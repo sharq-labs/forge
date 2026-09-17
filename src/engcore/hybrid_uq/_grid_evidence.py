@@ -45,7 +45,26 @@ SPOT_CHECK_INTERIOR_NODES = 4
 
 #: CORE-010: an axis is uniform in its inference coordinate when no step differs from the mean step by more than this
 #: fraction of it. A float64 linspace, and its image through exp or log, stays far inside.
+#:
+#: NO LONGER THE REFUSAL (I-07, R-29). It said nothing about how much the node density could move a moment, and
+#: refused a LOG-declared parameter's natural-linspace grid over plus or minus 2% -- prior density varying about
+#: 4%, moments equal to the accepted log-spaced grid's to six digits -- for a "largest step deviation 0.0201 of
+#: the mean step". The refusal is now `PRIOR_REWEIGHT_MOMENT_SD` below. This constant is kept because it is the
+#: spelling test a reader looking for one will expect to find, and it is reported in the detail.
 UNIFORM_STEP_RELATIVE_TOLERANCE = 1.0e-6
+
+#: I-07 (R-29): the node density a grid carries is an undeclared prior, and it MATTERS when reweighting the
+#: posterior by each node's cell volume in the inference coordinate moves an axis's mean by more than this
+#: fraction of that axis's sd, or its sd by more than this fraction of itself.
+#:
+#: NOT A NEW NUMBER. 0.05 sd is `engcore.hybrid_uq.router.TRUNCATION_CONVERGENCE_SD`, the resolution at which
+#: this core ALREADY declares a moment to have stopped moving -- the router uses it to decide that halving the
+#: steps of a truncated axis has converged. The undeclared prior matters exactly when it moves a reported moment
+#: by more than the resolution at which this core calls a moment unchanged, which is the same statement about
+#: the same kind of quantity. It is not imported from the router because the router imports THIS module and the
+#: dependency cannot run the other way; the two are kept numerically equal, the relationship is written at both,
+#: and `tests/hybrid_uq/test_core_scientific_audit_batch32.py` asserts the equality so they cannot drift.
+PRIOR_REWEIGHT_MOMENT_SD = 0.05
 
 #: A recomputed chi-square must agree with the grid's to every standardized residual within this many sigma: the
 #: agreement SUPPLIED_PREDICTION_AGREEMENT_SD already declares for a supplied prediction.
@@ -63,6 +82,27 @@ def require_grid_is_this_evidence(grid: PosteriorGrid, calibration, observations
     A shared ``dataset_id`` is a label. At deterministic nodes the forward evaluator's admission must equal the grid's,
     and the chi-square recomputed from the forward evaluator and the observations must equal the one the grid's
     log-likelihood implies. A grid altered only at nodes that are not checked is not caught.
+
+    RAISES, and keeps doing so: ``engcore.hybrid_uq.predictive`` builds ON a supplied posterior and has no other
+    route, so there a mismatch is about the request. A router that can fall back to the local route wants
+    :func:`grid_is_this_evidence` instead (I-07, R-30).
+    """
+    problem = grid_is_this_evidence(grid, calibration, observations, forward)
+    if problem is not None:
+        raise HybridUQError(problem[1])
+
+
+def grid_is_this_evidence(
+    grid: PosteriorGrid, calibration, observations: ObservationSet, forward
+) -> tuple[RouteReason, str] | None:
+    """The same check, REPORTED rather than raised: ``(GRID_NOT_THIS_EVIDENCE, detail)`` or None (I-07, R-30).
+
+    A grid that is not this request's evidence is a fact about the GRID. The request may still be answerable,
+    and the audited case proves it is: a table from a solver converged to 1e-9 relative, against observations
+    with sigma about 1e-4 relative, differs from a second forward evaluation by more than the 1e-6 sigma
+    agreement tolerance -- and the raise from inside ``route_uncertainty`` meant the router never reached the
+    local route, which answers the same request LOCAL_GAUSSIAN SUPPORTED. Every other finding in this module
+    already returns a reason; this was the one that raised.
     """
     observed, sigma = observations.numeric_vectors()
     keys = observations.keys
@@ -88,21 +128,41 @@ def require_grid_is_this_evidence(grid: PosteriorGrid, calibration, observations
         where = f"node {row} ({points[row].tolist()})"
         if value is None:
             if usable[row]:
-                raise HybridUQError(f"the grid carries a likelihood at {where}, which the forward evaluator refuses: the grid is "
-                                    f"not this request's evidence")
+                return (RouteReason.GRID_NOT_THIS_EVIDENCE,
+                        f"the grid carries a likelihood at {where}, which the forward evaluator refuses: the grid is "
+                        f"not this request's evidence")
             continue
         if not usable[row]:
-            raise HybridUQError(f"the grid has no likelihood at {where}, which the forward evaluator admits: the grid is not "
-                                f"this request's evidence")
+            return (RouteReason.GRID_NOT_THIS_EVIDENCE,
+                    f"the grid has no likelihood at {where}, which the forward evaluator admits: the grid is not "
+                    f"this request's evidence")
         chi_forward = float(np.sum(((value - observed) / sigma) ** 2))
         chi_grid = -2.0 * (float(ll[row]) - normalizer)
         roundoff = 64.0 * float(np.finfo(float).eps) * (abs(normalizer) + abs(float(ll[row])) + chi_forward + n)
         tolerance = 2.0 * RESIDUAL_AGREEMENT_SD * math.sqrt(n * chi_forward) + n * RESIDUAL_AGREEMENT_SD ** 2 + roundoff + 1e-9
         if not abs(chi_grid - chi_forward) <= tolerance:
-            raise HybridUQError(
-                f"the grid's likelihood at {where} implies chi-square {chi_grid:.6g}; the forward evaluator and the request's "
-                f"observations give {chi_forward:.6g}. A grid computed from other data or another model is not this "
-                f"request's evidence, whatever its dataset id says")
+            # EVERY DIGIT, AND IN THE UNIT THE TOLERANCE IS STATED IN (I-07, R-30).
+            #
+            # The audited message formatted both numbers to six significant figures and printed
+            # "implies chi-square 1064.66; ... give 1064.66" for a disagreement at the twelfth digit. A
+            # refusal whose two numbers print identically reads as a bug in the checker rather than a
+            # statement about the grid. `repr` of a float64 round-trips, so this shows what the comparison
+            # actually saw; and the sigma form is the unit RESIDUAL_AGREEMENT_SD is declared in, so a reader
+            # can see how far outside it the grid is rather than comparing two long decimals by eye.
+            difference = chi_grid - chi_forward
+            scale = 2.0 * math.sqrt(max(n * chi_forward, 0.0))
+            sigma_form = abs(difference) / scale if scale > 0.0 else float("inf")
+            # The CONCLUSION first. The recorded row truncates a detail to 400 characters, and the numbers
+            # this message now carries are long enough that a conclusion at the end is a conclusion a
+            # reader never sees. A grid computed from other data or another model is not this request's
+            # evidence whatever its dataset id says, and that is the sentence to lead with.
+            return (RouteReason.GRID_NOT_THIS_EVIDENCE,
+                    f"the grid is not this request's evidence: its likelihood at {where} implies chi-square "
+                    f"{chi_grid!r} and the forward evaluator with the request's own observations gives "
+                    f"{chi_forward!r}, a difference of {difference!r} -- {sigma_form:.6g} sigma per "
+                    f"standardized residual against a tolerance of "
+                    f"{tolerance / scale if scale > 0.0 else float('inf'):.6g} sigma ({tolerance!r} in "
+                    f"chi-square). A dataset id is a label")
 
 
 def _grid_leverage(grid: PosteriorGrid, row: int, observations: ObservationSet, calibration, forward):
@@ -447,21 +507,87 @@ def grid_prior_uniformity(grid: PosteriorGrid, calibration) -> tuple[RouteReason
                 return (RouteReason.GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES,
                         f"{name!r} is declared LOG but the grid has non-positive nodes")
             axis = np.log(axis)
+        axis_nodes = axis
         steps = np.diff(axis)
         mean = float(np.mean(steps))
         worst = float(np.max(np.abs(steps - mean)))
-        if not worst <= UNIFORM_STEP_RELATIVE_TOLERANCE * mean:
+        if worst <= UNIFORM_STEP_RELATIVE_TOLERANCE * mean:
+            continue
+        # JUDGED BY WHAT THE NODE DENSITY WOULD MOVE, NOT BY THE SPELLING (I-07, R-29).
+        #
+        # The step deviation says nothing about how much a heaped density could move a moment, and it
+        # refused a grid whose moments matched the accepted spelling's to six digits. So the density is
+        # applied: each node is given the midpoint-rule cell volume of its position in the inference
+        # coordinate, the posterior is reweighted by it, and the axis's mean and sd are recomputed. Uneven
+        # spacing is a finding when -- and only when -- that reweighting moves one of them.
+        moved_mean, moved_sd, reference_sd = _reweighted_moment_shift(grid, i, axis_nodes, transform)
+        if moved_mean is None:
             return (RouteReason.GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES,
-                    f"the nodes of {name!r} are not evenly spaced in its {transform.value} coordinate (largest step deviation "
-                    f"{worst / mean:.3g} of the mean step); every node carries equal prior mass, so their density would be an "
-                    f"undeclared prior on {name!r}")
+                    f"the nodes of {name!r} are not evenly spaced in its {transform.value} coordinate (largest step "
+                    f"deviation {worst / mean:.3g} of the mean step) and the effect of that density on the "
+                    f"posterior could not be measured, so it cannot be bounded")
+        if max(moved_mean, moved_sd) > PRIOR_REWEIGHT_MOMENT_SD:
+            return (RouteReason.GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES,
+                    f"the nodes of {name!r} are not evenly spaced in its {transform.value} coordinate (largest step "
+                    f"deviation {worst / mean:.3g} of the mean step), and weighting each node by its cell volume "
+                    f"in that coordinate moves the mean by {moved_mean:.3g} sd and the sd by {moved_sd:.3g} of "
+                    f"itself, against a bound of {PRIOR_REWEIGHT_MOMENT_SD:g} (reference sd {reference_sd:.6g}); "
+                    f"every node carries equal prior mass, so their density is an undeclared prior on {name!r}")
     return None
 
 
+def _reweighted_moment_shift(grid: PosteriorGrid, axis_index: int, axis_nodes, transform):
+    """How far weighting each node by its cell volume in the inference coordinate moves this axis's moments.
+
+    ``(mean shift in sd, sd shift as a fraction of itself, reference sd)``, or ``(None, None, None)`` when
+    there is nothing to measure. The cell volume is the midpoint rule -- ``(a[k+1] - a[k-1]) / 2``, with
+    half-cells at the ends -- which is exact for a uniform axis and is the obvious discretisation of node
+    density. Only THIS axis is reweighted: the finding is about this axis's spacing. (I-07, R-29.)
+    """
+    from ..inference.parameters import ParameterTransform
+
+    ll = np.asarray(grid.log_likelihood, dtype=np.float64)
+    usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(ll)
+    if not np.any(usable):
+        return None, None, None
+    node = np.asarray(grid.points, dtype=np.float64)[:, axis_index]
+    inference = np.log(node) if transform is ParameterTransform.LOG else node
+    axis = np.asarray(axis_nodes, dtype=np.float64)
+    width = np.empty(axis.size)
+    if axis.size < 2:
+        return None, None, None
+    width[1:-1] = (axis[2:] - axis[:-2]) / 2.0
+    width[0] = axis[1] - axis[0]
+    width[-1] = axis[-1] - axis[-2]
+    cell = np.interp(inference, axis, width)
+
+    base = np.where(usable, np.exp(ll - np.max(ll[usable])), 0.0)
+    if not np.sum(base) > 0.0:
+        return None, None, None
+    reweighted = base * cell
+    if not np.sum(reweighted) > 0.0:
+        return None, None, None
+
+    def moments(weight):
+        weight = weight / np.sum(weight)
+        mean = float(np.sum(weight * node))
+        return mean, float(np.sqrt(max(float(np.sum(weight * (node - mean) ** 2)), 0.0)))
+
+    mean_a, sd_a = moments(base)
+    mean_b, sd_b = moments(reweighted)
+    if not sd_a > 0.0:
+        return None, None, None
+    return abs(mean_b - mean_a) / sd_a, abs(sd_b - sd_a) / sd_a, sd_a
+
+
 def supplied_grid_problem(grid: PosteriorGrid, calibration, observations: ObservationSet, forward) -> tuple[RouteReason, str] | None:
-    """Binding (raises), then goodness of fit, then containment: why a resolved supplied grid may not stand, or None."""
-    require_grid_is_this_evidence(grid, calibration, observations, forward)
-    return (grid_prior_uniformity(grid, calibration)
+    """Binding, then goodness of fit, then containment: why a resolved supplied grid may not stand, or None.
+
+    Every one of these is REPORTED. The binding used to raise from here, which aborted a request the local
+    route could answer (I-07, R-30).
+    """
+    return (grid_is_this_evidence(grid, calibration, observations, forward)
+            or grid_prior_uniformity(grid, calibration)
             or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
             or grid_containment(grid, calibration)
             or grid_admissibility_truncation(grid)

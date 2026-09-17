@@ -156,8 +156,16 @@ def test_core005_a_grid_computed_from_other_data_under_the_same_id_is_refused():
     z = np.asarray(cal.estimate_vector)
     grid = other.grid([np.linspace(z[0] + 4.85, z[0] + 5.15, 31), np.linspace(z[1] - 0.25, z[1] + 0.25, 31)])
     assert grid.dataset_id == P.observations.dataset_id
-    with pytest.raises(HybridUQError, match="not this request's evidence"):
-        route_uncertainty(grid=grid, calibration=cal, observations=P.observations, forward=P.forward)
+    # I-07 (R-30): a grid that is not this request's evidence is PASSED_OVER with
+    # GRID_NOT_THIS_EVIDENCE and the request goes on, rather than raising from inside the router and
+    # aborting it. The grid is still refused and the reason is still named -- what moved is whether
+    # the REQUEST survives, and the audited case proves it can (LOCAL_GAUSSIAN SUPPORTED without the
+    # grid). Asserted here on the recorded row instead of on an exception.
+    result = route_uncertainty(grid=grid, calibration=cal, observations=P.observations, forward=P.forward)
+    row = next(r for r in result.considered if r["route"] == "GRID_AS_SUPPLIED")
+    assert row["outcome"] == "PASSED_OVER" and row["reason"] == "GRID_NOT_THIS_EVIDENCE", row
+    assert "not this request's evidence" in row["detail"]
+    assert result.decision is not RouteDecision.GRID_AS_SUPPLIED
 
 
 # ---------------------------------------------------------------------------
@@ -248,5 +256,13 @@ def test_a_grid_whose_admission_disagrees_with_the_forward_model_is_refused():
 
     def picky(theta):
         return None if theta[0] > 1.25 else P.forward(theta)
-    with pytest.raises(HybridUQError, match="not this request's evidence"):
-        route_uncertainty(grid=grid, observations=P.observations, forward=picky)
+    # I-07 (R-30): a grid that is not this request's evidence is PASSED_OVER with
+    # GRID_NOT_THIS_EVIDENCE and the request goes on, rather than raising from inside the router and
+    # aborting it. The grid is still refused and the reason is still named -- what moved is whether
+    # the REQUEST survives, and the audited case proves it can (LOCAL_GAUSSIAN SUPPORTED without the
+    # grid). Asserted here on the recorded row instead of on an exception.
+    result = route_uncertainty(grid=grid, observations=P.observations, forward=picky)
+    row = next(r for r in result.considered if r["route"] == "GRID_AS_SUPPLIED")
+    assert row["outcome"] == "PASSED_OVER" and row["reason"] == "GRID_NOT_THIS_EVIDENCE", row
+    assert "not this request's evidence" in row["detail"]
+    assert result.decision is not RouteDecision.GRID_AS_SUPPLIED

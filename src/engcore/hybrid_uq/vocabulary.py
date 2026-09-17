@@ -117,6 +117,10 @@ class RouteReason(str, Enum):
     #: CORE-010: a supplied grid's axes are not evenly spaced in the declared inference coordinates, so its equal node
     #: mass is an undeclared prior.
     GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES = "GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES"
+    #: I-07 (R-30): the grid's likelihood is not this request's observations under this request's
+    #: forward model. A fact about the GRID, so the grid route is passed over and the request
+    #: goes on to the local route; it used to raise from inside the router and abort everything.
+    GRID_NOT_THIS_EVIDENCE = "GRID_NOT_THIS_EVIDENCE"
     #: R-06 (re-audit 2026-09-16): a uniqueness search found a mode outside a supplied grid's box, so the grid describes
     #: one mode of a posterior that has more than one. Appended, not inserted: the member order is frozen.
     GRID_MISSES_A_FOUND_MODE = "GRID_MISSES_A_FOUND_MODE"

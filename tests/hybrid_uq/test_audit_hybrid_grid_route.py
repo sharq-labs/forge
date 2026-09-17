@@ -195,9 +195,18 @@ def test_huq06_a_grid_for_other_data_is_not_routed_for_this_request():
         route_uncertainty(grid=B.grid(AXES), calibration=A.calibrate(), observations=A.observations, forward=A.forward,
                           multistart=MultistartPolicy())
     other = S.affine("A", seed=999)
-    with pytest.raises(HybridUQError, match="not this request's evidence"):
-        route_uncertainty(grid=other.grid(AXES), calibration=A.calibrate(), observations=A.observations, forward=A.forward,
-                          multistart=MultistartPolicy())
+    # I-07 (R-30): a grid that is not this request's evidence is PASSED_OVER with
+    # GRID_NOT_THIS_EVIDENCE and the request goes on, rather than raising from inside the router and
+    # aborting it. The grid is still refused and the reason is still named -- what moved is whether
+    # the REQUEST survives, and the audited case proves it can (LOCAL_GAUSSIAN SUPPORTED without the
+    # grid). Asserted here on the recorded row instead of on an exception.
+    # The LABEL guard above still RAISES, and deliberately: it refuses before any content is looked at,
+    # and the two guards are different statements.
+    result = route_uncertainty(grid=other.grid(AXES), calibration=A.calibrate(), observations=A.observations,
+                               forward=A.forward, multistart=MultistartPolicy())
+    row = next(r for r in result.considered if r["route"] == "GRID_AS_SUPPLIED")
+    assert row["outcome"] == "PASSED_OVER" and row["reason"] == "GRID_NOT_THIS_EVIDENCE", row
+    assert "not this request's evidence" in row["detail"]
 
 
 def test_huq06_a_grid_over_other_parameters_is_not_routed_for_this_request():

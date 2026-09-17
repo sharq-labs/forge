@@ -4,7 +4,7 @@ Problems R-30 and R-29 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.j
 part A of two, under benchmarks/core_v4_false_confidence/BATCH32_THRESHOLD_PROTOCOL.json. Part B is R-19,
 the spot-check sampling.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 19d6b5c8, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -28,23 +28,37 @@ def _linear_problem():
 
 
 def _nudged_grid(problem, relative=1.0e-9):
-    """A grid whose log-likelihood is off by a solver's own convergence, not by a different model."""
-    grid = problem.grid([np.linspace(0.05, 4.0, 41)])
-    shifted = np.asarray(grid.log_likelihood, dtype=float) * (1.0 + relative)
-    mask = np.asarray(grid.admissible_mask, dtype=bool)
-    # The record's own invariant is that the weights ARE the likelihood, so they move with it.
-    weight = np.where(mask & np.isfinite(shifted), np.exp(shifted - np.max(shifted[mask])), 0.0)
-    return type(grid)(
-        parameter_names=grid.parameter_names,
-        points=grid.points,
-        weights=weight / np.sum(weight),
-        log_likelihood=shifted,
-        admissible_mask=mask,
-        dataset_id=grid.dataset_id,
+    """A grid built from model values off by a SOLVER's own convergence, not by a different model.
+
+    The audited mechanism: a table computed by a solver converged to ``relative`` relative, against
+    observations whose sigma is about 1e-4 relative. Every value is 1e-9 off, which is about 1e-5 of a
+    sigma -- ten times the 1e-6 sigma per residual the binding allows, and nothing a reader would call a
+    different model. The grid is built from those values so the disagreement arrives the way it really
+    does, through the likelihood, rather than by editing a log-likelihood by hand.
+    """
+    from engcore.inference.grid import AdmittedForwardTable, gaussian_grid_posterior
+
+    axis = np.linspace(0.999, 1.001, 201)
+    mesh = axis.reshape(-1, 1)
+    keys = problem.observations.keys
+    values = np.asarray([problem.model(row, problem.x) for row in mesh], dtype=float) * (1.0 + relative)
+    table = AdmittedForwardTable(
+        parameter_names=problem.parameters.names,
+        observation_keys=keys,
+        points=mesh,
+        values=values,
+        admissible_mask=np.ones(len(mesh), dtype=bool),
+        admission_refs=tuple(("analytic",) * len(keys) for _ in mesh),
+        rejection_reasons=tuple("" for _ in mesh),
     )
+    return gaussian_grid_posterior(table, problem.observations)
 
 
-@pytest.mark.xfail(strict=True, reason="R-30: the binding raises from inside the router")
+def _honest_grid(problem):
+    """The same box, built from the model itself: GRID_AS_SUPPLIED USED."""
+    return _nudged_grid(problem, relative=0.0)
+
+
 def test_r30_a_binding_mismatch_passes_the_grid_over_instead_of_aborting_the_request():
     problem = _linear_problem()
     result = route_uncertainty(grid=_nudged_grid(problem), calibration=problem.calibrate(),
@@ -56,7 +70,6 @@ def test_r30_a_binding_mismatch_passes_the_grid_over_instead_of_aborting_the_req
     assert rows[0]["reason"] == RouteReason.GRID_NOT_THIS_EVIDENCE.value, rows[0]
 
 
-@pytest.mark.xfail(strict=True, reason="R-30: the whole request aborts")
 def test_r30_the_request_is_still_answered_by_the_route_that_can_answer_it():
     """The audited comparison: the same request WITHOUT the grid is LOCAL_GAUSSIAN SUPPORTED."""
     problem = _linear_problem()
@@ -73,7 +86,6 @@ def test_r30_the_request_is_still_answered_by_the_route_that_can_answer_it():
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-30: both chi-squares print as 1064.66")
 def test_r30_the_mismatch_is_reported_in_digits_and_units_a_reader_can_act_on():
     problem = _linear_problem()
     result = route_uncertainty(grid=_nudged_grid(problem), calibration=problem.calibrate(),
@@ -88,11 +100,15 @@ def test_r30_the_mismatch_is_reported_in_digits_and_units_a_reader_can_act_on():
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-30: there is no GRID_NOT_THIS_EVIDENCE yet")
 def test_r30_a_grid_from_another_model_is_still_refused_as_not_this_evidence():
-    """The control: passing over is not the same as accepting."""
+    """The control: passing over is not the same as accepting.
+
+    A relative 1e-3 is a million times the solver-noise case and about 10 sigma per residual -- a different
+    model by any reading -- and it reports the same reason. Not larger than that: a grossly wrong grid
+    becomes GRID_UNRESOLVED first, which is a true finding about it but not the one under test here.
+    """
     problem = _linear_problem()
-    result = route_uncertainty(grid=_nudged_grid(problem, relative=0.5), calibration=problem.calibrate(),
+    result = route_uncertainty(grid=_nudged_grid(problem, relative=1.0e-3), calibration=problem.calibrate(),
                                observations=problem.observations, forward=problem.forward,
                                multistart=MultistartPolicy())
     assert result.decision is not RouteDecision.GRID_AS_SUPPLIED
@@ -123,7 +139,6 @@ NATURAL = np.linspace(0.19957772 * 0.98, 0.19957772 * 1.02, 401)
 LOGGED = np.geomspace(0.19957772 * 0.98, 0.19957772 * 1.02, 401)
 
 
-@pytest.mark.xfail(strict=True, reason="R-29: uniformity is judged per step")
 def test_r29_a_grid_that_is_uniform_in_effect_is_not_refused_on_a_step_deviation():
     problem = _log_problem()
     result = route_uncertainty(grid=problem.grid([NATURAL]), calibration=problem.calibrate(),
@@ -135,7 +150,6 @@ def test_r29_a_grid_that_is_uniform_in_effect_is_not_refused_on_a_step_deviation
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-29: the bound it is stated in does not exist yet")
 def test_r29_the_two_spellings_of_one_prior_report_the_same_moments():
     """Why the refusal was wrong: the two grids ARE the same posterior to six digits."""
     problem = _log_problem()
@@ -159,7 +173,6 @@ def test_r29_the_two_spellings_of_one_prior_report_the_same_moments():
     assert moments["natural"][1] == pytest.approx(moments["logged"][1], rel=1e-3)
 
 
-@pytest.mark.xfail(strict=True, reason="R-29: there is no moment-effect bound yet")
 def test_r29_the_moment_effect_bound_exists_and_is_the_repositorys_own_resolution():
     assert hasattr(GE, "PRIOR_REWEIGHT_MOMENT_SD"), (
         "engcore.hybrid_uq._grid_evidence has no PRIOR_REWEIGHT_MOMENT_SD; the rule "

@@ -34,7 +34,7 @@ from ._records import (
 from ..scientific.results.immutable import freeze
 from ._grid_evidence import (
     EDGE_LOG_LIKELIHOOD_DROP, admissibility_cut_axes, grid_admissibility_truncation, grid_containment,
-    grid_goodness_of_fit, grid_mode_resolution, grid_prior_uniformity, require_grid_is_this_evidence,
+    grid_goodness_of_fit, grid_is_this_evidence, grid_mode_resolution, grid_prior_uniformity,
 )
 from .identifiability import (
     RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
@@ -739,8 +739,11 @@ def route_uncertainty(
         # CORE-005: a grid is a posterior for a request only when it can be shown to be that request's evidence, and that
         # needs the observations and the forward model its likelihood is re-evaluated from.
         bound = isinstance(observations, ObservationSet) and forward is not None
-        if bound:
-            require_grid_is_this_evidence(grid, calibration, observations, forward)
+        # A grid that is not this request's evidence is a fact about the GRID, so it passes the grid route
+        # over and the request goes on to the local route. This used to raise from here, outside any try, so
+        # a table off by a solver's own convergence aborted a request the local route answers SUPPORTED
+        # (I-07, R-30).
+        binding = grid_is_this_evidence(grid, calibration, observations, forward) if bound else None
         try:
             identifiability = assess_routed_identifiability(grid)
         except GridResolutionError as exc:
@@ -753,7 +756,8 @@ def route_uncertainty(
             else:
                 # CORE-010, CORE-001 and CORE-002: equal node mass is the declared prior, the declared noise explains the
                 # residuals, and the box holds the posterior
-                problem = (grid_prior_uniformity(grid, calibration)
+                problem = (binding
+                           or grid_prior_uniformity(grid, calibration)
                            or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
                            or grid_containment(grid, calibration)
                            # R-17 then R-05: a cut inside the box, then every mode in the band on its own nodes

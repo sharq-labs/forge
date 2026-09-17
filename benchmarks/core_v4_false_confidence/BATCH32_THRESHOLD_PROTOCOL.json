@@ -55,5 +55,23 @@
   "The midpoint-rule cell volume is the obvious discretisation of node density and is exact for a uniform axis. On a wildly non-uniform axis it is itself an approximation, so the rule's own measurement has an error; it is far below 0.05 sd for any grid this core would otherwise accept, and it is stated rather than ignored.",
   "R-19 is untouched here: which nodes are re-evaluated, and the fact that the supplier chooses them, is part B. Until it lands, a supplier who keeps the checked rows honest can still sharpen the bulk -- and now gets PASSED_OVER rather than a raise when caught, which is the point of this part and not a weakening of that one."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. The refusal's message leads with its CONCLUSION rather than ending with it, and three existing expectations moved.",
+   "the_numbers_that_forced_it": "The recorded `considered` row truncates a detail to 400 characters. With the 17-digit numbers rule 2 requires, the sentence 'A grid computed from other data or another model is not this request's evidence' fell off the end -- CORE-005's own original test asserts that phrase and failed on a message that still contained it, 420 characters in. A conclusion a reader never sees is not a conclusion, so the message now opens with 'the grid is not this request's evidence:' and the numbers follow.",
+   "existing_expectations_moved": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch1.py::test_core005_a_grid_computed_from_other_data_under_the_same_id_is_refused -- asserted `pytest.raises`; now asserts the PASSED_OVER row and its reason, with the change explained in place.",
+    "tests/hybrid_uq/test_core_scientific_audit_batch1.py::test_a_grid_whose_admission_disagrees_with_the_forward_model_is_refused -- the same.",
+    "tests/hybrid_uq/test_audit_hybrid_grid_route.py::test_huq06_a_grid_for_other_data_is_not_routed_for_this_request -- the same for its content half; its LABEL half still raises, deliberately, because that guard refuses before any content is looked at and the two are different statements."
+   ],
+   "note": "None of the three is weakened: the grid is still refused and the reason is still named. What moved is whether the REQUEST survives, which is the finding.",
+   "one_deliberate_survivor": {
+    "id": "B32h",
+    "rule": "the midpoint-rule cell volume's factor of two",
+    "why": "Doubling the interior cell widths and leaving the ends alone rescales the reweighting almost uniformly, and the measured shift of a heaped grid stays far above 0.05 sd -- so the control still refuses it and no test in this repository distinguishes the two. It is a defect in the rule's own measurement rather than in its verdict, and the honest record is to declare it rather than to invent a fixture tuned to a factor of two. `expect=\"SURVIVED\"` makes a kill the failure."
+   }
+  }
+ ]
 }

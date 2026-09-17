@@ -369,6 +369,59 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "The refinement regime, and deliberately. A posterior the data HAVE localised but which a declared bound truncates still reports a width that depends on where the bound is -- 0.6712, 0.8912, 1.129, 1.341 and 1.699 at bounds of 11, 12, 13, 14 and 16 -- because the moments of a truncated distribution do depend on the truncation, and the audit's own fix direction asks for that path to be kept. The line between the two regimes is the 5.2565 sd band distance and it is drawn on purpose; BATCH31_THRESHOLD_PROTOCOL.json states both sequences so the choice is visible."
+  },
+  {
+   "problem": "R-30",
+   "title": "An evidence-binding mismatch raises instead of passing over",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "grid_is_this_evidence (returns) beside require_grid_is_this_evidence (raises), and the router's supplied-grid path consulting the first",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part A (batch 32)",
+   "why": "LATENT. The production calibration study supplies a grid it built itself in the same process, so the binding it faces is its own and cannot disagree; the MCP tools supply no grid. The rule is nevertheless what decides whether a request survives a fact about its grid, which is why it is fixed at the router and not left to a caller's try/except.",
+   "what_would_create_it": "Any caller that supplies a grid a DIFFERENT process computed -- which is what supplying a grid is for. A solver converged to 1e-9 relative against observations with sigma 1e-4 relative is enough: that is about 1e-5 of a sigma per residual, ten times the 1e-6 the binding allows, and it aborted the whole request.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_a_binding_mismatch_passes_the_grid_over_instead_of_aborting_the_request",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_request_is_still_answered_by_the_route_that_can_answer_it",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_mismatch_is_reported_in_digits_and_units_a_reader_can_act_on",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_a_grid_from_another_model_is_still_refused_as_not_this_evidence",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_raising_entry_point_still_raises"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Which NODES the binding re-evaluates, and that the supplier chooses them. R-19 is I-07 part B and is OPEN: a supplier who keeps the checked rows honest can still sharpen the posterior bulk, and now gets PASSED_OVER rather than a raise when caught -- which is this part working, not a weakening of that one."
+  },
+  {
+   "problem": "R-29",
+   "title": "The uniform-prior step tolerance refuses a grid that is effectively uniform",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "grid_prior_uniformity's moment-effect bound over _reweighted_moment_shift and PRIOR_REWEIGHT_MOMENT_SD",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part A (batch 32)",
+   "why": "LATENT, and this row is about a claim newly ALLOWED rather than newly refused, which is the direction this round is normally careful about. No production path supplies a grid on an axis whose spelling disagrees with its declared transform, so nothing production does changes. The bound is measured rather than assumed, and the detail records how far the moments actually moved.",
+   "what_would_create_it": "Any caller that supplies a grid spaced in natural units for a LOG-declared parameter -- which is what `numpy.linspace` gives you, and is how the audited case arose. Its prior density varied about 4% and its moments matched the accepted spelling's to six digits.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_a_grid_that_is_uniform_in_effect_is_not_refused_on_a_step_deviation",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_the_two_spellings_of_one_prior_report_the_same_moments",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_the_moment_effect_bound_exists_and_is_the_repositorys_own_resolution",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_a_node_density_that_does_move_the_moments_is_still_refused"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The reweighting's effect on the FIRST TWO moments of each axis marginal. A node density that leaves both alone and distorts a tail, or a correlation, is not caught. The first two moments are what a grid route REPORTS, so they are what the rule is about -- but this is not a statement that the prior is uniform."
   }
  ]
 }

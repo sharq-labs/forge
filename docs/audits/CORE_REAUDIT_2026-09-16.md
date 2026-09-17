@@ -2059,3 +2059,62 @@ under `src/engcore/domains/thermal/` was edited.
 plus **22 pinned re-runs** on the two changed files all KILLED.
 
 **Open decisions.** None.
+
+### Batch 32 — I-07 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-07 | **PARTIAL** (part A of two) | `19d6b5c8` (preregistration + 7 strict xfails), this commit | R-19 — which nodes the binding re-evaluates, and the fact that the supplier chooses them — is part B and is OPEN; the moment-effect bound measures the reweighting's effect on the FIRST TWO moments of each axis marginal, so a density that leaves both alone and distorts a tail or a correlation is not caught (the first two moments are what a grid route *reports*, which is why they are what the rule is about, but this is not a statement that the prior is uniform); the midpoint-rule cell volume is itself a discretisation, so the rule's own measurement has an error — far below 0.05 sd for any grid this core would accept |
+
+**R-30 and R-29 are FIXED.**
+
+| Claim | Status | How |
+|---|---|---|
+| a grid off at solver-tolerance level aborts the whole request | **FIXED** | `require_grid_is_this_evidence` raised from inside `route_uncertainty`, **outside any try**, so the router never reached the local route — which answers the same request LOCAL_GAUSSIAN SUPPORTED. A new `grid_is_this_evidence` returns `(GRID_NOT_THIS_EVIDENCE, detail)` and the grid route is PASSED_OVER. **Every other finding in that module already returned a reason**; the binding was the one that raised, for no reason the module states. A grid that is not this request's evidence is a fact about the *grid*. |
+| the message prints both chi-squares as 1064.66 | **FIXED** | Six significant figures for a disagreement at the twelfth digit. The detail now carries both numbers at `repr` precision — the width at which a float64 round-trips, so the message shows what the comparison actually saw — their difference, and the difference in **sigma per standardized residual**, which is the unit the tolerance is declared in. |
+| a grid uniform to within 4% with unchanged moments is refused | **FIXED** | Uniformity was judged per step, which says nothing about what the node density would *move*. Each node now gets the midpoint-rule cell volume of its position in the inference coordinate, the posterior is reweighted by it, and the grid is refused only when a mean moves by more than 0.05 of the axis sd or the sd by more than 0.05 of itself. **0.05 sd is not a new number**: it is `TRUNCATION_CONVERGENCE_SD`, the resolution at which this core already declares a moment to have stopped moving — and a test asserts the two are equal so they cannot drift. |
+
+**The raising entry point is kept, and the asymmetry is the point.**
+`engcore.hybrid_uq.predictive` builds *on* a supplied posterior and has no local route to fall back to, so
+there a mismatch really is about the request. Mutation B32a empties the raising function and is killed by
+that. What changed is only the path that has somewhere else to go.
+
+**This part newly ALLOWS something, which this round is normally careful about.** So the bound is
+*measured*: the reweighting is computed, the detail records how far the moments actually moved, and the two
+mutations that could have made the rule vacuous are both killed — B32i drops the reweighting so every shift
+is exactly zero, and B32g inverts the bound so no node density is ever an undeclared prior again. The
+clustered grid (350 of 410 nodes below 1.0) and the geomspace-on-an-identity-axis grid **stay refused**, and
+they are the controls that say so.
+
+**Amendment 1: the conclusion moved to the front of the message.** The recorded `considered` row truncates a
+detail to 400 characters, and with 17-digit numbers the sentence "…is not this request's evidence" fell off
+the end — CORE-005's own original test asserts that phrase and failed on a message that still contained it,
+420 characters in. **A conclusion a reader never sees is not a conclusion.**
+
+**Three existing expectations moved, none weakened, each commented in place.** Two in
+`test_core_scientific_audit_batch1.py` and one in `test_audit_hybrid_grid_route.py` asserted
+`pytest.raises`; they now assert the PASSED_OVER row and its reason. The grid is still refused and the reason
+is still named — what moved is whether the *request* survives. The label guard in the third
+(`computed from dataset 'synthetic.B'`) still raises, deliberately: it refuses before any content is looked
+at, and the two guards are different statements.
+
+**Compatibility.** Additive. One new `RouteReason` member (a refusal, not a downgrade, so it is absent from
+`_DOWNGRADES` by design), one new public function beside the one it does not replace, one new module
+constant. `UNIFORM_STEP_RELATIVE_TOLERANCE` keeps its name and value and is still reported in the detail; it
+is no longer the refusal, and that is written at its definition.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**Verification.** FAST tier 6849 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/hybrid_uq/` 417 passed.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH32_MUTATIONS.log`: **9 of 9 KILLED plus one declared survivor**, both controls
+green, plus pinned re-runs on the changed files all KILLED. The survivor is B32h, which doubles the interior
+cell widths: it rescales the reweighting almost uniformly, a heaped grid's shift stays far above 0.05 sd, and
+no test here distinguishes the two. It is a defect in the rule's own *measurement* rather than in its
+verdict, and the honest record is to declare it rather than to invent a fixture tuned to a factor of two.
+
+**Open decisions.** None.
