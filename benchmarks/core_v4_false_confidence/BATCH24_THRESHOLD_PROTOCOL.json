@@ -1,0 +1,62 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 24,
+  "improvements": [
+    "I-12 part A of two"
+  ],
+  "problems_addressed": [
+    "R-39"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "99be6bf4",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_part_is": "I-12 is two problems about CROSS_SOLVER_VALIDATED. This part is the CLASSIFICATION: `VALIDATION_LEVELS` puts that level beside BENCHMARK_VALIDATED and EXPERIMENTALLY_VALIDATED as a level that compares a result with something outside the model that produced it, and `evidence_basis` returns VALIDATED whenever any of them is attained. Agreement between two solvers of ONE declared model does not compare it with anything outside itself -- it is code-to-code verification -- so a DC result whose only other levels are dimensional validity and convergence moves from VERIFICATION_ONLY to VALIDATED the moment a cross-solver check is attached, and a circuit declared with a wrong resistor value reads VALIDATED because both solvers agree about the wrong model. Part B (the next batch) is R-21: the level granted only through the TrustedConsensusGate's byte-verified independence, the gate routed in production, and a disagreement between non-independent routes blocking SUPPORTED rather than warning.",
+  "reach": "LIBRARY_ONLY for the label itself, and the audit says why: the one production MCP caller strips the level with `_withhold_level`, so VALIDATED from this source is reachable only by composing the public API. The CLASSIFICATION is nevertheless a core rule that applies to every consumer of `evidence_basis`, including the MCP verdict block's `verification_only` rule and `required_evidence_basis`, which is why it is fixed at the core and not at the boundary.",
+  "what_was_already_seen": {
+    "R-39": "the audit's findings 42 and 83, reproduced at 294c129 and again by the adjudication. Without the consensus check a DC result reads SUPPORTED, basis VERIFICATION_ONLY, attained ['dimensionally_valid', 'numerically_converged']. With the ngspice-versus-MNA agreement attached it reads SUPPORTED, basis VALIDATED, attained ['cross_solver_validated', 'dimensionally_valid', 'numerically_converged'] -- while all three contributing models report `validation_status` SELF_CONSISTENT in the same report. A payload corrected by hand to VERIFICATION_ONLY is REFUSED on read, so a reader cannot even undo the label. The consensus itself lists `problem_declaration: py:engcore.domains.electrical.dc.circuit:DCCircuit` as a SHARED dependency of both routes."
+  },
+  "rules": {
+    "cross_solver_agreement_is_verification": {
+      "improvement": "I-12",
+      "problem": "R-39",
+      "rule": "`ValidationLevel.CROSS_SOLVER_VALIDATED` leaves `VALIDATION_LEVELS`. `evidence_basis` therefore returns VERIFICATION_ONLY for a report whose validating evidence is cross-solver agreement, and VALIDATED only for BENCHMARK_VALIDATED or EXPERIMENTALLY_VALIDATED. The enum member itself is unchanged and keeps its name, its value and its position.",
+      "why_this_is_the_modules_own_definition_and_not_a_new_opinion": "`evidence_basis`'s own docstring says these levels 'compare it with something outside itself'. `scientific/consensus.py` says two routes may 'realize the same mathematical formulation' and still count as independent, because only shared ARITHMETIC is excluded -- `SOLVER_INDEPENDENCE_DIMENSIONS` leaves the problem declaration out, and the consensus core's own docstring says a declaration error 'is invisible to every route that reads it'. The two pinned cross-solver routes share their declaration: both DC routes declare `DCCircuit` and both CSTR routes declare `ReactorRun`. And both DC routes solve the same KCL/Ohm/source relations, which `domains/electrical/dc/models.py` declares SELF_CONSISTENT -- 'not BENCHMARK_VALIDATED ... certainly not EXPERIMENTALLY_VALIDATED'. So the classification contradicted three statements the code already makes about itself, and this rule removes the contradiction rather than adding a judgement.",
+      "class": "A (a classification corrected against the module's own stated definition; no threshold)"
+    },
+    "both_kinds_are_named_and_every_level_is_in_exactly_one": {
+      "improvement": "I-12",
+      "problem": "R-39",
+      "rule": "A new module constant `VERIFICATION_LEVELS` names the levels that say the declared model was solved correctly -- DIMENSIONALLY_VALID, NUMERICALLY_CONVERGED, ANALYTICALLY_VERIFIED and CROSS_SOLVER_VALIDATED -- and `validation.py` refuses to import unless the two sets are disjoint and together cover every `ValidationLevel` member except the `UNVERIFIED` sentinel.",
+      "why_a_second_set_and_an_import_time_check": "today one kind is a set and the other is 'the rest', so a level added later is silently verification, and R-39 is precisely a level that ended up in the wrong group. The adjudication records that the classification 'was a choice, not an accident' -- it was written into BATCH3's protocol -- which is exactly the kind of choice that should have to be made explicitly for every member. Naming both sets and refusing an unclassified member makes the next one a decision somebody has to write down. Same discipline `mcp/server.py::_audit_tables` already applies to the verdict tables.",
+      "class": "A"
+    },
+    "the_word_says_which_kind_the_level_is": {
+      "improvement": "I-12",
+      "problem": "R-39",
+      "rule": "`_BASIS_MEANS['VERIFICATION_ONLY']` in the MCP server says that agreement between two solvers of the same declared model is one of the things it covers, so an agent reading a VERIFICATION_ONLY report with a cross-solver check does not have to infer it. No verdict changes: the `verification_only` rule already decides nothing and fires on every SUPPORTED verdict either tool can return.",
+      "class": "A (wording on a description table that is already required to be complete)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "no symbol is removed, renamed or reordered. `ValidationLevel` keeps every member, including CROSS_SOLVER_VALIDATED, with the same name, value and position. `VALIDATION_LEVELS` keeps its name and its type and loses one element, which the audit's own fix_direction for R-39 asks for. `VERIFICATION_LEVELS` is a new module-level name, which is additive. No dataclass field, default or signature changes.",
+    "behaviour_that_deliberately_changes": [
+      "`ValidationReport.evidence_basis` and `mcp.evidence.evidence_basis_of` return VERIFICATION_ONLY where they returned VALIDATED, for any report whose only validating level is cross-solver agreement.",
+      "`required_evidence_basis='VALIDATED'` is no longer satisfied by cross-solver agreement, so a caller who demanded validation and got code-to-code verification now reads `required_evidence_basis_not_attained` and INSUFFICIENT_EVIDENCE. That is the whole point: the demand meant something and was being met by something else.",
+      "a report whose verdict_qualifiers were written before this batch and say VALIDATED on cross-solver evidence alone is REFUSED on read, because the qualifier is re-derived and enforced. That is the existing read-back rule doing its job on a corrected classification, and it is stated here rather than discovered."
+    ],
+    "serialized_records": "no field added, removed or renamed. `verdict_qualifiers.evidence_basis` is a DERIVED value that is re-derived and enforced on read, so a stored report carrying VALIDATED on cross-solver evidence alone stops reading back. Every such record in the repository is listed under claims_that_move.",
+    "claims_that_move": [
+      "no committed evidence file in the repository is known in advance to carry `evidence_basis: VALIDATED`; the audit's own reach note says the only production serialized path withholds the level. Every file that does is found by search before the fix is implemented, listed in the audit document with its before and after, and regenerated where its generator is not one of the long runs.",
+      "`KINETICS_K2.json` and `BATTERY_T41.json` are NOT regenerated. Their SUPERSEDED markers stand and gain this rule."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "After this, VALIDATED is unreachable in production: `oracles._TRUSTED_ORACLE_DECLARATIONS` is empty, so BENCHMARK_VALIDATED and EXPERIMENTALLY_VALIDATED cannot be awarded, and cross-solver agreement no longer counts. That is the honest state of the tree -- nothing in production compares a result with anything outside the model that produced it -- and it is recorded here rather than papered over by keeping the label reachable.",
+    "`evidence_basis` still covers the WHOLE report rather than each value: it says VALIDATED if any single check validates anything, even a different quantity. That is a stated residual of CORE-009/VAL-01 (a ValidationCheck is not bound to the values it qualifies), it is not what R-39 is about, and I-20 is where the binding lands.",
+    "The classification is a statement about what the LEVELS mean, not about how hard it is to earn one. R-21 -- the level earned from hand-written independence strings, and the gate that has no caller -- is part B and is untouched here.",
+    "`VERIFICATION_LEVELS` is a set of the levels that exist today. The import-time completeness check will refuse a new member until someone classifies it, which is the intended cost."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
