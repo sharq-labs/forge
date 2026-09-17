@@ -2419,3 +2419,77 @@ Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `test
 **Guard mutations.** `BATCH37_MUTATIONS.log`: **6 of 6 KILLED plus one declared survivor**, both controls green.
 
 **Open decisions.** None.
+
+### Batch 38 — I-14 part F (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-14 | **DONE** (parts A–F) | `28e4c116`, `18db6895` (A), `0cad9502`, `32f02f20` (B, R-28), `3aff191b`, `7755c80b` (C, R-22 b/c/d), `228d47b9`, `96b4538e` (D, R-22 a), `3dd5fd08`, `2a37d112` (E, R-25 and finding 24), `9c20da6f` (F preregistration + 14 strict xfails), this commit | **R-27 stays PARTIAL and that is the honest answer**: three of finding 22's five claims are closed on read; the other two are *provably* not closable from a record without its grid and are now stated as a number instead of implied away — see below. A record read without its calibration still cannot have its bounds verified (part E's residual, unchanged) |
+
+**R-27 is PARTIAL: three claims FIXED, two STATED. I-14 is now DONE across all six parts.**
+
+| Claim (finding 22) | Status | How |
+|---|---|---|
+| a rebuilt record carrying a misfit local posterior | **FIXED** | `S.at_bound()` rebuilds a grid SUPPORTED; swapping in a *genuine* REFUSED posterior over the same parameters — its reasons re-derived from its own measurements, so nothing is forged — read back `GRID_REBUILT_FROM_LOCAL_COVARIANCE` **SUPPORTED** carrying `MODEL_MISFIT_BEYOND_DECLARED_NOISE`. **The read rule is now the write rule**, as it already was for uniqueness (R-01): the router passes the rebuild over on a misfit and on a structural refusal, so a record in that shape was never produced by it, and the misfit statement — *the declared noise does not explain the residuals* — is no longer dropped in silence. |
+| `considered` never checked | **FIXED** | `considered: []` read back SUPPORTED, and so did a ledger whose one USED row had been edited to `PASSED_OVER` for a misfit. The ledger is the record's account of how the decision was reached, and the router writes **exactly one USED row, on the route it returns**. New `_considered_problems` holds the shape, the closed route and outcome vocabularies (read off the write path, not chosen), the closed key set, and that one used route against the decision and claim the record reports. Checked against all 24 committed routed records under `benchmarks/core_v2_hybrid_uq` **before** the rule was written: all conform. |
+| ESS and `spacing_to_std` held to nothing | **FIXED** | An effective sample size of 1.5 with a step 50× the posterior's own standard deviation read back SUPPORTED — the grid V1 refuses as `GRID_TOO_COARSE_FOR_INFERENCE`. `_grid_diagnostic_problems` applies V1's own condition verbatim, **both halves of it** (a small ESS alone is a sharply informative posterior; what says "too coarse" is the step being as wide as the posterior), plus the definitional ranges: a count of nodes lies in [1, the point count the summary commits to], a fraction of a non-empty support in (0, 1], one ratio per axis. No number is chosen — 8.0 is read from `_DECLARED_IDENTIFIABILITY_THRESHOLDS`. |
+| the covariance can be divided by ~8 | **STATED, not fixed** | Cantelli is the tightest bound that assumes no shape and it bounds an interval **from above only**. New `grid_record_variance_shrink_window(mean, covariance, relative_widths)` = `min_i (2·CANTELLI_95_SD·σ_i / (w_i·|μ_i|))²` — the same algebra the code already applies, solved for the shrink factor. On the audited record it is **7.98**: variance ÷ 5 reads back, ÷ 8 does not. It is a *function* rather than a sentence because a sentence is what was wrong, and because the window depends on the record. |
+| lowered widths flip the verdict | **STATED, not fixed** | No lower bound on a central 95% interval follows from a standard deviation, so widths lowered with the covariance or lowered alone cannot be detected from a record. The docstring that claimed "**A covariance shrunk under a recomputed commitment breaks that bound**" — the overclaim the audit's verifier named — is gone, replaced by what is true: a grid record's moments and identifiability are **bounded on read, not re-derived**, and a caller who needs them re-derived needs the grid. |
+
+**And one defect found while writing the reproductions, in code batch 36 added.** A posterior the local route
+refuses *before any measurement* (`nearly_singular`, `NUMERICALLY_SINGULAR_JACOBIAN`) was built by `_refused`,
+which never wrote the observation content digest — so it serialized as a `hybrid_uq.route_diagnostics/3`
+record with an empty digest, which batch 36's rule requires of a `/3` record. **The router returned a record
+`from_dict` refuses.** It failed closed, so nothing false was ever read, but a write path that emits an
+unreadable record is a defect; `_refused` now writes the digest the observations give. This half of the batch
+is REACHED — the production calibration study routes the local posterior.
+
+**The record-forgery fuzzer I-14's brief asks for.** Deterministic (seed preregistered), 199 single-field
+edits over the grid record and the reports it holds, with the integrity-only digests recomputed where the
+record's own writer would recompute them. Every edit is either refused or comes back with the original's
+decision, claim, identifiability status, `why`, thresholds and used route, no width narrower and no variance
+shrunk past the stated window.
+
+**Amendment 2 is the interesting one, and it narrows a rule I wrote too strongly.** The fuzzer's invariant was
+preregistered as *refused, or every claim-bearing field unchanged*, with the grid diagnostics and the whole
+ledger among them. It reported **21 survivors of 199** in four families: an ESS moved anywhere inside
+[1, points] that does not also make the spacing coarse (4), an occupancy moved anywhere inside (0, 1] (5), a
+spacing of [2.0, 2.0] with ESS still 10.3 (1), and a `reason` string on a row that is not the used one (11).
+**None of them is a gap a rule could close** — they are the integrity-only limit this batch states, and V1
+deliberately accepts a coarse step when the posterior is well sampled. So the invariant now holds what is held
+exactly and requires everything else to be *no better*, which is what the rule's own name says. The numbers
+are in the amendment log rather than hidden in the test.
+
+**One mutation was repointed, and it says something about redundant guards.** B38c removes the empty-ledger
+branch and the preregistered reproduction still passed: on a *grid* record an empty ledger has no USED row
+either, so the used-route count caught it. The case only that branch sees is a **REFUSED** record, which
+carries no used route at all — a refusal with no ledger is a record that says nothing about why it refused.
+Repointed there, and it kills.
+
+**Compatibility.** Additive. One new public function and one new public constant (`CANTELLI_95_SD`), two new
+private helpers. No serialized field added or removed, so **no schema bump**: `hybrid_uq.hybrid_uq_result/1`
+and the identifiability record keep their keys, and `to_dict`/`from_dict` stay an identity round trip. No
+V1-frozen symbol, enum member or default changed. The verdict words are untouched. Every new rule refuses a
+record the router cannot produce; none lowers a claim on read.
+
+**Committed evidence.** Nothing moved. All 24 committed routed records conform to the new ledger rule.
+`KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**No existing expectation moved.** Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Verification.** FAST tier 6924 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched — the pinned call
+`problems.extend(_grid_report_problems(ident.report, self.mean, self.covariance))` is byte-identical, which is
+why the new diagnostics rule is a second call on its own line rather than a fourth argument. Guard reach
+ledger clean over 18 guards, R-27 LATENT/PARTIAL.
+
+**Guard mutations.** `BATCH38_MUTATIONS.log`: **17 of 17 KILLED**, no survivors.
+`BATCH38_PINNED_MUTATIONS.log`: **25 of 25 KILLED** on the files this batch changed. Both controls green.
+
+**Open decisions.** One, and it is the only way to close R-27's last two claims: **carry the grid's own
+marginal quantiles (and its ESS) in the committed `grid_summary`**, which is a bump of
+`hybrid_uq.hybrid_uq_result/1` and of `_GRID_SUMMARY_KEYS`. It would make a grid record's identifiability and
+moments genuinely re-derivable rather than bounded. *Recommendation:* do it in the V4 round if the record
+schema is bumped for other reasons, and not before — the reach is latent (no reader takes these records from
+outside the process that wrote them), and a schema bump for a latent gap costs more than it closes.

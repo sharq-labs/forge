@@ -1665,6 +1665,11 @@ def _refused(calibration: CalibrationResult, observations: ObservationSet, reaso
         minimum_bound_distance_sd=math.nan, nonlinearity_index=math.nan, nonlinearity_probes_skipped=0,
         minimum_chi_square_rise=math.nan, multistart=(), uniqueness="NOT_ASSESSED", thresholds=_thresholds(),
         evaluation_count=evaluations, claim=RouteClaim.REFUSED, refusals=(reason,), downgrades=(),
+        # R-27 (I-14 part F): an early refusal is a `/3` record like any other, and `from_dict` requires
+        # the digest of the observations a `/3` record was fitted to. Without it the router could return a
+        # record that cannot be read back at all -- found while reproducing finding 22, whose structural
+        # forgery needs a refused posterior that round-trips.
+        observation_content_digest=observation_set_content_digest(observations),
     )
     return LocalGaussianPosterior(
         approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION, parameter_names=parameters.names,

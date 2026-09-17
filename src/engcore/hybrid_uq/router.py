@@ -41,7 +41,7 @@ from ._grid_evidence import (
     supplied_grid_problem,
 )
 from .identifiability import (
-    RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
+    RoutedIdentifiability, _grid_axes_digest, _grid_diagnostic_problems, _grid_report_problems, _report_differences, assess_routed_identifiability,
 )
 from .local_gaussian import (
     MISFIT_REASONS, LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior,
@@ -71,6 +71,54 @@ _STRUCTURAL = frozenset({
 #: set because an early refusal records NOT_ASSESSED with no downgrade reason at all, and because the word is
 #: re-derived from the recorded starts by ``_multistart_verdict`` -- it cannot disagree with them.
 UNRESOLVED_UNIQUENESS = frozenset({"NOT_ASSESSED", "MULTISTART_INCOMPLETE", "MULTISTART_BELOW_MINIMUM_SEARCH"})
+
+#: Every route name and outcome word `route_uncertainty` writes into a `considered` ledger, and the keys a row
+#: may carry (R-27, finding 22's fifth claim). The ledger is the record's account of how the decision was
+#: reached; before this it was carried and never read, so an empty one, and one saying the used route had been
+#: passed over for a misfit, both read back beside a SUPPORTED grid decision.
+_LEDGER_ROUTES = frozenset({
+    "GRID_AS_SUPPLIED", "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "LOCAL_GAUSSIAN", "LOCAL_GAUSSIAN_DOWNGRADED",
+})
+_LEDGER_OUTCOMES = frozenset({"USED", "SKIPPED", "PASSED_OVER", "REFUSED_BY_V1"}) | {c.value for c in RouteClaim}
+_LEDGER_KEYS = frozenset({"route", "outcome", "reason", "detail"})
+
+
+def _considered_problems(decision: RouteDecision, claim: RouteClaim, considered) -> list[str]:
+    """Whether a ledger is an account of THIS decision: its shape, its vocabulary and its one used route.
+
+    The router writes exactly one USED row per answered request, on the route it returns, and no USED row at
+    all when it refuses. What is deliberately NOT checked: each passed-over row's reason against what that
+    route would have said, which cannot be re-derived without re-running the route.
+    """
+    problems: list[str] = []
+    rows = tuple(considered)
+    if not rows:
+        problems.append("considered is empty: a record carries the account of how its decision was reached")
+        return problems
+    for index, row in enumerate(rows):
+        extra = set(row) - _LEDGER_KEYS
+        if extra or "route" not in row or "outcome" not in row:
+            problems.append(f"considered[{index}] holds {sorted(row)}, and a row carries a route, an outcome "
+                            f"and at most a reason and a detail")
+            continue
+        if row["route"] not in _LEDGER_ROUTES:
+            problems.append(f"considered[{index}] names the route {row['route']!r}, which the router never writes")
+        if row["outcome"] not in _LEDGER_OUTCOMES:
+            problems.append(f"considered[{index}] reports the outcome {row['outcome']!r}, which the router never writes")
+    used = [row for row in rows if row.get("outcome") == "USED"]
+    if decision is RouteDecision.REFUSED:
+        if used:
+            problems.append(f"a refused routing used no route, and considered says it used {[r.get('route') for r in used]}")
+        return problems
+    expected = ("LOCAL_GAUSSIAN_DOWNGRADED" if decision is RouteDecision.LOCAL_GAUSSIAN and claim is RouteClaim.DOWNGRADED
+                else decision.value)
+    if len(used) != 1:
+        problems.append(f"considered reports {len(used)} used route(s) for a {decision.value} decision, not one")
+    elif used[0].get("route") != expected:
+        problems.append(f"considered says the route used was {used[0].get('route')!r}, and this record reports "
+                        f"a {decision.value} decision with a {claim.value} claim, which is written from {expected!r}")
+    return problems
+
 
 #: How an unresolved uniqueness word is reported when it passes a grid route over.
 _UNRESOLVED_REASON = {
@@ -182,6 +230,7 @@ class HybridUQResult:
         if ident is not None and not isinstance(ident, RoutedIdentifiability):
             raise HybridUQError("identifiability must be a RoutedIdentifiability")
         problems = []
+        problems.extend(_considered_problems(decision, self.claim, self.considered))
         if local is not None:
             problems.extend(_posterior_record_problems(local))
         if decision is RouteDecision.LOCAL_GAUSSIAN:
@@ -252,6 +301,8 @@ class HybridUQResult:
                     problems.append("identifiability carries another claim")
                 if tuple(ident.report.parameter_names) == names:
                     problems.extend(_grid_report_problems(ident.report, self.mean, self.covariance))
+                    # R-27: and the resolution diagnostics the report carries, which nothing read.
+                    problems.extend(_grid_diagnostic_problems(ident.report, points))
             if decision is RouteDecision.GRID_AS_SUPPLIED and local is not None:
                 problems.append("a supplied grid was used, so no local posterior was built")
             if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
@@ -266,6 +317,20 @@ class HybridUQResult:
                 if word in UNRESOLVED_UNIQUENESS:
                     problems.append(f"a rebuilt grid was designed from a local posterior whose uniqueness is {word}: "
                                     f"the box it names covers the modes a search found, and that search found none")
+                # R-27 (I-14 part F): the other two conditions the write path passes the rebuild route over
+                # on, for the same reason. A misfit reason says the declared noise does not explain the
+                # residuals, and a SUPPORTED grid claim over that posterior drops the statement silently: the
+                # audited record read back GRID_REBUILT_FROM_LOCAL_COVARIANCE SUPPORTED carrying a posterior
+                # whose only reason was MODEL_MISFIT_BEYOND_DECLARED_NOISE. A structural refusal leaves no
+                # usable covariance to have designed the box from at all.
+                misfit = sorted(set(local.reasons) & MISFIT_REASONS, key=lambda r: r.value)
+                if misfit:
+                    problems.append(f"a rebuilt grid carries a local posterior refused for {misfit[0].value}: the "
+                                    f"declared noise does not explain its residuals, and no grid is built past that")
+                structural = sorted(set(local.diagnostics.refusals) & _STRUCTURAL, key=lambda r: r.value)
+                if structural:
+                    problems.append(f"a rebuilt grid carries a local posterior with no usable local covariance to "
+                                    f"design a grid from ({structural[0].value})")
             grid = self.grid
             if grid is not None:
                 if tuple(grid.parameter_names) != names:

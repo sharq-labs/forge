@@ -563,6 +563,43 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A record read WITHOUT its calibration: the bounds-moved forgery survives that reading, and it cannot be closed from inside the record. Declared bounds are a property of the REQUEST, every field is the forger's to edit, and a digest the forger can recompute binds nothing. What the batch does is make every record the ROUTE writes verified, and give a reader holding the calibration the one function that checks it."
+  },
+  {
+   "problem": "R-27",
+   "title": "Grid HybridUQResult read-back and prediction trust hand-built records",
+   "rule": "src/engcore/hybrid_uq/router.py",
+   "rule_symbol": "_considered_problems and the rebuilt-record misfit and structural rules in HybridUQResult._require_one_truth; _grid_diagnostic_problems and grid_record_variance_shrink_window in src/engcore/hybrid_uq/identifiability.py, the second stating the limit the others cannot close; the `_refused` observation content digest in src/engcore/hybrid_uq/local_gaussian.py; RouteReason.GRID_NOT_BOUND_TO_EVIDENCE on routed_predictive_uncertainty (batch 37, finding 24)",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 parts E (batch 37, finding 24) and F (batch 38, finding 22)",
+   "why": "LATENT, not LIBRARY_ONLY: every rule here guards a record shape that does not occur in the tree. The router never writes a ledger without its used route, a rebuilt record over a misfit posterior, or an effective sample size V1 would have refused; and the only non-test caller of `HybridUQResult.from_dict` (benchmarks/core_v2_hybrid_uq/audit/kinetics.py:267) reads a record it produced itself in the same process. The audit's own verifier reached the same reading: 'No MCP or evidence path takes these records from outside.' PARTIAL rather than FIXED because two of finding 22's five claims are provably not closable from a record alone and are stated as a number instead -- see the residual below. One part of this batch IS reached: `_refused` now writes the observation content digest, so the local route, which the production calibration study uses, no longer returns a record `from_dict` refuses.",
+   "what_would_create_it": "Any reader that takes a serialized routed record from outside the process that produced it -- a cached grid record replayed across runs, or an evidence path that accepts one over the MCP boundary. The forgeries need no cryptography: the digests a record carries are integrity-only and anyone can recompute them, which is why the rules re-derive instead.",
+   "entry_points": [
+    "engcore.hybrid_uq.local_gaussian.local_gaussian_posterior (reached by engcore.studies.calibration_study) -- the `_refused` digest half only"
+   ],
+   "exercised_by": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_posterior_the_route_refused_early_reads_back"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_rebuilt_record_carrying_a_misfit_posterior_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_rebuilt_record_carrying_a_structurally_refused_posterior_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_empty_considered_ledger_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_ledger_that_says_the_used_route_was_passed_over_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_ledger_naming_another_used_route_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_each_half_of_the_ledger_vocabulary_is_checked_on_its_own",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_diagnostics_v1_would_have_refused_are_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_effective_sample_size_above_the_point_count_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_occupied_support_fraction_outside_its_range_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_spacing_vector_of_the_wrong_length_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_the_undetectable_shrink_window_is_stated_as_a_number",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_the_window_is_where_the_bound_actually_bites",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_no_single_field_edit_changes_what_a_claim_rests_on"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A grid record's moments and identifiability are BOUNDED on read, not re-derived: the grid is data-plane and is not serialized. Inside `grid_record_variance_shrink_window` (7.98 on the audited record) the covariance can be divided and nothing contradicts it; relative widths lowered with the covariance or lowered alone are undetectable, because no lower bound on a central 95% interval follows from a standard deviation; and a small shift of the mean is undetectable for the same reason the digests are integrity-only. Closing any of these needs the grid's own marginal quantiles carried in the committed summary, which is a schema bump and an owner's decision -- recorded as the batch's open decision."
   }
  ]
 }

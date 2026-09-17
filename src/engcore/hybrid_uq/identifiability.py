@@ -107,6 +107,74 @@ def _rule(condition: float, max_correlation: float, widths: Sequence[float], nam
 CANONICAL_IDENTIFIABILITY_THRESHOLDS = {"correlation_threshold": 0.95, "condition_threshold": 1.0e6, "width_threshold": 1.0}
 
 
+#: Cantelli's constant at 95%: the half-width, in standard deviations, of the widest two-sided interval that
+#: can hold 95% of the mass of SOME distribution with a given standard deviation. It is the tightest bound
+#: available without assuming a shape, which is why it is what a grid record's widths are held to (R-27).
+CANTELLI_95_SD = math.sqrt(0.975 / 0.025)
+
+
+def grid_record_variance_shrink_window(mean, covariance, relative_widths) -> float:
+    """The largest factor a grid record's covariance can be DIVIDED by while the record still reads back.
+
+    This function exists to state a limit, not to enforce one. A serialized grid result does not carry its
+    grid, so its mean and covariance cannot be recomputed; what holds them is the Cantelli bound in
+    :func:`_grid_report_problems`, which refuses a record whose carried 95% interval is too wide for its
+    carried standard deviation. Solving that bound for the shrink factor gives the window inside which
+    dividing the covariance alone -- with the integrity-only moments digest recomputed, which anyone can do --
+    contradicts nothing in the record:
+
+        ``min_i (2 k sigma_i / (w_i |mu_i|))**2``,  ``k = CANTELLI_95_SD``
+
+    over the parameters with a non-zero mean and a finite width, and ``inf`` when no parameter constrains it
+    (a zero mean makes a relative width meaningless, so those parameters are skipped, exactly as the bound
+    skips them). On the audited record the window is 7.98: a variance divided by 5 reads back and by 8 does
+    not. Callers who need a record's moments to be re-derivable need the grid, not this record.
+    """
+    mean = np.asarray(mean, dtype=np.float64)
+    sd = np.sqrt(np.maximum(np.diag(np.asarray(covariance, dtype=np.float64)), 0.0))
+    widths = np.asarray(relative_widths, dtype=np.float64)
+    factors = []
+    for index in range(min(len(mean), len(sd), len(widths))):
+        scale, width = abs(float(mean[index])), float(widths[index])
+        if scale == 0.0 or not math.isfinite(width) or width <= 0.0:
+            continue
+        factors.append((2.0 * CANTELLI_95_SD * float(sd[index]) / (width * scale)) ** 2)
+    return min(factors) if factors else math.inf
+
+
+def _grid_diagnostic_problems(report: IdentifiabilityReport, points) -> list[str]:
+    """What a grid record's own resolution diagnostics can be held to (R-27, finding 22's fourth claim).
+
+    The effective sample size, the occupied support fraction and the spacing-to-standard-deviation ratios were
+    carried and never read, so a record with an effective sample size of 1.5 and a step 50x the posterior's
+    width read back SUPPORTED -- a grid V1 would have refused with GRID_TOO_COARSE_FOR_INFERENCE. Three of the
+    four checks here are definitional (a count of nodes lies between 1 and the node count the summary commits
+    to; a fraction of a non-empty support lies in (0, 1]; there is one ratio per axis). The fourth is V1's own
+    condition verbatim, BOTH halves of it: a small effective sample size alone is a sharply informative
+    posterior, and what says 'too coarse' is the step being as wide as the posterior it is meant to resolve.
+    """
+    problems: list[str] = []
+    names = tuple(report.parameter_names)
+    spacing = tuple(float(s) for s in report.spacing_to_std)
+    if len(spacing) != len(names):
+        problems.append(f"identifiability carries {len(spacing)} spacing-to-standard-deviation ratio(s) for "
+                        f"{len(names)} parameter(s)")
+    ess = float(report.effective_sample_size)
+    occupied = float(report.occupied_support_fraction)
+    if not math.isfinite(ess) or ess < 1.0 or (points is not None and ess > float(points)):
+        problems.append(f"an effective sample size is a count of nodes, so it lies in [1, {points!r}]; this "
+                        f"record carries {ess!r}")
+    if not math.isfinite(occupied) or not 0.0 < occupied <= 1.0:
+        problems.append(f"an occupied support fraction lies in (0, 1]; this record carries {occupied!r}")
+    minimum = float(dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)["minimum_effective_points"])
+    worst = max(spacing) if spacing else math.inf
+    if math.isfinite(ess) and ess < minimum and worst >= 1.0:
+        problems.append(f"an effective sample size {ess:.3g} below {minimum:.3g} with a grid step {worst:.3g}x "
+                        f"the posterior's own standard deviation is the grid V1 refuses as too coarse for "
+                        f"inference, so no accepted grid produced this record")
+    return problems
+
+
 def _same_number(a: float, b: float) -> bool:
     a, b = float(a), float(b)
     return (math.isnan(a) and math.isnan(b)) or a == b or math.isclose(a, b, rel_tol=1e-12, abs_tol=0.0)
@@ -139,8 +207,17 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
     thresholds are the router's; the condition number and correlation are the carried covariance's, by the frozen
     formulas; the status and ``why`` follow from the carried numbers by the frozen rule; and each relative width,
     times its mean, is a central 95% interval of a distribution with the carried mean and standard deviation, which
-    Cantelli's inequality confines to mean +/- sqrt(0.975 / 0.025) sd. A covariance shrunk under a recomputed
-    commitment breaks that bound. A small shift of the mean does not, which is why the digests are integrity-only.
+    Cantelli's inequality confines to mean +/- ``CANTELLI_95_SD`` sd.
+
+    WHAT THAT DOES NOT CATCH (R-27, finding 22's first two claims). This docstring used to say 'A covariance
+    shrunk under a recomputed commitment breaks that bound', which is false inside a window this code can
+    compute: see :func:`grid_record_variance_shrink_window`, 7.98 on the audited record. Cantelli is the
+    tightest bound that assumes no shape, and it bounds an interval from ABOVE only -- no lower bound on a
+    central 95% interval follows from a standard deviation. So a covariance divided inside that window, widths
+    lowered with it or lowered alone (turning NOT_IDENTIFIABLE into IDENTIFIABLE), and a small shift of the
+    mean are all undetectable from the record, because the digests are integrity-only and anyone can recompute
+    them. A grid record's moments and identifiability are therefore NOT re-derived, only bounded, and a caller
+    who needs them re-derived needs the grid.
     """
     problems = []
     for key, value in CANONICAL_IDENTIFIABILITY_THRESHOLDS.items():
@@ -170,7 +247,7 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
                         width_threshold=report.width_threshold)
     if status is not report.status or why != report.why:
         problems.append(f"identifiability says {report.status.value} where its own numbers give {status.value}")
-    k = math.sqrt(0.975 / 0.025)
+    k = CANTELLI_95_SD
     for i in range(n):
         scale = abs(float(mean[i]))
         if not math.isfinite(widths[i]) or scale == 0.0:

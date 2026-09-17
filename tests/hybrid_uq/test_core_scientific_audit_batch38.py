@@ -8,12 +8,13 @@ refused local posterior, an effective sample size and spacing held to nothing, a
 nobody reads. The other two -- a covariance shrunk inside the Cantelli window, and relative widths lowered --
 are provably undetectable from a record without its grid, so they are STATED as a number instead of implied
 away. The fuzzer at the end is the standing check that no single-field edit changes what a claim rests on.
+
+Recorded as strict xfails in commit 9c20da6f, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
 
 import copy
-import itertools
 import math
 import random
 
@@ -128,9 +129,6 @@ def test_r27f_an_honest_rebuilt_record_still_reads_back():
     assert HybridUQResult.from_dict(result.to_dict()) == result
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, third claim: read-back holds a rebuilt record's local "
-                                       "posterior to its names only, so the misfit the local route recorded is "
-                                       "laundered into a SUPPORTED grid claim")
 def test_r27f_a_rebuilt_record_carrying_a_misfit_posterior_is_refused():
     payload = copy.deepcopy(_rebuilt_result().to_dict())
     misfit = _misfit_posterior()
@@ -140,8 +138,6 @@ def test_r27f_a_rebuilt_record_carrying_a_misfit_posterior_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, third claim: the router refuses to design a grid from a "
-                                       "posterior with no usable covariance, and read-back does not")
 def test_r27f_a_rebuilt_record_carrying_a_structurally_refused_posterior_is_refused():
     payload = copy.deepcopy(_rebuilt_result().to_dict())
     singular = _singular_posterior()
@@ -154,7 +150,6 @@ def test_r27f_a_rebuilt_record_carrying_a_structurally_refused_posterior_is_refu
 # ---------------------------------------------------------------------------
 # the_considered_ledger_names_the_route_the_decision_reports
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fifth claim: `considered` is never read, so () is accepted")
 def test_r27f_an_empty_considered_ledger_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     payload["considered"] = []
@@ -162,8 +157,6 @@ def test_r27f_an_empty_considered_ledger_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fifth claim: a ledger saying the used route was passed "
-                                       "over for a misfit reads back beside a SUPPORTED grid decision")
 def test_r27f_a_ledger_that_says_the_used_route_was_passed_over_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     rows = [dict(row) for row in payload["considered"]]
@@ -176,7 +169,6 @@ def test_r27f_a_ledger_that_says_the_used_route_was_passed_over_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fifth claim: nothing ties the USED row to the decision")
 def test_r27f_a_ledger_naming_another_used_route_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     rows = [dict(row) for row in payload["considered"]]
@@ -188,7 +180,6 @@ def test_r27f_a_ledger_naming_another_used_route_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fifth claim: a row can carry any route name and any outcome")
 def test_r27f_a_ledger_row_outside_the_routers_own_vocabulary_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     payload["considered"] = list(payload["considered"]) + [{"route": "SOMETHING_ELSE", "outcome": "FINE"}]
@@ -199,8 +190,6 @@ def test_r27f_a_ledger_row_outside_the_routers_own_vocabulary_is_refused():
 # ---------------------------------------------------------------------------
 # a_grid_record_reports_diagnostics_a_grid_v1_accepted
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fourth claim: ESS and spacing_to_std are never held to "
-                                       "anything, so a grid V1 would have refused reads back SUPPORTED")
 def test_r27f_diagnostics_v1_would_have_refused_are_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     report = _report(payload)
@@ -210,8 +199,6 @@ def test_r27f_diagnostics_v1_would_have_refused_are_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fourth claim: an effective sample size is a count of "
-                                       "nodes and nothing holds it to the node count the summary commits to")
 def test_r27f_an_effective_sample_size_above_the_point_count_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     _report(payload)["effective_sample_size"] = float(payload["grid_summary"]["points"] + 1)
@@ -219,8 +206,6 @@ def test_r27f_an_effective_sample_size_above_the_point_count_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fourth claim: the occupied support fraction is a fraction "
-                                       "and nothing holds it to (0, 1]")
 def test_r27f_an_occupied_support_fraction_outside_its_range_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     _report(payload)["occupied_support_fraction"] = 1.5
@@ -228,8 +213,6 @@ def test_r27f_an_occupied_support_fraction_outside_its_range_is_refused():
         HybridUQResult.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, fourth claim: spacing_to_std has one entry per axis and "
-                                       "nothing holds its length")
 def test_r27f_a_spacing_vector_of_the_wrong_length_is_refused():
     payload = copy.deepcopy(_grid_result().to_dict())
     _report(payload)["spacing_to_std"] = [0.5]
@@ -251,8 +234,6 @@ def test_r27f_a_broad_posterior_on_a_fine_grid_is_not_what_the_v1_rule_refuses()
 # ---------------------------------------------------------------------------
 # the_re_derivation_limit_of_a_grid_record_is_stated_as_a_number
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, first and second claims: the limit is not stated anywhere, "
-                                       "and the docstring claims the opposite")
 def test_r27f_the_undetectable_shrink_window_is_stated_as_a_number():
     window = _symbol(ID, "grid_record_variance_shrink_window")
     result = _grid_result()
@@ -265,9 +246,6 @@ def test_r27f_the_undetectable_shrink_window_is_stated_as_a_number():
     assert 7.9 < found < 8.1, f"the window on the audited record is 7.98, not {found!r}"
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22, first and second claims: `_grid_report_problems` says 'A "
-                                       "covariance shrunk under a recomputed commitment breaks that bound', which "
-                                       "is not true inside the window")
 def test_r27f_the_docstring_states_the_limit_instead_of_denying_it():
     text = RO._grid_report_problems.__doc__ or ""
     assert "A covariance shrunk under a recomputed commitment breaks that bound" not in text, (
@@ -403,8 +381,6 @@ def _same_numbers(a, b):
     return a == b
 
 
-@pytest.mark.xfail(strict=True, reason="R-27 finding 22: single-field edits to a grid record's diagnostics and to "
-                                       "its `considered` ledger read back with the claim untouched")
 def test_r27f_no_single_field_edit_changes_what_a_claim_rests_on():
     """The record-forgery fuzzer I-14's brief asks for, over the grid record.
 
@@ -446,10 +422,6 @@ def test_r27f_no_single_field_edit_changes_what_a_claim_rests_on():
 # ---------------------------------------------------------------------------
 # a_record_the_router_returns_can_be_read_back
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="found while reproducing finding 22: a posterior refused before any "
-                                       "measurement carries an empty observation content digest, which batch 36's "
-                                       "rule requires of a /3 record, so the router returns a record from_dict "
-                                       "refuses")
 def test_r27f_a_posterior_the_route_refused_early_reads_back():
     from engcore.hybrid_uq.local_gaussian import LocalGaussianPosterior
 
@@ -460,3 +432,40 @@ def test_r27f_a_posterior_the_route_refused_early_reads_back():
     except HybridUQError as exc:
         pytest.fail(f"the router returned a record it cannot read back: {exc}")
     assert read == singular
+
+
+# ---------------------------------------------------------------------------
+# ADDED while running batch 38's guard mutations, not preregistered: the ledger
+# reproduction above edits a row's route AND its outcome at once, so either check
+# alone kept it refused and a mutation of the other survived. One case per check,
+# plus the unknown key, which only the fuzzer reached.
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("row,word", [
+    ({"route": "SOMETHING_ELSE", "outcome": "SKIPPED"}, "route"),
+    ({"route": "LOCAL_GAUSSIAN", "outcome": "FINE"}, "outcome"),
+    ({"route": "LOCAL_GAUSSIAN", "outcome": "SKIPPED", "note": "anything"}, "at most a reason and a detail"),
+], ids=["route", "outcome", "unknown_key"])
+def test_r27f_each_half_of_the_ledger_vocabulary_is_checked_on_its_own(row, word):
+    payload = copy.deepcopy(_grid_result().to_dict())
+    payload["considered"] = list(payload["considered"]) + [row]
+    with pytest.raises(HybridUQError, match=word):
+        HybridUQResult.from_dict(payload)
+
+
+def test_r27f_a_refused_record_with_an_empty_ledger_is_refused_too():
+    """REPOINTED while running batch 38's guard mutations, not preregistered.
+
+    B38c removed the empty-ledger branch and the preregistered reproduction still passed: on a grid record an
+    empty ledger has no USED row either, so the used-route count caught it. A REFUSED record is the case only
+    the empty-ledger branch sees, because a refusal is supposed to carry no used route at all -- and a
+    refusal with no ledger is a record that says nothing about why it refused.
+    """
+    problem = S.strong_nonlinearity()
+    result = route_uncertainty(calibration=problem.calibrate(), observations=problem.observations,
+                               forward=problem.forward, multistart=MultistartPolicy())
+    assert result.decision is RouteDecision.REFUSED, result.decision
+    payload = copy.deepcopy(result.to_dict())
+    assert HybridUQResult.from_dict(payload) == result
+    payload["considered"] = []
+    with pytest.raises(HybridUQError, match="considered is empty"):
+        HybridUQResult.from_dict(payload)
