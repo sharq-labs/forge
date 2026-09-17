@@ -2493,3 +2493,41 @@ marginal quantiles (and its ESS) in the committed `grid_summary`**, which is a b
 moments genuinely re-derivable rather than bounded. *Recommendation:* do it in the V4 round if the record
 schema is bumped for other reasons, and not before — the reach is latent (no reader takes these records from
 outside the process that wrote them), and a schema bump for a latent gap costs more than it closes.
+
+### Batch 39 — I-20 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-20 | **PARTIAL** (part A of three) | `c1d1b846` (preregistration + 9 strict xfails), this commit | **R-45 stays OPEN**: the `validation_report/2` bump, reading `/1` payloads by the pre-CORE-013 precedence, and a representation of its own for an inapplicable check are part B; finding 90's other record bumps (`routed_identifiability`, `validity_assessment`, `uncertainty`, and the V4 serialization inventory) are part C |
+
+**R-46 is FIXED and REACHED. R-45's false critic detail is FIXED; R-45 itself stays OPEN.**
+
+| Claim | Status | How |
+|---|---|---|
+| a PASS seven orders outside its bound, with a minus sign | **FIXED** | `comparison_met_its_bound` returned `residual <= tolerance`. A tolerance bounds **how far** a quantity stands from its reference, so under the signed form **the bound could not be missed from below at all**: residual −10.0 against tolerance 1e-6 was constructed and earned `numerically_converged`. The module's own docstring describes this defect in its opening lines — *"seven orders outside its own bound … all the way to a SUPPORTED verdict"* — and it came back wearing a minus sign. Now `abs(residual) <= tolerance`; every gate in the tree already passed an `abs` value in, so no number any of them reports moves. |
+| a negative tolerance | **FIXED, for every outcome** | No distance is at most a negative number, so a negative tolerance is a bound nothing can meet and the comparison says nothing either way — `PASS residual=-3.0 tolerance=-1.0` was constructed. Refused at construction, for FAIL and NOT_RUN as well: a FAIL against an unmeetable bound is not a finding about the model, and the threshold pins and SRIA budgets read the field without ever looking at the outcome. This is the module's own stated choice, three times over — *a value that cannot be built cannot be read inconsistently*. |
+| "validation was never run" | **FIXED** | The DC solver writes a NOT_RUN `voltage_source_relation` whenever a circuit has no voltage source, so `NumericalCritic`'s fixed detail said nobody looked about reports in which everything applicable ran and passed. The detail now names the checks and counts the ones that ran; a report with **no** checks keeps the old sentence, which is the one report it was true of. The verdict stays NOT_ASSESSED — whether an inapplicable check should count as missing evidence needs the status precedence, which is part B. |
+
+**Compatibility.** No schema, field, default or enum member changes, and no V1-frozen signature changes. A
+scan of every committed JSON found **51 `validation_check` payloads and none with a negative residual or
+tolerance**, so nothing stored stops reading. The deliberate narrowing: a check carrying a negative tolerance,
+or a PASS whose residual misses its bound from below, stops being constructible — records no gate writes.
+
+**Committed evidence.** Nothing moved.
+
+**No existing expectation moved.** Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Verification.** FAST tier 6937 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Guard reach ledger clean over 19 guards,
+R-46 REACHED/FIXED. `tests/test_core_guards.py`, `tests/test_scientific_core.py` and
+`tests/test_audit_sria_assurance_binding.py`: 411 passed.
+
+**Guard mutations.** `BATCH39_MUTATIONS.log`: **5 of 5 KILLED**, including both controls (a strict `<` that
+would refuse exact agreement against a zero tolerance, and a detail that calls a report with no checks
+"0 check(s) ran"). `BATCH39_PINNED_MUTATIONS.log`: **9 of 9 KILLED** on the files this batch changed.
+
+**Open decisions.** None. R-45's remaining work is scheduled, not undecided: part B bumps
+`validation_report` to `/2`, reads `/1` payloads by the pre-CORE-013 precedence, and gives an inapplicable
+check a representation of its own — which is also what lets the SRIA critic stop reporting NOT_ASSESSED for a
+report where everything applicable ran.

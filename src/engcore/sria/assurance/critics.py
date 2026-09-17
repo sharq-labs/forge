@@ -249,11 +249,30 @@ class NumericalCritic:
                 )
             )
         elif status is ValidationOutcome.NOT_RUN:
-            add(
-                "validation_report_status",
-                CriticVerdict.NOT_ASSESSED,
-                "validation was never run",
+            # R-45 (finding 87): the detail was the fixed sentence "validation
+            # was never run", and it was false for most reports that reach
+            # here. A NOT_RUN report status means SOME check did not run -- the
+            # DC solver writes a NOT_RUN `voltage_source_relation` whenever a
+            # circuit has no voltage source -- so a report with five passing
+            # checks and one inapplicable one was reported as one nobody ran.
+            # The verdict is unchanged: NOT_ASSESSED is still what an unrun
+            # check supports. What changes is that the detail names the checks,
+            # which is what a reader needs to tell "nobody looked" from "this
+            # did not apply". Whether an inapplicable check should count as
+            # missing evidence at all needs the status precedence and a schema
+            # bump, and is I-20 part B.
+            unrun = [
+                c.name
+                for c in result.validation.checks
+                if c.outcome is ValidationOutcome.NOT_RUN
+            ]
+            ran = len(result.validation.checks) - len(unrun)
+            detail = (
+                "validation was never run"
+                if not ran
+                else f"{ran} check(s) ran; {len(unrun)} did not: {', '.join(unrun)}"
             )
+            add("validation_report_status", CriticVerdict.NOT_ASSESSED, detail)
             skipped.append("validation_report_status")
         else:
             add("validation_report_status", CriticVerdict.PASS, status.value)

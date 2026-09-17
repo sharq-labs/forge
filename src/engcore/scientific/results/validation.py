@@ -94,7 +94,18 @@ def comparison_met_its_bound(
     hat. A quantity that cannot be ordered against its bound was not compared
     to it.
 
-    ``True`` -- both numbers are finite and ``residual <= tolerance``.
+    ``True`` -- both numbers are finite and ``abs(residual) <= tolerance``.
+
+    **The DISTANCE, not the signed number** (R-46, re-audit 2026-09-16). This
+    was written ``residual <= tolerance``, and a tolerance bounds how far a
+    measured quantity may stand from its reference: a residual of -10 stands
+    10 away. Under the signed form the bound could not be missed from below at
+    all, so the defect this module's docstring describes -- a PASS seven orders
+    outside its own bound, carrying a level all the way to a SUPPORTED verdict
+    -- came straight back with a minus sign, and a negative tolerance that no
+    magnitude can meet was accepted beside it. Every gate in this repository
+    already passes an ``abs`` value in, so what changes is the rule, not the
+    numbers any of them report.
     """
     if residual is None or tolerance is None:
         return None
@@ -102,7 +113,7 @@ def comparison_met_its_bound(
     tolerance = float(tolerance)
     if not (math.isfinite(residual) and math.isfinite(tolerance)):
         return False
-    return residual <= tolerance
+    return abs(residual) <= tolerance
 
 
 def outcome_is_earned(
@@ -697,6 +708,24 @@ class ValidationCheck:
             object.__setattr__(self, "residual", float(self.residual))
         if self.tolerance is not None:
             object.__setattr__(self, "tolerance", float(self.tolerance))
+            # R-46, every outcome. No magnitude can be at most a negative
+            # number, so a negative tolerance is a bound nothing satisfies and
+            # the comparison it belongs to has no content. Refused for a FAIL
+            # and a NOT_RUN as well as for the outcomes that claim something:
+            # a FAIL against a bound that cannot be met is not a finding about
+            # the model, and the field is read by consumers -- the threshold
+            # pins, the SRIA budgets -- that never look at the outcome. Refused
+            # here for the reason stated three times above: a value that cannot
+            # be built cannot be read inconsistently.
+            if self.tolerance < 0.0:
+                raise ScientificValidationError(
+                    f"validation check {self.name!r} carries tolerance="
+                    f"{self.tolerance!r}. A tolerance bounds how far a measured "
+                    f"quantity may stand from its reference, and no distance is "
+                    f"at most a negative number: this is a bound nothing can "
+                    f"meet, so the comparison it belongs to says nothing either "
+                    f"way. Record the bound as the magnitude it is"
+                )
         # GUARD 21, enforced. Last, because it reads the two numbers and wants
         # them coerced to float first.
         #

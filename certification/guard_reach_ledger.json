@@ -600,6 +600,36 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A grid record's moments and identifiability are BOUNDED on read, not re-derived: the grid is data-plane and is not serialized. Inside `grid_record_variance_shrink_window` (7.98 on the audited record) the covariance can be divided and nothing contradicts it; relative widths lowered with the covariance or lowered alone are undetectable, because no lower bound on a central 95% interval follows from a standard deviation; and a small shift of the mean is undetectable for the same reason the digests are integrity-only. Closing any of these needs the grid's own marginal quantiles carried in the committed summary, which is a schema bump and an owner's decision -- recorded as the batch's open decision."
+  },
+  {
+   "problem": "R-46",
+   "title": "GUARD 21 compares signed residual and tolerance",
+   "rule": "src/engcore/scientific/results/validation.py",
+   "rule_symbol": "comparison_met_its_bound, which now compares abs(residual) with the tolerance; and the negative-tolerance refusal in ValidationCheck.__post_init__",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-20 part A (batch 39)",
+   "why": "REACHED, and more strongly than the audit's 'library-only' suggests: the rule is on `ValidationCheck.__post_init__`, so every check the domain gates build passes through it, and run_electrothermal and run_battery run those gates on their way to a verdict. The audit calls R-46 library-only because the forgery is a hand-built check, which is true of the CONSTRUCTION; the rule itself sits between a production entry point and a published number, because a level that `comparison_met_its_bound` clears is what `attained_levels` reports into the credibility report.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the domain validation gates that build every ValidationCheck",
+    "engcore.scientific.results.validation.ValidationReport.attained_levels"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_pass_whose_residual_misses_its_bound_from_below_is_refused",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_negative_tolerance_is_refused_for_every_outcome",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_negative_residual_inside_its_bound_still_passes",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_zero_tolerance_is_still_a_bound"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch39.py::test_r46_the_rule_itself_reads_the_distance_not_the_signed_number",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_level_declaring_warning_is_held_to_the_distance_too",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_the_audited_negative_tolerance_construction_no_longer_earns_a_level"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`outcome` is still refused rather than derived: `abs(residual) <= tolerance` is necessary for a PASS and not sufficient, and a refinement gate in this repository FAILs with a residual inside its bound because the sequence behind it never contracted. So a check that reports FAIL or NOT_RUN while its numbers agree is still constructible, deliberately, and a non-finite tolerance is still constructible on those outcomes -- the finiteness rule makes the comparison False, so nothing can claim success on one."
   }
  ]
 }

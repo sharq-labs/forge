@@ -41,7 +41,6 @@ def test_r46_a_residual_outside_its_bound_on_the_high_side_is_already_refused():
         _check(residual=10.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-46: comparison_met_its_bound returns residual <= tolerance, so any negative residual meets any positive bound")
 def test_r46_the_rule_itself_reads_the_distance_not_the_signed_number():
     assert comparison_met_its_bound(1.0e-12, 1.0e-6) is True
     assert comparison_met_its_bound(10.0, 1.0e-6) is False
@@ -51,14 +50,12 @@ def test_r46_the_rule_itself_reads_the_distance_not_the_signed_number():
     assert comparison_met_its_bound(float("nan"), 1.0e-6) is False
 
 
-@pytest.mark.xfail(strict=True, reason="R-46 as audited: the same PASS with residual -10.0 is constructed and earns numerically_converged")
 def test_r46_a_pass_whose_residual_misses_its_bound_from_below_is_refused():
     """The audited construction: the same check with a minus sign was built and earned its level."""
     with pytest.raises(ScientificValidationError, match="did not succeed"):
         _check(residual=-10.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-46: a level-declaring WARNING is held to the same signed comparison")
 def test_r46_a_level_declaring_warning_is_held_to_the_distance_too():
     with pytest.raises(ScientificValidationError, match="did not succeed"):
         _check(outcome=ValidationOutcome.WARNING, residual=-10.0)
@@ -76,14 +73,12 @@ def test_r46_a_negative_residual_inside_its_bound_still_passes():
 @pytest.mark.parametrize("outcome", [ValidationOutcome.PASS, ValidationOutcome.WARNING,
                                      ValidationOutcome.FAIL, ValidationOutcome.NOT_RUN],
                          ids=["pass", "warning", "fail", "not_run"])
-@pytest.mark.xfail(strict=True, reason="R-46 as audited: a negative tolerance is accepted, and no magnitude can meet it")
 def test_r46_a_negative_tolerance_is_refused_for_every_outcome(outcome):
     establishes = ValidationLevel.NUMERICALLY_CONVERGED if outcome is ValidationOutcome.PASS else None
     with pytest.raises(ScientificValidationError, match="tolerance"):
         _check(outcome=outcome, residual=-3.0, tolerance=-1.0, establishes=establishes)
 
 
-@pytest.mark.xfail(strict=True, reason="R-46 as audited: PASS residual=-3.0 tolerance=-1.0 is constructed with numerically_converged")
 def test_r46_the_audited_negative_tolerance_construction_no_longer_earns_a_level():
     with pytest.raises(ScientificValidationError, match="tolerance"):
         _check(residual=-3.0, tolerance=-1.0)
@@ -117,7 +112,6 @@ def _status_detail(result):
     return record
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 (finding 87): the critic's detail is the fixed string 'validation was never run'")
 def test_r45_a_report_whose_unrun_check_did_not_apply_is_not_a_report_nobody_ran():
     result = _result_with_an_inapplicable_check()
     assert result.validation.status is ValidationOutcome.NOT_RUN
