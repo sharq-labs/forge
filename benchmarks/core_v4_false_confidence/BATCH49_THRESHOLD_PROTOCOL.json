@@ -1,0 +1,88 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 49,
+ "improvements": [
+  "I-27 part C of three, the last part"
+ ],
+ "problems_addressed": [
+  "R-58 (the audit's finding 71), the production half"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "8ff34a5c",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "The half the audit calls REACHED and the ledger has been calling LIBRARY_ONLY since batch 19: every production electrothermal crossing passes a bare point value, with no uncertainty, no validity and no validation state, and `engcore.uq.cross_domain` -- the record that would carry them -- has no caller in `src/` at all. Part A fixed the crossing record; part B bound the uncertainty to it; this part makes the production loop carry both, so the guard family stops being a library.",
+ "reach": "REACHED once this part lands: the fixed-point electrothermal loop is the production coupling, it runs under `engcore.mcp.tools.run_electrothermal`, and it records the crossings on the run it returns.",
+ "what_was_already_seen": {
+  "finding 71 (R-58), the production half": "'No src module calls it, so every production crossing still carries a bare value (see the residual CORE-016 finding).' The coupled run's provenance carries `QuantityTransfer` records -- what crossed, from which record, at which instant -- and nothing beside them: the receiving domain sees a number, and nothing downstream can tell a propagated quantity from a declared one, nor read what the producing side said about its own uncertainty, its model's applicability or its validation."
+ },
+ "rules": {
+  "a_crossing_carries_what_the_producing_side_said_about_its_value": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "A new record in `engcore.uq.cross_domain`: `CrossedQuantity`, carrying one `UncertaintyTransfer` together with the producing result's own per-model validity verdicts, its validation status and its convergence state. It is built by `CrossedQuantity.from_result(transfer, result)`, which reads every one of those off the result rather than taking them from a caller.",
+   "class": "A",
+   "why": "The three things the audit names as missing -- uncertainty, validity, validation state -- are all statements the producing side already made, in its own record, and the crossing dropped them. Reading them from the result rather than accepting them as arguments is what makes the record a measurement of the producer rather than a second place for a caller to state something.",
+   "closes": "finding 71's production half, for what a crossing record can carry."
+  },
+  "a_crossing_is_bound_to_the_record_it_came_from": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "`from_result` refuses a result for which the transfer's own `check_against_result` reports findings, and `CrossedQuantity.__post_init__` refuses a verdict set that does not name every model the crossing declares it read.",
+   "class": "A",
+   "why": "Part A gave the transfer the question; this is the boundary that has to ask it, because here is where the answer is copied into a second record. A crossing built against another result would carry that result's validity and validation beside this crossing's value, which is the same relabelling part B refused for an uncertainty.",
+   "closes": "the hand-assembly route into the new record, before it exists."
+  },
+  "an_absent_uncertainty_entry_is_not_no_uncertainty": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "For a crossing whose value was read out of the record, `from_result` requires the result to carry an `Uncertainty` entry for the source quantity, and refuses a result that carries none. For a `configured_input` crossing it requires the opposite -- the result must NOT carry one for that quantity -- and the crossing carries an UNKNOWN uncertainty whose notes name the configuration as the origin.",
+   "class": "A",
+   "why": "An absent entry silently read as zero uncertainty is the shape of this whole problem, and `Uncertainty.unknown` exists precisely so that 'nobody evaluated it' is a value and not an absence. Production already writes UNKNOWN with a stated reason on every metric it reports, so the rule costs nothing there and refuses the record that would say nothing.",
+   "closes": "the silent-absence route, which is what made a bare value look complete."
+  },
+  "the_production_coupling_records_its_crossings": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "`CoupledRun` gains a trailing `crossings` field with a default of `()`, and the fixed-point electrothermal runner fills it with one `CrossedQuantity` per recorded transfer. A run that carries crossings must carry exactly one per transfer in its provenance, keyed by the transfer's own key, and is refused otherwise.",
+   "class": "A",
+   "why": "This is the line that changes the ledger row: the guard family stops being a library because the production loop builds the records. One per transfer, checked structurally, so a partial set cannot look complete -- the defect one level up from the one being fixed.",
+   "closes": "finding 71's 'no src module calls it'."
+  }
+ },
+ "thresholds": {
+  "none_introduced": {"value": null, "class": "A", "why": "this part introduces no threshold: every rule is a structural requirement about what a record carries and where it was read from. The only numeric comparison is the one part A already declared (BUDGET_TOLERANCE), reused through `check_against_result`."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "CrossedQuantity in engcore/uq/cross_domain.py, module-public and NOT added to engcore.uq's export list (batch 45's amendment 1: the frozen V1 symbol count stays 194 until I-30)",
+   "CoupledRun.crossings, a trailing field with a default of ()",
+   "electrothermal_coupled_run/2, written only when a run carries crossings",
+   "a crossed_quantity schema for the new record"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "QuantityTransfer records in the run's provenance are unchanged, so every reader of them keeps working",
+   "the loop's arithmetic, its outcome and its final values are untouched: this part records what crossed, it does not change what crossed"
+  ],
+  "records_that_already_exist": "Committed electrothermal evidence carries `electrothermal_coupled_run/1` payloads. A run that carries crossings serializes as /2 with a `crossings` list, so any committed record regenerated by this batch MOVES, and every such file is regenerated here and named in the audit document. Records written before this part keep their /1 bytes and read back with no crossings, which is the honest state of a run that recorded none.",
+  "deliberate_narrowing": "A CrossedQuantity cannot be built against a result the transfer does not name, nor from a result that says nothing about the quantity's uncertainty, and a CoupledRun cannot carry a partial set of crossings. None of these is producible in the tree today, because the record does not exist yet."
+ },
+ "residuals_stated_in_advance": [
+  "Production carries UNKNOWN uncertainty with a stated reason on every metric it reports, so what crosses is an UNKNOWN with its reason -- which is the honest state and not a quantification. This part makes the producing side's silence VISIBLE at the crossing; it does not quantify anything, and no rule here can.",
+  "The battery coupling, which the R-58 ledger row also names, is not touched: it crosses values through its own step and does not build QuantityTransfer records at all, so there is nothing to attach a crossing record to without first giving it the part-A record. That is a separate improvement and the ledger row keeps naming it.",
+  "The crossing carries the source's validation STATUS and convergence state, not its whole report: the report is on the result, which the crossing names, and copying it would create a second place for it to be edited.",
+  "`mcp/evidence.py` is not extended to render the crossings. What a report shows is a presentation decision per consumer, and the record existing is what this part is about."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_cross_domain_uq.py, the electrothermal suites, the MCP suites and tests/test_guard_reach_ledger.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "regeneration of every committed electrothermal record whose bytes move, named in the audit document",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
