@@ -52,7 +52,11 @@
   }
  },
  "thresholds": {
-  "operand_positivity": {"value": 0.0, "class": "A", "why": "not a tuned threshold but the sign boundary itself: at and below zero the inequality a/b <= 1 no longer orders a and b, and at exactly zero the ratio does not exist -- which this record already refuses when the denominator is the zero."}
+  "operand_positivity": {
+   "value": 0.0,
+   "class": "A",
+   "why": "not a tuned threshold but the sign boundary itself: at and below zero the DENOMINATOR no longer orders a and b through the ratio, and at exactly zero the ratio does not exist -- which this record already refuses. Amended on 2026-09-17 to the denominator alone; see the amendment log for the three contract-guard probes that forced it."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -85,5 +89,12 @@
   "regeneration of every committed record that carries the old misdiagnosis, named in the audit document",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": "The positivity rule applies to the DENOMINATOR only, not to both operands as preregistered.",
+   "numbers_that_forced_it": "benchmarks/contract_guard walks every shipped condition's declared edges and compares the verdict the runtime returns with the verdict the bound promises. Three probes disagreed under the preregistered form: reference_temperature_utilization at a ratio of 0.0 expected SATISFIED and observed UNKNOWN, and reference_reduced_debye_temperature and ceiling_reduced_debye_temperature at ratios of -0.8 and -0.6666666666666667 expected VIOLATED and observed UNKNOWN. The guard is right and the preregistered rule was too strong: with b > 0, 'a/b <= 1' is equivalent to 'a <= b' for a of EITHER sign, and 'a/b >= r' likewise, so a zero or negative numerator is an ordinary satisfied or violated case. Only b <= 0 reverses the inequality, which is the audited defect (-0.5 V over -1 V, and 2 V over -1 V). The rule is now `divisor < 0.0` -> UNKNOWN, with a zero denominator still raising as it already did.",
+   "threshold_moved": "operand_positivity applies to the denominator alone. The boundary itself (zero) did not move, and both audited reproductions are still refused."
+  }
+ ]
 }

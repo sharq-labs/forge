@@ -44,6 +44,9 @@ class UnknownCause(str, Enum):
     """Operational refinement of the stable :class:`UnknownReason` channel."""
 
     MISSING_INPUT = "missing_input"
+    #: R-54 (I-31): everything was supplied and readable, and the relation the
+    #: condition states does not order those values.
+    RELATION_NOT_ORDERED = "relation_not_ordered"
     PREREQUISITE_NOT_ESTABLISHED = "prerequisite_not_established"
     CONSERVATIVE_SCREEN_NOT_CLEARED = "conservative_screen_not_cleared"
     NONFINITE_FIELD = "nonfinite_field"
@@ -123,7 +126,7 @@ class UnknownDiagnostic:
         return item
 
 
-def _context_key(condition: Any) -> str:
+def _context_key(condition: Any, context: Mapping[str, Any] | None = None) -> str:
     # Structured conditions separate condition identity from source identity.
     # Scalar conditions historically use their own name as the context key.
     field = getattr(condition, "field", None)
@@ -132,6 +135,20 @@ def _context_key(condition: Any) -> str:
     mesh = getattr(condition, "mesh", None)
     if isinstance(mesh, str) and mesh.strip():
         return mesh.strip()
+    # R-51 (I-31): a condition over two operands is labelled by the RELATION it
+    # states and reads neither key by that label -- its own docstring says the
+    # name is not a context entry at all. Falling back to it named a key
+    # nothing supplies and nothing reads, so the lookup behind it always found
+    # None and a plain omission was diagnosed UNSPECIFIED_UNREADABLE_VALUE.
+    # The key a caller could act on is the operand the context is missing.
+    numerator = getattr(condition, "numerator", None)
+    denominator = getattr(condition, "denominator", None)
+    if isinstance(numerator, str) and isinstance(denominator, str):
+        supplied = context or {}
+        for operand in (numerator, denominator):
+            if supplied.get(operand) is None:
+                return operand
+        return numerator
     return str(condition.name)
 
 
@@ -231,7 +248,7 @@ def diagnose_unknowns(
                 f"assessment names unknown condition {unknown.name!r}, which is not "
                 "present in the supplied ValidityDomain"
             )
-        key = _context_key(condition)
+        key = _context_key(condition, context)
         value = context.get(key)
 
         if unknown.reason is UnknownReason.NOT_SUPPLIED:
@@ -240,6 +257,12 @@ def diagnose_unknowns(
         elif unknown.reason is UnknownReason.PREREQUISITE_NOT_ESTABLISHED:
             cause = UnknownCause.PREREQUISITE_NOT_ESTABLISHED
             detail = unknown.detail or "one or more prerequisite conditions were not established"
+        elif unknown.reason is UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION:
+            cause = UnknownCause.RELATION_NOT_ORDERED
+            detail = unknown.detail or (
+                f"every value this condition reads was supplied and readable; "
+                f"the relation it states does not order them"
+            )
         elif unknown.reason is UnknownReason.CONSERVATIVE_SCREEN:
             cause = UnknownCause.CONSERVATIVE_SCREEN_NOT_CLEARED
             detail = unknown.detail or "conservative screen did not establish applicability"

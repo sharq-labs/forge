@@ -459,6 +459,22 @@ class CategoryCondition:
         if not str(self.name).strip():
             raise ModelValidityError("category condition requires a name")
         object.__setattr__(self, "name", str(self.name).strip())
+        # R-54 (I-31): a bare string is an iterable of LETTERS, so
+        # `allowed='laminar'` becomes {'a','i','l','m','n','r'} -- and the
+        # condition then answers the opposite question from the one written
+        # down: the word is OUTSIDE_VALIDATED_DOMAIN and any one of its letters
+        # is IN_DOMAIN. This module already refuses exactly this shape for
+        # `RangeCondition.requires`; the rule is that one, reaching the sibling
+        # record it was never applied to.
+        if isinstance(self.allowed, (str, bytes, bytearray)):
+            raise ModelValidityError(
+                f"category condition {self.name!r} was declared with "
+                f"allowed={self.allowed!r}, a single string, which as a set of "
+                f"values is its {len(frozenset(self.allowed))} characters "
+                f"{sorted(frozenset(self.allowed))!r}: the word itself would be "
+                f"outside the domain and each of its letters inside it. Declare "
+                f"a collection of the values, such as a tuple of one"
+            )
         object.__setattr__(self, "allowed", frozenset(self.allowed))
         if not self.allowed:
             raise ModelValidityError(
@@ -500,9 +516,12 @@ class CategoryCondition:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CategoryCondition":
         require_schema(payload, CATEGORY_CONDITION_SCHEMA)
+        # R-54 (I-31): `frozenset` here would turn a stored bare string into
+        # its letters before the constructor could refuse it, so the payload is
+        # passed through as it arrived and the one rule lives in one place.
         return cls(
             name=payload["name"],
-            allowed=frozenset(payload.get("allowed", ())),
+            allowed=payload.get("allowed", ()),
             description=payload.get("description", ""),
         )
 
@@ -677,11 +696,27 @@ class CrossLimitCondition:
             context.get(self.numerator),
             context.get(self.denominator),
         )
+        # R-51 (I-31): `_absent_or_unreadable` is written for a condition whose
+        # single key IS its input, where anything that is not None is
+        # unreadable. Here a readable Quantity is one of TWO operands, so that
+        # test called every declared limit unreadable -- and with one limit
+        # declared and the other omitted, which is the ordinary case for the
+        # production rated model, the reason read UNREADABLE_SHAPE: 'a gap in
+        # the core, the caller can do nothing about it'. The repair layer then
+        # told the caller that declaring the missing limit would not help.
+        #
+        # The precedence the paragraph above states is unchanged and is the
+        # right one: a present-but-unreadable operand wins, because supplying
+        # the other one would not help. What changes is which values count.
         if any(
-            _absent_or_unreadable(value) is UnknownReason.UNREADABLE_SHAPE
+            value is not None and not isinstance(value, Quantity)
             for value in operands
         ):
             return UnknownReason.UNREADABLE_SHAPE
+        if all(isinstance(value, Quantity) for value in operands):
+            # Both readable and both present, so the UNKNOWN this explains is
+            # the one the relation itself could not answer.
+            return UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION
         return UnknownReason.NOT_SUPPLIED
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
@@ -740,6 +775,18 @@ class CrossLimitCondition:
                 f"validity condition {self.name!r}: {self.denominator} is "
                 f"zero, and the ratio this condition bounds does not exist"
             )
+        # R-54 (I-31): a ratio bound orders its operands only while the
+        # DENOMINATOR is positive. `a/b <= 1` is `a <= b` for b > 0 and
+        # reverses to `a >= b` for b < 0, so -0.5 V over -1 V satisfied the
+        # bound with a ABOVE b, and 2 V over -1 V satisfied it with the ratio
+        # negative. The numerator's sign carries no such problem: with b > 0 the
+        # equivalence holds for a of either sign, and a zero or negative
+        # numerator is an ordinary satisfied or violated case (amendment 1).
+        # The operands are readable and complete, so this is not a refusal that
+        # raises and not a status: it is an UNKNOWN, which is what the
+        # strictness rule asks of information that does not support the claim.
+        if divisor < 0.0:
+            return ValidityStatus.UNKNOWN
         ratio = Quantity(top / divisor, "dimensionless")
         return _within(
             ratio,
@@ -971,6 +1018,16 @@ class UnknownReason(str, Enum):
         mechanism has somewhere to put its answer, and so this enum is the one
         place the four situations are listed.
 
+    ``RELATION_NOT_ORDERED_BY_THE_DECLARATION``
+        The inputs arrived, readable and complete, and the relation the
+        condition states does not order them. **R-54 (I-31)**: a ratio bound
+        says ``a/b <= 1``, which means ``a <= b`` only while ``b`` is positive
+        -- with ``b`` negative the inequality reverses, so ``a = -0.5 V`` over
+        ``b = -1 V`` satisfied the bound with ``a`` above ``b``. The caller
+        declared exactly what was asked for, so this is neither an omission nor
+        an unreadable shape; what is missing is the ordering the bound assumes,
+        and an UNKNOWN that says so is the conservative answer.
+
     A reason outside this enum is refused rather than defaulted, which is what
     stops the channel from silently re-collapsing into one symbol.
     """
@@ -979,6 +1036,7 @@ class UnknownReason(str, Enum):
     UNREADABLE_SHAPE = "unreadable_shape"
     CONSERVATIVE_SCREEN = "conservative_screen"
     PREREQUISITE_NOT_ESTABLISHED = "prerequisite_not_established"
+    RELATION_NOT_ORDERED_BY_THE_DECLARATION = "relation_not_ordered_by_the_declaration"
 
 
 UNKNOWN_CONDITION_SCHEMA = schema_string("unknown_condition")

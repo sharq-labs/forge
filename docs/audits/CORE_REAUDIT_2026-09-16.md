@@ -3068,3 +3068,53 @@ which is I-25's, the next improvement in the order.
 `BATCH49_PINNED_MUTATIONS.log`: **1 of 1 KILLED** (G34n), control green.
 
 **Open decisions.** None.
+
+### Batch 50 — I-31
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-31 | **DONE** | `dd234130` (preregistration + 9 strict xfails), this commit | A present-but-unreadable operand still reports UNREADABLE_SHAPE without saying **which** operand; the diagnostic names one key rather than one per missing operand; a `CategoryCondition` still accepts any other iterable, which is the point; a pair whose denominator goes negative cannot be ratio-bounded by this record at all |
+
+**R-51 and R-54 are FIXED.** R-51 was a **misdiagnosis on a production path** — and one visible in committed
+evidence: `benchmarks/blind_v2/runs/*.json` record `reference_reduced_debye_temperature` as
+`"unreadable_shape"` beside three siblings recorded as `"not_supplied"`, which is the defect in one line.
+
+| Claim | Status | How |
+|---|---|---|
+| an omitted limit called a core gap | **FIXED** | `explain_in` asked `_absent_or_unreadable` of each operand, and that helper — written for a condition whose single key *is* its input — calls anything that is not `None` unreadable. So a **declared, readable** Quantity beside an omitted one gave UNREADABLE_SHAPE: "a gap in the core, the caller can do nothing about it". It now reports UNREADABLE_SHAPE only for an operand that is **present and not a Quantity**. The precedence the docstring states is unchanged: a present-but-unreadable operand still wins, because supplying the other one would not help. |
+| repair guidance that was false | **FIXED** | Follows from the reason: `domains.repair` now tells the caller to declare the missing limit, and `actionable_declarations` lists the condition instead of dropping it. Nothing in the repair layer changed except the new reason's own sentence. |
+| a diagnostic naming a nonexistent key | **FIXED** | `_context_key` fell back to the condition's own **name**, which a cross-limit condition never reads — its own docstring says the name is not a context entry — so the lookup behind it always found `None` and a plain omission was diagnosed `UNSPECIFIED_UNREADABLE_VALUE`. It now names the operand the context is missing. |
+| a bare string as an allowed set | **FIXED** | `frozenset('laminar')` is six letters, so the word was OUTSIDE_VALIDATED_DOMAIN and `'a'` was IN_DOMAIN. A `str`/`bytes` `allowed` is refused at construction, and `from_dict` stops converting the payload before the constructor can see it, so the one rule lives in one place. The message names the letter set it would have become. |
+| a ratio that does not order its operands | **FIXED** | `a/b <= 1` is `a <= b` only while `b > 0`; with `b < 0` it reverses, so `-0.5 V` over `-1 V` read IN_DOMAIN with *a above b*, and `2 V` over `-1 V` read IN_DOMAIN with the ratio negative. Such an assessment is now **UNKNOWN**, carrying a new `UnknownReason` member of its own — `RELATION_NOT_ORDERED_BY_THE_DECLARATION` — with its own guidance sentence (not actionable) and its own diagnostic cause. Not UNREADABLE_SHAPE: the caller declared exactly what was asked for, and the channel this batch un-blurs for R-51 must not be re-blurred here. |
+
+**Amendment 1.** The preregistered rule required **both** operands to be positive. `benchmarks/contract_guard`
+— which walks every shipped condition's declared edges and compares the runtime's verdict with the bound's
+promise — disagreed on three probes: a ratio of `0.0` expected SATISFIED and observed UNKNOWN, and ratios of
+`-0.8` and `-0.6666666666666667` expected VIOLATED and observed UNKNOWN. **The guard is right.** With `b > 0`
+the ratio orders `a` and `b` for `a` of *either* sign, so a zero or negative numerator is an ordinary
+satisfied or violated case; only `b <= 0` reverses the inequality, which is the audited defect. The rule is
+now the denominator alone, both audited reproductions are still refused, and the numbers are in the
+protocol's `amendment_log`.
+
+**Compatibility.** Additive only: one `UnknownReason` member appended, one `UnknownCause` member appended,
+one `_GUIDANCE` entry (whose exhaustiveness test is generic over the enum and keeps passing). No field,
+default or signature moved. Every in-tree cross-limit operand is an absolute temperature, so **no production
+assessment changes value** — what changes is the reason reported for an omitted optional limit.
+
+**Committed evidence.** Deliberately **not** regenerated. `benchmarks/blind_v2/runs/*.json` carry the old
+misdiagnosis, and they are records of a blind run against a named tree hash: evidence of what the tree said
+then, not a claim about what it says now. Fixing the reason at the source is the fix; rewriting a past run's
+record would be erasing the finding's own witness.
+
+**Verification.** The batch's own file 13 passed; `tests/test_unknown_reasons.py`,
+`tests/test_unknown_diagnostics_v2.py`, `tests/test_structured_validity.py`, `tests/test_core_guards.py` and
+`benchmarks/contract_guard` green. FAST tier back to **19 failures** — exactly the by-design set — after
+amendment 1 (20 before it, the extra one being the contract guard). Expensive tier **528 passed, 18 failed,
+14 errors**, the recorded baseline. `tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py`
+untouched. Guard reach ledger clean over **31** guards: R-51 REACHED/FIXED, R-54 LATENT/FIXED with what
+would create it.
+
+**Guard mutations.** `BATCH50_MUTATIONS.log`: **5 of 5 KILLED**, control green, none repointed.
+`BATCH50_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation targets these files.
+
+**Open decisions.** None.

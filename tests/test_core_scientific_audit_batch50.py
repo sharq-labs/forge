@@ -8,6 +8,8 @@ domain and 'a' is inside it. A ratio bound orders its operands only while they a
 required that. And when one operand of a cross-limit condition is declared and the other omitted -- the
 ordinary case for the production rated TCR model -- the reason reads UNREADABLE_SHAPE, so the repair layer
 tells the caller that declaring the missing limit will not help, which is false.
+
+Recorded as strict xfails in commit dd234130, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -63,13 +65,11 @@ def test_r54_a_list_of_words_is_still_an_allowed_set():
     assert condition.evaluate("laminar") is ValidityStatus.IN_DOMAIN
 
 
-@pytest.mark.xfail(strict=True, reason="R-54 finding 66 claim (a) as audited: frozenset('laminar') is six letters, so the word is OUTSIDE_VALIDATED_DOMAIN and 'a' is IN_DOMAIN")
 def test_r54_a_bare_string_allowed_set_is_refused():
     with pytest.raises(ModelValidityError, match="laminar|letter|string"):
         CategoryCondition(name="regime", allowed="laminar")
 
 
-@pytest.mark.xfail(strict=True, reason="R-54: and the same shape arrives through from_dict, which is how a stored declaration inverts")
 def test_r54_a_bare_string_allowed_set_is_refused_on_read():
     payload = CategoryCondition(name="regime", allowed=["laminar"]).to_dict()
     payload["allowed"] = "laminar"
@@ -77,7 +77,6 @@ def test_r54_a_bare_string_allowed_set_is_refused_on_read():
         CategoryCondition.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-54 as audited: the audited consequence, stated as the audit stated it")
 def test_r54_the_audited_inversion_cannot_be_declared():
     """As audited: 'laminar' outside its own allowed set, and 'a' inside it."""
     try:
@@ -102,7 +101,6 @@ def test_r54_a_positive_ratio_still_orders_its_operands():
     assert condition.evaluate_in(above) is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
 
 
-@pytest.mark.xfail(strict=True, reason="R-54 finding 66 claim (b) as audited: a = -0.5 V over b = -1 V is IN_DOMAIN although a > b, because a/b <= 1 orders a and b only while b > 0")
 def test_r54_two_negative_operands_are_not_ordered_by_their_ratio():
     condition = _cross(numerator="a", denominator="b")
     context = {"a": Quantity(-0.5, "volt"), "b": Quantity(-1.0, "volt")}
@@ -110,14 +108,12 @@ def test_r54_two_negative_operands_are_not_ordered_by_their_ratio():
         "a is above b and the ratio 0.5 reads as satisfied")
 
 
-@pytest.mark.xfail(strict=True, reason="R-54: and a = 2 V over b = -1 V is IN_DOMAIN too, with the ratio negative")
 def test_r54_a_sign_indefinite_pair_is_not_ordered_by_their_ratio():
     condition = _cross(numerator="a", denominator="b")
     context = {"a": Quantity(2.0, "volt"), "b": Quantity(-1.0, "volt")}
     assert condition.evaluate_in(context) is ValidityStatus.UNKNOWN
 
 
-@pytest.mark.xfail(strict=True, reason="R-54: an UNKNOWN needs its own reason, and the existing members either blame the caller or blame a shape the caller did supply correctly")
 def test_r54_the_unordered_ratio_has_its_own_reason_and_its_own_guidance():
     condition = _cross(numerator="a", denominator="b")
     context = {"a": Quantity(2.0, "volt"), "b": Quantity(-1.0, "volt")}
@@ -130,7 +126,6 @@ def test_r54_the_unordered_ratio_has_its_own_reason_and_its_own_guidance():
 # ---------------------------------------------------------------------------
 # a_missing_operand_is_a_declaration_the_caller_can_supply
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-51 finding 63 as audited: with reference_temperature declared and the ceiling omitted, the reason is UNREADABLE_SHAPE -- a gap in the core the caller cannot fix")
 def test_r51_an_omitted_limit_is_not_supplied_rather_than_unreadable():
     condition = _cross()
     context = {REFERENCE: Quantity(300.0, "kelvin")}
@@ -149,7 +144,6 @@ def test_r51_an_operand_in_a_shape_the_core_cannot_read_is_still_unreadable():
     assert condition.explain_in(context) is UnknownReason.UNREADABLE_SHAPE
 
 
-@pytest.mark.xfail(strict=True, reason="R-51 as audited: 'Declaring it again will not help: the gap is in the core', and actionable_declarations drops the condition")
 def test_r51_the_repair_layer_tells_the_caller_to_declare_the_missing_limit():
     condition = _cross()
     context = {REFERENCE: Quantity(300.0, "kelvin")}
@@ -162,7 +156,6 @@ def test_r51_the_repair_layer_tells_the_caller_to_declare_the_missing_limit():
 # ---------------------------------------------------------------------------
 # the_diagnostic_names_a_key_a_caller_could_supply
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-51's second claim as audited: _context_key falls back to the condition's own name, which a cross-limit condition never reads, so the diagnostic names a nonexistent key")
 def test_r51_the_diagnostic_names_the_operand_the_context_is_missing():
     from engcore.scientific.models.definition import ValidityDomain
     from engcore.scientific.models.unknown_diagnostics import diagnose_unknowns

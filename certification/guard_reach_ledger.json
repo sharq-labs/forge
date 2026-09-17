@@ -982,6 +982,64 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A dimension is not a name, and three members of the derived set are also the dimensions of a force (energy per length), a pressure (energy per volume) and a surface tension (energy per area). Nothing in a dimension can tell a pressure from an energy density, so the rule refuses SILENCE rather than mechanics: a declared conversion or a stated transport both satisfy it, and a pressure crossing says which it is in one sentence. Division by time is deliberately not in the set -- energy per time is a power, which the exact pair already covers. And what the transport declaration states is prose: a reader can see that somebody took a position, not check the position."
+  },
+  {
+   "problem": "R-51",
+   "title": "CrossLimitCondition reports a missing declaration as a core gap",
+   "rule": "src/engcore/scientific/models/definition.py",
+   "rule_symbol": "the operand test in CrossLimitCondition.explain_in, and the two-operand key in _context_key in src/engcore/scientific/models/unknown_diagnostics.py",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-31 (batch 50)",
+   "why": "REACHED, and the audit's own value agrees. RATED_LINEAR_TCR_MODEL declares three cross-limit conditions whose denominators -- maximum_operating_temperature and debye_temperature -- are optional while reference_temperature is always declared, so 'one operand declared, the other omitted' is the ORDINARY case for that production model, and engcore.domains.repair is what a caller reads about it. The misdiagnosis was visible in committed evidence: benchmarks/blind_v2/runs/*.json record reference_reduced_debye_temperature as 'unreadable_shape' beside three siblings recorded as 'not_supplied', which is the defect in one line.",
+   "entry_points": [
+    "engcore.domains.electrical.material.RATED_LINEAR_TCR_MODEL (three cross-limit conditions with optional denominators)",
+    "engcore.domains.repair.unassessable_guidance and actionable_declarations (what a caller reads)",
+    "engcore.scientific.models.unknown_diagnostics.diagnose_unknowns",
+    "engcore.mcp.tools.run_electrothermal (MCP), through the material model's assessment"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch50.py::test_r51_an_omitted_limit_is_not_supplied_rather_than_unreadable",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_both_omitted_is_still_not_supplied",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_an_operand_in_a_shape_the_core_cannot_read_is_still_unreadable",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_the_repair_layer_tells_the_caller_to_declare_the_missing_limit",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_the_diagnostic_names_the_operand_the_context_is_missing",
+    "tests/test_unknown_reasons.py",
+    "tests/test_unknown_diagnostics_v2.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The precedence is unchanged and deliberate: a present-but-unreadable operand still reports UNREADABLE_SHAPE, because supplying the other one would not help, and a caller cannot tell from the reason WHICH operand was unreadable. The diagnostic names one key -- the operand the context is missing, the numerator when both are -- rather than one diagnostic per missing operand, which would be a second record shape. Committed blind-run records keep their bytes: they are evidence of what the tree said then, not a claim about what it says now."
+  },
+  {
+   "problem": "R-54",
+   "title": "Validity condition primitives accept declarations whose meaning silently inverts",
+   "rule": "src/engcore/scientific/models/definition.py",
+   "rule_symbol": "the bare-string refusal in CategoryCondition.__post_init__ (and the unconverted payload in from_dict); the denominator-sign UNKNOWN in CrossLimitCondition.evaluate_in with UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION, its guidance in engcore/domains/repair.py and its cause in unknown_diagnostics",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-31 (batch 50)",
+   "why": "LATENT: both rules sit on constructors and an evaluator that production does run, and neither shape occurs in the tree. No in-tree declaration passes a bare string for an allowed set -- every one passes a tuple -- and every in-tree cross-limit operand is an absolute temperature in kelvin, which is positive by construction. That is why the audit had to build both cases by hand.",
+   "what_would_create_it": "A declaration written with `allowed='laminar'` instead of `allowed=('laminar',)`, which is a plausible slip because the string is iterable and the constructor accepted it; or a cross-limit condition over a sign-indefinite dimension -- a voltage, a charge, a signed power flow -- where the denominator can go negative and the ratio bound stops ordering its operands.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_bare_string_allowed_set_is_refused",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_bare_string_allowed_set_is_refused_on_read",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_the_audited_inversion_cannot_be_declared",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_list_of_words_is_still_an_allowed_set",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_two_negative_operands_are_not_ordered_by_their_ratio",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_sign_indefinite_pair_is_not_ordered_by_their_ratio",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_the_unordered_ratio_has_its_own_reason_and_its_own_guidance",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_positive_ratio_still_orders_its_operands"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A CategoryCondition still accepts any other iterable of strings, so a caller who passes a list of words gets the set they meant; what is refused is the one shape whose meaning inverts silently. The sign rule is on the DENOMINATOR alone (amendment 1), because with b > 0 the ratio orders a and b for a of either sign -- so a condition over a sign-indefinite dimension whose denominator stays positive is assessed as before. A dimension whose operands both go negative cannot be ratio-bounded by this record at all: it returns UNKNOWN with its own reason rather than pretending to order them, and expressing 'a <= b' without a ratio is a different record."
   }
  ]
 }
