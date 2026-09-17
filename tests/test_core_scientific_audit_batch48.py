@@ -8,6 +8,8 @@ handed in. So an INTERVAL of [10, 11] K propagates for a transfer whose value is
 another quantity, from another run, is accepted and then RELABELLED as coming from this crossing's source; a
 chain carrying 350 K and then 400 K propagates one width along a path nothing travelled; and the only sign
 that a conversion's efficiency uncertainty is missing is a note.
+
+Recorded as strict xfails in commit 888cdcfb, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -95,13 +97,11 @@ def test_r58_an_interval_around_the_value_still_crosses():
     assert propagated.lower is not None and propagated.lower.magnitude_in("kelvin") == pytest.approx(348.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71 claim (a) as audited: an INTERVAL of [10, 11] K propagates for a transfer whose value is 350 K and round-trips")
 def test_r58_an_interval_that_does_not_contain_the_value_is_refused():
     with pytest.raises(InvalidScientificProblem, match="interval|contain"):
         propagate_transfer_uncertainty(_transport(), _interval(10.0, 11.0))
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: for a conversion the interval is about what ENTERED, and nothing compared it with source_value either")
 def test_r58_a_conversions_interval_is_about_what_entered_it():
     entering = Uncertainty(
         kind=UncertaintyKind.INTERVAL, lower=Quantity(10.0, "watt"), upper=Quantity(11.0, "watt"),
@@ -114,13 +114,11 @@ def test_r58_a_conversions_interval_is_about_what_entered_it():
 # ---------------------------------------------------------------------------
 # the_source_uncertainty_names_the_crossings_source
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71 claim (c) as audited: a 1e-6 K NUMERICAL uncertainty from another run is accepted, because nothing ties the uncertainty to the crossing")
 def test_r58_an_uncertainty_about_another_quantity_is_refused():
     with pytest.raises(InvalidScientificProblem, match="source|names"):
         propagate_transfer_uncertainty(_transport(), _standard(1.0e-6, source="some-other-quantity"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: an uncertainty with no attribution at all propagates, and the propagated record then carries the transfer id as though it had one")
 def test_r58_an_uncertainty_attributed_to_nothing_is_refused():
     with pytest.raises(InvalidScientificProblem, match="source|names"):
         propagate_transfer_uncertainty(_transport(), _standard(source=""))
@@ -135,7 +133,6 @@ def test_r58_the_attributions_the_record_itself_names_are_accepted():
 # ---------------------------------------------------------------------------
 # the_propagated_record_keeps_the_original_attribution
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71 claim (b) as audited: the propagated source is OVERWRITTEN with transfer:<id>, so the original attribution is gone")
 def test_r58_the_propagated_record_keeps_both_references():
     propagated = propagate_transfer_uncertainty(_transport(), _standard(source="posterior:temperature@thermal.a"))
     assert "posterior:temperature@thermal.a" in propagated.source, propagated.source
@@ -154,7 +151,6 @@ def test_r58_a_chain_whose_values_meet_still_propagates():
     assert len(chain) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71 claim (d) as audited: the chain checks name connectivity and equal instants only, so 350 K then 400 K propagate the same 2 K")
 def test_r58_a_chain_whose_values_do_not_meet_is_refused():
     first = _transport("thermal.a", "thermal.b", target_quantity="temperature_in")
     second = _transport("thermal.b", "thermal.c", source_quantity="temperature_in",
@@ -166,7 +162,6 @@ def test_r58_a_chain_whose_values_do_not_meet_is_refused():
 # ---------------------------------------------------------------------------
 # an_undeclared_efficiency_uncertainty_is_structural
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58 as audited: with a conversion the efficiency is treated as exact while the output keeps kind STANDARD, and the only sign that its uncertainty is missing is a note")
 def test_r58_a_conversion_with_no_declared_efficiency_uncertainty_says_so_structurally():
     entering = Uncertainty(
         kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(5.0, "watt"),
@@ -179,7 +174,6 @@ def test_r58_a_conversion_with_no_declared_efficiency_uncertainty_says_so_struct
     assert item.completeness == "lower_bound_efficiency_uncertainty_undeclared"
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: there is nowhere to declare an efficiency uncertainty, so the propagated width can only ever be a lower bound")
 def test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature():
     names = {field.name for field in dataclasses.fields(EnergyConversion)}
     assert "efficiency_uncertainty" in names, "an efficiency's own uncertainty has nowhere to be declared"
@@ -190,14 +184,105 @@ def test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature():
     )
     item = make_uncertainty_transfer(_converting_transfer(conversion), entering)
     assert item.completeness == "complete"
-    # 100 W in at 0.8 is 80 W out; 5/100 and 0.04/0.8 in quadrature is 0.0640312...
+    # 100 W in at 0.8 is 80 W out. The relative widths are 5/100 = 0.05 and 0.04/0.8 = 0.05, and in
+    # quadrature that is 0.05 * sqrt(2) = 0.0707106..., so the propagated width is 5.65685... W.
+    #
+    # The preregistered form of this test wrote 0.0640312 here, which is arithmetic this file got wrong
+    # rather than a threshold: 0.04/0.8 is 0.05 and not 0.04. Corrected in place, with the reason, and
+    # recorded as amendment 1 in BATCH48_THRESHOLD_PROTOCOL.json -- the RULE (relative quadrature) is the
+    # one preregistered before anything was scored.
     assert item.uncertainty.standard_uncertainty is not None
-    assert item.uncertainty.standard_uncertainty.magnitude_in("watt") == pytest.approx(80.0 * 0.06403124237)
+    assert item.uncertainty.standard_uncertainty.magnitude_in("watt") == pytest.approx(
+        80.0 * (2.0 ** 0.5) * 0.05)
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: a transport has no efficiency, so nothing was ever missing there -- and there was no field in which to say that either")
 def test_r58_a_transport_is_complete():
     item = make_uncertainty_transfer(_transport(), _standard())
     names = {field.name for field in dataclasses.fields(UncertaintyTransfer)}
     assert "completeness" in names, "a transport cannot say that nothing was missing"
     assert item.completeness == "complete"
+
+
+# ---------------------------------------------------------------------------
+# the remaining declared rules and the cases the batch's guard mutations need,
+# written while running them rather than preregistered as reproductions
+# ---------------------------------------------------------------------------
+def test_r58_a_chain_link_records_the_crossing_that_fed_it():
+    """A chain is the one case where the entering uncertainty carries the PREVIOUS crossing's attribution,
+    so the record says which crossing that was instead of the caller being trusted for it."""
+    first = _transport("thermal.a", "thermal.b", target_quantity="temperature_in")
+    second = _transport("thermal.b", "thermal.c", source_quantity="temperature_in",
+                        target_quantity="temperature_in")
+    chain = propagate_uncertainty_chain((first, second), _standard())
+    assert chain[0].upstream is None
+    assert chain[1].upstream == first
+    assert UncertaintyTransfer.from_dict(chain[1].to_dict()) == chain[1]
+
+
+def test_r58_a_chain_link_taken_out_of_its_chain_is_refused():
+    """And the record cannot keep the attribution while dropping the crossing that justified it."""
+    first = _transport("thermal.a", "thermal.b", target_quantity="temperature_in")
+    second = _transport("thermal.b", "thermal.c", source_quantity="temperature_in",
+                        target_quantity="temperature_in", source_record_id="thermal-b-result")
+    link = propagate_uncertainty_chain((first, second), _standard())[1]
+    assert link.upstream is not None and link.upstream.source_record_id != link.transfer.source_record_id
+    with pytest.raises(InvalidScientificProblem, match="names nothing"):
+        UncertaintyTransfer(link.transfer, link.source_uncertainty, link.uncertainty, link.completeness)
+
+
+def test_r58_a_record_cannot_state_a_completeness_its_own_arithmetic_denies():
+    item = make_uncertainty_transfer(_converting_transfer(), _standard(5.0, "watt"))
+    with pytest.raises(InvalidScientificProblem, match="completeness"):
+        UncertaintyTransfer(item.transfer, item.source_uncertainty, item.uncertainty, "complete")
+
+
+def test_r58_an_efficiency_uncertainty_as_wide_as_the_efficiency_is_refused():
+    """A width that reaches the fraction it is about says the fraction is unknown, while looking measured."""
+    with pytest.raises(InvalidScientificProblem, match="efficiency_uncertainty"):
+        _conversion(efficiency_uncertainty=0.8)
+
+
+def test_r58_an_efficiency_uncertainty_without_an_efficiency_is_refused():
+    with pytest.raises(InvalidScientificProblem, match="uncertainty of nothing|efficiency_uncertainty"):
+        EnergyConversion(name="unknown_efficiency", input_form="a", output_form="b",
+                         unit_exemplar="watt", efficiency_uncertainty=0.05)
+
+
+def test_r58_an_unknown_uncertainty_still_crosses_unbound():
+    """UNKNOWN asserts nothing about any value, so there is nothing to bind and nothing to contain."""
+    propagated = propagate_transfer_uncertainty(_transport(), Uncertainty.unknown("not evaluated"))
+    assert propagated.kind is UncertaintyKind.UNKNOWN
+    assert "not evaluated" in propagated.notes
+
+
+def test_r58_an_interval_under_a_conversion_stays_a_lower_bound_even_when_the_efficiency_is_declared():
+    """Combining a bound with a standard uncertainty needs a distribution nobody declared, and the record
+    says so rather than quietly widening the bounds."""
+    conversion = _conversion(efficiency_uncertainty=0.04)
+    entering = Uncertainty(
+        kind=UncertaintyKind.INTERVAL, lower=Quantity(95.0, "watt"), upper=Quantity(105.0, "watt"),
+        confidence_level=0.95, source=RECORD, method="credible_interval",
+    )
+    item = make_uncertainty_transfer(_converting_transfer(conversion), entering)
+    assert item.completeness == "lower_bound_efficiency_uncertainty_undeclared"
+
+
+def test_r58_a_conversions_interval_is_about_the_input_and_not_the_output():
+    """Found while running this batch's mutations: the case only the entering-value rule sees. [79, 81] W
+    contains the 80 W that ARRIVED and not the 100 W that entered, and the interval is about the input."""
+    entering = Uncertainty(
+        kind=UncertaintyKind.INTERVAL, lower=Quantity(79.0, "watt"), upper=Quantity(81.0, "watt"),
+        confidence_level=0.95, source=RECORD, method="credible_interval",
+    )
+    with pytest.raises(InvalidScientificProblem, match="does not contain"):
+        propagate_transfer_uncertainty(_converting_transfer(), entering)
+
+
+def test_r58_a_chain_across_two_records_still_propagates():
+    """Also found there: a chain whose crossings name DIFFERENT records, which is the only case where the
+    upstream crossing is what justifies the entering attribution."""
+    first = _transport("thermal.a", "thermal.b", target_quantity="temperature_in")
+    second = _transport("thermal.b", "thermal.c", source_quantity="temperature_in",
+                        target_quantity="temperature_in", source_record_id="thermal-b-result")
+    chain = propagate_uncertainty_chain((first, second), _standard())
+    assert len(chain) == 2 and chain[1].upstream == first

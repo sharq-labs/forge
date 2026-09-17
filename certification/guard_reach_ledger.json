@@ -185,12 +185,12 @@
    "problem": "R-58",
    "title": "Cross-domain crossings carry bare point values, and UncertaintyTransfer binds nothing",
    "rule": "src/engcore/uq/cross_domain.py",
-   "rule_symbol": "UncertaintyTransfer, which binds a crossing quantity's propagated uncertainty to the transfer that produced it",
+   "rule_symbol": "UncertaintyTransfer, which binds a crossing quantity's propagated uncertainty to the transfer that produced it; the interval-containment, attribution, chain-meeting and completeness rules of part B (_require_the_interval_contains_the_value, _require_the_uncertainty_names_the_source, the value-meeting refusal in propagate_uncertainty_chain, _completeness_of and the attribution that keeps both references), with EnergyConversion.efficiency_uncertainty",
    "status": "LIBRARY_ONLY",
-   "audit_status": "OPEN",
+   "audit_status": "PARTIAL",
    "audit_reached_in_production": "yes",
-   "closed_by": "I-27",
-   "why": "The problem is REACHED in production -- the audit's own value, and why this row's audit_reached_in_production is `yes` -- while the GUARD is not. The production electrothermal coupling passes bare point values across the thermal/electrical boundary with no uncertainty, no validity state and no validation state attached, and UncertaintyTransfer, the record that would bind them, has no caller in src. So a crossing that loses its uncertainty loses it silently: the receiving domain sees a number, and nothing downstream can tell a propagated quantity from a declared one. This is the one row where LIBRARY_ONLY understates the risk rather than overstating it, because the unguarded path is the one production actually runs. I-27 is where the transfers carry uncertainty and validity with physically bound checks.",
+   "closed_by": "I-27; part B (batch 48) bound the record, part C is the production half",
+   "why": "The problem is REACHED in production -- the audit's own value, and why this row's audit_reached_in_production is `yes` -- while the GUARD is not. The production electrothermal coupling passes bare point values across the thermal/electrical boundary with no uncertainty, no validity state and no validation state attached, and UncertaintyTransfer, the record that would bind them, has no caller in src. So a crossing that loses its uncertainty loses it silently: the receiving domain sees a number, and nothing downstream can tell a propagated quantity from a declared one. This is the one row where LIBRARY_ONLY understates the risk rather than overstating it, because the unguarded path is the one production actually runs. I-27 is where the transfers carry uncertainty and validity with physically bound checks. Part B (batch 48) closed everything the record itself can answer: an INTERVAL must contain the value it is about, an attribution must name something the crossing names, the propagated record keeps BOTH provenances, a chain propagates only where consecutive values meet, and a conversion whose efficiency declares no uncertainty says structurally that the width is a lower bound. The STATUS is unchanged and is the finding: nothing in src/ calls this module yet, so every production crossing still carries a bare point value. That is part C, and it is what will move this row to REACHED.",
    "entry_points": [
     "engcore.mcp.tools.run_electrothermal (the thermal/electrical coupling) -- passes bare point values and reaches no UncertaintyTransfer",
     "engcore.domains.battery.coupling (the coupled step) -- same shape"
@@ -199,12 +199,26 @@
    "exercised_by_in_library": [
     "tests/test_cross_domain_uq.py::test_uncertainty_transfer_round_trip_recomputes_the_propagation",
     "tests/test_cross_domain_uq.py::test_hand_forged_propagated_uncertainty_is_refused",
-    "tests/test_cross_domain_uq.py::test_unknown_uncertainty_stays_unknown_instead_of_becoming_zero"
+    "tests/test_cross_domain_uq.py::test_unknown_uncertainty_stays_unknown_instead_of_becoming_zero",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_that_does_not_contain_the_value_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversions_interval_is_about_what_entered_it",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversions_interval_is_about_the_input_and_not_the_output",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_uncertainty_about_another_quantity_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_uncertainty_attributed_to_nothing_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_the_attributions_the_record_itself_names_are_accepted",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_the_propagated_record_keeps_both_references",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_whose_values_do_not_meet_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_link_records_the_crossing_that_fed_it",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_link_taken_out_of_its_chain_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversion_with_no_declared_efficiency_uncertainty_says_so_structurally",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_under_a_conversion_stays_a_lower_bound_even_when_the_efficiency_is_declared",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_record_cannot_state_a_completeness_its_own_arithmetic_denies"
    ],
    "bypasses": [],
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
-   "what_the_check_cannot_see": "nothing static: a crossing that passes a float is a call the checker could find only by knowing which arguments are crossing quantities, which is a type question and not a syntactic one. I-27's own tests are what will measure it once the transfers exist; until then this row is the declaration that they do not."
+   "what_the_check_cannot_see": "nothing static: a crossing that passes a float is a call the checker could find only by knowing which arguments are crossing quantities, which is a type question and not a syntactic one. I-27's own tests are what will measure it once the transfers exist; until then this row is the declaration that they do not. As of part B: the attribution rule is a containment test over what the crossing names, so it refuses an uncertainty bound to nothing and does not verify that the named result's own uncertainty entry for that quantity IS this one -- that needs the result passed in, which is part C's business where it builds the transfers. Quadrature assumes the efficiency's uncertainty is independent of the input's, and that assumption is RECORDED in the propagated method and notes rather than established. An INTERVAL under a conversion is never combined with an efficiency uncertainty, because a bound and a standard uncertainty need a distribution nobody declared; the record says lower bound instead."
   },
   {
    "problem": "R-75",

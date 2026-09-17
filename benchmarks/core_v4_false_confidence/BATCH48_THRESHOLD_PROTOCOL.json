@@ -58,7 +58,11 @@
   }
  },
  "thresholds": {
-  "containment_and_meeting_allowance": {"value": 1e-9, "class": "A", "why": "the composition package's BUDGET_TOLERANCE, reused rather than a second number: both comparisons are a unit conversion, which is one multiplication. No new threshold is introduced by this batch."}
+  "containment_and_meeting_allowance": {
+   "value": 1e-09,
+   "class": "A",
+   "why": "the composition package's BUDGET_TOLERANCE, reused rather than a second number: both comparisons are a unit conversion, which is one multiplication. No new threshold is introduced by this batch."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -91,5 +95,24 @@
   "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": "The quadrature arithmetic written into the preregistered reproduction was wrong and is corrected in place, with the reason, in the test itself.",
+   "numbers_that_forced_it": "The reproduction asserted a propagated width of 80 W * 0.0640312. The relative widths of the fixture are 5/100 = 0.05 for the input and 0.04/0.8 = 0.05 for the efficiency, and in quadrature that is 0.05 * sqrt(2) = 0.0707107, so the width is 5.656854 W and not 5.122499 W. The preregistered file had divided 0.04 by 0.8 and written 0.04. The RULE -- relative quadrature -- is the thing preregistered before anything was scored, and it is unchanged.",
+   "threshold_moved": "none: no threshold is introduced by this batch, and the tolerance is the composition package's existing BUDGET_TOLERANCE."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": "UncertaintyTransfer gains a second trailing field, `upstream`, which the preregistration did not name.",
+   "numbers_that_forced_it": "Not a number but a contradiction found while implementing: inside a chain the uncertainty entering crossing i+1 IS the record this module wrote for crossing i, and it carries crossing i's attribution. The attribution rule therefore refused every chain of two crossings naming different records -- including the one in tests/test_cross_domain_uq.py -- which is a false refusal of the kind this batch removes elsewhere. The record now states which crossing fed it, so the rule reads the justification off the record instead of trusting the caller, and a chain link reconstructed WITHOUT its upstream is refused (test_r58_a_chain_link_taken_out_of_its_chain_is_refused). Additive: a trailing field with a default of None, serialized only when present, under the same uncertainty_transfer/2 the completeness field introduced.",
+   "threshold_moved": "none."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": "propagate_transfer_uncertainty and make_uncertainty_transfer gain a keyword-only `upstream` argument with a default of None.",
+   "numbers_that_forced_it": "The same finding as amendment 2, one level out: the propagation has to be able to ask the question the record now answers. Keyword-only with a default, which the audit's compatibility rule allows, and neither function is in the frozen V1 or V2 surface.",
+   "threshold_moved": "none."
+  }
+ ]
 }

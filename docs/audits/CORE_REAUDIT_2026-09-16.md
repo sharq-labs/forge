@@ -2960,3 +2960,60 @@ same number, because the preregistered reproduction is answered by the missing-v
 `BATCH47_PINNED_MUTATIONS.log`: **1 of 1 KILLED** (G34n), control green.
 
 **Open decisions.** None.
+
+### Batch 48 — I-27 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-27 | **PARTIAL** (parts A–B of three) | `16c0e75e` + `70c68653` (A; R-60, R-61, R-64), `888cdcfb` (B preregistration + 9 strict xfails), this commit | **R-58 stays PARTIAL and LIBRARY_ONLY, which is the finding**: nothing in `src/` calls `engcore.uq.cross_domain`, so every production crossing still carries a bare point value. That is part C |
+
+**R-58's `UncertaintyTransfer` half is FIXED.** The record's only check was that the propagated uncertainty
+follows from whatever source uncertainty was handed in — so it was self-consistent with a source tied to the
+crossing by *nothing*, which is the parallel dictionary keyed by a coincidentally matching name that the
+module's own docstring says it exists to replace.
+
+| Claim | Status | How |
+|---|---|---|
+| an interval that is not about the value | **FIXED** | `[10, 11] K` propagated for a crossing of **350 K** and round-tripped. An INTERVAL must now contain the value it is an uncertainty *of* — the **entering** value for a conversion, since that is what the source uncertainty describes — compared absolutely, so an interval scale and an absolute one cannot differ by the offset between them. |
+| an uncertainty about another quantity | **FIXED** | A 1e-6 K uncertainty from another run, attributed to `'some-other-quantity'`, was accepted. An attribution must now name something the crossing itself names: its source record id, its source problem, its source quantity, or the declaration's name — the same shape batch 46 used for a binding reference at the inference boundary, for the same reason. |
+| the attribution overwritten | **FIXED** | The propagated `source` was replaced with `transfer:<id>`, which is what made another quantity's uncertainty read as this run's. It now carries **both** provenances: `transfer:<id>\|from:<the original>`. |
+| a chain along a path nothing travelled | **FIXED** | The chain checked name connectivity and equal instants only, so 350 K leaving one crossing and 400 K entering the next propagated the same 2 K. Consecutive crossings must now **meet by value**, in the next declaration's exemplar unit. |
+| efficiency uncertainty in a note | **FIXED** | A conversion's efficiency was treated as exact and the only sign was prose. `UncertaintyTransfer` now carries `completeness` — `complete` or `lower_bound_efficiency_uncertainty_undeclared` — derived from the crossing and **refused if the record says otherwise about its own arithmetic**. `EnergyConversion` gains `efficiency_uncertainty`; when declared, the standard uncertainty is propagated by relative quadrature, with the independence it assumes **recorded** in the method and the notes rather than claimed. |
+
+**Amendment 1.** The preregistered reproduction's quadrature arithmetic was wrong: 0.04/0.8 is 0.05, not
+0.04, so the propagated width is 5.656854 W and not 5.122499 W. Corrected in the test in place with the
+reason. The rule — relative quadrature — is what was preregistered, and it did not move.
+
+**Amendments 2 and 3.** A contradiction found while implementing: inside a chain, the uncertainty entering
+crossing *i+1* **is** the record this module wrote for crossing *i*, carrying crossing *i*'s attribution — so
+the new attribution rule refused every chain across two different records, including the one already in
+`tests/test_cross_domain_uq.py`. That is a false refusal of the kind this batch removes elsewhere, so the
+record now states which crossing fed it (`upstream`, a trailing field defaulting to None) and the rule reads
+the justification off the record instead of trusting the caller. A chain link reconstructed **without** its
+upstream is refused, which is what stops the field from being a way round the rule.
+
+**Compatibility.** Additive only: two trailing fields with defaults on `UncertaintyTransfer` (not in the
+frozen V1 or V2 surface), one trailing field with a default of `None` on `EnergyConversion`, one keyword-only
+argument with a default on two public functions, and `uncertainty_transfer/2` and `energy_conversion/2`
+written **only** when the record carries the new field — so every existing record keeps its bytes. An older
+version carrying either new field is refused on read. The propagated `source` **string** changes shape for
+every propagation, which is a value rather than a schema; the one in-tree assertion on it is amended in place
+with the reason, along with four fixture attributions that named nothing their crossing names.
+
+**Committed evidence.** Nothing regenerated: no committed JSON carries an `uncertainty_transfer` payload, and
+no `src` module builds one — which is the residual this part leaves standing.
+
+**Verification.** The batch's own file 21 passed. FAST tier **7084 passed, 5 skipped, 19 failed** — exactly
+the by-design set. Expensive tier **528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched. Guard
+reach ledger clean over 29 guards, with R-58 now PARTIAL and still LIBRARY_ONLY, naming part C.
+
+**Guard mutations.** `BATCH48_MUTATIONS.log`: **11 of 11 KILLED**, control green. Two were repointed while
+running them, each recorded in the log with the distinguishing case added as a named test: B48b (the
+entering-value rule) at an interval of `[79, 81] W` — which contains the 80 W that *arrived* and not the
+100 W that entered — because the audited interval contains neither; and B48d (the upstream candidate) at a
+chain whose two crossings name **different** records, because a chain naming one record is justified by that
+record either way. `BATCH48_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation targets these files, which
+is itself a fact about a rule family that had no caller.
+
+**Open decisions.** None.

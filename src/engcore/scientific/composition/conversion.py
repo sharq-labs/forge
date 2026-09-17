@@ -65,18 +65,22 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..models.definition import ValidityStatus
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..sequences import duplicates
 from ..units.validation import require_unit
 from ..results.immutable import freeze
 
 ENERGY_CONVERSION_SCHEMA = schema_string("energy_conversion")
+#: Bumped to /2 by `efficiency_uncertainty`, and written only when one is
+#: declared: a conversion that declares none keeps its /1 bytes.
+ENERGY_CONVERSION_SCHEMA_V2 = schema_string("energy_conversion", 2)
 LOSS_PATH_SCHEMA = schema_string("conversion_loss_path")
 CONVERSION_OUTCOME_SCHEMA = schema_string("conversion_outcome")
 
 __all__ = [
     "ENERGY_CONVERSION_SCHEMA",
+    "ENERGY_CONVERSION_SCHEMA_V2",
     "ENERGY_DIMENSIONS",
     "ENERGY_DERIVED_DIMENSIONS",
     "CONVERTIBLE_DIMENSIONS",
@@ -285,6 +289,15 @@ class EnergyConversion:
     efficiency: float | None = None
     losses: tuple[LossPath, ...] = ()
     description: str = ""
+    #: The standard uncertainty of ``efficiency``, dimensionless, on the same
+    #: scale as the efficiency itself.
+    #:
+    #: R-58 (I-27 part B): a declared efficiency was treated as EXACT by the
+    #: uncertainty that crossed it, and the only sign of that was a note. There
+    #: was nowhere to say otherwise, so the propagated width could only ever be
+    #: a lower bound. ``None`` means nobody has declared one, which is not the
+    #: same as zero -- the same distinction ``efficiency`` itself already makes.
+    efficiency_uncertainty: float | None = None
 
     def __post_init__(self) -> None:
         for label in ("name", "input_form", "output_form"):
@@ -331,6 +344,12 @@ class EnergyConversion:
         object.__setattr__(self, "losses", losses)
         object.__setattr__(self, "description", str(self.description))
 
+        if self.efficiency is None and self.efficiency_uncertainty is not None:
+            raise InvalidScientificProblem(
+                f"energy conversion {self.name!r} declares an "
+                f"efficiency_uncertainty and no efficiency. An uncertainty of "
+                f"nothing is not a statement about anything"
+            )
         if self.efficiency is None:
             # Undeclared, and that is allowed -- what is not allowed is
             # getting a number out of it. See `convert`. Losses without an
@@ -356,6 +375,27 @@ class EnergyConversion:
                 f"delivers more than it was given is not a conversion either"
             )
         object.__setattr__(self, "efficiency", efficiency)
+
+        # R-58: the efficiency's own standard uncertainty, on the efficiency's
+        # scale. A width that reaches the fraction it is about states nothing:
+        # the efficiency would then be consistent with delivering nothing and
+        # with delivering everything, which is the undeclared case wearing a
+        # number.
+        if self.efficiency_uncertainty is not None:
+            width = _fraction(
+                self.efficiency_uncertainty,
+                what=f"efficiency_uncertainty of {self.name!r}",
+            )
+            if not 0.0 <= width < efficiency:
+                raise InvalidScientificProblem(
+                    f"energy conversion {self.name!r} declares an "
+                    f"efficiency_uncertainty of {width!r} beside an efficiency "
+                    f"of {efficiency!r}. A standard uncertainty that reaches or "
+                    f"exceeds the fraction it is about says the fraction is "
+                    f"unknown, which is what declaring nothing already says, "
+                    f"and it says it while looking like a measurement"
+                )
+            object.__setattr__(self, "efficiency_uncertainty", width)
 
         # Conservation, checked here rather than hoped for. What enters equals
         # what leaves plus what is declared lost.
@@ -447,7 +487,11 @@ class EnergyConversion:
     # ---- serialization --------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": ENERGY_CONVERSION_SCHEMA,
+            "schema": (
+                ENERGY_CONVERSION_SCHEMA_V2
+                if self.efficiency_uncertainty is not None
+                else ENERGY_CONVERSION_SCHEMA
+            ),
             "name": self.name,
             "input_form": self.input_form,
             "output_form": self.output_form,
@@ -455,12 +499,28 @@ class EnergyConversion:
             "efficiency": self.efficiency,
             "losses": [loss.to_dict() for loss in self.losses],
             "description": self.description,
+            **(
+                {}
+                if self.efficiency_uncertainty is None
+                else {"efficiency_uncertainty": self.efficiency_uncertainty}
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EnergyConversion":
-        require_schema(payload, ENERGY_CONVERSION_SCHEMA)
+        version = require_schema_any(
+            payload, (ENERGY_CONVERSION_SCHEMA, ENERGY_CONVERSION_SCHEMA_V2)
+        )
         efficiency = payload.get("efficiency")
+        width = payload.get("efficiency_uncertainty")
+        if width is not None and version != ENERGY_CONVERSION_SCHEMA_V2:
+            # A version without the field cannot have meant a number in it, and
+            # the finding is precisely that an absent width was read as exact.
+            raise InvalidScientificProblem(
+                f"energy conversion payload declares schema {version!r} and "
+                f"carries an efficiency_uncertainty, which "
+                f"{ENERGY_CONVERSION_SCHEMA_V2!r} introduced"
+            )
         return cls(
             name=payload["name"],
             input_form=payload["input_form"],
@@ -474,4 +534,5 @@ class EnergyConversion:
                 LossPath.from_dict(loss) for loss in payload.get("losses", ())
             ),
             description=payload.get("description", ""),
+            efficiency_uncertainty=None if width is None else float(width),
         )
