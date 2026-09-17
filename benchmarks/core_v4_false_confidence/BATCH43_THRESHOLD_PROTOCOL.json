@@ -1,0 +1,87 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 43,
+ "improvements": [
+  "I-21 part B of two"
+ ],
+ "problems_addressed": [
+  "R-44 (the audit's findings 52 and 84)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "12f53117",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part A fixed what `best()` counts as feasible. This part is about what it counts as ESTABLISHED, and about the selection path production actually uses. `_established` looks only at validity, so a result whose validation is `unverified_report()` -- status NOT_RUN, nothing attained -- is eligible and wins on its objective against a verified candidate. And CORE-015's rule lives on `ScientificExperiment`, which nothing in src calls: the mechanism production uses is `design.ParetoArchive` / `ScopedEliteArchive` through the multirotor studies, whose gate is a caller-set ELIGIBLE with a free-text reason that never consults `result.validity` -- while every one of those results carries `validity_not_assessed` for both models. The audit's residual says an unassessed evaluation 'is recorded, not ranked'. On that path it is ranked.",
+ "reach": "REACHED. The design archives are the selection production runs (MVR0/MVR1), and this batch changes what those studies may claim. The `best()` half stays library-only, as part A's row records.",
+ "what_was_already_seen": {
+  "finding 52, from the audit": "`_established` (experiment.py) looks only at validity. The OK status requires `is_usable`, and `is_usable` only excludes FAIL -- so a result whose validation is `unverified_report()`, with status NOT_RUN and no attained level, is eligible and wins on its objective against a verified candidate. After CORE-013 a NOT_RUN check outranks passes in the report's status, and `best()` ignores that status.",
+  "finding 84, from the audit": "Nothing in src calls `.best(` or constructs a `ScientificExperiment`. `ParetoArchive`/`ScopedEliteArchive` rank on a caller-set `SelectionEligibility.ELIGIBLE` and never consult `result.validity`; the multirotor studies mark EVERY evaluation ELIGIBLE although every result records `validity_not_assessed` for both models -- 'MVR0 declares this model as a reference identity with no ValidityDomain, so there is no envelope to assess against'. The result is a global Pareto front and a per-objective elite chosen entirely from candidates for which `_established()` is False."
+ },
+ "rules": {
+  "one_established_candidate_rule_in_the_results_layer": {
+   "improvement": "I-21",
+   "problem": "R-44",
+   "rule": "New public `result_establishment_problems(result)` in `engcore.scientific.results.requirements`: the reasons a result is not established, or an empty tuple. It requires that the result names at least one model, that every named model was assessed IN_DOMAIN, that its validation report carries no NOT_RUN check, and that it attained at least one validation level. `ScientificExperiment._established` delegates to it, and the design layer calls it too.",
+   "class": "A",
+   "why": "Two selection paths were applying two different rules, and the one with no production caller had the stricter one -- which is how the audit found a production Pareto front ranking candidates the library's own rule calls unestablished. The two new conditions are the ones finding 52 names: a NOT_RUN check is evidence that was not gathered (that is why CORE-013 puts it above PASS), and a result that attained no level at all has nothing standing behind the number being ranked. NOT_APPLICABLE checks are not NOT_RUN and do not count against a candidate, which is exactly the distinction batch 40 introduced for this reason.",
+   "closes": "finding 52, and gives finding 84 one rule to share."
+  },
+  "eligible_means_the_models_were_assessed": {
+   "improvement": "I-21",
+   "problem": "R-44",
+   "rule": "`DesignEvaluation.__post_init__` refuses `SelectionEligibility.ELIGIBLE` when `result_establishment_problems` is non-empty, naming the problems. A new appended member, `SelectionEligibility.RANKED_WITHOUT_ASSESSMENT`, is the honest label for a candidate a caller wants compared although its models' applicability was never assessed; like the other explicit values it requires a reason.",
+   "class": "A",
+   "why": "The audit offers exactly two ways out and this batch takes both, one for each case that exists. Where a model HAS a validity domain, ELIGIBLE must mean it was assessed and the candidate is inside it -- otherwise the word is a caller's assertion about evidence nobody gathered. Where a model has NO domain at all, as MVR0's two reference identities genuinely do not ('declaring one is MVR1's work'), refusing to rank would delete the study rather than correct it; so the ranking stays and the LABEL says what it is. The name is deliberately not a synonym for eligible: a reader of an archive can see which candidates were compared without assessment.",
+   "closes": "finding 84's first half -- ELIGIBLE can no longer be claimed over an unassessed result."
+  },
+  "an_archive_says_which_members_were_ranked_unassessed": {
+   "improvement": "I-21",
+   "problem": "R-44",
+   "rule": "`ParetoArchive` and `ScopedEliteArchive` rank both ELIGIBLE and RANKED_WITHOUT_ASSESSMENT evaluations, and each gains a trailing field `unassessed` (default empty): the references, among its own members, whose evaluations were RANKED_WITHOUT_ASSESSMENT. `build` fills it, verification recomputes it from the evaluation universe it is given, and it is serialized only when non-empty.",
+   "class": "A",
+   "why": "An archive is read as a claim about which candidates are best. If some of its members were never assessed for applicability, that is part of the claim and belongs in the record, not in the caller's memory: the eligibility label lives on the evaluations, which a persisted archive does not carry. Recomputed on verification for the same reason every other membership fact is -- a stored list of references is not a verified claim, which this module says in its own docstring. Written only when non-empty so an archive of fully assessed candidates keeps its bytes and its digest.",
+   "closes": "finding 84's second half: the ranking is visible as what it is."
+  },
+  "the_studies_say_what_they_are_doing": {
+   "improvement": "I-21",
+   "problem": "R-44",
+   "rule": "The MVR0 reference evaluation and the MVR1 study evaluation declare `RANKED_WITHOUT_ASSESSMENT` instead of `ELIGIBLE`, keeping their existing reasons. Nothing else about the studies changes.",
+   "class": "A",
+   "why": "Their results record `validity_not_assessed` for both models and say why in the record. Claiming ELIGIBLE beside that was the contradiction the audit found; declaring the label that matches the record is the whole fix on this path, and it is what makes the archive field above non-empty where it should be.",
+   "closes": "finding 84 on the production path."
+  }
+ },
+ "thresholds": {
+  "none": {"value": null, "class": "A", "why": "no number is chosen. One shared rule, one appended enum member, one trailing field, two declarations."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "`result_establishment_problems` (new public function in the results layer)",
+   "`SelectionEligibility.RANKED_WITHOUT_ASSESSMENT`, appended after INELIGIBLE",
+   "a trailing `unassessed` field with an empty default on both archives, serialized only when non-empty"
+  ],
+  "what_is_not_changed": [
+   "no existing field, default or enum member; no schema version, because the new field is written only when it carries information",
+   "`_established`'s name and behaviour for the two conditions it already had",
+   "the archives' dominance rule, their objective handling and their verification contract"
+  ],
+  "records_that_already_exist": "No committed JSON carries a `pareto_archive/1`, `scoped_elite_archive/1` or `design_evaluation` payload; the one committed file mentioning 'eligibility' is battery B3's preregistration, where it is prose about model selection. To be re-confirmed by a scan before implementing.",
+  "deliberate_narrowing": "`ELIGIBLE` over a result whose models were not assessed, or whose validation carries a NOT_RUN check, stops being constructible; `best()` stops returning a candidate with no verification at all. The multirotor studies keep ranking exactly the candidates they ranked before, under a label that says what was and was not assessed."
+ },
+ "residuals_stated_in_advance": [
+  "RANKED_WITHOUT_ASSESSMENT is still a caller's declaration: nothing forces a caller to use it rather than marking a candidate INELIGIBLE or UNKNOWN, and nothing assesses a model that has no validity domain. Declaring domains for the multirotor models is MVR1's own work and is not this batch's.",
+  "`result_establishment_problems` requires at least one attained level, not a particular one. A caller who needs a specific level has `ValidationReport.require_level`, and choosing one per study is a study's decision, not the core's.",
+  "The archives record which members were ranked unassessed; they do not refuse to build such an archive. Refusing would delete MVR0 and MVR1 rather than correct them, and the audit's own fix direction offers the label as the alternative.",
+  "`ScientificExperiment` still has no production caller. Part A's ledger row says so and this part does not change it."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "the design and multirotor suites, the experiments suites, tests/test_scientific_core.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
