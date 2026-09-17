@@ -73,12 +73,20 @@ def test_the_battery_models_that_miss_their_tolerance_are_still_named_in_the_his
 
 def test_tcr_agrees_with_the_exact_posterior_in_both_designs():
     designs = _load("TCR.json")["designs"]
+    #: I-08 part B (batch 21), R-14: NARROW's local claim moved from SUPPORTED to DOWNGRADED. With the tail
+    #: probes widened off the principal axes its smallest chi-square rise ratio is 0.8127 -- the rise 6
+    #: reported sd out along the flattest direction of its curvature matrix is 29.3 where a Gaussian predicts
+    #: 36 -- which is below TAIL_DOWNGRADE_RATIO = 0.90. That is a real measurement on a model that IS
+    #: non-quadratic that far out, found by directions no axis probe reaches; no threshold moved. The NUMBERS
+    #: are unaffected and the agreement assertion below still holds for both designs. WIDE is unchanged.
+    expected_claim = {"WIDE": "SUPPORTED", "NARROW": "DOWNGRADED"}
     for name in ("WIDE", "NARROW"):
         assert designs[name]["agreement"]["within_declared_tolerance"] is True, name
         # regenerated under HUQ-01/07/08: p = 2 with the canonical 6-start policy is at the minimum search, and the
         # diagonal probes keep the nonlinearity below the downgrade threshold
-        assert designs[name]["v2_local"]["claim"] == "SUPPORTED", name
+        assert designs[name]["v2_local"]["claim"] == expected_claim[name], name
         assert designs[name]["v2_local"]["nonlinearity_index"] < 0.10, name
+    assert designs["NARROW"]["v2_local"]["reasons"] == ["TAIL_HEAVIER_WITHIN_6_SD"]
     assert designs["NARROW"]["router_given_the_41_node_grid"]["decision"] == "LOCAL_GAUSSIAN"
     assert designs["WIDE"]["router_given_the_41_node_grid"]["decision"] == "GRID_AS_SUPPLIED"
     # R-06 (re-audit 2026-09-16): a supplied grid narrower than the declared bounds now needs a uniqueness

@@ -14,13 +14,13 @@
    "claim": "REFUSED",
    "identifiability": null,
    "calibration": {
-    "wall_seconds": 0.27972109999973327,
+    "wall_seconds": 0.3546777709998423,
     "forward_evaluations": 16
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 0.41172729997197166,
-    "forward_evaluations": 25,
-    "route_recorded_evaluations": 25,
+    "wall_seconds": 0.8983327629975975,
+    "forward_evaluations": 41,
+    "route_recorded_evaluations": 41,
     "jacobian_minimum_4p_plus_1": 9,
     "chi_square_probes_2p_squared": 8,
     "chi_square_probes_skipped": 0
@@ -35,14 +35,14 @@
     "MODEL_MISFIT_BEYOND_DECLARED_NOISE"
    ],
    "route_with_default_multistart": {
-    "wall_seconds": 2.6966014000063296,
-    "forward_evaluations": 162
+    "wall_seconds": 3.7474009710022074,
+    "forward_evaluations": 185
    },
    "linearized_predictive": {
     "not_incurred": "the route refused; there is no posterior to predict from"
    },
-   "production_predictions": 13601,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 92336
+   "production_predictions": 16214,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 105258
   },
   "5": {
    "label": "MEASURED",
@@ -50,13 +50,13 @@
    "claim": "REFUSED",
    "identifiability": null,
    "calibration": {
-    "wall_seconds": 0.6296480000019073,
+    "wall_seconds": 0.8092614349989162,
     "forward_evaluations": 36
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 1.6907530999742448,
-    "forward_evaluations": 91,
-    "route_recorded_evaluations": 91,
+    "wall_seconds": 4.114510428000358,
+    "forward_evaluations": 179,
+    "route_recorded_evaluations": 179,
     "jacobian_minimum_4p_plus_1": 21,
     "chi_square_probes_2p_squared": 50,
     "chi_square_probes_skipped": 0
@@ -72,14 +72,14 @@
     "MULTISTART_INCOMPLETE"
    ],
    "route_with_default_multistart": {
-    "wall_seconds": 5.89362820002134,
-    "forward_evaluations": 361
+    "wall_seconds": 10.414896376001707,
+    "forward_evaluations": 478
    },
    "linearized_predictive": {
     "not_incurred": "the route refused; there is no posterior to predict from"
    },
-   "production_predictions": 32696,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 120500
+   "production_predictions": 46431,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 136974
   },
   "10": {
    "label": "MEASURED",
@@ -87,36 +87,36 @@
    "claim": "REFUSED",
    "identifiability": null,
    "calibration": {
-    "wall_seconds": 1.2951777999987826,
+    "wall_seconds": 1.5376282510005694,
     "forward_evaluations": 66
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 5.1688377000100445,
-    "forward_evaluations": 281,
-    "route_recorded_evaluations": 281,
+    "wall_seconds": 15.409652095000638,
+    "forward_evaluations": 649,
+    "route_recorded_evaluations": 649,
     "jacobian_minimum_4p_plus_1": 41,
     "chi_square_probes_2p_squared": 200,
     "chi_square_probes_skipped": 0
    },
    "claim_without_multistart": "REFUSED",
    "goodness_of_fit": {
-    "chi_square_minimum": 259.4480254411017,
+    "chi_square_minimum": 259.4480254411016,
     "degrees_of_freedom": 57,
-    "variance_ratio": 4.551719744580732
+    "variance_ratio": 4.55171974458073
    },
    "reasons_with_default_multistart": [
     "MODEL_MISFIT_BEYOND_DECLARED_NOISE",
     "MULTISTART_INCOMPLETE"
    ],
    "route_with_default_multistart": {
-    "wall_seconds": 13.819977000006475,
-    "forward_evaluations": 759
+    "wall_seconds": 27.753684991999762,
+    "forward_evaluations": 1193
    },
    "linearized_predictive": {
     "not_incurred": "the route refused; there is no posterior to predict from"
    },
-   "production_predictions": 74102,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 170694
+   "production_predictions": 127836,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 205624
   },
   "20": {
    "label": "MEASURED",
@@ -124,36 +124,36 @@
    "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 2.6833467000105884,
+    "wall_seconds": 3.377084924999508,
     "forward_evaluations": 126
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 21.155686899990542,
-    "forward_evaluations": 961,
-    "route_recorded_evaluations": 961,
+    "wall_seconds": 67.81475527899966,
+    "forward_evaluations": 2489,
+    "route_recorded_evaluations": 2489,
     "jacobian_minimum_4p_plus_1": 81,
     "chi_square_probes_2p_squared": 800,
     "chi_square_probes_skipped": 0
    },
    "claim_without_multistart": "DOWNGRADED",
    "goodness_of_fit": {
-    "chi_square_minimum": 32.24427921375042,
+    "chi_square_minimum": 32.24427921375045,
     "degrees_of_freedom": 47,
-    "variance_ratio": 0.6860484939095833
+    "variance_ratio": 0.6860484939095841
    },
    "reasons_with_default_multistart": [
     "MULTISTART_INCOMPLETE"
    ],
    "route_with_default_multistart": {
-    "wall_seconds": 41.45939840000938,
-    "forward_evaluations": 1961
+    "wall_seconds": 95.21540762600125,
+    "forward_evaluations": 3546
    },
    "linearized_predictive": {
-    "wall_seconds": 10.462263499997789,
+    "wall_seconds": 12.703473992998624,
     "forward_evaluations": 947
    },
-   "production_predictions": 235467,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 280223
+   "production_predictions": 444038,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 383220
   },
   "41": {
    "label": "MEASURED",
@@ -161,36 +161,36 @@
    "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 6.862273000006098,
+    "wall_seconds": 8.184874800997932,
     "forward_evaluations": 252
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 95.77869509998709,
-    "forward_evaluations": 3691,
-    "route_recorded_evaluations": 3691,
+    "wall_seconds": 344.2595019020009,
+    "forward_evaluations": 10259,
+    "route_recorded_evaluations": 10259,
     "jacobian_minimum_4p_plus_1": 165,
     "chi_square_probes_2p_squared": 3362,
     "chi_square_probes_skipped": 0
    },
    "claim_without_multistart": "DOWNGRADED",
    "goodness_of_fit": {
-    "chi_square_minimum": 0.15632529449883423,
+    "chi_square_minimum": 0.15632529449884483,
     "degrees_of_freedom": 26,
-    "variance_ratio": 0.00601251132687824
+    "variance_ratio": 0.006012511326878647
    },
    "reasons_with_default_multistart": [
     "MULTISTART_INCOMPLETE"
    ],
    "route_with_default_multistart": {
-    "wall_seconds": 143.03641609998886,
-    "forward_evaluations": 5680
+    "wall_seconds": 432.4256034830032,
+    "forward_evaluations": 12571
    },
    "linearized_predictive": {
-    "wall_seconds": 47.06956189998891,
+    "wall_seconds": 62.53473271599796,
     "forward_evaluations": 3593
    },
-   "production_predictions": 763310,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 1036630
+   "production_predictions": 1665063,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 1632590
   }
  },
  "v1_grid_measured": {
@@ -198,28 +198,28 @@
    "label": "MEASURED (serial)",
    "grid_points": 81,
    "production_predictions": 8100,
-   "wall_seconds": 1.8063211999833584,
+   "wall_seconds": 2.855000341995037,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
-   "python_heap_peak_bytes_tracemalloc_calibration_table": 2043610
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 2741170
   },
   "3": {
    "label": "MEASURED (serial)",
    "grid_points": 729,
    "production_predictions": 72900,
-   "wall_seconds": 18.214394200011156,
+   "wall_seconds": 26.412695596001868,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
-   "python_heap_peak_bytes_tracemalloc_calibration_table": 15869310
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 16490206
   },
   "4": {
    "label": "MEASURED (serial)",
    "grid_points": 6561,
    "production_predictions": 656100,
-   "wall_seconds": 167.19563339999877,
+   "wall_seconds": 241.7352445610013,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
-   "python_heap_peak_bytes_tracemalloc_calibration_table": 140671906
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 141213226
   },
   "5": {
    "label": "MEASURED in the committed B3 run, 12 workers (not re-run)",
@@ -240,26 +240,26 @@
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 3486784401.0,
    "production_predictions": 348678440100.0,
-   "serial_wall_seconds": 88854614.60972874,
-   "serial_wall_years": 2.815632830434784,
-   "heap_bytes": 74758818396546.0
+   "serial_wall_seconds": 128468020.1047431,
+   "serial_wall_years": 4.070905902373536,
+   "heap_bytes": 75046498038666.0
   },
   "20": {
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 1.2157665459056929e+19,
    "production_predictions": 1.215766545905693e+21,
-   "serial_wall_seconds": 3.0981688417806886e+17,
-   "serial_wall_years": 9817504632.103483,
-   "heap_bytes": 2.606678818222684e+23
+   "serial_wall_seconds": 4.479402885285726e+17,
+   "serial_wall_years": 14194371198.334873,
+   "heap_bytes": 2.6167095871089772e+23
   },
   "41": {
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 1.3302794647291133e+39,
    "production_predictions": 1.3302794647291134e+41,
-   "serial_wall_seconds": 3.3899850282639143e+37,
-   "serial_wall_years": 1.0742214326387033e+30,
-   "heap_bytes": 2.8522016128045136e+43
+   "serial_wall_seconds": 4.90131735620744e+37,
+   "serial_wall_years": 1.5531337478792556e+30,
+   "heap_bytes": 2.863177178722014e+43
   }
  },
- "v1_per_row_seconds_measured_p4": 0.02548325459533589
+ "v1_per_row_seconds_measured_p4": 0.03684426833729634
 }

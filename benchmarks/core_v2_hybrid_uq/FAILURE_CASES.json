@@ -302,7 +302,8 @@
      "SECOND_MODE_FOUND"
     ],
     "downgrades": [
-     "NONLINEAR_WITHIN_2_SD"
+     "NONLINEAR_WITHIN_2_SD",
+     "TAIL_HEAVIER_WITHIN_6_SD"
     ],
     "uniqueness": "SECOND_MODE_FOUND",
     "nonlinearity_index": 0.11161166931627631,
@@ -337,7 +338,7 @@
      {
       "route": "LOCAL_GAUSSIAN",
       "outcome": "REFUSED",
-      "reason": "SECOND_MODE_FOUND,NONLINEAR_WITHIN_2_SD"
+      "reason": "SECOND_MODE_FOUND,NONLINEAR_WITHIN_2_SD,TAIL_HEAVIER_WITHIN_6_SD"
      },
      {
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
@@ -439,7 +440,7 @@
      "POORLY_SCALED_PARAMETERIZATION"
     ],
     "uniqueness": "NOT_ASSESSED",
-    "nonlinearity_index": 0.23112665608544858,
+    "nonlinearity_index": 0.23120435234624148,
     "jacobian_condition": 43636358.495212354,
     "raw_jacobian_condition": 43977070.00374909,
     "emits_covariance": true

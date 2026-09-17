@@ -52,8 +52,14 @@ def test_the_cost_is_order_p_plus_multistart():
     # probes and 2p(p - 1) diagonal probes between two axes: 4p + 1 + 2p^2. This pinned 6p + 1 before audit HUQ-08,
     # when the probes looked along the principal axes only and a cross term between two of them went unseen.
     p = 2
-    # + 4p tail probes at 3 and 6 sd along the principal axes (CORE-003); all inside the declared bounds here
-    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p + 4 * p
+    # + the tail probes at 3 and 6 sd (CORE-003), all inside the declared bounds here. This pinned 4p -- the p
+    # principal axes, two radii, two signs -- until I-08 part B (batch 21), where R-14 widened the tail
+    # direction set to every direction the +/-2 sd probes cover (the p axes and the p(p-1) diagonals) plus the
+    # curvature matrix's two extreme eigenvectors: 2 * 2 * (p^2 + 2). A posterior exactly Gaussian on both
+    # axes out to 6 sd and saturating along its diagonals was SUPPORTED with no reason at all, and no axis
+    # probe could see it. The ORDER is unchanged -- the diagnostics were already O(p^2) -- and the constant
+    # goes from 2p^2 + 4p to 6p^2 + 8.
+    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p + 4 * (p * p + 2)
 
 
 def test_intervals_are_labelled_and_mapped_back_through_a_log_transform():

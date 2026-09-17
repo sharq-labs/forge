@@ -1274,3 +1274,97 @@ Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's list
 under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None.
+
+### Batch 21 — I-08 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-08 | **DONE** | `c2976119`, `7d9ae9fa` (part A), `1b1bafae` (part B preregistration + 12 strict xfails), this commit | the curvature matrix is a FINITE-DIFFERENCE second derivative at radius `PROBE_SD`, not the Hessian at the estimate — for a genuinely quadratic chi-square they agree exactly, and for anything else it mixes the curvature with the quartic and higher terms at 2 sd, which is the right thing to threshold here (the claim being checked is that the Gaussian describes the posterior out to 2 sd) but means the index is not an estimate of anything at the optimum; M is built over a complete sub-block when probes are missing, so a posterior with a declared bound inside 2 sd on one parameter gets a gate over the others and the record does not say which indices it covered; the extreme-eigenvector tail probes are chosen by a matrix built from the ±2 sd probes, so the p² fixed directions are what carry R-14 and the two extremes are an addition rather than the mechanism; clipping compares a rise with `r_clip²` under the same Gaussian prediction and is not a claim that the tail beyond the declared box is Gaussian; and `hybrid_uq/predictive.py` still builds its own probe directions, which neither part measured |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-13 | **FIXED** | The whitened curvature matrix is rebuilt from the SAME ±2 sd probes the route already evaluates — no new forward evaluation, because a local quadratic `Q(u) = uᵀMu` is fully determined by the p axes and the p(p−1) diagonals: `M_kk = mean_sign Q(±s e_k)/s²` and `M_ij = (Q̄₊ − Q̄₋)/(2s²)` with `s = PROBE_SD`. **The gate reuses the two declared thresholds and needs no new number**, and the reason is an identity: the per-direction index the route already thresholds is `\|Q(s d)/s² − 1\| = \|dᵀMd − 1\|`, and the supremum of that over ALL unit directions IS `max(\|λ_max − 1\|, \|1 − λ_min\|)`. So the matrix index is the same quantity maximized over every direction instead of evaluated at 2p² of them, it DOMINATES every per-direction index, and `nonlinearity_index` becomes their maximum — so no record's reasons stop following from its numbers. The audited case reproduces the preregistered arithmetic: at p = 10 with `M = I + c(J − I)` and `c = −0.099` the eigenvalues are 1.099 (multiplicity 9) and `1 + 9c = 0.109`, the index is 0.891 against `NONLINEARITY_REFUSE = 0.50`, and the case is REFUSED where every per-direction probe sat at 0.0992 under the 0.10 downgrade. A probe beyond a bound leaves an entry unmeasured, and M is then built over the largest index set whose axis probes and all of whose pairwise diagonals were evaluated — a principal submatrix's extremes still bound the worst direction from below, so the restriction never loosens the gate. `curvature_eigenvalue_bounds` records `(λ_min, λ_max)` and read-back refuses a record whose index is below what its own extremes imply. |
+| R-14 | **FIXED** | The 3 and 6 sd tail probes run along every direction the ±2 sd probes cover — the p invariant axes and the p(p−1) diagonals — plus the `λ_min` and `λ_max` eigenvectors of the curvature matrix, mapped back into parameter space and normalized to unit Mahalanobis length. p² + 2 directions where there were p. **Why these and not a sphere sample:** a heavy tail has to be looked for where the local quadratic is least trustworthy — the diagonals are where a cross term lives, which is why the ±2 sd probes already cover them, and the `λ_min` direction is the one the matrix itself says is flattest. A quasi-random sample would be a different rule with a sample size to justify. The audit's own note said I-08 must supply a case with more than two residual degrees of freedom so that what carries it is the probe and not I-04's underpowered cap, and `off_axis_flat_tail_with_residual_dof` is it: 6 observations, 2 parameters, exactly Gaussian along both invariant axes out to 6 sd (rises 4, 9, 36) and a rise of 15.92 against the Gaussian's 36 along either diagonal — a ratio of 0.442, below `TAIL_REFUSE_RATIO`. At the baseline it was SUPPORTED with NO reason at all and a minimum tail rise ratio of 1.0; it is now REFUSED. |
+| R-15 | **FIXED** | A tail probe whose point leaves the declared box is CLIPPED to the largest radius the box allows and its rise compared with `r_clip²` — the Gaussian's prediction at the radius actually probed — instead of being dropped. No posterior mass lies outside a declared bound, so the original reasoning was right and the SILENCE was the defect: at 6.01 posterior sd the 6 sd probe ran and refused, at 5.99 it vanished and the claim rose. The two now agree, at ratios 0.2595 and 0.2588. A clipped probe is counted in `tail_probes_clipped`; a probe the box stops below `PROBE_SD` is not used, because the ±2 sd probes already measured that radius against their own rule, and it is counted in `tail_probes_outside_bounds` and downgrades. **The floor IS `PROBE_SD`** — a declared constant, not a choice — because using a clipped probe inside it would threshold the same measurement twice against a different rule. |
+
+**Compatibility.** `RouteDiagnostics` gains three TRAILING fields with defaults (`curvature_eigenvalue_bounds`,
+`tail_probes_clipped`, `tail_probes_outside_bounds`), each serialized only when it carries information, and
+`RouteReason` gains one APPENDED member. Both are the allowed additive shapes. `_thresholds()` gains no key,
+for the same reason as batch 20. The one existing read-back bound that moves is WIDENED — the tail-count
+budget from `2·len(TAIL_PROBE_SD)·p` to `2·len(TAIL_PROBE_SD)·(p² + 2)` — and widening an upper bound cannot
+refuse a record that satisfied the narrower one. So every record written under
+`hybrid_uq.route_diagnostics/2` still reads back. `_probe_directions(lam, vec)` keeps its signature, and the
+two pinned diagonal lines inside it are byte-identical: the labelled variant builds the same list and zips the
+labels beside it, which is what keeps mutation anchor G33c matching.
+
+**One amendment, with the numbers that forced it.** The preregistration said a probe the box stops inside
+`PROBE_SD` "adds the existing NONLINEARITY_PROBE_INCOMPLETE downgrade". It gets an appended member of its own,
+`TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS`, because folding the two together made the fact R-15 is ABOUT
+unobservable. **Two guard mutations that removed the rule both SURVIVED**, and the reason is structural rather
+than a gap in the tests: along any of the p² fixed probe directions the box stops a tail probe inside
+`PROBE_SD` only when it also stops that direction's own ±2 sd probe, because both conditions are the same
+inequality on the box reach — so `nonlinearity_probes_skipped` is non-zero in every such geometry and already
+emits the same word. At a bound of 1.5 posterior sd the audited case records
+`nonlinearity_probes_skipped = 2` and `tail_probes_outside_bounds = 4`. A probe the box stopped inside the
+radius the ±2 sd probes already cover is a different fact from a ±2 sd probe that left the box, and R-15 is
+precisely about that fact being silent. The correction is strictly additive: the member is appended, both
+counts default to 0, and no record written before the rule gains a reason.
+
+**Existing expectations moved, three of them, none weakened.**
+
+* `test_the_cost_is_order_p_plus_multistart` pinned `4p + 1 + 2p² + 4p`. The tail term is now
+  `4(p² + 2)`: 41 evaluations at p = 2 where there were 25. The ORDER is unchanged — the diagnostics were
+  already O(p²) — and the constant goes from `2p² + 4p` to `6p² + 8`, about 3× at large p. The comment carries
+  the arithmetic and why.
+* `test_hybrid_uq_tcr.py::test_the_local_route_agrees_with_the_resolved_grid[narrow]` asserted SUPPORTED. The
+  NARROW TCR design's smallest chi-square rise ratio is 0.8127 — the rise 6 reported sd out along the flattest
+  direction of its curvature matrix is 29.3 where a Gaussian predicts 36 — which is below
+  `TAIL_DOWNGRADE_RATIO = 0.90`. **That is a real measurement on a model that IS non-quadratic that far out,
+  found by directions no axis probe reaches; no threshold moved.** The test now expects DOWNGRADED with
+  `TAIL_HEAVIER_WITHIN_6_SD` for that design and SUPPORTED for WIDE, and every numeric agreement assertion
+  against the dense grid is unchanged and still holds to within 5%. What moved is the WORD.
+* The two I-15 conformance cases for R-13 and R-15 were strict xfails and now pass, so their markers came off
+  with a line naming the fix.
+
+**Verification.** FAST tier 6728 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged). The
+xfail count is 1 because the four I-15 conformance cases this improvement closed — R-13, R-14's sibling R-15,
+R-16 and R-26 — have had their markers removed across batches 20 and 21; the one left is R-11's, waiting for
+I-06. Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact (G33c needed the labelled probe list to be
+built so that its two pinned diagonal lines stay byte-identical, which is how it is written);
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Committed evidence regenerated.** `FAILURE_CASES.json`, all cases met; `multimodal_two_parameter` gains
+`TAIL_HEAVIER_WITHIN_6_SD` beside the refusal it already had, which changes no claim. `TCR.json`: NARROW's
+`v2_local.claim` SUPPORTED → DOWNGRADED with `reasons` `['TAIL_HEAVIER_WITHIN_6_SD']`, forward evaluations
+250 → 266, nonlinearity index 0.0753 → 0.0709 (the invariant basis from part A, folded in by the same
+regeneration); WIDE unchanged but for 190 → 211 evaluations and 0.00523 → 0.00432. The guard in
+`test_hybrid_uq_committed_evidence.py` now pins both claims and NARROW's reason, so neither half can be
+dropped silently. `PERFORMANCE.json` regenerated for the evaluation counts; its own guard is an inequality
+(`forward_evaluations >= 4p + 1 + evaluated_probes`) and still holds. `KINETICS_K2.json` and
+`BATTERY_T41.json` are NOT regenerated (their full runs are ~76 min and longer); their SUPERSEDED markers
+stand and these rules are two more reasons they are superseded.
+
+**Guard mutations, and the five findings they produced.** `BATCH21_MUTATIONS.log`: **18 of 18 KILLED**,
+control green, plus 10 pinned re-runs on `local_gaussian.py` all KILLED. Eight survived the first run and
+every survival was informative:
+
+* **B21d** (one sign accepted as the sign-averaged rise) survived the recovery test, which feeds EVERY probe,
+  so a rule about a MISSING probe was invisible to it. A new guard deletes one sign and asserts the index is
+  left out of the matrix — and that one complete index yields no matrix at all rather than a 1×1 one that
+  repeats its own axis probe.
+* **B21i** (each extreme eigenvector replaced by an axis already in the set) survived a count and a
+  unit-Mahalanobis check, which a duplicate passes. The guard now asserts the last two directions ARE the
+  mapped eigenvectors.
+* **B21k** (a clipped probe compared with the radius it ASKED for) survived the audited 6.01/5.99 pair, and
+  rightly: those radii differ by 0.2%, which no verdict can resolve. At a bound of 2.5 sd the factor is 5.8 —
+  0.985 of the radius reached against 0.171 of the radius asked for — and the guard reads that case.
+* **B21l** and **B21n** survived `> 0` assertions that half a rule still satisfies. The clipped count is now
+  asserted exactly: two, at a bound of 5.99 sd.
+* **B21m**, **B21m2** and **B21p** and **B21o** are the amendment and its consequences, above; B21o survived
+  because popping a key a record DOES carry says nothing about a record that should not carry it, and the
+  guard now reads a p = 1 route, which builds no matrix.
+
+**Open decisions.** None.

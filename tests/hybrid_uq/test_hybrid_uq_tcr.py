@@ -7,7 +7,7 @@ import math
 import numpy as np
 import pytest
 
-from engcore.hybrid_uq import MultistartPolicy, RouteClaim, RouteDecision, route_uncertainty
+from engcore.hybrid_uq import MultistartPolicy, RouteClaim, RouteDecision, RouteReason, route_uncertainty
 from engcore.inference import CalibrationSpec, NoiseModel, calibrate, gaussian_grid_posterior
 from engcore.scientific.units.quantity import Quantity
 from engcore.studies import (
@@ -35,8 +35,19 @@ def _design(temps, nodes):
     return obs, forward, fit, grid
 
 
+#: The claim each design's local route stands behind. WIDE is SUPPORTED. NARROW became DOWNGRADED under I-08
+#: part B (batch 21): with the tail probes widened off the principal axes (R-14), its smallest chi-square rise
+#: ratio is 0.8127 -- the rise 6 reported sd out along the flattest direction of its curvature matrix is 29.3
+#: where a Gaussian predicts 36 -- which is below TAIL_DOWNGRADE_RATIO = 0.90. That is a real measurement and
+#: not a threshold change: the axis probes could not see it, and the model IS non-quadratic that far out. The
+#: numbers are unaffected, which the agreement assertions below still check to within 5% of the dense grid's;
+#: what moved is the WORD, from "the Gaussian describes this posterior" to "it describes it, with a heavier
+#: tail than it reports 6 sd out". benchmarks/core_v2_hybrid_uq/TCR.json was regenerated against this.
+EXPECTED_LOCAL_CLAIM = {"wide": RouteClaim.SUPPORTED, "narrow": RouteClaim.DOWNGRADED}
+
+
 @pytest.mark.parametrize("temps,nodes", [(WIDE, 41), (NARROW, 81)], ids=["wide", "narrow"])
-def test_the_local_route_agrees_with_the_resolved_grid(temps, nodes):
+def test_the_local_route_agrees_with_the_resolved_grid(temps, nodes, request):
     obs, forward, fit, grid = _design(temps, nodes)
     # The canonical multistart. This asked for 3 starts before audit HUQ-01; a search below max(6, 2p + 2) starts
     # can no longer stand behind a SUPPORTED claim, which is what this test asserts.
@@ -45,7 +56,13 @@ def test_the_local_route_agrees_with_the_resolved_grid(temps, nodes):
     # also needs a uniqueness basis, which only a search over the calibration can give it.
     gridded = route_uncertainty(grid=grid, calibration=fit, observations=obs, forward=forward,
                                 multistart=MultistartPolicy())
-    assert local.decision is RouteDecision.LOCAL_GAUSSIAN and local.claim is RouteClaim.SUPPORTED
+    design = request.node.callspec.id
+    assert local.decision is RouteDecision.LOCAL_GAUSSIAN
+    assert local.claim is EXPECTED_LOCAL_CLAIM[design], local.considered
+    if local.claim is RouteClaim.DOWNGRADED:
+        used = [entry for entry in local.considered if entry.get("outcome") == "USED"]
+        assert [entry.get("reason") for entry in used] == [RouteReason.TAIL_HEAVIER_WITHIN_6_SD.value], (
+            local.considered)
     assert gridded.decision is RouteDecision.GRID_AS_SUPPLIED
     gs = np.sqrt(np.diag(gridded.covariance))
     assert np.all(np.abs(np.asarray(local.mean) - np.asarray(gridded.mean)) / gs < 0.05)

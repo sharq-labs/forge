@@ -492,6 +492,17 @@ class RouteDiagnostics:
     #: CORE-001 / R-03: (c1, c2, c3) of that statistic's exact null, which the p-value is derived from on read.
     #: Empty when no leverage test ran.
     leverage_null_cumulants: tuple[float, ...] = ()
+    #: R-13 (re-audit 2026-09-16, I-08 part B): (lambda_min, lambda_max) of the whitened curvature matrix the
+    #: nonlinearity index was judged on, or empty when fewer than two indices had a complete set of probes --
+    #: and on every record written before the rule, which is why the derived checks are skipped when it is
+    #: empty. `nonlinearity_index` must dominate max(|lambda_max - 1|, |1 - lambda_min|).
+    curvature_eigenvalue_bounds: tuple[float, ...] = ()
+    #: R-15: tail probes that reached a smaller radius than asked because the declared box stopped them, and
+    #: were compared with the radius they DID reach.
+    tail_probes_clipped: int = 0
+    #: R-15: tail probes the declared box stopped inside PROBE_SD, where the +/-2 sd probes have already
+    #: measured the rise against their own rule, so there is no tail left to measure. Downgrades.
+    tail_probes_outside_bounds: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim", RouteClaim(self.claim))
@@ -513,6 +524,12 @@ class RouteDiagnostics:
         object.__setattr__(self, "leverage_null_cumulants", tuple(float(c) for c in self.leverage_null_cumulants))
         if self.leverage_null_cumulants and len(self.leverage_null_cumulants) != 3:
             raise HybridUQError("a leverage null is (c1, c2, c3) or absent")
+        object.__setattr__(self, "curvature_eigenvalue_bounds",
+                           tuple(float(v) for v in self.curvature_eigenvalue_bounds))
+        bounds = self.curvature_eigenvalue_bounds
+        if bounds and (len(bounds) != 2 or not all(math.isfinite(v) for v in bounds) or bounds[0] > bounds[1]):
+            raise HybridUQError(
+                "the curvature extremes are (lambda_min, lambda_max), two finite numbers in order, or absent")
         object.__setattr__(self, "thresholds", freeze({str(k): float(v) for k, v in dict(self.thresholds).items()}))
         _require_reasons_follow_measurements(self)
 
@@ -538,6 +555,15 @@ class RouteDiagnostics:
             "minimum_tail_rise_ratio": encode_float(self.minimum_tail_rise_ratio),
             "tail_probes_skipped": int(self.tail_probes_skipped),
         }
+        # R-13 / R-15: written only when they carry information. A record that carried an empty extremes list
+        # or a zero count would say a rule was applied where nothing was measured, and would also change the
+        # bytes of every record that predates the rule.
+        if self.curvature_eigenvalue_bounds:
+            payload["curvature_eigenvalue_bounds"] = encode_vector(self.curvature_eigenvalue_bounds)
+        if self.tail_probes_clipped:
+            payload["tail_probes_clipped"] = int(self.tail_probes_clipped)
+        if self.tail_probes_outside_bounds:
+            payload["tail_probes_outside_bounds"] = int(self.tail_probes_outside_bounds)
         if math.isfinite(self.leverage_weighted_chi_square) or self.leverage_null_cumulants:
             # written only when a leverage test ran: a record that carries the key and not the measurement
             # would say the rule was applied where it was not
@@ -560,6 +586,13 @@ class RouteDiagnostics:
         if "leverage_weighted_chi_square" in payload:
             added["leverage_weighted_chi_square"] = decode_float(payload["leverage_weighted_chi_square"])
             added["leverage_null_cumulants"] = decode_vector(payload.get("leverage_null_cumulants", []))
+        # absent on every record written before I-08 part B, which derives nothing from them
+        if "curvature_eigenvalue_bounds" in payload:
+            added["curvature_eigenvalue_bounds"] = decode_vector(payload["curvature_eigenvalue_bounds"])
+        if "tail_probes_clipped" in payload:
+            added["tail_probes_clipped"] = int(payload["tail_probes_clipped"])
+        if "tail_probes_outside_bounds" in payload:
+            added["tail_probes_outside_bounds"] = int(payload["tail_probes_outside_bounds"])
         return cls(**added,
             parameters=int(payload["parameters"]), observations=int(payload["observations"]),
             jacobian_rank=int(payload["jacobian_rank"]), jacobian_condition=decode_float(payload["jacobian_condition"]),
@@ -727,10 +760,27 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
             refusals |= found_refusals
             downgrades |= found_downgrades
         tail_skipped, tail_ratio = int(d.tail_probes_skipped), float(d.minimum_tail_rise_ratio)
-        if not 0 <= tail_skipped <= 2 * len(TAIL_PROBE_SD) * p:
-            problems.append(f"{tail_skipped} tail probes skipped of {2 * len(TAIL_PROBE_SD) * p}")
+        # R-14 widened the tail direction set from p to p^2 + 2, so the bound on every tail count widens with
+        # it. Widening an upper bound cannot refuse a record that satisfied the narrower one.
+        tail_probe_budget = 2 * len(TAIL_PROBE_SD) * (p * p + 2)
+        if not 0 <= tail_skipped <= tail_probe_budget:
+            problems.append(f"{tail_skipped} tail probes skipped of {tail_probe_budget}")
+        clipped, outside = int(d.tail_probes_clipped), int(d.tail_probes_outside_bounds)
+        if not 0 <= clipped <= tail_probe_budget or not 0 <= outside <= tail_probe_budget:
+            problems.append(f"{clipped} clipped and {outside} out-of-bounds tail probes of {tail_probe_budget}")
         if tail_skipped:
             downgrades.add(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
+        if outside:
+            downgrades.add(RouteReason.TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS)
+        # R-13: the index must account for the matrix the record says it was judged on.
+        bounds = tuple(d.curvature_eigenvalue_bounds)
+        if bounds:
+            index = float(d.nonlinearity_index)
+            implied = max(abs(bounds[1] - 1.0), abs(1.0 - bounds[0]))
+            if not (math.isnan(index) or index >= implied - 1.0e-9 * max(1.0, implied)):
+                problems.append(
+                    f"a nonlinearity index of {index:.6g} is below the {implied:.6g} its own curvature "
+                    f"extremes {bounds} imply")
         if math.isinf(tail_ratio):
             problems.append("a tail rise ratio is finite, or NaN when no tail probe was evaluated")
         found_refusals, found_downgrades = _tail_verdict(tail_ratio)
@@ -1158,19 +1208,164 @@ def _invariant_basis(cov: "np.ndarray") -> tuple["np.ndarray", "np.ndarray"]:
     return mu, sd[:, None] * w
 
 
+def _labelled_probe_directions(lam: np.ndarray, vec: np.ndarray) -> list[tuple[tuple, "np.ndarray"]]:
+    """``(label, direction)`` for every probe, where the label says which entry of the curvature matrix it feeds.
+
+    ``("axis", k)`` is the k-th unit-Mahalanobis axis; ``("plus", i, j)`` and ``("minus", i, j)`` are the two
+    diagonals between axes i and j. R-13 rebuilds the whitened curvature matrix from exactly these, so the
+    label is what ties a measured rise to the entry it determines -- without it the probe loop would have to
+    re-derive which direction it was on from the numbers, which is how a matrix gets assembled out of the
+    wrong probes.
+    """
+    # The direction list is built exactly as it always was -- the two diagonal lines below are pinned by the
+    # mutation population (G33c) and are byte-identical -- and the labels are built beside it. Zipped rather
+    # than appended in pairs so that removing the diagonals removes them from the RESULT too.
+    scaled = [math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k] for k in range(len(lam))]
+    labels: list[tuple] = [("axis", k) for k in range(len(scaled))]
+    directions = list(scaled)
+    for i in range(len(scaled)):
+        for j in range(i + 1, len(scaled)):
+            labels.append(("plus", i, j))
+            labels.append(("minus", i, j))
+            directions.append((scaled[i] + scaled[j]) / math.sqrt(2.0))
+            directions.append((scaled[i] - scaled[j]) / math.sqrt(2.0))
+    return list(zip(labels, directions))
+
+
 def _probe_directions(lam: np.ndarray, vec: np.ndarray) -> list[np.ndarray]:
     """Unit-Mahalanobis probe directions: every principal axis, then every diagonal between two of them.
 
     Each direction has Mahalanobis length 1, so a Gaussian predicts the same chi-square rise, PROBE_SD ** 2, along
     all of them. 2p + 2p(p - 1) probes in all: the diagonals are what see a cross term between two axes.
     """
+    return [direction for _label, direction in _labelled_probe_directions(lam, vec)]
+
+
+def _curvature_matrix(p: int, rises: Mapping[tuple, float]):
+    """``(M, indices)``: the whitened curvature matrix rebuilt from the probes already paid for (R-13).
+
+    THE PROBLEM. Each probed direction was bounded ALONE, against the Gaussian's ``PROBE_SD ** 2``. A
+    curvature error spread over many pairs is small in every single direction and large in their sum: at
+    p = 10 a residual curvature of -0.099 on every pair sat at index 0.0992 -- under the 0.10 downgrade --
+    while along the equal-weight direction the true chi-square rise at 2, 3 and 6 reported sd was 0.5, 1.303
+    and 9.068 against a Gaussian's 4, 9 and 36. The true standard deviation there was 2.24x the reported one.
+
+    THE ARITHMETIC. For a local quadratic ``Q(u) = u^T M u`` in whitened coordinates, the axis probes give
+    ``Q(+/-s e_k) = s^2 M_kk`` and the diagonals give
+    ``Q(s (e_i +/- e_j)/sqrt(2)) = s^2 (M_ii + M_jj)/1 ... = s^2 ((M_ii + M_jj)/2 * 2 +/- 2 M_ij) / 1``, so
+    with the two signs averaged over each direction::
+
+        M_kk = mean_sign Q(+/- s e_k) / s^2
+        M_ij = (Qbar_plus - Qbar_minus) / (2 s^2)
+
+    where ``s = PROBE_SD``. No new forward evaluation: the axes and the diagonals between every pair already
+    determine the form completely.
+
+    AN INCOMPLETE MATRIX IS BUILT OVER WHAT IS COMPLETE. A probe beyond a declared bound or at an
+    inadmissible point leaves an entry unmeasured, so the matrix is assembled over the largest index set
+    whose axis probes AND all of whose pairwise diagonals were evaluated. A principal submatrix's extreme
+    eigenvalues still bound the worst direction from below -- the supremum over unit directions supported on
+    a subset is at most the supremum over all of them -- so the gate is never loosened by the restriction,
+    only reduced in reach, and NONLINEARITY_PROBE_INCOMPLETE already says a probe was missed. Below two
+    complete indices there is no matrix, and this returns ``None``.
+    """
+    square = PROBE_SD ** 2
+
+    def averaged(label):
+        values = [rises[(label, sign)] for sign in (1.0, -1.0) if (label, sign) in rises]
+        return sum(values) / len(values) if len(values) == 2 else None
+
+    diagonal = {k: averaged(("axis", k)) for k in range(p)}
+    complete = [k for k in range(p) if diagonal[k] is not None]
+    pairs: dict[tuple[int, int], float] = {}
+    for i in complete:
+        for j in complete:
+            if j <= i:
+                continue
+            plus, minus = averaged(("plus", i, j)), averaged(("minus", i, j))
+            if plus is None or minus is None:
+                continue
+            pairs[(i, j)] = (plus - minus) / (2.0 * square)
+    # the largest index set every one of whose pairs is measured: drop an index at a time, worst first
+    indices = list(complete)
+    while len(indices) >= 2:
+        missing = {k: sum(1 for i in indices for j in indices
+                          if i < j and (i, j) not in pairs and k in (i, j)) for k in indices}
+        worst = max(indices, key=lambda k: missing[k])
+        if missing[worst] == 0:
+            break
+        indices.remove(worst)
+    if len(indices) < 2:
+        return None
+    matrix = np.eye(len(indices))
+    for a, i in enumerate(indices):
+        matrix[a, a] = float(diagonal[i]) / square
+        for b, j in enumerate(indices):
+            if j > i:
+                matrix[a, b] = matrix[b, a] = pairs[(i, j)]
+    return 0.5 * (matrix + matrix.T), tuple(indices)
+
+
+def _curvature_index(matrix: "np.ndarray") -> tuple[float, tuple[float, float]]:
+    """``(index, (lambda_min, lambda_max))``: the SUPREMUM of the per-direction index, and the extremes it is.
+
+    The per-direction index the route already thresholds is ``|Q(s d) / s^2 - 1| = |d^T M d - 1|`` for a unit
+    whitened direction ``d``, and the supremum of a Rayleigh quotient's deviation from 1 over all unit
+    directions is ``max(|lambda_max - 1|, |1 - lambda_min|)``. So this is the same quantity, maximized over
+    every direction instead of evaluated at 2p^2 of them -- which is why it is compared with
+    NONLINEARITY_DOWNGRADE and NONLINEARITY_REFUSE unchanged, and why it DOMINATES every per-direction index.
+    """
+    values = np.linalg.eigvalsh(np.asarray(matrix, dtype=float))
+    low, high = float(values[0]), float(values[-1])
+    return max(abs(high - 1.0), abs(1.0 - low)), (low, high)
+
+
+def _tail_directions(lam: "np.ndarray", vec: "np.ndarray", matrix, indices) -> list["np.ndarray"]:
+    """Every direction the +/-2 sd probes cover, plus the curvature matrix's two extreme eigenvectors (R-14).
+
+    THE PROBLEM. The 3 and 6 sd tail probes ran along the p axes only. A posterior that is exactly Gaussian
+    on both axes out to 6 sd and saturates along its diagonals beyond about 3 sd was SUPPORTED with no reason
+    at all, and its 95% intervals held 76.8% of the marginal.
+
+    WHY THESE DIRECTIONS. A tail probe asks whether the posterior is heavier than the reported Gaussian
+    SOMEWHERE, and a heavy tail has to be looked for where the local quadratic is least trustworthy. The
+    diagonals are where a cross term lives, which is why the +/-2 sd probes already cover them; the
+    ``lambda_min`` direction is the one the curvature matrix says is flattest, which is where a saturating
+    tail hides. A quasi-random sample of the sphere would be a different rule with a sample size to justify.
+
+    The extreme eigenvectors are in whitened coordinates over ``indices``; they are mapped back by
+    ``sum_k u_k delta_k``, which has Mahalanobis length 1 exactly because the ``delta_k`` are
+    cov-orthonormal in that metric.
+    """
     scaled = [math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k] for k in range(len(lam))]
-    directions = list(scaled)
-    for i in range(len(scaled)):
-        for j in range(i + 1, len(scaled)):
-            directions.append((scaled[i] + scaled[j]) / math.sqrt(2.0))
-            directions.append((scaled[i] - scaled[j]) / math.sqrt(2.0))
+    directions = _probe_directions(lam, vec)
+    if matrix is None or not indices:
+        return directions
+    values, vectors = np.linalg.eigh(np.asarray(matrix, dtype=float))
+    for column in (0, len(values) - 1):
+        u = vectors[:, column]
+        directions.append(sum(float(u[a]) * scaled[k] for a, k in enumerate(indices)))
     return directions
+
+
+def _clipped_radius(z0: "np.ndarray", direction: "np.ndarray", radius: float,
+                    lower: "np.ndarray", upper: "np.ndarray") -> float:
+    """The largest ``r <= radius`` with ``z0 + r * direction`` inside the declared box (R-15).
+
+    A tail probe beyond a declared bound used to be dropped SILENTLY, which made the claim depend on where a
+    bound was put: at 6.01 posterior sd the 6 sd probe ran and refused, at 5.99 it vanished and the claim
+    rose. No posterior mass lies outside a declared bound, so a probe that would leave the box is indeed not
+    measuring the posterior's tail -- the original reasoning is right and the silence was the defect. The
+    probe is clipped to the radius the box allows, compared with that radius squared, and counted.
+    """
+    limit = float(radius)
+    for i in range(len(z0)):
+        step = float(direction[i])
+        if step > 0.0:
+            limit = min(limit, (float(upper[i]) - float(z0[i])) / step)
+        elif step < 0.0:
+            limit = min(limit, (float(lower[i]) - float(z0[i])) / step)
+    return max(limit, 0.0)
 
 
 def _declared_parameterization_digest(parameter_set: CalibrationParameterSet) -> str:
@@ -1379,7 +1574,8 @@ def local_gaussian_posterior(
     lam, vec = _invariant_basis(cov)
     worst, skipped, min_rise, not_minimum, evaluated = 0.0, 0, math.inf, False, 0
     expected = PROBE_SD ** 2
-    for delta in _probe_directions(lam, vec):
+    measured_rises: dict[tuple, float] = {}
+    for label, delta in _labelled_probe_directions(lam, vec):
         for sign in (1.0, -1.0):
             point = z0 + sign * PROBE_SD * delta
             if np.any(point < lower) or np.any(point > upper):
@@ -1392,10 +1588,25 @@ def local_gaussian_posterior(
                 continue
             evaluated += 1
             rise = value - chi_min
+            measured_rises[(label, sign)] = rise
             min_rise = min(min_rise, rise)
             if rise < -1e-9 * max(1.0, chi_min):
                 not_minimum = True
             worst = max(worst, abs(rise / expected - 1.0))
+    # R-13: the probes already paid for, read as a MATRIX. The per-direction index above bounds each
+    # direction alone, and a curvature error spread over many pairs is small in every one of them and large
+    # in their sum. The matrix index is the same quantity -- |d^T M d - 1| -- maximized over EVERY unit
+    # direction, so it dominates the loop above and is compared with the same two declared thresholds.
+    built = _curvature_matrix(p, measured_rises)
+    curvature_bounds: tuple[float, ...] = ()
+    curvature_indices: tuple[int, ...] = ()
+    if built is not None:
+        curvature, curvature_indices = built
+        curvature_worst, extremes = _curvature_index(curvature)
+        curvature_bounds = extremes
+        worst = max(worst, curvature_worst)
+    else:
+        curvature = None
     if evaluated < p:
         # Fewer probes than parameters were compared with the model (audit HUQ-10). The nonlinearity was not
         # measured, and 0.0 is not its value: it is recorded as NaN, and a covariance nobody checked against the
@@ -1414,25 +1625,36 @@ def local_gaussian_posterior(
     # is Gaussian to just past 2 sd and nearly flat beyond, which puts most of its mass outside the reported interval.
     # A probe beyond a declared bound is not needed: no posterior mass lies there.
     tail_skipped, tail_ratio = 0, math.inf
-    for k in range(p):
-        axis = math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k]
+    tail_clipped, tail_outside = 0, 0
+    for axis in _tail_directions(lam, vec, curvature, curvature_indices):
         for radius in TAIL_PROBE_SD:
             for sign in (1.0, -1.0):
-                point = z0 + sign * radius * axis
-                if np.any(point < lower) or np.any(point > upper):
+                # R-15: clipped to the radius the declared box allows, and compared with THAT radius squared.
+                # Dropping the probe made the claim depend on where a bound was put -- 6.01 sd refused and
+                # 5.99 sd was SUPPORTED. Below PROBE_SD there is no tail left to measure, because the +/-2 sd
+                # probes already measured that radius against their own rule; such a probe is not used, and it
+                # is counted rather than silent.
+                reached = _clipped_radius(z0, sign * axis, radius, lower, upper)
+                if reached < PROBE_SD:
+                    tail_outside += 1
                     continue
+                if reached < radius:
+                    tail_clipped += 1
+                point = z0 + sign * reached * axis
                 value = chi_square_at(point)
                 evaluations += 1
                 if value is None:
                     tail_skipped += 1
                     continue
-                tail_ratio = min(tail_ratio, (value - chi_min) / radius ** 2)
+                tail_ratio = min(tail_ratio, (value - chi_min) / reached ** 2)
     tail_ratio = math.nan if math.isinf(tail_ratio) else float(tail_ratio)
     tail_refusals, tail_downgrades = _tail_verdict(tail_ratio)
     refusals.extend(sorted(tail_refusals, key=lambda r: r.value))
     downgrades.extend(sorted(tail_downgrades, key=lambda r: r.value))
     if tail_skipped:
         downgrades.append(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
+    if tail_outside:
+        downgrades.append(RouteReason.TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS)
 
     # a single mode: deterministic multistart through the frozen calibrate
     starts_record: list[dict[str, Any]] = []
@@ -1525,6 +1747,8 @@ def local_gaussian_posterior(
         downgrades=tuple(d for d in downgrades if d.severity is RouteClaim.DOWNGRADED),
         chi_square_minimum=float(chi_min), minimum_tail_rise_ratio=tail_ratio, tail_probes_skipped=tail_skipped,
         leverage_weighted_chi_square=leverage_statistic, leverage_null_cumulants=leverage_cumulants,
+        curvature_eigenvalue_bounds=curvature_bounds, tail_probes_clipped=tail_clipped,
+        tail_probes_outside_bounds=tail_outside,
     )
     posterior = LocalGaussianPosterior(
         approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION, parameter_names=names,

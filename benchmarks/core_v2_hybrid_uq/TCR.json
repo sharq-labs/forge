@@ -25,19 +25,19 @@
     "claim": "SUPPORTED",
     "reasons": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 0.005225483449801782,
+    "nonlinearity_index": 0.004323334753368879,
     "mean": [
-     1.2591462177267174,
-     0.00391589367711874
+     1.2591462177207227,
+     0.0039158936771837
     ],
     "sd": [
-     0.0013806418883279307,
-     1.609341079929174e-05
+     0.001380641888329791,
+     1.6093410799455728e-05
     ],
-    "correlation": -0.9208184917941975,
+    "correlation": -0.9208184917950567,
     "identifiability": "PARAMETERS_IDENTIFIABLE",
-    "forward_evaluations": 190,
-    "wall_seconds": 0.216578199993819
+    "forward_evaluations": 211,
+    "wall_seconds": 0.29447088899905793
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 41,
@@ -47,23 +47,23 @@
      0.003915926175403195
     ],
     "sd": [
-     0.0013806426883029397,
+     0.0013806426883029399,
      1.6093524446565528e-05
     ],
     "identifiability": "PARAMETERS_IDENTIFIABLE",
     "forward_evaluations": 1681,
-    "wall_seconds": 1.6871027999732178
+    "wall_seconds": 2.172697125999548
    },
    "exact_quadrature": {
     "mean": [
-     1.2591447038558292,
-     0.0039159261754191646
+     1.2591447038557535,
+     0.00391592617541897
     ],
     "sd": [
-     0.0013806427183020184,
-     1.6093524797688592e-05
+     0.0013806427183020206,
+     1.6093524797688616e-05
     ],
-    "correlation": -0.9208180582166107
+    "correlation": -0.9208180582166094
    },
    "router_given_the_41_node_grid": {
     "decision": "GRID_AS_SUPPLIED",
@@ -71,30 +71,31 @@
      {
       "route": "GRID_AS_SUPPLIED",
       "outcome": "USED",
-      "reason": ""
+      "reason": "",
+      "detail": "uniqueness: MULTISTART_NO_SECOND_MODE, over 6 start(s), every found mode inside the box"
      }
     ]
    },
    "agreement": {
     "v2_mean_shift_exact_sd": [
-     0.0010964972096946704,
-     0.0020193401279955726
+     0.0010964929225297454,
+     0.0020193360795052696
     ],
     "v2_sd_ratio_exact": [
-     0.9999993988494802,
-     0.9999929165053469
+     0.999999398850826,
+     0.9999929165155352
     ],
     "grid_mean_shift_exact_sd": [
-     8.760245840532293e-10,
-     9.923161346317454e-10
+     9.308665857352824e-10,
+     9.802436376646838e-10
     ],
     "grid_sd_ratio_exact": [
-     0.9999999782716569,
-     0.9999999781823392
+     0.9999999782716554,
+     0.9999999781823378
     ],
     "v2_sd_ratio_grid": [
-     0.9999994205778108,
-     0.9999929383228536
+     0.999999420579158,
+     0.9999929383330434
     ],
     "identifiability_equal": true,
     "within_declared_tolerance": true
@@ -112,22 +113,24 @@
    "calibration_status": "CALIBRATION_CONVERGED",
    "v2_local": {
     "decision": "LOCAL_GAUSSIAN",
-    "claim": "SUPPORTED",
-    "reasons": [],
+    "claim": "DOWNGRADED",
+    "reasons": [
+     "TAIL_HEAVIER_WITHIN_6_SD"
+    ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 0.07527838387588748,
+    "nonlinearity_index": 0.07089470864401326,
     "mean": [
-     1.2643400451880453,
-     0.0032526222525304273
+     1.2643400453559537,
+     0.003252622233613292
     ],
     "sd": [
-     0.006837821987997175,
-     0.000773738219055557
+     0.006837821986799817,
+     0.0007737382187092811
     ],
-    "correlation": -0.9931656721357156,
+    "correlation": -0.9931656721315196,
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
-    "forward_evaluations": 250,
-    "wall_seconds": 0.2142149999854155
+    "forward_evaluations": 266,
+    "wall_seconds": 0.3018089910001436
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 81,
@@ -138,22 +141,22 @@
     ],
     "sd": [
      0.0068379084574761925,
-     0.0007738825692034689
+     0.00077388256920347
     ],
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
     "forward_evaluations": 6561,
-    "wall_seconds": 4.662341999995988
+    "wall_seconds": 6.4215737729973625
    },
    "exact_quadrature": {
     "mean": [
-     1.2643030627565823,
-     0.0032609353399778484
+     1.2643030627565346,
+     0.0032609353399778935
     ],
     "sd": [
-     0.006837922002653202,
-     0.000773884126789759
+     0.0068379220026531995,
+     0.0007738841267897602
     ],
-    "correlation": -0.9931381972261871
+    "correlation": -0.9931381972261906
    },
    "router_given_the_41_node_grid": {
     "decision": "LOCAL_GAUSSIAN",
@@ -166,31 +169,36 @@
      },
      {
       "route": "LOCAL_GAUSSIAN",
+      "outcome": "DOWNGRADED",
+      "reason": "TAIL_HEAVIER_WITHIN_6_SD"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN_DOWNGRADED",
       "outcome": "USED",
-      "reason": ""
+      "reason": "TAIL_HEAVIER_WITHIN_6_SD"
      }
     ]
    },
    "agreement": {
     "v2_mean_shift_exact_sd": [
-     0.005408431311244194,
-     0.010742031215843106
+     0.005408455873690713,
+     0.010742055660304048
     ],
     "v2_sd_ratio_exact": [
-     0.9999853735307324,
-     0.9998114604898186
+     0.9999853733556271,
+     0.9998114600423653
     ],
     "grid_mean_shift_exact_sd": [
-     7.0553776442491e-07,
-     8.300868808139954e-07
+     7.05530782831666e-07,
+     8.300869390950841e-07
     ],
     "grid_sd_ratio_exact": [
-     0.9999980191091673,
-     0.999997987313299
+     0.9999980191091677,
+     0.9999979873132989
     ],
     "v2_sd_ratio_grid": [
-     0.9999873543965154,
-     0.9998134728010989
+     0.9999873542214095,
+     0.9998134723536447
     ],
     "identifiability_equal": true,
     "within_declared_tolerance": true

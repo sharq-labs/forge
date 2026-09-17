@@ -79,5 +79,14 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "a_tail_probe_at_a_bound_is_clipped_compared_at_its_own_radius_and_counted",
+      "what_changed": "The preregistration said a tail probe the declared box stops inside PROBE_SD 'adds the existing NONLINEARITY_PROBE_INCOMPLETE downgrade'. It adds a new appended member instead, TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS, and NONLINEARITY_PROBE_INCOMPLETE keeps exactly the meaning it had.",
+      "the_numbers_that_forced_it": "Two guard mutations survived. B21m removed the `or tail_outside` arm of the downgrade condition and B21m2 removed the whole condition -- and BOTH left the suite green. The reason is structural, not a gap in the tests: along any of the p^2 fixed probe directions the box stops a tail probe inside PROBE_SD only when it also stops that direction's own +/-2 sd probe, because both conditions are `box reach along d < PROBE_SD`. So `nonlinearity_probes_skipped` is non-zero in every such geometry and already emits NONLINEARITY_PROBE_INCOMPLETE. At a bound of 1.5 posterior sd the audited case records nonlinearity_probes_skipped = 2 and tail_probes_outside_bounds = 4, and the downgrade is the same word either way. Folded together, the fact R-15 is ABOUT -- that the tail was never measured -- was unobservable in the record's reasons.",
+      "why_this_is_the_right_correction_and_not_a_widening": "A probe the box stopped inside the radius the +/-2 sd probes already cover is a different fact from a +/-2 sd probe that left the box, and R-15 is precisely about that fact being silent. Emitting a word of its own is what makes it readable, and it is strictly additive: the member is appended, both counts default to 0, and no record written before this rule gains a reason. The two mutations are now killed by the bound-1.5 reproduction, which asserts the new word AND that the old one is still there for the +/-2 sd probes.",
+      "what_was_kept": "the severity is DOWNGRADED, as preregistered; the floor is still PROBE_SD; and the clipped path is unchanged."
+    }
+  ]
 }

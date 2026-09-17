@@ -142,6 +142,14 @@ class RouteReason(str, Enum):
     #: is already refused on a supplied grid and refined across in a rebuild; this is the same hard edge, and growing
     #: the box cannot fix it, which is why it is not GRID_DOES_NOT_CONTAIN_POSTERIOR.
     GRID_CUT_BY_INADMISSIBILITY = "GRID_CUT_BY_INADMISSIBILITY"
+    #: R-15 (re-audit 2026-09-16, I-08 part B): a declared bound stopped a 3 or 6 sd tail probe inside
+    #: PROBE_SD, the radius the +/-2 sd probes already cover, so there was no tail left for it to measure and
+    #: it was not used. A DOWNGRADE and a member of its own, not NONLINEARITY_PROBE_INCOMPLETE: along any of
+    #: the fixed probe directions a tail probe is stopped that early only when that direction's own +/-2 sd
+    #: probe was stopped too, so folding the two together made this fact unobservable -- two guard mutations
+    #: removing the rule survived, which is what put this member here. Appended, not inserted: the member
+    #: order is frozen.
+    TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS = "TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS"
 
     @property
     def severity(self) -> RouteClaim:
@@ -153,7 +161,7 @@ _DOWNGRADES = frozenset({
     "GLOBAL_UNIQUENESS_NOT_ASSESSED", "MULTISTART_INCOMPLETE", "PREDICTIVE_NONLINEAR",
     "RESIDUALS_EXCEED_DECLARED_NOISE", "TAIL_HEAVIER_WITHIN_6_SD", "GRID_NOT_BOUND_TO_EVIDENCE",
     "PREDICTION_DOMAIN_NOT_DECLARED", "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS",
-    "GOODNESS_OF_FIT_UNDERPOWERED",
+    "GOODNESS_OF_FIT_UNDERPOWERED", "TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS",
 })
 
 

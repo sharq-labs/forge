@@ -328,7 +328,8 @@ def test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put(
 # ---------------------------------------------------------------------------
 # R-13, R-14, R-15: the probes (I-08)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-13 open until I-08: the probes bound each direction, not the matrix")
+# Closed by I-08 part B (batch 21): the whitened curvature matrix is rebuilt from the same +/-2 sd probes
+# and gated on its extreme eigenvalues, which ARE the supremum of the per-direction index. xfail at 5a08eef.
 def test_r13_a_curvature_error_spread_over_every_pair_is_not_supported():
     """R-13: a residual curvature of -0.099 on every pair passes every probe at index 0.0992.
 
@@ -357,7 +358,8 @@ def test_r14_a_posterior_flat_along_its_diagonals_is_not_supported():
     assert_mass_floor(result, "off_axis_flat_tail")
 
 
-@pytest.mark.xfail(strict=True, reason="R-15 open until I-08: a tail probe beyond a bound is dropped uncounted")
+# Closed by I-08 part B (batch 21): a tail probe at a declared bound is clipped to the radius the box
+# allows, compared with that radius squared, and counted. xfail at 5a08eef.
 def test_r15_moving_a_declared_bound_across_a_probe_radius_does_not_raise_the_claim():
     """R-15: the same flat-tailed posterior is REFUSED with bounds at 6.01 sd and SUPPORTED at 5.99 sd."""
     outside = _local(F.tail_beyond_a_bound(6.01))
