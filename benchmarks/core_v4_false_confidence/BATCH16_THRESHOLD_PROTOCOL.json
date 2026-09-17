@@ -63,5 +63,13 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "(the runner, not a rule) benchmarks/core_v4_false_confidence/audit/isolated_mutations.py",
+      "what_changed": "an EMPTY mutation set now reports NONE instead of running a control. No pinned mutation in tests/mutation_guards.py targets either file this batch changed, so the pinned run was handed an empty set; it fell through to a control run with an empty test list, which pytest reads as 'collect everything' -- 15 errors and a RED control for a run that measured nothing.",
+      "why_it_matters": "a runner that reports RED when there was nothing to run says something false about the guards, and this runner's own doctrine is that a red control discards the run. Batch 16's own six mutations are unaffected: they ran against a green control before this fix and their verdicts stand.",
+      "after": "BATCH16_PINNED_MUTATIONS.log reads 'NONE (no mutation in this set targets the changed files)'."
+    }
+  ]
 }

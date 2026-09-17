@@ -15,6 +15,12 @@ it, so the dropped Dirichlet condition is never imposed and never checked, and t
 the winning flux law.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH16_THRESHOLD_PROTOCOL.json`.
+
+Six of these were audited reproductions, recorded as `xfail(strict=True)` in commit **e0749c17** and
+confirmed there to fail against the pre-batch tree (6 failed, 2 passed under `--runxfail`): four on DID NOT
+RAISE, which is an assertion about a refusal that is absent, and two on their own assertions. The markers
+came off with the implementation. The two unmarked tests are no-regression guards on the shape every in-tree
+caller uses and on the number the audited run should have produced.
 """
 
 from __future__ import annotations
@@ -81,7 +87,6 @@ def _duplicate_left(mesh: StructuredMesh) -> MeshRegion:
 # =====================================================================
 # R-56: the core gate keys by edge, not by the name a caller chose
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_two_conditions_on_one_edge_under_two_region_ids_are_refused():
     """Both at the SAME value, so nothing else in the layer has a reason to object.
 
@@ -98,7 +103,6 @@ def test_r56_two_conditions_on_one_edge_under_two_region_ids_are_refused():
         require_complete_boundary(_field(mesh), mesh, regions, conditions)
 
 
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_a_dirichlet_and_a_neumann_on_one_edge_are_refused():
     """The corner check only compares Dirichlet pairs, so this went through untouched."""
     mesh = _mesh()
@@ -109,7 +113,6 @@ def test_r56_a_dirichlet_and_a_neumann_on_one_edge_are_refused():
         require_complete_boundary(_field(mesh), mesh, regions, conditions)
 
 
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_a_region_set_that_misses_an_edge_is_not_a_complete_boundary():
     """`one of four edges conditioned, regions=(left,): ACCEPTED as complete`, and then a KeyError."""
     mesh = _mesh()
@@ -118,7 +121,6 @@ def test_r56_a_region_set_that_misses_an_edge_is_not_a_complete_boundary():
         require_complete_boundary(_field(mesh), mesh, (left,), [_dirichlet(left.region_id)])
 
 
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_the_refusal_names_the_edges_that_have_no_condition():
     """Region ids the caller chose, so only an EDGE-keyed message can name what is missing.
 
@@ -153,7 +155,6 @@ def test_r56_a_boundary_conditioned_once_per_edge_is_still_complete():
 # =====================================================================
 # R-56: the consumer that actually chose the winner
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_the_problems_edge_map_refuses_a_collision_instead_of_choosing_a_winner():
     """`edges` is a public property, and a caller may hold a problem the core gate did not build.
 
@@ -175,7 +176,6 @@ def test_r56_the_problems_edge_map_refuses_a_collision_instead_of_choosing_a_win
 # =====================================================================
 # R-56: the audited end-to-end case
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-24 not implemented yet (batch 16 preregistration)")
 def test_r56_the_audited_conduction_case_is_refused_rather_than_silently_solved():
     """9x9 plate, 400 K on `plate:left`, 0 W/m^2 on a second region claiming the same edge.
 

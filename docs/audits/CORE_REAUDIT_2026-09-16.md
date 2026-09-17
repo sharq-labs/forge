@@ -912,3 +912,51 @@ Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists
 anchor intact; `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 16 — I-24
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-24 | **DONE** | `e0749c17` (preregistration + 6 strict xfails), this commit | the edge set is the four `BoundaryEdge` members, because a structured rectilinear mesh is the only support this layer has; a support with another boundary topology would need the set to come from the mesh, and the refusal names which edges it required; a condition whose region is a PART of an edge is not representable here at all, so a partially conditioned edge cannot be declared and is not checked for; and the corner-agreement check keeps keying its prescribed values by region id, which is safe now that a region id and an edge are in bijection for any declaration that reaches it |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-56 | **FIXED** | `require_complete_boundary` now keys BOTH of its checks by the RESOLVED EDGE. Two conditions on one edge are refused whatever their region ids and whatever their kinds — a Dirichlet edge and a Neumann condition on the same edge is the same contradiction with the same silent winner, and the corner rule only ever compared Dirichlet pairs. Completeness is over the SUPPORT's four edges rather than over the caller's own region list, so a caller who passes one region and one condition is told which edges have no condition instead of being told the boundary is complete and then crashing with a `KeyError` inside assembly. Both refusal sentences are unchanged — `One edge, one condition` and `under-determined` — because the rule they state was always the intended one and only the key was wrong. And `SteadyConductionProblem.edges` refuses a collision instead of keeping the last condition: that dict comprehension is where the winner was actually chosen, and the assembly and `_worst_dirichlet_error` both read it, which is why the dropped 400 K Dirichlet edge was never imposed and never checked. The audited case — a 9x9 plate declaring a 400 K left edge and a 0 W/m² flux on the same edge through two region ids, which solved with `field_finite`, `field_linear_system_residual` and `boundary_conditions_held` all PASS and a field maximum of 300.00000000019827 K — is refused when the problem is constructed, and its honest counterpart (the same plate declared once per edge) is committed beside it and reports its maximum as 400 K. |
+
+**Why both ends.** The core gate is where the contradiction is a declaration error; the consumer is where it
+becomes a wrong number. A guard at only one of the two is a guard the other end can be reached without —
+`edges` is a public property and a caller may hold a problem built some other way — so both refuse, and the
+consumer's message says why keeping either condition would be worse than refusing.
+
+**Compatibility.** No field, member, default or signature changed anywhere, nothing was added to a serialized
+record and no schema string is bumped. Three behaviours change on purpose, and each of the three was a state
+that produced a wrong number or a crash: two conditions on one edge under two region ids, a region set that
+does not cover the support, and a Dirichlet plus a Neumann on one edge. Every in-tree caller of
+`require_complete_boundary` passes `boundary_regions(mesh)` — all four edges, one region each, with ids
+derived from the support so two regions cannot claim one edge — which this batch's tests measure rather than
+assume.
+
+**Existing tests edited (no assertion weakened).** None. The two existing refusal tests in
+`tests/test_field_records.py` read the sentences this batch deliberately kept, and both pass unchanged.
+
+**Committed evidence.** Nothing moved: no committed conduction2d record declares a duplicate region or a
+partial region set, and the manufactured-solution and convergence suites pass unchanged.
+
+**Guard mutations.** `BATCH16_MUTATIONS.log`: **6 of 6 KILLED**, control green, none survived a first run.
+Five remove a new rule; the sixth removes the bookkeeping that records an edge as seen, which is the control
+that the completeness check is not vacuously satisfied. No pinned mutation in `tests/mutation_guards.py`
+targets either file this batch changed, so the pinned set is empty — and the runner was fixed to say so: an
+empty set used to fall through to a control run with an empty test list, which pytest reads as "collect
+everything", giving 15 errors and a RED control for a run that measured nothing. Recorded in the protocol's
+`amendment_log`; batch 16's own six ran against a green control before that fix and their verdicts stand.
+
+**Verification.** The targeted files pass (106 tests over `test_core_scientific_audit_batch16`,
+`test_conduction2d`, `test_field_records`, `test_field_profiled_conditions` and the mutation harness). The
+FAST and expensive tier runs were still in flight when this commit was written and are recorded in the
+commit that follows it -- stated that way rather than claimed here.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None in this batch.

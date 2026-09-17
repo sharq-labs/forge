@@ -166,6 +166,17 @@ def run(mutations, *, label: str, scratch: pathlib.Path, log: pathlib.Path | Non
         finally:
             shutil.rmtree(work, ignore_errors=True)
 
+    # NO MUTATIONS, NO CONTROL. An empty set used to fall through to a control run with an empty
+    # test list, which pytest reads as "collect everything" -- 15 errors and a RED control for a run
+    # that measured nothing (batch 16, whose two changed files carry no pinned mutation). A runner
+    # that reports RED when there was nothing to run says something false about the guards.
+    if not mutations:
+        say(f"NONE (no mutation in this set targets the changed files) | label={label}")
+        if log is not None:
+            log.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+            print(f"wrote {log}", flush=True)
+        return 0
+
     control = scratch / f"{label.lower()}_control"
     if control.exists():
         shutil.rmtree(control)

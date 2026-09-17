@@ -221,13 +221,36 @@ class SteadyConductionProblem:
 
     @property
     def edges(self) -> Mapping[BoundaryEdge, FieldBoundaryCondition]:
-        """The condition on each edge, by edge rather than by region id."""
+        """The condition on each edge, by edge rather than by region id.
+
+        **Refuses a collision rather than choosing a winner (I-24, R-56).** This was a dict
+        comprehension keyed by edge, so two conditions resolving to one edge silently kept the
+        LAST -- and the assembly and ``_worst_dirichlet_error`` both read this mapping, so the
+        dropped condition was never imposed and never checked. The audited case declared a 400 K
+        Dirichlet left edge and a 0 W/m² flux on the same edge through two region ids, solved with
+        every check PASS, and returned a field whose maximum was 300 K.
+
+        ``require_complete_boundary`` refuses the same declaration at construction, and this is
+        deliberately the second of the two: that one is where the contradiction is a declaration
+        error, this is where it became a wrong number, and a guard at only one end is a guard the
+        other end can be reached without -- this property is public and a caller may hold a problem
+        built some other way.
+        """
         by_region = {region.region_id: region for region in self.regions}
-        return {
-            by_region[condition.region_id].edge: condition
-            for condition in self.conditions
-            if condition.field_id == self.field.field_id
-        }
+        chosen: dict[BoundaryEdge, FieldBoundaryCondition] = {}
+        for condition in self.conditions:
+            if condition.field_id != self.field.field_id:
+                continue
+            edge = by_region[condition.region_id].edge
+            if edge in chosen:
+                raise Conduction2DError(
+                    f"{self.problem_id!r}: the {edge.value} edge carries two conditions on field "
+                    f"{self.field.field_id!r}, {chosen[edge].name!r} and {condition.name!r}. One "
+                    f"edge, one condition; keeping either of them here would impose one and drop "
+                    f"the other with nothing in the record to say which"
+                )
+            chosen[edge] = condition
+        return chosen
 
 
 def require_applicable(problem: SteadyConductionProblem) -> None:
