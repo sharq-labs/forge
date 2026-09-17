@@ -64,7 +64,32 @@
   "The peak's coordinate is read off the grid lattice, so the distance is quantised to the node spacing on that axis. The band distance is 5.2565 sd and a design box is `sigma_span` sd wide with node counts set by the aliasing rule, so the quantisation is far smaller than the comparison it feeds; it is noted because the rule is stated as an exact inequality.",
   "R-11 stays LIBRARY_ONLY: the rebuild path has no production caller. What this closes is the width a SUPPORTED claim would report if one arrived.",
   "The clamp is at the SOURCE. `RouteDiagnostics`' self-check still refuses a negative cumulant, unchanged, so a record built some other way is still held to it. That is deliberate: the fix is that the computation cannot produce a negative, not that the check tolerates one.",
-  "I-14 is NOT closed by this. Its scope is read-back re-derivation and a record fuzzer; what lands here is the one numerical fact that blocked I-06, and I-14's entry will say so."
+  "I-14 is NOT closed by this. Its scope is read-back re-derivation and a record fuzzer; what lands here is the one numerical fact that blocked I-06, and I-14's entry will say so.",
+  "The refinement regime still reports a width that depends on the declared bound, and this batch does not change that: at declared upper bounds of 11, 12, 13, 14 and 16 the same data give a SUPPORTED sd of 0.6712, 0.8912, 1.129, 1.341 and 1.699, each after one to four truncation halvings. That is the behaviour the audit's own fix direction asks to KEEP -- 'keep truncation refinement for posteriors that actually decay toward the bound' -- because there the bound genuinely truncates a posterior the data have localised, and the moments of a truncated distribution do depend on where it is truncated. It is recorded here in full because a reader comparing the 2.372 / 2.788 / 3.522 sequence this batch refuses with the 0.6712 / 1.699 sequence it allows is entitled to know the line was drawn on purpose and where. Widening the rule to cover it would be a different improvement and would need its own preregistration."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. The FIXTURE R-11 is reproduced on changed, and the reason is the batch's own other fix. A new builder, `false_confidence_cases.one_sided_declared_bound`, replaces `decay_with_upper_bound` in this batch's reproductions and in I-15's INV-4 conformance case.",
+   "the_numbers_that_forced_it": "Once the leverage-null clamp landed, `decay_with_upper_bound` became routable -- and is REFUSED by the local route for MODEL_MISFIT_BEYOND_DECLARED_NOISE, NONLINEAR_BEYOND_LOCAL_GAUSSIAN and PARAMETER_AT_BOUND before the rebuild path is reached at all, at every declared bound in {13, 20, 40, 60, 80}. The audited two-parameter fixture therefore cannot exercise the rule it was written for, and INV-4 would be satisfied VACUOUSLY: there is no SUPPORTED width to compare. The replacement is one-parameter -- y = exp(-t0 x) on x in [0, 1] with a declared sigma of 0.05, the amplitude fixed so x = 0 pins it and the small rates are ruled out -- and it reaches the rebuild and reproduces the audited SIGNATURE exactly: at a true rate of 10 the SUPPORTED rate sd is 2.372, 2.788 and 3.522 for a declared upper bound of 40, 60 and 80, a factor of 1.485 across the range for one set of data. The audit's own numbers for the two-parameter case were 1.743 / 2.037 / 3.473 at bounds 20 / 40 / 80.",
+   "why_this_is_not_choosing_a_fixture_that_flatters_the_fix": "The same builder supplies the CONTROL, at a true rate of 8, where the curve has not decayed within the window and the data bound the rate on both sides: its SUPPORTED sd is 1.201 at every one of the three bounds, before and after this batch. So the case and its control differ in one number, the true rate, and the rule must refuse one and leave the other alone. A rule that refused every rebuild would satisfy INV-4's first half; it fails the control. Both halves are asserted in the conformance case and in this batch's own tests.",
+   "guards_added_while_running": "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_contained_posterior_is_still_supported_and_its_width_is_the_data_s, and the contained half of I-15's INV-4 case -- neither preregistered, both because the substituted fixture made a blanket-refusal rule newly plausible."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": 2,
+   "what_changed": "No rule changed. One reproduction was repointed and one assertion tightened, both forced by this batch's mutation run.",
+   "the_numbers_that_forced_it": "Three of nine mutations survived the first run. (a) B31d and B31e corrupt the distance INSIDE the per-side branch, and the reproduction they named was the CONTAINED case at a true rate of 8 -- where no face reaches its bound at all, so the branch is never entered. They now name a case that really is truncated: at a declared bound of 14 the posterior reaches it, the route halves the steps twice and reports SUPPORTED, which is the halving loop the audit says to keep. (b) B31f removes the side from the refusal's leading sentence, and the assertion looked for the word 'high' ANYWHERE in the detail -- which still passes, because the detail ends with a `dominated side(s): [('theta1', 'high')]` list. It now asserts the sentence, \"the high declared bound of 'theta1'\".",
+   "one_deliberate_survivor": {
+    "id": "B31i",
+    "rule": "the round-off floor's scaling",
+    "why": "Replacing `terms * eps * scale` with a bare `eps` still routes R-11's fixture, because that null's terms are of order 1e-7 and an absolute eps happens to cover their cancellation. It is the failure mode of every absolute tolerance on a relative quantity, and no reproduction in this repository has a leverage null large enough to expose it -- so it is declared `expect=\"SURVIVED\"` with the reason rather than left as an unexplained green. A kill is now the failure."
+   },
+   "guards_added_or_repointed": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_truncated_posterior_that_decays_toward_its_bound_still_takes_the_refinement_path -- replaces the contained-case version and asserts that the halving loop actually ran ('truncation halving(s) on axes [0]' in the detail), so the guard speaks about the branch it guards.",
+    "the side-naming assertion now names the sentence rather than the word."
+   ]
+  }
+ ]
 }

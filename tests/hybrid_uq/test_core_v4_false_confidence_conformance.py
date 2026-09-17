@@ -309,20 +309,39 @@ def test_r20_a_variance_ratio_above_four_is_never_supported(chi_square, points):
 # ---------------------------------------------------------------------------
 # R-11: the declared bound must not set the reported width (I-06)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-11 open until I-06: domination is refused only when both sides truncate")
 def test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put():
-    """R-11: the same data give a rate sd of 4.98, 10.33 and 16.14 with the upper bound at 40, 60 and 80."""
-    widths = {}
+    """INV-4. Closed by I-06 (batch 31): domination is diagnosed one side at a time. xfail at 5a08eef.
+
+    The case is `one_sided_declared_bound` rather than `decay_with_upper_bound`, and the substitution is
+    recorded in BATCH31_THRESHOLD_PROTOCOL.json's amendment 1: once the leverage-null blocker is fixed the
+    audited two-parameter fixture is refused for MODEL_MISFIT_BEYOND_DECLARED_NOISE before the rebuild path
+    is reached, so it would satisfy this invariant VACUOUSLY -- no SUPPORTED width to compare. The
+    one-parameter case reaches the rebuild and reproduces the same signature: at the baseline its SUPPORTED
+    rate sd is 2.372, 2.788 and 3.522 for a declared upper bound of 40, 60 and 80.
+
+    Both halves are asserted, because a rule that refused every rebuild would satisfy the first alone: the
+    one-sided case has no SUPPORTED width at any bound, and the contained case at a rate of 8 keeps one and
+    keeps it CONSTANT across the same three bounds.
+    """
+    widths, contained = {}, {}
     for bound in (40.0, 60.0, 80.0):
-        problem = F.decay_with_upper_bound(bound)
-        result = _rebuilt(problem, multistart=MultistartPolicy())
+        result = _rebuilt(F.one_sided_declared_bound(bound), multistart=MultistartPolicy())
         if result.claim is RouteClaim.SUPPORTED:
             widths[bound] = float(np.sqrt(np.asarray(result.covariance, dtype=float)[0][0]))
-    if len(widths) < 2:
-        return
-    spread = max(widths.values()) / min(widths.values())
+        control = _rebuilt(F.one_sided_declared_bound(bound, rate=8.0), multistart=MultistartPolicy())
+        assert control.claim is RouteClaim.SUPPORTED, (
+            f"the contained case is {control.claim.value} at bound {bound:g}; a rule that refuses every "
+            f"rebuild satisfies this invariant without measuring anything")
+        contained[bound] = float(np.sqrt(np.asarray(control.covariance, dtype=float)[0][0]))
+    if len(widths) >= 2:
+        spread = max(widths.values()) / min(widths.values())
+        assert spread - 1.0 <= SD_RELATIVE_TOLERANCE, (
+            f"a SUPPORTED width moved by a factor {spread:.4g} when only the declared upper bound moved: "
+            f"{widths}")
+    spread = max(contained.values()) / min(contained.values())
     assert spread - 1.0 <= SD_RELATIVE_TOLERANCE, (
-        f"a SUPPORTED width moved by a factor {spread:.4g} when only the declared upper bound moved: {widths}")
+        f"the contained case's SUPPORTED width moved by a factor {spread:.4g} across the same bounds: "
+        f"{contained}")
 
 
 # ---------------------------------------------------------------------------

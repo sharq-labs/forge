@@ -1977,3 +1977,85 @@ under `src/engcore/domains/thermal/` was edited.
 the four changed files all KILLED.
 
 **Open decisions.** None.
+
+### Batch 31 — I-06, and I-15 closes with it
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-06 | **DONE** | `28e4c116` (preregistration + 7 strict xfails), this commit | the REFINEMENT regime still reports a width that depends on the declared bound, by design and by the audit's own instruction — stated in full below; the test is on the FITTED local sd, so if that is itself wrong by orders of magnitude the distance in sd units is wrong with it (the local fit's own adequacy is what I-08's probes are for); a non-finite or non-positive fitted sd skips the per-side test, a defensive branch the local route refuses earlier |
+| I-15 | **DONE** | `5a08eef` (the suite), and this commit | the suite's ratchet is complete: `test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put` was its last `xfail(strict=True)`, and the FAST tier now reports **no xfails at all** where it reported one |
+| I-14 | **PARTIAL** (one part, early) | this commit | only the leverage-null clamp landed, because it blocked I-06 outright; I-14's own scope — read-back re-derivation and a record fuzzer — is untouched |
+
+**R-11 is FIXED.** CORE-002 already refused a grid whose posterior reaches **both** declared bounds of an
+axis. R-11 is the one-sided case that rule let through.
+
+| Claim | Status | How |
+|---|---|---|
+| one reached bound goes to the halving loop, so the bound sets the width | **FIXED** | Domination is now diagnosed one side at a time. When a side's face reaches within ln 1e6 of the peak AND that face is the declared bound, the distance from the peak's own coordinate out to the bound is compared with the fitted local sd. **The threshold is derived, not chosen:** a Gaussian of sd *s* is exactly `EDGE_LOG_LIKELIHOOD_DROP` below its peak at `sqrt(2 ln 1e6)` sd, so a profile still inside the band further out than that is, by arithmetic, wider than the local fit claims. `_GAUSSIAN_BAND_SD` is written as that expression and never as 5.2565 — mutation B31b makes it a literal and is killed. |
+| the refusal does not say which side | **FIXED** | It names the parameter, the side, the distance in local sd and the band distance. The two findings have **opposite remedies**: both sides dominated means the declared range says nothing, one side means the *data* constrain one direction and a wider box makes it worse — which is exactly how the 1.743 / 2.037 / 3.473 sequence was produced. The both-sides wording is left alone, word for word. |
+| a posterior that decays toward its bound must keep refining | **KEPT** | The audit asks for this explicitly, and it is what makes the rule a diagnosis rather than a blanket refusal. At a declared bound of 14 the fixture reaches its bound, halves the steps twice and reports SUPPORTED. Mutations B31d and B31e corrupt the distance inside that branch and are killed by it. |
+
+**A blocker had to be cleared first, and it belongs to I-14.** The leverage null's cumulants are
+`trace(M^k)` for a positive-semidefinite `M`, so none can be negative — but the closed form that avoids
+building an *n × n* matrix computes them by cancellation, and for a problem where one observation holds all
+the leverage it produced **−2.22e-16, exactly −eps**. `RouteDiagnostics`' own self-check refuses a record
+whose null carries a negative cumulant, so `route_uncertainty` **raised** on R-11's fixture at every declared
+bound: the problem could not be routed at all, whatever its verdict would have been. Clamped at the source,
+inside a floor **derived** from the computation — `n · eps · (sum of the summands' magnitudes)`, the standard
+first-order bound on a sum's round-off — so a genuinely negative value, which could only be a coding error,
+still raises. Mutation B31h removes the floor and is killed.
+
+**Amendment 1: the fixture moved, and the batch's own other fix is why.** Once the clamp landed,
+`decay_with_upper_bound` became routable — and is REFUSED for `MODEL_MISFIT_BEYOND_DECLARED_NOISE`,
+`NONLINEAR_BEYOND_LOCAL_GAUSSIAN` and `PARAMETER_AT_BOUND` before the rebuild path is reached, at every
+bound. The audited two-parameter fixture can no longer exercise the rule it was written for, and INV-4 would
+have been satisfied **vacuously**. The replacement is one-parameter — `y = exp(−t0 x)`, amplitude fixed so
+`x = 0` pins it — and reproduces the signature exactly: **2.372 / 2.788 / 3.522** at bounds 40 / 60 / 80, a
+factor of 1.485 for one set of data. What makes this not a fixture chosen to flatter the fix is that **the
+same builder supplies the control**: at a true rate of 8 the data bound the rate on both sides and the
+SUPPORTED sd is **1.201 at every one of those bounds**, before and after. One number differs between case and
+control, and the rule must refuse one and leave the other alone.
+
+**Amendment 2: three mutations survived and each said something.** B31d and B31e corrupt the distance
+*inside* the per-side branch, and named the contained case — where no face reaches a bound, so the branch is
+never entered. B31f removes the side from the refusal's leading sentence, and the assertion looked for the
+word `high` anywhere in the detail, which still passes because the detail ends with a `dominated side(s)`
+list. Both repointed; both killed.
+
+**Where the line is drawn, stated because a reader is entitled to it.** This batch refuses the
+2.372 / 2.788 / 3.522 sequence and **allows** 0.6712 / 0.8912 / 1.129 / 1.341 / 1.699 at bounds of 11, 12,
+13, 14 and 16 — each after one to four truncation halvings. That second sequence is bound-dependent too, and
+it is kept because the audit's own fix direction says to keep it: there the bound genuinely truncates a
+posterior the data *have* localised, and the moments of a truncated distribution do depend on the truncation.
+The line between the two regimes is the 5.2565 sd band distance. Widening the rule to cover the second would
+be a different improvement and would need its own preregistration.
+
+**One mutation is a declared survivor.** B31i replaces the floor's `terms · eps · scale` with a bare `eps`,
+and R-11's fixture still routes — that null's terms are of order 1e-7, so an absolute eps happens to cover
+their cancellation. It is the failure mode of every absolute tolerance on a relative quantity, and no
+reproduction in this tree has a leverage null large enough to expose it. `expect="SURVIVED"` records that, and
+a kill is now the failure.
+
+**Compatibility.** Additive. One new private module-level constant; no new public symbol, no signature,
+field, default or enum member change. `GRID_POSTERIOR_BOUND_DOMINATED` already existed in the vocabulary and
+was already a downgrade. A record's `leverage_null_cumulants` can change from −2.2e-16 to 0.0; no committed
+record carries a negative cumulant, and the self-check that reads them refuses one, so no readable record
+moves.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**One existing expectation moved, and it is I-15's own ratchet.** The INV-4 conformance case's
+`xfail(strict=True)` came off, and the case was rewritten to assert **both** halves — the one-sided case has
+no SUPPORTED width at any bound, and the contained case keeps one and keeps it constant — because a rule that
+refused every rebuild would satisfy the first alone.
+
+**Verification.** FAST tier 6839 passed, 5 skipped, **0 xfailed**, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/hybrid_uq/` 407 passed.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH31_MUTATIONS.log`: **8 of 8 KILLED plus one declared survivor**, control green,
+plus **22 pinned re-runs** on the two changed files all KILLED.
+
+**Open decisions.** None.

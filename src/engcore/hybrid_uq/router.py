@@ -333,6 +333,16 @@ def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest
+#: HOW FAR A GAUSSIAN OF THE FITTED SD REACHES BEFORE IT LEAVES THE ln 1e6 BAND (I-06, R-11).
+#:
+#: A Gaussian of standard deviation s has a log-density exactly
+#: ``EDGE_LOG_LIKELIHOOD_DROP`` below its peak at ``sqrt(2 ln 1e6)`` sd. So if
+#: the fitted local Gaussian were the truth, a profile would already have left
+#: the band by this distance; one still INSIDE the band further out than this is
+#: wider than the local fit claims in that direction. Written as the expression
+#: and not as the literal 5.2565, so it cannot drift from the band it is about.
+_GAUSSIAN_BAND_SD = math.sqrt(2.0 * EDGE_LOG_LIKELIHOOD_DROP)
+
 #: log-likelihood must sit at least EDGE_LOG_LIKELIHOOD_DROP below the grid's maximum (density below 1e-6 of the
 #: peak). The frozen V1 checks verify resolution, not containment, so the router checks containment itself -- on
 #: supplied grids too, since CORE-002 (see _grid_evidence).
@@ -493,8 +503,15 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         # R-17: the forward model's admissible region ending inside the box is the same hard edge as a declared
         # bound. Kept in its own list so the bound-domination rule below never fires on the model's own domain.
         cut = admissibility_cut_axes(ll, ll.shape)
+        # The peak's own coordinate on each axis, for the per-side domination
+        # test below. Read off the lattice, so it is quantised to the node
+        # spacing -- far finer than the 5.2565 sd comparison it feeds.
+        peak_index = np.unravel_index(int(np.argmax(ll)), ll.shape)
+        one_sided = []
         for i in range(p):
             width = hi[i] - lo[i]
+            steps = max(int(nodes[i]) - 1, 1)
+            peak_at = lo[i] + float(peak_index[i]) * (hi[i] - lo[i]) / steps
             for side, index, bound in (("low", 0, lower[i]), ("high", -1, upper[i])):
                 edge = lo[i] if side == "low" else hi[i]
                 face = float(np.max(np.take(ll, index, axis=i)))
@@ -502,6 +519,23 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                 if abs(edge - bound) <= tolerance[i]:
                     if reaches:
                         truncated.append(i)
+                        # R-11: ONE reached declared bound is enough, when the
+                        # posterior stays inside the band all the way out to it
+                        # over more than a Gaussian of the fitted sd could
+                        # reach. The both-sides rule below let this through, and
+                        # the sd reported then belonged to wherever the bound
+                        # was declared: 1.743, 2.037 and 3.473 for the same data
+                        # with the bound at 20, 40 and 80.
+                        #
+                        # A posterior that DECAYS toward its bound -- a peak
+                        # sitting at one, say -- has a distance of about zero
+                        # here, nowhere near the band distance, so it falls
+                        # through to the halving loop exactly as before. That is
+                        # what makes this a diagnosis and not a blanket refusal.
+                        if math.isfinite(sd[i]) and sd[i] > 0.0:
+                            reach = abs(bound - peak_at) / float(sd[i])
+                            if reach > _GAUSSIAN_BAND_SD:
+                                one_sided.append((local.parameter_names[i], side, reach))
                     continue
                 if reaches:
                     if side == "low":
@@ -522,6 +556,20 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         return None, (RouteReason.GRID_POSTERIOR_BOUND_DOMINATED,
                       f"the posterior reaches both declared bounds of {dominated} within ln 1e6 of its peak: the width "
                       f"reported there would be the declared range's, not the data's")
+    # R-11 (I-06): the same finding one side at a time, named as one side. Kept
+    # SEPARATE from the rule above, and reported after it, because the two call
+    # for different remedies: both sides dominated means the declared range is
+    # too narrow to say anything, one side means the DATA constrain only one
+    # direction and a wider box makes it worse. A refusal that did not
+    # distinguish them is what produced the 1.743 / 2.037 / 3.473 sequence.
+    if one_sided:
+        worst = max(one_sided, key=lambda item: item[2])
+        named = sorted({(name, side) for name, side, _reach in one_sided})
+        return None, (RouteReason.GRID_POSTERIOR_BOUND_DOMINATED,
+                      f"the posterior runs to the {worst[1]} declared bound of {worst[0]!r} while staying within "
+                      f"ln 1e6 of its peak over {worst[2]:.3g} local sd, more than the {_GAUSSIAN_BAND_SD:.4g} sd a "
+                      f"Gaussian of that sd would reach: the width reported there is the bound's, not the data's "
+                      f"(dominated side(s): {named})")
 
     halvings = 0
     truncated = sorted(set(truncated) | set(cut))

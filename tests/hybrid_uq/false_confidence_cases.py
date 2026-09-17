@@ -312,6 +312,26 @@ def decay_with_upper_bound(bound: float):
                    np.linspace(0.0, 1.0, 8), (30.0, 2.0), 0.05, (0.01, 0.01), (bound, 10.0), (5.0, 1.0))
 
 
+def one_sided_declared_bound(bound: float, rate: float = 10.0):
+    """p=1: y = exp(-t0 x) on x in [0, 1], whose rate's LOWER side is bounded by the data and whose upper side is not.
+
+    ADDED while implementing I-06 (batch 31), not part of the original reproduction set, and the reason is
+    recorded in BATCH31_THRESHOLD_PROTOCOL.json's amendment 1: :func:`decay_with_upper_bound` -- the audited
+    two-parameter fixture -- is refused for MODEL_MISFIT_BEYOND_DECLARED_NOISE before the rebuild path is
+    reached once the leverage-null blocker is fixed, so it can no longer exercise the rule it was written for.
+
+    At a rate of 10 the curve has decayed to 4.5e-5 by x = 1, well under the declared sigma of 0.05, so every
+    rate above about 10 predicts the same thing and the data say nothing about how large it is. The amplitude
+    is fixed, so x = 0 pins it and the small rates are ruled out. That is the one-sided case exactly, and it
+    reproduces the audited signature: at ``rate=10`` the SUPPORTED sd is 2.372, 2.788 and 3.522 for a declared
+    upper bound of 40, 60 and 80 -- the bound setting the answer. At ``rate=8`` the posterior is contained and
+    the sd is 1.201 at every one of those bounds, which is the control.
+    """
+    return Problem(f"R11_one_sided_{bound:g}_{rate:g}",
+                   lambda t, x: np.exp(-float(t[0]) * np.asarray(x, dtype=float)),
+                   np.linspace(0.0, 1.0, 8), (rate,), 0.05, (0.01,), (bound,), (rate,))
+
+
 # ---------------------------------------------------------------------------
 # R-17 (finding 19): a posterior cut by forward-model inadmissibility counts as contained
 # ---------------------------------------------------------------------------

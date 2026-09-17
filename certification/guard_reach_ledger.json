@@ -340,6 +340,35 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A spread read with `magnitude_in` DOWNSTREAM of a declaration. `studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` do so at several points; those reads are safe because the declaration guard admits only ratio-scale units, where the two readers agree exactly -- but they are safe BY that guard and not by their own statement. And a `Quantity` handed around loose still carries no statement of whether it is a point or a span: what this improvement adds is that every declared spread FIELD makes that statement at construction."
+  },
+  {
+   "problem": "R-11",
+   "title": "A posterior cut at the declared upper bound, with data bounding only the lower side, is SUPPORTED",
+   "rule": "src/engcore/hybrid_uq/router.py",
+   "rule_symbol": "_rebuild_grid's per-side bound-domination test over _GAUSSIAN_BAND_SD = sqrt(2 * EDGE_LOG_LIKELIHOOD_DROP), beside the existing both-sides rule; and src/engcore/hybrid_uq/local_gaussian.py::_clamp_leverage_cumulant, the I-14 part that had to land first",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-06 (batch 31); the batch also closes I-15's last open conformance case",
+   "why": "LATENT. The rebuild path is reached only by a caller that supplies both a MultistartPolicy and a table builder: the production calibration study routes a SUPPLIED grid and the MCP tools form no predictive interval at all, so no production path can present the shape. The rule is nevertheless fixed in the router because that is where the width a claim reports is decided. What this closes is the width a SUPPORTED claim WOULD report if such a caller arrived -- 2.372, 2.788 and 3.522 for one set of data at declared upper bounds of 40, 60 and 80. Note that the leverage-null clamp shipped in the same batch IS on every local route, production included; it is carried on I-14's row when that lands, and is recorded here because R-11 could not be exercised at all without it.",
+   "what_would_create_it": "Any caller that rebuilds a grid from a local covariance -- the documented way to get a posterior when the supplied grid is refused -- on a problem where the data constrain a parameter from one side only. A decay rate whose signal is gone inside the observation window is the ordinary case: every rate above some value predicts the same thing, so the upper side is whatever was declared.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with rebuild= and multistart=)"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_posterior_running_to_one_declared_bound_is_passed_over",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_contained_posterior_is_still_supported_and_its_width_is_the_data_s",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_truncated_posterior_that_decays_toward_its_bound_still_takes_the_refinement_path",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_band_distance_is_derived_from_the_band_and_not_chosen",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_refusal_names_the_parameter_and_which_side_it_ran_to",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_fixture_is_routable_at_all",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_cumulant_far_below_the_round_off_floor_is_refused_and_not_clamped",
+    "tests/hybrid_uq/test_core_v4_false_confidence_conformance.py::test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The refinement regime, and deliberately. A posterior the data HAVE localised but which a declared bound truncates still reports a width that depends on where the bound is -- 0.6712, 0.8912, 1.129, 1.341 and 1.699 at bounds of 11, 12, 13, 14 and 16 -- because the moments of a truncated distribution do depend on the truncation, and the audit's own fix direction asks for that path to be kept. The line between the two regimes is the 5.2565 sd band distance and it is drawn on purpose; BATCH31_THRESHOLD_PROTOCOL.json states both sequences so the choice is visible."
   }
  ]
 }

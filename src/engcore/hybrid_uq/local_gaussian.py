@@ -172,10 +172,62 @@ def _leverage_null_cumulants(weights: "np.ndarray", basis: "np.ndarray") -> tupl
     h = np.einsum("ij,ij->i", U, U) if U.size else np.zeros(d.shape)
     G = U.T @ (d[:, None] * U) if U.size else np.zeros((0, 0))
     G2 = U.T @ ((d ** 2)[:, None] * U) if U.size else np.zeros((0, 0))
+    # NON-NEGATIVE BY ARITHMETIC, AND THE CLOSED FORM REACHES ZERO BY
+    # CANCELLATION (I-14, landed in the batch that needed it).
+    #
+    # `c_k = trace(M^k)` with `M = (I - H) D (I - H)` positive semidefinite --
+    # `D = diag(h)` has `h` in [0, 1] and `I - H` is an orthogonal projector --
+    # so none of the three can be negative. `c2` is half the statistic's
+    # variance and `c3` an eighth of its third central moment, and neither can
+    # be negative for a quadratic form in N(0, I).
+    #
+    # The form above is written out precisely so that nothing of size n x n is
+    # built, and the price of that trade is cancellation: for a problem where
+    # one observation holds all the leverage the true cumulants are zero and
+    # this arithmetic produced -2.22e-16, which is exactly -eps. The route's own
+    # `_require_reasons_follow_measurements` refuses a record whose null carries
+    # a negative cumulant, so such a problem could not be ROUTED at all -- it
+    # raised before any verdict was reached.
+    #
+    # Clamped at the source rather than tolerated at the check, and only inside
+    # a floor derived from the computation, so a genuinely negative value -- the
+    # only other way one could arise being a coding error -- still raises.
+    terms1 = float(np.sum(np.abs(d)) + np.sum(np.abs(h * d)))
+    terms2 = float(np.sum(d ** 2) + 2.0 * np.sum(np.abs(h * d ** 2)) + abs(np.trace(G @ G)))
+    terms3 = float(np.sum(np.abs(d) ** 3) + 3.0 * np.sum(np.abs(h * d ** 3))
+                   + 3.0 * abs(np.trace(G @ G2)) + abs(np.trace(G @ G @ G)))
+    count = max(int(d.size), 1)
     c1 = float(np.sum(d) - np.sum(h * d))
     c2 = float(np.sum(d ** 2) - 2.0 * np.sum(h * d ** 2) + np.trace(G @ G))
     c3 = float(np.sum(d ** 3) - 3.0 * np.sum(h * d ** 3) + 3.0 * np.trace(G @ G2) - np.trace(G @ G @ G))
-    return c1, c2, c3
+    return (
+        _clamp_leverage_cumulant(c1, scale=terms1, terms=count, name="c1"),
+        _clamp_leverage_cumulant(c2, scale=terms2, terms=count, name="c2"),
+        _clamp_leverage_cumulant(c3, scale=terms3, terms=count, name="c3"),
+    )
+
+
+def _clamp_leverage_cumulant(value: float, *, scale: float, terms: int, name: str) -> float:
+    """A leverage null cumulant, with round-off at zero removed and nothing else.
+
+    The floor is DERIVED and not chosen: ``terms * eps * scale``, with ``scale``
+    the sum of the magnitudes of the summands that formed ``value``, is the
+    standard first-order bound on the round-off of a sum of that many terms. A
+    value inside it is indistinguishable from zero in float64; a value outside
+    it is not round-off, and clamping it would turn this function into a way of
+    accepting a coding error. (I-14.)
+    """
+    if value >= 0.0:
+        return float(value)
+    floor = float(terms) * float(np.finfo(float).eps) * abs(float(scale))
+    if value >= -floor:
+        return 0.0
+    raise HybridUQError(
+        f"the leverage null's {name} came out {value!r}, which is below the "
+        f"round-off floor {-floor!r} of its own computation. It is the trace of "
+        f"a power of a positive-semidefinite matrix and cannot be negative, so "
+        f"this is not cancellation but an error in how it was formed"
+    )
 
 
 def _three_moment_p_value(statistic: float, c1: float, c2: float, c3: float) -> float:
