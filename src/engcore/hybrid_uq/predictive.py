@@ -236,6 +236,12 @@ class RoutedPredictiveUncertainty:
             else:
                 if float(nonlinearity) < 0.0:
                     raise HybridUQError("a negative predictive nonlinearity")
+                if not math.isfinite(float(nonlinearity)):
+                    # R-37: NaN is "not measured" and is handled above. An infinity is a measured deviation
+                    # with no scale to measure it against, which is a refusal and not a record.
+                    raise HybridUQError(
+                        "a predictive nonlinearity of infinity is a linearization with no parameter "
+                        "uncertainty to scale it against, which a record cannot carry")
                 if (float(nonlinearity) > PREDICTIVE_NONLINEARITY_DOWNGRADE) != (RouteReason.PREDICTIVE_NONLINEAR in self.reasons):
                     raise HybridUQError(f"a predictive nonlinearity of {float(nonlinearity):.3g} and reasons "
                                         f"{[r.value for r in self.reasons]} disagree about PREDICTIVE_NONLINEAR")
@@ -497,7 +503,12 @@ def linearized_predictive_uq(
         # A deviation is measured in units of the PARAMETER standard uncertainty (audit HUQ-11): scaled by the total,
         # a large measurement sigma hid a parameter part curved enough to move the parameter interval off its mass.
         # Since the parameter sd never exceeds the total, this never reads less nonlinearity than the total scale did.
-        nonlinearity = 0.0
+        # R-37: ONE number per SPEC. The deviations below are already a vector over the specs, and the
+        # maximum was taken over the whole call -- so an exactly affine prediction in the same call as a
+        # quadratic one recorded the quadratic one's number, and its read-back rule then derived
+        # PREDICTIVE_NONLINEAR for it from someone else's curvature. A record has to be about the thing it
+        # names.
+        nonlinearity = np.zeros(len(specs))
         lam, vec = np.linalg.eigh(cov)
         directions = _probe_directions(lam, vec)
         for i in range(len(specs)):
@@ -520,20 +531,33 @@ def linearized_predictive_uq(
                 with np.errstate(divide="ignore", invalid="ignore"):
                     relative = np.where(parameter_sd > 0.0, deviation / np.where(parameter_sd > 0.0, parameter_sd, 1.0),
                                         np.where(deviation > 0.0, math.inf, 0.0))
-                nonlinearity = max(nonlinearity, float(np.max(relative)))
+                nonlinearity = np.maximum(nonlinearity, relative)
     else:
         # A caller who chooses not to measure linearity has not shown it: every probe counts as not evaluated, so
         # the claim is capped at DOWNGRADED. predictive_nonlinearity stays None, which says nothing was measured.
         skipped = 2 * len(z0)
+    if nonlinearity is not None and not np.all(np.isfinite(nonlinearity)):
+        # R-37: inf is not a large nonlinearity -- it is the absence of a scale to measure one against. The
+        # deviation is expressed in units of the PARAMETER standard uncertainty because that is what the
+        # reported interval is built from; where that uncertainty is exactly 0 the interval is a point, and a
+        # probe that moves the prediction at all says the point is wrong by an amount the interval cannot
+        # express. There is no number to downgrade, so the route refuses -- which is what "a refused route
+        # emits no predictive uncertainty" already says everywhere else here. It was emitted DOWNGRADED.
+        worst = [keys[i] for i in range(len(specs)) if not math.isfinite(float(nonlinearity[i]))]
+        raise RouteRefusedError(
+            f"the linearization of {worst} has no parameter uncertainty for its own curvature to be measured "
+            f"against: the probes move it and its reported interval is a point. A prediction whose "
+            f"linearization cannot be scaled is refused, not downgraded")
     reasons = set(posterior.diagnostics.downgrades)
-    if nonlinearity is not None and nonlinearity > PREDICTIVE_NONLINEARITY_DOWNGRADE:
-        reasons.add(RouteReason.PREDICTIVE_NONLINEAR)
     if skipped:
         reasons.add(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
     q = float(norm.ppf(0.5 + level / 2.0))
     out = []
     for i, spec in enumerate(specs):
         spec_reasons = reasons | _prediction_domain_reasons(spec, calibration_observations, posterior)
+        measured = None if nonlinearity is None else float(nonlinearity[i])
+        if measured is not None and measured > PREDICTIVE_NONLINEARITY_DOWNGRADE:
+            spec_reasons = spec_reasons | {RouteReason.PREDICTIVE_NONLINEAR}
         claim = claim_for(spec_reasons)
         out.append(RoutedPredictiveUncertainty(
             observation_key=spec.observation_key, unit=spec.unit, approximation_class=ApproximationClass.LINEARIZED_PREDICTIVE_UQ,
@@ -542,9 +566,73 @@ def linearized_predictive_uq(
             parameter_interval=(float(g0[i] - q * parameter_sd[i]), float(g0[i] + q * parameter_sd[i])),
             total_interval=(float(g0[i] - q * total_sd[i]), float(g0[i] + q * total_sd[i])), confidence_level=level,
             sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED, posterior_digest=posterior.digest,
-            route_claim=claim, reasons=tuple(spec_reasons), predictive_nonlinearity=nonlinearity,
+            route_claim=claim, reasons=tuple(spec_reasons), predictive_nonlinearity=measured,
         ))
     return tuple(out)
+
+
+#: R-23: the table is supposed to BE ``predict``'s values on these nodes, and ``predict`` is deterministic, so
+#: the only admissible disagreement is floating point. Same form as this module's probe-deviation and
+#: variance-roundoff bounds.
+TABLE_ROUNDOFF_FACTOR = 64.0
+
+
+def _spot_check_nodes(posterior: PosteriorGrid, predictive_table: AdmittedForwardTable,
+                      spec: PredictiveObservableSpec) -> tuple[int, ...]:
+    """The nodes a grid prediction's reported numbers stand on (R-23).
+
+    Three, chosen deterministically among the nodes that are admissible in BOTH the posterior and the table
+    and carry non-zero posterior weight: the node of maximum posterior weight, and the nodes attaining the
+    table's smallest and largest value for THIS prediction.
+
+    WHY THESE AND NOT A COUNT. A count would be a threshold with nothing behind it. These are the nodes the
+    ANSWER is made of: the reported mean is dominated by the highest-weight node, and the reported interval's
+    ends cannot lie outside the table's extreme values over the support. A table that is systematically wrong
+    -- the audited case is a factor of two -- disagrees at the first of them. A table wrong at one low-weight
+    interior node is NOT caught, and the bound on that is explicit: such a node moves the reported mean by at
+    most its own weight times its own deviation.
+    """
+    weights = np.asarray(posterior.weights, dtype=float)
+    values = np.asarray(predictive_table.values, dtype=float)
+    column = list(predictive_table.observation_keys).index(spec.observation_key)
+    usable = (np.asarray(posterior.admissible_mask, dtype=bool)
+              & np.asarray(predictive_table.admissible_mask, dtype=bool)
+              & (weights > 0.0))
+    if not usable.any():
+        return ()
+    heaviest = int(np.argmax(np.where(usable, weights, -np.inf)))
+    lowest = int(np.argmin(np.where(usable, values[:, column], np.inf)))
+    highest = int(np.argmax(np.where(usable, values[:, column], -np.inf)))
+    return tuple(sorted({heaviest, lowest, highest}))
+
+
+def _require_table_is_the_model(posterior: PosteriorGrid, predictive_table: AdmittedForwardTable,
+                               spec: PredictiveObservableSpec, predict: ForwardEvaluator) -> None:
+    """Refuse a predictive table that is not ``predict``'s values at the nodes the numbers stand on (R-23).
+
+    A caller who passes ``predict`` beside a table is asserting that the table IS that model's values on
+    these nodes. That assertion is true or false, not evidence to be weighed, so a false one is refused --
+    the same shape as CORE-005's refusal for a grid that is not this request's evidence, and as part A's
+    refusal of calibration observations the posterior was not fitted to. Before this, the grid path took both
+    arguments and used only the table.
+    """
+    column = list(predictive_table.observation_keys).index(spec.observation_key)
+    values = np.asarray(predictive_table.values, dtype=float)
+    points = np.asarray(predictive_table.points, dtype=float)
+    reference = (Quantity(0.0, spec.unit),)
+    for node in _spot_check_nodes(posterior, predictive_table, spec):
+        got = evaluate(predict, tuple(points[node]), (spec.observation_key,), (spec.unit,), reference)
+        if got is None:
+            raise HybridUQError(
+                f"the predictive model refuses node {node} of the table it is supposed to be the values of, "
+                f"which the table admits: the two do not describe the same model")
+        stated, fresh = float(values[node, column]), float(got[0])
+        tolerance = TABLE_ROUNDOFF_FACTOR * float(np.finfo(float).eps) * max(abs(stated), abs(fresh), 0.0)
+        if not abs(stated - fresh) <= tolerance:
+            raise HybridUQError(
+                f"the predictive table states {stated!r} for {spec.observation_key!r} at node {node} and the "
+                f"predict passed with it gives {fresh!r}: a grid prediction's numbers are the table's, so a "
+                f"table that is not this model's values is refused rather than reported")
 
 
 def grid_predictive_uncertainty(
@@ -559,6 +647,7 @@ def grid_predictive_uncertainty(
     observations=None,
     forward: ForwardEvaluator | None = None,
     calibration=None,
+    predict: ForwardEvaluator | None = None,
 ) -> RoutedPredictiveUncertainty:
     """The frozen grid predictive, in the V2 record, for a grid the router's own judgement accepts.
 
@@ -573,10 +662,25 @@ def grid_predictive_uncertainty(
         raise HybridUQError("grid_predictive_uncertainty takes a PosteriorGrid")
     claim = _grid_route_claim(posterior)
     claim, reasons = _grid_evidence_judgement(posterior, claim, observations, forward, calibration)
-    reasons = tuple(sorted(set(reasons) | _prediction_domain_reasons(spec, observations), key=lambda r: r.value))
+    found = set(reasons) | _prediction_domain_reasons(spec, observations) | _table_reasons(
+        posterior, predictive_table, spec, predict)
+    reasons = tuple(sorted(found, key=lambda r: r.value))
     claim = claim_for(reasons)
     return _grid_record(posterior, predictive_table, spec, claim, reasons, twin=twin, model=model, source_ref=source_ref,
                         confidence_level=confidence_level)
+
+
+def _table_reasons(posterior, predictive_table, spec, predict) -> set:
+    """R-23: the table checked against ``predict``, or the record saying nobody checked it.
+
+    Without the downgrade the spot-check would be silenced by omitting an optional argument, which is the
+    shape of R-12 one layer down -- and R-12 is the problem part A of this same improvement closed. A rule a
+    caller turns off by passing nothing is not a rule.
+    """
+    if predict is None:
+        return {RouteReason.PREDICTIVE_TABLE_NOT_CHECKED}
+    _require_table_is_the_model(posterior, predictive_table, spec, predict)
+    return set()
 
 
 def _grid_record(posterior, predictive_table, spec, claim, reasons, *, twin, model, source_ref, confidence_level):

@@ -14,6 +14,11 @@ prediction's NUMBERS.
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH23_THRESHOLD_PROTOCOL.json`. No new threshold: the
 nonlinearity rule is a finiteness requirement and a per-row maximum, and the table check is an identity at
 three named nodes to floating-point roundoff.
+
+The nine reproductions that reproduced were committed as strict xfails in `49e0b2f2`, before any of part B
+was written, and each was confirmed there to fail on its own assertion. The markers came off in the
+implementing commit. The tenth held already and was unmarked at preregistration, with a comment above it
+saying why it is kept.
 """
 
 from __future__ import annotations
@@ -87,7 +92,6 @@ def _affine_frame():
     return post, np.asarray(post.inference_point), vec, np.sqrt(lam)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r37_each_record_carries_its_own_nonlinearity():
     """One curved output in a call must not make an exactly affine one in the same call report its number."""
     post, z0, vec, s = _affine_frame()
@@ -103,10 +107,12 @@ def test_r37_each_record_carries_its_own_nonlinearity():
     assert float(affine.predictive_nonlinearity) < 1.0e-6, affine.predictive_nonlinearity
     assert RouteReason.PREDICTIVE_NONLINEAR in curved.reasons
     assert RouteReason.PREDICTIVE_NONLINEAR not in affine.reasons
-    assert affine.route_claim is RouteClaim.SUPPORTED, [r.value for r in affine.reasons]
+    # both records carry PREDICTION_DOMAIN_NOT_DECLARED, because neither spec declares a condition -- part A's
+    # rule and nothing to do with this one. What this test is about is that the CURVATURE reason and the
+    # number behind it are the ones this prediction's own probes measured.
+    assert set(affine.reasons) == {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}, [r.value for r in affine.reasons]
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r37_a_prediction_with_no_parameter_uncertainty_that_the_probes_move_is_refused():
     """inf is not a large nonlinearity; it is the absence of a scale to measure one against."""
     post, z0, vec, s = _affine_frame()
@@ -122,7 +128,6 @@ def test_r37_a_prediction_with_no_parameter_uncertainty_that_the_probes_move_is_
         linearized_predictive_uq(post, predict, [PredictiveObservableSpec("quadratic", UNIT)])
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r37_a_record_carrying_a_nonfinite_nonlinearity_is_refused_on_read():
     post, _z0, _vec, _s = _affine_frame()
     (good,) = linearized_predictive_uq(post, lambda t: [Quantity(float(t[0]) + float(t[1]), UNIT)],
@@ -159,32 +164,40 @@ def _grid_frame():
     return problem, grid, table, spec
 
 
+def _predict_one(problem, spec):
+    """``predict`` for a grid prediction returns THAT prediction's value, one per spec, as the local path does."""
+    index = list(problem.observations.keys).index(spec.observation_key)
+
+    def predict(theta):
+        values = problem.forward(theta)
+        return None if values is None else [values[index]]
+
+    return predict
+
+
 def _doubled(table):
     return dataclasses.replace(table, values=np.asarray(table.values, dtype=float) * 2.0)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_a_table_of_twice_the_model_is_refused_when_predict_is_passed():
     """The audited case: a table of twice the model, passed together with the correct predict()."""
     problem, grid, table, spec = _grid_frame()
     _takes_predict(grid_predictive_uncertainty)
-    with pytest.raises(HybridUQError):
+    with pytest.raises(HybridUQError, match="is refused rather than reported"):
         grid_predictive_uncertainty(grid, _doubled(table), spec, twin=TWIN, model=S.MODEL, source_ref="audit",
                                     observations=problem.observations, forward=problem.forward,
-                                    calibration=problem.calibrate(), predict=problem.forward)
+                                    calibration=problem.calibrate(), predict=_predict_one(problem, spec))
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_the_table_that_is_the_model_is_accepted_and_says_it_was_checked():
     problem, grid, table, spec = _grid_frame()
     _takes_predict(grid_predictive_uncertainty)
     record = grid_predictive_uncertainty(grid, table, spec, twin=TWIN, model=S.MODEL, source_ref="audit",
                                          observations=problem.observations, forward=problem.forward,
-                                         calibration=problem.calibrate(), predict=problem.forward)
+                                         calibration=problem.calibrate(), predict=_predict_one(problem, spec))
     assert _reason("PREDICTIVE_TABLE_NOT_CHECKED") not in record.reasons, [r.value for r in record.reasons]
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_a_table_nobody_checked_says_so():
     """A rule a caller turns off by passing nothing is not a rule -- R-12 one layer down."""
     problem, grid, table, spec = _grid_frame()
@@ -195,7 +208,6 @@ def test_r23_a_table_nobody_checked_says_so():
     assert record.route_claim is RouteClaim.DOWNGRADED
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_the_checked_nodes_are_the_ones_the_reported_numbers_stand_on():
     """The maximum-weight node and the two nodes attaining the table's extreme values on the support."""
     module = _module()
@@ -211,17 +223,16 @@ def test_r23_the_checked_nodes_are_the_ones_the_reported_numbers_stand_on():
     assert int(np.argmax(np.where(usable, values, -np.inf))) in nodes
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_the_router_checks_the_table_it_is_handed_beside_a_predict():
     problem, grid, table, spec = _grid_frame()
     result = route_uncertainty(grid=grid, calibration=problem.calibrate(), observations=problem.observations,
                                forward=problem.forward, multistart=MultistartPolicy())
     assert result.decision is RouteDecision.GRID_AS_SUPPLIED, result.considered
     _takes_predict(grid_predictive_uncertainty)
-    with pytest.raises(HybridUQError):
-        routed_predictive_uncertainty(result, [spec], predict=problem.forward, predictive_table=_doubled(table),
+    with pytest.raises(HybridUQError, match="is refused rather than reported"):
+        routed_predictive_uncertainty(result, [spec], predict=_predict_one(problem, spec), predictive_table=_doubled(table),
                                       twin=TWIN, model=S.MODEL, source_ref="audit")
-    (record,) = routed_predictive_uncertainty(result, [spec], predict=problem.forward, predictive_table=table,
+    (record,) = routed_predictive_uncertainty(result, [spec], predict=_predict_one(problem, spec), predictive_table=table,
                                               twin=TWIN, model=S.MODEL, source_ref="audit")
     assert _reason("PREDICTIVE_TABLE_NOT_CHECKED") not in record.reasons
     (unchecked,) = routed_predictive_uncertainty(result, [spec], predictive_table=table, twin=TWIN,
@@ -229,15 +240,14 @@ def test_r23_the_router_checks_the_table_it_is_handed_beside_a_predict():
     assert _reason("PREDICTIVE_TABLE_NOT_CHECKED") in unchecked.reasons
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part B not implemented yet (batch 23 preregistration)")
 def test_r23_the_tolerance_is_roundoff_and_a_disagreement_of_one_part_in_a_million_is_refused():
     """`predict` is deterministic and the table is supposed to BE its values, so only roundoff is admissible."""
     problem, grid, table, spec = _grid_frame()
     nudged = np.asarray(table.values, dtype=float).copy()
     nudged *= 1.0 + 1.0e-6
     _takes_predict(grid_predictive_uncertainty)
-    with pytest.raises(HybridUQError):
+    with pytest.raises(HybridUQError, match="is refused rather than reported"):
         grid_predictive_uncertainty(grid, dataclasses.replace(table, values=nudged), spec, twin=TWIN,
                                     model=S.MODEL, source_ref="audit", observations=problem.observations,
                                     forward=problem.forward, calibration=problem.calibrate(),
-                                    predict=problem.forward)
+                                    predict=_predict_one(problem, spec))

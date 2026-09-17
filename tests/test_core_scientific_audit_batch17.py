@@ -101,6 +101,11 @@ def test_r02_a_predictive_decomposition_carries_its_route_claim_and_reasons():
         payload = decomposition.to_dict()
         assert payload["route_claim"] == decomposition.route_claim
         assert payload["reasons"] == list(decomposition.reasons)
+        # R-23 (I-13 part B, batch 23): this study builds its predictive table from its own production
+        # forward model, so it hands that model to the table check and its records are CHECKED rather than
+        # downgraded. A production record reading PREDICTIVE_TABLE_NOT_CHECKED would mean the study had the
+        # model and did not use it.
+        assert "PREDICTIVE_TABLE_NOT_CHECKED" not in decomposition.reasons, decomposition.reasons
 
 
 def test_r02_held_out_metrics_carry_the_route_claim_and_reasons():

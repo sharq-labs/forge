@@ -441,6 +441,7 @@ def _routed(
     *,
     calibration: ObservationSet,
     forward,
+    predict,
     twin: TwinReference,
     credible_mass: float,
 ):
@@ -463,7 +464,28 @@ def _routed(
         twin=twin, model=TCR_MODEL_REF, source_ref=spec.observation_key,
         confidence_level=credible_mass,
         observations=calibration, forward=forward,
+        # R-23 (I-13 part B): the table this study builds is checked against the forward model it was built
+        # from, at the nodes the reported numbers stand on. Without it the record would say
+        # PREDICTIVE_TABLE_NOT_CHECKED, which is the true statement about a table nobody compared with
+        # anything -- and this study HAS the model, so there is nothing to withhold.
+        predict=predict,
     )
+
+
+def _predict_one(observations: ObservationSet, key: str, *, reference_temperature, temperatures_by_condition,
+                 counter):
+    """A one-output evaluator for R-23's table check: this prediction's value, from the production model."""
+    index = list(observations.keys).index(key)
+    evaluator = _forward_for(
+        observations, reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition, counter=counter,
+    )
+
+    def predict(point):
+        values = evaluator(point)
+        return None if values is None else [values[index]]
+
+    return predict
 
 
 def _forward_for(
@@ -542,6 +564,9 @@ def predict_held_out(
         routed = _routed(
             posterior, predictive_table, spec,
             calibration=split.calibration, forward=forward,
+            predict=_predict_one(
+                split.held_out, observation.key, reference_temperature=reference_temperature,
+                temperatures_by_condition=temperatures_by_condition, counter=counter),
             twin=twin, credible_mass=credible_mass,
         )
         out.append(
@@ -621,6 +646,9 @@ def validate_held_out(
             conditions={CONDITION_TEMPERATURE: temperatures_by_condition[first.condition_id]},
         ),
         calibration=split.calibration, forward=forward,
+        predict=_predict_one(
+            split.held_out, first.key, reference_temperature=reference_temperature,
+            temperatures_by_condition=temperatures_by_condition, counter=counter),
         twin=twin, credible_mass=credible_mass,
     )
 

@@ -1447,3 +1447,62 @@ control green, plus 18 pinned re-runs on the two changed files all KILLED. Five 
   declared exactly the design's names.
 
 **Open decisions.** None.
+
+### Batch 23 — I-13 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-13 | **DONE** | `dd96dfcc`, `2fff3b4f` (part A), `49e0b2f2` (part B preregistration + 9 strict xfails), this commit | the spot-check is three nodes, so a table wrong only at low-weight interior nodes is not caught — the bound is each such node's weight times its deviation on the mean, and nothing tighter is claimed; a FINITE nonlinearity is still only a downgrade however large, which is what the improvement's brief asks for (a finite refusal threshold would be a separate rule with its own consequences for committed evidence); `PREDICTIVE_TABLE_NOT_CHECKED` is not re-derived on read, because a record does not carry whether a `predict` was available when it was built, which is the limit every build-time-only reason in this module has; the check compares the table with `predict` in the SPEC's unit, so a table built in another unit of the same dimension disagrees at roundoff and reads as a disagreement rather than a unit mismatch; and nothing here binds `predict` to the calibration's own forward model, which is the limit part A already stated |
+
+**Two problems about the prediction's numbers.** Part A bound the domain statement; part B is what the record
+says about its own uncertainty and where its numbers came from.
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-37 | **FIXED** | The probe deviations were already a vector over the specs and the maximum was taken over the whole CALL, so an exactly affine prediction in the same call as a quadratic one recorded the quadratic one's number — and its own read-back rule then derived `PREDICTIVE_NONLINEAR` for it from someone else's curvature. Each record now carries the maximum its OWN probes measured. And a spec whose nonlinearity is not finite is REFUSED: `linearized_predictive_uq` raises naming it, and a record carrying an infinity is refused on read. **Why a refusal and not a downgrade:** inf is not a large nonlinearity, it is the absence of a scale to measure one against. The deviation is expressed in units of the PARAMETER standard uncertainty because that is what the reported interval is built from; where that uncertainty is exactly 0 the interval is a point, and a probe that moves the prediction at all says the point is wrong by an amount the interval cannot express. There is no number to downgrade — which is what "a refused route emits no predictive uncertainty" already says everywhere else in this module. NaN keeps exactly the meaning it had: nothing was measured, which is `NONLINEARITY_PROBE_INCOMPLETE`. |
+| R-23 | **FIXED** | `grid_predictive_uncertainty` and `routed_predictive_uncertainty` take `predict` on the grid path, and the router used to accept it and apply it only on the LOCAL path — a grid result read its numbers out of the table with the model sitting unused in the same call. The table is now checked against it **at the nodes the reported numbers stand on**: among nodes admissible in both the posterior and the table and carrying non-zero posterior weight, the node of maximum posterior weight and the nodes attaining the table's smallest and largest value for this prediction. **Why those and not a count:** a count would be a threshold with nothing behind it. These are the nodes the answer is made of — the reported mean is dominated by the highest-weight node, and the reported interval's ends cannot lie outside the table's extreme values over the support — so the audited factor-of-two table disagrees at the first of them. The tolerance is roundoff (`64·eps·max(|table|, |predict|)`, the form this module already uses), because `predict` is deterministic and the table is supposed to BE its values; a disagreement RAISES, the same shape as part A's digest refusal. And a grid prediction made with no `predict` carries a new appended downgrade, `PREDICTIVE_TABLE_NOT_CHECKED` — without it the check would be silenced by omitting an optional argument, which is R-12 one layer down, and R-12 is the problem part A of this same improvement closed. |
+
+**The reach half.** `engcore.studies.calibration_study` — the one production path to a predictive interval —
+BUILDS its predictive table from its own production forward model, so it now hands that model to the check on
+every prediction and its records are checked rather than downgraded. A production record reading
+`PREDICTIVE_TABLE_NOT_CHECKED` would mean the study had the model and did not use it, and
+`test_core_scientific_audit_batch17.py::test_r02_a_predictive_decomposition_carries_its_route_claim_and_reasons`
+now asserts it does not.
+
+**Compatibility.** `RouteReason` gains one APPENDED member. `grid_predictive_uncertainty`,
+`routed_predictive_uncertainty` and the study's private `_routed` gain one keyword argument;
+`predictive_nonlinearity` already existed and only its VALUE becomes per-spec. No record gains a field. A
+record written before this batch still reads back: `PREDICTIVE_TABLE_NOT_CHECKED` is derived at BUILD time
+from the absence of an argument and is never re-derived on read, so an old grid record without it is not
+refused. The non-finite refusal is a new read-back rule and no committed record carries a non-finite
+nonlinearity — the audit found that shape in a constructed case, not in evidence.
+
+**Existing expectations moved, two of them, neither weakened.**
+`test_audit_hybrid_grid_route.py::test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement`
+now passes a one-output `predict` for its SUPPORTED case — the claim it asserts is unchanged, and the test
+gained two new assertions: the same grid with no `predict` carries exactly
+`PREDICTIVE_TABLE_NOT_CHECKED`, and the unbound case's reason list grows by it. One test in batch 17 gained
+the production assertion above.
+
+**Verification.** FAST tier 6754 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Committed evidence.** Nothing moved, and nothing was regenerated. `TCR.json`, `FAILURE_CASES.json`,
+`PERFORMANCE.json` and `WHEEL_V2.json` build their predictive numbers through the frozen
+`posterior_predictive_uq` directly, not through `grid_predictive_uncertainty`, so neither the table check nor
+the new downgrade reaches them. `KINETICS_K2.json` is the one record built through the routed grid path and
+it is NOT regenerated (its MULTI multistart alone is ~76 min of CSTR solves); its SUPERSEDED marker stands
+and these two rules are two more reasons it is superseded.
+
+**Guard mutations.** `BATCH23_MUTATIONS.log`: **12 of 12 KILLED on the first run**, both controls green, plus
+25 pinned re-runs on the three changed files all KILLED. Nothing survived, which is the first batch in this
+round where that happened — the guards were written from the reproductions rather than around them, and two
+of the twelve (B23d and B23h) exist precisely because the obvious mutation of a rule is not the only one: a
+per-spec array can be computed and then overwritten by its own maximum, and a roundoff tolerance can be
+turned into a threshold without removing a line.
+
+**Open decisions.** None.

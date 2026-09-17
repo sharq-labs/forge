@@ -45,7 +45,7 @@ from .local_gaussian import (
 from .predictive import (
     RoutedPredictiveUncertainty, _grid_record, _grid_route_claim, _prediction_domain_reasons,
     _require_weights_follow_likelihood, grid_digest,
-    grid_predictive_uncertainty, linearized_predictive_uq,
+    grid_predictive_uncertainty, linearized_predictive_uq, _table_reasons,
 )
 from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
@@ -867,7 +867,11 @@ def routed_predictive_uncertainty(
     _grid_route_claim(result.grid)
     out = []
     for spec in specs:
-        reasons = tuple(sorted(_prediction_domain_reasons(spec, calibration_observations), key=lambda r: r.value))
+        # R-23 (I-13 part B): `predict` was accepted here and used only on the LOCAL path, so a grid result
+        # read its numbers out of the table and never compared them with the model passed beside it.
+        found = _prediction_domain_reasons(spec, calibration_observations) | _table_reasons(
+            result.grid, predictive_table, spec, predict)
+        reasons = tuple(sorted(found, key=lambda r: r.value))
         out.append(_grid_record(result.grid, predictive_table, spec, claim_for(reasons), reasons, twin=twin, model=model,
                                 source_ref=source_ref, confidence_level=confidence_level))
     return tuple(out)

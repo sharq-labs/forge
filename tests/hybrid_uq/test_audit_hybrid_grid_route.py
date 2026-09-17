@@ -88,15 +88,31 @@ def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     # CORE-006: a prediction at the sixth observation's x, inside the range the conditioned observations declare
     spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
                                     conditions={"x": Quantity(float(P.x[5]), "dimensionless")})
+    # R-23 (I-13 part B, batch 23): SUPPORTED also needs the table to have been CHECKED against the model it
+    # is supposed to be the values of. `predict` returns this prediction's value, one per spec, as the local
+    # path's does; without it the record carries PREDICTIVE_TABLE_NOT_CHECKED, which the third case below
+    # asserts. The claim asserted here is unchanged.
+    def predict(theta):
+        values = P.forward(theta)
+        return None if values is None else [values[5]]
+
     record = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
-                                         source_ref="audit", observations=S.conditioned(P), forward=P.forward)
+                                         source_ref="audit", observations=S.conditioned(P), forward=P.forward,
+                                         predict=predict)
     assert record.route_claim.value == "SUPPORTED" and record.parameter_standard_uncertainty > 0.0
+    # and the same grid with no predict to check its table against is DOWNGRADED for exactly that
+    nobody_checked = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"),
+                                                 model=S.MODEL, source_ref="audit",
+                                                 observations=S.conditioned(P), forward=P.forward)
+    assert {r.value for r in nobody_checked.reasons} == {"PREDICTIVE_TABLE_NOT_CHECKED"}
     # CORE-005 and CORE-006: without the evidence that binds it, the same grid is not SUPPORTED, and nothing states the
     # range the prediction may claim either
     unbound = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
                                           source_ref="audit")
     assert unbound.route_claim.value == "DOWNGRADED"
-    assert [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE", "PREDICTION_DOMAIN_NOT_DECLARED"]
+    assert [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE", "PREDICTION_DOMAIN_NOT_DECLARED",
+                                                  # R-23 (batch 23): and nobody checked the table either
+                                                  "PREDICTIVE_TABLE_NOT_CHECKED"]
 
 
 # ---------------------------------------------------------------------------

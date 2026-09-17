@@ -150,6 +150,12 @@ class RouteReason(str, Enum):
     #: removing the rule survived, which is what put this member here. Appended, not inserted: the member
     #: order is frozen.
     TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS = "TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS"
+    #: R-23 (re-audit 2026-09-16, I-13 part B): a grid-route prediction read its numbers out of a predictive
+    #: TABLE with no `predict` to check the table against, so nothing established that the table holds the
+    #: model's values on those nodes. A table of twice the model reported a SUPPORTED mean of 3.949 where the
+    #: honest answer was 1.975. A DOWNGRADE, because the numbers are whatever the table says and the claim is
+    #: what cannot be stood behind. Appended, not inserted: the member order is frozen.
+    PREDICTIVE_TABLE_NOT_CHECKED = "PREDICTIVE_TABLE_NOT_CHECKED"
 
     @property
     def severity(self) -> RouteClaim:
@@ -162,6 +168,7 @@ _DOWNGRADES = frozenset({
     "RESIDUALS_EXCEED_DECLARED_NOISE", "TAIL_HEAVIER_WITHIN_6_SD", "GRID_NOT_BOUND_TO_EVIDENCE",
     "PREDICTION_DOMAIN_NOT_DECLARED", "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS",
     "GOODNESS_OF_FIT_UNDERPOWERED", "TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS",
+    "PREDICTIVE_TABLE_NOT_CHECKED",
 })
 
 
