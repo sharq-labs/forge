@@ -199,10 +199,14 @@ class ObservationSplit:
                     by_content.setdefault(observation_content_digest(item), []).append(
                         f"{side}:{item.key}"
                     )
+            # R-32 (re-audit 2026-09-16): a collision WITHIN one half is a copy by the same argument -- same
+            # observable, same value, same sigma, different condition_id. Inside the held-out half the
+            # consequence is worse than leakage: the paired differences of a comparison become identical, so
+            # its sample variance is exactly zero and the standard-error test is vacuous.
             collisions = {
                 digest: where
                 for digest, where in by_content.items()
-                if len({entry.split(":", 1)[0] for entry in where}) > 1
+                if len({entry.split(":", 1)[0] for entry in where}) > 1 or len(where) > 1
             }
             if collisions:
                 examples = sorted(
@@ -228,6 +232,17 @@ class ObservationSplit:
                     f"measurement. If this study really does carry exact replicates, declare it with "
                     f"allow_exact_replicates()"
                 )
+            # R-32: and within each half, for the same reason
+            for side, observations in (("calibration", self.calibration.observations),
+                                       ("held_out", self.held_out.observations)):
+                inside = _near_duplicates(observations, observations)
+                if inside:
+                    raise DataLeakageError(
+                        f"{len(inside)} pair(s) of {side} observations are one reading repeated to within a "
+                        f"millionth of its declared sigma: {inside[:3]!r}. Counted as separate measurements they "
+                        f"inflate n and drive the paired standard error of a model comparison to zero. If this "
+                        f"study really does carry exact replicates, declare it with allow_exact_replicates()"
+                    )
 
     @property
     def calibration_dataset_id(self) -> str:
@@ -437,6 +452,11 @@ def _require_posterior_conditioned_on_calibration(
 #: CORE-017: two readings of one observable are the same reading when their values differ by at most this fraction of
 #: the larger declared sigma and their sigmas by at most this relative amount (class C, a copy-detection resolution).
 NEAR_DUPLICATE_RELATIVE_TO_SIGMA = 1.0e-6
+#: R-32 (re-audit 2026-09-16): the tolerance for the LINEAGE route below, where the two rows carry the same
+#: ``source_ref`` -- the same row, imported twice, possibly with a re-declared sigma or under a new observable name.
+#: Looser than the numeric route's, and affordable there: that route compares only pairs that share a provenance
+#: string, so its false-match exposure is a handful of pairs rather than n_cal * n_held of them.
+NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA = 1.0e-3
 
 
 def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float, float]:
@@ -447,20 +467,52 @@ def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float,
     return base, value, abs(upper.magnitude_in(base) - value)
 
 
-def _near_duplicates(calibration, held_out) -> list[tuple[str, str]]:
-    """Pairs across the halves that are one reading: same observable and base unit, values within 1e-6 sigma, sigmas within 1e-6."""
+def _near_duplicates(left, right) -> list[tuple[str, str]]:
+    """Pairs that are one reading. Two routes, and only one of them may ignore the declared sigma (audit R-32).
+
+    * The NUMERIC route: the same observable name and base unit, the values within
+      ``NEAR_DUPLICATE_RELATIVE_TO_SIGMA`` of the larger declared sigma, AND the sigmas within the same
+      tolerance. This is the original rule.
+    * The LINEAGE route: the same non-empty ``source_ref`` and base unit, and the values within
+      ``NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA``. The observable NAME and the declared SIGMA are both
+      ignored here: the same row imported twice may be renamed and may have its uncertainty re-declared, and
+      the provenance is what says it is the same row.
+
+    Why the sigma requirement survives on the numeric route, against the audit's suggestion to drop it: the
+    B3 battery evidence contains two cross-half pairs of readings whose recorded voltages are BIT-IDENTICAL
+    (the instrument quantizes) and whose combined standard uncertainties differ by 4.8e-6 of a sigma, at
+    distinct rows, distinct rested conditions and distinct ``source_ref``s. Those are two measurements. On
+    value alone, at any tolerance, they are indistinguishable from the re-import the audit asks to catch, so
+    lineage is the discriminator and the numeric route keeps both conditions.
+
+    The two sides may be the two halves of a split or one half against itself; the caller decides, and a pair
+    is reported at most once.
+    """
     by_observable: dict[tuple[str, str], list[tuple[float, float, str]]] = {}
-    for item in calibration:
+    by_lineage: dict[tuple[str, str], list[tuple[float, float, str]]] = {}
+    for item in left:
         unit, value, sigma = _base_value_and_sigma(item)
         by_observable.setdefault((item.observable_name, unit), []).append((value, sigma, item.key))
-    found = []
-    for item in held_out:
+        if str(item.source_ref).strip():
+            by_lineage.setdefault((str(item.source_ref).strip(), unit), []).append((value, sigma, item.key))
+    found, seen = [], set()
+    for item in right:
         unit, value, sigma = _base_value_and_sigma(item)
-        for other_value, other_sigma, other_key in by_observable.get((item.observable_name, unit), ()):
+        candidates = [(NEAR_DUPLICATE_RELATIVE_TO_SIGMA, True, other)
+                      for other in by_observable.get((item.observable_name, unit), ())]
+        if str(item.source_ref).strip():
+            candidates += [(NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA, False, other)
+                           for other in by_lineage.get((str(item.source_ref).strip(), unit), ())]
+        for tolerance, needs_same_sigma, (other_value, other_sigma, other_key) in candidates:
+            if other_key == item.key or (other_key, item.key) in seen:
+                continue
             scale = max(sigma, other_sigma)
-            if abs(value - other_value) <= NEAR_DUPLICATE_RELATIVE_TO_SIGMA * scale and \
-                    abs(sigma - other_sigma) <= NEAR_DUPLICATE_RELATIVE_TO_SIGMA * scale:
-                found.append((other_key, item.key))
+            if abs(value - other_value) > tolerance * scale:
+                continue
+            if needs_same_sigma and abs(sigma - other_sigma) > tolerance * scale:
+                continue
+            seen.add((other_key, item.key))
+            found.append((other_key, item.key))
     return found
 
 

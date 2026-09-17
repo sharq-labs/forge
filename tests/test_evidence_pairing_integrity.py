@@ -177,6 +177,10 @@ def test_only_typed_assessments_are_compared():
 
 
 def test_the_identity_covers_exactly_the_declared_fields():
+    # I-18 (batch 13) APPENDED split_content_digest: the two dataset ids above are STRINGS, so two
+    # calibration campaigns labelled alike paired as one evidence and the difference in their training data
+    # was reported as a model preference (audit R-24). The list is asserted in full, as before, so a field
+    # can still only join it deliberately.
     assert EVIDENCE_IDENTITY_FIELDS == (
         "observation_key",
         "observed_value",
@@ -185,6 +189,7 @@ def test_the_identity_covers_exactly_the_declared_fields():
         "heldout_dataset_id",
         "posterior_dataset_id",
         "twin",
+        "split_content_digest",
     )
     item = _assess(MA, "H1:y")
     assert item.evidence.likelihood_sigma == 2.0

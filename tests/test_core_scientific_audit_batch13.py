@@ -18,11 +18,11 @@ Out-of-sample model comparison rests on four things, and each one was a label.
   flag on unbound assessments (or fabricated log densities) names a model.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH13_THRESHOLD_PROTOCOL.json`. The sixteen
-reproductions here were committed as `xfail(strict=True)` first and run with `--runxfail` to watch each fail
-on its own assertion. Five tests carry no marker and never did, because they pass at the preregistration
-commit and must keep passing: the same split still pairs and is still decisive; declared replicates are still
-allowed; a copy rounded to eight significant digits is already caught; and two comparison cases that this
-data already answers correctly.
+reproductions here were committed as `xfail(strict=True)` at 28ae62ad and run with `--runxfail` to watch
+each fail on its own assertion; the markers came off when I-18 was implemented. Five tests carry no marker
+and never did, because they passed at 28ae62ad and must keep passing: the same split still pairs and is still
+decisive; declared replicates are still allowed; a copy rounded to eight significant digits is already
+caught; and two comparison cases that this data already answers correctly.
 """
 
 from __future__ import annotations
@@ -44,7 +44,12 @@ from engcore.adequacy.predictive import (
     PredictiveObservationAssessment,
 )
 from engcore.inference import AdmittedForwardTable, GaussianObservation, ObservationSet, gaussian_grid_posterior
-from engcore.inference.split import DataLeakageError, ObservationSplit, allow_exact_replicates
+from engcore.inference.split import (
+    DataLeakageError,
+    ObservationSplit,
+    allow_exact_replicates,
+    observation_content_digest as observation_content_digest_of,
+)
 from engcore.scientific import ModelReference, Quantity, TwinReference
 from engcore.uq import PredictiveObservableSpec
 
@@ -117,7 +122,6 @@ def _verified(item):
 # =====================================================================
 # R-24: content binding binds the content
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r24_a_spec_sigma_that_is_not_the_declared_one_is_refused():
     """The audited record: a 0.05 K spec sigma against a declared 0.5 K makes B decisively preferred."""
     split, xs = _split()
@@ -125,14 +129,12 @@ def test_r24_a_spec_sigma_that_is_not_the_declared_one_is_refused():
         _assess("A", GOOD, split, xs, sigma=0.05)
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r24_a_twin_that_is_not_the_splits_twin_is_refused():
     split, xs = _split()
     with pytest.raises(ModelAdequacyError, match="(?i)twin"):
         _assess("A", GOOD, split, xs, twin=OTHER_TWIN)
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r24_the_identity_carries_the_splits_content():
     split, xs = _split()
     items = _assess("A", GOOD, split, xs)
@@ -143,7 +145,42 @@ def test_r24_the_identity_carries_the_splits_content():
             for item in _assess("A", GOOD, other, other_xs)} != digests
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
+def test_r24_a_record_written_before_this_rule_keeps_the_digest_it_had():
+    """The new identity key is written only when non-empty, and hashes only when non-empty.
+
+    The pinned digest below is the one the pre-batch canonical form produces for this identity, recomputed
+    by hand from the seven fields it had. So a stored record does not become unreadable because the identity
+    grew a field it never carried. Not a reproduction: it is the compatibility the rule promises.
+    """
+    from engcore.adequacy.predictive import PredictiveEvidenceIdentity
+
+    identity = PredictiveEvidenceIdentity(
+        observation_key="H1:y", observed_value=12.0, unit="kelvin", likelihood_sigma=2.0,
+        heldout_dataset_id="HOLD-1", posterior_dataset_id="TRAIN-1", twin=TwinReference("twin", "1"))
+    assert identity.split_content_digest == ""
+    assert identity.digest == "fadf5b6aa9fb6a34c9e61f8b138794932e6433334fc2268558c482ec8c6b83cc"
+    assert "split_content_digest" not in identity.to_dict()
+    bound = dataclasses.replace(identity, split_content_digest="a" * 64)
+    assert bound.digest != identity.digest
+    assert identity.differences(bound) == ("split_content_digest",)
+
+
+def test_r32_a_near_copy_inside_one_half_is_refused_too():
+    """Not bit-identical, so the exact content digest misses it: the near-duplicate rule is the one that sees
+    it, and it now looks inside each half."""
+    xs = _xs(12)
+    held = tuple(k for i, k in enumerate(xs) if i >= 8)
+    keep = next(k for k in xs if k not in held)
+    readings = tuple(_reading(k, 2.0 * x) for k, x in xs.items())
+    original = next(o for o in readings if o.condition_id == keep)
+    nudged = _reading("nudged", original.value.magnitude + 1.0e-8 * SIGMA, source=original.source_ref)
+    assert nudged.value.magnitude != original.value.magnitude
+    source_set = ObservationSet(readings + (nudged,), dataset_id="source")
+    with pytest.raises(DataLeakageError, match="(?i)calibration observations are one reading"):
+        ObservationSplit.partition(source_set, held_out_condition_ids=held, twin=TWIN,
+                                   calibration_dataset_id="calibration", heldout_dataset_id="heldout")
+
+
 def test_r24_two_campaigns_under_the_same_labels_do_not_pair_as_one_evidence():
     """The audited record: identical models on different calibration data, delta -5.8 and se 0.86, decisive.
 
@@ -154,11 +191,10 @@ def test_r24_two_campaigns_under_the_same_labels_do_not_pair_as_one_evidence():
     second, second_xs = _split(offset=0.75)
     left = _assess("A", GOOD, first, xs)
     right = _assess("B", GOOD, second, second_xs)
-    try:
-        comparison = compare_log_predictive_scores(A, left, B, right)
-    except ModelAdequacyError:
-        return
-    assert comparison.preferred_model is None, (comparison.delta_a_minus_b, comparison.why)
+    # the identity NAMES the split content, so this is the same refusal every other identity field gets --
+    # two models receive a comparative conclusion only on the same canonical evidence
+    with pytest.raises(ModelAdequacyError, match="split_content_digest"):
+        compare_log_predictive_scores(A, left, B, right)
 
 
 def test_r24_the_same_split_still_pairs_and_is_still_decisive():
@@ -172,7 +208,6 @@ def test_r24_the_same_split_still_pairs_and_is_still_decisive():
 # =====================================================================
 # R-34: content binding is verified, not declared
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r34_a_flipped_flag_on_unbound_assessments_names_no_preferred_model():
     """The audited record: dataclasses.replace(x, content_bound=True) gives a decisive 15.9-nat preference."""
     split, xs = _split(count=40)
@@ -183,7 +218,6 @@ def test_r34_a_flipped_flag_on_unbound_assessments_names_no_preferred_model():
     assert comparison.preferred_model is None, comparison.why
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r34_a_fabricated_log_density_names_no_preferred_model():
     split, xs = _split(count=40)
     left = _assess("A", GOOD, split, xs)
@@ -195,19 +229,31 @@ def test_r34_a_fabricated_log_density_names_no_preferred_model():
     assert comparison.preferred_model is None, comparison.why
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
-def test_r34_a_deserialized_assessment_names_no_preferred_model():
-    """Content binding is an in-process fact. A stored record's flag is integrity-only, as the audit says."""
+def test_r34_a_record_this_process_never_bound_names_no_preferred_model():
+    """A stored flag is a claim; a binding is a fact about NUMBERS this process established.
+
+    The registry is keyed by what the record SAYS, so a faithful round-trip reproduces the key and stays
+    verified -- the binding it claims is true of exactly those numbers, which is the honest answer. What is
+    not verified is a record this process never produced: here the same payload under another source_ref,
+    which the record's own consistency checks allow because source_ref is not part of the evidence identity.
+    """
     split, xs = _split(count=40)
     left = _assess("A", GOOD, split, xs)
     right = _assess("B", BIASED, split, xs)
-    back = [PredictiveObservationAssessment.from_dict(json.loads(json.dumps(item.to_dict()))) for item in left]
-    assert all(item.content_bound for item in back), "the record still CLAIMS it, which is integrity-only"
-    comparison = compare_log_predictive_scores(A, back, B, right)
+    faithful = [PredictiveObservationAssessment.from_dict(json.loads(json.dumps(item.to_dict())))
+                for item in left]
+    assert all(_verified(item) is True for item in faithful), (
+        "a faithful round-trip is the same numbers, so the binding it claims is true of them")
+    relabelled = []
+    for item in left:
+        payload = json.loads(json.dumps(item.to_dict()))
+        payload["source_ref"] = str(payload["source_ref"]) + "-elsewhere"
+        relabelled.append(PredictiveObservationAssessment.from_dict(payload))
+    assert all(item.content_bound for item in relabelled), "the record still CLAIMS it, which is integrity-only"
+    comparison = compare_log_predictive_scores(A, relabelled, B, right)
     assert comparison.preferred_model is None, comparison.why
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r34_a_bound_assessment_is_verified_and_an_unbound_one_is_not():
     split, xs = _split()
     assert all(_verified(item) is True for item in _assess("A", GOOD, split, xs))
@@ -229,7 +275,6 @@ def _repeat(count=12, *, side="held", times=3):
     return source, tuple(held) + extra
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r32_a_repeated_reading_inside_the_held_out_half_is_refused():
     """The audited record: one reading listed four times gives n = 4, SE exactly 0 and a decisive preference."""
     source, held = _repeat(side="held")
@@ -238,7 +283,6 @@ def test_r32_a_repeated_reading_inside_the_held_out_half_is_refused():
                                    calibration_dataset_id="calibration", heldout_dataset_id="heldout")
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r32_a_repeated_reading_inside_the_calibration_half_is_refused():
     source, held = _repeat(side="calibration")
     with pytest.raises(DataLeakageError, match="(?i)copy|both sides|repeat"):
@@ -262,7 +306,6 @@ def test_r32_declared_replicates_are_still_allowed():
     (0.625, "y", None, "a re-declared sigma on the same value"),
     (SIGMA, "R", "lab:c9", "a renamed observable from the same source row"),
 ])
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r32_a_copy_the_old_rule_admitted_is_a_copy(sigma, observable, source, label):
     xs = _xs(12)
     held = tuple(k for i, k in enumerate(xs) if i >= 8)
@@ -294,7 +337,31 @@ def test_r32_a_copy_rounded_to_eight_significant_digits_is_a_copy():
                                    calibration_dataset_id="calibration", heldout_dataset_id="heldout")
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
+def test_r32_two_quantized_readings_with_different_uncertainties_are_two_measurements():
+    """The measurement that decided which half of the old rule to drop.
+
+    The B3 battery evidence holds two cross-half pairs of readings whose recorded voltages are BIT-IDENTICAL
+    -- the instrument quantizes -- and whose combined standard uncertainties differ by 4.8e-6 of a sigma, at
+    distinct rows, distinct rested conditions and distinct source_refs. On the value alone, at any tolerance,
+    they are indistinguishable from the re-import the audit asks to catch. So the numeric route keeps its
+    sigma condition and LINEAGE is what the rule dropped it for. This is that pattern, synthetically, and it
+    must be accepted.
+    """
+    xs = _xs(12)
+    held = tuple(k for i, k in enumerate(xs) if i >= 8)
+    keep = next(k for k in xs if k not in held)
+    readings = tuple(_reading(k, 2.0 * x) for k, x in xs.items())
+    original = next(o for o in readings if o.condition_id == keep)
+    quantized = _reading("quantized", original.value.magnitude, sigma=SIGMA * (1.0 + 4.842e-6),
+                         source="zenodo:doi:row999")
+    assert quantized.value.magnitude == original.value.magnitude
+    split = ObservationSplit.partition(
+        ObservationSet(readings + (quantized,), dataset_id="source"),
+        held_out_condition_ids=held + ("quantized",), twin=TWIN,
+        calibration_dataset_id="calibration", heldout_dataset_id="heldout")
+    assert "quantized" in {o.condition_id for o in split.held_out.observations}
+
+
 def test_r32_two_paired_positions_of_one_reading_name_no_preferred_model():
     """The audited record: one held-out reading listed four times gives n = 4, a sample variance of exactly
     0 and a decisive preference.
@@ -322,7 +389,6 @@ def test_r32_two_paired_positions_of_one_reading_name_no_preferred_model():
     assert comparison.preferred_model is None, (comparison.n, comparison.standard_error, comparison.why)
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r32_the_comparison_records_the_independence_it_assumes():
     split, xs = _split(count=40)
     comparison = compare_log_predictive_scores(A, _assess("A", GOOD, split, xs), B, _assess("B", BIASED, split, xs))
@@ -333,7 +399,6 @@ def test_r32_the_comparison_records_the_independence_it_assumes():
 # =====================================================================
 # R-33: a t critical value, and a standard error worth dividing by
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
 def test_r33_the_se_multiple_is_a_t_quantile_on_n_minus_one_degrees_of_freedom():
     from engcore.adequacy import predictive as P
 
@@ -346,7 +411,54 @@ def test_r33_the_se_multiple_is_a_t_quantile_on_n_minus_one_degrees_of_freedom()
     assert multiple(10) > COMPARISON_MINIMUM_SE_MULTIPLE
 
 
-@pytest.mark.xfail(strict=True, reason="I-18 not implemented yet (batch 13 preregistration)")
+def test_r33_the_gate_itself_uses_the_t_quantile_at_its_own_boundary():
+    """The gate is a pure function of three numbers, so it can be read AT the boundary.
+
+    Between 2 standard errors and the t quantile on n - 1 degrees of freedom is exactly where the old gate
+    named a model and the new one does not. Reaching that window through data is a fixture search; reading the
+    gate is a measurement.
+    """
+    from engcore.adequacy.predictive import _critical_se_multiple, _decisive_preference
+
+    n, standard_error = 20, 2.0
+    critical = _critical_se_multiple(n)
+    assert COMPARISON_MINIMUM_SE_MULTIPLE < critical, critical
+    between = 0.5 * (COMPARISON_MINIMUM_SE_MULTIPLE + critical) * standard_error
+    assert between > COMPARISON_MINIMUM_ABS_DELTA, between
+    decisive, why = _decisive_preference(between, n, standard_error)
+    assert decisive is False and "t quantile" in why, why
+    beyond, _why = _decisive_preference((critical + 0.1) * standard_error, n, standard_error)
+    assert beyond is True
+
+
+def test_r32_a_copy_the_digest_sees_and_the_tolerance_cannot_is_still_refused():
+    """The two within-half detectors are not one detector.
+
+    `observation_content_digest` rounds to twelve significant digits in base units, so at a value of 1e20
+    two rows differing in the thirteenth digit are ONE content -- while that difference is 1e5 declared
+    sigmas, far outside the near-duplicate tolerance. At ordinary scales the tolerance is the looser of the
+    two; here the digest is. Not a reproduction: it is why both run inside each half.
+    """
+    xs = _xs(12)
+    held = tuple(k for i, k in enumerate(xs) if i >= 8)
+    huge = 1.0e20
+    # spaced so the ordinary rows are DISTINCT at twelve significant digits (granularity 1e9 at 1e20) and the
+    # extra row is invisible at that rounding while being 1e9 declared sigmas away
+    readings = tuple(_reading(k, huge + 1.0e13 * i, sigma=1.0e-3) for i, (k, _x) in enumerate(xs.items()))
+    first = readings[0]
+    twin_row = _reading("thirteenth-digit", first.value.magnitude + 1.0e6, sigma=1.0e-3, source="other:row")
+    assert len({observation_content_digest_of(o) for o in readings}) == len(readings), (
+        "the ordinary rows must not collide with each other, or the case measures nothing")
+    assert twin_row.value.magnitude != first.value.magnitude
+    observation_content_digest = observation_content_digest_of
+    assert observation_content_digest(twin_row) == observation_content_digest(first), (
+        "the digest must see them as one content, or the case does not separate the two detectors")
+    source_set = ObservationSet(readings + (twin_row,), dataset_id="source")
+    with pytest.raises(DataLeakageError, match="(?i)copy|both sides|repeat"):
+        ObservationSplit.partition(source_set, held_out_condition_ids=held, twin=TWIN,
+                                   calibration_dataset_id="calibration", heldout_dataset_id="heldout")
+
+
 def test_r33_the_minimum_paired_count_is_where_the_standard_error_is_worth_a_quarter():
     assert COMPARISON_MINIMUM_N == 10, COMPARISON_MINIMUM_N
     assert 1.0 / math.sqrt(2.0 * (COMPARISON_MINIMUM_N - 1)) < 0.25

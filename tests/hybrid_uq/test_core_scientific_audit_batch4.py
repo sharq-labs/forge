@@ -74,7 +74,9 @@ def test_core012_every_routed_prediction_states_that_errors_are_assumed_independ
 # ---------------------------------------------------------------------------
 # CORE-007 and CORE-011: adequacy bound by content; a preference only when decisive
 # ---------------------------------------------------------------------------
-XS = {"c1": 1.0, "c2": 2.0, "c3": 3.0, "c4": 1.5, "h1": 4.0, "h2": 5.0, "h3": 6.0}
+# I-18 (batch 13) raised COMPARISON_MINIMUM_N from 2 to 10, so the two CORE-011 comparisons below need at
+# least ten held-out points to reach the gate they are about. The conditions grew; nothing else did.
+XS = {f"c{i}": 1.0 + 0.2 * i for i in range(14)} | {f"h{i}": 4.0 + 0.2 * i for i in range(12)}
 GRID = np.linspace(1.0, 3.0, 2001)
 
 
@@ -92,10 +94,12 @@ def _table(keys, fn):
 
 
 def _split():
-    noise = {"c1": 0.3, "c2": -0.4, "c3": 0.2, "c4": -0.1, "h1": 0.35, "h2": -0.25, "h3": 0.1}
+    rng = np.random.default_rng(20260916)
+    noise = {k: float(v) for k, v in zip(XS, rng.normal(0.0, 0.3, len(XS)))}
     source = ObservationSet(tuple(_obs(k, 2.0 * x + noise[k]) for k, x in XS.items()), dataset_id="source")
-    return ObservationSplit.partition(source, held_out_condition_ids=("h1", "h2", "h3"), twin=TWIN,
-                                      calibration_dataset_id="calibration", heldout_dataset_id="heldout")
+    return ObservationSplit.partition(source, held_out_condition_ids=tuple(k for k in XS if k.startswith("h")),
+                                      twin=TWIN, calibration_dataset_id="calibration",
+                                      heldout_dataset_id="heldout")
 
 
 def _assessments(model, fn, split, *, bound=True):
@@ -131,7 +135,7 @@ def test_core011_a_negligible_difference_names_no_preferred_model():
     split = _split()
     comparison = compare_log_predictive_scores(ModelReference("A", "1"), _assessments("A", GOOD, split),
                                                ModelReference("B", "1"), _assessments("B", TWIN_OF_GOOD, split))
-    assert comparison.preferred_model is None and comparison.n == 3 and "4 nats" in comparison.why
+    assert comparison.preferred_model is None and comparison.n == 12 and "4 nats" in comparison.why
 
 
 def test_core011_a_decisive_difference_on_content_bound_evidence_names_the_better_model():

@@ -668,3 +668,75 @@ recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6 passed, ev
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 13 — I-18
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-18 | **DONE** | `28ae62ad` (preregistration + 16 strict xfails), this commit | a re-import that rewrites the number AND the provenance is indistinguishable from a new measurement by any rule this layer can state (this replaces the preregistered claim that 1e-3 σ on the value would catch it — see the amendment log); the in-process registry means a comparison over records from an EARLIER process names no preferred model, which needs `compare` to take the split and tables to fix and the V1 freeze has no room for that until V4; the split content digest binds the two halves' content, not the forward model or the parameterization; the t correction fixes the level of ONE comparison and nothing records how many were run on one held-out set (that is I-21's); the minimum n of 10 is a precision floor on the standard error, not a strong level — the elpd literature's own advice is nearer a hundred points; and declaring `allow_exact_replicates()` now declares more than it did, because it also switches off the within-half test |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-24 | **FIXED** | Three holes, one idea: content binding now binds the content. The split branch requires `spec.observation_sigma` to be the matched held-out observation's declared sigma, to the same tolerance the branch already holds the VALUE to — the declared noise is what makes a log density a likelihood rather than a distance, and a caller-chosen sigma created a decisive preference (0.05 K against a declared 0.5 K) and erased a genuine 11.5-nat one (5 K). It requires `twin == split.twin`, which `ObservationSplit`'s own docstring already said. And `PredictiveEvidenceIdentity` gained a trailing `split_content_digest` over the split's twin, both dataset ids and the canonical content digest of every observation in BOTH halves — so the pairing loop that already refuses two assessments assessed against different evidence now refuses two bound to different SPLIT CONTENT, and names the field. Two campaigns under the same id strings no longer pair as one evidence. |
+| R-32 | **FIXED** | The copy detectors run WITHIN each half as well as across it, unless the study declared replicates: the detector's own argument ("same observable, same value, same sigma, different condition_id — for a continuous quantity that is a copy, not a coincidence") never depended on which side the rows are on, and inside the held-out half the consequence is worse than leakage — the paired differences become identical, the sample variance is exactly 0 and the standard-error test is vacuous. A second, LINEAGE route catches the re-import the old rule admitted: the same non-empty `source_ref` and base unit, values within a thousandth of the declared sigma, with the observable NAME and the declared SIGMA both ignored. `compare` withholds a preference when two paired positions carry the same held-out content, and `ModelScoreComparison` records the independence its standard error assumes. |
+| R-33 | **FIXED** | The SE multiple is the two-sided Student-t quantile on `n − 1` degrees of freedom at `COMPARISON_ALPHA` — which is the level the existing multiple of 2 already declared, so the threshold's preregistered false-refusal rate is kept and only the missing small-sample correction is new. `COMPARISON_MINIMUM_N` rose from 2 to 10: the relative standard error of a sample sd on `n − 1` degrees of freedom is `1/sqrt(2(n−1))`, and 10 is the smallest n at which that is below a quarter. **Measured** (`audit/batch13_false_decisive_rate.py`, 40 000 trials): the old gate gives 0.0742 at n = 10, 0.0619 at n = 20 and 0.0515 at n = 50 against a declared α of 0.0455; the new gate gives 0.0443, 0.0467 and 0.0459, and below n = 10 the rate is 0 because no preference is named at all. |
+| R-34 | **FIXED** | `content_bound` is V1-frozen and stays exactly as it is — a recorded claim, integrity-only on read. What changed is who believes it: a module-private registry holds the RECORD DIGESTS this process bound, written only at the end of the split branch, and `compare` gates the preferred model on the derived `content_binding_verified` instead. A flipped flag, a `replace` with a fabricated log density, and a record this process never produced are all unverified; a faithful same-process round-trip is verified, and that is the honest answer — the binding it claims is true of exactly those numbers. |
+
+**A preregistered rule corrected by real evidence.** The protocol preregistered "a copy is decided on the
+VALUE, at a thousandth of the declared sigma, with the sigma-equality requirement dropped" — the audit's own
+suggested rule. It **refuses real evidence**: `benchmarks/battery_flagship_b3` stopped building, because its
+split holds two cross-half pairs (DCHG r142/r143 and r145/r146) whose recorded open-circuit voltages are
+BIT-IDENTICAL — the instrument quantizes — and whose combined standard uncertainties differ by 4.842e-6 of a
+sigma, at distinct rows, distinct rested conditions and distinct `source_ref`s. Those are two measurements.
+On the value alone, at any tolerance, they are indistinguishable from the re-import the audit asks to catch,
+so the sigma was doing real work and LINEAGE is the discriminator. The numeric route therefore keeps both
+conditions at the preregistered 1e-6, and the looser tolerance with no sigma condition moved to the lineage
+route, where the false-match exposure is a handful of pairs instead of `n_cal × n_held`. The arithmetic that
+settles it: the expected number of false matches on value alone is about `0.7979 · t · pairs`, which for B3's
+2211 pairs is **1.76 at t = 1e-3** — and exactly 2 were found — against 0.0018 at 1e-6. The full reasoning and
+the numbers are the first entry of the protocol's `amendment_log`.
+
+**Compatibility.** Additive on every V1-frozen symbol: `PredictiveEvidenceIdentity` gained one trailing field
+with a default, `ModelScoreComparison` one trailing field with a default, `PredictiveObservationAssessment`
+no field and two derived properties (`record_digest`, `content_binding_verified`). No field is removed,
+renamed or reordered, and no existing default changed. `EVIDENCE_IDENTITY_FIELDS` grew from 7 entries to 8,
+which the V1 snapshot records as a SIZE — the same additive category as a new enum member. The two module
+constants that changed (`COMPARISON_MINIMUM_N` 2 → 10, and the new
+`NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA`) are not in the frozen snapshot, which records constants by kind
+and container size rather than by value. `predictive_evidence_identity` is NOT bumped: the new key is written
+only when non-empty and enters the identity digest only when non-empty, and a pinned digest test computed by
+hand from the pre-batch canonical form proves a stored record keeps the digest it had.
+
+**Existing tests edited (no assertion weakened).**
+
+* `tests/test_evidence_pairing_integrity.py::test_the_identity_covers_exactly_the_declared_fields` asserts the
+  field list in full, as before, with the appended name and a comment saying why it joined;
+* `tests/hybrid_uq/test_core_scientific_audit_batch4.py`'s two CORE-011 comparisons grew their split from 3 to
+  12 held-out points, because the gate they are about now needs 10. Both assertions are unchanged — one still
+  says a negligible difference names no model and names the 4-nat reason, the other still says a decisive
+  difference on content-bound evidence names the better model.
+
+**Committed evidence.** Nothing moved: no committed record in the repository carries a predictive assessment
+or a model comparison. The B3 benchmark is the evidence this batch was corrected BY, and it builds and passes
+unchanged.
+
+**Guard mutations.** `BATCH13_MUTATIONS.log`: **18 of 18 KILLED**, control green. Four survived a first run,
+and all four purchases are recorded in the protocol's `amendment_log`: a gate for "bound to the same split"
+was dead code (the pairing loop already refuses it and names the field) and was removed — which then made the
+mutation that reads the caller-settable flag instead of the in-process verification killable, because the two
+gates had been covering each other; the decisive gate was extracted into a pure function
+`_decisive_preference(delta, n, standard_error)` and is read at its own boundary, because the window between
+2 SE and the t quantile is a fixture search through data and a measurement through the function; and the
+within-half exact-content detector needed the one case only it sees (at a value of 1e20 the digest's twelve
+significant digits make two rows one content while their difference is 1e9 declared sigmas). The 5 pinned
+mutations on the two files this batch changed were re-run isolated and all 5 are still KILLED
+(`BATCH13_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6593 passed, 5 xfailed, 18 failed (the by-design 18, unchanged). Expensive tier
+528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6
+passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None in this batch.

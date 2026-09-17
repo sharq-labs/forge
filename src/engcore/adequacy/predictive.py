@@ -76,7 +76,18 @@ EVIDENCE_IDENTITY_FIELDS = (
     "heldout_dataset_id",
     "posterior_dataset_id",
     "twin",
+    # R-24 (re-audit 2026-09-16): APPENDED. The two dataset ids above are STRINGS, so two calibration
+    # campaigns labelled alike paired as one evidence and the difference in their training data was reported
+    # as a model preference. Empty on a record written before this rule, and then absent from the canonical
+    # form, so such a record keeps the digest it had.
+    "split_content_digest",
 )
+
+
+#: R-34: the record digests this process bound to a split, by content. Written only at the end of
+#: `assess_predictive_observation`'s split branch, read only by `content_binding_verified`. Module-private and
+#: never serialized: a binding is an in-process fact about numbers, not a field on a record.
+_CONTENT_BOUND_RECORDS: set[str] = set()
 
 
 def _canonical_value(value: Any) -> Any:
@@ -108,8 +119,13 @@ class PredictiveEvidenceIdentity:
     heldout_dataset_id: str
     posterior_dataset_id: str
     twin: TwinReference
+    #: R-24: a digest over the SPLIT's content -- its twin, both dataset ids and the canonical content digest
+    #: of every observation in both halves. Set only where the split is in hand, so a comparison can require
+    #: both sides to be bound to the same evidence and not merely to the same labels. Empty otherwise.
+    split_content_digest: str = ""
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "split_content_digest", str(self.split_content_digest).strip())
         for label in ("observation_key", "heldout_dataset_id", "posterior_dataset_id"):
             text = str(getattr(self, label)).strip()
             if not text:
@@ -127,7 +143,11 @@ class PredictiveEvidenceIdentity:
             raise ModelAdequacyError("evidence identity requires a TwinReference")
 
     def _canonical(self) -> dict[str, Any]:
-        return {name: _canonical_value(getattr(self, name)) for name in EVIDENCE_IDENTITY_FIELDS}
+        # an empty split_content_digest is LEFT OUT, so a record written before that field existed hashes to
+        # what it hashed to. `differences` reads the same mapping with .get, so an absent value still differs
+        # from a present one and the refusal names the field.
+        return {name: _canonical_value(getattr(self, name)) for name in EVIDENCE_IDENTITY_FIELDS
+                if not (name == "split_content_digest" and not self.split_content_digest)}
 
     @property
     def digest(self) -> str:
@@ -152,6 +172,7 @@ class PredictiveEvidenceIdentity:
             "heldout_dataset_id": self.heldout_dataset_id,
             "posterior_dataset_id": self.posterior_dataset_id,
             "twin": self.twin.to_dict(),
+            **({"split_content_digest": self.split_content_digest} if self.split_content_digest else {}),
             "digest": self.digest,
         }
 
@@ -167,6 +188,7 @@ class PredictiveEvidenceIdentity:
                 heldout_dataset_id=payload["heldout_dataset_id"],
                 posterior_dataset_id=payload["posterior_dataset_id"],
                 twin=TwinReference.from_dict(payload["twin"]),
+                split_content_digest=payload.get("split_content_digest", ""),
             )
         except KeyError as exc:
             raise ModelAdequacyError(
@@ -278,6 +300,31 @@ class PredictiveObservationAssessment:
             mismatched.append("twin")
         return tuple(mismatched)
 
+    @property
+    def record_digest(self) -> str:
+        """SHA-256 over everything this record says EXCEPT the content_bound claim.
+
+        The key of the in-process binding registry (R-34). Excluding the claim is what makes the registry a
+        statement about the numbers rather than about the flag: a record reconstructed with the same numbers
+        gets the same digest, and the binding it claims is then true of exactly those numbers.
+        """
+        payload = {k: v for k, v in self.to_dict().items() if k != "content_bound"}
+        blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+    @property
+    def content_binding_verified(self) -> bool:
+        """Whether THIS PROCESS bound this record to a split, by content (R-34).
+
+        ``content_bound`` is a field anyone can set -- ``dataclasses.replace``, ``from_dict``, the
+        constructor -- and the comparison used to read it as proof. This reads a private registry that only
+        :func:`assess_predictive_observation` writes, keyed by :attr:`record_digest`, so a flipped flag, a
+        fabricated log density and a deserialized record are all unverified. A record read back from disk is
+        never verified: content binding is an in-process fact, and the stored flag is integrity-only, which
+        is what the audit document already says of it.
+        """
+        return self.record_digest in _CONTENT_BOUND_RECORDS
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": PREDICTIVE_ASSESSMENT_SCHEMA,
@@ -349,6 +396,11 @@ class ModelScoreComparison:
     standard_error: float = math.nan
     #: Why a preferred model was or was not named.
     why: str = ""
+    #: R-32 (re-audit 2026-09-16): the paired standard error treats the held-out positions as independent
+    #: measurements. RECORDED, never a reason to lower the verdict -- which is this program's rule for
+    #: independence. CORE-012's flag existed only on routed predictive records; this standard error rests on
+    #: the same assumption and said nothing about it.
+    measurement_errors_assumed_independent: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -362,7 +414,30 @@ class ModelScoreComparison:
             "n": int(self.n),
             "standard_error": None if not math.isfinite(self.standard_error) else float(self.standard_error),
             "why": self.why,
+            "measurement_errors_assumed_independent": bool(self.measurement_errors_assumed_independent),
         }
+
+
+def _split_content_digest(split) -> str:
+    """SHA-256 over what the SPLIT is: its twin, both dataset ids and the content of every observation (R-24).
+
+    ``inference.split.observation_content_digest`` is already canonical -- value and sigma in the dimension's
+    base unit, rounded to twelve significant digits, and deliberately independent of the condition label -- so
+    this is a digest of the evidence and not of a spelling of it. Both halves are covered: the held-out half is
+    in the evidence identity value by value, but only for the ONE observation an assessment scores, and a
+    comparison sums over the whole half.
+    """
+    from ..inference.split import observation_content_digest
+
+    payload = {
+        "twin": split.twin.to_dict(),
+        "calibration_dataset_id": split.calibration.dataset_id,
+        "heldout_dataset_id": split.held_out.dataset_id,
+        "calibration_content": sorted(observation_content_digest(o) for o in split.calibration.observations),
+        "heldout_content": sorted(observation_content_digest(o) for o in split.held_out.observations),
+    }
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def assess_predictive_observation(
@@ -390,6 +465,7 @@ def assess_predictive_observation(
     ``content_bound``. A comparison names a preferred model only over content-bound assessments.
     """
     content_bound = False
+    split_content_digest = ""
     if (split is None) != (calibration_table is None):
         raise ModelAdequacyError("content binding needs both the split and the calibration table, or neither")
     if split is not None:
@@ -400,6 +476,14 @@ def assess_predictive_observation(
         if str(heldout_dataset_id).strip() != split.heldout_dataset_id:
             raise ModelAdequacyError(
                 f"held-out dataset {heldout_dataset_id!r} is not the split's held-out set {split.heldout_dataset_id!r}")
+        # R-24 (finding 40): the split's own docstring says a split whose halves describe different twins is
+        # two studies and that scoring one against the other's posterior is refused. The branch never compared
+        # them, and the evidence identity then recorded the caller's twin.
+        if twin != split.twin:
+            raise ModelAdequacyError(
+                f"the assessment names twin {twin.twin_id!r}@{twin.version} and the split describes "
+                f"{split.twin.twin_id!r}@{split.twin.version}; a score against another twin's split is not this "
+                f"twin's held-out evidence")
         matching = [o for o in split.held_out.observations if o.key == spec.observation_key]
         if not matching:
             raise ModelAdequacyError(
@@ -414,7 +498,22 @@ def assess_predictive_observation(
         if not same:
             raise ModelAdequacyError(
                 f"{spec.observation_key!r} is scored at {observed}, but the split's held-out observation is {held}")
+        # R-24 (finding 29): the declared sigma is as much the split's evidence as the value is -- it is what
+        # makes the log density a likelihood rather than a distance. A caller-chosen sigma created a decisive
+        # preference (0.05 K against a declared 0.5 K) and erased a genuine one (5 K), content-bound both times.
+        declared = matching[0].sigma
+        try:
+            same_sigma = spec.observation_sigma is not None and math.isclose(
+                spec.observation_sigma.magnitude_in(declared.units), declared.magnitude, rel_tol=1e-12, abs_tol=0.0)
+        except Exception:  # noqa: BLE001 - an incompatible sigma is another sigma
+            same_sigma = False
+        if not same_sigma:
+            raise ModelAdequacyError(
+                f"{spec.observation_key!r} is scored with likelihood sigma {spec.observation_sigma}, but the split's "
+                f"held-out observation declares {declared}; the declared noise is part of the evidence, and a log "
+                f"density computed with another sigma is not a score on it")
         content_bound = True
+        split_content_digest = _split_content_digest(split)
 
     if spec.observation_sigma is None:
         raise ModelAdequacyError(
@@ -500,7 +599,7 @@ def assess_predictive_observation(
     )
 
     stored_observation = observed.to(spec.unit)
-    return PredictiveObservationAssessment(
+    assessment = PredictiveObservationAssessment(
         observation_key=spec.observation_key,
         observed=stored_observation,
         predictive_mean=predictive.mean,
@@ -523,16 +622,73 @@ def assess_predictive_observation(
             heldout_dataset_id=heldout_dataset_id,
             posterior_dataset_id=posterior.dataset_id,
             twin=twin,
+            split_content_digest=split_content_digest,
         ),
         content_bound=content_bound,
     )
+    if content_bound:
+        # R-34: the binding is recorded HERE, where it was established, keyed by what the record says. The
+        # `content_bound` field stays a recorded claim -- it is V1-frozen -- and the comparison reads this.
+        _CONTENT_BOUND_RECORDS.add(assessment.record_digest)
+    return assessment
 
 
 #: CORE-011, preregistered in benchmarks/core_v4_false_confidence/BATCH4_THRESHOLD_PROTOCOL.json (class C, from the
 #: elpd-difference practice of Vehtari, Gelman and Gabry 2017 and Sivula, Magnusson and Vehtari 2022).
-COMPARISON_MINIMUM_N = 2
+#: R-33 (re-audit 2026-09-16): 2 -> 10. delta / SE is a t statistic on n - 1 degrees of freedom, and the gate is
+#: only as good as the sd it divides by: the relative standard error of a sample sd on n - 1 degrees of freedom is
+#: 1 / sqrt(2 (n - 1)) -- 0.707 at n = 2, 0.500 at n = 3, 0.236 at n = 10. 10 is the smallest n at which that is
+#: below a quarter, so the standard error is a measurement rather than a coin flip. It also matches the audit's
+#: reading of the elpd literature ("tens of points").
+COMPARISON_MINIMUM_N = 10
 COMPARISON_MINIMUM_ABS_DELTA = 4.0
+#: The NORMAL multiple the level below is declared from. Kept at its preregistered value: the level does not change,
+#: only the small-sample correction that was missing.
 COMPARISON_MINIMUM_SE_MULTIPLE = 2.0
+#: R-33: the two-sided level the multiple above states, 2 * (1 - Phi(2)). The gate used to compare a t statistic with
+#: the NORMAL quantile, which at n = 2 is a Cauchy tail: P(|t| > 2) is about 0.295, and the audit measured a preferred
+#: model in 27.5 % of runs between exact mirror-image models.
+COMPARISON_ALPHA = 2.0 * (1.0 - float(ndtr(COMPARISON_MINIMUM_SE_MULTIPLE)))
+
+
+def _critical_se_multiple(n: int) -> float:
+    """The two-sided Student-t quantile on ``n - 1`` degrees of freedom at :data:`COMPARISON_ALPHA`.
+
+    13.968 at n = 2, 4.527 at n = 3, 2.320 at n = 10, 2.026 at n = 100 -- against the fixed 2 the gate used.
+    """
+    from scipy.stats import t as _student_t
+
+    return float(_student_t.ppf(1.0 - COMPARISON_ALPHA / 2.0, int(n) - 1))
+
+
+def _decisive_preference(delta: float, n: int, standard_error: float) -> tuple[bool, str]:
+    """Whether a summed paired difference is decisive, and why or why not (CORE-011, audit R-33).
+
+    A pure function of three numbers, so the gate can be read at its own boundary rather than only through
+    data that happens to land near it. Three conditions, in the order a refusal names them: enough paired
+    observations for the standard error to be a measurement, a difference above the absolute floor, and a
+    difference above the two-sided t quantile on ``n - 1`` degrees of freedom -- not the fixed normal 2, which
+    at n = 2 is a Cauchy tail.
+    """
+    if int(n) < COMPARISON_MINIMUM_N:
+        return False, (
+            f"no preferred model: {int(n)} paired observation(s), fewer than the {COMPARISON_MINIMUM_N} at which a "
+            f"standard error of the difference has its own relative error below a quarter")
+    if abs(float(delta)) <= COMPARISON_MINIMUM_ABS_DELTA:
+        return False, (
+            f"no preferred model: |delta| {abs(float(delta)):.3g} nats does not exceed "
+            f"{COMPARISON_MINIMUM_ABS_DELTA:g} nats")
+    critical = _critical_se_multiple(n)
+    if abs(float(delta)) <= critical * float(standard_error):
+        return False, (
+            f"no preferred model: |delta| {abs(float(delta)):.3g} nats is within {critical:.4g} standard errors "
+            f"({float(standard_error):.3g}); {critical:.4g} is the two-sided t quantile on {int(n) - 1} degrees of "
+            f"freedom at alpha {COMPARISON_ALPHA:.4g}, which is the level {COMPARISON_MINIMUM_SE_MULTIPLE:g} normal "
+            f"standard errors declares")
+    return True, (
+        f"|delta| {abs(float(delta)):.3g} nats over {int(n)} content-bound paired observations exceeds "
+        f"{COMPARISON_MINIMUM_ABS_DELTA:g} nats and {critical:.4g} standard errors ({float(standard_error):.3g}), the "
+        f"t quantile on {int(n) - 1} degrees of freedom at alpha {COMPARISON_ALPHA:.4g}")
 
 
 def compare_log_predictive_scores(
@@ -603,26 +759,29 @@ def compare_log_predictive_scores(
     differences = np.asarray([x.log_predictive_density - y.log_predictive_density for x, y in zip(a, b)], dtype=np.float64)
     standard_error = float(math.sqrt(n * float(np.var(differences, ddof=1)))) if n >= 2 else math.nan
     leader = model_a if delta > 0.0 else model_b if delta < 0.0 else None
-    if not all(item.content_bound for item in (*a, *b)):
+    # R-32: one reading listed twice is one measurement counted twice in both scores, and its paired
+    # differences are identical, so the sample variance falls toward zero and the standard-error test goes
+    # vacuous. The split refuses such a half unless the study DECLARED replicates; where it did, the
+    # declaration is honoured here.
+    repeated_content = duplicates([(item.evidence.observed_value, item.evidence.unit,
+                                    item.evidence.likelihood_sigma) for item in a])
+    # R-24: "bound to the SAME split" needs no gate of its own here. `split_content_digest` is an
+    # EVIDENCE_IDENTITY_FIELD, so the pairing loop above already refuses two assessments bound to different
+    # split content -- and names the field. A guard mutation showed a gate here to be dead code, which is
+    # what a surviving mutation is for.
+    if not all(item.content_binding_verified for item in (*a, *b)):
         preferred, why = None, (
-            "no preferred model: not every assessment is content-bound to its split (CORE-007), so nothing shows the "
-            "held-out scores were not computed on data the posteriors were fitted to")
-    elif n < COMPARISON_MINIMUM_N:
+            "no preferred model: not every assessment was content-bound to its split IN THIS PROCESS (CORE-007, "
+            "R-34), so nothing shows the held-out scores were not computed on data the posteriors were fitted to. A "
+            "recorded content_bound flag is a claim, not a binding")
+    elif repeated_content:
         preferred, why = None, (
-            f"no preferred model: {n} paired observation(s), fewer than the {COMPARISON_MINIMUM_N} a standard error of "
-            f"the difference needs")
-    elif abs(delta) <= COMPARISON_MINIMUM_ABS_DELTA:
-        preferred, why = None, (
-            f"no preferred model: |delta| {abs(delta):.3g} nats does not exceed {COMPARISON_MINIMUM_ABS_DELTA:g} nats")
-    elif abs(delta) <= COMPARISON_MINIMUM_SE_MULTIPLE * standard_error:
-        preferred, why = None, (
-            f"no preferred model: |delta| {abs(delta):.3g} nats is within {COMPARISON_MINIMUM_SE_MULTIPLE:g} standard "
-            f"errors ({standard_error:.3g})")
+            f"no preferred model: {len(repeated_content)} held-out reading(s) appear more than once among the paired "
+            f"positions (R-32), so one measurement would be counted several times and the paired standard error "
+            f"treats the copies as independent")
     else:
-        preferred, why = leader, (
-            f"|delta| {abs(delta):.3g} nats over {n} content-bound paired observations exceeds "
-            f"{COMPARISON_MINIMUM_ABS_DELTA:g} nats and {COMPARISON_MINIMUM_SE_MULTIPLE:g} standard errors "
-            f"({standard_error:.3g})")
+        decisive, why = _decisive_preference(delta, n, standard_error)
+        preferred = leader if decisive else None
     return ModelScoreComparison(
         model_a, model_b, score_a, score_b, delta, preferred, evidence_digest, n=n, standard_error=standard_error, why=why
     )
