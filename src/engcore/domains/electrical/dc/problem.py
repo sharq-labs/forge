@@ -187,15 +187,21 @@ def build_dc_problem(
             for model in models_for_circuit(circuit)
         ),
         required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
+        # R-45 (re-audit 2026-09-16): a requirement is declared only when this circuit can produce the
+        # check. The unconditional set demanded a PASSING `voltage_source_relation` from a circuit with no
+        # voltage source, so `declared_validation_requirements` came back NOT_RUN on an otherwise clean
+        # solve -- the same category error as recording an inapplicable check as "never ran", one layer up.
+        # The check-kind registry already names this shape: a requirement naming no kind any emitter
+        # produces "is reported as one no result can ever satisfy".
         validation_requirements=frozenset(
             {
                 "dimensional_consistency",
                 "linear_system_residual",
                 "kirchhoff_current_law",
-                "resistor_metric_consistency",
-                "voltage_source_relation",
                 "power_balance",
             }
+            | ({"resistor_metric_consistency"} if circuit.resistors else set())
+            | ({"voltage_source_relation"} if circuit.voltage_sources else set())
         ),
         # Identity, not hidden science: the scientific values all live in
         # typed IR fields above. This records *which* circuit artifact those

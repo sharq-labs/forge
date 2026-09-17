@@ -630,6 +630,44 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "`outcome` is still refused rather than derived: `abs(residual) <= tolerance` is necessary for a PASS and not sufficient, and a refinement gate in this repository FAILs with a residual inside its bound because the sequence behind it never contracted. So a check that reports FAIL or NOT_RUN while its numbers agree is still constructible, deliberately, and a non-finite tolerance is still constructible on those outcomes -- the finiteness rule makes the comparison False, so nothing can claim success on one."
+  },
+  {
+   "problem": "R-45",
+   "title": "The CORE-013 status precedence changed without a schema bump",
+   "rule": "src/engcore/scientific/results/validation.py",
+   "rule_symbol": "REPORT_SCHEMA at validation_report/2 with LEGACY_REPORT_SCHEMA still read; _legacy_status and _legacy_status_read; ValidationOutcome.NOT_APPLICABLE, its refusal of a declared level and its exclusion from ValidationReport.status; ValidationReport.not_applicable; the NOT_APPLICABLE outcomes and the conditional validation_requirements in src/engcore/domains/electrical/dc/{validation,problem}.py; NumericalCritic's named-checks detail in src/engcore/sria/assurance/critics.py (batch 39)",
+   "status": "REACHED",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-20 parts A (batch 39) and B (batch 40)",
+   "why": "REACHED. `ValidationReport.status` is read by `CredibilityEvidenceReport` on the way to a verdict, so run_electrothermal and run_battery reach it; the DC gate and the DC problem builder are production code on that same path, and the batch's own test drives a solve end to end. The audit's 'library-only' describes the READ side of the problem (a stored report from an older tree), which is where a user's saved result comes in; the status rule itself was never library-only. PARTIAL rather than FIXED because finding 90's third item -- an older reader silently DROPPING `evaluated` and `source_kind` -- needs the `validity_assessment` and `uncertainty` bumps, which are I-20 part C.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the domain validation gates and CredibilityEvidenceReport.from_result",
+    "engcore.scientific.results.result.ScientificResult.from_dict, which embeds this reader",
+    "engcore.domains.electrical.dc.solve_circuit and build_dc_problem"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_clean_circuit_with_no_voltage_source_reports_pass",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_problem_stops_demanding_a_check_its_circuit_cannot_produce",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_divider_still_declares_and_passes_the_voltage_source_check",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_critic_reports_pass_for_a_report_where_everything_applicable_ran",
+    "tests/domains/electrical/test_dc_validation.py::test_report_records_not_applicable_for_absent_element_classes"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_status_precedence_change_is_named_by_a_version",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_pre_core013_record_reads_back_with_its_status_re_derived",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_legacy_warning_record_reads_back_too",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_legacy_status_that_matches_neither_precedence_is_refused_and_says_so",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_current_record_whose_status_disagrees_is_still_refused",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_an_inapplicable_check_is_not_missing_evidence",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_an_inapplicable_check_still_establishes_nothing",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_report_of_nothing_but_inapplicable_checks_established_nothing",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_failure_and_an_unrun_check_still_outrank_an_inapplicable_one"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A `/1` payload whose stored status matches neither precedence is refused, and the reader still cannot tell a hand-edit from a third precedence nobody recorded -- version strings are the only signal, which is the point of the bump. `validation_check` is not versioned here, so a bare check payload carrying `not_applicable` is refused by an older reader on the enum rather than by a version check. And only the DC gate distinguishes the two outcomes: other domains' 'did not apply' checks still report NOT_RUN, and src/engcore/domains/thermal/** is SHA-256 pinned and cannot be edited."
   }
  ]
 }

@@ -34,10 +34,19 @@ from typing import Any, Mapping
 
 from ..sequences import duplicates
 from ..errors import ScientificValidationError
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 
 CHECK_SCHEMA = schema_string("validation_check")
-REPORT_SCHEMA = schema_string("validation_report")
+
+#: R-45 (re-audit 2026-09-16): `/2` because CORE-013 changed what `status` MEANS. The precedence went from
+#: FAIL > WARNING > PASS > NOT_RUN to FAIL > NOT_RUN > WARNING > PASS, under an unchanged schema string, and
+#: `from_dict` compares a stored status with the recomputed one -- so every report the older tree wrote with a
+#: PASS and a NOT_RUN check -- the ordinary shape of a solve that verified what it could and left one
+#: comparison ungathered -- was refused
+#: on read as a contradiction. A version string is the only place a reader can learn that a field's meaning
+#: changed, and `/1` payloads are read under the precedence they were written with.
+REPORT_SCHEMA = schema_string("validation_report", 2)
+LEGACY_REPORT_SCHEMA = schema_string("validation_report")
 
 
 def compared_something(
@@ -530,6 +539,13 @@ class ValidationOutcome(str, Enum):
     FAIL = "fail"
     WARNING = "warning"
     NOT_RUN = "not_run"
+    #: R-45: there was no way to say "there was nothing here to check". NOT_RUN means the evidence was not
+    #: gathered, which is why CORE-013 put it above PASS -- a report must not pass on the strength of a check
+    #: nobody performed. "This circuit has no voltage source" is a different statement: there is no evidence
+    #: to gather and no claim left unbacked by its absence. Collapsing the two made every report holding one
+    #: permanently NOT_RUN, which is what made SRIA report that validation was never run about a report in
+    #: which everything applicable ran and passed. Appended: the member order is frozen.
+    NOT_APPLICABLE = "not_applicable"
 
 
 class ValidationLevel(str, Enum):
@@ -665,6 +681,17 @@ class ValidationCheck:
             # residual check and the resistance admissibility bound already do,
             # and `unverified_report` builds a NOT_RUN check with no level at
             # all.
+            # R-45: and neither can a check that did not apply. The level would be backed by the absence
+            # of anything to check, which is the same category error as establishing UNVERIFIED, one field
+            # over. Refused here for the same reason: a value that cannot be built cannot be read
+            # inconsistently.
+            if ValidationOutcome(self.outcome) is ValidationOutcome.NOT_APPLICABLE and establishes is not None:
+                raise ScientificValidationError(
+                    f"validation check {str(self.name).strip()!r} reports NOT_APPLICABLE and declares "
+                    f"establishes={establishes.value}. A check that did not apply established nothing: there "
+                    f"was no evidence to gather, so there is nothing for a level to rest on. Leave establishes "
+                    f"unset, which is how a check says it earned nothing"
+                )
             if establishes is ValidationLevel.UNVERIFIED:
                 raise ScientificValidationError(
                     f"validation check {str(self.name).strip()!r} declares "
@@ -1033,7 +1060,10 @@ class ValidationReport:
         reads only "not FAIL" and is unchanged.
         """
         self._require_no_check_contradicts_its_numbers()
-        outcomes = {c.outcome for c in self.checks}
+        # R-45: a check that did not apply is not part of the precedence at all. It gathers no evidence and
+        # leaves no claim unbacked, so it can neither lower the status nor raise it. A report of nothing but
+        # inapplicable checks established nothing, which is the empty report's own answer: NOT_RUN.
+        outcomes = {c.outcome for c in self.checks} - {ValidationOutcome.NOT_APPLICABLE}
         if ValidationOutcome.FAIL in outcomes:
             return ValidationOutcome.FAIL
         if ValidationOutcome.NOT_RUN in outcomes or not outcomes:
@@ -1100,6 +1130,11 @@ class ValidationReport:
     def not_run(self) -> tuple[ValidationCheck, ...]:
         return tuple(c for c in self.checks if c.outcome is ValidationOutcome.NOT_RUN)
 
+    @property
+    def not_applicable(self) -> tuple[ValidationCheck, ...]:
+        """The checks that had nothing to check (R-45), which `not_run` deliberately does not name."""
+        return tuple(c for c in self.checks if c.outcome is ValidationOutcome.NOT_APPLICABLE)
+
     def with_check(self, check: ValidationCheck) -> "ValidationReport":
         return ValidationReport(checks=(*self.checks, check), notes=self.notes)
 
@@ -1122,7 +1157,7 @@ class ValidationReport:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationReport":
-        require_schema(payload, REPORT_SCHEMA)
+        version = require_schema_any(payload, (REPORT_SCHEMA, LEGACY_REPORT_SCHEMA))
         report = cls(
             checks=tuple(
                 ValidationCheck.from_dict(c) for c in payload.get("checks", ())
@@ -1138,6 +1173,10 @@ class ValidationReport:
         # compared at all, so PASS could be written over a FAIL. A payload
         # without the keys is read as written; one that states them must state
         # what its checks produce.
+        # R-45: a `/1` record's status is resolved against the precedence its version names, BEFORE the
+        # comparison below, which is left exactly as it was for every record written since the bump.
+        if version == LEGACY_REPORT_SCHEMA:
+            payload = _legacy_status_read(payload, report)
         if "attained_levels" in payload:
             declared = set(payload.get("attained_levels") or ())
             recomputed = {l.value for l in report.attained_levels}
@@ -1152,6 +1191,50 @@ class ValidationReport:
                 f"status its checks produce ({report.status.value!r})"
             )
         return report
+
+
+def _legacy_status(checks) -> ValidationOutcome:
+    """The pre-CORE-013 precedence: FAIL > WARNING > PASS > NOT_RUN, and an empty report is NOT_RUN.
+
+    Kept as executable code rather than as a sentence in a changelog, because it is what a stored
+    `validation_report/1` status MEANS: a record is honest if it says what its writer's rule said, and the
+    version names the writer's rule. Nothing in the current tree computes a status this way.
+    """
+    outcomes = {ValidationOutcome(c.outcome) for c in checks}
+    if ValidationOutcome.FAIL in outcomes:
+        return ValidationOutcome.FAIL
+    if ValidationOutcome.WARNING in outcomes:
+        return ValidationOutcome.WARNING
+    if ValidationOutcome.PASS in outcomes:
+        return ValidationOutcome.PASS
+    return ValidationOutcome.NOT_RUN
+
+
+def _legacy_status_read(payload: Mapping[str, Any], report: "ValidationReport") -> Mapping[str, Any]:
+    """A `/1` payload, with its stored status resolved against the precedence it was written under (R-45).
+
+    Three cases. It agrees with the CURRENT rule: nothing to do, and the comparison below will pass. It
+    agrees with the precedence its own version names: the record is accepted and the status DROPPED, so the
+    reader reports what the current rule gives -- the stored word is explained, not believed. It agrees with
+    neither: refused, and the message says that two precedences exist and this is neither, rather than
+    reporting a contradiction whose cause it knows.
+    """
+    if "status" not in payload:
+        return payload
+    stored = payload.get("status")
+    if stored == report.status.value:
+        return payload
+    legacy = _legacy_status(report.checks).value
+    if stored == legacy:
+        kept = dict(payload)
+        kept.pop("status")
+        return kept
+    raise ScientificValidationError(
+        f"serialized status {stored!r} in a {LEGACY_REPORT_SCHEMA} record is neither of the two precedences "
+        f"this reader knows: the precedence that version was written under gives {legacy!r}, and the current "
+        f"one gives {report.status.value!r}. A record whose status matches no rule that ever computed one "
+        f"cannot be read as the report it claims to be"
+    )
 
 
 def unverified_report(reason: str = "no validation performed") -> ValidationReport:

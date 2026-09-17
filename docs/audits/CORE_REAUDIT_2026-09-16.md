@@ -2531,3 +2531,61 @@ would refuse exact agreement against a zero tolerance, and a detail that calls a
 `validation_report` to `/2`, reads `/1` payloads by the pre-CORE-013 precedence, and gives an inapplicable
 check a representation of its own — which is also what lets the SRIA critic stop reporting NOT_ASSESSED for a
 report where everything applicable ran.
+
+### Batch 40 — I-20 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-20 | **PARTIAL** (parts A–B of three) | `c1d1b846`, `dff3181f` (A, R-46), `6ac7c3bf` (B preregistration + 12 strict xfails), this commit | **R-45 stays PARTIAL**: finding 90's third item — an older reader silently *dropping* `evaluated` and `source_kind` — needs the `validity_assessment` and `uncertainty` bumps, which are part C with the V4 serialization inventory. A declared requirement is still satisfied only by a PASSING check, so a domain that demands one whose check is NOT_APPLICABLE still reports it unmet; only the DC gate makes the distinction so far |
+
+**R-45's findings 53 and 87 and finding 90's first item are FIXED, and the guard is REACHED.**
+
+| Claim | Status | How |
+|---|---|---|
+| a pre-CORE-013 record is refused as a contradiction | **FIXED** | CORE-013 reordered the status precedence and left the string at `validation_report/1`, and `from_dict` compares a stored status with the recomputed one — so **the whole record was lost, not re-labelled**, for every report written with a passing check beside an unrun one. `REPORT_SCHEMA` is now `validation_report/2`; a `/1` payload whose stored status is what the **pre-CORE-013 precedence** (FAIL > WARNING > PASS > NOT_RUN) gives over its own checks is accepted and its status **re-derived under the current rule** — the stored word is explained, not believed. `_legacy_status` keeps that precedence as executable code rather than as a sentence in a changelog, because it is what a stored `/1` status *means*. |
+| a status matching neither precedence | **refused, with the right reason** | The message now says that two precedences exist and this status is neither, and names both answers, instead of reporting a contradiction whose cause the reader knows. A `/2` record is held to the current rule exactly as before — including the line pinned as G30ae, which is byte-identical, which is why the legacy resolution happens *before* it. |
+| "did not apply" recorded as "nobody ran" | **FIXED** | NOT_RUN means the evidence was not gathered, which is why CORE-013 put it above PASS. *This circuit has no voltage source* is a different statement: there is nothing to gather and no claim left unbacked. New `ValidationOutcome.NOT_APPLICABLE` (appended; the member order is frozen) may declare no level, is `passed` by nothing, and is **excluded from the precedence** — while a report of nothing but inapplicable checks is NOT_RUN, the empty report's own answer. |
+| the production path | **FIXED** | The DC gate emits it for the two absent element classes, and — found while reproducing — `build_dc_problem` demanded a *passing* `voltage_source_relation` from circuits that have no voltage source, so `declared_validation_requirements` came back NOT_RUN on an otherwise clean solve. The declaration is now conditional on the elements the circuit has. A one-resistor current-source circuit that solves exactly now reports **PASS**, and the SRIA critic reports PASS with it, instead of "validation was never run". |
+
+**One mutation was repointed twice, and both repointings are findings about my own reproductions.** B40e
+removes the NOT_APPLICABLE exclusion from the status and a *mixed* report still reads PASS — the precedence
+chain ends in `return PASS`, so an unrecognized member falls straight through it. The case that sees the rule
+is a report of **nothing but** inapplicable checks, which without the exclusion reads PASS: a report that
+established nothing reporting a pass, which is worse than the NOT_RUN finding 87 named. B40c disables the
+legacy precedence's WARNING rung, and the preregistered refusal reproduction cannot see it either, because
+that payload's legacy status is PASS with or without the rung; a record whose stored status *is* `warning` —
+what the older tree wrote for a warning beside an unrun check — is what pins it.
+
+**Compatibility.** Additive: one appended enum member, one new property, one schema version whose predecessor
+is still read. No field, default or existing member changes; `is_usable` still reads only "not FAIL". The only
+committed mentions of `validation_report/1` are V1 freeze digests, whose manifest tests fail by design until
+the V4 round. `validation_check` is deliberately **not** bumped: a NOT_APPLICABLE check is only written inside
+a `/2` report, and an older reader handed a bare check payload with the new value raises on the enum, which is
+fail-closed. Three in-tree expectations moved and each is commented in place:
+`tests/domains/electrical/test_dc_validation.py` (renamed to `..._not_applicable_...`, now asserting PASS and
+`not_run == ()`), `tests/domains/electrical/test_dc_solver.py` (the helper admits the new outcome), and a
+comment of mine in `validation.py` that named two domains and tripped the core-purity guard in
+`tests/test_model0r_differential.py` — the rule is right and the comment was rewritten without them.
+
+**Committed evidence.** Nothing moved.
+
+**Verification.** FAST tier 6954 passed, 5 skipped, 0 xfailed, **19 failed — the by-design set plus one more
+inside it**: `tests/test_core_api_snapshot.py::test_enum_members_and_values_are_unchanged`, which reports
+`NOT_APPLICABLE` as one more member than the pinned snapshot holds. A new enum member is the additive form the
+compatibility rules allow, and those snapshots must not be regenerated before the V4 round, so the failure is
+the expected one and the file was already in the by-design list. No test outside that list fails. Expensive
+tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py` 6 passed;
+`tests/mutation_guards.py` untouched, including the pinned `/2` status comparison. Guard reach ledger clean
+over 20 guards, R-45 REACHED/PARTIAL. `tests/domains/electrical` 347 passed; `tests/test_data_boundary0.py`,
+`tests/test_core_guards.py`, `tests/test_scientific_core.py` 441 passed.
+
+**Guard mutations.** `BATCH40_MUTATIONS.log`: **8 of 8 KILLED**, including the two that say a migration reader
+must not guess (dropping *every* legacy status reads a record that matches no precedence as if it were honest)
+and the control that a circuit which *has* a voltage source still declares and passes that check.
+`BATCH40_PINNED_MUTATIONS.log`: **13 of 13 KILLED** on the files this batch changed. Both controls green.
+
+**Open decisions.** None. Part C is scheduled: bump `validity_assessment` (to `/3`, when it carries the keys a
+V3-era reader drops) and `uncertainty` (to `/2`, when `source_kind` is recorded) so an older reader **refuses
+rather than silently drops** them, give `routed_identifiability` a legacy reader that accepts a pre-CORE-004
+explanation whose verdict re-derives identically, and list every one of these as a compatibility event in the
+V4 serialization inventory.

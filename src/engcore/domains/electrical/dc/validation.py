@@ -418,9 +418,12 @@ def check_resistor_relation(
     circuit = prepared.circuit
     voltages = _voltages(prepared, solution)
     if not circuit.resistors:
+        # R-45: NOT_APPLICABLE, not NOT_RUN. There is no resistor relation to check here, which is a
+        # statement about the circuit, not about evidence somebody failed to gather -- and as NOT_RUN it
+        # made every such report's validation status NOT_RUN for good.
         return ValidationCheck(
             name="resistor_metric_consistency",
-            outcome=ValidationOutcome.NOT_RUN,
+            outcome=ValidationOutcome.NOT_APPLICABLE,
             detail="circuit contains no resistors",
         )
 
@@ -459,9 +462,11 @@ def check_voltage_sources(
     circuit = prepared.circuit
     voltages = _voltages(prepared, solution)
     if not circuit.voltage_sources:
+        # R-45, the audit's own example: NOT_APPLICABLE, not NOT_RUN. A circuit with no voltage source has
+        # no source constraint to reconstruct.
         return ValidationCheck(
             name="voltage_source_relation",
-            outcome=ValidationOutcome.NOT_RUN,
+            outcome=ValidationOutcome.NOT_APPLICABLE,
             detail="circuit contains no voltage sources",
         )
 

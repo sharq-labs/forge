@@ -6,6 +6,8 @@ three, under benchmarks/core_v4_false_confidence/BATCH40_THRESHOLD_PROTOCOL.json
 CORE-013 reordered the status precedence and left the schema string at `validation_report/1`, and the reader
 compares a stored status with the recomputed one. So every report the pre-CORE-013 tree wrote with a PASS and
 a NOT_RUN check -- which is what any conduction1d slab solve writes -- is refused on read.
+
+Recorded as strict xfails in commit 6ac7c3bf, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -57,7 +59,6 @@ def _legacy_payload(status="pass"):
 # ---------------------------------------------------------------------------
 # a_change_of_meaning_gets_a_version
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-45 finding 53: CORE-013 changed what status means under an unchanged schema string")
 def test_r45_the_status_precedence_change_is_named_by_a_version():
     assert REPORT_SCHEMA == "validation_report/2", (
         "CORE-013 changed what `status` means and the schema string still says /1")
@@ -74,7 +75,6 @@ def test_r45_a_current_record_round_trips():
 # ---------------------------------------------------------------------------
 # a_legacy_report_is_read_under_the_precedence_it_was_written_with
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-45 as audited: the record any pre-CORE-013 conduction1d solve wrote is refused on read")
 def test_r45_the_pre_core013_record_reads_back_with_its_status_re_derived():
     """The audited record: 'pass' is what the old precedence gave over these exact checks."""
     try:
@@ -96,7 +96,6 @@ def test_r45_a_legacy_record_whose_status_is_the_current_answer_still_reads():
     assert read.status is ValidationOutcome.NOT_RUN
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the refusal names a contradiction rather than the precedence change that caused it")
 def test_r45_a_legacy_status_that_matches_neither_precedence_is_refused_and_says_so():
     with pytest.raises(ScientificValidationError) as raised:
         ValidationReport.from_dict(_legacy_payload("fail"))
@@ -124,7 +123,6 @@ def test_r45_an_unknown_version_is_still_refused():
 # ---------------------------------------------------------------------------
 # a_check_that_did_not_apply_is_not_a_check_nobody_ran
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-45 finding 87: there is no representation for a check that did not apply")
 def test_r45_there_is_a_way_to_say_a_check_did_not_apply():
     outcome = getattr(ValidationOutcome, "NOT_APPLICABLE", None)
     assert outcome is not None, "ValidationOutcome has no NOT_APPLICABLE; it is preregistered"
@@ -145,7 +143,6 @@ def _inapplicable(name="voltage_source_relation"):
                            detail="circuit contains no voltage sources")
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 finding 87: an inapplicable check is recorded as NOT_RUN, so the report is permanently NOT_RUN")
 def test_r45_an_inapplicable_check_is_not_missing_evidence():
     report = ValidationReport(checks=(
         ValidationCheck(name="linear_system_residual", outcome=ValidationOutcome.PASS,
@@ -160,7 +157,6 @@ def test_r45_an_inapplicable_check_is_not_missing_evidence():
     assert report.claims(ValidationLevel.NUMERICALLY_CONVERGED)
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the new outcome does not exist, so nothing refuses a level on it")
 def test_r45_an_inapplicable_check_still_establishes_nothing():
     with pytest.raises(ScientificValidationError, match="not_applicable|did not apply"):
         ValidationCheck(name="voltage_source_relation",
@@ -169,21 +165,19 @@ def test_r45_an_inapplicable_check_still_establishes_nothing():
                         establishes=ValidationLevel.NUMERICALLY_CONVERGED)
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the new outcome does not exist")
 def test_r45_a_report_of_nothing_but_inapplicable_checks_established_nothing():
     report = ValidationReport(checks=(_inapplicable(), _inapplicable("resistor_metric_consistency")))
     assert report.status is ValidationOutcome.NOT_RUN, (
         "a report that established nothing is NOT_RUN, which is the empty report's own answer")
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the new outcome does not exist")
 def test_r45_a_failure_and_an_unrun_check_still_outrank_an_inapplicable_one():
     """The control: excluding NOT_APPLICABLE does not touch the precedence between the others."""
     failing = ValidationReport(checks=(
         ValidationCheck(name="power_balance", outcome=ValidationOutcome.FAIL, residual=1.0, tolerance=1e-9),
         _inapplicable(),
     ))
-    assert failing.status is ValidationOutcome.FAIL and not failing.is_usable
+    assert failing.status is ValidationOutcome.FAIL and failing.failures
     unrun = ValidationReport(checks=(
         ValidationCheck(name="analytic_invariant_agreement", outcome=ValidationOutcome.NOT_RUN),
         _inapplicable(),
@@ -191,7 +185,6 @@ def test_r45_a_failure_and_an_unrun_check_still_outrank_an_inapplicable_one():
     assert unrun.status is ValidationOutcome.NOT_RUN
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the new outcome does not exist")
 def test_r45_an_inapplicable_check_round_trips():
     report = ValidationReport(checks=(_inapplicable(),))
     assert ValidationReport.from_dict(report.to_dict()) == report
@@ -219,7 +212,6 @@ def _current_source_only_result():
     return solve_circuit(circuit, run_id="b40")
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 as audited: a clean current-source circuit reports a NOT_RUN validation status")
 def test_r45_a_clean_circuit_with_no_voltage_source_reports_pass():
     """The production shape the audit names, end to end."""
     result = _current_source_only_result()
@@ -231,7 +223,6 @@ def test_r45_a_clean_circuit_with_no_voltage_source_reports_pass():
     assert result.validation.not_run == ()
 
 
-@pytest.mark.xfail(strict=True, reason="R-45, found while reproducing: build_dc_problem demands a PASSING voltage_source_relation from a circuit that has no voltage source")
 def test_r45_the_problem_stops_demanding_a_check_its_circuit_cannot_produce():
     from engcore.domains.electrical.dc import build_dc_problem
     from engcore.domains.electrical.dc import DCCircuit, DCCurrentSource, ElectricalNode, Resistor
@@ -269,7 +260,6 @@ def test_r45_a_divider_still_declares_and_passes_the_voltage_source_check():
     assert report.status is ValidationOutcome.PASS
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 finding 87: the critic reports NOT_ASSESSED because the report status is NOT_RUN")
 def test_r45_the_critic_reports_pass_for_a_report_where_everything_applicable_ran():
     from engcore.sria.assurance.critics import NumericalCritic
 
@@ -278,3 +268,27 @@ def test_r45_the_critic_reports_pass_for_a_report_where_everything_applicable_ra
     record = next(c for c in assessment.checks if c.name == "validation_report_status")
     assert record.outcome.value == "pass", (
         f"the critic still reports {record.outcome.value!r}: {record.detail!r}")
+
+
+def test_r45_a_legacy_warning_record_reads_back_too():
+    """ADDED while running batch 40's guard mutations, not preregistered.
+
+    B40c disables the legacy precedence's WARNING rung and the preregistered reproduction still refused its
+    payload, because that payload's legacy status is PASS either way. The rung is only visible on a record
+    whose stored status IS 'warning' -- which the pre-CORE-013 tree wrote for any report holding a warning
+    beside an unrun check, and which the current rule calls NOT_RUN.
+    """
+    report = ValidationReport(checks=(
+        ValidationCheck(name="cross_solver_agreement", outcome=ValidationOutcome.WARNING,
+                        detail="two routes disagree", residual=1.0e-3, tolerance=1.0e-6),
+        ValidationCheck(name="analytic_invariant_agreement", outcome=ValidationOutcome.NOT_RUN),
+    ))
+    assert report.status is ValidationOutcome.NOT_RUN
+    payload = copy.deepcopy(report.to_dict())
+    payload["schema"] = "validation_report/1"
+    payload["status"] = "warning"
+    try:
+        read = ValidationReport.from_dict(payload)
+    except ScientificValidationError as exc:
+        pytest.fail(f"a legacy record whose status is the old rule's WARNING is refused: {exc}")
+    assert read.status is ValidationOutcome.NOT_RUN and read == report
