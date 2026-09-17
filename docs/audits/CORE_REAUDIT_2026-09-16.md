@@ -1105,7 +1105,7 @@ the two files this batch changed were re-run isolated and all 5 are still KILLED
 (`BATCH18_PINNED_MUTATIONS.log`), control green.
 
 **Verification.** FAST tier 6672 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
-Expensive tier PENDING. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None. The decision part A deferred — what a coverage verdict should do about a refused
