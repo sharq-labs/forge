@@ -231,6 +231,37 @@ def gross_misfit_with_ten_precise_points():
                    (-10.0, -10.0), (10.0, 10.0), (0.0, 0.0), observed=tuple(observed))
 
 
+def dilute(problem, *, count: int, sigma_factor: float):
+    """``problem`` with ``count`` observations appended that carry no information about the parameters.
+
+    Each added reading is the model's own prediction at the calibrated estimate, with a sigma ``sigma_factor``
+    times the largest declared one, so it adds a degree of freedom and about ``sigma_factor ** -2`` of one
+    reading's Fisher information. This is R-03's padding: it buys degrees of freedom and leaves the
+    covariance where it was.
+    """
+    from engcore.inference import GaussianObservation, ObservationSet
+    from engcore.scientific.units.quantity import Quantity
+
+    estimate = np.asarray(problem.calibrate().estimate_vector, dtype=float)
+    unit = problem.observations.observations[0].value.units
+    sigma = float(np.max(problem.sigma)) * float(sigma_factor)
+    predicted = float(np.asarray(problem.model(estimate, problem.x), dtype=float)[0])
+    added = tuple(
+        GaussianObservation(condition_id=f"uninformative{i}", observable_name="y", value=Quantity(predicted, unit),
+                            sigma=Quantity(sigma, unit), source_ref=f"synthetic:uninformative:{i}")
+        for i in range(int(count)))
+    diluted = Problem.__new__(Problem)
+    diluted.__dict__.update(problem.__dict__)
+    diluted.observations = ObservationSet(problem.observations.observations + added,
+                                          dataset_id=problem.observations.dataset_id + ".diluted")
+    # The model is evaluated at problem.x, so the added rows need an x each; they carry the same x as the
+    # first reading, which is what makes them exact copies of an informative condition with a huge sigma.
+    diluted.x = np.concatenate([problem.x, np.full(int(count), problem.x[0])])
+    diluted.sigma = np.concatenate([problem.sigma, np.full(int(count), sigma)])
+    diluted.observed = np.concatenate([problem.observed, np.full(int(count), predicted)])
+    return diluted
+
+
 def small_dof_variance_ratio(target_chi_square: float, points: int):
     """p=2 with ``points`` observations, so 1 or 2 residual degrees of freedom, at a chosen chi-square."""
     x = np.linspace(0.0, 1.0, points)

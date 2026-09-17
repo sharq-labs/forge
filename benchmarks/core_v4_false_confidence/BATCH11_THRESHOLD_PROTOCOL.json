@@ -1,0 +1,105 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 11,
+  "improvements": [
+    "I-04"
+  ],
+  "problems_addressed": [
+    "R-03",
+    "R-20"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "70f4033c",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "Both problems are library-only: production (MCP run_electrothermal / run_battery, the domain runners, studies/calibration_study) does not reach engcore.hybrid_uq. What it DOES reach is the same rule's other caller: `_goodness_of_fit` is shared by the local route (local_gaussian.py:1130), the read-back (local_gaussian.py:555) and every grid route (`_grid_evidence.grid_goodness_of_fit`, called from router.py:703, predictive.py:124 and `supplied_grid_problem`). So the rules below are written once and land in four places.",
+  "what_was_already_seen": {
+    "R-03": "the audited reproduction: an affine model, 10 points at sigma 0.01 whose residuals are 3x their sigma (chi-square 72 on 8 dof) REFUSE MODEL_MISFIT_BEYOND_DECLARED_NOISE on their own. Add 1000 points at sigma 10 with correctly declared precision, or 60 points at sigma 10 with over-declared sigma, and the route reads SUPPORTED with a covariance identical to 4 digits -- so the reported sd stays about 3x too small for the residuals that determine it. The verifier reproduced it and then showed it with honest noise too: 10 points at sigma 0.01 plus 150 at sigma 0.05, a 5x ratio typical of two instruments, flipped 3 of 4 seeds from REFUSED to SUPPORTED with the precise subset still at chi-square/dof 4.2 to 6.4.",
+    "R-20": "the p >= alpha branch returns BEFORE the variance-ratio refusal, so chi-square/dof 6.6 at dof 1 and 4.57 at dof 2 read SUPPORTED with no reason at all. The verifier confirmed the exact band: at dof 1 the refusal only fires above chi-square 6.63, at dof 2 the band where the ratio exceeds 4 and nothing fires is chi-square/dof 4 to 4.6, and at dof 3 and above 4 x dof clears the critical value so the refusal can fire. It also recorded the power of the gate against a true variance ratio of 4: 0.802 missed at dof 1, 0.684 at dof 2, 0.417 at dof 5, 0.168 at dof 10."
+  },
+  "rules": {
+    "the_goodness_of_fit_is_also_tested_where_the_information_is": {
+      "improvement": "I-04",
+      "problem": "R-03",
+      "rule": "Beside the pooled chi-square, the route computes a LEVERAGE-WEIGHTED residual statistic T = sum_i H_ii r_i^2, where r is the vector of standardized residuals at the estimate and H_ii is the i-th diagonal of the hat matrix H = A (A^T A)^-1 A^T of the whitened Jacobian A. An observation's leverage IS its share of the Fisher information that builds the covariance, so T weighs each residual by how much the reported uncertainty depends on it.",
+      "why": "the pooled test asks one question -- does the declared noise explain the TOTAL residual -- on n - p degrees of freedom, and never asks which residuals determine the covariance. An observation with a large declared sigma adds almost nothing to A^T A, so it does not move the covariance, but it adds a degree of freedom and (with honest sigma) about one chi-square unit. Padding therefore buys degrees of freedom at a fair price and dilutes the gate. The leverage weights are exactly the quantity the pooled test is missing: they are 0 for an observation the covariance does not depend on and sum to p.",
+      "cost": "for the local route: NOTHING. A = sensitivity.weighted_jacobian and r = sensitivity.standardized_residuals are already in hand, and H_ii = sum_j U[i, j]^2 comes from the U of the SVD the route already computes for its rank and conditioning. For a grid route: one convergence-checked Jacobian at the grid's best node, at least 4p + 1 forward evaluations (see the grid rule below).",
+      "class": "A (a definition: the hat-matrix diagonal, with no chosen constant)"
+    },
+    "the_null_distribution_of_the_leverage_statistic_is_exact_to_three_moments": {
+      "improvement": "I-04",
+      "problem": "R-03",
+      "rule": "Under the route's own premise (the declared sigma is right, so the errors are N(0, I) in standardized units), the fitted residuals satisfy r = (I - H) e, so T = e^T (I - H) D (I - H) e with D = diag(H_ii). Its cumulants follow from c_k = trace(((I - H) D)^k): the mean is c_1, the variance 2 c_2 and the third central moment 8 c_3. With U the orthonormal basis of the column space of A, d_i = H_ii, G = U^T D U and G2 = U^T D^2 U (both p x p), these are exactly\n  c_1 = sum d - sum H_ii d_i\n  c_2 = sum d^2 - 2 sum H_ii d_i^2 + trace(G^2)\n  c_3 = sum d^3 - 3 sum H_ii d_i^3 + 3 trace(G G2) - trace(G^3)\ncomputed in O(n p^2 + p^3) without forming an n x n matrix. The p-value is Pearson's three-moment match to a shifted, scaled chi-square: b = c_3 / c_2, dof_eff = c_2^3 / c_3^2, a = c_1 - b dof_eff, and p = chi2.sf((T - a) / b, dof_eff). When c_2 or c_3 is not strictly positive the match is undefined and the leverage test is recorded as not run.",
+      "why": "T is a quadratic form in Gaussian errors, not a chi-square: its weights are the eigenvalues of (I - H) D (I - H), which are unequal by construction (that is the point of the statistic). Matching three moments to a shifted scaled chi-square is the standard approximation for such a form, and it is exact in the two cases that matter for correctness: equal weights, and the pooled test itself.",
+      "the_reduction_that_makes_it_checkable": "with d_i = 1 for every observation (every residual weighted equally) the identities give c_1 = c_2 = c_3 = n - p, hence b = 1, dof_eff = n - p, a = 0, and the p-value is exactly chi2.sf(T, n - p) -- the pooled test. So the leverage test is the pooled test generalized to unequal weights, and that identity is asserted as a test.",
+      "class": "A (an exact cumulant computation plus a standard moment-matching identity; no chosen constant)"
+    },
+    "two_tests_at_half_alpha_each_and_the_worse_result_stands": {
+      "improvement": "I-04",
+      "problem": "R-03",
+      "rule": "The pooled test and the leverage test are each run at GOODNESS_OF_FIT_ALPHA / 2, and the verdict is the worse of the two (a refusal beats a downgrade beats no reason). Where only the pooled test can run (no leverage weights) it is run at the same alpha / 2, not at alpha.",
+      "value": 0.005,
+      "why": "two tests on the same data at alpha each would give a family-wise false-refusal rate above alpha. Splitting the preregistered alpha in two by Bonferroni keeps it at the level batch 1 declared, which is the level the round is scored at. This makes each INDIVIDUAL test looser: a fit whose pooled p-value lies in [0.005, 0.01) carried RESIDUALS_EXCEED_DECLARED_NOISE and now carries it only if the leverage test flags it too. That is the price of adding a second test at a fixed family-wise level, and it is the direction the audit's improvement declares ('at alpha/2 each'). It is bounded: the variance-ratio refusal is unconditional (next rule), so nothing that matters by a factor of 2 in the reported sd depends on the p-value at all. Running the pooled test at the full alpha when the leverage test cannot run would make the level depend on whether a Jacobian was available, which is not a property of the fit.",
+      "class": "B (a Bonferroni split of the already-preregistered GOODNESS_OF_FIT_ALPHA = 0.01 over two tests)",
+      "the_alternative_not_taken": "run both at alpha, accepting a family-wise level up to 0.02. That would be strictly stricter than today and would move no record's verdict downward, but it would silently double the declared false-refusal rate, which is a preregistered number. Bonferroni is conservative here because the two statistics are quadratic forms in the SAME residuals and are strongly correlated, so the true family-wise level at alpha/2 each is below 0.01 rather than at it."
+    },
+    "the_variance_ratio_refusal_is_unconditional": {
+      "improvement": "I-04",
+      "problem": "R-20",
+      "rule": "A variance ratio above MISFIT_REFUSE_VARIANCE_RATIO = 4 refuses MODEL_MISFIT_BEYOND_DECLARED_NOISE whatever the p-value is. For the pooled test the ratio is chi-square / (n - p); for the leverage test it is T / c_1, since c_1 is that statistic's null mean. The p-value branch no longer returns before the ratio is tested.",
+      "why": "batch 1 declared the ratio of 4 because 'above 4 the residual scatter exceeds twice the declared sigma, so no rescaling of the covariance makes its sds right to a factor 2'. That statement is about the SIZE of the error in the reported uncertainty and does not become false when the sample is too small for the p-value to notice: at dof 1 a chi-square of 6.6 is a scatter 2.6x the declared sigma and read SUPPORTED. Ordering the ratio test after the p-value made the preregistered decision table contradict its own stated rationale at dof 1 and 2.",
+      "class": "A (an ordering change; the ratio and its justification are already preregistered)"
+    },
+    "one_or_two_residual_degrees_of_freedom_is_underpowered": {
+      "improvement": "I-04",
+      "problem": "R-20",
+      "rule": "A measured route with n - p <= 2 adds the DOWNGRADE reason GOODNESS_OF_FIT_UNDERPOWERED: the claim is at most DOWNGRADED, and the record says the declared noise model was essentially untestable rather than tested and found adequate. It is a downgrade and not a refusal, because with a correct declared sigma the covariance is valid at any degrees of freedom -- what is missing is the falsifier, not the premise.",
+      "value": 2,
+      "why": "with the ratio refusal now unconditional, a true variance ratio of 4 is missed with probability P(chi2_dof <= min(dof, chi2.ppf(0.995, dof) / 4)): 0.683 at dof 1, 0.632 at dof 2, 0.608 at dof 3, 0.554 at dof 4, 0.477 at dof 5, 0.210 at dof 10. At one or two residual degrees of freedom the gate is far more likely to miss a factor-4 misfit than to catch it, and nothing else in the record says so -- unlike the minimum-multistart cap and the fewer-probes-than-parameters rule, which both exist to say exactly this about a different measurement.",
+      "why_2_and_not_4": "2 is the value the audit's improvement I-04 declares ('give DOWNGRADED GOODNESS_OF_FIT_UNDERPOWERED at dof 1-2'), and it is an owner decision this stream does not change. The even-odds criterion above would reach 4. That dof 3 and dof 4 are underpowered by the same criterion and are NOT flagged is stated as a residual below, not silently rounded away.",
+      "class": "C (a declared power floor on the degrees of freedom; the owner's value, with the power table it rests on computed from the already-preregistered alpha and ratio)"
+    },
+    "the_record_carries_what_the_rule_used": {
+      "improvement": "I-04",
+      "problem": "R-03",
+      "rule": "RouteDiagnostics gains two trailing fields with defaults: `leverage_weighted_chi_square` (NaN when the leverage test did not run) and `leverage_null_cumulants` (empty then). `_require_reasons_follow_measurements` re-derives BOTH tests from them and from the chi-square minimum, n and p, so a record cannot state a goodness-of-fit verdict its own numbers do not imply. An early refusal carries neither, and is held to that.",
+      "why": "the module's discipline is that digests prove integrity and claims are re-derived from the numbers. A leverage verdict the reader cannot recompute would be the one goodness-of-fit conclusion in the record taken on trust. The cumulants are recorded rather than the p-value because they are what the p-value follows from, and because recomputing them needs the Jacobian, which the record does not carry.",
+      "class": "A"
+    },
+    "the_grid_route_runs_the_same_rule": {
+      "improvement": "I-04",
+      "problem": "R-03",
+      "rule": "`grid_goodness_of_fit` takes the calibration and the forward evaluator (both already in scope at every call site) and runs the same two tests at the grid's best admissible node: the pooled test on the grid's own chi-square minimum as today, and the leverage test on the standardized residuals of a forward evaluation there weighted by the hat diagonal of a convergence-checked Jacobian there. If that Jacobian cannot be built -- the forward evaluator refuses a step, or a derivative does not stabilize -- the grid is passed over with the new refusal GOODNESS_OF_FIT_NOT_MEASURABLE. The GOODNESS_OF_FIT_UNDERPOWERED downgrade does NOT pass a grid over: `grid_goodness_of_fit` acts only on the reasons in MISFIT_REASONS, which is exactly today's behaviour for both existing reasons.",
+      "why": "the audited dilution is a property of the rule, not of the caller, and `_grid_evidence` calls the same function: a supplied grid over a padded dataset is SUPPORTED for the same reason and with the same covariance error. A grid claim is SUPPORTED or absent, so the check that decides it has to be as strong as the local route's, and a grid whose fit cannot be tested where the information is cannot be the one the route stands behind.",
+      "cost": "at least 4p + 1 forward evaluations per supplied-grid check, where today the check costs the one evaluation binding already makes. Grid routes are used at small p (a tensor grid is exponential in p), so this is tens of evaluations, not thousands.",
+      "class": "A (the same rule, the same constants, at the node the grid's own chi-square minimum comes from)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "untouched.",
+    "v2_symbols": [
+      "RouteReason: two members APPENDED after the last existing one -- GOODNESS_OF_FIT_UNDERPOWERED (a downgrade) and GOODNESS_OF_FIT_NOT_MEASURABLE (a refusal). No member is removed, renamed or reordered.",
+      "RouteDiagnostics: two TRAILING fields with defaults (`leverage_weighted_chi_square` = NaN, `leverage_null_cumulants` = ()). No existing field is removed, renamed, reordered or given a new default.",
+      "`grid_goodness_of_fit` gains two keyword arguments with defaults (calibration=None, forward=None); it lives in the private module `_grid_evidence`.",
+      "`_goodness_of_fit` is private and gains two optional arguments."
+    ],
+    "serialized_records": "route_diagnostics/2 is NOT bumped. The two new keys are written only when the leverage test ran, and a reader without them (any record written before this batch) is accepted and held to the pooled test alone at alpha/2. Two kinds of pre-batch record are refused on read because the reasons they carry are no longer the ones their own numbers imply: one with n - p <= 2 (which now implies the underpowered downgrade) and one whose pooled p-value lies in [0.005, 0.01) while it records RESIDUALS_EXCEED_DECLARED_NOISE (which now implies no pooled reason). Each is checked against the committed records one by one below.",
+    "claims_that_move": [
+      "a local route with chi-square / dof > 4 and a pooled p-value at or above alpha/2 now REFUSES (was: no reason at all) -- R-20's case, at dof 1 and 2;",
+      "a local route with n - p <= 2 is at most DOWNGRADED (was: SUPPORTED) -- the widest change in the batch; its blast radius on the existing suites is measured and recorded in the audit document;",
+      "a local or grid route on a mixed-precision dataset whose informative subset misfits now refuses or downgrades (was: SUPPORTED) -- R-03's case;",
+      "in the other direction, a fit whose POOLED p-value lies in [0.005, 0.01) and whose leverage test does not flag it loses RESIDUALS_EXCEED_DECLARED_NOISE, because each test now runs at alpha/2. No committed record in the repository sits in that band (PERFORMANCE's five are at variance ratios 24, 13, 4.6 and two below 1);",
+      "a supplied grid whose best node has no computable curvature is passed over (was: used)."
+    ],
+    "committed_evidence": "KINETICS_K2.json and BATTERY_T41.json are SUPERSEDED and must not be re-run; their markers gain an entry for these rules with the projection computed from the n, p and chi-square their frozen bytes carry. TCR.json, FAILURE_CASES.json and PERFORMANCE.json are the cheap records: PERFORMANCE's five V2 claims turn on this very rule (p = 2, 5, 10 REFUSED for misfit at variance ratios 24, 13 and 4.6; p = 20, 41 DOWNGRADED with ratios below 1), so each is re-derived from the numbers the record carries and, if any moves, the record is regenerated."
+  },
+  "residuals_stated_in_advance": [
+    "The three-moment match is an approximation to the distribution of a quadratic form. It is exact for equal weights (where it reduces to the pooled test) and its error grows with the spread of the eigenvalues of (I - H) D (I - H). No preregistered threshold depends on its tail being right to more than an order of magnitude: alpha / 2 = 0.005 decides a downgrade, and the refusal that matters for a large misfit is the variance-ratio rule, which uses only the exact null mean c_1.",
+    "dof 3 and dof 4 are underpowered by the same even-odds criterion that justifies the rule (they miss a true factor-4 misfit with probability 0.608 and 0.554) and are NOT flagged, because the owner's declared limit is 2. Raising the limit to 4 is a one-line change and the power table that would justify it is in this protocol.",
+    "The leverage statistic weighs an observation by its share of the information, which is the right question for the reported covariance and not for every question a reader might ask. A model that misfits badly at observations with NO leverage -- a systematic error confined to the least informative points -- is flagged by the pooled test and not by the leverage test, which is why both are run and the worse stands.",
+    "The hat diagonal is computed at ONE point: the estimate for a local route, the grid's best node for a grid. A leverage pattern that changes sharply over the region the posterior occupies is not described by either. The route already assumes a locally linear model, and this rule inherits that assumption exactly.",
+    "A supplied grid with n - p <= 2 is still SUPPORTED with nothing recording that the noise model was untestable, because a grid claim is SUPPORTED or absent and there is no way to qualify it. Giving a grid route a way to carry a qualifier is I-07's and I-18's subject, not this batch's.",
+    "Over-declared sigma on the padding points is the version of R-03 that hides a misfit of any size. The leverage test catches it because such points have almost no leverage. What neither test catches is over-declared sigma on the INFORMATIVE points, which is under-dispersion and deliberately ungated: a declared sigma larger than the residuals makes the reported uncertainty conservative."
+  ],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}

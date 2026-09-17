@@ -428,33 +428,8 @@ def _claim_order(claim) -> int:
 
 
 def _dilute(problem, *, count: int, sigma_factor: float):
-    """``problem`` with ``count`` observations appended that carry no information about the parameters.
-
-    Each added reading is the model's own prediction at the calibrated estimate, with a sigma ``sigma_factor``
-    times the largest declared one, so it adds a degree of freedom and about ``sigma_factor**-2`` of one
-    reading's Fisher information.
-    """
-    from engcore.inference import GaussianObservation, ObservationSet
-    from engcore.scientific.units.quantity import Quantity
-
-    estimate = np.asarray(problem.calibrate().estimate_vector, dtype=float)
-    unit = problem.observations.observations[0].value.units
-    sigma = float(np.max(problem.sigma)) * float(sigma_factor)
-    predicted = float(np.asarray(problem.model(estimate, problem.x), dtype=float)[0])
-    added = tuple(
-        GaussianObservation(condition_id=f"uninformative{i}", observable_name="y", value=Quantity(predicted, unit),
-                            sigma=Quantity(sigma, unit), source_ref=f"synthetic:uninformative:{i}")
-        for i in range(int(count)))
-    diluted = S.Problem.__new__(S.Problem)
-    diluted.__dict__.update(problem.__dict__)
-    diluted.observations = ObservationSet(problem.observations.observations + added,
-                                          dataset_id=problem.observations.dataset_id + ".diluted")
-    # The model is evaluated at problem.x, so the added rows need an x each; they carry the same x as the
-    # first reading, which is what makes them exact copies of an informative condition with a huge sigma.
-    diluted.x = np.concatenate([problem.x, np.full(int(count), problem.x[0])])
-    diluted.sigma = np.concatenate([problem.sigma, np.full(int(count), sigma)])
-    diluted.observed = np.concatenate([problem.observed, np.full(int(count), predicted)])
-    return diluted
+    """R-03's padding, built in `false_confidence_cases` beside the case it dilutes (I-04 moved it there)."""
+    return F.dilute(problem, count=count, sigma_factor=sigma_factor)
 
 
 def _worst_direction_rise_ratio(problem, post) -> float:
