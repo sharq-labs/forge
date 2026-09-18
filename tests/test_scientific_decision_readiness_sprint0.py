@@ -104,13 +104,6 @@ def test_sdr04_verification_only_support_cannot_satisfy_a_validated_use() -> Non
     assert decision_grade.missing_evidence_basis == "VALIDATED"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-05: the production battery report emits quantitative values but "
-        "does not yet carry per-value uncertainty declarations"
-    ),
-)
 def test_sdr05_battery_quantitative_values_close_the_uncertainty_chain() -> None:
     """Every quantitative value used by a later claim needs an uncertainty state.
 
