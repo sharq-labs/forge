@@ -15,12 +15,24 @@ What this package adds is the protocol between them -- a structured claim
 selection over declared applicability (:mod:`.selection`), structured repair
 (:mod:`.repair`), the compiler that decides whether a claim can execute
 (:mod:`.compiler`), route classification from pinned identities
-(:mod:`.routes`) and the deterministic experiment plan (:mod:`.planning`) --
-routing one to the other without a caller naming a system.
+(:mod:`.routes`), the deterministic experiment plan (:mod:`.planning`),
+execution bound to the plan (:mod:`.execution`), the claim-level verdict
+(:mod:`.verdict`), the structured explanation (:mod:`.explanation`) and the
+end-to-end runtime (:mod:`.assessment`) -- routing one to the other without a
+caller naming a system.
 
 Nothing here parses natural language and nothing here imports an AI provider.
 """
 
+from .assessment import (
+    ASSESSMENT_SCHEMA,
+    AssessmentForgeryError,
+    ClaimAssessment,
+    assemble_evidence,
+    assess_claim,
+    assure,
+    verify_assessment,
+)
 from .capabilities import (
     AttainableLevel,
     CapabilityDeclaration,
@@ -66,6 +78,8 @@ from .contract import (
     ScientificClaim,
     UncertaintyDemand,
 )
+from .execution import ExecutionOutcome, PlanExecution, binding_problems, execute_plan
+from .explanation import ExplanationItem, ExplanationKind, explain, resolve
 from .planning import (
     ExperimentPlan,
     PlanningError,
@@ -79,6 +93,16 @@ from .planning import (
 )
 from .repair import RepairAction, RepairKind, merge_repairs
 from .routes import RouteAssessment, RouteClass, assess_routes, classify_dependencies, pinned_dependencies
+from .verdict import (
+    ClaimComparison,
+    ClaimVerdict,
+    ComparisonOutcome,
+    DecisionRule,
+    VerdictBasis,
+    admissible,
+    compare,
+    derive_claim_verdict,
+)
 from .selection import (
     CandidateAssessment,
     CandidateStatus,
@@ -99,6 +123,29 @@ from .errors import (
 )
 
 __all__ = [
+    "ASSESSMENT_SCHEMA",
+    "AssessmentForgeryError",
+    "ClaimAssessment",
+    "ClaimComparison",
+    "ClaimVerdict",
+    "ComparisonOutcome",
+    "DecisionRule",
+    "ExecutionOutcome",
+    "ExplanationItem",
+    "ExplanationKind",
+    "PlanExecution",
+    "VerdictBasis",
+    "admissible",
+    "assemble_evidence",
+    "assess_claim",
+    "assure",
+    "binding_problems",
+    "compare",
+    "derive_claim_verdict",
+    "execute_plan",
+    "explain",
+    "resolve",
+    "verify_assessment",
     "READINESS_ORDER",
     "AttainableLevel",
     "CandidateAssessment",
