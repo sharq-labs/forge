@@ -421,7 +421,8 @@ class Evidence:
 
     @property
     def belief_key(self) -> str:
-        return f"{self.claim_type.value}|{self.claim_binding.key}"
+        base = f"{self.claim_type.value}|{self.claim_binding.key}"
+        return base if not self.context_ref else f"{base}|context:{self.context_ref}"
 
     @property
     def is_belief_bearing(self) -> bool:
