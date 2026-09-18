@@ -1,12 +1,16 @@
 """The MCP transport: this runtime, exposed to an agent, over stdio.
 
-A **transport and nothing else**. It computes no physics, evaluates no
-condition and decides no verdict. Every fact it returns was produced by
-:mod:`engcore.mcp.problem` and :mod:`engcore.mcp.evidence` and is carried here
-unaltered; every field it describes is read off the model registries by
-:func:`~engcore.mcp.problem.describe_electrothermal_case`, so a model input
-added or re-dimensioned in a domain changes the description rather than making
-it quietly false.
+The domain run tools remain **transport and nothing else**: they compute no
+physics here, evaluate no condition here and re-decide no credibility verdict.
+Every scientific fact they return was produced below this module.
+
+The public surface also exposes one explicit orchestration tool,
+`assess_claim`. It does not compute physics or invent scientific judgement;
+it binds an existing credibility report to the already-implemented SRIA
+Evidence -> Critic -> Arbiter path for a caller-declared decision standard.
+The caller must name the system, quantity, decision, required evidentiary
+levels and model-discrepancy declaration. No natural-language inference,
+automatic model selection or confidence default lives here.
 
 **The unflattering verdict is transmitted.** The nominal electro-thermal case
 reports ``INSUFFICIENT_EVIDENCE``, because the payload has no field for a
@@ -76,7 +80,7 @@ __all__ = [
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -875,10 +879,11 @@ def build_server() -> MCPServer:
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
-            "its own results. Call describe_capabilities before writing a "
-            "case. Verdicts are advisory input to an engineer of record, and "
-            "an unflattering verdict is this runtime's real answer rather than "
-            "a failure to retry."
+            "its own results and can bind one structured claim to an explicit "
+            "decision standard. Call describe_capabilities before writing a "
+            "case. assess_claim requires the system, quantity, decision, "
+            "required evidence levels and discrepancy declaration explicitly. "
+            "Verdicts remain decision support, not certification."
         ),
     )
     server.add_tool(
