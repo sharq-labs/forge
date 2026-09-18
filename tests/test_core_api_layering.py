@@ -260,6 +260,11 @@ NON_CORE_PACKAGES = {
     "sria": "the evidence / admission / assurance / campaign layer, above Core",
     "design": "design generation and design memory, above Core",
     "mcp": "the tool-server adapter -- a consumer of the Core, not the Core",
+    "claims": (
+        "the scientific claim layer -- claim contract, capability registry, "
+        "routing, planning and claim assessment. EXPERIMENTAL, and above sria "
+        "and mcp: it consumes the Core's records and never defines one"
+    ),
 }
 
 

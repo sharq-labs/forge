@@ -1,0 +1,73 @@
+"""Builders shared by the claim-layer tests. No assertions live here."""
+
+from __future__ import annotations
+
+import copy
+from typing import Any
+
+from engcore.claims import (
+    CallerAssumption,
+    ClaimKind,
+    ClaimTarget,
+    DecisionBinding,
+    EvidenceRequirement,
+    QuantityOfInterest,
+    RequestedOutput,
+    ScientificClaim,
+    UncertaintyDemand,
+)
+from engcore.scientific.ir.constraints import ConstraintOperator
+from engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.units.quantity import Quantity
+from engcore.sria.uncertainty import DiscrepancyKind, ModelDiscrepancy
+
+UNKNOWN_DISCREPANCY = ModelDiscrepancy(
+    kind=DiscrepancyKind.UNKNOWN,
+    rationale="model-form discrepancy has not been quantified for this claim",
+)
+
+
+def claim(**overrides: Any) -> ScientificClaim:
+    """A valid THRESHOLD claim; every field overridable."""
+    fields: dict[str, Any] = dict(
+        claim_id="c-1",
+        statement="The body stays below 353.15 K at the end of the interval.",
+        kind=ClaimKind.THRESHOLD,
+        qoi=QuantityOfInterest(name="final_temperature", units="kelvin"),
+        operator=ConstraintOperator.LESS_THAN,
+        target=ClaimTarget(value=Quantity(353.15, "kelvin")),
+        tolerance=None,
+        required_capabilities=frozenset(),
+        operating_context={"stages[0].body.duration": Quantity(600.0, "second")},
+        known_inputs={"stages[0].body.heat_capacity": Quantity(50.0, "joule / kelvin")},
+        missing_inputs=frozenset(),
+        assumptions=(),
+        decision=DecisionBinding("d-1", "Accept the part for the 600 s duty."),
+        evidence=EvidenceRequirement((ValidationLevel.ANALYTICALLY_VERIFIED,)),
+        uncertainty=UncertaintyDemand(frozenset(), None, False),
+        discrepancy=UNKNOWN_DISCREPANCY,
+        requested_outputs=frozenset({RequestedOutput.VERDICT}),
+    )
+    fields.update(overrides)
+    return ScientificClaim(**fields)
+
+
+def band_claim(**overrides: Any) -> ScientificClaim:
+    """A valid TOLERANCE_BAND claim."""
+    fields = dict(
+        kind=ClaimKind.TOLERANCE_BAND,
+        operator=ConstraintOperator.EQUAL,
+        target=ClaimTarget(value=Quantity(309.75, "kelvin")),
+        tolerance=Quantity(0.5, "kelvin"),
+    )
+    fields.update(overrides)
+    return claim(**fields)
+
+
+def payload(**overrides: Any) -> dict[str, Any]:
+    """The serialized form of :func:`claim`, deep-copied so a test may mutate it."""
+    return copy.deepcopy(claim(**overrides).to_dict())
+
+
+def assumption(assumption_id: str = "steady_ambient", statement: str = "ambient stays at 300 K") -> CallerAssumption:
+    return CallerAssumption(assumption_id, statement)
