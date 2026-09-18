@@ -116,7 +116,7 @@ def _environment() -> dict[str, Any]:
     }
     return {**body, "fingerprint": tagged_digest(_ENVIRONMENT_TAG, body)}
 
-def make_bundledef make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
+def make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
     """The bundle of one assessment. ``trust`` must be the registry it was assessed under (default: production)."""
     from ..external_evidence import PRODUCTION_EXTERNAL_REGISTRY
 
