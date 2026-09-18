@@ -34,9 +34,8 @@ REFERENCE = (
     "public reproductions: Altair SimSolid SS-V:3070 and MOOSE nafems_t3_verif"
 )
 
-# Temporary probe value. The test below is used once to obtain the canonical
-# serializer digest, then this constant is replaced and pinned by review.
-EVIDENCE_DIGEST = "0" * 64
+# Repository-reviewed content pin. Any scientific-content edit requires a new digest.
+EVIDENCE_DIGEST = "eb6e2daf9a6ad6a957576fc9d3462175edf0525ebeea68bcd74778868d875328"
 
 CONDITIONS = {
     "length": Quantity(0.1, "meter"),
