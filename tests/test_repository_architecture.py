@@ -52,3 +52,19 @@ def test_legacy_mcp_credibility_imports_are_identity_preserving():
     from engcore.mcp.sria_bridge import CredibilityReportCritic as legacy_critic
     assert legacy_report is canonical_report
     assert legacy_critic is canonical_critic
+
+
+def test_claim_reorganization_keeps_legacy_import_identity():
+    from engcore.claims.analysis.sensitivity import SensitivityReport as canonical_sensitivity
+    from engcore.claims.sensitivity import SensitivityReport as legacy_sensitivity
+    from engcore.claims.analysis.challenge import ChallengeReport as canonical_challenge
+    from engcore.claims.challenge import ChallengeReport as legacy_challenge
+    from engcore.claims.governance.policy import DecisionContext as canonical_context
+    from engcore.claims.policy import DecisionContext as legacy_context
+    from engcore.claims.replay.bundle import BundleStatus as canonical_bundle
+    from engcore.claims.bundle import BundleStatus as legacy_bundle
+
+    assert legacy_sensitivity is canonical_sensitivity
+    assert legacy_challenge is canonical_challenge
+    assert legacy_context is canonical_context
+    assert legacy_bundle is canonical_bundle

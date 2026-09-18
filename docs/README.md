@@ -17,12 +17,15 @@ A Markdown claim must never be broader than the code, declared applicability/cap
 
 ## Layout
 
+- `architecture/` — **current architecture entry point and layer map**.
+
 - `CORE_FREEZE_POLICY.md` — compatibility/freeze policy used by the certification process.
 - `TESTING.md` — developer testing guidance.
 - `SRIA.md` — SRIA concepts and architecture.
 - `domains/` — domain-specific documentation.
 - `assurance/` — assurance and evidence explanations.
 - `reviews/` — review records and claim/capability audits.
+- `audits/` — dated historical audit snapshots; read its README before treating a finding as current.
 - `project/` — project needs and planning material.
 - `architecture-study/` — historical/reference architecture studies; not current executable truth.
 - `archive/` — superseded historical material.

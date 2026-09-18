@@ -73,7 +73,7 @@ digest rather than merely labelled, so that editing the flagship study cannot
 look like a compatibility event. The day nobody believes that alarm is the day
 a real one goes unnoticed.
 
-**Non-Core packages** (`6`): `domains`, `systems`, `sria`, `design`, `mcp`,
+**Non-Core packages** (`7`): `domains`, `systems`, `sria`, `design`, `credibility`, `mcp`,
 `claims`.
 They live under `engcore` and are not part of the Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
