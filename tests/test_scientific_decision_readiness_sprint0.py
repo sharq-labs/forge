@@ -213,32 +213,16 @@ def test_sdr09_conflicting_claims_remain_distinct_records() -> None:
     assert low.record_hash != high.record_hash
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-10: the public MCP boundary exposes only describe_capabilities "
-        "plus one run tool per registered system; no generic claim/decision "
-        "assessment boundary exists yet"
-    ),
-)
 def test_sdr10_public_boundary_has_a_cross_domain_decision_tool() -> None:
     server_path = Path(__file__).resolve().parents[1] / "src" / "engcore" / "mcp" / "server.py"
     source = server_path.read_text(encoding="utf-8")
     registered = set(
         re.findall(
-            r'server\.add_tool\(\s*\w+,\s*name="([^"]+)"',
+            r'server\\.add_tool\\(\\s*\\w+,\\s*name="([^"]+)"',
             source,
         )
     )
-    system_tools = {boundary.tool for boundary in SYSTEMS}
-
-    generic = registered - system_tools - {"describe_capabilities"}
-    assert generic, (
-        "MCP exposes only system-specific execution tools and capability "
-        "description; an AI cannot submit a generic scientific claim + "
-        "decision/context for assessment"
-    )
-
+    assert "assess_claim" in registered
 
 
 def test_sprint1_bridge_derives_claim_value_from_report() -> None:
