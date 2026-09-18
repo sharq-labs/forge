@@ -124,7 +124,13 @@ def test_every_folded_mutation_still_matches_the_source_it_names():
 
 def test_every_folded_mutation_changes_executable_code():
     _stale, inert, _fstring = applied()
-    assert inert == {}, sorted(inert.items())
+    # Five message-only f-string mutations are executable-token changes only
+    # under PEP 701 (Python 3.12+). On 3.11 they are intentionally inert and
+    # must be exactly the declared compatibility set, never an undeclared sixth.
+    expected_inert = (
+        set(pop.FSTRING_ONLY_ON_3_12) if sys.version_info < (3, 12) else set()
+    )
+    assert set(inert) == expected_inert, sorted(inert.items())
 
 
 def test_the_entries_that_only_bite_on_3_12_are_exactly_the_five_declared():
