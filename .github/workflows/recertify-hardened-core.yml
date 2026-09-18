@@ -15,9 +15,12 @@ permissions:
   pull-requests: read
   actions: read
 
+# Only the newest head of a pull request is worth recertifying. A certificate-child
+# push creates a new head too; cancelling the parent run at that point is safe because
+# the child run verifies the certificate and owns the required recertification gate.
 concurrency:
-  group: recertify-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-  cancel-in-progress: false
+  group: recertify-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   classify:
