@@ -142,15 +142,21 @@ def test_sdr05_battery_quantitative_values_close_the_uncertainty_chain() -> None
 from engcore.sria import (
     ClaimBinding,
     ClaimType,
+    DiscrepancyKind,
     Evidence,
+    ModelDiscrepancy,
     SourceClass,
+    SubjectModel,
     UncertaintyDeclaration,
 )
 
 
 def _audit_uncertainty() -> UncertaintyDeclaration:
-    """Minimal declaration for structural evidence-identity probes."""
-    return UncertaintyDeclaration()
+    """Minimal explicit declaration for structural evidence-identity probes."""
+    return UncertaintyDeclaration(
+        subject_model=SubjectModel.PREDICTION_MODEL,
+        discrepancy=ModelDiscrepancy(kind=DiscrepancyKind.ZERO_DECLARED),
+    )
 
 
 @pytest.mark.xfail(
