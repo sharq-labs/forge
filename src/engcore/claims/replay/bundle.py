@@ -1,4 +1,4 @@
-"""Phase 10 -- a portable, deterministic assessment bundle: verify it without physics, replay it with physics.
+"""Portable deterministic assessment bundle: verify it without physics, replay it with physics.
 
 A bundle carries everything needed to re-check one assessed claim:
 
@@ -115,6 +115,7 @@ def _environment() -> dict[str, Any]:
         "git": _git_identity(),
     }
     return {**body, "fingerprint": tagged_digest(_ENVIRONMENT_TAG, body)}
+
 
 def make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
     """The bundle of one assessment. ``trust`` must be the registry it was assessed under (default: production)."""

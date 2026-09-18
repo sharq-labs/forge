@@ -169,7 +169,7 @@ def bundled(registry):
 
 def test_bundle_environment_carries_a_reproducibility_fingerprint(bundled) -> None:
     environment = bundled["environment"]
-    assert environment["schema"] == "engcore.claim_replay_environment/1"
+    assert environment["schema"] == "claim_replay_environment/1"
     assert len(environment["fingerprint"]) == 64
     assert set(environment["distribution"]) == {"crafty", "numpy", "scipy", "pint"}
     assert set(environment["python"]) == {"version", "implementation"}
