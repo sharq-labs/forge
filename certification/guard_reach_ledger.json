@@ -1199,6 +1199,86 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "MeshRegion still binds its own mesh by `mesh_id`, which is a label two discretisations of one geometry share; putting a fingerprint on the region is a change to that record and is not this batch's. Containment is checked against the support's rectangle and not against the cell the probe falls in, so a probe inside the rectangle that snaps half a cell is still answered and `probe_offset` remains the only place that says so -- refusing there would delete every legitimate coarse-mesh probe. And `apply` still accepts a bare sequence, where the unit and the field id stay the caller's assertion; making the typed field mandatory is a signature change the compatibility rule forbids before the V4 round."
+  },
+  {
+   "problem": "R-67",
+   "title": "The round's batch-guard mutation evidence sat outside the pinned harness and any failure counted as a kill",
+   "rule": "tests/mutation_population_v4.py",
+   "rule_symbol": "POPULATION_V4 (563 entries), with tools/certification/mutation_v4_runner.py::verdict_from_junit and require_an_isolated_tree, and tests/test_mutation_population_v4.py as the FAST-tier check that each entry still matches",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55)",
+   "why": "REACHED, and by the only kind of production this rule has: the certification control plane. The population is DATA inside the area `tools/certification/core_certificate.py` pins and digests, the runner is the module the recertify workflow invokes, and the FAST-tier suite applies all 563 entries to the live source on every run. What the audit measured -- 55 scripts under benchmarks/ that nothing verified, two kills that no longer applied, and a runner crediting any non-zero exit -- is closed: 25 moved entries are repointed with their reasons, 2 that cannot be applied are marked and never applied, and a kill is the ONE test the entry names failing in that run's JUnit report.",
+   "entry_points": [
+    "tools/certification/mutation_v4_runner.py::main (the shard runner the recertify workflow invokes)",
+    "tools/certification/core_certificate.py::build_manifest (digests the population as part of the harness area)",
+    "tools/certification/mutation_population.py::v4_population (re-derives the population's identity from the tree)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names",
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_changes_executable_code",
+    "tests/test_mutation_population_v4.py::test_the_population_is_pinned_by_the_certificate_and_its_digests_are_re_derived",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_a_kill_requires_the_named_target_test_to_fail",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_the_runner_refuses_to_mutate_the_repository_itself"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "That an entry matching exactly once is a KILL. Only the formal round establishes that, and until its transcripts are recorded the FAST check says the population still describes the tree and nothing more. The batch scripts under benchmarks/ remain unpinned by decision: they are the historical record of how each batch ran, and the population is what is verified from now on -- so an edit to a batch script is no longer an edit to any evidence, which is the point, but also means nothing detects one."
+  },
+  {
+   "problem": "R-68",
+   "title": "The certificate harness area did not pin the helper modules its suites import",
+   "rule": "tools/certification/core_certificate.py",
+   "rule_symbol": "harness_import_closure and harness_pinning_problems, called from build_manifest",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55)",
+   "why": "REACHED: the closure is derived and enforced where a certificate is BUILT, so a manifest is refused rather than written over a harness area that does not cover what its own suites read. The finding was that the area was a hand-maintained list -- hybrid_synthetic.py was imported by ten certified targets and measured by nothing, and the branch changed it by twelve lines without moving the certificate -- so the fix is the derivation, not a longer list. The area now enumerates 123 files, and the check compares it against the closure of the harness TARGETS and every target test the V4 population names.",
+   "entry_points": [
+    "tools/certification/core_certificate.py::build_manifest (refuses a scope that does not cover the closure)",
+    "tools/certification/core_certificate.py::main (the verifier the recertify workflow runs)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_a_manifest_is_refused_over_a_harness_area_that_misses_an_imported_helper",
+    "tests/test_mutation_population_v4.py::test_the_closure_reaches_every_suite_the_population_names",
+    "tests/test_core_scientific_audit_batch55.py::test_r68_every_module_the_certified_suites_import_is_pinned_by_the_certificate",
+    "tests/test_core_scientific_audit_batch55.py::test_r68_a_scope_whose_harness_area_misses_an_imported_helper_is_refused"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The closure follows STATIC imports. A helper reached only through `importlib` by a computed name, or through a conftest fixture that loads a file by path, is not found -- nothing in the closure does either today, and the check reports what it measured rather than claiming a reach it does not have."
+  },
+  {
+   "problem": "R-66",
+   "title": "The V2 and V3 freeze verifiers accept a self-asserted assurance record",
+   "rule": "tools/certification/mutation_population.py",
+   "rule_symbol": "v4_population (population_sha256 over the ordered ids, definitions_sha256 over the canonical JSON of the full entries) and v4_log_problems (verdicts re-derived from the transcript)",
+   "status": "REACHED",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55) for the population half; I-29 (batch 56) for the freeze record's commit and figures",
+   "why": "PARTIAL on purpose, and the split is recorded in BATCH55_THRESHOLD_PROTOCOL.json rather than left to a reader. The population half is closed and REACHED: a V4 population's identity is recomputed from the tree, never read from a record, and the digest covers the mutation BODIES so the same ids with a rewritten target test or expectation are a different population; a shard's verdicts are re-derived from its own transcript and each must equal what the ENTRY declares. The other half of finding 91 -- a verifier that re-derives the evidence digests, the measured commit and the figures a certificate asserts, as V1 did -- is the Core Freeze V4 control plane in batch 56.",
+   "entry_points": [
+    "tools/certification/mutation_population.py::main (identity, select and record, invoked per shard by the recertify workflow)",
+    "tools/certification/mutation_v4_runner.py::main (reads the population through v4_population and v4_entries)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_the_definitions_digest_covers_the_bodies_and_not_only_the_ids",
+    "tests/test_mutation_population_v4.py::test_a_population_whose_entries_are_the_wrong_shape_is_refused",
+    "tests/test_core_scientific_audit_batch55.py::test_r66_the_v4_population_digests_are_re_derived_from_the_definitions",
+    "tests/test_core_scientific_audit_batch55.py::test_r66_a_shard_transcript_is_read_for_the_verdict_it_names"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A transcript that was never produced by a run. The digests prove WHICH population a shard claims and the lines prove what it reported, and nothing here proves the lines came from executing anything -- that is what the certificate's own commit binding and the fresh-execution gate in the workflow are for, and it is the half batch 56 takes on."
   }
  ]
 }

@@ -9,7 +9,7 @@ by any non-zero exit code. This suite is the other side of that -- the populatio
 harness area, a runner whose kill names its own test, and a certificate that pins every module its certified
 suites import.
 
-Recorded as strict xfails before the fix, each seen failing on its own assertion.
+Recorded as strict xfails in commit ccc72f94, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -25,6 +25,13 @@ if str(REPO / "tests") not in sys.path:  # the harness is a support module, not 
     sys.path.insert(0, str(REPO / "tests"))
 
 import mutation_guards as mg  # noqa: E402 - after the path is set, as the harness's own tests do
+
+
+def _measured():
+    """The population scan, from the suite that owns it, so both cannot disagree."""
+    from test_mutation_population_v4 import applied
+
+    return applied()
 
 
 def _module(name: str):
@@ -60,7 +67,6 @@ def _region(spec: str) -> tuple[str, int, int]:
 # ---------------------------------------------------------------------------
 # R-67: the population, in the pinned area
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-67 finding 92: the round's 563 guard mutations are not declared anywhere the certificate measures")
 def test_r67_the_rounds_guard_mutations_are_declared_inside_the_pinned_harness_area():
     """563 mutations of evidence, and the certificate measured none of their bytes."""
     population = _module("mutation_population_v4")
@@ -75,43 +81,26 @@ def test_r67_the_rounds_guard_mutations_are_declared_inside_the_pinned_harness_a
         f"has to trust 55 scripts under benchmarks/ that nothing verifies. Pinned: {len(pinned)} file(s)")
 
 
-@pytest.mark.xfail(strict=True, reason="R-67 finding 92: nothing checks that the round's guard mutations still describe the tree")
 def test_r67_every_folded_mutation_still_matches_the_live_source_exactly_once():
-    """The check that caught five silently dead mutations, applied to the folded 563."""
-    population = _module("mutation_population_v4")
-    not_mutated = _attribute(population, "NOT_MUTATED")
-    stale = {}
-    for mid, spec, old, new, _test, expect, _note, also, _source in _attribute(population, "POPULATION_V4"):
-        if expect == not_mutated:
-            continue
-        for target_spec, target_old, _target_new in ((spec, old, new), *also):
-            text, low, high = _region(target_spec)
-            count = text[low:high].count(target_old)
-            if count != 1:
-                stale[mid] = f"{target_spec} matched {count} times"
+    """The check that caught five silently dead mutations, applied to the folded 563.
+
+    Delegated to `tests/test_mutation_population_v4.py`, which is where the rule LIVES from now on
+    and which measures the population once for both suites. The reproduction stays here because this
+    is the batch that had to state it.
+    """
+    stale, _inert, _fstring = _measured()
     assert stale == {}, (
-        "these folded mutations no longer describe the source, so the guards behind them are unverified "
-        "whatever their batch log printed:\n  " + "\n  ".join(f"{k}: {v}" for k, v in sorted(stale.items())))
+        "these folded mutations no longer describe the source, so the guards behind them are "
+        "unverified whatever their batch log printed:\n  "
+        + "\n  ".join(f"{k}: {v}" for k, v in sorted(stale.items())))
 
 
-@pytest.mark.xfail(strict=True, reason="R-67 finding 92: nothing checks that the round's guard mutations change code")
 def test_r67_every_folded_mutation_changes_executable_code():
     """A mutation whose only effect is prose reports a guard nobody tested."""
-    population = _module("mutation_population_v4")
-    not_mutated = _attribute(population, "NOT_MUTATED")
-    inert = []
-    for mid, spec, old, new, _test, expect, _note, also, _source in _attribute(population, "POPULATION_V4"):
-        if expect == not_mutated:
-            continue
-        for target_spec, target_old, target_new in ((spec, old, new), *also):
-            text, low, high = _region(target_spec)
-            mutated = text[:low] + text[low:high].replace(target_old, target_new) + text[high:]
-            if mg._code_digest(text) == mg._code_digest(mutated):
-                inert.append(f"{mid}: {target_spec}")
-    assert inert == [], inert
+    _stale, inert, _fstring = _measured()
+    assert inert == {}, sorted(inert.items())
 
 
-@pytest.mark.xfail(strict=True, reason="R-67 finding 92: two recorded kills no longer apply and nothing says so")
 def test_r67_the_entries_that_moved_and_the_declared_survivors_each_carry_their_reason():
     """A stale entry is repointed with its reason, or it is a guard retired by nobody's decision."""
     population = _module("mutation_population_v4")
@@ -119,17 +108,21 @@ def test_r67_the_entries_that_moved_and_the_declared_survivors_each_carry_their_
     fstring_only = _attribute(population, "FSTRING_ONLY_ON_3_12")
     repointed, survivors, unmutated = [], [], []
     for mid, _spec, _old, _new, _test, expect, note, _also, _source in _attribute(population, "POPULATION_V4"):
-        if "REPOINTED" in note:
+        if "[REPOINTED 2026-09-18:" in note:
+            # The marker is dated and bracketed on purpose: a batch note may use the word in prose.
             repointed.append(mid)
-            assert ";" in note and "was " in note, f"{mid}: repointed without saying what it used to name"
+            assert "; was " in note, f"{mid}: repointed without saying what it used to name"
         if expect == "SURVIVED":
             survivors.append(mid)
             assert note.strip(), f"{mid}: declared SURVIVED with no recorded reason"
         if expect == not_mutated:
             unmutated.append(mid)
             assert note.strip(), f"{mid}: declared NOT MUTATED with no recorded reason"
-    assert len(repointed) == 27, (
-        f"{len(repointed)} of the round's 27 moved entries are repointed; the rest are stale, dropped, or "
+    # 25, not the 27 the protocol preregistered: see amendment 1. The two NOT MUTATED placeholders
+    # carry an EMPTY `old`, which `str.count` finds everywhere, so the first measurement counted them
+    # among the entries that no longer describe the tree. They are asserted separately below.
+    assert len(repointed) == 25, (
+        f"{len(repointed)} of the round's 25 moved entries are repointed; the rest are stale, dropped, or "
         f"silently rewritten: {sorted(repointed)}")
     assert len(unmutated) == 2, sorted(unmutated)
     assert sorted(fstring_only) == ["B31f", "B32e", "B34b", "B47e", "B48e"], sorted(fstring_only)
@@ -162,6 +155,13 @@ _JUNIT_COLLECTION_ERROR = """<?xml version="1.0" encoding="utf-8"?>
 </testsuite></testsuites>
 """
 
+_JUNIT_NAMED_ERROR = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites><testsuite name="pytest" tests="1" errors="1">
+<testcase classname="tests.test_thing" name="test_the_guard_fires" file="tests/test_thing.py">
+<error message="fixture failed">KeyError: 'store'</error></testcase>
+</testsuite></testsuites>
+"""
+
 _JUNIT_PASSED = """<?xml version="1.0" encoding="utf-8"?>
 <testsuites><testsuite name="pytest" tests="1" failures="0">
 <testcase classname="tests.test_thing" name="test_the_guard_fires" file="tests/test_thing.py"/>
@@ -173,13 +173,13 @@ _JUNIT_EMPTY = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 
-@pytest.mark.xfail(strict=True, reason="R-67 finding 97: the runners treat any non-zero exit as KILLED")
 def test_r67_a_kill_requires_the_named_target_test_to_fail():
     """Finding 97: any non-zero exit was a kill, so an unrelated failure credited the guard."""
     runner = _module("tools.certification.mutation_v4_runner")
     verdict = _attribute(runner, "verdict_from_junit")
     assert verdict(_JUNIT_NAMED_FAILURE, _NODEID) == "KILLED"
     for label, xml in (("another test failed", _JUNIT_OTHER_FAILURE),
+                       ("the named test raised outside its own body", _JUNIT_NAMED_ERROR),
                        ("the module did not import", _JUNIT_COLLECTION_ERROR),
                        ("nothing was collected", _JUNIT_EMPTY)):
         found = verdict(xml, _NODEID)
@@ -189,7 +189,6 @@ def test_r67_a_kill_requires_the_named_target_test_to_fail():
     assert verdict(_JUNIT_PASSED, _NODEID) == "SURVIVED"
 
 
-@pytest.mark.xfail(strict=True, reason="R-67 finding 97: the runners mutate the shared checkout in place")
 def test_r67_the_runner_refuses_to_mutate_the_repository_itself():
     """Finding 97's other half: the runners mutated the shared checkout in place."""
     runner = _module("tools.certification.mutation_v4_runner")
@@ -202,7 +201,6 @@ def test_r67_the_runner_refuses_to_mutate_the_repository_itself():
 # ---------------------------------------------------------------------------
 # R-68: the certificate pins what its suites import
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-68 finding 93: the harness area pins the suites and not the helpers they import")
 def test_r68_every_module_the_certified_suites_import_is_pinned_by_the_certificate():
     """Finding 93: hybrid_synthetic.py is imported by ten certified targets and pinned by nothing."""
     certificate = _module("tools.certification.core_certificate")
@@ -217,7 +215,6 @@ def test_r68_every_module_the_certified_suites_import_is_pinned_by_the_certifica
         + "\n  ".join(missing))
 
 
-@pytest.mark.xfail(strict=True, reason="R-68 finding 93: the harness area is a hand-maintained list with nothing derived to check it")
 def test_r68_a_scope_whose_harness_area_misses_an_imported_helper_is_refused():
     """The derived check, not a longer list: the reason finding 93 happened is that the list was a list."""
     certificate = _module("tools.certification.core_certificate")
@@ -236,7 +233,6 @@ def test_r68_a_scope_whose_harness_area_misses_an_imported_helper_is_refused():
 # ---------------------------------------------------------------------------
 # R-66: the population half
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-66 finding 91: there is no V4 population to re-derive a digest from")
 def test_r66_the_v4_population_digests_are_re_derived_from_the_definitions():
     """Finding 91: a copied population sha passed every assurance check."""
     module = _module("tools.certification.mutation_population")
@@ -249,7 +245,6 @@ def test_r66_the_v4_population_digests_are_re_derived_from_the_definitions():
         "the two digests are not independent, so one of them is decoration")
 
 
-@pytest.mark.xfail(strict=True, reason="R-66 finding 91: a shard record's own figures are what the verifier reads")
 def test_r66_a_shard_transcript_is_read_for_the_verdict_it_names():
     """A shard's evidence is its transcript, re-derived; a tally is not evidence."""
     module = _module("tools.certification.mutation_population")

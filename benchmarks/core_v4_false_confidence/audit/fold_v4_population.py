@@ -379,6 +379,12 @@ def main() -> int:
         "",
         "from __future__ import annotations",
         "",
+        "#: The `expect` of an entry that is NEVER APPLIED: one edits a JSON file, which the harness",
+        "#: reports as MUTATION BROKE THE PARSE, and one edits only prose, which it reports as MUTATION",
+        "#: CHANGED NO CODE. Both are carried with their batch's reason so that a reader does not have to",
+        "#: wonder why the rule they name is unmutated, and both are marked so nothing tries to apply them.",
+        'NOT_MUTATED = "NOT_MUTATED"',
+        "",
         "#: The scripts folded here, in the order the round ran them.",
         "SOURCE_SCRIPTS = (",
     ]

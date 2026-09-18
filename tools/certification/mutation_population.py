@@ -126,6 +126,16 @@ class Population:
 
     ids: tuple[str, ...]
     definitions_sha256: str = ""
+    #: ``(id, declared verdict)`` pairs for a population whose entries declare one. The V1-V3
+    #: population does not: every mutation there must be killed, and the harness says so in one
+    #: place. The V4 population carries two entries a batch declared SURVIVED with its reason and two
+    #: it declared NOT MUTATED, so what each entry must report travels WITH the entry rather than
+    #: being a rule a reader applies from memory.
+    expectations: tuple[tuple[str, str], ...] = ()
+
+    @property
+    def declared(self) -> dict[str, str]:
+        return dict(self.expectations)
 
     @property
     def count(self) -> int:
@@ -248,6 +258,123 @@ def log_problems(text: str, population: Population, selected: Sequence[str]) -> 
             f"the runner's tally is {summary.tally} and a fully killed shard of "
             f"{len(selected)} reads {expected_tally}"
         )
+    return problems
+
+
+# ---------------------------------------------------------------------------
+# the V4 population: this round's own batch guards (R-67), beside the V1-V3 one
+# ---------------------------------------------------------------------------
+#: Where the round's 563 batch guard mutations are declared, as data, inside the area the certificate
+#: pins. R-67's finding is that this evidence sat under ``benchmarks/`` in 55 scripts nothing verified.
+V4_POPULATION_PATH = "tests/mutation_population_v4.py"
+
+#: The population the V4 certificate claims. Like EXPECTED_FORMAL_POPULATION this is a DECISION: a
+#: change that folds another batch in must move this number in the same (recertified) change, so the
+#: figure in a record is something somebody decided rather than whatever the file held that day.
+#: 563 = every mutation the 2026-09-16 core re-audit's 55 batch scripts declare, none dropped.
+EXPECTED_V4_POPULATION = 563
+
+_V4_VERDICT = re.compile(r"^(?P<id>[A-Za-z0-9]+) \S+ -> (?P<verdict>[^|]+?)(?:\s+<-- EXPECTED .*)?\s*(?:\|.*)?$")
+_V4_NOT_MUTATED = re.compile(r"^NOT MUTATED: (?P<id>[A-Za-z0-9]+) --")
+_V4_CONTROL = re.compile(r"^CONTROL\b.*\b(?P<state>GREEN|RED)\b")
+
+
+def v4_entries(root: pathlib.Path) -> tuple[tuple, ...]:
+    """``POPULATION_V4`` from the pinned module at ``root``, as plain tuples.
+
+    Loaded with :func:`runpy.run_path`, exactly as the V1-V3 population is loaded from the harness,
+    and for the same reason: the population is DATA in the tree at the measured commit, not something
+    a record asserts about itself.
+    """
+    path = root / V4_POPULATION_PATH
+    if not path.is_file():
+        raise PopulationError(f"no V4 mutation population at {path}")
+    namespace = runpy.run_path(str(path), run_name="_mutation_population_v4_probe")
+    entries = namespace.get("POPULATION_V4")
+    if not isinstance(entries, tuple) or not entries:
+        raise PopulationError(f"{V4_POPULATION_PATH} defines no POPULATION_V4 tuple")
+    normalized: list[tuple] = []
+    for entry in entries:
+        if not isinstance(entry, tuple) or len(entry) != 9:
+            raise PopulationError(f"malformed POPULATION_V4 entry: {entry!r}")
+        mid, spec, old, new, test, expect, note, also, source = entry
+        if not all(isinstance(field, str) for field in (mid, spec, old, new, test, expect, note, source)):
+            raise PopulationError(f"POPULATION_V4 entry {mid!r} has a non-string field")
+        if not isinstance(also, tuple) or any(len(edit) != 3 for edit in also):
+            raise PopulationError(f"POPULATION_V4 entry {mid!r} has a malformed `also`")
+        normalized.append((mid, spec, old, new, test, expect, note, tuple(tuple(e) for e in also), source))
+    return tuple(normalized)
+
+
+def v4_population(root: pathlib.Path) -> Population:
+    """The V4 population's ordered identity, RE-DERIVED from the definitions in the tree (R-66).
+
+    Both digests are computed here and nowhere else: ``population_sha256`` over the ordered ids, and
+    ``definitions_sha256`` over the canonical JSON of the full entries -- so the same ids with a
+    different mutation body, a different target test or a different expectation are a different
+    population. Finding 91 is that a record carrying a COPIED population sha passed every check; a
+    digest recomputed from the tree and compared cannot be copied into one.
+    """
+    entries = v4_entries(root)
+    payload = [[entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6],
+                [list(edit) for edit in entry[7]], entry[8]] for entry in entries]
+    return Population(
+        ids=tuple(entry[0] for entry in entries),
+        definitions_sha256=hashlib.sha256(_canonical_json(payload)).hexdigest(),
+        expectations=tuple((entry[0], entry[5]) for entry in entries),
+    )
+
+
+def v4_log_problems(text: str, population: Population, selected: Sequence[str]) -> list[str]:
+    """Why a V4 transcript does not show exactly ``selected`` run and reaching its declared verdict.
+
+    The verdicts are re-derived from the transcript's own lines rather than read from a tally, and
+    each is compared with what the ENTRY declares -- KILLED for a real guard, SURVIVED for the two a
+    batch kept on purpose to record that one rule of a disjunction is not on its own load-bearing,
+    NOT_MUTATED for the two that cannot be applied at all. A transcript in which everything is a kill
+    is not better evidence than one in which two entries report what they were declared to report;
+    it is evidence that the round was not read.
+    """
+    declared = population.declared
+    verdicts: dict[str, list[str]] = {}
+    unknown: set[str] = set()
+    control_green = control_red = False
+    known = set(population.ids)
+    for line in text.splitlines():
+        if (found := _V4_CONTROL.match(line)) is not None:
+            control_green |= found.group("state") == "GREEN"
+            control_red |= found.group("state") == "RED"
+            continue
+        if (found := _V4_NOT_MUTATED.match(line)) is not None:
+            verdicts.setdefault(found.group("id"), []).append("NOT_MUTATED")
+            continue
+        if (found := _V4_VERDICT.match(line)) is None:
+            continue
+        mid = found.group("id")
+        if mid in known:
+            verdicts.setdefault(mid, []).append(found.group("verdict").strip())
+        else:
+            unknown.add(mid)
+    problems: list[str] = []
+    if not control_green or control_red:
+        problems.append("the transcript has no green unmutated control, so no verdict in it is evidence")
+    if unknown:
+        problems.append(f"the transcript reports mutations outside the population: {sorted(unknown)}")
+    ran, wanted = set(verdicts), set(selected)
+    if ran - wanted:
+        problems.append(f"the transcript ran mutations this shard did not select: {sorted(ran - wanted)}")
+    if wanted - ran:
+        problems.append(f"the transcript has no verdict for selected mutations: {sorted(wanted - ran)}")
+    repeated = sorted(mid for mid, found in verdicts.items() if len(found) > 1)
+    if repeated:
+        problems.append(f"the transcript reports a verdict more than once for {repeated}")
+    wrong = sorted(
+        f"{mid} reported {found[0]!r}, declared {declared.get(mid)!r}"
+        for mid, found in verdicts.items()
+        if mid in wanted and found[:1] != [declared.get(mid)]
+    )
+    if wrong:
+        problems.append(f"entries that did not reach their declared verdict: {wrong}")
     return problems
 
 

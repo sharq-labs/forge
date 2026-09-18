@@ -22,7 +22,7 @@
  "measured_before_any_rule_was_written": {
   "batch_scripts": 55,
   "mutations_in_them": 563,
-  "entries_that_no_longer_describe_the_tree": 27,
+  "entries_that_no_longer_describe_the_tree": "27 as first measured; 25 moved entries plus the 2 never-applied placeholders -- see amendment 1",
   "entries_a_batch_declared_NOT_MUTATED": 2,
   "entries_a_batch_declared_SURVIVED_with_a_reason": "carried as declared, not repaired",
   "harness_area_files_pinned_today": 49,
@@ -60,7 +60,7 @@
   "an_entry_whose_target_moved_is_repointed_with_its_reason_and_never_dropped_silently": {
    "improvement": "I-30",
    "problem": "R-67",
-   "rule": "The 27 entries whose target moved after the batch that wrote them are repointed in `REPOINTED` in the generator, each carrying the reason, the spec and text it used to name, and what it names now. The two entries a batch declared NOT MUTATED (a JSON edit, which breaks the parse; a prose edit, which changes no code) are marked `NOT_MUTATED` and are never applied. Entries a batch declared `SURVIVED` keep that expectation and their recorded reason.",
+   "rule": "The 25 entries whose target moved (27 as first measured; see amendment 1) after the batch that wrote them are repointed in `REPOINTED` in the generator, each carrying the reason, the spec and text it used to name, and what it names now. The two entries a batch declared NOT MUTATED (a JSON edit, which breaks the parse; a prose edit, which changes no code) are marked `NOT_MUTATED` and are never applied. Entries a batch declared `SURVIVED` keep that expectation and their recorded reason.",
    "class": "A",
    "why": "A stale mutation is a guard verified by nobody, which is the defect, and DELETING one is how that becomes invisible. Every rule these 27 name is still in the tree, so each can be repointed honestly. This includes B1j and B1k, which finding 92 names as no longer applying: the mission's final round expected them to be dropped, and both rules -- the supplied grid's goodness of fit and its containment -- are still there, one line each in the router's disjunction, so they are repointed instead. Dropping a live guard to match an expectation would be the weakening this round exists to remove.",
    "compatibility": "Additive.",
@@ -95,15 +95,49 @@
   }
  },
  "thresholds_declared": {
-  "population_count": {"value": 563, "class": "A", "note": "the corpus, counted by the generator; not a chosen number"},
-  "batch_scripts_folded": {"value": 55, "class": "A"},
-  "repointed_entries": {"value": 27, "class": "A", "note": "each with its reason in the generator and in the emitted note"},
-  "not_mutated_entries": {"value": 2, "class": "A"},
-  "fstring_only_on_3_12": {"value": 5, "class": "A", "note": "asserted as an exact set, so it cannot grow silently"},
-  "harness_closure_files": {"value": 121, "class": "A", "note": "derived, then pinned; the check is the derivation"},
-  "shard_count": {"value": 4, "class": "C", "note": "convention carried from the V1-V3 population"}
+  "population_count": {
+   "value": 563,
+   "class": "A",
+   "note": "the corpus, counted by the generator; not a chosen number"
+  },
+  "batch_scripts_folded": {
+   "value": 55,
+   "class": "A"
+  },
+  "repointed_entries": {
+   "value": 25,
+   "class": "A",
+   "note": "each with its reason in the generator and in the emitted note; amended from 27, see the amendment log"
+  },
+  "not_mutated_entries": {
+   "value": 2,
+   "class": "A"
+  },
+  "fstring_only_on_3_12": {
+   "value": 5,
+   "class": "A",
+   "note": "asserted as an exact set, so it cannot grow silently"
+  },
+  "harness_closure_files": {
+   "value": 121,
+   "class": "A",
+   "note": "derived, then pinned; the check is the derivation"
+  },
+  "shard_count": {
+   "value": 4,
+   "class": "C",
+   "note": "convention carried from the V1-V3 population"
+  }
  },
  "compatibility": "ADDITIVE ONLY. No V1-frozen symbol, default, field order or enum member is touched. The MCP verdict words are untouched. The certificate's harness area grows, which moves its digest and is settled by the V4 round in batch 56.",
  "reproductions_first": "Every rule above is recorded as a strict xfail in tests/test_core_scientific_audit_batch55.py before any of it is implemented, each seen failing ON ITS OWN ASSERTION.",
- "amendment_log": []
+ "amendment_log": [
+  {
+   "amendment": 1,
+   "date": "2026-09-18",
+   "changes": "`repointed_entries` 27 -> 25, and `entries_that_no_longer_describe_the_tree` is restated as 25 moved entries plus 2 never-applied placeholders.",
+   "numbers_that_forced_it": "The first measurement counted 27 entries whose `old` text does not match the live tree exactly once. Two of those -- B25j and B27g -- carry an EMPTY `old` and `new`: their batch declared them NOT MUTATED (a JSON edit breaks the parse; a prose edit changes no code) and excluded them from its own run. `str.count('')` returns len(text) + 1, so an empty pattern 'matches' 138459 times in certification/guard_reach_ledger.json and 103528 times in src/engcore/scientific/consensus.py -- which is why they appeared in the stale list at all. Neither can be repointed, because neither names a mutation. The entries that genuinely moved and are repointed with their reasons are 25.",
+   "what_did_not_change": "No rule, no threshold class, and no entry. The two placeholders are carried with their batch's reason and marked NOT_MUTATED so nothing applies them, exactly as rule 4 preregistered; only the two counts the rule quotes are corrected."
+  }
+ ]
 }
