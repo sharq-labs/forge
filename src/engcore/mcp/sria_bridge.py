@@ -132,6 +132,9 @@ def evidence_from_credibility_report(
         )
 
     quantity = report.values[name]
+    source_refs = ()
+    if report.provenance.parent_run_id:
+        source_refs = (f"run:{report.provenance.parent_run_id}",)
     return Evidence(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
@@ -148,6 +151,8 @@ def evidence_from_credibility_report(
         provenance_ref=report.provenance.run_id,
         domain_pack_ref=domain_pack_ref,
         context_ref=context_ref,
+        source_refs=source_refs,
+        source_closure_complete=False,
     )
 
 
