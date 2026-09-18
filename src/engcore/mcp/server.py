@@ -47,6 +47,11 @@ from .errors import (
 from ..scientific.solvers.protocol import ConvergenceState
 from .evidence import EVIDENCE_BASIS_ORDER, CredibilityVerdict
 from .battery import run_battery_case
+from .claim_assessment import (
+    ClaimAssessmentError,
+    assess_claim_request,
+    refused_claim_assessment,
+)
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -62,6 +67,7 @@ __all__ = [
     "SERVER_NAME",
     "SERVER_VERSION",
     "SYSTEM_NAME",
+    "assess_claim",
     "build_server",
     "describe_capabilities",
     "main",
@@ -783,6 +789,25 @@ field, what you sent, what was expected and how to repair it -- fix that one \
 field and call again."""
 
 
+_ASSESS_CLAIM_DESCRIPTION = """Assess one structured scientific claim for one declared decision.
+
+The request must explicitly name a registered system, its case payload, the
+reported quantity to assess, the terminal decision statement, one or more
+required ValidationLevels, and a model-discrepancy declaration.
+
+This tool does not infer a scientific question from prose, select a model,
+choose a report when a system returns several, or invent a confidence target.
+It executes the existing system boundary and carries its credibility report
+through SRIA evidence and assurance.
+
+The result contains BOTH the production credibility verdict and the assurance
+verdict. A validation level cannot hide a NOT_SUPPORTED or
+INSUFFICIENT_EVIDENCE credibility report: the credibility critic itself is a
+required assurance critic.
+
+This is scientific decision support, not safety certification and not an
+automatic real-world decision."""
+
 _RUN_BATTERY_DESCRIPTION = """\
 Run one battery case and return its credibility evidence report.
 
@@ -830,6 +855,19 @@ error naming the field, what you sent, what was expected and how to repair \
 it -- fix that one field and call again."""
 
 
+def assess_claim(request: dict[str, Any]) -> dict[str, Any]:
+    """Public structured claim-assessment boundary.
+
+    Expected scientific refusals are returned as data. Unexpected programming
+    errors still raise: a transport must not turn an implementation defect
+    into an innocent-looking INSUFFICIENT_EVIDENCE answer.
+    """
+    try:
+        return assess_claim_request(request)
+    except (ClaimAssessmentError, ProblemPayloadError) as exc:
+        return refused_claim_assessment(exc)
+
+
 def build_server() -> MCPServer:
     """The server, with both tools registered. Used by the tests and by main."""
     server = MCPServer(
@@ -860,6 +898,12 @@ def build_server() -> MCPServer:
         name="run_battery",
         title="Run a battery discharge case",
         description=_RUN_BATTERY_DESCRIPTION,
+    )
+    server.add_tool(
+        assess_claim,
+        name="assess_claim",
+        title="Assess a structured scientific claim",
+        description=_ASSESS_CLAIM_DESCRIPTION,
     )
     _audit_tools(server)
     return server
