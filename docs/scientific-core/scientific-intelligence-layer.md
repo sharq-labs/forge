@@ -1,8 +1,8 @@
 # Scientific Intelligence Layer (Core G–N)
 
-Continues the claim layer of PRs #51–#56. Everything below lives in
-`engcore.claims` (non-Core, not frozen), except for two SRIA changes, which
-are marked **certified area**.
+Continues the claim layer of PRs #51–#56. Scientific-intelligence orchestration lives in
+`engcore.claims`; credibility/V&V report semantics and the SRIA bridge live in
+`engcore.credibility`. Both are non-Core. Two SRIA changes are marked **certified area**.
 
 ## Pipeline
 
@@ -14,7 +14,7 @@ ScientificClaim (+ DecisionContext, + InputUncertainty)
   → execute_plan                                         claims/execution.py
   → uncertainty studies: refinement (NUMERICAL),         claims/uq_studies.py
       propagation (EPISTEMIC_PARAMETER)                  numerical_uq.py, parameter_uq.py
-  → SRIA evidence (+ study channel records)              mcp/sria_bridge.py
+  → SRIA evidence (+ study channel records)              credibility/sria_bridge.py
   → Arbiter: context of use enforced by the authority    sria/assurance/arbiter.py (certified area)
   → external evidence: benchmark / measurement /         claims/external_evidence.py
       literature, judged standing, never a level
