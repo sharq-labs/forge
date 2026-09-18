@@ -54,7 +54,11 @@ import mutation_guards as M  # noqa: E402
 #: ``tools/certification/guard_reach.py`` and the declaration it checks in
 #: ``certification/guard_reach_ledger.json``, so a copy without them cannot run the mutation at all.
 #: 1.0 MB between them.
-_COPY_TREES = ("src", "tests", "experiments", "tools", "certification")
+#: ``.git`` joined in batch 56 (I-29): the Core Freeze V4 guards read the V1 snapshot AS COMMITTED,
+#: with ``git show <baseline>:<path>``, which is the whole point of R-69 -- a comparison against the
+#: working tree cannot fail. Without the repository in the copy those tests ERROR under every
+#: mutation, which is a red result that says nothing. 39 MB beside the 40 MB already copied.
+_COPY_TREES = ("src", "tests", "experiments", "tools", "certification", ".git")
 _COPY_FILES = ("pyproject.toml",)
 _COPY_GLOBS = ("benchmarks/core_v4_false_confidence/*.json", "benchmarks/core_v2_hybrid_uq/*.json")
 

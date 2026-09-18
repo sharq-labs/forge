@@ -1258,27 +1258,110 @@
    "problem": "R-66",
    "title": "The V2 and V3 freeze verifiers accept a self-asserted assurance record",
    "rule": "tools/certification/mutation_population.py",
-   "rule_symbol": "v4_population (population_sha256 over the ordered ids, definitions_sha256 over the canonical JSON of the full entries) and v4_log_problems (verdicts re-derived from the transcript)",
+   "rule_symbol": "v4_population (population_sha256 over the ordered ids, definitions_sha256 over the canonical JSON of the full entries) and v4_log_problems (verdicts re-derived from the transcript); and tools/certification/core_freeze_v4.py::v4_mutation_problems, which recomputes every figure a V4 assurance record asserts -- the population's two digests from the tree, each shard's log digest from the transcript's own bytes, each shard's verdicts by parsing that transcript, and the shards' union and disjointness",
    "status": "REACHED",
-   "audit_status": "PARTIAL",
+   "audit_status": "FIXED",
    "audit_reached_in_production": "latent",
-   "closed_by": "I-30 (batch 55) for the population half; I-29 (batch 56) for the freeze record's commit and figures",
-   "why": "PARTIAL on purpose, and the split is recorded in BATCH55_THRESHOLD_PROTOCOL.json rather than left to a reader. The population half is closed and REACHED: a V4 population's identity is recomputed from the tree, never read from a record, and the digest covers the mutation BODIES so the same ids with a rewritten target test or expectation are a different population; a shard's verdicts are re-derived from its own transcript and each must equal what the ENTRY declares. The other half of finding 91 -- a verifier that re-derives the evidence digests, the measured commit and the figures a certificate asserts, as V1 did -- is the Core Freeze V4 control plane in batch 56.",
+   "closed_by": "I-30 (batch 55) for the population half; I-29 (batch 56) for the freeze record",
+   "why": "REACHED and CLOSED. The population half (batch 55): a V4 population's identity is recomputed from the tree, never read from a record, and the digest covers the mutation BODIES so the same ids with a rewritten target test or expectation are a different population. The freeze-record half (batch 56): the V4 verifier re-derives the measured commit by `git merge-base`, every shard's log digest from the transcript's bytes and every verdict by parsing those lines, and refuses a record whose figures disagree -- which is what finding 91's fabricated record with green flags and a copied population sha exploited.",
    "entry_points": [
     "tools/certification/mutation_population.py::main (identity, select and record, invoked per shard by the recertify workflow)",
-    "tools/certification/mutation_v4_runner.py::main (reads the population through v4_population and v4_entries)"
+    "tools/certification/mutation_v4_runner.py::main (reads the population through v4_population and v4_entries)",
+    "tools/certification/core_freeze_v4.py::verify (the freeze verifier the recertify workflow runs)"
    ],
    "exercised_by": [
     "tests/test_mutation_population_v4.py::test_the_definitions_digest_covers_the_bodies_and_not_only_the_ids",
     "tests/test_mutation_population_v4.py::test_a_population_whose_entries_are_the_wrong_shape_is_refused",
     "tests/test_core_scientific_audit_batch55.py::test_r66_the_v4_population_digests_are_re_derived_from_the_definitions",
-    "tests/test_core_scientific_audit_batch55.py::test_r66_a_shard_transcript_is_read_for_the_verdict_it_names"
+    "tests/test_core_scientific_audit_batch55.py::test_r66_a_shard_transcript_is_read_for_the_verdict_it_names",
+    "tests/test_core_scientific_audit_batch56.py::test_r66_an_assurance_record_whose_figures_disagree_with_the_tree_is_refused"
    ],
    "exercised_by_in_library": [],
    "bypasses": [],
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
-   "what_the_check_cannot_see": "A transcript that was never produced by a run. The digests prove WHICH population a shard claims and the lines prove what it reported, and nothing here proves the lines came from executing anything -- that is what the certificate's own commit binding and the fresh-execution gate in the workflow are for, and it is the half batch 56 takes on."
+   "what_the_check_cannot_see": "A transcript that was never produced by a run. The digests prove WHICH population a shard claims, the lines prove what it reported, and the measured commit proves which tree -- and nothing here proves the lines came from executing anything. That binding is the recertify workflow's fresh-execution gate, and V4 states it as a non-claim rather than implying it."
+  },
+  {
+   "problem": "R-65",
+   "title": "The branch descends from no Core Freeze, and recertification is blocked",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "core_freeze_v4.verify (v4.descends_from_v3, via descends_from) with certification/core_freeze_v4.json, and recertification_scope.CERTIFICATE_SELF_CHECKS",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED: the freeze verifier and the recertification classifier are what the recertify workflow runs, and both now describe this tree. The candidate descends from the V3 freeze commit and says which one; the nineteen checks that compare the tree against a pinned artifact of the PREVIOUS freeze are classified as certificate self-checks, so a recertifying source gate can be green while the certificate child still requires every one of them to be reported PASSED in JUnit. The four API snapshots and the FROZEN-STATE table are regenerated once, in the freeze, with the additive proof recorded beside them.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::main (--verify, run by the recertify workflow and by the certificate child)",
+    "tools/certification/recertification_scope.py::CERTIFICATE_SELF_CHECKS (read by both the source gates and the child)"
+   ],
+   "exercised_by": [
+    "tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract",
+    "tests/test_core_freeze_v4_manifest.py::test_v4_descends_from_v3_and_rewrites_no_history",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_a_candidate_that_descends_from_no_freeze_is_not_a_descendant",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_the_deferred_self_checks_cover_every_check_that_reads_the_previous_freeze",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_the_frozen_state_table_states_the_digest_the_tree_computes"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "That a deferred self-check actually ran. The certificate child requires each to be reported PASSED in JUnit, and if the child itself were never run nothing here would notice -- which is why the branch-policy workflow, not this ledger, is what makes the child mandatory."
+  },
+  {
+   "problem": "R-69",
+   "title": "The frozen API snapshot cannot see method-level contracts or additive-only violations",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "additive_only_problems and enum_insertions over stored_v1_frozen_snapshot / stored_v2_frozen_snapshot, with tools/certification/api_surface_v4.py pinned in certification/core_v4_api_surface.json",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED: both halves are in the verifier the recertify workflow runs. The comparison is against the snapshot AS COMMITTED at the V1 baseline -- read with `git show` and refused unless its bytes hash to the digest V1's own manifest pinned -- so `v1_entries_byte_identical_in_v2`'s live-against-live shape cannot come back; and additive is ENUMERATED, so a removed parameter, a changed default, a changed parameter kind, a new required argument, a reordered field or member, a shrunk frozen container and a changed exception chain each produce a named problem. The method-level gap is closed by a separate deep surface: 1943 method signatures and every enum member's position, pinned by digest. `engcore.api_snapshot` is untouched, so V1, V2 and V3 keep computing what they always computed.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::verify (api.additive_only, api.enum_insertions_are_recorded, api.deep_surface_is_the_live_one)",
+    "tools/certification/api_surface_v4.py::main (writes certification/core_v4_api_surface.json)"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch56.py::test_r69_every_difference_from_the_stored_v1_surface_is_additive",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_a_reordered_enum_member_is_not_additive",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see",
+    "tests/test_core_freeze_v4_manifest.py::test_the_compatibility_claim_is_proved_against_the_bytes_v1_committed",
+    "tests/test_core_freeze_v4_manifest.py::test_a_shrunk_or_reordered_surface_is_not_additive"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "SHAPE is all of it. A symbol whose signature is unchanged and whose meaning was reversed passes, which is what the 575-mutation population and the suites are for. The deep surface records methods by name and signature and not what they do; and a frozen container is recorded by TYPE and SIZE, so a tuple whose eighth entry replaced its seventh is invisible to the constant rule -- which is why that rule accepts only growth and the members are asserted by name in the suites."
+  },
+  {
+   "problem": "R-70",
+   "title": "The V3 supersession check passes on any exception",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "is_the_core_refusal and v3_fixtures_refused, with REQUIRED_V3_REFUSAL",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED, and measured on every verify. A supersession claim rests on a REFUSAL, and the audited check caught `Exception` and read any of them as one -- so it passed with the rule deleted and an ImportError raised in its place, which is the vacuous kill the mutation harness refuses one level up. V4 requires the exception to be the core's own class AND its message to name the rule (the route diagnostics contradicting their own measurements), and records the type and message it saw. The V3 verifier also REPORTS that refusal now instead of dying on it with a traceback, because a verifier's job is to say which contract holds.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::verify (v4.v3_fixtures_refused_by_the_named_rule, re-derived on every run)",
+    "tools/certification/core_freeze_v3.py::verify (reports the refusal as a failed check rather than raising)"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch56.py::test_r70_the_supersession_check_names_the_rule_that_refuses_the_v3_fixtures",
+    "tests/test_core_freeze_v4_manifest.py::test_the_v3_supersession_names_the_rule_that_refuses",
+    "tests/test_core_freeze_v3_manifest.py::test_the_v3_refusal_is_the_named_rule_and_not_any_exception",
+    "tests/test_core_freeze_v3_manifest.py::test_the_identity_references_are_refused_in_a_fresh_process_too"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "It pins the exception TYPE and a phrase of the message. A future rewording of that message is a test failure -- the right cost for a check whose whole point is which rule fired -- and a DIFFERENT rule that happened to use the same phrase would satisfy it, which is why the type is required too."
   }
  ]
 }

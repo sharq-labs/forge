@@ -145,6 +145,12 @@ def test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted()
     v4 = _module("tools.certification.core_freeze_v4")
     compare = _attribute(v4, "additive_only_problems")
     stored = _one_symbol()
+    grown = _one_symbol(kind="constant", signature=None, dataclass_fields=None,
+                        value={"kind": "immutable_container", "type": "tuple", "size": 9})
+    container = _one_symbol(kind="constant", signature=None, dataclass_fields=None,
+                            value={"kind": "immutable_container", "type": "tuple", "size": 8})
+    assert compare(container, grown) == [], (
+        "a frozen tuple that GAINED an entry is the constant form of appending an enum member")
 
     added_field = _one_symbol(dataclass_fields=[
         {"name": "a", "has_default": False}, {"name": "b", "has_default": True},
@@ -183,8 +189,18 @@ def test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted()
             {"name": "c", "kind": "KEYWORD_ONLY", "has_default": False}], "returns": "None"})),
         ("a changed kind", _one_symbol(kind="class")),
         ("a changed exception chain", _one_symbol(exception_mro=["engcore.X"])),
+        # A frozen tuple of field names that LOST one: two records that differed become one
+        # identity. The growth of such a container is additive (see amendment 1 of batch 13 and
+        # `_constant_problems`), and the shrink is the break that rule must not let through.
     ):
         assert compare(stored, live), f"{label} is accepted as additive"
+
+    # A frozen tuple of field names that LOST one: two records that differed become one identity.
+    # Compared constant-against-constant, because a kind change would be caught by another rule and
+    # this is about the size comparison itself.
+    shrunk = _one_symbol(kind="constant", signature=None, dataclass_fields=None,
+                         value={"kind": "immutable_container", "type": "tuple", "size": 7})
+    assert compare(container, shrunk), "a frozen container that SHRANK is accepted as additive"
 
 
 def test_r69_a_reordered_enum_member_is_not_additive():
@@ -308,7 +324,42 @@ def test_r66_an_assurance_record_whose_figures_disagree_with_the_tree_is_refused
     assert v4.v4_mutation_problems(REPO, copied, logs=logs), (
         "a shard whose log digest is another shard's is accepted -- the copied sha of finding 91")
 
-    flagged = json.loads(json.dumps(honest))
-    flagged["shards"]["0"]["control"] = "GREEN"
-    assert v4.v4_mutation_problems(REPO, flagged, logs={0: b"nothing happened here\n", **{k: v for k, v in logs.items() if k}}), (
-        "a green flag beside a transcript that says nothing is accepted")
+    # The transcript must be READ and not only hashed. The record is built FROM the silent
+    # transcript, so its digest matches and the only thing left that can refuse it is what the
+    # lines say -- which is the record vouching for itself, finding 91's shape.
+    silent = {index: b"nothing happened here\n" for index in logs}
+    self_consistent = v4.v4_mutation_assurance(REPO, logs=silent, source_commit="HEAD")
+    assert v4.v4_mutation_problems(REPO, self_consistent, logs=silent), (
+        "a shard record whose own transcript reports no verdict at all is accepted")
+
+    one_lying = dict(logs)
+    first = sorted(logs)[0]
+    one_lying[first] = logs[first].replace(b" -> KILLED", b" -> NOT_A_TEST_FAILURE(exit 2)", 1)
+    lying_record = v4.v4_mutation_assurance(REPO, logs=one_lying, source_commit="HEAD")
+    assert v4.v4_mutation_problems(REPO, lying_record, logs=one_lying), (
+        "a shard whose transcript reports a verdict the entry did not declare is accepted")
+
+
+def test_r65_a_candidate_that_descends_from_no_freeze_is_not_a_descendant():
+    """R-65's first sentence, at its own boundary: *the branch descends from no Core Freeze.*"""
+    v4 = _module("tools.certification.core_freeze_v4")
+    descends = _attribute(v4, "descends_from")
+    manifest = json.loads((REPO / v4.MANIFEST_PATH).read_bytes())
+    v3_commit = manifest["freeze"]["descends_from_v3_commit"]
+    candidate = manifest["freeze"]["candidate_commit"]
+    assert descends(REPO, v3_commit, candidate)
+    assert not descends(REPO, "0" * 40, candidate), "an unknown ancestor reads as an ancestor"
+    assert not descends(REPO, "", candidate), "no ancestor at all reads as nothing to check"
+    assert not descends(REPO, candidate, v3_commit), "descent is not symmetric and is read as if it were"
+
+
+def test_r69_the_v2_surface_is_compared_too_because_the_v1_contract_has_no_hybrid_uq():
+    """`RouteReason` -- the enum finding 95 measured -- is a V2 symbol, not a V1 one."""
+    v4 = _module("tools.certification.core_freeze_v4")
+    facts = _attribute(v4, "api_facts")(REPO)
+    assert facts["v2_additive_only_problems"] == []
+    assert facts["v2_stored"]["frozen_digest"] and facts["v4_live"]["v2_frozen_count"] == 221
+    insertions = facts["v2_enum_insertions"]
+    assert "engcore.hybrid_uq.RouteReason" in insertions, (
+        "the V2 surface is not compared, so the module the finding is in is outside the proof")
+    assert insertions["engcore.hybrid_uq.RouteReason"]["members_now"] == 43

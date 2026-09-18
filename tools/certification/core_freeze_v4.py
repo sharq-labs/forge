@@ -119,6 +119,19 @@ REQUIRED_SUITES = v3.REQUIRED_SUITES
 # =====================================================================
 # the stored V1 surface, and what additive means
 # =====================================================================
+def descends_from(root: pathlib.Path, ancestor: str, commit: str) -> bool:
+    """Whether ``commit`` descends from ``ancestor`` in this repository.
+
+    A named function rather than a line inside :func:`verify`, so the rule R-65's first sentence is
+    about -- *the branch descends from no Core Freeze* -- can be tested at its own boundary: an empty
+    or unknown ancestor is False, never "nothing to check".
+    """
+    if not ancestor or not commit:
+        return False
+    return subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, commit],
+                          cwd=root, capture_output=True).returncode == 0
+
+
 def stored_v1_frozen_snapshot(root: pathlib.Path) -> dict[str, Any]:
     """The frozen snapshot AS COMMITTED at the Core Freeze V1 baseline, with its two digests.
 
@@ -576,8 +589,7 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
     head = v2.git(root, "rev-parse", "HEAD")
     candidate = manifest.get("freeze", {}).get("candidate_commit", "")
     exact = head == candidate
-    descends = bool(candidate) and subprocess.run(
-        ["git", "merge-base", "--is-ancestor", candidate, head], cwd=root).returncode == 0
+    descends = descends_from(root, candidate, head)
     v = v2.Verification(mode="EXACT_FREEZE" if exact else ("DESCENDANT" if descends else "UNRELATED"))
     v.add("manifest.schema", manifest.get("schema") == MANIFEST_SCHEMA, manifest.get("schema"))
     clean = v2.git(root, "status", "--porcelain") == ""
@@ -587,8 +599,7 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
 
     # R-65: a freeze that does not descend from the previous one is a fork.
     v3_commit = manifest.get("freeze", {}).get("descends_from_v3_commit", "")
-    from_v3 = bool(v3_commit) and subprocess.run(
-        ["git", "merge-base", "--is-ancestor", v3_commit, candidate or head], cwd=root).returncode == 0
+    from_v3 = descends_from(root, v3_commit, candidate or head)
     v.add("v4.descends_from_v3", from_v3, f"V3 freeze {v3_commit[:12]}")
     for label, path, key in (("v1", V1_MANIFEST_PATH, "v1_manifest_sha256"),
                              ("v2", V2_MANIFEST_PATH, "v2_manifest_sha256"),

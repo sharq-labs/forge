@@ -3375,3 +3375,58 @@ exactly the by-design set. `tests/test_mutation_harness.py` **6 passed** with `t
 untouched. Guard reach ledger clean over **39** guards (R-67 and R-68 REACHED/FIXED, R-66 REACHED/PARTIAL).
 Guard mutations: `BATCH55_MUTATIONS.log`, **12/12 KILLED**, CONTROL GREEN over 10 tests; no pinned mutation targets a file
 this batch changed, and `BATCH55_PINNED_MUTATIONS.log` records that as NONE rather than as a clean run.
+
+### Batch 56 — I-29 (R-65, R-69, R-70, and R-66's freeze-record half)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-29 | **DONE** | `e658f5e7` (preregistration + 12 strict xfails), `08e1b02f`, `850b334d`, this commit | The certificate and the V4 manifest are rebuilt as the last step of the batch, so they name the commit whose tree they describe. **An open decision** is recorded below: the owner's rule forbids reordering members, and this round INSERTED 7 `RouteReason` members among the existing ones |
+
+**The round's own result, made certifiable.** Nineteen FAST-tier tests had been failing by design since
+batch 1: the V1 frozen digest moved from `c80e6418…` to `f18aa806…`, four pinned snapshots described the
+pre-round surface, and the V2 and V3 manifests state a contract the hardened readers now refuse. That is
+finding 89 — *the branch descends from no Core Freeze, and recertification is blocked*. Regenerating a
+snapshot earlier would have made each batch's snapshot the reference for the next, which is why the round
+carried the failures instead.
+
+| Claim | Status | How |
+|---|---|---|
+| the compatibility claim is asserted, never proved | **FIXED** | `additive_only_problems(stored, live)` compares the live surface against `tests/api/frozen_api_snapshot.json` **as committed at the V1 baseline** — read with `git show` and refused unless its bytes hash to the digest V1's own manifest pinned — and names every non-additive difference: a removed or renamed symbol, a removed parameter, a changed default, a changed parameter **kind**, a new required argument, an enum member removed/revalued/reordered, a dataclass field removed/reordered/inserted before the last, a new field without a default, a changed exception chain, a changed union, a **shrunk** frozen container. Result on this tree: **zero**, from the stored V1 surface and from the stored V2 surface. 194 frozen symbols, 205 public, seven modules — unchanged |
+| the comparison was live against live | **FIXED** | finding 95's first half. `v1_entries_byte_identical_in_v2` compared the live surface with the live surface, so it could not fail; and byte identity was the wrong claim anyway, because under an additive-only rule it can only be satisfied by changing nothing |
+| 13 enum members changed position undetected | **FIXED, and it is a decision** | `RouteReason` grew from **24 members to 43**, and **7** of the new ones took positions 11, 12, 20–24 — before members that already existed. Every pre-existing member keeps its name, its value and its relative order. `enum_insertions` names each inserted member and its position, the V4 manifest records the list, and `api.enum_insertions_are_recorded` fails if the manifest's list is not what the tree says (amendment 1) |
+| a deleted method moved no digest | **FIXED** | finding 94. `engcore.api_snapshot` describes module-level symbols and not one method, so `ValidityDomain.assess`'s `record_values` argument and `ValidationReport.evidence_basis` could vanish silently. `tools/certification/api_surface_v4.py` records **1943 method signatures** and every enum member's **position**, pinned in `certification/core_v4_api_surface.json` by digest. `engcore.api_snapshot` is **untouched**, so V1, V2 and V3 keep computing what they always computed — adding methods there would have moved the V1 number three published contracts pin |
+| any exception counted as the supersession refusal | **FIXED** | finding 96. `is_the_core_refusal` requires the exception to be the core's own class **and** its message to name the rule, and records both. V3's verifier also **reports** that refusal now instead of dying on it with a traceback — a verifier that crashes says nothing about which contract holds |
+| an assurance record's own figures | **FIXED** | finding 91's other half. `v4_mutation_problems` recomputes the population's two digests from the tree, each shard's log digest from the transcript's own bytes, each shard's verdicts by parsing those lines, and the shards' union and disjointness. A record built FROM a silent transcript is refused on what the lines say, not on its digest |
+| recertification is blocked | **FIXED** | `CERTIFICATE_SELF_CHECKS` grows from 4 nodes to 23: every check that compares the tree against a pinned artifact of the previous freeze. Deselected in the source gates and run by the certificate child, **which requires each to be reported PASSED in JUnit** — deferring is not skipping |
+
+**OPEN DECISION — inserted enum members.** The owner's compatibility rule forbids *removing, renaming or
+reordering fields or members* and allows *new enum members*. This round added 19 `RouteReason` members and
+placed 7 of them among the existing ones, grouped by meaning rather than appended. Every existing member
+keeps its name, its value and its relative order; what moved is absolute positions, which no consumer can
+observe except through `list(RouteReason)`. **Options:** (a) accept insertions as additive, with
+`enum_insertions` recording each one — what V4 does, and the recommendation, because the alternative is
+either refusing the round's result or renumbering a 43-member enum to satisfy a rule about consumers;
+(b) require appending, which means moving 7 members to the end of the enum and re-running the population.
+Recorded here rather than decided quietly.
+
+**Amendment 1** is that decision reaching the reproduction: as preregistered, an inserted member was to be a
+problem. The numbers that forced it are in the protocol's `amendment_log`.
+
+**What V4 supersedes.** V3's identity references are `hybrid_uq.route_diagnostics/1` records naming no
+thresholds and carrying a nan chi-square minimum, and R-01/R-20 make every such record refuse on read —
+exactly as V2's fixtures were refused by V3. `tests/test_core_freeze_v3_manifest.py` becomes a historical
+record, as V2's suite did, and names the five V3 checks V4 supersedes and nothing else.
+
+**Compatibility.** ADDITIVE ONLY, and **this is the batch where that is proved rather than asserted**. No
+frozen symbol added or removed, no default changed, no field or enum member reordered. `engcore.api_snapshot`
+is untouched. The MCP verdict words are untouched.
+
+**Committed evidence.** The four `tests/api/*.json` snapshots, `certification/core_v4_api_surface.json`,
+`certification/core_freeze_v4.json`, `certification/CORE_FREEZE_V4.md`, the regenerated
+`certification/current_core_v2.json`, and the FROZEN-STATE table in `docs/CORE_FREEZE_POLICY.md`. Each is
+regenerated once, here, with the comparator's verdict recorded beside it.
+
+**Verification.** The batch's own two files **14 + 11 passed**. Guard mutations:
+`BATCH56_MUTATIONS.log`, **14/14 KILLED**, CONTROL GREEN; `BATCH56_PINNED_MUTATIONS.log` records NONE, since
+no pinned mutation targets a file this batch changed. Guard reach ledger clean over **42** guards (R-65,
+R-69, R-70 REACHED/FIXED; R-66 now REACHED/FIXED with both halves closed).

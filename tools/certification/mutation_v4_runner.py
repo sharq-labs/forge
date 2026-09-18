@@ -45,7 +45,11 @@ from typing import Iterable, Sequence
 #: guards read, and the committed JSON evidence the static guards compare against. Carried over from
 #: the round's own runner, where each entry was added because a copy without it turned a CONTROL red
 #: for a reason having nothing to do with any mutation.
-COPY_TREES = ("src", "tests", "experiments", "tools", "certification")
+#: ``.git`` is here for the Core Freeze V4 guards, which read the V1 API snapshot AS COMMITTED
+#: (``git show <baseline>:tests/api/frozen_api_snapshot.json``). That is R-69's fix, so a copy
+#: without the repository makes those target tests ERROR under every mutation -- a red result that
+#: says nothing, which is the failure this runner exists to prevent.
+COPY_TREES = ("src", "tests", "experiments", "tools", "certification", ".git")
 COPY_FILES = ("pyproject.toml",)
 COPY_GLOBS = ("benchmarks/core_v4_false_confidence/*.json", "benchmarks/core_v2_hybrid_uq/*.json")
 

@@ -86,6 +86,28 @@ def test_the_compatibility_claim_is_proved_against_the_bytes_v1_committed(manife
     assert manifest["api"]["v4_live"]["frozen_count"] == core_freeze_v2.V1_FROZEN_COUNT == 194
 
 
+def test_the_v4_manifest_states_the_v2_comparison_it_made(manifest):
+    """Both surfaces, because the V1 contract does not contain `hybrid_uq` at all.
+
+    `RouteReason` -- the enum finding 95 measured -- is a V2 symbol. A manifest that compared only
+    the V1 surface would report a clean additive proof while saying nothing about the module the
+    finding is in, so the V2 comparison is made, recorded, and recomputed on every verify.
+    """
+    from engcore import api_snapshot as A
+
+    stored = core_freeze_v4.stored_v2_frozen_snapshot(REPO)
+    live = A.frozen_only(A.build(modules=A.V2_CANONICAL_MODULES))
+    assert manifest["api"]["v2_stored"]["frozen_digest"] == stored["digest"]
+    assert manifest["api"]["v2_additive_only_problems"] == core_freeze_v4.additive_only_problems(
+        stored["snapshot"], live) == []
+    assert manifest["api"]["v4_live"]["v2_frozen_count"] == live["symbol_count"] == 221
+    assert manifest["api"]["v4_live"]["v2_frozen_digest"] == A.frozen_digest(
+        A.build(modules=A.V2_CANONICAL_MODULES))
+    # The comparison must be capable of failing over the V2 surface too, not only the V1 one.
+    shrunk = {**stored["snapshot"], "symbols": stored["snapshot"]["symbols"][:-1]}
+    assert core_freeze_v4.additive_only_problems(stored["snapshot"], shrunk)
+
+
 def test_the_inserted_enum_members_are_named_rather_than_discovered(manifest):
     """Finding 95's own measurement: members changed position and nothing detected it."""
     stored = core_freeze_v4.stored_v2_frozen_snapshot(REPO)
