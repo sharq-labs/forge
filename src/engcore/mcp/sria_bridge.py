@@ -44,7 +44,7 @@ from ..sria.assurance.assessment import (
 )
 from ..sria.provenance import AssessmentProvenance
 from ..sria.uncertainty import CHANNEL_OF_SOURCE
-from .evidence import CredibilityEvidenceReport
+from .evidence import CredibilityEvidenceReport, CredibilityVerdict
 
 __all__ = [
     "CredibilityReportCritic",
@@ -214,8 +214,14 @@ class CredibilityReportCritic:
             critic_class=self.critic_class,
             subject_ref=report.run_id,
             verdict=(
-                CriticVerdict.INCONCLUSIVE
-                if missing_mandatory
+                CriticVerdict.FAIL
+                if report.verdict is CredibilityVerdict.NOT_SUPPORTED
+                else CriticVerdict.INCONCLUSIVE
+                if (
+                    missing_mandatory
+                    or report.verdict
+                    is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+                )
                 else CriticVerdict.PASS
             ),
             provenance=AssessmentProvenance(
@@ -232,7 +238,8 @@ class CredibilityReportCritic:
             ),
             checks=tuple(checks),
             summary=(
-                f"credibility report exposes {len(attained)} attained "
-                "validation/verification level(s)"
+                f"credibility report verdict={report.verdict.value}; "
+                f"exposes {len(attained)} attained validation/verification "
+                "level(s)"
             ),
         )
