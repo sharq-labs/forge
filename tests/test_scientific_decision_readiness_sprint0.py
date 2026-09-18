@@ -249,17 +249,31 @@ def test_sprint1_bridge_derives_claim_value_from_report() -> None:
 
 
 def test_sprint1_bridge_refuses_to_invent_model_discrepancy() -> None:
+    """An omitted discrepancy is carried as UNKNOWN, never invented as zero.
+
+    Sprint 1 pinned this as a ``TypeError``. PR #50 reconciled the bridge so an
+    omitted declaration becomes an explicit ``DiscrepancyKind.UNKNOWN`` (see
+    ``docs/audits/SCIENTIFIC_DECISION_EVIDENCE_SPRINT_1.md`` and
+    ``tests/test_decision_evidence_bridge.py``), and this test kept the old
+    expectation, so ``main`` failed it. The invariant the name states --
+    nothing is invented -- is what is asserted: the kind is UNKNOWN, and in
+    particular it is not ZERO_DECLARED.
+    """
+    from engcore.sria import DiscrepancyKind
+
     report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
     quantity_name = next(iter(report.values))
-    with pytest.raises(TypeError):
-        evidence_from_credibility_report(
-            report,
-            quantity_name=quantity_name,
-            evidence_id="bridge-no-discrepancy",
-            domain_pack_ref="electrothermal",
-            context_ref="campaign:test#decision:d1",
-            discrepancy=None,
-        )
+    evidence = evidence_from_credibility_report(
+        report,
+        quantity_name=quantity_name,
+        evidence_id="bridge-no-discrepancy",
+        domain_pack_ref="electrothermal",
+        context_ref="campaign:test#decision:d1",
+        discrepancy=None,
+    )
+    kind = evidence.uncertainty.discrepancy.kind
+    assert kind is DiscrepancyKind.UNKNOWN
+    assert kind is not DiscrepancyKind.ZERO_DECLARED
 
 
 def test_sprint1_credibility_critic_exposes_attained_validation_levels() -> None:
