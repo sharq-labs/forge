@@ -1,0 +1,78 @@
+"""Sprint 0 — structural pins for decision-to-evidence closure.
+
+These are strict expected failures, not implementation tests.  They encode
+surviving audit findings without prescribing the concrete adapter/class that
+will eventually close them.
+"""
+
+from __future__ import annotations
+
+import inspect
+import re
+from pathlib import Path
+
+import pytest
+
+from engcore.scientific import oracles
+from engcore.sria.assurance.arbiter import Arbiter
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-01: production Scientific Core/MCP does not yet bridge into SRIA "
+        "evidence/decision assurance"
+    ),
+)
+def test_sdr01_production_tree_has_a_sria_bridge() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "engcore"
+    imports: list[str] = []
+    patterns = (
+        re.compile(r"\bfrom\s+engcore\.sria\b"),
+        re.compile(r"\bimport\s+engcore\.sria\b"),
+        re.compile(r"\bfrom\s+\.\.sria\b"),
+        re.compile(r"\bfrom\s+\.sria\b"),
+    )
+
+    for path in root.rglob("*.py"):
+        # The bridge must be outside SRIA; SRIA importing itself proves nothing.
+        if "sria" in path.relative_to(root).parts:
+            continue
+        source = path.read_text(encoding="utf-8")
+        if any(pattern.search(source) for pattern in patterns):
+            imports.append(str(path.relative_to(root)))
+
+    assert imports, (
+        "no production module outside src/engcore/sria imports SRIA; "
+        "ScientificResult/CredibilityEvidenceReport cannot currently enter "
+        "the SRIA evidence/decision path"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-03: obligations_from_charter records required ValidationLevel "
+        "tokens, but Arbiter.decide explicitly cannot evaluate them"
+    ),
+)
+def test_sdr03_arbiter_can_evaluate_charter_validation_levels() -> None:
+    source = inspect.getsource(Arbiter.decide)
+    assert "validation-level obligations are recorded but not evaluated" not in source
+    assert "obligation {target} is not evaluable in M3" not in source
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-06: production trusted-oracle authority is intentionally empty "
+        "until reviewed external evidence is admitted"
+    ),
+)
+def test_sdr06_production_has_reviewed_trusted_external_oracle() -> None:
+    registry = oracles._TRUSTED_ORACLE_DECLARATIONS
+    assert registry, (
+        "the trusted production oracle registry is empty; benchmark and "
+        "experimental validation are representable but no external oracle "
+        "currently has repository-pinned authority"
+    )
