@@ -136,14 +136,11 @@ def evidence_from_credibility_report(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
         claim_type=ClaimType.QOI_VALUE,
-        claim_binding=ClaimBinding(
-            subject_kind="qoi",
-            subject_ref=name,
-            qualifiers={"credibility_report_digest": _report_digest(report)},
-        ),
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref=name),
         claim_payload={
             "value": quantity.magnitude,
             "units": str(quantity.units),
+            "_credibility_report_digest": _report_digest(report),
         },
         uncertainty=_uncertainty_declaration(
             report, name, discrepancy=discrepancy
