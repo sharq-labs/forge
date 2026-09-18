@@ -160,8 +160,8 @@ MODEL = ScientificModelDefinition(
 class NAFEMST3Numerics:
     """Numerical resolution only; the benchmark physics is not configurable."""
 
-    n_cells: int = 80
-    n_steps: int = 320
+    n_cells: int = 160
+    n_steps: int = 640
 
     def __post_init__(self) -> None:
         if isinstance(self.n_cells, bool) or not isinstance(self.n_cells, int):
