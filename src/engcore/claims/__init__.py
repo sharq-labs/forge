@@ -13,8 +13,10 @@ physics, no validation vocabulary and no decision engine of its own:
 What this package adds is the protocol between them -- a structured claim
 (:mod:`.contract`), a declared capability (:mod:`.capabilities`), model
 selection over declared applicability (:mod:`.selection`), structured repair
-(:mod:`.repair`) and the compiler that decides whether a claim can execute
-(:mod:`.compiler`) -- routing one to the other without a caller naming a system.
+(:mod:`.repair`), the compiler that decides whether a claim can execute
+(:mod:`.compiler`), route classification from pinned identities
+(:mod:`.routes`) and the deterministic experiment plan (:mod:`.planning`) --
+routing one to the other without a caller naming a system.
 
 Nothing here parses natural language and nothing here imports an AI provider.
 """
@@ -64,7 +66,19 @@ from .contract import (
     ScientificClaim,
     UncertaintyDemand,
 )
+from .planning import (
+    ExperimentPlan,
+    PlanningError,
+    PlanStep,
+    StepAvailability,
+    StepKind,
+    charter_for,
+    execution_order,
+    plan_experiment,
+    verify_plan,
+)
 from .repair import RepairAction, RepairKind, merge_repairs
+from .routes import RouteAssessment, RouteClass, assess_routes, classify_dependencies, pinned_dependencies
 from .selection import (
     CandidateAssessment,
     CandidateStatus,
@@ -92,6 +106,20 @@ __all__ = [
     "CompilationStatus",
     "CompiledClaim",
     "ConditionStatus",
+    "ExperimentPlan",
+    "PlanStep",
+    "PlanningError",
+    "RouteAssessment",
+    "RouteClass",
+    "StepAvailability",
+    "StepKind",
+    "assess_routes",
+    "charter_for",
+    "classify_dependencies",
+    "execution_order",
+    "pinned_dependencies",
+    "plan_experiment",
+    "verify_plan",
     "GapKind",
     "ModelApplicability",
     "ModelSelection",
