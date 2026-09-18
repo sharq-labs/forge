@@ -163,24 +163,24 @@ def test_sdr02_belief_key_separates_different_contexts() -> None:
     assert screening.belief_key != certification.belief_key
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-07: Evidence has no first-class dependency/ancestor closure, so "
-        "two derived records cannot prove whether they share observations"
-    ),
-)
 def test_sdr07_evidence_records_source_dependency_closure() -> None:
     fields = Evidence.__dataclass_fields__
-    dependency_fields = {
-        name
-        for name in fields
-        if any(token in name for token in ("depend", "ancestor", "parent", "source_record"))
-    }
-    assert dependency_fields, (
-        "Evidence records provenance_ref but no first-class evidence ancestry; "
-        "shared source observations cannot be detected generically"
+    assert "source_refs" in fields
+    assert "source_closure_complete" in fields
+
+    incomplete = Evidence(
+        evidence_id="lineage-a",
+        source_class=SourceClass.SIMULATION,
+        claim_type=ClaimType.QOI_VALUE,
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="temperature"),
+        claim_payload={"value": 350.0, "units": "kelvin"},
+        uncertainty=_audit_uncertainty(),
+        provenance_ref="run-a",
+        domain_pack_ref="thermal",
+        context_ref="context:lineage",
     )
+    assert incomplete.independence_roots == ("run:run-a",)
+    assert incomplete.source_closure_complete is False
 
 
 from engcore.mcp.systems import SYSTEMS
