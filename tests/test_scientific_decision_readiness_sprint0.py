@@ -137,3 +137,72 @@ def test_sdr05_battery_quantitative_values_close_the_uncertainty_chain() -> None
         "battery report has quantitative values with no uncertainty record: "
         f"{missing}"
     )
+
+
+from engcore.sria import (
+    ClaimBinding,
+    ClaimType,
+    Evidence,
+    SourceClass,
+    UncertaintyDeclaration,
+)
+
+
+def _audit_uncertainty() -> UncertaintyDeclaration:
+    """Minimal declaration for structural evidence-identity probes."""
+    return UncertaintyDeclaration()
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-02: evidence content identity includes context_ref but belief_key "
+        "does not, so different contexts currently share one contribution key"
+    ),
+)
+def test_sdr02_belief_key_separates_different_contexts() -> None:
+    base = dict(
+        source_class=SourceClass.SIMULATION,
+        claim_type=ClaimType.QOI_VALUE,
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="temperature"),
+        claim_payload={"value": 350.0, "units": "kelvin"},
+        uncertainty=_audit_uncertainty(),
+        provenance_ref="run-1",
+        domain_pack_ref="thermal",
+    )
+    screening = Evidence(
+        evidence_id="screening",
+        context_ref="context:screening",
+        **base,
+    )
+    certification = Evidence(
+        evidence_id="certification",
+        context_ref="context:certification",
+        **base,
+    )
+
+    # Context already changes scientific-content identity: that part is good.
+    assert screening.content_hash != certification.content_hash
+
+    # The surviving gap: contribution grouping is still context-blind.
+    assert screening.belief_key != certification.belief_key
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-07: Evidence has no first-class dependency/ancestor closure, so "
+        "two derived records cannot prove whether they share observations"
+    ),
+)
+def test_sdr07_evidence_records_source_dependency_closure() -> None:
+    fields = Evidence.__dataclass_fields__
+    dependency_fields = {
+        name
+        for name in fields
+        if any(token in name for token in ("depend", "ancestor", "parent", "source_record"))
+    }
+    assert dependency_fields, (
+        "Evidence records provenance_ref but no first-class evidence ancestry; "
+        "shared source observations cannot be detected generically"
+    )
