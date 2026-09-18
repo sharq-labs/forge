@@ -887,20 +887,6 @@ class Arbiter:
         # --- required named checks --------------------------------------
         for obligation in obligations.of_kind(ObligationKind.REQUIRED_CHECK):
             target = obligation.target
-            if target.startswith("validation_level:"):
-                # Recorded for provenance; M3 does not evaluate ValidationLevel.
-                results.append(
-                    ObligationResult(
-                        obligation_id=obligation.obligation_id,
-                        satisfied=False,
-                        detail=(
-                            "validation-level obligations are recorded but not "
-                            "evaluated in M3; cannot be certified"
-                        ),
-                    )
-                )
-                reasons.append(f"obligation {target} is not evaluable in M3")
-                continue
             state, record, refs = self._resolve_check(target, counted)
             if state == "missing":
                 results.append(
