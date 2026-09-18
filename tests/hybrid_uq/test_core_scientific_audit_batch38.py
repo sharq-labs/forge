@@ -431,7 +431,9 @@ def test_r27f_a_posterior_the_route_refused_early_reads_back():
         read = LocalGaussianPosterior.from_dict(singular.to_dict())
     except HybridUQError as exc:
         pytest.fail(f"the router returned a record it cannot read back: {exc}")
-    assert read == singular
+    # Compared as canonical records: from Python 3.13 a dataclass __eq__ compares fields with `==`, and a
+    # NaN field (which this refused posterior carries) is never `==` itself. The record writes NaN as "nan".
+    assert read.to_dict() == singular.to_dict()
 
 
 # ---------------------------------------------------------------------------
