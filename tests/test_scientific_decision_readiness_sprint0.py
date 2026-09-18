@@ -218,7 +218,7 @@ def test_sdr10_public_boundary_has_a_cross_domain_decision_tool() -> None:
     source = server_path.read_text(encoding="utf-8")
     registered = set(
         re.findall(
-            r'server\\.add_tool\\(\\s*\\w+,\\s*name="([^"]+)"',
+            r'server\.add_tool\(\s*\w+,\s*name="([^"]+)"',
             source,
         )
     )
