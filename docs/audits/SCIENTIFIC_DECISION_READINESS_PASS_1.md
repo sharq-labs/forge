@@ -179,3 +179,58 @@ Pass 2 should build two executable traces:
    claim cannot be certified.
 
 Only after those traces are reproducible should Sprint 1 implement the bridge.
+
+
+## Pass 2 — executable production traces
+
+### SDR-04 / Electrothermal — CLOSED at MCP, still open end-to-end
+
+A production electrothermal example already reaches a `SUPPORTED` credibility
+verdict on **VERIFICATION_ONLY** evidence. The audit test then reuses the same
+report but declares `required_evidence_basis="VALIDATED"`.
+
+Expected and pinned behavior:
+
+```text
+SUPPORTED + VERIFICATION_ONLY
+        |
+        | intended use now requires VALIDATED evidence
+        v
+INSUFFICIENT_EVIDENCE
+```
+
+This is the correct fail-closed semantic and must be preserved by the future
+Core/MCP -> SRIA bridge. Therefore SDR-04 is not “build a new verification vs
+validation vocabulary”; it is “do not lose the vocabulary already present when
+the report becomes decision evidence”.
+
+Test:
+`test_sdr04_verification_only_support_cannot_satisfy_a_validated_use`.
+
+### SDR-05 / Battery — OPEN production UQ closure
+
+The production battery assembler constructs a
+`CredibilityEvidenceReport` with final quantitative values:
+
+- `terminal_voltage`
+- `final_state_of_charge`
+- `heat_generation`
+- `final_temperature`
+
+but does not pass a per-value `uncertainty` mapping. The report therefore
+inherits the empty default.
+
+This is a stronger and more concrete gap than “SRIA needs more UQ”: the
+decision layer cannot honestly translate a missing production declaration into
+a quantified SRIA channel. The only safe interpretation is UNKNOWN, and that
+translation does not exist yet.
+
+Strict expected-failure test:
+`test_sdr05_battery_quantitative_values_close_the_uncertainty_chain`.
+
+### CI note
+
+No pull-request workflow run was associated with commit
+`31f83bf75a688479f30cddb84b3411290939ec63` because this audit branch is not
+yet a PR and the repository's relevant workflow is PR-triggered. No CI result is
+claimed for the new audit tests yet.
