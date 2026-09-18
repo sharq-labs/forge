@@ -23,6 +23,17 @@ end-to-end runtime (:mod:`.assessment`), uncertainty transport
 adapters (:mod:`.sources`) and trusted-oracle discovery (:mod:`.oracles`) --
 routing one to the other without a caller naming a system.
 
+Core G-N (see ``docs/scientific-core/scientific-intelligence-layer.md``) add
+quantitative UQ (:mod:`.numerical_uq`, :mod:`.parameter_uq`,
+:mod:`.uq_studies`), the risk-aware evidence policy (:mod:`.policy`),
+benchmark / measurement / literature ingestion (:mod:`.external_evidence`),
+evidence gaps and next experiments (:mod:`.gaps`, :mod:`.next_experiment`),
+sensitivity, robustness and challenge mode (:mod:`.sensitivity`,
+:mod:`.challenge`), and the impact graph (:mod:`.impact`). Two modules are
+reachable only by their own path, on purpose: ``engcore.claims.bundle`` (a
+view the runtime never reads back) and ``engcore.claims.nl_adapter`` (the
+outer boundary for language-model proposals).
+
 Nothing here parses natural language and nothing here imports an AI provider.
 """
 
