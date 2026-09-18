@@ -29,13 +29,13 @@ V = "tests/test_core_freeze_v4_manifest.py"
 MUTATIONS = [
     Mutation(
         "B56a", f"{F}::stored_v1_frozen_snapshot",
-        "    done = subprocess.run([\"git\", \"show\", f\"{baseline}:{V1_FROZEN_SNAPSHOT_FILE}\"],\n"
-        "                          cwd=root, capture_output=True)\n",
-        "    done = subprocess.run([\"git\", \"show\", f\"HEAD:{V1_FROZEN_SNAPSHOT_FILE}\"],\n"
-        "                          cwd=root, capture_output=True)\n",
+        "    baseline = manifest[\"freeze\"][\"baseline_commit\"]\n",
+        "    baseline = \"HEAD\"\n",
         f"{T}::test_r69_the_comparator_reads_the_v1_snapshot_as_it_was_committed",
-        "finding 95 restored: the comparison reads the snapshot at HEAD, so it is the live surface "
-        "against the live surface and cannot fail"),
+        "finding 95 restored: the comparison reads the snapshot at HEAD rather than at the commit "
+        "Core Freeze V1 recorded, so it is the live surface against the live surface and cannot "
+        "fail. Written as a change to the COMMIT rather than to the f-string that formats it, "
+        "because an edit inside an f-string changes no executable token on Python 3.11"),
     Mutation(
         "B56b", f"{F}::_parameter_problems",
         "        if name not in old and not parameter.get(\"has_default\"):\n",

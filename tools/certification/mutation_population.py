@@ -271,9 +271,12 @@ V4_POPULATION_PATH = "tests/mutation_population_v4.py"
 #: The population the V4 certificate claims. Like EXPECTED_FORMAL_POPULATION this is a DECISION: a
 #: change that folds another batch in must move this number in the same (recertified) change, so the
 #: figure in a record is something somebody decided rather than whatever the file held that day.
-#: 575 = every mutation the 2026-09-16 core re-audit's 56 batch scripts declare, none dropped: the 563
-#: of batches 1-54 and the 12 of batch 55, which are the guards over this population's own machinery.
-EXPECTED_V4_POPULATION = 575
+#: 589 = every mutation the 2026-09-16 core re-audit's 57 batch scripts declare, none dropped: the 563
+#: of batches 1-54, the 12 of batch 55 (the guards over this population's own machinery) and the 14 of
+#: batch 56 (the guards over the Core Freeze V4 control plane that certifies it). Each batch folds its
+#: own guards in for the same reason R-67 exists: a guard whose evidence sits outside the pinned area
+#: is verified by nobody, and that includes the guards over the pinned area itself.
+EXPECTED_V4_POPULATION = 589
 
 _V4_VERDICT = re.compile(r"^(?P<id>[A-Za-z0-9]+) \S+ -> (?P<verdict>[^|]+?)(?:\s+<-- EXPECTED .*)?\s*(?:\|.*)?$")
 _V4_NOT_MUTATED = re.compile(r"^NOT MUTATED: (?P<id>[A-Za-z0-9]+) --")

@@ -111,7 +111,7 @@ def test_no_two_folded_mutations_share_an_id():
     """The runner writes its work tree at ``mut_<id>``, so two entries under one name is one run."""
     ids = [entry[0] for entry in pop.POPULATION_V4]
     assert len(ids) == len(set(ids)), sorted(i for i in set(ids) if ids.count(i) > 1)
-    assert len(ids) == 575, f"{len(ids)} entries; the population the certificate claims is 575"
+    assert len(ids) == 589, f"{len(ids)} entries; the population the certificate claims is 589"
 
 
 def test_every_folded_mutation_still_matches_the_source_it_names():
@@ -173,7 +173,7 @@ def test_the_population_is_pinned_by_the_certificate_and_its_digests_are_re_deri
     assert "tests/mutation_population_v4.py" in set(enumerate_area(REPO, harness))
     population = v4_population(REPO)
     assert population.ids == pop.POPULATION_V4_IDS
-    assert population.count == 575 and population.definitions_sha256
+    assert population.count == 589 and population.definitions_sha256
 
 
 def test_the_closure_reaches_every_suite_the_population_names():
