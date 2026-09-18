@@ -26,9 +26,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Iterable
+from typing import Any, Iterable, Mapping, Sequence
 
-from ..scientific.results.uncertainty import UncertaintySource
+from ..scientific.results.uncertainty import Uncertainty, UncertaintySource
 from ..scientific.results.validation import ValidationLevel
 from ..sria import (
     ClaimBinding,
@@ -47,7 +47,7 @@ from ..sria.assurance.assessment import (
     CriticVerdict,
 )
 from ..sria.provenance import AssessmentProvenance
-from ..sria.uncertainty import CHANNEL_OF_SOURCE
+from ..sria.uncertainty import CHANNEL_OF_SOURCE, UncertaintyChannel
 from .evidence import CredibilityEvidenceReport, CredibilityVerdict
 
 __all__ = [
@@ -70,8 +70,16 @@ def _uncertainty_declaration(
     *,
     discrepancy: ModelDiscrepancy | None,
     unattributable: str = "refuse",
+    channel_records: Mapping[Any, Any] | None = None,
 ) -> UncertaintyDeclaration:
-    """Translate one report value's uncertainty without inventing attribution."""
+    """Translate one report value's uncertainty without inventing attribution.
+
+    ``channel_records`` are further per-channel records a study quantified
+    beside the report (numerical refinement, parameter propagation). Each must
+    be quantified and attributed to exactly the channel it is filed under; a
+    channel the report already fills with a different record is refused, never
+    overwritten or combined.
+    """
     if unattributable not in _UNATTRIBUTABLE_MODES:
         raise ValueError(f"unattributable_uncertainty must be one of {_UNATTRIBUTABLE_MODES}")
 
@@ -118,6 +126,20 @@ def _uncertainty_declaration(
             )
         channels[channel] = record
 
+    for channel, extra in dict(channel_records or {}).items():
+        channel = UncertaintyChannel(channel)
+        if not isinstance(extra, Uncertainty) or not extra.is_quantified:
+            raise ValueError(f"a study record filed under {channel.value!r} must be a quantified Uncertainty")
+        source = UncertaintySource(extra.source_kind)
+        if CHANNEL_OF_SOURCE.get(source) is not channel:
+            raise ValueError(
+                f"a {source.value!r} record cannot be filed under channel {channel.value!r}; the channel table "
+                f"attributes it elsewhere or nowhere"
+            )
+        if channel in channels and channels[channel] != extra:
+            raise ValueError(f"channel {channel.value!r} already carries the report's own record")
+        channels[channel] = extra
+
     return UncertaintyDeclaration(
         subject_model=SubjectModel.PREDICTION_MODEL,
         discrepancy=discrepancy,
@@ -139,6 +161,8 @@ def evidence_from_credibility_report(
     context_ref: str,
     discrepancy: ModelDiscrepancy | None = None,
     unattributable_uncertainty: str = "refuse",
+    channel_records: Mapping[Any, Any] | None = None,
+    study_refs: Sequence[str] = (),
 ) -> Evidence:
     """Derive candidate SRIA evidence for one quantity in a credibility report.
 
@@ -163,9 +187,11 @@ def evidence_from_credibility_report(
         )
 
     quantity = report.values[name]
-    source_refs = ()
+    source_refs: tuple[str, ...] = ()
     if report.provenance.parent_run_id:
         source_refs = (f"run:{report.provenance.parent_run_id}",)
+    # The runs a study executed beside this one are part of what the evidence rests on.
+    source_refs = source_refs + tuple(str(ref) for ref in study_refs)
     return Evidence(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
@@ -177,7 +203,8 @@ def evidence_from_credibility_report(
             "_credibility_report_digest": _report_digest(report),
         },
         uncertainty=_uncertainty_declaration(
-            report, name, discrepancy=discrepancy, unattributable=unattributable_uncertainty
+            report, name, discrepancy=discrepancy, unattributable=unattributable_uncertainty,
+            channel_records=channel_records,
         ),
         provenance_ref=report.provenance.run_id,
         domain_pack_ref=domain_pack_ref,

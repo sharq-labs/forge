@@ -79,6 +79,8 @@ LEVEL_SCHEMA = schema_string("capability_attainable_level")
 ROUTE_SCHEMA = schema_string("capability_route")
 UNCERTAINTY_SCHEMA = schema_string("capability_uncertainty")
 UNASSESSABLE_SCHEMA = schema_string("capability_unassessable_condition")
+REFINEMENT_SCHEMA = schema_string("capability_refinement_study")
+PERTURBABLE_SCHEMA = schema_string("capability_perturbable_input")
 REGISTRY_SCHEMA = schema_string("capability_registry")
 
 _DECLARATION_TAG = "crafty.claims.capability/1"
@@ -763,6 +765,117 @@ class UnassessableCondition:
         return cls(payload["model_id"], payload["condition"], payload["reason"])
 
 
+@dataclass(frozen=True)
+class RefinementStudy:
+    """How the capability's numerical uncertainty can be measured: a declared refinement ladder.
+
+    ``refined_inputs`` are NUMERICS count inputs and the finest (baseline) value
+    each takes when a claim states none -- exactly the executor's own default,
+    so level 0 of the study *is* the reported run. Level ``k`` divides every
+    refined input by ``ratio**k``; the scheme's ``formal_order`` and the
+    ``order_tolerance`` that decides the asymptotic range are the capability's
+    declaration, never inferred from the numbers.
+    """
+
+    quantities: frozenset[str]
+    refined_inputs: Mapping[str, int]
+    ratio: int
+    levels: int
+    formal_order: float
+    order_tolerance: float
+    basis: str
+    #: Checks that judge accuracy *at the run's own resolution*; a coarse level is
+    #: expected to fail them, and the study measures exactly that. Any other FAIL
+    #: disqualifies a level.
+    accuracy_checks: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "accuracy_checks", frozenset(_text(c, "refinement.accuracy_check") for c in self.accuracy_checks))
+        object.__setattr__(self, "quantities", frozenset(require_identifier(q, field="refinement.quantity", error=CapabilityDeclarationError) for q in self.quantities))
+        refined = {}
+        for path, value in require_mapping(self.refined_inputs, field="refinement.refined_inputs", error=CapabilityDeclarationError).items():
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise _err(f"refinement baseline for {path} must be a positive integer")
+            refined[_text(path, "refinement.path")] = value
+        if not self.quantities or not refined:
+            raise _err("a refinement study names at least one quantity and one refined input")
+        object.__setattr__(self, "refined_inputs", freeze(refined))
+        for label in ("ratio", "levels"):
+            value = getattr(self, label)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise _err(f"refinement.{label} must be an integer")
+        if self.ratio < 2:
+            raise _err("refinement.ratio must be at least 2")
+        if self.levels < 3:
+            raise _err("refinement.levels must be at least 3: an observed order needs three solutions")
+        for label in ("formal_order", "order_tolerance"):
+            value = getattr(self, label)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not value > 0:
+                raise _err(f"refinement.{label} must be positive")
+            object.__setattr__(self, label, float(value))
+        object.__setattr__(self, "basis", _text(self.basis, "refinement.basis"))
+
+    def ladder(self, baseline: Mapping[str, int]) -> tuple[dict[str, int], ...] | str:
+        """The resolution of every level, finest first, or why this baseline admits no ladder."""
+        out = []
+        for k in range(self.levels):
+            level = {}
+            for path, value in sorted(baseline.items()):
+                divisor = self.ratio ** k
+                if value % divisor:
+                    return f"{path}={value} is not divisible by {self.ratio}**{k}; level {k} would not be a refinement"
+                level[path] = value // divisor
+            out.append(level)
+        return tuple(out)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": REFINEMENT_SCHEMA,
+            "quantities": sorted(self.quantities),
+            "refined_inputs": {k: self.refined_inputs[k] for k in sorted(self.refined_inputs)},
+            "ratio": self.ratio,
+            "levels": self.levels,
+            "formal_order": self.formal_order,
+            "order_tolerance": self.order_tolerance,
+            "basis": self.basis,
+            "accuracy_checks": sorted(self.accuracy_checks),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "RefinementStudy":
+        payload = require_mapping(payload, field="refinement", error=CapabilityDeclarationError)
+        require_keys(payload, required=("schema", "quantities", "refined_inputs", "ratio", "levels", "formal_order", "order_tolerance", "basis", "accuracy_checks"), record="refinement", error=CapabilityDeclarationError)
+        require_schema_exact(payload, REFINEMENT_SCHEMA, record="refinement", error=CapabilityDeclarationError)
+        return cls(frozenset(payload["quantities"]), payload["refined_inputs"], payload["ratio"], payload["levels"], payload["formal_order"], payload["order_tolerance"], payload["basis"], frozenset(payload["accuracy_checks"]))
+
+
+@dataclass(frozen=True)
+class PerturbableInput:
+    """An input the capability may be re-run at another value of, for propagation or sensitivity.
+
+    Declaring it says only that the system accepts other values there; whether a
+    perturbed run stays inside its models' validated domains is decided per run
+    by the run's own validity records.
+    """
+
+    path: str
+    rationale: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "path", _text(self.path, "perturbable.path"))
+        object.__setattr__(self, "rationale", _text(self.rationale, "perturbable.rationale"))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": PERTURBABLE_SCHEMA, "path": self.path, "rationale": self.rationale}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PerturbableInput":
+        payload = require_mapping(payload, field="perturbable", error=CapabilityDeclarationError)
+        require_keys(payload, required=("schema", "path", "rationale"), record="perturbable", error=CapabilityDeclarationError)
+        require_schema_exact(payload, PERTURBABLE_SCHEMA, record="perturbable", error=CapabilityDeclarationError)
+        return cls(payload["path"], payload["rationale"])
+
+
 # ---------------------------------------------------------------------------
 # The declaration
 # ---------------------------------------------------------------------------
@@ -790,6 +903,10 @@ class CapabilityDeclaration:
     uncertainty: UncertaintyCapability
     routes: tuple[RouteDeclaration, ...]
     unassessable_conditions: tuple[UnassessableCondition, ...] = ()
+    #: Phase 2: how NUMERICAL uncertainty is measured (``None``: it is not).
+    refinement: RefinementStudy | None = None
+    #: Phase 2/7: inputs the system may be re-run at other values of.
+    perturbable: tuple[PerturbableInput, ...] = ()
     executor: Executor | None = field(default=None, compare=False, repr=False)
     case_builder: CaseBuilder | None = field(default=None, compare=False, repr=False)
 
@@ -814,6 +931,12 @@ class CapabilityDeclaration:
             object.__setattr__(self, label, items)
         if not isinstance(self.uncertainty, UncertaintyCapability):
             raise _err(f"{self.capability_id}: uncertainty must be an UncertaintyCapability")
+        if self.refinement is not None and not isinstance(self.refinement, RefinementStudy):
+            raise _err(f"{self.capability_id}: refinement must be a RefinementStudy")
+        perturbable = tuple(self.perturbable)
+        if any(not isinstance(p, PerturbableInput) for p in perturbable):
+            raise _err(f"{self.capability_id}: perturbable must be PerturbableInput records")
+        object.__setattr__(self, "perturbable", tuple(sorted(perturbable, key=lambda p: p.path)))
         object.__setattr__(self, "claim_shapes", frozenset(ClaimKind(k) for k in self.claim_shapes))
         if not self.claim_shapes:
             raise _err(f"{self.capability_id}: declares no claim shape it can decide")
@@ -906,6 +1029,29 @@ class CapabilityDeclaration:
         for name in self.uncertainty.quantified:
             if name not in produced:
                 raise _err(f"{self.capability_id}: uncertainty declared for {name}, which is not produced")
+        self._unique("perturbable", [p.path for p in self.perturbable])
+        by_path = {i.path: i for i in self.inputs}
+        for item in self.perturbable:
+            declared = by_path.get(item.path)
+            if declared is None or declared.kind is not InputKind.QUANTITY:
+                raise _err(f"{self.capability_id}: perturbable input {item.path} is not a declared quantity input")
+        if self.refinement is not None:
+            for name in self.refinement.quantities:
+                if name not in produced:
+                    raise _err(f"{self.capability_id}: refinement names {name}, which is not produced")
+            for path in self.refinement.refined_inputs:
+                declared = by_path.get(path)
+                if declared is None or declared.kind is not InputKind.COUNT or declared.role is not InputRole.NUMERICS:
+                    raise _err(f"{self.capability_id}: refined input {path} is not a declared NUMERICS count")
+            ladder = self.refinement.ladder(self.refinement.refined_inputs)
+            if isinstance(ladder, str):
+                raise _err(f"{self.capability_id}: the declared baseline admits no ladder: {ladder}")
+        # A channel may be declared quantifiable only where a declared study can quantify it.
+        for name, channels in self.uncertainty.quantified.items():
+            if UncertaintyChannel.NUMERICAL in channels and (self.refinement is None or name not in self.refinement.quantities):
+                raise _err(f"{self.capability_id}: NUMERICAL is declared for {name} with no refinement study behind it")
+            if UncertaintyChannel.EPISTEMIC_PARAMETER in channels and not self.perturbable:
+                raise _err(f"{self.capability_id}: EPISTEMIC_PARAMETER is declared for {name} with no perturbable input")
 
     # ---- views ----------------------------------------------------------------
 
@@ -965,6 +1111,9 @@ class CapabilityDeclaration:
             "uncertainty": self.uncertainty.to_dict(),
             "routes": [r.to_dict() for r in self.routes],
             "unassessable_conditions": [u.to_dict() for u in self.unassessable_conditions],
+            # Written only when declared, so a capability that declares neither keeps its identity.
+            **({"refinement": self.refinement.to_dict()} if self.refinement is not None else {}),
+            **({"perturbable": [p.to_dict() for p in self.perturbable]} if self.perturbable else {}),
         }
 
     @property
@@ -983,6 +1132,7 @@ class CapabilityDeclaration:
                 "produces", "models", "solvers", "claim_shapes", "attainable_levels", "uncertainty", "routes",
                 "unassessable_conditions",
             ),
+            optional=("refinement", "perturbable"),
             record="capability",
             error=CapabilityDeclarationError,
         )
@@ -1006,6 +1156,8 @@ class CapabilityDeclaration:
             uncertainty=UncertaintyCapability.from_dict(payload["uncertainty"]),
             routes=many("routes", RouteDeclaration.from_dict),
             unassessable_conditions=many("unassessable_conditions", UnassessableCondition.from_dict),
+            refinement=None if payload.get("refinement") is None else RefinementStudy.from_dict(payload["refinement"]),
+            perturbable=many("perturbable", PerturbableInput.from_dict) if "perturbable" in payload else (),
         )
 
 
@@ -1412,6 +1564,8 @@ __all__ = [
     "InputRole",
     "MismatchReason",
     "ModelUse",
+    "PerturbableInput",
+    "RefinementStudy",
     "ProducedQuantity",
     "ProvidedCapability",
     "RouteDeclaration",

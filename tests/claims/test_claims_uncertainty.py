@@ -1,8 +1,10 @@
 """CORE-8: uncertainty transport and closure, Core -> SRIA -> claim, without invention.
 
-The production systems all report UNKNOWN uncertainty, so the quantified path is
-exercised by wrapping the real NAFEMS T3 run and replacing only its uncertainty
-record -- the run, its checks, its levels and its binding stay the genuine ones.
+These tests are about the *report's own* uncertainty record, so they wrap the real
+NAFEMS T3 run and replace only that record -- the run, its checks, its levels and
+its binding stay the genuine ones -- and they strip T3's declared refinement study
+(Phase 2), whose own NUMERICAL record would otherwise meet the injected one in the
+same channel (a conflict the bridge refuses; see test_phase2_production_uq.py).
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from engcore.claims import (
     CapabilityRun,
     InstanceReport,
     TransportState,
+    UncertaintyCapability,
     UncertaintyDemand,
     UncertaintyTransportError,
     assess_claim,
@@ -56,7 +59,11 @@ def _with_uncertainty(registry, record: Uncertainty) -> CapabilityRegistry:
         (item,) = genuine(case, run_id=run_id).reports
         return CapabilityRun(reports=(InstanceReport(None, replace(item.report, uncertainty={QOI: record})),))
 
-    return CapabilityRegistry(replace(d, executor=run) if d.capability_id == NAFEMS_T3_CAPABILITY_ID else d for d in registry)
+    stripped = UncertaintyCapability(quantified={}, basis="stripped: the report's own record is the only one under test")
+    return CapabilityRegistry(
+        replace(d, executor=run, refinement=None, uncertainty=stripped) if d.capability_id == NAFEMS_T3_CAPABILITY_ID else d
+        for d in registry
+    )
 
 
 def _demand(*channels, k=2.0):
@@ -125,12 +132,13 @@ def test_the_bridge_still_refuses_an_unattributable_record_by_default_and_files_
 
 
 def test_a_quantified_attributed_channel_can_support_a_claim_that_demands_it(registry) -> None:
-    record = assess_claim(t3_claim(uncertainty=_demand(UncertaintyChannel.NUMERICAL)), _with_uncertainty(registry, _std(0.01, UncertaintySource.NUMERICAL))).to_dict()
+    wrapped = _with_uncertainty(registry, _std(0.01, UncertaintySource.NUMERICAL))
+    record = assess_claim(t3_claim(uncertainty=_demand(UncertaintyChannel.NUMERICAL)), wrapped).to_dict()
     assert record["verdict"] == "supported"
     assert record["comparison"]["rule"] == "guard_band_linear_sum"
     assert record["uncertainty"]["channels"] == {"numerical": True}
     assert record["assurance"]["verdict"] == "valid"
-    verify_assessment(json.loads(json.dumps(record)), registry)
+    verify_assessment(json.loads(json.dumps(record)), wrapped)
 
 
 def test_a_band_that_straddles_the_tolerance_edge_decides_nothing(registry) -> None:

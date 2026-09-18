@@ -86,12 +86,19 @@ def _same(a: Quantity, b: Any) -> bool:
     return math.isclose(a.magnitude, b.to(a.units).magnitude, rel_tol=1e-12, abs_tol=0.0)
 
 
-def binding_problems(plan: ExperimentPlan, registry: CapabilityRegistry, report: Any, stated: dict[str, Any]) -> tuple[str, ...]:
-    """Every way ``report`` fails to be the answer to ``plan``. Empty means bound."""
+def binding_problems(
+    plan: ExperimentPlan, registry: CapabilityRegistry, report: Any, stated: dict[str, Any], *, run_id: str | None = None
+) -> tuple[str, ...]:
+    """Every way ``report`` fails to be the answer to ``plan``. Empty means bound.
+
+    ``run_id`` names a planned *variant* run (a refinement level, a propagated
+    sample); it defaults to the plan's own run.
+    """
     problems: list[str] = []
     declaration = registry.get(plan.capability_id)
-    if report.provenance.run_id != plan.run_id:
-        problems.append(f"the report's run {report.provenance.run_id!r} is not the plan's run {plan.run_id!r}")
+    expected_run = plan.run_id if run_id is None else run_id
+    if report.provenance.run_id != expected_run:
+        problems.append(f"the report's run {report.provenance.run_id!r} is not the planned run {expected_run!r}")
     planned = {(m["model_id"], m["version"]) for m in plan.content["models"]}
     assessed = {(r.model_id, r.version) for r in report.validity}
     for model_id, version in sorted(assessed - planned):

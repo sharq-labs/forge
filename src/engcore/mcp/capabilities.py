@@ -52,8 +52,10 @@ from ..claims.capabilities import (
     InputRole,
     InstanceReport,
     ModelUse,
+    PerturbableInput,
     ProducedQuantity,
     ProvidedCapability,
+    RefinementStudy,
     RouteDeclaration,
     RouteKind,
     SolverUse,
@@ -64,6 +66,7 @@ from ..claims.contract import ClaimKind
 from ..claims.errors import CapabilityDeclarationError, CapabilityExecutionRefused
 from ..scientific.results.validation import ValidationLevel
 from ..scientific.units.quantity import Quantity
+from ..sria.uncertainty import UncertaintyChannel
 
 __all__ = [
     "BATTERY_CAPABILITY_ID",
@@ -84,6 +87,23 @@ _BOTH_SHAPES = frozenset({ClaimKind.THRESHOLD, ClaimKind.TOLERANCE_BAND})
 _NO_UQ = (
     "every reported value carries Uncertainty.unknown: this path performs no "
     "numerical, parameter, measurement or model-form uncertainty quantification"
+)
+
+#: Phase 2B: the electrothermal inputs a propagation or sensitivity study may re-run the case at.
+#: Parameters and boundary conditions of the declared physics; never numerics, identities or routes.
+_ET_PERTURBABLE = (
+    ("source_voltage", "the ideal source's voltage, a boundary condition of the circuit"),
+    ("stages[].body.ambient_temperature", "the ambient each body exchanges heat with"),
+    ("stages[].body.ambient_conductance", "the body's lumped heat-transfer conductance to ambient"),
+    ("stages[].body.heat_capacity", "the body's lumped heat capacity"),
+    ("stages[].conductor.reference_resistance", "the conductor's resistance at its reference temperature"),
+    ("stages[].conductor.temperature_coefficient", "the conductor's linear temperature coefficient of resistance"),
+)
+
+_ET_PARAMETER_UQ = (
+    "EPISTEMIC_PARAMETER is quantified only when the claim declares input distributions over the "
+    "perturbable inputs: every draw is a real run, and Wilks' two-sided tolerance interval over those runs "
+    "is reported (no normality or linearity assumed). NUMERICAL, ALEATORIC and MODEL_FORM are not quantified"
 )
 
 _KIND = {
@@ -300,7 +320,14 @@ def electrothermal_capability() -> CapabilityDeclaration:
                 condition="the lumped body's closed form agrees with the pinned series-recurrence reference",
             ),
         ),
-        uncertainty=UncertaintyCapability(quantified={}, basis=_NO_UQ),
+        uncertainty=UncertaintyCapability(
+            quantified={
+                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
+                for name in ("final_temperature", "steady_state_temperature", "time_constant")
+            },
+            basis=_ET_PARAMETER_UQ,
+        ),
+        perturbable=tuple(PerturbableInput(path, why) for path, why in _ET_PERTURBABLE),
         routes=(
             RouteDeclaration(
                 route_id="electrothermal.fixed_point",
@@ -575,7 +602,32 @@ def nafems_t3_capability() -> CapabilityDeclaration:
                 condition="the probe temperature agrees with the trusted NAFEMS T3 target at the exact benchmark point",
             ),
         ),
-        uncertainty=UncertaintyCapability(quantified={}, basis=_NO_UQ),
+        uncertainty=UncertaintyCapability(
+            quantified={nafems_t3.QOI: (UncertaintyChannel.NUMERICAL,)},
+            basis=(
+                "NUMERICAL is quantified by a declared three-level space-and-time refinement of the "
+                "Crank-Nicolson solve (Richardson extrapolation with the observed order, reported as a GCI "
+                "interval, or UNKNOWN when the levels are not in the asymptotic range). Parameter, measurement "
+                "and model-form uncertainty are not quantified"
+            ),
+        ),
+        refinement=RefinementStudy(
+            quantities=frozenset({nafems_t3.QOI}),
+            refined_inputs={
+                "numerics.n_cells": nafems_t3.NAFEMST3Numerics().n_cells,
+                "numerics.n_steps": nafems_t3.NAFEMST3Numerics().n_steps,
+            },
+            ratio=2,
+            levels=3,
+            formal_order=2.0,
+            order_tolerance=0.25,
+            basis=(
+                "second-order central differences in space and Crank-Nicolson in time, refined together by 2 "
+                "so the leading error scales as h**2; the coarsest level keeps the probe on a node and its own "
+                "2x-coarser companion valid"
+            ),
+            accuracy_checks=frozenset({"nafems_t3_refinement_sensitivity", "nafems_t3_external_benchmark"}),
+        ),
         routes=(
             RouteDeclaration(
                 route_id="nafems_t3.crank_nicolson",

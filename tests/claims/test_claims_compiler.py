@@ -304,7 +304,14 @@ def test_a_demanded_uncertainty_channel_no_capability_quantifies_is_predicted(re
         registry,
     )
     targets = {g.target for g in compiled.predicted_gaps if g.kind is GapKind.CHANNEL_UNQUANTIFIED}
-    assert targets == {"numerical", "model_form"}
+    # Phase 2: T3 declares a refinement study, so NUMERICAL is quantifiable; MODEL_FORM is not.
+    assert targets == {"model_form"}
+    et = compile_claim(et_claim(uncertainty=UncertaintyDemand(frozenset({UncertaintyChannel.NUMERICAL}), 2.0, False)), registry)
+    assert {g.target for g in et.predicted_gaps if g.kind is GapKind.CHANNEL_UNQUANTIFIED} == {"numerical"}
+    # Declared quantifiable, but the claim states no input distributions: still a predicted gap.
+    et_param = compile_claim(et_claim(uncertainty=UncertaintyDemand(frozenset({UncertaintyChannel.EPISTEMIC_PARAMETER}), None, False)), registry)
+    (gap,) = [g for g in et_param.predicted_gaps if g.kind is GapKind.CHANNEL_UNQUANTIFIED]
+    assert "declares no input distributions" in gap.detail
 
 
 def test_an_unknown_or_unsupported_zero_discrepancy_cannot_meet_a_discrepancy_demand(registry) -> None:

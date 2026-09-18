@@ -135,7 +135,8 @@ def test_a_battery_claim_is_insufficient_and_says_the_lumped_body_cannot_be_asse
 
 
 def test_a_demanded_uncertainty_channel_that_is_unknown_leaves_the_claim_undecided(registry) -> None:
-    record = assess_claim(t3_claim(uncertainty=UncertaintyDemand(frozenset({UncertaintyChannel.NUMERICAL}), 2.0, False)), registry).to_dict()
+    # The electrothermal capability declares no refinement study, so NUMERICAL stays UNKNOWN there.
+    record = assess_claim(et_claim(uncertainty=UncertaintyDemand(frozenset({UncertaintyChannel.NUMERICAL}), 2.0, False)), registry).to_dict()
     assert record["verdict"] == "insufficient_evidence"
     assert record["comparison"]["outcome"] == "not_evaluated"
     assert record["uncertainty"]["channels"] == {"numerical": False}
