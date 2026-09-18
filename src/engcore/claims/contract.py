@@ -76,6 +76,7 @@ from ._records import (
 )
 from .errors import ClaimContractError
 from .parameter_uq import InputUncertainty
+from .policy import DecisionContext
 
 CLAIM_SCHEMA = schema_string("scientific_claim")
 QOI_SCHEMA = schema_string("claim_quantity_of_interest")
@@ -489,6 +490,9 @@ class ScientificClaim:
     #: Phase 2B: what the caller states is uncertain about the inputs (a declaration, never evidence).
     #: Serialized only when present, so a claim without it keeps its identity.
     input_uncertainty: InputUncertainty | None = None
+    #: Phase 3: the decision this claim serves and the policy that sets its evidence bar.
+    #: Serialized only when present; when present it is part of identity, so a policy change is a new context.
+    decision_context: DecisionContext | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim_id", require_text(self.claim_id, field="claim_id"))
@@ -515,6 +519,8 @@ class ScientificClaim:
         self._check_comparison()
         self._check_inputs()
         self._check_input_uncertainty()
+        if self.decision_context is not None and not isinstance(self.decision_context, DecisionContext):
+            raise ClaimContractError("decision_context must be a DecisionContext record or None")
 
         caps = self.required_capabilities
         if isinstance(caps, (str, bytes)) or not isinstance(caps, (frozenset, set, tuple, list)):
@@ -720,13 +726,14 @@ class ScientificClaim:
             "discrepancy": self.discrepancy.to_dict(),
             "requested_outputs": sorted(output.value for output in self.requested_outputs),
             **({"input_uncertainty": self.input_uncertainty.to_dict()} if self.input_uncertainty is not None else {}),
+            **({"decision_context": self.decision_context.to_dict()} if self.decision_context is not None else {}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificClaim":
         """Read a claim, refusing every unknown, missing or malformed field."""
         payload = require_mapping(payload, field="claim")
-        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, optional=("input_uncertainty",), record="claim")
+        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, optional=("input_uncertainty", "decision_context"), record="claim")
         require_schema_exact(payload, CLAIM_SCHEMA, record="claim")
         tolerance = payload["tolerance"]
         if tolerance is not None:
@@ -760,6 +767,9 @@ class ScientificClaim:
             input_uncertainty=None
             if payload.get("input_uncertainty") is None
             else InputUncertainty.from_dict(payload["input_uncertainty"]),
+            decision_context=None
+            if payload.get("decision_context") is None
+            else DecisionContext.from_dict(payload["decision_context"]),
         )
 
 

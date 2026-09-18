@@ -46,6 +46,7 @@ from .capabilities import CapabilityDeclaration, CapabilityRegistry, MismatchRea
 from .contract import ScientificClaim
 from .errors import ClaimContractError
 from .repair import RepairAction, RepairKind, merge_repairs
+from .policy import apply_policy
 from .uq_studies import study_spec
 from .selection import (
     CandidateAssessment,
@@ -481,6 +482,9 @@ def compile_claim(claim: ScientificClaim | Mapping[str, Any], registry: Capabili
             claim = ScientificClaim.from_dict(claim)
         except ClaimContractError as exc:
             return _refused(str(exc), registry)
+    # Phase 3: the decision's policy adds to the claim's own evidence bar (never lowers it).
+    # Idempotent, so a compiled claim read back from a record compiles to itself.
+    claim = apply_policy(claim)
 
     # The target as a comparable quantity, or why it is not one yet.
     target = claim.resolve_target()
