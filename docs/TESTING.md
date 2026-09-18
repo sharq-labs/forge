@@ -34,6 +34,23 @@ is the gate for a milestone freeze.
 
 ---
 
+## Impact query tool
+
+Stored assessment records can be queried without rerunning physics:
+
+```bash
+python tools/forge_impact.py query assessment.json --kind model --key thermal.model
+python tools/forge_impact.py query assessment.json --kind trust_registry --key <recorded-registry-digest>
+python tools/forge_impact.py detect assessment.json
+```
+
+`query` asks which assessments depend on a declared identity. `detect`
+compares stored capability/policy/trust identities with the current production
+registries and returns a reassessment report. Neither command edits historical
+decisions or changes scientific standing.
+
+---
+
 ## Fast changed-file gate
 
 Before selecting a large tier by hand, Forge now has a small deterministic

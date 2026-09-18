@@ -20,6 +20,10 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Added a current architecture entry point and historical-audit index.
 - Added persistent Claude/agent working contract, scientific reviewer,
   regression manifest and fast changed-file gate.
+- Added trust-registry change detection to impact analysis.
+- Strengthened replay bundles with source/runtime environment fingerprints.
+- Renamed sprint-phase claim tests by scientific feature.
+- Added `tools/forge_impact.py` for dependency and reassessment queries.
 
 ## Verification log
 
