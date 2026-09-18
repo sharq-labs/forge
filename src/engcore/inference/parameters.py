@@ -50,7 +50,9 @@ from typing import Any, Mapping, Sequence
 from ..scientific.ir.problem import ModelReference
 from ..scientific.sequences import duplicates
 from ..scientific.serialization import require_schema, schema_string
-from ..scientific.units.quantity import Quantity, is_ratio_scale, normalize_unit
+from ..scientific.units.quantity import (
+    Quantity, canonical_magnitude, is_ratio_scale, normalize_unit,
+)
 
 PARAMETER_IDENTITY_SCHEMA = schema_string("calibration_parameter_identity")
 PARAMETER_SET_SCHEMA = schema_string("calibration_parameter_set")
@@ -250,8 +252,15 @@ class ParameterIdentity:
             # identity. A digest that disagreed with `contains` about whether
             # two declarations are the same range would be worse than no
             # digest.
-            "lower": self.bounds.lower.magnitude_in(self.unit),
-            "upper": self.bounds.upper.magnitude_in(self.unit),
+            # I-23 (R-74): the CANONICAL magnitude. Converting into the parameter's own unit was
+            # the right idea and was not enough -- the conversion itself lands on a different
+            # float, so 2838 of 20000 random four-decimal bounds restated from millivolts into
+            # volts were a different identity; and `-0.0` compared EQUAL to `0.0` while hashing
+            # differently, so one bound was two digests and `differences()` said there was no
+            # difference. `canonical_magnitude` is read by BOTH, which is what the comment below
+            # already promised.
+            "lower": canonical_magnitude(self.bounds.lower, self.unit),
+            "upper": canonical_magnitude(self.bounds.upper, self.unit),
             "transform": self.transform.value,
         }
 

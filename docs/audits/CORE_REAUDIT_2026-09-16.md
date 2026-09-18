@@ -3430,3 +3430,39 @@ regenerated once, here, with the comparator's verdict recorded beside it.
 `BATCH56_MUTATIONS.log`, **14/14 KILLED**, CONTROL GREEN; `BATCH56_PINNED_MUTATIONS.log` records NONE, since
 no pinned mutation targets a file this batch changed. Guard reach ledger clean over **42** guards (R-65,
 R-69, R-70 REACHED/FIXED; R-66 now REACHED/FIXED with both halves closed).
+
+### Batch 57 — I-23 (R-62, R-74)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-23 | **DONE** | `45884fe1` (preregistration + 6 strict xfails), this commit | Both problems stay **PARTIAL**: the rules are closed and the reach is not. Nothing in `src/engcore` builds a `StructuredMesh` for a domain run or a `ParameterIdentity` for a production calibration, and finding 105's second half — the grid-binding helpers have no caller — is unchanged, because inventing one would be inventing a calibration |
+
+**Two identities computed from raw float64 magnitudes.** The audit deferred this one, and it is the last
+improvement of the round.
+
+| Claim | Status | How |
+|---|---|---|
+| 7 mm and 0.7 cm are two supports | **FIXED** | The conversions land on `0.007` and `0.006999999999999999`, and the fingerprint hashed `repr` of them. One rule now: `canonical_magnitude(value, unit)` in `engcore.scientific.units.quantity`, quantized to **12 significant digits** with a negative zero normalised away |
+| the geometry comparison had its own tolerance | **FIXED** | `1e-12 * max(1.0, abs(x))` is ABSOLUTE below one metre, so 10 nm against 10.0005 nm — 5e-5 apart in relative terms — read as one rectangle and `check_field_transfer` offered a declared projection for a difference no projection can close. `_same_geometry` now compares the same canonical magnitudes for **exact equality**, so a fingerprint and a comparison cannot disagree |
+| the same bound in mV is a different parameter | **FIXED** | `ParameterIdentity._canonical` already converted into the parameter's own unit, and the conversion itself lands elsewhere: **10661 of 40000** random four-decimal bounds restated from millivolts disagreed in the 16th digit. It reads the shared rule now, and `digest` and `differences()` read the same dict |
+| `-0.0` is one value to the comparison and two to the digest | **FIXED** | `-0.0 == 0.0` is True in IEEE and `json.dumps(-0.0)` writes `-0.0`. The rule returns `0.0` for either, so a record keyed by digest cannot hold one parameter twice |
+| the rule is one rule | **FIXED** | `tests/test_core_scientific_audit_batch57.py::test_i23_the_mesh_and_the_parameter_read_the_same_rule` asserts that `mesh`, `transfer` and `parameters` read the SAME function object. A second copy of a rule is a second answer waiting to happen, which is what this batch is about |
+
+**The threshold, and why it is a convention (class B).** 12 significant digits is where the two
+requirements meet: a unit restatement of one value disagrees in the 16th digit, so 12 makes every
+restatement one identity; the audited geometry difference is 5e-5 relative, which 12 digits keeps apart with
+four orders of magnitude to spare. A float64 carries 15–17 significant digits, so 12 leaves three for the
+conversions themselves. Two rectangles differing in the 13th digit are one support — a decision, and stated
+as one: a geometry declared to 13 digits is declaring float noise.
+
+**Compatibility.** ADDITIVE on shape: one module-public function, in no package export list, so the frozen
+V1 symbol count stays **194** and `additive_only_problems` stays empty. Two V1-frozen **method values** move
+— a mesh fingerprint and a parameter digest — for declarations whose canonical magnitude carried float
+noise, which is the fix itself. No committed evidence carries either.
+
+**Verification.** The batch's own file **9 passed**; the mesh, transfer and parameter suites **62 passed**.
+FAST tier **7231 passed, 6 skipped** with only the certificate and freeze self-checks outstanding, which the
+rebuilt artifacts close — the round's 19 by-design failures are **gone**. Guard mutations:
+`BATCH57_MUTATIONS.log`, **6/6 KILLED**, CONTROL GREEN; `BATCH57_PINNED_MUTATIONS.log` re-ran the one pinned
+mutation on the files this batch changed (`G32q`), KILLED, control green. Guard reach ledger clean over
+**44** guards, with R-62 and R-74 as the only LIBRARY_ONLY rows and both PARTIAL.

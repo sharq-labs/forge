@@ -12,7 +12,7 @@ value to `differences()` and TWO to the digest. Meanwhile the transfer check com
 same rectangle and a transfer between two different geometries is reported as a resolution difference
 a projection can close.
 
-Recorded as strict xfails before the fix, each seen failing on its own assertion.
+Recorded as strict xfails in commit 45884fe1, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -60,7 +60,6 @@ def _parameter(lower, upper, *, unit="volt", name="v"):
 # ---------------------------------------------------------------------------
 # R-62: the mesh
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-62 finding 76: a mesh fingerprint hashes raw float64 magnitudes, so 7 mm and 0.7 cm are two supports")
 def test_r62_the_same_rectangle_stated_in_two_units_is_one_support():
     """The audited case: 7 mm and 0.7 cm, whose conversions differ in the 16th digit."""
     millimetres, centimetres = Quantity(7.0, "millimeter"), Quantity(0.7, "centimeter")
@@ -80,7 +79,6 @@ def test_r62_a_rectangle_that_really_differs_is_still_two_supports():
     assert not left.same_support_as(right)
 
 
-@pytest.mark.xfail(strict=True, reason="R-62 finding 76: the geometry comparison's 1e-12 floor is absolute below one metre")
 def test_r62_the_transfer_check_reads_geometry_the_way_the_fingerprint_does():
     """The absolute 1e-12 m floor: two rectangles 5e-5 apart relatively read as one."""
     producer_mesh = _mesh(Quantity(10.0, "nanometer"), nodes=(5, 5), mesh_id="p")
@@ -109,19 +107,21 @@ def test_r62_the_same_rectangle_at_two_resolutions_is_still_a_resolution_differe
 # ---------------------------------------------------------------------------
 # R-74: the parameter
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-74 finding 105: the same bound in mV and V is a different identity")
 def test_r74_a_bound_restated_in_another_unit_is_the_same_parameter():
     """274 of 2000 random millivolt/volt restatements disagreed in the measurement."""
-    # -3.7911 V and -3791.1 mV: the conversion lands on -3.7911000000000006, one of 2838 such
-    # disagreements in 20000 random four-decimal bounds.
-    in_volts = _parameter(Quantity(-3.7911, "volt"), Quantity(2.1119, "volt"))
-    in_millivolts = _parameter(Quantity(-3791.1, "millivolt"), Quantity(2111.9, "millivolt"))
+    # -1.3004 V against -1300.4 mV, and 1.0392 V against 1039.2 mV: the conversions land on
+    # -1.3004000000000002 and 1.0392000000000001. 10661 of 40000 random four-decimal bounds
+    # restated this way disagree, which is finding 105's "282 of 2000" measured again here.
+    in_volts = _parameter(Quantity(-1.3004, "volt"), Quantity(1.0392, "volt"))
+    in_millivolts = _parameter(Quantity(-1300.4, "millivolt"), Quantity(1039.2, "millivolt"))
+    assert (in_volts.bounds.lower.magnitude_in("volt")
+            != in_millivolts.bounds.lower.magnitude_in("volt")), (
+        "the two conversions agree exactly, so this case no longer measures anything")
     assert in_volts.differences(in_millivolts) == ()
     assert in_volts.digest == in_millivolts.digest, (
         "the same admissible range stated in millivolts is a different parameter identity")
 
 
-@pytest.mark.xfail(strict=True, reason="R-74 finding 105: -0.0 and 0.0 show no difference and have different digests")
 def test_r74_a_negative_zero_bound_is_one_value_in_both_directions():
     """`-0.0 == 0.0` is True and `json.dumps(-0.0)` is `-0.0`: one value, two digests."""
     negative = _parameter(Quantity(-0.0, "volt"), Quantity(1.0, "volt"))
@@ -144,7 +144,6 @@ def test_r74_a_bound_that_really_differs_is_still_a_different_parameter():
 # ---------------------------------------------------------------------------
 # the shared rule itself
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="I-23: there is no shared rule for how much of a float is identity")
 def test_i23_one_rule_states_how_much_of_a_float_is_identity():
     module, canonical = _helper()
     digits = getattr(module, "IDENTITY_SIGNIFICANT_DIGITS", None)
@@ -164,7 +163,6 @@ def test_i23_one_rule_states_how_much_of_a_float_is_identity():
         canonical(Quantity(1.0, "meter"), "kelvin")
 
 
-@pytest.mark.xfail(strict=True, reason="I-23: each identity rounds float64 noise into its own answer")
 def test_i23_the_mesh_and_the_parameter_read_the_same_rule():
     """One rule, two identities: a second copy of it is a second answer waiting to happen."""
     module, _canonical = _helper()

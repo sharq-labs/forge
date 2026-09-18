@@ -1362,6 +1362,59 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "It pins the exception TYPE and a phrase of the message. A future rewording of that message is a test failure -- the right cost for a check whose whole point is which rule fired -- and a DIFFERENT rule that happened to use the same phrase would satisfy it, which is why the type is required too."
+  },
+  {
+   "problem": "R-62",
+   "title": "Mesh identity depends on unit-conversion float rounding and a 1e-12 m floor",
+   "rule": "src/engcore/scientific/units/quantity.py",
+   "rule_symbol": "canonical_magnitude with IDENTITY_SIGNIFICANT_DIGITS = 12, read by StructuredMesh._canonical (the fingerprint) and by fields.transfer._same_geometry",
+   "status": "LIBRARY_ONLY",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-23 (batch 57) closes the RULE; no improvement in this round gives it a production caller, and the audit's own word for its reach is library-only",
+   "why": "The rules are closed and the REACH is not, which is what PARTIAL means here rather than a hedge. Closed: one canonical-magnitude rule, quantized to 12 significant digits with no negative zero, is read by the fingerprint AND by the geometry comparison -- so 7 mm and 0.7 cm are one support (they were two, hashing 0.007 against 0.006999999999999999), 10 nm and 10.0005 nm are two rectangles (they were one, because the comparison's 1e-12 tolerance is absolute below a metre), and a digest can no longer disagree with a comparison about the same two declarations. Not closed: nothing in `src/engcore` builds a StructuredMesh for a domain run, so no production path reaches either rule.",
+   "entry_points": [
+    "engcore.scientific.fields.mesh.StructuredMesh.fingerprint (the library entry point a caller reaches identity through)",
+    "engcore.scientific.fields.transfer.check_field_transfer (the library entry point for the geometry verdict)"
+   ],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_same_rectangle_stated_in_two_units_is_one_support",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_a_rectangle_that_really_differs_is_still_two_supports",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_transfer_check_reads_geometry_the_way_the_fingerprint_does",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_same_rectangle_at_two_resolutions_is_still_a_resolution_difference",
+    "tests/test_core_scientific_audit_batch57.py::test_i23_one_rule_states_how_much_of_a_float_is_identity"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Identity agrees with comparison to 12 significant digits and not beyond: two rectangles differing in the 13th digit are one support, which is a decision (a geometry stated to 13 digits is stating float noise) and not an accident. The rule also covers the ORIGIN and EXTENTS and not the node coordinates, so a mesh whose nodes were perturbed within its rectangle is the same support -- which is what a structured mesh means."
+  },
+  {
+   "problem": "R-74",
+   "title": "Parameter identity: the digest and differences() disagree, and unit restatement changes identity",
+   "rule": "src/engcore/inference/parameters.py",
+   "rule_symbol": "ParameterIdentity._canonical reading canonical_magnitude, so digest and differences() read one rule",
+   "status": "LIBRARY_ONLY",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-23 (batch 57) closes the RULE; the grid-binding helpers still have no caller, which is finding 105's own second half",
+   "why": "Closed: the digest and the comparison read the SAME canonical magnitude, so `-0.0` and `0.0` are one parameter in both directions (they were one to `differences()` and two to the digest), and the same admissible range stated in millivolts is one identity (10661 of 40000 random four-decimal bounds restated that way disagreed in the 16th digit). Not closed: nothing in `src/engcore` declares a ParameterIdentity for a production calibration, and the grid-binding helpers finding 105 names still have no caller -- this batch adds none, because inventing one would be inventing a calibration.",
+   "entry_points": [
+    "engcore.inference.parameters.ParameterIdentity.digest (the library entry point a record keyed by identity reaches)",
+    "engcore.inference.parameters.ParameterIdentity.differences (the comparison the digest must agree with)"
+   ],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_bound_restated_in_another_unit_is_the_same_parameter",
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_negative_zero_bound_is_one_value_in_both_directions",
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_bound_that_really_differs_is_still_a_different_parameter",
+    "tests/test_core_scientific_audit_batch57.py::test_i23_the_mesh_and_the_parameter_read_the_same_rule"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The bounds and the unit are canonicalized; the model reference and the name are compared as strings, so two parameters differing only in how their model states its version are two identities, which is what a version is for. And a parameter whose bound is an infinity keeps it unquantized, because rounding an infinity would say something false about it."
   }
  ]
 }

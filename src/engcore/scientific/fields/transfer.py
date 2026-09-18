@@ -27,7 +27,7 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity, dimensionality
+from ..units.quantity import Quantity, canonical_magnitude, dimensionality
 from .definition import FieldDefinition
 from .mesh import CANONICAL_LENGTH, StructuredMesh
 from .result import FieldRecord
@@ -328,13 +328,19 @@ class FieldDependency:
 
 
 def _same_geometry(left: StructuredMesh, right: StructuredMesh) -> bool:
-    """Same rectangle in space, whatever the resolution over it."""
+    """Same rectangle in space, whatever the resolution over it.
+
+    THE SAME RULE THE FINGERPRINT READS (I-23, R-62). This compared the raw conversions with a
+    tolerance of ``1e-12 * max(1.0, |x|)``, which below one metre is an ABSOLUTE 1e-12 m: two
+    supports 10 nm and 10.0005 nm wide -- 5e-5 apart in relative terms -- answered "the same
+    rectangle", and `check_field_transfer` then offered a declared projection for a difference no
+    projection can close. A separate tolerance here is also a second rule that can disagree with
+    the identity; `canonical_magnitude` is the one rule, so two meshes are the same rectangle
+    exactly when the origin and extent parts of their fingerprints agree.
+    """
     return all(
-        abs(
-            getattr(left, name).magnitude_in(CANONICAL_LENGTH)
-            - getattr(right, name).magnitude_in(CANONICAL_LENGTH)
-        )
-        <= 1e-12 * max(1.0, abs(getattr(left, name).magnitude_in(CANONICAL_LENGTH)))
+        canonical_magnitude(getattr(left, name), CANONICAL_LENGTH)
+        == canonical_magnitude(getattr(right, name), CANONICAL_LENGTH)
         for name in ("length_x", "length_y", "origin_x", "origin_y")
     )
 

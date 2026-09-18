@@ -1335,3 +1335,47 @@ def coerce_quantity(value: Quantity | float | int | str, unit: str) -> Quantity:
     if isinstance(value, str):
         return Quantity.parse(value).to(unit)
     return Quantity(float(value), unit)
+
+
+#: How much of a float64 is IDENTITY (I-23, R-62/R-74). A CONVENTION, and where the two
+#: requirements meet: a unit restatement of one value disagrees in the 16th significant digit
+#: (7 mm and 0.7 cm convert to 0.007 and 0.006999999999999999, a relative difference of 9e-17,
+#: and 2838 of 20000 random four-decimal millivolt/volt bounds disagree at all), so 12 digits
+#: makes every restatement of one value ONE identity; and the audited geometry difference --
+#: 10 nm against 10.0005 nm -- is 5e-5 relative, which 12 digits keeps apart with four orders of
+#: magnitude to spare. A float64 carries 15 to 17 significant digits, so 12 leaves three for the
+#: conversions themselves.
+IDENTITY_SIGNIFICANT_DIGITS = 12
+
+
+def canonical_magnitude(value: "Quantity", unit: str, *,
+                        digits: int = IDENTITY_SIGNIFICANT_DIGITS) -> float:
+    """``value``'s magnitude in ``unit`` as an IDENTITY: quantized, and with no negative zero.
+
+    The one rule for every digest and every comparison over a physical magnitude, because two
+    rules are two answers waiting to disagree -- which is exactly what the re-audit found:
+
+    * a mesh fingerprint hashed ``repr(magnitude_in("meter"))``, so the same rectangle stated in
+      millimetres and in centimetres was two supports and a field produced on one could not be
+      read on the other (R-62);
+    * a parameter identity hashed the same kind of number, so the same admissible range stated in
+      millivolts was a different parameter (R-74);
+    * and ``-0.0`` compared EQUAL to ``0.0`` while hashing differently, so one value was two
+      identities in a record keyed by digest, with the comparison and the digest each convinced
+      it was right (R-74).
+
+    Quantization is to SIGNIFICANT digits and not to decimal places, because a magnitude spans
+    nanometres and metres in the same field and an absolute rule is a different rule at each
+    scale -- which is the other half of R-62: a ``1e-12 * max(1.0, |x|)`` tolerance is absolute
+    below one metre, and it answered "the same rectangle" for two geometries 5e-5 apart.
+
+    The dimension is checked by the conversion, so a length read in kelvin raises here.
+    """
+    magnitude = value.magnitude_in(unit)
+    if magnitude == 0.0:
+        # Covers -0.0, whose sign is real in IEEE and is not information about a bound.
+        return 0.0
+    if not math.isfinite(magnitude):
+        # An infinity is identity as it stands; rounding it would say something false about it.
+        return magnitude
+    return float(f"{magnitude:.{digits - 1}e}")
