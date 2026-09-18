@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from engcore.scientific.fields import (
@@ -67,7 +69,20 @@ def _record(
             mean=Quantity((minimum + maximum) / 2.0, "kelvin"),
             l2_norm=Quantity(max(abs(minimum), abs(maximum)), "kelvin"),
             non_finite=non_finite,
+            # R-55 (I-25 part A): a vector field is judged on its per-node magnitude, and a
+            # multi-component record that carries none answers UNKNOWN. These fixtures state one so the
+            # predicate logic this file is about stays reachable; the magnitude rule has its own tests in
+            # tests/test_core_scientific_audit_batch52.py.
+            magnitude_maximum=(
+                None if components == 1 else Quantity(abs(maximum) * math.sqrt(components), "kelvin")
+            ),
         ),
+        # R-55: a predicate decides from a summary only when the record says that summary was derived
+        # from the bytes its reference names -- a record whose values held a 900 K hot spot used to carry
+        # a summary saying 310 K, with the digest unchanged, and read IN_DOMAIN under a 500 K maximum.
+        # This fixture writes its summary by hand for the case under test and declares the binding
+        # deliberately, because what it exercises is the envelope logic and not the binding.
+        summary_verified_against=reference.digest,
     )
 
 

@@ -3166,3 +3166,48 @@ too, and the case only the undeclared-point rule sees is a **bound** prediction 
 evidence. Control green. `BATCH51_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation targets this file.
 
 **Open decisions.** None.
+
+### Batch 52 — I-25 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-25 | **PARTIAL** (part A of two) | `2e5b9565` (preregistration + 9 strict xfails), this commit | The verification digest is an integrity binding, not proof against somebody who recomputes it; `from_record` can only check what it resolves, and the reader this record exists for resolves nothing; `magnitude_maximum` is a maximum only; **R-63 and R-73 are part B** |
+
+**R-55 is FIXED.** The summary is what every reader acts on *without* resolving a mesh-sized array, and it
+was the record's own word about that array — bound to the bytes by nothing, to the field's unit by nothing,
+and to itself only loosely.
+
+| Claim | Status | How |
+|---|---|---|
+| a summary that contradicts itself | **FIXED** | A mean outside `[minimum, maximum]` and a negative `l2_norm` are refused at construction. Neither needs the bytes to refute, which is why they belong there: the reader who has only the summary is the reader this record is for. |
+| a summary of a different quantity | **FIXED** | `FieldRecord` refuses summary entries outside the field's declared dimension — a kelvin field summarized in pascal, volt or second — and a `non_finite` count above the reference's value count, because a subset is not larger than the set. |
+| a summary bound to no bytes | **FIXED** | `FieldValue.from_record` resolved the content-addressed bytes and never looked at the summary, so a record whose values held a **900 K hot spot** carried a summary saying 310 K **with the reference digest unchanged**. The read path now re-derives the summary and refuses a mismatch, within a stated relative tolerance (`SUMMARY_AGREEMENT_RTOL = 1e-9`, class B — a sum is order-dependent in floating point). |
+| predicates deciding from it anyway | **FIXED** | `FieldRecord` gained `summary_verified_against`: the digest of the bytes the summary came from, written by `FieldValue.store`. `FieldRangeCondition` and `FieldFiniteCondition` answer **UNKNOWN** for a record whose summary was never bound to its own values — not OUTSIDE, because an unbound summary is not evidence against the field either. |
+| a vector field judged per component | **FIXED** | The envelope was taken over **flattened** components, which for a vector field is a box and not a speed: (1, 1, 1) m/s sits inside a 1.2 m/s box per component while its magnitude is 1.732. `FieldSummary` now carries `magnitude_maximum`, computed per node by `FieldValue.summary()`, and a multi-component field is judged on it. A multi-component record that carries none is UNKNOWN: the magnitude cannot be recovered from the box. |
+
+**Compatibility.** Additive only: two trailing fields with defaults (`FieldSummary.magnitude_maximum`,
+`FieldRecord.summary_verified_against`), and `field_summary/2` and `field_record/2` written **only** when the
+record carries the new field — so a scalar field's summary and an unbound record keep their bytes. An older
+version carrying either new field is refused on read. Two in-tree fixtures are amended in place with the
+reason: `tests/test_structured_validity.py` and `tests/test_unknown_diagnostics_v2.py` hand-write a summary
+for the case under test and now declare the binding deliberately, because what they exercise is the envelope
+logic and the diagnostic channel rather than the binding.
+
+**Committed evidence.** Nothing regenerated. No committed JSON carries a `field_record` payload — the files
+that name the schema are threshold protocols and assurance manifests listing schema names, not records — and
+the conduction2d path builds its records in-process.
+
+**Verification.** The batch's own file 14 passed; `tests/test_structured_validity.py`,
+`tests/test_unknown_diagnostics_v2.py`, `tests/test_field_ir_ceiling.py` and `tests/test_field_composition.py`
+green. FAST tier **7132 passed, 5 skipped, 19 failed** — exactly the by-design set. Expensive tier
+**528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched. Guard reach ledger clean
+over **34** guards, R-55 LATENT/FIXED with what would create the shape it guards.
+
+**Guard mutations.** `BATCH52_MUTATIONS.log`: **10 of 10 KILLED**, control green. B52j was repointed while
+running them, with the case added as a named test: the preregistered reproduction's record is also *unbound*,
+so the binding rule answers it first, and the case only the magnitude rule sees is a record **bound** to its
+own bytes that still carries no magnitude. `BATCH52_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation
+targets these files.
+
+**Open decisions.** None.

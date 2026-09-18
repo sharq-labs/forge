@@ -37,7 +37,11 @@ from ..scientific.fields.definition import FieldDefinition
 from ..scientific.fields.mesh import CANONICAL_LENGTH, StructuredMesh
 from ..scientific.fields.profiles import SpatialProfile
 from ..scientific.fields.regions import MeshRegion
-from ..scientific.fields.result import FieldRecord, FieldSummary
+from ..scientific.fields.result import (
+    SUMMARY_AGREEMENT_RTOL,
+    FieldRecord,
+    FieldSummary,
+)
 from ..scientific.results.data_reference import ScientificDataReference
 from ..scientific.units.quantity import Quantity
 from .resolver import BulkDataResolver
@@ -172,7 +176,26 @@ class FieldValue:
             mean=Quantity(float(flat.mean()), self.unit),
             l2_norm=Quantity(float(math.sqrt(float(np.dot(flat, flat)))), self.unit),
             non_finite=0,
+            magnitude_maximum=self._magnitude_maximum(),
         )
+
+    def _magnitude_maximum(self) -> Quantity | None:
+        """The largest per-node component magnitude, for a vector field (R-55).
+
+        ``minimum`` and ``maximum`` above are the envelope over flattened components, which for a vector
+        field is a BOX: (1, 1, 1) m/s sits inside a 1.2 m/s box per component and its speed is 1.732. The
+        bound a declarer writes for a vector field is the bound on the speed, and it cannot be recovered
+        from the box, so it is computed here where the array is in hand. ``None`` for a scalar field,
+        where the two questions are the same one.
+        """
+        components = int(self.definition.components)
+        if components <= 1:
+            return None
+        # The component axis is the last one: `expected_shape` appends it, which
+        # is the layout every field record in this repository carries.
+        per_node = self.values.reshape(-1, components)
+        magnitudes = np.sqrt(np.sum(per_node * per_node, axis=1))
+        return Quantity(float(magnitudes.max()), self.unit)
 
     def to_unit(self, unit: str) -> "FieldValue":
         """The same field in another unit of the same dimension.
@@ -218,6 +241,11 @@ class FieldValue:
             shape=self.shape,
             reference=reference,
             summary=self.summary(),
+            # R-55 (I-25 part A): the summary was derived from exactly these
+            # bytes, and this is the record saying so. It is what lets a
+            # validity predicate act on a summary at all without holding the
+            # array itself.
+            summary_verified_against=reference.digest,
         )
         return record, reference
 
@@ -234,7 +262,45 @@ class FieldValue:
         record.verify_against(mesh)
         values = resolver.resolve(record.reference)
         array = np.asarray(values, dtype=np.float64).reshape(record.shape)
-        return cls(definition=record.definition, mesh=mesh, values=array)
+        field = cls(definition=record.definition, mesh=mesh, values=array)
+        field._require_the_summary_describes_these_values(record)
+        return field
+
+    def _require_the_summary_describes_these_values(self, record: FieldRecord) -> None:
+        """R-55: the one place the bytes and the summary are both in hand, and it did not look.
+
+        The bytes are content-addressed and the summary is not, so a record whose values held a 900 K hot
+        spot carried a summary saying 310 K with its reference digest unchanged -- and every reader that
+        acts on the summary, including two registered validity predicates, believed it.
+
+        Compared relatively, within ``SUMMARY_AGREEMENT_RTOL``: a sum is order-dependent in floating point
+        and a store may hand the same values back in a different layout.
+        """
+        derived = self.summary()
+        unit = self.unit
+        for label in ("minimum", "maximum", "mean", "l2_norm", "magnitude_maximum"):
+            claimed = getattr(record.summary, label)
+            actual = getattr(derived, label)
+            if claimed is None or actual is None:
+                # A summary written before `magnitude_maximum` existed states
+                # nothing about it, and an absence is not a disagreement. What
+                # it costs is stated on the record: a predicate over a vector
+                # field without it answers UNKNOWN.
+                continue
+            left = claimed.magnitude_in(unit)
+            right = actual.magnitude_in(unit)
+            scale = max(abs(left), abs(right))
+            if abs(left - right) > SUMMARY_AGREEMENT_RTOL * scale:
+                raise InvalidScientificProblem(
+                    f"field {record.definition.field_id!r} summarizes its {label} as {claimed} and its "
+                    f"own values give {actual}. A summary is what a reader acts on without resolving a "
+                    f"mesh-sized array, and these bytes do not say what it says"
+                )
+        if record.summary.non_finite != derived.non_finite:
+            raise InvalidScientificProblem(
+                f"field {record.definition.field_id!r} counts {record.summary.non_finite} non-finite "
+                f"value(s) and its own values hold {derived.non_finite}"
+            )
 
     def __str__(self) -> str:  # pragma: no cover - display only
         return (

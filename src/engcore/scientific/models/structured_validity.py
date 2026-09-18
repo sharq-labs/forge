@@ -89,6 +89,24 @@ class FieldRangeCondition:
     ``name`` identifies the condition; ``field`` identifies the context value.
     Keeping those separate allows finite/range/structure checks to target the
     same field without duplicating it under several context keys.
+
+    **What "the envelope" means, and what it used to mean (R-55, I-25).** For a
+    scalar field it is the recorded minimum and maximum. For a field with more
+    than one component those two are the envelope over FLATTENED components,
+    which is a box and not a magnitude: a velocity of (1, 1, 1) m/s sits inside
+    a 1.2 m/s box per component while its speed is 1.732, and this condition
+    called that IN_DOMAIN. A bound a declarer writes for a vector field is the
+    bound on the magnitude, so that is what is compared, from the summary's
+    ``magnitude_maximum``; a multi-component record that does not carry one is
+    UNKNOWN, because the magnitude cannot be recovered from the box.
+
+    **And it decides from a summary, so it needs one that was bound to its own
+    bytes.** The summary is the record's own word about an array nobody
+    resolved: a record whose values held a 900 K hot spot carried a summary
+    saying 310 K, with the reference digest unchanged, and this predicate
+    answered IN_DOMAIN under a 500 K maximum. A record whose summary was never
+    derived from the bytes it names is now UNKNOWN -- not OUTSIDE, because an
+    unbound summary is not evidence against the field either.
     """
 
     name: str
@@ -128,8 +146,12 @@ class FieldRangeCondition:
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, FieldRecord):
             return ValidityStatus.UNKNOWN
+        if not value.summary_is_bound_to_its_values:
+            return ValidityStatus.UNKNOWN
         if not value.is_finite:
             return ValidityStatus.UNKNOWN
+        if int(value.definition.components) > 1:
+            return self._evaluate_magnitude(value)
         if self.minimum is not None:
             result = _base._within(
                 value.summary.minimum,
@@ -153,6 +175,25 @@ class FieldRangeCondition:
             if result is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
                 return result
         return ValidityStatus.IN_DOMAIN
+
+    def _evaluate_magnitude(self, value: FieldRecord) -> ValidityStatus:
+        """A vector field, judged on its per-node magnitude (R-55).
+
+        Only a MAXIMUM is compared: a minimum magnitude is not a bound anybody writes for a vector field,
+        and a declared minimum over a magnitude would be a different statement from the one on the record.
+        A condition that states only a minimum therefore says nothing here and answers UNKNOWN.
+        """
+        magnitude = value.summary.magnitude_maximum
+        if magnitude is None or self.maximum is None:
+            return ValidityStatus.UNKNOWN
+        return _base._within(
+            magnitude,
+            minimum=None,
+            maximum=self.maximum,
+            minimum_inclusive=True,
+            maximum_inclusive=self.maximum_inclusive,
+            name=self.name,
+        )
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         return self.evaluate(context.get(self.field))
@@ -199,7 +240,11 @@ class FieldRangeCondition:
 
 @dataclass(frozen=True)
 class FieldFiniteCondition:
-    """Require a typed field record to report zero non-finite values."""
+    """Require a typed field record to report zero non-finite values.
+
+    R-55 (I-25): the count is the record's own word about an array nobody resolved, so a record whose
+    summary was never derived from the bytes it names answers UNKNOWN rather than IN_DOMAIN.
+    """
 
     name: str
     field: str | None = None
@@ -213,6 +258,8 @@ class FieldFiniteCondition:
 
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, FieldRecord):
+            return ValidityStatus.UNKNOWN
+        if not value.summary_is_bound_to_its_values:
             return ValidityStatus.UNKNOWN
         return (
             ValidityStatus.IN_DOMAIN

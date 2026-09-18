@@ -8,6 +8,8 @@ word: nothing binds it to the bytes the reference names, to the field's unit, or
 whose bytes hold a 900 K hot spot reads IN_DOMAIN under a 500 K maximum once its summary says 310 K, with
 the reference digest unchanged. And a 3-component velocity of (1, 1, 1) m/s -- magnitude 1.732 -- passes a
 1.2 m/s maximum, because the envelope is taken over flattened components.
+
+Recorded as strict xfails in commit 2e5b9565, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -84,21 +86,18 @@ def test_r55_an_honest_summary_is_unchanged():
     assert _record().summary.mean.magnitude_in("kelvin") == pytest.approx(300.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: FieldSummary accepts a mean outside [minimum, maximum]")
 def test_r55_a_mean_outside_its_own_range_is_refused():
     with pytest.raises(InvalidScientificProblem, match="mean"):
         FieldSummary(minimum=Quantity(290.0, "kelvin"), maximum=Quantity(310.0, "kelvin"),
                      mean=Quantity(900.0, "kelvin"), l2_norm=Quantity(310.0, "kelvin"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: a negative l2_norm is accepted")
 def test_r55_a_negative_norm_is_refused():
     with pytest.raises(InvalidScientificProblem, match="l2_norm|norm"):
         FieldSummary(minimum=Quantity(290.0, "kelvin"), maximum=Quantity(310.0, "kelvin"),
                      mean=Quantity(300.0, "kelvin"), l2_norm=Quantity(-1.0, "kelvin"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: entries in a different dimension from the field are accepted -- pascal, volt and second for a kelvin field")
 def test_r55_a_summary_in_another_dimension_is_refused():
     with pytest.raises(InvalidScientificProblem, match="dimension|kelvin|pascal"):
         _record(summary=FieldSummary(
@@ -106,7 +105,6 @@ def test_r55_a_summary_in_another_dimension_is_refused():
             mean=Quantity(300.0, "pascal"), l2_norm=Quantity(310.0, "pascal")))
 
 
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: a non_finite count larger than the field's value count is accepted")
 def test_r55_more_non_finite_values_than_values_is_refused():
     with pytest.raises(InvalidScientificProblem, match="non_finite|count"):
         _record(summary=FieldSummary(
@@ -125,7 +123,6 @@ def test_r55_a_field_read_back_from_its_own_record_still_works():
     assert field.values.max() == pytest.approx(300.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: from_record resolves the content-addressed bytes and never compares them with the summary, so a record whose bytes hold a 900 K hot spot carries a summary that says 310 K")
 def test_r55_a_summary_that_does_not_match_the_bytes_is_refused_on_read():
     record, store, mesh = _stored([300.0, 300.0, 300.0, 300.0, 300.0, 900.0])
     forged = dataclasses.replace(record, summary=FieldSummary(
@@ -139,13 +136,11 @@ def test_r55_a_summary_that_does_not_match_the_bytes_is_refused_on_read():
 # ---------------------------------------------------------------------------
 # a_predicate_that_decides_from_a_summary_needs_a_verified_record
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-55 finding 70 as audited: FieldRangeCondition answers from the self-declared summary alone, so a record nobody bound to its bytes is IN_DOMAIN")
 def test_r55_a_range_predicate_will_not_decide_from_an_unbound_summary():
     condition = FieldRangeCondition(name="T", maximum=Quantity(500.0, "kelvin"))
     assert condition.evaluate(_record()) is ValidityStatus.UNKNOWN
 
 
-@pytest.mark.xfail(strict=True, reason="R-55: and the finiteness predicate answers from the same unbound count")
 def test_r55_a_finiteness_predicate_will_not_decide_from_an_unbound_summary():
     condition = FieldFiniteCondition(name="T")
     assert condition.evaluate(_record()) is ValidityStatus.UNKNOWN
@@ -161,7 +156,6 @@ def test_r55_a_record_bound_to_its_bytes_is_decided_as_before():
 # ---------------------------------------------------------------------------
 # an_envelope_over_a_vector_field_is_about_its_magnitude
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-55 finding 67 as audited: the envelope is taken over FLATTENED components, so a 3-component velocity (1, 1, 1) m/s with |u| = 1.732 is IN_DOMAIN against a 1.2 m/s maximum")
 def test_r55_a_vector_field_is_judged_on_its_magnitude():
     record, _store, _mesh = _stored([1.0] * 18, components=3, unit="meter / second")
     condition = FieldRangeCondition(name="T", maximum=Quantity(1.2, "meter / second"))
@@ -174,12 +168,33 @@ def test_r55_a_vector_field_inside_the_bound_still_passes():
     assert condition.evaluate(record) is ValidityStatus.IN_DOMAIN
 
 
-@pytest.mark.xfail(strict=True, reason="R-55: a multi-component record written before the magnitude existed cannot be judged on it, and answering from the per-component envelope is the audited defect")
 def test_r55_a_vector_record_without_a_magnitude_is_unknown():
     names = {field.name for field in dataclasses.fields(FieldSummary)}
     assert "magnitude_maximum" in names, "a vector field's envelope has nowhere to be recorded"
     record = _record(components=3, unit="meter / second", values=1.0, summary=FieldSummary(
         minimum=Quantity(1.0, "meter / second"), maximum=Quantity(1.0, "meter / second"),
         mean=Quantity(1.0, "meter / second"), l2_norm=Quantity(4.24, "meter / second")))
+    condition = FieldRangeCondition(name="T", maximum=Quantity(1.2, "meter / second"))
+    assert condition.evaluate(record) is ValidityStatus.UNKNOWN
+
+
+def test_r55_a_bound_vector_record_without_a_magnitude_is_still_unknown():
+    """The case only the magnitude rule sees, found while running this batch's mutations: the record IS
+    bound to its own bytes and still carries no magnitude, because it was written before the field
+    existed. The per-component envelope cannot answer the question the bound asks."""
+    mesh = _mesh()
+    definition = _definition(components=3, unit="meter / second")
+    count = definition.expected_count(mesh)
+    reference, _payload = ScientificDataReference.for_values(
+        "T:field", [1.0] * count, unit="meter / second")
+    record = FieldRecord(
+        definition=definition, mesh_fingerprint=mesh.fingerprint(),
+        shape=definition.expected_shape(mesh), reference=reference,
+        summary=FieldSummary(
+            minimum=Quantity(1.0, "meter / second"), maximum=Quantity(1.0, "meter / second"),
+            mean=Quantity(1.0, "meter / second"), l2_norm=Quantity(4.24, "meter / second")),
+        summary_verified_against=reference.digest,
+    )
+    assert record.summary_is_bound_to_its_values is True
     condition = FieldRangeCondition(name="T", maximum=Quantity(1.2, "meter / second"))
     assert condition.evaluate(record) is ValidityStatus.UNKNOWN

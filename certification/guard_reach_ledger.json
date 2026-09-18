@@ -1095,6 +1095,41 @@
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A multi-point comparison is reported as ONE check with one residual ratio, the worst over the comparisons made, and the observations at other points are named in the detail rather than being checks of their own; per-point checks would be a different record shape. Two readings of one metric at one point are still refused, because a duplicate and a disagreement are indistinguishable there. Oracle authority is unchanged and is the ceiling on all of this: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an OracleEvidenceSet, and no oracle is pinned, so no production path awards an oracle level at all. Pinning one is a repository decision about external evidence, not something a rule can close. `_same_operating_point` is reused unchanged, so its offset-scale behaviour (the audit's finding 104) applies here too and belongs to another problem.",
    "what_would_create_it": "An oracle pinned in `_TRUSTED_ORACLE_DECLARATIONS` together with an `OracleProvider` that builds an `OracleEvidenceSet` for a problem -- which is what the route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED is designed to be, and what no path in this repository does today. Until then no comparison of a real prediction against external evidence exists to reach: the shapes these rules guard (a bare mapping asserted to be at an operating point, a two-point dataset, a prediction missing a metric) occur only in tests."
+  },
+  {
+   "problem": "R-55",
+   "title": "Field validity decides from an unbound self-declared summary and a component envelope",
+   "rule": "src/engcore/scientific/fields/result.py",
+   "rule_symbol": "FieldSummary's self-consistency rules and magnitude_maximum; FieldRecord's dimension and count checks, summary_verified_against and summary_is_bound_to_its_values; FieldValue._require_the_summary_describes_these_values and _magnitude_maximum in src/engcore/data/field.py; the binding and magnitude branches of FieldRangeCondition.evaluate and FieldFiniteCondition.evaluate in src/engcore/scientific/models/structured_validity.py",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-25 part A (batch 52); part B is R-63 and R-73",
+   "why": "LATENT for the PREDICATES, which is what the problem is about: FieldRangeCondition and FieldFiniteCondition are registered validity-condition decoders and are therefore reachable from a payload, and no production domain declares one -- the audit says so in its own words, 'no production domain uses these conditions yet'. The summary rules themselves sit on records production DOES produce, so a field stored by the conduction2d path now carries the digest of the bytes its summary came from, and a summary that disagrees with those bytes is refused on read.",
+   "what_would_create_it": "A domain declaring a FieldRangeCondition or a FieldFiniteCondition over a field it produces -- which is what the structured-validity decoders exist for -- or any consumer reading a field record's summary and acting on it without resolving the bytes. The audited shapes are a summary nobody derived from its own field (a 900 K hot spot summarized as 310 K with the reference digest unchanged) and a multi-component field judged per component ((1, 1, 1) m/s passing a 1.2 m/s bound).",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_mean_outside_its_own_range_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_negative_norm_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_summary_in_another_dimension_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_more_non_finite_values_than_values_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_summary_that_does_not_match_the_bytes_is_refused_on_read",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_field_read_back_from_its_own_record_still_works",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_range_predicate_will_not_decide_from_an_unbound_summary",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_finiteness_predicate_will_not_decide_from_an_unbound_summary",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_record_bound_to_its_bytes_is_decided_as_before",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_field_is_judged_on_its_magnitude",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_field_inside_the_bound_still_passes",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_record_without_a_magnitude_is_unknown",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_bound_vector_record_without_a_magnitude_is_still_unknown",
+    "tests/test_structured_validity.py",
+    "tests/test_unknown_diagnostics_v2.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The verification digest is an integrity binding, as every digest here is: it closes an unbound summary and a silent hand-off, not a determined edit by somebody who recomputes the digest too. `from_record` can only check what it resolves, so the reader this record exists for -- one that acts on the summary WITHOUT resolving a mesh-sized array -- is protected by the digest binding and the internal consistency rules rather than by a re-derivation it never performs. `magnitude_maximum` is a maximum only, because a minimum magnitude is not a bound anybody writes for a vector field; a condition stating only a minimum over a multi-component field therefore answers UNKNOWN. The per-component envelope stays on the record, because a component-wise bound is a legitimate statement -- what changed is which one the condition applies."
   }
  ]
 }
