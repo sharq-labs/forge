@@ -223,13 +223,34 @@ def test_independent_routes_that_disagree_fail_rather_than_warn():
     assert check.residual == pytest.approx(1.0 / 3.0)
 
 
-def test_dependent_routes_that_disagree_warn_rather_than_fail():
-    """A comparison denied authority to award cannot be given authority to condemn."""
+def test_dependent_routes_that_disagree_also_fail():
+    """This asserted WARNING, and that was R-21.
+
+    The reasoning was "a comparison denied authority to award cannot be given authority to condemn". Those
+    are not the same authority. Awarding a level is a claim about what the evidence SHOWS; reporting a
+    disagreement is a MEASUREMENT of what the two routes did. Both routes were asked for the same named
+    quantities, under one declared required-output contract, and returned numbers 33% apart: at least one of
+    them is wrong about the thing they were both asked to compute, and that is true however much machinery
+    they share. Sharing machinery makes it WORSE -- the same arithmetic produced two different answers,
+    which is a defect in the computation and not a difference of opinion between independent witnesses.
+
+    The audited sentence was that the verdict over such a check stays SUPPORTED. It does not any more: a
+    FAIL is what every consumer reads as "do not rely on this".
+
+    What is unchanged, and is the sentence this record exists to write, is the other direction --
+    `test_one_shared_component_defeats_the_whole_consensus` above: routes that AGREE while sharing their
+    machinery produce a PASS that establishes nothing. The outcome and the level are still allowed to
+    disagree; a disagreement is simply no longer the case where they do.
+    """
     consensus = _consensus(
         (_route("a", ALPHA, "shared"), _route("b", BETA, "shared")),
         {"a": {"x": 1.0}, "b": {"x": 1.5}},
     )
-    assert consensus.to_check().outcome is ValidationOutcome.WARNING
+    check = consensus.to_check()
+    assert check.outcome is ValidationOutcome.FAIL
+    assert check.residual == pytest.approx(1.0 / 3.0)
+    # and it still establishes nothing: a stricter outcome is not a claim
+    assert check.establishes is None
 
 
 def test_nothing_compared_is_not_agreement():

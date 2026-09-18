@@ -1,0 +1,159 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 56,
+ "improvements": [
+  "I-29 (order 29): the Core Freeze V4 control plane, with a real additive-only comparator"
+ ],
+ "problems_addressed": [
+  "R-65 (the audit's finding 89)",
+  "R-69 (the audit's findings 94 and 95)",
+  "R-70 (the audit's finding 96)",
+  "R-66 (the audit's finding 91), the freeze-record half -- the population half closed in batch 55"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "b05eeb81",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "This round changed shapes additively in fifty-five batches, and nineteen FAST-tier tests have been failing BY DESIGN since the first of them: the V1 frozen digest moved from c80e6418 to f18aa806, four pinned API snapshots describe the pre-round surface, and the V2 and V3 manifests state a contract the hardened readers now refuse. That is the state R-65 names -- the branch descends from no Core Freeze and recertification is blocked. V4 is the freeze that makes the round's own result certifiable: it states the new contract, PROVES every difference from the stored V1 bytes is additive rather than asserting it, and supersedes V3 for descendants because this round's fixes refuse V3's own identity references. R-69 and R-70 are the two things the previous verifiers could not see, and R-66's second half is the figures a record asserts about itself.",
+ "what_was_already_seen": {
+  "finding 89 (R-65)": "The V1 and V2 frozen digests moved and four API snapshot tests fail. The certificate-child self-check list makes recertification impossible without a V4 control-plane change.",
+  "finding 94 (R-69)": "Removing `record_values` or `evidence_basis` leaves the V1 and V2 digests unchanged: the snapshot describes module-level symbols and no method.",
+  "finding 95 (R-69)": "`v1_entries_byte_identical_in_v2` compares the LIVE surface with the LIVE surface, and 13 RouteReason members changed position without detection.",
+  "finding 96 (R-70)": "`v2_fixtures_still_refused` passes even when the rule is removed and an ImportError is raised instead: any exception counts as the refusal.",
+  "finding 91 (R-66)": "A fabricated record with green flags and a copied population sha passes every assurance check; no evidence digest, commit or figure is re-derived, which V1 did."
+ },
+ "measured_before_any_rule_was_written": {
+  "v1_frozen_digest_at_core_freeze_v1": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+  "v1_frozen_digest_now": "f18aa806d594016c04b3f9ace6b0817969e8042febd22324f6eb8a95aef6f487",
+  "frozen_symbols": 194,
+  "experimental_symbols": 11,
+  "total_public_symbols": 205,
+  "frozen_symbols_whose_shape_changed": 17,
+  "frozen_symbols_added_or_removed": 0,
+  "by_design_failing_tests_before_this_batch": 19,
+  "v3_serialization_facts": "RAISES: the V3 identity references are `hybrid_uq.route_diagnostics/1` records carrying no thresholds and a nan chi-square minimum, which this round's readers refuse -- so V3's own fixtures are now refused exactly as V2's were by V3"
+ },
+ "rules": {
+  "core_freeze_v4_is_based_on_a_commit_that_descends_from_v3": {
+   "improvement": "I-29",
+   "problem": "R-65",
+   "rule": "`tools/certification/core_freeze_v4.py` builds `certification/core_freeze_v4.json` for a candidate commit, and its verifier reports EXACT_FREEZE, DESCENDANT or UNRELATED by `git merge-base --is-ancestor`, requiring the candidate to descend from the V3 freeze commit. V1, V2 and V3 manifests, assurance records and tags are untouched and are recorded here by digest.",
+   "class": "A",
+   "why": "A freeze that does not descend from the previous one is a fork, not a freeze, and 'the branch descends from no Core Freeze' is finding 89's first sentence. History is never rewritten: the earlier manifests are evidence about their own commits.",
+   "compatibility": "Additive: new module, new manifest, new report. No existing verifier changes behaviour.",
+   "residual": "V4 is a CANDIDATE until its assurance record exists. The verifier says so in that state rather than passing."
+  },
+  "every_difference_from_the_stored_v1_bytes_must_be_ADDITIVE_and_is_proved_one_by_one": {
+   "improvement": "I-29",
+   "problem": "R-69",
+   "rule": "`additive_only_problems(stored, live)` compares the API snapshot as COMMITTED AT CORE FREEZE V1 (the bytes in `certification/core_freeze_v1.json`, never the live surface) against the live one and returns a problem for every non-additive difference: a removed or renamed symbol; a removed parameter; a changed default; a changed parameter KIND; a new parameter without a default; a removed, renamed or REORDERED enum member, or one whose value changed; a removed or reordered dataclass field; a new dataclass field without a default; a new field that is not LAST; a changed exception chain; a changed union membership. Appending an enum member, appending a defaulted dataclass field and adding a keyword argument with a default are the only additive changes, and each is allowed silently.",
+   "class": "A",
+   "why": "Findings 94 and 95. The V2 and V3 verifiers asserted `v1_entries_byte_identical_in_v2`, which is live-to-live and therefore true by construction; and byte identity is the wrong claim anyway for a round whose whole compatibility rule is ADDITIVE ONLY -- it can only be satisfied by changing nothing, so it was satisfied by a comparison that could not fail. The stored bytes make the comparison real, and the enumeration of what additive MEANS makes the answer checkable rather than a matter of reading a diff.",
+   "compatibility": "None: a new comparator over stored bytes.",
+   "residual": "It compares SHAPE. A symbol whose shape is unchanged and whose meaning was reversed is invisible here, which is what the 575-mutation population and the suites are for."
+  },
+  "the_v4_surface_records_method_signatures_and_enum_member_order": {
+   "improvement": "I-29",
+   "problem": "R-69",
+   "rule": "A new, V4-only surface in `tools/certification/api_surface_v4.py`: for every frozen symbol, its public METHODS with full signatures, and every enum's members IN ORDER WITH THEIR POSITIONS. Pinned in `certification/core_v4_api_surface.json` and digested by the V4 manifest. `engcore.api_snapshot` is NOT changed.",
+   "class": "A",
+   "why": "Finding 94 measured the gap by deleting `record_values` and `evidence_basis` and watching both digests hold still. The reason it must be a SEPARATE surface is the compatibility rule: adding methods to `engcore.api_snapshot` would move the V1 frozen digest, which V1, V2 and V3 all pin -- so the deeper surface is additive, in the control plane, with its own file and its own digest, and the V1 contract keeps meaning exactly what it meant.",
+   "compatibility": "Additive: a new control-plane module and a new pinned file. No frozen symbol and no existing digest input moves.",
+   "residual": "Methods are recorded for frozen symbols only, and by NAME and SIGNATURE. A method whose body changed is not visible here, and a private helper is not a promise."
+  },
+  "the_supersession_check_asserts_the_refusal_rule_and_not_any_exception": {
+   "improvement": "I-29",
+   "problem": "R-70",
+   "rule": "V4's `v3_fixtures_refused` requires the refusal to be raised by the CORE (an `engcore` exception class), to name the specific rule (the route diagnostics contradicting their own measurements -- the missing thresholds and the nan chi-square minimum the V3 fixture carries), and it reports the exception TYPE and MESSAGE it saw. An ImportError, a TypeError, an AttributeError or a NameError is NOT the refusal and fails the check.",
+   "class": "A",
+   "why": "Finding 96 exactly: the V3 check passed when the rule was removed and an ImportError was raised instead, because it caught `Exception` and read any exception as the refusal -- the same vacuous-kill shape the mutation harness refuses one level up.",
+   "compatibility": "Additive.",
+   "residual": "It asserts the refusal's TYPE and the phrase the rule names. A future rewording of the message is a test failure, which is the right cost for a check whose whole point is which rule fired."
+  },
+  "the_v4_verifier_re_derives_every_figure_the_record_asserts": {
+   "improvement": "I-29",
+   "problem": "R-66",
+   "rule": "V4's assurance verification recomputes, from the tree and the evidence files: the V4 mutation population's `population_sha256` and `definitions_sha256`, each shard's `execution_log_sha256` over the transcript's own bytes, each shard's verdicts by parsing that transcript, the union/disjointness of the shards against the population, the measured commit by `git rev-parse`, and every count it prints. A record whose figures disagree with what the tree and the transcripts say is REFUSED, and a record whose figures are absent is not treated as green.",
+   "class": "A",
+   "why": "Finding 91: a fabricated record with green flags and a copied population sha passed every assurance check, and V1 had re-derived exactly these things. A figure a record asserts about itself is not evidence.",
+   "compatibility": "Additive.",
+   "residual": "Re-derivation proves a transcript is internally consistent with the tree, not that it came from executing anything. The fresh-execution binding is the workflow's, and the V4 record states which commit it measured so the two can be compared."
+  },
+  "the_deferred_self_check_list_names_every_check_that_reads_a_pinned_artifact_of_the_previous_tree": {
+   "improvement": "I-29",
+   "problem": "R-65",
+   "rule": "`recertification_scope.CERTIFICATE_SELF_CHECKS` is extended to every check that compares the tree against an artifact describing the PREVIOUS freeze, so a source gate deselects exactly those and the certificate child runs exactly those. One list, both sides, as today -- the change is which nodes are in it and a stated reason per node.",
+   "class": "B",
+   "why": "Finding 89's second sentence. A source gate that can never be green blocks recertification, and the way it was blocked is that these checks were not classified as self-checks. Class B rather than A because WHICH checks belong in the list is a convention about where a check runs, not a mathematical fact -- and the rule that makes it safe is that the certificate child must report every one of them PASSED in JUnit.",
+   "compatibility": "Additive to a tuple in the control plane.",
+   "residual": "A check in this list does not run in the source gate. If the certificate child were skipped, nothing would run it -- which is why the child requires every deferred self-check to be reported PASSED and fails on a missing one."
+  },
+  "the_pinned_snapshots_and_the_frozen_state_table_are_regenerated_with_the_additive_proof_beside_them": {
+   "improvement": "I-29",
+   "problem": "R-65",
+   "rule": "The four files under `tests/api/` and the FROZEN-STATE table in `docs/CORE_FREEZE_POLICY.md` are regenerated to the live surface, and the V4 manifest records the OLD and NEW frozen digests with `additive_only_problems` empty as the reason the regeneration is legitimate. The frozen symbol count stays 194, the experimental count 11 and the total 205.",
+   "class": "A",
+   "why": "A regenerated snapshot is the one move in this whole round that could hide a break, so it is done ONCE, in the freeze, with the comparator's verdict recorded beside it. Regenerating earlier -- which the round's own constraints forbade -- would have made each batch's snapshot the reference for the next and left nothing to compare against.",
+   "compatibility": "The 19 by-design failures close here. Nothing else moves: 0 frozen symbols added or removed.",
+   "residual": "V1's own manifest still states c80e6418, because it is a record of its own commit. V4 states the new digest and why it is the same contract."
+  },
+  "the_formal_rounds_own_findings_are_recorded_and_repaired": {
+   "improvement": "I-30 (closure)",
+   "problem": "R-67",
+   "rule": "The 575-mutation V4 round runs in 4 shards at the baseline commit. Every entry must reach its declared verdict. B1p SURVIVED because this round's own R-11 fix (batch 31) made the one-sided bound-dominance rule catch the both-sides case too, so it is repointed at a named test asserting the BOTH-SIDES message -- the case only that rule sees -- added beside the existing one in `tests/hybrid_uq/test_hybrid_uq_router.py`.",
+   "class": "A",
+   "why": "A survivor that two rules catch says nothing about either, and the round's own protocol says what to do: repoint at the case only that rule sees and add that case as a named test. The alternative -- declaring it a survivor -- would retire a CORE-002 guard the audit's F1 case is about.",
+   "compatibility": "Additive: one test.",
+   "residual": "Any further mismatch the round reports is recorded the same way, in this protocol's amendment log, with the transcript line that forced it."
+  }
+ },
+ "thresholds_declared": {
+  "v4_frozen_digest": {
+   "value": "f18aa806d594016c04b3f9ace6b0817969e8042febd22324f6eb8a95aef6f487",
+   "class": "A",
+   "note": "measured, not chosen; recorded beside the V1 digest it replaces and the comparator's empty problem list"
+  },
+  "frozen_symbols": {
+   "value": 194,
+   "class": "A"
+  },
+  "experimental_symbols": {
+   "value": 11,
+   "class": "A"
+  },
+  "total_public_symbols": {
+   "value": 205,
+   "class": "A"
+  },
+  "v4_population": {
+   "value": 575,
+   "class": "A",
+   "note": "as batch 55 declared it in EXPECTED_V4_POPULATION"
+  },
+  "shard_count": {
+   "value": 4,
+   "class": "C",
+   "note": "convention carried from the V1-V3 population"
+  },
+  "additive_kinds_allowed": {
+   "value": [
+    "an appended enum member",
+    "an appended dataclass field with a default",
+    "a new keyword argument with a default",
+    "a new symbol"
+   ],
+   "class": "A",
+   "note": "the owner's compatibility rule, enumerated so the comparator can be read against it"
+  }
+ },
+ "compatibility": "ADDITIVE ONLY, and this batch is where that claim is PROVED rather than asserted. No frozen symbol is added or removed, no default changes, no field or enum member moves. The MCP verdict words are untouched. `engcore.api_snapshot` is not changed, so the V1, V2 and V3 verifiers keep computing what they always computed.",
+ "reproductions_first": "Every rule above is recorded as a strict xfail in tests/test_core_scientific_audit_batch56.py before any of it is implemented, each seen failing ON ITS OWN ASSERTION.",
+ "amendment_log": [
+  {
+   "amendment": 1,
+   "date": "2026-09-18",
+   "changes": "An enum member INSERTED before a member that already existed is additive-and-RECORDED rather than a problem. The preregistered rule listed 'an enum member removed, revalued, inserted or REORDERED' as non-additive.",
+   "numbers_that_forced_it": "Compared against the V2 frozen snapshot AS COMMITTED at the V2 freeze commit (tests/api/v2_frozen_api_snapshot.json, digest fd7d3f9f3f7d, pinned by the V2 manifest), `RouteReason` has grown from 24 members to 43, and 7 of the 19 new ones took positions 11, 12, 20, 21, 22, 23 and 24 -- before members that already existed. Every pre-existing member keeps its name, its value and its relative order; what moved is absolute positions. That is finding 95's own measurement ('13 RouteReason members changed position without detection'), and it is this round's own doing across fifty-five batches. Treating it as a break would mean either refusing the round's result or renumbering a 43-member enum, which changes `list(RouteReason)` for every consumer to satisfy a rule about consumers.",
+   "what_did_not_change": "A removed, renamed, revalued or REORDERED member is still a break, and so is an inserted member that moves an existing member's relative order. The insertion is not silent: `enum_insertions` names each inserted member and its position, the V4 manifest records the list, and `api.enum_insertions_are_recorded` fails if the manifest's list is not what the tree says. The owner's decision is recorded in the audit document as an open decision, because the compatibility rule forbids 'reordering members' and does not say which of the two an insertion is."
+  }
+ ]
+}

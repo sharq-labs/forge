@@ -1,0 +1,109 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 7,
+  "improvements": [
+    "I-10"
+  ],
+  "problems_addressed": [
+    "R-10",
+    "R-40",
+    "R-43"
+  ],
+  "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+  "machine_record": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "8149151",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "R-10 and the from_result half of R-43 sit on the PRODUCTION path: the MCP tools run_electrothermal and run_battery build a CredibilityEvidenceReport through from_result and read derive_verdict. R-40's provenance override is the documented path for coupled runs and production passes run.provenance (mcp/problem.py). This batch therefore changes what production reports, which is the point of putting it third in the execution order.",
+  "what_was_already_seen": [
+    "the audited reproductions only, as recorded in the machine record: a thermal.conduction1d.linear_diffusion result with an IN_DOMAIN assessment and one passing DIMENSIONALLY_VALID check reports verdict SUPPORTED with convergence DIVERGED, MAX_ITERATIONS or FAILED, is_usable False, no 'convergence' anywhere in the report JSON, and the same verdict after a from_dict round trip; a result declaring two models with one assessed reports INSUFFICIENT_EVIDENCE with its own provenance and SUPPORTED with an overriding run provenance naming only the assessed one; an UncertaintyDeclaration whose ALEATORIC and EPISTEMIC_PARAMETER channels both carry source_kind=NUMERICAL is accepted and both channels read KNOWN; V1 posterior_predictive_uq leaves source_kind UNSPECIFIED on both its epistemic and its total interval",
+    "NOTHING about how any rule below scores anywhere else"
+  ],
+  "rules": {
+    "the_report_carries_the_result_s_convergence": {
+      "improvement": "I-10",
+      "problem": "R-10",
+      "rule": "CredibilityEvidenceReport gains a trailing field `convergence: ConvergenceState | None = None`. from_result sets it from the result. derive_verdict gains a keyword-only `convergence` argument, and returns INSUFFICIENT_EVIDENCE when it is neither CONVERGED nor NOT_APPLICABLE.",
+      "why_insufficient_evidence_and_not_not_supported": "derive_verdict's own taxonomy, stated for the coupling rule it sits beside: a run that did not reach its own criterion produced an iterate rather than a solution, and the fix is to go and produce one. NOT_SUPPORTED is reserved for a finding more evidence cannot rescue. A DIVERGED solve is a gap, not a refutation of the model.",
+      "why_none_is_not_a_state": "a report assembled by hand around values that came from no solver has no convergence state, and NOT_APPLICABLE is a claim (direct or closed-form evaluation) rather than an absence. None is the absence and decides nothing; every report built through from_result carries a real state, because ScientificResult requires one.",
+      "class": "A (the state is read from the result, not measured; no threshold)",
+      "measured_outcome": "implemented as stated. The audited cases (NOT_CONVERGED, MAX_ITERATIONS, DIVERGED, FAILED with an IN_DOMAIN assessment and one passing ANALYTICALLY_VERIFIED check) all report INSUFFICIENT_EVIDENCE, carry the state in the report and its JSON, and keep the verdict through a round trip and through a payload with the field deleted. The production MCP electrothermal report carries convergence not_applicable and stays SUPPORTED."
+    },
+    "non_convergence_also_travels_as_a_check": {
+      "improvement": "I-10",
+      "problem": "R-10",
+      "rule": "from_result also appends a NOT_RUN ValidationCheck named `solver_did_not_converge` when the result's state is neither CONVERGED nor NOT_APPLICABLE, beside the STORED_ATTRIBUTION_CHECK that already works this way.",
+      "why_both": "the field is for the reader and the check is for the record. A new top-level field is additive, so a reader written before it drops it, and a payload with the field deleted would re-derive SUPPORTED and match a hand-edited verdict. A NOT_RUN check cannot be deleted without deleting a check, which is visible in the check list and moves the verdict by itself. The audit's own fix direction offers either; taking both is what makes the downgrade survive serialization.",
+      "outcome_is_not_run_and_not_fail": "nothing found the values false; the solver said it had not finished. That is the same distinction STORED_ATTRIBUTION_CHECK draws, and NOT_RUN is already INSUFFICIENT_EVIDENCE.",
+      "class": "A"
+    },
+    "a_provenance_override_may_widen_the_inventory_and_never_narrow_it": {
+      "improvement": "I-10",
+      "problem": "R-40",
+      "rule": "from_result adds the result's own declared models, and the models named in validity_not_assessed, to contributing_models, whatever provenance is passed. The union is taken, so an override provenance can still add models and can no longer remove one.",
+      "why": "contributing_models already documents itself as impossible to narrow by construction and answerable for when widened. The override was the one channel that narrowed it, and it is the documented path for coupled runs, so the narrowing was reachable from production. A model a result DECLARES took part in producing its values, whether or not the run provenance names its execution -- that is exactly the case contributing_models was added for.",
+      "effect": "a result that declares a model it does not assess now reports INSUFFICIENT_EVIDENCE through unassessed_models whatever provenance it is given, which is the honest reading and is what the result's own provenance already produced.",
+      "class": "A (a set union; no number)",
+      "measured_outcome": "implemented as stated, with no blast radius: the FAST tier gained 27 passing tests and lost none, and the production electrothermal and battery reports report unassessed_models () as before."
+    },
+    "the_report_carries_per_value_uncertainty_and_its_source": {
+      "improvement": "I-10",
+      "problem": "R-43",
+      "rule": "CredibilityEvidenceReport gains a trailing field `uncertainty: Mapping[str, Uncertainty]`, filled by from_result from the result. It is serialized when non-empty and read back, and the declared source kinds appear in verdict_qualifiers as `uncertainty_sources` so a reader who never opens the field sees that an interval is NUMERICAL.",
+      "does_not_move_a_verdict": "carrying an uncertainty is not evidence for or against a result, and the strictness rule this program works under lowers a claim for UNDECLARED or UNBOUND information, not for declared information. A NUMERICAL interval standing in for scientific uncertainty is refused where it is USED as such, which is the SRIA rule below, not at the report.",
+      "class": "A"
+    },
+    "a_declared_source_kind_may_not_contradict_its_sria_channel": {
+      "improvement": "I-10",
+      "problem": "R-43",
+      "rule": "UncertaintyDeclaration and the budget's ChannelEntry refuse a record whose declared source_kind names a different channel, under one explicit map: ALEATORIC accepts MEASUREMENT, EPISTEMIC_PARAMETER accepts PARAMETER, MODEL_FORM accepts MODEL_FORM, NUMERICAL accepts NUMERICAL. COMBINED is accepted by no single channel, because it is already a mixture and root-sum-squaring it with another channel double-counts what it contains.",
+      "unspecified": "ACCEPTED, and recorded as unattributed rather than treated as compatible: a new derived `unattributed_channels` names every quantified channel whose record declares no source. Refusing UNSPECIFIED outright is the stricter reading the audit's fix direction prefers and is NOT taken here, because every domain solver in the repository emits Uncertainty.unknown() or a quantified record with the default UNSPECIFIED, so the refusal would break every existing declaration rather than any wrong one. Recorded as a residual.",
+      "why_the_map_and_not_a_looser_rule": "the record exists precisely to stop a discretization estimate standing in for scientific uncertainty (CORE-016). A channel is the thing a budget root-sum-squares; filing a NUMERICAL estimate under ALEATORIC and MODEL_FORM makes an assurance budget report both as KNOWN from one number that is neither.",
+      "class": "A (a definitional map between two declared vocabularies, not a threshold)",
+      "measured_outcome": "implemented as stated. No existing declaration in src/ or tests/ was refused, because no producer set source_kind before this batch: the map has something true to check only for the two V1 predictive intervals, which is the residual already stated."
+    },
+    "the_v1_predictive_producers_declare_what_their_intervals_are_of": {
+      "improvement": "I-10",
+      "problem": "R-43",
+      "rule": "posterior_predictive_uq sets source_kind=PARAMETER on its epistemic interval and COMBINED on its total interval, which is what their own notes already say in prose.",
+      "compatibility": "Uncertainty serializes source_kind only when it is not UNSPECIFIED, so records written before this keep their bytes and records written after carry one more key. Any SHA-pinned fixture holding a V1 predictive interval moves and is regenerated by writing bytes.",
+      "class": "A (a label for something the producer already knows)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "posterior_predictive_uq is V1-frozen. Its SIGNATURE and return type are unchanged; one already-existing field of a record it returns goes from its default to a declared value. That is not a signature or field change, and nothing reads source_kind today, so nothing downstream changes behaviour. Any byte-pinned fixture of its output moves.",
+    "v2_and_boundary_symbols": [
+      "CredibilityEvidenceReport: two trailing dataclass fields with defaults appended (`convergence`, `uncertainty`). Additive.",
+      "derive_verdict: one keyword-only argument with a default appended (`convergence`). Additive.",
+      "ChannelEntry and UncertaintyDeclaration: no field change; a new refusal on a contradictory declaration.",
+      "UncertaintyDeclaration gains a derived `unattributed_channels` property. Additive."
+    ],
+    "serialized_records": "mcp_evidence_package gains `convergence` and `uncertainty`, each written only when it carries information (a state that is not None, a non-empty mapping), and `verdict_qualifiers.uncertainty_sources`, written only when non-empty. No schema is bumped: a reader of the old schema sees keys it ignores, and a record written before this reads back unchanged. The verdict a payload declares is re-derived and compared as it already is, so an old record whose result had converged reads back with the same verdict.",
+    "the_verdict_word": "unchanged. SUPPORTED / INSUFFICIENT_EVIDENCE / NOT_SUPPORTED, and non-convergence uses the existing INSUFFICIENT_EVIDENCE."
+  },
+  "residuals_stated_in_advance": [
+    "A hand-edited payload with `convergence` deleted re-derives its verdict without it. The NOT_RUN check is what closes that for a report built from a non-converged result; a report hand-assembled with neither is indistinguishable from one whose values came from no solver. Making the field required needs a schema bump, which is I-20's.",
+    "UNSPECIFIED source kinds are recorded as unattributed and not refused, so a quantified record with no declared source still enters a channel. Refusing it is a one-line change once the producers declare their sources; the producers are this batch's V1 predictive intervals only, and every domain solver still emits UNSPECIFIED.",
+    "Setting source_kind on the V1 predictive intervals gives the SRIA map something true to check, but nothing yet CARRIES those intervals into an UncertaintyDeclaration: the budget and the V1 producer are still two unconnected halves. Closing that is I-16's reach ledger and not a rule here.",
+    "Carrying uncertainty in the report does not lower any claim, by the strictness rule stated in the rules above. A reader who needs the distinction reads the qualifier.",
+    "DISCOVERED WHILE IMPLEMENTING, not preregistered: the battery MCP tool assembles its CredibilityEvidenceReport directly rather than through from_result, because run_self_heating_discharge returns steps and not a ScientificResult. So the battery report's convergence is None and this batch's rule does not reach it. What gates that path is CouplingEvidence, which derive_verdict already reads, but the solver-level state is absent because there is no result to read it from. Recorded here and in the Progress section; giving the battery march a ScientificResult is not a rule of this batch."
+  ],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-16",
+      "entry": 1,
+      "what": "recorded the expensive tier's pre-existing failure baseline in this environment, so later batches can tell an environmental failure from one of their own",
+      "why": "the expensive tier has 18 failures at the batch-7 preregistration commit, BEFORE any of this batch's code. They are identical before and after, verified by running the tier in a git worktree at 5b8d036 and diffing. Fourteen are the ngspice provider, which this environment invokes as ('wsl.exe', '-e', 'ngspice') and cannot launch; two are the CSTR domain's validation status under this environment's numerics; two are the benchmarks/*_validation gate rebuilds that the per-batch protocol restores with git checkout.",
+      "baseline": [
+        "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+        "benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+        "tests/domains/kinetics/test_cstr_domain.py::test_benign_regime_converges_and_is_usable",
+        "tests/domains/kinetics/test_cstr_domain.py::test_the_five_stages_are_separable_and_ordered",
+        "tests/mcp/test_problem.py::test_the_second_route_actually_runs_and_the_level_is_withheld",
+        "tests/test_cross_solver_consensus.py::test_the_dc_routes_earn_the_level_on_a_real_circuit",
+        "tests/test_heterogeneous_ngspice.py (12 failures and 14 errors, all NgspiceUnavailable)"
+      ],
+      "effect_on_the_rules_already_scored": "none; this is a record of the environment, not a change to any rule."
+    }
+  ]
+}

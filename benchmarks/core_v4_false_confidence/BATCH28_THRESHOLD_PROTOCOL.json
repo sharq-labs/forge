@@ -1,0 +1,47 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 28,
+ "improvements": [
+  "I-22 part C of four"
+ ],
+ "problems_addressed": [
+  "R-57"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "dbdbba14",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part A (batch 26) was the boundary, part B (batch 27) the consensus and operating-point comparisons. This part is the CORNER guard in the fields layer: R-57. I-22's brief is four clauses and this is the third; the fourth, R-48 (tolerances, sigmas and spreads converted as absolute temperatures, across oracles, ir/constraints, inference/grid and inference/split), is part D -- separated because it needs a difference conversion in the units module itself and touches four more files, and because a batch that changes both a refusal and a unit model at once cannot be read.",
+ "reach": "LIBRARY_ONLY. `require_complete_boundary` is reached by the conduction2d domain, but no production declaration states two edges of one field in different units of the same dimension: the shipped 2D declarations state kelvin throughout. The guard itself IS the production refusal -- the audit records that in conduction2d the corner node is then pinned to whichever edge the assembly writes last and the domain's own `boundary_conditions_held` check reports FAIL -- so a caller relying on the core refusal gets no protection at all, which is why this is fixed at the core.",
+ "what_was_already_seen": {
+  "R-57": "the audit's finding 69, reproduced at 294c129 and again at dbdbba14 on a 9x9 plate with `FieldDefinition('T', 'kelvin', 'plate')`. Four edges at 300 kelvin are ACCEPTED, as they must be. Replacing the bottom edge with 300 degC -- which is 573.15 K, a 273.15 K contradiction at two corners -- is also ACCEPTED. Replacing it with 26.85 degC, which IS 300.0 K, is REFUSED, with the message `prescribe 300 and 26.85 kelvin there`: the guard compared 300 against 26.85 and labelled BOTH numbers with the field's unit, when the second was never in it. The mechanism is at conditions.py:419-421 -- `reference = first.law.evaluate(x=x, y=y)`, `value = other.law.evaluate(x=x, y=y)`, then `abs(value - reference)` -- and `SpatialProfile.evaluate` returns a magnitude in the LAW's own unit, while `FieldBoundaryCondition.require_consistent` checks a Dirichlet law for DIMENSION only ('any unit of the right dimension is accepted'). So the guard subtracted two numbers on two scales."
+ },
+ "rules": {
+  "corner_values_are_compared_in_one_canonical_unit": {
+   "improvement": "I-22",
+   "problem": "R-57",
+   "rule": "Before differencing, each meeting law's magnitude is converted from that law's OWN unit into `base_unit(definition.unit)` -- the coherent SI base unit of the field's dimension -- through `Quantity(magnitude, law.unit).magnitude_in(canonical)`, which performs the affine step for an offset scale. `CORNER_AGREEMENT_REL_TOL` is unchanged at 1e-9 and is applied in that unit.",
+   "class": "A",
+   "why": "Not a threshold: the tolerance does not move. Subtracting two magnitudes expressed on two scales is an arithmetic error, and converting both into one unit is the only thing that makes the subtraction mean anything. The canonical unit rather than `definition.unit` for the same reason batch 27 gave: `base_unit` is a pure function of the dimension, it is always a RATIO scale, and `CORNER_AGREEMENT_REL_TOL` is a RELATIVE tolerance, which is a statement about a ratio. A field declared in degC would otherwise have its corner agreement judged on a scale whose zero is a convention -- the same defect one layer over. The two-point affine pattern this uses is already in the repository, in `engcore.data.field.evaluate_on_region`, which converts a law's values into the field's unit for exactly this reason.",
+   "closes": "300 K meeting 300 degC is refused; 300 K meeting 26.85 degC is accepted."
+  },
+  "the_refusal_names_the_unit_each_value_was_written_in": {
+   "improvement": "I-22",
+   "problem": "R-57",
+   "rule": "The refusal reports both values in the canonical unit and names it, and where a law's own unit differs from that unit it additionally reports the value AS WRITTEN with the unit it was written in.",
+   "class": "A",
+   "why": "The audited message said `prescribe 300 and 26.85 kelvin there` for a pair of which only the first was in kelvin. A message that mislabels its own numbers sends a reader to look for a mistake that is not there -- here, to conclude the declarations disagree by 273 K when they agree exactly -- and this repository's rule is that a refusal names what it measured. Nothing numeric is chosen.",
+   "closes": "the mislabelling, which is half of what made the audited behaviour hard to see."
+  }
+ },
+ "compatibility": {
+  "additive_only": "No new public symbol, no signature, field, default or enum member change. `fields/conditions.py` gains an import of `base_unit` from the units module, which the layer ladder allows. No serialized record changes. `CORNER_AGREEMENT_REL_TOL` keeps its name, its value and its place.",
+  "behaviour_narrowed_and_widened_deliberately": "A pair of edges whose declared values differ by more than 1e-9 relative once both are on one scale is now refused where it was accepted (the 273.15 K case), and a pair that agrees physically is now accepted where it was refused. Both directions are the same correction.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "Only DIRICHLET edges are compared, unchanged: a flux constrains a derivative and imposes nothing at the point, so a value edge meeting a flux edge is still not a contradiction.",
+  "The guard compares the two laws AT THE CORNER POINT. Two edges that agree at every corner and disagree along their shared span cannot share a span on a structured quadrilateral, so there is nothing more to compare -- but that is a property of this support type and not a general one.",
+  "R-48 is not touched here. A field declared in degC now has its corner agreement judged correctly, but a SPREAD declared in degC anywhere in the core is still converted as an absolute temperature; that is part D."
+ ],
+ "amendment_log": []
+}

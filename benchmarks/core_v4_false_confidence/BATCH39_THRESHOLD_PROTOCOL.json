@@ -1,0 +1,75 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 39,
+ "improvements": [
+  "I-20 part A of three"
+ ],
+ "problems_addressed": [
+  "R-46 (the audit's finding 54, in full)",
+  "R-45's third fix direction (the audit's finding 87: SRIA reports 'validation was never run' when a check simply did not apply)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "287b64fb",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "I-20 is two independent things wearing one id: a comparison that reads a sign (R-46) and a record-compatibility event under an unchanged schema string (R-45). This part is R-46 in full, plus the one fix direction of R-45 that needs no schema bump: a critic whose fixed detail says 'validation was never run' about a report in which five checks ran and passed. The `validation_report/2` bump, reading `/1` payloads under the old precedence, and giving an inapplicable check a representation of its own are part B; finding 90's other record bumps are part C.",
+ "reach": "MIXED. `comparison_met_its_bound` and `ValidationCheck.__post_init__` are on the construction path of every check the domain gates build, and the MCP entry points run those gates, so the guard is REACHED. The critic is SRIA's and is library-only.",
+ "what_was_already_seen": {
+  "R-46, from the audit and reproduced at 287b64fb": "`comparison_met_its_bound` returns `residual <= tolerance` after a finiteness check. A PASS with residual 10.0 against tolerance 1e-6 is refused; the SAME check with residual -10.0 is constructed and earns `numerically_converged`; and a PASS with residual -3.0 against tolerance -1.0 is constructed too. The module's own docstring describes this defect ('residual=10.0 beside tolerance=1e-6 -- seven orders outside its own bound -- carrying ANALYTICALLY_VERIFIED all the way to a SUPPORTED verdict') and it comes back with a minus sign.",
+  "finding 87's critic, from the audit": "`NumericalCritic` maps `status is NOT_RUN` to NOT_ASSESSED with the fixed detail 'validation was never run'. The DC solver writes a NOT_RUN `voltage_source_relation` check whenever a circuit has no voltage source, so that detail is false for a report in which everything that applied ran and passed."
+ },
+ "rules": {
+  "a_tolerance_bounds_a_magnitude": {
+   "improvement": "I-20",
+   "problem": "R-46",
+   "rule": "`comparison_met_its_bound` returns `abs(residual) <= tolerance` (after the existing finiteness rule, unchanged).",
+   "class": "A",
+   "why": "A tolerance is a bound on how far a measured quantity may stand from its reference, and a residual of -10 stands 10 away. Nothing numeric is chosen: the change is that the comparison reads the distance rather than the signed number, which is what the word tolerance means and what every in-tree gate already passes in (they all apply `abs` themselves). The signed form makes the bound unfalsifiable from below: any negative residual, however large, met any positive tolerance.",
+   "closes": "R-46's first construction, at the one function every reader of a check consults."
+  },
+  "a_negative_tolerance_is_not_a_bound": {
+   "improvement": "I-20",
+   "problem": "R-46",
+   "rule": "`ValidationCheck.__post_init__` refuses a check whose `tolerance` is negative, for EVERY outcome -- PASS, WARNING, FAIL and NOT_RUN alike.",
+   "class": "A",
+   "why": "No magnitude can be at most a negative number, so a negative tolerance is a bound nothing can satisfy and the comparison it belongs to has no content. Refused for every outcome rather than only for the outcomes that claim something, because a FAIL against a bound that cannot be met is not a finding about the model, and because the field is read by consumers (the threshold pins, the SRIA budgets) that do not look at the outcome. Refusing at construction rather than filtering at the reading sites is this module's own established choice, stated three times in `__post_init__`: a value that cannot be built cannot be read inconsistently. Scanned first: no committed record in the repository carries a negative residual or tolerance, so nothing stored stops reading.",
+   "closes": "R-46's second construction (residual -3.0 against tolerance -1.0), for every outcome rather than for the two that claim success."
+  },
+  "a_critic_says_which_checks_did_not_run": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "`NumericalCritic`'s NOT_ASSESSED detail for a NOT_RUN report status names the checks that did not run and how many did; a report with no checks at all keeps 'validation was never run'. The verdict stays NOT_ASSESSED and the skipped list is unchanged.",
+   "class": "A",
+   "why": "The detail is a statement of fact about the report and it was false: a report with five passing checks and one inapplicable one is not a report where validation was never run. Naming the checks is the only honest form, and it is what a reader needs to tell 'nobody looked' from 'this did not apply'. No claim moves: NOT_ASSESSED is still what a report with an unrun check supports, and deciding that an inapplicable check should not count as missing evidence at all requires the status precedence and the schema bump, which are part B.",
+   "closes": "the false detail. The NOT_RUN/NOT_APPLICABLE ambiguity behind it stays open until part B."
+  }
+ },
+ "thresholds": {
+  "none": {"value": null, "class": "A", "why": "no number is chosen in this part. The two rules are definitional (a tolerance bounds a magnitude; a negative bound is unsatisfiable) and the third is a message."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": ["nothing public: two rules tighten existing behaviour and one message is rewritten"],
+  "what_is_not_changed": [
+   "no schema string, field, default or enum member",
+   "no V1-frozen signature: `comparison_met_its_bound` keeps its parameters and its return type",
+   "the verdict words are untouched, and no verdict changes for any record in the tree"
+  ],
+  "records_that_already_exist": "A scan of every committed JSON found no `validation_check` record carrying a negative residual or tolerance (51 check payloads in experiments/kinetics_k1/k1_results.json, 0 negative), so no stored record stops reading.",
+  "deliberate_narrowing": "A check carrying a negative tolerance, or a PASS whose residual misses its bound on the low side, stops being constructible. Both are records no gate in the tree writes."
+ },
+ "residuals_stated_in_advance": [
+  "`outcome` is still refused rather than derived from the two numbers, for the reason `__post_init__` states at length: a refinement gate FAILs with a residual inside its bound because the sequence behind it never contracted. This batch does not revisit that.",
+  "A non-finite tolerance (NaN or inf) is still constructible on a FAIL or NOT_RUN: the existing finiteness rule makes the comparison False, so nothing can claim success on one, and refusing it is a separate decision from refusing a negative bound.",
+  "R-45 stays OPEN after this part: the `validation_report/2` bump, reading `/1` payloads by the pre-CORE-013 precedence, and a representation for an inapplicable check are part B.",
+  "The critic still reports NOT_ASSESSED for a report whose only unrun check did not apply. Changing that is part B's, because it needs the status precedence to stop putting NOT_RUN above PASS."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_core_guards.py, tests/test_scientific_core.py and the domain validation tests",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at exactly the 18 by-design failures",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}

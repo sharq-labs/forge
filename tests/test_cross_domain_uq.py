@@ -42,11 +42,14 @@ def _transport(
     )
 
 
-def _standard(value: float = 2.0, unit: str = "kelvin") -> Uncertainty:
+def _standard(value: float = 2.0, unit: str = "kelvin", source: str | None = None) -> Uncertainty:
+    # R-58 (I-27 part B): a source uncertainty must be attributed to something the crossing itself names,
+    # or it is the parallel dictionary keyed by a coincidentally matching name that this module replaces.
+    # The default names the quantity; the chain and conversion cases pass their own.
     return Uncertainty(
         kind=UncertaintyKind.STANDARD,
         standard_uncertainty=Quantity(value, unit),
-        source="calibration:temperature",
+        source=source or "calibration:temperature",
         method="posterior_std",
     )
 
@@ -57,7 +60,10 @@ def test_standard_uncertainty_crosses_plain_domain_transport():
     assert propagated.kind is UncertaintyKind.STANDARD
     assert propagated.standard_uncertainty is not None
     assert propagated.standard_uncertainty.magnitude_in("kelvin") == pytest.approx(2.0)
-    assert propagated.source == "transfer:result:thermal.a"
+    # R-58: the propagated record now carries BOTH provenances -- what the uncertainty was an uncertainty
+    # of, and the crossing it came through. Writing only the second is what made another quantity's
+    # uncertainty read as this run's.
+    assert propagated.source == "transfer:result:thermal.a|from:calibration:temperature"
     assert propagated.method == "cross_domain_transport"
 
 
@@ -79,7 +85,9 @@ def test_interval_bounds_are_absolute_values_and_keep_offset_semantics():
         lower=Quantity(298.0, "kelvin"),
         upper=Quantity(302.0, "kelvin"),
         confidence_level=0.95,
-        source="posterior",
+        # R-58: attributed to the record the crossing names, and an interval that must contain the value
+        # it is about -- 26.85 degC is 300 K, inside [298, 302] K.
+        source="posterior of result:thermal.a",
         method="credible_interval",
     )
     propagated = propagate_transfer_uncertainty(transfer, source)
@@ -113,7 +121,9 @@ def test_deterministic_energy_conversion_scales_standard_uncertainty():
         source_record_id="electrical:r1",
         instant="stage:1",
     )
-    propagated = propagate_transfer_uncertainty(transfer, _standard(5.0, "watt"))
+    # R-58: attributed to what the crossing names -- here the source quantity of the declaration.
+    propagated = propagate_transfer_uncertainty(
+        transfer, _standard(5.0, "watt", source="calibration:input_power"))
     assert propagated.standard_uncertainty is not None
     assert propagated.standard_uncertainty.magnitude_in("watt") == pytest.approx(4.0)
     assert propagated.method == "cross_domain_conversion:electrical_to_mechanical"
@@ -140,7 +150,9 @@ def test_connected_chain_propagates_the_same_uncertainty_across_domains():
         target_problem="domain.c",
         target_quantity="z",
     )
-    chain = propagate_uncertainty_chain((first, second), _standard(1.5))
+    # R-58: attributed to the quantity the first crossing carries, and the two crossings now have to meet
+    # by VALUE as well as by name -- both transports carry 350 K, which is what a chain is.
+    chain = propagate_uncertainty_chain((first, second), _standard(1.5, source="calibration:x"))
     assert len(chain) == 2
     assert chain[-1].uncertainty.standard_uncertainty is not None
     assert chain[-1].uncertainty.standard_uncertainty.magnitude_in("kelvin") == pytest.approx(1.5)
@@ -160,7 +172,7 @@ def test_disconnected_chain_is_refused_instead_of_matching_similar_units():
         target_quantity="z",
     )
     with pytest.raises(InvalidScientificProblem, match="disconnected"):
-        propagate_uncertainty_chain((first, second), _standard())
+        propagate_uncertainty_chain((first, second), _standard(source="calibration:x"))
 
 
 def test_chain_cannot_jump_between_instants_without_a_temporal_model():
@@ -179,7 +191,7 @@ def test_chain_cannot_jump_between_instants_without_a_temporal_model():
         instant="step:2",
     )
     with pytest.raises(InvalidScientificProblem, match="temporal evolution"):
-        propagate_uncertainty_chain((first, second), _standard())
+        propagate_uncertainty_chain((first, second), _standard(source="calibration:x"))
 
 
 def test_uncertainty_transfer_round_trip_recomputes_the_propagation():

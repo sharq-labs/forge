@@ -1,0 +1,78 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 29,
+ "improvements": [
+  "I-22 part D of five"
+ ],
+ "problems_addressed": [
+  "R-48 (the audit's finding 58, and the units primitive finding 99 needs)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "23ca4409",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "R-48 is one defect at four sites, and every site needs a conversion the units module does not have: a DIFFERENCE transforms by the linear part of an affine map, and `Quantity.to` only ever applies the whole map. So this part gives the units module that conversion and the refusal that goes with it, and then fixes the first site, the ORACLE tolerance (finding 58) -- the designed route to EXPERIMENTALLY_VALIDATED, and the one where a mis-read tolerance buys a validation level. Part E is finding 99's remaining consumers: `ir/constraints.py`'s tolerance and the margin it reports, and the `GaussianObservation` sigma read by `inference/grid.py` and `inference/split.py`. R-48 is FIXED only when both have landed; this document records it PARTIAL until then.",
+ "reach": "LIBRARY_ONLY for the oracle site, and the audit says why: no oracle is pinned (`_TRUSTED_ORACLE_DECLARATIONS` is an empty immutable mapping by design) and nothing outside the core builds an `OracleEvidenceSet`. It is nevertheless the designed route to EXPERIMENTALLY_VALIDATED, so the site where a wrong tolerance is worth a validation level. The units primitive is below every layer and is reached by whatever calls it.",
+ "what_was_already_seen": {
+  "R-48": "the audit's finding 58, reproduced at 294c129 and again at 23ca4409, all four spellings: (a) an expected value of 300 kelvin with an `absolute_tolerance` of 0.5 degC reads its tolerance as **273.65 kelvin**, so a prediction of 573.0 kelvin -- 273 kelvin wrong -- PASSES with residual 0.998, and with the identity pinned it earns EXPERIMENTALLY_VALIDATED; (b) a 1 degC band passes a prediction 16.67 kelvin (30 degF) off; (c) the CORRECT opposite spelling is refused -- a legitimate 0.5 kelvin band on an expected value in degC converts to -272.65 degC and dies on 'tolerance must be non-negative', a message about a sign for a value that is positive; (d) the PHYSICALLY correct spelling, a 0.5 delta_degC band on a degC expected value, passes `require_same_dimension` and then raises pint's `DimensionalityError`, which is neither a `UnitCompatibilityError` nor any `ScientificCoreError`. So the core accepted the wrong declaration silently, refused the right one with the wrong reason, and crashed untyped on the right one written the right way."
+ },
+ "rules": {
+  "a_spread_is_converted_by_the_slope_only": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "New `Quantity.magnitude_as_spread_in(unit)`: this quantity read as a DIFFERENCE, expressed in `unit`. The magnitude is multiplied by `slope(self.units) / slope(unit)`, where `slope(x)` is `Quantity(1, x).magnitude_in(base) - Quantity(0, x).magnitude_in(base)` for the dimension's coherent SI base unit. `magnitude_in` is untouched and still converts an absolute value.",
+   "class": "A",
+   "why": "An affine map is a linear part plus an offset, and a DIFFERENCE of two values transforms by the linear part alone. That is the definition of an affine map, not a modelling choice, and there is no number in it. The slope is computed through the BASE unit rather than directly between the two units because a direct conversion is not always available in the backend: `Quantity(1, 'delta_degC').magnitude_in('degC')` raises, while both units' slopes against kelvin are perfectly well defined. The two-point pattern itself is already in this repository -- `engcore.data.field.evaluate_on_region` uses exactly it to move a law's values between scales.",
+   "closes": "0.5 degC is a 0.5 kelvin spread and a 1 degF band is a 5/9 kelvin one; delta_degC works against any temperature unit."
+  },
+  "a_spread_must_be_on_a_ratio_scale": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "New module-level `require_spread_unit(unit, *, context)`: refuses a unit for which `is_ratio_scale` is False, and its message names the delta spelling to use instead (`delta_degC` for `degC`). Applied to a declared spread at the point of declaration.",
+   "class": "A",
+   "why": "This is not a new opinion: it is the rule this repository already applies, in the same words, in two places -- a coupling tolerance and a temperature excursion span are both refused on an affine scale by `_require_ratio_scale`, 'because a difference cannot live on a scale with a conventional zero'. `is_ratio_scale`'s own docstring says so. What R-48 is about is that the GENERIC core types never had that guard although the function was in the same module. Note that the refusal, rather than a silent slope conversion, is the stricter of the two available answers and is chosen deliberately: '0.5 degC' as a tolerance is AMBIGUOUS -- it can be read as a half-degree span or as the temperature 0.5 degC -- and a boundary that guesses which is what this whole round is about. The slope conversion above is for the unit that says what it is: `delta_degC`.",
+   "compatibility": "A `degC` or `degF` spread stops being accepted. It was accepted and read as an absolute temperature, so this is a refusal replacing a false result. No declaration in this repository states a spread on an offset scale -- checked, not assumed: every oracle observation in the tree uses volt, kelvin or meter, and `_TRUSTED_ORACLE_DECLARATIONS` is empty."
+  },
+  "an_ambiguous_conversion_is_this_packages_error": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "`Quantity.to` wraps a backend conversion failure in `UnitCompatibilityError`, naming both units and the fact that the dimensions agree. The dimensional pre-check and the fast paths are unchanged.",
+   "class": "A",
+   "why": "`require_compatible` passes for `delta_degC` against `degC` -- they ARE the same dimension -- and the backend then raises `pint.errors.DimensionalityError`, which is a `TypeError` and is caught by nothing in this package. A caller cannot handle an exception type from a dependency it is not supposed to know about, and every other refusal in this module is a `UnitCompatibilityError`. The module's own stated position is 'pint owns the unit algebra; this module owns the contract', and an exception type is part of a contract."
+  },
+  "an_oracle_tolerance_is_a_difference": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "`OracleObservation.__post_init__` calls `require_spread_unit` on `absolute_tolerance.units` and checks non-negativity on that quantity's OWN magnitude. `OracleEvidenceSet.compare` compares in `base_unit(expected.units)` and reads the tolerance with `magnitude_as_spread_in` of that unit. `require_same_dimension` still runs, first, and is unchanged.",
+   "class": "A",
+   "why": "The tolerance is a difference -- the record calls it `absolute_tolerance`, a band -- and was converted with `magnitude_in(expected.units)`, the absolute conversion. The non-negativity check was performed on the CONVERTED magnitude, which is why a valid 0.5 kelvin band on a degC expected value was refused for being negative: -272.65. On a ratio scale a magnitude's sign does not depend on the unit, so once the unit is required to be a ratio scale the check belongs on the magnitude as declared. The comparison unit is the canonical one for the reason batch 27 and batch 28 gave: `residual_ratio` is a RATIO."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new public method on `Quantity` (`magnitude_as_spread_in`) and one new module-level function (`require_spread_unit`), beside `is_ratio_scale` and `is_delta_unit`. No signature, field, default or enum member change; no existing method's behaviour changes except `to`'s exception TYPE on a failure that previously escaped untyped. `oracles.py` gains an import of `base_unit` and `require_spread_unit`. No serialized record gains or loses a key.",
+  "recorded_numbers": "An oracle observation's serialized `absolute_tolerance` is its declared quantity and is unchanged; the content digest of any evidence set already written is unchanged. What moves is the tolerance a comparison READS, and only for a spread declared on an offset scale -- which is now refused rather than read.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "R-48 stays PARTIAL after this batch. `ConstraintDefinition.tolerance`, the margin it reports, and the `GaussianObservation` sigma read by `inference/grid.py` and `inference/split.py` are finding 99's sites and are part E.",
+  "`magnitude_as_spread_in` is a new way to read a quantity, not a new TYPE of quantity. A `Quantity` still does not know whether it is a point or a span; the caller decides by which reader it uses. Giving spreads their own type would be a non-additive change to a V1-frozen symbol and is out of scope for this improvement -- recorded here so that the residual is the design decision and not an oversight.",
+  "`require_spread_unit` refuses an offset-scale spread rather than converting it by slope. A caller who genuinely means a half-degree band must write `delta_degC`. That is the stricter answer and it is the repository's existing one, but it does mean a declaration that was accepted (wrongly) now fails loudly."
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Three guards were strengthened and two mutations repointed, all forced by this batch's own mutation run; recorded here because the protocol's discipline is that anything learned after the rules were written is dated and named.",
+   "the_numbers_that_forced_it": "Five of ten mutations survived on the first run. (a) B29a and B29b named the delta-to-delta reproduction, where `Quantity.to` is ALREADY correct -- delta units are multiplicative, so only a pair involving an absolute offset unit can tell the absolute reader from the spread reader; repointed at the offset-unit reproduction, where the absolute reader gives 275.15 instead of 2.0. (b) B29h reverts the comparison's spread reader, and with the declaration guard in place only a RATIO-scale unit can reach the comparison -- where the two readers agree exactly, the offset being zero. It is now PAIRED with the declaration guard and pointed at a new test asserting the invariant over every spelling of a half-degree band at once. (c) B29i replaces the canonical comparison unit with the expected value's own, and survived because the RATIO of a difference to a spread is invariant under any affine change of scale: no number this check reports moves. What does move is the scale the refusal NAMES, so the reproduction now asserts that the failure detail names the unit the residual was measured on -- the mislabelling batch 28 fixed one layer over.",
+   "deliberate_survivor": {
+    "id": "B29c",
+    "rule": "the identity short-circuit in `magnitude_as_spread_in`",
+    "why": "The two slopes of one unit are the same float, so their quotient is exactly 1.0 in IEEE arithmetic and NO test can distinguish the short-circuit from the division. It is kept for the reason `Quantity.to` states at length -- a conversion to the unit already carried is not a conversion, and that is almost the only case, 549 of 552 calls in one measured run -- which makes it a performance and exactness rule rather than a scientific guard. It is declared `expect=\"SURVIVED\"` so that a kill becomes the failure."
+   },
+   "guards_added_while_running_the_mutations": [
+    "tests/test_core_scientific_audit_batch29.py::test_r48_no_spelling_of_a_half_degree_band_admits_a_273_kelvin_error -- the invariant over delta_degC, kelvin and delta_degF bands plus the refusal of the ambiguous degC spelling, which is what the paired B29h has to break.",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_the_physically_correct_declaration_does_not_crash_untyped now asserts the failure detail names the canonical scale.",
+    "tests/test_core_runtime_caches.py: `_slope_against_base` added to both memo enumerations, the same ratchet batch 26 hit."
+   ]
+  }
+ ]
+}

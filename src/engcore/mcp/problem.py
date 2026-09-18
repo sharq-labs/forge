@@ -72,6 +72,7 @@ from ..domains.electrical.dc import problem as dc_problem
 from ..domains.electrical.dc import solver as dc_solver
 from ..domains.thermal_models import context as thermal_ctx
 from ..domains.thermal_models import lumped as lump
+from ..execution.consensus import TrustedConsensusGate
 from ..scientific.composition import QuantityTransfer
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import (
@@ -81,9 +82,15 @@ from ..scientific.models.definition import (
 )
 from ..scientific.results.validation import (
     ValidationCheck,
+    ValidationLevel,
     ValidationOutcome,
 )
-from ..scientific.units.quantity import Quantity, dimension_of, dimensionality
+from ..scientific.units.quantity import (
+    Quantity,
+    dimension_of,
+    dimensionality,
+    is_delta_unit,
+)
 from ..systems.electrothermal import coupled as cp
 from ..systems.electrothermal.resistor_body import RESISTOR_POWER_METRIC
 from .errors import (
@@ -94,6 +101,7 @@ from .errors import (
     WrongDimensionError,
 )
 from .evidence import (
+    WITHHELD_LEVEL_EVIDENCE_PREFIX,
     AssertedContext,
     CouplingEvidence,
     CredibilityEvidenceReport,
@@ -916,6 +924,34 @@ def _read_quantity(
             f"[{dimensionality(exemplar)}] (any unit of that dimension, for "
             f"example '1 {exemplar}')"
         )
+    # A SPAN IS NOT A POINT, AND THE DIMENSION CHECK ABOVE CANNOT SEE THE
+    # DIFFERENCE.
+    #
+    # `delta_degC` and `kelvin` have the same dimension and the same size, so
+    # every check this function performed passed an ambient temperature of
+    # "27 delta_degC" straight through as 27 K -- not the 300.15 K the caller
+    # meant, and not a number any later stage could question. The two scales
+    # are separated only by the name the backend gives them, which is what
+    # `is_delta_unit` reads.
+    #
+    # Symmetric, because the error is: an absolute temperature supplied where a
+    # span is required is 273.15 wrong in the other direction. No
+    # `unit_exemplar` in this repository is a delta unit today, so that half
+    # refuses nothing that exists and guards the exemplar that does not exist
+    # yet. (I-22, R-75.)
+    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):
+        span, point = (
+            ("a difference", "an absolute value")
+            if is_delta_unit(quantity.units)
+            else ("an absolute value", "a difference")
+        )
+        raise WrongDimensionError(
+            f"{where} is on the wrong scale: {raw!r} states {span} on an "
+            f"offset temperature scale, but this field must be {point}. The "
+            f"two have the same dimension and the same size, so nothing later "
+            f"can tell them apart -- state it as {point}, for example "
+            f"'1 {exemplar}'"
+        )
     return quantity
 
 
@@ -1431,7 +1467,16 @@ def _cross_solver_checks(
         external=external,
         external_solver=external_solver.identity,
     )
-    return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)
+    # R-21 (I-12 part B): through the GATE, which is the only thing in this tree that requires the
+    # artifacts' own bytes before CROSS_SOLVER_VALIDATED. It had no caller, so the level rested on declared
+    # independence wherever it was awarded at all. This path ships no artifact digests, so the gate withholds
+    # the level and says why -- and `_withhold_level` still runs, because the two rules are different: the
+    # gate withholds because the ARTIFACTS are not verified, and this boundary withholds because the check is
+    # about values it does not scope to. Either alone would leave the level one change away from a report.
+    decision = TrustedConsensusGate().assess(
+        consensus, (), name=CROSS_SOLVER_CHECK_NAME,
+    )
+    return (_withhold_level(decision.check),)
 
 
 def _withhold_level(check: ValidationCheck) -> ValidationCheck:
@@ -1442,7 +1487,25 @@ def _withhold_level(check: ValidationCheck) -> ValidationCheck:
     Every other field is carried through unchanged, so the residual, the
     tolerance and the consensus's own account of why the routes are independent
     all reach the reader intact. Only the claim about *these* values is dropped.
+
+    R-04 (core re-audit 2026-09-16): the level is also recorded STRUCTURALLY, as a
+    ``level-withheld:`` line in the evidence, so ``CredibilityEvidenceReport.levels_withheld``
+    can name it and the verdict block can carry it. Before that it reached a reader only
+    inside the ``detail`` sentence below, where a reader asking what this run nearly
+    established had to parse prose for it. The sentence stays; it says WHY, and the line
+    says WHAT.
     """
+    withheld = None if check.establishes is None else ValidationLevel(check.establishes)
+    # R-21 (I-12 part B): IDEMPOTENT. The gate upstream now withholds the level for its own reason and
+    # records it structurally, so this used to append a second `level-withheld:` line and a second sentence
+    # for the same level -- two statements of one fact, which a reader has to reconcile. Applied to a check
+    # that already says the level was withheld, this returns it unchanged.
+    already = any(
+        isinstance(line, str) and line.startswith(WITHHELD_LEVEL_EVIDENCE_PREFIX)
+        for line in check.evidence
+    )
+    if withheld is None and already:
+        return check
     return ValidationCheck(
         name=check.name,
         outcome=check.outcome,
@@ -1450,7 +1513,11 @@ def _withhold_level(check: ValidationCheck) -> ValidationCheck:
         establishes=None,
         residual=check.residual,
         tolerance=check.tolerance,
-        evidence=check.evidence,
+        evidence=(
+            check.evidence
+            if withheld is None
+            else (*check.evidence, f"{WITHHELD_LEVEL_EVIDENCE_PREFIX}{withheld.value}")
+        ),
     )
 
 
@@ -2083,6 +2150,12 @@ def _refused_case_run(
     report = CredibilityEvidenceReport.from_result(
         refused,
         provenance=run.provenance,
+        # I-19 (R-72): the problem these values answer, so its own declared validation and
+        # uncertainty requirements are read rather than believed. The refused stage's problem, which
+        # is the one this report is about.
+        problem=next(
+            (p for p in problems if p.problem_id == refused.problem_id), None
+        ),
         coupling=_coupling_evidence(run),
         # Only the models of the problem that was refused. The closure of a
         # value this report carries stops there, because the run stopped
@@ -2265,6 +2338,9 @@ def run_electrothermal_case(
         reports.append(
             CredibilityEvidenceReport.from_result(
                 thermal_result,
+                # I-19 (R-72): the problem this sub-solve answers, so its declared requirements are
+                # read at the boundary that forms the verdict rather than nowhere at all.
+                problem=thermal_problem,
                 # The **run's** provenance, not the sub-solve's: these values
                 # were produced by the coupled run, and the sub-solve's own
                 # record names one of the six models they rest on. The

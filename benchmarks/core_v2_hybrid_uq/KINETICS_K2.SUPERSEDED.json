@@ -42,6 +42,36 @@
    "rule": "RoutedIdentifiability.digest includes why",
    "commit": "3ddc686",
    "effect_on_this_record": "MULTI_v2.route.record_digest and every embedded record's digest no longer reproduce (with HUQ-01's policy keys in thresholds)."
+  },
+  {
+   "id": "R-08 / I-02",
+   "rule": "the minimum multistart search includes max_evaluations and maximum_retractions (a value below the canonical policy's is a recorded shortfall), and a search is incomplete unless at least max(6, 2p + 2) starts CONVERGED, not merely half of those proposed. A refit that does not converge under a budget below the canonical one is retried once at the canonical budget.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "MULTI_v2 is the record the re-audit cites for this problem (REAUDIT_2026-09-16.json R-08). Its policy is 6 starts at p = 2 with max_evaluations=400 (kinetics.py:257), and 2 of the 6 committed refits are CALIBRATION_FAILED. Under these rules it projects DOWNGRADED on two independent counts: the budget of 400 is below the canonical 2000, and 4 converged where 6 are required. The committed route record carries no multistart policy keys in its thresholds, so on read-back the uniqueness it states (MULTISTART_NO_SECOND_MODE) no longer follows from the 4 of 6 starts it lists and the record is refused rather than re-derived -- a strictness increase on an already superseded record, not a regression. The two failed refits would now each be retried at 2000 evaluations, which is exactly the multistart cost this stream must not pay. The record's bytes and its SUPERSEDED status are unchanged and the multistart was NOT re-run."
+  },
+  {
+   "id": "R-18 / I-02",
+   "rule": "a start the forward model refuses is REPLACED by the next unused point of the same Halton sequence, from one counter shared by every start, instead of being halved toward the calibrated estimate. The entry records `replacements` and no longer records `retractions`.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "every committed MULTI_v2 entry records retractions 0, so no start was pulled toward the estimate and the span each one searched is the span the record implies. The key name in the committed bytes is the old one; nothing reads it."
+  },
+  {
+   "id": "R-07 / I-02",
+   "rule": "a separated converged refit that is not a BETTER_OPTIMUM is SECOND_MODE when its Laplace mass ratio exp(-(chi - chi_min) / 2) * sqrt(det(Sigma) / det(Sigma_min)) exceeds MULTISTART_MASS_FLOOR = 1e-3 and WORSE_LOCAL_OPTIMUM when it does not, and the ratio is recorded so a reader can re-derive the classification.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "MULTI_v2 holds one separated converged refit, at chi-square 2699.72 against the estimate's 5.4446 and a Mahalanobis distance of 12446.6, classified WORSE_LOCAL_OPTIMUM. Its height ratio alone is exp(-1347.1), far below the floor, so no covariance at that optimum could lift it above 1e-3 -- the classification is projected UNCHANGED. The record carries no laplace_mass_ratio; because it carries no multistart policy either, the read-back's mass rule does not apply to it (the rule is gated on the policy record, which postdates these bytes). The refit was NOT re-run."
+  },
+  {
+   "id": "R-03 / R-20 / I-04",
+   "rule": "the CORE-001 gate runs TWO tests at half the declared alpha each and the worse stands: the pooled chi-square as before, and a leverage-weighted statistic T = sum_i H_ii r_i^2 against its exact three-moment null, which weighs each residual by how much the reported covariance depends on it. The variance-ratio refusal (ratio above 4) now fires whatever the p-value says, and one or two residual degrees of freedom add the downgrade GOODNESS_OF_FIT_UNDERPOWERED.",
+   "commit": "core re-audit batch 11 (I-04), branch claude/core-scientific-audit",
+   "effect_on_this_record": "MULTI is 6 observations at p = 2 (kinetics.py, stage 1), so 4 residual degrees of freedom: above the underpowered limit of 2, so no cap is projected. Its chi-square at the estimate is 5.444574 (the calibration block), a variance ratio of 1.36 and a pooled p-value of 0.2447, so the pooled half of the rule says nothing here, as it did before -- and the unconditional variance ratio changes nothing at 1.36. The LEVERAGE half cannot be projected from these bytes: the record carries no residuals and no Jacobian, and the statistic needs both. With 6 observations at p = 2 the null mean is p - sum H_ii^2, at most 2, so a leverage ratio above 4 would need T above 8 against a total chi-square of 5.44 -- impossible, since every weight is at most 1 and therefore T <= chi-square. So no REFUSAL can be projected; a downgrade cannot be ruled out without the residuals. The record's MULTI claim already stands DOWNGRADED under R-08 / I-02 above, so no projection in this marker moves further. The multistart was NOT re-run."
+  },
+  {
+   "id": "R-05 / R-17 / I-05",
+   "rule": "a V2 layer above V1's grid resolution check: every interior local maximum of the node log-likelihood within ln 1e6 of the peak gets its OWN quadratic fit on its own nodes, held to a residual bound of ln 100 nats and to V1's own aliasing bound (GRID_MODE_UNRESOLVED); and an admissible node the posterior reaches with an inadmissible lattice neighbour is a truncation face -- refused on a supplied grid (GRID_CUT_BY_INADMISSIBILITY), refined across in a rebuild. V1's src/engcore/inference/calibration.py is unchanged.",
+   "commit": "core re-audit batch 12 (I-05), branch claude/core-scientific-audit",
+   "effect_on_this_record": "the MULTI and WEAK_C2 reference grids in this record are V1 grids built by converged_reference with nested refinement until the moments stopped moving, and they are reported as REFERENCES rather than as routed claims -- no route decision in this record rests on a V2 supplied-grid or rebuilt-grid check, so GRID_MODE_UNRESOLVED and GRID_CUT_BY_INADMISSIBILITY reach nothing here. Whether those reference grids would themselves pass the per-mode check cannot be told from these bytes (the record carries their moments, not their node log-likelihoods), and re-running them is the CSTR cost this stream must not pay. The CSTR forward model refuses no point inside the reference boxes -- the record's grids report no inadmissible nodes -- so no admissibility cut is projected. Nothing was re-run."
   }
  ],
  "unchanged": "the MULTI estimate and standard deviations (identical when re-derived without multistart), covariance, determinant and correlation, identifiability statuses (declared NOT_IDENTIFIABLE, aligned WEAKLY_IDENTIFIABLE), the C2 predictive parameter and total sd, the reference grids (Core V1, unaffected), the CORRECTED errata quantities, WEAK_C2 REFUSED (NO_RESIDUAL_DEGREES_OF_FREEDOM), and the natural_k0_identity REFUSED / k0_declared_log DOWNGRADED parameterization verdicts.",
@@ -49,13 +79,17 @@
   "MULTI_v2": {
    "label": "PROJECTED (Jacobian, probes, identifiability and C2 predictive MEASURED without multistart; refits not re-run)",
    "decision": "LOCAL_GAUSSIAN",
-   "claim": "SUPPORTED",
-   "reasons": [],
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
    "nonlinearity_index_8_probes": 0.07150467229495039,
    "identifiability_declared": "PARAMETERS_NOT_IDENTIFIABLE",
    "identifiability_aligned": "PARAMETERS_WEAKLY_IDENTIFIABLE",
    "C2_predictive_claim": "SUPPORTED",
-   "C2_max_predictive_nonlinearity_parameter_sd": 0.05658004437696277
+   "C2_max_predictive_nonlinearity_parameter_sd": 0.05658004437696277,
+   "why_the_claim_moved": "core re-audit batch 10 (I-02): the minimum search now includes max_evaluations, and it counts CONVERGED refits. K2's policy is 6 starts at p = 2 with max_evaluations=400 against a canonical 2000, and 2 of the 6 committed refits are CALIBRATION_FAILED, so 4 converged where 6 are required. Either shortfall alone caps the claim at DOWNGRADED. The refits were not re-run; a retry of the two failures at the canonical budget is the multistart cost this stream must not pay.",
+   "read_back": "the committed route record carries no multistart policy keys, so on read-back the uniqueness it states (MULTISTART_NO_SECOND_MODE) no longer follows from the 4 of 6 converged starts it lists, and RouteDiagnostics.from_dict refuses it. That is a strictness increase on frozen bytes that were already superseded, recorded here rather than worked around."
   },
   "natural_k0_identity": {
    "label": "MEASURED (no multistart, as committed)",

@@ -1,0 +1,134 @@
+{
+ "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+ "candidate_commit": "b79945558784ba392c46c426b7f53ea8f58ef87b",
+ "claim": "Fresh execution of the 589-mutation V4 guard population in four shards at the measured commit, each mutation in an isolated copy of the tree and each verdict read from the JUnit report of the ONE test its entry names. Every figure in this record is re-derived by tools.certification.core_freeze_v4.v4_mutation_problems from the tree and from these transcripts' own bytes; none is read from the record.",
+ "evidence": {
+  "benchmarks/core_v4_false_confidence/v4_round/shard0.log": "1f28a850845abbb8f74b099b56219a6a66535208ff7a1625024d431a7a84762f",
+  "benchmarks/core_v4_false_confidence/v4_round/shard1.log": "ccff46fb7dda76aff64b73e1d51b03d9ef40a3da092d89daa5b8da1fc30dc80a",
+  "benchmarks/core_v4_false_confidence/v4_round/shard2.log": "7a4d32f28bb89fdd1bbadfd82bc2e56b0406252a46930a8a562a09c887822b1b",
+  "benchmarks/core_v4_false_confidence/v4_round/shard3.log": "7f392c99282e4670d97877c54e2416a9be5e051d8b9a71347366d2b105467eef"
+ },
+ "manifest_sha256": "9856a1da6cde68a103ce3b33924e6af4dbdba31562db2b5088fbf6cfc0ebf432",
+ "measured_commit": "2a892920505979763a17b6754a64da0394b16e48",
+ "mutations": {
+  "v4": {
+   "definitions_sha256": "a05d18f4b2c5dd5e40bca023fbf1f966bf31c682bfd1c67f1ce54fa953447074",
+   "expected_population": 589,
+   "kill_rule": "a mutation is KILLED only when the ONE test its entry names carries a <failure> in that run's own JUnit report",
+   "population": 589,
+   "population_path": "tests/mutation_population_v4.py",
+   "population_sha256": "59714de30aa1f4a441ce11d0f2b880ff189f1bd530af388b7eb180f7e7268671",
+   "runner": "tools/certification/mutation_v4_runner.py",
+   "shard_count": 4,
+   "sharding_rule": "shard i runs the ids at positions p where p % shard_count == i",
+   "shards": {
+    "0": {
+     "execution_log_bytes": 45435,
+     "execution_log_sha256": "1f28a850845abbb8f74b099b56219a6a66535208ff7a1625024d431a7a84762f",
+     "selected_count": 148,
+     "selected_ids_sha256": "c65342148cedb2c48ec39109b9c27369cb41f0780ab3b40090f48e8a2dc3d955"
+    },
+    "1": {
+     "execution_log_bytes": 45878,
+     "execution_log_sha256": "ccff46fb7dda76aff64b73e1d51b03d9ef40a3da092d89daa5b8da1fc30dc80a",
+     "selected_count": 147,
+     "selected_ids_sha256": "02e49b63dec494a22077f626efcf28fdc44cee92b9fa4a499ff9d4bbc3a7c36d"
+    },
+    "2": {
+     "execution_log_bytes": 45029,
+     "execution_log_sha256": "7a4d32f28bb89fdd1bbadfd82bc2e56b0406252a46930a8a562a09c887822b1b",
+     "selected_count": 147,
+     "selected_ids_sha256": "5394e6ea7f5fd96a1b488d0d60d951d469f82cad05f350e746a6dfb4e16e3a19"
+    },
+    "3": {
+     "execution_log_bytes": 43590,
+     "execution_log_sha256": "7f392c99282e4670d97877c54e2416a9be5e051d8b9a71347366d2b105467eef",
+     "selected_count": 147,
+     "selected_ids_sha256": "14ccf241782c1a8bdbb67889dc72927163afb7a950b8a00d0cb0c893be7448d0"
+    }
+   },
+   "source_commit": "2a892920505979763a17b6754a64da0394b16e48"
+  }
+ },
+ "schema": "engcore.core_freeze_assurance/4",
+ "suites": {
+  "FAST": {
+   "arguments": [
+    "-m",
+    "not expensive",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "7238 passed, 6 skipped in 168.39s (0:02:48)"
+  },
+  "api_snapshot_v1": {
+   "arguments": [
+    "-q",
+    "tests/test_core_api_snapshot.py",
+    "tests/test_core_api_contracts.py"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "35 passed, 1 skipped in 14.57s"
+  },
+  "api_snapshot_v2": {
+   "arguments": [
+    "-q",
+    "tests/test_core_v2_api_snapshot.py",
+    "tests/test_core_v2_compatibility.py"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "12 passed in 1.33s"
+  },
+  "certificate": {
+   "arguments": [
+    "-q",
+    "tests/test_core_certificate.py",
+    "tests/test_certification_control_plane.py",
+    "tests/test_recertification_scope.py"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "145 passed in 8.22s"
+  },
+  "freeze_manifest_v4": {
+   "arguments": [
+    "-q",
+    "tests/test_core_freeze_v4_manifest.py",
+    "tests/test_core_freeze_v3_manifest.py",
+    "tests/test_core_freeze_manifest.py"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "44 passed, 2 skipped in 16.22s"
+  },
+  "population_v4": {
+   "arguments": [
+    "-q",
+    "tests/test_mutation_population_v4.py",
+    "tests/test_mutation_harness.py"
+   ],
+   "deselected_certificate_child_self_checks": [],
+   "exit_code": 0,
+   "green": true,
+   "summary_line": "17 passed in 22.96s"
+  }
+ },
+ "transcripts": {
+  "0": "benchmarks/core_v4_false_confidence/v4_round/shard0.log",
+  "1": "benchmarks/core_v4_false_confidence/v4_round/shard1.log",
+  "2": "benchmarks/core_v4_false_confidence/v4_round/shard2.log",
+  "3": "benchmarks/core_v4_false_confidence/v4_round/shard3.log"
+ }
+}

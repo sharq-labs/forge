@@ -1,0 +1,44 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 3,
+ "part": "3b",
+ "findings": [
+  "CORE-009",
+  "CORE-014",
+  "CORE-016"
+ ],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "203a666",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "compatibility_decision": "additive only on V1-frozen symbols (2026-09-16, repository owner). Batch 3a's amendment applies here too: a new key in the bytes of an existing V1 record is not additive, so every new field below is serialized only when it carries information and is opt-in for producers",
+ "what_was_already_seen": [
+  "the audit agent's reproductions: an oracle comparison of {y: 1 m} attached to a result at y = 42 m, another model and T = 5000 K attains EXPERIMENTALLY_VALIDATED (latent: the trusted-oracle registry is empty); an assessment computed at T = 300 K attaches IN_DOMAIN to a result whose provenance records T = 5000 K; Uncertainty has no source category"
+ ],
+ "rules": {
+  "oracle_conditions": {
+   "finding": "CORE-009",
+   "rule": "OracleObservation gains conditions (name -> Quantity, default empty). OracleEvidenceSet.compare gains a keyword conditions. When any observation declares conditions, the comparison is made only if every declared condition is supplied and agrees with it; otherwise the check is NOT_RUN, establishes no level, and says which condition was missing or differed",
+   "agreement": "same dimension and |a - b| <= 1e-9 * max(|a|, |b|) in the observation's unit, or both zero",
+   "agreement_class": "A (the same operating point stated twice)",
+   "why_not_run_not_fail": "a comparison at other conditions is not evidence against the model; FAIL would make the verdict NOT_SUPPORTED on a comparison that was never made",
+   "serialization": "conditions is written only when non-empty, so the content digest of every existing evidence set is unchanged"
+  },
+  "validity_binding": {
+   "finding": "CORE-014",
+   "rule": "ValidityAssessment gains evaluated (name -> Quantity, default empty), filled by ValidityDomain.assess(..., record_values=True) with every Quantity the domain's conditions read. ScientificResult refuses an assessment whose evaluated value differs from the provenance input of the same name (agreement as above)",
+   "opt_in": "record_values defaults to False: filling it by default would change the bytes of every serialized result",
+   "serialization": "evaluated is written only when non-empty"
+  },
+  "uncertainty_source": {
+   "finding": "CORE-016",
+   "rule": "Uncertainty gains source_kind: UNSPECIFIED (default), MEASUREMENT, PARAMETER, NUMERICAL, MODEL_FORM or COMBINED. A NUMERICAL-only record says, in its own field, that it is not the value's scientific uncertainty. Cross-domain transfer carries source_kind through unchanged",
+   "serialization": "source_kind is written only when not UNSPECIFIED"
+  }
+ },
+ "stated_residuals_before_implementation": [
+  "CORE-009: a ValidationCheck is still not bound to the result it qualifies (the deferred VAL-01 field); conditions only stop a comparison made at other conditions from counting",
+  "CORE-014: opt-in, so an assessment built without record_values binds nothing; no domain opts in within this batch",
+  "CORE-016: QuantityTransfer still carries no upstream credibility, and nothing combines uncertainty sources"
+ ],
+ "amendments": "recorded here as dated entries, never edited in place"
+}

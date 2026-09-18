@@ -1,0 +1,3 @@
+G31u tests/mcp/test_audit_results_declarations.py -> KILLED | 1 failed, 13 passed in 2.99s | code 6100f315879d243b->f55a57ab2a42fd61 | pinned: CAP-04 (results-CAP04b-electrothermal-flag-unstated) -- tests/mcp/test_audit_results_declarations.py
+G34m tests/domains/electrical/test_audit_domains_debye_conductor_class.py -> KILLED | 1 failed, 12 passed in 2.83s | code 6100f315879d243b->dbd74f0981dc5d09 | pinned: CAP-05 (domains-cap05c-assertion-not-recorded-in-report) -- tests/domains/electrical/test_audit_domains_debye_conductor_class.py
+CONTROL (unmutated, 2 test(s)) GREEN | 27 passed in 3.29s

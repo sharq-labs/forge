@@ -65,6 +65,7 @@ continuity between them checkable rather than asserted.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import pathlib
@@ -187,13 +188,42 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "executes since V3 superseded the V2 serialization contract; weakening it would "
      "change whether the hardened routed-uncertainty contract is accepted without "
      "changing Hybrid UQ source"),
+    ("tools/certification/guard_reach.py",
+     "the guard REACH verifier (I-16): it refuses a guard_reach_ledger.json that "
+     "is not self-consistent and implements the four static bypass checks the "
+     "2026-09-16 re-audit named. A weaker check would let a guard whose reach "
+     "nobody states pass as a guard production runs"),
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/api_surface_v4.py",
+     "the V4 deep API surface (I-29, R-69): the method signatures and enum "
+     "member POSITIONS the frozen snapshot never described, which is why "
+     "deleting a method moved neither the V1 nor the V2 digest. A surface "
+     "nothing pins is a surface nobody compares"),
+    ("tools/certification/core_freeze_v4.py",
+     "the Core Freeze V4 verifier (I-29): it proves, difference by difference, "
+     "that every change since the V1 surface AS V1 COMMITTED IT is additive, "
+     "requires the V3 supersession to be the named refusal rather than any "
+     "exception, and re-derives every figure an assurance record asserts. The "
+     "audited checks compared the live surface with the live surface"),
     ("tools/certification/mutation_population.py",
      "the canonical formal mutation population, the shard rule and the "
      "coverage proof; a wrong union with the right count would certify a "
      "mutation family that never ran"),
+    ("tests/test_mutation_population_v4.py",
+     "the V4 population's own guard, run on every FAST invocation: every folded "
+     "mutation must still match the source it names exactly once and change "
+     "code. Twenty-five had already gone stale when the round folded them in, "
+     "and a stale mutation is a guard verified by nobody whose log still says "
+     "KILLED. A certificate that claims a mutation round is claiming this check "
+     "ran, so the check is pinned by it"),
+    ("tools/certification/mutation_v4_runner.py",
+     "the runner for the V4 guard-mutation population (I-30, R-67): it works in "
+     "an isolated copy and counts a kill only when the ONE test an entry names "
+     "failed, read from that run's JUnit report. The audited runners mutated the "
+     "shared checkout and credited any non-zero exit to the guard, so a broken "
+     "import read as a guard firing"),
     ("tools/certification/recertification_scope.py",
      "the single classifier deciding which changes require recertification "
      "and which self-checks are deferred to the certificate child"),
@@ -379,12 +409,43 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_audit_sria_policy_binding.py",
             "tests/test_audit_sria_stop_review_grounds.py",
             "tests/test_audit_sria_trust_root.py",
+            # The V4 population (R-67) and the suites its 563 entries name, which a kill
+            # in that round is a statement about, plus the support modules all of these
+            # import. Derived rather than remembered: `harness_import_closure` computes
+            # the closure and `harness_pinning_problems` refuses a scope that does not
+            # cover it, which is what makes the next helper a failure instead of a gap.
+            "tests/mutation_population_v4.py",
+            "tests/domains/battery/battery_cases.py",
+            "tests/domains/battery/test_battery_coupling.py",
+            "tests/hybrid_uq/false_confidence_cases.py",
+            "tests/hybrid_uq/hybrid_synthetic.py",
+            "tests/hybrid_uq/test_core_scientific_audit_batch*.py",
+            "tests/hybrid_uq/test_core_v4_false_confidence_conformance.py",
+            "tests/inference/test_field_observation_spike.py",
+            "tests/inference/test_reproducibility_and_evidence.py",
+            "tests/inference/test_tcr_heldout_uq.py",
+            "tests/issued_levels.py",
+            "tests/mcp/test_core_scientific_audit_batch*.py",
+            "tests/mcp/test_evidence.py",
+            "tests/route_declarations_for_tests.py",
+            "tests/test_core_runtime_caches.py",
+            "tests/test_core_scientific_audit_batch*.py",
+            "tests/test_cross_solver_consensus.py",
+            "tests/test_external_oracles.py",
+            "tests/test_guard_reach_ledger.py",
+            "tests/test_scientific_core.py",
+            "tests/test_trusted_consensus_gate.py",
         ),
         why=(
-            "the mutation harness and every suite in its TARGETS, which it runs "
-            "against each mutant. 'N/N killed' is a statement about these exact bytes: "
-            "the same sentence over a weakened suite would be worth nothing, "
-            "so the suites are pinned alongside the runner"
+            "the mutation harness, every suite in its TARGETS, every suite the V4 "
+            "population's entries name, and every module under tests/ that any of "
+            "them imports. 'N/N killed' is a statement about these exact bytes: the "
+            "same sentence over a weakened suite would be worth nothing, so the "
+            "suites are pinned alongside the runner. The helper modules joined in "
+            "I-30 (R-68, finding 93): hybrid_synthetic.py was read by ten certified "
+            "targets and measured by nothing, and the branch changed it by twelve "
+            "lines without moving the certificate. The list is checked against the "
+            "derived import closure, because a hand-maintained list is the finding"
         ),
     ),
     ScopeArea(
@@ -398,6 +459,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "src/engcore/__init__.py",
             "src/engcore/api_snapshot.py",
             "tests/test_core_certificate.py",
+            "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
             "tools/__init__.py",
             "tools/certification/*.py",
@@ -507,6 +569,100 @@ def enumerate_area(root: pathlib.Path, area: ScopeArea) -> list[str]:
     return sorted(found, key=lambda text: text.encode("utf-8"))
 
 
+
+# ---------------------------------------------------------------------------
+# what the certified suites import (R-68)
+# ---------------------------------------------------------------------------
+#: The support modules under ``tests/`` are not a package: the suites import them by bare name,
+#: which pytest makes work by putting their directory on ``sys.path``. So the closure below resolves
+#: a bare module name against the files under ``tests/`` and nothing else -- an import of `engcore`
+#: or `numpy` is not a test helper and is out of this area by decision.
+HARNESS_SEEDS = ("tests/mutation_guards.py",)
+
+
+def _tests_local_modules(root: pathlib.Path) -> dict[str, str]:
+    return {
+        path.stem: path.relative_to(root).as_posix()
+        for path in sorted((root / "tests").rglob("*.py"))
+        if not _excluded(path.relative_to(root))
+    }
+
+
+def _imported_names(path: pathlib.Path) -> set[str]:
+    """Every top-level module name ``path`` imports, including imports inside a function.
+
+    Static, and it says so: a helper reached only through ``importlib`` by a computed name is not
+    found here. Nothing in the closure does that, and a check that reports what it measured is worth
+    more than one that claims a reach it does not have.
+    """
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+        if isinstance(node, ast.Import):
+            found.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            found.add(node.module.split(".")[0])
+    return found
+
+
+def harness_import_closure(root: pathlib.Path) -> list[str]:
+    """Every file under ``tests/`` the certified mutation evidence depends on, derived.
+
+    R-68, finding 93: the harness area pinned the SUITES the harness runs and not the modules those
+    suites import, so ``tests/hybrid_uq/hybrid_synthetic.py`` was read by ten certified targets and
+    measured by nothing -- and the branch changed it by twelve lines without moving the certificate.
+    The answer cannot be a longer list, because a hand-maintained list is what the finding is about.
+
+    The seeds are the harness itself, every suite in its ``TARGETS``, and every ``target_test`` the V4
+    mutation population names -- the two sets of suites a kill is a statement about. The closure is
+    then taken over their ``tests/``-local imports, transitively.
+    """
+    import runpy  # noqa: PLC0415 - loaded here, as the population tool loads the same two files
+
+    local = _tests_local_modules(root)
+    seeds: set[str] = {name for name in HARNESS_SEEDS if (root / name).is_file()}
+    harness = root / "tests" / "mutation_guards.py"
+    if harness.is_file():
+        namespace = runpy.run_path(str(harness), run_name="_harness_closure_probe")
+        seeds.update(str(target).replace("\\", "/") for target in namespace.get("TARGETS", ()))
+    population = root / "tests" / "mutation_population_v4.py"
+    if population.is_file():
+        namespace = runpy.run_path(str(population), run_name="_population_closure_probe")
+        seeds.update(entry[4].split("::")[0] for entry in namespace.get("POPULATION_V4", ()))
+        seeds.add("tests/mutation_population_v4.py")
+    closure = {name for name in seeds if (root / name).is_file()}
+    queue = sorted(closure)
+    while queue:
+        current = queue.pop()
+        for name in _imported_names(root / current):
+            relative = local.get(name)
+            if relative is not None and relative not in closure:
+                closure.add(relative)
+                queue.append(relative)
+    return sorted(closure, key=lambda text: text.encode("utf-8"))
+
+
+def harness_pinning_problems(
+    root: pathlib.Path, scope: Sequence[ScopeArea] | None = None
+) -> list[str]:
+    """Why a scope's HARNESS area does not cover what the certified suites actually read.
+
+    Called from :func:`build_certificate` and :func:`verify_certificate`, so the derivation is part of
+    what a certificate means and not only something a test checks.
+    """
+    areas = tuple(scope if scope is not None else SCOPE)
+    pinned: set[str] = set()
+    for area in areas:
+        if area.classification in ("HARNESS", "CERTIFICATION_CONTROL"):
+            pinned.update(enumerate_area(root, area))
+    missing = [name for name in harness_import_closure(root) if name not in pinned]
+    if not missing:
+        return []
+    return [
+        f"the harness area does not pin {len(missing)} module(s) the certified suites import, so "
+        f"'N/N killed' is a statement about bytes no certificate measures: " + ", ".join(missing)
+    ]
+
+
 def file_digest(path: pathlib.Path) -> str:
     """SHA-256 over the file's exact bytes. Nothing is decoded or normalized."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -562,6 +718,12 @@ def build_manifest(
         }
         if area.file_reasons:
             areas[area.name]["file_reasons"] = dict(area.file_reasons)
+    # R-68 (finding 93): a manifest is refused rather than written over a harness area that does not
+    # cover what its own suites import. Here, not only in a test, because the claim a certificate
+    # makes about the mutation rounds is a claim about these bytes.
+    pinning = harness_pinning_problems(root, SCOPE if scope is None else scope)
+    if pinning:
+        raise CertificationError("; ".join(pinning))
     return {
         "areas": areas,
         "file_count": sum(a["file_count"] for a in areas.values()),

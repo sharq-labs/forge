@@ -72,7 +72,9 @@ _DIMENSIONAL = ValidationReport(checks=(ValidationCheck(
     evidence=("fixture: kelvin declared by the fixture",)),))
 _SEQUENCE = ValidationReport(checks=(ValidationCheck(
     name="tolerance_ladder", outcome=ValidationOutcome.PASS, establishes=ValidationLevel.NUMERICALLY_CONVERGED,
-    residual=1e-10, tolerance=1e-8, evidence=("fixture: a converged ladder",)),))
+    # R-71 (I-28 part C): a convergence SEQUENCE has members, so its establishing check now names at
+    # least two of them; one entry is a single solve, which the admission boundary refuses.
+    residual=1e-10, tolerance=1e-8, evidence=("fixture: ladder member 1", "fixture: ladder member 2")),))
 
 
 def _source(validity):
@@ -90,7 +92,7 @@ def _numerical(validity):
     from engcore.inference.admissibility import AdmissibleNumericalPrediction
 
     return AdmissibleNumericalPrediction(
-        prediction_id="p", domain="synthetic", adapter_id="adapter", binding_ref="binding:p", verification_ref="verification:p",
+        prediction_id="p", domain="synthetic", adapter_id="adapter", binding_ref=f"{_ADMISSION_MODEL[0]}@{_ADMISSION_MODEL[1]}", verification_ref="verification:p",
         source_result=_source(validity), observable_names=("y",), sequence_validation=_SEQUENCE)
 
 
@@ -98,7 +100,7 @@ def _analytic(validity):
     from engcore.inference.admissibility import AdmissibleAnalyticPrediction
 
     return AdmissibleAnalyticPrediction(
-        prediction_id="p", domain="synthetic", adapter_id="adapter", binding_ref="binding:p", verification_ref="verification:p",
+        prediction_id="p", domain="synthetic", adapter_id="adapter", binding_ref=f"{_ADMISSION_MODEL[0]}@{_ADMISSION_MODEL[1]}", verification_ref="verification:p",
         source_result=_source(validity), observable_names=("y",), validation=_DIMENSIONAL,
         analytic_basis="closed form y = f(x) for this fixture")
 

@@ -13,17 +13,40 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
 
 UNCERTAINTY_SCHEMA = schema_string("uncertainty")
+
+#: R-45 (re-audit 2026-09-16): the version a record declares WHEN IT CARRIES `source_kind`. CORE-016 added
+#: the field under `uncertainty/1`, so a reader that predates it accepted the record and dropped the key --
+#: and a NUMERICAL uncertainty came back UNSPECIFIED, indistinguishable from one nobody was asked for. A
+#: dropped key is worse than a refused record: the refusal is loud, the drop is invisible. Written only when
+#: the field is present, so every record that carries nothing new keeps its bytes and its digest.
+UNCERTAINTY_SCHEMA_V2 = schema_string("uncertainty", 2)
 
 
 class UncertaintyKind(str, Enum):
     UNKNOWN = "unknown"        # not evaluated — the honest default
     STANDARD = "standard"      # standard uncertainty (1-sigma style)
     INTERVAL = "interval"      # explicit lower/upper bounds
+
+
+class UncertaintySource(str, Enum):
+    """CORE-016 (scientific core audit 2026-09-16): what an uncertainty is an uncertainty OF.
+
+    A discretization estimate and a measurement standard deviation are both STANDARD uncertainties, and only one of
+    them bounds how far the value may be from the world. ``NUMERICAL`` says, in the record itself, that the uncertainty
+    is the solution's error about the declared model and not the value's scientific uncertainty.
+    """
+
+    UNSPECIFIED = "unspecified"   # the default: nothing was declared, and nothing may be inferred from that
+    MEASUREMENT = "measurement"
+    PARAMETER = "parameter"
+    NUMERICAL = "numerical"
+    MODEL_FORM = "model_form"
+    COMBINED = "combined"
 
 
 @dataclass(frozen=True)
@@ -38,9 +61,12 @@ class Uncertainty:
     source: str = ""
     method: str = ""
     notes: str = ""
+    #: CORE-016: serialized only when declared, so records written before it keep their bytes.
+    source_kind: UncertaintySource = UncertaintySource.UNSPECIFIED
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", UncertaintyKind(self.kind))
+        object.__setattr__(self, "source_kind", UncertaintySource(self.source_kind))
 
         for label in ("standard_uncertainty", "lower", "upper"):
             value = getattr(self, label)
@@ -136,8 +162,9 @@ class Uncertainty:
         return cls(kind=UncertaintyKind.UNKNOWN, notes=notes)
 
     def to_dict(self) -> dict[str, Any]:
+        records_source_kind = self.source_kind is not UncertaintySource.UNSPECIFIED
         return {
-            "schema": UNCERTAINTY_SCHEMA,
+            "schema": UNCERTAINTY_SCHEMA_V2 if records_source_kind else UNCERTAINTY_SCHEMA,
             "kind": self.kind.value,
             "standard_uncertainty": (
                 self.standard_uncertainty.to_dict()
@@ -150,11 +177,22 @@ class Uncertainty:
             "source": self.source,
             "method": self.method,
             "notes": self.notes,
+            **({"source_kind": self.source_kind.value} if self.source_kind is not UncertaintySource.UNSPECIFIED else {}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Uncertainty":
-        require_schema(payload, UNCERTAINTY_SCHEMA)
+        version = require_schema_any(payload, (UNCERTAINTY_SCHEMA, UNCERTAINTY_SCHEMA_V2))
+        # R-45: the version and the field were introduced together, so a `/1` record carrying a source kind
+        # is a shape no writer here has produced. It is either an edit or a re-emit that kept the field and
+        # lost the version, and reading it would make the version string mean nothing.
+        if version == UNCERTAINTY_SCHEMA and "source_kind" in payload:
+            raise ScientificCoreError(
+                f"{UNCERTAINTY_SCHEMA} record carries a source_kind, which was introduced with "
+                f"{UNCERTAINTY_SCHEMA_V2}. A record that declares the older version while carrying the newer "
+                f"field cannot be read: its version is the reader's only statement of which fields it must "
+                f"understand. Re-emit it with the code that wrote the field"
+            )
         def _q(key):
             value = payload.get(key)
             return Quantity.from_dict(value) if value else None
@@ -168,4 +206,5 @@ class Uncertainty:
             source=payload.get("source", ""),
             method=payload.get("method", ""),
             notes=payload.get("notes", ""),
+            source_kind=UncertaintySource(payload.get("source_kind", UncertaintySource.UNSPECIFIED.value)),
         )

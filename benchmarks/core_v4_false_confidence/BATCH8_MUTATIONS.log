@@ -1,0 +1,15 @@
+B8a test_r47_a_pass_with_a_level_and_nothing_compared_establishes_nothing -> KILLED | 1 failed in 2.38s | code 7f6da3bdf1594e37->77cc36f85e841418 | R-47: the exported verdict stops re-applying GUARD 2 and reads a claimed level again
+B8b test_r47_derive_verdict_refuses_a_duck_typed_check -> KILLED | 1 failed in 2.38s | code 7f6da3bdf1594e37->8471935df2f8c23d | R-47: the exported verdict stops re-applying VAL-01's issuer rule
+B8c test_r47_derive_verdict_refuses_an_object_missing_the_fields_the_rule_reads -> KILLED | 1 failed in 2.38s | code 7f6da3bdf1594e37->ec362e6817c3a0b4 | R-47: an object missing the fields the rule reads is read past instead of refused
+B8d test_a_level_established_by_a_check_that_did_not_pass_does_not_count -> KILLED | 1 failed in 1.96s | code 7f6da3bdf1594e37->c70bc3ebc2eedd1e | R-47: a WARNING check's level counts, which the core's own attained_levels does not do
+B8e test_r04_derive_verdict_reads_a_required_basis_on_its_own -> KILLED | 1 failed in 2.40s | code 7f6da3bdf1594e37->8b471a2f1410d055 | R-04: a caller's demand for a kind of evidence stops deciding anything
+B8f test_r04_a_caller_can_demand_a_basis_it_did_not_get -> KILLED | 1 failed in 2.40s | code 7f6da3bdf1594e37->50a29ba3e9447c4a | R-04: the report stops naming the basis it was required to have
+B8g test_r04_a_payload_with_the_evidence_basis_removed_is_refused -> KILLED | 1 failed in 2.47s | code 7f6da3bdf1594e37->c5234559e6c3f5bd | R-04: deleting the whole qualifiers block is a way past the comparison again
+B8h test_r04_a_payload_with_the_evidence_basis_removed_is_refused -> KILLED | 1 failed in 2.56s | code 7f6da3bdf1594e37->52a455c958f68054 | R-04: deleting one qualifier -- evidence_basis -- is a way past it again
+B8i test_r04_a_verification_only_support_does_not_read_as_validation -> KILLED | 1 failed in 2.50s | code 8b25de7ea7266a37->fada5d5846ed67b4 | R-04: the sentence an agent reads goes back to the one that does not mention verification
+B8j test_r04_the_verdict_block_names_its_evidence_basis -> KILLED | 1 failed in 2.41s | code 8b25de7ea7266a37->5e2f96bc0e0fc2c1 | R-04: the block carries the key and not the basis
+B8k test_r04_a_non_deciding_verification_only_rule_fires -> KILLED | 1 failed in 2.45s | code 8b25de7ea7266a37->3df901eaaf67350f | R-04: the non-deciding rule never fires, so a VERIFICATION_ONLY support reads bare again
+B8l test_the_rule_table_names_a_solver_that_did_not_finish -> KILLED | 1 failed in 2.51s | code 8b25de7ea7266a37->ea695eac337c2b34 | I-10's named rule: the rule never fires, so the convergence gap is nameless again
+B8m test_r04_describe_capabilities_explains_the_evidence_basis -> KILLED | 1 failed in 1.35s | code 8b25de7ea7266a37->35a85e857d6d0d99 | R-04: describe_capabilities says the same thing for every basis
+B8n test_r04_a_withheld_level_is_recorded_where_a_reader_finds_it -> KILLED | 1 failed in 1.26s | code e7ae43ee988965dc->4a8cc7d15f1a08ce | R-04: a withheld level goes back to reaching a reader only inside a detail sentence
+CONTROL (unmutated, 13 test(s)) GREEN | 13 passed in 2.96s

@@ -245,6 +245,13 @@ def _stated_by_a_package_for(module: str) -> str | None:
     return None
 
 
+def _same_operating_point(stated, other) -> bool:
+    """CORE-014: the rule ``oracles`` states, applied to a validity assessment's recorded values."""
+    from ..oracles import _same_operating_point as same
+
+    return same(stated, other)
+
+
 @dataclass(frozen=True)
 class ScientificResult:
     """An interpreted, attributable scientific output."""
@@ -584,6 +591,16 @@ class ScientificResult:
                     f"verdict about a model that did not take part is not a "
                     f"verdict about this result"
                 )
+            # CORE-014: an assessment that recorded the values it read is a verdict at that operating point only
+            inputs = dict(getattr(self.provenance, "inputs", {}) or {})
+            for name, value in dict(getattr(assessment, "evaluated", {}) or {}).items():
+                if name in inputs and not _same_operating_point(value, inputs[name]):
+                    raise ScientificCoreError(
+                        f"validity for {key!r} was assessed with {name} = {value}, but this result's provenance "
+                        f"records {name} = {inputs[name]}. An assessment made at another operating point is not a "
+                        f"verdict about this result"
+                    )
+            self._require_assessment_is_about_this_model(key, versions[key], assessment)
             checked[key] = (
                 assessment
                 if assessment.status is status
@@ -593,6 +610,13 @@ class ScientificResult:
                     violated=assessment.violated,
                     unknown=assessment.unknown,
                     unknown_reasons=assessment.unknown_reasons,
+                    evaluated=assessment.evaluated,
+                    # Carried, not dropped. The status coercion above rebuilds the record, and a
+                    # rebuild that left these behind would erase the very claims checked a line
+                    # above -- which is exactly the shape R-09 found in `ModelValidityRecord`.
+                    model_id=assessment.model_id,
+                    model_version=assessment.model_version,
+                    declared_conditions=assessment.declared_conditions,
                 )
             )
 
@@ -648,6 +672,61 @@ class ScientificResult:
                 declined[key] = stated
 
         return checked, declined
+
+    def _require_assessment_is_about_this_model(
+        self, key: str, version: str, assessment: ValidityAssessment
+    ) -> None:
+        """I-11 (R-50): an assessment answers for the model it is filed under, over its own conditions.
+
+        Two claims were unchecked anywhere in the core. An assessment carried no model key, so one
+        made for another model -- or for another version of this one, which is a different claim --
+        was accepted under any key the result declared. And it carried no record of which conditions
+        its domain decided, so ``status=IN_DOMAIN, satisfied=('anything_at_all',)`` was accepted,
+        round-tripped, and was returned by :meth:`validity_of` to ``Experiment.best``, the inference
+        admission gate and experiment evaluation -- all three of which read the status alone.
+
+        Both halves are checked only when the assessment makes the claim. An assessment written
+        before this rule carries neither and is accepted unchanged: there is nothing to compare, and
+        inventing a comparison for a record that never made the claim would be refusing it for its
+        age rather than for its content.
+
+        The MCP boundary's registry check (``_require_conditions_of_the_declared_model``) stays and
+        is the stronger of the two, because it reads the model's own domain. This one needs no
+        registry, which is why it can live here: ``engcore.scientific`` cannot import the domains,
+        and a core record that needed a registry to be checkable would be checkable only where the
+        registry is.
+        """
+        if assessment.model_id and assessment.model_id != key:
+            raise ScientificCoreError(
+                f"validity for {key!r} carries an assessment of model {assessment.model_id!r}. An "
+                f"assessment names the model it is about, and one filed under another model's key "
+                f"is a verdict about a different claim"
+            )
+        if assessment.model_version and assessment.model_version != version:
+            raise ScientificCoreError(
+                f"validity for {key!r} was assessed at version "
+                f"{assessment.model_version!r}, and this result declares {version!r}. Two versions "
+                f"of a model are two claims, so a verdict about one is not a verdict about the other"
+            )
+        if not assessment.declared_conditions:
+            return
+        reported = [*assessment.satisfied, *assessment.violated, *assessment.unknown]
+        repeated = sorted({name for name in reported if reported.count(name) > 1})
+        if repeated:
+            raise ScientificCoreError(
+                f"validity for {key!r} reports condition(s) {repeated} more than once; the domain "
+                f"that produced this assessment decides each condition exactly once, so an "
+                f"assessment placing one in two lists was not produced by it"
+            )
+        stray = sorted(set(reported) - set(assessment.declared_conditions))
+        missing = sorted(set(assessment.declared_conditions) - set(reported))
+        if stray or missing:
+            raise ScientificCoreError(
+                f"validity for {key!r} does not account for exactly the conditions its own domain "
+                f"decided: names the domain does not declare {stray}, declared conditions left out "
+                f"{missing}. An assessment is a verdict over a stated set of conditions; one naming "
+                f"others, or omitting some, is not that verdict"
+            )
 
     # ---- accessors ------------------------------------------------------
     def is_assessed(self, model_id: str) -> bool:

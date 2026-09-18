@@ -154,7 +154,9 @@ def test_the_five_stages_are_separable_and_ordered() -> None:
     report = solver.validate(prepared, raw)
     assert raw.convergence is ConvergenceState.CONVERGED
     assert set(metrics) == set(METRIC_UNITS)
-    assert report.status is ValidationOutcome.PASS
+    # A single solve deliberately leaves verification-only checks (for example
+    # tolerance independence) NOT_RUN, so aggregate status must reflect that.
+    assert report.status is ValidationOutcome.NOT_RUN
 
 
 def test_supports_answers_without_solving() -> None:
@@ -443,7 +445,9 @@ def test_the_scientific_core_owns_no_cstr_specific_rule() -> None:
 def test_benign_regime_converges_and_is_usable(benign_result) -> None:
     assert benign_result.convergence is ConvergenceState.CONVERGED
     assert benign_result.is_usable is True
-    assert benign_result.validation_status is ValidationOutcome.PASS
+    # The solve is usable and dimensionally validated, but stronger verification
+    # checks are intentionally deferred to the multi-solve verification gate.
+    assert benign_result.validation_status is ValidationOutcome.NOT_RUN
 
 
 def test_a_single_solve_claims_only_dimensional_validity(benign_result) -> None:

@@ -1,0 +1,97 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 19,
+  "improvements": [
+    "I-16"
+  ],
+  "problems_addressed": [
+    "R-02",
+    "R-09",
+    "R-21",
+    "R-43",
+    "R-58"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "22de10cd",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_improvement_is": "I-16 fixes nothing about the science. It makes the REACH CLAIM checkable. This round's central finding is not that individual guards are wrong -- it is that guards were written where production does not go: `engcore.hybrid_uq` had no caller in src outside its own package (R-02), `record_values` had no caller at all (R-09), `TrustedConsensusGate` has none (R-21), `UncertaintySource` has no producer (R-43), and the production electrothermal coupling passes bare point values (R-58). Two of those five are now FIXED (R-09 by batch 14, R-02 by batches 17 and 18) and three are not. The ledger is what stops the same thing happening again, and what stops a FIXED row from quietly becoming unreached.",
+  "reach": "The ledger and its verifier are CI artifacts, so their own reach is the test suite. What they GUARD is every production entry point this round names: the MCP `run_electrothermal` and `run_battery` tools, the domain runners, and `studies/calibration_study`.",
+  "what_was_already_seen": {
+    "R-02": "FIXED in batches 17-18. Before them, `engcore.hybrid_uq` -- every V2 evidence gate -- had no caller in src outside its own package, so the production study ran none of them.",
+    "R-09": "FIXED in batch 14. Before it, `record_values` defaulted to False and NOTHING in src passed True, so the CORE-014 binding looped over an empty mapping on every production path.",
+    "R-21": "NOT FIXED. `TrustedConsensusGate`, which is what requires byte-verified artifact independence before CROSS_SOLVER_VALIDATED, has no caller in src; the one production `to_check` call is in `mcp/problem.py` and reaches the level rule directly. It is level-WITHHELD there, which is a real mitigation and is exactly the kind of fact a ledger should record rather than leave to a reader's inference. I-12 is the improvement that closes it.",
+    "R-43": "NOT FIXED for the producer half. `UncertaintySource` has no producer in src, so `source_kind` is UNSPECIFIED on every record production makes; batch 8's I-09 gave the credibility report an `uncertainty` field, so the transport exists and the declaration does not. I-25 and the SRIA budget rule are where it closes.",
+    "R-58": "NOT FIXED. The production electrothermal coupling passes bare point values with no uncertainty, validity or validation state, and `UncertaintyTransfer` -- which would bind them -- has no caller. I-27 is the improvement that closes it."
+  },
+  "rules": {
+    "the_ledger_declares_reach_and_nothing_infers_it": {
+      "improvement": "I-16",
+      "problem": "all five",
+      "rule": "`certification/guard_reach_ledger.json` carries one row per guard family this round tracks. Each row states: the problem id, the rule's location, a `status` of REACHED, LIBRARY_ONLY or LATENT, the production entry points that reach it, the bypasses that would defeat it, the test that exercises it through a production entry point, and a `why` for the status. A status is a DECLARATION and the verifier checks what can be checked about it; nothing infers reach from a grep.",
+      "the_three_statuses": "REACHED -- a production entry point reaches the rule and a named test exercises it there. LIBRARY_ONLY -- the rule exists and no production entry point reaches it, which is a FINDING and must name the improvement that will close it. LATENT -- the rule guards a shape that does not occur in the tree yet (no caller of the guarded form exists at all), which is not the same as unreached and must say what would create it.",
+      "class": "A (a declaration format; no threshold)"
+    },
+    "a_row_must_be_checkable_and_is_checked": {
+      "improvement": "I-16",
+      "problem": "all five",
+      "rule": "`tools/certification/guard_reach.py` refuses a ledger that is not self-consistent: a row whose named rule file does not exist; a row whose named test file or test function does not exist; a REACHED or LIBRARY_ONLY row that names no production entry point or no reason; a LIBRARY_ONLY row that does not name the improvement that will close it; a LATENT row that does not say what would create the shape it guards; a row naming a bypass the checker does not implement; and a bypass the checker implements that no row names.",
+      "why_both_directions": "a ledger the checker does not enforce is a comment, and a checker with rules the ledger does not name is a guard nobody declared. Either half alone is the defect this round is about.",
+      "class": "A"
+    },
+    "four_static_bypass_checks_fail_the_build": {
+      "improvement": "I-16",
+      "problem": "R-02, R-09, R-21",
+      "rule": "The verifier implements the four bypasses the audit names, over `src/engcore` only, and fails on an UNDECLARED hit. Each check has a declared allow-list in the ledger, with a reason per entry.\n(a) RAW_POSTERIOR_GRID_CONSUMER -- a call to `posterior_predictive_uq` in production. Allowed: `uq/predictive.py` (it IS the function), `hybrid_uq/predictive.py` (it judges the grid first, which is the point), and any module the ledger declares with a reason.\n(b) ASSESS_VALIDITY_WITHOUT_RECORD_VALUES -- a `.validity.assess(` or `.assess_validity(` call under `src/engcore/domains` whose argument list does not pass `record_values`, matched across line breaks. Allowed: `domains/derived_context.py`, whose own default is True.\n(c) TO_CHECK_OUTSIDE_THE_GATE -- a `.to_check(` call outside `execution/consensus.py` that is not immediately wrapped by `_withhold_level`. The mcp/problem.py call is wrapped, which is why it is a mitigation and not a hole, and the check is written so that UNWRAPPING it fails the build.\n(d) ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART -- a `route_uncertainty(` call passing a rebuild policy and `multistart=None`, or passing a rebuild policy and no multistart at all. There is no production caller today, which is what makes this row LATENT.",
+      "why_static_and_not_a_call_graph": "a name-resolved call graph over this tree would be a second implementation of Python's import semantics, and its false negatives would be invisible -- exactly the failure mode of a guard nobody can see the edge of. Each of these four bypasses is a SYNTACTIC shape the audit identified by reading the code, and a syntactic check finds every instance of it or fails loudly on a form it cannot parse.",
+      "class": "A (four syntactic checks; no threshold)"
+    },
+    "a_fixed_problem_must_cite_reach": {
+      "improvement": "I-16",
+      "problem": "all five",
+      "rule": "Every problem the ledger marks `audit_status: FIXED` must have `status` REACHED or LATENT. A fix to a rule production does not reach is not a fix to a production problem, and the ledger refuses to record it as one. A problem whose audit status is PARTIAL or OPEN may be LIBRARY_ONLY, and must then name the improvement that will close it.",
+      "the_audit_json_is_the_cross_check": "each row also carries the audit's own `reached_in_production` value for that problem, and the verifier refuses a row whose value disagrees with `REAUDIT_2026-09-16.json`. So the ledger cannot drift from the audit it is about.",
+      "class": "A"
+    },
+    "the_verifier_runs_in_the_suite": {
+      "improvement": "I-16",
+      "problem": "all five",
+      "rule": "`tests/test_guard_reach_ledger.py` runs the verifier and fails the FAST tier on any finding. The verifier is also a module with a `--verify` entry point, so the same check runs from the command line and in the Core Freeze V4 round.",
+      "class": "A"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "none touched. This batch adds one JSON artifact, one tool module and one test, and changes no production code. If a bypass check finds an undeclared hit, the fix is a ledger row with a reason or a production change -- and which one it is is the ledger's whole purpose.",
+    "behaviour_that_deliberately_changes": [
+      "the FAST tier fails when production gains an undeclared bypass of one of the four shapes, or when a ledger row stops being checkable."
+    ],
+    "serialized_records": "none. `certification/guard_reach_ledger.json` is a new file, written by hand and verified by the tool rather than generated.",
+    "claims_that_move": [
+      "nothing numerical. Three problems are recorded as LIBRARY_ONLY for the first time in a machine-readable place -- R-21, R-43 and R-58 -- which is a statement about this round's own progress rather than about any result."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The ledger covers the guard families this round tracks by R-xx, not every check in the tree. A complete guard inventory is `tests/mutation_guards.py`'s job and the Core Freeze V4 round's (I-30); this is the REACH map, and its rows are the ones whose reach the audit measured.",
+    "The four bypass checks are syntactic. A bypass written in a shape none of them matches -- a dynamic dispatch, a getattr, a call through an alias the checker does not resolve -- is not caught, and the ledger says so per row rather than claiming completeness.",
+    "REACHED means a production entry point reaches the rule and a named test exercises it there. It does not mean every production path reaches it: R-09's own residual is that 59 of 77 condition names cannot be bound, and the ledger's `why` carries that rather than hiding it behind the status.",
+    "The verifier reads `src/engcore` only. A bypass in `benchmarks/`, `studies/` outside the package, or a test is not production and is not checked."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "four_static_bypass_checks_fail_the_build (b) ASSESS_VALIDITY_WITHOUT_RECORD_VALUES",
+      "what_changed": "The preregistered allow-list for this check was `domains/derived_context.py`, whose own default is True. The committed allow-list is EMPTY, and the reproduction shows detection on an INJECTED source rather than on a hit in the tree.",
+      "the_numbers_that_forced_it": "Over the 233 production modules (52 under src/engcore/domains, carrying 7 `.validity.assess(`/`.assess_validity(` call sites), the checker finds 0 hits with an empty allow-list. Batch 14's I-11 closed every one of the 7 sites. `domains/derived_context.py` is not among them either: line 192 forwards `record_values=record_values`, so the name IS in the argument list the checker reads and the site was never a hit. So the preregistered allow-list entry would have been unnecessary, and an unnecessary allow-list entry is a hole nobody would notice -- if a later edit dropped the flag from that helper, the allow-list would have hidden it.",
+      "why_this_is_not_a_threshold_change": "No threshold moved; this check has none. What moved is a factual expectation about the tree, and it moved in the direction the guard wants: the shape the check looks for does not occur. The reproduction could not keep its preregistered form (`assessments_without_record_values(allowed=()) != []`), because that assertion asserts a fixed defect stays broken. It now asserts the tree is clean AND that the checker finds the shape in an injected source and does not flag the same site once the flag is passed -- the same construction the TO_CHECK_OUTSIDE_THE_GATE and ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART reproductions already needed, for the same reason.",
+      "where_it_is_recorded": "the empty list and its reason are in the R-09 row's `note_on_the_empty_allow_list` in certification/guard_reach_ledger.json, in the checker's own docstring, and in the amended test's docstring."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "a_row_must_be_checkable_and_is_checked",
+      "what_changed": "Two refusals were added to the verifier beyond the list written in the preregistration: an allow-list entry with no reason, and an allow-list entry naming a path that does not exist.",
+      "why": "The first is the preregistered rule's own words made enforceable -- `Each check has a declared allow-list in the ledger, with a reason per entry` was written as a format requirement and nothing checked it, which is the one-level-up version of the defect this whole improvement is about. The second catches an allow-list that keeps allowing a module after it is renamed or deleted, which would silently widen the check's blind spot. Both are strictly stricter; neither can turn a finding into a pass.",
+      "the_numbers_that_forced_it": "none -- no result was seen. Both were added while implementing the preregistered rule text, before the ledger's first clean run."
+    }
+  ]
+}

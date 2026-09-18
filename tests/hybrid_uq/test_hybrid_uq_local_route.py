@@ -20,6 +20,7 @@ from engcore.hybrid_uq import (
     local_gaussian_posterior,
     reconstruct_local_sensitivity,
 )
+from engcore.hybrid_uq.local_gaussian import POORLY_SCALED_CONDITION_LIMIT
 from engcore.inference import CalibrationStatus, IdentifiabilityStatus
 
 
@@ -51,7 +52,14 @@ def test_the_cost_is_order_p_plus_multistart():
     # probes and 2p(p - 1) diagonal probes between two axes: 4p + 1 + 2p^2. This pinned 6p + 1 before audit HUQ-08,
     # when the probes looked along the principal axes only and a cross term between two of them went unseen.
     p = 2
-    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p
+    # + the tail probes at 3 and 6 sd (CORE-003), all inside the declared bounds here. This pinned 4p -- the p
+    # principal axes, two radii, two signs -- until I-08 part B (batch 21), where R-14 widened the tail
+    # direction set to every direction the +/-2 sd probes cover (the p axes and the p(p-1) diagonals) plus the
+    # curvature matrix's two extreme eigenvectors: 2 * 2 * (p^2 + 2). A posterior exactly Gaussian on both
+    # axes out to 6 sd and saturating along its diagonals was SUPPORTED with no reason at all, and no axis
+    # probe could see it. The ORDER is unchanged -- the diagnostics were already O(p^2) -- and the constant
+    # goes from 2p^2 + 4p to 6p^2 + 8.
+    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p + 4 * (p * p + 2)
 
 
 def test_intervals_are_labelled_and_mapped_back_through_a_log_transform():
@@ -165,12 +173,29 @@ def test_a_thin_correlated_ridge_is_exact_where_a_coarse_bounds_grid_aliases():
     assert np.all(np.abs(np.asarray(post.inference_point) - mu) / sd < 1e-4)
 
 
-def test_a_poorly_scaled_parameterization_is_downgraded_not_silently_trusted():
+def test_a_unit_choice_is_recorded_and_never_downgrades_a_well_conditioned_fit():
+    """This asserted POORLY_SCALED_PARAMETERIZATION on this case, and that was R-26.
+
+    The case is a pure UNIT choice: the same straight line with its intercept in units of 1e-9 and its slope
+    in units of 1e4. Its raw condition number is 3.19e9 and its column-equilibrated condition number is
+    3.474 -- the fit is exactly Gaussian and perfectly well conditioned for a solver that equilibrates, which
+    this one does. Any caller produces a raw condition number of any size by restating a parameter in a
+    smaller unit, so a claim that follows from it is not a claim about the evidence. I-08 part A (batch 20)
+    moved the downgrade onto the equilibrated condition number against
+    `sqrt(NONLINEARITY_DOWNGRADE) * NUMERICAL_CONDITION_LIMIT`, and left the raw number RECORDED.
+
+    So the claim here is the corrected one, and it is not weaker: the raw condition is still computed and
+    still recorded (a number nobody reads is a number that stops being computed), the scaling downgrade is
+    NOT emitted for a well-conditioned fit, and the downgrade that replaced it is exercised where it can be
+    stated exactly -- on a record whose equilibrated condition is above the limit, in
+    `tests/test_core_scientific_audit_batch20.py`.
+    """
     P = S.Problem("poorly_scaled", lambda t, x: t[0] * 1e-9 + t[1] * 1e4 * x, np.linspace(0.0, 1.0, 12), (2e9, 1e-4), 0.05,
                   (0.0, -1.0), (1e10, 1.0), (1e9, 0.0))
     _, post = _route(P, multistart=None)
     assert post.diagnostics.raw_jacobian_condition > post.diagnostics.jacobian_condition * 1e6
-    assert RouteReason.POORLY_SCALED_PARAMETERIZATION in post.diagnostics.downgrades
+    assert post.diagnostics.jacobian_condition < POORLY_SCALED_CONDITION_LIMIT
+    assert RouteReason.POORLY_SCALED_PARAMETERIZATION not in post.diagnostics.downgrades
 
 
 def test_no_residual_degrees_of_freedom_is_refused():
@@ -255,8 +280,12 @@ def test_the_claim_must_follow_from_the_reasons():
     assert math.isfinite(post.diagnostics.minimum_bound_distance_sd)
 
 
-def test_an_inadmissible_multistart_start_is_retracted_toward_the_estimate_and_recorded():
-    """A bounds box is not an admissible region: here only theta1 > theta2 is admissible."""
+def test_an_inadmissible_multistart_start_is_replaced_by_another_halton_point_and_recorded():
+    """A bounds box is not an admissible region: here only theta1 > theta2 is admissible.
+
+    I-02 (batch 10) replaced retraction toward the estimate with replacement by the next unused point of the
+    same Halton sequence, so the recorded count is `replacements` and the used start is a full-span point.
+    """
     P = S.affine()
     base = P.forward
 
@@ -265,8 +294,11 @@ def test_an_inadmissible_multistart_start_is_retracted_toward_the_estimate_and_r
 
     calibration = P.calibrate()
     post = local_gaussian_posterior(calibration, P.observations, ordered, multistart=MultistartPolicy())
-    retracted = [m for m in post.diagnostics.multistart if m.get("retractions", 0) > 0]
-    assert retracted, "the Halton starts include inadmissible points; at least one must be retracted"
+    replaced = [m for m in post.diagnostics.multistart if m.get("replacements", 0) > 0]
+    assert replaced, "the Halton starts include inadmissible points; at least one must be replaced"
+    assert all("retractions" not in m for m in post.diagnostics.multistart), "nothing retracts any more"
+    assert all(tuple(m["start"]) != tuple(m["proposed_start"]) for m in replaced), \
+        "a replaced start is a different point from the one the model refused"
     assert all(m["status"] == "CALIBRATION_CONVERGED" for m in post.diagnostics.multistart)
     assert post.diagnostics.uniqueness == "MULTISTART_NO_SECOND_MODE"
     assert post.claim is RouteClaim.SUPPORTED

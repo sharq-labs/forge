@@ -187,7 +187,9 @@ def solve_slab_with_bulk_field(
         # not say less about its model because its field went into a data
         # reference instead of into memory.
         validity={
-            model.model_id: model.validity.assess({"alpha": slab.diffusivity})
+            # I-11: record the value the condition read, so a result whose provenance states
+            # another diffusivity cannot carry this verdict.
+            model.model_id: model.validity.assess({"alpha": slab.diffusivity}, record_values=True)
             for model in CONDUCTION_MODELS
         },
         solver=solver.identity,

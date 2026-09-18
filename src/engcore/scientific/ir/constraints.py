@@ -38,9 +38,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
-from ..errors import InvalidScientificProblem
+from ..errors import InvalidScientificProblem, UnitCompatibilityError
 from ..serialization import require_bool, require_schema, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, base_unit, is_ratio_scale, require_spread_unit
 from ..units.validation import require_same_dimension
 
 CONSTRAINT_SCHEMA = schema_string("constraint_definition")
@@ -63,6 +63,47 @@ class ConstraintCheck:
     satisfied: bool
     margin: Quantity
     value: Quantity
+
+    def __post_init__(self) -> None:
+        """R-41: the verdict and the margin are one measurement, so they cannot disagree.
+
+        This record had no constructor rule at all, and it is the single field a selection reads:
+        `satisfied=True` beside a margin of -2.5 A was accepted, survived a round trip, and won the ranking.
+        `ConstraintDefinition.check` computes the two together and for every operator the sign of the margin
+        IS the verdict -- inside the bound is positive, outside is negative -- so a record where they
+        disagree was not produced by it.
+
+        Zero is accepted for either verdict, deliberately: at exactly the limit a non-strict operator is
+        satisfied and a strict one is not, and a check does not carry its operator, so zero is the one value
+        the two answers share.
+        """
+        name = str(self.constraint).strip()
+        if not name:
+            raise InvalidScientificProblem("a constraint check names the constraint it tested")
+        object.__setattr__(self, "constraint", name)
+        if not isinstance(self.satisfied, bool):
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports satisfied={self.satisfied!r}, which is a "
+                f"{type(self.satisfied).__name__}, not a verdict. A truthy value is not a statement that a "
+                f"constraint held"
+            )
+        for label, quantity in (("margin", self.margin), ("value", self.value)):
+            if not isinstance(quantity, Quantity):
+                raise InvalidScientificProblem(
+                    f"constraint check {name!r} carries {label}={quantity!r}, which is not a Quantity"
+                )
+        margin = float(self.margin.magnitude)
+        if self.satisfied and margin < 0.0:
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports the constraint satisfied and a margin of {self.margin}. "
+                f"A negative margin is the measurement of being outside the bound: the verdict and the "
+                f"number it comes from are one result and cannot disagree"
+            )
+        if not self.satisfied and margin > 0.0:
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports the constraint violated and a margin of {self.margin}. "
+                f"A positive margin is the measurement of being inside the bound"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -129,7 +170,27 @@ class ConstraintDefinition:
                 self.bound,
                 context=f"constraint {name!r} tolerance",
             )
-            if self.tolerance.to(self.bound.units).magnitude < 0.0:
+            # A TOLERANCE IS A DIFFERENCE (I-22, R-48).
+            #
+            # It was converted with `.to(self.bound.units)`, the ABSOLUTE
+            # conversion, and the sign was then checked on that number. A
+            # '2 degC' tolerance on a 358.15 kelvin bound became 275.15 kelvin,
+            # so a 600 kelvin reading SATISFIED a 358.15 kelvin limit and the
+            # check reported a margin of 33.3 kelvin. Written the other way
+            # round, a perfectly good 2 kelvin tolerance on an 85 degC bound
+            # converted to -271.15 and was refused for being NEGATIVE.
+            #
+            # `require_spread_unit` is the rule the domains already applied to
+            # a coupling tolerance and an excursion span; on a ratio scale a
+            # magnitude's sign does not depend on the unit, so the check
+            # belongs on the magnitude AS DECLARED.
+            try:
+                require_spread_unit(
+                    self.tolerance.units, context=f"constraint {name!r} tolerance"
+                )
+            except UnitCompatibilityError as exc:
+                raise InvalidScientificProblem(str(exc)) from exc
+            if self.tolerance.magnitude < 0.0:
                 raise InvalidScientificProblem(
                     f"constraint {name!r}: tolerance must be non-negative"
                 )
@@ -145,8 +206,12 @@ class ConstraintDefinition:
             value, self.bound, context=f"constraint {self.name!r} value"
         )
         measured = value.to(self.bound.units)
+        # Read as a DIFFERENCE, which is what lets the delta spelling work at
+        # all: `magnitude_in` has no conversion from delta_degC to degC and
+        # raises. The declared unit is a ratio scale, so for every constraint
+        # in this repository this is the identity. (I-22, R-48.)
         tol = (
-            self.tolerance.to(self.bound.units).magnitude
+            self.tolerance.magnitude_as_spread_in(self.bound.units)
             if self.tolerance is not None
             else 0.0
         )
@@ -178,10 +243,29 @@ class ConstraintDefinition:
             margin = tol - abs(x - b)
             satisfied = abs(x - b) <= tol
 
+        # A MARGIN IS A DIFFERENCE, AND ITS UNIT HAS TO BE ABLE TO SAY SO.
+        #
+        # Labelled with the bound's unit, a twelve-degree margin under an
+        # 85 degC limit was `12.0 degree_Celsius`, and every consumer that
+        # converted it read 285.15 kelvin. The bound's unit is kept when it is
+        # a ratio scale -- which it is for every constraint this repository
+        # declares, so no serialized check moves a byte -- and the dimension's
+        # base unit is used when it is not. The base unit rather than a
+        # synthesized `delta_` name, because the base unit is what the registry
+        # already gives and inventing a unit NAME from a string is the kind of
+        # guess this round is against. (I-22, R-48.)
+        margin_unit = (
+            self.bound.units
+            if is_ratio_scale(self.bound.units)
+            else base_unit(self.bound.units)
+        )
         return ConstraintCheck(
             constraint=self.name,
             satisfied=bool(satisfied),
-            margin=Quantity(margin, self.bound.units),
+            margin=Quantity(
+                Quantity(margin, self.bound.units).magnitude_as_spread_in(margin_unit),
+                margin_unit,
+            ),
             value=measured,
         )
 

@@ -262,8 +262,19 @@ def test_m_a_valid_covariance_still_round_trips_byte_identically():
 def _supported_multistart_posterior():
     from engcore.hybrid_uq import MultistartPolicy
 
+    from engcore.inference import calibrate
+
+    # R-12 (I-13 part A, batch 22): calibrated ON the conditioned observations, not on the bare ones with
+    # the conditions declared afterwards. A posterior now carries a digest of the observation CONTENT it was
+    # fitted to, and `linearized_predictive_uq` refuses `calibration_observations` that do not match -- a
+    # rule that accepted the same observations with conditions ADDED could not tell that apart from the same
+    # observations with their conditions RESCALED, which is one of R-12's three audited reproductions. The
+    # conditions are part of the evidence and belong on the observations the fit used. The fit itself is
+    # unchanged: a declared condition enters no residual.
     P = S.affine()
-    post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
+    observations = S.conditioned(P)
+    fit = calibrate(P.spec, observations, P.forward, heldout_dataset_id="synthetic.affine.heldout")
+    post = local_gaussian_posterior(fit, observations, P.forward, multistart=MultistartPolicy())
     assert post.claim is RouteClaim.SUPPORTED and post.reasons == ()
     return post
 
@@ -285,10 +296,12 @@ def test_o_and_p_skipping_the_check_changes_the_claim_and_not_the_numbers():
     from engcore.uq import PredictiveObservableSpec
 
     post = _supported_multistart_posterior()
-    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT))
+    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT), conditions={"x": Quantity(0.5, UNIT)})
     predict = lambda t: [Quantity(t[0] + 0.5 * t[1], UNIT)]  # noqa: E731
-    (checked,) = linearized_predictive_uq(post, predict, [spec])
-    (unchecked,) = linearized_predictive_uq(post, predict, [spec], check_nonlinearity=False)
+    calibrated = S.conditioned(S.affine())  # CORE-006: x = 0.5 lies inside the calibrated range
+    (checked,) = linearized_predictive_uq(post, predict, [spec], calibration_observations=calibrated)
+    (unchecked,) = linearized_predictive_uq(post, predict, [spec], check_nonlinearity=False,
+                                            calibration_observations=calibrated)
     # P: the default, complete check on an affine prediction still supports it
     assert checked.route_claim is RouteClaim.SUPPORTED and checked.reasons == ()
     assert checked.predictive_nonlinearity is not None and checked.predictive_nonlinearity < 1e-6
@@ -313,7 +326,12 @@ def _local_result():
 
 def _grid_result():
     P = S.affine()
-    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]))
+    # A supplied grid narrower than the declared bounds now needs a uniqueness basis (R-06, re-audit
+    # 2026-09-16), and the only basis a grid route can get is a search, which needs the calibration.
+    # The record this returns is what the router produces for a properly posed request; what the tests
+    # below do to it is unchanged.
+    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
+                               calibration=P.calibrate(), observations=P.observations, forward=P.forward)
     assert result.decision is RouteDecision.GRID_AS_SUPPLIED
     return result
 
@@ -451,7 +469,7 @@ def test_an_offset_scale_coordinate_may_be_copied_but_not_combined():
 def _rebuilt_grid_result():
     from engcore.hybrid_uq import GridRebuildPolicy, MultistartPolicy
 
-    P = S.strong_nonlinearity()
+    P = S.bimodal_two_parameter()  # F1 until CORE-002: its rebuilt posterior spans both declared bounds
     result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
                                multistart=MultistartPolicy(), rebuild=GridRebuildPolicy(P.table_builder()))
     assert result.decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE

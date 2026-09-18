@@ -187,14 +187,20 @@ def _tight_nonlinear():
     wide = S.Problem("wide", model, x, truth, 0.35, (0.01, 0.01), (20.0, 10.0), truth, observed=model(truth, x))
     sd = np.sqrt(np.diag(np.asarray(local_gaussian_posterior(wide.calibrate(), wide.observations, wide.forward,
                                                              multistart=None)._design_covariance)))
-    return S.Problem("tight", model, x, truth, 0.35, truth - 1.5 * sd, truth + 1.5 * sd, truth, observed=model(truth, x))
+    # I-08 part A (batch 20) moved the probe basis to the CORRELATION eigenbasis scaled by the marginal sds,
+    # which for this correlated posterior (r = 0.552) probes CLOSER IN along its per-parameter axes: the
+    # smallest per-axis excursion of a 2 sd probe is 0.9468 sd, where the old eigh(cov) basis exceeded 1.5 sd
+    # on every probe. The fixture's factor moves from 1.5 to 0.9 so that every probe still leaves the box,
+    # which is what this test is about. The claim is unchanged -- a route whose probes all left the bounds
+    # emits no covariance -- and it is the FIXTURE that had to follow the basis, not the assertion.
+    return S.Problem("tight", model, x, truth, 0.35, truth - 0.9 * sd, truth + 0.9 * sd, truth, observed=model(truth, x))
 
 
 def test_huq10_a_route_whose_probes_all_left_the_bounds_emits_no_covariance():
     P = _tight_nonlinear()
     calibration = P.calibrate()
     post = local_gaussian_posterior(calibration, P.observations, P.forward, multistart=MultistartPolicy())
-    assert post.diagnostics.minimum_chi_square_rise == math.inf, "every probe leaves the +/-1.5 sd box"
+    assert post.diagnostics.minimum_chi_square_rise == math.inf, "every probe leaves the +/-0.9 sd box"
     assert math.isnan(post.diagnostics.nonlinearity_index)
     assert post.claim is RouteClaim.REFUSED and post.covariance is None
     assert RouteReason.NONLINEAR_BEYOND_LOCAL_GAUSSIAN in post.diagnostics.refusals

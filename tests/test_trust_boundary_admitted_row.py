@@ -99,7 +99,9 @@ SEQUENCE = ValidationReport(
             establishes=ValidationLevel.NUMERICALLY_CONVERGED,
             residual=1e-10,
             tolerance=1e-8,
-            evidence=("fixture: a synthetic tolerance ladder",),
+            # R-71: a convergence SEQUENCE has members, and its establishing check now names at
+            # least two of them; one entry is a single solve, which admission refuses.
+            evidence=("fixture: ladder member 1", "fixture: ladder member 2"),
         ),
     )
 )
@@ -110,7 +112,9 @@ def _prediction(prediction_id: str = "tb2-pred", value: float = 1.25):
         prediction_id=prediction_id,
         domain="synthetic",
         adapter_id="tb2-adapter",
-        binding_ref=f"binding:{prediction_id}",
+        # R-71 (I-28 part C): a binding reference now has to name something the source's own record
+        # carries, so the fixture writes the model identity its source declares instead of a free string.
+        binding_ref=f"{MODEL[0]}@{MODEL[1]}",
         source_result=_source(f"{prediction_id}-source", value),
         observable_names=("y",),
         sequence_validation=SEQUENCE,
@@ -149,7 +153,7 @@ def test_the_official_admission_path_still_produces_an_admitted_row():
     # needs that before the ids, and a ref that omitted it would make the two
     # routes indistinguishable after the fact.
     assert row.admission_refs == (
-        "numerical|tb2-pred|verification:tb2-pred|binding:tb2-pred",
+        "numerical|tb2-pred|verification:tb2-pred|synthetic.tb2_response@1.0.0",
     )
     assert row.rejection_reason == ""
     # The constructor is the same gate under its own name.
@@ -308,8 +312,19 @@ def test_a_table_row_marked_admitted_must_carry_its_admission_records():
             admission_refs=(("only-one",), ()),
             rejection_reasons=("", "not admitted"),
         )
+    # R-71 (re-audit 2026-09-16, I-28 part B): an admission record also has to BE one. A free string such
+    # as the 'a' this line used to pass is the same absence of evidence with extra characters -- the audit's
+    # table of fabricated values carried 'forged' and 'x' and produced a posterior -- so the form the
+    # admission gate writes is now required, and a free string is refused beside the blank and the
+    # wrong-count cases above.
+    with pytest.raises(InferenceProblemError, match="admission record"):
+        AdmittedForwardTable(
+            **base, admissible_mask=np.asarray([True, False]), admission_refs=(("a",), ())
+        )
     accepted = AdmittedForwardTable(
-        **base, admissible_mask=np.asarray([True, False]), admission_refs=(("a",), ())
+        **base,
+        admissible_mask=np.asarray([True, False]),
+        admission_refs=(("numerical|pred-1|ver-1|bind-1",), ()),
     )
     assert accepted.admissible_mask.tolist() == [True, False]
 

@@ -1,0 +1,6 @@
+B3a test_core013_a_report_with_a_check_that_never_ran_is_not_a_pass -> KILLED | 1 failed in 0.48s
+B3b test_core008_a_report_says_when_its_evidence_is_verification_only -> KILLED | 1 failed in 0.46s
+B3c test_core008_a_verdict_resting_on_verification_alone_says_so_in_every_report -> KILLED | 1 failed in 1.83s
+B3d test_core015_an_unassessed_or_unknown_candidate_is_never_best -> KILLED | 1 failed in 0.48s
+B3e test_core015_an_unassessed_or_unknown_candidate_is_never_best -> KILLED | 1 failed in 0.56s
+CONTROL (unmutated) GREEN | 4 passed in 1.91s

@@ -135,7 +135,7 @@ class MultistartPolicy:
     max_evaluations: int = 2000
     mode_separation_quantile: float = 0.999   # Mahalanobis^2 beyond chi2(p) quantile = a different optimum
     comparable_fit_quantile: float = 0.99     # chi-square within chi2(p) quantile of the best = comparable
-    maximum_retractions: int = 12             # an inadmissible start is halved toward the estimate until admitted
+    maximum_retractions: int = 12             # an inadmissible start is replaced by the next unused Halton point
     # start_points(parameter_set) -> tuple[tuple[float, ...], ...]  (deterministic, natural units)
     # to_dict / from_dict / digest
 
@@ -206,7 +206,7 @@ def local_gaussian_posterior(
 ) -> LocalGaussianPosterior
 ```
 
-*Amendment.* `maximum_retractions` was added when the Battery B3 run showed a failure: every box-filling Halton start produced non-monotone knot voltages. The production adapter refuses those, so no restart could run, and each model was capped at MULTISTART_INCOMPLETE. A bounds box does not describe a model's admissible region; retracting toward the (admissible) estimate does. Every retraction is recorded per start.
+*Amendment.* `maximum_retractions` was added when the Battery B3 run showed a failure: every box-filling Halton start produced non-monotone knot voltages. The production adapter refuses those, so no restart could run, and each model was capped at MULTISTART_INCOMPLETE. A bounds box does not describe a model's admissible region, so a refused start needs a different one. It was first retracted toward the (admissible) estimate, halving the distance each time; the re-audit's R-18 shows why that is not a search (below), and the field now budgets REPLACEMENTS. The name and the default of 12 are unchanged.
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
@@ -216,6 +216,13 @@ def local_gaussian_posterior(
 - **Diagonal probes.** The ±2 sd χ² probes run along every principal axis **and** every diagonal (sᵢvᵢ ± sⱼvⱼ)/√2 between two of them: 2p² probes, each of unit Mahalanobis length. Axis probes alone could not see a cross term uᵢuⱼ, so a saddle whose descent lay between two axes passed as a minimum. The validity diagnostics therefore cost at least 4p + 1 + 2p² forward evaluations (O(p²)), not O(p).
 - **A lower refit is never the same optimum.** A converged refit inside the separation radius whose χ² is below the estimate's by more than max(2 × the Gauss–Newton predicted decrease, 0.05²) is `LOWER_OBJECTIVE_SAME_BASIN` and refuses `NOT_A_LOCAL_MINIMUM`.
 - **No measurement is not a measurement.** When fewer than p probes are evaluated (outside the bounds, or refused), `nonlinearity_index` is NaN and the route refuses `NONLINEAR_BEYOND_LOCAL_GAUSSIAN`: no covariance nobody compared with the model is emitted.
+
+*Amendment (core re-audit 2026-09-16, I-02: R-07, R-08, R-18).* The search a claim of a single mode rests on counted things that had not happened. Four further rules hold:
+
+- **The budget and the replacement allowance are part of the minimum search.** `max_evaluations` below the canonical 2000, or `maximum_retractions` below the canonical 12, is a recorded shortfall like a narrower span, because the start that travels to a distant mode is the slow one: a refit budget of 12 turned REFUSED `SECOND_MODE_FOUND` into SUPPORTED `MULTISTART_NO_SECOND_MODE` with no shortfall recorded at all.
+- **The minimum search counts CONVERGED refits.** A search is incomplete unless at least `max(6, 2p + 2)` starts converged. The rule was `converged * 2 < len(entries)`, so up to half the starts could fail silently — and the refits that fail are the ones that were travelling furthest. A refit that does not converge under a budget below the canonical one is retried exactly once at the canonical budget, and the retry's outcome is what the entry records.
+- **A refused start is REPLACED, not retracted.** The next unused point of the same Halton sequence takes its place, from one counter shared by every start so no two take the same one. Retraction narrowed the span — a start retracted k times searched `2 ** -k` of its intended span, up to 1/4096 — and the recorded count was read by nothing. Each entry now records `replacements` and no longer records `retractions`.
+- **A separated optimum is classified by its MASS.** A converged refit beyond the separation radius that is not a `BETTER_OPTIMUM` is `SECOND_MODE` when its Laplace mass ratio `exp(-(χ² - χ²_min) / 2) * sqrt(det Σ / det Σ_min)` exceeds `MULTISTART_MASS_FLOOR = 1e-3`, and `WORSE_LOCAL_OPTIMUM` when it does not; the ratio is recorded per entry and the read-back holds the word to it. Posterior mass depends on a mode's volume as well as its peak height, and classifying by height alone read a broad basin ten χ² units up holding 0.79 of the posterior as merely worse — which the verdict then ignored. A mode whose mass cannot be bounded (no curvature at the refit, or an overflowing ratio) records `laplace_mass_unavailable` and counts as a second mode. `BETTER_OPTIMUM` is unchanged and its mass is never consulted: it says the estimate is not the optimum, and no mass argument rescues the covariance built at it.
 
 **A reparameterization keeps unit semantics.** `reparameterized(matrix, names, units, label)` forms linear combinations of inference coordinates, so every output row must be dimensionally meaningful.
 
@@ -400,6 +407,8 @@ def routed_predictive_uncertainty(
 | `NONLINEAR_BEYOND_LOCAL_GAUSSIAN` | nonlinearity index > 0.50, or fewer than p probes evaluated (index NaN) |
 | `SECOND_MODE_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² ≤ χ²_min + χ²_p(0.99) |
 | `BETTER_OPTIMUM_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² lower than the estimate's by more than χ²_p(0.99) |
+| `MODEL_MISFIT_BEYOND_DECLARED_NOISE` | the pooled χ²/(n − p), **or** the leverage-weighted statistic over its null mean, exceeds 4 — whatever the p-value (core re-audit R-20) |
+| `GOODNESS_OF_FIT_NOT_MEASURABLE` | grid only: no curvature could be built at the grid's best node, so the fit cannot be tested where the information is (core re-audit R-03) |
 
 **Downgrades** (claim DOWNGRADED):
 
@@ -410,10 +419,12 @@ def routed_predictive_uncertainty(
 | `NONLINEARITY_PROBE_INCOMPLETE` | a ±2 sd probe was not evaluated: it fell outside the bounds, was inadmissible, or (predictive only) was never run because `check_nonlinearity=False` |
 | `POORLY_SCALED_PARAMETERIZATION` | raw cond(J_w) > 1/√ε while the equilibrated condition is representable |
 | `GLOBAL_UNIQUENESS_NOT_ASSESSED` | `multistart=None` |
-| `MULTISTART_INCOMPLETE` | fewer than half the starts converged, or the policy is below the minimum search (`max(6, 2p + 2)` starts, canonical span and quantiles) |
+| `MULTISTART_INCOMPLETE` | fewer than `max(6, 2p + 2)` starts CONVERGED, or the policy is below the minimum search (`max(6, 2p + 2)` starts, canonical span, quantiles, refit budget and replacement allowance) |
 | `PREDICTIVE_NONLINEAR` | predictive only: a probe deviates from the linear extrapolation by more than 0.10 parameter sd |
+| `RESIDUALS_EXCEED_DECLARED_NOISE` | the pooled test **or** the leverage test has p < α/2 = 0.005 with a ratio at most 4 |
+| `GOODNESS_OF_FIT_UNDERPOWERED` | n − p ≤ 2, where the gate misses a true variance ratio of 4 more often than it catches it (core re-audit R-20) |
 
-**Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`.
+**Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`, `GRID_MODE_UNRESOLVED`, `GRID_CUT_BY_INADMISSIBILITY`.
 
 **Refusals with no reason code.** Some local-route refusals happen before there is a posterior record to attach a reason to. The main one is a finite-difference Jacobian that does not converge. `local_gaussian_posterior` raises `RouteRefusedError` for these. The router records them as `LOCAL_GAUSSIAN` with outcome `REFUSED` and the exception text as `detail`, and ends `REFUSED` with no numbers. They get no reason code because `RouteReason` is part of the Core Freeze V2 contract, and a new member would move the V2 frozen digest.
 
@@ -425,6 +436,17 @@ The thresholds are module constants, recorded inside every `RouteDiagnostics.thr
 - failure cases F1–F6.
 
 The stationarity threshold is new and must be validated on the same set before freeze.
+
+*Amendment (core re-audit 2026-09-16, I-05: R-05, R-17).* **Every mode in the band, and the model's own domain.** Two additive V2 checks run wherever a grid is held to its evidence — the supplied-grid route, the rebuild, and routed prediction. V1's `src/engcore/inference/calibration.py` is unchanged: the checks import its constants and its exact aliasing enumeration.
+
+- **`GRID_MODE_UNRESOLVED`.** V1 fits ONE least-squares quadratic about the global argmax, over a window of 50 nats or more, with no test of how well it fits, and floors flat or convex directions to "cannot alias". With two modes in the box that window pools both: the fitted lattice variance came out at 285 to 7e3 and the aliasing check switched itself off, so a mode of local sd 0.00065 at a step of 0.005 was SUPPORTED with an sd 14× too small. Now every INTERIOR lattice node within ln 1e6 of the peak that is at least as high as all `3^p − 1` of its neighbours gets its own quadratic on the smallest box holding V1's own node count, in V1's lattice units and with V1's floors. The fit must describe its own nodes to `MODE_FIT_RESIDUAL_NATS` = `_ALIASING_NUMBER_MINIMUM / 2` = ln 100 — the aliasing bound is declared as a 1% amplitude, and ln 100 nats *is* that tolerance in the log-density the fit works in — and its curvature must pass V1's aliasing bound. The full stencil matters: over the `2p` axis neighbours alone an exactly Gaussian TILTED ridge staircases into spurious maxima. Spurious maxima are harmless by construction — each yields the ridge's own curvature — so the scan only has to miss nothing.
+- **`GRID_CUT_BY_INADMISSIBILITY`.** `grid_containment` takes each face's peak over ADMISSIBLE nodes only, so a posterior cut off inside the box by the forward model's refusal never reaches a face: SUPPORTED with mean errors up to +0.57 true sd, where the same cut at a declared bound is refused. Now an admissible node the posterior reaches with an inadmissible lattice neighbour is a truncation face — passed over on a supplied grid, and joined to the rebuild's truncation halving so steps across the cut are halved until the moments move less than `TRUNCATION_CONVERGENCE_SD`. It is not `GRID_DOES_NOT_CONTAIN_POSTERIOR`, which says to grow the box; growing cannot fix a cut inside it. And it is never `GRID_POSTERIOR_BOUND_DOMINATED`: that reason is about the DECLARED range being what a width describes, while an admissibility cut is the model's own domain, so the rebuild keeps the two lists apart and runs the domination check before the cuts join the halving list.
+
+*Amendment (core re-audit 2026-09-16, I-04: R-03, R-20).* **The goodness of fit is tested twice, and where the information is.** Beside the pooled χ² on n − p degrees of freedom, the route computes the leverage-weighted statistic `T = Σᵢ Hᵢᵢ rᵢ²`, where `Hᵢᵢ` is the hat-matrix diagonal of the whitened Jacobian — observation i's share of the Fisher information that builds the reported covariance. Under the route's premise the fitted residuals satisfy `r = (I − H)e`, so `T` is a quadratic form whose cumulants `c_k = tr(((I − H) diag(H))ᵏ)` are computed in closed form and matched to a shifted, scaled χ² on three moments. At equal weights `c₁ = c₂ = c₃ = n − p` and the leverage test IS the pooled test.
+
+Each test runs at **α/2 = 0.005**, so the family-wise false-refusal rate stays the declared α, and the worse result stands. Why it was needed: an observation with a large declared σ adds almost nothing to `Jᵀ_w J_w`, so it does not move the covariance, but it adds a degree of freedom to the pooled test. Ten precise points at χ²/dof 9 were REFUSED alone and SUPPORTED with 60 over-declared or 1000 honestly low-precision points appended, with a covariance identical to 4 digits. Two further rules: the variance-ratio refusal fires whatever the p-value (at 1 residual dof a χ² of 6.6 — a scatter 2.6× the declared σ — had read SUPPORTED because the p-value branch returned first), and `n − p ≤ 2` adds `GOODNESS_OF_FIT_UNDERPOWERED`, because there the gate misses a true factor-4 misfit with probability 0.68 and 0.63.
+
+`RouteDiagnostics` carries `leverage_weighted_chi_square` and `leverage_null_cumulants` so a reader re-derives both verdicts; a record written before the rule carries neither and is held to the pooled test alone. The grid route runs the same two tests at its best admissible node, with a convergence-checked Jacobian there, and is passed over with `GOODNESS_OF_FIT_NOT_MEASURABLE` when that curvature cannot be built.
 
 *Amendment (audit, stream hybrid).* The committed Core V2 evidence under `benchmarks/core_v2_hybrid_uq` was produced before the audited rules above. `TCR.json`, `FAILURE_CASES.json`, `PERFORMANCE.json` and `WHEEL_V2.json` were regenerated under them; `BATTERY_T41.json` and `KINETICS_K2.json` were not, and each carries a `*.SUPERSEDED.md` / `*.SUPERSEDED.json` marker beside it stating what changed and what is known about what it would now say.
 

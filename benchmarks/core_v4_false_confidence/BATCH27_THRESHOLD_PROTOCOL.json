@@ -1,0 +1,70 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 27,
+ "improvements": [
+  "I-22 part B of three"
+ ],
+ "problems_addressed": [
+  "R-52"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "b9baf42e",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part A (batch 26) was the boundary: what a declaration may say. This part is the COMPARISON: a relative difference is meaningful only on a ratio scale, and the unit it is taken in must not depend on the order the routes were declared in. It closes R-52 (the audit's findings 64 and 101), which names two sites -- `CrossSolverConsensus.from_results`/`_compare` and `oracles._same_operating_point`. Part C is R-57 and R-48: the corner-agreement guard, and tolerances, sigmas and spreads converted as deltas.",
+ "reach": "LIBRARY_ONLY, and the audit says why: the only production caller of `from_results` is `src/engcore/domains/electrical/dc_consensus.py`, which lists the native route first and reports on ratio scales, so no production pin reaches the flip. `_same_operating_point` is reached by `ScientificResult`'s CORE-009/CORE-014 binding, which IS production, but no production result states an operating point on an offset scale. The rule is fixed in the core because it applies to every consumer, and the ledger row will say LIBRARY_ONLY rather than claim reach the code does not have.",
+ "what_was_already_seen": {
+  "R-52": "the audit's findings 64 and 101, reproduced at 294c129 and again at b9baf42e with the test route pins beside the production pins. The SAME two readings -- 26.85 degC and 300.0000001 kelvin, one ten-billionth of a kelvin apart -- score `worst_relative_difference` 3.7244e-09 with `agreed=False` when the degC route is declared first, and 3.3333e-10 with `agreed=True` when the kelvin route is. Declaration order decides whether two solvers agreed. In the other direction, two readings of -273.14 degC and -273.14000000001 degC (a true 1e-8 relative disagreement on the kelvin scale, 0.01 K against 0.01 K) score 3.66e-14 and AGREE, while the identical pair written in kelvin scores 1.0e-08 and is refused. The mechanism is `common_unit.setdefault(str(name), quantity.units)` at consensus.py:1938-1941 -- the first declared route that reports a name fixes the unit for all of them -- and `relative_difference` at 721-729, which divides magnitudes and never asks whether their zero means anything. `is_ratio_scale` has existed in the units module throughout; `CrossLimitCondition` uses it and this comparison does not. `_same_operating_point` (oracles.py:47-56) has the same shape one layer over: 0.02 degC against 0.020000001 degC is 'a different operating point' while the identical 1e-9 K difference in kelvin is 'the same', and it is asymmetric besides -- it compares in `stated.units`, so which argument is `stated` changes the answer."
+ },
+ "rules": {
+  "the_compared_unit_is_canonical_and_not_the_first_routes": {
+   "improvement": "I-22",
+   "problem": "R-52",
+   "rule": "`from_results` expresses every route's value of a name in `base_unit` of that quantity's unit -- the coherent SI base unit of its dimension -- instead of in the unit of the first declared route that reports the name. The conversion itself is unchanged (`Quantity.magnitude_in`, which performs the affine step for an offset scale).",
+   "class": "A",
+   "why": "`base_unit` is a pure function of a unit's DIMENSION, so it cannot depend on declaration order: that is the whole of the fix and there is no number in it. It is also the unit the module already reaches for when two scales have to be put on one footing -- `base_unit`'s own docstring says 'where a ratio or a difference has to be taken across two scales, this is the one they can both be put on'. CORE-018's intent, that 1 m and 1000 mm are not a 0.999 disagreement, is preserved exactly; only the CHOICE of common unit changes, from an arbitrary one to a canonical one.",
+   "closes": "the order flip in both directions."
+  },
+  "a_relative_difference_needs_a_ratio_scale": {
+   "improvement": "I-22",
+   "problem": "R-52",
+   "rule": "The unit each name is compared in must satisfy `is_ratio_scale`; a name whose compared unit does not is REFUSED (`ScientificValidationError`) rather than compared. Checked at the conversion in `from_results`.",
+   "class": "A",
+   "why": "|a-b|/max(|a|,|b|) is a statement about a RATIO, and a ratio is meaningful only where zero of the unit is zero of the quantity -- which is `is_ratio_scale`'s own sentence, and the rule this repository already applies to a coupling tolerance, an excursion span and a cross-limit ratio. Nothing numeric is chosen. Given the rule above the check is structurally satisfied for every dimension the SI has a coherent base unit for, which is every dimension; it is written anyway because that is a fact about the unit registry and not about this function, and a future common-unit rule that reintroduced an affine scale would otherwise be silent.",
+   "closes": "the cryogenic degC pair: it can no longer be compared on the scale that flatters it."
+  },
+  "a_declared_floor_is_read_in_that_canonical_unit": {
+   "improvement": "I-22",
+   "problem": "R-52",
+   "rule": "`<tolerance_key>.floor.<kind>` is read in the coherent SI base unit of the compared quantity's dimension. The declaration's grammar, its value and its digest are unchanged; what changes is that its reference unit is now fixed by the quantity's dimension rather than by which route was declared first.",
+   "class": "A",
+   "why": "A bare number needs a unit from somewhere, and before this it came from declaration order, which is what made the same 1e-15 floor worth 1e-15 A in one order and 1e-9 A in another. The dimension is the only order-independent source available without changing the threshold-set grammar. Every floor DC declares keeps its meaning exactly, checked rather than assumed: the floors are for node voltage, resistor voltage, current, power and dissipation, and volt, ampere and watt are all coherent SI units, so the conversion factor is 1 and the recorded magnitudes and their digests do not move.",
+   "compatibility": "A domain declaring a floor for a kind reported in a NON-coherent unit (millivolts, say) would find its floor read in volts. No such declaration exists in this repository; this is stated so that it is a known consequence rather than a discovery."
+  },
+  "an_operating_point_is_compared_on_a_ratio_scale_too": {
+   "improvement": "I-22",
+   "problem": "R-52",
+   "rule": "`oracles._same_operating_point` converts BOTH quantities into `base_unit` of the stated quantity's unit before applying its 1e-9 relative tolerance, instead of comparing in `stated.units`.",
+   "class": "A",
+   "why": "The same rule at the same kind of site, for the same reason. It also makes the predicate SYMMETRIC, which it was not: comparing in `stated.units` meant that swapping the arguments could change the answer, and 'the same operating point' is a relation, not a claim one of the two makes about the other. `_OPERATING_POINT_RTOL` is untouched at 1e-9 -- this batch changes the SCALE the tolerance is applied on, never the tolerance."
+  },
+  "the_docstring_says_what_the_code_does": {
+   "improvement": "I-22",
+   "problem": "R-52",
+   "rule": "`from_results`'s docstring stops saying the compared numbers are read 'in its own unit, so a route that returned the right number in another unit shows up as a disagreement'. It says what CORE-018 made true and what this batch makes canonical.",
+   "class": "A",
+   "why": "The audit found this sentence already false at 294c129 -- CORE-018 had made it false and left it standing. Prose that contradicts the code is how a reader acquires a wrong belief about a guard, and this document's own method is to read the code and not the comments."
+  }
+ },
+ "compatibility": {
+  "additive_only": "No new public symbol, no signature change, no field, default or enum member change. `consensus.py` and `oracles.py` gain imports of `base_unit` and `is_ratio_scale` from the units module, which the layer ladder allows (units are below both). No serialized record gains or loses a key.",
+  "recorded_numbers": "`reported_values` and each route's `values_digest` are magnitudes in the compared unit, so they move for any quantity a route reports in a non-coherent unit. For every production and pinned consensus in this repository the factor is 1 (volt, ampere, watt, kelvin, second are coherent), so no committed digest moves -- asserted by the FAST and expensive tiers rather than by inspection.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "The record still does not say which unit its compared numbers are in. It is now derivable from the quantity's dimension, which is the point of the rule, but the record carries neither the unit nor the dimension, so a reader has to know the quantities. Writing the compared unit into the record would be a new key in a serialized record and is deliberately NOT done here; it belongs with I-25 (field records re-derive what they claim) or with a schema bump.",
+  "Floors remain bare numbers in the threshold declaration. Giving them explicit units is the audit's other suggested fix direction and would be a change to the threshold-set grammar and its digest; the canonical-unit rule closes the order dependence without it.",
+  "`_same_operating_point` still returns False for an incompatible dimension by swallowing the exception, which is the existing behaviour and is correct for its caller, but means a dimension error and a genuine mismatch are indistinguishable to it. Unchanged here.",
+  "`CrossSolverConsensus.over` takes bare numbers and has no units to canonicalise. It cannot award the level (IND-02), so the comparison it records is a measurement and not a claim -- but a caller reading `over`'s worst relative difference is still reading whatever scale it was handed."
+ ],
+ "amendment_log": []
+}

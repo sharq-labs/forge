@@ -1,0 +1,2 @@
+G34n tests/mcp/test_audit_domains_refused_coupling.py -> KILLED | 3 failed, 1 passed in 2.60s | code 551ff043791eafd1->772365776e877c63 | pinned: CAP-06 (domains-cap06-refused-sweep-change-zeroed) -- tests/mcp/test_audit_domains_refused_coupling.py
+CONTROL (unmutated, 1 test(s)) GREEN | 4 passed in 2.59s

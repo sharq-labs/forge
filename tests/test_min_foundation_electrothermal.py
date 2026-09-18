@@ -714,8 +714,13 @@ def test_f_the_twin_is_the_only_instance_state_authority(executed):
     # where the rest goes. It is a property OF THE CROSSING and not of either
     # instance, so it does not make this record a second state authority --
     # which is what this test is about.
+    # `transport_declaration` is the seventh (R-64, I-27 part A): what happens
+    # to a DENSITY of energy crossing the boundary, when no conversion is
+    # declared for it. Prose about the crossing, carrying no value either, for
+    # the same reason `conversion` does not make this a state authority.
     assert fields == {
         "conversion",
+        "transport_declaration",
         "source_problem_id", "source_quantity",
         "target_problem_id", "target_quantity",
         "unit_exemplar", "name", "description",
@@ -818,10 +823,11 @@ def test_g_the_new_record_round_trips_deterministically(executed):
 
 def test_g2_an_unknown_schema_is_refused_rather_than_guessed(executed):
     payload = dict(executed.dependencies[0].to_dict())
-    # `/2` became a real version when the conversion field landed, so the
-    # unknown one has to be a version that does not exist. What this checks is
-    # unchanged: a reader refuses a schema it was not taught.
-    payload["schema"] = "quantity_dependency/3"
+    # `/2` became a real version when the conversion field landed, and `/3`
+    # became one when `transport_declaration` landed (R-64, I-27 part A), so
+    # the unknown one has to move again. What this checks is unchanged: a
+    # reader refuses a schema it was not taught.
+    payload["schema"] = "quantity_dependency/4"
     with pytest.raises(ScientificCoreError):
         QuantityDependency.from_dict(payload)
 

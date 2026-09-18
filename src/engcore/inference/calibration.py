@@ -489,8 +489,12 @@ class IdentifiabilityReport:
     Three measures, because no single one is trustworthy alone:
 
     ``condition_number``
-        of the posterior covariance. Large means the ridge is long relative to
-        its width.
+        of the posterior CORRELATION matrix. Large means some combination of the
+        parameters is far less determined than the parameters one at a time.
+        Taken on the correlation rather than the covariance since the scientific
+        core audit of 2026-09-16 (CORE-004): a covariance condition number mixes
+        units, and moved across the threshold when one parameter was restated in
+        micrometres instead of metres.
     ``max_abs_correlation``
         the largest off-diagonal posterior correlation. This is what catches a
         two-parameter ridge that a determinant can miss when both variances are
@@ -879,6 +883,15 @@ _DECLARED_IDENTIFIABILITY_THRESHOLDS = (
 _HIGHER_IS_STRICTER = frozenset({"minimum_effective_points"})
 
 
+#: CORE-004. Appended to every identifiability explanation, V1 and routed alike: a relative width needs a reference, and
+#: the only one a declaration carries is the parameter's zero. A parameterization with another origin can reach another
+#: verdict, and the record says so rather than presenting the verdict as scale-free.
+WIDTH_REFERENCE_NOTE = (
+    ". Relative widths are measured against each parameter's declared zero; a parameterization with another origin can "
+    "reach another verdict"
+)
+
+
 def _require_declared_or_tighter_thresholds(**given: float) -> dict[str, float]:
     """Refuse thresholds that are meaningless or looser than declared (INF-10); return the tightened ones.
 
@@ -991,7 +1004,8 @@ def assess_identifiability(
     correlation = posterior.correlation
     n = covariance.shape[0]
 
-    eigenvalues = np.linalg.eigvalsh(covariance)
+    # CORE-004: on the correlation matrix, so that no parameter's unit or scale enters the number
+    eigenvalues = np.linalg.eigvalsh(correlation)
     smallest = float(np.min(eigenvalues))
     largest = float(np.max(eigenvalues))
     if smallest <= 0.0:
@@ -1082,6 +1096,9 @@ def assess_identifiability(
             f"ridge exists, not that it is long, and both marginal intervals "
             f"here are within {widest:.3g} of their own values"
         )
+    # CORE-004: the widths above are relative to each parameter's declared zero. That is a property of the declaration, not
+    # of the data, so the verdict says so rather than presenting a scale-free finding.
+    why += WIDTH_REFERENCE_NOTE
     if tightened:
         why += (
             f". Classified under caller-tightened thresholds {tightened}; the "

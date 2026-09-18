@@ -1,0 +1,91 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 45,
+ "improvements": [
+  "I-28 part B of three"
+ ],
+ "problems_addressed": [
+  "R-71 (the audit's finding 102)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "d6b73c9c",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "`AdmittedForwardRow` was hardened so that its constructor IS the admission gate. `AdmittedForwardTable`'s own dataclass constructor still takes finished arrays and, for an admitted row, checks only that `admission_refs` holds one non-empty string per observation -- and no consumer parses those strings. A table of fabricated values with refs ('forged', 'x') produces a posterior. Separately, a table records the numbers in the units of the set it was built against and records no units, so reusing it with a set whose keys match in other units compares incommensurate numbers: 1500 milliohm against a table in ohm gave a MAP of 1.5. Finding 98 -- admission not bound to the source result -- is part C.",
+ "reach": "LIBRARY_ONLY. `engcore.inference` is public API; the table's consumers inside the repository are the uq, adequacy, split and hybrid_uq routes and the kinetics experiments. No MCP entry point builds one.",
+ "what_was_already_seen": {
+  "the forged table, from the audit": "'posterior from forged table: weights [1. 0. 0.] map [0.]' -- a table whose values are fabricated and whose admission records are the strings 'forged' and 'x' produces a posterior, because the only check is that each admitted row carries one non-empty string per observation and nothing parses them. Of the consumers, only `hybrid_uq.router` re-verifies content against a forward evaluator.",
+  "the unit reuse, from the audit": "'same table, data 1500 milliohm (=1.5 ohm): map [1.5] weights [0.000e+00 6.000e-04 9.994e-01] (table values in ohm compared with magnitudes in milliohm; keys match, units never checked)'. `AdmittedForwardRow` stores `value.magnitude_in(observation.value.units)`, so a table's numbers are in the units of the set it was built against and the table records none of them."
+ },
+ "rules": {
+  "an_admission_record_has_the_form_the_gate_writes": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "`AdmittedForwardTable.__post_init__` refuses an admitted row whose admission records are not the form the admission gate writes: `route|prediction_id|verification_ref|binding_ref`, four non-empty parts, with `route` one of the two the admission boundary declares (`numerical`, `analytic`). New derived property `admitted_routes`: the distinct routes an admitted table's rows carry, so a consumer can gate on the route rather than on a prefix nothing parses.",
+   "class": "A",
+   "why": "The strings are written in exactly one place -- `AdmittedForwardRow.__init__`, from a prediction that crossed one of the two admission boundaries -- and the table's own docstring already says what it can and cannot check: it cannot re-run admission, but it CAN refuse 'a row marked admitted with no admission record behind each of its values'. A free string is that absence with extra characters: 'forged' and 'x' record nothing, and nothing in the tree parsed them, so the route the audit calls the difference between 'sequence-level convergence' and 'the declared applicability of a closed form' was unreadable. Nothing numeric is chosen; the vocabulary is the two routes `AdmissibleNumericalPrediction.admission_route` and `AdmissibleAnalyticPrediction.admission_route` return.",
+   "closes": "the forged-table construction, at the one place a table is made from finished arrays."
+  },
+  "a_table_declares_the_units_its_numbers_are_in": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "New trailing field `observation_units: tuple[str, ...] = ()`, one per observation key, filled by `from_rows` from the set it was built against. When a table declares them, `select_observations` refuses an `ObservationSet` whose observation units are not those units -- which covers `gaussian_grid_posterior`, since it selects through the same method.",
+   "class": "A",
+   "why": "A forward table is a block of numbers in the units of the set that built it, and the keys are labels: two sets with the same keys in ohm and in milliohm are different measurements of the same quantity, and comparing one's data with the other's predictions is a factor of 1000 nobody declared. The units are what the row already used to convert (`magnitude_in(observation.value.units)`), so recording them states what the numbers already are. Written as a declaration on the table rather than by converting everything to base units, because converting would change every table's numbers and every committed record built from one -- what the improvement's brief calls 'compares data in canonical units' is achieved here by refusing an incommensurate comparison rather than by re-scaling the evidence.",
+   "closes": "the unit-reuse case, for every table `from_rows` builds."
+  },
+  "the_admission_path_requires_a_bound_table": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "New public `require_bound_forward_table(table, observations)`: refuses a table that declares no units, or whose units or keys are not the given set's. `uq.admission`'s binding validation calls it, so the predictive-admission route cannot be run with a table that is not bound to the observations it is being used against.",
+   "class": "A",
+   "why": "A table with no declared units is either hand-built or an old cache, and the one thing that cannot be recovered from it is what its numbers mean. On the ordinary posterior path such a table keeps working, because refusing there would delete every legitimate cached table without telling anyone what to do about it; on the ADMISSION path -- where the table decides which posterior nodes are predictively supported, and where the audit found the conditioning built on it -- an unbound table is refused outright.",
+   "closes": "the consumer half, on the path the audit followed."
+  }
+ },
+ "thresholds": {
+  "none": {
+   "value": null,
+   "class": "A",
+   "why": "no number is chosen. One record form read off the writer, one declaration of units, one refusal on the admission path."
+  }
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "a trailing `observation_units` field with an empty default",
+   "`AdmittedForwardTable.admitted_routes` (derived property)",
+   "`require_bound_forward_table` (new public function)"
+  ],
+  "what_is_not_changed": [
+   "no existing field, default or enum member; `from_rows`, `select_observations` and `gaussian_grid_posterior` keep their signatures",
+   "no table's numbers change: the units are recorded, not applied",
+   "a rejected row still needs no admission record, exactly as now"
+  ],
+  "records_that_already_exist": "To be scanned before implementing: every committed JSON carrying an `admitted_forward_table` payload or an `admission_refs` list, with the numbers recorded in the audit document. In-tree hand-built tables are expected to need realistic refs, and each fixture change will be commented in place.",
+  "deliberate_narrowing": "A table marked admitted with free-string admission records stops being constructible, and an admission-path table that declares no units stops being usable there. Both are records the admission gate never produced."
+ },
+ "residuals_stated_in_advance": [
+  "A table that declares no units still works on the ordinary posterior path, so the audited 1500-milliohm comparison is only refused for tables built through `from_rows`. Refusing every undeclared table would delete legitimate cached tables; what closes the rest is that `from_rows` is the only builder that has an observation set to declare from.",
+  "The refs are still strings and a forger can write a well-formed one: the form is checkable, the content is not, and binding the refs to the source result is exactly part C (finding 98).",
+  "`admitted_routes` is a property for consumers to gate on; this batch does not add a gate to any consumer beyond the admission path. Which routes a given consumer should accept is a decision per consumer and is stated as part C's business.",
+  "The improvement's brief says the table should compare data in canonical units. This batch records the units and refuses an incommensurate comparison instead of re-scaling every table's numbers, which would change committed evidence for no gain in what is detectable."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "the inference suites, tests/test_k31_predictive_admission.py, tests/test_k3_predictive_uq.py, tests/test_k4_model_adequacy.py, tests/hybrid_uq",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what": "`require_bound_forward_table` and `parse_admission_ref` were first added to `engcore.inference`'s package exports, as 'new public function' in the preregistration implies. That moved the V1 FROZEN symbol count from 194 to 196 and failed tests/test_core_api_contracts.py::test_no_experimental_symbol_is_in_the_frozen_contract, which pins the count and is NOT one of the tests that fail by design.",
+   "change": "Both live in `engcore.inference.grid`, which is where the table and every rule about it lives, and are not added to the package's export list. They are public in their module; the frozen surface is unchanged.",
+   "why": "The compatibility rules allow a new public symbol, but the frozen surface and its counts are regenerated in the Core Freeze V4 round (I-30) and not before -- growing the frozen export list now would pre-empt that round and break a test the owner did not list as failing by design. Nothing about the rules changes: the same functions, reachable from the same module, called from the same places."
+  }
+ ]
+}

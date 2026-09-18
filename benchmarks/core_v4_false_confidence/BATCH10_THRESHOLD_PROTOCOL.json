@@ -1,0 +1,133 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 10,
+  "improvements": [
+    "I-02"
+  ],
+  "problems_addressed": [
+    "R-07",
+    "R-08",
+    "R-18"
+  ],
+  "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+  "baseline_commit": "514e910",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "library-only. engcore.hybrid_uq has no production caller; benchmarks, audits and the certification tools reach the multistart as a library. It matters anyway: every hybrid-UQ claim of a single mode rests on this search, the committed K2 kinetics evidence rests on it, and I-01 made the ROUTER run it by default for a grid route, so its honesty now decides whether a grid is built.",
+  "what_was_already_seen": [
+    "the audited reproductions only, re-run by hand at 514e910 on the cases in tests/hybrid_uq/false_confidence_cases.py: R-07's broad basin is SUPPORTED with MULTISTART_NO_SECOND_MODE and a 95% interval of +/-0.0196 holding 0.1769 of its posterior, with all six starts classified WORSE_LOCAL_OPTIMUM at chi2 = 10 and m2 = 2.5e5; R-08 is REFUSED SECOND_MODE_FOUND at max_evaluations 2000 and SUPPORTED MULTISTART_NO_SECOND_MODE at 12, with no recorded shortfall and sd 1.0 against a reference 9.72; R-18's six starts are all SAME_OPTIMUM after 0, 4, 4, 5, 3 and 3 retractions (proposed -12 used -0.75, and so on), reading MULTISTART_NO_SECOND_MODE with a 95% interval of +/-0.196 holding 0.4748 of the posterior",
+    "the K2 supersession marker's own note that 2 of 6 committed refits failed and that max_evaluations=400 was not part of the minimum search",
+    "NOTHING about how any rule below scores anywhere else"
+  ],
+  "rules": {
+    "the_minimum_search_includes_the_budget_and_the_retraction_allowance": {
+      "improvement": "I-02",
+      "problem": "R-08",
+      "rule": "_search_shortfalls compares the recorded multistart_max_evaluations and multistart_maximum_retractions with the canonical policy's, and records a shortfall when either is below it. Both are already recorded in the diagnostics' thresholds; nothing new is stored.",
+      "why": "HUQ-01 caps any search LOOSER than canonical at MULTISTART_INCOMPLETE, and checked starts, interior_fraction, mode_separation_quantile and comparable_fit_quantile. A refit budget is as much a part of how far a search looks as the span it looks over: the start that travels to a distant mode is the slow one, so a small budget removes exactly that refit. In the audited case a budget of 12 turned REFUSED SECOND_MODE_FOUND into SUPPORTED MULTISTART_NO_SECOND_MODE with no shortfall recorded at all.",
+      "class": "A (the canonical values are already preregistered; this compares against them)"
+    },
+    "the_minimum_search_counts_converged_refits": {
+      "improvement": "I-02",
+      "problem": "R-08",
+      "rule": "A search is incomplete unless at least _minimum_starts(p) = max(6, 2p + 2) starts CONVERGED. The old rule was `converged * 2 < len(entries)`, so up to half the starts could fail silently.",
+      "why": "a start that did not converge looked nowhere. Half of a minimum search is not a minimum search, and the audited case shows why: the refits that fail are the ones that were travelling furthest.",
+      "class": "A (the minimum is already preregistered as max(6, 2p + 2); this applies it to converged starts rather than proposed ones)"
+    },
+    "a_failed_refit_is_retried_once_at_the_canonical_budget": {
+      "improvement": "I-02",
+      "problem": "R-08",
+      "rule": "A refit whose status is not CONVERGED is retried exactly once with max_evaluations set to the canonical MultistartPolicy()'s, when the policy's own budget is below it. The retry's outcome is what the entry records; the extra evaluations are counted in evaluation_count.",
+      "why_one_retry": "one retry is the difference between 'the caller's budget was too small' and 'this problem does not converge from here'. A second retry at the same budget would be the same search run twice, and a third budget would be a threshold nobody declared.",
+      "why_at_all": "without it, the honest answer to a small budget is MULTISTART_INCOMPLETE -- a DOWNGRADE. With it, the audited case reaches SECOND_MODE_FOUND, which is the true answer and a refusal. Resolving is better than withholding where the resolution is available, which is I-01's argument in the same program.",
+      "cost": "up to `starts` extra calibrations at the canonical budget when a caller's budget is too small. A caller exploring a small budget pays for the claim; the evaluation count says so.",
+      "class": "A (the canonical budget is already preregistered; 'once' is argued above, not measured)"
+    },
+    "a_refused_start_is_replaced_and_not_retracted": {
+      "improvement": "I-02",
+      "problem": "R-18",
+      "rule": "A start the forward model refuses is replaced by the next unused point of the SAME Halton sequence, not halved toward the estimate. At most maximum_retractions replacements are tried per start, and the replacement points are drawn from one shared counter so no two starts take the same one. A start with no admissible replacement is recorded NO_ADMISSIBLE_START and does not count as converged.",
+      "why": "retraction narrows the span, and HUQ-01 already treats a narrower span (interior_fraction below canonical) as below the minimum search. Each retraction halves the distance to the estimate, so a start retracted k times searched 2^-k of its intended span -- up to 1/4096 -- and the record's `retractions` count was read by nothing. In the audited case five of six starts were pulled into the estimate's own basin and the verdict was 'no second mode' from a search that never left it.",
+      "the_record": "each entry keeps `proposed_start` and `start` and gains `replacements`, the number of Halton points tried. `retractions` is no longer written, because nothing retracts.",
+      "class": "A (a change of technique; maximum_retractions keeps its name and its value as the replacement budget)"
+    },
+    "a_separated_optimum_is_classified_by_its_mass": {
+      "improvement": "I-02",
+      "problem": "R-07",
+      "rule": "A converged refit farther than the separation radius, whose objective is not below the estimate's by more than the comparable-fit allowance, is SECOND_MODE when its Laplace mass ratio exceeds the floor below and WORSE_LOCAL_OPTIMUM when it does not. The ratio is exp(-(chi_refit - chi_min)/2) * sqrt(det(Sigma_refit) / det(Sigma_min)), the Laplace approximation to the ratio of the two modes' posterior mass, computed from a local sensitivity reconstructed at the refit. It is recorded in the entry as `laplace_mass_ratio`, so a reader can re-derive the classification.",
+      "value": 0.001,
+      "why_mass_and_not_height": "posterior mass depends on a mode's VOLUME as well as its peak height. The old rule classified by objective alone: anything more than chi2.ppf(0.99, p) above the estimate was WORSE_LOCAL_OPTIMUM, which _multistart_verdict ignored entirely. In the audited case a broad basin 10 chi-square units up holds 0.792 of the posterior and the route reported SUPPORTED with a 95% interval holding 0.177.",
+      "why_1e_3": "a separated mode with mass ratio r holds r/(1+r) of the total. For a 95% interval around the primary mode to still hold the 0.90 of the posterior that I-15's conformance floor requires, the mass elsewhere must stay under 0.05, which is r < 0.0526. 1e-3 is a factor 50 inside that, and it is the value the audit's own fix direction names. It is not tuned on any result: the arithmetic above is the whole derivation.",
+      "class": "C (a declared negligibility floor for posterior mass, derived from I-15's preregistered 0.90 and the audit's stated value)"
+    },
+    "a_better_optimum_is_still_a_refusal_whatever_its_mass": {
+      "improvement": "I-02",
+      "problem": "R-07",
+      "rule": "BETTER_OPTIMUM is unchanged: a separated refit whose objective is below the estimate's by more than the comparable-fit allowance refuses BETTER_OPTIMUM_FOUND, and its mass is not consulted.",
+      "why": "that finding is not about a second mode. It says the estimate this posterior is built around is not the optimum, so the covariance at it is not the covariance of the mode, and no mass argument rescues that.",
+      "class": "A (an existing rule, stated so the change above cannot be read as touching it)"
+    },
+    "the_read_back_holds_the_classification_to_the_recorded_mass": {
+      "improvement": "I-02",
+      "problem": "R-07",
+      "rule": "_require_reasons_follow_measurements requires a separated converged entry that is not BETTER_OPTIMUM to carry a finite non-negative laplace_mass_ratio, and its classification to be SECOND_MODE exactly when that ratio exceeds the floor.",
+      "why": "the rule is worth nothing if a record can carry the classification without the number it follows from. This is the same discipline every other reason in the record is already held to.",
+      "compatibility": "a record written before this batch carries no laplace_mass_ratio. Such a record is read under the ROUTE_DIAGNOSTICS_SCHEMA_V1 exemption where one applies, and otherwise refused: /2 postdates the policy record and every writer of it will carry the ratio. Stated as a residual.",
+      "class": "A"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "untouched.",
+    "v2_symbols": [
+      "MultistartPolicy: no field changes. `maximum_retractions` keeps its name and its default of 12 and becomes the REPLACEMENT budget, which is a behaviour change on a V2 symbol of the kind I-02 asks for.",
+      "RouteDiagnostics: no field changes. Each multistart entry gains `laplace_mass_ratio` where one applies and loses `retractions` in favour of `replacements`; the entries are free-form mappings inside an existing field.",
+      "local_gaussian_posterior: no signature change. A search below the canonical budget now costs one retry per failed refit."
+    ],
+    "serialized_records": "route_diagnostics/2 is NOT bumped. The entry keys change inside the existing `multistart` field, and a record written before this batch will not re-derive its classification for a separated start -- which is the point, and is stated as a residual.",
+    "committed_evidence": "KINETICS_K2.json's MULTI record is SUPERSEDED and must not be re-run (its multistart alone is about 76 minutes of CSTR solves). Its marker gains an entry for these rules: its policy is 6 starts with max_evaluations=400, and 2 of the 6 committed refits failed, so under the two rules above it projects MULTISTART_INCOMPLETE on both counts -- a budget below canonical, and 4 converged where 6 are required. The record's bytes and its SUPERSEDED status do not change. BATTERY_T41.json is already marked for the same rule family and its marker gains the same note.",
+    "the_conformance_suite": "I-15's R-07, R-08 and R-18 cases become live: their xfail markers come off."
+  },
+  "residuals_stated_in_advance": [
+    "The Laplace mass ratio is a Laplace approximation. For a mode whose posterior is far from Gaussian it is wrong by whatever the approximation is wrong by, and the route has no better estimate available without quadrature it does not run. It is used only to classify a mode as negligible or not, against a floor 50x inside the value that would matter, which is the margin that makes an approximation adequate here.",
+    "A record written before this batch carries no laplace_mass_ratio for a separated start, so its classification cannot be re-derived and it is refused on read unless the V1 schema exemption applies. No committed record in the repository holds a separated converged start outside KINETICS_K2.json, whose MULTI refits are all WORSE_LOCAL_OPTIMUM or SAME_OPTIMUM and which is SUPERSEDED.",
+    "Replacing a refused start with the next Halton point still cannot reach a mode the Halton sequence does not land near. Six points in the central 80% of a bounds box is a coarse search in any dimension above two, and the record says MULTISTART_NO_SECOND_MODE rather than 'unique'. That residual is I-01's and is unchanged.",
+    "The retry at the canonical budget makes a small-budget search cost more than the caller asked for. That is deliberate and recorded in evaluation_count; a caller who wants the cheap search and not the claim gets MULTISTART_INCOMPLETE instead.",
+    "R-07's own reproduction may still not REFUSE after this batch if its basin's Laplace mass ratio falls below the floor. The conformance case asserts the MASS invariant and not a reason word, so whichever way it lands the invariant is what is measured -- and if it lands SUPPORTED with a 95% interval holding 0.177 of the posterior, the case stays xfail and the residual is recorded rather than the floor moved.",
+    "ADDED DURING IMPLEMENTATION (not stated in advance, and recorded here as a residual rather than worked around): the mass rule's read-back is gated on the multistart policy record, which postdates any pre-batch bytes, so a pre-batch record is exempt from it -- but the converged-count rule is NOT gated, and a pre-batch record whose refits failed no longer re-derives the uniqueness word it states and is refused on read. KINETICS_K2.json's MULTI_v2 route record is the one such record in the repository (4 of 6 converged, no policy keys, MULTISTART_NO_SECOND_MODE stated). It is already SUPERSEDED and its marker now records this. Refusing it is the correct strictness: a record claiming no second mode over a search two thirds of which converged is overclaiming, and the strictness rule of this program says undeclared or unbound information lowers a claim."
+  ],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-16",
+      "stage": "before implementation, while confirming the strict xfails fail",
+      "change": "Two of the thirteen preregistered tests passed at the baseline commit and so are not reproductions; their xfail markers were removed and they were re-labelled as no-regression guards. (1) The lower-separated-optimum case: BETTER_OPTIMUM_FOUND already refuses, and the mirror_mode problem it used never produced a BETTER_OPTIMUM start, so it skipped rather than failing; it now uses the asymmetric double well from test_hybrid_uq_local_route.py::test_a_better_optimum_than_the_estimate_is_refused, which produces one reliably, and asserts the refusal survives the mass rule. (2) The unseparated-start case: a SAME_OPTIMUM refit carries no laplace_mass_ratio today because the key does not exist, so it passes trivially and its value is as a guard afterwards.",
+      "also": "The read-back consistency test was rewritten. Its first form rewrote the classification, the refusals and the uniqueness word together, which _require_reasons_follow_measurements already refuses, so it passed at the baseline for a reason unrelated to the new rule. It now lowers only the recorded laplace_mass_ratio of a SECOND_MODE start to 1e-12 and requires the read-back to refuse a word that does not follow from its own number.",
+      "why_this_is_not_a_threshold_change": "No threshold, class or value in `rules` is touched. The floor stays MULTISTART_MASS_FLOOR = 1e-3 as preregistered; 1e-12 is a test input chosen to sit far below any floor the preregistered bound (0 < floor < 0.0526) admits, so the test does not depend on the floor's value.",
+      "mechanics": "Tests that need the floor read it with getattr(local_gaussian, 'MULTISTART_MASS_FLOOR', None) rather than importing it, so a preregistered test fails on its own assertion instead of on an ImportError, as the per-batch protocol requires.",
+      "verified": "11 reproductions fail on their own assertions under --runxfail; 2 guards pass; nothing skips."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "during implementation",
+      "change": "The uniqueness WORD now names `below` before `incomplete`. Counting converged refits made a policy below the minimum search incomplete as well, so the more specific word (MULTISTART_BELOW_MINIMUM_SEARCH) was masked by the more general one (MULTISTART_INCOMPLETE) for a caller whose policy is simply too small.",
+      "why_this_is_not_a_threshold_change": "no threshold or class in `rules` moves, and no claim moves: `if incomplete or below:` adds MULTISTART_INCOMPLETE to the downgrades either way. Only the word a record states changes, and it states the more specific fact. The alternative was to edit tests/hybrid_uq/test_audit_hybrid_local_route.py::test_huq01_the_one_start_mirror_mode_is_no_longer_supported_and_says_why, which asserts the specific word for exactly this case."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "after the first guard-mutation run, before the batch was committed",
+      "change": "Three tests were added and one strengthened, because three mutations showed rules that no test measured.",
+      "detail": [
+        "Zeroing the shared Halton counter SURVIVED. The R-18 basin test asserted only 'not SUPPORTED', which a search whose replacements all collapse onto one point still satisfies (five of six starts then find no admissible point and the record downgrades). It now asserts SECOND_MODE_FOUND: with replacement working, the far island IS reached.",
+        "Dropping the volume term from the mass ratio SURVIVED, because R-07's own basin clears the floor on peak height alone (exp(-10 / 2) = 6.7e-3 > 1e-3). The volume half of the rule was therefore unmeasured. Added test_a_separated_mode_is_weighed_by_its_volume_and_not_only_its_height: the same basin made a tenth as wide, so the height ratio still clears the floor and the mass ratio 6.7e-4 does not. Its 1e-3-vs-6.7e-4 comparison uses the preregistered floor and no new number.",
+        "The entry-key mutation was refused as MUTATION CHANGED NO CODE (a string literal, which _code_digest ignores); it now mutates the code that chooses the key."
+      ],
+      "why_this_is_not_a_threshold_change": "no threshold, class or value in `rules` is touched. The added cases are measurements of rules already preregistered."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "during implementation",
+      "change": "The mass rule is completed for the case the preregistration did not name: a separated refit whose mass cannot be BOUNDED. The curvature at the refit may not reconstruct, the information there may not be positive definite, or the ratio may overflow a float. In those cases the entry records `laplace_mass_unavailable` with the reason instead of a number, and the refit counts as a SECOND_MODE -- a mode whose mass cannot be bounded is not a negligible mode. The read-back accepts a recorded reason in place of the ratio for SECOND_MODE and for nothing else.",
+      "why": "the preregistered read-back rule requires a FINITE non-negative ratio. Writing a fabricated finite number for an uncomputable one, or a non-finite one the read-back then has to admit, would both be worse than recording that it could not be bounded. The classification is a single decision in the code (`WORSE_LOCAL_OPTIMUM if ratio is not None and ratio <= floor else SECOND_MODE`) so the conservative branch is not a second, unexercised rule.",
+      "why_this_is_not_a_threshold_change": "no threshold moves. MULTISTART_MASS_FLOOR is 1e-3 as preregistered."
+    }
+  ]
+}

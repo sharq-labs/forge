@@ -28,6 +28,7 @@ from __future__ import annotations
 import hashlib
 import math
 import operator as _operator
+import re
 import threading
 from dataclasses import dataclass
 from functools import lru_cache
@@ -523,6 +524,12 @@ def clear_unit_caches() -> None:
     # found by the enumeration test rather than by re-reading this list.
     base_unit.cache_clear()
     is_ratio_scale.cache_clear()
+    # `is_delta_unit` (I-22) memoizes a fact about a registry name, in front of
+    # the registry, and belongs here for the reason the two above do.
+    is_delta_unit.cache_clear()
+    # `_slope_against_base` (I-22, R-48) memoizes two conversions through the
+    # registry and belongs here for the reason the others do.
+    _slope_against_base.cache_clear()
     # This list is no longer the only thing keeping the clear complete:
     # `tests/test_core_runtime_caches.py::
     #  test_clear_unit_caches_clears_every_memo_in_the_module` walks the
@@ -631,6 +638,100 @@ def is_ratio_scale(unit: str) -> bool:
     if base == text:
         return True
     return float(registry().Quantity(0.0, text).to(base).magnitude) == 0.0
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def is_delta_unit(unit: str) -> bool:
+    """Is this unit a DIFFERENCE on an offset scale rather than a point on it?
+
+    True for ``delta_degC``, ``delta_degF``, ``millidelta_degC`` and
+    ``watt/delta_degC``; false for ``degC``, ``kelvin`` and ``ohm``.
+
+    The distinction cannot be measured. A Celsius DIFFERENCE and a kelvin are
+    the same size -- slope 1, offset 0 -- so every numerical test that could
+    separate ``delta_degC`` from ``kelvin`` returns the same answer for both,
+    and :func:`is_ratio_scale` says True of each. What differs is what the
+    caller MEANT, and the one place that meaning is recorded is the name: the
+    backend's ``delta_`` prefix exists to say "a span, not a point". So this
+    test is deliberately a test on the NAME, and it is the only rule in this
+    module that is.
+
+    The name is read through the registry's own prefix parser rather than by
+    slicing the string, because ``millidelta_degree_Celsius`` is a thousandth
+    of a Celsius difference and is still a difference; a ``startswith`` would
+    have called it absolute.
+
+    Note that ``kelvin`` is False. A kelvin span and a kelvin point are the
+    same number, so the language has no separate word for the span -- which is
+    exactly why a ``delta_degC`` arriving where a ``kelvin`` was asked for is
+    not a harmless synonym but a 273.15 error waiting to be made.
+    """
+    text = normalize_unit(unit)
+    components = registry().Unit(text)._units
+    for name in components:
+        for _prefix, stem, _suffix in registry().parse_unit_name(name):
+            if stem.startswith("delta_"):
+                return True
+    return False
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _slope_against_base(unit: str) -> float:
+    """How much one unit of ``unit`` is, in the base unit of its dimension.
+
+    The LINEAR part of the conversion, with the offset removed by taking two
+    points: 1 degC and 0 degC are 274.15 K and 273.15 K, so the slope is 1;
+    1 delta_degF and 0 delta_degF are 5/9 K and 0 K, so the slope is 5/9. For
+    every ratio-scale unit this is just the conversion factor, because there
+    the offset is zero.
+
+    Against the BASE unit rather than between two arbitrary units, because a
+    direct conversion is not always available: the backend refuses
+    ``Quantity(1, "delta_degC").magnitude_in("degC")`` outright, while both
+    units' slopes against kelvin are perfectly well defined. Two slopes and a
+    division reach every pair. (I-22, R-48.)
+
+    Memoized for the reason every memo in this module is: the registry is a
+    constant for the life of the process.
+    """
+    canonical = normalize_unit(unit)
+    base = base_unit(canonical)
+    one = Quantity(1.0, canonical).magnitude_in(base)
+    zero = Quantity(0.0, canonical).magnitude_in(base)
+    return one - zero
+
+
+def require_spread_unit(unit: str, *, context: str = "") -> str:
+    """A SPREAD -- a tolerance, a sigma, a band, a margin -- needs a scale whose zero is zero.
+
+    Returns the canonical unit, so a caller can use it directly.
+
+    Not a new rule. This repository already refuses a coupling tolerance and a
+    temperature excursion span on an affine scale, in the same words and for
+    the same reason: "a difference cannot live on a scale with a conventional
+    zero". :func:`is_ratio_scale` says so in its own docstring. What R-48 is
+    about is that the GENERIC core types -- an oracle's ``absolute_tolerance``,
+    a ``ConstraintDefinition``'s tolerance, a ``GaussianObservation``'s sigma
+    -- never had that guard although the function was in this same module.
+
+    A refusal rather than a slope conversion, deliberately: ``"0.5 degC"`` as a
+    tolerance is AMBIGUOUS. It can be read as a half-degree band or as the
+    temperature 0.5 degC, and a boundary that guesses which is exactly what the
+    round this comes from is about. :meth:`Quantity.magnitude_as_spread_in` is
+    for the unit that says what it is -- ``delta_degC``.
+    """
+    canonical = normalize_unit(unit)
+    if not is_ratio_scale(canonical):
+        where = f" ({context})" if context else ""
+        raise UnitCompatibilityError(
+            f"{canonical!r} cannot state a spread{where}: zero of it is a "
+            f"convention, not zero of the quantity, so a difference expressed "
+            f"in it is not a difference. Use the difference unit of the same "
+            f"scale -- for degrees Celsius that is 'delta_degC', and for "
+            f"degrees Fahrenheit 'delta_degF' -- or a unit whose zero is "
+            f"physical, such as 'kelvin'"
+        )
+    return canonical
 
 
 @lru_cache(maxsize=_UNIT_CACHE_SIZE)
@@ -760,6 +861,101 @@ def _canonical_dimensionality(canonical: str) -> str:
     return str(type(dimensions)(dict(sorted(dimensions.items()))))
 
 
+#: A DECIMAL LITERAL, and nothing else: an optional sign, digits with an
+#: optional fractional part (or a bare fractional part), and an optional
+#: exponent. Deliberately narrower than `float()`, which also reads "inf",
+#: "nan", "1_0" and "0x10" -- none of which a caller declaring a measurement
+#: writes, and the first two of which the finiteness rule refuses one step
+#: later with a message about the wrong thing. (I-22, R-75.)
+_DECIMAL_LITERAL = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?")
+
+
+def _declared_magnitude(text: str, token: str) -> float:
+    """The magnitude of a separated declaration: one decimal literal, whole."""
+    if _DECIMAL_LITERAL.fullmatch(token) is None:
+        raise UnitCompatibilityError(
+            f"cannot read quantity {text!r}: {token!r} is not a magnitude. A "
+            f"declaration is one decimal number and then a unit, for example "
+            f"'5 volt'; arithmetic is not evaluated here, because a boundary "
+            f"that evaluates what it is given cannot report what it was given"
+        )
+    return float(token)
+
+
+#: An EXPONENT, which is the only place a unit expression legitimately carries
+#: a number of its own: ``meter**2``, ``second**-1``, ``meter^2``.
+_UNIT_EXPONENT = re.compile(r"(?:\*\*|\^)\s*[+-]?\d+(?:\.\d+)?")
+
+#: The leading ``1`` of a reciprocal, the other legitimate number in a unit:
+#: ``1/kelvin``, which this repository writes everywhere.
+_UNIT_RECIPROCAL = re.compile(r"^1\s*(?=/)")
+
+
+def _require_the_unit_is_a_unit_and_not_arithmetic(text: str, unit: str) -> None:
+    """The unit half may name units and raise them to powers, and nothing else.
+
+    ADDED while running batch 26's guard mutations, not preregistered; recorded
+    as amendment 1 of BATCH26_THRESHOLD_PROTOCOL.json.
+
+    The unit half is handed to the backend as an EXPRESSION, and the backend
+    evaluates it: ``normalize_unit("volt 1")`` is ``"volt"`` and
+    ``normalize_unit("volt * 2 / 2")`` is ``"volt"`` too. A net scaling factor
+    of one leaves the magnitude untouched, so the identity rule above -- which
+    catches "5 volt 2" because 5 * volt * 2 is ten and the caller wrote five --
+    sees nothing wrong, and the trailing text is silently dropped. Only a rule
+    on the TEXT can see it.
+
+    So: after the exponents and the leading reciprocal ``1`` are accounted for,
+    a unit expression carries no numbers. That is a statement about unit
+    algebra rather than a threshold -- a unit is a product of named units with
+    rational exponents -- and it accepts every spelling this repository writes,
+    ``1/kelvin``, ``meter**2/second``, ``watt/meter/kelvin`` and
+    ``kg m / s**2`` among them.
+    """
+    residue = _UNIT_EXPONENT.sub("", _UNIT_RECIPROCAL.sub("", unit.strip()))
+    if any(character.isdigit() for character in residue):
+        raise UnitCompatibilityError(
+            f"cannot read quantity {text!r}: {unit.strip()!r} is not a unit "
+            f"but an expression containing a number. A unit is named units "
+            f"raised to powers -- '1/kelvin' and 'meter**2/second' are units, "
+            f"'volt 1' is arithmetic, and arithmetic that happens to scale by "
+            f"one leaves no trace in the magnitude for anyone to notice"
+        )
+
+
+def _require_the_magnitude_written_is_the_magnitude_parsed(
+    text: str, quantity: "Quantity"
+) -> None:
+    """The number the caller wrote must be the number the core now holds.
+
+    An identity, not a tolerance: when the text really is a declaration both
+    sides come from the same decimal literal through the same ``float`` call,
+    so any difference at all is arithmetic nobody asked for. This is what
+    covers the no-separator path, which has to stay open for "5volt" and is
+    therefore still the backend's expression parser: "2volt+3volt" writes 2 and
+    would return 5.
+
+    Text with no leading decimal literal is refused here, which makes a bare
+    unit ("volt", which the expression parser reads as one of it) the same rule
+    as the bare number this method already refused at the top. A quantity is a
+    magnitude AND a unit; neither is implied by the other. (I-22, R-75.)
+    """
+    written = _DECIMAL_LITERAL.match(text.strip())
+    if written is None:
+        raise UnitCompatibilityError(
+            f"cannot read quantity {text!r}: it states no magnitude. A unit on "
+            f"its own is not a measurement, any more than a number on its own "
+            f"is; state both, for example '1 {quantity.units}'"
+        )
+    if float(written.group()) != quantity.magnitude:
+        raise UnitCompatibilityError(
+            f"cannot read quantity {text!r}: it writes the magnitude "
+            f"{written.group()} but reads as {quantity.magnitude}. The "
+            f"difference is arithmetic inside the text, which this boundary "
+            f"does not evaluate -- state one decimal number and one unit"
+        )
+
+
 @dataclass(frozen=True)
 class Quantity:
     """A scientific value: magnitude plus unit, never one without the other."""
@@ -768,6 +964,23 @@ class Quantity:
     units: str
 
     def __post_init__(self) -> None:
+        # A MAGNITUDE IS A NUMBER, AND `bool` AND `str` ARE NOT NUMBERS HERE.
+        #
+        # `bool` is a subclass of `int`, so `float(True)` is 1.0 and
+        # `Quantity(True, "volt")` was one volt: a flag read as a measurement,
+        # with nothing to distinguish it from a measured one afterwards. A
+        # `str` magnitude reintroduces at the constructor every expression the
+        # parse grammar below refuses, and with no unit half to check it
+        # against. Both are refused by TYPE, before the `float` call, so which
+        # NUMBERS are allowed is exactly what it was: `int`, `float` and the
+        # numpy scalars the solver arrays produce all still pass. (I-22, R-75.)
+        if isinstance(self.magnitude, bool) or isinstance(self.magnitude, str):
+            raise UnitCompatibilityError(
+                f"scientific magnitude must be a number, got "
+                f"{self.magnitude!r} ({type(self.magnitude).__name__}); "
+                f"a bool is not a measurement and a string is not a magnitude "
+                f"-- use Quantity.parse for text"
+            )
         magnitude = float(self.magnitude)
         if not math.isfinite(magnitude):
             raise UnitCompatibilityError(
@@ -830,19 +1043,44 @@ class Quantity:
         # excursion span are refused by ``_require_ratio_scale`` on the UNIT,
         # after any parse, and those refusals are about a difference that
         # cannot live on a scale with a conventional zero.
+        #
+        # WHITESPACE MEANS A DECLARATION, NOT AN EXPRESSION.
+        #
+        # The fallback's charter, stated above, is the spellings "the split
+        # cannot handle -- '5volt' with no separator among them". A string that
+        # HAS a separator is by that statement not the fallback's business, and
+        # letting it fall through cost exactly what a boundary cannot afford:
+        # the split refuses "volt 2" (the backend: "Unit expression cannot have
+        # a scaling factor"), that refusal was SWALLOWED, and the fallback then
+        # evaluated the whole string as arithmetic -- 5 * volt * 2, so
+        # "5 volt 2" was read as 10 volt and "2 volt + 3 volt" as 5 volt. So
+        # the split is now the ONLY path for separated text, and a refusal from
+        # either half is raised rather than swallowed. The unit half may still
+        # contain whitespace, because a unit EXPRESSION legitimately does:
+        # "1 kg m / s**2" splits at the first run and the rest is the unit.
+        # (I-22, R-75.)
         magnitude, separator, unit = raw.partition(" ")
         if separator and unit.strip():
-            try:
-                return cls(float(magnitude), unit.strip())
-            except (ValueError, UnitCompatibilityError):
-                pass
+            _require_the_unit_is_a_unit_and_not_arithmetic(text, unit)
+            quantity = cls(_declared_magnitude(text, magnitude), unit.strip())
+            _require_the_magnitude_written_is_the_magnitude_parsed(text, quantity)
+            return quantity
+        # The no-separator path is the backend's expression parser, so the same
+        # rule applies to what follows the magnitude there: "5volt*1" scales by
+        # one and would otherwise pass the identity below untouched.
+        head = _DECIMAL_LITERAL.match(raw)
+        _require_the_unit_is_a_unit_and_not_arithmetic(
+            text, raw[head.end():] if head is not None else raw
+        )
         try:
             parsed = registry().Quantity(raw)
         except Exception as exc:
             raise UnitCompatibilityError(
                 f"cannot parse quantity {text!r}: {exc}"
             ) from exc
-        return cls(float(parsed.magnitude), str(parsed.units))
+        quantity = cls(float(parsed.magnitude), str(parsed.units))
+        _require_the_magnitude_written_is_the_magnitude_parsed(text, quantity)
+        return quantity
 
     # ---- dimensional interface ----------------------------------------
     @property
@@ -906,18 +1144,90 @@ class Quantity:
         # `_conversion_rule` caches what does not depend on the magnitude. See
         # its docstring for why a multiplicative pair may be a multiply and an
         # affine one may not.
-        factor, source_units, target_units = _conversion_rule(self.units, target)
+        # The refusal can come from either step: `_conversion_rule` probes the
+        # backend with 0.0 to decide whether the pair is affine, so a pair the
+        # backend will not convert at all raises THERE, before any magnitude of
+        # this value is touched.
+        try:
+            factor, source_units, target_units = _conversion_rule(self.units, target)
+        except UnitCompatibilityError:
+            raise
+        except Exception as exc:
+            raise UnitCompatibilityError(
+                f"cannot convert {self.units!r} to {target!r}: {exc}. The two "
+                f"have the same dimension [{self.dimensionality}], so this is "
+                f"a question about the SCALE and not about the dimension -- a "
+                f"difference and an absolute value on an offset scale are not "
+                f"interchangeable. To read this value as a DIFFERENCE, use "
+                f"magnitude_as_spread_in"
+            ) from exc
         if factor is not None:
             return Quantity(self.magnitude * factor, target)
-        return Quantity(
-            float(registry().convert(self.magnitude, source_units, target_units)),
-            target,
-        )
+        # THE BACKEND'S REFUSAL IS THIS PACKAGE'S ERROR (I-22, R-48).
+        #
+        # `require_compatible` above passes for `delta_degC` against `degC`:
+        # they ARE the same dimension. The backend then raises
+        # `pint.errors.DimensionalityError`, which is a `TypeError` and is
+        # caught by nothing in this package -- so the physically correct
+        # declaration of a Celsius band on a Celsius value died with an
+        # exception type from a dependency the caller is not supposed to know
+        # about, while the WRONG declaration ('0.5 degC' as a band) was
+        # accepted silently. Every other refusal in this module is a
+        # `UnitCompatibilityError`, and an exception type is part of a
+        # contract: "pint owns the unit algebra; this module owns the
+        # contract".
+        try:
+            converted = float(
+                registry().convert(self.magnitude, source_units, target_units)
+            )
+        except Exception as exc:
+            raise UnitCompatibilityError(
+                f"cannot convert {self.magnitude!r} {self.units!r} to "
+                f"{target!r}: {exc}. The two have the same dimension "
+                f"[{self.dimensionality}], so this is a question about the "
+                f"SCALE and not about the dimension -- a difference and an "
+                f"absolute value on an offset scale are not interchangeable. "
+                f"To read this value as a DIFFERENCE, use "
+                f"magnitude_as_spread_in"
+            ) from exc
+        return Quantity(converted, target)
 
     def magnitude_in(self, unit: str) -> float:
         """Numeric magnitude expressed in ``unit`` — the single sanctioned way
-        to hand a scientific value to a numeric kernel."""
+        to hand a scientific value to a numeric kernel.
+
+        An ABSOLUTE value: the whole affine map, offset included. The reader
+        for a difference is :meth:`magnitude_as_spread_in`.
+        """
         return self.to(unit).magnitude
+
+    def magnitude_as_spread_in(self, unit: str) -> float:
+        """This magnitude read as a DIFFERENCE, expressed in ``unit``.
+
+        A difference transforms by the LINEAR part of an affine map and not by
+        the whole of it -- that is what an affine map is -- so a spread of
+        0.5 delta_degC is 0.5 kelvin, and one of 1 delta_degF is 5/9 kelvin.
+        Read with :meth:`magnitude_in` instead, a 0.5 degC band became
+        **273.65 kelvin**, and a prediction 273 kelvin wrong passed it.
+
+        Works between any two units of one dimension, delta and absolute
+        alike, because the two slopes are taken against the dimension's base
+        unit and divided: the backend has no direct conversion from
+        ``delta_degC`` to ``degC``, and both slopes against kelvin are 1.
+
+        This is a second way to READ a quantity, not a second KIND of
+        quantity. A :class:`Quantity` still does not know whether it is a point
+        or a span; the caller states which it means by choosing the reader, and
+        :func:`require_spread_unit` is how a declaration says it meant a span.
+        (I-22, R-48.)
+        """
+        target = normalize_unit(unit)
+        self.require_compatible(target, context="spread conversion")
+        if target == self.units:
+            return self.magnitude
+        return self.magnitude * (
+            _slope_against_base(self.units) / _slope_against_base(target)
+        )
 
     # ---- minimal arithmetic -------------------------------------------
     # Enough for constraint checks and adapters; full quantity algebra stays
@@ -1025,3 +1335,47 @@ def coerce_quantity(value: Quantity | float | int | str, unit: str) -> Quantity:
     if isinstance(value, str):
         return Quantity.parse(value).to(unit)
     return Quantity(float(value), unit)
+
+
+#: How much of a float64 is IDENTITY (I-23, R-62/R-74). A CONVENTION, and where the two
+#: requirements meet: a unit restatement of one value disagrees in the 16th significant digit
+#: (7 mm and 0.7 cm convert to 0.007 and 0.006999999999999999, a relative difference of 9e-17,
+#: and 2838 of 20000 random four-decimal millivolt/volt bounds disagree at all), so 12 digits
+#: makes every restatement of one value ONE identity; and the audited geometry difference --
+#: 10 nm against 10.0005 nm -- is 5e-5 relative, which 12 digits keeps apart with four orders of
+#: magnitude to spare. A float64 carries 15 to 17 significant digits, so 12 leaves three for the
+#: conversions themselves.
+IDENTITY_SIGNIFICANT_DIGITS = 12
+
+
+def canonical_magnitude(value: "Quantity", unit: str, *,
+                        digits: int = IDENTITY_SIGNIFICANT_DIGITS) -> float:
+    """``value``'s magnitude in ``unit`` as an IDENTITY: quantized, and with no negative zero.
+
+    The one rule for every digest and every comparison over a physical magnitude, because two
+    rules are two answers waiting to disagree -- which is exactly what the re-audit found:
+
+    * a mesh fingerprint hashed ``repr(magnitude_in("meter"))``, so the same rectangle stated in
+      millimetres and in centimetres was two supports and a field produced on one could not be
+      read on the other (R-62);
+    * a parameter identity hashed the same kind of number, so the same admissible range stated in
+      millivolts was a different parameter (R-74);
+    * and ``-0.0`` compared EQUAL to ``0.0`` while hashing differently, so one value was two
+      identities in a record keyed by digest, with the comparison and the digest each convinced
+      it was right (R-74).
+
+    Quantization is to SIGNIFICANT digits and not to decimal places, because a magnitude spans
+    nanometres and metres in the same field and an absolute rule is a different rule at each
+    scale -- which is the other half of R-62: a ``1e-12 * max(1.0, |x|)`` tolerance is absolute
+    below one metre, and it answered "the same rectangle" for two geometries 5e-5 apart.
+
+    The dimension is checked by the conversion, so a length read in kelvin raises here.
+    """
+    magnitude = value.magnitude_in(unit)
+    if magnitude == 0.0:
+        # Covers -0.0, whose sign is real in IEEE and is not information about a bound.
+        return 0.0
+    if not math.isfinite(magnitude):
+        # An infinity is identity as it stands; rounding it would say something false about it.
+        return magnitude
+    return float(f"{magnitude:.{digits - 1}e}")

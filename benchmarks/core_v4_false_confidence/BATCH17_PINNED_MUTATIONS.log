@@ -1,0 +1,6 @@
+G32e tests/inference/test_audit_inference_heldout_study.py -> KILLED | 2 failed, 17 passed in 5.32s | code 077d88e77536839d->f8a1afbcee9b7250 | pinned: INF-01 (INF-01-applicability-at-declared-conditions) -- tests/inference/test_audit_inference_heldout_study.py
+G32f tests/inference/test_audit_inference_heldout_study.py -> KILLED | 1 failed, 18 passed in 5.53s | code 077d88e77536839d->8f3b5bcd908cb8cc | pinned: INF-02 (INF-02-declared-sigma-only) -- tests/inference/test_audit_inference_heldout_study.py
+G32h tests/inference/test_audit_inference_heldout_study.py -> KILLED | 2 failed, 17 passed in 5.21s | code 077d88e77536839d->b17ce11a1c71b98e | pinned: INF-05 (INF-05-calibrated-only-when-contained) -- tests/inference/test_audit_inference_heldout_study.py
+G32i tests/inference/test_audit_inference_heldout_study.py -> KILLED | 1 failed, 18 passed in 5.17s | code 077d88e77536839d->300e77e7cf1d864f | pinned: INF-05 (INF-05-no-intervals-refused) -- tests/inference/test_audit_inference_heldout_study.py
+G32n tests/inference/test_audit_inference_split_guards.py -> KILLED | 1 failed, 6 passed in 0.60s | code 818e1231f61370ba->642f9ffa2756a21c | pinned: INF-07 (INF-07-heldout-is-not-posterior-dataset) -- tests/inference/test_audit_inference_split_guards.py
+CONTROL (unmutated, 2 test(s)) GREEN | 26 passed in 5.23s

@@ -101,11 +101,18 @@ def observation_content_digest(observation: GaussianObservation) -> str:
     # twelve digits in value AND sigma are a copy, exactly as the module says of
     # bit-identical ones. Sigma is converted as a DIFFERENCE, so an offset unit
     # does not add its zero to it.
+    #
+    # This used to do that conversion BY HAND -- add the sigma to the value,
+    # convert both, subtract -- and the trick corrected the wrong half. It fixed
+    # the value-unit-to-base step, and read the sigma's OWN declared unit with
+    # `magnitude_in`, which is where finding 99's 273.65 came from: a '0.5 degC'
+    # sigma on a kelvin reading was already wrong before the trick ran.
+    # `magnitude_as_spread_in` is the thing the trick was approximating, and it
+    # is exact for a delta unit the backend will not convert directly.
+    # (I-22, R-48.)
     unit = base_unit(observation.value.units)
     value = observation.value.magnitude_in(unit)
-    sigma_in_value_unit = observation.sigma.magnitude_in(observation.value.units)
-    upper = Quantity(observation.value.magnitude + sigma_in_value_unit, observation.value.units)
-    sigma = abs(upper.magnitude_in(unit) - value)
+    sigma = abs(observation.sigma.magnitude_as_spread_in(unit))
     payload = {
         "observable_name": observation.observable_name,
         "unit": unit,
@@ -199,10 +206,14 @@ class ObservationSplit:
                     by_content.setdefault(observation_content_digest(item), []).append(
                         f"{side}:{item.key}"
                     )
+            # R-32 (re-audit 2026-09-16): a collision WITHIN one half is a copy by the same argument -- same
+            # observable, same value, same sigma, different condition_id. Inside the held-out half the
+            # consequence is worse than leakage: the paired differences of a comparison become identical, so
+            # its sample variance is exactly zero and the standard-error test is vacuous.
             collisions = {
                 digest: where
                 for digest, where in by_content.items()
-                if len({entry.split(":", 1)[0] for entry in where}) > 1
+                if len({entry.split(":", 1)[0] for entry in where}) > 1 or len(where) > 1
             }
             if collisions:
                 examples = sorted(
@@ -217,6 +228,28 @@ class ObservationSplit:
                     f"replicates, declare it with allow_exact_replicates() so "
                     f"the decision is visible"
                 )
+            # CORE-017 (scientific core audit 2026-09-16): the digest above rounds to twelve digits, so a copy nudged by a
+            # part per million of its own sigma crossed it. A pair whose values agree to 1e-6 of the larger sigma and whose
+            # sigmas agree to 1e-6 relative is the same reading.
+            near = _near_duplicates(self.calibration.observations, self.held_out.observations)
+            if near:
+                raise DataLeakageError(
+                    f"{len(near)} held-out observation(s) repeat a calibration reading to within a millionth of its "
+                    f"declared sigma: {near[:3]!r}. That is a copy below any measurement resolution, not a new "
+                    f"measurement. If this study really does carry exact replicates, declare it with "
+                    f"allow_exact_replicates()"
+                )
+            # R-32: and within each half, for the same reason
+            for side, observations in (("calibration", self.calibration.observations),
+                                       ("held_out", self.held_out.observations)):
+                inside = _near_duplicates(observations, observations)
+                if inside:
+                    raise DataLeakageError(
+                        f"{len(inside)} pair(s) of {side} observations are one reading repeated to within a "
+                        f"millionth of its declared sigma: {inside[:3]!r}. Counted as separate measurements they "
+                        f"inflate n and drive the paired standard error of a model comparison to zero. If this "
+                        f"study really does carry exact replicates, declare it with allow_exact_replicates()"
+                    )
 
     @property
     def calibration_dataset_id(self) -> str:
@@ -421,6 +454,95 @@ def _require_posterior_conditioned_on_calibration(
             f"A matching dataset id is a label; a posterior fitted to other evidence "
             f"-- the held-out rows included -- cannot be scored as held-out validation"
         )
+
+
+#: CORE-017: two readings of one observable are the same reading when their values differ by at most this fraction of
+#: the larger declared sigma and their sigmas by at most this relative amount (class C, a copy-detection resolution).
+NEAR_DUPLICATE_RELATIVE_TO_SIGMA = 1.0e-6
+#: R-32 (re-audit 2026-09-16): the tolerance for the LINEAGE route below, where the two rows carry the same
+#: ``source_ref`` -- the same row, imported twice, possibly with a re-declared sigma or under a new observable name.
+#: Looser than the numeric route's, and affordable there: that route compares only pairs that share a provenance
+#: string, so its false-match exposure is a handful of pairs rather than n_cal * n_held of them.
+NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA = 1.0e-3
+
+
+def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float, float]:
+    base = base_unit(observation.value.units)
+    value = observation.value.magnitude_in(base)
+    # The same hand-written difference trick as `_content_digest` had, replaced
+    # by the same spread reader and for the same reason (I-22, R-48).
+    return base, value, abs(observation.sigma.magnitude_as_spread_in(base))
+
+
+def observation_set_content_digest(observations: ObservationSet) -> str:
+    """``"<count>:<sha256>"`` over what a whole observation SET says (I-14, R-22(a)).
+
+    The set-level sibling of :func:`observation_content_digest`, and content-addressed in the same sense: the
+    per-observation digests, sorted, so two imports of the same rows in a different order are one content.
+    That function already excludes ``condition_id`` and ``source_ref`` for the same reason.
+
+    THE COUNT IS IN THE CLEAR, AND THAT IS THE DESIGN. A digest alone cannot be checked against a count
+    without the observations, so a reader holding only a record could verify nothing. With the count beside
+    it, a record's own ``observations`` field is checkable from the record alone -- and making the two agree
+    requires editing the digest, which no longer matches the observations the moment anyone does hold them.
+    """
+    if not isinstance(observations, ObservationSet):
+        raise InferenceProblemError(
+            f"an observation-set content digest is taken of an ObservationSet, got {type(observations).__name__}")
+    rows = tuple(observations.observations)
+    inner = hashlib.sha256()
+    for digest in sorted(observation_content_digest(row) for row in rows):
+        inner.update(digest.encode("ascii"))
+    return f"{len(rows)}:{inner.hexdigest()}"
+
+
+def _near_duplicates(left, right) -> list[tuple[str, str]]:
+    """Pairs that are one reading. Two routes, and only one of them may ignore the declared sigma (audit R-32).
+
+    * The NUMERIC route: the same observable name and base unit, the values within
+      ``NEAR_DUPLICATE_RELATIVE_TO_SIGMA`` of the larger declared sigma, AND the sigmas within the same
+      tolerance. This is the original rule.
+    * The LINEAGE route: the same non-empty ``source_ref`` and base unit, and the values within
+      ``NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA``. The observable NAME and the declared SIGMA are both
+      ignored here: the same row imported twice may be renamed and may have its uncertainty re-declared, and
+      the provenance is what says it is the same row.
+
+    Why the sigma requirement survives on the numeric route, against the audit's suggestion to drop it: the
+    B3 battery evidence contains two cross-half pairs of readings whose recorded voltages are BIT-IDENTICAL
+    (the instrument quantizes) and whose combined standard uncertainties differ by 4.8e-6 of a sigma, at
+    distinct rows, distinct rested conditions and distinct ``source_ref``s. Those are two measurements. On
+    value alone, at any tolerance, they are indistinguishable from the re-import the audit asks to catch, so
+    lineage is the discriminator and the numeric route keeps both conditions.
+
+    The two sides may be the two halves of a split or one half against itself; the caller decides, and a pair
+    is reported at most once.
+    """
+    by_observable: dict[tuple[str, str], list[tuple[float, float, str]]] = {}
+    by_lineage: dict[tuple[str, str], list[tuple[float, float, str]]] = {}
+    for item in left:
+        unit, value, sigma = _base_value_and_sigma(item)
+        by_observable.setdefault((item.observable_name, unit), []).append((value, sigma, item.key))
+        if str(item.source_ref).strip():
+            by_lineage.setdefault((str(item.source_ref).strip(), unit), []).append((value, sigma, item.key))
+    found, seen = [], set()
+    for item in right:
+        unit, value, sigma = _base_value_and_sigma(item)
+        candidates = [(NEAR_DUPLICATE_RELATIVE_TO_SIGMA, True, other)
+                      for other in by_observable.get((item.observable_name, unit), ())]
+        if str(item.source_ref).strip():
+            candidates += [(NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA, False, other)
+                           for other in by_lineage.get((str(item.source_ref).strip(), unit), ())]
+        for tolerance, needs_same_sigma, (other_value, other_sigma, other_key) in candidates:
+            if other_key == item.key or (other_key, item.key) in seen:
+                continue
+            scale = max(sigma, other_sigma)
+            if abs(value - other_value) > tolerance * scale:
+                continue
+            if needs_same_sigma and abs(sigma - other_sigma) > tolerance * scale:
+                continue
+            seen.add((other_key, item.key))
+            found.append((other_key, item.key))
+    return found
 
 
 def allow_exact_replicates(split_kwargs: Mapping[str, Any]) -> dict[str, Any]:

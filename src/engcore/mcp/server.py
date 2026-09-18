@@ -1,12 +1,16 @@
 """The MCP transport: this runtime, exposed to an agent, over stdio.
 
-A **transport and nothing else**. It computes no physics, evaluates no
-condition and decides no verdict. Every fact it returns was produced by
-:mod:`engcore.mcp.problem` and :mod:`engcore.mcp.evidence` and is carried here
-unaltered; every field it describes is read off the model registries by
-:func:`~engcore.mcp.problem.describe_electrothermal_case`, so a model input
-added or re-dimensioned in a domain changes the description rather than making
-it quietly false.
+The domain run tools remain **transport and nothing else**: they compute no
+physics here, evaluate no condition here and re-decide no credibility verdict.
+Every scientific fact they return was produced below this module.
+
+The public surface also exposes one explicit orchestration tool,
+`assess_claim`. It does not compute physics or invent scientific judgement;
+it binds an existing credibility report to the already-implemented SRIA
+Evidence -> Critic -> Arbiter path for a caller-declared decision standard.
+The caller must name the system, quantity, decision, required evidentiary
+levels and model-discrepancy declaration. No natural-language inference,
+automatic model selection or confidence default lives here.
 
 **The unflattering verdict is transmitted.** The nominal electro-thermal case
 reports ``INSUFFICIENT_EVIDENCE``, because the payload has no field for a
@@ -44,8 +48,14 @@ from .errors import (
     UnknownFieldError,
     WrongDimensionError,
 )
-from .evidence import CredibilityVerdict
+from ..scientific.solvers.protocol import ConvergenceState
+from .evidence import EVIDENCE_BASIS_ORDER, CredibilityVerdict
 from .battery import run_battery_case
+from .claim_assessment import (
+    ClaimAssessmentError,
+    assess_claim_request,
+    refused_claim_assessment,
+)
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -61,6 +71,7 @@ __all__ = [
     "SERVER_NAME",
     "SERVER_VERSION",
     "SYSTEM_NAME",
+    "assess_claim",
     "build_server",
     "describe_capabilities",
     "main",
@@ -69,7 +80,7 @@ __all__ = [
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -148,6 +159,67 @@ _REPAIR: Mapping[type, str] = {
 }
 
 
+#: The same three questions, answered for each (verdict, evidence basis) pair (R-04, core re-audit
+#: 2026-09-16). ``_VERDICT_GUIDANCE`` above is the VALIDATED reading and is what
+#: ``describe_capabilities`` has always listed per verdict; it is left byte-identical. What the audit
+#: found is that an agent reading ``means`` on a SUPPORTED report was told "nothing in this report
+#: argues against relying on the result" when the only evidence attained was that the DECLARED MODEL
+#: WAS SOLVED CORRECTLY -- and every SUPPORTED verdict either MCP tool can return today is exactly
+#: that, because the trusted oracle registry is empty and the only cross-solver check has its level
+#: withheld on purpose. The word stays SUPPORTED; the sentence beside it now says which kind of
+#: evidence it rests on.
+_BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
+    (CredibilityVerdict.SUPPORTED, "VALIDATED"): {
+        "means": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["means"]
+                 + " At least one of those levels compares the model with something outside "
+                   "itself: a benchmark, an experiment, or an independently implemented solver.",
+        "does_not_mean": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["does_not_mean"],
+        "action": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["action"],
+    },
+    (CredibilityVerdict.SUPPORTED, "VERIFICATION_ONLY"): {
+        "means": "Nothing in this report argues against relying on the result, and at least one "
+                 "check both passed and established an evidentiary level -- but every level "
+                 "attained is a VERIFICATION level: it says the declared model was solved "
+                 "correctly. This report contains no comparison of the model with the world.",
+        "does_not_mean": "It does not mean the model describes the part, that the equations are the "
+                         "right equations, or that any measurement agrees with the answer. Nothing "
+                         "here was compared with a benchmark, an experiment, or an independently "
+                         "implemented solver. A correct solution of the wrong model is exactly what "
+                         "this verdict cannot distinguish. Read the attained levels, the conditions "
+                         "each model was judged against, and decide.",
+        "action": "Read the evidence and decide, and decide separately whether the model applies: "
+                  "this report does not answer that. To demand more, set required_evidence_basis "
+                  "to VALIDATED and the verdict becomes INSUFFICIENT_EVIDENCE until something "
+                  "outside the model agrees with it.",
+    },
+    (CredibilityVerdict.SUPPORTED, "NONE"): {
+        "means": "Reserved: SUPPORTED requires at least one attained level, so this pair cannot "
+                 "arise. It is described because an undescribed pair must not reach an agent.",
+        "does_not_mean": "It is not a verdict this platform can produce.",
+        "action": "Report this response as a defect in engcore.mcp.",
+    },
+}
+for _verdict in (CredibilityVerdict.INSUFFICIENT_EVIDENCE, CredibilityVerdict.NOT_SUPPORTED):
+    for _basis in ("VALIDATED", "VERIFICATION_ONLY", "NONE"):
+        # A gap and a finding mean what they mean whatever was attained beside them: the rules that
+        # produced them are in `verdict_reasons`, and the basis is reported as a field. Only
+        # SUPPORTED's sentence depended on the reader assuming the levels meant more than they did.
+        _BASIS_GUIDANCE[(_verdict, _basis)] = _VERDICT_GUIDANCE[_verdict]
+
+#: What each evidence basis IS, in one sentence, for the block and for describe_capabilities.
+_BASIS_MEANS: Mapping[str, str] = {
+    "VALIDATED": "At least one attained level compares the model with something outside itself.",
+    # R-39 (I-12 part A): agreement between two solvers is named here explicitly, because it is the level
+    # most likely to be read as validation -- it used to be counted as one -- and because it is the only
+    # level in this group that involves a second program rather than a second look at the same one.
+    "VERIFICATION_ONLY": "Every attained level says the declared model was solved correctly. That includes "
+                         "agreement between two solvers of the same declared model, which compares two "
+                         "implementations and not the model with the world. Nothing here compares it with "
+                         "the world.",
+    "NONE": "No check both passed and established an evidentiary level.",
+}
+
+
 def _audit_tables() -> None:
     """Refuse to import while anything an agent could receive is undescribed.
 
@@ -158,6 +230,11 @@ def _audit_tables() -> None:
     for defined, described, what in (
         ({v.value for v in CredibilityVerdict},
          {v.value for v in _VERDICT_GUIDANCE}, "verdict"),
+        # R-04: every (verdict, basis) pair, for the reason every verdict is described --
+        # a pair with no entry would reach an agent with no explanation attached.
+        ({f"{v.value}/{b}" for v in CredibilityVerdict for b in EVIDENCE_BASIS_ORDER},
+         {f"{v.value}/{b}" for v, b in _BASIS_GUIDANCE}, "verdict and evidence basis pair"),
+        ({str(b) for b in EVIDENCE_BASIS_ORDER}, set(_BASIS_MEANS), "evidence basis"),
         ({c.__name__ for c in ProblemPayloadError.__subclasses__()},
          {c.__name__ for c in _REPAIR}, "payload error class"),
     ):
@@ -225,7 +302,18 @@ def describe_capabilities() -> dict[str, Any]:
         "server": {"name": SERVER_NAME, "version": SERVER_VERSION},
         "systems": [_describe_system(boundary) for boundary in SYSTEMS],
         "verdicts": [
-            {"value": verdict.value, **_VERDICT_GUIDANCE[verdict]}
+            {
+                "value": verdict.value,
+                **_VERDICT_GUIDANCE[verdict],
+                # R-04: what the same verdict means on each kind of evidence, so an agent
+                # knows before it calls that a SUPPORTED verdict may rest on verification
+                # alone -- which, on this server, every SUPPORTED verdict does.
+                "by_evidence_basis": [
+                    {"evidence_basis": basis, "evidence_basis_means": _BASIS_MEANS[basis],
+                     **_BASIS_GUIDANCE[(verdict, basis)]}
+                    for basis in sorted(EVIDENCE_BASIS_ORDER, key=EVIDENCE_BASIS_ORDER.get, reverse=True)
+                ],
+            }
             for verdict in CredibilityVerdict
         ],
         "how_to_read_a_field": {
@@ -275,6 +363,19 @@ def _unknown_models(report: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _finished(report: Any) -> bool:
+    """Whether the solver behind this report said it was done (R-10).
+
+    ``None`` is the absence of a state -- a report around values that came from no solver -- and is
+    not a rule firing. Read through the enum, like everything else a rule reads.
+    """
+    state = getattr(report, "convergence", None)
+    return state is None or ConvergenceState(state) in (
+        ConvergenceState.CONVERGED,
+        ConvergenceState.NOT_APPLICABLE,
+    )
+
+
 def _fired_rules(report: Any) -> list[dict[str, Any]]:
     """Each rule of ``derive_verdict`` that this report's contents trigger.
 
@@ -321,10 +422,32 @@ def _fired_rules(report: Any) -> list[dict[str, Any]]:
         ("required_level_not_attained", verdicts.INSUFFICIENT_EVIDENCE,
          report.missing_required_levels,
          lambda v: {"missing_levels": [level.value for level in v]}),
+        # R-10, named here: the batch-7 rule makes this INSUFFICIENT_EVIDENCE, and the
+        # NOT_RUN check it also writes already showed up under validation_check_not_run.
+        # A reader seeing "a check did not run" would look for a check; what happened is
+        # that the solver stopped.
+        ("solver_did_not_converge", verdicts.INSUFFICIENT_EVIDENCE,
+         () if _finished(report) else (report.convergence,),
+         lambda v: {"convergence": ConvergenceState(v[0]).value,
+                    "note": "the solver reported that it had not finished; these values are an "
+                            "iterate and not a solution"}),
+        ("required_evidence_basis_not_attained", verdicts.INSUFFICIENT_EVIDENCE,
+         () if report.missing_evidence_basis is None else (report.missing_evidence_basis,),
+         lambda v: {"required_evidence_basis": v[0],
+                    "evidence_basis": report.evidence_basis}),
         # Never decides anything. Carried because SUPPORTED absorbs it, which
         # makes it the finding a reader is most likely to miss.
         ("check_warned", None, report.warning_checks,
          lambda v: {"warning_checks": list(v)}),
+        # R-04: never decides anything either, and for the same reason it is carried:
+        # SUPPORTED absorbs it, and it is the thing a reader most needs told. Every
+        # SUPPORTED verdict either MCP tool can return today fires this rule.
+        ("verification_only", None,
+         () if report.evidence_basis == "VALIDATED" else (report.evidence_basis,),
+         lambda v: {"evidence_basis": v[0],
+                    "means": _BASIS_MEANS[v[0]],
+                    "attained_levels": sorted(level.value for level in report.attained_levels),
+                    "levels_withheld": [list(entry) for entry in report.levels_withheld]}),
     )
     return [
         {"rule": rule,
@@ -351,9 +474,17 @@ def _verdict_block(report: Any) -> dict[str, Any]:
             f"enumeration in engcore.mcp.server is out of step with "
             f"derive_verdict"
         )
+    basis = report.evidence_basis
     return {
         "value": verdict.value,
-        **_VERDICT_GUIDANCE[verdict],
+        # R-04: the sentence beside the word, keyed by (verdict, basis). SUPPORTED on
+        # verification alone no longer reads as though something outside the model agreed.
+        **_BASIS_GUIDANCE[(verdict, basis)],
+        "evidence_basis": basis,
+        "evidence_basis_means": _BASIS_MEANS[basis],
+        "attained_levels": sorted(level.value for level in report.attained_levels),
+        "levels_withheld": [list(entry) for entry in report.levels_withheld],
+        "warning_checks": list(report.warning_checks),
         "verdict_reasons": reasons,
         # Rules that fired without deciding this verdict: gaps outranked by a
         # finding, and warnings, which never decide anything.
@@ -662,6 +793,25 @@ field, what you sent, what was expected and how to repair it -- fix that one \
 field and call again."""
 
 
+_ASSESS_CLAIM_DESCRIPTION = """Assess one structured scientific claim for one declared decision.
+
+The request must explicitly name a registered system, its case payload, the
+reported quantity to assess, the terminal decision statement, one or more
+required ValidationLevels, and a model-discrepancy declaration.
+
+This tool does not infer a scientific question from prose, select a model,
+choose a report when a system returns several, or invent a confidence target.
+It executes the existing system boundary and carries its credibility report
+through SRIA evidence and assurance.
+
+The result contains BOTH the production credibility verdict and the assurance
+verdict. A validation level cannot hide a NOT_SUPPORTED or
+INSUFFICIENT_EVIDENCE credibility report: the credibility critic itself is a
+required assurance critic.
+
+This is scientific decision support, not safety certification and not an
+automatic real-world decision."""
+
 _RUN_BATTERY_DESCRIPTION = """\
 Run one battery case and return its credibility evidence report.
 
@@ -709,6 +859,19 @@ error naming the field, what you sent, what was expected and how to repair \
 it -- fix that one field and call again."""
 
 
+def assess_claim(request: dict[str, Any]) -> dict[str, Any]:
+    """Public structured claim-assessment boundary.
+
+    Expected scientific refusals are returned as data. Unexpected programming
+    errors still raise: a transport must not turn an implementation defect
+    into an innocent-looking INSUFFICIENT_EVIDENCE answer.
+    """
+    try:
+        return assess_claim_request(request)
+    except (ClaimAssessmentError, ProblemPayloadError) as exc:
+        return refused_claim_assessment(exc)
+
+
 def build_server() -> MCPServer:
     """The server, with both tools registered. Used by the tests and by main."""
     server = MCPServer(
@@ -716,10 +879,11 @@ def build_server() -> MCPServer:
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
-            "its own results. Call describe_capabilities before writing a "
-            "case. Verdicts are advisory input to an engineer of record, and "
-            "an unflattering verdict is this runtime's real answer rather than "
-            "a failure to retry."
+            "its own results and can bind one structured claim to an explicit "
+            "decision standard. Call describe_capabilities before writing a "
+            "case. assess_claim requires the system, quantity, decision, "
+            "required evidence levels and discrepancy declaration explicitly. "
+            "Verdicts remain decision support, not certification."
         ),
     )
     server.add_tool(
@@ -739,6 +903,12 @@ def build_server() -> MCPServer:
         name="run_battery",
         title="Run a battery discharge case",
         description=_RUN_BATTERY_DESCRIPTION,
+    )
+    server.add_tool(
+        assess_claim,
+        name="assess_claim",
+        title="Assess a structured scientific claim",
+        description=_ASSESS_CLAIM_DESCRIPTION,
     )
     _audit_tools(server)
     return server

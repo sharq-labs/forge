@@ -1,0 +1,127 @@
+{
+ "api": {
+  "additive_only_problems": [],
+  "deep_surface": {
+   "digest": "88f4f6200cddd32948245bfe7073ac59a611a63e23aed8e0b9f35a780f39f2fa",
+   "method_count": 1943,
+   "path": "certification/core_v4_api_surface.json",
+   "schema": "engcore.api_surface_v4/1"
+  },
+  "enum_insertions": {},
+  "v1_stored": {
+   "commit": "af43c896f79a37ac10c0c4e981836b85b24e5a5b",
+   "file": "tests/api/frozen_api_snapshot.json",
+   "file_sha256": "422bc9c1d4b4b73926a9a2974b1173a964b11963e5d20ab08737a1c385035de0",
+   "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929"
+  },
+  "v2_additive_only_problems": [],
+  "v2_enum_insertions": {
+   "engcore.hybrid_uq.RouteReason": {
+    "existing_members_keep_their_relative_order": true,
+    "inserted_before_an_existing_member": [
+     "MODEL_MISFIT_BEYOND_DECLARED_NOISE",
+     "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN",
+     "RESIDUALS_EXCEED_DECLARED_NOISE",
+     "TAIL_HEAVIER_WITHIN_6_SD",
+     "GRID_NOT_BOUND_TO_EVIDENCE",
+     "PREDICTION_DOMAIN_NOT_DECLARED",
+     "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS"
+    ],
+    "members_before": 24,
+    "members_now": 43,
+    "positions": [
+     11,
+     12,
+     20,
+     21,
+     22,
+     23,
+     24
+    ]
+   }
+  },
+  "v2_stored": {
+   "commit": "7876bd9f3e22db67c26f510b820719477a9c655d",
+   "file": "tests/api/v2_frozen_api_snapshot.json",
+   "file_sha256": "906332249626ca4e88fe37de9de90db3672e8ceaec597ff1ecd843cc0be9b818",
+   "frozen_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb"
+  },
+  "v4_live": {
+   "frozen_count": 194,
+   "frozen_digest": "f18aa806d594016c04b3f9ace6b0817969e8042febd22324f6eb8a95aef6f487",
+   "total_count": 205,
+   "v2_frozen_count": 221,
+   "v2_frozen_digest": "19a68c866852c03af2944ec8a751b9d4a4f29feeb678c20b3ebb79b2a78e21f7"
+  }
+ },
+ "audit": {
+  "document": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+  "improvements": 31,
+  "measurements": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "problems": 75
+ },
+ "capability_claim": "Core Freeze V4 is the 2026-09-16 scientific core re-audit's contract: 75 problems measured, and the shapes the fixes needed added WITHOUT removing, renaming, reordering or re-defaulting anything a consumer holds. The claim is not that the API is unchanged -- it is that every difference from the Core Freeze V1 surface, as V1 itself committed it, is one of the four additive kinds the owner allowed, proved difference by difference by additive_only_problems.",
+ "certificate": {
+  "issued_by": "the recertify workflow's certificate-only child",
+  "required_areas": [
+   "assurance_admission",
+   "core",
+   "evidence_identity",
+   "execution_trust",
+   "inference_admission",
+   "predictive_representation",
+   "routed_uncertainty",
+   "harness",
+   "certification_control"
+  ]
+ },
+ "freeze": {
+  "additive_over": "Core Freeze V1 (v1.0-core-freeze), PROVED difference by difference",
+  "candidate_commit": "b79945558784ba392c46c426b7f53ea8f58ef87b",
+  "descends_from_v3_commit": "9acffc0065a59948648c9d4a87e7dd0fbf9a3e4a",
+  "name": "Core Freeze V4",
+  "supersedes": "Core Freeze V3 (v3.0-core-freeze) contract, for descendants; V1-V3 history untouched",
+  "tag": "v4.0-core-freeze"
+ },
+ "non_claims": [
+  "V4 does not claim any domain solver quantifies its uncertainty: every one still reports UNKNOWN with a stated reason (R-43's remaining half).",
+  "V4 does not claim the deep surface covers behaviour. Methods are recorded by name and signature; what they do is what the 575-mutation population and the suites are for.",
+  "V4 does not claim a fresh execution. The assurance record states which commit it measured and every figure in it is re-derived from the tree and the transcripts; binding that to an execution is the recertify workflow's job.",
+  "V4 does not re-freeze the mesh and parameter identities (R-62, R-74): I-23 is deferred and is listed as an open decision in the audit document."
+ ],
+ "pinned_api_files": {
+  "certification/core_v4_api_surface.json": "5d8d5a5447e820545ad9d668b4d9e83882098231beb7ac1bd6dd2bbafe3fe7ed",
+  "tests/api/frozen_api_snapshot.json": "0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072",
+  "tests/api/full_api_snapshot.json": "c8d45572dd722d9fc485c9f74d7609170b569ea029f3466f9cc4351e54c042d8",
+  "tests/api/v2_frozen_api_snapshot.json": "93b88aaf43679a0e1aaf06b41435aa8ad3e46b48f256ecb4054de3e9cec4bbf9",
+  "tests/api/v2_full_api_snapshot.json": "9e5b94774b397010f9b7d05dcf5edef67fdd189d357a49e7e44b5a5bbdd92a89"
+ },
+ "references": {
+  "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+  "deep_surface_tool": "tools/certification/api_surface_v4.py",
+  "manifest_tests": "tests/test_core_freeze_v4_manifest.py",
+  "mutation_population": "tests/mutation_population_v4.py",
+  "mutation_runner": "tools/certification/mutation_v4_runner.py",
+  "policy": "docs/CORE_FREEZE_POLICY.md",
+  "report": "certification/CORE_FREEZE_V4.md",
+  "superseded_v3_verifier": "tools/certification/core_freeze_v3.py",
+  "verifier": "tools/certification/core_freeze_v4.py"
+ },
+ "schema": "engcore.core_freeze/4",
+ "supersedes_v3_because": [
+  "R-01/R-20: a route's goodness of fit is re-derived from the numbers it carries, and a `route_diagnostics/1` record that names no thresholds and no chi-square minimum is refused -- which is what V3's own identity references are, so V3's serialization inventory can no longer be reproduced by a correct tree",
+  "R-43: a quantified uncertainty record nobody attributed can no longer be aggregated into a channel total, so an SRIA budget built from V3's unattributed records is refused",
+  "R-58/R-61: a recorded transfer states where its value came from and is checked against the result it names, so a crossing carrying a bare point value no longer round-trips",
+  "R-67/R-68: the certificate's harness area is derived from what its suites import, so a V3 certificate's scope table is not a V4 scope table"
+ ],
+ "v1_manifest_sha256": "eb7643007ca8ced81e80b0403fcf953c2d2f9855b92e2b1242255339f9220aee",
+ "v2_manifest_sha256": "e0c2fe20e805d1162c3849765647838b4a101be6da5db67628ecd7dab273919f",
+ "v3_fixtures_refused": {
+  "exception": "engcore.hybrid_uq.vocabulary.HybridUQError",
+  "message": "the route diagnostics contradict their own measurements: ['threshold goodness_of_fit_alpha is None, not the declared 0.01', 'threshold misfit_refuse_variance_ratio is None, not the declared 4.0', 'threshold tail_probe_sd_inner is None, not the declared 3.0', 'threshold tail_probe_sd_outer is None, not the declared 6.0', 'threshold tail_downgrade_ratio is None, not the declared 0.9', 'threshold tail_refuse_ratio is None, not the declared 0.5', 'a measured route records the chi-square minimum its goodness of fit is judged on; this record carries nan (a hybrid_uq.route_diagnostics/1 record never ",
+  "refused": true,
+  "required_exception": "engcore.hybrid_uq.vocabulary.HybridUQError",
+  "required_phrase": "contradict their own measurements"
+ },
+ "v3_manifest_sha256": "6c0d7eb908b6f0280e83d20d4af29c0e486be5760470f4866c3146c2260bb86c"
+}

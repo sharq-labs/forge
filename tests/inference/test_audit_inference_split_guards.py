@@ -80,7 +80,7 @@ def _posterior(dataset_id):
 
 def _table():
     return AdmittedForwardTable(("p",), ("H:y",), np.asarray([[0.0], [1.0], [2.0]]), np.asarray([[10.0], [14.0], [14.0]]),
-                                np.ones(3, dtype=bool), (("a",), ("b",), ("c",)), ("", "", ""))
+                                np.ones(3, dtype=bool), (("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",), ("numerical|p-c|v-c|b-c",)), ("", "", ""))
 
 
 def _assess(posterior_id, heldout_id):

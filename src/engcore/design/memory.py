@@ -246,7 +246,13 @@ class DesignMemoryEntry:
         candidate: DesignCandidate,
         evaluation: DesignEvaluation,
     ) -> "DesignMemoryEntry":
-        if evaluation.eligibility is not SelectionEligibility.ELIGIBLE:
+        # R-44: D3 takes both labels a D1 archive ranks under. A memory entry records the evaluation by
+        # reference, so the distinction lives on the evaluation and in the archive that ranked it; recording
+        # it on the entry as well is a record change deferred with the V4 inventory.
+        if evaluation.eligibility not in (
+            SelectionEligibility.ELIGIBLE,
+            SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
+        ):
             raise InvalidScientificProblem("D3 entry requires eligible D1 evaluation")
         if evaluation.design_space.key != scope.design_space.key:
             raise InvalidScientificProblem("D3 entry evaluation scope mismatch")
@@ -367,7 +373,10 @@ class DesignMemoryLayerA:
         entries: list[DesignMemoryEntry] = []
         partition_keys: dict[str, str] = {}
         for evaluation in evaluations:
-            if evaluation.eligibility is not SelectionEligibility.ELIGIBLE:
+            if evaluation.eligibility not in (
+                SelectionEligibility.ELIGIBLE,
+                SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
+            ):
                 continue
             candidate = candidate_by_id.get(evaluation.candidate.candidate_id)
             if candidate is None:

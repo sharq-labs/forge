@@ -42,6 +42,36 @@
    "rule": "a log coordinate's identifiability width is its natural-scale relative width",
    "commit": "3ddc686",
    "effect_on_this_record": "no effect: every battery parameter is an identity-declared voltage."
+  },
+  {
+   "id": "R-08 / I-02",
+   "rule": "the minimum multistart search includes max_evaluations and maximum_retractions (a value below the canonical policy's is a recorded shortfall), and a search is incomplete unless at least max(6, 2p + 2) starts CONVERGED, not merely half of those proposed. A refit that does not converge under a budget below the canonical one is retried once at the canonical budget.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "every model's committed multistart lists 6 of 6 starts CALIBRATION_CONVERGED, so the converged-count rule adds nothing and MULTISTART_NO_SECOND_MODE still re-derives from the starts on read-back. The policy T41 ran is not recorded in the route thresholds, so no budget shortfall can be projected from the committed bytes; battery.py's policy would have to be read to say more, and the route was not re-run."
+  },
+  {
+   "id": "R-18 / I-02",
+   "rule": "a start the forward model refuses is REPLACED by the next unused point of the same Halton sequence, from one counter shared by every start, instead of being halved toward the calibrated estimate. The entry records `replacements` and no longer records `retractions`.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "this is the record the re-audit's R-18 finding points at for reach: P1..P5 record retractions of 1, 2, 3, 2 and 1, so between one and three of each model's six starts were halved toward the estimate -- one of them to 1/8 of its intended distance -- and then counted as full-span starts behind SUPPORTED MULTISTART_NO_SECOND_MODE. Under replacement those starts would have searched other full-span points of the Halton sequence instead, so the committed 'no second mode' rests on a narrower search than the record implies. What it would say after the change cannot be projected without re-running the search, which is the battery solve this stream must not pay for. The bytes and the SUPERSEDED status are unchanged."
+  },
+  {
+   "id": "R-07 / I-02",
+   "rule": "a separated converged refit that is not a BETTER_OPTIMUM is SECOND_MODE when its Laplace mass ratio exp(-(chi - chi_min) / 2) * sqrt(det(Sigma) / det(Sigma_min)) exceeds MULTISTART_MASS_FLOOR = 1e-3 and WORSE_LOCAL_OPTIMUM when it does not, and the ratio is recorded so a reader can re-derive the classification.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "no committed entry in any model is separated: all thirty refits are SAME_OPTIMUM. The mass rule reaches nothing here, and the read-back's mass rule is gated on a multistart policy record these bytes do not carry."
+  },
+  {
+   "id": "R-03 / R-20 / I-04",
+   "rule": "the CORE-001 gate runs TWO tests at half the declared alpha each and the worse stands: the pooled chi-square as before, and a leverage-weighted statistic T = sum_i H_ii r_i^2 against its exact three-moment null, which weighs each residual by how much the reported covariance depends on it. The variance-ratio refusal (ratio above 4) now fires whatever the p-value says, and one or two residual degrees of freedom add the downgrade GOODNESS_OF_FIT_UNDERPOWERED.",
+   "commit": "core re-audit batch 11 (I-04), branch claude/core-scientific-audit",
+   "effect_on_this_record": "the B3 calibration split is 67 observations, so every model here has between 26 and 65 residual degrees of freedom and none is underpowered. The pooled half is unchanged: the committed record's own held-out chi-square of 2.20 on 33 points and the T41 fit's variance ratio far below 1 leave it silent, and the unconditional ratio adds nothing below 4. The leverage half was MEASURED for the same family, the same B3 data and the same p by this batch's probe on PERFORMANCE.json (benchmarks/core_v4_false_confidence/audit/batch11_performance_probe.py): at p = 41 the leverage statistic is 0.0807 against a null mean of 14.31, a ratio of 0.0056, so that test is silent too. The probe covers p = 2, 5, 10, 20 and 41; the other models in this record (P1..P9, T3..T21) were not measured, and their claims already stand DOWNGRADED under HUQ-01. Nothing was re-run for this record."
+  },
+  {
+   "id": "R-05 / R-17 / I-05",
+   "rule": "a V2 layer above V1's grid resolution check: every interior local maximum of the node log-likelihood within ln 1e6 of the peak gets its OWN quadratic fit on its own nodes, held to a residual bound of ln 100 nats and to V1's own aliasing bound (GRID_MODE_UNRESOLVED); and an admissible node the posterior reaches with an inadmissible lattice neighbour is a truncation face -- refused on a supplied grid (GRID_CUT_BY_INADMISSIBILITY), refined across in a rebuild. V1's src/engcore/inference/calibration.py is unchanged.",
+   "commit": "core re-audit batch 12 (I-05), branch claude/core-scientific-audit",
+   "effect_on_this_record": "every model in this record is routed LOCAL_GAUSSIAN with no grid ('route_uncertainty(calibration, observations, forward, multistart=MultistartPolicy()) with no grid', the record's own route_call), so neither rule reaches any claim in it. The vs_committed_core_grid comparison reads a V1 grid built elsewhere and is a tolerance comparison, not a routed claim. Nothing was re-run."
   }
  ],
  "unchanged": "posterior means and standard deviations (max relative sd change vs the committed record 0.0), identifiability statuses, the vs_b3_domain_route and vs_committed_core_grid tolerance verdicts (P9 still the one miss), held-out chi-square and coverage: the audited rules change what the route will claim, not the covariance it computes.",

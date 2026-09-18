@@ -12,7 +12,7 @@ No physical laws are implemented here, and none are registered by the core.
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping, Sequence
 
@@ -459,6 +459,22 @@ class CategoryCondition:
         if not str(self.name).strip():
             raise ModelValidityError("category condition requires a name")
         object.__setattr__(self, "name", str(self.name).strip())
+        # R-54 (I-31): a bare string is an iterable of LETTERS, so
+        # `allowed='laminar'` becomes {'a','i','l','m','n','r'} -- and the
+        # condition then answers the opposite question from the one written
+        # down: the word is OUTSIDE_VALIDATED_DOMAIN and any one of its letters
+        # is IN_DOMAIN. This module already refuses exactly this shape for
+        # `RangeCondition.requires`; the rule is that one, reaching the sibling
+        # record it was never applied to.
+        if isinstance(self.allowed, (str, bytes, bytearray)):
+            raise ModelValidityError(
+                f"category condition {self.name!r} was declared with "
+                f"allowed={self.allowed!r}, a single string, which as a set of "
+                f"values is its {len(frozenset(self.allowed))} characters "
+                f"{sorted(frozenset(self.allowed))!r}: the word itself would be "
+                f"outside the domain and each of its letters inside it. Declare "
+                f"a collection of the values, such as a tuple of one"
+            )
         object.__setattr__(self, "allowed", frozenset(self.allowed))
         if not self.allowed:
             raise ModelValidityError(
@@ -500,9 +516,12 @@ class CategoryCondition:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CategoryCondition":
         require_schema(payload, CATEGORY_CONDITION_SCHEMA)
+        # R-54 (I-31): `frozenset` here would turn a stored bare string into
+        # its letters before the constructor could refuse it, so the payload is
+        # passed through as it arrived and the one rule lives in one place.
         return cls(
             name=payload["name"],
-            allowed=frozenset(payload.get("allowed", ())),
+            allowed=payload.get("allowed", ()),
             description=payload.get("description", ""),
         )
 
@@ -658,7 +677,8 @@ class CrossLimitCondition:
                     f"dimensionless; got {bound}"
                 )
         if self.minimum is not None and self.maximum is not None:
-            if self.maximum.magnitude < self.minimum.magnitude:
+            # CORE-018: ordered in one unit. Raw magnitudes accepted [0.9, 50 percent] and refused [50 percent, 0.9].
+            if self.maximum.magnitude_in(self.minimum.units) < self.minimum.magnitude:
                 raise ModelValidityError(
                     f"cross-limit condition {self.name!r}: maximum below "
                     f"minimum"
@@ -676,11 +696,27 @@ class CrossLimitCondition:
             context.get(self.numerator),
             context.get(self.denominator),
         )
+        # R-51 (I-31): `_absent_or_unreadable` is written for a condition whose
+        # single key IS its input, where anything that is not None is
+        # unreadable. Here a readable Quantity is one of TWO operands, so that
+        # test called every declared limit unreadable -- and with one limit
+        # declared and the other omitted, which is the ordinary case for the
+        # production rated model, the reason read UNREADABLE_SHAPE: 'a gap in
+        # the core, the caller can do nothing about it'. The repair layer then
+        # told the caller that declaring the missing limit would not help.
+        #
+        # The precedence the paragraph above states is unchanged and is the
+        # right one: a present-but-unreadable operand wins, because supplying
+        # the other one would not help. What changes is which values count.
         if any(
-            _absent_or_unreadable(value) is UnknownReason.UNREADABLE_SHAPE
+            value is not None and not isinstance(value, Quantity)
             for value in operands
         ):
             return UnknownReason.UNREADABLE_SHAPE
+        if all(isinstance(value, Quantity) for value in operands):
+            # Both readable and both present, so the UNKNOWN this explains is
+            # the one the relation itself could not answer.
+            return UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION
         return UnknownReason.NOT_SUPPLIED
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
@@ -739,6 +775,18 @@ class CrossLimitCondition:
                 f"validity condition {self.name!r}: {self.denominator} is "
                 f"zero, and the ratio this condition bounds does not exist"
             )
+        # R-54 (I-31): a ratio bound orders its operands only while the
+        # DENOMINATOR is positive. `a/b <= 1` is `a <= b` for b > 0 and
+        # reverses to `a >= b` for b < 0, so -0.5 V over -1 V satisfied the
+        # bound with a ABOVE b, and 2 V over -1 V satisfied it with the ratio
+        # negative. The numerator's sign carries no such problem: with b > 0 the
+        # equivalence holds for a of either sign, and a zero or negative
+        # numerator is an ordinary satisfied or violated case (amendment 1).
+        # The operands are readable and complete, so this is not a refusal that
+        # raises and not a status: it is an UNKNOWN, which is what the
+        # strictness rule asks of information that does not support the claim.
+        if divisor < 0.0:
+            return ValidityStatus.UNKNOWN
         ratio = Quantity(top / divisor, "dimensionless")
         return _within(
             ratio,
@@ -970,6 +1018,16 @@ class UnknownReason(str, Enum):
         mechanism has somewhere to put its answer, and so this enum is the one
         place the four situations are listed.
 
+    ``RELATION_NOT_ORDERED_BY_THE_DECLARATION``
+        The inputs arrived, readable and complete, and the relation the
+        condition states does not order them. **R-54 (I-31)**: a ratio bound
+        says ``a/b <= 1``, which means ``a <= b`` only while ``b`` is positive
+        -- with ``b`` negative the inequality reverses, so ``a = -0.5 V`` over
+        ``b = -1 V`` satisfied the bound with ``a`` above ``b``. The caller
+        declared exactly what was asked for, so this is neither an omission nor
+        an unreadable shape; what is missing is the ordering the bound assumes,
+        and an UNKNOWN that says so is the conservative answer.
+
     A reason outside this enum is refused rather than defaulted, which is what
     stops the channel from silently re-collapsing into one symbol.
     """
@@ -978,6 +1036,7 @@ class UnknownReason(str, Enum):
     UNREADABLE_SHAPE = "unreadable_shape"
     CONSERVATIVE_SCREEN = "conservative_screen"
     PREREQUISITE_NOT_ESTABLISHED = "prerequisite_not_established"
+    RELATION_NOT_ORDERED_BY_THE_DECLARATION = "relation_not_ordered_by_the_declaration"
 
 
 UNKNOWN_CONDITION_SCHEMA = schema_string("unknown_condition")
@@ -1049,6 +1108,17 @@ class UnknownCondition:
 VALIDITY_ASSESSMENT_SCHEMA_V1 = schema_string("validity_assessment", 1)
 VALIDITY_ASSESSMENT_SCHEMA_V2 = schema_string("validity_assessment", 2)
 
+#: R-45 (re-audit 2026-09-16): the version a record declares WHEN IT CARRIES one of the bindings a `/2`
+#: reader drops -- CORE-014's `evaluated` operating point, or I-11's model identity and declared conditions.
+#: Those keys were added under `/2`, so a reader that predates them accepted the record and dropped them,
+#: and the audit followed the consequence: an assessment bound to 300 K, re-emitted once, admitted a result
+#: at 5000 K as IN_DOMAIN, because the newer reader's own operating-point refusal had nothing left to fire
+#: on. Written only when one of the keys is present, so a record that binds nothing keeps its bytes.
+VALIDITY_ASSESSMENT_SCHEMA_V3 = schema_string("validity_assessment", 3)
+
+#: The keys whose presence a `/2` reader cannot see and would silently drop.
+_ASSESSMENT_BINDING_KEYS = ("evaluated", "model_id", "model_version", "declared_conditions")
+
 
 def classify_conditions(
     *,
@@ -1114,12 +1184,42 @@ class ValidityAssessment:
     violated: tuple[str, ...] = ()
     unknown: tuple[str, ...] = ()
     unknown_reasons: tuple[UnknownCondition, ...] = ()
+    #: CORE-014 (scientific core audit 2026-09-16): the Quantities the conditions read, when the assessment was made
+    #: with ``record_values=True``. A result refuses an assessment whose values differ from its own provenance inputs.
+    #: Serialized only when recorded, so records written without it keep their bytes.
+    evaluated: Mapping[str, Quantity] = field(default_factory=dict)
+    #: I-11 (R-50, core re-audit 2026-09-16): the model this assessment is about, as
+    #: :meth:`ScientificModelDefinition.assess_validity` filled it. Empty on an assessment made
+    #: straight off a :class:`ValidityDomain`, which does not know which model owns it.
+    model_id: str = ""
+    model_version: str = ""
+    #: I-11 (R-50): the conditions this assessment's domain actually decided, in declaration order.
+    #: This is what makes the record self-describing: ``satisfied=('anything_at_all',)`` was accepted
+    #: by every consumer that reads a status, because nothing carried the names to compare it against.
+    #: A registry could resolve them, but only where the registry is importable -- and
+    #: ``engcore.scientific`` cannot import the domains.
+    declared_conditions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        evaluated = dict(self.evaluated)
+        for key, value in evaluated.items():
+            if not str(key).strip() or not isinstance(value, Quantity):
+                raise ScientificCoreError(
+                    f"validity assessment evaluated value {key!r} must be a named Quantity"
+                )
+        object.__setattr__(self, "evaluated", freeze({str(k).strip(): v for k, v in sorted(evaluated.items())}))
         object.__setattr__(self, "satisfied", tuple(self.satisfied))
         object.__setattr__(self, "violated", tuple(self.violated))
         object.__setattr__(self, "unknown", tuple(self.unknown))
         object.__setattr__(self, "unknown_reasons", tuple(self.unknown_reasons))
+        object.__setattr__(self, "model_id", str(self.model_id).strip())
+        object.__setattr__(self, "model_version", str(self.model_version).strip())
+        object.__setattr__(self, "declared_conditions", tuple(str(n).strip() for n in self.declared_conditions))
+        if self.model_version and not self.model_id:
+            raise ModelValidityError(
+                "validity assessment carries a model version and no model id; a version on its own "
+                "names nothing and cannot be compared with the model it is filed under"
+            )
 
         # The status is COERCED first and CROSS-CHECKED second, and both were
         # previously the credibility boundary's job -- which is one layer too
@@ -1252,21 +1352,46 @@ class ValidityAssessment:
         return self.unknown_because(UnknownReason.NOT_SUPPLIED)
 
     def to_dict(self) -> dict[str, Any]:
+        binds = bool(self.evaluated or self.model_id or self.model_version or self.declared_conditions)
         return {
-            "schema": VALIDITY_ASSESSMENT_SCHEMA_V2,
+            "schema": VALIDITY_ASSESSMENT_SCHEMA_V3 if binds else VALIDITY_ASSESSMENT_SCHEMA_V2,
             "status": self.status.value,
             "satisfied": list(self.satisfied),
             "violated": list(self.violated),
             "unknown": list(self.unknown),
             "unknown_reasons": [e.to_dict() for e in self.unknown_reasons],
+            **({"evaluated": {k: v.to_dict() for k, v in self.evaluated.items()}} if self.evaluated else {}),
+            # I-11: written only when they carry information, as `evaluated` already is, so an
+            # assessment recorded before this batch keeps its bytes and its digest.
+            **({"model_id": self.model_id} if self.model_id else {}),
+            **({"model_version": self.model_version} if self.model_version else {}),
+            **({"declared_conditions": list(self.declared_conditions)} if self.declared_conditions else {}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidityAssessment":
         version = require_schema_any(
             payload,
-            (VALIDITY_ASSESSMENT_SCHEMA_V1, VALIDITY_ASSESSMENT_SCHEMA_V2),
+            (
+                VALIDITY_ASSESSMENT_SCHEMA_V1,
+                VALIDITY_ASSESSMENT_SCHEMA_V2,
+                VALIDITY_ASSESSMENT_SCHEMA_V3,
+            ),
         )
+        # R-45: a binding and the version that names it were introduced together, so an older version
+        # carrying one is the shape that gets silently unbound -- either an edit, or a re-emit that kept the
+        # field and lost the version. Reading it would make the version string mean nothing, and this record
+        # is the one whose binding a verdict rests on.
+        if version != VALIDITY_ASSESSMENT_SCHEMA_V3:
+            carried = [key for key in _ASSESSMENT_BINDING_KEYS if payload.get(key)]
+            if carried:
+                raise ScientificCoreError(
+                    f"{version} record carries {carried}, which were introduced with "
+                    f"{VALIDITY_ASSESSMENT_SCHEMA_V3}. A record that declares an older version while "
+                    f"carrying a newer binding cannot be read: its version is the reader's only statement "
+                    f"of which fields it must understand, and this binding is what an operating-point "
+                    f"refusal reads. Re-emit it with the code that wrote the field"
+                )
         unknown = tuple(payload.get("unknown", ()))
         if version == VALIDITY_ASSESSMENT_SCHEMA_V1 and unknown:
             raise ScientificCoreError(
@@ -1286,6 +1411,10 @@ class ValidityAssessment:
                 UnknownCondition.from_dict(e)
                 for e in payload.get("unknown_reasons", ())
             ),
+            evaluated={k: Quantity.from_dict(v) for k, v in (payload.get("evaluated") or {}).items()},
+            model_id=payload.get("model_id", ""),
+            model_version=payload.get("model_version", ""),
+            declared_conditions=tuple(payload.get("declared_conditions", ())),
         )
 
 
@@ -1370,8 +1499,13 @@ class ValidityDomain:
         *,
         declared: Mapping[str, Any] | None = None,
         assembled: Mapping[str, Any] | None = None,
+        record_values: bool = False,
     ) -> ValidityAssessment:
         """Classify a context as in-domain, outside-domain, or unknown.
+
+        ``record_values`` (CORE-014): record on the assessment every Quantity the conditions read, so a result can
+        refuse the assessment when its own provenance states another operating point. Off by default because it adds
+        bytes to every serialized result.
 
         A domain with no conditions is UNKNOWN, not valid: absence of declared
         limits is not evidence of unlimited validity.
@@ -1405,6 +1539,8 @@ class ValidityDomain:
         """
         merged = self._merge(context, declared=declared, assembled=assembled)
         if not self.conditions:
+            # No conditions, so nothing was decided: `declared_conditions` stays empty, which is
+            # the true statement and not a compatibility exemption.
             return ValidityAssessment(status=ValidityStatus.UNKNOWN)
 
         # EVALUATED in dependency order, REPORTED in declaration order. The
@@ -1474,12 +1610,21 @@ class ValidityDomain:
         else:
             status = ValidityStatus.IN_DOMAIN
 
+        evaluated = {}
+        if record_values:
+            read = {getattr(condition, label, None) for condition in self.conditions
+                    for label in ("name", "numerator", "denominator")}
+            evaluated = {key: value for key, value in merged.items() if key in read and isinstance(value, Quantity)}
         return ValidityAssessment(
             status=status,
             satisfied=tuple(satisfied),
             violated=tuple(violated),
             unknown=tuple(unknown),
             unknown_reasons=tuple(reasons),
+            evaluated=evaluated,
+            # I-11 (R-50): the names this domain decided, in declaration order. Reported once each
+            # and covering every condition, which is the property a consumer can then check.
+            declared_conditions=tuple(condition.name for condition in self.conditions),
         )
 
     def _merge(
@@ -2113,10 +2258,25 @@ class ScientificModelDefinition:
         *,
         declared: Mapping[str, Any] | None = None,
         assembled: Mapping[str, Any] | None = None,
+        record_values: bool = False,
     ) -> ValidityAssessment:
-        return self.validity.assess(
-            context, declared=declared, assembled=assembled
+        """This model's verdict over ``context``, naming this model.
+
+        ``record_values`` (CORE-014, I-11) records the Quantities the conditions read, so a result
+        can refuse an assessment made at another operating point than its own provenance states.
+        Default False, because this is a V1-frozen symbol's method and a new keyword must not change
+        what an existing call returns; the domains' own helper
+        (:meth:`engcore.domains.derived_context.DomainValidityContext.assess`) defaults it True, so a
+        production path gets the binding by construction rather than by memory.
+
+        The model key is filled unconditionally. It is not a threshold and not a cost: an assessment
+        that cannot say which model it is about was accepted by every consumer that reads a status,
+        and ``ScientificResult`` now compares it with the key it is filed under.
+        """
+        assessment = self.validity.assess(
+            context, declared=declared, assembled=assembled, record_values=record_values
         )
+        return replace(assessment, model_id=self.model_id, model_version=self.version)
 
     @property
     def provided_metrics(self) -> tuple[str, ...]:

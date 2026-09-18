@@ -1,0 +1,121 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 15,
+  "improvements": [
+    "I-19"
+  ],
+  "problems_addressed": [
+    "R-72"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "61ca4ff2",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "R-72 is REACHED IN PRODUCTION: the three problem builders that declare validation requirements are the DC circuit (six checks), the CSTR reactor (four) and the frozen conduction1d slab (five), and all three are production problems. The enforcement gap reaches TrustedExecutionRuntime, which has BOTH the admitted problem and the validation report and calls such a record `trusted`, and the credibility boundary, which never sees the problem at all. The uncertainty half is library-only today: nothing in src constructs an UncertaintySpecification with a requirement above NONE, so no production verdict rests on it.",
+  "what_was_already_seen": {
+    "R-72": "finding 103, verified P2 and not refuted. A grep over src finds `validation_requirements` only where it is declared (ir/problem.py:130/148/444/488), in the three domain builders (dc/problem.py:190, cstr/problem.py:1348, thermal/conduction1d/problem.py:421) and in re-exports; `UncertaintySpecification` and `UncertaintyRequirement` are only defined, serialized and re-exported, and NOTHING reads `problem.uncertainty`. A result carrying one unrelated check and UNKNOWN uncertainty for a problem that requires three checks and QUANTIFIED uncertainty is `is_usable`, its report status is PASS, and the trusted runtime calls the record `trusted` and `admitted`. Requirement names are not validated, so `numerically_convergd` is accepted and, because nothing reads the field, never noticed. `ScientificProblem.from_dict` ignores unknown keys, so a record whose `validation_requirements` or `uncertainty` key is MISSPELLED round-trips to a problem with no requirements and requirement NONE, with no complaint -- re-verified on this tree: `[2] misspelled keys -> [] none`. A reader of the problem record will believe these declarations gate the result."
+  },
+  "rules": {
+    "a_problem_record_is_parsed_strictly": {
+      "improvement": "I-19",
+      "problem": "R-72 (the misspelled key)",
+      "rule": "ScientificProblem.from_dict and UncertaintySpecification.from_dict REFUSE a key they do not read. The refusal names the unknown keys and the keys the reader accepts. A PRESENT `uncertainty` key is read through UncertaintySpecification.from_dict rather than through a truth test, so a present-but-empty value is refused by that reader's own schema requirement instead of silently becoming the default specification.",
+      "why": "a declaration that does not arrive is worse than one that is refused: the record still reads as though the requirements were stated, and the reader believes them. Both writers emit every key they read, so no payload this tree has ever written is refused.",
+      "the_alternative_not_taken": "accepting unknown keys and reporting them. A report nobody reads is the defect, not the fix; and `from_dict` has no channel to report through.",
+      "class": "A (no threshold; a reader's own key set)"
+    },
+    "a_requirement_names_a_registered_check_kind": {
+      "improvement": "I-19",
+      "problem": "R-72 (the unvalidated name)",
+      "rule": "A new additive core module `engcore/scientific/results/requirements.py` holds a REGISTRY of validation check kinds: `register_validation_check_kinds(*names)` and `registered_validation_check_kinds()`. Every module in this tree that EMITS a check kind a problem declares registers it beside the emitter. A declared requirement that names no registered kind is UNSATISFIABLE and is reported as unmet, naming the requirement and the registered kinds, wherever the requirement is enforced.",
+      "why_not_refused_at_construction": "a construction-time or from_dict-time refusal would make a problem record's acceptability depend on which domain modules happen to be imported in that process, because engcore.scientific cannot import the domains and the registry is only populated by their import. A guard that switches itself off with the import graph is worse than no guard. At ENFORCEMENT time the domain is necessarily imported -- its result is the thing being judged -- so the registry can answer, and a typo is then reported as a requirement nothing can ever satisfy, which is the true statement.",
+      "the_pinned_tree": "src/engcore/domains/thermal/** is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments and must not be edited, so conduction1d cannot call the registrar beside its own checks. Its five kinds are registered in src/engcore/domains/__init__.py -- the domains package root, which is imported before any domain module -- with a comment saying why they are not registered beside the emitter.",
+      "class": "A (a name registry; no threshold)"
+    },
+    "a_declared_requirement_is_unmet_unless_a_check_of_that_name_passed": {
+      "improvement": "I-19",
+      "problem": "R-72",
+      "rule": "`unmet_validation_requirements(problem, report)` returns, sorted, every declared requirement for which the report carries no check of that exact name with outcome PASS. A check that is present and WARNING, NOT_RUN or FAIL does not satisfy the requirement: the problem demanded the check, and a check that did not pass is not the check passing.",
+      "why_PASS_and_not_merely_present": "the declaration is read by an engineer as 'this result was checked and the check held'. A NOT_RUN check of the right name says the opposite.",
+      "class": "A (an exact-name, exact-outcome rule; no threshold)"
+    },
+    "a_declared_uncertainty_requirement_is_unmet_unless_the_record_meets_it": {
+      "improvement": "I-19",
+      "problem": "R-72",
+      "rule": "`unmet_uncertainty_requirements(problem, uncertainty)` returns, sorted, every metric the specification names that the mapping does not satisfy: under REPORTED, a metric with no Uncertainty record at all; under QUANTIFIED, a metric whose record is absent or whose kind is UNKNOWN; and, when the specification declares a confidence_level, a metric whose record declares no confidence level or declares a different one. NONE demands nothing. A metric named by the specification that is not one of the problem's own variables or objectives is reported too, under the same rule the registry rule states: a demand about a name the problem does not carry can never be satisfied.",
+      "confidence_level_comparison": "equal to 1.0e-12 RELATIVE. Both sides are declarations rather than computed numbers, so exact equality is nearly right; the relative tolerance is there only so a float that has been through JSON compares equal to the one that was written. Class B (a representation tolerance, not a statistical one).",
+      "why_UNKNOWN_fails_QUANTIFIED": "UncertaintyKind.UNKNOWN is the record's own word for `not evaluated`. A demand for a quantified uncertainty is not met by a record that says nobody quantified it.",
+      "class": "A for the rule, B for the one tolerance"
+    },
+    "what_is_unmet_becomes_a_NOT_RUN_check": {
+      "improvement": "I-19",
+      "problem": "R-72",
+      "rule": "`requirement_checks(problem, *, validation, uncertainty=())` returns at most two ValidationChecks, named `declared_validation_requirements` and `declared_uncertainty_requirement`, with outcome NOT_RUN and a detail naming exactly what is unmet -- and nothing at all when nothing is unmet, so a result that meets its declaration keeps its bytes.",
+      "why_NOT_RUN_and_not_FAIL": "the same reason the boundary's existing `solver_convergence` and `stored_result_attribution` checks are NOT_RUN: nothing found the values false. The check the problem demanded was not run, or the uncertainty it demanded was not computed. The work to recommend is to run it, and FAIL would recommend discarding a result that may be perfectly correct.",
+      "why_a_check_and_not_a_new_field": "a NOT_RUN check already lowers a credibility verdict to INSUFFICIENT_EVIDENCE through machinery that exists and is guarded, it survives serialization, and it cannot be deleted from a payload without deleting a check -- which is visible in the check list and moves the verdict by itself. A new field would need a new verdict rule and a new reader.",
+      "class": "A"
+    },
+    "the_trusted_runtime_reads_the_problems_own_declaration": {
+      "improvement": "I-19",
+      "problem": "R-72 (the audited trusted-runtime case)",
+      "rule": "`TrustedExecutionRecord.trusted` is False when the admitted problem's validation requirements are unmet by the record's own validation report, and a new derived property `unmet_declared_requirements` names them. RE-DERIVED from the prepared problem and the report the record already carries, never supplied: a record that took this from its assembler could assert that a requirement was met.",
+      "why_here": "this is the one place in src that holds the problem and the result of solving it together, and it is where the audit reproduced the defect -- `validation checks ['dimensional_consistency'] status pass trusted True admitted True` against a problem requiring kirchhoff_current_law and power_balance. `trusted` is derived, so tightening it changes no field, no default and no signature.",
+      "not_the_uncertainty_half": "a TrustedExecutionRecord carries metrics and no Uncertainty records, so the uncertainty requirement cannot be judged there and is not.",
+      "class": "A (a derived property, re-derived)"
+    },
+    "the_credibility_boundary_reads_it_when_it_is_given_the_problem": {
+      "improvement": "I-19",
+      "problem": "R-72",
+      "rule": "`CredibilityEvidenceReport.from_result` gains a keyword-only `problem: ScientificProblem | None = None`. When given, the requirement checks above are appended to the report's validation checks, so an unmet declaration lowers the verdict to INSUFFICIENT_EVIDENCE through the existing NOT_RUN rule. The default of None keeps what every existing call returns.",
+      "why_optional": "a report may legitimately be assembled where the problem record is not in hand (a stored result read back on its own), and a required argument would break every existing caller for no gain. Where the problem IS in hand, the assembler passes it, and the two production MCP assemblers do.",
+      "class": "A (an additive keyword with a default)"
+    },
+    "the_production_assemblers_pass_what_they_hold": {
+      "improvement": "I-19",
+      "problem": "R-72",
+      "rule": "Every site in src that assembles a CredibilityEvidenceReport around a result whose problem is in hand passes it: both `from_result` calls in `engcore/mcp/problem.py` (the refused-stage report and the per-stage thermal report) and, for the direct constructor in `engcore/mcp/battery.py`, the requirement checks are appended to the checks it already carries. And the two editable domain result builders that solve a problem declaring requirements -- the DC solver and the CSTR runner -- append the requirement checks to the result they build, so the verdict travels with the result rather than only with a report somebody remembered to assemble.",
+      "measured_before_writing_this": "the DC domain's own validation module emits exactly the six names its problem declares, and the CSTR's emits exactly its four, so on today's paths these additions produce NO check and move NO byte. They fire for a solver that does not produce the declared checks, which is the gap the audit names.",
+      "not_touched": "src/engcore/domains/thermal/** is SHA-256 pinned, so the conduction1d result builder is NOT edited. Its problem's requirements are enforced by the two generic boundaries above instead, and that asymmetry is recorded as a residual rather than paid for with the frozen thermal experiments' evidence.",
+      "class": "A"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "ADDITIVE ONLY in shape. `CredibilityEvidenceReport.from_result` gains a keyword-only argument with a default of None; `TrustedExecutionRecord` gains one derived property and no field; `ScientificProblem` and `UncertaintySpecification` gain no field. A new module `engcore/scientific/results/requirements.py` is added with three functions and one constant. No field or member is removed, renamed or reordered and no existing default changes.",
+    "behaviour_that_deliberately_changes": [
+      "`ScientificProblem.from_dict` and `UncertaintySpecification.from_dict` now REFUSE a payload carrying a key the reader does not read. This is a reader becoming stricter, which the round's compatibility rule permits only where the old acceptance was dishonest -- and it was: the refused payload is exactly the one whose declaration was silently dropped. No payload either writer emits is refused, and every in-tree caller builds its payload from `to_dict`.",
+      "`TrustedExecutionRecord.trusted` is False for a record whose problem declared requirements the validation report does not meet. That is the audited defect and the point of the improvement."
+    ],
+    "serialized_records": "no schema string is bumped and no record gains a key. The only new bytes are the NOT_RUN checks, and only on a result or report whose declaration is actually unmet.",
+    "claims_that_move": [
+      "a credibility report assembled with the problem in hand is INSUFFICIENT_EVIDENCE when a declared check did not pass, where it was SUPPORTED;",
+      "a trusted execution record is not trusted when the admitted problem's declared checks did not pass, where it was trusted;",
+      "nothing else: every in-tree problem that declares requirements is solved by a domain whose validation emits exactly those names, which is measured rather than assumed by this batch's tests and by re-running the FAST and expensive tiers."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The unknown-key refusal is scoped to ScientificProblem and UncertaintySpecification. The audit's own verification says the silent drop is a general pattern across every from_dict in engcore.scientific; making all of them strict is a larger change with a much larger blast radius on stored records, and it is not this improvement's brief.",
+    "src/engcore/domains/thermal/** is SHA-256 pinned, so the conduction1d result builder does not append the requirement checks. Its declaration is enforced only where a boundary holds both the problem and the result -- the trusted runtime and a report assembled with the problem -- and not on a bare ScientificResult it produced.",
+    "The uncertainty requirement has no production reach today, because nothing in src constructs an UncertaintySpecification above NONE. The rule is written and guarded, and it becomes load-bearing the first time a problem declares one.",
+    "A requirement is satisfied by a PASS check of the right NAME. Nothing here verifies that the check of that name checked what the name says -- that is the check emitter's business, and a name registry cannot reach it.",
+    "The registry records which names are check kinds somewhere in this tree, not which names a particular solver can produce. A requirement naming a kind another domain emits is registered and therefore satisfiable in principle, and unmet in practice; the report says unmet either way.",
+    "`ScientificResult.is_usable` is unchanged. It reads FAIL and convergence, and a NOT_RUN check does not move it; that is the existing rule for every NOT_RUN check in the tree and changing it is not in this brief."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "the_production_assemblers_pass_what_they_hold",
+      "what_changed": "HOW the battery assembler reads its problems, not WHETHER it does. The rule said the requirement checks would be appended to the checks `engcore/mcp/battery.py` already carries. That report answers TWO sub-problems -- the battery cell problem and the lumped thermal body problem -- and `CredibilityEvidenceReport` refuses two checks of one name, rightly: one name, one finding. Two separate calls to `requirement_checks` would therefore have made the report unconstructible the moment either problem declared a requirement. A new sibling, `merged_requirement_checks(problems, ...)`, produces one check per kind whose detail names each problem's unmet items in problem order, and the battery assembler calls that.",
+      "why_it_is_recorded": "the preregistered rule named a call the implementation does not make. Nothing about what is enforced, where, or under which threshold moved -- both problems' declarations are read, which is what the rule demanded -- but the preregistration must not be quietly corrected to match the code.",
+      "measured": "neither battery sub-problem declares a validation requirement or an uncertainty above NONE today, so the call appends nothing and the production battery report keeps its bytes. Verified by the FAST tier, in which every mcp/battery suite passes unchanged.",
+      "verified_by": "tests/test_core_scientific_audit_batch15.py::test_r72_a_report_over_several_problems_carries_one_check_naming_each, and guard mutation B15p, which makes the merge name only the first problem's unmet requirement."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "(the runner, not a rule) benchmarks/core_v4_false_confidence/audit/isolated_mutations.py",
+      "what_changed": "`_COPY_TREES` gained `experiments`. The pinned mutations on the files this batch changed include `tests/domains/kinetics/test_audit_consensus_cstr_levels.py`, whose module fixture imports `experiments.kinetics_k1.k1_config`; the isolated copy carried only `src` and `tests`, so that file ERRORED in every copy and the first pinned run's CONTROL came back RED -- 116 passed, 3 errors.",
+      "why_it_matters": "this runner's own doctrine is that a run whose control is red says nothing at all, and the 22 KILLED verdicts of that first run are therefore discarded rather than reported. The tree is 6.7 MB beside the 34 MB already copied.",
+      "after": "control GREEN at 119 passed, and the whole batch-15 mutation set was re-run from scratch."
+    }
+  ]
+}

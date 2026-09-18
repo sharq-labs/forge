@@ -462,7 +462,31 @@ def test_a_coupled_run_and_a_standalone_assessment_agree_at_the_same_point():
         cell_temperature=step.cell_temperature,
         elapsed_time_under_load=step.elapsed,
     )
-    assert standalone == dict(step.validity)
+    # Compared against the START INSTANT rather than the step's combined verdict, and this is a
+    # stronger check than the one it replaces, not a weaker one: `validity_at[STEP_START]` is the
+    # assessment the march made at exactly this operating point, so equality now covers the
+    # operating point each record holds as well as its condition lists (core re-audit batch 14,
+    # I-11). The combined record is a verdict about the INTERVAL and deliberately records no value
+    # for a name that moved within it -- the temperature does, by construction -- so equality with
+    # it would have asserted that an interval has one operating point.
+    assert standalone == dict(step.validity_at[cp.STEP_START])
+    # The claim the old assertion made, stated over what the two records must share: the same
+    # verdict, the same conditions, and no value recorded that the instants disagreed on.
+    combined = dict(step.validity)
+    assert set(combined) == set(standalone)
+    for model_id, at_start in standalone.items():
+        over_the_step = combined[model_id]
+        assert over_the_step.status is at_start.status
+        assert over_the_step.satisfied == at_start.satisfied
+        assert over_the_step.violated == at_start.violated
+        assert over_the_step.unknown == at_start.unknown
+        assert over_the_step.declared_conditions == at_start.declared_conditions
+        assert over_the_step.model_id == at_start.model_id
+        held = dict(over_the_step.evaluated)
+        both = dict(step.validity_at[cp.STEP_END][model_id].evaluated)
+        assert set(held) == {
+            name for name, value in at_start.evaluated.items() if both.get(name) == value
+        }
 
 
 # =====================================================================

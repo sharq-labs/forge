@@ -25,9 +25,17 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ..scientific.models.definition import ValidityStatus
-from ..scientific.results.result import ScientificResult
-from ..scientific.results.validation import ValidationLevel, ValidationReport
+from ..scientific.results.result import ConvergenceState, ScientificResult
+from ..scientific.results.validation import (
+    ValidationLevel,
+    ValidationOutcome,
+    ValidationReport,
+)
 from ..scientific.units.quantity import Quantity
+
+
+# R-71 (I-28 part C): definitional, not tuned -- one member is a single solve.
+_SEQUENCE_MEMBERS = 2
 
 
 class InferenceAdmissibilityError(ValueError):
@@ -83,7 +91,9 @@ class AdmissibleNumericalPrediction:
                 f"source result {self.source_result.result_id!r} is not "
                 "scientifically usable according to its domain validation"
             )
+        _require_the_source_names_a_model(self.source_result, "numerical")
         _require_applicability_not_refuted(self.source_result, "numerical")
+        _require_binding_names_the_source(self.source_result, self.binding_ref, "numerical")
         # ScientificResult already makes provenance mandatory, but retain this
         # explicit invariant here so the inference boundary documents what it
         # relies on rather than relying on an incidental implementation detail.
@@ -103,6 +113,18 @@ class AdmissibleNumericalPrediction:
                 "sequence validation did not establish NUMERICALLY_CONVERGED; "
                 "a usable single solve cannot certify its own numerical adequacy"
             )
+        # R-71 (I-28 part C): "a usable single solve cannot certify its own numerical
+        # adequacy" was the whole purpose of the line above, and the source's OWN report
+        # was accepted as the sequence's, which is precisely that solve certifying itself.
+        if self.sequence_validation == self.source_result.validation:
+            raise InferenceAdmissibilityError(
+                f"numerical inference refuses source result "
+                f"{self.source_result.result_id!r}: its sequence_validation is the "
+                f"source's own validation report. A usable single solve cannot certify "
+                f"its own numerical adequacy, so the sequence's evidence is a different "
+                f"record from the single solve's"
+            )
+        _require_a_sequence_of_members(self.sequence_validation)
 
         names = tuple(str(name).strip() for name in self.observable_names)
         if not names or any(not name for name in names):
@@ -249,7 +271,10 @@ class AdmissibleAnalyticPrediction:
                 f"source result {self.source_result.result_id!r} is not "
                 "scientifically usable according to its domain validation"
             )
+        _require_the_source_names_a_model(self.source_result, "analytic")
         _require_applicability_not_refuted(self.source_result, "analytic")
+        _require_binding_names_the_source(self.source_result, self.binding_ref, "analytic")
+        _require_the_source_has_nothing_to_converge(self.source_result, self.prediction_id)
         if self.source_result.provenance is None:  # pragma: no cover - Core forbids it
             raise InferenceAdmissibilityError(
                 "analytic inference refuses a source without provenance"
@@ -267,6 +292,16 @@ class AdmissibleAnalyticPrediction:
                 f"sequence-level evidence. The analytic route is for models "
                 f"with nothing to converge, not a lower bar for models that "
                 f"have something to converge and did not establish it"
+            )
+        # R-71: the dimensional evidence has to exist in the record the prediction is
+        # about, not only in a report handed over beside it.
+        if not self.source_result.validation.claims(ValidationLevel.DIMENSIONALLY_VALID):
+            raise InferenceAdmissibilityError(
+                f"analytic inference refuses source result "
+                f"{self.source_result.result_id!r}: its own validation report does not "
+                f"establish DIMENSIONALLY_VALID. The evidence for an analytic admission "
+                f"is a fact about the source record, and a report attached beside it does "
+                f"not put it there"
             )
         if not self.validation.claims(ValidationLevel.DIMENSIONALLY_VALID):
             raise InferenceAdmissibilityError(
@@ -405,6 +440,113 @@ def require_admissible_numerical_prediction(
             "admitted prediction lost its NUMERICALLY_CONVERGED evidence"
         )
     return candidate
+
+
+def _source_reference_candidates(result) -> tuple[str, ...]:
+    """Everything the source result's own record names, for a binding reference to be one of (R-71).
+
+    The candidates are not a new convention: they are what the in-tree producers already write. The battery
+    calibration and the TCR study pass `model_id@version`; the CSTR routes pass a physics fingerprint that
+    the source's provenance metadata carries and that the domain already compares against it.
+    """
+    provenance = result.provenance
+    candidates = {str(result.result_id)}
+    if provenance is not None:
+        candidates.add(str(provenance.run_id))
+        for value in (getattr(provenance, "metadata", None) or {}).values():
+            candidates.add(str(value))
+        for model_id, version in tuple(getattr(provenance, "models", ()) or ()):
+            candidates.update({str(model_id), f"{model_id}@{version}"})
+        for solver_id, version in tuple(getattr(provenance, "solvers", ()) or ()):
+            candidates.update({str(solver_id), f"{solver_id}@{version}"})
+    for model_id, version in tuple(result.models or ()):
+        candidates.update({str(model_id), f"{model_id}@{version}"})
+    solver = getattr(result, "solver", None)
+    if solver is not None:
+        candidates.update({str(solver.solver_id), f"{solver.solver_id}@{solver.version}"})
+    for value in (getattr(result, "metadata", None) or {}).values():
+        candidates.add(str(value))
+    return tuple(sorted(candidate for candidate in candidates if candidate.strip()))
+
+
+def _require_binding_names_the_source(result, binding_ref: str, route: str) -> None:
+    """R-71: a binding reference that binds nothing is a field with a name and no content.
+
+    The audited record's reference was 'binding:p', which names nothing in the source it claims to bind. A
+    reference is accepted when the source's own record contains it -- its id, its run id, a model or solver
+    identity it declares, or a value its metadata carries.
+    """
+    candidates = _source_reference_candidates(result)
+    text = str(binding_ref)
+    if not any(candidate in text for candidate in candidates):
+        raise InferenceAdmissibilityError(
+            f"{route} inference refuses binding_ref {binding_ref!r}: it names nothing in source result "
+            f"{result.result_id!r}. A binding reference binds the prediction to the record it came from, so "
+            f"it carries something that record names -- its id, its run id, a model or solver identity it "
+            f"declares, or a value its metadata carries"
+        )
+
+
+def _require_the_source_names_a_model(result, route: str) -> None:
+    """R-71: the applicability rule iterates over the source's models, so no models means no rule.
+
+    A source with no models satisfied every applicability check vacuously and crossed either route -- and a
+    number no model claims is not evidence about a model's parameters, which is what the applicability
+    refusal says in its own message.
+    """
+    if not tuple(result.models or ()):
+        raise InferenceAdmissibilityError(
+            f"{route} inference refuses source result {result.result_id!r}: it names no model. A number no "
+            f"model claims is not evidence about a model's parameters, and an applicability rule over no "
+            f"models is satisfied by anything"
+        )
+
+
+def _require_the_source_has_nothing_to_converge(result, prediction_id: str) -> None:
+    """R-71: whether a model has something to converge is a fact about the SOURCE, not about the attached report.
+
+    The route's own refusal already says it is "for models with nothing to converge, not a lower bar for
+    models that have something to converge and did not establish it" -- and it read the report the CALLER
+    passed, so it fired exactly when it was not needed. A closed-form evaluation records
+    ``NOT_APPLICABLE`` convergence (both in-tree analytic producers do); any other state is the record of an
+    iterative solve.
+    """
+    if result.validation.claims(ValidationLevel.NUMERICALLY_CONVERGED):
+        raise InferenceAdmissibilityError(
+            f"analytic inference refuses source result {result.result_id!r} for prediction "
+            f"{prediction_id!r}: the source's OWN validation claims NUMERICALLY_CONVERGED, so it has "
+            f"something to converge and belongs on the numerical route, which holds it to sequence-level "
+            f"evidence"
+        )
+    if result.convergence is not ConvergenceState.NOT_APPLICABLE:
+        raise InferenceAdmissibilityError(
+            f"analytic inference refuses source result {result.result_id!r} for prediction "
+            f"{prediction_id!r}: its convergence state is {result.convergence.value!r}. A model with "
+            f"nothing to converge records NOT_APPLICABLE; any other state is the record of an iterative "
+            f"solve, and an iterative solve crosses the numerical route or not at all"
+        )
+
+
+def _require_a_sequence_of_members(report: ValidationReport) -> None:
+    """R-71: a convergence SEQUENCE has members, so the check establishing it names at least two.
+
+    Two is definitional rather than tuned: one member is a single solve, which is the thing this boundary
+    exists to refuse. What the report is NOT held to -- naming this model, these observables, or the run ids
+    of the members -- is stated as a residual in the batch protocol, because a ValidationReport carries
+    evidence strings and not a typed sequence record.
+    """
+    for check in report.checks:
+        if (
+            check.outcome is ValidationOutcome.PASS
+            and check.establishes is ValidationLevel.NUMERICALLY_CONVERGED
+            and len({str(entry) for entry in check.evidence}) >= _SEQUENCE_MEMBERS
+        ):
+            return
+    raise InferenceAdmissibilityError(
+        f"numerical inference refuses a sequence_validation whose NUMERICALLY_CONVERGED check names fewer "
+        f"than {_SEQUENCE_MEMBERS} distinct evidence entries: a convergence sequence has members, and one "
+        f"member is the single solve this boundary refuses"
+    )
 
 
 def _require_applicability_not_refuted(result: ScientificResult, route: str) -> None:

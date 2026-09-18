@@ -140,7 +140,7 @@ def test_kcl_is_not_merely_the_matrix_row():
     assert kcl.residual > SETTINGS.kcl_atol_ampere
 
 
-def test_report_records_not_run_for_absent_element_classes():
+def test_report_records_not_applicable_for_absent_element_classes():
     circuit = DCCircuit(
         circuit_id="only_current",
         nodes=(GND, ElectricalNode("n1")),
@@ -151,8 +151,15 @@ def test_report_records_not_run_for_absent_element_classes():
     )
     result = solve_circuit(circuit, run_id="no-vsource")
     checks = {c.name: c for c in result.validation.checks}
-    assert checks["voltage_source_relation"].outcome is ValidationOutcome.NOT_RUN
-    # a NOT_RUN check contributes no evidence and no level
+    # R-45 (re-audit 2026-09-16, I-20 part B): was NOT_RUN, and NOT_RUN means the evidence was not
+    # gathered. There is no source constraint to reconstruct in a circuit with no voltage source, and
+    # recording that as missing evidence held this report's aggregate at NOT_RUN for good -- which is what
+    # made SRIA report that validation was never run about a solve in which everything applicable passed.
+    assert checks["voltage_source_relation"].outcome is ValidationOutcome.NOT_APPLICABLE
+    assert result.validation.not_run == ()
+    # The CORE-013 rule itself is unchanged and still tested: a check that did not RUN keeps the aggregate
+    # from reading PASS (tests/test_core_scientific_audit_batch40.py holds both halves). What changed is that
+    # this check did not APPLY, and the problem no longer demands a passing check of that name either.
     assert result.validation.status is ValidationOutcome.PASS
 
 

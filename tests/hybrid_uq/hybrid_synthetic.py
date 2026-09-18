@@ -73,7 +73,7 @@ class Problem:
         ok = np.all(np.isfinite(values), axis=1)
         table = AdmittedForwardTable(parameter_names=self.parameters.names, observation_keys=keys, points=mesh,
                                      values=np.where(ok[:, None], values, 0.0), admissible_mask=ok,
-                                     admission_refs=tuple((("analytic",) * len(keys)) if o else () for o in ok),
+                                     admission_refs=tuple((("analytic|fixture|ver|bind",) * len(keys)) if o else () for o in ok),
                                      rejection_reasons=tuple("" if o else "non-finite" for o in ok))
         return gaussian_grid_posterior(table, self.observations)
 
@@ -86,9 +86,21 @@ class Problem:
             ok = np.all(np.isfinite(values), axis=1)
             return AdmittedForwardTable(parameter_names=self.parameters.names, observation_keys=keys, points=mesh,
                                         values=np.where(ok[:, None], values, 0.0), admissible_mask=ok,
-                                        admission_refs=tuple((("analytic",) * len(keys)) if o else () for o in ok),
+                                        admission_refs=tuple((("analytic|fixture|ver|bind",) * len(keys)) if o else () for o in ok),
                                         rejection_reasons=tuple("" if o else "non-finite" for o in ok))
         return build
+
+
+def conditioned(problem):
+    """The problem's observations with each one's x declared as its condition (CORE-006: the calibrated range).
+
+    Separate from ``Problem.observations`` so every existing observation keeps its bytes; a prediction check passes this
+    as ``calibration_observations`` and declares its own x on the spec.
+    """
+    return ObservationSet(tuple(
+        GaussianObservation(o.condition_id, o.observable_name, o.value, o.sigma, o.source_ref,
+                            conditions={"x": Quantity(float(x), UNIT)})
+        for o, x in zip(problem.observations.observations, problem.x)), dataset_id=problem.observations.dataset_id)
 
 
 def affine(label="affine", **kw):

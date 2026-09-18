@@ -38,7 +38,7 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, canonical_magnitude
 from ..units.validation import require_same_dimension
 
 MESH_SCHEMA = schema_string("structured_mesh")
@@ -210,10 +210,15 @@ class StructuredMesh:
     def _canonical(self) -> dict[str, Any]:
         return {
             "topology": self.topology.value,
-            "origin_x": repr(self.origin_x.magnitude_in(CANONICAL_LENGTH)),
-            "origin_y": repr(self.origin_y.magnitude_in(CANONICAL_LENGTH)),
-            "length_x": repr(self.length_x.magnitude_in(CANONICAL_LENGTH)),
-            "length_y": repr(self.length_y.magnitude_in(CANONICAL_LENGTH)),
+            # I-23 (R-62): the CANONICAL magnitude, not `repr` of a raw conversion. 7 mm and
+            # 0.7 cm are one rectangle and used to be two supports, because the conversions land
+            # on 0.007 and 0.006999999999999999. `canonical_magnitude` is the same rule
+            # `_same_geometry` in transfer.py reads, so a fingerprint and a comparison cannot
+            # disagree about whether two declarations are the same support.
+            "origin_x": repr(canonical_magnitude(self.origin_x, CANONICAL_LENGTH)),
+            "origin_y": repr(canonical_magnitude(self.origin_y, CANONICAL_LENGTH)),
+            "length_x": repr(canonical_magnitude(self.length_x, CANONICAL_LENGTH)),
+            "length_y": repr(canonical_magnitude(self.length_y, CANONICAL_LENGTH)),
             "nodes_x": self.nodes_x,
             "nodes_y": self.nodes_y,
             "unit": CANONICAL_LENGTH,

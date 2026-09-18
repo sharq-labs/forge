@@ -1,0 +1,13 @@
+G33i tests/hybrid_uq/test_audit_hybrid_grid_route.py -> KILLED | 2 failed, 8 passed in 2.28s | code 37a96007c0ffcb6a->47779a0dd3faf985 | pinned: HUQ-04 (HYB-HUQ04c) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+G33j tests/hybrid_uq/test_audit_hybrid_grid_route.py -> KILLED | 2 failed, 8 passed in 2.18s | code 37a96007c0ffcb6a->75b577ab3c066ad2 | pinned: HUQ-05 (HYB-HUQ05) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+G33k tests/hybrid_uq/test_audit_hybrid_grid_route.py -> KILLED | 1 failed, 9 passed in 2.13s | code 37a96007c0ffcb6a->0e0c9aefa607a4ca | pinned: HUQ-06 (HYB-HUQ06a) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+G33l tests/hybrid_uq/test_audit_hybrid_grid_route.py -> KILLED | 1 failed, 9 passed in 2.14s | code 37a96007c0ffcb6a->40e831d3a18260be | pinned: HUQ-06 (HYB-HUQ06b) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+G33s tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 1 failed, 39 passed in 1.58s | code 37a96007c0ffcb6a->ca1f80018df95cb7 | pinned: HUQ-09 (HYB-HUQ09b) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33t tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 2 failed, 38 passed in 1.55s | code 37a96007c0ffcb6a->163a86cb5e896023 | pinned: HUQ-09 (HYB-HUQ09c) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33v tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 1 failed, 39 passed in 1.59s | code 37a96007c0ffcb6a->a651ec7aafd1835b | pinned: HUQ-09 (HYB-HUQ09e) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33y tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 1 failed, 39 passed in 1.64s | code 37a96007c0ffcb6a->34b948995c0f3f85 | pinned: HUQ-12 (HYB-HUQ12a) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33z tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 1 failed, 39 passed in 1.61s | code 37a96007c0ffcb6a->ab6c21dae85b188b | pinned: HUQ-12 (HYB-HUQ12b) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33aa tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 2 failed, 38 passed in 1.57s | code 37a96007c0ffcb6a->5dd53cbf83f2dcfd | pinned: HUQ-12 (HYB-HUQ12c) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33af tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 1 failed, 39 passed in 1.59s | code 37a96007c0ffcb6a->a9314122aa576e0d | pinned: HUQ-13 (HYB-HUQ13b) -- tests/hybrid_uq/test_audit_hybrid_records.py
+G33ah tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 2 failed, 38 passed in 1.62s | code 37a96007c0ffcb6a->4993d75d18beb61f | pinned: HUQ-13 (HYB-HUQ13d) -- tests/hybrid_uq/test_audit_hybrid_records.py
+CONTROL (unmutated, 2 test(s)) GREEN | 50 passed in 2.56s

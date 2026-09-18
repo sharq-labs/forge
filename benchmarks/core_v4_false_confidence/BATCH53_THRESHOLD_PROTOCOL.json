@@ -1,0 +1,89 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 53,
+ "improvements": [
+  "I-25 part B of two, the last part"
+ ],
+ "problems_addressed": [
+  "R-63 (the audit's finding 77)",
+  "R-73 (the audit's finding 104)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "ea9c9bf4",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Two records whose whole purpose is to be a gate, and neither re-derives what it asserts. `FieldTransferContract` carries both field definitions AND a verdict, and checks only the types, the fingerprint format and a non-empty reason -- so a payload computed as REFUSED (1 component against 3, kelvin against pascal) reads back as COMPATIBLE with `may_cross_directly` True. `FieldObservationOperator` says an observation is identified by CONTENT rather than by an index, and for a region mean it compares the region's LABEL: the same operator and digest return the mean of the left edge or the right edge depending on which region object is handed over. A probe declared metres away from a 10 mm plate silently reads a corner node.",
+ "reach": "LATENT for both, as the audit records ('latent'): no `src` consumer builds a `FieldTransferContract`, and the observation operator is reached only from tests and benchmarks. Part A's rules sit on records production produces; these two sit on records nothing in production builds yet -- which is why the audit calls them latent gaps in the gates the records exist to be.",
+ "what_was_already_seen": {
+  "finding 77 (R-63)": "`FieldTransferContract.__post_init__` and `from_dict` check the types, the 64-hex fingerprint format and a non-empty reason, but never re-derive the verdict parts the definitions alone determine (components, dimension, location, unit). A payload computed as REFUSED for 1 component against 3 and kelvin against pascal reads back as COMPATIBLE with `may_cross_directly` True. Direct construction with made-up fingerprints does the same.",
+  "finding 104 (R-73)": "For REGION_MEAN, `apply()` only checks `region.region_id == self.region_id`. The region's content -- its edge, and the `mesh_id` label it binds its own mesh by -- is not in the operator digest, so the same operator, digest and region id return the mean of the left edge (400 K) or the right edge (300 K) depending on which `MeshRegion` object is supplied. For PROBE_AT_LOCATION, `resolve_indices` uses argmin per axis with no containment check: a probe declared 2 m and -5 m away from a 10 mm plate silently returns a corner node's value, and `probe_offset` reports 5.38 m only if somebody asks. The field values are a bare float array whose unit and field_id are asserted by the operator and never checked."
+ },
+ "rules": {
+  "a_contract_may_not_claim_more_than_its_own_records_allow": {
+   "improvement": "I-25",
+   "problem": "R-63",
+   "rule": "`FieldTransferContract.__post_init__` derives the strongest verdict its two definitions and two fingerprints permit -- REFUSED for differing components or dimensions; no better than REQUIRES_PROJECTION for differing fingerprints or differing locations; no better than REQUIRES_UNIT_CONVERSION for differing unit strings -- and refuses a declared verdict stronger than that. A weaker verdict stays allowed.",
+   "class": "A",
+   "why": "Every one of those parts is on the record itself, so the contract can check its own verdict without the meshes: the two definitions and the two fingerprints are exactly what `check_field_transfer` decides from. Refusing only a verdict that claims MORE than the records allow is the direction that matters -- a conservative verdict may be reached for a reason the record does not carry (a caller who knows something about the run), and refusing that would make the record unable to state caution.",
+   "closes": "finding 77 in full, for the parts two definitions and two fingerprints determine."
+  },
+  "a_region_mean_names_the_region_it_reads_by_content": {
+   "improvement": "I-25",
+   "problem": "R-73",
+   "rule": "The operator gains trailing `region_mesh_id` and `region_edge` fields, both included in its canonical form and therefore in its digest, and `apply` refuses a region whose mesh id or edge differs from them. A region operator that declares neither is refused a region whose content it cannot check -- it answers only for a region matching by id, and says so in the refusal.",
+   "class": "A",
+   "why": "The operator's stated purpose is that an observation is identified by content rather than by an index, and the region -- which decides WHICH nodes are averaged -- was identified by a label. Putting the region's content in the digest is what makes two observations of different edges two different observations, which is what the digest is for.",
+   "closes": "finding 104's region claim."
+  },
+  "a_probe_outside_the_support_is_refused_rather_than_snapped": {
+   "improvement": "I-25",
+   "problem": "R-73",
+   "rule": "`resolve_indices` and `apply` refuse a probe whose declared location lies outside the support's rectangle, by more than a relative tolerance on the mesh's own extent. Inside the rectangle the nearest node is still used, and `probe_offset` still reports how far it is.",
+   "class": "A for the rule, B for the tolerance",
+   "why": "A probe 2 m from a 10 mm plate is not a measurement of that plate at all, and argmin answered it with a corner node under the declared name -- the observation then enters a calibration as a value at a different physical place. Refusing OUTSIDE the support and reporting the offset INSIDE it is the line the record already draws in prose: `probe_offset`'s own docstring says a caller is entitled to see the snap, which is a statement about a probe that is on the support.",
+   "closes": "finding 104's probe claim."
+  },
+  "the_values_an_operator_reads_are_the_field_it_names": {
+   "improvement": "I-25",
+   "problem": "R-73",
+   "rule": "`apply` accepts, in place of a bare array, any object carrying a field `definition` and `values` (a `FieldValue`). When it is given one, the field's id, unit dimension and support must be the ones the operator declares, and the array is taken from it.",
+   "class": "A",
+   "why": "The unit and the field id on the operator were assertions about an array nobody checked: applying a velocity field to a temperature operator produced a Quantity in kelvin. Accepting the typed field is additive -- every existing caller passes a sequence and is unaffected -- and it is the one place the two records meet.",
+   "closes": "finding 104's 'bare float array' claim, for a caller who passes the typed field."
+  }
+ },
+ "thresholds": {
+  "probe_containment_rtol": {"value": 1e-9, "class": "B", "why": "a representation allowance on the mesh's own extent, so a probe declared exactly at an edge is inside it whatever the float arithmetic of the axis coordinates gives. The same magnitude the rest of this audit uses for a unit conversion and for an operating point. It is not a modelling tolerance: a probe outside the rectangle by more than a part in a billion of its extent is outside it."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "FieldObservationOperator.region_mesh_id and .region_edge, trailing fields with empty defaults, both in the canonical form",
+   "field_observation_operator's next schema version, written only when a record carries them",
+   "apply() accepting a typed field in place of a sequence; no signature change"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "a probe inside the support resolves to the same node it always did, and probe_offset is unchanged",
+   "FieldTransferContract's fields, verdicts and reasons are unchanged; what changes is which combinations construct"
+  ],
+  "records_that_already_exist": "The operator's digest CHANGES for a record that declares the region's content, because the content is in the canonical form -- which is the point of the fix. A record that declares neither new field keeps its digest and its schema version byte for byte, so every existing record is unaffected. No committed JSON carries either record.",
+  "deliberate_narrowing": "A transfer contract claiming more than its records allow, a region mean applied to a region whose content differs from the declared one, and a probe outside its support all stop being constructible or applicable. None occurs in the tree: nothing in `src` builds a contract, and every in-tree probe is on its support."
+ },
+ "residuals_stated_in_advance": [
+  "Geometry beyond fingerprint equality cannot be re-derived by the contract: two supports covering different rectangles have different fingerprints, so a REFUSED-for-geometry verdict is indistinguishable on the record from a REFUSED-for-resolution one. The contract refuses a verdict that claims too much and does not re-derive which REASON applies, because the reason needs the meshes.",
+  "`MeshRegion` still binds its own mesh by `mesh_id`, which is a label: two discretisations of one geometry share it, and the region's `require_support` compares it. Putting a fingerprint on the region is a change to that record and is not this batch's; what this batch closes is the operator not checking the region's content AT ALL.",
+  "Containment is checked against the support's rectangle, not against the cell the probe falls in. A probe inside the rectangle but half a cell from the nearest node is still answered with that node, and `probe_offset` is still the only place that says so -- refusing there would delete every legitimate coarse-mesh probe.",
+  "`apply` with a bare sequence is still accepted, so a caller who passes one still asserts the unit and the field id. Making the typed field mandatory is a signature change the compatibility rule forbids before the V4 round.",
+  "R-55, part A, closed the field record's own summary. The two records here are still reached by nothing in production, which the ledger rows state as LATENT with what would create them."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "the field suites (tests/test_field_ir_ceiling.py, tests/test_field_composition.py), the field-observation suites and the inference suites",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}

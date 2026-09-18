@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
+from issued_levels import analytic_issuer_evidence
 from engcore.scientific import (
     AmbiguousSolverError,
     BindingIssueKind,
@@ -1074,7 +1075,9 @@ def test_validation_report_states():
             ValidationCheck("c", ValidationOutcome.NOT_RUN),
         )
     )
-    assert mixed.status is ValidationOutcome.WARNING
+    # CORE-013 (scientific core audit 2026-09-16): a check that never ran outranks a warning and a pass. This was
+    # WARNING, which read as "ran, with a caveat" over a check that did not run at all.
+    assert mixed.status is ValidationOutcome.NOT_RUN
     assert len(mixed.warnings) == 1 and len(mixed.not_run) == 1
 
     failed = mixed.with_check(ValidationCheck("d", ValidationOutcome.FAIL))
@@ -1125,7 +1128,10 @@ def test_validation_level_requires_a_passing_check():
             ValidationCheck(
                 "analytic", ValidationOutcome.PASS,
                 establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
-                evidence=("fixture:agreement with a named closed form",),
+                # R-04: the issuer's own record, beside what this fixture already said. The level
+                # is this fixture's means, not its subject.
+                evidence=analytic_issuer_evidence()
+                + ("fixture:agreement with a named closed form",),
             ),
         )
     )
@@ -1212,10 +1218,28 @@ def test_provenance_lineage():
 # O. Experiment and evaluation
 # =====================================================================
 
-def _evaluation(index: int, load: float, status=EvaluationStatus.OK):
+def _evaluation(index: int, load: float, status=EvaluationStatus.OK, *, assessed: bool = False):
     problem = build_algebraic_problem()
     constraint = problem.constraints[0]
-    result = _result(result_id=f"res-{index}") if status is EvaluationStatus.OK else None
+    established = {}
+    if assessed:
+        # CORE-015: Experiment.best ranks only candidates whose models were assessed IN_DOMAIN
+        from engcore.scientific.models.definition import RangeCondition, ValidityDomain
+
+        domain = ValidityDomain(conditions=(RangeCondition("drive_level", maximum=Quantity(10.0, "volt")),))
+        established = {"validity_not_assessed": {},
+                       "validity": {"synthetic.linear_response": domain.assess({"drive_level": Quantity(5.0, "volt")})}}
+    # R-42 (re-audit 2026-09-16, I-21 part A): the result carries the load this evaluation reports.
+    # It used to carry the fixture's default 2.5 W while the evaluation reported 5.0, 2.0, 9.0 or 0.5 W --
+    # the audited defect itself, in this repository's own canonical fixture: `best()` ranked on a number its
+    # own result contradicted, because the agreement guard was keyed by the objective's NAME
+    # ('minimize_load') and an objective names its quantity through `metric` ('load').
+    values = {"load": Quantity(load, "watt"), "response": Quantity(0.1, "ampere")}
+    result = (
+        _result(result_id=f"res-{index}", values=values, **established)
+        if status is EvaluationStatus.OK
+        else None
+    )
     return ScientificEvaluation(
         evaluation_id=f"eval-{index}",
         candidate={
@@ -1260,11 +1284,14 @@ def test_experiment_best_respects_direction():
     experiment = ScientificExperiment(
         "exp-0003", problem, ExperimentBudget(max_observations=5)
     )
-    experiment.record(_evaluation(1, 5.0))
-    experiment.record(_evaluation(2, 2.0))
-    experiment.record(_evaluation(3, 9.0))
+    experiment.record(_evaluation(1, 5.0, assessed=True))
+    experiment.record(_evaluation(2, 2.0, assessed=True))
+    experiment.record(_evaluation(3, 9.0, assessed=True))
     best = experiment.best("minimize_load")
     assert best is not None and best.evaluation_id == "eval-2"
+    # CORE-015: an unassessed candidate with a better value is not the best
+    experiment.record(_evaluation(4, 0.5))
+    assert experiment.best("minimize_load").evaluation_id == "eval-2"
     _raises(ScientificCoreError, experiment.best, "no_such_objective")
 
 

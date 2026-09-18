@@ -30,6 +30,7 @@ from engcore.hybrid_uq import (
 from engcore.hybrid_uq.predictive import grid_digest
 from engcore.inference import AdmittedForwardTable, GridResolutionError
 from engcore.scientific.twins import TwinReference
+from engcore.scientific.units.quantity import Quantity
 from engcore.uq import PredictiveObservableSpec
 
 AXES = [np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]
@@ -48,7 +49,9 @@ def _forged(grid, **arrays):
 def test_huq02_the_grid_predictive_never_supports_a_grid_the_router_refuses():
     P = S.affine()
     coarse = P.grid([np.linspace(0.0, 2.0, 3), np.linspace(1.0, 3.0, 3)])
-    routed = route_uncertainty(grid=coarse)
+    # the grid is held to the evidence it describes since CORE-005 (scientific core audit 2026-09-16): a supplied grid is
+    # routed only with the observations and forward model its likelihood is re-evaluated from
+    routed = route_uncertainty(grid=coarse, observations=P.observations, forward=P.forward)
     assert routed.decision is RouteDecision.REFUSED and routed.considered[0]["outcome"] == "REFUSED_BY_V1"
     table = P.table_builder()(coarse.points)
     spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
@@ -82,10 +85,34 @@ def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     P = S.affine()
     grid = P.grid(AXES)
     table = P.table_builder()(grid.points)
-    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
+    # CORE-006: a prediction at the sixth observation's x, inside the range the conditioned observations declare
+    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
+                                    conditions={"x": Quantity(float(P.x[5]), "dimensionless")})
+    # R-23 (I-13 part B, batch 23): SUPPORTED also needs the table to have been CHECKED against the model it
+    # is supposed to be the values of. `predict` returns this prediction's value, one per spec, as the local
+    # path's does; without it the record carries PREDICTIVE_TABLE_NOT_CHECKED, which the third case below
+    # asserts. The claim asserted here is unchanged.
+    def predict(theta):
+        values = P.forward(theta)
+        return None if values is None else [values[5]]
+
     record = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
-                                         source_ref="audit")
+                                         source_ref="audit", observations=S.conditioned(P), forward=P.forward,
+                                         predict=predict)
     assert record.route_claim.value == "SUPPORTED" and record.parameter_standard_uncertainty > 0.0
+    # and the same grid with no predict to check its table against is DOWNGRADED for exactly that
+    nobody_checked = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"),
+                                                 model=S.MODEL, source_ref="audit",
+                                                 observations=S.conditioned(P), forward=P.forward)
+    assert {r.value for r in nobody_checked.reasons} == {"PREDICTIVE_TABLE_NOT_CHECKED"}
+    # CORE-005 and CORE-006: without the evidence that binds it, the same grid is not SUPPORTED, and nothing states the
+    # range the prediction may claim either
+    unbound = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
+                                          source_ref="audit")
+    assert unbound.route_claim.value == "DOWNGRADED"
+    assert [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE", "PREDICTION_DOMAIN_NOT_DECLARED",
+                                                  # R-23 (batch 23): and nobody checked the table either
+                                                  "PREDICTIVE_TABLE_NOT_CHECKED"]
 
 
 # ---------------------------------------------------------------------------
@@ -159,11 +186,27 @@ def test_huq05_a_table_altered_only_at_its_peak_is_caught():
 # HUQ-06
 # ---------------------------------------------------------------------------
 def test_huq06_a_grid_for_other_data_is_not_routed_for_this_request():
+    """Since CORE-005 a grid of other data is refused by content (test_core005_*). The dataset-id guard is kept for what
+    content cannot see: a grid that names another dataset. B carries A's exact observations under another id, so only
+    the label guard can refuse it -- otherwise the content refusal shadows this guard and a mutation removing it lives."""
     A = S.affine("A")
-    B = S.affine("B", seed=999)
-    with pytest.raises(HybridUQError, match="dataset"):
+    B = S.affine("B", observed=A.observed)
+    with pytest.raises(HybridUQError, match="computed from dataset 'synthetic.B'"):
         route_uncertainty(grid=B.grid(AXES), calibration=A.calibrate(), observations=A.observations, forward=A.forward,
                           multistart=MultistartPolicy())
+    other = S.affine("A", seed=999)
+    # I-07 (R-30): a grid that is not this request's evidence is PASSED_OVER with
+    # GRID_NOT_THIS_EVIDENCE and the request goes on, rather than raising from inside the router and
+    # aborting it. The grid is still refused and the reason is still named -- what moved is whether
+    # the REQUEST survives, and the audited case proves it can (LOCAL_GAUSSIAN SUPPORTED without the
+    # grid). Asserted here on the recorded row instead of on an exception.
+    # The LABEL guard above still RAISES, and deliberately: it refuses before any content is looked at,
+    # and the two guards are different statements.
+    result = route_uncertainty(grid=other.grid(AXES), calibration=A.calibrate(), observations=A.observations,
+                               forward=A.forward, multistart=MultistartPolicy())
+    row = next(r for r in result.considered if r["route"] == "GRID_AS_SUPPLIED")
+    assert row["outcome"] == "PASSED_OVER" and row["reason"] == "GRID_NOT_THIS_EVIDENCE", row
+    assert "not this request's evidence" in row["detail"]
 
 
 def test_huq06_a_grid_over_other_parameters_is_not_routed_for_this_request():

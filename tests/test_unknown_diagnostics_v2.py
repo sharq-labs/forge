@@ -64,6 +64,12 @@ def _field(*, non_finite: int = 0) -> FieldRecord:
             l2_norm=Quantity(310.0, "kelvin"),
             non_finite=non_finite,
         ),
+        # R-55 (I-25 part A): a field predicate decides from a summary only when the record says that
+        # summary was derived from the bytes its reference names -- an unbound summary is the record's own
+        # word about an array nobody resolved, and it used to be believed. This fixture writes its summary
+        # by hand for the case under test and declares the binding deliberately, because what this file
+        # exercises is the diagnostic channel and not the binding.
+        summary_verified_against=reference.digest,
     )
 
 

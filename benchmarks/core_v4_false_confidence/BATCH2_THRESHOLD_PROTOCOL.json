@@ -1,0 +1,52 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 2,
+ "findings": ["CORE-004", "CORE-010"],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "6e3f359",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "compatibility_decision": "2026-09-16, by the repository owner: Core Freeze V4 may ADD to V1-frozen symbols (enum members, trailing dataclass fields, defaulted arguments) and may not remove or change anything existing",
+ "what_was_already_seen": [
+  "the audit reproductions only: CORE-004 E4 (an intercept and the same intercept minus 1000: IDENTIFIABLE -> NOT_IDENTIFIABLE) and E5 (a slope per metre and per micrometre: IDENTIFIABLE -> WEAKLY_IDENTIFIABLE, condition 2.54 -> 2.54e12); CORE-010 E7 (linspace, geomspace and a clustered axis over the same bounds: means 1.053, 1.021, 0.900, sds 0.176, 0.179, 0.125, all SUPPORTED)",
+  "no committed evidence has been scored under any rule below"
+ ],
+ "rules": {
+  "condition_number_on_correlation": {
+   "finding": "CORE-004",
+   "rule": "the identifiability condition number is taken on the posterior CORRELATION matrix, D^-1/2 C D^-1/2, in assess_identifiability (V1), in the routed classification, and in the read-back re-derivation",
+   "threshold": "unchanged: 1e6",
+   "class": "the threshold stays class C; the change makes it invariant to each parameter's unit and scale (class A property)",
+   "why": "the raw-covariance condition number mixes parameter units: rescaling one parameter by k multiplies its variance by k^2, so the same posterior crossed 1e6 in micrometres and not in metres",
+   "not_changed": "the correlation threshold and the relative-width threshold"
+  },
+  "width_reference_is_stated": {
+   "finding": "CORE-004",
+   "rule": "every identifiability explanation states that relative widths are measured against each parameter's declared zero, and that a parameterization with another origin can reach another verdict",
+   "why": "an origin-invariant width criterion needs a declared scale of interest, which no parameter declaration carries; inventing one would be a new, unrecorded assumption. The dependence is made explicit instead of removed",
+   "status_it_leads_to": "PARTIAL: the unit dependence is removed, the origin dependence is stated"
+  },
+  "grid_prior_is_uniform_in_inference_coordinates": {
+   "finding": "CORE-010",
+   "rule": "a grid route (supplied or rebuilt) and grid_predictive_uncertainty given the evidence accept a grid only if every axis is uniformly spaced in the parameter's inference coordinate: natural for IDENTITY, logarithm for LOG. Transforms come from the calibration when one is given; without a calibration every axis must be uniform in its natural coordinate",
+   "why": "gaussian_grid_posterior gives every node equal prior mass, so node density IS the prior density. On an axis uniform in the inference coordinate that is the declared prior; on any other it is an undeclared informative prior",
+   "uniformity_tolerance": "max |step - mean step| <= 1e-6 * mean step on every axis",
+   "tolerance_class": "A (a float64 linspace and its image through exp/log reproduce equal steps far inside this)",
+   "reason": "GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES (router: passed over; grid_predictive_uncertainty with evidence: HybridUQError)",
+   "not_changed": "gaussian_grid_posterior and PosteriorGrid (V1): a grid is still an exact discrete posterior under equal node mass; only routed claims are held to this"
+  }
+ },
+ "compatibility": {
+  "moves": [
+   "RouteReason gains GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES",
+   "the identifiability explanation text, which is part of every RoutedIdentifiability digest (HUQ-14)",
+   "assess_identifiability's condition_number field changes value for every posterior whose parameters differ in scale"
+  ],
+  "classification": "additive in shape; a change of verdict semantics where the old verdict came from unit scale"
+ },
+ "what_will_be_reported_after_implementation": [
+  "every batch-2 regression test, seen failing on the baseline commit and passing after",
+  "every existing assertion that changes, with the reason",
+  "the committed evidence re-scored (TCR, FAILURE_CASES, PERFORMANCE) with every changed identifiability verdict listed"
+ ],
+ "amendments": "recorded here as dated entries, never edited in place"
+}

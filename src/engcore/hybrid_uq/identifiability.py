@@ -19,13 +19,28 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
-from ..inference.calibration import IdentifiabilityReport, IdentifiabilityStatus, assess_identifiability
+from ..inference.calibration import (
+    _DECLARED_IDENTIFIABILITY_THRESHOLDS,
+    WIDTH_REFERENCE_NOTE,
+    IdentifiabilityReport,
+    IdentifiabilityStatus,
+    _require_declared_or_tighter_thresholds,
+    assess_identifiability,
+)
 from ..inference.grid import PosteriorGrid
 from ._records import decode_float, decode_vector, digest_of, encode_float, encode_vector, require_schema
 from .local_gaussian import LocalGaussianPosterior
 from .vocabulary import ApproximationClass, HybridUQError, RouteClaim
 
-ROUTED_IDENTIFIABILITY_SCHEMA = "hybrid_uq.routed_identifiability/1"
+#: R-45 (re-audit 2026-09-16): `/2` because CORE-004 changed two things under `/1` -- the conditioning is
+#: now computed on the CORRELATION matrix rather than the covariance, and every explanation carries
+#: `WIDTH_REFERENCE_NOTE`. A reader re-derives both, so a `/1` record was refused with "the verdict and its
+#: explanation do not follow from its own numbers, which give <the same verdict>": a message reporting a
+#: contradiction where the record is simply unreadable. The refusal is right -- a `/1` record's stored
+#: condition number was computed under a definition this code retired and nothing in the record says which
+#: -- so the version carries the reason, as `hybrid_uq.route_diagnostics/1` already does.
+ROUTED_IDENTIFIABILITY_SCHEMA = "hybrid_uq.routed_identifiability/2"
+ROUTED_IDENTIFIABILITY_SCHEMA_V1 = "hybrid_uq.routed_identifiability/1"
 
 
 def grid_parameterization_digest(posterior: PosteriorGrid) -> str:
@@ -44,11 +59,12 @@ def classify(mean: Sequence[float], covariance, lows: Sequence[float], highs: Se
     """The frozen V1 rule, over any covariance and any marginal intervals. Private to V2."""
     cov = np.asarray(covariance, dtype=np.float64)
     n = cov.shape[0]
-    eigenvalues = np.linalg.eigvalsh(cov)
-    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
-    condition = math.inf if smallest <= 0.0 else largest / smallest
     sd = np.sqrt(np.diag(cov))
     correlation = cov / np.outer(sd, sd)
+    # CORE-004: the condition number of the correlation matrix, which no parameter's unit or scale moves
+    eigenvalues = np.linalg.eigvalsh(correlation)
+    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
+    condition = math.inf if smallest <= 0.0 else largest / smallest
     off = [abs(float(correlation[i, j])) for i in range(n) for j in range(n) if i != j]
     max_correlation = max(off) if off else 0.0
     widths = []
@@ -92,11 +108,79 @@ def _rule(condition: float, max_correlation: float, widths: Sequence[float], nam
         why += (f". The parameters are strongly correlated ({max_correlation:.4f}) and this is still IDENTIFIABLE on purpose: "
                 f"correlation says a ridge exists, not that it is long, and both marginal intervals here are within "
                 f"{widest:.3g} of their own values")
-    return status, why
+    return status, why + WIDTH_REFERENCE_NOTE
 
 
 #: The thresholds the router classifies under: the frozen ``assess_identifiability`` defaults.
 CANONICAL_IDENTIFIABILITY_THRESHOLDS = {"correlation_threshold": 0.95, "condition_threshold": 1.0e6, "width_threshold": 1.0}
+
+
+#: Cantelli's constant at 95%: the half-width, in standard deviations, of the widest two-sided interval that
+#: can hold 95% of the mass of SOME distribution with a given standard deviation. It is the tightest bound
+#: available without assuming a shape, which is why it is what a grid record's widths are held to (R-27).
+CANTELLI_95_SD = math.sqrt(0.975 / 0.025)
+
+
+def grid_record_variance_shrink_window(mean, covariance, relative_widths) -> float:
+    """The largest factor a grid record's covariance can be DIVIDED by while the record still reads back.
+
+    This function exists to state a limit, not to enforce one. A serialized grid result does not carry its
+    grid, so its mean and covariance cannot be recomputed; what holds them is the Cantelli bound in
+    :func:`_grid_report_problems`, which refuses a record whose carried 95% interval is too wide for its
+    carried standard deviation. Solving that bound for the shrink factor gives the window inside which
+    dividing the covariance alone -- with the integrity-only moments digest recomputed, which anyone can do --
+    contradicts nothing in the record:
+
+        ``min_i (2 k sigma_i / (w_i |mu_i|))**2``,  ``k = CANTELLI_95_SD``
+
+    over the parameters with a non-zero mean and a finite width, and ``inf`` when no parameter constrains it
+    (a zero mean makes a relative width meaningless, so those parameters are skipped, exactly as the bound
+    skips them). On the audited record the window is 7.98: a variance divided by 5 reads back and by 8 does
+    not. Callers who need a record's moments to be re-derivable need the grid, not this record.
+    """
+    mean = np.asarray(mean, dtype=np.float64)
+    sd = np.sqrt(np.maximum(np.diag(np.asarray(covariance, dtype=np.float64)), 0.0))
+    widths = np.asarray(relative_widths, dtype=np.float64)
+    factors = []
+    for index in range(min(len(mean), len(sd), len(widths))):
+        scale, width = abs(float(mean[index])), float(widths[index])
+        if scale == 0.0 or not math.isfinite(width) or width <= 0.0:
+            continue
+        factors.append((2.0 * CANTELLI_95_SD * float(sd[index]) / (width * scale)) ** 2)
+    return min(factors) if factors else math.inf
+
+
+def _grid_diagnostic_problems(report: IdentifiabilityReport, points) -> list[str]:
+    """What a grid record's own resolution diagnostics can be held to (R-27, finding 22's fourth claim).
+
+    The effective sample size, the occupied support fraction and the spacing-to-standard-deviation ratios were
+    carried and never read, so a record with an effective sample size of 1.5 and a step 50x the posterior's
+    width read back SUPPORTED -- a grid V1 would have refused with GRID_TOO_COARSE_FOR_INFERENCE. Three of the
+    four checks here are definitional (a count of nodes lies between 1 and the node count the summary commits
+    to; a fraction of a non-empty support lies in (0, 1]; there is one ratio per axis). The fourth is V1's own
+    condition verbatim, BOTH halves of it: a small effective sample size alone is a sharply informative
+    posterior, and what says 'too coarse' is the step being as wide as the posterior it is meant to resolve.
+    """
+    problems: list[str] = []
+    names = tuple(report.parameter_names)
+    spacing = tuple(float(s) for s in report.spacing_to_std)
+    if len(spacing) != len(names):
+        problems.append(f"identifiability carries {len(spacing)} spacing-to-standard-deviation ratio(s) for "
+                        f"{len(names)} parameter(s)")
+    ess = float(report.effective_sample_size)
+    occupied = float(report.occupied_support_fraction)
+    if not math.isfinite(ess) or ess < 1.0 or (points is not None and ess > float(points)):
+        problems.append(f"an effective sample size is a count of nodes, so it lies in [1, {points!r}]; this "
+                        f"record carries {ess!r}")
+    if not math.isfinite(occupied) or not 0.0 < occupied <= 1.0:
+        problems.append(f"an occupied support fraction lies in (0, 1]; this record carries {occupied!r}")
+    minimum = float(dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)["minimum_effective_points"])
+    worst = max(spacing) if spacing else math.inf
+    if math.isfinite(ess) and ess < minimum and worst >= 1.0:
+        problems.append(f"an effective sample size {ess:.3g} below {minimum:.3g} with a grid step {worst:.3g}x "
+                        f"the posterior's own standard deviation is the grid V1 refuses as too coarse for "
+                        f"inference, so no accepted grid produced this record")
+    return problems
 
 
 def _same_number(a: float, b: float) -> bool:
@@ -131,8 +215,17 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
     thresholds are the router's; the condition number and correlation are the carried covariance's, by the frozen
     formulas; the status and ``why`` follow from the carried numbers by the frozen rule; and each relative width,
     times its mean, is a central 95% interval of a distribution with the carried mean and standard deviation, which
-    Cantelli's inequality confines to mean +/- sqrt(0.975 / 0.025) sd. A covariance shrunk under a recomputed
-    commitment breaks that bound. A small shift of the mean does not, which is why the digests are integrity-only.
+    Cantelli's inequality confines to mean +/- ``CANTELLI_95_SD`` sd.
+
+    WHAT THAT DOES NOT CATCH (R-27, finding 22's first two claims). This docstring used to say 'A covariance
+    shrunk under a recomputed commitment breaks that bound', which is false inside a window this code can
+    compute: see :func:`grid_record_variance_shrink_window`, 7.98 on the audited record. Cantelli is the
+    tightest bound that assumes no shape, and it bounds an interval from ABOVE only -- no lower bound on a
+    central 95% interval follows from a standard deviation. So a covariance divided inside that window, widths
+    lowered with it or lowered alone (turning NOT_IDENTIFIABLE into IDENTIFIABLE), and a small shift of the
+    mean are all undetectable from the record, because the digests are integrity-only and anyone can recompute
+    them. A grid record's moments and identifiability are therefore NOT re-derived, only bounded, and a caller
+    who needs them re-derived needs the grid.
     """
     problems = []
     for key, value in CANONICAL_IDENTIFIABILITY_THRESHOLDS.items():
@@ -140,13 +233,13 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
             problems.append(f"identifiability {key} {getattr(report, key)!r} is not the router's {value!r}")
     cov = np.asarray(covariance, dtype=np.float64)
     n = cov.shape[0]
-    eigenvalues = np.linalg.eigvalsh(cov)
-    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
-    condition = math.inf if smallest <= 0.0 else largest / smallest
     std = np.sqrt(np.maximum(np.diag(cov), 0.0))
     denominator = np.outer(std, std)
     with np.errstate(divide="ignore", invalid="ignore"):
         correlation = np.divide(cov, denominator, out=np.zeros_like(cov), where=denominator > 0.0)
+    eigenvalues = np.linalg.eigvalsh(correlation)  # CORE-004: as assess_identifiability computes it
+    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
+    condition = math.inf if smallest <= 0.0 else largest / smallest
     off = [abs(float(correlation[i, j])) for i in range(n) for j in range(n) if i != j]
     max_correlation = max(off) if off else 0.0
     if not _same_number(report.condition_number, condition):
@@ -162,7 +255,7 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
                         width_threshold=report.width_threshold)
     if status is not report.status or why != report.why:
         problems.append(f"identifiability says {report.status.value} where its own numbers give {status.value}")
-    k = math.sqrt(0.975 / 0.025)
+    k = CANTELLI_95_SD
     for i in range(n):
         scale = abs(float(mean[i]))
         if not math.isfinite(widths[i]) or scale == 0.0:
@@ -221,13 +314,37 @@ class RoutedIdentifiability:
         # the frozen rule does not give from them is not a verdict. A local report's explanation also names its
         # parameterization after the rule's text.
         r = self.report
+        # A RECORD CANNOT CARRY A RULE LOOSER THAN THE ROUTER'S (I-14, R-28).
+        #
+        # The re-derivation below makes a record SELF-CONSISTENT, which is
+        # precisely why the audited forgery read back: its numbers and its moved
+        # rule agreed with each other, and neither was compared with the
+        # declared rule. These constants are the ones `_report_differences`
+        # already checks against; what changes is that the check runs at
+        # construction and not only inside a `HybridUQResult`.
+        for key, canonical in CANONICAL_IDENTIFIABILITY_THRESHOLDS.items():
+            value = float(getattr(r, key))
+            if not math.isfinite(value) or value <= 0.0 or value > float(canonical):
+                raise HybridUQError(
+                    f"identifiability {key}={value!r} is looser than the router's {canonical!r}; a "
+                    f"classification may be made stricter by argument, never more lenient, and a record "
+                    f"carrying a moved rule is consistent with itself and with nothing else")
         status, why = _rule(r.condition_number, r.max_abs_correlation, r.relative_widths, r.parameter_names,
                             correlation_threshold=r.correlation_threshold, condition_threshold=r.condition_threshold,
                             width_threshold=r.width_threshold)
-        explained = r.why == why or (cls is ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION and r.why.startswith(why + " ["))
+        # The tightened note is RE-DERIVED from the report's own thresholds, which it carries, so a record
+        # that claims a moved rule must carry the rule it claims and a record that claims none must carry
+        # none. (I-14, R-28.)
+        expected = why + _tightened_note({
+            key: float(getattr(r, key))
+            for key, declared in _DECLARED_IDENTIFIABILITY_THRESHOLDS
+            if key in CANONICAL_IDENTIFIABILITY_THRESHOLDS and float(getattr(r, key)) != float(declared)
+        })
+        explained = r.why == expected or (cls is ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION
+                                          and r.why.startswith(expected + " ["))
         if status is not r.status or not explained:
             raise HybridUQError(f"the identifiability verdict {r.status.value} and its explanation do not follow from its own "
-                                f"numbers, which give {status.value} and {why!r} under its thresholds")
+                                f"numbers, which give {status.value} and {expected!r} under its thresholds")
 
     @property
     def status(self) -> IdentifiabilityStatus:
@@ -240,6 +357,15 @@ class RoutedIdentifiability:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "RoutedIdentifiability":
+        if payload.get("schema") == ROUTED_IDENTIFIABILITY_SCHEMA_V1:
+            raise HybridUQError(
+                f"{ROUTED_IDENTIFIABILITY_SCHEMA_V1} records cannot be read: CORE-004 changed the "
+                f"conditioning definition (the condition number is the CORRELATION matrix's, not the "
+                f"covariance's) and appended the width-reference note to every explanation, both under that "
+                f"same version. A stored condition number does not say which definition produced it, so the "
+                f"verdict cannot be re-derived from it. Re-derive the identifiability from the covariance "
+                f"instead of reading the record"
+            )
         require_schema(payload, ROUTED_IDENTIFIABILITY_SCHEMA)
         return cls(approximation_class=ApproximationClass(payload["approximation_class"]),
                    parameterization_digest=payload["parameterization_digest"], route_claim=RouteClaim(payload["route_claim"]),
@@ -274,6 +400,14 @@ def _local_marginal_intervals(point: Sequence[float], sd: Sequence[float], trans
     return scales, lows, highs
 
 
+def _tightened_note(tightened: Mapping[str, float]) -> str:
+    """The grid path's own sentence for a caller-tightened rule, or nothing (I-14, R-28)."""
+    if not tightened:
+        return ""
+    return (f". Classified under caller-tightened thresholds {dict(tightened)}; the "
+            f"declared defaults are {dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)}")
+
+
 def assess_routed_identifiability(
     posterior: LocalGaussianPosterior | PosteriorGrid,
     *,
@@ -293,6 +427,23 @@ def assess_routed_identifiability(
                                      route_claim=RouteClaim.SUPPORTED, report=report)
     if not isinstance(posterior, LocalGaussianPosterior):
         raise HybridUQError("assess_routed_identifiability takes a LocalGaussianPosterior or a PosteriorGrid")
+    # THE DECLARED-OR-TIGHTER GUARD RUNS HERE TOO (I-14, R-28).
+    #
+    # It ran for a grid and not for the local route, so a verdict was BOUGHT by
+    # argument: the weak-identification case is canonically NOT_IDENTIFIABLE
+    # with widths [8.553, 1.842] and correlation 0.9999985, and under
+    # (0.99999, 1e300, 1e9) it reads WEAKLY_IDENTIFIABLE -- while the SAME
+    # thresholds on the same problem's grid raise `looser than the declared
+    # 1.0`. That is an inconsistency inside one function, thirty lines apart.
+    # `minimum_effective_points` is passed at its declared value: a local
+    # Gaussian has no effective-point count, so the check for it is a no-op.
+    declared = dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)
+    tightened = _require_declared_or_tighter_thresholds(
+        correlation_threshold=correlation_threshold,
+        condition_threshold=condition_threshold,
+        width_threshold=width_threshold,
+        minimum_effective_points=declared["minimum_effective_points"],
+    )
     cov = posterior._require_numbers()
     level = float(confidence_level)
     if not 0.0 < level < 1.0:
@@ -307,7 +458,14 @@ def assess_routed_identifiability(
         status=status, condition_number=condition, max_abs_correlation=max_corr, relative_widths=widths,
         parameter_names=posterior.parameter_names, correlation_threshold=correlation_threshold,
         condition_threshold=condition_threshold, width_threshold=width_threshold,
-        why=f"{why} [LOCAL_GAUSSIAN_APPROXIMATION in parameterization {posterior.parameterization!r}]",
+        # A STRICTER RULE IS STILL A RULE THAT MOVED (I-14, R-28). The grid path
+        # appends this note, in these words, and a reader comparing two reports
+        # has no other way to know which rule each was reached under. The
+        # parameterization suffix stays LAST, because `RoutedIdentifiability`
+        # re-derives `why` and accepts the local class's report only as the
+        # rule's text followed by that bracket.
+        why=(f"{why}{_tightened_note(tightened)} "
+             f"[LOCAL_GAUSSIAN_APPROXIMATION in parameterization {posterior.parameterization!r}]"),
     )
     return RoutedIdentifiability(approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION,
                                  parameterization_digest=posterior.parameterization_digest,

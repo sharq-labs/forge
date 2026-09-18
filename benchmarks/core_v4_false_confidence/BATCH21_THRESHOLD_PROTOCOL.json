@@ -1,0 +1,92 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 21,
+  "improvements": [
+    "I-08 part B of two"
+  ],
+  "problems_addressed": [
+    "R-13",
+    "R-14",
+    "R-15"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "7d9ae9fa",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_part_is": "Part A made the probe basis and the scaling downgrade independent of declared units. Part B is what the probes MEASURE. Three problems, one sentence each: a curvature error spread over many pairs is invisible because each direction is bounded ALONE (R-13); the 3 and 6 sd tail probes run along the p axes only, so a posterior that saturates along its diagonals is SUPPORTED (R-14); and a tail probe beyond a declared bound is dropped without being counted, so moving a bound from 6.01 to 5.99 posterior sd RAISES the claim (R-15). All three are measured on the invariant basis part A built.",
+  "reach": "LIBRARY_ONLY, and the guard reach ledger's R-02 row says why: engcore.hybrid_uq is reached from production only through engcore.studies.calibration_study, which predicts through grid_predictive_uncertainty and does not run the local route. I-13 is where a production path routes.",
+  "what_was_already_seen": {
+    "R-13": "`tests/hybrid_uq/test_core_v4_false_confidence_conformance.py::test_r13_a_curvature_error_spread_over_every_pair_is_not_supported` is the audited reproduction, a strict xfail since batch 6. A residual curvature of -0.099 on every pair of 10 parameters passes every probe at index 0.0992 -- under the 0.10 downgrade -- while along the equal-weight direction the true chi-square rise at 2, 3 and 6 reported sd is 0.5, 1.303 and 9.068 against a Gaussian's 4, 9 and 36. The true sd there is 2.24x the reported one.",
+    "R-14": "`...::test_r14_a_posterior_flat_along_its_diagonals_is_not_supported` NO LONGER REPRODUCES and is not marked: I-04 (batch 11) caps that case at DOWNGRADED for an unrelated reason -- 4 observations and 2 parameters, so GOODNESS_OF_FIT_UNDERPOWERED fires and the mass floor is satisfied without any tail probe looking off-axis. The audit's own note says R-14 stays OPEN for I-08, which must add a case with more than 2 residual degrees of freedom so that what carries it is the PROBE and not the cap. This batch adds that case.",
+    "R-15": "`...::test_r15_moving_a_declared_bound_across_a_probe_radius_does_not_raise_the_claim` is the audited reproduction, a strict xfail since batch 6: the same flat-tailed posterior is REFUSED with bounds at 6.01 sd and SUPPORTED at 5.99 sd."
+  },
+  "rules": {
+    "the_curvature_matrix_is_rebuilt_from_the_probes_already_paid_for": {
+      "improvement": "I-08",
+      "problem": "R-13",
+      "rule": "The whitened curvature matrix M is assembled from the SAME +/-2 sd probes the route already evaluates -- no new forward evaluation. With Q(u) the measured chi-square rise at the whitened point u, the probes sit at u = +/-PROBE_SD e_k (axes) and u = +/-PROBE_SD (e_i +/- e_j)/sqrt(2) (diagonals), and a local quadratic Q(u) = u^T M u gives M_kk = mean_sign Q(+/-PROBE_SD e_k) / PROBE_SD^2 and M_ij = (Qbar_plus - Qbar_minus) / (2 * PROBE_SD^2), where Qbar_+/- are the sign-averaged rises on the (e_i +/- e_j)/sqrt(2) directions. For a Gaussian M = I exactly.",
+      "the_gate_is_the_extreme_eigenvalues_and_it_reuses_the_declared_thresholds": "the curvature index is max(|lambda_max - 1|, |1 - lambda_min|) over the eigenvalues of M, and it is compared with NONLINEARITY_DOWNGRADE = 0.10 and NONLINEARITY_REFUSE = 0.50 -- the two the route already declares, unchanged. NO NEW THRESHOLD, and this is why: the existing per-direction index for a unit whitened direction d is |Q(PROBE_SD d) / PROBE_SD^2 - 1| = |d^T M d - 1|, and the supremum of that over ALL unit directions IS max(|lambda_max - 1|, |1 - lambda_min|). So the matrix index is exactly the quantity the route was already thresholding, maximized over every direction instead of evaluated at 2p^2 of them. It DOMINATES every per-direction index, so `nonlinearity_index` becomes max(per-direction index, curvature index) and no record's reasons stop following from its numbers.",
+      "the_audited_case_arithmetic": "at p = 10 with M = I + c(J - I) and c = -0.099 the eigenvalues are 1 - c = 1.099 with multiplicity 9 and 1 + 9c = 0.109, so the curvature index is 0.891 -- above NONLINEARITY_REFUSE. The equal-weight direction is the lambda_min eigenvector, which is where the audit measured a true sd 2.24x the reported one, and 1/sqrt(0.109) = 3.03 is the sd inflation the matrix reports there. The case is REFUSED, on the threshold the route already had.",
+      "an_incomplete_matrix_is_built_over_the_sub_block_that_is_complete": "a probe beyond a declared bound or at an inadmissible point leaves an entry of M unmeasured. M is then assembled over the largest index set whose axis probes AND all of whose pairwise diagonal probes were evaluated, and the index is the extreme eigenvalues of THAT principal submatrix. It is still a valid lower bound on the worst direction -- the supremum over unit directions supported on a subset is at most the supremum over all of them -- so the gate is never loosened by the restriction, only weakened in reach, and the existing NONLINEARITY_PROBE_INCOMPLETE downgrade already says a probe was missed. Below two complete indices there is no matrix and the index is NaN.",
+      "class": "A (an identity: the matrix index IS the supremum of the quantity already thresholded; no threshold chosen)"
+    },
+    "the_extremes_are_recorded_so_the_index_can_be_checked": {
+      "improvement": "I-08",
+      "problem": "R-13",
+      "rule": "`RouteDiagnostics` gains one trailing field with a default, `curvature_eigenvalue_bounds: tuple[float, float] = ()`, holding (lambda_min, lambda_max) of the matrix that was built, and serialized ONLY when it is non-empty. Read-back refuses a record whose bounds are not two finite numbers in order, and refuses a record whose `nonlinearity_index` is below max(|lambda_max - 1|, |1 - lambda_min|) -- the index must dominate the matrix it was computed from.",
+      "why_a_field_and_not_a_reason": "the reasons are unchanged (NONLINEAR_WITHIN_2_SD and NONLINEAR_BEYOND_LOCAL_GAUSSIAN say exactly what a curvature deviation says), and what a reader cannot get from the index alone is WHERE the curvature is wrong and by how much in each direction. A record written before this rule carries no bounds, the derived checks are skipped for it, and its reasons still follow from its numbers -- so no committed record stops reading back.",
+      "class": "A"
+    },
+    "the_tails_are_probed_in_every_direction_the_probes_cover_and_in_the_extremes": {
+      "improvement": "I-08",
+      "problem": "R-14",
+      "rule": "The 3 and 6 sd tail probes run along EVERY direction the +/-2 sd probes use -- the p invariant axes and the p(p-1) diagonals between two of them -- plus the lambda_min and lambda_max eigenvectors of the curvature matrix, mapped back into parameter space and normalized to unit Mahalanobis length. Both signs, as now.",
+      "why_those_directions_and_not_a_sphere_sample": "a tail probe asks whether the posterior is heavier than the reported Gaussian SOMEWHERE, and a heavy tail has to be looked for where the local quadratic is least trustworthy. The diagonals are where a cross term lives, which is why the +/-2 sd probes already cover them; the lambda_min direction is the one the curvature matrix says is flattest, which is where a saturating tail hides. A random or quasi-random sample of the sphere would be a different rule with a sample size to justify; this reuses the direction set the route already argues for and adds the two the matrix identifies.",
+      "cost": "the tail probes go from 2 * len(TAIL_PROBE_SD) * p = 4p to 2 * len(TAIL_PROBE_SD) * (p^2 + 2) = 4p^2 + 8 forward evaluations. The route's diagnostics were already O(p^2) (2p^2 for the +/-2 sd probes), so the ORDER does not change and the constant goes from 2p^2 + 4p to 6p^2 + 8: about 3x at large p. PERFORMANCE.json's measured counts move and it is regenerated; its guard is an inequality (forward_evaluations >= 4p + 1 + evaluated_probes) and stays satisfied.",
+      "class": "A (a direction set, argued from what each direction is for; no threshold)"
+    },
+    "a_tail_probe_at_a_bound_is_clipped_compared_at_its_own_radius_and_counted": {
+      "improvement": "I-08",
+      "problem": "R-15",
+      "rule": "A tail probe whose point leaves the declared box is CLIPPED to the largest radius r_clip <= r that stays inside it, and its rise is compared with r_clip^2 -- the Gaussian's prediction at the radius actually probed -- instead of being dropped. A clipped probe is counted in a new trailing field `tail_probes_clipped: int = 0`. A probe whose r_clip is below PROBE_SD is NOT used, because the +/-2 sd probes already measured that radius and there is no tail there to measure; it is counted in a new trailing field `tail_probes_outside_bounds: int = 0`, and a non-zero count adds the existing NONLINEARITY_PROBE_INCOMPLETE downgrade.",
+      "why_PROBE_SD_is_the_floor_and_not_a_new_number": "the floor is the radius the nonlinearity probes already cover. A tail probe is only informative beyond it: at or inside PROBE_SD the rise is already measured and already thresholded, so using a clipped probe there would threshold the same measurement twice against a different rule. The floor is therefore PROBE_SD exactly, which is a declared constant and not a choice.",
+      "why_clipping_and_not_refusing": "no posterior mass lies outside a declared bound, so a probe that would leave the box is not measuring the posterior's tail -- the original reasoning, and it is right. What was wrong is dropping the probe SILENTLY, which made the claim depend on where a bound was put: at 6.01 sd the 6 sd probe ran and refused, at 5.99 sd it vanished and the claim rose. Clipping measures the tail as far out as the declared box allows and says what radius it got to, so the two cases agree.",
+      "read_back": "the upper bound on `tail_probes_skipped` widens from 2 * len(TAIL_PROBE_SD) * p to 2 * len(TAIL_PROBE_SD) * (p^2 + 2), which no existing record violates -- widening an upper bound cannot refuse a record that satisfied the narrower one. The two new counts default to 0, so an old record derives nothing from them.",
+      "class": "A (a comparison at the radius actually probed, and a floor that is an existing declared constant)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "none touched. `RouteDiagnostics` gains three TRAILING fields with defaults -- `curvature_eigenvalue_bounds: tuple[float, float] = ()`, `tail_probes_clipped: int = 0`, `tail_probes_outside_bounds: int = 0` -- which is the allowed additive shape. No field is removed, renamed or reordered and no existing default changes. `_thresholds()` gains no key, for the same reason as batch 20: it is re-derived exactly on read-back.",
+    "behaviour_that_deliberately_changes": [
+      "`nonlinearity_index` becomes max(per-direction index, curvature index), so a curvature error spread over many pairs is reported at its true size and can now refuse.",
+      "`minimum_tail_rise_ratio` is a minimum over p^2 + 2 directions instead of p, so a posterior that saturates off-axis is found.",
+      "a tail probe at a declared bound is clipped and compared at its own radius instead of vanishing, and what cannot be used is counted and downgrades.",
+      "the route spends about 3x the forward evaluations on diagnostics at large p, same O(p^2)."
+    ],
+    "serialized_records": "three new trailing fields, each written only when it carries information (`curvature_eigenvalue_bounds` when non-empty; the two counts when non-zero). Every record written under hybrid_uq.route_diagnostics/2 still reads back: the new derived checks are skipped when the fields are absent, and the one existing bound that moves is widened.",
+    "claims_that_move": [
+      "`benchmarks/core_v2_hybrid_uq/FAILURE_CASES.json` and `PERFORMANCE.json` are regenerated; any case whose claim or count moves is recorded in the audit document with its before and after.",
+      "`benchmarks/core_v4_false_confidence/REFERENCE_POSTERIORS.json` is a pinned dense reference and is NOT affected: it is the posterior, not the route's reading of it.",
+      "`KINETICS_K2.json` and `BATTERY_T41.json` are NOT regenerated (their full runs are ~76 min and longer). Their SUPERSEDED markers stand and gain these rules.",
+      "any other committed claim the regeneration moves is recorded with its before and after."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The curvature matrix is a FINITE-DIFFERENCE second derivative at radius PROBE_SD, not the Hessian at the estimate. For a genuinely quadratic chi-square they agree exactly; for anything else M mixes the curvature with the quartic and higher terms at 2 sd. That is the right thing to threshold here -- the claim being checked is that the Gaussian describes the posterior out to 2 sd, not that the Hessian at the optimum is what the covariance says -- but it means the index is not an estimate of anything at the optimum.",
+    "M is built over a complete sub-block when probes are missing, so a posterior with a declared bound inside 2 sd on one parameter gets a gate over the others and not over that one. The existing NONLINEARITY_PROBE_INCOMPLETE downgrade is what says so; the record does not say WHICH indices the matrix covered.",
+    "The extreme-eigenvector tail probes are chosen by a matrix built from the +/-2 sd probes, so on a posterior whose 2 sd behaviour is Gaussian and whose 6 sd behaviour is not, those two extra directions are chosen by information that does not predict the tail. The p^2 fixed directions are what carry R-14; the two extremes are an addition, not the mechanism.",
+    "Clipping compares a rise with r_clip^2 under the SAME Gaussian prediction. Where the declared box cuts the posterior well inside 6 sd, the outer tail is simply not measured and the record says so with a clipped count and, below PROBE_SD, a downgrade. It is not a claim that the tail beyond the box is Gaussian.",
+    "R-13's gate is still a bound on a QUADRATIC form. A curvature error that is exactly zero in every probed direction and non-zero only in a direction no probe and no eigenvector of M reaches would be missed; with all p axes and all p(p-1) diagonals the form is fully determined, so this can only happen through the finite-difference residual above, not through an unprobed direction."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "a_tail_probe_at_a_bound_is_clipped_compared_at_its_own_radius_and_counted",
+      "what_changed": "The preregistration said a tail probe the declared box stops inside PROBE_SD 'adds the existing NONLINEARITY_PROBE_INCOMPLETE downgrade'. It adds a new appended member instead, TAIL_NOT_MEASURED_BEYOND_THE_PROBE_RADIUS, and NONLINEARITY_PROBE_INCOMPLETE keeps exactly the meaning it had.",
+      "the_numbers_that_forced_it": "Two guard mutations survived. B21m removed the `or tail_outside` arm of the downgrade condition and B21m2 removed the whole condition -- and BOTH left the suite green. The reason is structural, not a gap in the tests: along any of the p^2 fixed probe directions the box stops a tail probe inside PROBE_SD only when it also stops that direction's own +/-2 sd probe, because both conditions are `box reach along d < PROBE_SD`. So `nonlinearity_probes_skipped` is non-zero in every such geometry and already emits NONLINEARITY_PROBE_INCOMPLETE. At a bound of 1.5 posterior sd the audited case records nonlinearity_probes_skipped = 2 and tail_probes_outside_bounds = 4, and the downgrade is the same word either way. Folded together, the fact R-15 is ABOUT -- that the tail was never measured -- was unobservable in the record's reasons.",
+      "why_this_is_the_right_correction_and_not_a_widening": "A probe the box stopped inside the radius the +/-2 sd probes already cover is a different fact from a +/-2 sd probe that left the box, and R-15 is precisely about that fact being silent. Emitting a word of its own is what makes it readable, and it is strictly additive: the member is appended, both counts default to 0, and no record written before this rule gains a reason. The two mutations are now killed by the bound-1.5 reproduction, which asserts the new word AND that the old one is still there for the +/-2 sd probes.",
+      "what_was_kept": "the severity is DOWNGRADED, as preregistered; the floor is still PROBE_SD; and the clipped path is unchanged."
+    }
+  ]
+}

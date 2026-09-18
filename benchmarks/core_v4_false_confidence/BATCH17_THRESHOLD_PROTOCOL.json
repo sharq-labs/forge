@@ -1,0 +1,88 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 17,
+  "improvements": [
+    "I-03 (part A of two)"
+  ],
+  "problems_addressed": [
+    "R-02"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "6cae6c40",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "why_two_batches": "I-03 is the audit's largest improvement (5 stars, effort L) and addresses four problems. Part A -- this batch -- routes the production study's predictive and held-out statements through the V2 evidence gates and closes R-02. Part B (batch 18) is the study's own verdict arithmetic: the held-out power floor (R-35), cluster-aware coverage (R-36), heterogeneous declared sigmas and an honest calibration status (R-38), and the condition side-maps that turn PREDICTION_DOMAIN_NOT_DECLARED into a real domain check. Splitting them keeps each batch's blast radius measurable, which is the per-batch protocol's whole purpose; I-03 is recorded DONE only when both have landed.",
+  "reach": "R-02 is REACHED IN PRODUCTION: `engcore/studies/calibration_study.py` is the only production orchestration that turns a calibration into predictive intervals and a held-out verdict, and `engcore.hybrid_uq` has no caller in src outside its own package. So every V2 gate the 2026-09-16 audit built -- goodness of fit (CORE-001), containment (CORE-002), prior uniformity (CORE-010), mode resolution, admissibility truncation -- runs on nothing that ships. `adequacy.assess_predictive_observation` is on the same V1 path and is what a model comparison reads.",
+  "what_was_already_seen": {
+    "R-02": "findings 33 and 81. `predict_held_out`, `validate_held_out` and `assess_predictive_observation` all compute through the frozen `uq.predictive.posterior_predictive_uq`, which applies only the resolution refusal. Measured: a grid over the posterior mean +/- 0.6 sd reports a parameter sd of 0.0421 against the wide grid's 0.1240 -- 0.34x -- and is still `content_bound`, and the model comparison turns a non-decisive 2.872-nat difference (se 0.940, preferred None) into a decisive 6.259-nat preference (se 2.109, preferred A). The routed containment check refuses the same grid outright with GRID_DOES_NOT_CONTAIN_POSTERIOR. A calibration whose residuals are 10x the declared sigma still gets predictive intervals from `predict_held_out` and a FAIL from `validate_held_out` rather than a refusal (the routed path raises MODEL_MISFIT_BEYOND_DECLARED_NOISE: chi-square 232.824 on 4 dof). `PredictiveDecomposition` and `HeldOutMetrics` carry no claim or reason field, so nothing they return can say a statement was downgraded."
+  },
+  "rules": {
+    "the_study_predicts_through_the_v2_record": {
+      "improvement": "I-03",
+      "problem": "R-02",
+      "rule": "`predict_held_out` and `validate_held_out` obtain their predictive quantities from `hybrid_uq.grid_predictive_uncertainty` with `observations=split.calibration` and `forward=tcr_forward_evaluator(...)`, instead of calling the frozen `uq.predictive.posterior_predictive_uq` directly. That function applies the router's own judgement -- binding to the evidence, prior uniformity, goodness of fit, containment, admissibility truncation and mode resolution -- and RAISES for a grid the router would not route, which is the behaviour the audit's routed comparison shows and the study did not have.",
+      "why_the_existing_function_and_not_a_new_one": "`grid_predictive_uncertainty` already computes the frozen predictive through the same `posterior_predictive_uq` and wraps it in a record carrying the claim and the reasons. A new `admit_grid` helper would be a second statement of the same judgement, and the audit's own fix direction names this function first.",
+      "the_numbers_do_not_move": "the predictive mean, the parameter sd, the total sd and both intervals come from the same frozen call on the same inputs. What is new is the judgement around it and the refusal where that judgement fails. Verified by a test that compares every field of the production WIDE design before and after.",
+      "class": "A (an existing judgement, applied on the path that ships)"
+    },
+    "the_study_records_the_claim_it_earned": {
+      "improvement": "I-03",
+      "problem": "R-02",
+      "rule": "`PredictiveDecomposition` and `HeldOutMetrics` gain two TRAILING fields with defaults: `route_claim: str = \"\"` and `reasons: tuple[str, ...] = ()`, filled from the V2 record. Serialized only when non-empty, so a record written before this batch keeps its bytes.",
+      "why_strings_and_not_the_enums": "both records are study outputs that serialize straight to JSON and are read by the flagship reports. `RouteClaim` and `RouteReason` are `str` enums whose `.value` is what every other record in the tree writes; carrying the value keeps these two records free of a `hybrid_uq` import in their own module-level types.",
+      "what_it_will_say_today": "DOWNGRADED with PREDICTION_DOMAIN_NOT_DECLARED, because the TCR observations do not yet carry their temperature as a declared condition. That is part B's work and is stated as a residual rather than hidden: the claim is honest -- nothing today shows where the prediction sits relative to the calibrated range -- and it is now SAID instead of being absent.",
+      "class": "A (additive trailing fields)"
+    },
+    "a_truncating_box_is_not_content_bound": {
+      "improvement": "I-03",
+      "problem": "R-02 (finding 33)",
+      "rule": "The content-binding branch of `assess_predictive_observation` applies `grid_prior_uniformity` and `grid_containment`. On a finding the assessment is NOT marked content-bound and is not entered in the in-process binding registry, and the reason is recorded in a new trailing field `content_binding_refused_because: str = \"\"`. `compare` therefore names no preferred model over it, which is exactly the audited case: the decisive 6.259-nat preference the narrow box created disappears.",
+      "why_recorded_and_not_raised": "raising would change what an existing call returns for a grid that is merely narrow, and the round's strictness rule is that unbound information LOWERS a claim rather than destroying the record. `content_binding_verified` is already the derived gate a comparison reads (batch 13), so withholding the binding is the whole of the lowering, and the new field says why.",
+      "class": "A (two existing checks, applied in a branch that had neither)"
+    },
+    "the_frozen_predictive_records_the_conditions_nobody_checked": {
+      "improvement": "I-03",
+      "problem": "R-02 (finding 81)",
+      "rule": "`PredictiveQuantification` gains one TRAILING field, `conditions_not_checked: tuple[str, ...] = ()`, filled by `posterior_predictive_uq` with the names of the conditions the spec declares -- because that function checks none of them and has no calibration observations to check them against. Serialized only when non-empty.",
+      "why_not_a_refusal": "`posterior_predictive_uq` is V1-frozen and is called by the V2 record, which DOES check the conditions. A refusal there would break the very path that fixes this. Recording is the honest half a frozen function can carry, and the V2 reason carries the downgrade.",
+      "class": "A (an additive trailing field; no threshold)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "ADDITIVE ONLY. `PredictiveQuantification` gains one trailing field with a default; `PredictiveObservationAssessment` gains one; `PredictiveDecomposition` and `HeldOutMetrics` gain two each. No field or member is removed, renamed or reordered, no existing default changes, and no signature loses or reorders a parameter.",
+    "behaviour_that_deliberately_changes": [
+      "`predict_held_out` and `validate_held_out` RAISE for a grid the router would not route -- a truncated box, a calibration whose residuals exceed the declared noise, a non-uniform prior axis, an unresolved mode. Each of those was previously answered with an interval or a verdict, which is the defect.",
+      "an assessment over a truncating grid is no longer content-bound, so a comparison over it names no preferred model."
+    ],
+    "serialized_records": "the new keys are written only when non-empty, so every record written before this batch keeps its bytes and its digest. No schema string is bumped.",
+    "claims_that_move": [
+      "the study's predictive and held-out records now say DOWNGRADED / PREDICTION_DOMAIN_NOT_DECLARED where they said nothing. The numbers beside them are unchanged, which is measured field by field.",
+      "no committed evidence: `benchmarks/core_v2_hybrid_uq/TCR.json` records the hybrid-UQ route on the TCR designs and not the study's outputs, and no committed record in the repository carries a `PredictiveDecomposition`, a `HeldOutMetrics` or a `PredictiveObservationAssessment`. Re-derived rather than assumed by re-running the FAST and expensive tiers and the committed-evidence suite."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The prediction-domain check is DECLARED but not yet informative: the TCR observations carry no `conditions`, so every routed record reads PREDICTION_DOMAIN_NOT_DECLARED. Putting `temperatures_by_condition` onto `GaussianObservation.conditions` -- and the battery's `RestedOcvCondition` likewise -- is part B, because it changes observation content digests and therefore needs its own blast-radius measurement.",
+    "`gaussian_grid_posterior` and `posterior_predictive_uq` themselves are unchanged apart from the recorded field. The V1 goodness-of-fit and prior rules remain outside them, as the 2026-09-16 audit's own residuals state; what changes is that the production path no longer reaches them unjudged.",
+    "The coverage study calls `validate_held_out`, so every repetition now pays the V2 judgement's cost -- one extra forward table for the binding check was already paid, and prior uniformity, containment, admissibility and mode resolution are all node arithmetic on a grid already in memory. The measured cost is reported in the audit document rather than assumed negligible.",
+    "A held-out verdict is still PASS or FAIL. A DOWNGRADED route claim beside a PASS is recorded and does not change the word, because there is no third word yet; adding `HELD_OUT_VALIDATION_INCONCLUSIVE` is part B's (R-35).",
+    "`assess_predictive_observation` applies containment and prior uniformity but not goodness of fit: that check needs the calibration observations and the forward evaluator, and this function receives a calibration TABLE. Routing it fully is the same work as part B's condition side-maps and is stated there."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "(a rule ADDED after seeing results) run_coverage_study records a refused repetition instead of dying",
+      "what_forced_it": "the numbers. Routing `validate_held_out` through the V2 judgement means the goodness-of-fit gate (CORE-001) now sees every coverage repetition's calibration half -- and a gate with a declared false-refusal rate refuses that fraction of WELL-SPECIFIED repetitions by construction. Measured on the study's own reproducibility fixture (4 calibration temperatures, 2 residual degrees of freedom, truth = the fitted law, noise = the declared sigma): seed 11 and seed 12 route and PASS; seed 13 gives chi-square 13.6471 on 2 dof, p = 0.0011, and is refused as MODEL_MISFIT_BEYOND_DECLARED_NOISE. The sweep runs FAIL_FAST, so one refusal killed the whole study with 'coverage study lost 1 repetition(s)'.",
+      "the_rule_added": "`CoverageRepetition` gains a trailing `route_refused_because: str = \"\"`. A repetition whose grid the V2 judgement refuses is RECORDED with its reason and zero intervals rather than raising, and `CoverageStudy.why` states how many were refused, which seeds, and that the coverage fraction is therefore conditional on the repetitions that were routable.",
+      "why_this_and_not_the_alternatives": "counting a refused repetition as zero covered would be punitive and false -- nothing says its intervals would have missed. Dropping it silently is the selection effect the study's own 'lost repetition' guard was written against. Recording it, and saying the number is conditional, is the only one of the three that states what actually happened.",
+      "what_is_deliberately_NOT_decided_here": "what the coverage VERDICT should do about the refused fraction. A refused fraction consistent with the gate's declared rate is a different thing from one that says the pipeline is misspecified, and the threshold between them is a preregistration this batch does not have. That is I-03 part B's (R-36), together with the cluster-aware interval.",
+      "verified_by": "tests/inference/test_reproducibility_and_evidence.py::test_the_coverage_study_is_a_function_of_its_seed_schedule, which failed with the lost-repetition RuntimeError before this rule and passes after it."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "(an observation, not a rule change) the leverage-weighted statistic reads NaN on a 2-parameter TCR grid",
+      "what_was_seen": "the refusal messages this batch newly surfaces read 'chi-square 129.887 on 4 degrees of freedom at the grid's best node, and a leverage-weighted nan against a null mean of nan'. The POOLED half made the refusal and it is correct; the leverage half (batch 11, I-04) reports NaN rather than a number on these grids.",
+      "why_it_is_recorded_and_not_fixed_here": "it changes no verdict in this batch -- the pooled variance-ratio rule decides every case measured -- and it is a defect in a batch-11 rule rather than in anything batch 17 adds. Fixing it inside this batch would be an unpreregistered change to another batch's threshold. Recorded here so it is not lost, and to be carried into I-14 (read-back re-derivation) or its own follow-up."
+    }
+  ]
+}

@@ -4,11 +4,19 @@ or a refusal -- deterministically, in that order, with every route it tried reco
 The grid route is the repaired V1 grid route and nothing looser: a grid is used only when the frozen
 ``assess_identifiability`` accepts it (tensor lattice, ESS, the ESS-and-spacing rule, lattice aliasing, a usable
 curvature fit). The router has no way to accept a grid V1 refuses.
+
+Resolution is not enough (scientific core audit 2026-09-16). A supplied grid must also be the request's evidence --
+bound by content to the observations and forward model, not by dataset id (CORE-005) -- the declared noise must
+explain its residuals (CORE-001), and its box must contain the posterior (CORE-002). A local route whose residuals
+the declared noise does not explain is never rebuilt into a grid, and a rebuilt grid whose posterior spans both
+declared bounds of an axis is not used: the width it reports there is the bounds', not the data's.
 """
 
 from __future__ import annotations
 
+import hashlib
 import math
+import secrets
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
@@ -26,17 +34,27 @@ from ._records import (
     decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
 )
 from ..scientific.results.immutable import freeze
-from .identifiability import (
-    RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
+from ._grid_evidence import (
+    EDGE_LOG_LIKELIHOOD_DROP, admissibility_cut_axes, grid_admissibility_truncation, grid_containment,
+    SPOT_CHECK_INADMISSIBLE_ROWS, SPOT_CHECK_WEIGHTED_ROWS,
+    grid_goodness_of_fit, grid_is_this_evidence, grid_mode_resolution, grid_prior_uniformity,
+    supplied_grid_problem,
 )
-from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior
+from .identifiability import (
+    RoutedIdentifiability, _grid_axes_digest, _grid_diagnostic_problems, _grid_report_problems, _report_differences, assess_routed_identifiability,
+)
+from .local_gaussian import (
+    MISFIT_REASONS, LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior,
+)
 from .predictive import (
-    RoutedPredictiveUncertainty, _require_weights_follow_likelihood, grid_digest, grid_predictive_uncertainty,
-    linearized_predictive_uq,
+    RoutedPredictiveUncertainty, _grid_record, _grid_route_claim, _prediction_domain_reasons,
+    _require_weights_follow_likelihood, grid_digest,
+    grid_predictive_uncertainty, linearized_predictive_uq, _table_reasons,
 )
 from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, ApproximationClass, HybridUQError, RouteClaim, RouteDecision, RouteReason, RouteRefusedError,
+    claim_for,
 )
 
 HYBRID_UQ_RESULT_SCHEMA = "hybrid_uq.hybrid_uq_result/1"
@@ -47,6 +65,76 @@ _STRUCTURAL = frozenset({
     RouteReason.NO_RESIDUAL_DEGREES_OF_FREEDOM, RouteReason.STRUCTURALLY_UNIDENTIFIABLE,
     RouteReason.NUMERICALLY_SINGULAR_JACOBIAN,
 })
+
+#: The uniqueness words that say no adequate search stands behind a single mode: nothing looked, or what
+#: looked was below the minimum search (R-01, re-audit 2026-09-16). The word is read rather than the reason
+#: set because an early refusal records NOT_ASSESSED with no downgrade reason at all, and because the word is
+#: re-derived from the recorded starts by ``_multistart_verdict`` -- it cannot disagree with them.
+UNRESOLVED_UNIQUENESS = frozenset({"NOT_ASSESSED", "MULTISTART_INCOMPLETE", "MULTISTART_BELOW_MINIMUM_SEARCH"})
+
+#: Every route name and outcome word `route_uncertainty` writes into a `considered` ledger, and the keys a row
+#: may carry (R-27, finding 22's fifth claim). The ledger is the record's account of how the decision was
+#: reached; before this it was carried and never read, so an empty one, and one saying the used route had been
+#: passed over for a misfit, both read back beside a SUPPORTED grid decision.
+_LEDGER_ROUTES = frozenset({
+    "GRID_AS_SUPPLIED", "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "LOCAL_GAUSSIAN", "LOCAL_GAUSSIAN_DOWNGRADED",
+})
+_LEDGER_OUTCOMES = frozenset({"USED", "SKIPPED", "PASSED_OVER", "REFUSED_BY_V1"}) | {c.value for c in RouteClaim}
+_LEDGER_KEYS = frozenset({"route", "outcome", "reason", "detail"})
+
+
+def _considered_problems(decision: RouteDecision, claim: RouteClaim, considered) -> list[str]:
+    """Whether a ledger is an account of THIS decision: its shape, its vocabulary and its one used route.
+
+    The router writes exactly one USED row per answered request, on the route it returns, and no USED row at
+    all when it refuses. What is deliberately NOT checked: each passed-over row's reason against what that
+    route would have said, which cannot be re-derived without re-running the route.
+    """
+    problems: list[str] = []
+    rows = tuple(considered)
+    if not rows:
+        problems.append("considered is empty: a record carries the account of how its decision was reached")
+        return problems
+    for index, row in enumerate(rows):
+        extra = set(row) - _LEDGER_KEYS
+        if extra or "route" not in row or "outcome" not in row:
+            problems.append(f"considered[{index}] holds {sorted(row)}, and a row carries a route, an outcome "
+                            f"and at most a reason and a detail")
+            continue
+        if row["route"] not in _LEDGER_ROUTES:
+            problems.append(f"considered[{index}] names the route {row['route']!r}, which the router never writes")
+        if row["outcome"] not in _LEDGER_OUTCOMES:
+            problems.append(f"considered[{index}] reports the outcome {row['outcome']!r}, which the router never writes")
+    used = [row for row in rows if row.get("outcome") == "USED"]
+    if decision is RouteDecision.REFUSED:
+        if used:
+            problems.append(f"a refused routing used no route, and considered says it used {[r.get('route') for r in used]}")
+        return problems
+    expected = ("LOCAL_GAUSSIAN_DOWNGRADED" if decision is RouteDecision.LOCAL_GAUSSIAN and claim is RouteClaim.DOWNGRADED
+                else decision.value)
+    if len(used) != 1:
+        problems.append(f"considered reports {len(used)} used route(s) for a {decision.value} decision, not one")
+    elif used[0].get("route") != expected:
+        problems.append(f"considered says the route used was {used[0].get('route')!r}, and this record reports "
+                        f"a {decision.value} decision with a {claim.value} claim, which is written from {expected!r}")
+    return problems
+
+
+#: How an unresolved uniqueness word is reported when it passes a grid route over.
+_UNRESOLVED_REASON = {
+    "NOT_ASSESSED": RouteReason.GLOBAL_UNIQUENESS_NOT_ASSESSED,
+    "MULTISTART_INCOMPLETE": RouteReason.MULTISTART_INCOMPLETE,
+    "MULTISTART_BELOW_MINIMUM_SEARCH": RouteReason.MULTISTART_INCOMPLETE,
+}
+
+
+def _bound_tolerance(lower, upper):
+    """The float64 round-trip allowance for "this coordinate IS that declared bound".
+
+    The same expression ``grid_containment`` and ``_rebuild_grid`` already use, so a face that counts as a
+    declared bound there counts as one here: one rule, one number.
+    """
+    return 1.0e-12 * (np.abs(np.asarray(upper, dtype=float) - np.asarray(lower, dtype=float)) + 1.0)
 
 
 @dataclass(frozen=True)
@@ -142,9 +230,25 @@ class HybridUQResult:
         if ident is not None and not isinstance(ident, RoutedIdentifiability):
             raise HybridUQError("identifiability must be a RoutedIdentifiability")
         problems = []
+        problems.extend(_considered_problems(decision, self.claim, self.considered))
         if local is not None:
             problems.extend(_posterior_record_problems(local))
         if decision is RouteDecision.LOCAL_GAUSSIAN:
+            # R-25 (I-14 part E): THE LABEL IS WHAT TURNS THE RE-DERIVATIONS OFF.
+            #
+            # `_posterior_record_problems` re-derives the bound distances only for the DECLARED
+            # parameterization; for any other label it returns after checking that the estimate equals the
+            # point, because a mapped posterior's diagnostics describe its PARENT and are deliberately not
+            # tied to its own covariance. So renaming a record to 'linear_map:forged' and dividing its
+            # covariance by 1e4 read back SUPPORTED with sd [0.00027151, 0.00045993] -- the whole defence
+            # switched off by a string. The router builds declared posteriors and nothing else, so a routed
+            # record carrying another label was not produced by it. `reparameterized` stays a caller's tool
+            # and a mapped posterior stays usable on its own.
+            if local is not None and local.parameterization != "declared":
+                problems.append(
+                    f"a LOCAL_GAUSSIAN routed result carries a posterior in the declared parameterization; "
+                    f"this one is {local.parameterization!r}, for which the bound distances, the near-bound "
+                    f"set and every other re-derivation are not performed")
             if self.coordinates != "inference":
                 problems.append("coordinates are not 'inference'")
             if names != local.parameter_names:
@@ -197,10 +301,36 @@ class HybridUQResult:
                     problems.append("identifiability carries another claim")
                 if tuple(ident.report.parameter_names) == names:
                     problems.extend(_grid_report_problems(ident.report, self.mean, self.covariance))
+                    # R-27: and the resolution diagnostics the report carries, which nothing read.
+                    problems.extend(_grid_diagnostic_problems(ident.report, points))
             if decision is RouteDecision.GRID_AS_SUPPLIED and local is not None:
                 problems.append("a supplied grid was used, so no local posterior was built")
             if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
                 problems.append("a rebuilt grid carries the local posterior it was designed from, over the same parameters")
+            elif decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE:
+                # R-01 (re-audit 2026-09-16): the read rule is the write rule. The router no longer designs a box
+                # from a local posterior whose uniqueness search is unresolved, because the box centres are the
+                # estimate plus the modes that search found, and an unresolved search found none. A record that
+                # says otherwise was not produced by the router, and its SUPPORTED grid claim would be exactly the
+                # downgrade the local posterior it carries recorded, laundered away.
+                word = str(local.diagnostics.uniqueness)
+                if word in UNRESOLVED_UNIQUENESS:
+                    problems.append(f"a rebuilt grid was designed from a local posterior whose uniqueness is {word}: "
+                                    f"the box it names covers the modes a search found, and that search found none")
+                # R-27 (I-14 part F): the other two conditions the write path passes the rebuild route over
+                # on, for the same reason. A misfit reason says the declared noise does not explain the
+                # residuals, and a SUPPORTED grid claim over that posterior drops the statement silently: the
+                # audited record read back GRID_REBUILT_FROM_LOCAL_COVARIANCE SUPPORTED carrying a posterior
+                # whose only reason was MODEL_MISFIT_BEYOND_DECLARED_NOISE. A structural refusal leaves no
+                # usable covariance to have designed the box from at all.
+                misfit = sorted(set(local.reasons) & MISFIT_REASONS, key=lambda r: r.value)
+                if misfit:
+                    problems.append(f"a rebuilt grid carries a local posterior refused for {misfit[0].value}: the "
+                                    f"declared noise does not explain its residuals, and no grid is built past that")
+                structural = sorted(set(local.diagnostics.refusals) & _STRUCTURAL, key=lambda r: r.value)
+                if structural:
+                    problems.append(f"a rebuilt grid carries a local posterior with no usable local covariance to "
+                                    f"design a grid from ({structural[0].value})")
             grid = self.grid
             if grid is not None:
                 if tuple(grid.parameter_names) != names:
@@ -287,9 +417,19 @@ def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest
-#: log-likelihood must sit at least this far below the grid's maximum (density below 1e-6 of the peak).
-#: The frozen V1 checks verify resolution, not containment, so the router checks containment itself.
-EDGE_LOG_LIKELIHOOD_DROP = math.log(1.0e6)
+#: HOW FAR A GAUSSIAN OF THE FITTED SD REACHES BEFORE IT LEAVES THE ln 1e6 BAND (I-06, R-11).
+#:
+#: A Gaussian of standard deviation s has a log-density exactly
+#: ``EDGE_LOG_LIKELIHOOD_DROP`` below its peak at ``sqrt(2 ln 1e6)`` sd. So if
+#: the fitted local Gaussian were the truth, a profile would already have left
+#: the band by this distance; one still INSIDE the band further out than this is
+#: wider than the local fit claims in that direction. Written as the expression
+#: and not as the literal 5.2565, so it cannot drift from the band it is about.
+_GAUSSIAN_BAND_SD = math.sqrt(2.0 * EDGE_LOG_LIKELIHOOD_DROP)
+
+#: log-likelihood must sit at least EDGE_LOG_LIKELIHOOD_DROP below the grid's maximum (density below 1e-6 of the
+#: peak). The frozen V1 checks verify resolution, not containment, so the router checks containment itself -- on
+#: supplied grids too, since CORE-002 (see _grid_evidence).
 _MAXIMUM_BOX_EXPANSIONS = 6
 #: When V1 refuses a rebuilt grid, the aliasing target is raised 4x (steps halved) and the grid rebuilt, at most
 #: this many times and always within the point budget.
@@ -346,10 +486,17 @@ def _require_requested_grid(table, names, natural):
 
 #: Interior rows of a rebuilt table re-evaluated through the forward model, chosen from a digest of the table itself,
 #: on top of its two extreme corners, the node nearest the estimate and the table's own best-fitting node.
+#:
+#: NO LONGER THE COUNT, AND NO LONGER THE SEED (I-07, R-19). The audit says it in one sentence -- "a rebuild
+#: `table_builder` can do the same to `_require_table_agrees_with_forward`" -- and the mechanism is the one it
+#: measured on the supplied-grid path: the seed is a digest of the table's own values and mask, so a builder
+#: keeps the fixed rows honest, answers with a sharpened model everywhere else, and nudges one far-tail value
+#: until the drawn rows miss it. Two attempts were enough there. Kept because it is the constant a reader of
+#: the old behaviour will look for.
 _SPOT_CHECK_INTERIOR_ROWS = 4
 
 
-def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward):
+def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward, *, nonce=None):
     """Refuse a rebuilt table whose values are not the forward model's at the nodes it is spot-checked on (HUQ-05).
 
     ``_require_requested_grid`` binds a table's coordinates to the request; nothing bound its VALUES, so a builder
@@ -359,8 +506,6 @@ def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, f
     admitted node must be admitted by the forward evaluator and agree with it to ``SUPPLIED_PREDICTION_AGREEMENT_SD``
     observation sigmas; a node the forward evaluator admits must not be refused by the table.
     """
-    import hashlib
-
     if forward is None:
         raise HybridUQError("a rebuilt grid is verified against the forward evaluator; none was supplied")
     predictions, _columns = table.select_observations(observations)
@@ -372,12 +517,30 @@ def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, f
     n = len(natural)
     span = np.where(np.ptp(mesh, axis=0) > 0.0, np.ptp(mesh, axis=0), 1.0)
     rows = {0, n - 1, int(np.argmin(np.sum(((mesh - z0) / span) ** 2, axis=1)))}
+    # THE ROWS ARE DRAWN FROM A SEED THE BUILDER DOES NOT CONTROL (I-07, R-19).
+    #
+    # `SPOT_CHECK_WEIGHTED_ROWS` rows by the posterior weight the table's own chi-square implies -- because
+    # a builder who moves a reported moment must move that weight -- and
+    # `SPOT_CHECK_INADMISSIBLE_ROWS` uniformly from the rows it refused, which carry no weight at all and
+    # are how a builder deletes mass without touching a value.
+    weight = np.zeros(n)
     if np.any(mask):
         chi = np.sum(((predictions - observed[None, :]) / sigma[None, :]) ** 2, axis=1)
         rows.add(int(np.argmin(np.where(mask, chi, np.inf))))
-    seed = hashlib.sha256(np.ascontiguousarray(table.values, dtype="<f8").tobytes()
-                          + np.ascontiguousarray(mask, dtype=np.uint8).tobytes()).digest()
-    rows.update(int.from_bytes(seed[4 * k:4 * k + 4], "little") % n for k in range(_SPOT_CHECK_INTERIOR_ROWS))
+        usable = mask & np.isfinite(chi)
+        if np.any(usable):
+            weight = np.where(usable, np.exp(-0.5 * (chi - np.min(chi[usable]))), 0.0)
+    stream = np.random.default_rng(np.frombuffer(
+        hashlib.sha256(nonce if nonce is not None else secrets.token_bytes(32)).digest(), dtype=np.uint32))
+    total = float(np.sum(weight))
+    if total > 0.0:
+        pool = np.flatnonzero(weight > 0.0)
+        draw = min(int(SPOT_CHECK_WEIGHTED_ROWS), pool.size)
+        rows.update(int(r) for r in stream.choice(pool, size=draw, replace=False, p=weight[pool] / total))
+    refused = np.flatnonzero(~mask)
+    if refused.size:
+        draw = min(int(SPOT_CHECK_INADMISSIBLE_ROWS), refused.size)
+        rows.update(int(r) for r in stream.choice(refused, size=draw, replace=False))
     for row in sorted(rows):
         value = evaluate(forward, natural[row], keys, units, references)
         if value is None:
@@ -444,8 +607,18 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         peak = float(np.max(ll))
         grew = False
         truncated = []
+        # R-17: the forward model's admissible region ending inside the box is the same hard edge as a declared
+        # bound. Kept in its own list so the bound-domination rule below never fires on the model's own domain.
+        cut = admissibility_cut_axes(ll, ll.shape)
+        # The peak's own coordinate on each axis, for the per-side domination
+        # test below. Read off the lattice, so it is quantised to the node
+        # spacing -- far finer than the 5.2565 sd comparison it feeds.
+        peak_index = np.unravel_index(int(np.argmax(ll)), ll.shape)
+        one_sided = []
         for i in range(p):
             width = hi[i] - lo[i]
+            steps = max(int(nodes[i]) - 1, 1)
+            peak_at = lo[i] + float(peak_index[i]) * (hi[i] - lo[i]) / steps
             for side, index, bound in (("low", 0, lower[i]), ("high", -1, upper[i])):
                 edge = lo[i] if side == "low" else hi[i]
                 face = float(np.max(np.take(ll, index, axis=i)))
@@ -453,6 +626,23 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                 if abs(edge - bound) <= tolerance[i]:
                     if reaches:
                         truncated.append(i)
+                        # R-11: ONE reached declared bound is enough, when the
+                        # posterior stays inside the band all the way out to it
+                        # over more than a Gaussian of the fitted sd could
+                        # reach. The both-sides rule below let this through, and
+                        # the sd reported then belonged to wherever the bound
+                        # was declared: 1.743, 2.037 and 3.473 for the same data
+                        # with the bound at 20, 40 and 80.
+                        #
+                        # A posterior that DECAYS toward its bound -- a peak
+                        # sitting at one, say -- has a distance of about zero
+                        # here, nowhere near the band distance, so it falls
+                        # through to the halving loop exactly as before. That is
+                        # what makes this a diagnosis and not a blanket refusal.
+                        if math.isfinite(sd[i]) and sd[i] > 0.0:
+                            reach = abs(bound - peak_at) / float(sd[i])
+                            if reach > _GAUSSIAN_BAND_SD:
+                                one_sided.append((local.parameter_names[i], side, reach))
                     continue
                 if reaches:
                     if side == "low":
@@ -466,8 +656,30 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         return None, (RouteReason.GRID_REBUILD_UNRESOLVED,
                       f"posterior density still reaches a non-bound face after {_MAXIMUM_BOX_EXPANSIONS} expansions")
 
+    # CORE-002: density within ln 1e6 of the peak on BOTH declared bounds of an axis means the data rule out no part of
+    # the declared range there; the moments along it describe the bounds, and no refinement changes that.
+    dominated = sorted({local.parameter_names[i] for i in truncated if truncated.count(i) >= 2})
+    if dominated:
+        return None, (RouteReason.GRID_POSTERIOR_BOUND_DOMINATED,
+                      f"the posterior reaches both declared bounds of {dominated} within ln 1e6 of its peak: the width "
+                      f"reported there would be the declared range's, not the data's")
+    # R-11 (I-06): the same finding one side at a time, named as one side. Kept
+    # SEPARATE from the rule above, and reported after it, because the two call
+    # for different remedies: both sides dominated means the declared range is
+    # too narrow to say anything, one side means the DATA constrain only one
+    # direction and a wider box makes it worse. A refusal that did not
+    # distinguish them is what produced the 1.743 / 2.037 / 3.473 sequence.
+    if one_sided:
+        worst = max(one_sided, key=lambda item: item[2])
+        named = sorted({(name, side) for name, side, _reach in one_sided})
+        return None, (RouteReason.GRID_POSTERIOR_BOUND_DOMINATED,
+                      f"the posterior runs to the {worst[1]} declared bound of {worst[0]!r} while staying within "
+                      f"ln 1e6 of its peak over {worst[2]:.3g} local sd, more than the {_GAUSSIAN_BAND_SD:.4g} sd a "
+                      f"Gaussian of that sd would reach: the width reported there is the bound's, not the data's "
+                      f"(dominated side(s): {named})")
+
     halvings = 0
-    truncated = sorted(set(truncated))
+    truncated = sorted(set(truncated) | set(cut))
     while truncated:
         finer = nodes.copy()
         for i in truncated:
@@ -489,7 +701,68 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                           f"a declared bound truncates the posterior and its moments still moved {moved:.3g} sd "
                           f"after {halvings} halving(s)")
     return rebuilt, (f"{int(np.prod(nodes.astype(float)))} points, nodes {[int(n) for n in nodes]}, {attempt} box expansion(s), "
-                     f"{halvings} truncation halving(s) on axes {truncated}, {int(refinement)} refinement(s)")
+                     f"{halvings} truncation halving(s) on axes {truncated} (admissibility cuts {cut}), "
+                     f"{int(refinement)} refinement(s)")
+
+
+def _declared_bounds(calibration) -> list[tuple[float, float]] | None:
+    """Each parameter's declared bounds in its own natural unit, or None without a calibration to read them from."""
+    if not isinstance(calibration, CalibrationResult):
+        return None
+    return [(float(q.bounds.lower.magnitude_in(q.unit)), float(q.bounds.upper.magnitude_in(q.unit)))
+            for q in calibration.spec.parameters.parameters]
+
+
+def _grid_spans_the_declared_bounds(grid: PosteriorGrid, calibration) -> bool:
+    """Whether the grid's own box IS the declared box on every axis (R-06).
+
+    The declared bounds are the whole parameter space the request admits, so a grid that spans them has no
+    outside for a mode to hide in, and the router's containment check has already shown the posterior does not
+    reach its faces. Whether a mode INSIDE such a box is resolved is a grid-resolution question, not this one.
+    """
+    bounds = _declared_bounds(calibration)
+    if bounds is None or len(bounds) != len(grid.parameter_names):
+        return False
+    points = np.asarray(grid.points, dtype=np.float64)
+    for i, (lower, upper) in enumerate(bounds):
+        tolerance = float(_bound_tolerance(lower, upper))
+        axis = points[:, i]
+        if not (float(np.min(axis)) <= lower + tolerance and float(np.max(axis)) >= upper - tolerance):
+            return False
+    return True
+
+
+def _grid_uniqueness_basis(grid: PosteriorGrid, calibration, local, searched: bool) -> tuple[RouteReason, str] | str:
+    """R-06: why a supplied grid may not stand on uniqueness, or the basis on which it may.
+
+    Either the grid spans the declared bounds, or a uniqueness search at or above the minimum ran and every
+    separated mode it found lies inside the grid's box. A grid route's claim is SUPPORTED or absent, so a grid
+    with neither is passed over rather than downgraded.
+    """
+    if _grid_spans_the_declared_bounds(grid, calibration):
+        return "uniqueness: the grid spans the declared bounds of every axis, so no mode lies outside it"
+    if not searched or local is None:
+        return (RouteReason.GRID_UNIQUENESS_NOT_ASSESSED,
+                "the grid is narrower than the declared bounds and no uniqueness search stands behind it, so nothing "
+                "shows the posterior has no mode outside its box; a grid claim cannot be downgraded")
+    word = str(local.diagnostics.uniqueness)
+    if word in UNRESOLVED_UNIQUENESS:
+        return (RouteReason.GRID_UNIQUENESS_NOT_ASSESSED,
+                f"the grid is narrower than the declared bounds and the uniqueness search behind it is {word}, so "
+                f"nothing shows the posterior has no mode outside its box")
+    points = np.asarray(grid.points, dtype=np.float64)
+    low, high = np.min(points, axis=0), np.max(points, axis=0)
+    tolerance = _bound_tolerance(low, high)
+    for mode in getattr(local, "_modes", ()):  # inference coordinates, as the local route records them
+        natural = np.asarray(to_natural(np.asarray(mode, dtype=float), local.inference_transforms), dtype=float)
+        outside = [i for i in range(len(natural))
+                   if natural[i] < low[i] - tolerance[i] or natural[i] > high[i] + tolerance[i]]
+        if outside:
+            names = [str(grid.parameter_names[i]) for i in outside]
+            return (RouteReason.GRID_MISSES_A_FOUND_MODE,
+                    f"the uniqueness search found a mode at {[float(v) for v in natural]} which lies outside the grid's "
+                    f"box on {names}: the grid describes one mode of a posterior that has more than one")
+    return f"uniqueness: {word}, over {len(local.diagnostics.multistart)} start(s), every found mode inside the box"
 
 
 def _require_grid_bound_to_request(grid: PosteriorGrid, calibration, observations) -> None:
@@ -518,8 +791,18 @@ def route_uncertainty(
     multistart: MultistartPolicy | None = None,
     rebuild: GridRebuildPolicy | None = None,
     maximum_grid_parameters: int = GRID_ROUTE_MAXIMUM_PARAMETERS,
+    canonical_uniqueness_search: bool = True,
 ) -> HybridUQResult:
-    """Route an uncertainty request. See docs/CORE_V2_API_DESIGN.md section 3.6 for the rule."""
+    """Route an uncertainty request. See docs/CORE_V2_API_DESIGN.md section 3.6 for the rule.
+
+    ``canonical_uniqueness_search`` (R-01, R-06): a grid route's claim is SUPPORTED or absent, so a grid needs
+    a basis for the single mode it describes. When a grid route is in play -- a grid is supplied, or a
+    ``GridRebuildPolicy`` is given -- and the caller passed no ``multistart``, the router runs the canonical
+    :class:`MultistartPolicy` for its local route rather than recording that nobody looked. Pass ``False`` to
+    keep the older behaviour, which can only pass a grid over and never accept one. With neither a grid nor a
+    rebuild policy, ``multistart=None`` keeps its exact meaning and no search is run: there the DOWNGRADED
+    local claim already says what is not known, and a search would only cost evaluations.
+    """
     if int(maximum_grid_parameters) > GRID_ROUTE_MAXIMUM_PARAMETERS or int(maximum_grid_parameters) < 1:
         raise HybridUQError(f"maximum_grid_parameters must lie in [1, {GRID_ROUTE_MAXIMUM_PARAMETERS}], the validated grid range")
     if rebuild is not None and not isinstance(rebuild, GridRebuildPolicy):
@@ -527,6 +810,28 @@ def route_uncertainty(
     considered: list[dict[str, str]] = []
     if isinstance(grid, PosteriorGrid):
         _require_grid_bound_to_request(grid, calibration, observations)
+
+    # The search that stands behind whatever grid claim this call may make (R-01, R-06).
+    local_inputs = calibration is not None and observations is not None and forward is not None
+    a_grid_route_is_in_play = grid is not None or rebuild is not None
+    searching = multistart
+    if searching is None and bool(canonical_uniqueness_search) and a_grid_route_is_in_play and local_inputs:
+        searching = MultistartPolicy()
+    # The local route is built at most once, and step 1 may need it before step 2 reports it.
+    _local_route: list = []
+
+    def local_route():
+        """``(posterior, refusal)``: the local route with ``searching``, computed once. One of the two is None."""
+        if not _local_route:
+            if not local_inputs:
+                _local_route.append((None, None))
+            else:
+                try:
+                    _local_route.append((local_gaussian_posterior(calibration, observations, forward,
+                                                                  multistart=searching), None))
+                except RouteRefusedError as exc:
+                    _local_route.append((None, exc))
+        return _local_route[0]
 
     # 1. the grid as supplied
     if grid is None:
@@ -538,32 +843,64 @@ def route_uncertainty(
                            "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
     else:
         _require_weights_follow_likelihood(grid)
+        # CORE-005: a grid is a posterior for a request only when it can be shown to be that request's evidence, and that
+        # needs the observations and the forward model its likelihood is re-evaluated from.
+        bound = isinstance(observations, ObservationSet) and forward is not None
+        # A grid that is not this request's evidence is a fact about the GRID, so it passes the grid route
+        # over and the request goes on to the local route. This used to raise from here, outside any try, so
+        # a table off by a solver's own convergence aborted a request the local route answers SUPPORTED
+        # (I-07, R-30).
+        binding = grid_is_this_evidence(grid, calibration, observations, forward) if bound else None
         try:
             identifiability = assess_routed_identifiability(grid)
         except GridResolutionError as exc:
             considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "REFUSED_BY_V1",
                                "reason": RouteReason.GRID_UNRESOLVED.value, "detail": str(exc)[:400]})
         else:
-            considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": ""})
-            return HybridUQResult(
-                decision=RouteDecision.GRID_AS_SUPPLIED, approximation_class=ApproximationClass.POSTERIOR_GRID,
-                claim=RouteClaim.SUPPORTED, parameter_names=grid.parameter_names, coordinates="natural",
-                mean=tuple(grid.mean), covariance=tuple(map(tuple, grid.covariance)), local_posterior=None,
-                grid_summary=_grid_summary(grid, "GRID_AS_SUPPLIED"), considered=tuple(considered),
-                identifiability=identifiability, grid=grid)
+            if not bound:
+                problem = (RouteReason.GRID_NOT_BOUND_TO_EVIDENCE,
+                           "a supplied grid is used only with the observations and forward model it is checked against")
+            else:
+                # CORE-010, CORE-001 and CORE-002: equal node mass is the declared prior, the declared noise explains the
+                # residuals, and the box holds the posterior
+                problem = (binding
+                           or grid_prior_uniformity(grid, calibration)
+                           or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
+                           or grid_containment(grid, calibration)
+                           # R-17 then R-05: a cut inside the box, then every mode in the band on its own nodes
+                           or grid_admissibility_truncation(grid)
+                           or grid_mode_resolution(grid))
+            if problem is None:
+                # R-06: last, because it is the only check that may cost a uniqueness search, and a grid that
+                # spans its declared bounds needs none. Nothing before this point has run the search the
+                # caller handed in, so a grid over one of two equal modes read SUPPORTED.
+                basis = _grid_uniqueness_basis(grid, calibration, *local_route()[:1], searched=searching is not None)
+                problem = None if isinstance(basis, str) else basis
+            else:
+                basis = ""
+            if problem is not None:
+                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER", "reason": problem[0].value,
+                                   "detail": problem[1][:400]})
+            else:
+                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": "", "detail": basis[:400]})
+                return HybridUQResult(
+                    decision=RouteDecision.GRID_AS_SUPPLIED, approximation_class=ApproximationClass.POSTERIOR_GRID,
+                    claim=RouteClaim.SUPPORTED, parameter_names=grid.parameter_names, coordinates="natural",
+                    mean=tuple(grid.mean), covariance=tuple(map(tuple, grid.covariance)), local_posterior=None,
+                    grid_summary=_grid_summary(grid, "GRID_AS_SUPPLIED"), considered=tuple(considered),
+                    identifiability=identifiability, grid=grid)
 
     # 2. the local Gaussian route
     local = None
-    if calibration is None or observations is None or forward is None:
+    if not local_inputs:
         considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "SKIPPED", "reason": RouteReason.LOCAL_INPUTS_NOT_SUPPLIED.value})
     else:
-        try:
-            local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
-        except RouteRefusedError as exc:
+        local, refusal = local_route()
+        if refusal is not None:
             # The route refused without a posterior record (a derivative that did not stabilize): recorded, and
             # nothing is rebuilt from it, because there is no covariance to design a grid from.
             considered.append({"route": "LOCAL_GAUSSIAN", "outcome": RouteClaim.REFUSED.value,
-                               "reason": "the local route refused before it had a posterior", "detail": str(exc)[:400]})
+                               "reason": "the local route refused before it had a posterior", "detail": str(refusal)[:400]})
         else:
             reasons = ",".join(r.value for r in local.reasons)
             if local.claim is RouteClaim.SUPPORTED:
@@ -574,12 +911,28 @@ def route_uncertainty(
     # 3. a grid rebuilt from the local covariance, then verified by the frozen V1 checks
     if rebuild is not None and local is not None:
         p = len(local.parameter_names)
-        if p > int(maximum_grid_parameters):
+        misfit = sorted(set(local.reasons) & MISFIT_REASONS, key=lambda r: r.value)
+        if misfit:
+            # CORE-001: a grid claim is SUPPORTED or absent, so a grid cannot carry a misfit the local route recorded
+            considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                               "reason": misfit[0].value,
+                               "detail": "the declared noise does not explain the residuals; no grid is built past that"})
+        elif p > int(maximum_grid_parameters):
             considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
                                "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
         elif set(local.diagnostics.refusals) & _STRUCTURAL:
             considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
                                "reason": "no usable local covariance to design a grid from"})
+        elif str(local.diagnostics.uniqueness) in UNRESOLVED_UNIQUENESS:
+            # R-01: the same rule as the misfit above, for the same reason. The box is the estimate plus the modes
+            # a search found; an unresolved search found none, so the grid covers one basin and says SUPPORTED,
+            # which is exactly the DOWNGRADED caveat the local route recorded, laundered away. A found mode is not
+            # this case: it becomes a design centre, and the rebuilt box covers it.
+            word = str(local.diagnostics.uniqueness)
+            considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                               "reason": _UNRESOLVED_REASON[word].value,
+                               "detail": f"the uniqueness search behind this local route is {word}, so the box would cover "
+                                         f"one basin and report SUPPORTED; a grid claim cannot be downgraded"})
         else:
             for refinement in range(_MAXIMUM_REFINEMENTS + 1):
                 rebuilt, detail = _rebuild_grid(local, rebuild, observations, forward, refinement)
@@ -594,6 +947,14 @@ def route_uncertainty(
                     considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "REFUSED_BY_V1",
                                        "reason": RouteReason.GRID_REBUILD_UNRESOLVED.value,
                                        "detail": f"refinement {refinement}: {str(exc)[:360]}"})
+                    continue
+                # R-05: V1 checks one quadratic about the global argmax, so a second mode in the box is aliased
+                # away. The next refinement quadruples the aliasing target, which is the lever that fixes it.
+                unresolved = grid_mode_resolution(rebuilt)
+                if unresolved is not None:
+                    considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                                       "reason": unresolved[0].value,
+                                       "detail": f"refinement {refinement}: {unresolved[1][:360]}"})
                     continue
                 considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "USED", "reason": "",
                                    "detail": detail})
@@ -639,8 +1000,27 @@ def routed_predictive_uncertainty(
     model: ModelReference | None = None,
     source_ref: str | None = None,
     confidence_level: float = 0.95,
+    calibration_observations: ObservationSet | None = None,
+    observations: ObservationSet | None = None,
+    forward: ForwardEvaluator | None = None,
+    calibration: CalibrationResult | None = None,
 ) -> tuple[RoutedPredictiveUncertainty, ...]:
-    """Predictive uncertainty through whichever route the result used. A refused result has none."""
+    """Predictive uncertainty through whichever route the result used. A refused result has none.
+
+    ``calibration_observations`` (CORE-006) are the observations the result was calibrated on; their declared conditions
+    bound the range a prediction may claim. Without them every prediction is DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED``.
+
+    ``observations`` and ``forward`` (I-14, R-27 / the audit's finding 24) are the EVIDENCE a grid result's
+    grid is held to. This function used to re-apply only the V1 resolution check and say so in a comment --
+    "the evidence checks cannot be [re-applied], since the result does not carry the evidence" -- and then
+    predict anyway, so a grid computed from other data, which ``grid_predictive_uncertainty`` refuses on the
+    same evidence, predicted SUPPORTED once wrapped in a hand-built result: mean 2.4745 against an honest
+    1.9745. There are two honest answers and this is both of them. Given the evidence the grid checks are
+    re-run; without it every prediction is DOWNGRADED ``GRID_NOT_BOUND_TO_EVIDENCE``, which is the reason
+    the supplied-grid route already uses for exactly this. ``calibration`` is passed through to the same
+    checks: without it the goodness of fit falls back to the pooled test, which is what the numbers then
+    support.
+    """
     if not isinstance(result, HybridUQResult):
         raise HybridUQError("routed_predictive_uncertainty takes a HybridUQResult")
     if result.decision is RouteDecision.REFUSED:
@@ -648,10 +1028,35 @@ def routed_predictive_uncertainty(
     if result.decision is RouteDecision.LOCAL_GAUSSIAN:
         if predict is None:
             raise HybridUQError("a LOCAL_GAUSSIAN result predicts through a forward evaluator: pass predict")
-        return linearized_predictive_uq(result.local_posterior, predict, specs, confidence_level=confidence_level)
+        return linearized_predictive_uq(result.local_posterior, predict, specs, confidence_level=confidence_level,
+                                        calibration_observations=calibration_observations)
     if result.grid is None:
         raise HybridUQError("this grid result was read back from a record; the grid itself is data-plane and was not serialized")
     if predictive_table is None or twin is None or model is None or source_ref is None:
         raise HybridUQError("a grid result predicts through a table over result.grid.points: pass predictive_table, twin, model, source_ref")
-    return tuple(grid_predictive_uncertainty(result.grid, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
-                                             confidence_level=confidence_level) for spec in specs)
+    # The router held this grid to its evidence, its goodness of fit and its containment before it built the result
+    # (CORE-001/-002/-005), and _require_one_truth binds result.grid to the grid_summary digest the result carries. The
+    # resolution judgement is re-applied; the evidence checks cannot be, since the result does not carry the evidence.
+    _grid_route_claim(result.grid)
+    # I-14 (R-27, finding 24). The checks are the ones `supplied_grid_problem` applies, run here on the
+    # result's own grid: a claim about a posterior is a claim about the evidence it came from, and a record
+    # cannot carry that evidence. A finding RAISES, because a caller who handed over the evidence asked for
+    # it to be checked; its absence DOWNGRADES, because a claim not bound to evidence is still a number.
+    unbound: set[RouteReason] = set()
+    if isinstance(observations, ObservationSet) and forward is not None:
+        finding = supplied_grid_problem(result.grid, calibration, observations, forward)
+        if finding is not None:
+            raise RouteRefusedError(
+                f"this grid result is not bound to the evidence handed over: {finding[0].value} -- {finding[1]}")
+    else:
+        unbound.add(RouteReason.GRID_NOT_BOUND_TO_EVIDENCE)
+    out = []
+    for spec in specs:
+        # R-23 (I-13 part B): `predict` was accepted here and used only on the LOCAL path, so a grid result
+        # read its numbers out of the table and never compared them with the model passed beside it.
+        found = _prediction_domain_reasons(spec, calibration_observations) | _table_reasons(
+            result.grid, predictive_table, spec, predict) | unbound
+        reasons = tuple(sorted(found, key=lambda r: r.value))
+        out.append(_grid_record(result.grid, predictive_table, spec, claim_for(reasons), reasons, twin=twin, model=model,
+                                source_ref=source_ref, confidence_level=confidence_level))
+    return tuple(out)

@@ -127,7 +127,16 @@ from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
 from ...scientific.results.validation import ValidationOutcome
 from ...scientific.results.uncertainty import Uncertainty
-from ...scientific.serialization import require_schema, schema_string
+from ...scientific.serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+)
+# R-58 (I-27 part C): the systems layer consumes the UQ layer's crossing record,
+# which is the direction this platform's layering already runs -- composition
+# declares that a quantity crossed, UQ says what was known about it, and a
+# system pack is the thing that has both in hand.
+from ...uq.cross_domain import CrossedQuantity
 from ...scientific.twins.definition import (
     ScientificTwin,
     TwinDatum,
@@ -173,6 +182,10 @@ TORN_ENDPOINT_SCHEMA = schema_string("electrothermal_torn_endpoint")
 FIXED_POINT_PLAN_SCHEMA = schema_string("electrothermal_fixed_point_plan")
 COUPLED_ITERATION_SCHEMA = schema_string("electrothermal_coupled_iteration")
 COUPLED_RUN_SCHEMA = schema_string("electrothermal_coupled_run")
+#: Bumped to /2 by `crossings`, and written only when a run recorded some: a
+#: run that recorded none keeps its /1 bytes and reads back with none, which is
+#: the honest state of a run that had nothing to record.
+COUPLED_RUN_SCHEMA_V2 = schema_string("electrothermal_coupled_run", 2)
 
 #: Prose labels for the declared edges. Nothing branches on them.
 DEPENDENCY_HEAT = "joule-dissipation-heats-body"
@@ -1096,6 +1109,15 @@ def ambient_transfers(
                 value=stage.body.ambient_temperature,
                 source_record_id=source.result_id,
                 instant=f"coupled_iteration:{final.index}",
+                # R-61 (I-27 part A): the ambient is a CONTROL input of the
+                # thermal problem this result answers, and the value comes from
+                # the system configuration rather than out of the result. The
+                # record it names is still the right one -- it is the problem
+                # the ambient was imposed on -- and until the crossing said
+                # which of the two it was, a reader had no way to tell a value
+                # read out of a record from one imposed on it, and
+                # `check_against_result` had no question to ask.
+                value_origin=QuantityTransfer.VALUE_ORIGIN_CONFIGURED_INPUT,
             )
         )
     return tuple(transfers)
@@ -1163,6 +1185,43 @@ def converted_transfers(
             )
         )
     return tuple(transfers)
+
+
+def _recorded_transfers(
+    system: CoupledElectroThermalSystem,
+    plan: "FixedPointCouplingPlan",
+    final: "CoupledIteration | None",
+) -> tuple[QuantityTransfer, ...]:
+    """Both kinds of crossing this composition records, in the order the run records them."""
+    return ambient_transfers(system, final) + converted_transfers(plan, final)
+
+
+def recorded_crossings(
+    final: "CoupledIteration | None",
+    transfers: tuple[QuantityTransfer, ...],
+) -> tuple[CrossedQuantity, ...]:
+    """What the producing side said about each value that crossed, read off the record it named.
+
+    R-58 (I-27 part C). The transfers above say what crossed, from which record and when; this says what
+    that record said about it -- its own uncertainty entry for the quantity, its per-model applicability
+    verdicts, its validation status and its convergence state. Every one of those is read from the result
+    by ``CrossedQuantity.from_result``, so nothing here can state a verdict the record does not.
+
+    A run with no final iteration recorded no transfers either, and a transfer whose source result is not
+    in the final pass is not produced by :func:`ambient_transfers` or :func:`converted_transfers`, so the
+    absent case is an absent crossing rather than an invented one -- the position those two functions
+    already take about naming a record that does not exist.
+    """
+    if final is None:
+        return ()
+    produced = {result.result_id: result for result in final.results}
+    crossings: list[CrossedQuantity] = []
+    for transfer in transfers:
+        result = produced.get(transfer.source_record_id)
+        if result is None:  # pragma: no cover - both builders read the same pass
+            continue
+        crossings.append(CrossedQuantity.from_result(transfer, result))
+    return tuple(crossings)
 
 
 def stage_problems(
@@ -1565,6 +1624,16 @@ class CoupledRun:
     #: The two paths now hold the same evidence and differ only in whether a
     #: caller has to catch it.
     refusal: "TransportRefused | None" = None
+    #: What the producing side said about each value that crossed.
+    #:
+    #: R-58 (I-27 part C): the provenance above carries the crossings as
+    #: `QuantityTransfer` records -- what crossed, from which record, at which
+    #: instant -- and nothing beside them, so a receiving domain saw a number
+    #: and could not read the producer's own uncertainty, applicability verdict
+    #: or validation state. Each entry here is one of those crossings with all
+    #: three read off the result it names. One per transfer, checked below,
+    #: because a partial set is the same defect one level up.
+    crossings: tuple["CrossedQuantity", ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.plan, FixedPointCouplingPlan):
@@ -1601,6 +1670,26 @@ class CoupledRun:
                     f"final value {name!r} must be a Quantity"
                 )
 
+        crossings = tuple(self.crossings)
+        for crossing in crossings:
+            if not isinstance(crossing, CrossedQuantity):
+                raise InvalidScientificProblem(
+                    f"coupled run crossings must be CrossedQuantity records, "
+                    f"got {type(crossing).__name__}"
+                )
+        if crossings:
+            recorded = {crossing.key for crossing in crossings}
+            declared = {transfer.key for transfer in self.provenance.transfers}
+            if recorded != declared:
+                missing = sorted(declared - recorded)
+                extra = sorted(recorded - declared)
+                raise InvalidScientificProblem(
+                    f"a coupled run that records crossings records one per "
+                    f"transfer: missing {missing}, unaccounted {extra}. A "
+                    f"partial set reads as the whole of what crossed"
+                )
+        object.__setattr__(self, "crossings", crossings)
+
     @property
     def criterion_met(self) -> bool:
         """Derived from :attr:`outcome`, never stored beside it."""
@@ -1624,7 +1713,7 @@ class CoupledRun:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": COUPLED_RUN_SCHEMA,
+            "schema": COUPLED_RUN_SCHEMA_V2 if self.crossings else COUPLED_RUN_SCHEMA,
             "plan": self.plan.to_dict(),
             "outcome": self.outcome.value,
             "iterations": [i.to_dict() for i in self.iterations],
@@ -1640,11 +1729,24 @@ class CoupledRun:
                 for problem_id, quantity in sorted(self.final_values)
             ],
             "provenance": self.provenance.to_dict(),
+            **(
+                {}
+                if not self.crossings
+                else {"crossings": [c.to_dict() for c in self.crossings]}
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CoupledRun":
-        require_schema(payload, COUPLED_RUN_SCHEMA)
+        version = require_schema_any(
+            payload, (COUPLED_RUN_SCHEMA, COUPLED_RUN_SCHEMA_V2)
+        )
+        crossings = payload.get("crossings") or ()
+        if crossings and version != COUPLED_RUN_SCHEMA_V2:
+            raise InvalidScientificProblem(
+                f"coupled run payload declares schema {version!r} and carries "
+                f"crossings, which {COUPLED_RUN_SCHEMA_V2!r} introduced"
+            )
         return cls(
             plan=FixedPointCouplingPlan.from_dict(payload["plan"]),
             outcome=CouplingOutcome(payload["outcome"]),
@@ -1658,6 +1760,7 @@ class CoupledRun:
                 for entry in payload["final_values"]
             },
             provenance=ProvenanceRecord.from_dict(payload["provenance"]),
+            crossings=tuple(CrossedQuantity.from_dict(c) for c in crossings),
         )
 
 
@@ -2154,6 +2257,17 @@ def run_fixed_point_coupling(
     final = run.iterations[-1] if run.iterations else None
     return replace(
         run,
+        # R-58 (I-27 part C): one crossing record per transfer, carrying the
+        # producer's own uncertainty, applicability and validation state. Built
+        # here, beside the transfers, because this is the one place that holds
+        # both the crossing and the result it came out of.
+        #
+        # It reads the two builders through `_recorded_transfers` rather than
+        # binding the tuple below to a name, because the expression below is
+        # pinned byte-for-byte by a certification mutation (G20a): the line
+        # that used to drop every converting crossing is what that guard
+        # watches, and restructuring it would leave the guard matching nothing.
+        crossings=recorded_crossings(final, _recorded_transfers(system, plan, final)),
         provenance=replace(
             run.provenance,
             # Both kinds, and the second used to be dropped on this line. The

@@ -263,6 +263,17 @@ def test_provenance_accepts_the_run_that_uploaded_these_bytes(certified):
     assert _provenance(root, source) == []
 
 
+def test_provenance_accepts_a_recorded_manual_dispatch(certified):
+    root, _first, source, child, certificate = certified
+    manual = json.loads(json.dumps(certificate))
+    manual["assurance"]["lineage"]["event"] = "workflow_dispatch"
+    manual["assurance"]["lineage"]["pull_request"] = None
+    _recommit(root, manual)
+
+    run = _run(source, event="workflow_dispatch")
+    assert _provenance(root, source, run=run) == []
+
+
 @pytest.mark.parametrize("override, fragment", [
     ({"head_sha": "0" * 40}, "measured"),
     ({"path": ".github/workflows/tests.yml"}, "ran workflow"),

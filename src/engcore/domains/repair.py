@@ -1006,6 +1006,15 @@ _GUIDANCE: dict[UnknownReason, tuple[bool, str]] = {
         "not clear it. That is not a finding against the run — it was not "
         "shown wrong, and may still be fine",
     ),
+    UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION: (
+        False,
+        "{condition} received everything it asked for, and the relation it "
+        "states does not order those values: a ratio bound says a/b is within "
+        "its limits, which orders a and b only while both are positive. "
+        "Declaring the same values again will not help — what is missing is a "
+        "relation that holds for their signs, and that is a different "
+        "declaration from this one",
+    ),
     UnknownReason.PREREQUISITE_NOT_ESTABLISHED: (
         False,
         "{condition} cannot be assessed until its prerequisite is established. "

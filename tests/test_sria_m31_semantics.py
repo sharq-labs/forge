@@ -602,8 +602,8 @@ def test_binding_with_a_non_valid_verdict_is_refused():
 # 6. Unevaluated charter requirements fail closed
 # =====================================================================
 
-def test_unevaluated_charter_requirement_blocks_valid():
-    """A ValidationLevel obligation M3 cannot evaluate must not be assumed met."""
+def test_validation_level_without_an_authorized_issuer_blocks_valid():
+    """A ValidationLevel obligation needs an explicitly authorized level issuer."""
     from engcore.sria import ConfidenceRequirement
 
     charter = CampaignCharter(
@@ -635,7 +635,11 @@ def test_unevaluated_charter_requirement_blocks_valid():
     )
     assert decision.verdict is not AssuranceVerdict.VALID
     assert decision.verdict is AssuranceVerdict.INCONCLUSIVE
-    assert any("not evaluable in M3" in r for r in decision.reasons)
+    assert any(
+        "validation_level:experimentally_validated" in r
+        and "was not performed" in r
+        for r in decision.reasons
+    )
     unmet = decision.unmet_obligations
     # Obligation results are keyed by the declared obligation id, not by a
     # synthesized "check:<target>" name: the runner derives obligation state

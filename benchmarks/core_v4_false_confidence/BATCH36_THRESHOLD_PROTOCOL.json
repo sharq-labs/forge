@@ -1,0 +1,67 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 36,
+ "improvements": [
+  "I-14 part D of four, the last"
+ ],
+ "problems_addressed": [
+  "R-22 claim (a), the observation count"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "7755c80b",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "The last of R-22's four claims, and the one the improvement's brief says to batch the schema bump for: `observations` is a free field that feeds the goodness of fit and nothing constrains it. Raising 10 to 40 is still ACCEPTED at this batch's baseline, measured. Closing it needs the record to carry something the count can be checked against, which is a field it does not have -- hence `hybrid_uq.route_diagnostics/3`. R-25 and R-27, and the fuzzer the brief also asks for, follow in their own batch; this one changes a schema and nothing else should ride with it.",
+ "reach": "REACHED, and this is the first of I-14's parts that is. The observation-content check is performed by the LOCAL ROUTE itself on the record it has just built, so every posterior the router produces -- and the production calibration study routes the local posterior -- is checked against the observations it was fitted to. The read-back half is LIBRARY_ONLY for the same reason every read-back is.",
+ "what_was_already_seen": {
+  "R-22 (a), reproduced at 7755c80b": "On `gross_misfit_with_ten_precise_points` the genuine record carries `observations` 10 and is REFUSED with MODEL_MISFIT_BEYOND_DECLARED_NOISE. Editing the field to 40 is ACCEPTED on read. The audit's own case is the same edit where it flips a verdict rather than merely surviving: chi-square 30 on 10 degrees of freedom is DOWNGRADED RESIDUALS_EXCEED_DECLARED_NOISE, and on 38 it is a plausible fit, so the record reads back SUPPORTED. `observations` feeds `_goodness_of_fit` and nothing else reads it, so no other field disagrees with the edit."
+ },
+ "rules": {
+  "an_observation_set_has_a_content_digest": {
+   "improvement": "I-14",
+   "problem": "R-22 (a)",
+   "rule": "New `observation_set_content_digest(observations)` in `engcore.inference.split`, beside the per-observation `observation_content_digest` it is the set-level sibling of. It returns `\"<count>:<sha256>\"`: the count in the clear, then a digest over the per-observation content digests in sorted order.",
+   "class": "A",
+   "why": "The count is in the clear ON PURPOSE, and that is the whole design. A digest alone cannot be checked against a count without the observations, so a reader holding only the record could verify nothing; with the count beside it, `observations` is checkable from the record alone, and making the two agree requires editing the digest -- which no longer matches the observations the moment anyone does hold them. The per-observation digests are the existing ones, so the set digest is content-addressed in the same sense and for the same reason: `observation_content_digest`'s own docstring says it is over what the observation SAYS, not what it is called.",
+   "sorted_because": "a set of observations is a set. Two imports of the same rows in a different order are the same evidence, and the existing per-observation digest already excludes `condition_id` and `source_ref` for exactly that reason."
+  },
+  "the_record_carries_it_and_the_count_agrees": {
+   "improvement": "I-14",
+   "problem": "R-22 (a)",
+   "rule": "`RouteDiagnostics` gains a trailing `observation_content_digest: str = \"\"` field with a default, and `ROUTE_DIAGNOSTICS_SCHEMA` becomes `hybrid_uq.route_diagnostics/3`. A `/3` record must carry a non-empty digest of the form `\"<count>:<64 hex>\"`, and `observations` must equal that count. `/1` and `/2` payloads stay readable.",
+   "class": "A",
+   "why": "A trailing field with a default is the additive shape the compatibility rules allow, and the schema bump is what makes writing it unconditional rather than 'only when it carries information' -- which is the exception those rules name and which this improvement's brief asks for explicitly. The count check is an identity between two things the record now states, so there is no threshold in it.",
+   "compatibility": "No committed artifact in this repository carries a serialized `route_diagnostics` payload -- checked, not assumed: the only occurrences of the schema string in `benchmarks/` and `certification/` are the `/1` CONSTANT's value in the freeze manifests and prose in earlier threshold protocols. The V1 and V2 API snapshots pin the constant's value and will move; they are in the by-design failing set until the V4 round."
+  },
+  "the_route_checks_its_own_record_against_the_observations_it_used": {
+   "improvement": "I-14",
+   "problem": "R-22 (a)",
+   "rule": "New `require_posterior_matches_observations(posterior, observations)`: recomputes the set digest and refuses a posterior whose `observation_content_digest` or `observations` count disagrees. `local_gaussian_posterior` calls it on the record it has just built, before returning it.",
+   "class": "A",
+   "why": "Without this the rule is a read-back rule only, and a read-back rule is checked by whoever chooses to check. Calling it where the observations ARE available makes the binding a production fact: the digest in every record the route writes is the digest of the observations that record was fitted to, verified at the moment both are in hand. It also means the count check is not merely internally consistent -- a forger who edits both fields to agree produces a record that no longer matches any observation set, and the route's own check is the thing that would have caught it.",
+   "cost": "one pass over the observation set per local route, against a Jacobian and a multistart search."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new trailing dataclass field with a default, one new public function in `inference/split`, one new public function in `hybrid_uq/local_gaussian`. No signature, existing field, default or enum member changes. The serialized record gains one key, under an explicit schema bump.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "A `/2` payload carries no digest, so its `observations` field is unbound and R-22(a) survives for such a payload. That is deliberate rather than overlooked: refusing `/2` on read would be a compatibility break for records this core wrote three batches ago, and the route now writes `/3` for everything, so every record this core PRODUCES is checkable. A reader handed a `/2` record is in the position every reader was in before this batch, and the schema string says so.",
+  "The count-in-the-clear check is verifiable from the record alone; the DIGEST half is not, and cannot be -- verifying it needs the observations. That asymmetry is the point of putting the count in the clear, and it is stated so that nobody reads the field as self-verifying.",
+  "The digest binds the observations' VALUES and SIGMAS, through the existing per-observation content digest. It does not bind `dataset_id`, `condition_id` or `source_ref`, because that digest deliberately excludes them -- the same reading relabelled is the same reading. A record fitted to one set and relabelled with another set's dataset_id is not caught by this rule; `calibration_content_digest` is the field that speaks to that."
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. One check was REMOVED from `require_posterior_matches_observations` because it was masking the rule this batch is about, and one reproduction was repointed at the case its rule actually covers. Both forced by the mutation run.",
+   "the_numbers_that_forced_it": "Two of eight mutations survived. (a) B36d removes the DIGEST comparison, and the reproduction still passed -- because the function also re-checked `calibration_content_digest`, which caught the same forgery. The new binding was being credited to an old one. That third check is removed: it is the posterior's own field, verified where it is used, and one rule per function. (b) B36e removes the COUNT comparison and survived for a structural reason worth writing down: given a digest the count is REDUNDANT, because the digest STATES the count in the clear, so a matching digest implies a matching count and the digest check catches the forgery first. The case the count check is actually for is the record that has NO digest -- a `/2` payload -- and the reproduction now uses exactly that.",
+   "what_this_says_about_the_design": "The count-in-the-clear is what makes a record checkable ALONE, and the digest is what makes it checkable AGAINST the observations. The separate count comparison inside the production check is therefore the `/2` fallback and nothing else, which is a narrower job than the preregistration implied and is now the job its test describes.",
+   "relationship_to_calibration_content_digest": "Stated because the redundancy is real. `calibration_content_digest` is over `ObservationSet.to_dict()` and binds the dataset id, the condition ids, the source refs and the row ORDER. `observation_content_digest` binds the values and sigmas alone, order-independently, and carries the count -- the weaker and more robust binding, and the only one an observation COUNT can be recovered from. The second is not a duplicate of the first; it is the one R-22(a) needs.",
+   "guards_added_or_repointed": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_an_older_records_count_is_still_checked_against_the_observations -- added, not preregistered: the `/2` record whose digest is empty, which is the only case the separate count check can decide.",
+    "the production check no longer re-verifies `calibration_content_digest`."
+   ]
+  }
+ ]
+}

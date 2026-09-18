@@ -68,11 +68,45 @@ def _consensus_check():
     return check
 
 
+#: R-49 and R-53 (I-26): an oracle level now needs two things this fixture did not state. The evidence
+#: has to say WHERE it was observed -- a level is a claim that the model was validated somewhere -- and
+#: the prediction has to name the record it was computed from, because the operating point used to be the
+#: caller's assertion about a bare mapping of numbers. What this suite is about, which issuers may award
+#: which level, is unchanged.
+AT = {"ambient_temperature": Quantity(298.15, "kelvin")}
+
+
 def _oracle(kind=OracleKind.EXPERIMENTAL_DATASET):
     return OracleEvidenceSet.create(
         oracle_id="lab.cell.discharge.001", version="1", kind=kind, reference="doi:10.example/dataset",
-        observations=(OracleObservation("voltage", Quantity(3.70, "volt"), Quantity(0.05, "volt")),),
+        observations=(OracleObservation("voltage", Quantity(3.70, "volt"), Quantity(0.05, "volt"),
+                                        conditions=AT),),
     )
+
+
+def _oracle_check(oracle, magnitude=3.71):
+    """One compared prediction, bound to the record it came from."""
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ConvergenceState, ScientificResult
+    from engcore.scientific.results.uncertainty import Uncertainty
+    from engcore.scientific.results.validation import ValidationCheck, ValidationOutcome
+    from engcore.scientific.solvers.protocol import SolverIdentity
+
+    model = ("synthetic.oracle_fixture", "1.0.0")
+    predicted = {"voltage": Quantity(magnitude, "volt")}
+    record = ScientificResult(
+        result_id="oracle-fixture-result", problem_id="oracle-fixture", values=dict(predicted),
+        models=(model,),
+        validity_not_assessed={model[0]: "a fixture: nothing asked whether the model applied"},
+        solver=SolverIdentity("algebraic", "1.0.0"), convergence=ConvergenceState.NOT_APPLICABLE,
+        validation=ValidationReport(checks=(ValidationCheck(
+            name="dimensional_consistency", outcome=ValidationOutcome.PASS,
+            establishes=ValidationLevel.DIMENSIONALLY_VALID, evidence=("fixture",)),)),
+        uncertainty={"voltage": Uncertainty.unknown("no quantification in this fixture")},
+        provenance=ProvenanceRecord(run_id="oracle-fixture-run", models=(model,),
+                                    solvers=(("algebraic", "1.0.0"),), inputs=dict(AT)),
+    )
+    return oracle.compare(predicted, conditions=AT, predicted_from=record)
 
 
 def _trust(monkeypatch, oracle):
@@ -127,8 +161,18 @@ def test_a_check_that_claims_nothing_may_still_name_the_level(outcome):
 
 
 def test_weaker_levels_are_unchanged():
-    ValidationCheck(name="c", outcome=ValidationOutcome.PASS,
-                    establishes=ValidationLevel.ANALYTICALLY_VERIFIED, evidence=("closed form",))
+    """R-04 (core re-audit 2026-09-16) moved ANALYTICALLY_VERIFIED out of this set.
+
+    VAL-01 held three levels to an issuer's record and this test asserted the other three were
+    unchanged. That was the gap the re-audit found: ANALYTICALLY_VERIFIED is a claim that a solve
+    agrees with an independent closed form, and a prose evidence string was enough to make it. The
+    level now needs a pinned analytic reference or a pinned oracle, which
+    tests/test_core_scientific_audit_batch9.py asserts. The two levels that still need no issuer,
+    and are still recorded as an OPEN residual under R-04, are these.
+    """
+    for level in (ValidationLevel.DIMENSIONALLY_VALID, ValidationLevel.NUMERICALLY_CONVERGED):
+        ValidationCheck(name="c", outcome=ValidationOutcome.PASS, establishes=level,
+                        evidence=("a comparison this test does not make",))
 
 
 # ---- VAL-01: what the platform issues still stands ----------------------------------------
@@ -190,7 +234,7 @@ def test_a_consensus_issuer_record_for_a_gate_the_routes_do_not_name_is_refused(
 def test_a_pinned_oracle_issued_check_stands(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
-    check = oracle.compare({"voltage": Quantity(3.71, "volt")})
+    check = _oracle_check(oracle)
     assert check.establishes is ValidationLevel.EXPERIMENTALLY_VALIDATED
     report = ValidationReport.from_dict(json.loads(json.dumps(ValidationReport(checks=(check,)).to_dict())))
     assert ValidationLevel.EXPERIMENTALLY_VALIDATED in report.attained_levels
@@ -199,7 +243,7 @@ def test_a_pinned_oracle_issued_check_stands(monkeypatch):
 def test_an_oracle_record_nobody_pinned_is_refused(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
-    check = oracle.compare({"voltage": Quantity(3.71, "volt")})
+    check = _oracle_check(oracle)
     monkeypatch.setattr(oracle_module, "_TRUSTED_ORACLE_DECLARATIONS", {})
     with pytest.raises(ScientificValidationError, match="issuer"):
         _rebuilt(check)
@@ -208,7 +252,7 @@ def test_an_oracle_record_nobody_pinned_is_refused(monkeypatch):
 def test_an_oracle_record_claiming_a_level_of_another_kind_is_refused(monkeypatch):
     oracle = _oracle(OracleKind.BENCHMARK_DATASET)
     _trust(monkeypatch, oracle)
-    check = oracle.compare({"voltage": Quantity(3.71, "volt")})
+    check = _oracle_check(oracle)
     assert check.establishes is ValidationLevel.BENCHMARK_VALIDATED
     with pytest.raises(ScientificValidationError, match="issuer"):
         _rebuilt(check, establishes=ValidationLevel.EXPERIMENTALLY_VALIDATED)
@@ -217,7 +261,7 @@ def test_an_oracle_record_claiming_a_level_of_another_kind_is_refused(monkeypatc
 def test_a_report_re_verifies_issuers_on_every_read(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
-    report = ValidationReport(checks=(oracle.compare({"voltage": Quantity(3.71, "volt")}),))
+    report = ValidationReport(checks=(_oracle_check(oracle),))
     assert report.attained_levels
     monkeypatch.setattr(oracle_module, "_TRUSTED_ORACLE_DECLARATIONS", {})
     with pytest.raises(ScientificValidationError, match="issuer"):

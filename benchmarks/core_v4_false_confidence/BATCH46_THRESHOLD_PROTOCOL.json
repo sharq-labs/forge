@@ -1,0 +1,82 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 46,
+ "improvements": [
+  "I-28 part C of three, the last part"
+ ],
+ "problems_addressed": [
+  "R-71 (the audit's finding 98)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "304d458b",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "The core boundary that is supposed to stop a single usable solve from certifying its own numerical adequacy checks only a report object the caller hands over, and that report is never linked to the source result. An iterative solve whose OWN report claims NUMERICALLY_CONVERGED is admitted as 'analytic' if the caller attaches any report that reaches DIMENSIONALLY_VALID; the numerical route accepts the source's own single-solve report as `sequence_validation`; a source with no models crosses either route, because the applicability loop iterates over `result.models`; and `binding_ref` is a free string never checked against provenance. Parts A and B closed R-59 and finding 102.",
+ "reach": "REACHED. Both admission routes are on production paths: the battery calibration and the TCR study build analytic predictions, and the CSTR inference routes build numerical ones, all of which reach an MCP entry point through their domain runners.",
+ "what_was_already_seen": {
+  "finding 98, from the audit": "'source result's own report claims NUMERICALLY_CONVERGED: True' with the analytic route admitting it anyway -- the 'routes are disjoint' refusal reads the report the CALLER passed, so it fires only when that report would have cleared the numerical route anyway, and a numerical source that never established convergence is exactly the case that gets through. The numerical route accepts the source's own single-solve report as `sequence_validation`, and nothing checks that the report describes a sequence, this model or these observables. A source result with no models, no solver and no validity crosses either route, because `_require_applicability_not_refuted` iterates over `result.models`, which is empty. `binding_ref` and `verification_ref` are free strings that are never checked against provenance."
+ },
+ "rules": {
+  "the_analytic_route_reads_the_sources_own_record": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "`AdmissibleAnalyticPrediction` refuses a source whose OWN validation claims NUMERICALLY_CONVERGED, refuses a source whose convergence state is anything but NOT_APPLICABLE, and requires DIMENSIONALLY_VALID to be attained by the SOURCE's own report and not only by the report the caller attached.",
+   "class": "A",
+   "why": "The module already says what the analytic route is for, in its own refusal: 'the analytic route is for models with nothing to converge, not a lower bar for models that have something to converge and did not establish it'. Whether a model has something to converge is a fact about the SOURCE, and the check read the caller's attached report instead -- so it fired exactly when it was not needed. `NOT_APPLICABLE` is what a closed-form evaluation records (both in-tree analytic producers, the battery calibration and the TCR study, record it), and any other state is the record of an iterative solve. Requiring the dimensional level in the source's own report closes the other half: the evidence has to exist in the record the prediction is about, not in a document handed over beside it.",
+   "closes": "finding 98's first claim, on the route production uses."
+  },
+  "a_sequence_report_is_not_the_single_solves_own_report": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "`AdmissibleNumericalPrediction` refuses a `sequence_validation` that is the source result's own validation report, and requires the check that establishes NUMERICALLY_CONVERGED to carry at least two distinct evidence entries.",
+   "class": "A",
+   "why": "'A usable single solve cannot certify its own numerical adequacy' is this boundary's whole purpose, and the code accepted the single solve's own report as the sequence's. The second half is definitional: a convergence SEQUENCE has members, so the check that establishes convergence names at least two of them. Two is not a tuning choice -- one member is a single solve, which is the thing being refused.",
+   "closes": "finding 98's second claim, to the extent a report can be held to it without the sequence's own records; what is left is stated as a residual."
+  },
+  "an_admitted_source_names_at_least_one_model": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "Both routes refuse a source result that names no model.",
+   "class": "A",
+   "why": "`_require_applicability_not_refuted` iterates over `result.models`, so a source with no models satisfies it vacuously and crosses either route: a number that no model claims is not evidence about a model's parameters, which is what the applicability rule says in its own message. This is the same rule batch 43 put in `result_establishment_problems` for selection, for the same reason, one boundary over.",
+   "closes": "finding 98's third claim."
+  },
+  "a_binding_reference_names_something_the_source_carries": {
+   "improvement": "I-28",
+   "problem": "R-71",
+   "rule": "Both routes refuse a `binding_ref` that names nothing in the source result's own record: it must contain the result id, the provenance run id, a declared model identity (`model_id` or `model_id@version`), the solver identity, or a value the result's or provenance's metadata carries.",
+   "class": "A",
+   "why": "The field is called a binding reference and it bound nothing. The candidates are not invented: they are what the in-tree producers already write -- the battery calibration and the TCR study pass `model_id@version`, and the CSTR routes pass a physics fingerprint that the source's provenance metadata carries and that the domain already compares. A free string such as 'binding:p' names none of them, which is the audited state.",
+   "closes": "finding 98's fourth claim for `binding_ref`; `verification_ref` is stated as a residual."
+  }
+ },
+ "thresholds": {
+  "sequence_members": {"value": 2, "class": "A", "why": "definitional: a convergence sequence has members, and one member is the single solve this boundary exists to refuse."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": ["private helpers in engcore/inference/admissibility.py; no new public symbol, so the frozen surface and its symbol count do not move (batch 45's amendment 1)"],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature",
+   "the existing refusals (usability, applicability, provenance, observable names) keep their messages",
+   "both in-tree analytic producers record NOT_APPLICABLE convergence and pass the source's own report, and both in-tree numerical producers pass a separate sequence report"
+  ],
+  "records_that_already_exist": "No committed JSON carries an admissible-prediction payload; the only files naming the records are the API snapshots, whose tests fail by design. Test fixtures that pass free-string binding refs or a one-member sequence report are expected to need realistic values, each commented in place.",
+  "deliberate_narrowing": "An analytic prediction over an iteratively solved source, a numerical prediction whose sequence report is the source's own, a source naming no model, and a binding reference naming nothing in the source all stop being constructible. Each is a record the audit built by hand and none is produced anywhere in the tree."
+ },
+ "residuals_stated_in_advance": [
+  "`verification_ref` is not bound. A verification reference names a verification artefact -- a solver identity, a ladder, a sequence label -- and the source record does not carry that artefact, so there is nothing in it to check the reference against. Binding it needs the verification record itself to be passed, which is a change to what the boundary takes and is not this batch's.",
+  "`sequence_validation` is held to being a different report from the source's and to naming at least two members. It is NOT held to naming this model, these observables or the run ids of the sequence, because a ValidationReport carries checks and evidence strings rather than a typed sequence record; the audit's own fix direction asks for that binding by content, and it needs a record that does not exist yet.",
+  "A model the source names is not checked for being closed-form: nothing in the core declares which models have something to converge. What is checked is the source's own convergence state and its own report, which is the evidence the record carries. A registry of analytic model identities is the audit's other suggestion and is a separate improvement.",
+  "The admission route is carried as a typed, parseable record on the table as of part B (`admitted_routes`); this batch does not add a gate per consumer, which is a decision per consumer."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_core_trust_closure.py, the inference suites, the battery and kinetics and TCR suites",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}

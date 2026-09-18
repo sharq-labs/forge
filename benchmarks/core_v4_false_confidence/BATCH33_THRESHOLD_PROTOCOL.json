@@ -1,0 +1,84 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 33,
+ "improvements": [
+  "I-07 part B of two, the last"
+ ],
+ "problems_addressed": [
+  "R-19"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "dba69f30",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part A changed what happens when a spot-check disagrees. This part changes WHICH NODES are checked, which is the part that makes the check worth performing: at the baseline the rows are the grid's two ends, its argmax, the node nearest the estimate, and four rows indexed by a sha256 over the grid's own points, log-likelihood and mask -- so the supplier controls every byte the seed is drawn from. Both the supplied-grid binding (`_grid_evidence.require_grid_is_this_evidence`) and the rebuilt-table check (`router._require_table_agrees_with_forward`) have the same shape, and both are fixed here.",
+ "reach": "LIBRARY_ONLY. The production calibration study supplies a grid it built itself in the same process; the MCP tools supply none. The threat the rule is about is a grid computed elsewhere, which is what supplying a grid is for.",
+ "what_was_already_seen": {
+  "R-19": "the audit's finding 18, reproduced at 294c129. The honest grid is GRID_AS_SUPPLIED SUPPORTED with sd [0.02715, 0.04599]. A forged grid with the bulk log-likelihood sharpened 4x -- 5022 tampered nodes of 19881 -- is also GRID_AS_SUPPLIED SUPPORTED, considered USED, reporting sd [0.01358, 0.02300] against the honest and exact [0.02715, 0.04599], and PARAMETERS_IDENTIFIABLE. The forger's method is stated: keep the four fixed rows honest, sharpen the bulk, then change a far-tail log-likelihood by 1e-9 -- which moves no weight -- until the four drawn rows miss the bulk. TWO attempts were enough. Even without grinding, a 25% tampered bulk escapes all four drawn rows with probability 0.75^4 = 32%. The audit document's own CORE-005 residual already said 'A grid altered only at unchecked nodes is not caught'."
+ },
+ "rules": {
+  "the_rows_are_drawn_from_a_seed_the_supplier_does_not_control": {
+   "improvement": "I-07",
+   "problem": "R-19",
+   "rule": "The sampling seed is a VERIFIER-side nonce: `secrets.token_bytes(32)` by default, taken fresh on every call. Both checks gain a keyword-only `nonce: bytes | None = None` so a test can pin one; passing it is the only way to make the draw reproducible, and nothing in `src/` passes it.",
+   "class": "A",
+   "why": "Not a threshold: the seed's provenance. A spot check exists to sample what the supplier did not choose, and a seed derived from the supplier's own bytes is a seed the supplier can search -- the audit measured two attempts. Grinding costs the forger one far-tail log-likelihood change of 1e-9, which moves no posterior weight and passes every other check, so the search is free. A fresh nonce makes the draw unavailable BEFORE the grid is submitted, which is the only property that matters; it costs reproducibility of the DRAW, and nothing of the record, because this check writes nothing into one -- it returns a reason or None.",
+   "closes": "the grinding attack."
+  },
+  "the_rows_are_sampled_by_posterior_weight": {
+   "improvement": "I-07",
+   "problem": "R-19",
+   "rule": "`SPOT_CHECK_WEIGHTED_ROWS` nodes are drawn WITHOUT replacement from the admissible nodes with probability proportional to posterior weight, and `SPOT_CHECK_INADMISSIBLE_ROWS` uniformly from the inadmissible ones (fewer when there are fewer). The existing four fixed rows are kept.",
+   "class": "B",
+   "value": "SPOT_CHECK_WEIGHTED_ROWS = 17, SPOT_CHECK_INADMISSIBLE_ROWS = 17",
+   "why": "17 is not chosen, it is computed: `ceil(ln(1 - P) / ln(1 - f))` with P = 0.99 and f = 0.25 is 17, the number of weight-proportional draws that miss a tampered region holding a fraction f of the posterior weight with probability at most 1 - P. Both inputs are declared rather than tuned. **f = 0.25 is the audited attack**: the forgery tampered 5022 of 19881 nodes, 25.3%, and halved the reported sd -- so the detection rule is sized against the attack the audit demonstrated rather than against a number chosen afterwards. **P = 0.99 is the confidence level this repository already uses** for a decision of this kind (`chi2.ppf(0.99, ...)` in the multistart classification). Class B because a detection probability is a statistical convention, not an identity. Weight-proportional rather than uniform because tampering that changes a reported MOMENT must move posterior weight, so weight is the measure under which the thing being protected lives: the audit's own alternative, re-evaluating every node within ln 1e6 of the peak, is the same idea taken to certainty at a cost proportional to the grid.",
+   "why_the_inadmissible_rows_are_uniform": "An inadmissible node carries ZERO posterior weight, so a weight-proportional draw can never select one -- and a node marked inadmissible that the model admits is exactly how mass is removed from a posterior without touching a likelihood. Those nodes therefore need their own sample, and uniform is the only measure available on a set the posterior says nothing about. The same count, for the same detection probability against the same tampered fraction.",
+   "closes": "the 0.75^4 = 32% escape, and the unchecked admissibility marks."
+  },
+  "every_face_is_checked_because_containment_depends_on_it": {
+   "improvement": "I-07",
+   "problem": "R-19",
+   "rule": "The highest-log-likelihood node of every face (2p nodes for a p-parameter grid) is added to the checked rows, for the supplied-grid binding. A face node's likelihood and admission are what `grid_containment` reads.",
+   "class": "A",
+   "why": "Containment is decided by the largest log-likelihood on each face, so a supplier who lowers exactly those nodes gets a grid certified as containing a posterior that runs out of it -- and those are the nodes a weight-proportional draw is LEAST likely to reach, because a contained posterior has almost no weight on its faces. The set is 2p nodes, fixed by the grid's own shape, so there is nothing to choose. Not a threshold.",
+   "closes": "the audit's 'the same gap lets inadmissible marks go unchecked, including on face nodes, which defeats containment'."
+  },
+  "the_rebuilt_table_check_gets_the_same_rule": {
+   "improvement": "I-07",
+   "problem": "R-19",
+   "rule": "`router._require_table_agrees_with_forward` draws its rows the same way: a verifier-side nonce, `SPOT_CHECK_WEIGHTED_ROWS` rows by chi-square-implied posterior weight, `SPOT_CHECK_INADMISSIBLE_ROWS` uniformly from the refused rows, and the existing fixed rows.",
+   "class": "A",
+   "why": "The audit says so in one sentence -- 'A rebuild table_builder can do the same to `_require_table_agrees_with_forward`' -- and the mechanism is identical: a seed over the table's own values and mask. Fixing one and not the other would leave the same attack on the path a caller reaches by asking for a rebuild instead of supplying a grid.",
+   "closes": "the rebuilt-table half."
+  }
+ },
+ "compatibility": {
+  "additive_only": "Two new module constants and one new keyword-only argument with a default on each of two functions, one of which is private. `SPOT_CHECK_INTERIOR_NODES` and `_SPOT_CHECK_INTERIOR_ROWS` keep their names and values and stop being the count; that is stated at both definitions. No signature, field, default or enum member changes, and no serialized record gains or loses a key.",
+  "what_it_costs": "The checked-row count rises from 8 to about 4 + 2p + 17 + min(17, inadmissible count) -- roughly 40 forward evaluations for a two-parameter grid, against 8. That is the price of the check being worth performing, and it is stated rather than discovered: a spot check that samples 8 of 19881 nodes from the supplier's own seed is not a check. Every row is still a constant, so the cost does not grow with the grid.",
+  "determinism": "The DRAW is no longer reproducible without the nonce, by design. Nothing this check produces enters a record: it returns a reason or None, so no digest, snapshot or committed artifact depends on which rows were drawn. A test that needs a fixed draw passes `nonce=`.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "A tampered region holding less than 25% of the posterior weight is detected with probability below 0.99 -- 17 draws catch a 10% region only 83% of the time. The rule states a detection probability against a stated fraction and does not claim more. Certainty needs the audit's other alternative, re-evaluating every node within ln 1e6 of the peak, at a cost proportional to the grid; that is a different trade and would need its own preregistration.",
+  "The weighted draw uses the GRID's own weights, which are the thing being checked. A forger who lowers the weight of the nodes they tampered with reduces their chance of being drawn -- but lowering that weight is itself the tampering, and it moves the moments the route reports, which is what the honest-versus-forged comparison measures. The rule is sized against weight moved, so the two cannot be separated; this is stated because the circularity is real and bounded rather than absent.",
+  "`secrets.token_bytes` makes a failing check non-reproducible: a grid that passes once may fail on a second call with a different draw. That is correct for a probabilistic check and inconvenient, so the refusal detail names the nonce it drew, and both functions accept one.",
+  "Nothing here bounds what a forger can do to nodes OUTSIDE the ln 1e6 band, and nothing needs to: those nodes carry less than 1e-6 of the peak density, which is the same bound `grid_containment` and the mode search already work to."
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Three reproductions were strengthened, all forced by this batch's mutation run, and one mutation's own edit was rewritten.",
+   "the_numbers_that_forced_it": "Four of eight mutations did not do their job on the first run. (a) B33b pins the nonce to a CONSTANT at the binding's call site, and the reproduction called the row chooser directly with nonce=None -- which cannot see a call site. It now runs through `grid_is_this_evidence` with the chooser wrapped, and checks the captured nonces too: a hard-coded nonce is worse than the grid's own bytes, because it never even changes. (b) B33d makes the draw UNIFORM, and the reproduction compared against the top 25% of node COUNT -- a quarter of the box, which a uniform draw hits just as often. It now uses the smallest set of nodes holding 95% of the posterior MASS, which on this fixture is under a tenth of the grid, and requires at least 10 of the 17 drawn rows to land there on average. (c) B33g wraps the same digest of `table.values` in a `nonce if nonce is not None else ...`, which does not contain the one exact substring the reproduction looked for; it now asserts over the whole seed expression that the table is not in it. (d) B33a's own edit reported MUTATION CHANGED NO CODE, because it carried a comment-only paired edit; rewritten as a single-line seed substitution.",
+   "guards_strengthened": [
+    "test_r19_the_draw_is_not_a_function_of_the_grids_own_bytes now observes the draw THROUGH the binding and captures the nonces.",
+    "test_r19_the_draw_lands_where_the_posterior_weight_is now measures against posterior MASS rather than node count, and asserts the fixture is discriminating before it measures anything.",
+    "test_r19_the_rebuilt_table_check_no_longer_seeds_from_the_table now asserts over the seed expression rather than one substring."
+   ],
+   "one_deliberate_survivor": {
+    "id": "B33h",
+    "rule": "the rebuild path's weight-proportional draw",
+    "why": "The audit demonstrated the forgery on the SUPPLIED grid and asserted the rebuild's exposure in one sentence without a measurement, so this repository has no rebuild forgery to detect: the uniform draw is indistinguishable from the weighted one here, and the honest control is all that runs. Building the fixture needs a table_builder that answers with a sharpened model at the requested coordinates, which this batch does not have. Declared `expect=\"SURVIVED\"` so the gap is recorded rather than implied, and so a kill becomes the failure."
+   }
+  }
+ ]
+}

@@ -289,3 +289,16 @@ def test_dc_consensus_refuses_an_identity_the_result_does_not_carry():
     renamed = SolverIdentity(EXT.solver_id, EXT.version, backend="another-simulator")
     with pytest.raises(ScientificValidationError):
         dcc.dc_consensus(native=native, native_solver=MNA, external=external, external_solver=renamed)
+
+
+def test_core018_the_same_length_in_metres_and_millimetres_agrees():
+    """Scientific core audit 2026-09-16, CORE-018: values are compared in one unit per name, the first route's."""
+    a, b = route("a"), route("b")
+
+    def result(solver, value, unit, result_id):
+        return ScientificResult(result_id=result_id, values={"x": Quantity(value, unit), "y": Quantity(2.0, "dimensionless")},
+                                provenance=ProvenanceRecord(run_id=f"run-{result_id}", solvers=(solver.key,)), solver=solver)
+
+    consensus = _bound(a, b, result(a.solver, 1.0, "meter", "ra"), result(b.solver, 1000.0, "millimeter", "rb"))
+    assert consensus.comparison.agreed
+    assert consensus.reported_values[b.route_id]["x"] == 1.0

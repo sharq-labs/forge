@@ -47,9 +47,32 @@ def test_every_v2_record_round_tripped_when_frozen(manifest):
         assert entry["round_trip_byte_identical"] and entry["unknown_schema_refused"], name
 
 
-def test_the_v2_frozen_api_surface_is_still_the_live_surface(manifest):
-    """V3 superseded the V2 serialization contract, not its shapes."""
-    assert core_freeze_v2.api_facts() == manifest["api"]
+def test_the_v2_frozen_api_surface_is_superseded_additively(manifest):
+    """AMENDED at Core Freeze V4 (I-29, R-65/R-69). Was: the V2 surface is still the live surface.
+
+    V3 superseded the V2 serialization contract and not its shapes, and this test asserted exactly
+    that -- `core_freeze_v2.api_facts() == manifest["api"]`, live against recorded. The 2026-09-16
+    scientific core re-audit moved the shapes, additively: the V2 frozen digest moved with the V1
+    one, `RouteReason` grew from 24 members to 43, and no symbol, field, default or member was
+    removed, renamed, revalued or reordered.
+
+    So the claim here is the V4 one, and it is stronger than the equality it replaces: the live V2
+    surface is compared with the V2 snapshot AS COMMITTED AT THE V2 FREEZE COMMIT -- read out of git
+    and refused unless its bytes hash to what the V2 manifest pinned -- and every difference must be
+    one of the additive kinds. The old form could only be satisfied by changing nothing, which is
+    finding 95's complaint about `v1_entries_byte_identical_in_v2` one module along.
+    """
+    from engcore import api_snapshot
+    from tools.certification import core_freeze_v4
+
+    stored = core_freeze_v4.stored_v2_frozen_snapshot(REPO)
+    assert stored["file_sha256"] == manifest["pinned_v2_snapshot_files"][stored["file"]]
+    live = api_snapshot.frozen_only(api_snapshot.build(modules=api_snapshot.V2_CANONICAL_MODULES))
+    assert core_freeze_v4.additive_only_problems(stored["snapshot"], live) == []
+    assert live["symbol_count"] == manifest["api"]["v2"]["frozen_count"] == 221
+    insertions = core_freeze_v4.enum_insertions(stored["snapshot"], live)
+    assert "engcore.hybrid_uq.RouteReason" in insertions, (
+        "the inserted members are not recorded anywhere, which is finding 95 itself")
 
 
 def test_v3_supersedes_v2_and_records_its_bytes_and_reasons():

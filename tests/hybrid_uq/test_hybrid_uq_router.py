@@ -65,7 +65,8 @@ def test_an_unresolved_grid_is_never_trusted():
 def test_an_unresolved_grid_alone_is_a_refusal_with_no_numbers():
     P = S.weak_identification()
     aliased = P.grid([np.linspace(-50, 50, 401), np.linspace(-5, 5, 401)])
-    result = route_uncertainty(grid=aliased)
+    result = route_uncertainty(grid=aliased, observations=P.observations, forward=P.forward)
+    assert result.considered[0]["outcome"] == "REFUSED_BY_V1"
     assert result.decision is RouteDecision.REFUSED and result.claim is RouteClaim.REFUSED
     assert result.mean is None and result.covariance is None and result.identifiability is None
     with pytest.raises(RouteRefusedError):
@@ -77,7 +78,7 @@ def test_a_grid_beyond_the_validated_dimension_is_passed_over():
     P = S.Problem("six", lambda t, x: t[0] + t[1] * x + t[2] * x ** 2 + t[3] * x ** 3 + t[4] * x ** 4 + t[5] * x ** 5, x,
                   (1, 0.5, 0.2, 0.1, 0.05, 0.02), 0.01, (-10,) * 6, (10,) * 6, (0,) * 6)
     grid = P.grid([np.linspace(-1.0, 1.0, 3)] * 6)
-    result = route_uncertainty(grid=grid)
+    result = route_uncertainty(grid=grid, observations=P.observations, forward=P.forward)
     assert result.considered[0]["reason"] == RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value
     with pytest.raises(HybridUQError):
         route_uncertainty(grid=grid, maximum_grid_parameters=GRID_ROUTE_MAXIMUM_PARAMETERS + 1)
@@ -91,11 +92,10 @@ def test_a_supported_local_route_is_used_when_no_grid_is_supplied():
 
 
 @pytest.mark.parametrize("make,axes", [
-    (S.strong_nonlinearity, [np.linspace(0.01, 20.0, 481), np.linspace(0.01, 10.0, 481)]),
     (S.at_bound, [np.linspace(0.8, 1.2, 401), np.linspace(0.0, 0.3, 401)]),
     (S.mirror_mode, [np.linspace(-3.0, 3.0, 6001)]),
     (S.bimodal_two_parameter, [np.linspace(-3.0, 3.0, 1201), np.linspace(-2.0, 2.0, 801)]),
-], ids=["F1_nonlinear", "F2_at_bound", "F4_mirror", "bimodal"])
+], ids=["F2_at_bound", "F4_mirror", "bimodal"])
 def test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference(make, axes):
     P = make()
     result = route_uncertainty(rebuild=GridRebuildPolicy(P.table_builder()), **_inputs(P))
@@ -105,6 +105,42 @@ def test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_match
     mean, sd = _reference(P, axes)
     assert np.all(np.abs(np.asarray(result.mean) - mean) / sd < 0.05)
     assert np.all(np.abs(np.sqrt(np.diag(result.covariance)) / sd - 1.0) < 0.05)
+
+
+def test_a_rebuilt_grid_whose_posterior_spans_both_declared_bounds_is_not_used():
+    """F1 was the first case above until CORE-002 (scientific core audit 2026-09-16).
+
+    Its decay rate's posterior density is within 7 nats of the peak at BOTH declared bounds, 0.01 and 20. The rebuilt
+    grid matched a dense reference over those bounds and was SUPPORTED with sd 1.75 -- but that sd is the upper bound's:
+    the same data give sd 2.57 with the bound at 40 and 5.81 with it at 80. A width the declared range chooses is not
+    the data's, so the rebuild is passed over GRID_POSTERIOR_BOUND_DOMINATED and the route ends in a refusal.
+    """
+    P = S.strong_nonlinearity()
+    result = route_uncertainty(rebuild=GridRebuildPolicy(P.table_builder()), **_inputs(P))
+    assert result.decision is RouteDecision.REFUSED
+    assert result.considered[-1]["reason"] == RouteReason.GRID_POSTERIOR_BOUND_DOMINATED.value
+    assert "theta1" in result.considered[-1]["detail"]
+
+
+def test_a_posterior_dominated_on_BOTH_bounds_is_refused_in_those_words():
+    """The case only the both-sides rule decides, added by the V4 formal mutation round (I-30, R-67).
+
+    The test above asserts the reason and the parameter, and since this round's R-11 fix (I-06, batch 31) a
+    SECOND rule three lines below returns the same `GRID_POSTERIOR_BOUND_DOMINATED` and also names `theta1` --
+    for the one-sided case, whose remedy is the opposite one. So removing the both-sides rule left that test
+    green, and the guard mutation for CORE-002 SURVIVED while the invariant it names was gone.
+
+    What distinguishes them is what each SAYS, because that is what a reader acts on: both bounds dominated
+    means the declared range is too narrow to say anything, one side means the data constrain one direction
+    and a wider box makes it worse. This asserts the both-sides wording on the audited F1 case.
+    """
+    P = S.strong_nonlinearity()
+    result = route_uncertainty(rebuild=GridRebuildPolicy(P.table_builder()), **_inputs(P))
+    detail = result.considered[-1]["detail"]
+    assert "reaches both declared bounds" in detail, detail
+    assert "runs to the" not in detail, (
+        "the one-sided rule answered a both-sides case, so the reader is told to widen a range that is "
+        f"already saying nothing: {detail}")
 
 
 def test_structural_refusals_are_not_rebuilt_and_end_in_a_refusal():
@@ -144,7 +180,8 @@ def test_routed_predictive_uses_the_route_that_was_chosen():
     (r,) = routed_predictive_uncertainty(local, [PredictiveObservableSpec("y@1", UNIT, Quantity(0.05, UNIT))],
                                          predict=lambda t: [Quantity(t[0] + t[1], UNIT)])
     assert r.approximation_class is ApproximationClass.LINEARIZED_PREDICTIVE_UQ
-    grid = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]))
+    grid = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
+                              calibration=P.calibrate(), observations=P.observations, forward=P.forward)
     with pytest.raises(HybridUQError, match="predictive_table"):
         routed_predictive_uncertainty(grid, [PredictiveObservableSpec("y@1", UNIT)])
 
@@ -254,7 +291,8 @@ def test_a_reordered_table_is_refused_even_though_its_rows_are_the_requested_row
 
 
 def test_an_honest_builder_still_rebuilds_and_the_certified_grid_is_the_last_grid_it_was_asked_for():
-    P = S.strong_nonlinearity()
+    # F1 until CORE-002: its rebuilt posterior spans both declared bounds and is no longer used
+    P = S.bimodal_two_parameter()
     honest = P.table_builder()
     requests = []
 
@@ -266,5 +304,5 @@ def test_an_honest_builder_still_rebuilds_and_the_certified_grid_is_the_last_gri
     assert result.decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and result.claim is RouteClaim.SUPPORTED
     assert result.grid.parameter_names == P.parameters.names
     assert np.array_equal(result.grid.points, requests[-1])
-    mean, sd = _reference(P, [np.linspace(0.01, 20.0, 481), np.linspace(0.01, 10.0, 481)])
+    mean, sd = _reference(P, [np.linspace(-3.0, 3.0, 1201), np.linspace(-2.0, 2.0, 801)])
     assert np.all(np.abs(np.asarray(result.mean) - mean) / sd < 0.05)

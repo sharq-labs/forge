@@ -1,49 +1,48 @@
 name: Recertify Hardened Core
 
-# Ownership is decided by tools/certification/recertification_scope.py, not by a
-# path filter: GitHub path filters and shell `case` patterns were two dialects of
-# two hand-kept lists, and both had drifted away from the certificate's scope.
-# This workflow therefore runs on every pull request. `classify` is cheap; on a
-# change that touches nothing certified every other job is skipped and
-# `recertification-gate` passes. Branch protection must require that gate (a
-# skipped job counts as passing; see tools/certification/branch_policy.py).
+# Manual-only hardened-core recertification.
+#
+# In GitHub Actions choose "Recertify Hardened Core", select the branch from
+# the "Use workflow from" dropdown, then click "Run workflow". Pushes and pull
+# requests do not start this workflow automatically.
 on:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: read
   actions: read
 
 concurrency:
-  group: recertify-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-  cancel-in-progress: false
+  group: recertify-manual-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   classify:
     runs-on: ubuntu-latest
     outputs:
-      mode: ${{ steps.gate.outputs.recertification }}
-      source_sha: ${{ steps.gate.outputs.source_sha }}
-      certificate_sha: ${{ steps.gate.outputs.certificate_sha }}
+      mode: ${{ steps.source.outputs.mode }}
+      source_sha: ${{ steps.source.outputs.source_sha }}
     steps:
-      - name: Checkout exact pull-request head
+      - name: Checkout the selected branch head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.12"
-      - name: Classify source commit, certificate child, or not required
-        id: gate
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: >-
-          python -m tools.certification.recertification_scope classify
-          --event pull_request --base "$BASE_SHA" --head "$HEAD_SHA"
-          --github-output "$GITHUB_OUTPUT"
+      - name: Require a branch selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" != "branch" ]; then
+            echo "Recertification must run against a branch, not ${GITHUB_REF_TYPE}."
+            exit 1
+          fi
+      - name: Bind this manual run to the selected source commit
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "mode=source" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   fast311:
     needs: classify
@@ -470,8 +469,11 @@ jobs:
       needs.formal_mutations_3.result == 'success' &&
       needs.trust_mutations.result == 'success'
     runs-on: ubuntu-latest
+    outputs:
+      child_sha: ${{ steps.commit.outputs.child_sha }}
     env:
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+      TARGET_BRANCH: ${{ github.ref_name }}
     steps:
       - name: Checkout the exact measured source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -501,8 +503,6 @@ jobs:
           path: ${{ runner.temp }}/evidence
 
       - name: Build assurance record from the downloaded evidence
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: >-
           python -m tools.certification.hardening_assurance build
           --source-commit "${SOURCE_SHA}"
@@ -511,17 +511,17 @@ jobs:
           --repository "${GITHUB_REPOSITORY}"
           --run-id "${GITHUB_RUN_ID}"
           --run-attempt "${GITHUB_RUN_ATTEMPT}"
-          --pull-request "${PR_NUMBER}"
+          --event workflow_dispatch
           --executed-commit "${GITHUB_SHA}"
 
-      - name: Ensure measured source is still the pull-request head
+      - name: Ensure the selected branch still points at the measured source
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "${GITHUB_HEAD_REF}"
-          remote_sha="$(git rev-parse "origin/${GITHUB_HEAD_REF}")"
+          git fetch origin "${TARGET_BRANCH}"
+          remote_sha="$(git rev-parse "origin/${TARGET_BRANCH}")"
           if [ "$remote_sha" != "$SOURCE_SHA" ]; then
-            echo "Pull-request head moved while assurance was running."
+            echo "Selected branch moved while assurance was running."
             echo "Measured: $SOURCE_SHA"
             echo "Current:  $remote_sha"
             exit 1
@@ -540,6 +540,7 @@ jobs:
           --allow-dirty
 
       - name: Commit certificate as child of the measured source commit
+        id: commit
         shell: bash
         run: |
           set -euo pipefail
@@ -557,6 +558,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add certification/current_core_v2.json
           git commit -m "certification: recertify hardened core"
+          echo "child_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Verify the child's lineage before it is pushed
         run: python -m tools.certification.certificate_lineage verify-child
@@ -577,27 +579,29 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Push the certificate child
+      - name: Push the certificate child to the selected branch
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "${GITHUB_HEAD_REF}"
-          remote_sha="$(git rev-parse "origin/${GITHUB_HEAD_REF}")"
+          git fetch origin "${TARGET_BRANCH}"
+          remote_sha="$(git rev-parse "origin/${TARGET_BRANCH}")"
           if [ "$remote_sha" != "$SOURCE_SHA" ]; then
-            echo "Pull-request head moved after certificate generation; refusing push."
+            echo "Selected branch moved after certificate generation; refusing push."
             exit 1
           fi
-          git push origin HEAD:"${GITHUB_HEAD_REF}"
+          git push origin HEAD:"${TARGET_BRANCH}"
 
   verify_certificate_child:
-    needs: classify
-    if: needs.classify.outputs.mode == 'certificate_child'
+    needs:
+      - classify
+      - certify
+    if: needs.certify.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact certificate child
+      - name: Checkout exact certificate child produced by this run
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ needs.classify.outputs.certificate_sha }}
+          ref: ${{ needs.certify.outputs.child_sha }}
           fetch-depth: 0
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
@@ -607,8 +611,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin "${GITHUB_SHA}"
-          python -m tools.certification.certificate_lineage verify-child --merge-preview "${GITHUB_SHA}"
+          git fetch --no-tags origin "${{ needs.classify.outputs.source_sha }}"
+          python -m tools.certification.certificate_lineage verify-child \
+            --merge-preview "${{ needs.classify.outputs.source_sha }}"
       - name: Verify the parent's certify run produced these exact certificate bytes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -647,7 +652,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ needs.certify.outputs.child_sha || needs.classify.outputs.source_sha }}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"

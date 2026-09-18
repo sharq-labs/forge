@@ -158,6 +158,7 @@ from .serialization import (
 )
 from .sequences import duplicates as duplicate_entries
 from .solvers.protocol import SolverIdentity
+from .units.quantity import base_unit, is_ratio_scale
 
 SHARED_COMPONENT_SCHEMA = schema_string("shared_component")
 SOLVE_ROUTE_SCHEMA = schema_string("solve_route")
@@ -731,9 +732,13 @@ def relative_difference(a: float, b: float) -> float:
 
 #: How a threshold set declares an absolute floor for one kind of quantity:
 #: ``<tolerance_key>.floor.<kind>``, where ``kind`` is the part of a quantity's
-#: name before its first ``:`` (``flux`` for ``flux:inlet``). The floor is in the unit the routes report that
-#: kind in, and it is the domain's declaration, travelling in the threshold set
-#: and in its digest -- so a record recomputes the same comparison from itself.
+#: name before its first ``:`` (``flux`` for ``flux:inlet``). The floor is read in the CANONICAL unit of that
+#: kind's dimension -- the coherent SI base unit the compared magnitudes are
+#: expressed in (I-22, R-52; it used to be "the unit the routes report that kind
+#: in", which was the unit of whichever route was declared first, so the same
+#: 1e-15 was worth 1e-15 A in one order and 1e-9 A in the other). It is the
+#: domain's declaration, travelling in the threshold set and in its digest -- so
+#: a record recomputes the same comparison from itself.
 _FLOOR_KEY_SEPARATOR = ".floor."
 
 
@@ -994,6 +999,26 @@ _EXECUTION_BINDINGS = "_execution_bindings"
 #: Read by ``results.validation`` when it re-verifies a check that declares
 #: ``CROSS_SOLVER_VALIDATED`` (VAL-01). Not exported.
 CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX = "consensus-thresholds:"
+
+#: R-21 (re-audit 2026-09-16, I-12 part B): the line every check carrying CROSS_SOLVER_VALIDATED must carry,
+#: saying WHICH independence the level rests on. ``results.validation`` refuses the level without exactly
+#: one of them (VAL-01's rule, extended). Two values and no others:
+#:
+#: * ``declared`` -- independence read from declarations the DOMAIN LAYER PINS and this module verifies
+#:   against the pinned identities. A route nothing pins earns nothing at all, so this is not a caller's
+#:   word; it is weaker than the bytes because it says the declarations agree, not that the two programs
+#:   were read and found to share no code.
+#: * ``artifact-verified`` -- the same declarations PLUS the bytes of the named artifacts, digested and
+#:   compared. Written only by ``execution.consensus.TrustedConsensusGate`` when
+#:   ``assess_independence_evidence`` reports ``strongly_independent``.
+#:
+#: The basis is ADDITIVE, which is what the improvement's brief asks for: removing the declared basis would
+#: delete the only basis any route in this tree can currently reach and make the level unreachable rather
+#: than better founded. What R-21 is about is that a reader could not tell the two apart.
+INDEPENDENCE_BASIS_EVIDENCE_PREFIX = "independence basis:"
+INDEPENDENCE_BASIS_DECLARED = "declared"
+INDEPENDENCE_BASIS_ARTIFACT_VERIFIED = "artifact-verified"
+INDEPENDENCE_BASES = (INDEPENDENCE_BASIS_DECLARED, INDEPENDENCE_BASIS_ARTIFACT_VERIFIED)
 
 
 def _values_digest(produced: Mapping[str, float]) -> str:
@@ -1696,21 +1721,37 @@ class CrossSolverConsensus:
         while sharing a Jacobian produce a PASS that establishes nothing, which
         is precisely the sentence the platform previously had no way to write.
 
-        A disagreement between independent routes is a FAIL — two independent
-        routes that differ have found something. A disagreement between routes
-        that share their machinery is a WARNING: a real finding about the
-        implementation, but calling it a scientific failure would hand the
-        comparison an authority this same record has just denied it.
+        A disagreement beyond tolerance is a FAIL, whether or not the routes are
+        independent.
+
+        R-21 (re-audit 2026-09-16, I-12 part B): a disagreement between routes
+        that share their machinery used to be a WARNING, on the reasoning that
+        "a comparison denied authority to award cannot be given authority to
+        condemn". Those are not the same authority. Awarding a level is a claim
+        about what the evidence SHOWS; reporting a disagreement is a
+        MEASUREMENT of what the two routes did. Both routes were asked for the
+        same named quantities, under one declared required-output contract, and
+        returned numbers that differ beyond the declared tolerance: at least
+        one of them is wrong about the thing they were both asked to compute,
+        and that is true however much machinery they share. Sharing machinery
+        makes it worse rather than better -- the same arithmetic produced two
+        different answers, which is a defect in the computation and not a
+        difference of opinion between independent witnesses. The audited case
+        read WARNING at a relative difference of 1/3, and the verdict over it
+        stayed SUPPORTED.
+
+        The outcome and the level are still allowed to disagree in the other
+        direction, which is the sentence this record exists to write: routes
+        that AGREE while sharing a Jacobian produce a PASS that establishes
+        nothing.
         """
         comparison = self.comparison
         if not comparison.compared_anything:
             outcome = ValidationOutcome.NOT_RUN
         elif comparison.agreed:
             outcome = ValidationOutcome.PASS
-        elif self.routes_are_independent:
-            outcome = ValidationOutcome.FAIL
         else:
-            outcome = ValidationOutcome.WARNING
+            outcome = ValidationOutcome.FAIL
         return ValidationCheck(
             name=name,
             outcome=outcome,
@@ -1781,6 +1822,11 @@ class CrossSolverConsensus:
                 separators=(",", ":"),
             )
         )
+        # R-21: which independence the level rests on, written only when a level is actually awarded --
+        # a check that establishes nothing has no basis to state, and a line saying `declared` beside no
+        # level would read as a claim nobody made.
+        if self.establishes is not None:
+            lines.append(INDEPENDENCE_BASIS_EVIDENCE_PREFIX + INDEPENDENCE_BASIS_DECLARED)
         return (*lines, *self.thresholds.evidence())
 
     # ---- construction ----------------------------------------------------
@@ -1875,9 +1921,17 @@ class CrossSolverConsensus:
         keeping and it establishes nothing.
 
         The compared numbers are read from each result's values -- every
-        ``Quantity``, in its own unit, so a route that returned the right number
-        in another unit shows up as a disagreement rather than being converted
-        into an agreement.
+        ``Quantity``, converted into the CANONICAL unit of its dimension (the
+        coherent SI base unit), so that a route which returned the right number
+        in another unit is not scored as a disagreement and the comparison does
+        not depend on which route was declared first. The unit a declared
+        absolute floor is read in is that same canonical unit.
+
+This paragraph used to say each value was read in whatever unit its
+        own route reported, and that a route returning the right number in
+        another unit therefore showed up as a disagreement. CORE-018 made that
+        false and left the sentence standing; I-22 (R-52) makes the common unit
+        canonical instead of arbitrary.
         """
         from .results.result import ScientificResult
 
@@ -1892,6 +1946,42 @@ class CrossSolverConsensus:
             )
         values: dict[str, dict[str, float]] = {}
         bindings: dict[str, dict[str, Any]] = {}
+        # CORE-018 (scientific core audit 2026-09-16): every route's value of a name is expressed in ONE unit,
+        # because raw magnitudes compared 1 m with 1000 mm as a 0.999 disagreement.
+        #
+        # THAT UNIT IS CANONICAL, NOT THE FIRST DECLARED ROUTE'S (I-22, R-52).
+        # CORE-018 took it from whichever declared route reported the name
+        # first, and declaration order then decided two things it has no
+        # business deciding. 26.85 degC against 300.0000001 kelvin -- one
+        # ten-billionth of a kelvin apart -- scored 3.72e-09 and DISAGREED with
+        # the Celsius route first, and 3.33e-10 and AGREED with the kelvin
+        # route first, against one tolerance of 1e-9. And a declared floor is a
+        # bare number read in that same unit, so the same 1e-15 was worth
+        # 1e-15 A in one order and 1e-9 A in the other.
+        #
+        # `base_unit` is a pure function of a unit's DIMENSION, so it cannot
+        # depend on order, and it is what this module's own units layer reaches
+        # for when two scales must be put on one footing. It is also always a
+        # ratio scale, which is what the comparison below needs: |a-b|/max(|a|,
+        # |b|) is a statement about a RATIO, and a ratio means nothing where
+        # zero of the unit is a convention. Two readings of -273.14 degC and
+        # -273.14000000001 degC are 0.01 K apart by a relative 1e-8 -- a real
+        # disagreement -- and scored 3.7e-14 on the Celsius scale.
+        common_unit: dict[str, str] = {}
+        for route in routes:
+            for name, quantity in getattr(by_route.get(route.route_id), "values", {}).items():
+                canonical = base_unit(quantity.units)
+                if not is_ratio_scale(canonical):
+                    raise ScientificValidationError(
+                        f"consensus {consensus_id!r} cannot compare {str(name)!r}: "
+                        f"its canonical unit {canonical!r} is not a ratio scale, "
+                        f"so the relative difference this comparison reports "
+                        f"would be a ratio of two numbers whose zero is a "
+                        f"convention. Report it on a scale whose zero is the "
+                        f"quantity's zero, or compare it against a declared "
+                        f"absolute floor"
+                    )
+                common_unit.setdefault(str(name), canonical)
         for route in routes:
             if route.route_id not in by_route:
                 raise ScientificValidationError(
@@ -1926,7 +2016,7 @@ class CrossSolverConsensus:
                     f"{result.solver.backend!r}"
                 )
             produced = {
-                str(name): float(quantity.magnitude_in(quantity.units))
+                str(name): float(quantity.magnitude_in(common_unit.get(str(name), quantity.units)))
                 for name, quantity in result.values.items()
             }
             values[route.route_id] = produced

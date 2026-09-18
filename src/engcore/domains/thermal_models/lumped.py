@@ -91,6 +91,8 @@ from ...scientific.realizations.definition import (
     ModelRealizationDefinition,
 )
 from ...scientific.realizations.registry import RealizationRegistry
+from ...scientific.results.requirements import register_validation_check_kinds
+from ...scientific.results.thresholds import VerificationThresholds
 from ...scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
@@ -193,6 +195,7 @@ __all__ = [
     "PHASE_CHANGE_UTILIZATION_LIMIT",
     "POWER_UNIT",
     "RADIATION_NEGLIGIBILITY_LIMIT",
+    "LUMPED_ANALYTIC_REFERENCE_THRESHOLDS",
     "SOLVER_ROUNDING_ULPS",
     "STEADY_STATE_TEMPERATURE_METRIC",
     "TEMPERATURE",
@@ -1421,6 +1424,9 @@ BACKEND = "python.math.exp"
 BALANCE_RESIDUAL_CHECK = "lumped_balance_residual"
 ANALYTIC_REFERENCE_CHECK = "analytic_reference_agreement"
 
+# I-19 (R-72): the check kinds this module EMITS, declared beside the names themselves.
+register_validation_check_kinds(BALANCE_RESIDUAL_CHECK, ANALYTIC_REFERENCE_CHECK)
+
 #: The comparison tolerance against the independent reference, expressed in
 #: units in the last place of the largest intermediate the closed form forms.
 #:
@@ -1444,6 +1450,31 @@ ANALYTIC_REFERENCE_CHECK = "analytic_reference_agreement"
 #: meaningful temperature difference, and wide enough that the check does not
 #: become a report of which libm the run used.
 SOLVER_ROUNDING_ULPS = 128
+
+#: The declared set behind the analytic-reference check's level (R-04, core re-audit 2026-09-16).
+#:
+#: ``ANALYTICALLY_VERIFIED`` needed no issuer at all, and this is the check the one SUPPORTED report
+#: either MCP tool can return rests on: it carried a prose evidence string and a tolerance this module
+#: computed, with nothing declared behind it. ``_analytic_issuer_gap`` now requires the awarding gate's
+#: own declared set, for the reason every threshold set exists: a caller who can set the number a
+#: verification is judged against has defeated the verification.
+#:
+#: The budget above is the part that IS a policy choice. The rest of the tolerance is the reference's
+#: own reported error bound, which is a measurement of the reference and not a threshold, and it is
+#: added per solve as it always was. The number does not change here; it acquires an owner.
+LUMPED_ANALYTIC_REFERENCE_THRESHOLDS = VerificationThresholds(
+    gate_id="thermal_models.lumped.analytic_reference",
+    version="0.1.0",
+    values={"rounding_ulps": float(SOLVER_ROUNDING_ULPS)},
+    basis=(
+        "rounding_ulps: the two routes compute the same real number, so every digit of disagreement "
+        "above floating-point noise is a defect in one of them. 128 ulps of the largest intermediate "
+        "the closed form forms is roughly 1e-11 K on a body near 340 K -- seven orders tighter than "
+        "the smallest physically meaningful temperature difference, and wide enough that the check "
+        "does not become a report of which libm the run used. See SOLVER_ROUNDING_ULPS above for the "
+        "full argument; the number is unchanged from it"
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -1742,7 +1773,13 @@ class LumpedThermalSolver(DeclaredSupport):
             initial_k=body.initial_k,
             duration_s=body.duration_s,
         )
-        evidence = (f"{REFERENCE_ID}: {REFERENCE_EXPRESSION}",)
+        # R-04: the statement line was already here and is what names the reference. What was missing
+        # is the DECLARED threshold record, without which the level belonged to nobody. Written on the
+        # NOT_RUN branch too: a reader of a gap should see which numbers were to be judged against as
+        # clearly as a reader of a pass.
+        evidence = (
+            f"{REFERENCE_ID}: {REFERENCE_EXPRESSION}",
+        ) + LUMPED_ANALYTIC_REFERENCE_THRESHOLDS.evidence()
         if not reference.available:
             return ValidationCheck(
                 name=ANALYTIC_REFERENCE_CHECK,
@@ -1765,7 +1802,11 @@ class LumpedThermalSolver(DeclaredSupport):
         )
         tolerance = (
             reference.error_bound_k
-            + SOLVER_ROUNDING_ULPS * sys.float_info.epsilon * magnitude
+            # Read from the declared set rather than from the module constant, so the number the
+            # gate judges against is the number the gate declares (R-04). Same value.
+            + LUMPED_ANALYTIC_REFERENCE_THRESHOLDS["rounding_ulps"]
+            * sys.float_info.epsilon
+            * magnitude
         )
         difference = abs(final_k - reference.value_k)
         agrees = difference <= tolerance
@@ -1776,8 +1817,10 @@ class LumpedThermalSolver(DeclaredSupport):
             ),
             residual=difference,
             tolerance=tolerance,
-            establishes=(
-                ValidationLevel.ANALYTICALLY_VERIFIED if agrees else None
+            # Through the gate, not beside it: a caller who derived the budget still gets the whole
+            # comparison -- residual, tolerance, detail -- and no claim (R-04).
+            establishes=LUMPED_ANALYTIC_REFERENCE_THRESHOLDS.award(
+                ValidationLevel.ANALYTICALLY_VERIFIED, earned=agrees
             ),
             detail=(
                 f"closed form gives {final_k:.12g} K; {reference.detail}. "

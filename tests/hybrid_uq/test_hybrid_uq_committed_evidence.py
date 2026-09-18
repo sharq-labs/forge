@@ -73,14 +73,29 @@ def test_the_battery_models_that_miss_their_tolerance_are_still_named_in_the_his
 
 def test_tcr_agrees_with_the_exact_posterior_in_both_designs():
     designs = _load("TCR.json")["designs"]
+    #: I-08 part B (batch 21), R-14: NARROW's local claim moved from SUPPORTED to DOWNGRADED. With the tail
+    #: probes widened off the principal axes its smallest chi-square rise ratio is 0.8127 -- the rise 6
+    #: reported sd out along the flattest direction of its curvature matrix is 29.3 where a Gaussian predicts
+    #: 36 -- which is below TAIL_DOWNGRADE_RATIO = 0.90. That is a real measurement on a model that IS
+    #: non-quadratic that far out, found by directions no axis probe reaches; no threshold moved. The NUMBERS
+    #: are unaffected and the agreement assertion below still holds for both designs. WIDE is unchanged.
+    expected_claim = {"WIDE": "SUPPORTED", "NARROW": "DOWNGRADED"}
     for name in ("WIDE", "NARROW"):
         assert designs[name]["agreement"]["within_declared_tolerance"] is True, name
         # regenerated under HUQ-01/07/08: p = 2 with the canonical 6-start policy is at the minimum search, and the
         # diagonal probes keep the nonlinearity below the downgrade threshold
-        assert designs[name]["v2_local"]["claim"] == "SUPPORTED", name
+        assert designs[name]["v2_local"]["claim"] == expected_claim[name], name
         assert designs[name]["v2_local"]["nonlinearity_index"] < 0.10, name
+    assert designs["NARROW"]["v2_local"]["reasons"] == ["TAIL_HEAVIER_WITHIN_6_SD"]
     assert designs["NARROW"]["router_given_the_41_node_grid"]["decision"] == "LOCAL_GAUSSIAN"
     assert designs["WIDE"]["router_given_the_41_node_grid"]["decision"] == "GRID_AS_SUPPLIED"
+    # R-06 (re-audit 2026-09-16): a supplied grid narrower than the declared bounds now needs a uniqueness
+    # basis. Both TCR grids are +/- 6 OLS standard errors wide, far inside the declared bounds, so both stand
+    # on a search rather than on their box, and the record's grid route must still be the one it claims.
+    # benchmarks/core_v2_hybrid_uq/audit/tcr.py was re-run against the new rule: every claim below reproduces.
+    for name in ("WIDE", "NARROW"):
+        assert designs[name]["v1_resolved_grid"]["decision"] == "GRID_AS_SUPPLIED", name
+        assert designs[name]["v2_local"]["uniqueness"] == "MULTISTART_NO_SECOND_MODE", name
 
 
 def test_every_adversarial_case_met_its_declared_expectation():
@@ -88,7 +103,16 @@ def test_every_adversarial_case_met_its_declared_expectation():
     assert cases["all_met"] is True
     assert {"strong_nonlinearity", "parameter_at_bound", "nearly_singular_jacobian", "mirror_mode", "multimodal_two_parameter",
             "log_parameterization_of_a_linear_model", "weak_identification", "thin_correlated_ridge_with_aliased_bounds_grid",
-            "mapped_non_tensor_point_set"} <= set(cases["cases"])
+            "mapped_non_tensor_point_set",
+            # R-26 (I-08 part A, batch 20): `poorly_scaled_parameterization` was only ever adversarial about
+            # its units -- raw condition 3.19e9, equilibrated 3.474 -- and its declared expectation is
+            # restated to SUPPORTED. `ill_conditioned_after_equilibration` is the case the corrected
+            # downgrade is for: a quartic over a 10% range of x, equilibrated condition 4.36e7, inside the
+            # band between POORLY_SCALED_CONDITION_LIMIT and the refusal. Both are pinned here so neither
+            # half of the correction can be dropped without a test saying so.
+            "poorly_scaled_parameterization", "ill_conditioned_after_equilibration"} <= set(cases["cases"])
+    assert cases["cases"]["poorly_scaled_parameterization"]["local"]["claim"] == "SUPPORTED"
+    assert "POORLY_SCALED_PARAMETERIZATION" in cases["cases"]["ill_conditioned_after_equilibration"]["local"]["downgrades"]
     # regenerated under HUQ-06: a grid over other parameters is refused outright when routed with a calibration
     mapped = cases["cases"]["mapped_non_tensor_point_set"]
     assert mapped["router_with_local_other_parameter_names"].startswith("HybridUQError")
@@ -114,6 +138,28 @@ def test_performance_counts_the_audited_diagnostics_and_claims():
         assert v["claim_without_multistart"] != "SUPPORTED", p
         if p >= 3:
             assert v["claim"] != "SUPPORTED" and "MULTISTART_INCOMPLETE" in v["reasons_with_default_multistart"], p
+
+
+def test_performance_records_that_the_coarse_knot_models_do_not_fit_the_b3_data():
+    """Scientific core audit 2026-09-16, CORE-001, first measured on real evidence.
+
+    The same uniform-knot LINEAR family on B3's calibration data: with 2, 5 and 10 knots the residuals are 24x, 13x and
+    4.6x the declared noise variance, so the route refuses and emits no covariance. Before the goodness-of-fit rule these
+    routes reported covariances built from a declared sigma the residuals contradict. With 20 and 41 knots the fit is
+    within the declared noise and only the multistart minimum caps the claim. The V1 grid part of this record still
+    reads PARAMETERS_IDENTIFIABLE at p = 2..4: the frozen V1 ``assess_identifiability`` takes no observations and applies
+    no goodness of fit, which is why only the routed (V2) claims are held to it.
+    """
+    measured = _load("PERFORMANCE.json")["v2_measured"]
+    for p in ("2", "5", "10"):
+        v = measured[p]
+        assert v["claim"] == "REFUSED" and "MODEL_MISFIT_BEYOND_DECLARED_NOISE" in v["reasons_with_default_multistart"], p
+        assert v["goodness_of_fit"]["variance_ratio"] > 4.0, p
+        assert "not_incurred" in v["linearized_predictive"], p
+    for p in ("20", "41"):
+        v = measured[p]
+        assert v["claim"] == "DOWNGRADED" and v["goodness_of_fit"]["variance_ratio"] < 1.0, p
+        assert not {"MODEL_MISFIT_BEYOND_DECLARED_NOISE", "RESIDUALS_EXCEED_DECLARED_NOISE"} & set(v["reasons_with_default_multistart"]), p
 
 
 def test_the_hd_mutation_matrix_killed_everything_with_a_green_control():

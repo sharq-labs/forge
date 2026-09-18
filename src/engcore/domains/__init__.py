@@ -16,6 +16,27 @@ from ..scientific.consensus import (
 from ..scientific.results.thresholds import (
     THRESHOLD_DECLARATIONS_ATTRIBUTE as _THRESHOLD_ATTRIBUTE,
 )
+from ..scientific.results.requirements import register_validation_check_kinds
+from ..scientific.results.validation import (
+    ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE as _ANALYTIC_REFERENCE_ATTRIBUTE,
+)
+
+# I-19 (R-72): the check kinds the FROZEN conduction1d tree emits, declared here for the same reason
+# the table below states a position on behalf of `thermal.conduction1d.solver`:
+# `src/engcore/domains/thermal/**` is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments, so
+# it cannot call the registrar beside its own checks without breaking the pin that makes "T1 was not
+# edited afterwards" a checkable claim. They are registered one package above the freeze, in the
+# domain layer's own words, and this package is imported before any domain module can be.
+#
+# `conduction1d/problem.py` declares all five of these as validation requirements, so without this
+# the requirement rule would report the frozen slab problem's own declaration as unsatisfiable.
+register_validation_check_kinds(
+    "dimensional_consistency",
+    "linear_system_residual",
+    "boundary_conditions_held",
+    "field_finite",
+    "amplitude_decay",
+)
 
 #: Positions this package states on behalf of modules that cannot state their
 #: own, keyed by module name. The core walks a constructing module's package
@@ -135,12 +156,76 @@ SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
         "version": "0.1.0",
         "threshold_digest": "88b2ce9f040139bf34e827904917dbe0ea534445b81b74a525800a877f83291e",
     }),
+    "thermal_models.lumped.analytic_reference": MappingProxyType({
+        # R-04 (core re-audit 2026-09-16): the lumped analytic check's tolerance was the
+        # reference's own error bound plus a rounding budget the module held as a bare
+        # constant, with nothing declared behind it -- and it is the check the one SUPPORTED
+        # MCP report rests on. The budget is the part that IS a policy choice, so it gets an
+        # owner. SOLVER_ROUNDING_ULPS keeps its name and its value; it is now read from here.
+        "declared_by": "engcore.domains.thermal_models.lumped.LUMPED_ANALYTIC_REFERENCE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "0e092d57b7d86e71ffc1bb28d122b44adaabe089e5d5c7a78defa191e911f0ca",
+    }),
 })
 
 #: ``thermal_models.conduction2d`` is deliberately absent. Its gate declares
 #: thresholds and reports every residual against them, and awards no level at
 #: all — so registering it would grant an authority it does not exercise. See
 #: that module's ``CONDUCTION2D_GATE_THRESHOLDS`` for the argument.
+
+#: Which closed forms this layer stands behind, pinned by reference id (R-04, core re-audit 2026-09-16).
+#:
+#: ``ANALYTICALLY_VERIFIED`` is a claim that a solve agrees with an independent closed form, and it needed
+#: no issuer at all: ``ValidationCheck(PASS, establishes=ANALYTICALLY_VERIFIED, evidence=("trust me",))``
+#: was constructed, attained, survived ``from_dict`` and carried a SUPPORTED verdict, while the same
+#: construction claiming BENCHMARK_VALIDATED was refused. The one SUPPORTED report either MCP tool can
+#: return rests on exactly this level.
+#:
+#: So the level is now held to its issuer's record, the way the oracle and consensus levels are:
+#: ``validation._analytic_issuer_gap`` requires the check's evidence to name a reference registered here,
+#: carry the SHA-256 of that reference's own expression, claim repository authority, and name the declared
+#: threshold set of the gate this table says awards it.
+#:
+#: **What is pinned is the STATEMENT, not the code.** What makes the level meaningful is WHICH closed form
+#: the solve was compared against, and that is the expression. A digest of the implementing module's bytes
+#: would move on every edit to the file, including edits that do not touch the formula, and would make the
+#: level brittle rather than bound.
+#:
+#: Each digest is recomputed at import from the constant the entry names, so this table and the constant
+#: cannot drift apart silently -- the same discipline ``SCIENTIFIC_THRESHOLD_DECLARATIONS`` uses.
+SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS = MappingProxyType({
+    "thermal_models.lumped.series_recurrence": MappingProxyType({
+        "declared_by": "engcore.domains.thermal_models.lumped.REFERENCE_EXPRESSION",
+        "version": "0.1.0",
+        "expression": (
+            "T(t) = sum a_n t^n with a_0 = T0, C a_1 = Q - hA (a_0 - T_amb), "
+            "C (n+1) a_{n+1} = -hA a_n"
+        ),
+        "expression_digest": "2534eb18c91ca70e9dbd156ce76b824a75c2f595f3cb05f16eaab77352fd5ba4",
+        "thresholds_gate": "thermal_models.lumped.analytic_reference",
+    }),
+    "thermal.conduction1d.single_mode_analytic": MappingProxyType({
+        "declared_by": "engcore.domains.thermal.conduction1d.validation.REFERENCE_EXPRESSION",
+        "version": "0.1.0",
+        "expression": "u(x,t) = sin(pi*x/L) * exp(-alpha*pi^2*t/L^2)",
+        "expression_digest": "a8564c9933fbad5abed6e16fd6f12188a3318872b27b8489f0222a04aee5f1c6",
+        "thresholds_gate": "thermal.conduction1d.refinement",
+    }),
+    "kinetics.cstr.adiabatic_reaction_free_invariant": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INVARIANT_EXPRESSION",
+        "version": "0.1.0",
+        "expression": (
+            "Z = T + beta C_A;  Z(t) = Z_f + (Z_0 - Z_f) exp(-a t)  [exact when UA = 0]"
+        ),
+        "expression_digest": "0fb7efc02108e3d14f7b0369ea83ddbdfebcbc7834b153c11bee14161681693b",
+        "thresholds_gate": "kinetics.cstr.verification_gate",
+    }),
+})
+
+assert _ANALYTIC_REFERENCE_ATTRIBUTE == "SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS", (
+    f"the core looks for {_ANALYTIC_REFERENCE_ATTRIBUTE!r}; this package defines "
+    f"SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS"
+)
 
 assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
     f"the core looks for {_THRESHOLD_ATTRIBUTE!r}; this package defines "

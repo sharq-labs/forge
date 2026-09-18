@@ -1,0 +1,6 @@
+G32e tests/inference/test_audit_inference_heldout_study.py -> KILLED | 2 failed, 17 passed in 5.84s | code 5731c83fb31a4697->91f1a4dd9951a50b | pinned: INF-01 (INF-01-applicability-at-declared-conditions) -- tests/inference/test_audit_inference_heldout_study.py
+G32f tests/inference/test_audit_inference_heldout_study.py -> KILLED | 1 failed, 18 passed in 5.96s | code 5731c83fb31a4697->043fc07e63156659 | pinned: INF-02 (INF-02-declared-sigma-only) -- tests/inference/test_audit_inference_heldout_study.py
+G32h tests/inference/test_audit_inference_heldout_study.py -> KILLED | 2 failed, 17 passed in 5.39s | code 5731c83fb31a4697->98d70ee82ee42264 | pinned: INF-05 (INF-05-calibrated-only-when-contained) -- tests/inference/test_audit_inference_heldout_study.py
+G32i tests/inference/test_audit_inference_heldout_study.py -> KILLED | 1 failed, 18 passed in 5.39s | code 5731c83fb31a4697->b05aa17ac52b3b9e | pinned: INF-05 (INF-05-no-intervals-refused) -- tests/inference/test_audit_inference_heldout_study.py
+G32j tests/inference/test_audit_inference_heldout_study.py -> KILLED | 4 failed, 15 passed in 5.58s | code 16278b5b0229fb97->6d9a9702a4cdef2f | pinned: INF-08 (INF-08-tcr-table-rows-within-declared-bounds) -- tests/inference/test_audit_inference_heldout_study.py
+CONTROL (unmutated, 1 test(s)) GREEN | 19 passed in 5.61s

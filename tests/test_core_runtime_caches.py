@@ -53,6 +53,15 @@ def test_the_module_exposes_the_memos_this_audit_expects():
         "_compatible",
         "base_unit",
         "is_ratio_scale",
+        # `is_delta_unit` joined the module in core re-audit batch 26 (I-22,
+        # R-75) and memoizes a registry name lookup exactly as the two above
+        # do. Added here, and to `clear_unit_caches`, which is the revisit this
+        # assertion exists to force.
+        "is_delta_unit",
+        # `_slope_against_base` joined the module in core re-audit batch 29
+        # (I-22, R-48): the LINEAR part of a conversion, which is what a
+        # difference transforms by. Same ratchet, same two places.
+        "_slope_against_base",
     }, sorted(module_memos())
 
 
@@ -73,10 +82,22 @@ def test_clear_unit_caches_clears_every_memo_in_the_module():
     a.is_compatible_with("volt")
     q.base_unit("kiloohm")
     q.is_ratio_scale("degC")
+    q.is_delta_unit("delta_degC")
+    q.Quantity(1.0, "delta_degC").magnitude_as_spread_in("kelvin")
     q.dimensionality("ohm")
 
-    filled = [n for n, m in populated.items() if m.cache_info().currsize > 0]
-    assert filled, "nothing was populated, so this test would pass vacuously"
+    # EVERY memo, not merely one. ADDED while running core re-audit batch 26's
+    # guard mutations, not preregistered: mutation B26l dropped
+    # `is_delta_unit.cache_clear()` from `clear_unit_caches` and this test
+    # still passed, because the populate block above had never touched that
+    # memo and an empty cache survives a clear invisibly. "Nothing was
+    # populated" was too weak a floor -- a memo missing from the block below is
+    # a memo this test cannot speak about at all.
+    filled = {n for n, m in populated.items() if m.cache_info().currsize > 0}
+    assert filled == set(populated), (
+        f"not populated by the block above: {sorted(set(populated) - filled)}. "
+        f"A memo this test never fills is one it cannot prove is cleared"
+    )
 
     clear_unit_caches()
 

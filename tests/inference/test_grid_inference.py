@@ -34,7 +34,7 @@ def test_gaussian_grid_posterior_normalizes_and_favors_closest_prediction():
         points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         values=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         admissible_mask=np.asarray([True, True, True]),
-        admission_refs=(("a",), ("b",), ("c",)),
+        admission_refs=(("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",), ("numerical|p-c|v-c|b-c",)),
         rejection_reasons=("", "", ""),
     )
     posterior = gaussian_grid_posterior(table, obs)
@@ -51,7 +51,7 @@ def test_inadmissible_grid_row_gets_zero_posterior_mass():
         points=np.asarray([[0.0], [1.0]], dtype=np.float64),
         values=np.asarray([[1.0], [1.0]], dtype=np.float64),
         admissible_mask=np.asarray([False, True]),
-        admission_refs=((), ("admitted",)),
+        admission_refs=((), ("numerical|p-1|v-1|b-1",)),
         rejection_reasons=("scientifically rejected", ""),
     )
     posterior = gaussian_grid_posterior(table, obs)
@@ -67,7 +67,7 @@ def test_posterior_replay_is_deterministic_on_same_numpy_path():
         points=np.asarray([[0.0], [0.5], [1.0], [1.5]], dtype=np.float64),
         values=np.asarray([[0.2], [0.7], [1.1], [1.7]], dtype=np.float64),
         admissible_mask=np.asarray([True, True, True, True]),
-        admission_refs=(("a",), ("b",), ("c",), ("d",)),
+        admission_refs=(("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",), ("numerical|p-c|v-c|b-c",), ("numerical|p-d|v-d|b-d",)),
         rejection_reasons=("", "", "", ""),
     )
     first = gaussian_grid_posterior(table, obs)

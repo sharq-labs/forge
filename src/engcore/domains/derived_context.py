@@ -139,8 +139,17 @@ class DomainValidityContext:
     declared: Mapping[str, Any]
     assembled: Mapping[str, Any]
 
-    def assess(self, model: Any) -> Any:
+    def assess(self, model: Any, *, record_values: bool = True) -> Any:
         """This model's verdict, over the slice of the assembly it reserves.
+
+        ``record_values`` (CORE-014, I-11) records on the assessment the Quantities the conditions
+        read, so a result or a credibility report can refuse a verdict made at another operating
+        point than its own provenance states. **Default True**, unlike
+        :meth:`ScientificModelDefinition.assess_validity`, whose default must stay False because it
+        is a V1-frozen symbol's method. This is the domains' own helper and the path battery,
+        electrical and repair all assess through, so setting it here is what makes the binding
+        load-bearing in production without every domain having to remember the flag. A caller who
+        does not want the bytes passes False and says so.
 
         **The filter is narrow, and what it does not cover raises.** A name in
         the assembly that this model's conditions never read is another
@@ -187,6 +196,7 @@ class DomainValidityContext:
                 for name, value in self.assembled.items()
                 if name in reserved
             },
+            record_values=record_values,
         )
 
     def merged(self) -> dict[str, Any]:

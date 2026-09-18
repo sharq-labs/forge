@@ -23,6 +23,7 @@ import sys
 import pytest
 
 import engcore
+from issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
@@ -194,7 +195,7 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: directions and has to be updated deliberately, which is the moment somebody
 #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
 #: the pattern: derive the population, then assert its size.
-EXPECTED_MODELS = 16
+EXPECTED_MODELS = 17
 EXPECTED_RESERVING_MODELS = 15
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the
@@ -217,7 +218,11 @@ EXPECTED_RESERVING_MODELS = 15
 # self-heated resistor record, whose assumption "one resistance describes the
 # element over the whole run" had no condition while the coupled transient held
 # R(T_final) across the interval.
-EXPECTED_CONDITION_NAMES = 77
+# 77 -> 92 in Scientific Decision Readiness Sprint 2.5: the NAFEMS P18.T3
+# executable vertical is intentionally valid at exactly one reviewed operating
+# point. Its fifteen declared benchmark inputs each carry an exact validity
+# condition. None is derived, so EXPECTED_RESERVED_NAMES remains unchanged.
+EXPECTED_CONDITION_NAMES = 92
 EXPECTED_RESERVED_NAMES = 59
 
 
@@ -2361,10 +2366,18 @@ def _guarded_level():
     the evidence (see ``tests/test_audit_consensus_level_issuers.py``), so a
     sentence can no longer build one at all, and the GUARD 2 enumeration is
     exercised on a level that sentence-evidence can still legitimately carry.
+
+    It has moved once more, and for the same reason. R-04 (core re-audit
+    2026-09-16) put ``ANALYTICALLY_VERIFIED`` behind an issuer too -- a pinned
+    analytic reference or a pinned oracle -- so it is no longer a level a
+    sentence can carry either. ``DIMENSIONALLY_VALID`` is, and the batch-9
+    protocol records the two levels that still need no issuer as an OPEN
+    residual. When that closes, this function moves again and the tests that
+    use it keep testing GUARD 2's enumeration, which is their subject.
     """
     from engcore.scientific.results.validation import ValidationLevel
 
-    return ValidationLevel.ANALYTICALLY_VERIFIED
+    return ValidationLevel.DIMENSIONALLY_VALID
 
 
 def _earned_check(name="earned"):
@@ -5045,6 +5058,10 @@ def test_a_pass_can_stand_seven_orders_outside_its_own_tolerance():
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
         residual=1e-9,
         tolerance=1e-6,
+        # R-04 (core re-audit 2026-09-16): the level is held to its issuer's record now. It is this
+        # test's means and not its subject -- what is under test is GUARD 21 and the read-time
+        # re-application -- so the check carries the records a genuine issuer writes.
+        evidence=analytic_issuer_evidence(),
     )
     record = ModelValidityRecord(
         model_id="thermal.lumped",
@@ -5217,6 +5234,10 @@ def test_a_report_cannot_be_handed_a_contradiction_the_constructor_refused():
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
         residual=1e-9,
         tolerance=1e-6,
+        # R-04 (core re-audit 2026-09-16): the level is held to its issuer's record now. It is this
+        # test's means and not its subject -- what is under test is GUARD 21 and the read-time
+        # re-application -- so the check carries the records a genuine issuer writes.
+        evidence=analytic_issuer_evidence(),
     )
     object.__setattr__(smuggled, "residual", 10.0)
 
@@ -5231,6 +5252,10 @@ def test_a_report_cannot_be_handed_a_contradiction_the_constructor_refused():
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
         residual=1e-9,
         tolerance=1e-6,
+        # R-04 (core re-audit 2026-09-16): the level is held to its issuer's record now. It is this
+        # test's means and not its subject -- what is under test is GUARD 21 and the read-time
+        # re-application -- so the check carries the records a genuine issuer writes.
+        evidence=analytic_issuer_evidence(),
     )
     report = ValidationReport(checks=(honest,))
     assert report.attained_levels == frozenset(

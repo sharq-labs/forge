@@ -1,0 +1,6 @@
+B3f test_core009_a_comparison_at_other_conditions_is_not_made -> KILLED | 1 failed in 0.47s
+B3g test_core009_a_comparison_at_other_conditions_is_not_made -> KILLED | 1 failed in 0.45s
+B3h test_core014_an_assessment_read_at_another_operating_point_is_refused -> KILLED | 1 failed in 0.49s
+B3i test_core014_an_assessment_read_at_another_operating_point_is_refused -> KILLED | 1 failed in 0.56s
+B3j test_core016_an_uncertainty_says_what_kind_of_uncertainty_it_is -> KILLED | 1 failed in 0.54s
+CONTROL (unmutated) GREEN | 3 passed in 0.47s

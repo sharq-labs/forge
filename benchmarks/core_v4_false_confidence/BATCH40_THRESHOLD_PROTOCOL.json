@@ -1,0 +1,98 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 40,
+ "improvements": [
+  "I-20 part B of three"
+ ],
+ "problems_addressed": [
+  "R-45 (the audit's findings 53 and 87, and finding 90's first item)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "dff3181f",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "CORE-013 changed a serialized record's MEANING under an unchanged schema string, and the reader compares a stored status with the recomputed one, so every report the pre-CORE-013 tree wrote with a PASS and a NOT_RUN check -- which is what any conduction1d solve and any DC circuit missing an element class writes -- is refused on read with a message about a contradiction. This part bumps `validation_report` to `/2`, reads `/1` payloads under the precedence they were written with, and gives a check that DID NOT APPLY a representation of its own, so it stops being counted as evidence nobody gathered. Finding 90's other record bumps (`routed_identifiability`, `validity_assessment`, `uncertainty`, and the V4 serialization inventory) are part C and the I-30 round.",
+ "reach": "REACHED. `ValidationReport.status` and `from_dict` are on the MCP path: run_electrothermal and run_battery build reports through the domain gates and `CredibilityEvidenceReport` reads their status, and `ScientificResult.from_dict` embeds this reader. The DC gate change is production code on that same path.",
+ "what_was_already_seen": {
+  "the_refused_legacy_record, from the audit's verification of finding 53": "The pre-CORE-013 tree (b569b20^) was extracted and used to write a default conduction1d slab solve: 5 PASS and 2 NOT_RUN checks, serialized status 'pass', schema `validation_report/1`. Both `ValidationReport.from_dict` and `ScientificResult.from_dict` refuse it -- \"serialized status 'pass' does not match the status its checks produce ('not_run')\". The same payload with the status key removed loads and recomputes to NOT_RUN. The whole record is lost, not re-labelled.",
+  "the_inapplicable_check, reproduced at dff3181f": "A circuit of one resistor and one current source solves cleanly: `dimensional_consistency`, `linear_system_residual`, `kirchhoff_current_law`, `resistor_metric_consistency` and `power_balance` all PASS, `voltage_source_relation` is NOT_RUN with detail 'circuit contains no voltage sources', and the report's status is NOT_RUN. On top of that, `build_dc_problem` declares `voltage_source_relation` as a validation REQUIREMENT for this circuit, so `declared_validation_requirements` is NOT_RUN as well: the problem demands a check the circuit cannot produce."
+ },
+ "rules": {
+  "a_change_of_meaning_gets_a_version": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "`REPORT_SCHEMA` becomes `validation_report/2`. `ValidationReport.to_dict` writes it; `from_dict` accepts `/2` and `/1` through `require_schema_any` and returns the version it found.",
+   "class": "A",
+   "why": "The version string is the only place a reader can learn that the same field now means something else. CORE-013 reordered the status precedence -- FAIL > WARNING > PASS > NOT_RUN became FAIL > NOT_RUN > WARNING > PASS -- and left `validation_report/1` in place, so a stored 'pass' is ambiguous between an honest older record and an edited one, and the reader resolved that ambiguity by refusing both. `require_schema_any` already exists for exactly this and is documented as 'the reader half of an additive version bump'. The only committed mentions of `validation_report/1` are the V1 freeze digests, whose manifest tests fail by design until the V4 round.",
+   "closes": "the ambiguity. It does not by itself make the older record readable -- that is the next rule."
+  },
+  "a_legacy_report_is_read_under_the_precedence_it_was_written_with": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "For a `/1` payload: if its stored status equals what the CURRENT precedence gives, nothing changes. If it equals what the PRE-CORE-013 precedence (FAIL > WARNING > PASS > NOT_RUN, empty is NOT_RUN) gives over the payload's own checks, the record is accepted and its status re-derived under the current rule. If it equals neither, it is refused with a message naming both precedences. A `/2` payload is held to the current rule exactly as now.",
+   "class": "A",
+   "why": "A record is honest if it says what its writer's rule said, and the writer's rule is what the version names. That is the whole content of a version bump, and the alternative -- refusing every older record -- loses evidence rather than strengthening it, which is the failure mode the audit calls conservative but wrong-cause. Re-deriving under the current rule is what keeps the fix: the stored 'pass' is not believed, it is explained, and what the reader gets is the NOT_RUN the current rule gives. The comparison for `/2` records is untouched, including its pinned line, so nothing weakens for records written from here on.",
+   "closes": "findings 53 and 90's first item: the pre-branch record loads, with its status recomputed, and a record that matches no precedence is still refused."
+  },
+  "a_check_that_did_not_apply_is_not_a_check_nobody_ran": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "New `ValidationOutcome.NOT_APPLICABLE`, appended last. A NOT_APPLICABLE check may not declare a level (refused at construction, as UNVERIFIED is), is not `passed`, contributes nothing to `attained_levels`, and is EXCLUDED from the status precedence; a report whose only checks are NOT_APPLICABLE, like an empty report, is NOT_RUN. New `not_applicable` property beside `failures`, `warnings` and `not_run`, and `not_run` keeps naming only the checks that did not run.",
+   "class": "A",
+   "why": "NOT_RUN means 'this evidence was not gathered', which is why CORE-013 put it above PASS: a report cannot pass on the strength of a check nobody performed. 'The circuit has no voltage source' is a different statement -- there is no evidence to gather, and there is no claim that goes unbacked by its absence. Collapsing the two makes every report containing one permanently NOT_RUN, which is what made the SRIA critic say nobody looked. A new enum member is the additive form the compatibility rules allow, and it is appended so the member order is unchanged. Excluded rather than ranked below PASS: a report of nothing but inapplicable checks established nothing, and that is the empty report's own answer.",
+   "closes": "finding 87's second fix direction, and with it the false NOT_ASSESSED the critic reported."
+  },
+  "a_gate_says_which_of_the_two_it_means": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "The DC gates emit NOT_APPLICABLE, with the same detail text, where a check cannot apply to the circuit in front of them: `voltage_source_relation` with no voltage sources, and `resistor_metric_consistency` with no resistors. Nothing else about those checks changes.",
+   "class": "A",
+   "why": "The distinction is only worth having if the producers make it, and these are the two sites in the DC gate that report the absence of an element class rather than a measurement. This is the audit's own example ('the DC solver's voltage_source_relation NOT_RUN when a circuit has no voltage source'). No tolerance or comparison is touched.",
+   "closes": "the production half: a clean single-resistor current-source circuit stops reporting a NOT_RUN validation status."
+  },
+  "a_problem_does_not_demand_a_check_its_own_circuit_cannot_produce": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "`build_dc_problem` declares `voltage_source_relation` among its `validation_requirements` only when the circuit has a voltage source, and `resistor_metric_consistency` only when it has a resistor. The other four are declared unconditionally.",
+   "class": "A",
+   "why": "Found while reproducing the inapplicable check at dff3181f: the current-source circuit's report also carries a NOT_RUN `declared_validation_requirements`, because the problem demands a PASSING `voltage_source_relation` that the circuit cannot produce. That is the same category error one layer up, and this tree already names it -- the check-kind registry's own comment says a requirement 'naming no kind any emitter produces is reported as one no result can ever satisfy'. A requirement nothing can satisfy is not a gate, and leaving it in place would have made the previous rule invisible on the production path.",
+   "closes": "the second NOT_RUN on that report, which is what the status and the critic actually read."
+  }
+ },
+ "thresholds": {
+  "none": {"value": null, "class": "A", "why": "no number is chosen. Two precedences, one new enum member, and four declaration conditions."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "`ValidationOutcome.NOT_APPLICABLE`, appended after NOT_RUN",
+   "`ValidationReport.not_applicable`",
+   "`validation_report/2`, with `/1` still read",
+   "a module-level legacy status helper (private)"
+  ],
+  "what_is_not_changed": [
+   "no field, no default, no existing enum member or its order",
+   "`validation_check/1` is NOT bumped: a NOT_APPLICABLE check is only written inside a `/2` report, so the version signal sits on the record whose meaning changed. An older reader handed a bare check payload with the new value raises on the enum, which is fail-closed",
+   "`is_usable` still reads only 'not FAIL'",
+   "the `/2` status comparison in `from_dict`, including the line pinned as G30ae in tests/mutation_guards.py, is byte-identical"
+  ],
+  "records_that_already_exist": "The only committed mentions of `validation_report/1` are digests in certification/core_freeze_v1.json and benchmarks/core_freeze_v1/REPRODUCTION_OUTPUT.json, whose manifest tests fail by design until the V4 round; the V1 fixture for this record is an empty report. No committed payload carries a stored report status, and experiments/kinetics_k1/k1_results.json's 51 check payloads carry none of the new value.",
+  "deliberate_narrowing": "None. Every change here accepts records that were refused, or reports a status that was over-stated."
+ },
+ "residuals_stated_in_advance": [
+  "A declared validation requirement is still satisfied only by a PASSING check of that name, so a domain that declares a requirement whose check comes back NOT_APPLICABLE still reports it unmet. That is deliberate -- a requirement the producer cannot meet is a real gap in that producer's declaration -- and the DC declaration is fixed rather than the requirement rule.",
+  "Only the DC gate is changed. Other domains' 'did not apply' checks (kinetics, thermal, battery) keep reporting NOT_RUN until each is read on its own; `src/engcore/domains/thermal/**` is SHA-256 pinned and cannot be edited at all.",
+  "A `/1` payload whose stored status matches neither precedence is refused, as it must be, but the reader still cannot distinguish a hand-edit from a third precedence nobody recorded. Version strings are the only signal, and this is why the bump matters.",
+  "`validation_check` is not versioned in this batch, so a `/1` check payload carrying `not_applicable` is refused by an older reader on the enum rather than by a version check. Recorded as a V4 inventory item.",
+  "R-45's third component -- an older reader silently DROPPING `evaluated` and `source_kind` (finding 90's item 3) -- is part C: it needs `validity_assessment` and `uncertainty` bumps, which are separate records."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "the DC domain suites, tests/test_core_guards.py, tests/test_scientific_core.py, the SRIA assurance suites and tests/test_data_boundary0.py (which requires older payloads to keep loading)",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at exactly the 18 by-design failures",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}

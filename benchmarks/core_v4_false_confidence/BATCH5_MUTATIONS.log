@@ -1,0 +1,4 @@
+B5a test_core017_a_copied_reading_nudged_below_measurement_resolution_is_leakage -> KILLED | 2 failed in 0.55s
+B5b test_core018_cross_limit_bounds_are_ordered_in_one_unit -> KILLED | 1 failed in 0.58s
+B5c test_core018_the_same_length_in_metres_and_millimetres_agrees -> KILLED | 1 failed in 0.74s
+CONTROL (unmutated) GREEN | 4 passed in 0.57s

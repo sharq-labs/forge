@@ -32,11 +32,34 @@ PARETO_ARCHIVE_SCHEMA = schema_string("pareto_archive")
 SCOPED_ELITE_ARCHIVE_SCHEMA = schema_string("scoped_elite_archive")
 
 
+#: R-44: the two labels a caller may compare under. ELIGIBLE now means the result stands behind its own
+#: numbers (`DesignEvaluation` refuses it otherwise); RANKED_WITHOUT_ASSESSMENT says the models'
+#: applicability was never assessed, which is what a study whose models declare no validity domain records
+#: on every evaluation. Both are ranked -- refusing would delete such a study rather than correct it -- and
+#: an archive records which of its members were the second kind, because a persisted archive does not carry
+#: its evaluations' labels.
+_RANKABLE = (SelectionEligibility.ELIGIBLE, SelectionEligibility.RANKED_WITHOUT_ASSESSMENT)
+
+
 def _require_eligible(evaluation: DesignEvaluation) -> None:
-    if evaluation.eligibility is not SelectionEligibility.ELIGIBLE:
+    if evaluation.eligibility not in _RANKABLE:
         raise InvalidScientificProblem(
             "Pareto comparison requires explicitly ELIGIBLE evaluations"
         )
+
+
+def _unassessed_refs(
+    evaluations: Sequence[DesignEvaluation],
+    members: Sequence[DesignEvaluationReference],
+) -> tuple[DesignEvaluationReference, ...]:
+    """R-44: which of an archive's own members were ranked without their models being assessed."""
+    unassessed = {
+        item.evaluation_id
+        for item in evaluations
+        if item.eligibility is SelectionEligibility.RANKED_WITHOUT_ASSESSMENT
+    }
+    return tuple(sorted((ref for ref in members if ref.evaluation_id in unassessed),
+                        key=lambda ref: ref.evaluation_id))
 
 
 def dominates(
@@ -123,11 +146,7 @@ def _pareto_refs(
     evaluations: Sequence[DesignEvaluation],
     objectives: tuple[ObjectiveDefinition, ...],
 ) -> tuple[DesignEvaluationReference, ...]:
-    eligible = tuple(
-        item
-        for item in evaluations
-        if item.eligibility is SelectionEligibility.ELIGIBLE
-    )
+    eligible = tuple(item for item in evaluations if item.eligibility in _RANKABLE)
     nondominated: list[DesignEvaluationReference] = []
     for candidate in eligible:
         if any(
@@ -161,6 +180,9 @@ class ParetoArchive:
     objectives: tuple[ObjectiveDefinition, ...]
     source_evaluations: tuple[DesignEvaluationReference, ...]
     members: tuple[DesignEvaluationReference, ...]
+    #: R-44: the members ranked without their models being assessed. Trailing, with an empty default, and
+    #: serialized only when non-empty, so an archive of fully assessed candidates keeps its bytes.
+    unassessed: tuple[DesignEvaluationReference, ...] = ()
 
     def __post_init__(self) -> None:
         archive_id = str(self.archive_id).strip()
@@ -186,6 +208,13 @@ class ParetoArchive:
         object.__setattr__(self, "objectives", objectives)
         object.__setattr__(self, "source_evaluations", source)
         object.__setattr__(self, "members", members)
+        unassessed = _validate_refs(self.unassessed, context="Pareto archive unassessed members")
+        member_ids = {item.evaluation_id for item in members}
+        if any(item.evaluation_id not in member_ids for item in unassessed):
+            raise InvalidScientificProblem(
+                "an archive's unassessed references name its own members"
+            )
+        object.__setattr__(self, "unassessed", unassessed)
 
     @classmethod
     def build(
@@ -198,12 +227,14 @@ class ParetoArchive:
     ) -> "ParetoArchive":
         declared = require_objectives(objectives)
         items = _validate_evaluations(evaluations, design_space)
+        members = _pareto_refs(items, declared)
         return cls(
             archive_id=archive_id,
             design_space=design_space,
             objectives=declared,
             source_evaluations=_evaluation_refs(items),
-            members=_pareto_refs(items, declared),
+            members=members,
+            unassessed=_unassessed_refs(items, members),
         )
 
     def validate_against(
@@ -217,6 +248,12 @@ class ParetoArchive:
             raise InvalidScientificProblem(
                 "persisted Pareto membership does not match recomputed membership"
             )
+        # R-44: recomputed like every other membership fact here -- a stored list of references is not a
+        # verified claim, and "which of these was never assessed" is part of the claim.
+        if _unassessed_refs(items, expected) != self.unassessed:
+            raise InvalidScientificProblem(
+                "persisted Pareto unassessed members do not match the evaluations' own eligibility"
+            )
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -227,6 +264,7 @@ class ParetoArchive:
             "objectives": [item.to_dict() for item in self.objectives],
             "source_evaluations": [item.to_dict() for item in self.source_evaluations],
             "members": [item.to_dict() for item in self.members],
+            **({"unassessed": [item.to_dict() for item in self.unassessed]} if self.unassessed else {}),
         }
 
     @classmethod
@@ -257,6 +295,10 @@ class ParetoArchive:
                 DesignEvaluationReference.from_dict(item)
                 for item in payload.get("members", ())
             ),
+            unassessed=tuple(
+                DesignEvaluationReference.from_dict(item)
+                for item in payload.get("unassessed", ())
+            ),
         )
         return archive.validate_against(evaluations)
 
@@ -271,6 +313,8 @@ class ScopedEliteArchive:
     objectives: tuple[ObjectiveDefinition, ...]
     source_evaluations: tuple[DesignEvaluationReference, ...]
     members: tuple[DesignEvaluationReference, ...]
+    #: R-44, as on the Pareto archive: the members ranked without their models being assessed.
+    unassessed: tuple[DesignEvaluationReference, ...] = ()
 
     def __post_init__(self) -> None:
         archive_id = str(self.archive_id).strip()
@@ -302,6 +346,13 @@ class ScopedEliteArchive:
         object.__setattr__(self, "objectives", objectives)
         object.__setattr__(self, "source_evaluations", source)
         object.__setattr__(self, "members", members)
+        unassessed = _validate_refs(self.unassessed, context="scoped elite unassessed members")
+        member_ids = {item.evaluation_id for item in members}
+        if any(item.evaluation_id not in member_ids for item in unassessed):
+            raise InvalidScientificProblem(
+                "an archive's unassessed references name its own members"
+            )
+        object.__setattr__(self, "unassessed", unassessed)
 
     @classmethod
     def build(
@@ -315,13 +366,15 @@ class ScopedEliteArchive:
     ) -> "ScopedEliteArchive":
         declared = require_objectives(objectives)
         items = _validate_evaluations(evaluations, design_space)
+        members = _pareto_refs(items, declared)
         return cls(
             archive_id=archive_id,
             scope_ref=scope_ref,
             design_space=design_space,
             objectives=declared,
             source_evaluations=_evaluation_refs(items),
-            members=_pareto_refs(items, declared),
+            members=members,
+            unassessed=_unassessed_refs(items, members),
         )
 
     def validate_against(
@@ -334,6 +387,10 @@ class ScopedEliteArchive:
             raise InvalidScientificProblem(
                 "persisted scoped-elite membership does not match recomputed membership"
             )
+        if _unassessed_refs(items, expected) != self.unassessed:
+            raise InvalidScientificProblem(
+                "persisted scoped-elite unassessed members do not match the evaluations' own eligibility"
+            )
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -345,6 +402,7 @@ class ScopedEliteArchive:
             "objectives": [item.to_dict() for item in self.objectives],
             "source_evaluations": [item.to_dict() for item in self.source_evaluations],
             "members": [item.to_dict() for item in self.members],
+            **({"unassessed": [item.to_dict() for item in self.unassessed]} if self.unassessed else {}),
         }
 
     @classmethod
@@ -374,6 +432,10 @@ class ScopedEliteArchive:
             members=tuple(
                 DesignEvaluationReference.from_dict(item)
                 for item in payload.get("members", ())
+            ),
+            unassessed=tuple(
+                DesignEvaluationReference.from_dict(item)
+                for item in payload.get("unassessed", ())
             ),
         )
         return archive.validate_against(evaluations)

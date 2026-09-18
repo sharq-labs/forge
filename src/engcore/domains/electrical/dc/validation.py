@@ -41,6 +41,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from ....scientific.results.requirements import register_validation_check_kinds
 from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
@@ -52,6 +53,20 @@ from ....scientific.units.quantity import Quantity
 from .components import CURRENT_UNIT, POWER_UNIT, VOLTAGE_UNIT
 from .errors import ElectricalDCError
 from .mna import PreparedDCSystem
+
+# I-19 (R-72): the check kinds this module EMITS, declared beside the emitters. A problem's
+# `validation_requirements` is read against this registry at enforcement time, so a requirement
+# naming no kind any emitter produces is reported as one no result can ever satisfy -- which is
+# what `numerically_convergd` was, silently, for as long as nothing read the field.
+register_validation_check_kinds(
+    "dimensional_consistency",
+    "linear_system_residual",
+    "kirchhoff_current_law",
+    "resistor_metric_consistency",
+    "voltage_source_relation",
+    "power_balance",
+    "linear_system_solved",
+)
 
 
 @dataclass(frozen=True)
@@ -403,9 +418,12 @@ def check_resistor_relation(
     circuit = prepared.circuit
     voltages = _voltages(prepared, solution)
     if not circuit.resistors:
+        # R-45: NOT_APPLICABLE, not NOT_RUN. There is no resistor relation to check here, which is a
+        # statement about the circuit, not about evidence somebody failed to gather -- and as NOT_RUN it
+        # made every such report's validation status NOT_RUN for good.
         return ValidationCheck(
             name="resistor_metric_consistency",
-            outcome=ValidationOutcome.NOT_RUN,
+            outcome=ValidationOutcome.NOT_APPLICABLE,
             detail="circuit contains no resistors",
         )
 
@@ -444,9 +462,11 @@ def check_voltage_sources(
     circuit = prepared.circuit
     voltages = _voltages(prepared, solution)
     if not circuit.voltage_sources:
+        # R-45, the audit's own example: NOT_APPLICABLE, not NOT_RUN. A circuit with no voltage source has
+        # no source constraint to reconstruct.
         return ValidationCheck(
             name="voltage_source_relation",
-            outcome=ValidationOutcome.NOT_RUN,
+            outcome=ValidationOutcome.NOT_APPLICABLE,
             detail="circuit contains no voltage sources",
         )
 

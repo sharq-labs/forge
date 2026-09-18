@@ -1,0 +1,18 @@
+B1a test_core001_a_gross_misfit_is_refused_and_emits_no_covariance -> KILLED | 1 failed in 1.08s
+B1b test_core001_a_moderate_misfit_is_downgraded_and_says_why -> KILLED | 1 failed in 1.05s
+B1c test_core001_a_gross_misfit_is_refused_and_emits_no_covariance -> KILLED | 1 failed in 1.10s
+B1d test_a_record_that_hides_its_misfit_is_refused_on_read -> KILLED | 1 failed in 1.07s
+B1e test_core003_a_tail_far_heavier_than_the_gaussian_is_refused -> KILLED | 1 failed in 1.20s
+B1f test_core003_a_tail_far_heavier_than_the_gaussian_is_refused -> KILLED | 1 failed in 1.08s
+B1g test_a_record_that_hides_its_tail_is_refused_on_read -> KILLED | 1 failed in 1.08s
+B1h test_core001_a_misfit_is_not_rescued_by_rebuilding_a_grid -> KILLED | 1 failed in 1.02s
+B1i test_core002_a_grid_without_the_evidence_it_describes_is_not_certified -> KILLED | 1 failed in 1.04s
+B1j test_core001_a_misfit_supplied_grid_is_passed_over -> KILLED | 1 failed in 1.15s
+B1k test_core002_a_supplied_grid_that_truncates_the_posterior_is_passed_over -> KILLED | 1 failed in 1.16s
+B1l test_core005_a_grid_computed_from_other_data_under_the_same_id_is_refused -> KILLED | 1 failed in 1.18s
+B1m test_core005_a_grid_computed_from_other_data_under_the_same_id_is_refused -> KILLED | 1 failed in 1.19s
+B1n test_a_grid_whose_admission_disagrees_with_the_forward_model_is_refused -> KILLED | 1 failed in 1.21s
+B1o test_core002_a_parameter_the_data_never_touch_is_not_certified_on_a_supplied_grid -> KILLED | 1 failed in 1.14s
+B1p test_a_rebuilt_grid_whose_posterior_spans_both_declared_bounds_is_not_used -> KILLED | 1 failed in 1.20s
+B1q test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement -> KILLED | 1 failed in 1.23s
+CONTROL (unmutated) GREEN | 14 passed in 1.22s

@@ -1,0 +1,115 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 1,
+ "findings": ["CORE-001", "CORE-002", "CORE-003", "CORE-005"],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "4033c220ab455927b6a781eb3bf9d4e46e33a8ea",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_was_already_seen": [
+  "the audit reproductions only: CORE-001 affine fit to quadratic truth (chi2 8204 on 10 dof); CORE-002 a parameter with no effect on the data on a 21x21 supplied grid, and an affine posterior on a +/-0.6 sd box; CORE-003 a posterior Gaussian to 2.05 sd with chi2 rising 0.01 per sd beyond; CORE-005 a grid from data shifted by +5 under the request's dataset id",
+  "no committed evidence (TCR, FAILURE_CASES, PERFORMANCE, BATTERY_T41, KINETICS_K2) has been scored under any rule below"
+ ],
+ "threshold_classes": {
+  "A": "a mathematical guarantee under the stated model",
+  "B": "a statistical convention with a stated error rate under the stated model",
+  "C": "an engineering heuristic; recorded as such, and never described as a guarantee"
+ },
+ "rules": {
+  "goodness_of_fit": {
+   "finding": "CORE-001",
+   "statistic": "chi2_min, the sum of squared standardized residuals at the calibrated estimate (local route) or the smallest over admissible grid nodes (grid routes, an upper bound on the minimum), on dof = n - p",
+   "tests": "p = chi2.sf(chi2_min, dof) under the declared independent Gaussian noise; variance ratio v = chi2_min / dof",
+   "alpha": 0.01,
+   "alpha_class": "B",
+   "alpha_why": "the value HELD_OUT_CHI_SQUARE_ALPHA already declares for held-out validation in this repository; not chosen for this batch",
+   "refuse_variance_ratio": 4.0,
+   "refuse_variance_ratio_class": "C",
+   "refuse_variance_ratio_why": "v > 4 means the residual scatter exceeds twice the declared sigma, so the reported standard deviations are understated by more than a factor 2 even under the most charitable rescaling; a covariance that wrong is not emitted",
+   "decision": {
+    "p >= alpha": "no reason",
+    "p < alpha and v <= 4": "downgrade RESIDUALS_EXCEED_DECLARED_NOISE",
+    "p < alpha and v > 4": "refuse MODEL_MISFIT_BEYOND_DECLARED_NOISE"
+   },
+   "not_gated": "under-dispersion (p > 1 - alpha): the declared sigma is too large, the reported uncertainty is conservative, and conservatism is not false confidence",
+   "grid_routes": "a grid claim is SUPPORTED or absent, so either reason passes the grid route over (supplied or rebuilt); a local route carrying either reason is never rebuilt into a grid",
+   "record": "the chi2_min a route measured is carried in its diagnostics so the reason is re-derived on read"
+  },
+  "tail_probes": {
+   "finding": "CORE-003",
+   "where": "along every principal axis of the local covariance, both signs, at radii 3 and 6 posterior sd: 4p forward evaluations beyond the existing 2p^2",
+   "statistic": "rise ratio = (chi2(z) - chi2_min) / r^2, which is 1 for the Gaussian the route reports",
+   "direction": "only a SHORTFALL is gated: a rise below r^2 means more mass beyond r than the Gaussian reports; a rise above it means less, which makes the reported interval conservative",
+   "downgrade_below": 0.9,
+   "refuse_below": 0.5,
+   "class": "C",
+   "why_these_values": "the existing NONLINEARITY_DOWNGRADE (0.10) and NONLINEARITY_REFUSE (0.50), applied to the shortfall side only; no new number is introduced",
+   "reasons": {"refuse": "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN (refusal)", "downgrade": "TAIL_HEAVIER_WITHIN_6_SD (downgrade)"},
+   "probe_outside_declared_bounds": "not evaluated and not counted as skipped: no posterior mass lies beyond a declared bound",
+   "probe_refused_by_forward": "counted as not evaluated; the route adds NONLINEARITY_PROBE_INCOMPLETE",
+   "stated_residual": "any finite probe set can be evaded: a plateau placed strictly between probe radii, or beyond 6 sd with bounds more than about 1e6 sd away, is not seen. The claim is local by construction and the record says which radii were probed"
+  },
+  "supplied_grid_binding": {
+   "finding": "CORE-005",
+   "requires": "observations AND forward; a supplied grid without both is passed over GRID_NOT_BOUND_TO_EVIDENCE",
+   "check": "at deterministic nodes -- the grid's first and last node, its highest-likelihood node, the node nearest the calibrated estimate when a calibration is given, and four interior nodes chosen from a digest of the grid's own bytes -- the forward evaluator's admission must equal the grid's mask, and the chi2 recomputed from the forward evaluator and the observations must equal the grid's",
+   "tolerance": "|chi2_grid - chi2_forward| <= 2e-6 * sqrt(n * chi2_forward) + n * 1e-12 + 1e-9, i.e. every standardized residual agreeing to 1e-6 sd, the agreement SUPPLIED_PREDICTION_AGREEMENT_SD already declares",
+   "tolerance_class": "A (numerical agreement of one computation with itself)",
+   "on_mismatch": "HybridUQError, as HUQ-06 does for a grid over other parameters: a grid of other evidence is a malformed request, not a route to pass over",
+   "stated_residual": "a grid altered only at unchecked nodes is not caught (the HUQ-05 residual, now shared by supplied grids)"
+  },
+  "supplied_grid_containment": {
+   "finding": "CORE-002",
+   "rule": "the rebuilt grid's containment rule, EDGE_LOG_LIKELIHOOD_DROP = ln 1e6, applied to every face of a supplied tensor grid",
+   "class": "C (existing value, not new)",
+   "declared_bound_faces": "known only when a calibration is given. A supplied grid whose posterior reaches a face that is a declared bound is still passed over: truncation convergence needs refinement, which only a rebuild can do",
+   "reason": "GRID_DOES_NOT_CONTAIN_POSTERIOR",
+   "bound_dominated": "on a REBUILT grid, an axis whose posterior reaches BOTH declared bounds is passed over GRID_POSTERIOR_BOUND_DOMINATED: the data rule out no part of the declared range at the 1e-6 density level, so the width reported for it is the range's, not the data's"
+  },
+  "standalone_grid_predictive": {
+   "findings": ["CORE-002", "CORE-005"],
+   "rule": "grid_predictive_uncertainty gains keyword arguments observations=None and forward=None. With both, the grid is held to the three grid rules above and a pass keeps SUPPORTED; without them the record is DOWNGRADED with GRID_NOT_BOUND_TO_EVIDENCE"
+  }
+ },
+ "compatibility": {
+  "moves": [
+   "RouteReason gains MODEL_MISFIT_BEYOND_DECLARED_NOISE, RESIDUALS_EXCEED_DECLARED_NOISE, TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN, TAIL_HEAVIER_WITHIN_6_SD, GRID_NOT_BOUND_TO_EVIDENCE, GRID_DOES_NOT_CONTAIN_POSTERIOR, GRID_POSTERIOR_BOUND_DOMINATED",
+   "RouteDiagnostics gains trailing defaulted fields for chi2_min and the tail probes; its schema becomes hybrid_uq.route_diagnostics/2",
+   "grid_predictive_uncertainty gains two defaulted keyword arguments"
+  ],
+  "classification": "MINOR by docs/CORE_FREEZE_POLICY.md section 4 (members, fields and defaulted arguments added), but a change of claim semantics: records that were SUPPORTED can now be DOWNGRADED or REFUSED",
+  "consequence": "the Core Freeze V3 verifier's vocabulary and frozen-surface checks fail on this batch by design; the batch is certified in Core Freeze V4, after batches 2 and 3",
+  "legacy_records": "a hybrid_uq.route_diagnostics/1 record carries no chi2_min, so a goodness-of-fit reason cannot be re-derived from it; such a record is refused on read unless its route was REFUSED before measuring anything"
+ },
+ "what_will_be_reported_after_implementation": [
+  "every batch-1 regression test, seen failing on the baseline commit and passing after",
+  "tests/hybrid_uq, tests/inference, tests/test_k3_predictive_uq.py and tests/test_k4_model_adequacy.py, with every changed assertion listed and explained",
+  "the cheap committed evidence (TCR, FAILURE_CASES, PERFORMANCE) re-scored under these rules, with every changed claim listed; BATTERY_T41 and KINETICS_K2 marked as the audit round marked them if not regenerated"
+ ],
+ "amendments": "any change to a value or rule above after the first scoring is recorded here as a dated amendment with the result that prompted it, never edited in place",
+ "amendment_log": [
+  {
+   "id": 1,
+   "date": "2026-09-16",
+   "changes": "compatibility.legacy_records",
+   "was": "a hybrid_uq.route_diagnostics/1 record is refused on read unless its route was REFUSED before measuring anything",
+   "now": "every hybrid_uq.route_diagnostics/1 record is refused on read",
+   "why": "found while writing the read-back test, before any committed evidence was scored: every record must carry the canonical threshold set, which now includes the batch-1 thresholds, so the exemption could not hold. No threshold value or gating rule changed"
+  },
+  {
+   "id": 2,
+   "date": "2026-09-16",
+   "changes": "rules.supplied_grid_binding.tolerance",
+   "was": "|chi2_grid - chi2_forward| <= 2e-6 * sqrt(n * chi2_forward) + n * 1e-12 + 1e-9",
+   "now": "the same, plus 64 * eps * (|log normalizer| + |log-likelihood| + chi2_forward + n)",
+   "why": "a clarification written with the implementation, before any test ran against it: the grid's chi-square is recovered from its log-likelihood by subtracting the Gaussian normalizer, whose float64 roundoff scales with its magnitude and was not in the stated bound. Class A: agreement of one computation with itself"
+  },
+  {
+   "id": 3,
+   "date": "2026-09-16",
+   "changes": "rules.standalone_grid_predictive and compatibility.moves",
+   "was": "grid_predictive_uncertainty gains two defaulted keyword arguments, observations and forward",
+   "now": "three: observations, forward and calibration (default None); calibration supplies the declared bounds the containment rule names in its refusal",
+   "why": "written with the implementation: the router's containment check reads declared bounds from the calibration, and the standalone function applies the same check. No threshold or gating rule changed"
+  }
+ ]
+}

@@ -192,6 +192,13 @@ def test_a_region_mean_is_taken_over_a_declared_region():
         mesh_fingerprint=m.fingerprint(),
         unit=KELVIN,
         region_id=region.region_id,
+        # R-73 (I-25 part B): a region-mean operator declares the region's CONTENT, not only its label.
+        # The same operator, digest and region id used to return the mean of the left edge or the right
+        # edge depending on which MeshRegion object was handed over -- and the region is what decides
+        # which nodes are averaged. What this test is about, that the mean is taken over the declared
+        # region, is unchanged.
+        region_mesh_id=region.mesh_id,
+        region_edge=region.edge.value,
     )
     got = operator.apply(m, ramp(m), region=region)
     # left edge is x = 0, so T = 300 + 500*y averaged over y in [0, 0.04]

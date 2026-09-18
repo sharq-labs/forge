@@ -1,0 +1,77 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 32,
+ "improvements": [
+  "I-07 part A of two"
+ ],
+ "problems_addressed": [
+  "R-30",
+  "R-29"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "75872dca",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "I-07 is three problems about the grid evidence binding. This part is the two REFUSAL-SHAPING ones: R-30, where a binding mismatch at solver-tolerance level aborts the whole request instead of passing the grid over, and R-29, where a grid that is uniform to within 4% and whose moments are unchanged is refused on a raw step deviation. Part B is R-19, the spot-check sampling itself -- which rows are re-evaluated and whether the supplier can predict them -- separated because it changes what the check COSTS and needs its own detection-probability argument, and because a batch that changes both which nodes are checked and what happens when one disagrees cannot be read.",
+ "reach": "LIBRARY_ONLY for both. The production calibration study supplies a grid it built itself in the same process, so the binding it faces is its own; the MCP tools supply no grid at all. R-30 is nevertheless the shape that turns a recoverable request into a crash, and R-29 the shape that refuses a correct one -- both at the core, because both decide what a caller is allowed to have computed.",
+ "what_was_already_seen": {
+  "R-30": "the audit's finding 26, reproduced at 294c129. The chi-square agreement tolerance is about 1e-6 sigma per residual. A table from a solver converged to 1e-9 relative, against observations with sigma about 1e-4 relative, differs from a second forward evaluation by more than that, and `require_grid_is_this_evidence` raises `HybridUQError` from inside `route_uncertainty` -- which is called OUTSIDE any try, so the router never reaches the local route. The same request without the grid is LOCAL_GAUSSIAN SUPPORTED. The message printed the two chi-squares as equal: 'implies chi-square 1064.66; the forward evaluator and the request's observations give 1064.66'.",
+  "R-29": "the audit's finding 25, reproduced at 294c129. Uniformity is judged per step: the worst deviation from the mean step must be at most 1e-6 of it. A LOG-declared parameter whose supplied grid is evenly spaced in NATURAL units over plus or minus 2% has a prior density varying about 4% across the box, and is PASSED_OVER with 'largest step deviation 0.0201 of the mean step' -- while its moments equal the accepted log-spaced grid's to six digits: mean 0.19957772 against 0.19957611, sd 0.00056666 against 0.00056666."
+ },
+ "rules": {
+  "a_binding_mismatch_passes_the_grid_over": {
+   "improvement": "I-07",
+   "problem": "R-30",
+   "rule": "A new `grid_is_this_evidence(grid, calibration, observations, forward)` performs the same checks and RETURNS `(RouteReason.GRID_NOT_THIS_EVIDENCE, detail)` instead of raising. `supplied_grid_problem` and the router's supplied-grid path call it, so a mismatch is recorded as PASSED_OVER with its own reason and the router goes on to the local route. `require_grid_is_this_evidence` keeps its name, its signature and its raising behaviour.",
+   "class": "A",
+   "why": "Not a threshold: a control-flow decision, and the router's own stated design is that a route which cannot stand is PASSED_OVER with a reason while the request continues. Every other grid finding in this module already returns a reason -- prior uniformity, goodness of fit, containment, admissibility truncation, mode resolution -- and the binding was the one that raised, for no reason the module states. A grid that is not this request's evidence is a fact about the GRID, not about the request: the request may still be answerable, and the audited case proves it is (LOCAL_GAUSSIAN SUPPORTED without the grid).",
+   "compatibility": "`require_grid_is_this_evidence` is unchanged and still raises, and `engcore.hybrid_uq.predictive` keeps calling it. That asymmetry is deliberate: a predictive request built ON a supplied posterior has no local route to fall back to, so there the mismatch IS about the request. A new `RouteReason` member is additive.",
+   "closes": "the aborted request."
+  },
+  "a_mismatch_is_reported_in_units_a_reader_can_act_on": {
+   "improvement": "I-07",
+   "problem": "R-30",
+   "rule": "The detail states the two chi-squares to 17 significant digits (`repr` of the float), their difference, the tolerance it was compared against, and the difference expressed in standardized-residual sigma as `|dchi| / (2 sqrt(n chi))`.",
+   "class": "A",
+   "why": "The audited message printed both numbers as 1064.66 because it formatted them to six significant figures, and the disagreement was at the twelfth. A refusal whose two numbers print identically cannot be acted on at all -- it reads as a bug in the checker rather than a statement about the grid. Seventeen digits is not a choice: it is the number at which a float64 round-trips, so the message shows what the comparison actually saw. The sigma form is the unit the TOLERANCE is stated in, so a reader can see how far outside it the grid is.",
+   "closes": "the message."
+  },
+  "prior_uniformity_is_judged_by_what_the_node_density_would_move": {
+   "improvement": "I-07",
+   "problem": "R-29",
+   "rule": "The per-step deviation refusal is replaced by a MOMENT-EFFECT bound. Each node is given the midpoint-rule cell volume of its position in the inference coordinate (the product over axes of `(a[k+1] - a[k-1]) / 2`, with half-cells at the ends), the posterior is re-weighted by it, and the axis mean and sd are recomputed. The grid is refused only when a mean moves by more than `PRIOR_REWEIGHT_MOMENT_SD` of that axis's unweighted sd, or an sd moves by more than the same fraction of itself. The LOG-axis refusal for non-positive nodes is unchanged.",
+   "class": "B",
+   "value": "PRIOR_REWEIGHT_MOMENT_SD = 0.05",
+   "why": "The number is not new: 0.05 sd is `TRUNCATION_CONVERGENCE_SD`, the resolution at which this repository ALREADY declares a moment to have stopped moving -- the router uses it to decide that halving the steps of a truncated axis has converged. Reusing it here is the same statement about the same kind of quantity: the undeclared prior a node density carries matters exactly when it moves a reported moment by more than the resolution at which this core calls a moment unchanged. Class B rather than A because 0.05 sd is a convention about what counts as a difference, not an identity; it is the repository's own existing convention and it is not being chosen here for the first time. It is NOT imported from the router, because `_grid_evidence` is imported by the router and the dependency cannot run the other way; the two are kept numerically equal and the relationship is written down at both.",
+   "what_it_refuses_that_the_old_rule_did_not": "nothing structurally, but it refuses on the effect rather than the spelling: a grid whose nodes are evenly spaced to 1e-9 in the WRONG coordinate now passes the step test and is caught by the moment test if and only if the reweighting moves a moment. The old rule would also have refused it. The direction that changes is the other one.",
+   "compatibility": "A grid previously refused for a step deviation whose reweighting moves no moment is now USED. That is the audited case: a natural-linspace grid on a LOG axis, moments matching the accepted grid to six digits. This is a claim newly ALLOWED, which is the one direction this round is normally careful about -- so the moment test is the bound, the reweighting is computed rather than assumed, and the detail records how far the moments actually moved."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new `RouteReason` member (`GRID_NOT_THIS_EVIDENCE`, a refusal of the grid route), one new public function beside the one it does not replace (`grid_is_this_evidence`), one new module constant (`PRIOR_REWEIGHT_MOMENT_SD`). No signature, field, default or existing enum member changes. `UNIFORM_STEP_RELATIVE_TOLERANCE` keeps its name and value; it is no longer the refusal and that is stated at its definition.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "The moment-effect test measures the reweighting's effect on the FIRST TWO moments of each axis marginal. A node density that leaves both alone and distorts a tail, or a correlation, is not caught. The first two moments are what a grid route REPORTS, so they are what the rule is about -- but a reader should not read this as 'the prior is uniform'.",
+  "The midpoint-rule cell volume is the obvious discretisation of node density and is exact for a uniform axis. On a wildly non-uniform axis it is itself an approximation, so the rule's own measurement has an error; it is far below 0.05 sd for any grid this core would otherwise accept, and it is stated rather than ignored.",
+  "R-19 is untouched here: which nodes are re-evaluated, and the fact that the supplier chooses them, is part B. Until it lands, a supplier who keeps the checked rows honest can still sharpen the bulk -- and now gets PASSED_OVER rather than a raise when caught, which is the point of this part and not a weakening of that one."
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. The refusal's message leads with its CONCLUSION rather than ending with it, and three existing expectations moved.",
+   "the_numbers_that_forced_it": "The recorded `considered` row truncates a detail to 400 characters. With the 17-digit numbers rule 2 requires, the sentence 'A grid computed from other data or another model is not this request's evidence' fell off the end -- CORE-005's own original test asserts that phrase and failed on a message that still contained it, 420 characters in. A conclusion a reader never sees is not a conclusion, so the message now opens with 'the grid is not this request's evidence:' and the numbers follow.",
+   "existing_expectations_moved": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch1.py::test_core005_a_grid_computed_from_other_data_under_the_same_id_is_refused -- asserted `pytest.raises`; now asserts the PASSED_OVER row and its reason, with the change explained in place.",
+    "tests/hybrid_uq/test_core_scientific_audit_batch1.py::test_a_grid_whose_admission_disagrees_with_the_forward_model_is_refused -- the same.",
+    "tests/hybrid_uq/test_audit_hybrid_grid_route.py::test_huq06_a_grid_for_other_data_is_not_routed_for_this_request -- the same for its content half; its LABEL half still raises, deliberately, because that guard refuses before any content is looked at and the two are different statements."
+   ],
+   "note": "None of the three is weakened: the grid is still refused and the reason is still named. What moved is whether the REQUEST survives, which is the finding.",
+   "one_deliberate_survivor": {
+    "id": "B32h",
+    "rule": "the midpoint-rule cell volume's factor of two",
+    "why": "Doubling the interior cell widths and leaving the ends alone rescales the reweighting almost uniformly, and the measured shift of a heaped grid stays far above 0.05 sd -- so the control still refuses it and no test in this repository distinguishes the two. It is a defect in the rule's own measurement rather than in its verdict, and the honest record is to declare it rather than to invent a fixture tuned to a factor of two. `expect=\"SURVIVED\"` makes a kill the failure."
+   }
+  }
+ ]
+}

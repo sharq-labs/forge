@@ -93,10 +93,15 @@ class MissingUnitError(ProblemPayloadError):
 
 
 class WrongDimensionError(ProblemPayloadError):
-    """A quantity parsed, and its dimension is not the one the field needs.
+    """A quantity parsed, and its unit is not one this field can accept.
 
-    Carries **both** dimensions, because "expected a temperature" is not
-    actionable when the caller believes they supplied one.
+    Either the DIMENSION is wrong, or -- on an offset temperature scale -- the
+    SCALE is: a ``delta_degC`` difference declared where an absolute
+    temperature is required has the right dimension and the right size, and is
+    still 273.15 K away from what the caller meant (I-22, R-75).
+
+    Carries **both** sides in either case, because "expected a temperature" is
+    not actionable when the caller believes they supplied one.
     """
 
 

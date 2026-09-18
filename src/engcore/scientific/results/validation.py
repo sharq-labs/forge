@@ -34,10 +34,19 @@ from typing import Any, Mapping
 
 from ..sequences import duplicates
 from ..errors import ScientificValidationError
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 
 CHECK_SCHEMA = schema_string("validation_check")
-REPORT_SCHEMA = schema_string("validation_report")
+
+#: R-45 (re-audit 2026-09-16): `/2` because CORE-013 changed what `status` MEANS. The precedence went from
+#: FAIL > WARNING > PASS > NOT_RUN to FAIL > NOT_RUN > WARNING > PASS, under an unchanged schema string, and
+#: `from_dict` compares a stored status with the recomputed one -- so every report the older tree wrote with a
+#: PASS and a NOT_RUN check -- the ordinary shape of a solve that verified what it could and left one
+#: comparison ungathered -- was refused
+#: on read as a contradiction. A version string is the only place a reader can learn that a field's meaning
+#: changed, and `/1` payloads are read under the precedence they were written with.
+REPORT_SCHEMA = schema_string("validation_report", 2)
+LEGACY_REPORT_SCHEMA = schema_string("validation_report")
 
 
 def compared_something(
@@ -94,7 +103,18 @@ def comparison_met_its_bound(
     hat. A quantity that cannot be ordered against its bound was not compared
     to it.
 
-    ``True`` -- both numbers are finite and ``residual <= tolerance``.
+    ``True`` -- both numbers are finite and ``abs(residual) <= tolerance``.
+
+    **The DISTANCE, not the signed number** (R-46, re-audit 2026-09-16). This
+    was written ``residual <= tolerance``, and a tolerance bounds how far a
+    measured quantity may stand from its reference: a residual of -10 stands
+    10 away. Under the signed form the bound could not be missed from below at
+    all, so the defect this module's docstring describes -- a PASS seven orders
+    outside its own bound, carrying a level all the way to a SUPPORTED verdict
+    -- came straight back with a minus sign, and a negative tolerance that no
+    magnitude can meet was accepted beside it. Every gate in this repository
+    already passes an ``abs`` value in, so what changes is the rule, not the
+    numbers any of them report.
     """
     if residual is None or tolerance is None:
         return None
@@ -102,7 +122,7 @@ def comparison_met_its_bound(
     tolerance = float(tolerance)
     if not (math.isfinite(residual) and math.isfinite(tolerance)):
         return False
-    return residual <= tolerance
+    return abs(residual) <= tolerance
 
 
 def outcome_is_earned(
@@ -244,6 +264,142 @@ def _issuer_gap(
         ValidationLevel.EXPERIMENTALLY_VALIDATED,
     ):
         return _oracle_issuer_gap(level, residual, tolerance, tuple(evidence))
+    if level is ValidationLevel.ANALYTICALLY_VERIFIED:
+        # TWO legitimate issuers, which is what the audit's fix direction asks for: "a pinned oracle
+        # record OR a declared threshold set". A pinned ANALYTIC_REFERENCE oracle awards this level
+        # through `_LEVEL_BY_KIND`, and a domain gate awards it against a registered closed form.
+        # An `oracle:` line says which rule the record is claiming, so the two cannot be mixed to
+        # satisfy neither.
+        if any(isinstance(line, str) and line.startswith("oracle:") for line in evidence):
+            return _oracle_issuer_gap(level, residual, tolerance, tuple(evidence))
+        return _analytic_issuer_gap(tuple(evidence))
+    return None
+
+
+#: Where the domain layer pins the closed forms it stands behind (R-04, core re-audit 2026-09-16).
+#: Read by name, like the threshold and route declarations, so the core never learns what is in it.
+ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE = "SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS"
+
+#: How an analytic reference's issuer names it in a check's evidence: ``"<reference id>: <expression>"``.
+#: The producers already wrote exactly this line; what was missing was anything that CHECKED it.
+ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR = ": "
+
+
+def _analytic_references() -> Mapping[str, Any]:
+    """The domain layer's pinned analytic references, or none if it pins none."""
+    import importlib
+
+    try:
+        package = importlib.import_module(f"{__name__.split('.')[0]}.domains")
+    except ImportError:  # pragma: no cover - an installation without its domains
+        return {}
+    table = getattr(package, ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE, None)
+    return table if isinstance(table, Mapping) else {}
+
+
+def _threshold_declarations() -> Mapping[str, Any]:
+    """The domain layer's pinned verification gates, read the way the thresholds module reads them."""
+    from .thresholds import _declarations
+
+    return _declarations()
+
+
+def _analytic_issuer_gap(evidence: tuple[str, ...]) -> str | None:
+    """Why a check claiming ANALYTICALLY_VERIFIED names no verifiable issuer, or ``None``.
+
+    R-04 (core re-audit 2026-09-16). An issuer record was required for only the three levels above
+    this one, and this one needed nothing but GUARD 2's "something was compared" -- where a sentence
+    is something. ``ValidationCheck(PASS, establishes=ANALYTICALLY_VERIFIED, evidence=("trust me",))``
+    was constructed, attained, survived ``from_dict`` and carried a SUPPORTED verdict, while the very
+    same construction claiming BENCHMARK_VALIDATED was refused. And every SUPPORTED report either MCP
+    tool can return rests on exactly this level.
+
+    The rule is the oracle rule's shape and the consensus rule's second half, neither invented here:
+
+    1. the check names exactly one analytic reference, as ``"<reference id>: <expression>"`` --
+       which is the line all three producers already wrote;
+    2. that reference is REGISTERED by the domain layer, because a reference id is a public string
+       and was never proof of anything;
+    3. the expression the check names is the registered expression, byte for byte -- what makes the
+       level meaningful is WHICH closed form the solve was compared against;
+    4. the check names exactly one threshold record, of the gate the registration says awards this
+       reference's level, and that record is that gate's declared set: the level belongs to the
+       domain that awards it, and a set that is not the domain's own awards nothing.
+
+    **Why the expression and not a digest of it.** The oracle rule requires a content digest because
+    an oracle's evidence is data the caller does not hold, so the digest binds the claim to something
+    outside the check. An analytic reference's expression is *in the source*, and a digest of a public
+    value carries no more authority than the value: anyone who can copy one can copy the other. So the
+    authority here is the registry (this id is one the repository stands behind) and the declared
+    threshold set (which a caller cannot forge), and the expression is compared in full rather than
+    through a digest that would add a step and no strength.
+
+    This also means no producer has to write a new evidence line, which matters: everything under
+    ``src/engcore/domains/thermal/`` is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments,
+    whose claim is that their measured bias is a property of *that* solver. That pin is evidence this
+    work has no authority to spend, so the rule is written to the records the producers already keep.
+
+    What this cannot do is tell an issued record from a faithful copy of one, which is
+    :func:`_issuer_gap`'s own residual, verbatim: a check copied from a genuine solve onto another
+    result carries a genuine record, and closing that needs the record bound to the result it
+    qualifies, which the frozen shape of this check has no field for.
+    """
+    references = _analytic_references()
+    named = [
+        line.split(ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR, 1)
+        for line in evidence
+        if isinstance(line, str) and ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR in line
+        and line.split(ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR, 1)[0] in references
+    ]
+    if len(named) != 1:
+        return (
+            f"it names no single analytic reference this layer pins; the registry holds "
+            f"{sorted(references)}"
+        )
+    reference_id, expression = named[0]
+    declaration = references[reference_id]
+    if not isinstance(declaration, Mapping):
+        return f"analytic reference {reference_id!r} is not pinned by the analytic reference registry"
+    if expression != declaration.get("expression"):
+        return (
+            f"the closed form it names for {reference_id!r} is not the registered one: the level says "
+            f"a solve agreed with a specific closed form, and this is a different statement"
+        )
+    gate_id = declaration.get("thresholds_gate")
+    records = [
+        line[len("thresholds:"):]
+        for line in evidence
+        if isinstance(line, str) and line.startswith("thresholds:")
+    ]
+    if len(records) != 1:
+        return (
+            f"it carries no single verification threshold record; {reference_id!r}'s level is awarded "
+            f"by gate {gate_id!r} and a check that does not say which numbers it was judged against "
+            f"has not said the gate judged it"
+        )
+    # ONE comparison, against the domain layer's pin -- not an object rebuilt from the evidence, and
+    # not three checks where one does the work.
+    #
+    # `VerificationThresholds.evidence()` writes `thresholds:<gate>@<version>#<fingerprint>`, where
+    # the fingerprint is the first 16 hex of the values digest and a caller's override carries
+    # `+override.<marker>` in its version. The expected string is built from the gate the REGISTRY
+    # names for this reference, so a record naming another gate, another version, or other numbers
+    # fails the same comparison -- which is why there is one. The first draft had three, and the
+    # batch-9 mutation run showed two of them were dead: removing either left the third catching
+    # every case, because all three were compared against the registry's gate rather than the
+    # record's own. That is the same four steps `_verified_against_declaration` applies -- registered
+    # gate, registered version, registered values digest, not an override -- read off the line.
+    declared_gate = _threshold_declarations().get(gate_id)
+    if not isinstance(declared_gate, Mapping):
+        return f"gate {gate_id!r} is not pinned by the verification threshold registry"
+    pinned = str(declared_gate.get("threshold_digest") or "")
+    expected = f"{gate_id}@{declared_gate.get('version')}#{pinned[:16]}"
+    if records[0] != expected:
+        return (
+            f"its threshold record is {records[0]!r}; the set {gate_id!r} declares is {expected!r}. A "
+            f"record naming another gate, another version of it, or other numbers is a threshold "
+            f"specification and not the awarding gate's own, and awards nothing"
+        )
     return None
 
 
@@ -257,7 +413,12 @@ def _consensus_issuer_gap(
     residual: float | None, tolerance: float | None, evidence: tuple[str, ...]
 ) -> str | None:
     """The record ``CrossSolverConsensus.to_check`` writes, re-verified."""
-    from ..consensus import CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX, _route_declarations
+    from ..consensus import (
+        CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX,
+        INDEPENDENCE_BASES,
+        INDEPENDENCE_BASIS_EVIDENCE_PREFIX,
+        _route_declarations,
+    )
     from .thresholds import VerificationThresholds
 
     records = [
@@ -267,6 +428,21 @@ def _consensus_issuer_gap(
     ]
     if len(records) != 1:
         return "it carries no single consensus threshold record"
+    # R-21 (I-12 part B): WHICH independence the level rests on. The level was awarded on declared
+    # independence and on byte-verified artifact independence alike, and a reader could not tell the two
+    # apart -- the gate that requires the bytes had no caller. Exactly one of the two enumerated bases, so a
+    # check can neither omit the statement nor claim both.
+    bases = [
+        line[len(INDEPENDENCE_BASIS_EVIDENCE_PREFIX):]
+        for line in evidence
+        if isinstance(line, str) and line.startswith(INDEPENDENCE_BASIS_EVIDENCE_PREFIX)
+    ]
+    if len(bases) != 1 or bases[0] not in INDEPENDENCE_BASES:
+        return (
+            f"it names no single independence basis out of {list(INDEPENDENCE_BASES)}: a level earned from "
+            f"declarations the domain layer pins and a level earned from the artifacts' own bytes are not "
+            f"the same claim, and a reader cannot tell them apart from the level alone"
+        )
     try:
         record = json.loads(records[0])
         thresholds = VerificationThresholds(
@@ -363,6 +539,13 @@ class ValidationOutcome(str, Enum):
     FAIL = "fail"
     WARNING = "warning"
     NOT_RUN = "not_run"
+    #: R-45: there was no way to say "there was nothing here to check". NOT_RUN means the evidence was not
+    #: gathered, which is why CORE-013 put it above PASS -- a report must not pass on the strength of a check
+    #: nobody performed. "This circuit has no voltage source" is a different statement: there is no evidence
+    #: to gather and no claim left unbacked by its absence. Collapsing the two made every report holding one
+    #: permanently NOT_RUN, which is what made SRIA report that validation was never run about a report in
+    #: which everything applicable ran and passed. Appended: the member order is frozen.
+    NOT_APPLICABLE = "not_applicable"
 
 
 class ValidationLevel(str, Enum):
@@ -386,6 +569,73 @@ class ValidationLevel(str, Enum):
     BENCHMARK_VALIDATED = "benchmark_validated"
     CROSS_SOLVER_VALIDATED = "cross_solver_validated"
     EXPERIMENTALLY_VALIDATED = "experimentally_validated"
+
+
+#: CORE-008: the levels that compare a result with something outside the model that produced it.
+#:
+#: R-39 (re-audit 2026-09-16, I-12 part A): CROSS_SOLVER_VALIDATED is NOT one of them, and used to be.
+#: Agreement between two solvers of ONE declared model compares two implementations, not the model with
+#: anything outside itself -- and the classification contradicted three statements this tree already makes
+#: about itself. `evidence_basis` below defines these levels as the ones that "compare it with something
+#: outside itself". `scientific/consensus.py` says two routes may "realize the same mathematical
+#: formulation" and still count as independent, because only shared ARITHMETIC is excluded:
+#: `SOLVER_INDEPENDENCE_DIMENSIONS` leaves the PROBLEM DECLARATION out, and that module's own docstring says
+#: a declaration error "is invisible to every route that reads it". Each pinned pair of routes shares its
+#: declaration, and the consensus record itself lists that declaration as a SHARED dependency; each pair
+#: solves the same declared relations, which the declaring layer states are SELF_CONSISTENT and neither
+#: benchmark- nor experimentally validated. So a result whose only other levels were dimensional validity
+#: and numerical convergence moved from VERIFICATION_ONLY to VALIDATED the moment a cross-solver check was
+#: attached -- and a model declared with a wrong parameter value read VALIDATED, because both solvers agree
+#: about the wrong model. The level itself is unchanged and still says exactly what it said; what changed is
+#: the KIND of evidence it is counted as. The instances are named in
+#: `docs/audits/CORE_REAUDIT_2026-09-16.md`, which is where this core is allowed to know about them.
+VALIDATION_LEVELS = frozenset({
+    ValidationLevel.BENCHMARK_VALIDATED,
+    ValidationLevel.EXPERIMENTALLY_VALIDATED,
+})
+
+#: The other kind: levels that say the DECLARED MODEL was solved correctly. Named rather than left as
+#: "everything else" (R-39) because that is how a level ended up in the wrong group -- one kind was a set and
+#: the other was the remainder, so a member added later was silently verification and nobody had to decide.
+VERIFICATION_LEVELS = frozenset({
+    ValidationLevel.DIMENSIONALLY_VALID,
+    ValidationLevel.NUMERICALLY_CONVERGED,
+    ValidationLevel.ANALYTICALLY_VERIFIED,
+    ValidationLevel.CROSS_SOLVER_VALIDATED,
+})
+
+
+def _require_every_level_is_classified() -> None:
+    """Refuse to import while any level is in both kinds, in neither, or both at once (R-39).
+
+    The same discipline ``mcp/server.py::_audit_tables`` applies to the verdict tables, for the same reason:
+    a member nobody classified reaches a reader as one kind by default, and the default was wrong once
+    already. UNVERIFIED is the sentinel and is in neither set -- ``ValidationCheck`` refuses it, so no check
+    can establish it and no attained-level computation can see it.
+    """
+    overlap = VALIDATION_LEVELS & VERIFICATION_LEVELS
+    if overlap:
+        raise ScientificValidationError(
+            f"levels {sorted(level.value for level in overlap)} are both validation and verification"
+        )
+    classified = VALIDATION_LEVELS | VERIFICATION_LEVELS
+    if ValidationLevel.UNVERIFIED in classified:
+        raise ScientificValidationError(
+            "UNVERIFIED is the absence of verification and is neither kind of evidence"
+        )
+    unclassified = {
+        level for level in ValidationLevel if level is not ValidationLevel.UNVERIFIED
+    } - classified
+    if unclassified:
+        raise ScientificValidationError(
+            f"levels {sorted(level.value for level in unclassified)} are neither validation nor "
+            f"verification: a level nobody classified reaches a reader as one of them by default, and "
+            f"`evidence_basis` would say which kind of evidence a report holds without anybody having "
+            f"decided"
+        )
+
+
+_require_every_level_is_classified()
 
 
 @dataclass(frozen=True)
@@ -431,6 +681,17 @@ class ValidationCheck:
             # residual check and the resistance admissibility bound already do,
             # and `unverified_report` builds a NOT_RUN check with no level at
             # all.
+            # R-45: and neither can a check that did not apply. The level would be backed by the absence
+            # of anything to check, which is the same category error as establishing UNVERIFIED, one field
+            # over. Refused here for the same reason: a value that cannot be built cannot be read
+            # inconsistently.
+            if ValidationOutcome(self.outcome) is ValidationOutcome.NOT_APPLICABLE and establishes is not None:
+                raise ScientificValidationError(
+                    f"validation check {str(self.name).strip()!r} reports NOT_APPLICABLE and declares "
+                    f"establishes={establishes.value}. A check that did not apply established nothing: there "
+                    f"was no evidence to gather, so there is nothing for a level to rest on. Leave establishes "
+                    f"unset, which is how a check says it earned nothing"
+                )
             if establishes is ValidationLevel.UNVERIFIED:
                 raise ScientificValidationError(
                     f"validation check {str(self.name).strip()!r} declares "
@@ -474,6 +735,24 @@ class ValidationCheck:
             object.__setattr__(self, "residual", float(self.residual))
         if self.tolerance is not None:
             object.__setattr__(self, "tolerance", float(self.tolerance))
+            # R-46, every outcome. No magnitude can be at most a negative
+            # number, so a negative tolerance is a bound nothing satisfies and
+            # the comparison it belongs to has no content. Refused for a FAIL
+            # and a NOT_RUN as well as for the outcomes that claim something:
+            # a FAIL against a bound that cannot be met is not a finding about
+            # the model, and the field is read by consumers -- the threshold
+            # pins, the SRIA budgets -- that never look at the outcome. Refused
+            # here for the reason stated three times above: a value that cannot
+            # be built cannot be read inconsistently.
+            if self.tolerance < 0.0:
+                raise ScientificValidationError(
+                    f"validation check {self.name!r} carries tolerance="
+                    f"{self.tolerance!r}. A tolerance bounds how far a measured "
+                    f"quantity may stand from its reference, and no distance is "
+                    f"at most a negative number: this is a bound nothing can "
+                    f"meet, so the comparison it belongs to says nothing either "
+                    f"way. Record the bound as the magnitude it is"
+                )
         # GUARD 21, enforced. Last, because it reads the two numbers and wants
         # them coerced to float first.
         #
@@ -767,22 +1046,51 @@ class ValidationReport:
     # ---- derived state --------------------------------------------------
     @property
     def status(self) -> ValidationOutcome:
-        """Aggregate outcome. FAIL dominates; an empty report is NOT_RUN.
+        """Aggregate outcome. FAIL dominates, then NOT_RUN; an empty report is NOT_RUN.
 
         The comparison rule is re-applied here for the reason it is re-applied
         on :attr:`attained_levels`, one field over. GUARD 2 is about levels, so
         it is re-read where a level becomes a claim; GUARD 21 is about
         *outcomes*, and this is where an outcome becomes one.
+
+        CORE-013 (scientific core audit 2026-09-16): a check that never ran
+        outranks a warning and a pass. The order used to be FAIL > WARNING >
+        PASS > NOT_RUN, so one passing mesh-convergence check reported PASS
+        over an experimental comparison that was never made. ``is_usable``
+        reads only "not FAIL" and is unchanged.
         """
         self._require_no_check_contradicts_its_numbers()
-        outcomes = {c.outcome for c in self.checks}
+        # R-45: a check that did not apply is not part of the precedence at all. It gathers no evidence and
+        # leaves no claim unbacked, so it can neither lower the status nor raise it. A report of nothing but
+        # inapplicable checks established nothing, which is the empty report's own answer: NOT_RUN.
+        outcomes = {c.outcome for c in self.checks} - {ValidationOutcome.NOT_APPLICABLE}
         if ValidationOutcome.FAIL in outcomes:
             return ValidationOutcome.FAIL
+        if ValidationOutcome.NOT_RUN in outcomes or not outcomes:
+            return ValidationOutcome.NOT_RUN
         if ValidationOutcome.WARNING in outcomes:
             return ValidationOutcome.WARNING
-        if ValidationOutcome.PASS in outcomes:
-            return ValidationOutcome.PASS
-        return ValidationOutcome.NOT_RUN
+        return ValidationOutcome.PASS
+
+    @property
+    def evidence_basis(self) -> str:
+        """``VALIDATED``, ``VERIFICATION_ONLY`` or ``NONE``: what kind of evidence the attained levels are (CORE-008).
+
+        Dimensional validity, numerical convergence, analytic verification and agreement between two solvers of
+        the same declared model say the declared model was solved correctly. Benchmark and experimental
+        validation compare it with something outside itself. A verdict resting on the first kind alone is a
+        statement about the solution, not about the world, and this says which kind a report holds so no reader
+        has to infer it from level names.
+
+        R-39 (re-audit 2026-09-16): cross-solver agreement moved from the second group to the first. See
+        :data:`VALIDATION_LEVELS` for why, in this tree's own words.
+        """
+        attained = self.attained_levels
+        if attained & VALIDATION_LEVELS:
+            return "VALIDATED"
+        if attained:
+            return "VERIFICATION_ONLY"
+        return "NONE"
 
     @property
     def attained_levels(self) -> frozenset[ValidationLevel]:
@@ -822,6 +1130,11 @@ class ValidationReport:
     def not_run(self) -> tuple[ValidationCheck, ...]:
         return tuple(c for c in self.checks if c.outcome is ValidationOutcome.NOT_RUN)
 
+    @property
+    def not_applicable(self) -> tuple[ValidationCheck, ...]:
+        """The checks that had nothing to check (R-45), which `not_run` deliberately does not name."""
+        return tuple(c for c in self.checks if c.outcome is ValidationOutcome.NOT_APPLICABLE)
+
     def with_check(self, check: ValidationCheck) -> "ValidationReport":
         return ValidationReport(checks=(*self.checks, check), notes=self.notes)
 
@@ -844,7 +1157,7 @@ class ValidationReport:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationReport":
-        require_schema(payload, REPORT_SCHEMA)
+        version = require_schema_any(payload, (REPORT_SCHEMA, LEGACY_REPORT_SCHEMA))
         report = cls(
             checks=tuple(
                 ValidationCheck.from_dict(c) for c in payload.get("checks", ())
@@ -860,6 +1173,10 @@ class ValidationReport:
         # compared at all, so PASS could be written over a FAIL. A payload
         # without the keys is read as written; one that states them must state
         # what its checks produce.
+        # R-45: a `/1` record's status is resolved against the precedence its version names, BEFORE the
+        # comparison below, which is left exactly as it was for every record written since the bump.
+        if version == LEGACY_REPORT_SCHEMA:
+            payload = _legacy_status_read(payload, report)
         if "attained_levels" in payload:
             declared = set(payload.get("attained_levels") or ())
             recomputed = {l.value for l in report.attained_levels}
@@ -874,6 +1191,50 @@ class ValidationReport:
                 f"status its checks produce ({report.status.value!r})"
             )
         return report
+
+
+def _legacy_status(checks) -> ValidationOutcome:
+    """The pre-CORE-013 precedence: FAIL > WARNING > PASS > NOT_RUN, and an empty report is NOT_RUN.
+
+    Kept as executable code rather than as a sentence in a changelog, because it is what a stored
+    `validation_report/1` status MEANS: a record is honest if it says what its writer's rule said, and the
+    version names the writer's rule. Nothing in the current tree computes a status this way.
+    """
+    outcomes = {ValidationOutcome(c.outcome) for c in checks}
+    if ValidationOutcome.FAIL in outcomes:
+        return ValidationOutcome.FAIL
+    if ValidationOutcome.WARNING in outcomes:
+        return ValidationOutcome.WARNING
+    if ValidationOutcome.PASS in outcomes:
+        return ValidationOutcome.PASS
+    return ValidationOutcome.NOT_RUN
+
+
+def _legacy_status_read(payload: Mapping[str, Any], report: "ValidationReport") -> Mapping[str, Any]:
+    """A `/1` payload, with its stored status resolved against the precedence it was written under (R-45).
+
+    Three cases. It agrees with the CURRENT rule: nothing to do, and the comparison below will pass. It
+    agrees with the precedence its own version names: the record is accepted and the status DROPPED, so the
+    reader reports what the current rule gives -- the stored word is explained, not believed. It agrees with
+    neither: refused, and the message says that two precedences exist and this is neither, rather than
+    reporting a contradiction whose cause it knows.
+    """
+    if "status" not in payload:
+        return payload
+    stored = payload.get("status")
+    if stored == report.status.value:
+        return payload
+    legacy = _legacy_status(report.checks).value
+    if stored == legacy:
+        kept = dict(payload)
+        kept.pop("status")
+        return kept
+    raise ScientificValidationError(
+        f"serialized status {stored!r} in a {LEGACY_REPORT_SCHEMA} record is neither of the two precedences "
+        f"this reader knows: the precedence that version was written under gives {legacy!r}, and the current "
+        f"one gives {report.status.value!r}. A record whose status matches no rule that ever computed one "
+        f"cannot be read as the report it claims to be"
+    )
 
 
 def unverified_report(reason: str = "no validation performed") -> ValidationReport:

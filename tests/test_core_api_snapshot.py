@@ -283,7 +283,15 @@ def test_every_default_factory_is_identified_by_name():
                 f"one exists but not what it produces. Give it a name"
             )
             assert "0x" not in name, f"{name} embeds an address"
-    assert seen == 33, f"{seen} frozen fields use a default factory"
+    # 33 through Core Freeze V3; 36 at Core Freeze V4. The three that joined are trailing
+    # defaulted mappings the 2026-09-16 re-audit added, each recording the operating point a
+    # verdict was formed at: `ValidityAssessment.evaluated` (CORE-014/R-45, the binding whose loss
+    # let a result 4700 K away read IN_DOMAIN), and `GaussianObservation.conditions` and
+    # `PredictiveObservableSpec.conditions` (CORE-006/R-31, where a prediction sits relative to the
+    # conditions its calibration covered). Each is an appended field with a NAMED factory, which is
+    # the additive category the owner allowed; `additive_only_problems` in
+    # tools/certification/core_freeze_v4.py proves there is no other kind of difference.
+    assert seen == 36, f"{seen} frozen fields use a default factory"
 
 
 def test_a_changed_default_factory_moves_the_frozen_digest():

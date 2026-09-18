@@ -1,0 +1,75 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 16,
+  "improvements": [
+    "I-24"
+  ],
+  "problems_addressed": [
+    "R-56"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "100cae16",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "R-56 is REACHED IN PRODUCTION: `require_complete_boundary` is the one completeness gate on every field boundary declaration, and `engcore/domains/thermal_models/conduction2d.py` is its only production consumer -- called from `require_applicable`, which runs in `SteadyConductionProblem.__post_init__`, so every 2D conduction solve in the tree goes through it. The audited end-to-end case is a ScientificResult whose three checks all PASS, whose field maximum is 300 K, and whose problem declares a 400 K Dirichlet edge that was never imposed.",
+  "what_was_already_seen": {
+    "R-56": "finding 68, verified P2. `require_complete_boundary` promises that every edge of the support carries exactly one condition, and refuses `two conditions on one region` as a contradiction with a silent winner. It does not check edges. `by_id` is built from whatever regions the caller passes; the duplicate check (`seen`) and the completeness check (`missing = set(by_id) - set(seen)`) are both keyed by REGION ID. Three consequences, all measured: a second MeshRegion on an edge that already has one (`plate:left-flux` on LEFT beside `plate:left`) lets two contradictory conditions share that edge and is ACCEPTED; a SUBSET of regions is accepted as complete (`one of four edges conditioned, regions=(left,): ACCEPTED as complete`), and the unconditioned edges then raise `KeyError <BoundaryEdge.BOTTOM>` inside assembly rather than being refused; and the corner check only compares DIRICHLET pairs, so a Dirichlet edge plus a Neumann condition on the same edge gets through. In conduction2d, `SteadyConductionProblem.edges` is a dict comprehension keyed by edge, so the LAST condition wins; the assembly and `_worst_dirichlet_error` both read `problem.edges`, so the dropped Dirichlet condition is never imposed and never checked. The audited run printed `conditions declared: ['left_hot', 'left_insulated', 'right_cold', 'bottom', 'top']`, `conditions the solver actually uses: {'left': 'left_insulated', ...}`, `checks: [('field_finite','pass'), ('field_linear_system_residual','pass'), ('boundary_conditions_held','pass')]`, `T:max 300.00000000019827 kelvin` -- where the correct solve gives 400 K -- and a provenance `boundary_laws` entry for `left` in W/m^2."
+  },
+  "rules": {
+    "completeness_and_uniqueness_are_keyed_by_resolved_edge": {
+      "improvement": "I-24",
+      "problem": "R-56",
+      "rule": "`require_complete_boundary` resolves each condition's region to the `(mesh_id, edge)` it names and keys BOTH of its checks by that edge. Two conditions on one edge of one field are refused whatever their region ids, and whatever their kinds -- a Dirichlet edge and a Neumann condition on the same edge is the same contradiction with the same silent winner. The refusal keeps the sentence `One edge, one condition`, which is what the function already said and what its existing test reads.",
+      "why_the_edge_and_not_the_region": "a region id is a NAME a caller chose; the edge is the thing the assembly writes to. The guard's own docstring promises 'every edge of the support carries exactly one condition', and a check keyed by the name cannot see two names for one edge. `MeshRegion` already carries `mesh_id` and `edge`, so the resolution costs nothing and invents nothing.",
+      "class": "A (a key change; no threshold)"
+    },
+    "completeness_is_over_the_supports_four_edges": {
+      "improvement": "I-24",
+      "problem": "R-56",
+      "rule": "The completeness check requires a condition on EVERY member of `BoundaryEdge` for the support, not only on the edges the caller's regions happen to name. A region set that does not cover all four edges is itself the gap and the missing EDGES are named. The refusal keeps the word `under-determined`, which is what the function already said and what its existing test reads.",
+      "why": "`missing = set(by_id) - set(seen)` measures the caller's own list against itself, so a caller who passes one region and one condition is told the boundary is complete. The support has four edges whatever the caller passed, and the solver then reads all four -- which is why the audited subset case does not merely pass the gate, it crashes with a KeyError inside assembly.",
+      "the_alternative_not_taken": "requiring the caller to pass all four regions and leaving the condition check as it is. That would refuse the same cases, but it would refuse them for the wrong reason -- the defect is a boundary that is not fully conditioned, not a list that is short -- and it would say nothing about which EDGE has no condition.",
+      "class": "A"
+    },
+    "a_consumer_refuses_a_collision_instead_of_choosing_a_winner": {
+      "improvement": "I-24",
+      "problem": "R-56",
+      "rule": "`SteadyConductionProblem.edges` refuses two conditions resolving to one edge instead of building a last-wins dict. It is reached only if the core gate above somehow did not run -- the property is public and a caller may hold a problem built another way -- and it is the place the silent winner was actually chosen.",
+      "why_both": "the core gate is where the contradiction is a declaration error and the consumer is where it becomes a wrong number. A guard at only one of the two is a guard that the other end can be reached without.",
+      "class": "A"
+    },
+    "a_production_conduction_case_declares_the_duplicate": {
+      "improvement": "I-24",
+      "problem": "R-56",
+      "rule": "The audited end-to-end case is committed as a regression: a 9x9 plate with `boundary_regions(mesh)` plus a second region on LEFT, a 400 K Dirichlet on `plate:left` and a 0 W/m^2 Neumann on the duplicate, is REFUSED when the problem is constructed rather than solved to a field whose maximum is 300 K with every check PASS. And the honest counterpart: the same plate with a 400 K left edge and a 300 K right edge, declared once each, still solves and still reports its maximum as 400 K.",
+      "class": "A (a reproduction, not a threshold)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "No field, member, default or signature changes anywhere. `require_complete_boundary` keeps its signature and its two refusal sentences; `SteadyConductionProblem.edges` keeps its type. Nothing is added to a serialized record and no schema string is bumped.",
+    "behaviour_that_deliberately_changes": [
+      "a declaration with two conditions on one edge under two region ids is refused where it was accepted and silently resolved;",
+      "a declaration whose regions do not cover all four edges of the support is refused where it was accepted as complete and then crashed inside assembly;",
+      "a Dirichlet condition and a Neumann condition on the same edge are refused where the corner check let them through."
+    ],
+    "claims_that_move": [
+      "nothing in the repository: every in-tree caller of `require_complete_boundary` passes `boundary_regions(mesh)` -- all four edges, one region each, ids derived from the support so two regions cannot claim one edge -- which is measured by this batch's tests rather than assumed. No committed conduction2d evidence declares a duplicate region or a partial region set."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The rule is stated for a structured mesh's four `BoundaryEdge` members, because that is the only support this layer has. A support with a different boundary topology would need the edge set to come from the mesh rather than from the enum, and the refusal message says which edges it required.",
+    "Two conditions on one edge are refused; a single condition whose region is a PART of an edge is not representable in this layer at all, so a partially conditioned edge cannot be declared and is not checked for.",
+    "The corner-agreement check keeps keying its prescribed values by region id. With one condition per edge enforced above, a region id and an edge are in bijection for any declaration that reaches it, so the two keys cannot disagree; the check is left as it is rather than rewritten for a case that can no longer arrive.",
+    "`require_complete_boundary` still takes the regions from the caller and still refuses a condition naming a region that is not among them. What it no longer does is treat that list as the definition of the boundary."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "(the runner, not a rule) benchmarks/core_v4_false_confidence/audit/isolated_mutations.py",
+      "what_changed": "an EMPTY mutation set now reports NONE instead of running a control. No pinned mutation in tests/mutation_guards.py targets either file this batch changed, so the pinned run was handed an empty set; it fell through to a control run with an empty test list, which pytest reads as 'collect everything' -- 15 errors and a RED control for a run that measured nothing.",
+      "why_it_matters": "a runner that reports RED when there was nothing to run says something false about the guards, and this runner's own doctrine is that a red control discards the run. Batch 16's own six mutations are unaffected: they ran against a green control before this fix and their verdicts stand.",
+      "after": "BATCH16_PINNED_MUTATIONS.log reads 'NONE (no mutation in this set targets the changed files)'."
+    }
+  ]
+}

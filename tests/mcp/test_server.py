@@ -56,6 +56,7 @@ from engcore.scientific.models.definition import (  # noqa: E402
     ValidityAssessment,
     ValidityStatus,
 )
+from engcore.scientific.results.validation import ValidationLevel  # noqa: E402
 
 #: Every model this boundary can bind, including the two companion records.
 #: The companions are *attachable* rather than always attached: they appear in
@@ -163,7 +164,7 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     """
     tools = {tool.name: tool for tool in list_tools().tools}
     assert sorted(tools) == sorted(
-        ["describe_capabilities"] + [s.tool for s in SYSTEMS]
+        ["describe_capabilities", "assess_claim"] + [s.tool for s in SYSTEMS]
     )
 
     describe = tools["describe_capabilities"]
@@ -175,6 +176,11 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
         assert list(run.input_schema["properties"]) == ["case"]
         assert run.input_schema["required"] == ["case"]
         assert run.output_schema is not None
+
+    assess = tools["assess_claim"]
+    assert list(assess.input_schema["properties"]) == ["request"]
+    assert assess.input_schema["required"] == ["request"]
+    assert assess.output_schema is not None
 
 
 def test_the_descriptions_say_what_an_agent_must_know_before_calling():
@@ -565,7 +571,15 @@ def test_a_verdict_no_rule_explains_is_refused_rather_than_transmitted():
         run_id="r", verdict=CredibilityVerdict.NOT_SUPPORTED, coupling=None,
         validity=(clean,), violated_conditions=(), failed_checks=(),
         not_run_checks=(), unassessed_models=(), unattributed_assessments=(),
-        warning_checks=(), attained_levels={"level"}, missing_required_levels=(),
+        # A real ValidationLevel member: the block reports the attained levels by name
+        # since R-04, so a bare string here would test the stub and not the transport.
+        warning_checks=(), attained_levels={ValidationLevel.DIMENSIONALLY_VALID},
+        missing_required_levels=(),
+        # The block reads the evidence basis, the withheld levels and the solver's own state
+        # since R-04 and R-10 (core re-audit 2026-09-16). A stub of a report has to carry what
+        # the transport reads off one, or it tests the stub.
+        evidence_basis="VALIDATED", levels_withheld=(), missing_evidence_basis=None,
+        convergence=None,
     )
     with pytest.raises(RuntimeError, match="no rule that produced it"):
         server._verdict_block(unexplained)

@@ -19,8 +19,8 @@ model adequacy / competition work (K4).
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Mapping
 
 import numpy as np
 from scipy.special import ndtr
@@ -28,9 +28,17 @@ from scipy.special import ndtr
 from ..inference import AdmittedForwardTable, GridResolutionError, PosteriorGrid
 from ..inference.calibration import _grid_resolution_refusal
 from ..scientific.ir.problem import ModelReference
-from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from ..scientific.results.immutable import freeze
+from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind, UncertaintySource
 from ..scientific.twins import TwinReference
-from ..scientific.units.quantity import Quantity, normalize_unit
+from ..scientific.units.quantity import (
+    Quantity,
+    UnitCompatibilityError,
+    base_unit,
+    is_ratio_scale,
+    normalize_unit,
+    require_spread_unit,
+)
 
 
 class UQProblemError(ValueError):
@@ -44,8 +52,16 @@ class PredictiveObservableSpec:
     observation_key: str
     unit: str
     observation_sigma: Quantity | None = None
+    conditions: Mapping[str, Quantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        # CORE-006 (scientific core audit 2026-09-16): the operating point, so a prediction can be compared with the
+        # range a calibration covered. Frozen; serialized only when declared.
+        conditions = dict(self.conditions)
+        for name, value in conditions.items():
+            if not str(name).strip() or not isinstance(value, Quantity):
+                raise UQProblemError(f"condition {name!r} must be a named Quantity")
+        object.__setattr__(self, "conditions", freeze({str(k).strip(): v for k, v in sorted(conditions.items())}))
         key = str(self.observation_key).strip()
         if not key:
             raise UQProblemError("predictive observable requires a non-empty observation_key")
@@ -57,9 +73,27 @@ class PredictiveObservableSpec:
             self.observation_sigma.require_compatible(
                 Quantity(1.0, self.unit), context=f"predictive noise {key}"
             )
-            sigma = self.observation_sigma.to(self.unit)
-            if sigma.magnitude <= 0.0:
+            # A NOISE SIGMA IS A SPREAD (I-22, R-48). Normalising it with
+            # `.to(self.unit)` is the ABSOLUTE conversion, so a '0.5 degC'
+            # sigma on a kelvin observable was STORED as 273.65 kelvin and
+            # every interval built from it was meaningless. The declared unit
+            # must be one that can state a spread, and it is then carried onto
+            # the observable's own scale as a difference -- or onto the
+            # dimension's base unit when the observable itself is on an offset
+            # scale, where an absolute unit cannot carry a spread at all.
+            try:
+                require_spread_unit(
+                    self.observation_sigma.units,
+                    context=f"predictive noise {key}",
+                )
+            except UnitCompatibilityError as exc:
+                raise UQProblemError(str(exc)) from exc
+            if self.observation_sigma.magnitude <= 0.0:
                 raise UQProblemError("observation_sigma must be strictly positive")
+            sigma_unit = self.unit if is_ratio_scale(self.unit) else base_unit(self.unit)
+            sigma = Quantity(
+                self.observation_sigma.magnitude_as_spread_in(sigma_unit), sigma_unit
+            )
             object.__setattr__(self, "observation_sigma", sigma)
 
 
@@ -84,6 +118,16 @@ class QuantifiedPredictiveResult:
     model: ModelReference
     source_ref: str
     posterior_support_size: int
+    #: I-03 (R-02, finding 81): the condition names the spec declared and this function did not check.
+    #:
+    #: ``posterior_predictive_uq`` receives a grid and a predictive table and no calibration
+    #: observations, so it cannot say where a declared condition sits relative to the range a
+    #: calibration covered -- and it used to IGNORE the declaration silently, answering a spec that
+    #: said ``T = 5000 K`` without comment. It is recorded rather than refused because the V2 record
+    #: (``hybrid_uq.grid_predictive_uncertainty``) calls this function after checking the conditions
+    #: itself, and a refusal here would break the one path that fixes this. Serialized only when
+    #: non-empty, so a record written before this field keeps its bytes.
+    conditions_not_checked: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not str(self.observation_key).strip():
@@ -119,6 +163,10 @@ class QuantifiedPredictiveResult:
             raise UQProblemError("quantified prediction requires source_ref")
         if int(self.posterior_support_size) < 1:
             raise UQProblemError("posterior_support_size must be positive")
+        object.__setattr__(
+            self, "conditions_not_checked",
+            tuple(sorted(str(name).strip() for name in self.conditions_not_checked)),
+        )
 
     @property
     def epistemic_variance(self) -> float:
@@ -144,6 +192,9 @@ class QuantifiedPredictiveResult:
             "model": self.model.to_dict(),
             "source_ref": self.source_ref,
             "posterior_support_size": int(self.posterior_support_size),
+            # I-03: written only when there is something to say.
+            **({"conditions_not_checked": list(self.conditions_not_checked)}
+               if self.conditions_not_checked else {}),
         }
 
 
@@ -322,6 +373,10 @@ def posterior_predictive_uq(
         source=source_ref,
         method="weighted_posterior_predictive_discrete",
         notes="Parameter/posterior uncertainty only; excludes model discrepancy and observation noise.",
+        # R-43 (core re-audit 2026-09-16): what the notes above already say, in the field a
+        # consumer can read. The CORE-016 record had no producer at all, so nothing downstream
+        # could tell this interval from a measurement standard deviation or a mesh estimate.
+        source_kind=UncertaintySource.PARAMETER,
     )
     total_interval = Uncertainty(
         kind=UncertaintyKind.INTERVAL,
@@ -334,6 +389,9 @@ def posterior_predictive_uq(
             "Total predictive uncertainty from parameter posterior plus declared independent "
             "observation noise; excludes model discrepancy."
         ),
+        # R-43: a mixture of the parameter channel and the observation channel, which is
+        # exactly COMBINED -- and is why no single SRIA channel accepts it.
+        source_kind=UncertaintySource.COMBINED,
     )
 
     return QuantifiedPredictiveResult(
@@ -349,4 +407,7 @@ def posterior_predictive_uq(
         model=model,
         source_ref=source_ref,
         posterior_support_size=int(np.count_nonzero(positive)),
+        # I-03 (R-02): this function checks none of the spec's conditions and has nothing to check
+        # them against. Saying so is what it can honestly do; the V2 record carries the downgrade.
+        conditions_not_checked=tuple(spec.conditions),
     )

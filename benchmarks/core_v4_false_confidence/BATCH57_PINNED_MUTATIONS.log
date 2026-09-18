@@ -1,0 +1,2 @@
+G32q tests/inference/test_audit_inference_identifiability.py -> KILLED | 2 failed, 14 passed in 0.64s | code b46d278d16040cff->52feb229d324e684 | pinned: NUM-04 (NUM-04-no-offset-scale-parameters) -- tests/inference/test_audit_inference_identifiability.py
+CONTROL (unmutated, 1 test(s)) GREEN | 16 passed in 0.79s

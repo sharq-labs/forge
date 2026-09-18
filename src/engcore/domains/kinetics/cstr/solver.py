@@ -81,6 +81,7 @@ from scipy.integrate import solve_ivp
 
 from ....scientific.ir.problem import ScientificProblem
 from ....scientific.results.provenance import ProvenanceRecord
+from ....scientific.results.requirements import report_with_requirement_checks
 from ....scientific.results.result import ScientificResult
 from ....scientific.results.uncertainty import Uncertainty
 from ....scientific.results.validation import ValidationReport
@@ -958,6 +959,19 @@ def solve_reactor_bundle(
         },
     )
 
+    # Hoisted out of the constructor so the requirement rule below can read what this result will
+    # actually carry. No uncertainty quantification is performed by a single solve: the tolerance
+    # ladder quantifies the numerical component and nothing here quantifies the model component, so
+    # anything but UNKNOWN would be fabrication.
+    uncertainty = {
+        name: Uncertainty.unknown(
+            "no uncertainty quantification performed by this solve; the "
+            "numerical component is estimated by the tolerance gate and "
+            "the model-form component is not estimated at all"
+        )
+        for name in metrics
+    }
+
     result = ScientificResult(
         result_id=run_id,
         problem_id=problem.problem_id,
@@ -966,19 +980,14 @@ def solve_reactor_bundle(
         validity={CSTR_MODEL.model_id: assessment},
         solver=solver.identity,
         convergence=raw.convergence,
-        validation=report,
-        # No uncertainty quantification is performed by a single solve. The
-        # tolerance ladder quantifies the numerical component and nothing here
-        # quantifies the model component, so anything but UNKNOWN would be
-        # fabrication.
-        uncertainty={
-            name: Uncertainty.unknown(
-                "no uncertainty quantification performed by this solve; the "
-                "numerical component is estimated by the tolerance gate and "
-                "the model-form component is not estimated at all"
-            )
-            for name in metrics
-        },
+        # I-19 (R-72): this problem declares four checks it requires, and nothing read that
+        # declaration. Returned UNCHANGED when the declaration is met -- which it is for every
+        # reactor this domain's own validation runs on -- and a NOT_RUN check naming what is
+        # missing when it is not, so the verdict travels with the result.
+        validation=report_with_requirement_checks(
+            problem, report, uncertainty=uncertainty
+        ),
+        uncertainty=uncertainty,
         assumptions=assumptions,
         warnings=raw.warnings,
         provenance=provenance,

@@ -26,7 +26,7 @@ from engcore.hybrid_uq import (
     local_gaussian_posterior,
 )
 from engcore.hybrid_uq.identifiability import classify
-from engcore.inference import AdmittedForwardTable, GridResolutionError, IdentifiabilityStatus, assess_identifiability
+from engcore.inference import AdmittedForwardTable, GridResolutionError, IdentifiabilityStatus, assess_identifiability, calibrate
 from engcore.scientific.ir.problem import ModelReference
 from engcore.scientific.twins import TwinReference
 from engcore.scientific.units.quantity import Quantity
@@ -134,8 +134,13 @@ def test_a_refused_local_route_has_no_identifiability():
 # ---------------------------------------------------------------------------
 # predictive
 # ---------------------------------------------------------------------------
-def _spec(key, sigma=0.05):
-    return PredictiveObservableSpec(key, UNIT, None if sigma is None else Quantity(sigma, UNIT))
+def _spec(key, sigma=0.05, x=None):
+    conditions = {} if x is None else {"x": Quantity(float(x), UNIT)}
+    return PredictiveObservableSpec(key, UNIT, None if sigma is None else Quantity(sigma, UNIT), conditions=conditions)
+
+
+#: CORE-006: the affine problem's observations with their x declared, so a prediction at x in [0, 1] can be SUPPORTED
+CALIBRATED = S.conditioned(S.affine())
 
 
 def test_linearized_predictive_is_exact_for_an_affine_model_and_keeps_its_sources_apart():
@@ -214,7 +219,7 @@ def _table(problem, grid, xs):
     values = np.asarray([[row[0] + row[1] * x for x in xs] for row in grid.points])
     keys = tuple(f"y@{x}" for x in xs)
     return AdmittedForwardTable(parameter_names=grid.parameter_names, observation_keys=keys, points=grid.points, values=values,
-                                admissible_mask=np.ones(len(grid.points), bool), admission_refs=tuple(("analytic",) * len(keys) for _ in grid.points),
+                                admissible_mask=np.ones(len(grid.points), bool), admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in grid.points),
                                 rejection_reasons=tuple("" for _ in grid.points)), keys
 
 
@@ -259,7 +264,16 @@ def _linear(t):
 
 
 def _supported_affine_posterior():
-    post = _local(S.affine())
+    # R-12 (I-13 part A, batch 22): calibrated ON the conditioned observations, not on the bare ones with
+    # the conditions declared afterwards. A posterior now carries a digest of the observation CONTENT it was
+    # fitted to, and `linearized_predictive_uq` refuses `calibration_observations` that do not match -- a
+    # rule that accepted the same observations with conditions ADDED could not tell that apart from the same
+    # observations with their conditions RESCALED, which is one of R-12's three audited reproductions. The
+    # conditions are part of the evidence and belong on the observations the fit used. The fit itself is
+    # unchanged: a declared condition enters no residual.
+    problem = S.affine()
+    fit = calibrate(problem.spec, CALIBRATED, problem.forward, heldout_dataset_id="synthetic.affine.heldout")
+    post = local_gaussian_posterior(fit, CALIBRATED, problem.forward, multistart=MultistartPolicy())
     assert post.claim is RouteClaim.SUPPORTED and not post.reasons
     return post
 
@@ -299,14 +313,14 @@ def test_a_probe_beyond_a_declared_bound_is_not_linearity_evidence(side):
     """Tests E (upper, the +2 sd reach) and F (lower, the -2 sd reach)."""
     complete = _supported_affine_posterior()
     post = _with_bound_cutting_a_probe(complete, side)
-    (r,) = linearized_predictive_uq(post, _linear, [_spec("y@0.5")])
+    (r,) = linearized_predictive_uq(post, _linear, [_spec("y@0.5", x=0.5)], calibration_observations=CALIBRATED)
     assert r.route_claim is RouteClaim.DOWNGRADED
     assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
     assert RouteReason.PREDICTIVE_NONLINEAR not in r.reasons
     # the model is affine, so the probes that were evaluated agree with the extrapolation; that is not enough
     assert r.predictive_nonlinearity < 1e-6
     # an incomplete check changes the claim, not the numbers
-    (full,) = linearized_predictive_uq(complete, _linear, [_spec("y@0.5")])
+    (full,) = linearized_predictive_uq(complete, _linear, [_spec("y@0.5", x=0.5)], calibration_observations=CALIBRATED)
     assert full.route_claim is RouteClaim.SUPPORTED
     assert math.isclose(r.mean, full.mean, rel_tol=1e-9)
     assert math.isclose(r.parameter_standard_uncertainty, full.parameter_standard_uncertainty, rel_tol=1e-6)
@@ -370,7 +384,7 @@ def test_a_complete_linear_check_is_supported():
         calls.append(tuple(t))
         return _linear(t)
 
-    (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
+    (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5", x=0.5)], calibration_observations=CALIBRATED)
     # 1 + 4p finite-difference calls, 2p axis probes, 2p(p - 1) diagonal probes and 2 along Sigma grad g (audit HUQ-07;
     # this pinned the 2p axis probes alone before)
     assert len(calls) == 1 + 4 * 2 + 2 * 2 + 2 * 2 * 1 + 2

@@ -1,0 +1,89 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 52,
+ "improvements": [
+  "I-25 part A of two"
+ ],
+ "problems_addressed": [
+  "R-55 (the audit's findings 67 and 70)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "8a75c9e8",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "A field record's summary is what every reader acts on without resolving a mesh-sized array, and it is the record's own word: nothing binds it to the bytes the reference names, to the field's unit, or even to itself. A record whose bytes hold a 900 K hot spot is IN_DOMAIN under a 500 K maximum once its summary says 310 K, with the reference digest unchanged. And the envelope a multi-component field is judged on is taken over flattened components, so a velocity of (1, 1, 1) m/s -- magnitude 1.732 -- passes a 1.2 m/s maximum. Part B is the transfer contract and the observation operator (R-63, R-73).",
+ "reach": "LATENT. `FieldRangeCondition` and `FieldFiniteCondition` are registered validity-condition decoders and are therefore reachable from a payload, and no production domain declares one: the audit records R-55 as library-only and says 'no production domain uses these conditions yet'. Field records themselves ARE produced (the conduction2d path), which is why the summary rules bite there even though the predicates do not.",
+ "what_was_already_seen": {
+  "finding 70 (R-55), the summary": "`FieldSummary` checks only that its entries are Quantities, that `non_finite` is a non-negative int, and that max >= min. It accepts a mean outside [min, max], a negative l2_norm, entries in a different dimension from the field (pascal, volt and second for a kelvin field), and a non_finite count larger than the field's value count. `FieldRecord` checks the reference's unit and count against the definition but never checks the summary. `FieldValue.from_record` resolves the content-addressed bytes and never compares them with the summary. `FieldRangeCondition` and `FieldFiniteCondition` answer from the self-declared summary alone: a record whose bytes hold a 900 K hot spot is IN_DOMAIN under a 500 K maximum once its summary says 310 K, and the reference digest is unchanged.",
+  "finding 67 (R-55), the envelope": "The envelope is taken over FLATTENED components, so a 3-component velocity (1, 1, 1) m/s with |u| = 1.732 is IN_DOMAIN against a 1.2 m/s maximum. The docstring says 'the whole represented field envelope', and nothing tells a declarer that the bound applies per component rather than to the magnitude."
+ },
+ "rules": {
+  "a_summary_agrees_with_itself_and_with_the_field_it_summarizes": {
+   "improvement": "I-25",
+   "problem": "R-55",
+   "rule": "`FieldSummary` refuses a mean outside [minimum, maximum] and a negative `l2_norm`. `FieldRecord` refuses a summary whose entries are not in the field's declared dimension and a `non_finite` count above the reference's value count.",
+   "class": "A",
+   "why": "Each of these is a statement the record makes about itself that cannot be true: a mean outside its own range, a norm below zero, a temperature summarized in pascal, more non-finite values than values. None needs the bytes to refute, which is exactly why it belongs at construction -- a reader who has only the summary is the reader this record exists for.",
+   "closes": "finding 70's internal-consistency and unit claims."
+  },
+  "a_summary_is_re_derived_from_the_bytes_it_claims_to_summarize": {
+   "improvement": "I-25",
+   "problem": "R-55",
+   "rule": "`FieldValue.from_record` recomputes the summary from the resolved values and refuses a record whose summary does not match, within a relative tolerance for floating-point summation.",
+   "class": "A for the rule, B for the tolerance",
+   "why": "The bytes are content-addressed and the summary is not, so the one place both are in hand is the read path -- and it resolved the bytes and never looked. The tolerance exists because a sum is order-dependent in floating point and a store may hand back the same values in a different layout; it is a representation allowance, not a modelling one.",
+   "closes": "finding 70's 'never compares them with the summary'."
+  },
+  "a_predicate_that_decides_from_a_summary_needs_a_verified_record": {
+   "improvement": "I-25",
+   "problem": "R-55",
+   "rule": "`FieldRecord` gains a trailing `summary_verified_against` field: the content digest of the bytes the summary was derived from, written by `FieldValue.store` and required to equal `reference.digest` for a predicate to act on it. `FieldRangeCondition` and `FieldFiniteCondition` return UNKNOWN for a record whose summary was never bound to its bytes.",
+   "class": "A",
+   "why": "The audit's own fix direction: 'a predicate that decides validity from a summary should either require a verified record or return UNKNOWN for one that was never verified against its bytes'. A digest equal to the reference's is what 'verified' can mean here without holding the array, and it is the same integrity shape this repository already uses for a posterior's weights and for an admitted table. UNKNOWN rather than a refusal, because a summary nobody bound is not evidence against the field either.",
+   "closes": "finding 70's predicate claim."
+  },
+  "an_envelope_over_a_vector_field_is_about_its_magnitude": {
+   "improvement": "I-25",
+   "problem": "R-55",
+   "rule": "`FieldSummary` gains a trailing `magnitude_maximum` field, computed by `FieldValue.summary()` for a multi-component field as the maximum over nodes of the per-node component magnitude. `FieldRangeCondition` judges a multi-component field on it, and returns UNKNOWN when a multi-component record does not carry it.",
+   "class": "A",
+   "why": "'The whole represented field envelope' is what the condition's own docstring promises, and a per-component envelope is a different statement: (1, 1, 1) m/s is inside a 1.2 m/s box per component and its magnitude is 1.732. For a vector field the physically meaningful bound is on the magnitude, which is why a declarer writing '1.2 m/s maximum' means the speed. UNKNOWN for a record that predates the field, because the magnitude cannot be recovered from a per-component envelope.",
+   "closes": "finding 67 in full."
+  }
+ },
+ "thresholds": {
+  "summary_agreement_rtol": {"value": 1e-9, "class": "B", "why": "a representation allowance for re-summing a float64 array in a possibly different layout, the same magnitude this repository already uses for a unit conversion (BUDGET_TOLERANCE) and for an operating point (_OPERATING_POINT_RTOL). It is not a modelling tolerance: a summary that misses its own bytes by more than a part in a billion is a different summary, not a rounding of this one."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "FieldSummary.magnitude_maximum, a trailing field with a default of None",
+   "FieldRecord.summary_verified_against, a trailing field with a default of ''",
+   "field_summary/2 and field_record/2, each written only when the record carries the new field"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "a single-component field's envelope is judged exactly as before",
+   "FieldValue itself already refuses a non-finite array, so its own summary is unchanged apart from the added magnitude"
+  ],
+  "records_that_already_exist": "Committed evidence carrying field records: the conduction2d and field-IR evidence under benchmarks/. A record whose summary was written by `FieldValue.store` now also carries the verification digest, so any committed record regenerated here MOVES, and every such file is regenerated and named in the audit document. Records written before this batch read back with an empty digest and no magnitude, which is the honest state of a summary nobody bound.",
+  "deliberate_narrowing": "A summary that contradicts itself, one in the wrong dimension, one counting more non-finite values than there are values, and a summary that does not match the bytes it names all stop being constructible or readable. A validity predicate stops answering from an unbound summary, and a multi-component field stops being judged per component."
+ },
+ "residuals_stated_in_advance": [
+  "The verification digest is an integrity binding, as every digest here is: it closes an unbound summary and a silent hand-off, not a determined edit by somebody who recomputes the digest too.",
+  "`FieldValue.from_record` can only check what it resolves. A consumer that reads `record.summary` without resolving the bytes is exactly the reader this record is for, and what protects that reader is the digest binding plus the internal consistency rules -- not a re-derivation it never performs.",
+  "`magnitude_maximum` is a maximum only. A minimum magnitude is not the bound a declarer writes for a vector field, and inventing one would put a number in the record that no condition reads.",
+  "The per-component envelope stays in the record (`minimum`/`maximum` are unchanged), because a component-wise bound is a legitimate statement about a vector field. What changes is which one `FieldRangeCondition` applies to a multi-component field.",
+  "R-63 (the transfer contract's verdict) and R-73 (the observation operator's region and probe binding) are part B."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_structured_validity.py, the field suites (tests/test_field_ir_ceiling.py, tests/test_field_composition.py), the conduction2d suites and the data-boundary suites",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "regeneration of every committed record whose bytes move, named in the audit document",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}

@@ -19,17 +19,62 @@ or efficiency uncertainty the transfer record does not carry.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
-from ..scientific.composition.transfer import QuantityTransfer
+from ..scientific.composition.transfer import (
+    BUDGET_TOLERANCE,
+    TRANSFER_VALUE_CONFIGURED_INPUT,
+    QuantityTransfer,
+)
 from ..scientific.errors import InvalidScientificProblem
+from ..scientific.models.definition import ValidityStatus
+from ..scientific.results.result import ConvergenceState
 from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.results.validation import ValidationOutcome
+from ..scientific.serialization import require_schema_any, schema_string
 from ..scientific.units.quantity import Quantity
 from ..scientific.units.validation import require_same_dimension
 
+#: What a result says about a model nobody assessed, as one word beside the
+#: ``ValidityStatus`` values. The record's own vocabulary: a reason in
+#: ``validity_not_assessed`` is a statement, and reading it as a verdict would
+#: be the inference the result refuses to make.
+NOT_ASSESSED = "not_assessed"
+
 UNCERTAINTY_TRANSFER_SCHEMA = schema_string("uncertainty_transfer")
+#: One crossing, with what the producing side said about the value that crossed.
+CROSSED_QUANTITY_SCHEMA = schema_string("crossed_quantity")
+
+#: What an uncertainty says when the value was imposed on the problem rather
+#: than produced by it. R-58 part C: the production ambient crossing takes its
+#: value from the system configuration, and neither the crossing nor the record
+#: it named said what its uncertainty was -- silence, which reads as none.
+CONFIGURED_INPUT_UNCERTAINTY_NOTE = (
+    "the value crossed as a configured input of the problem this record "
+    "answers, so the record states no uncertainty for it and none is inferred: "
+    "whoever configured it is where an uncertainty for it would come from"
+)
+#: Bumped to /2 by `completeness`, and written only when the propagation was
+#: NOT complete: a record with nothing missing keeps its /1 bytes.
+UNCERTAINTY_TRANSFER_SCHEMA_V2 = schema_string("uncertainty_transfer", 2)
+
+#: What the propagated width leaves out, said in the record rather than in a note.
+#:
+#: R-58 (I-27 part B): a conversion's efficiency was treated as exact, and the
+#: only sign of it was prose in ``notes``. A consumer reading a standard
+#: uncertainty had no way to know the number it held was a LOWER BOUND on the
+#: width -- which is what it is when a factor the value passed through carries
+#: an uncertainty nobody declared.
+TRANSFER_COMPLETE = "complete"
+TRANSFER_LOWER_BOUND_EFFICIENCY = "lower_bound_efficiency_uncertainty_undeclared"
+TRANSFER_COMPLETENESS = (TRANSFER_COMPLETE, TRANSFER_LOWER_BOUND_EFFICIENCY)
+
+#: How far two spellings of one value may differ and still be the same value:
+#: the composition package's own allowance for one unit conversion, reused
+#: rather than a second number.
+_MEETING_TOLERANCE = BUDGET_TOLERANCE
 
 
 def _delta_magnitude_in(value: Quantity, unit: str) -> float:
@@ -48,6 +93,129 @@ def _source_unit(transfer: QuantityTransfer) -> str:
     if transfer.source_value is not None:
         return transfer.source_value.units
     return transfer.dependency.unit_exemplar
+
+
+def _agree_relatively(left: float, right: float) -> bool:
+    """One relative criterion, with no absolute floor; a scale of zero is exact equality (R-60's rule)."""
+    scale = max(abs(left), abs(right))
+    return abs(left - right) <= _MEETING_TOLERANCE * scale
+
+
+def _entering_value(transfer: QuantityTransfer) -> Quantity:
+    """What the uncertainty handed in is an uncertainty OF.
+
+    For a conversion that is the value that ENTERED it: the source uncertainty describes the input, and the
+    propagation is what carries it across. For a transport nothing changes form, so the crossed value is
+    both.
+    """
+    if transfer.source_value is not None:
+        return transfer.source_value
+    return transfer.value
+
+
+def _require_the_interval_contains_the_value(
+    transfer: QuantityTransfer, source_uncertainty: Uncertainty
+) -> None:
+    """R-58 claim (a): an interval that does not contain its own value is another quantity's interval.
+
+    The audited record propagated [10, 11] K for a crossing of 350 K and round-tripped. Containment is
+    checked ABSOLUTELY, in the interval's own unit, so an interval scale and an absolute one cannot differ
+    by the offset between them.
+    """
+    lower, upper = source_uncertainty.lower, source_uncertainty.upper
+    if lower is None or upper is None:  # pragma: no cover - the record refuses this at construction
+        return
+    entering = _entering_value(transfer)
+    unit = lower.units
+    require_same_dimension(
+        entering, lower, context="cross-domain interval containment"
+    )
+    value = entering.magnitude_in(unit)
+    low = lower.magnitude_in(unit)
+    high = upper.magnitude_in(unit)
+    inside = (low <= value <= high) or _agree_relatively(value, low) or _agree_relatively(value, high)
+    if not inside:
+        raise InvalidScientificProblem(
+            f"the interval [{low}, {high}] {unit} does not contain "
+            f"{value} {unit}, the value that crossed for "
+            f"{transfer.dependency.source_quantity!r} at {transfer.instant}. An "
+            f"interval that does not contain its own value is not a statement "
+            f"about that value, and propagating it would carry another "
+            f"quantity's uncertainty across this crossing"
+        )
+
+
+def _transfer_reference_candidates(
+    transfer: QuantityTransfer, upstream: "QuantityTransfer | None" = None
+) -> tuple[str, ...]:
+    """Everything the crossing itself names, for an attribution to be one of.
+
+    ``upstream`` is the crossing that FEEDS this one inside a chain. Its attribution is what this module
+    itself wrote one step earlier, and a chain is exactly the case where the uncertainty entering a
+    crossing legitimately came from the crossing before it -- which the chain has already required to meet
+    this one by name, by instant and by value.
+    """
+    dependency = transfer.dependency
+    candidates = {
+        transfer.source_record_id,
+        dependency.source_problem_id,
+        dependency.source_quantity,
+        f"{dependency.source_problem_id}.{dependency.source_quantity}",
+        dependency.name,
+    }
+    if upstream is not None:
+        candidates.add(f"transfer:{upstream.source_record_id}")
+    return tuple(sorted(candidate for candidate in candidates if str(candidate).strip()))
+
+
+def _require_the_uncertainty_names_the_source(
+    transfer: QuantityTransfer,
+    source_uncertainty: Uncertainty,
+    upstream: "QuantityTransfer | None" = None,
+) -> None:
+    """R-58 claims (b) and (c): the handed-in uncertainty was tied to the crossing by nothing.
+
+    A 1e-6 K uncertainty from another run, or one attributed to 'some-other-quantity', was accepted and
+    then relabelled as coming from this crossing's source record. An attribution is accepted when the
+    crossing itself names it -- the source record id, the source problem, the source quantity, or the
+    declaration's own name.
+    """
+    attribution = str(source_uncertainty.source or "").strip()
+    candidates = _transfer_reference_candidates(transfer, upstream)
+    if not attribution or not any(candidate in attribution for candidate in candidates):
+        raise InvalidScientificProblem(
+            f"the source uncertainty is attributed to {source_uncertainty.source!r}, which names nothing "
+            f"this crossing names ({', '.join(candidates)}). An uncertainty bound to nothing is the "
+            f"parallel dictionary keyed by a coincidentally matching name that this record exists to "
+            f"replace: it would be propagated across the crossing and then read as the crossing's own"
+        )
+
+
+def _completeness_of(transfer: QuantityTransfer, source_uncertainty: Uncertainty) -> str:
+    """Whether the propagated width leaves anything out, as a word in the record.
+
+    A transport has no factor, so nothing is missing. A conversion whose efficiency declares no uncertainty
+    leaves that uncertainty out of the width, which makes the width a LOWER BOUND; and an INTERVAL keeps
+    absolute-bound semantics, so a declared efficiency uncertainty is not combined into it either -- doing
+    that needs a distribution nobody declared.
+    """
+    conversion = transfer.dependency.conversion
+    if conversion is None or conversion.efficiency is None:
+        return TRANSFER_COMPLETE
+    if conversion.efficiency_uncertainty is None:
+        return TRANSFER_LOWER_BOUND_EFFICIENCY
+    if source_uncertainty.kind is UncertaintyKind.INTERVAL:
+        return TRANSFER_LOWER_BOUND_EFFICIENCY
+    return TRANSFER_COMPLETE
+
+
+def _attribution(transfer: QuantityTransfer, source_uncertainty: Uncertainty) -> str:
+    """R-58 claim (b): BOTH provenances, because a propagated uncertainty has two.
+
+    What it was an uncertainty of, and the crossing it came through. Writing only the second is what made
+    another quantity's uncertainty read as this run's.
+    """
+    return f"transfer:{transfer.source_record_id}|from:{source_uncertainty.source}"
 
 
 def _factor(transfer: QuantityTransfer) -> float:
@@ -70,6 +238,18 @@ class UncertaintyTransfer:
     transfer: QuantityTransfer
     source_uncertainty: Uncertainty
     uncertainty: Uncertainty
+    #: What the propagated width leaves out. See ``TRANSFER_COMPLETENESS``. It
+    #: is derived from the transfer and the source uncertainty, and a record
+    #: that states another value is refused rather than corrected.
+    completeness: str = TRANSFER_COMPLETE
+    #: The crossing that FED this one, inside a chain.
+    #:
+    #: R-58: a chain is the one case where the uncertainty entering a crossing
+    #: legitimately came from the crossing before it, carrying that crossing's
+    #: attribution rather than this one's. The record says which crossing that
+    #: was, so the attribution rule can be applied to a chain link by reading
+    #: the record rather than by trusting the caller who built it.
+    upstream: QuantityTransfer | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.transfer, QuantityTransfer):
@@ -78,14 +258,26 @@ class UncertaintyTransfer:
             raise InvalidScientificProblem("source_uncertainty must be Uncertainty")
         if not isinstance(self.uncertainty, Uncertainty):
             raise InvalidScientificProblem("uncertainty must be Uncertainty")
+        if self.upstream is not None and not isinstance(self.upstream, QuantityTransfer):
+            raise InvalidScientificProblem("upstream must be a QuantityTransfer when given")
         expected = propagate_transfer_uncertainty(
             self.transfer,
             self.source_uncertainty,
+            upstream=self.upstream,
         )
         if expected != self.uncertainty:
             raise InvalidScientificProblem(
                 "uncertainty transfer does not follow from its QuantityTransfer "
                 "and source uncertainty"
+            )
+        derived = _completeness_of(self.transfer, self.source_uncertainty)
+        if str(self.completeness) != derived:
+            raise InvalidScientificProblem(
+                f"uncertainty transfer states completeness "
+                f"{self.completeness!r} where the transfer and the source "
+                f"uncertainty give {derived!r}. What a propagated width leaves "
+                f"out follows from the crossing, and a record may not say "
+                f"otherwise about its own arithmetic"
             )
 
     @property
@@ -94,31 +286,226 @@ class UncertaintyTransfer:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": UNCERTAINTY_TRANSFER_SCHEMA,
+            # /2 only when something IS missing: a complete record says nothing
+            # new and keeps its /1 bytes.
+            "schema": (
+                UNCERTAINTY_TRANSFER_SCHEMA
+                if self.completeness == TRANSFER_COMPLETE and self.upstream is None
+                else UNCERTAINTY_TRANSFER_SCHEMA_V2
+            ),
             "transfer": self.transfer.to_dict(),
             "source_uncertainty": self.source_uncertainty.to_dict(),
             "uncertainty": self.uncertainty.to_dict(),
+            **(
+                {}
+                if self.completeness == TRANSFER_COMPLETE
+                else {"completeness": self.completeness}
+            ),
+            **({} if self.upstream is None else {"upstream": self.upstream.to_dict()}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "UncertaintyTransfer":
-        require_schema(payload, UNCERTAINTY_TRANSFER_SCHEMA)
+        version = require_schema_any(
+            payload, (UNCERTAINTY_TRANSFER_SCHEMA, UNCERTAINTY_TRANSFER_SCHEMA_V2)
+        )
+        completeness = str(payload.get("completeness", TRANSFER_COMPLETE)).strip()
+        upstream = payload.get("upstream")
+        if upstream is not None and version != UNCERTAINTY_TRANSFER_SCHEMA_V2:
+            raise InvalidScientificProblem(
+                f"uncertainty transfer payload declares schema {version!r} and "
+                f"carries an upstream crossing, which "
+                f"{UNCERTAINTY_TRANSFER_SCHEMA_V2!r} introduced"
+            )
+        if completeness != TRANSFER_COMPLETE and version != UNCERTAINTY_TRANSFER_SCHEMA_V2:
+            raise InvalidScientificProblem(
+                f"uncertainty transfer payload declares schema {version!r} and "
+                f"a completeness of {completeness!r}, which "
+                f"{UNCERTAINTY_TRANSFER_SCHEMA_V2!r} introduced"
+            )
+        if completeness not in TRANSFER_COMPLETENESS:
+            raise InvalidScientificProblem(
+                f"uncertainty transfer payload declares completeness "
+                f"{completeness!r}, which is none of {TRANSFER_COMPLETENESS}"
+            )
         return cls(
             transfer=QuantityTransfer.from_dict(payload["transfer"]),
             source_uncertainty=Uncertainty.from_dict(payload["source_uncertainty"]),
             uncertainty=Uncertainty.from_dict(payload["uncertainty"]),
+            completeness=completeness,
+            upstream=(
+                None if upstream is None else QuantityTransfer.from_dict(upstream)
+            ),
+        )
+
+
+@dataclass(frozen=True)
+class CrossedQuantity:
+    """One crossing, carrying what the PRODUCING side said about the value that crossed.
+
+    R-58 part C. The coupled run's provenance carried :class:`QuantityTransfer` records -- what crossed,
+    from which record, at which instant -- and nothing beside them, so the receiving domain saw a number:
+    no uncertainty, no applicability verdict, no validation state. All three are statements the producing
+    side had already made in its own record, and the crossing dropped them.
+
+    Built through :meth:`from_result`, which reads every one of them OFF the result. Nothing here takes a
+    verdict from a caller, because a second place to state a verdict is a second place for it to disagree
+    with the record -- which is the defect this whole family is about, one level up.
+    """
+
+    uncertainty_transfer: UncertaintyTransfer
+    #: ``(model_id, status)`` for every model the producing result declares: its
+    #: ``ValidityStatus`` where it was assessed, and ``"not_assessed"`` where the record says, with a
+    #: reason, that nobody asked.
+    source_validity: tuple[tuple[str, str], ...]
+    #: The producing result's own ``ValidationReport.status``.
+    source_validation_status: str
+    #: The producing result's own ``ConvergenceState``.
+    source_convergence: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.uncertainty_transfer, UncertaintyTransfer):
+            raise InvalidScientificProblem(
+                "a crossed quantity carries an UncertaintyTransfer: a value that crossed with no "
+                "uncertainty record behind it is the state this record exists to end"
+            )
+        verdicts = tuple(
+            (str(model_id), str(status)) for model_id, status in tuple(self.source_validity)
+        )
+        declared = tuple(model_id for model_id, _status in verdicts)
+        if len(set(declared)) != len(declared):
+            raise InvalidScientificProblem(
+                f"a crossed quantity states two verdicts for one model: {declared}"
+            )
+        allowed = {status.value for status in ValidityStatus} | {NOT_ASSESSED}
+        for model_id, status in verdicts:
+            if status not in allowed:
+                raise InvalidScientificProblem(
+                    f"a crossed quantity states validity {status!r} for model {model_id!r}, which is "
+                    f"none of {sorted(allowed)}"
+                )
+        if not verdicts:
+            raise InvalidScientificProblem(
+                "a crossed quantity states no validity verdict at all. The producing result names the "
+                "models its value came from, and a crossing that carries none of them is the bare number "
+                "this record replaces"
+            )
+        if self.source_validation_status not in {outcome.value for outcome in ValidationOutcome}:
+            raise InvalidScientificProblem(
+                f"a crossed quantity states validation status "
+                f"{self.source_validation_status!r}, which is no ValidationOutcome"
+            )
+        if self.source_convergence not in {state.value for state in ConvergenceState}:
+            raise InvalidScientificProblem(
+                f"a crossed quantity states convergence {self.source_convergence!r}, which is no "
+                f"ConvergenceState"
+            )
+        object.__setattr__(self, "source_validity", verdicts)
+
+    @classmethod
+    def from_result(
+        cls, transfer: QuantityTransfer, result: Any
+    ) -> "CrossedQuantity":
+        """Read the crossing off the record it names, and refuse a record it does not name.
+
+        The binding is part A's own question, asked here because here is where the producer's statements
+        are copied into a second record: a crossing built against another result would carry that result's
+        validity and validation beside this crossing's value.
+        """
+        findings = transfer.check_against_result(result)
+        if findings:
+            raise InvalidScientificProblem(
+                f"a crossed quantity cannot be read off result "
+                f"{getattr(result, 'result_id', None)!r}: "
+                + "; ".join(issue.detail for issue in findings)
+            )
+        name = transfer.dependency.source_quantity
+        entries = dict(getattr(result, "uncertainty", {}) or {})
+        configured = transfer.value_origin == TRANSFER_VALUE_CONFIGURED_INPUT
+        entry = entries.get(name)
+        if configured:
+            # The record does not produce the quantity, so it states no
+            # uncertainty for it -- which is not none. The crossing says so in
+            # the one place a reader will look.
+            source_uncertainty = Uncertainty.unknown(CONFIGURED_INPUT_UNCERTAINTY_NOTE)
+        else:
+            if entry is None:
+                raise InvalidScientificProblem(
+                    f"result {getattr(result, 'result_id', None)!r} states no uncertainty for "
+                    f"{name!r}, and the crossing says the value was read out of it. An absent entry "
+                    f"read as no uncertainty is how a bare value comes to look complete; "
+                    f"Uncertainty.unknown exists so that 'nobody evaluated it' is a value"
+                )
+            source_uncertainty = entry
+
+        verdicts: list[tuple[str, str]] = []
+        assessed = dict(getattr(result, "validity", {}) or {})
+        declined = dict(getattr(result, "validity_not_assessed", {}) or {})
+        for model_id, _version in tuple(getattr(result, "models", ()) or ()):
+            if model_id in assessed:
+                verdicts.append((str(model_id), assessed[model_id].status.value))
+            elif model_id in declined:
+                verdicts.append((str(model_id), NOT_ASSESSED))
+            else:  # pragma: no cover - the result refuses this at construction
+                raise InvalidScientificProblem(
+                    f"result {getattr(result, 'result_id', None)!r} says nothing about model "
+                    f"{model_id!r}"
+                )
+        return cls(
+            uncertainty_transfer=make_uncertainty_transfer(transfer, source_uncertainty),
+            source_validity=tuple(sorted(verdicts)),
+            source_validation_status=result.validation.status.value,
+            source_convergence=result.convergence.value,
+        )
+
+    @property
+    def key(self) -> tuple[str, str, str, str, str]:
+        return self.uncertainty_transfer.transfer.key
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": CROSSED_QUANTITY_SCHEMA,
+            "uncertainty_transfer": self.uncertainty_transfer.to_dict(),
+            "source_validity": [
+                {"model_id": model_id, "status": status}
+                for model_id, status in self.source_validity
+            ],
+            "source_validation_status": self.source_validation_status,
+            "source_convergence": self.source_convergence,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CrossedQuantity":
+        require_schema_any(payload, (CROSSED_QUANTITY_SCHEMA,))
+        return cls(
+            uncertainty_transfer=UncertaintyTransfer.from_dict(payload["uncertainty_transfer"]),
+            source_validity=tuple(
+                (entry["model_id"], entry["status"]) for entry in payload["source_validity"]
+            ),
+            source_validation_status=payload["source_validation_status"],
+            source_convergence=payload["source_convergence"],
         )
 
 
 def propagate_transfer_uncertainty(
     transfer: QuantityTransfer,
     source_uncertainty: Uncertainty,
+    *,
+    upstream: QuantityTransfer | None = None,
 ) -> Uncertainty:
     """Propagate one uncertainty through the deterministic transfer mapping."""
     if not isinstance(transfer, QuantityTransfer):
         raise InvalidScientificProblem("propagation requires QuantityTransfer")
     if not isinstance(source_uncertainty, Uncertainty):
         raise InvalidScientificProblem("propagation requires Uncertainty")
+
+    if source_uncertainty.kind is not UncertaintyKind.UNKNOWN:
+        # An UNKNOWN uncertainty asserts nothing about any value, so there is
+        # nothing to bind and nothing to contain; it propagates as the honest
+        # absence it already is, with the source's own words carried in a note.
+        _require_the_uncertainty_names_the_source(transfer, source_uncertainty, upstream)
+    if source_uncertainty.kind is UncertaintyKind.INTERVAL:
+        _require_the_interval_contains_the_value(transfer, source_uncertainty)
 
     conversion = transfer.dependency.conversion
     method_prefix = "cross_domain_transport"
@@ -150,19 +537,46 @@ def propagate_transfer_uncertainty(
             context="cross-domain standard uncertainty",
         )
         source_delta = _delta_magnitude_in(standard, source_unit) * abs(factor)
+        efficiency_note = (
+            "conversion efficiency treated as deterministic because the "
+            "conversion record carries no uncertainty for it"
+        )
+        width = _efficiency_width(transfer)
+        if width is not None:
+            # First-order propagation of a product, in RELATIVE terms: the only
+            # combination a record carrying two standard uncertainties supports.
+            # It assumes the efficiency's uncertainty is independent of the
+            # input's, which is RECORDED here and in the method rather than
+            # established -- nothing in these records establishes independence.
+            entering = _entering_value(transfer).magnitude_in(source_unit)
+            if entering != 0.0:
+                relative_input = _delta_magnitude_in(standard, source_unit) / abs(entering)
+                relative_efficiency = width / abs(factor)
+                combined = math.sqrt(relative_input ** 2 + relative_efficiency ** 2)
+                source_delta = combined * abs(entering * factor)
+            efficiency_note = (
+                f"the declared efficiency uncertainty {width} was combined in "
+                f"quadrature with the input's, which assumes the two are "
+                f"independent; that independence is recorded here and is "
+                f"established nowhere"
+            )
         as_source = Quantity(source_delta, source_unit)
         propagated_delta = _delta_magnitude_in(as_source, target_unit)
         propagated = Quantity(propagated_delta, target_unit)
         return Uncertainty(
             kind=UncertaintyKind.STANDARD,
             standard_uncertainty=propagated,
-            source=f"transfer:{transfer.source_record_id}",
-            method=method_prefix,
+            source=_attribution(transfer, source_uncertainty),
+            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
+            method=(
+                method_prefix
+                if _efficiency_width(transfer) is None
+                else f"{method_prefix}+efficiency_uncertainty_in_quadrature"
+            ),
             notes=(
                 f"propagated from {source_uncertainty.method or 'declared source method'}; "
                 "standard uncertainty was converted as a delta (scale only); "
-                "conversion efficiency treated as deterministic because the "
-                "conversion record carries no uncertainty for it"
+                f"{efficiency_note}"
             ),
         )
 
@@ -187,11 +601,14 @@ def propagate_transfer_uncertainty(
             lower=Quantity(lo, source_unit).to(target_unit),
             upper=Quantity(hi, source_unit).to(target_unit),
             confidence_level=source_uncertainty.confidence_level,
-            source=f"transfer:{transfer.source_record_id}",
+            source=_attribution(transfer, source_uncertainty),
+            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
             method=method_prefix,
             notes=(
                 f"propagated interval from {source_uncertainty.method or 'declared source method'}; "
-                "no distribution or correlation was inferred"
+                "no distribution or correlation was inferred, so a declared "
+                "efficiency uncertainty is not combined into these bounds and "
+                "the record says so in its completeness"
             ),
         )
 
@@ -200,9 +617,19 @@ def propagate_transfer_uncertainty(
     )
 
 
+def _efficiency_width(transfer: QuantityTransfer) -> float | None:
+    """The declared standard uncertainty of this crossing's efficiency, if any."""
+    conversion = transfer.dependency.conversion
+    if conversion is None:
+        return None
+    return conversion.efficiency_uncertainty
+
+
 def make_uncertainty_transfer(
     transfer: QuantityTransfer,
     source_uncertainty: Uncertainty,
+    *,
+    upstream: QuantityTransfer | None = None,
 ) -> UncertaintyTransfer:
     return UncertaintyTransfer(
         transfer=transfer,
@@ -210,7 +637,10 @@ def make_uncertainty_transfer(
         uncertainty=propagate_transfer_uncertainty(
             transfer,
             source_uncertainty,
+            upstream=upstream,
         ),
+        completeness=_completeness_of(transfer, source_uncertainty),
+        upstream=upstream,
     )
 
 
@@ -248,13 +678,33 @@ def propagate_uncertainty_chain(
                     f"uncertainty chain is disconnected: previous transfer ends at "
                     f"{left}, next begins at {right}"
                 )
+            # R-58 claim (d): the two crossings must meet by VALUE as well as
+            # by name. Name connectivity says they are about the same quantity;
+            # it does not say they are about the same number, and 350 K leaving
+            # one crossing with 400 K entering the next is a path nothing
+            # travelled -- along which the audited code propagated one width.
+            met = _entering_value(transfer)
+            unit = transfer.dependency.unit_exemplar
+            if not _agree_relatively(
+                previous.value.magnitude_in(unit), met.magnitude_in(unit)
+            ):
+                raise InvalidScientificProblem(
+                    f"uncertainty chain does not meet: "
+                    f"{previous.value.magnitude_in(unit)} {unit} left "
+                    f"{previous.dependency.target_problem_id}."
+                    f"{previous.dependency.target_quantity} and "
+                    f"{met.magnitude_in(unit)} {unit} entered "
+                    f"{transfer.dependency.source_problem_id}."
+                    f"{transfer.dependency.source_quantity}. The two crossings "
+                    f"name the same quantity and are about different numbers"
+                )
             if previous.instant != transfer.instant:
                 raise InvalidScientificProblem(
                     f"uncertainty chain crosses different instants "
                     f"{previous.instant!r} and {transfer.instant!r}; propagating "
                     "across them would require a temporal evolution model"
                 )
-        item = make_uncertainty_transfer(transfer, current)
+        item = make_uncertainty_transfer(transfer, current, upstream=previous)
         propagated.append(item)
         current = item.uncertainty
         previous = transfer
@@ -262,6 +712,10 @@ def propagate_uncertainty_chain(
 
 
 __all__ = [
+    "CROSSED_QUANTITY_SCHEMA",
+    "CrossedQuantity",
+    "UNCERTAINTY_TRANSFER_SCHEMA_V2",
+    "TRANSFER_COMPLETENESS",
     "UncertaintyTransfer",
     "propagate_transfer_uncertainty",
     "make_uncertainty_transfer",

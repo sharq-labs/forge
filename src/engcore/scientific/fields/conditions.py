@@ -20,7 +20,7 @@ from typing import Any, Iterable, Mapping
 from ..errors import InvalidScientificProblem
 from ..ir.conditions import BoundaryKind
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, base_unit
 from ..units.validation import require_same_dimension
 from .definition import FieldDefinition
 from .profiles import (
@@ -31,7 +31,7 @@ from .profiles import (
     load_profile,
 )
 from .mesh import StructuredMesh
-from .regions import MeshRegion
+from .regions import BoundaryEdge, MeshRegion
 from .result import FieldRecord
 
 FIELD_BOUNDARY_CONDITION_SCHEMA = schema_string("field_boundary_condition")
@@ -318,16 +318,31 @@ def require_complete_boundary(
 
     * a condition naming a region that is not on this support — nothing to
       impose it on;
-    * two conditions on one region — a contradiction with a silent winner,
+    * two conditions on one **edge** — a contradiction with a silent winner,
       which is the same defect as two boundary values at a corner;
     * an edge with no condition — an under-determined problem that a solver
       would answer anyway, with whatever its assembly happened to leave there.
+
+    **Keyed by the EDGE, not by the region id (I-24, R-56).** Both checks used
+    to be keyed by ``region_id``, and the completeness one measured the caller's
+    own region list against itself. A region id is a NAME a caller chose; the
+    edge is the thing an assembly writes to. So a second ``MeshRegion`` on an
+    edge that already had one let two contradictory conditions share that edge
+    and was accepted — which is how a declared 400 K Dirichlet edge was dropped
+    in favour of a 0 W/m² flux, with every check still passing — and a caller
+    who passed one region and one condition was told the boundary was complete,
+    after which the unconditioned edges raised a ``KeyError`` inside assembly.
+
+    The two refusal sentences are unchanged, because the rule they state was
+    always the intended one: only the key was wrong.
     """
     by_id = {region.region_id: region for region in regions}
     for region in by_id.values():
         region.require_support(mesh)
 
-    seen: dict[str, str] = {}
+    # Keyed by edge, and carrying the condition and the region id that reached it so a refusal can
+    # name both the contradiction and the two names it arrived under.
+    seen: dict[BoundaryEdge, tuple[str, str]] = {}
     for condition in conditions:
         if condition.field_id != definition.field_id:
             continue
@@ -338,19 +353,25 @@ def require_complete_boundary(
                 f"{condition.region_id!r}, which is not a region of support "
                 f"{mesh.mesh_id!r}; declared: {sorted(by_id)}"
             )
-        if condition.region_id in seen:
+        edge = BoundaryEdge(region.edge)
+        if edge in seen:
+            first_name, first_region = seen[edge]
             raise InvalidScientificProblem(
-                f"region {condition.region_id!r} carries two conditions on "
-                f"field {definition.field_id!r}: {seen[condition.region_id]!r} "
-                f"and {condition.name!r}. One edge, one condition"
+                f"the {edge.value} edge of support {mesh.mesh_id!r} carries two "
+                f"conditions on field {definition.field_id!r}: {first_name!r} "
+                f"through region {first_region!r} and {condition.name!r} through "
+                f"region {condition.region_id!r}. One edge, one condition"
             )
-        seen[condition.region_id] = condition.name
+        seen[edge] = (condition.name, condition.region_id)
         condition.require_consistent(definition, region, mesh)
 
-    missing = sorted(set(by_id) - set(seen))
+    # Over the SUPPORT's edges, not over the regions the caller passed. The support has four edges
+    # whatever arrived here, and the solver reads all four.
+    missing = [edge.value for edge in BoundaryEdge if edge not in seen]
     if missing:
         raise InvalidScientificProblem(
-            f"field {definition.field_id!r} has no condition on {missing}; an "
+            f"field {definition.field_id!r} has no condition on the "
+            f"{missing} edge(s) of support {mesh.mesh_id!r}; an "
             f"edge without one leaves the problem under-determined, and a "
             f"solver would answer it anyway"
         )
@@ -391,13 +412,44 @@ def _require_corners_agree(
         for point in region.corner_points(mesh):
             corners.setdefault(point, []).append(condition)
 
+    # ONE SCALE, AND IT IS THE DIMENSION'S CANONICAL ONE (I-22, R-57).
+    #
+    # `SpatialProfile.evaluate` returns a magnitude in the LAW's own unit, and
+    # `FieldBoundaryCondition.require_consistent` checks a Dirichlet law for
+    # DIMENSION only -- "any unit of the right dimension is accepted" is the
+    # rule, deliberately. So this guard was subtracting two numbers on two
+    # scales: 300 kelvin meeting 300 degC, a 273.15 K contradiction at two
+    # corners, was ACCEPTED, and 300 kelvin meeting 26.85 degC, which is the
+    # same temperature, was REFUSED -- and the message labelled both numbers
+    # with the field's unit when only one of them was in it.
+    #
+    # The canonical unit rather than `definition.unit`, for the reason batch 27
+    # gave one layer over: `CORNER_AGREEMENT_REL_TOL` is a RELATIVE tolerance,
+    # which is a statement about a ratio, and a ratio means nothing on a scale
+    # whose zero is a convention. `base_unit` is a pure function of the
+    # dimension and is always a ratio scale, so a field declared in degC now
+    # gets the same verdict as the same physical pair declared in kelvin.
+    canonical = base_unit(definition.unit)
+
+    def _on_the_canonical_scale(condition) -> float:
+        law = condition.law
+        return float(
+            Quantity(law.evaluate(x=x, y=y), law.unit).magnitude_in(canonical)
+        )
+
+    def _as_written(condition) -> str:
+        law = condition.law
+        if law.unit == canonical:
+            return ""
+        return f" (as written: {law.evaluate(x=x, y=y):g} {law.unit})"
+
     for (x, y), meeting in sorted(corners.items()):
         if len(meeting) < 2:
             continue
         first, *rest = meeting
-        reference = first.law.evaluate(x=x, y=y)
+        reference = _on_the_canonical_scale(first)
         for other in rest:
-            value = other.law.evaluate(x=x, y=y)
+            value = _on_the_canonical_scale(other)
             tolerance = CORNER_AGREEMENT_REL_TOL * max(
                 1.0, abs(reference), abs(value)
             )
@@ -405,8 +457,9 @@ def _require_corners_agree(
                 raise InvalidScientificProblem(
                     f"conditions {first.name!r} and {other.name!r} meet at "
                     f"corner ({x:g}, {y:g}) of support {mesh.mesh_id!r} and "
-                    f"prescribe {reference:g} and {value:g} "
-                    f"{definition.unit} there. A corner node belongs to both "
+                    f"prescribe {reference:g}{_as_written(first)} and "
+                    f"{value:g}{_as_written(other)} {canonical} there. A "
+                    f"corner node belongs to both "
                     f"edges, so one of these silently wins on whichever order "
                     f"the assembly happens to use"
                 )

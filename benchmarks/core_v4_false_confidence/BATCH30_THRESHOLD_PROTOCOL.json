@@ -1,0 +1,73 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 30,
+ "improvements": [
+  "I-22 part E of five, the last"
+ ],
+ "problems_addressed": [
+  "R-48 (the audit's finding 99)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "e50bb6e1",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part D gave the units module the spread conversion and the spread refusal, and applied them at the oracle tolerance (finding 58). This part applies them at every other DECLARED spread in the core -- finding 99's sites: `ConstraintDefinition.tolerance` and the margin its check reports, `GaussianObservation.sigma` as read by `inference/grid.py` and `inference/split.py`, and `PredictiveObservable.observation_sigma`, which part D's ledger row named as the reason it stayed PARTIAL: `require_spread_unit` is applied at call sites and nothing structurally requires a spread field to consult it. With this part landed, every declared spread in `src/engcore` consults it, and R-48 is FIXED.",
+ "reach": "MIXED, and each site says which. `ConstraintDefinition` is reached by every MCP rating and limit check, `GaussianObservation` by the production calibration study and by `studies/tcr`, `PredictiveObservable` by the predictive layer the study routes through. All of them are reached with RATIO-SCALE units -- ohm, watt, kelvin, ampere -- so no production number moves and the ledger row will say LATENT for the shape rather than REACHED. What is reached is the guard; what is latent is the offset-scale declaration that would trip it.",
+ "what_was_already_seen": {
+  "R-48": "the audit's finding 99, reproduced at 294c129 and again at e50bb6e1, five spellings: (a) a '2 degC' tolerance on a 358.15 kelvin bound reads as **275.15 kelvin**, so a 600 kelvin reading SATISFIES a 358.15 kelvin limit with a reported margin of 33.3 kelvin; (b) a '0.5 degC' sigma on a 300 kelvin reading reads as **273.65 kelvin**, so the chi-squared of a 50 kelvin misfit is 0.0334 instead of 10000 -- any goodness-of-fit, containment or near-duplicate test on it is measuring nothing; (c) the reported margin is stored in the bound's OFFSET unit, so a margin of 12 degrees under an 85 degC limit is `12.0 degree_Celsius` and a consumer converting it reads **285.15 kelvin**; (d) the physically correct declarations -- a delta_degC tolerance on a degC bound, a delta_degC sigma on a degC value -- are REFUSED (at 294c129 with pint's own untyped DimensionalityError; since part D with this package's error, which is better and is still a refusal of the right answer); (e) a legitimate kelvin tolerance on a degC bound is refused for being NEGATIVE, the same sign-on-the-converted-magnitude defect part D found at the oracle."
+ },
+ "rules": {
+  "every_declared_spread_states_a_spread_unit": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "`require_spread_unit` is called on the declared unit of `ConstraintDefinition.tolerance`, `GaussianObservation.sigma` and `PredictiveObservable.observation_sigma`, in each record's `__post_init__`, and its refusal is re-raised as that record's own contract error (`InvalidScientificProblem`, `InferenceProblemError`, `UQProblemError`).",
+   "class": "A",
+   "why": "The same rule part D preregistered, at the sites part D's own ledger row named as the reason R-48 stayed open. Each record's own error type, because a caller building a problem handles one exception type -- the same reasoning part D used at the oracle.",
+   "closes": "the '2 degC' tolerance and the '0.5 degC' sigma, at declaration rather than at use."
+  },
+  "a_positivity_check_is_on_the_magnitude_as_declared": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "The tolerance's non-negativity and the sigma's strict positivity are checked on the declared quantity's OWN magnitude, not on a magnitude converted into the bound's or the value's unit.",
+   "class": "A",
+   "why": "On a ratio scale a magnitude's sign does not depend on the unit, and the unit is now required to be a ratio scale, so the converted check can only differ from this one by being WRONG -- which is what refused a legitimate kelvin tolerance on a degC bound for being negative (-272.65) and would have refused a legitimate kelvin sigma on a degC value as non-positive."
+  },
+  "every_conversion_of_a_declared_spread_is_a_spread_conversion": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "`ConstraintDefinition.check`'s `tol`, `ObservationSet.numeric_vectors`'s sigmas, both of `inference/split.py`'s content-digest sigmas, and `PredictiveObservable.__post_init__`'s stored normalization read their spread with `magnitude_as_spread_in` instead of `magnitude_in`/`to`.",
+   "class": "A",
+   "why": "A difference transforms by the linear part of an affine map. Given the declaration rule above every unit reaching these conversions is a ratio scale, where the two readers agree exactly -- so this rule changes no number today and is the reason the delta spelling works at all: `magnitude_in` has no conversion from `delta_degC` to `degC` and raises. Both rules are kept for the reason part D gave: the declaration guard is about what a caller may SAY, and the reader is about what the arithmetic MEANS.",
+   "note_on_split_py": "`split.py` already performed a two-point difference trick by hand -- add the sigma to the value, convert both, subtract -- and its comment says so. That trick corrects the value-unit-to-base step and not the sigma's OWN declared unit, which is where finding 99's 273.65 came from. The spread reader replaces the trick with the thing the trick was approximating."
+  },
+  "a_reported_margin_is_on_a_scale_that_can_carry_a_difference": {
+   "improvement": "I-22",
+   "problem": "R-48",
+   "rule": "`ConstraintCheck.margin` is reported in the bound's unit when that unit is a ratio scale, and in the coherent SI base unit of its dimension otherwise. The magnitude is carried across with `magnitude_as_spread_in`, which is the identity in the first case.",
+   "class": "A",
+   "why": "A margin is a DIFFERENCE, and labelling one `12.0 degree_Celsius` makes every consumer that converts it read 285.15 kelvin. The condition rather than an unconditional canonical unit is deliberate and is the compatibility decision: the bound's unit is a ratio scale in every constraint this repository declares, so every serialized `ConstraintCheck` keeps its unit and its magnitude byte for byte, and only the offset-scale case -- which has no correct answer today -- changes. The base unit rather than a synthesized `delta_` name because the base unit is what the registry already gives, and inventing a unit NAME from a string is the kind of guess this round is against.",
+   "compatibility": "A constraint whose bound is on an offset scale reports its margin in kelvin rather than in degC. That is a changed unit STRING in a record, for a record that was previously wrong; no such constraint exists in this repository."
+  }
+ },
+ "compatibility": {
+  "additive_only": "No new public symbol. No signature, field, default or enum member change. `ir/constraints.py`, `inference/grid.py`, `inference/split.py` and `uq/predictive.py` gain imports from the units module, which the layer ladder allows in each case (units are below all four). No serialized record gains or loses a key.",
+  "recorded_numbers": "Every spread and every bound in this repository is on a ratio scale, so every conversion above is the identity and no committed number or digest moves -- asserted by the two tiers, including `inference/split.py`'s content digests and the calibration study's committed evidence, rather than by inspection.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "`magnitude_as_spread_in` remains a way to READ a quantity, not a KIND of quantity. What this part adds is that every DECLARED spread field in the core now states, at construction, that it is one -- so the reader and the declaration agree by construction rather than by a caller's care. A `Quantity` handed around loose still carries no such statement.",
+  "`studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` read sigmas with `magnitude_in` at several points downstream of a declaration. Those reads are now safe because the declaration guard admits only ratio-scale units, where the two readers agree exactly -- but they are safe BY that guard and not by their own statement. Converting them all would be a larger, mechanical change with no behaviour in it; naming them here is the honest alternative.",
+  "The margin rule is conditional on the bound's unit, which means the unit of a reported margin is not a fixed function of the constraint alone. It is a fixed function of the bound's unit, which travels in the same record, so a reader can always tell -- but an unconditional canonical unit would have been simpler and would have moved every committed ConstraintCheck."
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Two reproductions were strengthened, both forced by this batch's own mutation run.",
+   "the_numbers_that_forced_it": "Two of eleven mutations survived on the first run, and both survived for the same reason: THE SLOPE BETWEEN THE TWO CELSIUS SCALES IS 1, so a fixture on a Celsius scale cannot tell a conversion from a relabelling. (a) B30i drops the base-unit fallback for a predictive spec's stored sigma, and the stored MAGNITUDE was still 0.5 -- what was wrong was the stored UNIT, `degree_Celsius`, an absolute unit carrying a spread. The reproduction now asserts `is_ratio_scale` of the stored unit. (b) B30k corrects the constraint margin's unit and does not carry its magnitude across; on a degC bound that is the identity. The reproduction now also checks a degF bound, Fahrenheit being the one offset scale whose slope is not 1: a 21.6 delta_degF margin must be recorded as 12 kelvin and not as 21.6 labelled kelvin. A relabelling is worse than the original defect, because it looks canonical.",
+   "guards_added_while_running_the_mutations": [
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_physically_correct_declarations_work now asserts that a stored predictive sigma's unit is a ratio scale, not merely that its magnitude is right.",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value gained a degF bound, the only offset scale whose slope is not 1."
+   ]
+  }
+ ]
+}

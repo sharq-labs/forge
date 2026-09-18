@@ -1,0 +1,1420 @@
+{
+ "schema": "guard_reach_ledger/1",
+ "improvement": "I-16",
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "verifier": "tools/certification/guard_reach.py",
+ "protocol": "benchmarks/core_v4_false_confidence/BATCH19_THRESHOLD_PROTOCOL.json",
+ "what_this_is": "The 2026-09-16 re-audit's central finding is not that individual guards were wrong. It is that guards were written where production does not go. A guard whose reach nobody states is a guard whose reach nobody can lose, so reach is DECLARED here, per guard family, and tools/certification/guard_reach.py refuses a declaration that is not checkable. A status is a declaration about what the code does, not a summary of what a grep found: nothing here is inferred.",
+ "statuses": {
+  "REACHED": "a production entry point reaches the rule and a named test exercises it there",
+  "LIBRARY_ONLY": "the rule exists and no production entry point reaches it. This is a FINDING and must name the improvement that will close it",
+  "LATENT": "the rule guards a shape that does not occur in the tree at all, so there is nothing to reach yet. Not the same as unreached, and must say what would create it"
+ },
+ "production_entry_points": [
+  "engcore.mcp.tools.run_electrothermal (MCP)",
+  "engcore.mcp.tools.run_battery (MCP)",
+  "the domain runners under engcore.domains (thermal_models, electrical.dc, battery, kinetics.cstr, repair)",
+  "engcore.studies.calibration_study (predict, validate, run_calibration_study, run_coverage_study)"
+ ],
+ "residuals": [
+  "This is the REACH map for the guard families whose reach the audit measured by R-xx, not a complete guard inventory. The inventory is tests/mutation_guards.py's job and the Core Freeze V4 round's (I-30).",
+  "The four bypass checks are SYNTACTIC. A bypass written in a shape none of them matches -- a dynamic dispatch, a getattr, a call through an alias the checker does not resolve -- is not caught. Each row says per check what it cannot see rather than claiming completeness.",
+  "The verifier reads src/engcore only. A bypass in benchmarks/, in a script or in a test is not production and is not checked."
+ ],
+ "guards": [
+  {
+   "problem": "R-01",
+   "title": "A grid rebuild turns an unassessed or incomplete uniqueness search into a SUPPORTED one-mode grid",
+   "rule": "src/engcore/hybrid_uq/router.py",
+   "rule_symbol": "route_uncertainty (the rebuild branch, which runs the canonical MultistartPolicy() itself where a grid route is in play and the caller supplied none)",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-01 (batch 6)",
+   "why": "The rule is right and there is nothing in the tree for it to reach: route_uncertainty has no caller in src at all. The one production study reaches the V2 gates through grid_predictive_uncertainty directly (see R-02) rather than through the router, so the rebuild shape does not occur in production today. That is LATENT and not LIBRARY_ONLY: LIBRARY_ONLY would say a production path bypasses the rule, and no production path asks for a rebuild.",
+   "what_would_create_it": "a production call to engcore.hybrid_uq.router.route_uncertainty. I-13 (binding routed predictions to calibration content) and I-07 (grid evidence the supplier cannot steer) are where a routed production path would arrive; on that day the ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART check turns the audited shape -- a rebuild policy passed together with multistart=None, which asks for the rebuild while declining the search -- into a build failure instead of a SUPPORTED one-mode grid.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch6.py::test_r01_a_rebuild_is_passed_over_when_no_uniqueness_search_ran",
+    "tests/hybrid_uq/test_core_scientific_audit_batch6.py::test_r01_the_router_runs_the_canonical_search_when_a_grid_route_needs_one"
+   ],
+   "bypasses": [
+    "ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART"
+   ],
+   "bypass_allow_lists": {
+    "ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART": []
+   },
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "a rebuild policy reached through a variable the checker cannot resolve (policy = None; ...; route_uncertainty(rebuild=policy, multistart=policy2)), and a caller that passes a multistart argument whose value is a None-valued name rather than the literal None."
+  },
+  {
+   "problem": "R-02",
+   "title": "The production calibration study predicts and validates through frozen V1 functions, so no V2 evidence gate runs",
+   "rule": "src/engcore/hybrid_uq/predictive.py",
+   "rule_symbol": "grid_predictive_uncertainty (CORE-006 route claim and evidence judgement) over grid_goodness_of_fit (CORE-001), grid_containment (CORE-002), require_grid_is_this_evidence (CORE-005) and grid_prior_uniformity (CORE-010)",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-03 (batches 17 and 18)",
+   "why": "Batches 17 and 18 routed engcore.studies.calibration_study -- the only production consumer of the predictive layer -- through grid_predictive_uncertainty, so every production prediction, held-out verdict and coverage repetition now passes the V2 evidence gates before the frozen V1 interval is formed: a grid the router would not route RAISES, and a grid it routes with a finding DOWNGRADES the claim and carries the reasons onto the record. Residual, stated rather than hidden behind the status: the study is the only production path that predicts at all. The MCP tools run solvers and report credibility; they form no predictive interval, so there is no second production path for this rule to reach.",
+   "entry_points": [
+    "engcore.studies.calibration_study.predict",
+    "engcore.studies.calibration_study.validate",
+    "engcore.studies.calibration_study.run_calibration_study",
+    "engcore.studies.calibration_study.run_coverage_study"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch17.py::test_r02_the_claim_names_the_prediction_domain",
+    "tests/test_core_scientific_audit_batch17.py::test_r02_a_box_that_truncates_the_posterior_yields_no_predictive_interval",
+    "tests/test_core_scientific_audit_batch17.py::test_r02_a_box_that_truncates_the_posterior_yields_no_held_out_verdict",
+    "tests/test_core_scientific_audit_batch17.py::test_r02_the_coverage_study_records_a_refused_repetition_and_says_the_number_is_conditional",
+    "tests/test_core_scientific_audit_batch18.py::test_r02_an_extrapolating_study_says_it_is_extrapolating",
+    "tests/test_core_scientific_audit_batch18.py::test_r02_each_predictive_record_carries_its_own_conditions_domain_verdict"
+   ],
+   "bypasses": [
+    "RAW_POSTERIOR_GRID_CONSUMER"
+   ],
+   "bypass_allow_lists": {
+    "RAW_POSTERIOR_GRID_CONSUMER": [
+     "src/engcore/uq/predictive.py",
+     "src/engcore/hybrid_uq/predictive.py",
+     "src/engcore/adequacy/predictive.py"
+    ]
+   },
+   "bypass_allow_list_reasons": {
+    "src/engcore/uq/predictive.py": "it IS posterior_predictive_uq. The frozen V1 function applies only the grid-resolution refusal, which is exactly why a direct consumer of it is the audited shape.",
+    "src/engcore/hybrid_uq/predictive.py": "grid_predictive_uncertainty calls the frozen function AFTER judging the grid -- route claim, evidence judgement and prediction-domain reasons first, interval second. Wrapping it is the fix, so the wrapper is the one caller that is meant to be here.",
+    "src/engcore/adequacy/predictive.py": "the CORE-011 content binding applies grid_containment and grid_prior_uniformity to the posterior before it will bind, and withholds the binding on a finding (batch 17). It does NOT apply grid_goodness_of_fit: a content binding is about whether the grid is THIS posterior's evidence, not about whether the model fits, and the fit statement belongs to the verdict the binding is attached to. That omission is a residual BATCH17's protocol states, and this allow-list entry is where it stays visible."
+   },
+   "what_the_check_cannot_see": "a consumer that reaches the frozen function through an alias (f = posterior_predictive_uq; f(...)), through a getattr, or through a re-export the checker does not resolve back to this name."
+  },
+  {
+   "problem": "R-09",
+   "title": "The CORE-014 operating-point binding never fires in production and is bypassable when enabled",
+   "rule": "src/engcore/scientific/models/definition.py",
+   "rule_symbol": "ScientificModelDefinition.assess_validity(record_values=...) and ValidityAssessment.evaluated, bound by ScientificResult._require_assessment_is_about_this_model and CredibilityEvidenceReport._require_assessments_at_this_operating_point",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-11 (batch 14)",
+   "why": "record_values defaults to False on a V1-frozen symbol's method and before batch 14 NOTHING in src passed True, so the CORE-014 binding looped over an empty mapping on every production path. Batch 14 set the default to True on DomainValidityContext.assess -- the domains' own helper, and the path battery, electrical and repair all assess through -- and passed it explicitly at the conduction and KCL sites, so a result or a credibility report now refuses a verdict made at a different operating point than its own provenance states. Residual, recorded on the report rather than hidden: 59 of the 77 condition names across the 16 registered models are reserved DERIVED quantities and 18 are declared inputs, so most names cannot be bound by name at all; they are REPORTED in CredibilityEvidenceReport.unbound_assessment_values and not counted as agreements (D-14-1). An interval verdict binds only the values that did not move within the step, so a coupled battery step binds its state of charge and current and not its temperature.",
+   "entry_points": [
+    "engcore.mcp.tools.run_electrothermal",
+    "engcore.mcp.tools.run_battery",
+    "engcore.domains.derived_context.DomainValidityContext.assess (battery, electrical, repair)",
+    "engcore.domains.thermal_models.conduction1d_bulk",
+    "engcore.domains.thermal_models.conduction1d_schemes",
+    "engcore.domains.electrical.dc.models.assess_kcl_validity"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch14.py::test_r09_the_production_conduction_models_record_their_operating_point",
+    "tests/test_core_scientific_audit_batch14.py::test_r09_the_production_electrical_assessments_record_their_operating_point",
+    "tests/test_core_scientific_audit_batch14.py::test_r09_the_derived_context_records_its_operating_point_by_default",
+    "tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point",
+    "tests/test_core_scientific_audit_batch14.py::test_r09_the_report_records_the_names_its_provenance_cannot_bind"
+   ],
+   "bypasses": [
+    "ASSESS_VALIDITY_WITHOUT_RECORD_VALUES"
+   ],
+   "bypass_allow_lists": {
+    "ASSESS_VALIDITY_WITHOUT_RECORD_VALUES": []
+   },
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "an assessment built by hand rather than through assess_validity -- a ValidityAssessment(...) constructor call with an empty `evaluated` -- and an assessment produced outside src/engcore/domains. The first is what the MCP boundary's registry check and the model-id/version binding are for; the second is not production. The check also cannot see a call that passes record_values=False, which is a DECLARATION that the caller does not want the bytes: the shape it finds is a caller who never considered the question.",
+   "note_on_the_empty_allow_list": "BATCH19's preregistration expected domains/derived_context.py on this allow-list, because its own default is True. It is not needed: that method forwards `record_values=record_values` to assess_validity, so the checker sees the name in the argument list and the site is not a hit. An allow-list entry that is not needed is a hole nobody would notice, so the list is empty and the expectation is recorded as an amendment in the protocol instead."
+  },
+  {
+   "problem": "R-21",
+   "title": "CROSS_SOLVER_VALIDATED is guarded only by string checks, and non-independent disagreement is absorbed as WARNING",
+   "rule": "src/engcore/execution/consensus.py",
+   "rule_symbol": "TrustedConsensusGate.assess, which requires byte-verified artifact independence before CrossSolverConsensus.to_check may keep the CROSS_SOLVER_VALIDATED level",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-12 (batches 24 and 25)",
+   "why": "CLOSED by I-12 part B (batch 25), and this row is what says so. `TrustedConsensusGate` had no caller in src: the one production consensus check was minted in engcore.mcp.problem from `CrossSolverConsensus.to_check`, which reaches the scientific comparison and the string-declared independence and never the gate. It is now built BY the gate. That path ships no artifact digests, so the gate withholds CROSS_SOLVER_VALIDATED and records the withholding structurally, and the boundary's own `_withhold_level` still runs for its own different reason -- the check is about values it does not scope to -- so the level is withheld twice over and either rule alone would leave it one change away from a report. Two more halves of R-21 closed with it: every check carrying the level must now name exactly one `independence basis:` -- `declared` (verified against the domain layer's pin) or `artifact-verified` (the gate's byte-digested line) -- which is what the audit meant by a reader being unable to tell the two apart; and a disagreement beyond tolerance is now FAIL whether or not the routes are verified independent, so the audited 33% case no longer reads WARNING under a SUPPORTED verdict. R-21's first claim -- hand-written evidence lines earning the level -- was already closed by VAL-01 and is pinned by a test of its own. Residual, stated rather than hidden behind the status: `artifact-verified` is unreachable in production, because no production route ships artifact digests, so the production path awards nothing at all.",
+   "entry_points": [
+    "engcore.mcp.tools.run_electrothermal (the cross-solver check emitted when a second route is asked for) -- reaches TrustedConsensusGate, which withholds the level for want of artifact bytes, and then the boundary's own _withhold_level"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch25.py::test_r21_the_production_cross_solver_check_is_built_by_the_gate",
+    "tests/test_core_scientific_audit_batch25.py::test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence",
+    "tests/mcp/test_problem.py::test_the_second_route_actually_runs_and_the_level_is_withheld",
+    "tests/mcp/test_problem.py::test_no_cross_solver_check_is_emitted_unless_one_is_asked_for"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch25.py::test_r21_the_gate_names_the_artifact_verified_basis_when_the_bytes_agree",
+    "tests/test_core_scientific_audit_batch25.py::test_r21_a_check_claiming_the_level_without_a_basis_is_refused",
+    "tests/test_cross_solver_consensus.py::test_a_hand_edited_payload_cannot_smuggle_in_a_level",
+    "tests/test_trusted_consensus_gate.py::test_digest_declarations_without_bytes_withhold_trusted_level",
+    "tests/test_trusted_consensus_gate.py::test_forged_fingerprint_cannot_keep_cross_solver_level"
+   ],
+   "bypasses": [
+    "TO_CHECK_OUTSIDE_THE_GATE"
+   ],
+   "bypass_allow_lists": {
+    "TO_CHECK_OUTSIDE_THE_GATE": []
+   },
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "a to_check call whose _withhold_level wrapper sits further than 40 characters before it, which the checker reports rather than allows. The production path no longer has such a call at all: the check it emits is the gate's. What no static check can see is a check COPIED from a genuine consensus onto another result -- it carries a genuine threshold record and a genuine basis line -- which needs the check bound to the result it qualifies (CORE-009/VAL-01, I-20's)."
+  },
+  {
+   "problem": "R-43",
+   "title": "UncertaintySource never reaches a verdict or report, and SRIA budgets accept NUMERICAL as model-form",
+   "rule": "src/engcore/sria/assurance/uncertainty_budget.py",
+   "rule_symbol": "the unattributed-channel refusal in UncertaintyBudget.aggregate; channels_from_predictive_uncertainty with CHANNEL_OF_SOURCE, and require_source_fits_channel with CHANNEL_ACCEPTS_SOURCE, in src/engcore/sria/uncertainty.py; the declared source_kind on the two V1 predictive intervals in src/engcore/uq/predictive.py (batch 8)",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-09/I-10 (batch 8) and I-25 part C (batch 54); the remaining half is a PRODUCER no rule can write",
+   "why": "PARTIAL, and LATENT rather than LIBRARY_ONLY as of batch 54, with the reason stated rather than softened. What is closed: the report carries per-value uncertainty with its source_kind (batch 8), the two V1 predictive intervals declare PARAMETER and COMBINED, a record filed under a channel its own source contradicts is refused at declaration and at the budget, an unattributed quantified record can no longer be AGGREGATED into a total presented as the channels' own -- which is exactly the audited harm, 'the SRIA budget marks aleatoric and model_form known from a numerical-only record' -- and channels_from_predictive_uncertainty carries a declared V1 record onto the channel its own source names, which is the connection batch 8 left missing. What is NOT closed, and cannot be by a rule: no domain solver in this repository quantifies uncertainty at all. Every one emits Uncertainty.unknown with a stated reason, which is the honest state of a solve nobody put an uncertainty budget on, and inventing a number for a channel is the defect this whole round is about. LATENT is therefore the right word for the guards: nothing in src builds an UncertaintyDeclaration, so the shape they guard is not produced in the tree.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_quantified_channel_cannot_be_aggregated",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_one_unattributed_channel_on_its_own_is_not_aggregated_either",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_declared_channel_still_aggregates",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unquantified_channel_keeps_its_own_refusal",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_channel_is_still_declarable_and_named",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_record_declaring_another_channel_is_still_refused_where_it_is_filed",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_predictive_record_is_carried_onto_the_channel_it_names",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_combined_record_is_refused_rather_than_filed",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unknown_record_carries_no_channel",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_quantified_record_carries_no_channel_either",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_the_carried_channels_are_what_a_declaration_accepts",
+    "tests/mcp/test_core_scientific_audit_batch7.py::test_r43_an_undeclared_source_is_recorded_as_unattributed_not_as_compatible",
+    "tests/mcp/test_core_scientific_audit_batch7.py::test_r43_the_v1_predictive_intervals_declare_what_they_are_of"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The refusal is on the KIND, not on the truth: a caller may declare MEASUREMENT on a discretization estimate and no rule here can tell. What is closed is silence being counted. An unattributed quantified record may still be DECLARED and read -- the pinned harnesses do exactly that, and `unattributed_channels` names it -- because a refusal at declaration time would make a pinned experiment unrunnable rather than making anything more honest. And no rule can produce the missing producer: a domain that does not quantify a channel says so with UNKNOWN, and that silence stays visible rather than being filled in.",
+   "what_would_create_it": "A caller building an UncertaintyDeclaration from a production record -- which channels_from_predictive_uncertainty now exists for -- or a domain solver that actually quantifies a channel. The audited shapes are a quantified record whose source_kind is UNSPECIFIED being counted as a channel's known uncertainty and combined into a total, and a record filed under a channel its own source contradicts. The SHA-256-pinned E1 and E2 experiment harnesses file unattributed quantified records under channels today, which is why the refusal is at aggregation rather than at declaration (batch 54's amendments 1 and 2)."
+  },
+  {
+   "problem": "R-58",
+   "title": "Cross-domain crossings carry bare point values, and UncertaintyTransfer binds nothing",
+   "rule": "src/engcore/uq/cross_domain.py",
+   "rule_symbol": "UncertaintyTransfer, which binds a crossing quantity's propagated uncertainty to the transfer that produced it; the interval-containment, attribution, chain-meeting and completeness rules of part B (_require_the_interval_contains_the_value, _require_the_uncertainty_names_the_source, the value-meeting refusal in propagate_uncertainty_chain, _completeness_of and the attribution that keeps both references), with EnergyConversion.efficiency_uncertainty; CrossedQuantity and CrossedQuantity.from_result (part C), with CoupledRun.crossings and recorded_crossings in src/engcore/systems/electrothermal/coupled.py",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-27 parts A, B and C (batches 47, 48 and 49)",
+   "why": "The problem is REACHED in production -- the audit's own value, and why this row's audit_reached_in_production is `yes` -- while the GUARD is not. The production electrothermal coupling passes bare point values across the thermal/electrical boundary with no uncertainty, no validity state and no validation state attached, and UncertaintyTransfer, the record that would bind them, has no caller in src. So a crossing that loses its uncertainty loses it silently: the receiving domain sees a number, and nothing downstream can tell a propagated quantity from a declared one. This is the one row where LIBRARY_ONLY understates the risk rather than overstating it, because the unguarded path is the one production actually runs. I-27 is where the transfers carry uncertainty and validity with physically bound checks. Part B (batch 48) closed everything the record itself can answer: an INTERVAL must contain the value it is about, an attribution must name something the crossing names, the propagated record keeps BOTH provenances, a chain propagates only where consecutive values meet, and a conversion whose efficiency declares no uncertainty says structurally that the width is a lower bound. The STATUS is unchanged and is the finding: nothing in src/ calls this module yet, so every production crossing still carries a bare point value. That is part C, and it is what will move this row to REACHED. Part C (batch 49) closed the production half and is what moves this row: the fixed-point electrothermal loop now records one CrossedQuantity per crossing, carrying the producing result's own uncertainty entry for the quantity, its per-model applicability verdicts, its validation status and its convergence state -- every one of them read OFF that result by from_result rather than taken from a caller. So the guard family has a production caller, which is exactly what LIBRARY_ONLY said it did not.",
+   "entry_points": [
+    "engcore.systems.electrothermal.coupled.run_fixed_point_coupling (records one crossing per transfer)",
+    "engcore.mcp.tools.run_electrothermal (MCP), through that loop",
+    "engcore.domains.battery.coupling (the coupled step) -- still crosses values through its own step and builds no QuantityTransfer records at all, so there is nothing yet to attach a crossing to; named here as the remaining production path rather than counted as reached"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch49.py::test_r58_the_production_coupling_records_a_crossing_per_transfer",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_run_cannot_carry_a_partial_set_of_crossings",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_crossing_carries_the_uncertainty_the_producer_declared",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_crossing_carries_the_sources_validity_verdict",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_crossing_carries_the_sources_validation_and_convergence_state",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_crossing_cannot_be_built_against_another_record",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_result_that_says_nothing_about_its_uncertainty_is_refused",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_configured_input_crossing_carries_an_undeclared_uncertainty",
+    "tests/test_core_scientific_audit_batch49.py::test_r58_a_crossing_names_every_model_the_source_declares",
+    "tests/test_electrothermal_vertical.py"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_cross_domain_uq.py::test_uncertainty_transfer_round_trip_recomputes_the_propagation",
+    "tests/test_cross_domain_uq.py::test_hand_forged_propagated_uncertainty_is_refused",
+    "tests/test_cross_domain_uq.py::test_unknown_uncertainty_stays_unknown_instead_of_becoming_zero",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_that_does_not_contain_the_value_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversions_interval_is_about_what_entered_it",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversions_interval_is_about_the_input_and_not_the_output",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_uncertainty_about_another_quantity_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_uncertainty_attributed_to_nothing_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_the_attributions_the_record_itself_names_are_accepted",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_the_propagated_record_keeps_both_references",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_whose_values_do_not_meet_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_link_records_the_crossing_that_fed_it",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_chain_link_taken_out_of_its_chain_is_refused",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_conversion_with_no_declared_efficiency_uncertainty_says_so_structurally",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_under_a_conversion_stays_a_lower_bound_even_when_the_efficiency_is_declared",
+    "tests/test_core_scientific_audit_batch48.py::test_r58_a_record_cannot_state_a_completeness_its_own_arithmetic_denies"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "nothing static: a crossing that passes a float is a call the checker could find only by knowing which arguments are crossing quantities, which is a type question and not a syntactic one. I-27's own tests are what will measure it once the transfers exist; until then this row is the declaration that they do not. As of part B: the attribution rule is a containment test over what the crossing names, so it refuses an uncertainty bound to nothing and does not verify that the named result's own uncertainty entry for that quantity IS this one -- that needs the result passed in, which is part C's business where it builds the transfers. Quadrature assumes the efficiency's uncertainty is independent of the input's, and that assumption is RECORDED in the propagated method and notes rather than established. An INTERVAL under a conversion is never combined with an efficiency uncertainty, because a bound and a standard uncertainty need a distribution nobody declared; the record says lower bound instead. As of part C: production writes Uncertainty.unknown with a stated reason on every metric it reports, so what crosses is an UNKNOWN carrying that reason. This makes the producing side's silence VISIBLE at the crossing; it quantifies nothing, and no rule here could. The battery coupling is untouched for the reason in the entry points. The crossing carries the source's validation STATUS and convergence state rather than its whole report, because the report is on the result the crossing names and a copy would be a second place for it to be edited. And mcp/evidence.py does not render the crossings: what a report shows is a decision per consumer."
+  },
+  {
+   "problem": "R-75",
+   "title": "Quantity.parse evaluates unit expressions, magnitudes accept bool or str, and delta units pass as absolute",
+   "rule": "src/engcore/scientific/units/quantity.py",
+   "rule_symbol": "Quantity.parse and Quantity.__post_init__ over _declared_magnitude, _require_the_unit_is_a_unit_and_not_arithmetic, _require_the_magnitude_written_is_the_magnitude_parsed and is_delta_unit; the delta refusal itself is src/engcore/mcp/problem.py::_read_quantity",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-22 part A (batch 26)",
+   "why": "Every declared value in an MCP run_electrothermal or run_battery payload is read by _read_quantity, which calls Quantity.parse and now also refuses a delta unit where the binding's unit_exemplar is absolute. The reproductions run through build_electrothermal_problems on the SHIPPED example payload rather than through the parser alone, which is what makes the row REACHED rather than LIBRARY_ONLY. Residual, stated rather than hidden behind the status: the grammar is about TEXT, so a caller constructing Quantity(5.0, 'volt') in process bypasses it entirely -- as it must, that being the two-argument path the class is built on -- and only __post_init__'s bool/str rule reaches there. The library comparisons that also mishandle offset scales (R-48, R-52, R-57) are parts B and C of this improvement and are LIBRARY_ONLY until then.",
+   "entry_points": [
+    "engcore.mcp.problem.build_electrothermal_problems",
+    "engcore.mcp.problem.run_electrothermal_case",
+    "engcore.mcp.battery",
+    "engcore.scientific.units.quantity.coerce_quantity"
+   ],
+   "exercised_by": [
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_an_expression_at_the_mcp_boundary_is_refused",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_the_example_payload_still_builds"
+   ],
+   "exercised_by_in_library": [
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_text_after_the_unit_is_not_folded_into_the_magnitude",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_an_arithmetic_expression_is_not_a_declaration",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_magnitude_is_a_decimal_literal_and_not_an_expression",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_unit_with_no_magnitude_is_refused",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_bool_is_not_a_magnitude",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_string_is_not_a_magnitude",
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_the_difference_scales_have_a_name"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "a boundary other than _read_quantity that reads a declared unit and checks only its dimension. The delta rule is applied at one call site, not enforced structurally, so a second such reader would have to consult is_delta_unit itself -- which is why parts B and C put the rule into the library comparisons rather than leaving it at the boundary."
+  },
+  {
+   "problem": "R-52",
+   "title": "The consensus verdict depends on route order through the first route's unit",
+   "rule": "src/engcore/scientific/consensus.py",
+   "rule_symbol": "CrossSolverConsensus.from_results' canonical common_unit (base_unit of each quantity's dimension) and its is_ratio_scale refusal, over _compare, relative_difference and _floored_difference; the same rule in src/engcore/scientific/oracles.py::_same_operating_point",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-22 part B (batch 27)",
+   "why": "LATENT rather than REACHED, and the distinction is the point of this ledger. Both rules sit on code production runs -- the only production caller of from_results is engcore.domains.electrical.dc_consensus, and _same_operating_point is read by ScientificResult's CORE-009/CORE-014 validity binding -- but neither production path can currently present the SHAPE the rules are about. DC lists the native route first and reports on volt and ampere, both coherent SI units, so the canonical conversion is the identity and no recorded magnitude or digest moves; no production result states an operating point on an offset scale. So the fix is real and the guards are exercised, in the library, by the tests below. Claiming REACHED would be claiming a production exercise that does not exist, which is the assertion I-16 was written to stop.",
+   "what_would_create_it": "A second caller of CrossSolverConsensus.from_results whose routes report one name in different units of the same dimension -- which is the ordinary case the moment an external provider reports in its own units rather than the native route's -- or any production result that states an operating point on an offset temperature scale, degC being the unit an engineer writes.",
+   "entry_points": [
+    "engcore.domains.electrical.dc_consensus.dc_consensus",
+    "engcore.scientific.results.result.ScientificResult"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch27.py::test_r52_the_verdict_does_not_depend_on_which_route_was_declared_first",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_the_canonical_unit_is_the_kelvin_scale_and_the_pair_agrees",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_a_true_disagreement_near_absolute_zero_is_not_flattered_by_celsius",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_a_declared_floor_means_the_same_thing_in_either_order",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_a_comparison_on_an_affine_scale_is_refused_rather_than_taken",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_an_operating_point_is_the_same_point_whatever_unit_states_it",
+    "tests/test_core_scientific_audit_batch27.py::test_r52_an_operating_point_is_a_relation_and_not_a_claim_one_side_makes"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "CrossSolverConsensus.over, which takes bare numbers and has no units to canonicalise. It cannot award CROSS_SOLVER_VALIDATED (IND-02), so what it records is a measurement rather than a claim -- but a caller reading its worst relative difference is reading whatever scale it handed in."
+  },
+  {
+   "problem": "R-57",
+   "title": "The corner-agreement guard compares magnitudes in each law's own unit",
+   "rule": "src/engcore/scientific/fields/conditions.py",
+   "rule_symbol": "_require_corners_agree, over CORNER_AGREEMENT_REL_TOL: both meeting laws' magnitudes converted into base_unit(definition.unit) before the difference is taken",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-22 part C (batch 28)",
+   "why": "LATENT rather than REACHED. require_complete_boundary IS reached -- the conduction2d domain calls it -- but no shipped 2D declaration states two edges of one field in different units of the same dimension: they state kelvin throughout, so the conversion is the identity and the guard's behaviour on production declarations is unchanged. The guard is nevertheless the production refusal, and the audit records what its absence cost: in conduction2d the corner node is pinned to whichever edge the assembly writes last and the domain's own boundary_conditions_held check reports FAIL -- a contradiction found after the solve rather than refused before it, and found only because that domain happens to check. A consumer relying on the core refusal got nothing.",
+   "what_would_create_it": "Any declaration that states one field's edges in more than one unit of its dimension -- a plate whose ambient side is given in degC and whose heated side in kelvin, which is how an engineer would write it -- or a field declared in degC, whose corner agreement was judged on a scale whose zero is a convention.",
+   "entry_points": [
+    "engcore.scientific.fields.require_complete_boundary",
+    "engcore.domains.thermal.conduction2d"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch28.py::test_r57_a_273_kelvin_corner_conflict_is_refused",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_two_edges_that_agree_physically_are_accepted_however_they_are_spelled",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_a_law_in_another_unit_agrees_at_the_corner_it_agrees_at",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_same_physical_pair_gets_the_same_verdict_in_either_declaration",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_refusal_does_not_label_two_scales_with_one_unit",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_existing_cases_still_do_what_they_did"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Two edges that agree at every corner and disagree along a shared span. They cannot share a span on a structured quadrilateral, so there is nothing more to compare here -- but that is a property of this support type, not a general one."
+  },
+  {
+   "problem": "R-48",
+   "title": "Spreads on offset temperature scales convert as absolute temperatures",
+   "rule": "src/engcore/scientific/units/quantity.py",
+   "rule_symbol": "require_spread_unit and Quantity.magnitude_as_spread_in over _slope_against_base, plus Quantity.to's wrapping of a backend scale refusal; applied at every declared spread in the core -- OracleObservation.absolute_tolerance, ConstraintDefinition.tolerance and the margin its check reports, GaussianObservation.sigma as read by ObservationSet.numeric_vectors and by inference/split.py's two content digests, and PredictiveObservableSpec.observation_sigma",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-22 parts D (batch 29, the audit's finding 58) and E (batch 30, finding 99)",
+   "why": "FIXED, in two batches. R-48 is one defect at four sites and every site needed a conversion the units module did not have: a difference transforms by the linear part of an affine map, and `magnitude_in` applies the whole map. Part D gave the module `magnitude_as_spread_in` and `require_spread_unit`, wrapped the backend's scale refusal in this package's own error, and fixed the oracle tolerance. Part E applied both primitives at every other DECLARED spread, which is what part D's own version of this row named as the reason it stayed PARTIAL: `require_spread_unit` is applied at call sites, and nothing structurally requires a spread field to consult it. Now every spread field in `src/engcore` does. LATENT rather than REACHED: `ConstraintDefinition` is reached by every MCP rating and limit check, `GaussianObservation` by the production calibration study and by `studies/tcr`, `PredictiveObservableSpec` by the predictive layer the study routes through -- and all of them are reached with RATIO-SCALE units, ohm, watt, kelvin, ampere, so every conversion is the identity and no production number moves. What is reached is the guard; what is latent is the offset-scale declaration that would trip it.",
+   "what_would_create_it": "Any declaration that states a tolerance, a sigma or a band on an offset temperature scale -- '2 degC' as a limit tolerance and '0.5 degC' as a measurement sigma are how an engineer and a lab respectively write them, and the first let a 600 kelvin reading satisfy a 358.15 kelvin limit while the second gave a 50 kelvin misfit a chi-squared of 0.033. Or any field, bound or observable declared on an offset scale, where an absolute unit cannot carry the spread or the margin at all.",
+   "entry_points": [
+    "engcore.mcp.problem (rating and limit checks, via ConstraintDefinition.check)",
+    "engcore.studies.calibration_study",
+    "engcore.studies.tcr",
+    "engcore.inference.split.observation_content_digest",
+    "engcore.scientific.oracles.OracleEvidenceSet.compare",
+    "engcore.scientific.units.quantity.Quantity.to"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch29.py::test_r48_a_celsius_difference_is_a_kelvin_of_the_same_size",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_a_spread_can_be_read_against_an_offset_unit_without_the_backend_refusing",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_a_spread_unit_whose_zero_is_a_convention_is_refused_by_name",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_a_conversion_the_backend_refuses_is_this_packages_error",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_an_oracle_tolerance_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_a_valid_band_on_an_expected_value_in_celsius_is_not_called_negative",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_the_physically_correct_declaration_does_not_crash_untyped",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_no_spelling_of_a_half_degree_band_admits_a_273_kelvin_error",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_constraint_tolerance_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_an_observation_sigma_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_predictive_observation_sigma_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_valid_tolerance_on_a_celsius_bound_is_not_called_negative",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_valid_sigma_on_a_celsius_value_is_not_called_non_positive",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_physically_correct_declarations_work",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_fahrenheit_difference_is_five_ninths_of_a_kelvin_everywhere",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_split_content_digest_reads_a_sigma_as_a_difference",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A spread read with `magnitude_in` DOWNSTREAM of a declaration. `studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` do so at several points; those reads are safe because the declaration guard admits only ratio-scale units, where the two readers agree exactly -- but they are safe BY that guard and not by their own statement. And a `Quantity` handed around loose still carries no statement of whether it is a point or a span: what this improvement adds is that every declared spread FIELD makes that statement at construction."
+  },
+  {
+   "problem": "R-11",
+   "title": "A posterior cut at the declared upper bound, with data bounding only the lower side, is SUPPORTED",
+   "rule": "src/engcore/hybrid_uq/router.py",
+   "rule_symbol": "_rebuild_grid's per-side bound-domination test over _GAUSSIAN_BAND_SD = sqrt(2 * EDGE_LOG_LIKELIHOOD_DROP), beside the existing both-sides rule; and src/engcore/hybrid_uq/local_gaussian.py::_clamp_leverage_cumulant, the I-14 part that had to land first",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-06 (batch 31); the batch also closes I-15's last open conformance case",
+   "why": "LATENT. The rebuild path is reached only by a caller that supplies both a MultistartPolicy and a table builder: the production calibration study routes a SUPPLIED grid and the MCP tools form no predictive interval at all, so no production path can present the shape. The rule is nevertheless fixed in the router because that is where the width a claim reports is decided. What this closes is the width a SUPPORTED claim WOULD report if such a caller arrived -- 2.372, 2.788 and 3.522 for one set of data at declared upper bounds of 40, 60 and 80. Note that the leverage-null clamp shipped in the same batch IS on every local route, production included; it is carried on I-14's row when that lands, and is recorded here because R-11 could not be exercised at all without it.",
+   "what_would_create_it": "Any caller that rebuilds a grid from a local covariance -- the documented way to get a posterior when the supplied grid is refused -- on a problem where the data constrain a parameter from one side only. A decay rate whose signal is gone inside the observation window is the ordinary case: every rate above some value predicts the same thing, so the upper side is whatever was declared.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with rebuild= and multistart=)"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_posterior_running_to_one_declared_bound_is_passed_over",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_contained_posterior_is_still_supported_and_its_width_is_the_data_s",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_truncated_posterior_that_decays_toward_its_bound_still_takes_the_refinement_path",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_band_distance_is_derived_from_the_band_and_not_chosen",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_refusal_names_the_parameter_and_which_side_it_ran_to",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_fixture_is_routable_at_all",
+    "tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_a_cumulant_far_below_the_round_off_floor_is_refused_and_not_clamped",
+    "tests/hybrid_uq/test_core_v4_false_confidence_conformance.py::test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The refinement regime, and deliberately. A posterior the data HAVE localised but which a declared bound truncates still reports a width that depends on where the bound is -- 0.6712, 0.8912, 1.129, 1.341 and 1.699 at bounds of 11, 12, 13, 14 and 16 -- because the moments of a truncated distribution do depend on the truncation, and the audit's own fix direction asks for that path to be kept. The line between the two regimes is the 5.2565 sd band distance and it is drawn on purpose; BATCH31_THRESHOLD_PROTOCOL.json states both sequences so the choice is visible."
+  },
+  {
+   "problem": "R-30",
+   "title": "An evidence-binding mismatch raises instead of passing over",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "grid_is_this_evidence (returns) beside require_grid_is_this_evidence (raises), and the router's supplied-grid path consulting the first",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part A (batch 32)",
+   "why": "LATENT. The production calibration study supplies a grid it built itself in the same process, so the binding it faces is its own and cannot disagree; the MCP tools supply no grid. The rule is nevertheless what decides whether a request survives a fact about its grid, which is why it is fixed at the router and not left to a caller's try/except.",
+   "what_would_create_it": "Any caller that supplies a grid a DIFFERENT process computed -- which is what supplying a grid is for. A solver converged to 1e-9 relative against observations with sigma 1e-4 relative is enough: that is about 1e-5 of a sigma per residual, ten times the 1e-6 the binding allows, and it aborted the whole request.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_a_binding_mismatch_passes_the_grid_over_instead_of_aborting_the_request",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_request_is_still_answered_by_the_route_that_can_answer_it",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_mismatch_is_reported_in_digits_and_units_a_reader_can_act_on",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_a_grid_from_another_model_is_still_refused_as_not_this_evidence",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r30_the_raising_entry_point_still_raises"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Which NODES the binding re-evaluates, and that the supplier chooses them. R-19 is I-07 part B and is OPEN: a supplier who keeps the checked rows honest can still sharpen the posterior bulk, and now gets PASSED_OVER rather than a raise when caught -- which is this part working, not a weakening of that one."
+  },
+  {
+   "problem": "R-29",
+   "title": "The uniform-prior step tolerance refuses a grid that is effectively uniform",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "grid_prior_uniformity's moment-effect bound over _reweighted_moment_shift and PRIOR_REWEIGHT_MOMENT_SD",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part A (batch 32)",
+   "why": "LATENT, and this row is about a claim newly ALLOWED rather than newly refused, which is the direction this round is normally careful about. No production path supplies a grid on an axis whose spelling disagrees with its declared transform, so nothing production does changes. The bound is measured rather than assumed, and the detail records how far the moments actually moved.",
+   "what_would_create_it": "Any caller that supplies a grid spaced in natural units for a LOG-declared parameter -- which is what `numpy.linspace` gives you, and is how the audited case arose. Its prior density varied about 4% and its moments matched the accepted spelling's to six digits.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_a_grid_that_is_uniform_in_effect_is_not_refused_on_a_step_deviation",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_the_two_spellings_of_one_prior_report_the_same_moments",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_the_moment_effect_bound_exists_and_is_the_repositorys_own_resolution",
+    "tests/hybrid_uq/test_core_scientific_audit_batch32.py::test_r29_a_node_density_that_does_move_the_moments_is_still_refused"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The reweighting's effect on the FIRST TWO moments of each axis marginal. A node density that leaves both alone and distorts a tail, or a correlation, is not caught. The first two moments are what a grid route REPORTS, so they are what the rule is about -- but this is not a statement that the prior is uniform."
+  },
+  {
+   "problem": "R-19",
+   "title": "Evidence binding spot-checks 8 nodes, 4 of them seeded from the supplier's bytes",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "_spot_check_rows over SPOT_CHECK_WEIGHTED_ROWS and SPOT_CHECK_INADMISSIBLE_ROWS, with a verifier-side nonce and every face's highest node; the same rule in src/engcore/hybrid_uq/router.py::_require_table_agrees_with_forward",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part B (batch 33)",
+   "why": "LATENT. The production calibration study supplies a grid it built itself in the same process, so the binding it faces is its own and there is no supplier to be adversarial; the MCP tools supply no grid. The threat the rule is about is a grid computed elsewhere, which is what supplying a grid is FOR -- so this is the guard on the feature rather than on a current caller.",
+   "what_would_create_it": "The first caller that supplies a grid, or a rebuild table_builder, that another party computed. The audited forgery needed no privileged access: keep the four fixed rows honest, sharpen the bulk, and nudge one far-tail log-likelihood by 1e-9 until the four seeded rows miss it. Two attempts, and the result was GRID_AS_SUPPLIED SUPPORTED with every reported width halved.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid= or rebuild=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_binding_takes_a_verifier_side_nonce",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_draw_is_not_a_function_of_the_grids_own_bytes",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_a_pinned_nonce_makes_the_draw_reproducible",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_a_ground_forgery_no_longer_survives_the_draw",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_honest_grid_is_still_this_requests_evidence",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_sample_size_is_computed_from_a_stated_detection_probability",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_draw_lands_where_the_posterior_weight_is",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_an_inadmissible_node_the_model_admits_is_caught",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_highest_node_of_every_face_is_checked",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_rebuilt_table_check_takes_a_nonce_too",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_rebuilt_table_check_no_longer_seeds_from_the_table",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_an_honest_rebuild_still_routes"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A tampered region holding LESS than a quarter of the posterior weight: 17 weighted draws catch a 10% region about 83% of the time, not 99%. The rule states a detection probability against a stated fraction and claims no more; certainty needs the audit's other alternative, re-evaluating every node within ln 1e6 of the peak, at a cost proportional to the grid. And the weighted draw uses the GRID's own weights, so a forger who lowers the weight of what they tampered with reduces their chance of being drawn -- but that lowering is itself the tampering and moves the moments the route reports, which is what the honest-versus-forged comparison measures. The circularity is real and bounded, not absent. Separately, the REBUILD path's weighted draw has no forgery reproduction here (mutation B33h is a declared survivor): the audit asserted that path's exposure in one sentence without measuring it."
+  },
+  {
+   "problem": "R-28",
+   "title": "assess_routed_identifiability accepts loosened thresholds on the local route",
+   "rule": "src/engcore/hybrid_uq/identifiability.py",
+   "rule_symbol": "assess_routed_identifiability's local branch calling _require_declared_or_tighter_thresholds, _tightened_note, and RoutedIdentifiability.__post_init__'s canonical-threshold refusal and re-derivation of that note",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 part B (batch 34)",
+   "why": "LATENT. The router calls `assess_routed_identifiability` with its defaults, so no production path passes a threshold at all and nothing production does changes. What R-28 is about is the PUBLIC function and the record it returns: a caller who calls it directly, or who serializes what it returns, could obtain a verdict the declared rule does not give -- and the record read back, because it was self-consistent.",
+   "what_would_create_it": "Any caller that passes an identifiability threshold. The thresholds are arguments on purpose, so that a study may be STRICTER, and that is exactly why the loosening direction had to be refused rather than documented: the same argument on the same problem's GRID has always raised `looser than the declared 1.0`.",
+   "entry_points": [
+    "engcore.hybrid_uq.identifiability.assess_routed_identifiability",
+    "engcore.hybrid_uq.router.route_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_canonical_verdict_is_not_identifiable",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_looser_rule_is_refused_on_the_local_route",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_grid_branch_already_refused_the_same_argument",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_stricter_rule_is_still_allowed_on_the_local_route",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_default_call_is_untouched",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_tightened_local_verdict_says_the_rule_was_moved",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_an_untightened_verdict_does_not_claim_one",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_record_carrying_a_looser_rule_is_refused_at_construction",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_record_round_trips_and_a_forged_payload_does_not"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`confidence_level`, which is not one of the declared thresholds: it selects WHICH interval is measured rather than how wide one may be, so a caller who asks for a 50% interval gets narrower relative widths and can reach a better verdict that way. The report carries the level and the grid branch refuses anything but 0.95 outright; the local branch's freedom is deliberate, because closing it is a different rule than the one R-28 names. And the guard is on the THRESHOLDS -- a caller who hands in a posterior whose covariance is wrong still gets a verdict consistent with that covariance, which is R-25's and R-27's territory."
+  },
+  {
+   "problem": "R-22",
+   "title": "Local RouteDiagnostics read-back trusts carried fields",
+   "rule": "src/engcore/hybrid_uq/local_gaussian.py",
+   "rule_symbol": "_require_reasons_follow_measurements: the policy-with-starts rule, the NaN-tail-ratio rule and the observation-count-against-the-digest rule; RouteDiagnostics.observation_content_digest under hybrid_uq.route_diagnostics/3; require_posterior_matches_observations, called by the local route; engcore.inference.split.observation_set_content_digest. Claim (b)'s closure is the pre-existing mass-ratio rule together with the uniqueness re-derivation.",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 parts C (batch 35: claims (b), (c), (d)) and D (batch 36: claim (a), with the route_diagnostics/3 bump)",
+   "why": "FIXED, and REACHED -- the first of I-14's parts that is. `require_posterior_matches_observations` is called by `local_gaussian_posterior` on the record it has just built, so every posterior the router produces is verified against the observations it was fitted to while both are in hand; the production calibration study routes the local posterior. Without that call the binding would be a read-back rule, and a read-back rule is checked by whoever chooses to check. The read-back half remains library-only for the reason every read-back is: nothing in production reads a posterior back from a payload it did not just write, and `from_dict` exists so that a READER can check one -- which is what R-22 is about, the check being the product.",
+   "what_would_create_it": "Any reader that takes a serialized posterior from elsewhere. The record is designed to travel and its reasons are re-derived on read precisely so a reader need not trust the sender; the audited forgeries need only consistent numbers. The observation count was the extreme case -- one integer, read by the goodness of fit and by nothing else, so no other field disagreed with an edit from 10 to 40.",
+   "entry_points": [
+    "engcore.hybrid_uq.local_gaussian.local_gaussian_posterior",
+    "engcore.hybrid_uq.router.route_uncertainty",
+    "engcore.studies.calibration_study",
+    "engcore.hybrid_uq.local_gaussian.LocalGaussianPosterior.from_dict"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_narrow_search_is_genuinely_downgraded",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_stripping_the_policy_no_longer_buys_a_supported_reading",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_partial_policy_is_still_refused_and_a_full_one_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_record_with_no_starts_and_no_policy_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_a_tail_ratio_that_no_probe_produced_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_a_genuine_record_with_no_tail_probe_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_an_infinite_tail_ratio_is_still_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22b_relabelling_a_genuine_second_mode_is_already_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_an_observation_set_digests_its_count_and_its_content",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_the_same_evidence_in_another_order_is_the_same_digest",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_a_different_reading_is_a_different_digest",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_editing_the_observation_count_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_a_record_with_no_digest_under_the_new_schema_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_a_genuine_record_still_round_trips",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_an_older_payload_is_still_readable",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_a_record_whose_count_was_edited_to_agree_still_fails_against_the_observations",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_an_older_records_count_is_still_checked_against_the_observations"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The tail rule is a NECESSARY condition only: a record with a FINITE ratio that no probe actually produced is not caught, because nothing ties the ratio to the probes. Binding that needs the probe outcomes in the record, which is a schema question. And BETTER_OPTIMUM vs SECOND_MODE is still not re-derived from the objective although all three numbers are there -- deliberately not added, because LOWER_OBJECTIVE_SAME_BASIN vs SAME_OPTIMUM cannot be re-derived at all (its tolerance is 2 * gradient @ cov @ gradient, which the record does not carry), and half a rule is worse than a stated gap. And a `route_diagnostics/2` payload carries no digest, so its observation count is unbound and R-22(a) survives for such a payload -- deliberately: refusing it would break records this core wrote three batches ago, the route now writes `/3` for everything, and the schema string says which shape a reader is holding.",
+   "exercised_by": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_a_record_carries_the_digest_of_the_observations_it_was_fitted_to",
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_the_route_binds_its_own_record_to_the_observations_it_used"
+   ]
+  },
+  {
+   "problem": "R-25",
+   "title": "Renaming the parameterization or moving recorded bounds escapes the HUQ-12 bound-distance check",
+   "rule": "src/engcore/hybrid_uq/local_gaussian.py",
+   "rule_symbol": "require_posterior_matches_calibration, called by local_gaussian_posterior; and HybridUQResult._require_one_truth's declared-parameterization rule in src/engcore/hybrid_uq/router.py",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 part E (batch 37)",
+   "why": "REACHED, because the calibration binding is called by the LOCAL ROUTE on the record it has just built -- and the production calibration study routes the local posterior. The audit calls R-25 library-only because the forgeries are read-back forgeries, and the read-back half is indeed library-only; what is REACHED is the binding that makes every record the route writes verified against the request it came from.",
+   "what_would_create_it": "Any reader that takes a serialized posterior from elsewhere. The first forgery needed one string: renaming the parameterization to 'linear_map:anything' makes the bound-distance re-derivation return after a single check, because a mapped posterior's diagnostics describe its parent by design. The second needed the bounds and the covariance moved together, which preserves every distance in sd units.",
+   "entry_points": [
+    "engcore.hybrid_uq.local_gaussian.local_gaussian_posterior",
+    "engcore.hybrid_uq.router.route_uncertainty",
+    "engcore.studies.calibration_study"
+   ],
+   "exercised_by": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_the_route_binds_its_own_record_to_the_calibration_it_used",
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_a_genuine_routed_record_still_reads"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_the_covariance_only_shrink_is_already_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_renaming_the_parameterization_no_longer_switches_the_defence_off",
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_a_mapped_posterior_is_still_usable_on_its_own",
+    "tests/hybrid_uq/test_core_scientific_audit_batch37.py::test_r25_moving_the_bounds_with_the_covariance_is_caught_against_the_calibration"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A record read WITHOUT its calibration: the bounds-moved forgery survives that reading, and it cannot be closed from inside the record. Declared bounds are a property of the REQUEST, every field is the forger's to edit, and a digest the forger can recompute binds nothing. What the batch does is make every record the ROUTE writes verified, and give a reader holding the calibration the one function that checks it."
+  },
+  {
+   "problem": "R-27",
+   "title": "Grid HybridUQResult read-back and prediction trust hand-built records",
+   "rule": "src/engcore/hybrid_uq/router.py",
+   "rule_symbol": "_considered_problems and the rebuilt-record misfit and structural rules in HybridUQResult._require_one_truth; _grid_diagnostic_problems and grid_record_variance_shrink_window in src/engcore/hybrid_uq/identifiability.py, the second stating the limit the others cannot close; the `_refused` observation content digest in src/engcore/hybrid_uq/local_gaussian.py; RouteReason.GRID_NOT_BOUND_TO_EVIDENCE on routed_predictive_uncertainty (batch 37, finding 24)",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 parts E (batch 37, finding 24) and F (batch 38, finding 22)",
+   "why": "LATENT, not LIBRARY_ONLY: every rule here guards a record shape that does not occur in the tree. The router never writes a ledger without its used route, a rebuilt record over a misfit posterior, or an effective sample size V1 would have refused; and the only non-test caller of `HybridUQResult.from_dict` (benchmarks/core_v2_hybrid_uq/audit/kinetics.py:267) reads a record it produced itself in the same process. The audit's own verifier reached the same reading: 'No MCP or evidence path takes these records from outside.' PARTIAL rather than FIXED because two of finding 22's five claims are provably not closable from a record alone and are stated as a number instead -- see the residual below. One part of this batch IS reached: `_refused` now writes the observation content digest, so the local route, which the production calibration study uses, no longer returns a record `from_dict` refuses.",
+   "what_would_create_it": "Any reader that takes a serialized routed record from outside the process that produced it -- a cached grid record replayed across runs, or an evidence path that accepts one over the MCP boundary. The forgeries need no cryptography: the digests a record carries are integrity-only and anyone can recompute them, which is why the rules re-derive instead.",
+   "entry_points": [
+    "engcore.hybrid_uq.local_gaussian.local_gaussian_posterior (reached by engcore.studies.calibration_study) -- the `_refused` digest half only"
+   ],
+   "exercised_by": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_posterior_the_route_refused_early_reads_back"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_rebuilt_record_carrying_a_misfit_posterior_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_rebuilt_record_carrying_a_structurally_refused_posterior_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_empty_considered_ledger_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_ledger_that_says_the_used_route_was_passed_over_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_ledger_naming_another_used_route_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_each_half_of_the_ledger_vocabulary_is_checked_on_its_own",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_diagnostics_v1_would_have_refused_are_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_effective_sample_size_above_the_point_count_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_an_occupied_support_fraction_outside_its_range_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_a_spacing_vector_of_the_wrong_length_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_the_undetectable_shrink_window_is_stated_as_a_number",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_the_window_is_where_the_bound_actually_bites",
+    "tests/hybrid_uq/test_core_scientific_audit_batch38.py::test_r27f_no_single_field_edit_changes_what_a_claim_rests_on"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A grid record's moments and identifiability are BOUNDED on read, not re-derived: the grid is data-plane and is not serialized. Inside `grid_record_variance_shrink_window` (7.98 on the audited record) the covariance can be divided and nothing contradicts it; relative widths lowered with the covariance or lowered alone are undetectable, because no lower bound on a central 95% interval follows from a standard deviation; and a small shift of the mean is undetectable for the same reason the digests are integrity-only. Closing any of these needs the grid's own marginal quantiles carried in the committed summary, which is a schema bump and an owner's decision -- recorded as the batch's open decision."
+  },
+  {
+   "problem": "R-46",
+   "title": "GUARD 21 compares signed residual and tolerance",
+   "rule": "src/engcore/scientific/results/validation.py",
+   "rule_symbol": "comparison_met_its_bound, which now compares abs(residual) with the tolerance; and the negative-tolerance refusal in ValidationCheck.__post_init__",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-20 part A (batch 39)",
+   "why": "REACHED, and more strongly than the audit's 'library-only' suggests: the rule is on `ValidationCheck.__post_init__`, so every check the domain gates build passes through it, and run_electrothermal and run_battery run those gates on their way to a verdict. The audit calls R-46 library-only because the forgery is a hand-built check, which is true of the CONSTRUCTION; the rule itself sits between a production entry point and a published number, because a level that `comparison_met_its_bound` clears is what `attained_levels` reports into the credibility report.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the domain validation gates that build every ValidationCheck",
+    "engcore.scientific.results.validation.ValidationReport.attained_levels"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_pass_whose_residual_misses_its_bound_from_below_is_refused",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_negative_tolerance_is_refused_for_every_outcome",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_negative_residual_inside_its_bound_still_passes",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_zero_tolerance_is_still_a_bound"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch39.py::test_r46_the_rule_itself_reads_the_distance_not_the_signed_number",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_a_level_declaring_warning_is_held_to_the_distance_too",
+    "tests/test_core_scientific_audit_batch39.py::test_r46_the_audited_negative_tolerance_construction_no_longer_earns_a_level"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`outcome` is still refused rather than derived: `abs(residual) <= tolerance` is necessary for a PASS and not sufficient, and a refinement gate in this repository FAILs with a residual inside its bound because the sequence behind it never contracted. So a check that reports FAIL or NOT_RUN while its numbers agree is still constructible, deliberately, and a non-finite tolerance is still constructible on those outcomes -- the finiteness rule makes the comparison False, so nothing can claim success on one."
+  },
+  {
+   "problem": "R-45",
+   "title": "The CORE-013 status precedence changed without a schema bump",
+   "rule": "src/engcore/scientific/results/validation.py",
+   "rule_symbol": "REPORT_SCHEMA at validation_report/2 with LEGACY_REPORT_SCHEMA still read; _legacy_status and _legacy_status_read; ValidationOutcome.NOT_APPLICABLE, its refusal of a declared level and its exclusion from ValidationReport.status; ValidationReport.not_applicable; the NOT_APPLICABLE outcomes and the conditional validation_requirements in src/engcore/domains/electrical/dc/{validation,problem}.py; NumericalCritic's named-checks detail in src/engcore/sria/assurance/critics.py (batch 39); uncertainty/2 and its refusal of a /1 payload carrying source_kind in src/engcore/scientific/results/uncertainty.py; validity_assessment/3, _ASSESSMENT_BINDING_KEYS and the matching refusal in src/engcore/scientific/models/definition.py; hybrid_uq.routed_identifiability/2 with /1 refused for a stated reason in src/engcore/hybrid_uq/identifiability.py",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-20 parts A (batch 39), B (batch 40) and C (batch 41)",
+   "why": "REACHED. `ValidationReport.status` is read by `CredibilityEvidenceReport` on the way to a verdict, so run_electrothermal and run_battery reach it; the DC gate and the DC problem builder are production code on that same path, and the batch's own test drives a solve end to end. The audit's 'library-only' describes the READ side of the problem (a stored report from an older tree), which is where a user's saved result comes in; the status rule itself was never library-only. FIXED as of part C, which closed finding 90's items 2 and 3: a record carrying one of the newer bindings now declares a version an older reader refuses, so the binding can no longer be dropped in silence, and a pre-CORE-004 identifiability record is refused for the reason it cannot be read rather than for a contradiction it does not contain.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the domain validation gates and CredibilityEvidenceReport.from_result",
+    "engcore.scientific.results.result.ScientificResult.from_dict, which embeds this reader",
+    "engcore.domains.electrical.dc.solve_circuit and build_dc_problem"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_clean_circuit_with_no_voltage_source_reports_pass",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_problem_stops_demanding_a_check_its_circuit_cannot_produce",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_divider_still_declares_and_passes_the_voltage_source_check",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_critic_reports_pass_for_a_report_where_everything_applicable_ran",
+    "tests/domains/electrical/test_dc_validation.py::test_report_records_not_applicable_for_absent_element_classes",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_an_assessment_bound_to_an_operating_point_declares_a_new_version",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_an_uncertainty_that_records_where_the_number_came_from_declares_a_new_version"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_status_precedence_change_is_named_by_a_version",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_the_pre_core013_record_reads_back_with_its_status_re_derived",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_legacy_warning_record_reads_back_too",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_legacy_status_that_matches_neither_precedence_is_refused_and_says_so",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_current_record_whose_status_disagrees_is_still_refused",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_an_inapplicable_check_is_not_missing_evidence",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_an_inapplicable_check_still_establishes_nothing",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_report_of_nothing_but_inapplicable_checks_established_nothing",
+    "tests/test_core_scientific_audit_batch40.py::test_r45_a_failure_and_an_unrun_check_still_outrank_an_inapplicable_one",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_the_old_version_carrying_the_new_key_is_refused",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_an_older_assessment_version_carrying_a_binding_is_refused",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_an_assessment_that_binds_nothing_keeps_its_bytes",
+    "tests/test_core_scientific_audit_batch41.py::test_r45_an_uncertainty_that_records_nothing_new_keeps_its_bytes",
+    "tests/hybrid_uq/test_core_scientific_audit_batch41_identifiability.py::test_r45_a_pre_core004_record_is_refused_for_the_reason_it_cannot_be_read",
+    "tests/hybrid_uq/test_core_scientific_audit_batch41_identifiability.py::test_r45_a_current_record_still_round_trips"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A `/1` payload whose stored status matches neither precedence is refused, and the reader still cannot tell a hand-edit from a third precedence nobody recorded -- version strings are the only signal, which is the point of the bump. `validation_check` is not versioned here, so a bare check payload carrying `not_applicable` is refused by an older reader on the enum rather than by a version check. And only the DC gate distinguishes the two outcomes: other domains' 'did not apply' checks still report NOT_RUN, and src/engcore/domains/thermal/** is SHA-256 pinned and cannot be edited. On the reverse direction: `local_gaussian_posterior/1` and `hybrid_uq_result/1` are still refused through their embedded route diagnostics rather than by an outer version check, and the V4 serialization inventory (I-30) is where these compatibility events become executable fixtures. A digest remains no authority: re-emitting a record through any writer gets that writer's version, and the protection is only that a newer field cannot ride under an older version."
+  },
+  {
+   "problem": "R-41",
+   "title": "Experiment.best judges feasibility from whatever checks a candidate carries",
+   "rule": "src/engcore/scientific/ir/constraints.py",
+   "rule_symbol": "ConstraintCheck.__post_init__ (a bool verdict that agrees with the sign of its margin); _feasibility_problems and _declared_or_refuse in src/engcore/scientific/experiments/experiment.py, called by ScientificExperiment.best and from_dict",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part A (batch 42)",
+   "why": "SPLIT, and the row records both halves. `ConstraintCheck.__post_init__` is REACHED: every check the domain gates and the IR constraint definitions build passes through it, and run_electrothermal and run_battery build constraint checks on the way to a verdict -- a forged `satisfied` beside a negative margin is now unconstructible everywhere, not only where a selection reads it. The coverage, re-derivation and declaration rules live on `ScientificExperiment`, which has NO production caller (nothing in src calls `.best(` or builds one), so that half is library-only and the audit says so. It is recorded here rather than as a separate LIBRARY_ONLY row because the improvement that closes the selection path production DOES use -- the design Pareto and elite archives -- is R-44, part B, and that is where the reach of selection is settled.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the constraint checks the domain gates build",
+    "engcore.scientific.ir.constraints.ConstraintDefinition.check"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_satisfied_verdict_beside_a_negative_margin_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_violated_verdict_beside_a_positive_margin_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_truthy_verdict_is_not_a_verdict",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_zero_margin_is_accepted_either_way",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_the_forged_check_cannot_be_read_back_either"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_candidate_that_checked_one_of_two_declared_constraints_is_not_best",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_an_extra_check_on_an_undeclared_constraint_is_refused_on_its_own",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_duplicate_check_of_one_constraint_does_not_cover_the_others",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_the_check_is_re_derived_from_the_result_where_the_metric_is_there",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_payload_with_no_constraints_key_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_payload_with_no_objectives_key_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_an_explicitly_empty_declaration_still_means_what_it_says"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A declared constraint whose metric the result does not carry is still judged by its stored check: the coverage rule catches a missing check, but nothing can re-derive a value that is not in the record. A zero margin is accepted for either verdict, because a check does not carry the operator that decides that case. And `best()` ranks one objective at a time -- the multi-objective selection production uses is the design archives', which is R-44."
+  },
+  {
+   "problem": "R-42",
+   "title": "The objective-versus-result check is keyed by objective name, not metric",
+   "rule": "src/engcore/scientific/experiments/experiment.py",
+   "rule_symbol": "_ranked_value_problem, called by ScientificExperiment.best for every eligible candidate",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part A (batch 42)",
+   "why": "LATENT rather than LIBRARY_ONLY: `ScientificExperiment` has no production caller at all, and the shape the rule guards -- an evaluation whose objective value disagrees with its own result's metric -- did occur in the tree, in this repository's own canonical test fixture, which reported 5.0, 2.0, 9.0 and 0.5 W while its result carried 2.5 W. That fixture now carries the load it reports, so after this batch the shape occurs nowhere.",
+   "what_would_create_it": "Any caller that builds an evaluation's objective values separately from the result's own quantities -- an optimizer wrapper caching an objective, or a study that computes the objective from a different unit conversion than the result's. The audit's own reproduction is the canonical shape: name 'minimize_load', metric 'load', and the guard keyed by the name that does not match.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch42.py::test_r42_ranking_on_a_value_the_result_contradicts_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r42_agreement_within_roundoff_is_still_agreement",
+    "tests/test_core_scientific_audit_batch42.py::test_r42_a_result_that_does_not_carry_the_metric_is_ranked_on_its_objective",
+    "tests/test_scientific_core.py::test_experiment_best_respects_direction"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A result that does not carry the objective's metric at all is still ranked on the objective value, deliberately: the rule reaches as far as the record does, and refusing there would be a rule nobody can satisfy. The evaluation's own name-keyed guard is left in place -- it is correct when the name IS the metric -- so the two rules overlap rather than replace each other."
+  },
+  {
+   "problem": "R-44",
+   "title": "Unassessed candidates are ranked: best() admits NOT_RUN validation and design archives lack the CORE-015 rule",
+   "rule": "src/engcore/scientific/results/requirements.py",
+   "rule_symbol": "result_establishment_problems, called by ScientificExperiment._established and by DesignEvaluation.__post_init__; SelectionEligibility.RANKED_WITHOUT_ASSESSMENT and the ELIGIBLE rule in src/engcore/design/evaluation.py; _RANKABLE, _unassessed_refs and the `unassessed` field on both archives in src/engcore/design/archives.py, recomputed by each validate_against",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part B (batch 43)",
+   "why": "REACHED, and this is the row where the reach of SELECTION is settled. The audit's 'library-only' describes `ScientificExperiment.best`, which still has no caller; what it also found is that the mechanism production DOES run -- the design Pareto and elite archives, through the MVR0 and MVR1 studies -- had no established-candidate rule at all and ranked every candidate on a caller's ELIGIBLE. Both paths now call one rule in the results layer, `DesignEvaluation` refuses ELIGIBLE over a result that does not stand behind its own numbers, and the two studies declare RANKED_WITHOUT_ASSESSMENT, which their archives record against the members it applies to. The studies are exercised end to end by their own suites and by this batch's reference-study test.",
+   "entry_points": [
+    "engcore.systems.aerospace.multirotor.reference.run_reference_study (MVR0) and study.run_study (MVR1), through design.ParetoArchive.build and ScopedEliteArchive.build",
+    "engcore.design.evaluation.DesignEvaluation, on every candidate either study evaluates",
+    "engcore.design.memory.DesignMemoryEntry.from_evaluation"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch43.py::test_r44_the_reference_study_declares_what_it_did_not_assess",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_eligible_cannot_be_declared_over_an_unassessed_result",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_records_the_members_it_ranked_without_assessment",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_elite_archive_records_it_too",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_edited_unassessed_list_is_refused_on_read",
+    "tests/systems/aerospace/test_multirotor_mvr0.py::test_small_reference_study_preserves_identity_and_scientific_boundaries",
+    "tests/systems/aerospace/test_multirotor_mvr1.py::test_target_failures_remain_eligible_and_pareto_uses_full_universe"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch43.py::test_r44_the_established_candidate_rule_lives_in_the_results_layer",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_with_no_verification_at_all_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_that_attained_a_level_and_left_a_check_unrun_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_with_an_empty_validation_report_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_inapplicable_check_does_not_make_a_candidate_unestablished",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_of_assessed_candidates_keeps_its_bytes"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "RANKED_WITHOUT_ASSESSMENT is still a caller's declaration, and nothing assesses a model that declares no validity domain -- declaring domains for the studies' models is their own work. The archives RECORD which members were ranked unassessed rather than refusing to build; refusing would delete those studies rather than correct them, which is the audit's own alternative. A D3 memory entry records the evaluation by reference, so the distinction lives on the evaluation and in the archive that ranked it, not on the entry; carrying it there too is deferred with the V4 inventory. And the rule requires at least one attained level, not a particular one: choosing which is a study's decision, for which `ValidationReport.require_level` exists."
+  },
+  {
+   "problem": "R-59",
+   "title": "Predictive-admission conditioning accepts any budget and returns an unmarked PosteriorGrid",
+   "rule": "src/engcore/uq/admission.py",
+   "rule_symbol": "MAXIMUM_CONDITIONED_UNSUPPORTED_MASS and the budget refusal in PredictiveAdmissionAudit.__post_init__; the derived dataset identity in condition_posterior_on_predictive_admission; conditioned_weights_digest and the binding check in ConditionedPosterior.__post_init__",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-28 part A (batch 44)",
+   "why": "LATENT. `engcore.uq` is public API, and the shapes these rules guard do not occur in the tree: both in-repo callers (experiments/kinetics_k31 and kinetics_k4) declare a budget of 1e-12, twelve orders below the new maximum, and their conditionings discard no mass at all, so no committed record carries a conditioning. No MCP entry point conditions a posterior. The rules are on the public functions a caller outside this repository would use, which is why the improvement exists.",
+   "what_would_create_it": "Any caller declaring a budget large enough to matter -- the audit's own reproduction used 1.0 and 5.0, discarding 99.9997% of the posterior -- or any consumer that takes `.posterior` off a conditioned pair and treats it as the fit to the dataset. The second is every PosteriorGrid-accepting UQ function, which is what made the missing marking consequential.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_core_declares_a_maximum_budget",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_that_would_condition_most_of_the_posterior_away_is_refused",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_above_one_is_refused_too",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_audit_record_refuses_the_same_budget",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_inside_the_maximum_still_works",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_conditioned_posterior_does_not_claim_the_datasets_identity",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_conditioned_record_states_the_conditioning_and_reports_its_support",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_an_audit_cannot_be_recombined_with_another_posterior",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_an_unconditioned_pair_is_still_a_valid_pair",
+    "tests/test_k31_predictive_admission.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The weights digest is integrity-only, as every digest here is: it closes accidental recombination and a silent hand-off, not a determined edit. The derived dataset identity is a string, so a consumer that only logs it gains nothing automatic -- what it guarantees is that anything comparing a posterior's identity with the dataset it was fitted to will not match. The admissible mask is deliberately NOT narrowed (amendment 1): narrowing it took the rejected node out of HUQ-04's reach and stopped the certified mutation G32d from being killed, so predictive support is reported separately instead. And an unsupported mass of exactly zero still returns the original object, unmarked, because nothing was conditioned."
+  },
+  {
+   "problem": "R-71",
+   "title": "Forward-model admission is not bound to the source result, and tables bind observations by key label only",
+   "rule": "src/engcore/inference/grid.py",
+   "rule_symbol": "ADMISSION_ROUTES, parse_admission_ref and the admission-record form checked in AdmittedForwardTable.__post_init__; AdmittedForwardTable.observation_units, filled by from_rows and enforced by select_observations (and so by gaussian_grid_posterior); AdmittedForwardTable.admitted_routes; require_bound_forward_table, and the same requirement on the predictive-admission path in src/engcore/uq/admission.py",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-28 parts A, B and C (batches 42, 45 and 46); part C is the row below",
+   "why": "LATENT, and PARTIAL. `engcore.inference` is public API and no MCP entry point builds a forward table; the table's consumers inside the repository are the uq, adequacy, split and hybrid_uq routes and the kinetics experiments. The shapes these rules guard did occur in the TREE -- twenty-eight fixtures across fourteen test files carried free strings such as 'a', 'r', 'prediction' and 'analytic' as admission records, which is what let the audit's ('forged', 'x') table produce a posterior -- and after this batch they all carry the form the gate writes. Finding 98, the binding of admission to the source result, is part C and is the row below, which is REACHED: this row stays LATENT because the table-form and units rules are the library half.",
+   "what_would_create_it": "A caller building an AdmittedForwardTable from finished arrays -- a cache loader, a recomputed table, or a hand-assembled one -- or reusing a table with an observation set whose keys match in other units: the audit's reproduction compared 1500 milliohm with a table in ohm and got a MAP of 1.5.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_whose_admission_records_are_free_strings_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_naming_no_declared_route_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_with_an_empty_part_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_with_the_wrong_number_of_parts_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_records_the_gate_writes_are_accepted",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_says_which_routes_its_admitted_rows_crossed",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_reusing_a_table_with_another_units_set_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_set_it_was_built_against_still_works",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_that_declares_no_units_still_computes_a_posterior",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_admission_path_refuses_an_unbound_table",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_predictive_admission_refuses_an_unbound_table"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The refs are still strings and a forger can write a well-formed one: the FORM is checkable, the content is not, and binding a record to the source result it came from is part C (finding 98), done in batch 46. A table that declares no observation units still computes a posterior on the ordinary path -- refusing there would delete every legitimate cached table -- so the audited unit reuse is refused for tables built through `from_rows`, which is every table the gate produces. `admitted_routes` is a property for consumers to gate on; which routes a given consumer should accept is part C's business."
+  },
+  {
+   "problem": "R-71",
+   "title": "Forward-model admission is not bound to the source result it is about (the audit's finding 98)",
+   "rule": "src/engcore/inference/admissibility.py",
+   "rule_symbol": "_require_the_source_has_nothing_to_converge and the source's own DIMENSIONALLY_VALID requirement in AdmissibleAnalyticPrediction.__post_init__; the sequence-report identity refusal and _require_a_sequence_of_members in AdmissibleNumericalPrediction.__post_init__; _require_the_source_names_a_model and _require_binding_names_the_source on both routes",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-28 part C (batch 46)",
+   "why": "REACHED, and the audit's own 'library-only' for R-71 -- kept verbatim in the field above, because this ledger echoes what the audit claimed -- is contradicted by the tree for this half of the problem. Both admission routes are built on production paths: the battery OCV calibration and the TCR study build analytic predictions, and the two CSTR inference adapters build numerical ones, all of which reach an MCP entry point through their domain runners. All four pass the source-bound rules with the references they already wrote: the analytic producers record NOT_APPLICABLE convergence and a source report attaining DIMENSIONALLY_VALID and pass `model_id@version`, and the CSTR routes pass a physics fingerprint their source's provenance metadata carries and a verification sequence report whose convergence check names every rung.",
+   "entry_points": [
+    "engcore.domains.battery.calibration (the OCV calibration's admitted analytic prediction)",
+    "engcore.studies.tcr (the temperature-coefficient study's admitted analytic prediction)",
+    "engcore.domains.kinetics.cstr.inference and engcore.domains.kinetics.cstr.alternative_inference (the admitted numerical predictions)",
+    "engcore.mcp.tools.run_battery (MCP), through the battery runner"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch46.py::test_r71_an_analytic_prediction_over_an_iterative_solve_is_refused",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_an_analytic_prediction_over_a_converged_source_is_refused_even_without_the_level",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_the_dimensional_level_has_to_be_in_the_sources_own_report",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_the_sources_own_report_is_not_its_sequence_report",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_a_sequence_report_names_at_least_two_members",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_a_source_that_names_no_model_is_refused",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_a_binding_reference_that_names_nothing_in_the_source_is_refused",
+    "tests/test_core_scientific_audit_batch46.py::test_r71_the_references_the_in_tree_producers_write_are_accepted",
+    "tests/domains/battery/test_battery_ocv_calibration.py::test_a_prediction_is_admitted_through_the_production_solver",
+    "tests/test_core_trust_closure.py",
+    "tests/test_trust_boundary_admitted_row.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`verification_ref` is still a free string: a verification reference names an artefact the source record does not carry, so there is nothing in the record to check it against, and binding it needs the verification record itself to be passed in -- a change to what the boundary takes. `sequence_validation` is held to being a different report from the source's and to naming at least two members; it is NOT held to naming this model, these observables, or the run ids of the members, because a ValidationReport carries checks and evidence strings rather than a typed sequence record. Nothing in the core declares which model identities are closed-form, so what the analytic route reads is the source's own convergence state and report rather than a property of the model. And the binding rule is a containment test over what the source names: it stops a reference that binds nothing, not a well-formed reference to the wrong one of the source's own names."
+  },
+  {
+   "problem": "R-60",
+   "title": "The QuantityTransfer conversion budget check has a 1.0 absolute floor",
+   "rule": "src/engcore/scientific/composition/transfer.py",
+   "rule_symbol": "the purely relative criterion in QuantityTransfer._check_against_the_declared_budget, and the shared _agree_relatively it is stated in",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "REACHED, against the audit's 'library-only', which is kept verbatim in the field above: the budget check runs in QuantityTransfer.__post_init__, and the production electrothermal loop constructs a converted transfer for every declared conversion edge of its final pass, which is how a conversion's arrived value is re-checked independently of the loop that computed it. What was library-only is the DEFECT: no in-tree crossing is small enough in its conversion's own exemplar unit for the floor to bite, so the audit had to build the case by hand (1 mW against a gigawatt exemplar). The rule now holds at every magnitude, production crossings included.",
+   "entry_points": [
+    "engcore.systems.electrothermal.coupled.converted_transfers (every declared conversion edge of the final pass)",
+    "engcore.systems.electrothermal.coupled (the fixed-point loop, through _transport)",
+    "engcore.mcp.tools.run_electrothermal (MCP), through that loop"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_small_crossing_carrying_everything_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_small_crossing_carrying_nothing_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_crossing_of_exactly_nothing_still_agrees_with_a_budget_of_nothing",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_an_honest_conversion_transfer_is_unchanged",
+    "tests/test_min_foundation_electrothermal.py",
+    "tests/test_electrothermal_vertical.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "BUDGET_TOLERANCE is one relative allowance for one multiplication and is not a modelling tolerance: a crossing that misses its declared efficiency by a part in a thousand is a different claim, and this rule says so, while a conversion whose declared efficiency is itself wrong is not something the arithmetic can see. A scale of zero is exact equality, which is the limit of the same rule and not a special case."
+  },
+  {
+   "problem": "R-61",
+   "title": "Transfer records compare unit strings and bind neither source record nor instant order",
+   "rule": "src/engcore/scientific/composition/transfer.py",
+   "rule_symbol": "_transfers_state_one_value and the one-instant-per-declaration refusal in require_agreeing_transfers; TRANSFER_VALUE_ORIGINS with the value_origin field and its validation; QuantityTransfer.check_against_result",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "REACHED, and here the audit's 'library-only' is contradicted most plainly: ProvenanceRecord.__post_init__ calls require_agreeing_transfers on EVERY construction and on every from_dict, so the agreement rule is on every production path that records a crossing, and the audited defect was a FALSE REFUSAL there -- one value spelled in two units, or read from two records, made a justified record unconstructible. The production ambient crossing now declares value_origin='configured_input', which is what it is: the ambient is a control input of the thermal problem whose result the transfer names, and the value comes from the system configuration.",
+   "entry_points": [
+    "engcore.scientific.results.provenance.ProvenanceRecord (construction and from_dict, on every recorded run)",
+    "engcore.systems.electrothermal.coupled.ambient_transfers (declares the configured-input origin)",
+    "engcore.systems.electrothermal.coupled.converted_transfers",
+    "engcore.mcp.tools.run_electrothermal (MCP), through that loop"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch47.py::test_r61_one_value_spelled_in_two_units_agrees",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_two_genuinely_different_values_are_still_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_one_value_from_two_records_agrees",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_the_refusal_names_the_records_that_disagree",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_stale_instant_cannot_sit_beside_the_final_one",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_transfer_can_be_checked_against_the_record_it_names",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_configured_input_crossing_declares_that_it_is_one",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_value_origin_nobody_declared_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_configured_input_that_the_record_does_produce_is_a_finding",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_value_that_is_not_in_the_record_it_names_is_a_finding",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_another_record_carrying_the_same_number_is_still_not_the_record_named",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_the_record_it_names_carrying_the_value_is_no_finding",
+    "tests/test_min_foundation_electrothermal.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`instant` is still an unparsed string and has no order: what closes the audited selection defect is refusing two instants of one declaration in one record, so no sort order can pick the stale one, and a numeric instant index would change what every producer writes. `check_against_result` is a method rather than a construction rule, because the record does not hold the result it names -- a transfer read back from a payload can only be checked by whoever holds the other half, and nothing forces a consumer to ask. A `configured_input` origin is checked for the named record NOT producing that quantity; it is not checked against the configuration that did supply it, because no core record carries a problem's control inputs as a comparable set."
+  },
+  {
+   "problem": "R-64",
+   "title": "The energy-crossing guard matches only exact energy or power dimensions",
+   "rule": "src/engcore/scientific/composition/dependency.py",
+   "rule_symbol": "ENERGY_DERIVED_DIMENSIONS and CONVERTIBLE_DIMENSIONS in composition/conversion.py; the energy-density refusal and the prose-on-an-exact-energy refusal in QuantityDependency.__post_init__, with the transport_declaration field",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "LATENT rather than reached: the rule is on the constructor of every QuantityDependency, which production does build, but the shape it guards does not occur in the tree. The in-tree declarations carry a power, a temperature and a resistance -- the first already had to declare its conversion, and the other two are not energy. Nothing in the repository declares a crossing in W/m^2, W/m, W/m^3 or J/kg, which is why the audit had to construct one.",
+   "what_would_create_it": "A conjugate or field coupling: a heat flux across an interface, a line power along an edge, a volumetric source, or a specific energy crossing with a mass flow. Those are the forms such a coupling exchanges, and before this batch each of them crossed with nothing declared, which reads as 'all of it arrives'.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_with_no_declaration_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_plain_power_is_still_refused_without_a_conversion",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_can_declare_a_transport",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_can_declare_a_conversion",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_prose_about_an_exact_energy_crossing_is_refused"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A dimension is not a name, and three members of the derived set are also the dimensions of a force (energy per length), a pressure (energy per volume) and a surface tension (energy per area). Nothing in a dimension can tell a pressure from an energy density, so the rule refuses SILENCE rather than mechanics: a declared conversion or a stated transport both satisfy it, and a pressure crossing says which it is in one sentence. Division by time is deliberately not in the set -- energy per time is a power, which the exact pair already covers. And what the transport declaration states is prose: a reader can see that somebody took a position, not check the position."
+  },
+  {
+   "problem": "R-51",
+   "title": "CrossLimitCondition reports a missing declaration as a core gap",
+   "rule": "src/engcore/scientific/models/definition.py",
+   "rule_symbol": "the operand test in CrossLimitCondition.explain_in, and the two-operand key in _context_key in src/engcore/scientific/models/unknown_diagnostics.py",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "yes",
+   "closed_by": "I-31 (batch 50)",
+   "why": "REACHED, and the audit's own value agrees. RATED_LINEAR_TCR_MODEL declares three cross-limit conditions whose denominators -- maximum_operating_temperature and debye_temperature -- are optional while reference_temperature is always declared, so 'one operand declared, the other omitted' is the ORDINARY case for that production model, and engcore.domains.repair is what a caller reads about it. The misdiagnosis was visible in committed evidence: benchmarks/blind_v2/runs/*.json record reference_reduced_debye_temperature as 'unreadable_shape' beside three siblings recorded as 'not_supplied', which is the defect in one line.",
+   "entry_points": [
+    "engcore.domains.electrical.material.RATED_LINEAR_TCR_MODEL (three cross-limit conditions with optional denominators)",
+    "engcore.domains.repair.unassessable_guidance and actionable_declarations (what a caller reads)",
+    "engcore.scientific.models.unknown_diagnostics.diagnose_unknowns",
+    "engcore.mcp.tools.run_electrothermal (MCP), through the material model's assessment"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch50.py::test_r51_an_omitted_limit_is_not_supplied_rather_than_unreadable",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_both_omitted_is_still_not_supplied",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_an_operand_in_a_shape_the_core_cannot_read_is_still_unreadable",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_the_repair_layer_tells_the_caller_to_declare_the_missing_limit",
+    "tests/test_core_scientific_audit_batch50.py::test_r51_the_diagnostic_names_the_operand_the_context_is_missing",
+    "tests/test_unknown_reasons.py",
+    "tests/test_unknown_diagnostics_v2.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The precedence is unchanged and deliberate: a present-but-unreadable operand still reports UNREADABLE_SHAPE, because supplying the other one would not help, and a caller cannot tell from the reason WHICH operand was unreadable. The diagnostic names one key -- the operand the context is missing, the numerator when both are -- rather than one diagnostic per missing operand, which would be a second record shape. Committed blind-run records keep their bytes: they are evidence of what the tree said then, not a claim about what it says now."
+  },
+  {
+   "problem": "R-54",
+   "title": "Validity condition primitives accept declarations whose meaning silently inverts",
+   "rule": "src/engcore/scientific/models/definition.py",
+   "rule_symbol": "the bare-string refusal in CategoryCondition.__post_init__ (and the unconverted payload in from_dict); the denominator-sign UNKNOWN in CrossLimitCondition.evaluate_in with UnknownReason.RELATION_NOT_ORDERED_BY_THE_DECLARATION, its guidance in engcore/domains/repair.py and its cause in unknown_diagnostics",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-31 (batch 50)",
+   "why": "LATENT: both rules sit on constructors and an evaluator that production does run, and neither shape occurs in the tree. No in-tree declaration passes a bare string for an allowed set -- every one passes a tuple -- and every in-tree cross-limit operand is an absolute temperature in kelvin, which is positive by construction. That is why the audit had to build both cases by hand.",
+   "what_would_create_it": "A declaration written with `allowed='laminar'` instead of `allowed=('laminar',)`, which is a plausible slip because the string is iterable and the constructor accepted it; or a cross-limit condition over a sign-indefinite dimension -- a voltage, a charge, a signed power flow -- where the denominator can go negative and the ratio bound stops ordering its operands.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_bare_string_allowed_set_is_refused",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_bare_string_allowed_set_is_refused_on_read",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_the_audited_inversion_cannot_be_declared",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_list_of_words_is_still_an_allowed_set",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_two_negative_operands_are_not_ordered_by_their_ratio",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_sign_indefinite_pair_is_not_ordered_by_their_ratio",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_the_unordered_ratio_has_its_own_reason_and_its_own_guidance",
+    "tests/test_core_scientific_audit_batch50.py::test_r54_a_positive_ratio_still_orders_its_operands"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A CategoryCondition still accepts any other iterable of strings, so a caller who passes a list of words gets the set they meant; what is refused is the one shape whose meaning inverts silently. The sign rule is on the DENOMINATOR alone (amendment 1), because with b > 0 the ratio orders a and b for a of either sign -- so a condition over a sign-indefinite dimension whose denominator stays positive is assessed as before. A dimension whose operands both go negative cannot be ratio-bounded by this record at all: it returns UNKNOWN with its own reason rather than pretending to order them, and expressing 'a <= b' without a ratio is a different record."
+  },
+  {
+   "problem": "R-49",
+   "title": "Oracle operating-point conditions are the caller's word, partial and optional",
+   "rule": "src/engcore/scientific/oracles.py",
+   "rule_symbol": "OracleEvidenceSet._binding_gap and the predicted_from keyword of OracleEvidenceSet.compare; the stated-but-undeclared refusal and the undeclared-point level withholding inside compare",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-26 (batch 51); the REACH is a repository decision about pinning an oracle, not an improvement",
+   "why": "LATENT, and the audit's own word for the problem -- 'library-only' -- is kept in the field above. LATENT is the ledger's category for a rule whose shape does not occur in the tree at all, which is this one: the oracle comparison is the designed route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED, and no production path reaches it because `_TRUSTED_ORACLE_DECLARATIONS` is empty and nothing outside the core builds an evidence set. The rules themselves are closed: a level now requires the prediction to name the record it was computed from, whose own inputs must be the stated point and whose values must be the compared numbers; a stated condition the evidence does not describe stops that comparison; and evidence that declares no point is compared and awards no level.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_stated_condition_the_evidence_does_not_describe_stops_the_comparison",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_evidence_with_no_declared_point_awards_no_level",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_bound_prediction_against_evidence_with_no_point_still_awards_no_level",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_level_needs_the_record_the_prediction_came_from",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_the_named_record_must_have_been_computed_at_the_stated_point",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_bound_prediction_at_the_observed_point_earns_the_level",
+    "tests/test_external_oracles.py",
+    "tests/test_audit_consensus_level_issuers.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`predicted_from` is optional, so a caller may still compare a bare mapping -- what that caller cannot do is earn a level from it, which is the claim the finding is about. Making the record mandatory is a signature change the compatibility rule forbids before the V4 round. When a record IS named, the binding is that it carries these values and that its own provenance inputs are the stated point, so a result that does not declare its operating point cannot support a level either -- an absence this reports rather than infers. Oracle authority is unchanged and is the ceiling on all of this: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an OracleEvidenceSet, and no oracle is pinned, so no production path awards an oracle level at all. Pinning one is a repository decision about external evidence, not something a rule can close. `_same_operating_point` is reused unchanged, so its offset-scale behaviour (the audit's finding 104) applies here too and belongs to another problem.",
+   "what_would_create_it": "An oracle pinned in `_TRUSTED_ORACLE_DECLARATIONS` together with an `OracleProvider` that builds an `OracleEvidenceSet` for a problem -- which is what the route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED is designed to be, and what no path in this repository does today. Until then no comparison of a real prediction against external evidence exists to reach: the shapes these rules guard (a bare mapping asserted to be at an operating point, a two-point dataset, a prediction missing a metric) occur only in tests."
+  },
+  {
+   "problem": "R-53",
+   "title": "Oracle comparison fails an unpredicted metric and cannot compare multi-point evidence",
+   "rule": "src/engcore/scientific/oracles.py",
+   "rule_symbol": "the (metric, conditions) identity in OracleEvidenceSet.__post_init__; the point-by-point comparison, the not-compared bookkeeping and the NOT_RUN outcome in OracleEvidenceSet.compare",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-26 (batch 51); the REACH is the same repository decision as R-49's",
+   "why": "LATENT for R-49's reason, with the audit's 'library-only' kept in the field above, and the rules are closed. A metric the prediction does not carry is recorded as not compared rather than as a failure, so an absence stops reading as NOT_SUPPORTED at the MCP boundary; the check is FAIL only when a comparison was made and missed its tolerance, and NOT_RUN when nothing failed and something was not compared. An evidence set's identity is now (metric, conditions), so a dataset can hold the shape its own name describes, and comparison runs point by point -- NOT_RUN only when nothing was comparable at all.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch51.py::test_r53_an_unpredicted_metric_is_not_run_rather_than_failed",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_an_unpredicted_metric_awards_no_level_and_accuses_nothing",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_a_prediction_that_misses_its_tolerance_is_still_a_failure",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_one_metric_at_two_operating_points_is_two_observations",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_a_two_point_set_is_compared_at_the_point_the_prediction_states",
+    "tests/test_external_oracles.py::test_duplicate_metric_observations_are_refused",
+    "tests/test_external_oracles.py::test_missing_metric_does_not_compare_the_intersection_and_awards_no_level"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A multi-point comparison is reported as ONE check with one residual ratio, the worst over the comparisons made, and the observations at other points are named in the detail rather than being checks of their own; per-point checks would be a different record shape. Two readings of one metric at one point are still refused, because a duplicate and a disagreement are indistinguishable there. Oracle authority is unchanged and is the ceiling on all of this: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an OracleEvidenceSet, and no oracle is pinned, so no production path awards an oracle level at all. Pinning one is a repository decision about external evidence, not something a rule can close. `_same_operating_point` is reused unchanged, so its offset-scale behaviour (the audit's finding 104) applies here too and belongs to another problem.",
+   "what_would_create_it": "An oracle pinned in `_TRUSTED_ORACLE_DECLARATIONS` together with an `OracleProvider` that builds an `OracleEvidenceSet` for a problem -- which is what the route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED is designed to be, and what no path in this repository does today. Until then no comparison of a real prediction against external evidence exists to reach: the shapes these rules guard (a bare mapping asserted to be at an operating point, a two-point dataset, a prediction missing a metric) occur only in tests."
+  },
+  {
+   "problem": "R-55",
+   "title": "Field validity decides from an unbound self-declared summary and a component envelope",
+   "rule": "src/engcore/scientific/fields/result.py",
+   "rule_symbol": "FieldSummary's self-consistency rules and magnitude_maximum; FieldRecord's dimension and count checks, summary_verified_against and summary_is_bound_to_its_values; FieldValue._require_the_summary_describes_these_values and _magnitude_maximum in src/engcore/data/field.py; the binding and magnitude branches of FieldRangeCondition.evaluate and FieldFiniteCondition.evaluate in src/engcore/scientific/models/structured_validity.py",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-25 part A (batch 52); part B is R-63 and R-73",
+   "why": "LATENT for the PREDICATES, which is what the problem is about: FieldRangeCondition and FieldFiniteCondition are registered validity-condition decoders and are therefore reachable from a payload, and no production domain declares one -- the audit says so in its own words, 'no production domain uses these conditions yet'. The summary rules themselves sit on records production DOES produce, so a field stored by the conduction2d path now carries the digest of the bytes its summary came from, and a summary that disagrees with those bytes is refused on read.",
+   "what_would_create_it": "A domain declaring a FieldRangeCondition or a FieldFiniteCondition over a field it produces -- which is what the structured-validity decoders exist for -- or any consumer reading a field record's summary and acting on it without resolving the bytes. The audited shapes are a summary nobody derived from its own field (a 900 K hot spot summarized as 310 K with the reference digest unchanged) and a multi-component field judged per component ((1, 1, 1) m/s passing a 1.2 m/s bound).",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_mean_outside_its_own_range_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_negative_norm_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_summary_in_another_dimension_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_more_non_finite_values_than_values_is_refused",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_summary_that_does_not_match_the_bytes_is_refused_on_read",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_field_read_back_from_its_own_record_still_works",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_range_predicate_will_not_decide_from_an_unbound_summary",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_finiteness_predicate_will_not_decide_from_an_unbound_summary",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_record_bound_to_its_bytes_is_decided_as_before",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_field_is_judged_on_its_magnitude",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_field_inside_the_bound_still_passes",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_vector_record_without_a_magnitude_is_unknown",
+    "tests/test_core_scientific_audit_batch52.py::test_r55_a_bound_vector_record_without_a_magnitude_is_still_unknown",
+    "tests/test_structured_validity.py",
+    "tests/test_unknown_diagnostics_v2.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The verification digest is an integrity binding, as every digest here is: it closes an unbound summary and a silent hand-off, not a determined edit by somebody who recomputes the digest too. `from_record` can only check what it resolves, so the reader this record exists for -- one that acts on the summary WITHOUT resolving a mesh-sized array -- is protected by the digest binding and the internal consistency rules rather than by a re-derivation it never performs. `magnitude_maximum` is a maximum only, because a minimum magnitude is not a bound anybody writes for a vector field; a condition stating only a minimum over a multi-component field therefore answers UNKNOWN. The per-component envelope stays on the record, because a component-wise bound is a legitimate statement -- what changed is which one the condition applies."
+  },
+  {
+   "problem": "R-63",
+   "title": "FieldTransferContract accepts any verdict",
+   "rule": "src/engcore/scientific/fields/transfer.py",
+   "rule_symbol": "FieldTransferContract._require_the_verdict_follows_from_the_records and the _STRENGTH ordering it compares against",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-25 part B (batch 53)",
+   "why": "LATENT, and the audit's own word for it. No `src` consumer builds a FieldTransferContract: the record exists to be the gate a field crossing passes, and the crossing does not exist yet. The rule is closed: the contract carries both field definitions and both support fingerprints -- which is what check_field_transfer decides from -- and it now refuses a verdict that claims more crossability than those records permit, while a more conservative verdict stays allowed.",
+   "what_would_create_it": "A field dependency actually crossing between two problems, which is what FieldDependency and check_field_transfer are for and what NEEDS.md's field-transfer milestone describes. The audited shapes are a payload computed as REFUSED for 1 component against 3 or kelvin against pascal reading back as COMPATIBLE, and direct construction with invented fingerprints.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch53.py::test_r63_an_honest_contract_is_unchanged",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_component_mismatch_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_dimension_mismatch_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_different_supports_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_locations_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_units_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_more_conservative_verdict_is_still_allowed",
+    "tests/test_field_composition.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Geometry beyond fingerprint equality: two supports covering different rectangles and two resolutions of one rectangle both appear on the record as two different fingerprints, so a REFUSED-for-geometry verdict is indistinguishable from a REQUIRES_PROJECTION-for-resolution one without the meshes. The contract therefore refuses a verdict that claims too much and does not re-derive WHICH reason a refusal rests on. A conservative verdict is deliberately left constructible, because a caller may refuse for a reason the record does not carry and this record must stay able to say so."
+  },
+  {
+   "problem": "R-73",
+   "title": "FieldObservationOperator binds its region by label and snaps out-of-support probes to an edge",
+   "rule": "src/engcore/inference/field_observation.py",
+   "rule_symbol": "FieldObservationOperator.region_mesh_id and .region_edge with _require_the_region_is_the_declared_one, _require_the_probe_is_on_the_support with PROBE_CONTAINMENT_RTOL, and _values_of_the_field_it_names",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-25 part B (batch 53)",
+   "why": "LATENT, and the audit's own word for it: the operator is reached from tests and benchmarks and from no production path -- no domain builds a field observation for a calibration yet. The rules are closed: the region's content (its support and its edge) is declared, is in the canonical form and therefore in the digest, and a region whose content differs is refused; a probe outside the support's rectangle is refused instead of being answered with a corner node; and a typed field handed to apply must be the field the operator names, in its dimension, on its support.",
+   "what_would_create_it": "A calibration that observes a solved field -- the thing this module is the spike for: a probe or an edge mean entering an inference problem as an observation. The audited shapes are two MeshRegion objects sharing a region id and differing in edge (the left edge at 400 K and the right at 300 K under one digest), a probe declared 2 m and -5 m from a 10 mm plate, and a bare float array whose unit and field id the operator asserted.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_region_mean_refuses_a_region_whose_content_is_not_the_declared_one",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_the_region_content_is_part_of_the_operators_identity",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_probe_on_its_support_still_reads_the_nearest_node",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_probe_outside_the_support_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_resolving_indices_outside_the_support_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_another_quantity_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_the_named_id_in_another_dimension_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_another_id_in_the_named_unit_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_the_named_quantity_is_read",
+    "tests/inference/test_field_observation_spike.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "MeshRegion still binds its own mesh by `mesh_id`, which is a label two discretisations of one geometry share; putting a fingerprint on the region is a change to that record and is not this batch's. Containment is checked against the support's rectangle and not against the cell the probe falls in, so a probe inside the rectangle that snaps half a cell is still answered and `probe_offset` remains the only place that says so -- refusing there would delete every legitimate coarse-mesh probe. And `apply` still accepts a bare sequence, where the unit and the field id stay the caller's assertion; making the typed field mandatory is a signature change the compatibility rule forbids before the V4 round."
+  },
+  {
+   "problem": "R-67",
+   "title": "The round's batch-guard mutation evidence sat outside the pinned harness and any failure counted as a kill",
+   "rule": "tests/mutation_population_v4.py",
+   "rule_symbol": "POPULATION_V4 (575 entries), with tools/certification/mutation_v4_runner.py::verdict_from_junit and require_an_isolated_tree, and tests/test_mutation_population_v4.py as the FAST-tier check that each entry still matches",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55)",
+   "why": "REACHED, and by the only kind of production this rule has: the certification control plane. The population is DATA inside the area `tools/certification/core_certificate.py` pins and digests, the runner is the module the recertify workflow invokes, and the FAST-tier suite applies all 575 entries to the live source on every run. What the audit measured -- 55 scripts under benchmarks/ that nothing verified, two kills that no longer applied, and a runner crediting any non-zero exit -- is closed: 26 moved entries are repointed with their reasons -- one of them at a target test renamed inside its own batch, which the formal round found -- 2 that cannot be applied are marked and never applied, and a kill is the ONE test the entry names failing in that run's JUnit report.",
+   "entry_points": [
+    "tools/certification/mutation_v4_runner.py::main (the shard runner the recertify workflow invokes)",
+    "tools/certification/core_certificate.py::build_manifest (digests the population as part of the harness area)",
+    "tools/certification/mutation_population.py::v4_population (re-derives the population's identity from the tree)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names",
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_changes_executable_code",
+    "tests/test_mutation_population_v4.py::test_the_population_is_pinned_by_the_certificate_and_its_digests_are_re_derived",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_a_kill_requires_the_named_target_test_to_fail",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_the_runner_refuses_to_mutate_the_repository_itself"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "That an entry matching exactly once is a KILL. Only the formal round establishes that, and until its transcripts are recorded the FAST check says the population still describes the tree and nothing more. The batch scripts under benchmarks/ remain unpinned by decision: they are the historical record of how each batch ran, and the population is what is verified from now on -- so an edit to a batch script is no longer an edit to any evidence, which is the point, but also means nothing detects one."
+  },
+  {
+   "problem": "R-68",
+   "title": "The certificate harness area did not pin the helper modules its suites import",
+   "rule": "tools/certification/core_certificate.py",
+   "rule_symbol": "harness_import_closure and harness_pinning_problems, called from build_manifest",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55)",
+   "why": "REACHED: the closure is derived and enforced where a certificate is BUILT, so a manifest is refused rather than written over a harness area that does not cover what its own suites read. The finding was that the area was a hand-maintained list -- hybrid_synthetic.py was imported by ten certified targets and measured by nothing, and the branch changed it by twelve lines without moving the certificate -- so the fix is the derivation, not a longer list. The area now enumerates 123 files, and the check compares it against the closure of the harness TARGETS and every target test the V4 population names.",
+   "entry_points": [
+    "tools/certification/core_certificate.py::build_manifest (refuses a scope that does not cover the closure)",
+    "tools/certification/core_certificate.py::main (the verifier the recertify workflow runs)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_a_manifest_is_refused_over_a_harness_area_that_misses_an_imported_helper",
+    "tests/test_mutation_population_v4.py::test_the_closure_reaches_every_suite_the_population_names",
+    "tests/test_core_scientific_audit_batch55.py::test_r68_every_module_the_certified_suites_import_is_pinned_by_the_certificate",
+    "tests/test_core_scientific_audit_batch55.py::test_r68_a_scope_whose_harness_area_misses_an_imported_helper_is_refused"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The closure follows STATIC imports. A helper reached only through `importlib` by a computed name, or through a conftest fixture that loads a file by path, is not found -- nothing in the closure does either today, and the check reports what it measured rather than claiming a reach it does not have."
+  },
+  {
+   "problem": "R-66",
+   "title": "The V2 and V3 freeze verifiers accept a self-asserted assurance record",
+   "rule": "tools/certification/mutation_population.py",
+   "rule_symbol": "v4_population (population_sha256 over the ordered ids, definitions_sha256 over the canonical JSON of the full entries) and v4_log_problems (verdicts re-derived from the transcript); and tools/certification/core_freeze_v4.py::v4_mutation_problems, which recomputes every figure a V4 assurance record asserts -- the population's two digests from the tree, each shard's log digest from the transcript's own bytes, each shard's verdicts by parsing that transcript, and the shards' union and disjointness",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-30 (batch 55) for the population half; I-29 (batch 56) for the freeze record",
+   "why": "REACHED and CLOSED. The population half (batch 55): a V4 population's identity is recomputed from the tree, never read from a record, and the digest covers the mutation BODIES so the same ids with a rewritten target test or expectation are a different population. The freeze-record half (batch 56): the V4 verifier re-derives the measured commit by `git merge-base`, every shard's log digest from the transcript's bytes and every verdict by parsing those lines, and refuses a record whose figures disagree -- which is what finding 91's fabricated record with green flags and a copied population sha exploited.",
+   "entry_points": [
+    "tools/certification/mutation_population.py::main (identity, select and record, invoked per shard by the recertify workflow)",
+    "tools/certification/mutation_v4_runner.py::main (reads the population through v4_population and v4_entries)",
+    "tools/certification/core_freeze_v4.py::verify (the freeze verifier the recertify workflow runs)"
+   ],
+   "exercised_by": [
+    "tests/test_mutation_population_v4.py::test_the_definitions_digest_covers_the_bodies_and_not_only_the_ids",
+    "tests/test_mutation_population_v4.py::test_a_population_whose_entries_are_the_wrong_shape_is_refused",
+    "tests/test_core_scientific_audit_batch55.py::test_r66_the_v4_population_digests_are_re_derived_from_the_definitions",
+    "tests/test_core_scientific_audit_batch55.py::test_r66_a_shard_transcript_is_read_for_the_verdict_it_names",
+    "tests/test_core_scientific_audit_batch56.py::test_r66_an_assurance_record_whose_figures_disagree_with_the_tree_is_refused"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A transcript that was never produced by a run. The digests prove WHICH population a shard claims, the lines prove what it reported, and the measured commit proves which tree -- and nothing here proves the lines came from executing anything. That binding is the recertify workflow's fresh-execution gate, and V4 states it as a non-claim rather than implying it."
+  },
+  {
+   "problem": "R-65",
+   "title": "The branch descends from no Core Freeze, and recertification is blocked",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "core_freeze_v4.verify (v4.descends_from_v3, via descends_from) with certification/core_freeze_v4.json, and recertification_scope.CERTIFICATE_SELF_CHECKS",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED: the freeze verifier and the recertification classifier are what the recertify workflow runs, and both now describe this tree. The candidate descends from the V3 freeze commit and says which one; the nineteen checks that compare the tree against a pinned artifact of the PREVIOUS freeze are classified as certificate self-checks, so a recertifying source gate can be green while the certificate child still requires every one of them to be reported PASSED in JUnit. The four API snapshots and the FROZEN-STATE table are regenerated once, in the freeze, with the additive proof recorded beside them.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::main (--verify, run by the recertify workflow and by the certificate child)",
+    "tools/certification/recertification_scope.py::CERTIFICATE_SELF_CHECKS (read by both the source gates and the child)"
+   ],
+   "exercised_by": [
+    "tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract",
+    "tests/test_core_freeze_v4_manifest.py::test_v4_descends_from_v3_and_rewrites_no_history",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_a_candidate_that_descends_from_no_freeze_is_not_a_descendant",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_the_deferred_self_checks_cover_every_check_that_reads_the_previous_freeze",
+    "tests/test_core_scientific_audit_batch56.py::test_r65_the_frozen_state_table_states_the_digest_the_tree_computes"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "That a deferred self-check actually ran. The certificate child requires each to be reported PASSED in JUnit, and if the child itself were never run nothing here would notice -- which is why the branch-policy workflow, not this ledger, is what makes the child mandatory."
+  },
+  {
+   "problem": "R-69",
+   "title": "The frozen API snapshot cannot see method-level contracts or additive-only violations",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "additive_only_problems and enum_insertions over stored_v1_frozen_snapshot / stored_v2_frozen_snapshot, with tools/certification/api_surface_v4.py pinned in certification/core_v4_api_surface.json",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED: both halves are in the verifier the recertify workflow runs. The comparison is against the snapshot AS COMMITTED at the V1 baseline -- read with `git show` and refused unless its bytes hash to the digest V1's own manifest pinned -- so `v1_entries_byte_identical_in_v2`'s live-against-live shape cannot come back; and additive is ENUMERATED, so a removed parameter, a changed default, a changed parameter kind, a new required argument, a reordered field or member, a shrunk frozen container and a changed exception chain each produce a named problem. The method-level gap is closed by a separate deep surface: 1943 method signatures and every enum member's position, pinned by digest. `engcore.api_snapshot` is untouched, so V1, V2 and V3 keep computing what they always computed.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::verify (api.additive_only, api.enum_insertions_are_recorded, api.deep_surface_is_the_live_one)",
+    "tools/certification/api_surface_v4.py::main (writes certification/core_v4_api_surface.json)"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch56.py::test_r69_every_difference_from_the_stored_v1_surface_is_additive",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_a_reordered_enum_member_is_not_additive",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see",
+    "tests/test_core_freeze_v4_manifest.py::test_the_compatibility_claim_is_proved_against_the_bytes_v1_committed",
+    "tests/test_core_freeze_v4_manifest.py::test_a_shrunk_or_reordered_surface_is_not_additive"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "SHAPE is all of it. A symbol whose signature is unchanged and whose meaning was reversed passes, which is what the 575-mutation population and the suites are for. The deep surface records methods by name and signature and not what they do; and a frozen container is recorded by TYPE and SIZE, so a tuple whose eighth entry replaced its seventh is invisible to the constant rule -- which is why that rule accepts only growth and the members are asserted by name in the suites."
+  },
+  {
+   "problem": "R-70",
+   "title": "The V3 supersession check passes on any exception",
+   "rule": "tools/certification/core_freeze_v4.py",
+   "rule_symbol": "is_the_core_refusal and v3_fixtures_refused, with REQUIRED_V3_REFUSAL",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-29 (batch 56)",
+   "why": "REACHED, and measured on every verify. A supersession claim rests on a REFUSAL, and the audited check caught `Exception` and read any of them as one -- so it passed with the rule deleted and an ImportError raised in its place, which is the vacuous kill the mutation harness refuses one level up. V4 requires the exception to be the core's own class AND its message to name the rule (the route diagnostics contradicting their own measurements), and records the type and message it saw. The V3 verifier also REPORTS that refusal now instead of dying on it with a traceback, because a verifier's job is to say which contract holds.",
+   "entry_points": [
+    "tools/certification/core_freeze_v4.py::verify (v4.v3_fixtures_refused_by_the_named_rule, re-derived on every run)",
+    "tools/certification/core_freeze_v3.py::verify (reports the refusal as a failed check rather than raising)"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch56.py::test_r70_the_supersession_check_names_the_rule_that_refuses_the_v3_fixtures",
+    "tests/test_core_freeze_v4_manifest.py::test_the_v3_supersession_names_the_rule_that_refuses",
+    "tests/test_core_freeze_v3_manifest.py::test_the_v3_refusal_is_the_named_rule_and_not_any_exception",
+    "tests/test_core_freeze_v3_manifest.py::test_the_identity_references_are_refused_in_a_fresh_process_too"
+   ],
+   "exercised_by_in_library": [],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "It pins the exception TYPE and a phrase of the message. A future rewording of that message is a test failure -- the right cost for a check whose whole point is which rule fired -- and a DIFFERENT rule that happened to use the same phrase would satisfy it, which is why the type is required too."
+  },
+  {
+   "problem": "R-62",
+   "title": "Mesh identity depends on unit-conversion float rounding and a 1e-12 m floor",
+   "rule": "src/engcore/scientific/units/quantity.py",
+   "rule_symbol": "canonical_magnitude with IDENTITY_SIGNIFICANT_DIGITS = 12, read by StructuredMesh._canonical (the fingerprint) and by fields.transfer._same_geometry",
+   "status": "LIBRARY_ONLY",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-23 (batch 57) closes the RULE; no improvement in this round gives it a production caller, and the audit's own word for its reach is library-only",
+   "why": "The rules are closed and the REACH is not, which is what PARTIAL means here rather than a hedge. Closed: one canonical-magnitude rule, quantized to 12 significant digits with no negative zero, is read by the fingerprint AND by the geometry comparison -- so 7 mm and 0.7 cm are one support (they were two, hashing 0.007 against 0.006999999999999999), 10 nm and 10.0005 nm are two rectangles (they were one, because the comparison's 1e-12 tolerance is absolute below a metre), and a digest can no longer disagree with a comparison about the same two declarations. Not closed: nothing in `src/engcore` builds a StructuredMesh for a domain run, so no production path reaches either rule.",
+   "entry_points": [
+    "engcore.scientific.fields.mesh.StructuredMesh.fingerprint (the library entry point a caller reaches identity through)",
+    "engcore.scientific.fields.transfer.check_field_transfer (the library entry point for the geometry verdict)"
+   ],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_same_rectangle_stated_in_two_units_is_one_support",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_a_rectangle_that_really_differs_is_still_two_supports",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_transfer_check_reads_geometry_the_way_the_fingerprint_does",
+    "tests/test_core_scientific_audit_batch57.py::test_r62_the_same_rectangle_at_two_resolutions_is_still_a_resolution_difference",
+    "tests/test_core_scientific_audit_batch57.py::test_i23_one_rule_states_how_much_of_a_float_is_identity"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Identity agrees with comparison to 12 significant digits and not beyond: two rectangles differing in the 13th digit are one support, which is a decision (a geometry stated to 13 digits is stating float noise) and not an accident. The rule also covers the ORIGIN and EXTENTS and not the node coordinates, so a mesh whose nodes were perturbed within its rectangle is the same support -- which is what a structured mesh means."
+  },
+  {
+   "problem": "R-74",
+   "title": "Parameter identity: the digest and differences() disagree, and unit restatement changes identity",
+   "rule": "src/engcore/inference/parameters.py",
+   "rule_symbol": "ParameterIdentity._canonical reading canonical_magnitude, so digest and differences() read one rule",
+   "status": "LIBRARY_ONLY",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-23 (batch 57) closes the RULE; the grid-binding helpers still have no caller, which is finding 105's own second half",
+   "why": "Closed: the digest and the comparison read the SAME canonical magnitude, so `-0.0` and `0.0` are one parameter in both directions (they were one to `differences()` and two to the digest), and the same admissible range stated in millivolts is one identity (10661 of 40000 random four-decimal bounds restated that way disagreed in the 16th digit). Not closed: nothing in `src/engcore` declares a ParameterIdentity for a production calibration, and the grid-binding helpers finding 105 names still have no caller -- this batch adds none, because inventing one would be inventing a calibration.",
+   "entry_points": [
+    "engcore.inference.parameters.ParameterIdentity.digest (the library entry point a record keyed by identity reaches)",
+    "engcore.inference.parameters.ParameterIdentity.differences (the comparison the digest must agree with)"
+   ],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_bound_restated_in_another_unit_is_the_same_parameter",
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_negative_zero_bound_is_one_value_in_both_directions",
+    "tests/test_core_scientific_audit_batch57.py::test_r74_a_bound_that_really_differs_is_still_a_different_parameter",
+    "tests/test_core_scientific_audit_batch57.py::test_i23_the_mesh_and_the_parameter_read_the_same_rule"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The bounds and the unit are canonicalized; the model reference and the name are compared as strings, so two parameters differing only in how their model states its version are two identities, which is what a version is for. And a parameter whose bound is an infinity keeps it unquantized, because rounding an infinity would say something false about it."
+  }
+ ]
+}

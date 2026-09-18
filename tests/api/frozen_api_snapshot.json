@@ -10,7 +10,7 @@
       "name": "EVIDENCE_IDENTITY_FIELDS",
       "value": {
         "kind": "immutable_container",
-        "size": 7,
+        "size": 8,
         "type": "tuple"
       }
     },
@@ -99,6 +99,54 @@
           "has_default_factory": false,
           "init": true,
           "name": "evidence_digest"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "int",
+            "value": 0
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "n"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "non_finite": "nan",
+            "type": "float"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "standard_error"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "why"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "bool",
+            "value": true
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "measurement_errors_assumed_independent"
         }
       ],
       "defined_in": "engcore.adequacy.predictive",
@@ -162,6 +210,46 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "evidence_digest"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "int",
+              "value": 0
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "n"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "non_finite": "nan",
+              "type": "float"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "standard_error"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "why"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "bool",
+              "value": true
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "measurement_errors_assumed_independent"
           }
         ],
         "required": [
@@ -247,6 +335,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "twin"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "split_content_digest"
         }
       ],
       "defined_in": "engcore.adequacy.predictive",
@@ -310,6 +410,16 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "twin"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "split_content_digest"
           }
         ],
         "required": [
@@ -475,6 +585,30 @@
           "has_default_factory": false,
           "init": true,
           "name": "evidence"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "bool",
+            "value": false
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "content_bound"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "content_binding_refused_because"
         }
       ],
       "defined_in": "engcore.adequacy.predictive",
@@ -602,6 +736,26 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "evidence"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "bool",
+              "value": false
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "content_bound"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "content_binding_refused_because"
           }
         ],
         "required": [
@@ -711,6 +865,26 @@
             "has_default": true,
             "kind": "keyword_only",
             "name": "credible_mass"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "NoneType",
+              "value": null
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "split"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "NoneType",
+              "value": null
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "calibration_table"
           }
         ],
         "required": [
@@ -2437,6 +2611,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "rejection_reasons"
+        },
+        {
+          "default": {
+            "kind": "immutable_container",
+            "size": 0,
+            "type": "tuple"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "observation_units"
         }
       ],
       "defined_in": "engcore.inference.grid",
@@ -2500,6 +2686,16 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "rejection_reasons"
+          },
+          {
+            "default": {
+              "kind": "immutable_container",
+              "size": 0,
+              "type": "tuple"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "observation_units"
           }
         ],
         "required": [
@@ -3219,6 +3415,16 @@
           "has_default_factory": false,
           "init": true,
           "name": "source_ref"
+        },
+        {
+          "default": {
+            "kind": "none"
+          },
+          "default_factory": "builtins:dict",
+          "has_default": true,
+          "has_default_factory": true,
+          "init": true,
+          "name": "conditions"
         }
       ],
       "defined_in": "engcore.inference.grid",
@@ -3266,6 +3472,15 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "source_ref"
+          },
+          {
+            "default": {
+              "kind": "object",
+              "type": "_HAS_DEFAULT_FACTORY_CLASS"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "conditions"
           }
         ],
         "required": [
@@ -5976,6 +6191,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "description"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "NoneType",
+            "value": null
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "efficiency_uncertainty"
         }
       ],
       "defined_in": "engcore.scientific.composition.conversion",
@@ -6045,6 +6272,16 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "description"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "NoneType",
+              "value": null
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "efficiency_uncertainty"
           }
         ],
         "required": [
@@ -8495,6 +8732,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "conversion"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "transport_declaration"
         }
       ],
       "defined_in": "engcore.scientific.composition.dependency",
@@ -8572,6 +8821,16 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "conversion"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "transport_declaration"
           }
         ],
         "required": [
@@ -8637,6 +8896,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "source_value"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": "read_from_the_record"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "value_origin"
         }
       ],
       "defined_in": "engcore.scientific.composition.transfer",
@@ -8686,6 +8957,16 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "source_value"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": "read_from_the_record"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "value_origin"
           }
         ],
         "required": [
@@ -12137,6 +12418,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "notes"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "UncertaintySource",
+            "value": "unspecified"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "source_kind"
         }
       ],
       "defined_in": "engcore.scientific.results.uncertainty",
@@ -12224,6 +12517,16 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "notes"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "UncertaintySource",
+              "value": "unspecified"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "source_kind"
           }
         ],
         "required": []
@@ -12506,6 +12809,10 @@
         {
           "name": "PREREQUISITE_NOT_ESTABLISHED",
           "value": "prerequisite_not_established"
+        },
+        {
+          "name": "RELATION_NOT_ORDERED_BY_THE_DECLARATION",
+          "value": "relation_not_ordered_by_the_declaration"
         }
       ],
       "kind": "enum",
@@ -12757,6 +13064,10 @@
         {
           "name": "NOT_RUN",
           "value": "not_run"
+        },
+        {
+          "name": "NOT_APPLICABLE",
+          "value": "not_applicable"
         }
       ],
       "kind": "enum",
@@ -12894,6 +13205,52 @@
           "has_default_factory": false,
           "init": true,
           "name": "unknown_reasons"
+        },
+        {
+          "default": {
+            "kind": "none"
+          },
+          "default_factory": "builtins:dict",
+          "has_default": true,
+          "has_default_factory": true,
+          "init": true,
+          "name": "evaluated"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "model_id"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "model_version"
+        },
+        {
+          "default": {
+            "kind": "immutable_container",
+            "size": 0,
+            "type": "tuple"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "declared_conditions"
         }
       ],
       "defined_in": "engcore.scientific.models.definition",
@@ -12949,6 +13306,45 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "unknown_reasons"
+          },
+          {
+            "default": {
+              "kind": "object",
+              "type": "_HAS_DEFAULT_FACTORY_CLASS"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "evaluated"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "model_id"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "model_version"
+          },
+          {
+            "default": {
+              "kind": "immutable_container",
+              "size": 0,
+              "type": "tuple"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "declared_conditions"
           }
         ],
         "required": [
@@ -13641,6 +14037,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "conditional_on_predictive_admission"
+        },
+        {
+          "default": {
+            "kind": "literal",
+            "type": "str",
+            "value": ""
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "conditioned_weights_digest"
         }
       ],
       "defined_in": "engcore.uq.admission",
@@ -13736,6 +14144,16 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "conditional_on_predictive_admission"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": ""
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "conditioned_weights_digest"
           }
         ],
         "required": [
@@ -13787,6 +14205,16 @@
           "has_default_factory": false,
           "init": true,
           "name": "observation_sigma"
+        },
+        {
+          "default": {
+            "kind": "none"
+          },
+          "default_factory": "builtins:dict",
+          "has_default": true,
+          "has_default_factory": true,
+          "init": true,
+          "name": "conditions"
         }
       ],
       "defined_in": "engcore.uq.predictive",
@@ -13820,6 +14248,15 @@
             "has_default": true,
             "kind": "positional_or_keyword",
             "name": "observation_sigma"
+          },
+          {
+            "default": {
+              "kind": "object",
+              "type": "_HAS_DEFAULT_FACTORY_CLASS"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "conditions"
           }
         ],
         "required": [
@@ -13950,6 +14387,18 @@
           "has_default_factory": false,
           "init": true,
           "name": "posterior_support_size"
+        },
+        {
+          "default": {
+            "kind": "immutable_container",
+            "size": 0,
+            "type": "tuple"
+          },
+          "default_factory": null,
+          "has_default": true,
+          "has_default_factory": false,
+          "init": true,
+          "name": "conditions_not_checked"
         }
       ],
       "defined_in": "engcore.uq.predictive",
@@ -14053,6 +14502,16 @@
             "has_default": false,
             "kind": "positional_or_keyword",
             "name": "posterior_support_size"
+          },
+          {
+            "default": {
+              "kind": "immutable_container",
+              "size": 0,
+              "type": "tuple"
+            },
+            "has_default": true,
+            "kind": "positional_or_keyword",
+            "name": "conditions_not_checked"
           }
         ],
         "required": [

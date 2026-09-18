@@ -101,6 +101,39 @@ def metrics_for(split, posterior, credible_mass=0.95):
     )
 
 
+def standardized_residuals_for(split, posterior, credible_mass=0.95):
+    """The per-observation residuals `validate_held_out` scores, computed the same way it does.
+
+    Added by I-03 part A (batch 17): the study's held-out verdict now goes through the V2 evidence
+    judgement first, which REFUSES a grid whose calibration residuals the declared noise does not
+    explain. For a misspecified model that refusal comes before any held-out score, so the residual
+    PATTERN -- the U shape a least-squares line fitted to a quadratic leaves, which is the central
+    evidence of B4 -- has to be read from the same per-observation call the study makes rather than
+    from metrics that no longer exist. `assess_predictive_observation` applies no goodness-of-fit
+    gate (stated as a residual of batch 17), so it answers the same question it always did.
+    """
+    from engcore.adequacy.predictive import assess_predictive_observation
+    from engcore.studies.calibration_study import TCR_MODEL_REF
+    from engcore.uq.predictive import PredictiveObservableSpec
+
+    predictive = tcr_forward_table(
+        split.held_out, [tuple(float(v) for v in row) for row in posterior.points],
+        reference_temperature=T_REF, temperatures_by_condition=BY_CONDITION,
+    )
+    out = []
+    for observation in split.held_out.observations:
+        assessment = assess_predictive_observation(
+            posterior, predictive,
+            PredictiveObservableSpec(observation_key=observation.key, unit=OHM,
+                                     observation_sigma=observation.sigma),
+            observation.value, twin=TWIN, model=TCR_MODEL_REF,
+            source_ref=f"study:{split.heldout_dataset_id}",
+            heldout_dataset_id=split.heldout_dataset_id, credible_mass=credible_mass,
+        )
+        out.append(assessment.standardized_residual)
+    return tuple(out)
+
+
 # =====================================================================
 # B1 -- predictive uncertainty, decomposed
 # =====================================================================
@@ -160,10 +193,21 @@ def test_model_discrepancy_is_recorded_as_not_modelled():
 # B2 -- held-out validation
 # =====================================================================
 
-def test_the_well_specified_model_passes_held_out_validation():
+def test_the_well_specified_model_is_not_rejected_on_held_out_evidence():
+    """I-03 part B (batch 18, R-35): 3 held-out points give INCONCLUSIVE, not PASS.
+
+    The claim this test makes is that a well-specified model's held-out evidence is not against it,
+    and that claim is unchanged -- neither the omnibus chi-square nor the mean-residual test
+    rejects. What moved is the WORD. Three points is below the minimum of 7 at which the
+    mean-residual test finds a one-sigma common bias at better than even odds, so the honest report
+    is that nothing was found AND nothing could have been; the audit measured a misspecified model
+    PASSing in 12 of 40 seeds at exactly this n, which is what PASS there was worth.
+    """
     split, posterior = build()
     m = metrics_for(split, posterior)
-    assert m.verdict is HeldOutValidation.PASS, m.why
+    assert m.verdict is HeldOutValidation.INCONCLUSIVE, m.why
+    assert m.verdict is not HeldOutValidation.FAIL
+    assert m.chi_square_p_value > 0.01, m.why
     assert m.n == 3
     assert m.rmse > 0.0 and m.mae > 0.0
     assert m.rmse >= m.mae  # RMSE >= MAE always; a violation means a mixed-up metric
@@ -243,15 +287,25 @@ def test_a_misspecified_model_converges_and_is_rejected():
         seed=20260912,
     )
     identifiability = assess_identifiability(posterior)
-    held_out = metrics_for(split, posterior)
 
     # 1. the search succeeded
     assert calibration.status is CalibrationStatus.CONVERGED
     # 2. the data determines the parameters
     assert identifiability.status is IdentifiabilityStatus.IDENTIFIABLE, identifiability.why
-    # 3. and the model is rejected on evidence it never saw
-    assert held_out.verdict is HeldOutValidation.FAIL, held_out.why
-    assert held_out.chi_square_p_value < 0.01
+    # 3. and the model is rejected on evidence it never saw.
+    #
+    # I-03 part A (batch 17) made this rejection EARLIER and STRONGER, not weaker. The study's
+    # held-out verdict now routes through the V2 evidence judgement, and this model's CALIBRATION
+    # residuals already exceed the declared noise -- chi-square 129.887 on 4 degrees of freedom --
+    # so the grid is refused before any held-out statement is made. The claim of B4 is unchanged and
+    # is now made twice over: the fit converged, the parameters are identifiable, and the model is
+    # refused. What moved is the mechanism, from a FAIL verdict to a refusal, which is a stronger
+    # answer than the one it replaces.
+    from engcore.hybrid_uq import HybridUQError
+
+    with pytest.raises(HybridUQError, match="MODEL_MISFIT_BEYOND_DECLARED_NOISE") as refused:
+        metrics_for(split, posterior)
+    assert "129.887" in str(refused.value) or "chi-square" in str(refused.value)
 
     # The residual PATTERN is the tell, and its shape is specific.
     #
@@ -263,7 +317,7 @@ def test_a_misspecified_model_converges_and_is_rejected():
     # it at both ends, so the residuals are U-shaped. That is the classical
     # signature of a truncated expansion, and it is stronger evidence than a
     # shared sign would have been, because noise produces it far more rarely.
-    residuals = held_out.standardized_residuals  # ordered by held-out condition
+    residuals = standardized_residuals_for(split, posterior)  # ordered by held-out condition
     middle = residuals[1]
     assert (middle < 0 < residuals[0]) and (middle < 0 < residuals[2]), residuals
     # and the miss is enormous relative to the declared measurement noise
@@ -278,12 +332,24 @@ def test_the_well_specified_and_misspecified_runs_differ_only_in_adequacy():
     clean_id = assess_identifiability(clean_posterior)
     bad_id = assess_identifiability(bad_posterior)
     clean_held = metrics_for(clean_split, clean_posterior)
-    bad_held = metrics_for(bad_split, bad_posterior)
 
     assert clean_id.status is bad_id.status is IdentifiabilityStatus.IDENTIFIABLE
-    assert clean_held.verdict is HeldOutValidation.PASS
-    assert bad_held.verdict is HeldOutValidation.FAIL
-    assert bad_held.rmse > 10.0 * clean_held.rmse
+    # I-03 part B (batch 18, R-35): INCONCLUSIVE at 3 held-out points rather than PASS -- the
+    # contrast this test is about is between "not rejected" and "refused", and it is sharper for it.
+    assert clean_held.verdict is HeldOutValidation.INCONCLUSIVE
+    assert clean_held.chi_square_p_value > 0.01
+    # I-03 part A (batch 17): the misspecified run is now REFUSED rather than FAILED, because its
+    # calibration residuals exceed the declared noise and the study routes through the V2 judgement
+    # first. The contrast this test is about is unchanged and sharper -- same convergence, same
+    # identifiability, and the adequacy side is the only one that separates them -- so the
+    # comparison is made on the same two quantities the FAIL verdict was read from.
+    from engcore.hybrid_uq import HybridUQError
+
+    with pytest.raises(HybridUQError, match="MODEL_MISFIT_BEYOND_DECLARED_NOISE"):
+        metrics_for(bad_split, bad_posterior)
+    bad_residuals = standardized_residuals_for(bad_split, bad_posterior)
+    clean_residuals = standardized_residuals_for(clean_split, clean_posterior)
+    assert max(abs(r) for r in bad_residuals) > 10.0 * max(abs(r) for r in clean_residuals)
 
 
 # =====================================================================

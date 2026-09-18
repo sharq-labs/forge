@@ -1,0 +1,100 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 50,
+ "improvements": [
+  "I-31"
+ ],
+ "problems_addressed": [
+  "R-51 (the audit's finding 63)",
+  "R-54 (the audit's finding 66)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "7e5a0497",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Two defects in the validity-condition primitives. R-51 is a MISDIAGNOSIS on a production path: when one operand of a cross-limit condition is declared and the other omitted, the reason channel says UNREADABLE_SHAPE -- 'a gap in the core, the caller can do nothing about it' -- and the repair layer then tells the user that declaring the missing limit will not help, which is false. R-54 is a pair of declarations whose meaning silently inverts: a bare string for an allowed set becomes its letter set, and a ratio bound cannot order two operands whose sign it does not know.",
+ "reach": "R-51 is REACHED: `RATED_LINEAR_TCR_MODEL` declares three cross-limit conditions whose denominators (maximum_operating_temperature, debye_temperature) are optional while reference_temperature is always declared, so the misdiagnosis is the ordinary case for that production model, and `engcore.domains.repair` is what a caller reads. R-54 is LATENT: no in-tree declaration passes a bare string, and every in-tree cross-limit operand is an absolute temperature.",
+ "what_was_already_seen": {
+  "finding 63 (R-51)": "`CrossLimitCondition.explain_in` asks `_absent_or_unreadable` of each operand and returns UNREADABLE_SHAPE if either answer is UNREADABLE_SHAPE. `_absent_or_unreadable` returns UNREADABLE_SHAPE for any value that is not None, INCLUDING a perfectly readable Quantity -- so whenever one limit is declared and the other omitted, the reason is UNREADABLE_SHAPE instead of NOT_SUPPLIED. `domains.repair` then says 'Declaring it again will not help: the gap is in the core', `actionable_declarations` drops the condition, and the reason channel over-counts core-universality gaps. `unknown_diagnostics` has the same blind spot: `_context_key` falls back to the condition's own name, which a cross-limit condition never reads, so the diagnostic names a nonexistent key and reports UNSPECIFIED_UNREADABLE_VALUE.",
+  "finding 66 (R-54)": "(a) `CategoryCondition(allowed='laminar')`, and `from_dict` with `'allowed': 'laminar'`, store the frozenset of characters {'a','i','l','m','n','r'}: 'laminar' is then OUTSIDE_VALIDATED_DOMAIN and 'a' is IN_DOMAIN. The module refuses exactly this bare-string shape for `RangeCondition.requires`. (b) `CrossLimitCondition` moves interval-scale operands to the base unit but never requires ratio-scale operands to be positive, so 'a/b <= 1' is not 'a <= b': a = -0.5 V over b = -1 V is IN_DOMAIN although a > b, and a = 2 V over b = -1 V is IN_DOMAIN too."
+ },
+ "rules": {
+  "a_bare_string_is_not_an_allowed_set": {
+   "improvement": "I-31",
+   "problem": "R-54",
+   "rule": "`CategoryCondition` refuses `allowed` given as a `str` (or `bytes`), at construction and therefore on `from_dict`, naming the letter set it would otherwise have become.",
+   "class": "A",
+   "why": "`frozenset('laminar')` is a set of six letters, and a condition over it answers the opposite question from the one written down: the word itself is outside the domain and any of its letters is inside it. This is not a judgement call -- the module already refuses the same bare-string shape for `RangeCondition.requires`, for the same reason, and this is that rule reaching the sibling record it was never applied to.",
+   "closes": "finding 66 claim (a)."
+  },
+  "a_ratio_bound_cannot_order_operands_whose_sign_it_does_not_know": {
+   "improvement": "I-31",
+   "problem": "R-54",
+   "rule": "`CrossLimitCondition.evaluate_in` returns UNKNOWN, rather than a status, when either operand is zero or negative in the shared base unit, and `explain_in` reports it as a new `UnknownReason` member appended after the existing ones. `domains.repair` gives that reason its own guidance sentence (not actionable) and `unknown_diagnostics` gives it its own cause.",
+   "class": "A",
+   "why": "'a/b <= 1' means 'a <= b' only when b > 0. With b < 0 the inequality reverses, so the record's own words ('a material whose reference temperature sits above its own maximum has contradicted itself') stop describing what the condition computes: -0.5 V over -1 V reads IN_DOMAIN with a above b. The conservative answer is UNKNOWN, not a refusal that raises: the declaration is readable and the operands are real, and what is missing is the ordering the bound assumes -- which the owner's strictness rule says must LOWER the claim rather than raise it. A new reason member rather than UNREADABLE_SHAPE, because the caller supplied exactly what was asked for and the channel this batch is un-blurring for R-51 must not be re-blurred here.",
+   "closes": "finding 66 claim (b)."
+  },
+  "a_missing_operand_is_a_declaration_the_caller_can_supply": {
+   "improvement": "I-31",
+   "problem": "R-51",
+   "rule": "`CrossLimitCondition.explain_in` reports UNREADABLE_SHAPE only when an operand is PRESENT and is not a readable `Quantity`, and NOT_SUPPLIED when the operands that are missing are simply absent.",
+   "class": "A",
+   "why": "The existing rule reads `_absent_or_unreadable`, which is written for a single-key condition where anything that is not None is unreadable -- true there, because the value IS the input, and false here, because a readable Quantity is one of two operands. The precedence the docstring states is right and is kept: a present-but-unreadable operand wins, because supplying the other one would not help. What changes is which values count as unreadable.",
+   "closes": "finding 63's first and main claim, on the production model."
+  },
+  "the_diagnostic_names_a_key_a_caller_could_supply": {
+   "improvement": "I-31",
+   "problem": "R-51",
+   "rule": "`unknown_diagnostics._context_key` returns, for a condition that names two operands, the operand the context is missing (the numerator when both are missing), instead of falling back to the condition's own name.",
+   "class": "A",
+   "why": "A cross-limit condition is labelled by the relation it states and reads NEITHER key by that label -- its own docstring says so -- so naming it was naming a key nothing supplies and nothing reads, and the value lookup behind it always returned None. That is what produced UNSPECIFIED_UNREADABLE_VALUE for a plain omission.",
+   "closes": "finding 63's second claim."
+  }
+ },
+ "thresholds": {
+  "operand_positivity": {
+   "value": 0.0,
+   "class": "A",
+   "why": "not a tuned threshold but the sign boundary itself: at and below zero the DENOMINATOR no longer orders a and b through the ratio, and at exactly zero the ratio does not exist -- which this record already refuses. Amended on 2026-09-17 to the denominator alone; see the amendment log for the three contract-guard probes that forced it."
+  }
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "one UnknownReason member, appended after the existing ones",
+   "one UnknownCause member in unknown_diagnostics, appended",
+   "one _GUIDANCE entry in engcore/domains/repair.py for the new reason (its exhaustiveness test is generic over the enum and keeps passing)"
+  ],
+  "what_is_not_changed": [
+   "no field, default or signature is removed, renamed or reordered",
+   "every existing reason keeps its meaning and its guidance sentence",
+   "the in-tree cross-limit conditions all carry absolute temperatures, so no production assessment changes value; what changes is the REASON reported for an omitted optional limit"
+  ],
+  "records_that_already_exist": "`UnknownCondition` serializes a reason string, and no committed JSON carries the new member because nothing could have produced it. Committed evidence that carries the OLD misdiagnosis is a different matter: any file recording UNREADABLE_SHAPE for a cross-limit omission is a record of the defect, and every such file is regenerated in this batch and named in the audit document.",
+  "deliberate_narrowing": "A CategoryCondition declared with a bare string stops being constructible, and a cross-limit assessment over a non-positive operand stops returning a status. Neither occurs in the tree: no declaration passes a string, and every in-tree operand is an absolute temperature in kelvin."
+ },
+ "residuals_stated_in_advance": [
+  "The positivity rule is checked in the shared base unit, which is where this record already puts interval-scale operands. A dimension whose base unit admits negative values legitimately -- a charge, a voltage -- therefore cannot be ratio-bounded by this condition at all when its operands go negative; it returns UNKNOWN with the new reason rather than pretending to order them. Expressing 'a <= b' directly, without a ratio, is a different record and is not this batch's.",
+  "`CategoryCondition` still accepts any iterable of strings, so a caller passing a list of words gets the set they meant. What is refused is the one shape whose meaning inverts silently.",
+  "The diagnostic's key for a two-operand condition is the missing operand; when both are missing it names the numerator, and the detail says which keys the condition reads. A diagnostic per missing operand would be a second record shape and is not introduced here.",
+  "R-51's over-counting of core-universality gaps is fixed at the source (the reason), not by changing any count that was already written down: a committed count is evidence of what the tree said then."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_unknown_reasons.py, the electrical material and repair suites, and the MCP suites",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "regeneration of every committed record that carries the old misdiagnosis, named in the audit document",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": "The positivity rule applies to the DENOMINATOR only, not to both operands as preregistered.",
+   "numbers_that_forced_it": "benchmarks/contract_guard walks every shipped condition's declared edges and compares the verdict the runtime returns with the verdict the bound promises. Three probes disagreed under the preregistered form: reference_temperature_utilization at a ratio of 0.0 expected SATISFIED and observed UNKNOWN, and reference_reduced_debye_temperature and ceiling_reduced_debye_temperature at ratios of -0.8 and -0.6666666666666667 expected VIOLATED and observed UNKNOWN. The guard is right and the preregistered rule was too strong: with b > 0, 'a/b <= 1' is equivalent to 'a <= b' for a of EITHER sign, and 'a/b >= r' likewise, so a zero or negative numerator is an ordinary satisfied or violated case. Only b <= 0 reverses the inequality, which is the audited defect (-0.5 V over -1 V, and 2 V over -1 V). The rule is now `divisor < 0.0` -> UNKNOWN, with a zero denominator still raising as it already did.",
+   "threshold_moved": "operand_positivity applies to the denominator alone. The boundary itself (zero) did not move, and both audited reproductions are still refused."
+  }
+ ]
+}

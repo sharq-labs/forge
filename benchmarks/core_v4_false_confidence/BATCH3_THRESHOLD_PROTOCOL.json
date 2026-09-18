@@ -1,0 +1,62 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 3,
+ "part": "3a",
+ "findings": [
+  "CORE-008",
+  "CORE-013",
+  "CORE-015"
+ ],
+ "deferred_to_part_3b": [
+  "CORE-009",
+  "CORE-014",
+  "CORE-016"
+ ],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "08e50a6",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "compatibility_decision": "additive only on V1-frozen symbols (2026-09-16, repository owner)",
+ "what_was_already_seen": [
+  "the audit agent's reproductions: a record whose only passing checks establish DIMENSIONALLY_VALID, NUMERICALLY_CONVERGED or ANALYTICALLY_VERIFIED derives SUPPORTED; a report of one PASS and one NOT_RUN check has status PASS; an OK evaluation accepts a result with UNKNOWN validity, a NOT_ASSESSED model, or no model",
+  "a survey of src/: domains establish mostly verification levels (NUMERICALLY_CONVERGED 10 sites, DIMENSIONALLY_VALID 8, ANALYTICALLY_VERIFIED 6) against CROSS_SOLVER_VALIDATED 6, BENCHMARK_VALIDATED 1, EXPERIMENTALLY_VALIDATED 1",
+  "a scan of every committed JSON: no stored report pairs status pass or warning with a not_run check"
+ ],
+ "rules": {
+  "evidence_basis": {
+   "finding": "CORE-008",
+   "rule": "verification levels are DIMENSIONALLY_VALID, NUMERICALLY_CONVERGED and ANALYTICALLY_VERIFIED; validation levels are BENCHMARK_VALIDATED, CROSS_SOLVER_VALIDATED and EXPERIMENTALLY_VALIDATED. A report's evidence basis is VALIDATED when it attains a validation level, VERIFICATION_ONLY when it attains only verification levels, NONE when it attains none",
+   "where": "ValidationReport.evidence_basis (derived) and the credibility report's verdict_qualifiers.evidence_basis (derived, re-derived on read)",
+   "verdict": "NOT changed. SUPPORTED on verification alone stays SUPPORTED, with the qualifier saying so on every report",
+   "why_not_change_the_verdict": "most domains earn only verification levels, so the verdict word moves the scored benchmarks and their sealed hold-out; that is a separate decision for the repository owner, recorded as the residual. The qualifier makes the distinction unmissable in every serialized report without it",
+   "class": "definitional, no threshold"
+  },
+  "report_status_precedence": {
+   "finding": "CORE-013",
+   "rule": "ValidationReport.status is FAIL if any check failed, else NOT_RUN if any check did not run, else WARNING if any warned, else PASS; an empty report is NOT_RUN",
+   "was": "FAIL > WARNING > PASS > NOT_RUN, so one PASS outvoted an experimental comparison that never ran",
+   "effect_on_usability": "none: is_usable and trusted execution read status is not FAIL",
+   "class": "definitional, no threshold"
+  },
+  "established_candidates": {
+   "finding": "CORE-015",
+   "rule": "Experiment.best ranks only OK evaluations whose result names at least one model, every one assessed IN_DOMAIN, and whose constraints were checked and satisfied when the experiment declares constraints. An evaluation whose feasibility is unchecked, whose validity is UNKNOWN, or whose result names no model is not a candidate for best",
+   "not_changed": "which evaluations may be recorded as OK: OK still means usable values, and an experiment still records every attempt",
+   "class": "definitional, no threshold"
+  }
+ },
+ "what_will_be_reported_after_implementation": [
+  "every batch-3a regression test, seen failing on the baseline commit and passing after",
+  "every existing assertion that changes, with the reason, including any domain study or benchmark whose best candidate changes"
+ ],
+ "amendments": "recorded here as dated entries, never edited in place",
+ "amendment_log": [
+  {
+   "id": 1,
+   "date": "2026-09-16",
+   "changes": "rules.evidence_basis.where",
+   "was": "ValidationReport.evidence_basis (derived) and the credibility report's verdict_qualifiers.evidence_basis",
+   "now": "ValidationReport.evidence_basis is a derived property and is NOT added to ValidationReport.to_dict; the credibility report's verdict_qualifiers carries it and re-derives it on read",
+   "why": "written with the implementation, before any test ran against it: ValidationReport bytes are inside every serialized ScientificResult, whose serialization contract Core Freeze V1 binds; a new key there is not additive in bytes. The qualifier reaches every credibility report without it. No rule changed"
+  }
+ ]
+}

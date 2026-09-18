@@ -164,20 +164,59 @@ class TrustedExecutionRecord:
             )
 
     @property
-    def trusted(self) -> bool:
-        """Whether this record may be relied on as a usable execution.
+    def unmet_declared_requirements(self) -> tuple[str, ...]:
+        """The admitted problem's declared validation requirements this record does not meet (I-19).
 
-        The parts are verified to belong together at construction. On top of
-        that, an output the backend did not bring to a usable end -- not
-        converged, diverged, failed, out of iterations -- or a validation that
-        FAILED is attested faithfully and is not trusted (RES-07): the record
-        says what happened, and what happened is not a result.
+        **RE-DERIVED from the prepared problem and the validation report this record already
+        carries, never supplied.** A record that took this from its assembler could assert that a
+        requirement was met, which is the one party the requirement is about.
+
+        This is the place the 2026-09-16 re-audit reproduced R-72 on a production-reaching path: it
+        is the only class in ``src`` that holds the admitted problem and the result of solving it
+        together, and it called a record ``trusted`` whose problem required
+        ``kirchhoff_current_law`` and ``power_balance`` against a validation report carrying only
+        ``dimensional_consistency``.
+
+        Only the validation half. This record carries metrics and no ``Uncertainty`` records, so the
+        problem's uncertainty specification cannot be judged here and is not.
+        """
+        from ..scientific.results.requirements import unmet_validation_requirements
+
+        return unmet_validation_requirements(self.prepared.problem, self.validation)
+
+    @property
+    def _attested_run_reached_a_usable_end(self) -> bool:
+        """RES-07: the backend brought the solve to a usable end and nothing FAILED.
+
+        Its own property rather than two lines inside :attr:`trusted`, so that the one decision
+        RES-07 owns stays one statement in one place as :attr:`trusted` grows conditions. An output
+        the backend did not bring to a usable end -- not converged, diverged, failed, out of
+        iterations -- or a validation that FAILED is attested faithfully and is not a result.
         """
         usable = self.raw.convergence in (
             ConvergenceState.CONVERGED,
             ConvergenceState.NOT_APPLICABLE,
         )
         return usable and self.validation.status is not ValidationOutcome.FAIL
+
+    @property
+    def trusted(self) -> bool:
+        """Whether this record may be relied on as a usable execution.
+
+        The parts are verified to belong together at construction. On top of that, two things have
+        to hold, and each is a rule somewhere else in this class:
+
+        * RES-07's -- :attr:`_attested_run_reached_a_usable_end`: the run reached a usable end and
+          nothing FAILED;
+        * I-19's (R-72) -- :attr:`unmet_declared_requirements` is empty: the ADMITTED PROBLEM said
+          which checks a result must carry, and a record that does not carry them is attested
+          faithfully and is not the result the problem asked for. A problem that declares no
+          requirements is unaffected, because the rule reads a declaration and there is none.
+        """
+        return (
+            self._attested_run_reached_a_usable_end
+            and not self.unmet_declared_requirements
+        )
 
 
 class TrustedExecutionRuntime:
