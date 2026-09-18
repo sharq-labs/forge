@@ -72,7 +72,7 @@ def test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks(manife
     """
     result = core_freeze_v3.verify(REPO, require_assurance=False)
     failing = {check.name for check in result.checks if check.binding and not check.ok}
-    assert failing <= (CERTIFICATE_CHILD_ONLY | SUPERSEDED_BY_V4), "\n" + result.render()
+    assert failing <= (CERTIFICATE_CHILD_ONLY | set(SUPERSEDED_BY_V4)), "\n" + result.render()
     assert "v3.serialization_and_identity" in failing, (
         "V3's identity references are accepted, so nothing supersedes V3 and V4 has no subject")
     detail = next(c.detail for c in result.checks if c.name == "v3.serialization_and_identity")

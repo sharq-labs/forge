@@ -213,7 +213,11 @@ def test_a_descendant_that_keeps_the_contract_still_verifies(live, manifest):
     later["domain"]["digest"] = "0" * 64  # new domain work is allowed after a freeze
     result = core_freeze.verify_manifest(later, live, require_clean=False)
     assert result.mode == "DESCENDANT"
-    assert result.ok, "\n" + result.render()
+    # AMENDED at Core Freeze V4, as the first test in this file was and for the same reason: the
+    # three checks V4 supersedes fail here too, because this copy tampers with the src tree hash
+    # and not with the API or the serialization facts. Nothing else may fail, and the supersession
+    # must be proved, which the first test does over the same tree.
+    assert set(result.failed()) <= set(SUPERSEDED_BY_V4), "\n" + result.render()
     informational = {c.name for c in result.checks if not c.binding}
     assert {"domain.digest", "bytes.reproduction_sha256"} <= informational
 
