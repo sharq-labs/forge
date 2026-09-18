@@ -224,7 +224,12 @@ def test_sdr09_conflicting_claims_remain_distinct_records() -> None:
 def test_sdr10_public_boundary_has_a_cross_domain_decision_tool() -> None:
     server_path = Path(__file__).resolve().parents[1] / "src" / "engcore" / "mcp" / "server.py"
     source = server_path.read_text(encoding="utf-8")
-    registered = set(re.findall(r'name="([^"]+)"', source))
+    registered = set(
+        re.findall(
+            r'server\.add_tool\(\s*\w+,\s*name="([^"]+)"',
+            source,
+        )
+    )
     system_tools = {boundary.tool for boundary in SYSTEMS}
 
     generic = registered - system_tools - {"describe_capabilities"}
