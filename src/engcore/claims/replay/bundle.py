@@ -28,6 +28,8 @@ from __future__ import annotations
 import json
 import math
 import platform
+import subprocess
+from importlib import metadata as importlib_metadata
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
@@ -40,7 +42,9 @@ from ..errors import ClaimLayerError
 from ..external_evidence import TrustedExternalRegistry, TrustedPin, read_external_record
 
 BUNDLE_SCHEMA = schema_string("claim_assessment_bundle")
+ENVIRONMENT_SCHEMA = schema_string("claim_replay_environment")
 _TAG = "crafty.claims.bundle/1"
+_ENVIRONMENT_TAG = "crafty.claims.environment/1"
 
 
 class BundleError(ClaimLayerError):
@@ -54,13 +58,65 @@ class BundleStatus(str, Enum):
     NOT_REPRODUCIBLE = "not_reproducible"
 
 
-def _environment() -> dict[str, str]:
+def _distribution_version(name: str) -> str:
+    try:
+        return importlib_metadata.version(name)
+    except importlib_metadata.PackageNotFoundError:
+        return "not-installed"
+
+
+def _git_identity() -> dict[str, Any]:
+    """Best-effort source identity. Missing Git metadata never becomes authority."""
+
+    def run(*args: str) -> str | None:
+        try:
+            proc = subprocess.run(
+                ["git", *args],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return proc.stdout.strip() if proc.returncode == 0 else None
+
+    commit = run("rev-parse", "HEAD")
+    status = run("status", "--porcelain")
+    return {
+        "commit": commit or "unknown",
+        "dirty": None if status is None else bool(status),
+    }
+
+
+def _environment() -> dict[str, Any]:
+    """Reproducibility metadata only; it never grants scientific standing."""
+
     import engcore
 
-    return {"engcore": str(getattr(engcore, "__version__", "unknown")), "python": platform.python_version()}
+    body: dict[str, Any] = {
+        "schema": ENVIRONMENT_SCHEMA,
+        "engcore": str(getattr(engcore, "__version__", "unknown")),
+        "distribution": {
+            "crafty": _distribution_version("crafty"),
+            "numpy": _distribution_version("numpy"),
+            "scipy": _distribution_version("scipy"),
+            "pint": _distribution_version("pint"),
+        },
+        "python": {
+            "version": platform.python_version(),
+            "implementation": platform.python_implementation(),
+        },
+        "platform": {
+            "system": platform.system(),
+            "release": platform.release(),
+            "machine": platform.machine(),
+        },
+        "git": _git_identity(),
+    }
+    return {**body, "fingerprint": tagged_digest(_ENVIRONMENT_TAG, body)}
 
-
-def make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
+def make_bundledef make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
     """The bundle of one assessment. ``trust`` must be the registry it was assessed under (default: production)."""
     from ..external_evidence import PRODUCTION_EXTERNAL_REGISTRY
 
@@ -240,6 +296,7 @@ __all__ = [
     "BundleCheck",
     "BundleError",
     "BundleStatus",
+    "ENVIRONMENT_SCHEMA",
     "ReplayResult",
     "ReplayTolerance",
     "bundle_from_json",

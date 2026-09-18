@@ -121,6 +121,38 @@ def test_a_changed_policy_profile_is_detected(corpus, registry) -> None:
     changes = detect_changes([a.to_dict() for a in corpus.values()], registry, policy_profiles=profiles)
     assert [c.kind for c in changes] == [ChangeKind.POLICY]
 
+def test_a_changed_external_trust_registry_is_detected_and_impacts_the_bound_assessment(registry) -> None:
+    measurement = MeasurementRecord(
+        "temperature_at_probe",
+        Quantity(309.76, "kelvin"),
+        Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(309.66, "kelvin"),
+            upper=Quantity(309.86, "kelvin"),
+            method="m",
+            source_kind=UncertaintySource.MEASUREMENT,
+        ),
+        "cal:1",
+        "lab:1",
+        dict(t3_point()),
+        "v1",
+    )
+    old_trust = TrustedExternalRegistry(
+        (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "reviewed"),)
+    )
+    assessment = assess_claim(t3_claim(), registry, external=(measurement,), trust=old_trust)
+    record = assessment.to_dict()
+
+    assert detect_changes([record], registry, trust_registry=old_trust) == ()
+
+    new_trust = TrustedExternalRegistry(())
+    changes = detect_changes([record], registry, trust_registry=new_trust)
+    assert [change.kind for change in changes] == [ChangeKind.TRUST_REGISTRY]
+    assert changes[0].key == old_trust.digest
+
+    affected = impact_of(DecisionGraph([record]), changes).to_dict()["requires_reassessment"]
+    assert [item["assessment"] for item in affected] == [record_digest(record)]
+
 
 # ---------------------------------------------------------------------------
 # Phase 10
@@ -134,6 +166,15 @@ def bundled(registry):
     assessment = assess_claim(claim, registry)
     return bundle_from_json(bundle_to_json(make_bundle(assessment, registry)))
 
+
+def test_bundle_environment_carries_a_reproducibility_fingerprint(bundled) -> None:
+    environment = bundled["environment"]
+    assert environment["schema"] == "engcore.claim_replay_environment/1"
+    assert len(environment["fingerprint"]) == 64
+    assert set(environment["distribution"]) == {"crafty", "numpy", "scipy", "pint"}
+    assert set(environment["python"]) == {"version", "implementation"}
+    assert set(environment["platform"]) == {"system", "release", "machine"}
+    assert set(environment["git"]) == {"commit", "dirty"}
 
 def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, registry, monkeypatch) -> None:
     import engcore.claims.execution as execution

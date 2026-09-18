@@ -229,46 +229,83 @@ def impact_of(graph: DecisionGraph, changes: Iterable[Change]) -> ImpactReport:
     return ImpactReport(changes, tuple(affected[d] for d in sorted(affected)))
 
 
-def detect_changes(records: Iterable[Mapping[str, Any]], registry: Any, *, policy_profiles: Mapping[str, Any] | None = None) -> tuple[Change, ...]:
-    """What in today's registry (and built-in policy profiles) differs from what the records were assessed against."""
+def detect_changes(
+    records: Iterable[Mapping[str, Any]],
+    registry: Any,
+    *,
+    policy_profiles: Mapping[str, Any] | None = None,
+    trust_registry: Any | None = None,
+) -> tuple[Change, ...]:
+    """Detect current registry/policy/trust drift from recorded assessment identities.
+
+    A trust-registry change is a reassessment trigger only. It never edits a
+    historical decision and never becomes scientific evidence.
+    """
     from ..policy import BUILTIN_PROFILES
+    from ..external_evidence import PRODUCTION_EXTERNAL_REGISTRY
 
     profiles = BUILTIN_PROFILES if policy_profiles is None else policy_profiles
+    trust = PRODUCTION_EXTERNAL_REGISTRY if trust_registry is None else trust_registry
     changes: dict[tuple, Change] = {}
     for record in records:
         plan = record.get("plan")
         if plan is not None:
             cap = plan["content"]["capability"]
             if cap["capability_id"] not in registry:
-                changes[(ChangeKind.CAPABILITY, cap["capability_id"])] = Change(ChangeKind.CAPABILITY, cap["capability_id"], "no longer registered")
+                changes[(ChangeKind.CAPABILITY, cap["capability_id"])] = Change(
+                    ChangeKind.CAPABILITY, cap["capability_id"], "no longer registered"
+                )
             else:
                 now = registry.get(cap["capability_id"])
                 if now.digest != cap["digest"]:
                     changes[(ChangeKind.CAPABILITY, cap["capability_id"])] = Change(
-                        ChangeKind.CAPABILITY, f"{cap['capability_id']}@{cap['version']}#{cap['digest']}",
-                        f"declaration digest is now {now.digest[:16]} (version {now.version})")
+                        ChangeKind.CAPABILITY,
+                        f"{cap['capability_id']}@{cap['version']}#{cap['digest']}",
+                        f"declaration digest is now {now.digest[:16]} (version {now.version})",
+                    )
                     current = {(m.model_id, m.version) for m in now.models}
                     for m in plan["content"]["models"]:
                         if (m["model_id"], m["version"]) not in current:
                             changes[(ChangeKind.MODEL, m["model_id"], m["version"])] = Change(
-                                ChangeKind.MODEL, f"{m['model_id']}@{m['version']}", "the registry no longer declares this model version")
+                                ChangeKind.MODEL,
+                                f"{m['model_id']}@{m['version']}",
+                                "the registry no longer declares this model version",
+                            )
                     solvers = {(s.solver_id, s.version) for s in now.solvers}
                     for s in plan["content"]["solvers"]:
                         if (s["solver_id"], s["version"]) not in solvers:
                             changes[(ChangeKind.SOLVER, s["solver_id"], s["version"])] = Change(
-                                ChangeKind.SOLVER, f"{s['solver_id']}@{s['version']}", "the registry no longer declares this solver version")
+                                ChangeKind.SOLVER,
+                                f"{s['solver_id']}@{s['version']}",
+                                "the registry no longer declares this solver version",
+                            )
         policy = record.get("policy")
         if policy is not None:
             req = policy["requirement"]
             current = profiles.get(req["profile_id"])
             if current is not None and current.digest != req["profile_digest"]:
                 changes[(ChangeKind.POLICY, req["profile_id"], req["profile_digest"])] = Change(
-                    ChangeKind.POLICY, f"{req['profile_id']}@{req['profile_version']}#{req['profile_digest']}",
-                    f"the profile is now {current.version} ({current.digest[:16]})")
+                    ChangeKind.POLICY,
+                    f"{req['profile_id']}@{req['profile_version']}#{req['profile_digest']}",
+                    f"the profile is now {current.version} ({current.digest[:16]})",
+                )
         for match in record.get("external_evidence") or []:
             if not match["trusted"]:
-                changes[(ChangeKind.ORACLE, match["oracle_id"])] = Change(ChangeKind.ORACLE, f"{match['oracle_id']}@{match['version']}", "the oracle no longer reproduces its pin")
+                changes[(ChangeKind.ORACLE, match["oracle_id"])] = Change(
+                    ChangeKind.ORACLE,
+                    f"{match['oracle_id']}@{match['version']}",
+                    "the oracle no longer reproduces its pin",
+                )
+        recorded_trust = record.get("external_trust_registry")
+        current_trust = getattr(trust, "digest", None)
+        if recorded_trust and current_trust != recorded_trust:
+            changes[(ChangeKind.TRUST_REGISTRY, recorded_trust)] = Change(
+                ChangeKind.TRUST_REGISTRY,
+                recorded_trust,
+                f"external trust registry is now {(current_trust or 'unknown')[:16]}",
+            )
     return tuple(changes[k] for k in sorted(changes, key=str))
+
 
 
 __all__ = [
