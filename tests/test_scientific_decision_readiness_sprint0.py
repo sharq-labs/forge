@@ -49,20 +49,12 @@ def test_sdr03_arbiter_can_evaluate_charter_validation_levels() -> None:
     assert "obligation {target} is not evaluable in M3" not in source
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-06: production trusted-oracle authority is intentionally empty "
-        "until reviewed external evidence is admitted"
-    ),
-)
 def test_sdr06_production_has_reviewed_trusted_external_oracle() -> None:
     registry = oracles._TRUSTED_ORACLE_DECLARATIONS
-    assert registry, (
-        "the trusted production oracle registry is empty; benchmark and "
-        "experimental validation are representable but no external oracle "
-        "currently has repository-pinned authority"
-    )
+    assert registry
+    declaration = registry[("nafems.p18.t3.transient_heat_1d", "1")]
+    assert declaration["kind"] == "benchmark_dataset"
+    assert len(declaration["evidence_digest"]) == 64
 
 
 # ---------------------------------------------------------------------------
