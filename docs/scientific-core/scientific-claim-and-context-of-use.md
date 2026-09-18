@@ -4,11 +4,30 @@
 > below its safe thermal limit under operating condition X"* is a claim. The
 > platform validates the first and has no vocabulary for the second.
 
-**Status: DESIGN ONLY. Nothing here is implemented.** This document exists
-because the round that produced it required the smallest sound contracts to be
-*proposed and assessed* rather than built, and the assessment came back: the
-integration is not yet demonstrably minimal. §6 says exactly what would have to
-be true first.
+**Status: SUPERSEDED BY AN IMPLEMENTATION (2026-09-18).** The claim layer now
+exists as `engcore.claims` -- see [`claims-layer.md`](claims-layer.md). It meets
+the three conditions §6 set, and departs from §2 where the conditions said to:
+
+* **A real producer and consumer of context.** The SRIA `CampaignCharter` and
+  `TerminalDecision` (from the decision-readiness sprints) are the decision
+  record. The claim layer builds one charter per plan. That charter's digest
+  binds the claim, the QOI, the capability, the models, the case, the evidence
+  bar, the discrepancy and the uncertainty demand. **No separate `ContextOfUse`
+  record was added**: every field §2.2 proposed is bound by that digest, and a
+  second identity would be a second thing to keep in step.
+* **A written derivation rule for claim status.** It is
+  `engcore.claims.verdict`: SUPPORTED / CONTRADICTED / INSUFFICIENT_EVIDENCE.
+  Support and contradiction must clear one admissibility bar, and an OUTSIDE or
+  NOT_SUPPORTED run never counts as a contradiction. The rule is stated in the
+  module and tested exhaustively.
+* **More than one producer.** Three registered capabilities answer claims:
+  electrothermal, battery and NAFEMS T3. They answer through one contract and
+  one MCP tool.
+
+`ScientificQuestion` and `EvidenceRelationship` were not built. The claim record
+carries the question, and one claim is assessed against one plan's evidence;
+claim algebra and multi-claim fusion remain deliberately absent (§5, SDR-09).
+The rest of this document is kept as the design argument it was.
 
 ---
 

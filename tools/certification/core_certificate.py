@@ -496,6 +496,11 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
     ("src/engcore/mcp/**", "the product boundary: a consumer of the core"),
+    ("src/engcore/claims/**",
+     "the scientific claim layer (EXPERIMENTAL): routing, planning and claim "
+     "assessment above the core, SRIA and the MCP boundary. It defines no "
+     "verdict of its own below the claim level -- run credibility, levels and "
+     "assurance stay with the certified records it reads"),
     ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
      "applications built on the core"),
     ("tests/** (except the harness area and the two self-check modules)",
