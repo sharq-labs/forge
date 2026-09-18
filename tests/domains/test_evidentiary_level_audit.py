@@ -83,6 +83,12 @@ ESTABLISHES_NOTHING = {
     "boundary_conditions_held": "never",
     # thermal_models/lumped.py
     "lumped_balance_residual": "never",
+    # thermal_models/nafems_t3.py — local execution checks. The external
+    # benchmark level is issued by the repository-pinned OracleEvidenceSet,
+    # not by any of these self-checks.
+    "nafems_t3_field_finite": "never",
+    "nafems_t3_boundary_conditions_held": "never",
+    "nafems_t3_refinement_sensitivity": "never",
     # thermal_models/conduction2d.py — the third pass. The other two checks
     # this model emits reuse `field_finite` and `boundary_conditions_held`
     # above, whose verdicts apply to them unchanged.
@@ -232,12 +238,13 @@ def test_the_levelled_checks_are_exactly_the_ones_the_audit_names():
         assert expected in joined, f"{name} no longer mentions {expected}"
 
 
-def test_the_two_empty_rungs_are_awarded_by_nothing_in_the_domains():
-    """`BENCHMARK_VALIDATED` and `EXPERIMENTALLY_VALIDATED`, plainly.
+def test_external_validation_levels_are_not_self_issued_by_domain_checks():
+    """Strong external levels are never minted by local domain self-checks.
 
-    There is no reference benchmark in this repository and no laboratory
-    measurement anywhere in this project, so neither level is earnable now or
-    later. This asserts that no check quietly starts claiming one.
+    BENCHMARK_VALIDATED is now earnable through the repository-pinned NAFEMS
+    oracle, which lives outside this domain-check inventory. Experimental
+    validation remains unoccupied. A domain check quietly claiming either
+    would bypass the external-authority boundary.
     """
     joined = " ".join(
         expr for exprs in INVENTORY.values() for expr in sorted(exprs)
@@ -256,6 +263,7 @@ def test_the_document_carries_a_row_for_every_audited_check():
     text = AUDIT.read_text(encoding="utf-8")
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
-    # 18 since IND-04 moved `independent_steady_state_agreement` here.
-    assert "Checks that pass today while establishing nothing: 18" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "18"
+    # 21 after Sprint 2.5 added three local NAFEMS execution checks that
+    # deliberately establish no level.
+    assert "Checks that pass today while establishing nothing: 21" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "21"
