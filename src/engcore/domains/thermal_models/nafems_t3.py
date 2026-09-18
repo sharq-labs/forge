@@ -35,7 +35,6 @@ from dataclasses import dataclass, replace
 import numpy as np
 from scipy.linalg import solve_banded
 
-from ...mcp.evidence import CredibilityEvidenceReport
 from ...scientific.models.definition import (
     InputSourceKind,
     ModelInputSpec,
@@ -378,24 +377,6 @@ def solve_nafems_t3(
     )
 
 
-def run_nafems_t3_credibility(
-    *,
-    run_id: str = "nafems-t3",
-    numerics: NAFEMST3Numerics | None = None,
-) -> CredibilityEvidenceReport:
-    """Execute T3 and require the external benchmark level in the report."""
-
-    result = solve_nafems_t3(run_id=run_id, numerics=numerics)
-    return CredibilityEvidenceReport.from_result(
-        result,
-        required_levels=(ValidationLevel.BENCHMARK_VALIDATED,),
-        notes=(
-            "NAFEMS T3 executable vertical: the benchmark level comes from "
-            "the repository-pinned external oracle comparison."
-        ),
-    )
-
-
 __all__ = [
     "MODEL",
     "MODEL_ID",
@@ -406,6 +387,5 @@ __all__ = [
     "REFINEMENT_DELTA_LIMIT_K",
     "SOLVER_ID",
     "SOLVER_VERSION",
-    "run_nafems_t3_credibility",
     "solve_nafems_t3",
 ]
