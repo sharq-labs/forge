@@ -122,6 +122,27 @@ def test_a_rebuilt_grid_whose_posterior_spans_both_declared_bounds_is_not_used()
     assert "theta1" in result.considered[-1]["detail"]
 
 
+def test_a_posterior_dominated_on_BOTH_bounds_is_refused_in_those_words():
+    """The case only the both-sides rule decides, added by the V4 formal mutation round (I-30, R-67).
+
+    The test above asserts the reason and the parameter, and since this round's R-11 fix (I-06, batch 31) a
+    SECOND rule three lines below returns the same `GRID_POSTERIOR_BOUND_DOMINATED` and also names `theta1` --
+    for the one-sided case, whose remedy is the opposite one. So removing the both-sides rule left that test
+    green, and the guard mutation for CORE-002 SURVIVED while the invariant it names was gone.
+
+    What distinguishes them is what each SAYS, because that is what a reader acts on: both bounds dominated
+    means the declared range is too narrow to say anything, one side means the data constrain one direction
+    and a wider box makes it worse. This asserts the both-sides wording on the audited F1 case.
+    """
+    P = S.strong_nonlinearity()
+    result = route_uncertainty(rebuild=GridRebuildPolicy(P.table_builder()), **_inputs(P))
+    detail = result.considered[-1]["detail"]
+    assert "reaches both declared bounds" in detail, detail
+    assert "runs to the" not in detail, (
+        "the one-sided rule answered a both-sides case, so the reader is told to widen a range that is "
+        f"already saying nothing: {detail}")
+
+
 def test_structural_refusals_are_not_rebuilt_and_end_in_a_refusal():
     P = S.nearly_singular()
     result = route_uncertainty(rebuild=GridRebuildPolicy(P.table_builder()), **_inputs(P))

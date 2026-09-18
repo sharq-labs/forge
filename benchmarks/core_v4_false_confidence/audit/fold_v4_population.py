@@ -155,11 +155,25 @@ REPOINTED: dict[str, dict[str, str]] = {
              "why": "batch 49's own follow-up introduced `_recorded_transfers` to keep the G20a anchor "
                     "byte-identical, which moved this line in the same round that wrote the mutation"},
     "B4a": {"old": '    if residual > PREDICTION_RANGE_RELATIVE_TOLERANCE:\n',
+            "new": '    if False:\n',
             "why": "R-31 replaced the per-condition box test with the joint support residual, so the same "
-                   "OUTSIDE_CALIBRATED_CONDITIONS gate is one comparison instead of two"},
+                   "OUTSIDE_CALIBRATED_CONDITIONS gate is one comparison instead of two. The replacement's "
+                   "INDENTATION moves with it: the audited line was inside a per-condition loop and this one "
+                   "is at the function's level, which the formal round caught as MUTATION BROKE THE PARSE"},
     "B4b": {"old": '    if design is None or not spec.conditions:\n',
-            "why": "the calibration design is resolved by `_calibration_design` now; the guard is the same "
-                   "DOMAIN_NOT_DECLARED branch"},
+            "expect": "SURVIVED",
+            "why": "the calibration design is resolved by `_calibration_design` now, and the branch has "
+                   "stopped being a guard of its own -- which the formal round measured, not a reader. Its "
+                   "`not spec.conditions` half is redundant against R-31's completeness rule three lines "
+                   "below (a prediction declaring NO condition cannot declare every condition the "
+                   "calibration does, so the same PREDICTION_DOMAIN_NOT_DECLARED is returned either way), "
+                   "and its `design is None` half prevents unpacking None rather than stating a rule: "
+                   "removing it makes production raise TypeError, and a kill whose mechanism is a TypeError "
+                   "is the vacuous kill this harness exists to refuse. DECLARED SURVIVED with that reason "
+                   "rather than repointed, because there is no case only this branch decides. The rule it "
+                   "used to carry is exercised by "
+                   "tests/hybrid_uq/test_core_scientific_audit_batch4.py::test_core006_a_prediction_with_no_"
+                   "declared_domain_is_downgraded, which still passes and still asserts the verdict"},
     "B4c": {"old": '        spec_reasons = reasons | _prediction_domain_reasons(spec, calibration_observations, '
                    'posterior)\n',
             "why": "`_prediction_domain_reasons` gained the posterior so a grid route can supply the design"},
@@ -177,6 +191,15 @@ REPOINTED: dict[str, dict[str, str]] = {
             "why": "I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the "
                    "re-derived requirement checks. The preceding line is carried so the mutation still names "
                    "the report field the target test reads, and not the checks"},
+    "B1p": {"test": "tests/hybrid_uq/test_hybrid_uq_router.py"
+                    "::test_a_posterior_dominated_on_BOTH_bounds_is_refused_in_those_words",
+            "why": "the case is caught by two rules since this round's own R-11 fix (batch 31) added the "
+                   "ONE-SIDED bound-dominance rule three lines below, which returns the same RouteReason and "
+                   "also names theta1 -- so the existing test could not tell the two apart and the mutation "
+                   "SURVIVED in the formal round. Repointed at the case only the both-sides rule decides: "
+                   "the WORDING that says the posterior reaches BOTH declared bounds, which is the finding "
+                   "with the other remedy (a declared range too narrow to say anything, rather than data "
+                   "that constrain one direction). The mutation and the rule are untouched"},
     "B17f": {"test": "tests/test_core_scientific_audit_batch17.py::test_r02_the_claim_names_the_prediction_domain",
              "why": "the target test was RENAMED inside its own batch -- the claim it checks is the one the "
                     "audit's R-02 names and the '_it_cannot_yet_show' tail went away with a rewrite. The "
@@ -256,7 +279,7 @@ def _repointed(entry: tuple) -> tuple:
     if "test" in move:
         was = f"was {spec} targeting {test}"
     test = move.get("test", test)
-    return (mid, moved, move.get("old", old), move.get("new", new), test, expect,
+    return (mid, moved, move.get("old", old), move.get("new", new), test, move.get("expect", expect),
             f"{note} [REPOINTED 2026-09-18: {move['why']}; {was}]".strip(), also)
 
 
