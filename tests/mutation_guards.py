@@ -1580,8 +1580,12 @@ EVIDENCE: dict[str, tuple[str, str]] = {
     "G1d": ("CONTRACT_REFUSAL", REFUSED_AT_IMPORT),
     "G8a": ("LAYERING_INVARIANT",
             "test_the_discovery_found_exactly_the_repository"),
+    # Repointed after the DC scale audit became the direct guard for
+    # power-balance emission. Removing check_power_balance now fails this test
+    # because the missing key is itself the violated invariant; the old
+    # live-solve level sweep no longer names this specific rule.
     "G8b": ("VALIDATION_INVARIANT",
-            "test_every_check_a_live_solve_produces_earns_its_level"),
+            "test_probe_a_corrupted_gigaohm_solution_fails"),
     "G8c": ("SCIENTIFIC_ASSERTION",
             "test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest"),
     "G2a": ("VALIDATION_INVARIANT",
