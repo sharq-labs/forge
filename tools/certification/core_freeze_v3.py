@@ -298,12 +298,27 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
     pinned_ok = v2.pinned_facts(root) == manifest.get("pinned_v2_snapshot_files") == v2_manifest.get("pinned_v2_snapshot_files")
     v.add("api.pinned_snapshot_bytes", pinned_ok, "pinned V2 snapshot files unchanged since Core Freeze V2")
 
-    live_ser = serialization_facts()
-    ser_ok = live_ser == manifest.get("serialization_inventory") and all(
-        e["round_trip_byte_identical"] and e["unknown_schema_refused"] for e in live_ser.values())
-    v.add("v3.serialization_and_identity", ser_ok, f"{len(live_ser)} records")
-    v.add("v3.v2_fixtures_still_refused", bool(v2_fixtures_refused()),
-          "the hardened readers must keep refusing the self-contradicting V2 identity references")
+    # SUPERSEDED BY V4, and REPORTED rather than raised (I-29, R-70's shape one level up). The
+    # 2026-09-16 scientific core re-audit made a `route_diagnostics/1` record that names no
+    # thresholds and carries a nan chi-square minimum refuse on read -- and V3's own identity
+    # references are exactly such records, so `serialization_facts()` now RAISES from inside this
+    # verifier. It used to take the whole process down with a traceback, which says nothing about
+    # which contract holds: a verifier's job is to report that this tree is not a V3 tree and why.
+    try:
+        live_ser = serialization_facts()
+    except BaseException as refusal:  # noqa: BLE001 - the refusal IS the supersession, and is named
+        name = f"{type(refusal).__module__}.{type(refusal).__qualname__}"
+        v.add("v3.serialization_and_identity", False,
+              f"superseded by Core Freeze V4: this tree refuses V3's own identity references "
+              f"({name}: {str(refusal)[:200]})")
+        v.add("v3.v2_fixtures_still_refused", bool(v2_fixtures_refused()),
+              "the hardened readers must keep refusing the self-contradicting V2 identity references")
+    else:
+        ser_ok = live_ser == manifest.get("serialization_inventory") and all(
+            e["round_trip_byte_identical"] and e["unknown_schema_refused"] for e in live_ser.values())
+        v.add("v3.serialization_and_identity", ser_ok, f"{len(live_ser)} records")
+        v.add("v3.v2_fixtures_still_refused", bool(v2_fixtures_refused()),
+              "the hardened readers must keep refusing the self-contradicting V2 identity references")
     v.add("v3.vocabulary", v2.vocabulary_facts() == manifest.get("vocabulary"))
     v.add("v3.no_exact_posterior", not any(c["exact_posterior"] for c in v2.vocabulary_facts()["approximation_classes"].values()))
     repair = v2.repair_facts(root)

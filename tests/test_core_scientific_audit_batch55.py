@@ -118,11 +118,13 @@ def test_r67_the_entries_that_moved_and_the_declared_survivors_each_carry_their_
         if expect == not_mutated:
             unmutated.append(mid)
             assert note.strip(), f"{mid}: declared NOT MUTATED with no recorded reason"
-    # 26, and the protocol preregistered 27: see amendments 1 and 3. The two NOT MUTATED placeholders
+    # 27 now: 26 at batch 55 (amendments 1 and 3 of BATCH55_THRESHOLD_PROTOCOL.json), plus B1p,
+    # which batch 56's formal round found SURVIVING because this round's own R-11 fix made a second
+    # rule catch its case. Recorded in BATCH56_THRESHOLD_PROTOCOL.json rule 9. The two NOT MUTATED placeholders
     # carry an EMPTY `old`, which `str.count` finds everywhere, so the first measurement counted them
     # among the entries that no longer describe the tree. They are asserted separately below.
-    assert len(repointed) == 26, (
-        f"{len(repointed)} of the round's 26 moved entries are repointed; the rest are stale, dropped, or "
+    assert len(repointed) == 27, (
+        f"{len(repointed)} of the round's 27 moved entries are repointed; the rest are stale, dropped, or "
         f"silently rewritten: {sorted(repointed)}")
     assert len(unmutated) == 2, sorted(unmutated)
     assert sorted(fstring_only) == ["B31f", "B32e", "B34b", "B47e", "B48e"], sorted(fstring_only)

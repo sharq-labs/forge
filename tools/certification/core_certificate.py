@@ -196,6 +196,17 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/api_surface_v4.py",
+     "the V4 deep API surface (I-29, R-69): the method signatures and enum "
+     "member POSITIONS the frozen snapshot never described, which is why "
+     "deleting a method moved neither the V1 nor the V2 digest. A surface "
+     "nothing pins is a surface nobody compares"),
+    ("tools/certification/core_freeze_v4.py",
+     "the Core Freeze V4 verifier (I-29): it proves, difference by difference, "
+     "that every change since the V1 surface AS V1 COMMITTED IT is additive, "
+     "requires the V3 supersession to be the named refusal rather than any "
+     "exception, and re-derives every figure an assurance record asserts. The "
+     "audited checks compared the live surface with the live surface"),
     ("tools/certification/mutation_population.py",
      "the canonical formal mutation population, the shard rule and the "
      "coverage proof; a wrong union with the right count would certify a "

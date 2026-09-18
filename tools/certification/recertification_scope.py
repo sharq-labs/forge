@@ -158,6 +158,31 @@ CERTIFICATE_SELF_CHECKS: tuple[str, ...] = (
     "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
     "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
     "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies",
+    # I-29 (R-65, finding 89): the checks that compare the tree against a PINNED API ARTIFACT of the
+    # previous freeze. A freeze changes those artifacts, so on the source commit of a recertifying
+    # change every one of them reads the artifact of the tree BEFORE the change -- which is the same
+    # construction as the four above, and is why finding 89 says recertification is impossible
+    # without a control-plane change: nineteen of these failed for fifty-five batches and no source
+    # gate could go green. They are deselected in the source gates and run by the certificate child,
+    # which requires each to be reported PASSED in JUnit, so deferring is not skipping.
+    "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
+    "tests/test_core_api_snapshot.py::test_parameter_kinds_and_defaults_are_unchanged",
+    "tests/test_core_api_snapshot.py::test_enum_members_and_values_are_unchanged",
+    "tests/test_core_api_snapshot.py::test_public_dataclass_fields_keep_their_order",
+    "tests/test_core_api_snapshot.py::test_every_default_factory_is_identified_by_name",
+    "tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes",
+    "tests/test_core_freeze_policy.py::test_the_policy_states_the_real_frozen_digest",
+    "tests/test_core_freeze_v2_manifest.py::test_the_v2_frozen_api_surface_is_superseded_additively",
+    "tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks",
+    "tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree",
+    "tests/test_core_freeze_v3_manifest.py::test_the_identity_references_are_refused_in_a_fresh_process_too",
+    "tests/test_core_freeze_v3_manifest.py::test_the_command_line_verifier_agrees_with_the_function",
+    "tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract",
+    "tests/test_core_freeze_v4_manifest.py::test_the_command_line_verifier_agrees_with_the_function",
+    "tests/test_core_v2_api_snapshot.py::test_the_live_v2_frozen_surface_matches_the_pinned_snapshot",
+    "tests/test_core_v2_api_snapshot.py::test_the_live_v2_full_surface_matches_the_pinned_snapshot",
+    "tests/test_core_v2_compatibility.py::test_the_v1_surface_is_the_v1_contract_plus_only_additive_changes",
+    "tests/test_core_v2_compatibility.py::test_every_v1_frozen_entry_is_byte_identical_inside_the_v2_surface",
 )
 
 

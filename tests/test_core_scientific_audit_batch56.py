@@ -10,7 +10,7 @@ it must not do is regenerate a snapshot and call the result compatible. So the c
 against the V1 snapshot AS COMMITTED, difference by difference, by a comparator that names what additive
 means and can therefore fail.
 
-Recorded as strict xfails before the fix, each seen failing on its own assertion.
+Recorded as strict xfails in commit e658f5e7, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -57,7 +57,6 @@ def _state_table() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # R-65: a freeze the round can actually be certified under
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-65 finding 89: the branch descends from no Core Freeze and there is no V4 control plane")
 def test_r65_a_core_freeze_v4_verifier_exists_and_binds_on_a_descendant_of_v3():
     v4 = _module("tools.certification.core_freeze_v4")
     manifest_path = REPO / _attribute(v4, "MANIFEST_PATH")
@@ -71,20 +70,17 @@ def test_r65_a_core_freeze_v4_verifier_exists_and_binds_on_a_descendant_of_v3():
     assert v3, "the V4 freeze does not say which V3 commit it descends from"
 
 
-@pytest.mark.xfail(strict=True, reason="R-65 finding 89: the V1 frozen digest moved and the executable policy still states the old one")
 def test_r65_the_frozen_state_table_states_the_digest_the_tree_computes():
     """The one number a consumer quotes in a bug report, and it has been wrong all round."""
     assert _state_table()["frozen digest"] == api_snapshot.frozen_digest()
     assert _state_table()["frozen symbols"] == "194"
 
 
-@pytest.mark.xfail(strict=True, reason="R-65 finding 89: the pinned snapshots describe the pre-round surface")
 def test_r65_the_pinned_snapshots_describe_the_live_surface():
     pinned = json.loads((REPO / "tests" / "api" / "frozen_api_snapshot.json").read_text(encoding="utf-8"))
     assert api_snapshot.canonical_bytes(api_snapshot.frozen_only()) == api_snapshot.canonical_bytes(pinned)
 
 
-@pytest.mark.xfail(strict=True, reason="R-65 finding 89: the self-check list makes recertification impossible")
 def test_r65_the_deferred_self_checks_cover_every_check_that_reads_the_previous_freeze():
     """Finding 89's second sentence: a source gate that can never be green blocks recertification."""
     scope = _module("tools.certification.recertification_scope")
@@ -95,10 +91,10 @@ def test_r65_the_deferred_self_checks_cover_every_check_that_reads_the_previous_
         "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
         "tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes",
         "tests/test_core_freeze_policy.py::test_the_policy_states_the_real_frozen_digest",
-        "tests/test_core_freeze_v2_manifest.py::test_the_v2_frozen_api_surface_is_still_the_live_surface",
-        "tests/test_core_freeze_v3_manifest.py::test_the_tree_keeps_the_core_freeze_v3_contract",
+        "tests/test_core_freeze_v2_manifest.py::test_the_v2_frozen_api_surface_is_superseded_additively",
+        "tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks",
         "tests/test_core_v2_api_snapshot.py::test_the_live_v2_frozen_surface_matches_the_pinned_snapshot",
-        "tests/test_core_v2_compatibility.py::test_the_v1_surface_is_exactly_the_v1_contract",
+        "tests/test_core_v2_compatibility.py::test_the_v1_surface_is_the_v1_contract_plus_only_additive_changes",
     }
     assert required <= deferred, sorted(required - deferred)
 
@@ -106,7 +102,6 @@ def test_r65_the_deferred_self_checks_cover_every_check_that_reads_the_previous_
 # ---------------------------------------------------------------------------
 # R-69: the comparator, and what additive means
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-69 finding 95: the comparison is live against live")
 def test_r69_the_comparator_reads_the_v1_snapshot_as_it_was_committed():
     """Finding 95: `v1_entries_byte_identical_in_v2` compares the live surface with the live surface."""
     v4 = _module("tools.certification.core_freeze_v4")
@@ -119,7 +114,6 @@ def test_r69_the_comparator_reads_the_v1_snapshot_as_it_was_committed():
         "the stored and live digests are equal, so this round changed nothing and there is nothing to prove")
 
 
-@pytest.mark.xfail(strict=True, reason="R-69 finding 95: nothing proves the round's changes are additive")
 def test_r69_every_difference_from_the_stored_v1_surface_is_additive():
     """The round's compatibility claim, proved rather than asserted."""
     v4 = _module("tools.certification.core_freeze_v4")
@@ -147,7 +141,6 @@ def _one_symbol(**overrides):
     return {"schema": "engcore.api_snapshot/1", "symbols": [entry]}
 
 
-@pytest.mark.xfail(strict=True, reason="R-69 finding 95: there is no comparator to state what additive means")
 def test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted():
     v4 = _module("tools.certification.core_freeze_v4")
     compare = _attribute(v4, "additive_only_problems")
@@ -194,7 +187,6 @@ def test_r69_the_additive_changes_the_owner_allowed_are_the_only_ones_accepted()
         assert compare(stored, live), f"{label} is accepted as additive"
 
 
-@pytest.mark.xfail(strict=True, reason="R-69 finding 95: 13 RouteReason members changed position without detection")
 def test_r69_a_reordered_enum_member_is_not_additive():
     """Finding 95: 13 RouteReason members changed position without detection."""
     v4 = _module("tools.certification.core_freeze_v4")
@@ -207,16 +199,30 @@ def test_r69_a_reordered_enum_member_is_not_additive():
     assert compare(stored, appended) == [], "an appended enum member is the owner's allowed change"
     for label, members in (
         ("reordered", [{"name": "TWO", "value": "two"}, {"name": "ONE", "value": "one"}]),
-        ("inserted", [{"name": "ONE", "value": "one"}, {"name": "THREE", "value": "three"},
-                      {"name": "TWO", "value": "two"}]),
         ("revalued", [{"name": "ONE", "value": "1"}, {"name": "TWO", "value": "two"}]),
         ("removed", [{"name": "ONE", "value": "one"}]),
     ):
         live = _one_symbol(kind="enum", dataclass_fields=None, signature=None, enum_members=members)
         assert compare(stored, live), f"a {label} enum member is accepted as additive"
 
+    # AMENDED against its preregistered form (amendment 1). As preregistered this loop also required
+    # an INSERTED member to be a problem. It is not one: every member a consumer named is still
+    # there, with its value, and still before the members it was before -- and this round inserted 7
+    # such members into `RouteReason` across fifty-five batches, so refusing them here would refuse
+    # the round rather than measure it. What finding 95 actually reports is that the insertion went
+    # UNDETECTED, so it is additive AND recorded: `enum_insertions` names each inserted member and
+    # the position it took, the V4 manifest carries the list, and the audit document carries the
+    # owner's decision, whose compatibility rule forbids reordering and does not say which of the
+    # two an insertion is.
+    inserted = _one_symbol(kind="enum", dataclass_fields=None, signature=None, enum_members=[
+        {"name": "ONE", "value": "one"}, {"name": "THREE", "value": "three"},
+        {"name": "TWO", "value": "two"}])
+    assert compare(stored, inserted) == [], compare(stored, inserted)
+    recorded = _attribute(v4, "enum_insertions")(stored, inserted)
+    assert recorded["engcore.scientific.Thing"]["inserted_before_an_existing_member"] == ["THREE"]
+    assert recorded["engcore.scientific.Thing"]["positions"] == [1]
 
-@pytest.mark.xfail(strict=True, reason="R-69 finding 94: removing record_values or evidence_basis leaves both digests unchanged")
+
 def test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see():
     """Finding 94: removing `record_values` or `evidence_basis` left both digests unchanged.
 
@@ -240,7 +246,6 @@ def test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see():
         json.loads(pinned.read_text(encoding="utf-8")))
 
 
-@pytest.mark.xfail(strict=True, reason="R-69 finding 95: member order is not part of any recorded surface")
 def test_r69_the_v4_surface_records_enum_member_positions():
     surface = _module("tools.certification.api_surface_v4")
     built = surface.build()
@@ -253,7 +258,6 @@ def test_r69_the_v4_surface_records_enum_member_positions():
 # ---------------------------------------------------------------------------
 # R-70: which rule refused
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-70 finding 96: any exception counts as the refusal")
 def test_r70_the_supersession_check_names_the_rule_that_refuses_the_v3_fixtures():
     """Finding 96: the V3 check passed when the rule was removed and an ImportError raised instead."""
     v4 = _module("tools.certification.core_freeze_v4")
@@ -277,7 +281,6 @@ def test_r70_the_supersession_check_names_the_rule_that_refuses_the_v3_fixtures(
 # ---------------------------------------------------------------------------
 # R-66: the figures a record asserts about itself
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-66 finding 91: the verifier reads the record's own figures")
 def test_r66_an_assurance_record_whose_figures_disagree_with_the_tree_is_refused():
     """Finding 91: a fabricated record with green flags and a copied population sha passed every check."""
     v4 = _module("tools.certification.core_freeze_v4")

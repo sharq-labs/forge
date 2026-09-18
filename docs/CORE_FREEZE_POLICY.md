@@ -13,10 +13,20 @@
 | --- | --- |
 | schema | `engcore.api_snapshot/1` |
 | frozen symbols | `194` |
-| frozen digest | `c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929` |
+| frozen digest | `f18aa806d594016c04b3f9ace6b0817969e8042febd22324f6eb8a95aef6f487` |
 | experimental symbols | `11` |
 | total public symbols | `205` |
 | deprecated symbols | `0` |
+
+**Core Freeze V4 (2026-09-18).** The digest above moved from
+`c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929`, which Core Freeze V1 recorded, and
+the 2026-09-16 scientific core re-audit is why: 31 improvements added new enum members, new trailing
+dataclass fields with defaults and new keyword arguments with defaults. The count did not move -- the
+same `194` symbols, in the same seven modules -- and **every** difference from the V1 surface **as V1
+committed it** is one of those additive kinds, proved difference by difference by
+`tools.certification.core_freeze_v4.additive_only_problems` and recorded in
+`certification/core_freeze_v4.json`. A digest that moves without that proof beside it is a broken
+contract, which is what §10 has always said.
 
 The frozen digest is the compatibility number. It is a SHA-256 over the
 canonical bytes of the frozen snapshot, and two processes on two machines

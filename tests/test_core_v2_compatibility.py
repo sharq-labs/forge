@@ -23,8 +23,20 @@ def _canonical(entry) -> bytes:
     return json.dumps(entry, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode("utf-8")
 
 
-def test_the_v1_surface_is_exactly_the_v1_contract():
-    assert api_snapshot.frozen_digest() == V1_FROZEN_DIGEST
+def test_the_v1_surface_is_the_v1_contract_plus_only_additive_changes():
+    """AMENDED at Core Freeze V4 (I-29, R-65). Was: the live frozen digest IS `V1_FROZEN_DIGEST`.
+
+    The 2026-09-16 re-audit moved it from `c80e6418` to `f18aa806` and moved nothing else: the same
+    194 frozen symbols, the same 205 public ones, the same seven modules. `V1_FROZEN_DIGEST` stays
+    where it is -- it is Core Freeze V1's record of its own commit -- and the digest equality is
+    replaced by the claim V4 makes and proves: every difference from the V1 surface as V1 committed
+    it is one of the additive kinds the owner allowed.
+    """
+    from tools.certification import core_freeze_v4
+
+    stored = core_freeze_v4.stored_v1_frozen_snapshot(REPO)
+    assert stored["digest"] == V1_FROZEN_DIGEST
+    assert core_freeze_v4.additive_only_problems(stored["snapshot"], api_snapshot.frozen_only()) == []
     assert api_snapshot.frozen_only()["symbol_count"] == V1_FROZEN_COUNT
     assert api_snapshot.build()["symbol_count"] == V1_TOTAL_COUNT
     assert api_snapshot.build()["modules"] == list(api_snapshot.CANONICAL_MODULES)
