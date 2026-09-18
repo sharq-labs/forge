@@ -227,8 +227,16 @@ def provenance_problems(
         problems.append(f"run {run_id} belongs to {(run.get('repository') or {}).get('full_name')!r}")
     if run.get("path") != WORKFLOW_PATH:
         problems.append(f"run {run_id} ran workflow {run.get('path')!r}, not {WORKFLOW_PATH}")
-    if run.get("event") != "pull_request":
-        problems.append(f"run {run_id} was triggered by {run.get('event')!r}, not pull_request")
+    expected_event = lineage.get("event", "pull_request")
+    if expected_event not in {"pull_request", "workflow_dispatch"}:
+        problems.append(
+            f"certificate records unsupported workflow event {expected_event!r}"
+        )
+    elif run.get("event") != expected_event:
+        problems.append(
+            f"run {run_id} was triggered by {run.get('event')!r}, "
+            f"certificate records {expected_event!r}"
+        )
     if run.get("head_sha") != source_commit:
         problems.append(f"run {run_id} measured {run.get('head_sha')}, not the certificate's parent {source_commit}")
     if not isinstance(attempt, int) or not isinstance(run.get("run_attempt"), int) or attempt > run["run_attempt"]:
