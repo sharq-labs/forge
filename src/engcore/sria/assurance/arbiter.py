@@ -156,6 +156,10 @@ class CriticRegistration:
     #: so a look-alike critic with the same id, version and class is a
     #: different registry.
     implementation: str = ""
+    # Only a reviewed critic with this capability may discharge
+    # validation_level:* obligations. A matching check name alone is not
+    # scientific authority.
+    validation_level_issuer: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -165,6 +169,7 @@ class CriticRegistration:
             "entry_point": self.entry_point,
             "domain_pack_ref": self.domain_pack_ref,
             "implementation": self.implementation,
+            "validation_level_issuer": self.validation_level_issuer,
         }
 
 
@@ -212,6 +217,9 @@ def _registration_for(critic: Any) -> CriticRegistration:
         entry_point=entry,
         domain_pack_ref=pack,
         implementation=f"{type(critic).__module__}.{type(critic).__qualname__}",
+        validation_level_issuer=bool(
+            getattr(critic, "validation_level_issuer", False)
+        ),
     )
 
 
@@ -899,7 +907,16 @@ class Arbiter:
         # --- required named checks --------------------------------------
         for obligation in obligations.of_kind(ObligationKind.REQUIRED_CHECK):
             target = obligation.target
-            state, record, refs = self._resolve_check(target, counted)
+            check_scope = counted
+            if target.startswith("validation_level:"):
+                check_scope = [
+                    assessment
+                    for assessment in counted
+                    if self._registrations[
+                        assessment.critic_id
+                    ].validation_level_issuer
+                ]
+            state, record, refs = self._resolve_check(target, check_scope)
             if state == "missing":
                 results.append(
                     ObligationResult(
