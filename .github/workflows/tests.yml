@@ -58,7 +58,7 @@ jobs:
           from pathlib import Path
 
           root_markdown = sorted(path.name for path in Path('.').glob('*.md'))
-          allowed_root = {'README.md'}
+          allowed_root = {'README.md', 'CLAUDE.md'}
           unexpected_root = [name for name in root_markdown if name not in allowed_root]
           source_markdown = sorted(str(path) for path in Path('src').rglob('*.md'))
 
@@ -77,7 +77,7 @@ jobs:
           if problems:
               raise SystemExit('\n'.join(problems))
 
-          print('documentation layout OK: root entry point is README.md and src/ has no Markdown')
+          print('documentation layout OK: root contains README.md/CLAUDE.md only and src/ has no Markdown')
           PY
 
   fast:
