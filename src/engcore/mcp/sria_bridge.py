@@ -30,6 +30,7 @@ from ..scientific.results.validation import ValidationLevel
 from ..sria import (
     ClaimBinding,
     ClaimType,
+    DiscrepancyKind,
     Evidence,
     ModelDiscrepancy,
     SourceClass,
@@ -61,9 +62,20 @@ def _uncertainty_declaration(
     report: CredibilityEvidenceReport,
     quantity_name: str,
     *,
-    discrepancy: ModelDiscrepancy,
+    discrepancy: ModelDiscrepancy | None,
 ) -> UncertaintyDeclaration:
     """Translate one report value's uncertainty without inventing attribution."""
+
+    if discrepancy is None:
+        discrepancy = ModelDiscrepancy(
+            kind=DiscrepancyKind.UNKNOWN,
+            rationale=(
+                "the credibility report does not quantify or bound model-form "
+                "discrepancy; the bridge preserves that absence as UNKNOWN"
+            ),
+        )
+    elif not isinstance(discrepancy, ModelDiscrepancy):
+        raise TypeError("discrepancy must be a ModelDiscrepancy or None")
 
     record = report.uncertainty.get(quantity_name)
     channels = {}
@@ -104,7 +116,7 @@ def evidence_from_credibility_report(
     evidence_id: str,
     domain_pack_ref: str,
     context_ref: str,
-    discrepancy: ModelDiscrepancy,
+    discrepancy: ModelDiscrepancy | None = None,
 ) -> Evidence:
     """Derive candidate SRIA evidence for one quantity in a credibility report.
 
@@ -114,11 +126,8 @@ def evidence_from_credibility_report(
 
     if not isinstance(report, CredibilityEvidenceReport):
         raise TypeError("report must be a CredibilityEvidenceReport")
-    if not isinstance(discrepancy, ModelDiscrepancy):
-        raise TypeError(
-            "discrepancy must be an explicit ModelDiscrepancy; the bridge "
-            "will not assume zero model-form uncertainty"
-        )
+    if discrepancy is not None and not isinstance(discrepancy, ModelDiscrepancy):
+        raise TypeError("discrepancy must be a ModelDiscrepancy or None")
     name = str(quantity_name).strip()
     if name not in report.values:
         raise KeyError(
