@@ -113,7 +113,7 @@ NON_CLAIMS = (
     "listed as an open decision in the audit document.",
 )
 
-REQUIRED_SUITES = v3.REQUIRED_SUITES
+REQUIRED_SUITES = ()  # see REQUIRED_V4_SUITES, declared beside the commands that produce them
 
 
 # =====================================================================
@@ -501,6 +501,89 @@ def v4_mutation_problems(root: pathlib.Path, record: Mapping[str, Any], *,
     return problems
 
 
+
+# =====================================================================
+# the assurance record, built from evidence and never from a claim
+# =====================================================================
+#: Where the V4 round's transcripts are committed. A shard's evidence is its transcript, and a
+#: transcript nobody can read is a figure somebody typed.
+TRANSCRIPT_DIR = "benchmarks/core_v4_false_confidence/v4_round"
+
+#: The suites a V4 assurance record must carry green. The four freeze/API suites are the ones the
+#: certificate child runs for the deferred self-checks, so a record that omits one is a record whose
+#: green FAST tier says nothing about the contract.
+REQUIRED_V4_SUITES = ("FAST", "population_v4", "freeze_manifest_v4", "api_snapshot_v1",
+                      "api_snapshot_v2", "certificate")
+
+V4_SUITE_COMMANDS: dict[str, tuple[str, ...]] = {
+    "FAST": ("-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile"),
+    "population_v4": ("-q", "tests/test_mutation_population_v4.py", "tests/test_mutation_harness.py"),
+    "freeze_manifest_v4": ("-q", "tests/test_core_freeze_v4_manifest.py",
+                           "tests/test_core_freeze_v3_manifest.py", "tests/test_core_freeze_manifest.py"),
+    "api_snapshot_v1": ("-q", "tests/test_core_api_snapshot.py", "tests/test_core_api_contracts.py"),
+    "api_snapshot_v2": ("-q", "tests/test_core_v2_api_snapshot.py", "tests/test_core_v2_compatibility.py"),
+    "certificate": ("-q", "tests/test_core_certificate.py", "tests/test_certification_control_plane.py",
+                    "tests/test_recertification_scope.py"),
+}
+
+
+def _run_suite(root: pathlib.Path, arguments: Sequence[str]) -> dict[str, Any]:
+    done = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", *arguments],
+                          cwd=root, capture_output=True, text=True)
+    lines = [line.strip() for line in done.stdout.splitlines() if line.strip()]
+    return {"exit_code": done.returncode, "green": done.returncode == 0,
+            "summary_line": lines[-1] if lines else "(no output)",
+            "arguments": list(arguments)}
+
+
+def build_assurance(root: pathlib.Path, *, run_suites: bool = True) -> dict[str, Any]:
+    """The V4 assurance record: the round's transcripts, the suites, and figures derived from both.
+
+    Nothing here is copied from another record. The population's digests come from the tree, each
+    shard's log digest from the transcript's bytes, each shard's verdicts from parsing those lines,
+    and the measured commit from ``git rev-parse``. That is finding 91 in one sentence: a figure a
+    record asserts about itself is not evidence.
+    """
+    transcripts = {}
+    logs: dict[int, bytes] = {}
+    for path in sorted((root / TRANSCRIPT_DIR).glob("shard*.log")):
+        index = int(path.stem.replace("shard", ""))
+        transcripts[str(index)] = path.relative_to(root).as_posix()
+        logs[index] = path.read_bytes()
+    if not logs:
+        raise RuntimeError(f"no shard transcript under {TRANSCRIPT_DIR}: there is no round to assure")
+    manifest_file = root / MANIFEST_PATH
+    manifest = json.loads(manifest_file.read_bytes())
+    measured = v2.git(root, "rev-parse", "HEAD")
+    mutations = v4_mutation_assurance(root, logs=logs, source_commit=measured)
+    problems = v4_mutation_problems(root, mutations, logs=logs)
+    if problems:
+        raise RuntimeError("the round's own evidence does not support a record: " + "; ".join(problems[:6]))
+    suites = {}
+    if run_suites:
+        for name in REQUIRED_V4_SUITES:
+            suites[name] = _run_suite(root, V4_SUITE_COMMANDS[name])
+            suites[name]["deselected_certificate_child_self_checks"] = []
+    return {
+        "schema": ASSURANCE_SCHEMA,
+        "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+        "candidate_commit": manifest["freeze"]["candidate_commit"],
+        "measured_commit": measured,
+        "manifest_sha256": v2.sha256_bytes(manifest_file.read_bytes()),
+        "transcripts": transcripts,
+        "evidence": {path: v2.sha256_bytes((root / path).read_bytes()) for path in transcripts.values()},
+        "mutations": {"v4": mutations},
+        "suites": suites,
+        "claim": (
+            "Fresh execution of the 589-mutation V4 guard population in four shards at the measured "
+            "commit, each mutation in an isolated copy of the tree and each verdict read from the "
+            "JUnit report of the ONE test its entry names. Every figure in this record is re-derived "
+            "by tools.certification.core_freeze_v4.v4_mutation_problems from the tree and from these "
+            "transcripts' own bytes; none is read from the record."
+        ),
+    }
+
+
 # =====================================================================
 # build and verify
 # =====================================================================
@@ -678,9 +761,9 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
               "; ".join(mutation_problems[:4]) or
               f"{len(logs)} transcript(s), every verdict and digest recomputed")
         suites = assurance.get("suites", {})
-        missing_suites = [suite for suite in REQUIRED_SUITES if suite not in suites]
+        missing_suites = [suite for suite in REQUIRED_V4_SUITES if suite not in suites]
         red = [suite for suite, record in suites.items()
-               if suite in REQUIRED_SUITES and not record.get("green")]
+               if suite in REQUIRED_V4_SUITES and not record.get("green")]
         v.add("assurance.required_suites_green", not missing_suites and not red,
               f"missing {missing_suites} red {red}")
         v.add("assurance.measured_commit_is_this_history",
@@ -697,6 +780,9 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--build", action="store_true")
+    parser.add_argument("--assure", action="store_true",
+                        help="write the assurance record from the round's transcripts and the suites")
+    parser.add_argument("--no-suites", action="store_true", help="with --assure: skip the suite runs")
     parser.add_argument("--verify", action="store_true")
     parser.add_argument("--candidate", default="")
     parser.add_argument("--allow-dirty", action="store_true")
@@ -714,6 +800,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         for problem in problems[:20]:
             print(f"  {problem}")
         return 1 if problems else 0
+    if args.assure:
+        record = build_assurance(root, run_suites=not args.no_suites)
+        path = root / ASSURANCE_PATH
+        path.write_bytes((json.dumps(record, indent=1, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8"))
+        red = [name for name, suite in record["suites"].items() if not suite["green"]]
+        print(f"wrote {ASSURANCE_PATH}: {len(record['transcripts'])} transcript(s), "
+              f"{record['mutations']['v4']['population']} mutations, red suites {red}")
+        return 1 if red else 0
     result = verify(root, require_clean=not args.allow_dirty, require_assurance=not args.no_assurance)
     print(result.render())
     return 0 if result.ok else 1

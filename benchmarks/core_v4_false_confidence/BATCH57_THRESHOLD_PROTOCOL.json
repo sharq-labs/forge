@@ -1,0 +1,78 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 57,
+ "improvements": [
+  "I-23 (order 30, the audit's deferred one): canonical identity for meshes and parameters"
+ ],
+ "problems_addressed": [
+  "R-62 (the audit's finding 76)",
+  "R-74 (the audit's finding 105)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "8cf8f8e9",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Two identities computed from raw float64 magnitudes. A mesh's fingerprint hashes `repr(magnitude_in('meter'))`, so 7 mm and 0.7 cm -- the same rectangle, stated twice -- hash differently, because the conversions land on 0.007 and 0.006999999999999999. A parameter's digest hashes the same kind of number, so the same bound stated in millivolts and in volts is a different identity, and `-0.0` and `0.0` are ONE value to `differences()` and TWO to the digest. And the transfer check's geometry comparison uses `1e-12 * max(1.0, |x|)`, which at nanometre scale is an ABSOLUTE 1e-12 m: 10 nm and 10.0005 nm read as the same rectangle, so a transfer between two different geometries is reported as a resolution difference a projection can close.",
+ "what_was_already_seen": {
+  "finding 76 (R-62)": "7 mm and 0.7 cm get different fingerprints, and 10 nm against 10.0005 nm reads as the same geometry at two resolutions, so transfers wrongly require projection.",
+  "finding 105 (R-74)": "-0.0 and 0.0 show no difference but have different digests. The same bound stated in mV or V is a different identity in 282 of 2000 cases, and the grid-binding helpers have no caller."
+ },
+ "measured_before_any_rule_was_written": {
+  "7_mm_in_meters": "0.007",
+  "0_7_cm_in_meters": "0.006999999999999999",
+  "same_float": false,
+  "mv_vs_v_disagreements_in_2000_random_bounds": 274,
+  "minus_zero_equals_zero_in_python": true,
+  "minus_zero_json": "-0.0",
+  "10_nm_vs_10_0005_nm_absolute_difference_m": 5.00000000000567e-13,
+  "old_geometry_tolerance_at_that_scale_m": 1e-12,
+  "reads_as_the_same_geometry_under_the_old_rule": true,
+  "reads_as_the_same_geometry_after_quantizing_to_12_significant_digits": false,
+  "7_mm_and_0_7_cm_agree_after_quantizing": true
+ },
+ "rules": {
+  "one_canonical_magnitude_rule_shared_by_every_identity_that_hashes_a_length_or_a_bound": {
+   "improvement": "I-23",
+   "problem": "R-62, R-74",
+   "rule": "A new module-public helper in `engcore.scientific.units.quantity`: `canonical_magnitude(value, unit, *, digits=IDENTITY_SIGNIFICANT_DIGITS)` returns the magnitude in `unit`, rounded to `digits` SIGNIFICANT digits and with a negative zero normalised to `0.0`, as a float. `StructuredMesh._canonical`, `ParameterIdentity._canonical` and the transfer check's geometry comparison all read it, so a digest and a comparison cannot disagree about whether two declarations are the same thing.",
+   "class": "B",
+   "why": "The number is a CONVENTION about how much of a float64 is identity, and 12 significant digits is where the two requirements meet: unit restatement disagrees in the 16th digit (7 mm against 0.7 cm differ by 8.7e-19 relative, and 274 of 2000 random mV/V bounds differ at all), so 12 digits makes every restatement of one value one identity; and 10 nm against 10.0005 nm differ by 5e-5 relative, which 12 digits keeps APART by four orders of magnitude of margin. A float64 carries 15-17 significant digits, so 12 leaves three to spare for the conversions themselves.",
+   "compatibility": "ADDITIVE: one new module-public function, added to no package export list, so the frozen V1 symbol count stays 194. `MeshDefinition.fingerprint` and `ParameterIdentity.digest` are V1-frozen METHODS whose VALUES move for a mesh or a parameter whose canonical magnitude had trailing float noise -- which is what the fix is. No committed evidence carries a mesh fingerprint or a parameter digest; the regeneration check is part of the verification below.",
+   "residual": "Identity now agrees with comparison to 12 digits and not beyond. Two rectangles differing in the 13th significant digit are one identity, which is a decision and not an accident: a geometry stated to 13 digits is stating float noise."
+  },
+  "the_transfer_check_compares_geometry_the_way_the_fingerprint_does": {
+   "improvement": "I-23",
+   "problem": "R-62",
+   "rule": "`_same_geometry` compares the CANONICAL magnitudes for exact equality instead of applying `1e-12 * max(1.0, |x|)`. Two meshes are the same rectangle exactly when their canonical magnitudes are equal, which is exactly when the origin and extent parts of their fingerprints agree.",
+   "class": "A",
+   "why": "Once identity is quantized, a separate tolerance in the comparison is a second rule that can disagree with the first -- which is the defect: the old floor made the comparison ABSOLUTE at 1e-12 m, so at nanometre scale it answered 'same rectangle' for geometries 5e-5 apart in relative terms, and `check_field_transfer` then reported RESOLUTION_DIFFERS (a projection can close it) for two different rectangles.",
+   "compatibility": "A behaviour change inside a library-only path, in the strict direction: a transfer between two rectangles that differ above the 12th digit is now GEOMETRY_DIFFERS rather than RESOLUTION_DIFFERS.",
+   "residual": "A mesh whose extents differ by less than the quantization is the same geometry to both rules, by construction."
+  },
+  "a_negative_zero_is_one_value_in_both_directions": {
+   "improvement": "I-23",
+   "problem": "R-74",
+   "rule": "`canonical_magnitude` returns `0.0` for `-0.0`, so `ParameterIdentity.digest` and `ParameterIdentity.differences` agree: two bounds that compare equal have one digest, and two that differ have two.",
+   "class": "A",
+   "why": "`-0.0 == 0.0` is True in IEEE arithmetic and `json.dumps` writes `-0.0`, which is how one value became two digests. A digest that disagrees with the comparison the same class offers is worse than no digest -- the module's own docstring says so about units, and this is the same sentence about signs.",
+   "compatibility": "Additive in shape; the digest of a parameter whose bound is `-0.0` moves.",
+   "residual": "Nothing else about IEEE is normalised: a NaN bound is refused elsewhere, and infinities keep their sign."
+  },
+  "the_reach_is_recorded_and_not_claimed": {
+   "improvement": "I-23",
+   "problem": "R-62, R-74",
+   "rule": "Both rows enter the guard reach ledger as LIBRARY_ONLY with `audit_status` PARTIAL, because the audit's own word for each is `library-only` and this batch adds no production caller: nothing in `src/engcore` builds a `StructuredMesh` for a domain run or a `ParameterIdentity` for a calibration yet.",
+   "class": "A",
+   "why": "The round's rule is that a FIXED problem must be REACHED or LATENT. The RULES here are closed and the REACH is not, and the ledger is the place that distinction is written down rather than rounded up. R-74's second half -- the grid-binding helpers have no caller -- is exactly that, and is stated as the residual it is.",
+   "compatibility": "None.",
+   "residual": "PARTIAL, and it stays PARTIAL until something in production meshes a field or declares a calibration parameter."
+  }
+ },
+ "thresholds_declared": {
+  "IDENTITY_SIGNIFICANT_DIGITS": {"value": 12, "class": "B", "note": "the convention: above every unit-restatement disagreement (16th digit) and four orders of magnitude below the audited geometry difference (5e-5 relative)"},
+  "geometry_comparison": {"value": "exact equality of canonical magnitudes", "class": "A", "note": "replaces 1e-12 * max(1.0, |x|), which was absolute below 1 m"},
+  "negative_zero": {"value": 0.0, "class": "A"}
+ },
+ "compatibility": "ADDITIVE ONLY on shape: one new module-public function, in no export list. Two V1-frozen METHOD VALUES move -- a mesh fingerprint and a parameter digest -- for declarations whose canonical magnitude carried float noise, which is the fix itself; `tools.certification.core_freeze_v4.additive_only_problems` must stay empty, and the V4 manifest and the deep surface are rebuilt after it.",
+ "reproductions_first": "Every rule above is recorded as a strict xfail in tests/test_core_scientific_audit_batch57.py before any of it is implemented, each seen failing ON ITS OWN ASSERTION.",
+ "amendment_log": []
+}
