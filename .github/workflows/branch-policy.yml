@@ -3,13 +3,10 @@ name: Branch Policy
 # Repository files cannot protect `main`; only GitHub's branch rules can. This
 # workflow reports, from CI and with the default token, whether the merge policy
 # the certification checks rely on is actually in force, and fails when it is
-# not. It deliberately does not run on pull requests: its result is a fact about
-# the repository's settings, not about the change under review.
+# not. It is manual-only: choose this workflow and the branch in GitHub Actions.
 # The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

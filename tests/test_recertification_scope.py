@@ -294,9 +294,9 @@ def _needs(names, default="skipped", **results):
 
 
 def test_the_recertification_gate_for_a_source_commit():
-    ok = _needs(rs.RECERTIFY_JOBS, default="success", verify_certificate_child="skipped")
+    ok = _needs(rs.RECERTIFY_JOBS, default="success")
     assert rs.recertification_gate_problems("source", ok) == []
-    for job in (*rs.RECERTIFY_SOURCE_GATES, "certify"):
+    for job in (*rs.RECERTIFY_SOURCE_GATES, "certify", "verify_certificate_child"):
         for state in ("failure", "skipped", "cancelled"):
             broken = {**ok, job: {"result": state}}
             assert rs.recertification_gate_problems("source", broken), (job, state)
