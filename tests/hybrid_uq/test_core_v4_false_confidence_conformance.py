@@ -119,7 +119,63 @@ def test_the_pinned_reference_posteriors_are_re_derivable_from_the_models():
 
     module = importlib.import_module("benchmarks.core_v4_false_confidence.audit.reference_posteriors")
     rebuilt = module.build()
-    assert rebuilt["digest"] == REFERENCE["digest"], "the pinned reference posteriors no longer match their models"
+    if rebuilt["digest"] != REFERENCE["digest"]:
+        differences = []
+        stored_cases = REFERENCE["cases"]
+        rebuilt_cases = rebuilt["cases"]
+        for label in sorted(set(stored_cases) | set(rebuilt_cases)):
+            if label not in stored_cases or label not in rebuilt_cases:
+                differences.append(
+                    f"{label}: present stored={label in stored_cases}, "
+                    f"rebuilt={label in rebuilt_cases}"
+                )
+                continue
+            stored = stored_cases[label]
+            fresh = rebuilt_cases[label]
+            if stored == fresh:
+                continue
+            scalar = {}
+            for key in (
+                "problem",
+                "parameter_names",
+                "nodes",
+                "bounds",
+                "mean",
+                "sd",
+                "halved_step_moved_sd",
+                "converged",
+                "quantile_steps",
+            ):
+                if stored.get(key) != fresh.get(key):
+                    scalar[key] = {
+                        "stored": stored.get(key),
+                        "rebuilt": fresh.get(key),
+                    }
+            stored_q = stored.get("quantiles_f8_base64", ())
+            fresh_q = fresh.get("quantiles_f8_base64", ())
+            quantile_digests = []
+            for axis in range(max(len(stored_q), len(fresh_q))):
+                old_q = stored_q[axis] if axis < len(stored_q) else ""
+                new_q = fresh_q[axis] if axis < len(fresh_q) else ""
+                old_digest = hashlib.sha256(old_q.encode("ascii")).hexdigest()
+                new_digest = hashlib.sha256(new_q.encode("ascii")).hexdigest()
+                if old_digest != new_digest:
+                    quantile_digests.append(
+                        {
+                            "axis": axis,
+                            "stored_sha256": old_digest,
+                            "rebuilt_sha256": new_digest,
+                        }
+                    )
+            differences.append(
+                f"{label}: scalar={scalar}; "
+                f"quantile_payload_digests={quantile_digests}"
+            )
+        pytest.fail(
+            "the pinned reference posteriors no longer match their models; "
+            f"pinned={REFERENCE['digest']} rebuilt={rebuilt['digest']}; "
+            + " | ".join(differences)
+        )
 
 
 # ---------------------------------------------------------------------------
