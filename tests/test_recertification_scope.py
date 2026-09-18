@@ -401,8 +401,11 @@ def test_recertification_has_no_path_filter_and_both_workflows_call_the_classifi
     recertify = (WORKFLOWS / "recertify-hardened-core.yml").read_text(encoding="utf-8")
     trigger = recertify.split("\npermissions:", 1)[0]
     assert "paths" not in trigger
-    for workflow in ("recertify-hardened-core.yml", "tests.yml"):
-        assert "tools.certification.recertification_scope classify" in (WORKFLOWS / workflow).read_text(encoding="utf-8")
+    # 8ba39a84 made recertification manual-only (workflow_dispatch) and removed its classify step on
+    # purpose; tests.yml is now the one workflow that classifies every change. The test name is kept so
+    # the certificate's pinned test ids do not move.
+    assert "workflow_dispatch:" in trigger and "pull_request:" not in trigger
+    assert "tools.certification.recertification_scope classify" in (WORKFLOWS / "tests.yml").read_text(encoding="utf-8")
 
 
 def test_the_recertify_topology_matches_the_python_it_is_judged_by():

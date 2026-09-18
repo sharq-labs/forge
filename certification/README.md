@@ -66,7 +66,8 @@ successfully, and uploaded exactly these certificate bytes. A certificate that
 did not come out of that job cannot pass it.
 
 Which changes need recertification is decided by one classifier, derived from
-the scope table, and called by both workflows:
+the scope table, and called by the tests workflow (recertification itself is
+manual-only since 8ba39a84):
 
 ```bash
 python -m tools.certification.recertification_scope explain <path> ...

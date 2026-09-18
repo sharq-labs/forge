@@ -67,6 +67,8 @@ from .obligations import (
     ObligationSet,
     ValidationObligation,
     obligations_from_charter,
+    charter_context_ref,
+    parse_charter_context_ref,
 )
 from .uncertainty_budget import (
     SURROGATE_APPROXIMATION_CHANNEL,
@@ -113,6 +115,8 @@ __all__ = [
     "ValidationObligation",
     "ObligationKind",
     "obligations_from_charter",
+    "charter_context_ref",
+    "parse_charter_context_ref",
     # arbiter
     "Arbiter",
     "ArbiterDecision",

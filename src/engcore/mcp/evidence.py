@@ -780,12 +780,33 @@ def derive_verdict(
             ValidityStatus(record.assessment.status) for record in validity
         }
         outcomes = {ValidationOutcome(check.outcome) for check in validation}
+        inapplicable_with_level = [
+            getattr(check, "name", "?")
+            for check in validation
+            if ValidationOutcome(check.outcome) is ValidationOutcome.NOT_APPLICABLE
+            and getattr(check, "establishes", None) is not None
+        ]
     except (ValueError, AttributeError) as exc:
         raise CredibilityEvidenceError(
             f"cannot derive a verdict from these contents ({exc}); a status or "
             f"outcome this function does not understand must not be read as "
             f"'nothing argues against this result'"
         ) from exc
+
+    # N4 / R-45: a check that did not apply is not part of the verdict at all, exactly as it is not part of
+    # ``ValidationReport.status``. It gathered no evidence and left no claim unbacked, so it can neither
+    # lower the verdict nor raise it -- and in particular it can never be read as a PASS: it attains no
+    # level (``attained_levels_of`` reads only PASS and WARNING), so a list of nothing but inapplicable
+    # checks is the empty list's answer, INSUFFICIENT_EVIDENCE. Before this, it reached the fail-closed
+    # guard below and the exported function raised on a record the core itself builds. One that claims a
+    # level anyway is refused, as the core's own constructor refuses it.
+    if inapplicable_with_level:
+        raise CredibilityEvidenceError(
+            f"check(s) {sorted(map(str, inapplicable_with_level))} report NOT_APPLICABLE and declare a level; "
+            f"a check that did not apply established nothing, and the core refuses to build one that says "
+            f"otherwise"
+        )
+    outcomes = outcomes - {ValidationOutcome.NOT_APPLICABLE}
 
     # Order of these two branches IS the precedence rule. Do not reorder.
     if ValidityStatus.OUTSIDE_VALIDATED_DOMAIN in statuses:

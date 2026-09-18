@@ -40,6 +40,41 @@ class ObligationKind(str, Enum):
     REQUIRED_UNCERTAINTY_CHANNEL = "required_uncertainty_channel"
     REQUIRED_CALIBRATION_STATUS = "required_calibration_status"
     REQUIRED_DOMAIN_CHECK = "required_domain_check"
+    #: Appended (member order is frozen). The evidence must carry exactly this
+    #: ``context_ref`` -- the charter-and-decision it was produced for.
+    REQUIRED_CONTEXT = "required_context"
+
+
+#: The one spelling of a charter-bound context of use. Evidence produced for a
+#: decision under a charter carries ``charter:<charter digest>#decision:<id>``.
+CHARTER_CONTEXT_PREFIX = "charter:"
+_DECISION_MARK = "#decision:"
+
+
+def charter_context_ref(charter_digest: str, decision_id: str) -> str:
+    """The context reference evidence made for ``decision_id`` under a charter carries."""
+    digest = str(charter_digest).strip()
+    decision = str(decision_id).strip()
+    if not digest or not decision:
+        raise ValueError("a charter context names both a charter digest and a decision id")
+    return f"{CHARTER_CONTEXT_PREFIX}{digest}{_DECISION_MARK}{decision}"
+
+
+def parse_charter_context_ref(context_ref: str) -> tuple[str, str] | None:
+    """``(charter_digest, decision_id)`` for a charter-bound reference, else ``None``.
+
+    A reference that starts with the charter prefix but does not parse is
+    returned as ``("", "")`` -- a malformed claim to a charter, which must never
+    be read as "no claim to a charter".
+    """
+    text = str(context_ref)
+    if not text.startswith(CHARTER_CONTEXT_PREFIX):
+        return None
+    body = text[len(CHARTER_CONTEXT_PREFIX):]
+    digest, mark, decision = body.partition(_DECISION_MARK)
+    if not mark or not digest.strip() or not decision.strip() or _DECISION_MARK in decision:
+        return ("", "")
+    return (digest, decision)
 
 
 @dataclass(frozen=True)
@@ -146,6 +181,10 @@ class ObligationSet:
         )
 
     @property
+    def required_contexts(self) -> tuple[str, ...]:
+        return tuple(o.target for o in self.of_kind(ObligationKind.REQUIRED_CONTEXT))
+
+    @property
     def required_calibration_verdicts(self) -> tuple[CalibrationVerdict, ...]:
         return tuple(
             CalibrationVerdict(o.target)
@@ -181,12 +220,19 @@ def obligations_from_charter(
     required_domain_checks: Iterable[str] = (),
     required_uncertainty_channels: Iterable[UncertaintyChannel] = (),
     required_calibration_verdicts: Iterable[CalibrationVerdict] = (),
+    context_decision_id: str | None = None,
 ) -> ObligationSet:
     """Derive obligations from a charter, attributing each to that charter.
 
     The charter's own ``confidence_requirements`` are the authority; the
     explicit arguments let a campaign state assurance requirements that the M1
     charter vocabulary does not yet model, without inventing global defaults.
+
+    ``context_decision_id`` binds the policy to one of the charter's terminal
+    decisions: the set then carries a ``REQUIRED_CONTEXT`` obligation, and the
+    Arbiter refuses VALID over evidence whose ``context_ref`` is not exactly
+    ``charter:<this charter's digest>#decision:<that id>``. A decision the
+    charter does not declare is refused here, not bound.
     """
     source = f"charter:{charter.campaign_id}"
     obligations: list[ValidationObligation] = []
@@ -254,6 +300,24 @@ def obligations_from_charter(
                     detail=requirement.description,
                 )
             )
+
+    if context_decision_id is not None:
+        declared = {d.decision_id for d in charter.terminal_decisions}
+        if context_decision_id not in declared:
+            raise ValueError(
+                f"decision {context_decision_id!r} is not a terminal decision of charter "
+                f"{charter.campaign_id!r} (declared: {sorted(declared)}); a policy cannot be bound "
+                f"to a decision its charter never made"
+            )
+        obligations.append(
+            ValidationObligation(
+                obligation_id=f"context:{context_decision_id}",
+                kind=ObligationKind.REQUIRED_CONTEXT,
+                target=charter_context_ref(charter.digest, context_decision_id),
+                source=source,
+                detail="evidence must have been produced for exactly this charter and decision",
+            )
+        )
 
     return ObligationSet(
         campaign_id=charter.campaign_id,

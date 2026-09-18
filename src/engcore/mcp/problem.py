@@ -97,6 +97,7 @@ from .errors import (
     MalformedPayloadError,
     MissingFieldError,
     MissingUnitError,
+    ProblemPayloadError,
     UnknownFieldError,
     WrongDimensionError,
 )

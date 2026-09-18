@@ -1,14 +1,14 @@
 """CORE-9 -- context of use: evidence counts only for the decision it was made for.
 
 SRIA already makes ``Evidence.context_ref`` part of an evidence record's content
-identity, so a record cannot be re-labelled after the fact. What nothing checked
-is whether the label is *the right one*: the Arbiter never compares
-``context_ref`` with the charter it decides under (audit finding N2, reproduced:
-evidence carrying a foreign context was decided VALID). Two runs that report the
-same number for different decisions -- or the same run offered to a decision it
-was not planned for -- read identically to it.
+identity, so a record cannot be re-labelled after the fact. Whether the label is
+*the right one* is now the Arbiter's own invariant (audit finding N2): charter-
+bound evidence cannot be decided VALID under another charter's policy, and a
+policy built with ``obligations_from_charter(..., context_decision_id=...)``
+carries a ``REQUIRED_CONTEXT`` obligation naming the exact charter and decision.
+The claim layer builds its policy that way.
 
-The claim layer closes that on its own path, reusing existing identity rather
+This module is the claim layer's *earlier*, broader check, reusing existing identity rather
 than adding a record: the plan's :class:`~engcore.sria.charter.CampaignCharter`
 binds the exact claim identity, QOI, capability, models, case, required levels,
 discrepancy declaration and uncertainty demand (its metadata carries the plan's

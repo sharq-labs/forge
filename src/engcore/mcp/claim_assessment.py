@@ -31,6 +31,7 @@ from ..sria import (
 from ..sria.assurance import (
     Arbiter,
     CriticClass,
+    charter_context_ref,
     obligations_from_charter,
     trusting_authority,
 )
@@ -185,8 +186,9 @@ def assess_claim_request(request: Mapping[str, Any]) -> dict[str, Any]:
     obligations = obligations_from_charter(
         charter,
         required_critics=(CriticClass.PROCESS,),
+        context_decision_id=decision_id,
     )
-    context_ref = f"charter:{charter.digest}#decision:{decision_id}"
+    context_ref = charter_context_ref(charter.digest, decision_id)
 
     evidence = evidence_from_credibility_report(
         report,
