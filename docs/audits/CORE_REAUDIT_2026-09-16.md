@@ -3118,3 +3118,51 @@ would create it.
 `BATCH50_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation targets these files.
 
 **Open decisions.** None.
+
+### Batch 51 — I-26
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-26 | **DONE** | `94f2bd08` (preregistration + 9 strict xfails), this commit | `predicted_from` is optional, so a caller may still compare a bare mapping — what it cannot do is earn a level; a multi-point comparison is one check with one residual, the worst over the comparisons made; `_same_operating_point` is reused unchanged, so the audit's finding 104 (offset scales) applies here too and belongs to another problem; **oracle authority is unchanged and is the ceiling on all of it** — no oracle is pinned, so no production path awards an oracle level at all |
+
+**R-49 and R-53 are FIXED.** The oracle comparison is the designed route to EXPERIMENTALLY_VALIDATED and
+BENCHMARK_VALIDATED, and it took the operating point on the caller's assertion about a bare mapping of
+numbers — while losing justified comparisons in the other direction.
+
+| Claim | Status | How |
+|---|---|---|
+| the level on the caller's word | **FIXED** | `compare` gained a keyword-only `predicted_from`: the record the prediction came from. A level is awarded only when that record carries the compared values **and** its own provenance inputs are the stated operating point. Without it the comparison still happens and the level is withheld, with the gap named in the evidence — the same shape this file already uses for oracle authority, and the shape batch 46 used at the inference boundary. A **named** record computed elsewhere is stronger still: that is not a comparison at the stated point, so the check is NOT_RUN. |
+| a stated point the evidence does not describe | **FIXED** | An observation declared at T only was compared against a prediction stated at P = 50 bar, silently. A stated condition the observation does not declare now stops that comparison: the evidence says nothing about that point. |
+| evidence that never says where | **FIXED** | An observation with no conditions — every record written before the field existed — compared anywhere and earned the level there. It is still compared, because refusing would delete evidence, and it awards **no level**: a level is a claim that the model was validated *somewhere*. |
+| an absence read as evidence against | **FIXED** | A metric the prediction did not carry was recorded as `'z:missing'`, so the check was FAIL, which `derive_verdict` reads as **NOT_SUPPORTED** — an accusation built out of a comparison nobody made. It is now recorded as not compared: FAIL is reserved for a comparison that was made and missed its tolerance, and an incomplete comparison is NOT_RUN with no level. |
+| a dataset that could never be compared | **FIXED** | Observations had to have unique **metrics**, and one stated point had to match **every** observation, so a set holding readings at two operating points — the normal shape of an experimental dataset — was always NOT_RUN and one metric could not appear at two points. The identity is now (metric, conditions) and comparison runs **point by point**: the observations at other points are named in the detail, and NOT_RUN is reserved for nothing being comparable at all. Two readings of one metric at one point are still refused. |
+
+**Compatibility.** Additive only: one keyword-only argument with a default, and no new public symbol, so the
+frozen surface and its symbol count do not move. The content digest over an evidence set is untouched, so
+every existing set keeps its identity. Four in-tree fixtures are amended in place with the reason: the two
+tests that assert a level now declare where their readings were taken and name the record the prediction came
+from, the duplicate-metric refusal matches its new message, and `test_missing_metric_fails_closed…` is
+renamed to `test_missing_metric_does_not_compare_the_intersection_and_awards_no_level` — it asserts NOT_RUN
+where it asserted FAIL, which **is** the fix, and everything else it guarded is unchanged.
+
+**Committed evidence.** Nothing to regenerate: no committed JSON carries an oracle evidence set or an oracle
+check, because nothing outside the core builds one and no oracle is pinned.
+
+**Verification.** The batch's own file 11 passed; `tests/test_external_oracles.py`,
+`tests/test_audit_consensus_level_issuers.py`, `tests/test_offset_unit_arithmetic.py` and the earlier oracle
+batches green. FAST tier **7118 passed, 5 skipped, 19 failed** — exactly the by-design set. Expensive tier
+**528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched. Guard reach ledger clean
+over **33** guards, both rows LATENT/FIXED with what would create the shape they guard: an oracle pinned in
+`_TRUSTED_ORACLE_DECLARATIONS` together with a provider that builds an evidence set. The audit's own word for
+both problems, `library-only`, is kept verbatim in each row's `audit_reached_in_production`.
+
+**Guard mutations.** `BATCH51_MUTATIONS.log`: **7 KILLED, 1 SURVIVED on purpose and recorded as such** — B51c
+removes the uniqueness check and the two-point test still passes, because *relaxing* that identity is what
+lets a two-point set exist; B51d is the same edit pointed at the invariant it does threaten (two readings of
+one metric at one point) and kills. B51f was repointed while running them, with the case added as a named
+test: the preregistered reproduction passes no record either, so the binding rule withholds the level there
+too, and the case only the undeclared-point rule sees is a **bound** prediction against condition-less
+evidence. Control green. `BATCH51_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation targets this file.
+
+**Open decisions.** None.

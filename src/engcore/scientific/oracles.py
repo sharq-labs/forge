@@ -336,9 +336,23 @@ class OracleEvidenceSet:
             raise ScientificValidationError("oracle evidence requires at least one observation")
         if any(not isinstance(item, OracleObservation) for item in observations):
             raise ScientificValidationError("oracle observations must be OracleObservation records")
-        metrics = [item.metric for item in observations]
-        if len(set(metrics)) != len(metrics):
-            raise ScientificValidationError("oracle evidence metrics must be unique")
+        # R-53 (I-26): the identity of an observation is its metric AT ITS
+        # OPERATING POINT. Requiring the metric alone to be unique meant one
+        # reading at two points was a duplicate, so an evidence set could not
+        # hold the shape its own name describes -- a set of readings taken at
+        # operating points -- and every comparison against such a dataset was
+        # lost. A metric at two points is two observations, which is what the
+        # observation record already says about itself.
+        keys = [
+            (item.metric, tuple(sorted((k, v.units, v.magnitude) for k, v in item.conditions.items())))
+            for item in observations
+        ]
+        if len(set(keys)) != len(keys):
+            raise ScientificValidationError(
+                "oracle evidence must not repeat one metric at one operating point: two readings of the "
+                "same metric at the same declared conditions are either a duplicate or a disagreement, "
+                "and nothing here can say which"
+            )
         object.__setattr__(self, "observations", observations)
 
         actual_digest = _oracle_content_digest(
@@ -420,12 +434,67 @@ class OracleEvidenceSet:
             ),
         )
 
+    def _binding_gap(
+        self,
+        predicted: Mapping[str, Quantity],
+        stated: Mapping[str, Quantity],
+        predicted_from: Any,
+    ) -> tuple[str | None, str | None]:
+        """R-49: ``(gap, contradiction)`` -- why no level may be awarded, and why nothing was compared.
+
+        A MISSING binding is a weaker comparison: it happened, and no level may rest on it. A binding
+        that CONTRADICTS the stated point is not a comparison at that point at all, so it is the second
+        member and the check is NOT_RUN.
+
+        The audited state: `predicted` is a plain mapping of numbers and the operating point is the
+        `conditions=` ARGUMENT, so a prediction computed at 400 K passed -- and earned a level -- at a
+        stated 300 K. Nothing tied either the numbers or the point to the record that produced them.
+
+        A record cannot be forced into the existing signature without breaking every caller, so the
+        binding is an added keyword and the LEVEL is what depends on it: the same shape this file already
+        uses for oracle authority, and the shape batch 46 used at the inference boundary.
+        """
+        if predicted_from is None:
+            return (
+                "the prediction does not name the record it was computed from, so the operating point is "
+                "an assertion about a mapping of numbers"
+            ), None
+        values = dict(getattr(predicted_from, "values", {}) or {})
+        record_id = getattr(predicted_from, "result_id", None)
+        for metric, value in predicted.items():
+            stated_value = values.get(metric)
+            if stated_value is None:
+                return None, (
+                    f"record {record_id!r} does not carry {metric!r}, so the compared number is not the "
+                    f"one that record computed"
+                )
+            if not _same_operating_point(stated_value, value):
+                return None, (
+                    f"the compared {metric!r} is {value} and record {record_id!r} states {stated_value}"
+                )
+        provenance = getattr(predicted_from, "provenance", None)
+        declared = dict(getattr(provenance, "inputs", {}) or {}) if provenance is not None else {}
+        for key, value in stated.items():
+            given = declared.get(key)
+            if not isinstance(given, Quantity):
+                return None, (
+                    f"the operating point states {key!r} and record {record_id!r} does not declare it as "
+                    f"an input, so nothing says the prediction was computed there"
+                )
+            if not _same_operating_point(given, value):
+                return None, (
+                    f"the operating point states {key} = {value} and record {record_id!r} was computed at "
+                    f"{given}"
+                )
+        return None, None
+
     def compare(
         self,
         predicted: Mapping[str, Quantity],
         *,
         name: str = "external_oracle",
         conditions: Mapping[str, Quantity] | None = None,
+        predicted_from: Any = None,
     ) -> ValidationCheck:
         """Compare every observation; only pinned evidence may award a level.
 
@@ -434,14 +503,50 @@ class OracleEvidenceSet:
         level. It is not FAIL, because a comparison at other conditions is not evidence against the model.
         """
         stated = dict(conditions or {})
+        # R-53 (I-26): POINT BY POINT. The rule used to be that one stated
+        # point had to match EVERY observation, so a two-point dataset was
+        # always NOT_RUN. An observation is comparable when the stated point
+        # states each condition it declares, at that value; the others are
+        # recorded as observed elsewhere, which is what they are.
+        #
+        # R-49: and a stated condition the observation does NOT declare stops
+        # that comparison too. The audited case is an observation declared at T
+        # only, compared against a prediction stated at P = 50 bar: the
+        # evidence says nothing about 50 bar, so a comparison there is a claim
+        # about a point the evidence does not describe.
         elsewhere: list[str] = []
+        comparable: list[OracleObservation] = []
+        undeclared_point = False
         for observation in self.observations:
+            reasons: list[str] = []
             for key, value in observation.conditions.items():
                 if key not in stated:
-                    elsewhere.append(f"{observation.metric}:{key} not stated (observed at {value})")
+                    reasons.append(f"{observation.metric}:{key} not stated (observed at {value})")
                 elif not _same_operating_point(value, stated[key]):
-                    elsewhere.append(f"{observation.metric}:{key} is {stated[key]}, observed at {value}")
-        if elsewhere:
+                    reasons.append(f"{observation.metric}:{key} is {stated[key]}, observed at {value}")
+            if observation.conditions:
+                for key, value in stated.items():
+                    if key not in observation.conditions:
+                        reasons.append(
+                            f"{observation.metric}:{key} is stated as {value} and the evidence declares "
+                            f"no {key}, so it says nothing about that point"
+                        )
+            else:
+                # R-49: every record written before the conditions field
+                # existed compares anywhere, including at a point it says
+                # nothing about. The comparison stands -- refusing it would
+                # delete evidence -- and no LEVEL may rest on it, because a
+                # level is a claim that the model was validated SOMEWHERE and
+                # this record does not say where. That is also why the
+                # stated-but-undeclared rule above is skipped here: with NO
+                # declared point there is nothing to contradict, and applying
+                # it would turn every legacy record into a refusal.
+                undeclared_point = True
+            if reasons:
+                elsewhere.extend(reasons)
+                continue
+            comparable.append(observation)
+        if not comparable:
             return ValidationCheck(
                 name=name,
                 outcome=ValidationOutcome.NOT_RUN,
@@ -452,11 +557,22 @@ class OracleEvidenceSet:
             )
         residual_ratio = 0.0
         failures: list[str] = []
+        # Only a metric the PREDICTION does not carry makes the comparison
+        # incomplete. An observation at another operating point is the ordinary
+        # multi-point case and is reported, not counted as a gap: a dataset is
+        # a set of readings at points, and comparing at one of them is exactly
+        # what this record is for.
+        not_compared: list[str] = []
         compared: list[str] = []
-        for observation in self.observations:
+        for observation in comparable:
             actual = predicted.get(observation.metric)
             if actual is None:
-                failures.append(f"{observation.metric}:missing")
+                # R-53 (I-26): an absence is not a disagreement. This used to
+                # be recorded as a failure, so the check was FAIL and
+                # `derive_verdict` read NOT_SUPPORTED -- evidence AGAINST the
+                # model built out of a comparison nobody made. The same reading
+                # CORE-009 and CORE-013 already moved to NOT_RUN, twice.
+                not_compared.append(f"{observation.metric}:not predicted")
                 continue
             if not isinstance(actual, Quantity):
                 failures.append(f"{observation.metric}:not_quantity")
@@ -492,10 +608,36 @@ class OracleEvidenceSet:
                     f"{observation.metric}:residual={delta:g}{unit}>tol={tolerance:g}{unit}"
                 )
 
-        passed = not failures and len(compared) == len(self.observations)
+        passed = not failures and bool(compared)
+        # R-53: a comparison that was MADE and disagreed is a failure; anything
+        # not compared leaves the check NOT_RUN once nothing failed, and awards
+        # no level either way.
+        incomplete = bool(not_compared)
+        other_points = list(elsewhere)
         summary_residual = residual_ratio if residual_ratio != float("inf") else 2.0
         authority_gap = self.identity.authority_gap
-        trusted_pass = passed and authority_gap is None
+        # R-49: what the prediction is bound to, and what the evidence says
+        # about where it was observed, both gate the LEVEL -- the same way this
+        # record already gates it on oracle authority.
+        binding_gap, binding_contradiction = self._binding_gap(predicted, stated, predicted_from)
+        if binding_gap is None and undeclared_point:
+            binding_gap = (
+                "at least one observation declares no operating point, so the comparison is not tied to a "
+                "point the model was validated at"
+            )
+        gaps = [gap for gap in (authority_gap, binding_gap) if gap is not None]
+        if binding_contradiction is not None:
+            # A NAMED record that was computed somewhere else, or does not
+            # carry these numbers, is not a weaker comparison: it is not a
+            # comparison at the stated point at all.
+            return ValidationCheck(
+                name=name,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=f"no comparison made: {binding_contradiction}",
+                evidence=(f"oracle:{self.identity.oracle_id}@{self.identity.version}",
+                          f"sha256:{self.identity.evidence_digest}"),
+            )
+        trusted_pass = passed and not incomplete and not gaps
         evidence = (
             f"oracle:{self.identity.oracle_id}@{self.identity.version}",
             f"sha256:{self.identity.evidence_digest}",
@@ -506,22 +648,42 @@ class OracleEvidenceSet:
                 if authority_gap is None
                 else f"oracle-authority:withheld:{authority_gap}"
             ),
+            (
+                "oracle-binding:the prediction names the record it came from"
+                if binding_gap is None
+                else f"oracle-binding:withheld:{binding_gap}"
+            ),
         )
-        if passed and authority_gap is None:
+        if passed and not incomplete and not gaps:
             detail = (
                 f"all {len(compared)} oracle metric(s) within declared tolerance; "
                 "content digest verified and oracle identity is repository-pinned"
+                + (f"; observations at other points: {other_points}" if other_points else "")
+            )
+        elif passed and not incomplete:
+            detail = (
+                f"all {len(compared)} oracle metric(s) within declared tolerance, "
+                f"but no validation level is awarded: {'; '.join(gaps)}"
             )
         elif passed:
             detail = (
-                f"all {len(compared)} oracle metric(s) within declared tolerance, "
-                f"but no validation level is awarded: {authority_gap}"
+                f"{len(compared)} oracle metric(s) within declared tolerance and "
+                f"{len(not_compared)} not compared, so the comparison is incomplete and awards no level: "
+                f"{not_compared}"
+                + (f"; observations at other points: {other_points}" if other_points else "")
+                + (f"; also {'; '.join(gaps)}" if gaps else "")
             )
         else:
             detail = f"oracle comparison failed: {failures}"
+        if failures:
+            outcome = ValidationOutcome.FAIL
+        elif incomplete:
+            outcome = ValidationOutcome.NOT_RUN
+        else:
+            outcome = ValidationOutcome.PASS
         return ValidationCheck(
             name=name,
-            outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
+            outcome=outcome,
             detail=detail,
             establishes=self.identity.establishes if trusted_pass else None,
             residual=summary_residual,

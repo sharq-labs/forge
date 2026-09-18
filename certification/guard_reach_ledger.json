@@ -1040,6 +1040,61 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A CategoryCondition still accepts any other iterable of strings, so a caller who passes a list of words gets the set they meant; what is refused is the one shape whose meaning inverts silently. The sign rule is on the DENOMINATOR alone (amendment 1), because with b > 0 the ratio orders a and b for a of either sign -- so a condition over a sign-indefinite dimension whose denominator stays positive is assessed as before. A dimension whose operands both go negative cannot be ratio-bounded by this record at all: it returns UNKNOWN with its own reason rather than pretending to order them, and expressing 'a <= b' without a ratio is a different record."
+  },
+  {
+   "problem": "R-49",
+   "title": "Oracle operating-point conditions are the caller's word, partial and optional",
+   "rule": "src/engcore/scientific/oracles.py",
+   "rule_symbol": "OracleEvidenceSet._binding_gap and the predicted_from keyword of OracleEvidenceSet.compare; the stated-but-undeclared refusal and the undeclared-point level withholding inside compare",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-26 (batch 51); the REACH is a repository decision about pinning an oracle, not an improvement",
+   "why": "LATENT, and the audit's own word for the problem -- 'library-only' -- is kept in the field above. LATENT is the ledger's category for a rule whose shape does not occur in the tree at all, which is this one: the oracle comparison is the designed route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED, and no production path reaches it because `_TRUSTED_ORACLE_DECLARATIONS` is empty and nothing outside the core builds an evidence set. The rules themselves are closed: a level now requires the prediction to name the record it was computed from, whose own inputs must be the stated point and whose values must be the compared numbers; a stated condition the evidence does not describe stops that comparison; and evidence that declares no point is compared and awards no level.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_stated_condition_the_evidence_does_not_describe_stops_the_comparison",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_evidence_with_no_declared_point_awards_no_level",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_bound_prediction_against_evidence_with_no_point_still_awards_no_level",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_level_needs_the_record_the_prediction_came_from",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_the_named_record_must_have_been_computed_at_the_stated_point",
+    "tests/test_core_scientific_audit_batch51.py::test_r49_a_bound_prediction_at_the_observed_point_earns_the_level",
+    "tests/test_external_oracles.py",
+    "tests/test_audit_consensus_level_issuers.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`predicted_from` is optional, so a caller may still compare a bare mapping -- what that caller cannot do is earn a level from it, which is the claim the finding is about. Making the record mandatory is a signature change the compatibility rule forbids before the V4 round. When a record IS named, the binding is that it carries these values and that its own provenance inputs are the stated point, so a result that does not declare its operating point cannot support a level either -- an absence this reports rather than infers. Oracle authority is unchanged and is the ceiling on all of this: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an OracleEvidenceSet, and no oracle is pinned, so no production path awards an oracle level at all. Pinning one is a repository decision about external evidence, not something a rule can close. `_same_operating_point` is reused unchanged, so its offset-scale behaviour (the audit's finding 104) applies here too and belongs to another problem.",
+   "what_would_create_it": "An oracle pinned in `_TRUSTED_ORACLE_DECLARATIONS` together with an `OracleProvider` that builds an `OracleEvidenceSet` for a problem -- which is what the route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED is designed to be, and what no path in this repository does today. Until then no comparison of a real prediction against external evidence exists to reach: the shapes these rules guard (a bare mapping asserted to be at an operating point, a two-point dataset, a prediction missing a metric) occur only in tests."
+  },
+  {
+   "problem": "R-53",
+   "title": "Oracle comparison fails an unpredicted metric and cannot compare multi-point evidence",
+   "rule": "src/engcore/scientific/oracles.py",
+   "rule_symbol": "the (metric, conditions) identity in OracleEvidenceSet.__post_init__; the point-by-point comparison, the not-compared bookkeeping and the NOT_RUN outcome in OracleEvidenceSet.compare",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-26 (batch 51); the REACH is the same repository decision as R-49's",
+   "why": "LATENT for R-49's reason, with the audit's 'library-only' kept in the field above, and the rules are closed. A metric the prediction does not carry is recorded as not compared rather than as a failure, so an absence stops reading as NOT_SUPPORTED at the MCP boundary; the check is FAIL only when a comparison was made and missed its tolerance, and NOT_RUN when nothing failed and something was not compared. An evidence set's identity is now (metric, conditions), so a dataset can hold the shape its own name describes, and comparison runs point by point -- NOT_RUN only when nothing was comparable at all.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch51.py::test_r53_an_unpredicted_metric_is_not_run_rather_than_failed",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_an_unpredicted_metric_awards_no_level_and_accuses_nothing",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_a_prediction_that_misses_its_tolerance_is_still_a_failure",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_one_metric_at_two_operating_points_is_two_observations",
+    "tests/test_core_scientific_audit_batch51.py::test_r53_a_two_point_set_is_compared_at_the_point_the_prediction_states",
+    "tests/test_external_oracles.py::test_duplicate_metric_observations_are_refused",
+    "tests/test_external_oracles.py::test_missing_metric_does_not_compare_the_intersection_and_awards_no_level"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A multi-point comparison is reported as ONE check with one residual ratio, the worst over the comparisons made, and the observations at other points are named in the detail rather than being checks of their own; per-point checks would be a different record shape. Two readings of one metric at one point are still refused, because a duplicate and a disagreement are indistinguishable there. Oracle authority is unchanged and is the ceiling on all of this: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an OracleEvidenceSet, and no oracle is pinned, so no production path awards an oracle level at all. Pinning one is a repository decision about external evidence, not something a rule can close. `_same_operating_point` is reused unchanged, so its offset-scale behaviour (the audit's finding 104) applies here too and belongs to another problem.",
+   "what_would_create_it": "An oracle pinned in `_TRUSTED_ORACLE_DECLARATIONS` together with an `OracleProvider` that builds an `OracleEvidenceSet` for a problem -- which is what the route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED is designed to be, and what no path in this repository does today. Until then no comparison of a real prediction against external evidence exists to reach: the shapes these rules guard (a bare mapping asserted to be at an operating point, a two-point dataset, a prediction missing a metric) occur only in tests."
   }
  ]
 }

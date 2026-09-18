@@ -9,6 +9,8 @@ ignored; and evidence that declares no point at all compares anywhere. In the ot
 justified comparisons: a metric the prediction does not carry scores FAIL -- which reads as NOT_SUPPORTED --
 and a set holding readings at two operating points, the normal shape of an experimental dataset, can never
 be compared at all.
+
+Recorded as strict xfails in commit 94f2bd08, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -70,9 +72,10 @@ def _trust(monkeypatch, oracle: OracleEvidenceSet) -> None:
 
 
 def _result(values, conditions=AT_300, result_id="cell-result") -> ScientificResult:
+    """A result whose own record says where it was computed: the operating point is the run's INPUTS."""
     return ScientificResult(
         result_id=result_id, problem_id="cell",
-        values=dict(values), conditions=dict(conditions),
+        values=dict(values),
         models=(MODEL,),
         validity_not_assessed={MODEL[0]: "a fixture: nothing asked whether the model applied"},
         solver=SolverIdentity("algebraic", "1.0.0"),
@@ -82,7 +85,8 @@ def _result(values, conditions=AT_300, result_id="cell-result") -> ScientificRes
             establishes=ValidationLevel.DIMENSIONALLY_VALID, evidence=("fixture",)),)),
         uncertainty={name: Uncertainty.unknown("no quantification here") for name in values},
         provenance=ProvenanceRecord(run_id="cell-run", models=(MODEL,),
-                                    solvers=(("algebraic", "1.0.0"),)),
+                                    solvers=(("algebraic", "1.0.0"),),
+                                    inputs=dict(conditions)),
     )
 
 
@@ -95,7 +99,6 @@ def test_r53_a_prediction_that_misses_its_tolerance_is_still_a_failure():
     assert check.outcome is ValidationOutcome.FAIL
 
 
-@pytest.mark.xfail(strict=True, reason="R-53 finding 65 as audited: a metric the prediction does not carry is recorded as 'z:missing' and the check is FAIL, which derive_verdict reads as NOT_SUPPORTED although no comparison was made")
 def test_r53_an_unpredicted_metric_is_not_run_rather_than_failed():
     oracle = _oracle(_observation(), _observation(metric="capacity", expected=2.5, unit="ampere * hour",
                                                   tolerance=0.1))
@@ -104,7 +107,6 @@ def test_r53_an_unpredicted_metric_is_not_run_rather_than_failed():
     assert check.establishes is None
 
 
-@pytest.mark.xfail(strict=True, reason="R-53: and with the oracle pinned, that FAIL is a NOT_SUPPORTED verdict built out of an absence")
 def test_r53_an_unpredicted_metric_awards_no_level_and_accuses_nothing(monkeypatch):
     oracle = _oracle(_observation(), _observation(metric="capacity", expected=2.5, unit="ampere * hour",
                                                   tolerance=0.1))
@@ -117,7 +119,6 @@ def test_r53_an_unpredicted_metric_awards_no_level_and_accuses_nothing(monkeypat
 # ---------------------------------------------------------------------------
 # multi_point_evidence_is_compared_point_by_point
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-53 as audited: observations inside one set must have unique METRICS, so the same reading at two operating points cannot be recorded at all")
 def test_r53_one_metric_at_two_operating_points_is_two_observations():
     try:
         oracle = _oracle(_observation(), _observation(expected=3.55, conditions=AT_400))
@@ -127,7 +128,6 @@ def test_r53_one_metric_at_two_operating_points_is_two_observations():
     assert len(oracle.observations) == 2
 
 
-@pytest.mark.xfail(strict=True, reason="R-53 as audited: compare requires one stated point to match EVERY observation's conditions, so a two-point set is always NOT_RUN and every justified comparison is lost")
 def test_r53_a_two_point_set_is_compared_at_the_point_the_prediction_states():
     try:
         oracle = _oracle(_observation(), _observation(expected=3.55, conditions=AT_400))
@@ -141,7 +141,6 @@ def test_r53_a_two_point_set_is_compared_at_the_point_the_prediction_states():
 # ---------------------------------------------------------------------------
 # a_stated_point_the_evidence_does_not_describe_is_not_a_comparison
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-49 finding 59's second gap as audited: a stated condition the observation does not declare is ignored silently, so an observation at T only is compared against a prediction at P = 50 bar")
 def test_r49_a_stated_condition_the_evidence_does_not_describe_stops_the_comparison():
     oracle = _oracle()
     check = oracle.compare(
@@ -155,7 +154,6 @@ def test_r49_a_stated_condition_the_evidence_does_not_describe_stops_the_compari
 # ---------------------------------------------------------------------------
 # evidence_that_does_not_say_where_it_was_observed_awards_no_level
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-49 finding 59's third gap as audited: an observation with no conditions -- every record written before the field existed -- compares at any operating point, and earns the level there")
 def test_r49_evidence_with_no_declared_point_awards_no_level(monkeypatch):
     oracle = _oracle(_observation(conditions={}))
     _trust(monkeypatch, oracle)
@@ -167,7 +165,6 @@ def test_r49_evidence_with_no_declared_point_awards_no_level(monkeypatch):
 # ---------------------------------------------------------------------------
 # a_level_requires_the_prediction_to_say_where_it_was_computed
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-49 finding 59's first claim as audited: the operating point is the caller's assertion about a bare mapping, so a prediction computed at 400 K passes -- and earns the level -- at a stated 300 K")
 def test_r49_a_level_needs_the_record_the_prediction_came_from(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
@@ -179,7 +176,6 @@ def test_r49_a_level_needs_the_record_the_prediction_came_from(monkeypatch):
     assert check.establishes is None, "no record was named, so no level is awarded"
 
 
-@pytest.mark.xfail(strict=True, reason="R-49: and the record the prediction came from is what makes the stated point checkable at all")
 def test_r49_the_named_record_must_have_been_computed_at_the_stated_point(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
@@ -192,7 +188,6 @@ def test_r49_the_named_record_must_have_been_computed_at_the_stated_point(monkey
     assert check.establishes is None
 
 
-@pytest.mark.xfail(strict=True, reason="R-49: with the record named and its point agreeing, the comparison is what it always claimed to be")
 def test_r49_a_bound_prediction_at_the_observed_point_earns_the_level(monkeypatch):
     oracle = _oracle()
     _trust(monkeypatch, oracle)
@@ -203,3 +198,16 @@ def test_r49_a_bound_prediction_at_the_observed_point_earns_the_level(monkeypatc
                            predicted_from=computed_here)
     assert check.outcome is ValidationOutcome.PASS, check.detail
     assert check.establishes is ValidationLevel.EXPERIMENTALLY_VALIDATED
+
+
+def test_r49_a_bound_prediction_against_evidence_with_no_point_still_awards_no_level(monkeypatch):
+    """The case only the undeclared-point rule sees, found while running this batch's mutations: the
+    prediction names the record it came from, the oracle is pinned, and the evidence still does not say
+    where it was observed -- so there is no point for a level to be a claim about."""
+    oracle = _oracle(_observation(conditions={}))
+    _trust(monkeypatch, oracle)
+    predicted = {"voltage": Quantity(3.70, "volt")}
+    check = oracle.compare(predicted, predicted_from=_result(predicted, conditions={}))
+    assert check.outcome is ValidationOutcome.PASS, check.detail
+    assert check.establishes is None
+    assert "declares no operating point" in check.detail
