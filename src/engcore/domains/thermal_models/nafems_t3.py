@@ -168,8 +168,10 @@ class NAFEMST3Numerics:
             raise TypeError("n_cells must be an integer")
         if isinstance(self.n_steps, bool) or not isinstance(self.n_steps, int):
             raise TypeError("n_steps must be an integer")
-        if self.n_cells < 10:
-            raise ValueError("n_cells must be at least 10")
+        if self.n_cells < 20:
+            raise ValueError(
+                "n_cells must be at least 20 so the 2x-coarser companion remains valid"
+            )
         if self.n_steps < 1:
             raise ValueError("n_steps must be positive")
         if self.n_cells % 5:
@@ -183,9 +185,11 @@ def _magnitude(name: str, unit: str) -> float:
 
 
 def _right_excursion(time_s: float) -> float:
+    left = _magnitude("left_boundary_temperature", "kelvin")
+    offset = _magnitude("right_boundary_offset", "kelvin")
     amplitude = _magnitude("right_boundary_amplitude", "kelvin")
     scale = _magnitude("right_boundary_sine_time_scale", "second")
-    return amplitude * math.sin(math.pi * time_s / scale)
+    return (offset - left) + amplitude * math.sin(math.pi * time_s / scale)
 
 
 def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
@@ -209,7 +213,13 @@ def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
     banded[1, :] = diagonal
     banded[2, :-1] = off
 
-    excursion = np.zeros(n_interior, dtype=float)
+    left_absolute = _magnitude("left_boundary_temperature", "kelvin")
+    initial_absolute = _magnitude("initial_temperature", "kelvin")
+    excursion = np.full(
+        n_interior,
+        initial_absolute - left_absolute,
+        dtype=float,
+    )
     for step in range(numerics.n_steps):
         t0 = step * dt
         t1 = (step + 1) * dt
@@ -235,8 +245,7 @@ def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
     if not math.isclose(probe_index * dx, probe, rel_tol=0.0, abs_tol=1.0e-14):
         raise ValueError("configured mesh does not place the T3 probe on a node")
 
-    absolute_offset = _magnitude("initial_temperature", "kelvin")
-    probe_kelvin = absolute_offset + float(full[probe_index])
+    probe_kelvin = left_absolute + float(full[probe_index])
     return probe_kelvin, {
         "dx_m": dx,
         "dt_s": dt,
