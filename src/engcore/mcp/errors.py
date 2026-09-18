@@ -26,6 +26,7 @@ in the DC domain.
 from __future__ import annotations
 
 from ..scientific.errors import ScientificCoreError
+from ..credibility.errors import CredibilityEvidenceError
 
 __all__ = [
     "CredibilityEvidenceError",
@@ -38,9 +39,6 @@ __all__ = [
     "WrongDimensionError",
 ]
 
-
-class CredibilityEvidenceError(ScientificCoreError):
-    """The report is malformed, or claims a verdict its contents do not support."""
 
 
 class ProblemPayloadError(ScientificCoreError):
