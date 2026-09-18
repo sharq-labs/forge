@@ -210,6 +210,12 @@ def _registration_for(critic: Any) -> CriticRegistration:
                 f"it speaks for; a domain critic without a pack could discharge "
                 f"any pack's obligations"
             )
+    level_issuer = getattr(critic, "validation_level_issuer", False)
+    if not isinstance(level_issuer, bool):
+        raise TypeError(
+            f"critic {critic_id!r} validation_level_issuer must be an explicit "
+            "bool; truthiness cannot grant scientific issuing authority"
+        )
     return CriticRegistration(
         critic_id=critic_id,
         critic_version=version,
@@ -217,9 +223,7 @@ def _registration_for(critic: Any) -> CriticRegistration:
         entry_point=entry,
         domain_pack_ref=pack,
         implementation=f"{type(critic).__module__}.{type(critic).__qualname__}",
-        validation_level_issuer=bool(
-            getattr(critic, "validation_level_issuer", False)
-        ),
+        validation_level_issuer=level_issuer,
     )
 
 
