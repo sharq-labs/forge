@@ -98,7 +98,13 @@ def test_r67_every_folded_mutation_still_matches_the_live_source_exactly_once():
 def test_r67_every_folded_mutation_changes_executable_code():
     """A mutation whose only effect is prose reports a guard nobody tested."""
     _stale, inert, _fstring = _measured()
-    assert inert == {}, sorted(inert.items())
+    population = _module("mutation_population_v4")
+    expected_inert = (
+        set(population.FSTRING_ONLY_ON_3_12)
+        if sys.version_info < (3, 12)
+        else set()
+    )
+    assert set(inert) == expected_inert, sorted(inert.items())
 
 
 def test_r67_the_entries_that_moved_and_the_declared_survivors_each_carry_their_reason():
