@@ -12,7 +12,10 @@ and the domain-pack identity, but cannot supply another value.
 
 Uncertainty is carried only when the production record itself names a source
 channel that SRIA already understands. UNKNOWN stays unknown. An unattributed
-or COMBINED quantified record is refused rather than guessed into a channel.
+or COMBINED quantified record is refused rather than guessed into a channel --
+or, when the caller passes ``unattributable_uncertainty="unknown"``, filed under
+no channel at all, with the exclusion stated in the declaration's notes, so
+every channel reads UNKNOWN. Neither path ever puts it in a channel.
 
 Validation levels are not copied into Evidence metadata. They are assessed by
 CredibilityReportCritic through the Arbiter's trusted-critic path, so a caller
@@ -58,13 +61,19 @@ def _report_digest(report: CredibilityEvidenceReport) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+_UNATTRIBUTABLE_MODES = ("refuse", "unknown")
+
+
 def _uncertainty_declaration(
     report: CredibilityEvidenceReport,
     quantity_name: str,
     *,
     discrepancy: ModelDiscrepancy | None,
+    unattributable: str = "refuse",
 ) -> UncertaintyDeclaration:
     """Translate one report value's uncertainty without inventing attribution."""
+    if unattributable not in _UNATTRIBUTABLE_MODES:
+        raise ValueError(f"unattributable_uncertainty must be one of {_UNATTRIBUTABLE_MODES}")
 
     if discrepancy is None:
         discrepancy = ModelDiscrepancy(
@@ -79,7 +88,18 @@ def _uncertainty_declaration(
 
     record = report.uncertainty.get(quantity_name)
     channels = {}
-    if record is not None and record.is_quantified:
+    excluded = ""
+    if (
+        record is not None
+        and record.is_quantified
+        and unattributable == "unknown"
+        and UncertaintySource(record.source_kind) in (UncertaintySource.UNSPECIFIED, UncertaintySource.COMBINED)
+    ):
+        excluded = (
+            f"; the quantified {UncertaintySource(record.source_kind).value} record names no single "
+            f"channel and is filed under none, so every channel reads UNKNOWN"
+        )
+    elif record is not None and record.is_quantified:
         source = UncertaintySource(record.source_kind)
         if source is UncertaintySource.UNSPECIFIED:
             raise ValueError(
@@ -105,6 +125,7 @@ def _uncertainty_declaration(
         notes=(
             f"derived from credibility report {report.run_id!r}; undeclared "
             "channels remain UNKNOWN by UncertaintyDeclaration.channel()"
+            + excluded
         ),
     )
 
@@ -117,6 +138,7 @@ def evidence_from_credibility_report(
     domain_pack_ref: str,
     context_ref: str,
     discrepancy: ModelDiscrepancy | None = None,
+    unattributable_uncertainty: str = "refuse",
 ) -> Evidence:
     """Derive candidate SRIA evidence for one quantity in a credibility report.
 
@@ -155,7 +177,7 @@ def evidence_from_credibility_report(
             "_credibility_report_digest": _report_digest(report),
         },
         uncertainty=_uncertainty_declaration(
-            report, name, discrepancy=discrepancy
+            report, name, discrepancy=discrepancy, unattributable=unattributable_uncertainty
         ),
         provenance_ref=report.provenance.run_id,
         domain_pack_ref=domain_pack_ref,

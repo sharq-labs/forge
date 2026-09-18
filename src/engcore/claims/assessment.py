@@ -51,13 +51,17 @@ from ..sria.assurance.assessment import CriticVerdict
 from ._records import canonical_json, require_mapping, tagged_digest
 from .capabilities import CapabilityRegistry
 from .compiler import CompilationStatus, CompiledClaim, compile_claim
+from .context import context_problems
 from .contract import ScientificClaim
 from .errors import ClaimLayerError
 from .execution import ExecutionOutcome, PlanExecution, binding_problems, execute_plan
 from .explanation import ExplanationItem, ExplanationKind, explain
 from .planning import ExperimentPlan, PlanningError, plan_experiment, verify_plan
 from .repair import RepairAction, RepairKind, merge_repairs
+from .oracles import discover_oracles
 from .selection import concrete
+from .sources import gather_evidence
+from .uncertainty import report_transport
 from .verdict import ClaimComparison, ClaimVerdict, VerdictBasis, admissible, compare, derive_claim_verdict
 
 ASSESSMENT_SCHEMA = schema_string("claim_assessment_record")
@@ -111,14 +115,13 @@ def assemble_evidence(plan: ExperimentPlan, claim: ScientificClaim, report: Cred
             domain_pack_ref=f"capability:{plan.capability_id}@{plan.content['capability']['version']}",
             context_ref=plan.context_ref,
             discrepancy=claim.discrepancy,
+            # A quantified record that names no single channel (UNSPECIFIED or
+            # COMBINED) is filed under none and every channel stays UNKNOWN --
+            # stated in the declaration, never guessed into a channel, never zero.
+            unattributable_uncertainty="unknown",
         )
-    except ValueError as exc:
-        # The bridge refuses a quantified uncertainty it cannot attribute to one
-        # channel (UNSPECIFIED or COMBINED) rather than guess one. That leaves no
-        # evidence record: the claim cannot be assured, and says why.
+    except ValueError as exc:  # pragma: no cover - the bridge's remaining refusals
         return AssembledEvidence(None, str(exc))
-    if evidence.context_ref != plan.context_ref:  # pragma: no cover - constructed above
-        return AssembledEvidence(None, "the evidence carries another context")
     return AssembledEvidence(evidence, None)
 
 
@@ -307,16 +310,26 @@ def _build_record(
     bound = executed and report is not None and not execution["binding_problems"]
     evidence = assurance = comparison = None
     evidence_problem = None
+    context = ()
     if bound:
         assembled = assemble_evidence(plan, claim, report)
         evidence, evidence_problem = assembled.evidence, assembled.problem
+        if evidence is not None:
+            # CORE-9: evidence counts only for the context it was made for.
+            context = context_problems(evidence, plan, report)
+            if context:
+                evidence_problem = "; ".join(context)
+                evidence = None
         if evidence is not None:
             assurance = assure(plan, claim, evidence, report)
             channels = dict(evidence.uncertainty.channels)
         else:
             channels = {}
         comparison = compare(claim, report.values[claim.qoi.name], compiled.target, channels)
+    bound = bound and not context
     live.update(evidence=evidence, assurance=assurance, comparison=comparison)
+    sources = gather_evidence({"simulation_evidence": evidence, "simulation_problem": evidence_problem})
+    oracles = () if claim is None else discover_oracles(registry, qoi=claim.qoi.name, context=claim.supplied_inputs)
 
     basis = VerdictBasis(
         ready=ready,
@@ -400,6 +413,7 @@ def _build_record(
             else {c.value: evidence.uncertainty.channel(c).is_quantified for c in claim.uncertainty.ordered_channels()},
             "discrepancy": claim.discrepancy.to_dict(),
             "evidence_problem": evidence_problem,
+            "transport": report_transport(report, qoi).to_dict() if qoi in report.values else None,
         },
         "evidence": None
         if evidence is None
@@ -414,6 +428,9 @@ def _build_record(
             "provenance_ref": evidence.provenance_ref,
             "source_closure_complete": evidence.source_closure_complete,
         },
+        "evidence_sources": [o.to_dict() for o in sources],
+        "external_evidence": [m.to_dict() for m in oracles],
+        "context_problems": list(context),
         "assurance": None if assurance is None else assurance.to_dict(plan),
         "credibility": None
         if report is None
