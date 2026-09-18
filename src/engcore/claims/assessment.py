@@ -58,6 +58,17 @@ from .execution import ExecutionOutcome, PlanExecution, binding_problems, execut
 from .explanation import ExplanationItem, ExplanationKind, explain
 from .planning import ExperimentPlan, PlanningError, plan_experiment, verify_plan
 from .repair import RepairAction, RepairKind, merge_repairs
+from .external_evidence import (
+    PRODUCTION_EXTERNAL_REGISTRY,
+    LiteratureRecord,
+    MeasurementRecord,
+    TrustedExternalRegistry,
+    _half_widths,
+    assess_benchmark,
+    assess_literature,
+    assess_measurement,
+    read_external_record,
+)
 from .oracles import discover_oracles
 from .policy import derive_requirement, policy_findings
 from .selection import concrete
@@ -321,6 +332,38 @@ def _reasons(basis: VerdictBasis, verdict: ClaimVerdict, record: Mapping[str, An
     return out
 
 
+def _simulated_interval(report: Any, evidence: Any, qoi: str) -> tuple[Any, tuple[float, float] | None] | None:
+    """The claim's value with the linear sum of its quantified INTERVAL channels (None when any is not one)."""
+    if report is None or qoi not in report.values:
+        return None
+    value = report.values[qoi]
+    if evidence is None or not evidence.uncertainty.channels:
+        return value, None
+    lo = hi = 0.0
+    for record in evidence.uncertainty.channels.values():
+        halves = _half_widths(record, value)
+        if halves is None:
+            return value, None
+        lo, hi = lo + halves[0], hi + halves[1]
+    return value, (lo, hi)
+
+
+def _external_assessments(claim, plan, report, evidence, oracles, offered, trust) -> tuple[Any, ...]:
+    """Benchmark evidence from every discovered oracle, and every offered record, each given its standing."""
+    if claim is None or plan is None:
+        return ()
+    simulated = _simulated_interval(report, evidence, claim.qoi.name)
+    out = [assess_benchmark(m, claim, context_ref=plan.context_ref, simulated=simulated) for m in oracles]
+    for item in offered:
+        if isinstance(item, MeasurementRecord):
+            out.append(assess_measurement(item, claim, context_ref=plan.context_ref, trust=trust, simulated=simulated))
+        elif isinstance(item, LiteratureRecord):
+            out.append(assess_literature(item, claim, context_ref=plan.context_ref, trust=trust, simulated=simulated))
+        else:
+            raise TypeError(f"external evidence must be a MeasurementRecord or LiteratureRecord, got {type(item).__name__}")
+    return tuple(out)
+
+
 def _build_record(
     claim: ScientificClaim | None,
     compiled: CompiledClaim,
@@ -329,6 +372,8 @@ def _build_record(
     report: CredibilityEvidenceReport | None,
     registry: CapabilityRegistry,
     studies: StudyOutcome | None = None,
+    external: tuple[Any, ...] = (),
+    trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """The assessment record, and the live objects it was built from."""
     live: dict[str, Any] = {}
@@ -355,8 +400,14 @@ def _build_record(
         comparison = compare(claim, report.values[claim.qoi.name], compiled.target, channels)
     bound = bound and not context
     live.update(evidence=evidence, assurance=assurance, comparison=comparison)
-    sources = gather_evidence({"simulation_evidence": evidence, "simulation_problem": evidence_problem})
     oracles = () if claim is None else discover_oracles(registry, qoi=claim.qoi.name, context=claim.supplied_inputs)
+    external_assessments = _external_assessments(claim, plan, report, evidence, oracles, external, trust)
+    live["external"] = external_assessments
+    sources = gather_evidence({
+        "simulation_evidence": evidence,
+        "simulation_problem": evidence_problem,
+        "external_assessments": external_assessments,
+    })
 
     # Phase 3: the requirements the decision's policy adds that a claim cannot state are read off the
     # run's own records. The policy grants nothing: it can only withhold admissibility.
@@ -485,6 +536,8 @@ def _build_record(
         },
         "evidence_sources": [o.to_dict() for o in sources],
         "external_evidence": [m.to_dict() for m in oracles],
+        "external_evidence_assessments": [a.to_dict() for a in external_assessments],
+        "external_trust_registry": trust.digest,
         "context_problems": list(context),
         "assurance": None if assurance is None else assurance.to_dict(plan),
         "credibility": None
@@ -556,8 +609,18 @@ def _execution_view(execution: PlanExecution) -> dict[str, Any]:
     }
 
 
-def assess_claim(claim: ScientificClaim | Mapping[str, Any], registry: CapabilityRegistry) -> ClaimAssessment:
-    """Assess one structured claim end to end. Expected outcomes are records, never exceptions."""
+def assess_claim(
+    claim: ScientificClaim | Mapping[str, Any],
+    registry: CapabilityRegistry,
+    *,
+    external: tuple[Any, ...] = (),
+    trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
+) -> ClaimAssessment:
+    """Assess one structured claim end to end. Expected outcomes are records, never exceptions.
+
+    ``external`` are measurement or literature records the caller offers; each is ingested and given a
+    standing under ``trust`` (the repository's pins by default). Offering one never grants a level.
+    """
     compiled = compile_claim(claim, registry)
     parsed = compiled.claim
     plan = execution = report = None
@@ -570,7 +633,8 @@ def assess_claim(claim: ScientificClaim | Mapping[str, Any], registry: Capabilit
     studies = None
     if execution is not None and execution.bound and planned_studies(plan):
         studies = run_uncertainty_studies(plan, registry, parsed, report)
-    record, live = _build_record(parsed, compiled, plan, view, report, registry, studies)
+    offered = tuple(read_external_record(r) if isinstance(r, Mapping) else r for r in external)
+    record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust)
     return ClaimAssessment(
         claim=parsed,
         compiled=compiled,
@@ -587,7 +651,12 @@ def assess_claim(claim: ScientificClaim | Mapping[str, Any], registry: Capabilit
     )
 
 
-def verify_assessment(record: Mapping[str, Any], registry: CapabilityRegistry) -> ClaimAssessment:
+def verify_assessment(
+    record: Mapping[str, Any],
+    registry: CapabilityRegistry,
+    *,
+    trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
+) -> ClaimAssessment:
     """Read an assessment record back by re-deriving every part of it.
 
     The claim is re-read strictly and recompiled; the plan is re-read and must
@@ -643,7 +712,15 @@ def verify_assessment(record: Mapping[str, Any], registry: CapabilityRegistry) -
             studies = verify_study_records(_plain(recorded_studies), plan, report)
         except UncertaintyStudyError as exc:
             raise AssessmentForgeryError(f"uncertainty studies: {exc}") from exc
-    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry, studies)
+    try:
+        offered = tuple(
+            read_external_record(a["record"])
+            for a in record.get("external_evidence_assessments", [])
+            if a.get("source_class") in ("measurement", "literature")
+        )
+    except (ClaimLayerError, KeyError, TypeError) as exc:
+        raise AssessmentForgeryError(f"external evidence: {exc}") from exc
+    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry, studies, offered, trust)
     if canonical_json(rebuilt) != canonical_json(_plain(record)):
         differing = sorted(k for k in set(rebuilt) | set(record) if canonical_json(_plain(rebuilt.get(k))) != canonical_json(_plain(record.get(k))))
         raise AssessmentForgeryError(

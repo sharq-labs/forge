@@ -1097,7 +1097,7 @@ def test_provenance_survives_serialization():
 # 11. Reserved source classes do not require implementation
 # =====================================================================
 
-def test_reserved_source_classes_are_representable_not_implemented():
+def test_non_simulation_source_classes_are_representable_and_ingestible():
     for reserved in (
         SourceClass.MEASUREMENT,
         SourceClass.LITERATURE,
@@ -1118,8 +1118,8 @@ def test_reserved_source_classes_are_representable_not_implemented():
             Evidence.from_dict(json.loads(json.dumps(evidence.to_dict()))).source_class
             is reserved
         )
-        # But the ingestion path refuses explicitly rather than half-working.
-        _raises(ReservedNotImplemented, require_implemented_source, reserved)
+        # Phase 4: engcore.claims.external_evidence is their ingestion path; ingestion is not admission.
+        require_implemented_source(reserved)
 
     require_implemented_source(SourceClass.SIMULATION)  # implemented: no raise
 

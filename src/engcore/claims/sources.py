@@ -14,14 +14,15 @@ gathered through one adapter per source class:
   naming what it would need. It never produces evidence, never raises, and is
   recorded in the assessment so a reader sees which sources were asked.
 
-Adding measurement or literature evidence later is then an adapter and an SRIA
-implementation flag, not an architecture change.
+Phase 4 implemented the other three (:mod:`.external_evidence`) and flipped SRIA's
+flag: each adapter reports PRODUCED only for evidence whose standing is
+ADMISSIBLE, and NO_EVIDENCE -- naming every weaker record's reasons -- otherwise.
 
 A note on BENCHMARK. A simulation *compared with* a trusted benchmark is still
 SIMULATION evidence -- the benchmark comparison is a validation check inside
 its credibility report (NAFEMS T3 earns BENCHMARK_VALIDATED that way). A
-BENCHMARK-class record would be the published benchmark value itself standing
-as evidence about the quantity; SRIA reserves that class, and so does this layer.
+BENCHMARK-class record is the published benchmark value itself standing as
+evidence about the quantity at the oracle's own conditions; it grants no level.
 """
 
 from __future__ import annotations
@@ -88,6 +89,21 @@ def _simulation(context: Mapping[str, Any]) -> SourceOutcome:
     return SourceOutcome(SourceClass.SIMULATION, SourceStatus.PRODUCED, evidence=evidence)
 
 
+def _external(source: SourceClass) -> Callable[[Mapping[str, Any]], SourceOutcome]:
+    def produce(context: Mapping[str, Any]) -> SourceOutcome:
+        mine = [a for a in context.get("external_assessments", ()) if a.source_class is source]
+        admissible = [a for a in mine if a.standing.value == "admissible" and a.evidence is not None]
+        if admissible:
+            return SourceOutcome(source, SourceStatus.PRODUCED, evidence=admissible[0].evidence,
+                                 reason=f"{len(admissible)} admissible of {len(mine)} offered")
+        if not mine:
+            return SourceOutcome(source, SourceStatus.NO_EVIDENCE, reason=f"no {source.value} evidence was offered or discovered")
+        why = "; ".join(f"{a.standing.value}: {a.reasons[0]['reason']}" for a in mine if a.reasons)
+        return SourceOutcome(source, SourceStatus.NO_EVIDENCE, reason=f"none of {len(mine)} is admissible ({why})")
+
+    return produce
+
+
 _REQUIRES = {
     SourceClass.SIMULATION: "a bound credibility report from the plan's execution",
     SourceClass.BENCHMARK: (
@@ -106,7 +122,7 @@ _REQUIRES = {
 #: One adapter per SRIA source class. Checked at import: a class without an
 #: adapter, or an adapter for a class SRIA does not define, is refused.
 SOURCE_ADAPTERS: Mapping[SourceClass, EvidenceSourceAdapter] = {
-    source: EvidenceSourceAdapter(source, _simulation if source is SourceClass.SIMULATION else None, _REQUIRES[source])
+    source: EvidenceSourceAdapter(source, _simulation if source is SourceClass.SIMULATION else _external(source), _REQUIRES[source])
     for source in SourceClass
 }
 if set(SOURCE_ADAPTERS) != set(SourceClass) or set(_REQUIRES) != set(SourceClass):  # pragma: no cover - import guard

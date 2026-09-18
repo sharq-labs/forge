@@ -115,18 +115,20 @@ def test_there_is_one_adapter_per_sria_source_class_and_sria_decides_which_are_i
     assert SOURCE_ADAPTERS[SourceClass.SIMULATION].implemented
 
 
-def test_unimplemented_sources_answer_explicitly_and_never_produce_evidence() -> None:
+def test_sources_with_nothing_admissible_answer_explicitly_and_never_produce_evidence() -> None:
+    # Phase 4: every class is implemented; with nothing offered each answers NO_EVIDENCE, never PRODUCED.
     outcomes = {o.source_class: o for o in gather_evidence({"simulation_evidence": None, "simulation_problem": "no run"})}
     assert outcomes[SourceClass.SIMULATION].status is SourceStatus.NO_EVIDENCE
     for source in (SourceClass.BENCHMARK, SourceClass.MEASUREMENT, SourceClass.LITERATURE):
-        assert outcomes[source].status is SourceStatus.NOT_IMPLEMENTED
-        assert outcomes[source].evidence is None and "not implemented" in outcomes[source].reason
+        assert outcomes[source].status is SourceStatus.NO_EVIDENCE
+        assert outcomes[source].evidence is None and "no " in outcomes[source].reason
 
 
 def test_an_assessment_records_every_source_it_asked(registry) -> None:
     record = assess_claim(t3_claim(), registry).to_dict()
     statuses = {o["source_class"]: o["status"] for o in record["evidence_sources"]}
-    assert statuses == {"simulation": "produced", "benchmark": "not_implemented", "measurement": "not_implemented", "literature": "not_implemented"}
+    # Phase 4: the trusted T3 oracle is BENCHMARK evidence at its exact point; nothing else was offered.
+    assert statuses == {"simulation": "produced", "benchmark": "produced", "measurement": "no_evidence", "literature": "no_evidence"}
     produced = next(o for o in record["evidence_sources"] if o["source_class"] == "simulation")
     assert produced["evidence_record_hash"] == record["evidence"]["record_hash"]
 
