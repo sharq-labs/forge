@@ -110,6 +110,7 @@ def _decision(report, evidence, charter, *, extra_uncertainty=()):
         critic.critic_id,
         report,
         evidence,
+        charter,
         subject=evidence,
         assessment_id=f"assessment-{evidence.evidence_id}",
     )
@@ -236,10 +237,34 @@ def test_report_evidence_binding_is_rechecked_by_registered_critic() -> None:
     assessment = critic.assess(
         report,
         tampered,
+        charter,
         assessment_id="tamper-assessment",
     )
     assert assessment.verdict is CriticVerdict.FAIL
     assert assessment.check("credibility_report_binding").outcome is CriticVerdict.FAIL
+
+
+
+
+def test_critic_refuses_evidence_bound_to_a_different_charter() -> None:
+    report = _electrothermal_report()
+    charter_a = _charter(campaign_id="context-a", decision_id="decision-a")
+    charter_b = _charter(campaign_id="context-b", decision_id="decision-b")
+    evidence = _evidence(report, charter_a)
+
+    critic = CredibilityReportCritic()
+    assessment = critic.assess(
+        report,
+        evidence,
+        charter_b,
+        assessment_id="wrong-charter",
+    )
+
+    assert assessment.verdict is CriticVerdict.FAIL
+    binding = assessment.check("credibility_report_binding")
+    assert binding is not None
+    assert binding.outcome is CriticVerdict.FAIL
+    assert "charter" in binding.detail.lower()
 
 
 def test_missing_battery_uncertainty_becomes_explicit_unknown_at_decision_boundary() -> None:
