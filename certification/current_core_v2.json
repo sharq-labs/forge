@@ -33,7 +33,7 @@
     "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "0e76b651ea21bd8f21fa1889478a29681a89955605bea672acbc6fe5d94bee16",
+    "aggregate_digest": "138a9730a0ead352d5e25e806ea7bb2a64a4fe809b6cb31b0b716ce3c9687f7e",
     "areas": {
       "assurance_admission": {
         "classification": "CORE_CERTIFIED",
@@ -66,7 +66,7 @@
       },
       "certification_control": {
         "classification": "CERTIFICATION_CONTROL",
-        "digest": "167abf87b528429cbaad47a4dbc63db9e57f254e8ee9d203ec021355f0d258f2",
+        "digest": "85ed45a1b754cf8908d39ca42537997705b8adcfac7ce16a21034be9d5683b18",
         "file_count": 25,
         "file_reasons": {
           ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
@@ -103,7 +103,7 @@
           "src/engcore/__init__.py": "bcf4c42aee09463d668129d4cf48b103d0f3aa06f3e605e4005ee1c987afa0e0",
           "src/engcore/api_snapshot.py": "0d18c1e7804f8974449ba51b7d832576822a197cead9c612559c4dceef225eea",
           "tests/test_core_certificate.py": "7059dddd2561da65709b4e3b379b145f5c8a60325545f1bd895daca5c27539ab",
-          "tests/test_core_freeze_manifest.py": "b2090107389d70afae0f5e1ab1fc333ba2fdb5c65de4e8aeeff2cd25cc422959",
+          "tests/test_core_freeze_manifest.py": "1302ca4978a4b5d35e8b009ea6ba5ce248a2a412186ff26de882e0aa7708ebb2",
           "tests/test_mutation_population_v4.py": "b9d3c3f657c0921e26d14a38153f22e7adbb7ab9350be3439f8b90a2457712e6",
           "tools/__init__.py": "8861d485b3cc33501966df3dada7c2e980beece7bd920fff7648a28b62e5eb42",
           "tools/certification/__init__.py": "c67a1b43f0d35e62ff42e47a2ea61ada2047728d0ca223f4673be27429666a4e",
@@ -115,11 +115,11 @@
           "tools/certification/core_freeze.py": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c",
           "tools/certification/core_freeze_v2.py": "8dad9752b1d4bd710c98d2deb9670ed2831609e71944037600f995bb0e77fed6",
           "tools/certification/core_freeze_v3.py": "4ac22f22cf5d0df53e189d50a9c0ec7415d9745f8a8f21941c3b54acdd057bfe",
-          "tools/certification/core_freeze_v4.py": "b867db3b4b71de4fec1e58d35e0c7c9e0f913adee4e72791d5be55907b952fd4",
+          "tools/certification/core_freeze_v4.py": "f5e030217f397e56824411a7e9750918e5ad934a5f7bcbbc694d79301cdbb016",
           "tools/certification/guard_reach.py": "0918f6fe5aea109c2d96a2ee42619fd55f1e260d035f97f4b6a70e2067ab06d0",
           "tools/certification/hardening_assurance.py": "aa920b5811d34b38384f09bf36b860f4c32d332daadffc33c9b7fe95c60127bf",
           "tools/certification/mutation_population.py": "82a47647c9710e285a9ef46fcafe7b7c86a8c9fa546ffcfa438eda414a20ef4e",
-          "tools/certification/mutation_v4_runner.py": "c396037ef37904204e95e1b39decac115a4222973dd3b5a7b13a134420ad5f3f",
+          "tools/certification/mutation_v4_runner.py": "c2592356eb6c8b5f4db2265d9092da5c252267873f6c34055c518a4eec221788",
           "tools/certification/recertification_scope.py": "1319374239b2f7321b3316257692c6ccc0eb7ad23cf3bcc1a682fa30c9d9b45c"
         },
         "patterns": [
@@ -241,7 +241,7 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "980fd85869fe92902b436f7599c7064a57da8de923fcb6ca46149aae033fb1b8",
+        "digest": "b1faf5fa24b22479818dbc878efeb877a7faed31cb62af1401954c14ad00848f",
         "file_count": 124,
         "files": {
           "tests/domains/battery/battery_cases.py": "2ea7908985e869cb8f8a791a981faa601e68ecf0e1a6c6a8b63a424c2689330f",
@@ -357,7 +357,7 @@
           "tests/test_core_scientific_audit_batch53.py": "bf957fa624b1a3e4c5f72504543269072acb17f39983289742017c5397de880d",
           "tests/test_core_scientific_audit_batch54.py": "1e60d6f503b3eb5da65dc8ec997c666341ebfea076ee58dcc2cf29fc91d5f0d4",
           "tests/test_core_scientific_audit_batch55.py": "a9177ff008e14d7b0dd74d0f0bb774e79e25c8989ac5bc141298400ad33cfda3",
-          "tests/test_core_scientific_audit_batch56.py": "8f9ac104942cc9426ef48a9e64f5647d523f8859a49aca1a12e771169817ff3f",
+          "tests/test_core_scientific_audit_batch56.py": "0f8c73c9936b0c55907dd27ab995e32938191eab7680073b26e630e5488f47dc",
           "tests/test_core_scientific_audit_batch9.py": "6fd1e273cafbf2fc312b3c0c18dd216797b1ee9ad6ed7b3a3f0693dfe9502e09",
           "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
           "tests/test_core_trust_closure.py": "f2872766298fc694ef1bfb6947cf8981d2e5ed57d2a7561f86e2e64ff221c7e6",
@@ -544,7 +544,7 @@
   "repository": {
     "branch": "claude/core-scientific-audit",
     "clean": true,
-    "commit": "08e1b02f1e2e639b3b72c1821bba977a99b6df61",
+    "commit": "162e309444993cd56d06d185e985f0985621e567",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
