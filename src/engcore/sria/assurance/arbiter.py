@@ -741,8 +741,8 @@ class Arbiter:
                     f"{evidence.evidence_id!r} belongs to pack "
                     f"{evidence.domain_pack_ref!r}"
                 )
-            report_digest = evidence.claim_binding.qualifiers.get(
-                "credibility_report_digest"
+            report_digest = evidence.claim_payload.get(
+                "_credibility_report_digest"
             )
             if report_digest:
                 assessed_report_digest = assessment.provenance.metadata.get(
