@@ -179,6 +179,10 @@ class SubjectModel(str, Enum):
 
 
 class DiscrepancyKind(str, Enum):
+    #: Nothing quantified or bounded model-form discrepancy for this claim.
+    #: This is deliberately distinct from ZERO_DECLARED: absence of an
+    #: estimate must never be turned into an assertion that discrepancy is zero.
+    UNKNOWN = "unknown"
     ZERO_DECLARED = "zero_declared"
     CONSTRAINED_PRIOR = "constrained_prior"
 
