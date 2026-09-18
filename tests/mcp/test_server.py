@@ -164,7 +164,7 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     """
     tools = {tool.name: tool for tool in list_tools().tools}
     assert sorted(tools) == sorted(
-        ["describe_capabilities", "assess_claim"] + [s.tool for s in SYSTEMS]
+        ["describe_capabilities", "assess_claim", "assess_scientific_claim"] + [s.tool for s in SYSTEMS]
     )
 
     describe = tools["describe_capabilities"]
@@ -181,6 +181,11 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     assert list(assess.input_schema["properties"]) == ["request"]
     assert assess.input_schema["required"] == ["request"]
     assert assess.output_schema is not None
+
+    generic = tools["assess_scientific_claim"]
+    assert list(generic.input_schema["properties"]) == ["claim"]
+    assert generic.input_schema["required"] == ["claim"]
+    assert generic.output_schema is not None
 
 
 def test_the_descriptions_say_what_an_agent_must_know_before_calling():

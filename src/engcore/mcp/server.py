@@ -72,6 +72,7 @@ __all__ = [
     "SERVER_VERSION",
     "SYSTEM_NAME",
     "assess_claim",
+    "assess_scientific_claim",
     "build_server",
     "describe_capabilities",
     "main",
@@ -80,7 +81,7 @@ __all__ = [
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.6.0"
+SERVER_VERSION = "0.7.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -872,8 +873,53 @@ def assess_claim(request: dict[str, Any]) -> dict[str, Any]:
         return refused_claim_assessment(exc)
 
 
+_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION = """Assess one structured scientific claim WITHOUT naming a system.
+
+Pass a `scientific_claim/1` record as `claim`. It states the quantity of
+interest and its units, a THRESHOLD (<, <=, >, >=) or TOLERANCE_BAND (==
+with a tolerance) comparison, the target, the operating context and known
+inputs (keyed by the capability's input paths), inputs you know are unknown,
+your assumptions, the decision, the required ValidationLevels, the
+uncertainty demand, and an explicit model-discrepancy declaration (UNKNOWN is
+allowed and is never read as zero). Every field is required; unknown fields
+are refused, not ignored.
+
+The runtime routes the claim by declared capabilities -- never by words --
+selects a model only if its applicability can be assessed, plans the run,
+executes it, and derives the verdict from the credibility report and the
+SRIA assurance decision:
+
+  SUPPORTED              admissible evidence satisfies the comparison
+  CONTRADICTED           admissible evidence violates it -- the same bar
+  INSUFFICIENT_EVIDENCE  anything else: not ready, outside validity, a run
+                         that is not credible, a missing level, an UNKNOWN
+                         demanded uncertainty, or a band straddling the bound
+
+A model outside its validity domain NEVER makes a claim CONTRADICTED: it
+shows only that this execution cannot bear on it. When the claim cannot run,
+the answer says why (NEEDS_INPUT, AMBIGUOUS, UNSUPPORTED_CAPABILITY, REFUSED)
+and lists repair actions read from the declarations. Every explanation item
+points into the record it explains.
+
+The verdict is advisory input to an engineer of record. It is not a decision,
+not a certification, and not a claim of conformance with any standard."""
+
+
+def assess_scientific_claim(claim: dict[str, Any]) -> dict[str, Any]:
+    """Generic claim assessment: route, plan, execute and assure a structured claim.
+
+    Every expected outcome -- a malformed claim, a missing input, an
+    unsupported capability, an insufficient verdict -- is returned as a
+    record. An unexpected exception is a defect and is not caught.
+    """
+    from ..claims.assessment import assess_claim as assess
+    from .capabilities import production_registry
+
+    return assess(claim, production_registry()).to_dict()
+
+
 def build_server() -> MCPServer:
-    """The server, with both tools registered. Used by the tests and by main."""
+    """The server, with every tool registered. Used by the tests and by main."""
     server = MCPServer(
         name=SERVER_NAME,
         version=SERVER_VERSION,
@@ -909,6 +955,12 @@ def build_server() -> MCPServer:
         name="assess_claim",
         title="Assess a structured scientific claim",
         description=_ASSESS_CLAIM_DESCRIPTION,
+    )
+    server.add_tool(
+        assess_scientific_claim,
+        name="assess_scientific_claim",
+        title="Route, run and assess a structured scientific claim",
+        description=_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION,
     )
     _audit_tools(server)
     return server
