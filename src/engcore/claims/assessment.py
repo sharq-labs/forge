@@ -70,6 +70,8 @@ from .external_evidence import (
     read_external_record,
 )
 from .oracles import discover_oracles
+from .gaps import analyze_gaps
+from .next_experiment import recommend_next
 from .policy import derive_requirement, policy_findings
 from .selection import concrete
 from .sources import gather_evidence
@@ -562,6 +564,11 @@ def _build_record(
         "verification, validation and uncertainty records. Not a safety certification and not an "
         "automatic real-world decision."
     )
+    # Phase 5/6: why the claim is (not) decided, and what could close each gap -- both pure functions of
+    # this record and the registry's declarations, so read-back re-derives them.
+    analysis = analyze_gaps(record)
+    record["evidence_gaps"] = analysis.to_dict()
+    record["next_experiments"] = recommend_next(record, registry, analysis).to_dict()
     canonical_json(record)  # the record is JSON, all the way down
     live["verdict"] = verdict
     live["basis"] = basis

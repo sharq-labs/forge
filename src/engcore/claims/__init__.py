@@ -197,6 +197,20 @@ from .external_evidence import (
     read_external_record,
 )
 
+from .gaps import (
+    EvidenceGap,
+    EvidenceGapAnalysis,
+    GapClass,
+    analyze_gaps,
+)
+
+from .next_experiment import (
+    ExperimentAction,
+    ExperimentRecommendation,
+    NextExperimentPlan,
+    recommend_next,
+)
+
 __all__ = [
     "ASSESSMENT_SCHEMA",
     "AssessmentForgeryError",
@@ -232,16 +246,21 @@ __all__ = [
     "DerivedEvidenceRequirement",
     "DistributionKind",
     "EstimateStatus",
+    "EvidenceGap",
+    "EvidenceGapAnalysis",
     "EvidencePolicy",
     "EvidencePolicyProfile",
     "EvidenceRequirement",
     "EvidenceSourceAdapter",
     "ExecutionOutcome",
+    "ExperimentAction",
     "ExperimentPlan",
+    "ExperimentRecommendation",
     "ExplanationItem",
     "ExplanationKind",
     "ExternalEvidenceAssessment",
     "ExternalStanding",
+    "GapClass",
     "GapKind",
     "InputDeclaration",
     "InputDistribution",
@@ -256,6 +275,7 @@ __all__ = [
     "ModelInfluence",
     "ModelSelection",
     "ModelUse",
+    "NextExperimentPlan",
     "NumericalUQError",
     "NumericalUncertaintyEstimate",
     "OracleApplicability",
@@ -305,6 +325,7 @@ __all__ = [
     "UnknownBasis",
     "VerdictBasis",
     "admissible",
+    "analyze_gaps",
     "apply_policy",
     "assemble_evidence",
     "assess_benchmark",
@@ -344,6 +365,7 @@ __all__ = [
     "policy_findings",
     "read_external_record",
     "readiness_rank",
+    "recommend_next",
     "report_transport",
     "require_context",
     "resolve",
