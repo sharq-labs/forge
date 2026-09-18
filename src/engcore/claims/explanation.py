@@ -190,8 +190,24 @@ def explain(record: Mapping[str, Any]) -> tuple[ExplanationItem, ...]:
     if reported is not None and reported.get("kind") == "unknown":
         add(ExplanationKind.UNCERTAINTY_GAP, "uncertainty.reported_unknown",
             "the reported value's uncertainty is UNKNOWN; it is not zero", "/uncertainty/reported/kind")
-    if uncertainty.get("evidence_problem"):
+    if uncertainty.get("evidence_problem") and not record.get("context_problems"):
         add(ExplanationKind.UNCERTAINTY_GAP, "uncertainty.not_transportable", uncertainty["evidence_problem"], "/uncertainty/evidence_problem")
+    transport = uncertainty.get("transport") or {}
+    for i, item in _each(transport.get("records")):
+        if item["state"] in ("unattributed", "mixture"):
+            add(ExplanationKind.UNCERTAINTY_GAP, f"uncertainty.{item['state']}",
+                f"the reported {item['name']} uncertainty is quantified but {item['state']}: it is filed under no "
+                f"channel, and no channel it might belong to is counted as known",
+                f"/uncertainty/transport/records/{i}/state")
+    for c, problem in _each(record.get("context_problems")):
+        add(ExplanationKind.NUMERICAL_FAILURE, "context.foreign_evidence", problem, f"/context_problems/{c}")
+    for o, oracle in _each(record.get("external_evidence")):
+        if not oracle["trusted"]:
+            continue
+        add(ExplanationKind.FINDING, f"external_evidence.{oracle['applicability']}",
+            f"trusted {oracle['kind']} {oracle['oracle_id']}@{oracle['version']} for {oracle['metric']} can establish "
+            f"{oracle['establishes']}; it applies to this claim's stated conditions: {oracle['applicability']}",
+            f"/external_evidence/{o}/applicability")
 
     assurance = record.get("assurance") or {}
     for o, obligation in _each(assurance.get("unmet_obligations")):

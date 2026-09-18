@@ -17,9 +17,11 @@ selection over declared applicability (:mod:`.selection`), structured repair
 (:mod:`.compiler`), route classification from pinned identities
 (:mod:`.routes`), the deterministic experiment plan (:mod:`.planning`),
 execution bound to the plan (:mod:`.execution`), the claim-level verdict
-(:mod:`.verdict`), the structured explanation (:mod:`.explanation`) and the
-end-to-end runtime (:mod:`.assessment`) -- routing one to the other without a
-caller naming a system.
+(:mod:`.verdict`), the structured explanation (:mod:`.explanation`), the
+end-to-end runtime (:mod:`.assessment`), uncertainty transport
+(:mod:`.uncertainty`), context-of-use binding (:mod:`.context`), evidence-source
+adapters (:mod:`.sources`) and trusted-oracle discovery (:mod:`.oracles`) --
+routing one to the other without a caller naming a system.
 
 Nothing here parses natural language and nothing here imports an AI provider.
 """
@@ -78,7 +80,19 @@ from .contract import (
     ScientificClaim,
     UncertaintyDemand,
 )
+from .context import ContextBindingError, context_problems, require_context
 from .execution import ExecutionOutcome, PlanExecution, binding_problems, execute_plan
+from .oracles import OracleApplicability, OracleMatch, discover_oracles
+from .sources import SOURCE_ADAPTERS, EvidenceSourceAdapter, SourceOutcome, SourceStatus, gather_evidence
+from .uncertainty import (
+    TransportState,
+    TransportedRecord,
+    UncertaintyTransport,
+    UncertaintyTransportError,
+    classify_record,
+    report_transport,
+    transport,
+)
 from .explanation import ExplanationItem, ExplanationKind, explain, resolve
 from .planning import (
     ExperimentPlan,
@@ -123,6 +137,24 @@ from .errors import (
 )
 
 __all__ = [
+    "SOURCE_ADAPTERS",
+    "ContextBindingError",
+    "EvidenceSourceAdapter",
+    "OracleApplicability",
+    "OracleMatch",
+    "SourceOutcome",
+    "SourceStatus",
+    "TransportState",
+    "TransportedRecord",
+    "UncertaintyTransport",
+    "UncertaintyTransportError",
+    "classify_record",
+    "context_problems",
+    "discover_oracles",
+    "gather_evidence",
+    "report_transport",
+    "require_context",
+    "transport",
     "ASSESSMENT_SCHEMA",
     "AssessmentForgeryError",
     "ClaimAssessment",
