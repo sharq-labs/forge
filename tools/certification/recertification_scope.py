@@ -594,7 +594,11 @@ def recertification_gate_problems(recertification: str, needs: Mapping[str, Any]
     if recertification == "not_required":
         problems += _require(results, others, "skipped")
     elif recertification == "source":
-        problems += _require(results, (*RECERTIFY_SOURCE_GATES, "certify"), "success")
+        problems += _require(
+            results,
+            (*RECERTIFY_SOURCE_GATES, "certify", "verify_certificate_child"),
+            "success",
+        )
     elif recertification == "certificate_child":
         problems += _require(results, ("verify_certificate_child",), "success")
     else:
