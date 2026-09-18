@@ -3357,7 +3357,15 @@ and the freeze manifests are in the by-design failing set for, and is settled by
 **Committed evidence.** Nothing to regenerate. `tests/mutation_population_v4.py` is itself generated and
 committed, and its generator prints the file's SHA-256 so a reader can re-run it and compare.
 
-**Verification.** The batch's own two files **21 passed**. FAST tier **7177 passed, 5 skipped, 19 failed** —
+**The kill rule was wrong once, in the safe direction.** The first `verdict_from_junit` matched on the
+report's `file` attribute, which pytest's default JUnit family does not write at all: every real report read
+`NOT_COLLECTED` while the target test had failed, so the first probe round scored **0/2** on two mutations
+that had plainly been killed. The nodeid is now rebuilt from `classname` when there is no `file`, and the
+report pytest **actually** writes is a named case in the suite —
+`test_r67_the_kill_rule_reads_the_report_pytest_actually_writes`, which also checks that the same test name
+in another file is not the kill. B55c is the mutation that restores the mistake.
+
+**Verification.** The batch's own two files **22 passed**. FAST tier **7177 passed, 5 skipped, 19 failed** —
 exactly the by-design set. `tests/test_mutation_harness.py` **6 passed** with `tests/mutation_guards.py`
 untouched. Guard reach ledger clean over **39** guards (R-67 and R-68 REACHED/FIXED, R-66 REACHED/PARTIAL).
 Guard mutations: `BATCH55_MUTATIONS.log`, **11/11 KILLED**, CONTROL GREEN; no pinned mutation targets a file

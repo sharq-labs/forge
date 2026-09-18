@@ -64,13 +64,26 @@ class MutationRoundError(RuntimeError):
 def _nodeid_of(case: ET.Element) -> str:
     """The pytest nodeid a JUnit ``<testcase>`` came from, as ``file::name``.
 
-    pytest writes ``file`` as the path and ``classname`` as the dotted module (plus a class), so the
-    path is taken from ``file`` and only the test's own ``name`` is appended. A collection error is
-    reported as a ``<testcase>`` whose name is the FILE, with no ``classname``; it therefore cannot
-    match a test's nodeid, which is exactly the outcome wanted.
+    pytest's default JUnit family writes ``classname`` as the dotted module (plus any class) and NO
+    ``file`` attribute, so the path is rebuilt from it when that is all there is: the dotted parts up
+    to the first class-looking name are the module path, and any class names belong to the nodeid's
+    tail. This mattered immediately -- the first round read every real report as NOT_COLLECTED while
+    the tests failed, which is the same shape of wrong answer as the audited rule and in the safe
+    direction.
+
+    A collection error is reported as a ``<testcase>`` whose ``name`` is the FILE and whose
+    ``classname`` is empty; it therefore cannot equal a test's nodeid, which is exactly wanted.
     """
     path = (case.get("file") or "").replace("\\", "/")
-    return f"{path}::{case.get('name') or ''}"
+    name = case.get("name") or ""
+    if not path:
+        parts = [part for part in (case.get("classname") or "").split(".") if part]
+        classes: list[str] = []
+        while parts and parts[-1][:1].isupper():
+            classes.insert(0, parts.pop())
+        path = "/".join(parts) + ".py" if parts else ""
+        name = "::".join([*classes, name])
+    return f"{path}::{name}"
 
 
 def verdict_from_junit(report: str | bytes, nodeid: str) -> str:

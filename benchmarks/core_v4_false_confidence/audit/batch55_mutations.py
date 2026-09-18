@@ -46,11 +46,12 @@ MUTATIONS = [
         "rightly reported MUTATION CHANGED NO CODE"),
     Mutation(
         "B55c", f"{R}::_nodeid_of",
-        "    return f\"{path}::{case.get('name') or ''}\"\n",
-        "    return case.get(\"name\") or \"\"\n",
-        f"{T}::test_r67_a_kill_requires_the_named_target_test_to_fail",
-        "the nodeid drops the FILE it came from, so it never equals the entry's nodeid and every "
-        "verdict becomes NOT_COLLECTED -- a round that reports nothing while looking careful"),
+        "        path = \"/\".join(parts) + \".py\" if parts else \"\"\n",
+        "        path = \"\"\n",
+        f"{T}::test_r67_the_kill_rule_reads_the_report_pytest_actually_writes",
+        "the nodeid drops the FILE it came from for every report pytest actually writes -- which have "
+        "no `file` attribute -- so every verdict becomes NOT_COLLECTED: a round that reports nothing "
+        "while looking careful. This is the mistake the first runner made"),
     Mutation(
         "B55d", f"{R}::require_an_isolated_tree",
         "    if work == root or root in work.parents:\n",

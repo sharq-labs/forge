@@ -261,3 +261,25 @@ def test_r66_a_shard_transcript_is_read_for_the_verdict_it_names():
     assert problems(lying, population, selected), "a verdict that is not the declared one is accepted"
     no_control = "\n".join(line for line in good.splitlines() if not line.startswith("CONTROL")) + "\n"
     assert problems(no_control, population, selected), "a round with no green control is accepted"
+
+#: What pytest's default JUnit family actually writes: `classname` as the dotted module, and no
+#: `file` attribute at all. The first runner matched on `file` only and read every real report as
+#: NOT_COLLECTED while the tests failed -- the same shape of wrong answer as the audited rule, in the
+#: safe direction, and caught by this case.
+_JUNIT_AS_PYTEST_WRITES_IT = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1">
+<testcase classname="tests.hybrid_uq.test_core_scientific_audit_batch1" name="test_core001_a_gross_misfit_is_refused" time="0.001">
+<failure message="Failed: DID NOT RAISE">assert False</failure></testcase>
+</testsuite></testsuites>
+"""
+
+
+def test_r67_the_kill_rule_reads_the_report_pytest_actually_writes():
+    """A rule that only works on a hand-written report is not the rule the round runs under."""
+    runner = _module("tools.certification.mutation_v4_runner")
+    nodeid = ("tests/hybrid_uq/test_core_scientific_audit_batch1.py"
+              "::test_core001_a_gross_misfit_is_refused")
+    assert runner.verdict_from_junit(_JUNIT_AS_PYTEST_WRITES_IT, nodeid) == "KILLED"
+    other = "tests/hybrid_uq/test_core_scientific_audit_batch2.py::test_core001_a_gross_misfit_is_refused"
+    assert runner.verdict_from_junit(_JUNIT_AS_PYTEST_WRITES_IT, other) == "NOT_COLLECTED", (
+        "the same test name in another file counts as the kill, so the nodeid's file is decoration")
