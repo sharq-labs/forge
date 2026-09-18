@@ -35,6 +35,7 @@ from typing import Any, Mapping
 from ..scientific.results.immutable import freeze
 from ..scientific.results.validation import VALIDATION_LEVELS
 from ..scientific.serialization import schema_string
+from ..sria.assurance.obligations import charter_context_ref
 from ..sria.charter import CampaignCharter, ConfidenceRequirement
 from ._records import canonical_json, require_keys, require_mapping, require_schema_exact, tagged_digest
 from .capabilities import CapabilityRegistry, InputRole, build_case, declared_path
@@ -230,7 +231,7 @@ class ExperimentPlan:
     @property
     def context_ref(self) -> str:
         """The only context reference evidence produced by this plan may carry."""
-        return f"charter:{self.charter.digest}#decision:{self.decision_id}"
+        return charter_context_ref(self.charter.digest, self.decision_id)
 
     def step(self, step_id: str) -> PlanStep:
         for candidate in self.steps:

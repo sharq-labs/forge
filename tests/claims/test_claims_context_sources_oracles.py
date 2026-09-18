@@ -68,8 +68,8 @@ def test_the_same_number_made_for_another_decision_does_not_count_here(registry)
         require_context(evidence_a, plan_b, report_b)
 
 
-def test_the_arbiter_alone_would_accept_foreign_context_which_is_why_the_claim_layer_checks(registry) -> None:
-    """Audit finding N2 is closed on this path, not in the certified Arbiter: pin both halves."""
+def test_the_arbiter_itself_refuses_foreign_context_and_the_claim_layer_still_checks(registry) -> None:
+    """Audit finding N2 is closed in the Arbiter now (Phase 1); the claim layer's broader check stays."""
     plan_a, report_a, evidence_a = _planned(t3_claim(), registry)
     plan_b, _, _ = _planned(t3_claim(decision=DecisionBinding("d-2", "Another use.")), registry)
     obligations = obligations_from_charter(plan_b.charter, required_critics=(CriticClass.PROCESS,))
@@ -78,7 +78,8 @@ def test_the_arbiter_alone_would_accept_foreign_context_which_is_why_the_claim_l
     assessment = arbiter.run_critic(critic.critic_id, report_a, subject=evidence_a, assessment_id="n2",
                                     mandatory_checks=("validation_level:benchmark_validated",))
     decision = arbiter.decide(decision_id="n2", evidence=evidence_a, assessments=(assessment,), obligations=obligations)
-    assert decision.verdict.value == "valid"  # SRIA does not compare context_ref with the charter
+    assert decision.verdict.value == "inconclusive"  # SRIA compares context_ref with the policy's charter
+    assert any(r.obligation_id == "context:charter" and not r.satisfied for r in decision.obligation_results)
     assert context_problems(evidence_a, plan_b)  # the claim layer does
 
 

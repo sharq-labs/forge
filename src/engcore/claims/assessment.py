@@ -131,6 +131,7 @@ def assure(plan: ExperimentPlan, claim: ScientificClaim, evidence: Any, report: 
         plan.charter,
         required_critics=(CriticClass.PROCESS,),
         required_uncertainty_channels=claim.uncertainty.ordered_channels(),
+        context_decision_id=plan.decision_id,
     )
     critic = CredibilityReportCritic()
     authority = trusting_authority(f"claims-authority:{plan.capability_id}", critics=(critic,), policies=(obligations,))

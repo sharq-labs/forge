@@ -105,7 +105,7 @@ from .assessment import (
     FindingImpact,
     Severity,
 )
-from .obligations import ObligationKind, ObligationSet
+from .obligations import ObligationKind, ObligationSet, parse_charter_context_ref
 from .uncertainty_budget import UncertaintyBudget
 
 ARBITER_DECISION_SCHEMA = schema_string("sria_arbiter_decision")
@@ -372,6 +372,52 @@ def claim_backing_problem(evidence: Evidence, assessed: _AssessedResult) -> str:
 
 def _declaration_digest(declaration: Any) -> str:
     return _canonical_digest(declaration.to_dict())
+
+
+def _context_results(
+    evidence: "Evidence | None",
+    obligations: ObligationSet,
+    results: list,
+    reasons: list,
+) -> None:
+    """Append the context-of-use results for one decision (see ``decide``)."""
+    claimed = None if evidence is None else parse_charter_context_ref(evidence.context_ref)
+    if claimed is not None and (claimed == ("", "") or claimed[0] != obligations.charter_digest):
+        if claimed == ("", ""):
+            why = f"evidence context {evidence.context_ref!r} claims a charter but does not name one"
+        elif not obligations.charter_digest:
+            why = (
+                f"evidence was produced under charter {claimed[0][:16]}..., and this policy was "
+                f"derived from no charter"
+            )
+        else:
+            why = (
+                f"evidence was produced under charter {claimed[0][:16]}..., not this policy's "
+                f"charter {obligations.charter_digest[:16]}..."
+            )
+        results.append(ObligationResult(obligation_id="context:charter", satisfied=False, detail=why))
+        reasons.append(f"context of use: {why}")
+    for obligation in obligations.of_kind(ObligationKind.REQUIRED_CONTEXT):
+        required = obligation.target
+        bound_charter = parse_charter_context_ref(required)
+        if evidence is None:
+            ok, why = False, "a context is bound to an evidence record; this decision has none"
+        elif bound_charter is not None and bound_charter[0] != obligations.charter_digest:
+            ok, why = False, "the required context names another charter than the policy's own"
+        elif evidence.context_ref != required:
+            ok, why = False, f"evidence context {evidence.context_ref!r} is not the required {required!r}"
+        else:
+            ok, why = True, "evidence context is the required context"
+        results.append(
+            ObligationResult(
+                obligation_id=obligation.obligation_id,
+                satisfied=ok,
+                evidence_ref="" if evidence is None else evidence.evidence_id,
+                detail=why,
+            )
+        )
+        if not ok:
+            reasons.append(f"context of use: {why}")
 
 
 @dataclass(frozen=True)
@@ -1130,6 +1176,18 @@ class Arbiter:
                     f"a successful solve does not substitute for trusted "
                     f"calibration"
                 )
+
+        # --- context of use ------------------------------------------------
+        # Evidence belongs to the charter and decision it was produced for
+        # (audit N2). Two rules, both INCONCLUSIVE and never INVALID: evidence
+        # judged under the wrong policy is not disproven, it is unaccounted for.
+        #
+        # 1. Unconditional: charter-bound evidence may only be judged under a
+        #    policy derived from that same charter. Nothing is recorded on a
+        #    match, so decisions over correctly bound evidence are unchanged.
+        # 2. A REQUIRED_CONTEXT obligation demands the exact reference,
+        #    decision included.
+        _context_results(evidence, obligations, results, reasons)
 
         # --- findings ------------------------------------------------------
         # Only evidence-invalidating findings may drive INVALID. Blocking
