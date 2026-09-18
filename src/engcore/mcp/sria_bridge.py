@@ -162,6 +162,7 @@ class CredibilityReportCritic:
     critic_id = "sria.credibility_report"
     critic_version = "critic.credibility_report/1"
     critic_class = CriticClass.PROCESS
+    validation_level_issuer = True
 
     def assess(
         self,
