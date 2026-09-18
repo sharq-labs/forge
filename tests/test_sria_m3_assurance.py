@@ -29,6 +29,7 @@ from engcore.scientific import (
     ValidationOutcome,
     ValidationReport,
 )
+from engcore.scientific.results.uncertainty import UncertaintySource
 from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityError,
@@ -140,11 +141,20 @@ def declaration(
     )
 
 
-def quantified(magnitude: float = 1e-12, units: str = "volt") -> Uncertainty:
+def quantified(
+    magnitude: float = 1e-12,
+    units: str = "volt",
+    source: "UncertaintySource | None" = None,
+) -> Uncertainty:
+    """A quantified record. R-43 (I-25 part C, batch 54): an unattributed quantified channel record can
+    be declared and read but not aggregated, so the calls that AGGREGATE pass the source of the channel
+    they file it under. The default stays unattributed, which is what every domain solver still emits and
+    what most of this file is about."""
     return Uncertainty(
         kind=UncertaintyKind.STANDARD,
         standard_uncertainty=Quantity(magnitude, units),
         method="linear-system residual bound",
+        **({} if source is None else {"source_kind": source}),
     )
 
 
@@ -449,18 +459,22 @@ def test_unknown_uncertainty_is_preserved_never_zeroed():
 
 def test_numerical_and_model_form_remain_distinct():
     """(3) Distinct channels are not silently combined."""
+    # R-43 (I-25 part C, batch 54): a quantified channel record whose own source_kind is UNSPECIFIED can
+    # no longer be AGGREGATED -- the audited harm was a total attributed to channels nobody attributed.
+    # These fixtures declare the source each channel is a channel of; what the tests assert (distinct
+    # channels are not silently combined, and incomparable quantities refuse) is unchanged.
     budget = UncertaintyBudget(
         value_name="v",
         entries=(
             ChannelEntry(
                 channel=UncertaintyChannel.NUMERICAL,
                 state=ChannelState.KNOWN,
-                uncertainty=quantified(1e-9),
+                uncertainty=quantified(1e-9, source=UncertaintySource.NUMERICAL),
             ),
             ChannelEntry(
                 channel=UncertaintyChannel.MODEL_FORM,
                 state=ChannelState.KNOWN,
-                uncertainty=quantified(0.5),
+                uncertainty=quantified(0.5, source=UncertaintySource.MODEL_FORM),
             ),
         ),
         declaration=declaration(),
@@ -495,12 +509,12 @@ def test_incompatible_quantities_cannot_be_combined():
             ChannelEntry(
                 channel=UncertaintyChannel.NUMERICAL,
                 state=ChannelState.KNOWN,
-                uncertainty=quantified(1.0, "volt"),
+                uncertainty=quantified(1.0, "volt", source=UncertaintySource.NUMERICAL),
             ),
             ChannelEntry(
                 channel=UncertaintyChannel.ALEATORIC,
                 state=ChannelState.KNOWN,
-                uncertainty=quantified(1.0, "kelvin"),
+                uncertainty=quantified(1.0, "kelvin", source=UncertaintySource.MEASUREMENT),
             ),
         ),
         declaration=declaration(),
@@ -518,6 +532,9 @@ def test_incompatible_quantities_cannot_be_combined():
         lower=Quantity(-1.0, "volt"),
         upper=Quantity(1.0, "volt"),
         method="bound",
+        # Filed under ALEATORIC below and aggregated, so R-43 (batch 54) needs it attributed: what this
+        # test is about is that an interval half-width and a standard uncertainty cannot be added.
+        source_kind=UncertaintySource.MEASUREMENT,
     )
     mixed_semantics = UncertaintyBudget(
         value_name="v",
@@ -525,7 +542,7 @@ def test_incompatible_quantities_cannot_be_combined():
             ChannelEntry(
                 channel=UncertaintyChannel.NUMERICAL,
                 state=ChannelState.KNOWN,
-                uncertainty=quantified(1.0, "volt"),
+                uncertainty=quantified(1.0, "volt", source=UncertaintySource.NUMERICAL),
             ),
             ChannelEntry(
                 channel=UncertaintyChannel.ALEATORIC,
@@ -1117,6 +1134,10 @@ def test_defect_matrix_fails_closed():
     assert all(v is not AssuranceVerdict.VALID for v in outcomes.values())
 
     # 7. incompatible units — refused at budget level, never reaching a verdict
+    #
+    # R-43 (I-25 part C, batch 54): both channels declare the source they are a channel of, because an
+    # unattributed quantified record is now refused BEFORE the units are compared -- and what this row
+    # is about is the units.
     _raises(
         IncomparableUncertainty,
         UncertaintyBudget(
@@ -1125,12 +1146,12 @@ def test_defect_matrix_fails_closed():
                 ChannelEntry(
                     channel=UncertaintyChannel.NUMERICAL,
                     state=ChannelState.KNOWN,
-                    uncertainty=quantified(1.0, "volt"),
+                    uncertainty=quantified(1.0, "volt", source=UncertaintySource.NUMERICAL),
                 ),
                 ChannelEntry(
                     channel=UncertaintyChannel.ALEATORIC,
                     state=ChannelState.KNOWN,
-                    uncertainty=quantified(1.0, "kelvin"),
+                    uncertainty=quantified(1.0, "kelvin", source=UncertaintySource.MEASUREMENT),
                 ),
             ),
             declaration=declaration(),

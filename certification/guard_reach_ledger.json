@@ -162,24 +162,35 @@
   {
    "problem": "R-43",
    "title": "UncertaintySource never reaches a verdict or report, and SRIA budgets accept NUMERICAL as model-form",
-   "rule": "src/engcore/scientific/results/uncertainty.py",
-   "rule_symbol": "UncertaintySource and the source_kind it declares on a StandardUncertainty",
-   "status": "LIBRARY_ONLY",
-   "audit_status": "OPEN",
+   "rule": "src/engcore/sria/assurance/uncertainty_budget.py",
+   "rule_symbol": "the unattributed-channel refusal in UncertaintyBudget.aggregate; channels_from_predictive_uncertainty with CHANNEL_OF_SOURCE, and require_source_fits_channel with CHANNEL_ACCEPTS_SOURCE, in src/engcore/sria/uncertainty.py; the declared source_kind on the two V1 predictive intervals in src/engcore/uq/predictive.py (batch 8)",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
    "audit_reached_in_production": "library-only",
-   "closed_by": "I-25",
-   "why": "UncertaintySource has no producer in src, so source_kind is UNSPECIFIED on every uncertainty production makes. Batch 8's I-09 gave the credibility report an `uncertainty` field, so the TRANSPORT now exists and reaches production; what does not exist is any production site that declares where the number came from. That matters twice: a budget cannot tell a numerical-discretization term from a model-form term, which is what lets an SRIA budget accept NUMERICAL as model-form; and an UNSPECIFIED kind is indistinguishable from a kind nobody was asked for, so the gap is invisible at the point of use. I-25 is where the producers declare it and the field records re-derive what they claim.",
-   "entry_points": [
-    "engcore.mcp.evidence.CredibilityEvidenceReport.from_result (reached by run_electrothermal and run_battery) -- carries the uncertainty, with source_kind UNSPECIFIED on every production record"
-   ],
+   "closed_by": "I-09/I-10 (batch 8) and I-25 part C (batch 54); the remaining half is a PRODUCER no rule can write",
+   "why": "PARTIAL, and LATENT rather than LIBRARY_ONLY as of batch 54, with the reason stated rather than softened. What is closed: the report carries per-value uncertainty with its source_kind (batch 8), the two V1 predictive intervals declare PARAMETER and COMBINED, a record filed under a channel its own source contradicts is refused at declaration and at the budget, an unattributed quantified record can no longer be AGGREGATED into a total presented as the channels' own -- which is exactly the audited harm, 'the SRIA budget marks aleatoric and model_form known from a numerical-only record' -- and channels_from_predictive_uncertainty carries a declared V1 record onto the channel its own source names, which is the connection batch 8 left missing. What is NOT closed, and cannot be by a rule: no domain solver in this repository quantifies uncertainty at all. Every one emits Uncertainty.unknown with a stated reason, which is the honest state of a solve nobody put an uncertainty budget on, and inventing a number for a channel is the defect this whole round is about. LATENT is therefore the right word for the guards: nothing in src builds an UncertaintyDeclaration, so the shape they guard is not produced in the tree.",
+   "entry_points": [],
    "exercised_by": [],
    "exercised_by_in_library": [
-    "tests/test_scientific_core.py::test_model_binding_rejects_wrong_source_kind"
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_quantified_channel_cannot_be_aggregated",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_one_unattributed_channel_on_its_own_is_not_aggregated_either",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_declared_channel_still_aggregates",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unquantified_channel_keeps_its_own_refusal",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_channel_is_still_declarable_and_named",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_record_declaring_another_channel_is_still_refused_where_it_is_filed",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_predictive_record_is_carried_onto_the_channel_it_names",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_a_combined_record_is_refused_rather_than_filed",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unknown_record_carries_no_channel",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_an_unattributed_quantified_record_carries_no_channel_either",
+    "tests/test_core_scientific_audit_batch54.py::test_r43_the_carried_channels_are_what_a_declaration_accepts",
+    "tests/mcp/test_core_scientific_audit_batch7.py::test_r43_an_undeclared_source_is_recorded_as_unattributed_not_as_compatible",
+    "tests/mcp/test_core_scientific_audit_batch7.py::test_r43_the_v1_predictive_intervals_declare_what_they_are_of"
    ],
    "bypasses": [],
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
-   "what_the_check_cannot_see": "nothing static: this row declares a MISSING producer, and no syntactic check over the tree can distinguish an uncertainty whose kind is genuinely unknown from one whose producer never declared it. That is exactly why the reach is declared here and measured by I-25's own tests rather than by a scan."
+   "what_the_check_cannot_see": "The refusal is on the KIND, not on the truth: a caller may declare MEASUREMENT on a discretization estimate and no rule here can tell. What is closed is silence being counted. An unattributed quantified record may still be DECLARED and read -- the pinned harnesses do exactly that, and `unattributed_channels` names it -- because a refusal at declaration time would make a pinned experiment unrunnable rather than making anything more honest. And no rule can produce the missing producer: a domain that does not quantify a channel says so with UNKNOWN, and that silence stays visible rather than being filled in.",
+   "what_would_create_it": "A caller building an UncertaintyDeclaration from a production record -- which channels_from_predictive_uncertainty now exists for -- or a domain solver that actually quantifies a channel. The audited shapes are a quantified record whose source_kind is UNSPECIFIED being counted as a channel's known uncertainty and combined into a total, and a record filed under a channel its own source contradicts. The SHA-256-pinned E1 and E2 experiment harnesses file unattributed quantified records under channels today, which is why the refusal is at aggregation rather than at declaration (batch 54's amendments 1 and 2)."
   },
   {
    "problem": "R-58",

@@ -42,7 +42,11 @@ from enum import Enum
 from typing import Any, Iterable, Mapping
 
 from ...scientific.errors import UnitCompatibilityError
-from ...scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from ...scientific.results.uncertainty import (
+    Uncertainty,
+    UncertaintyKind,
+    UncertaintySource,
+)
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
 from ..errors import UncertaintyContractError
@@ -345,6 +349,28 @@ class UncertaintyBudget:
                 f"cannot aggregate: channel(s) {sorted(unquantified)} are not "
                 f"quantified. An UNKNOWN channel is not zero, and treating it "
                 f"as zero would understate the total"
+            )
+
+        # R-43 (I-25 part C, batch 54): a quantified record whose own source is
+        # UNSPECIFIED is a number nobody has said is this channel's, and
+        # root-sum-squaring it with another channel is where the audit's
+        # "aleatoric and model_form marked known from a numerical-only record"
+        # became a total. The record may be DECLARED under a channel -- the
+        # SHA-256-pinned E1 and E2 harnesses do exactly that and their bytes
+        # may not be edited -- and `unattributed_channels` reports it; what it
+        # may not do is be combined into a number presented as the channel's.
+        unattributed = [
+            e.channel.value
+            for e in entries
+            if UncertaintySource(e.uncertainty.source_kind) is UncertaintySource.UNSPECIFIED
+        ]
+        if unattributed:
+            raise BudgetError(
+                f"cannot aggregate: channel(s) {sorted(unattributed)} carry a quantified uncertainty "
+                f"that declares no source_kind, so nothing has said those numbers are that channel's. "
+                f"Combining them produces a total attributed to channels nobody attributed: declare "
+                f"UncertaintySource on each record, which is what tells a discretization estimate from a "
+                f"measurement standard deviation"
             )
 
         kinds = {e.channel for e in entries}

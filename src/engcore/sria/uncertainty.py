@@ -54,6 +54,16 @@ class UncertaintyChannel(str, Enum):
 #: see :attr:`UncertaintyDeclaration.unattributed_channels`. Refusing it is the stricter reading,
 #: and it is not taken here because every domain solver in this repository still emits the default,
 #: so the refusal would fall on every existing declaration rather than on any wrong one.
+#: R-43: a row lists the sources a channel is a channel OF, plus UNSPECIFIED.
+#:
+#: UNSPECIFIED stays ACCEPTED here, and batch 54 (I-25 part C) records why: the
+#: SHA-256-pinned E1 and E2 experiment harnesses file quantified channel records
+#: that declare no source, and the pinned bytes may not be edited -- so a
+#: refusal at declaration time would make a pinned experiment unrunnable rather
+#: than making anything more honest. What batch 54 closes instead is the harm
+#: the audit measured: an unattributed record may no longer be COUNTED as a
+#: channel's known uncertainty, which is where "aleatoric and model_form marked
+#: known from a numerical-only record" came from.
 CHANNEL_ACCEPTS_SOURCE: "Mapping[UncertaintyChannel, frozenset[UncertaintySource]]" = {
     UncertaintyChannel.ALEATORIC: frozenset(
         {UncertaintySource.UNSPECIFIED, UncertaintySource.MEASUREMENT}
@@ -68,6 +78,71 @@ CHANNEL_ACCEPTS_SOURCE: "Mapping[UncertaintyChannel, frozenset[UncertaintySource
         {UncertaintySource.UNSPECIFIED, UncertaintySource.NUMERICAL}
     ),
 }
+
+#: Which channel a declared source belongs in, derived from the map above so
+#: the two cannot disagree.
+CHANNEL_OF_SOURCE: "Mapping[UncertaintySource, UncertaintyChannel]" = {
+    source: channel
+    for channel, sources in CHANNEL_ACCEPTS_SOURCE.items()
+    for source in sources
+    # UNSPECIFIED is in every row above, for the reason stated there, and it is
+    # a channel of nothing: it says which channels ACCEPT an unattributed
+    # record, not which channel such a record belongs to.
+    if source is not UncertaintySource.UNSPECIFIED
+}
+
+
+def channels_from_predictive_uncertainty(
+    records: "Mapping[str, Uncertainty]",
+) -> "dict[UncertaintyChannel, Uncertainty]":
+    """Carry declared V1 uncertainty records onto the channels their own sources name (R-43).
+
+    The producer and the budget were two unconnected halves: ``posterior_predictive_uq`` declares
+    PARAMETER on its epistemic interval and COMBINED on its total, the budget accepts PARAMETER only
+    under EPISTEMIC_PARAMETER, and nothing carried the one to the other -- so the map had nothing
+    production-made to check.
+
+    The channel is DERIVED from each record's own ``source_kind``, which is the only direction that
+    cannot invent an attribution. An UNKNOWN record carries no channel and is skipped, because a
+    production record whose metrics were never quantified is the ordinary case. A COMBINED record is
+    refused with the reason the map already gives: it is a mixture of channels, and filing it under one
+    counts what it contains twice.
+    """
+    channels: dict[UncertaintyChannel, Uncertainty] = {}
+    for name, record in dict(records).items():
+        if not isinstance(record, Uncertainty):
+            raise UncertaintyContractError(
+                f"{name!r} is not an Uncertainty record, so it names no channel"
+            )
+        if not record.is_quantified:
+            continue
+        source = UncertaintySource(record.source_kind)
+        if source is UncertaintySource.UNSPECIFIED:
+            # R-43 (I-25 part C): refused rather than skipped. Skipping would
+            # drop a quantified number silently, which is the shape of the
+            # defect one level down; and there is no channel to carry it to,
+            # because the record does not say which channel's number it is.
+            raise UncertaintyContractError(
+                f"uncertainty {name!r} is quantified and declares no source_kind, so it names no "
+                f"channel: nothing has said which channel's number it is. Declare UncertaintySource, "
+                f"which is what tells a discretization estimate from a measurement standard deviation"
+            )
+        channel = CHANNEL_OF_SOURCE.get(source)
+        if channel is None:
+            raise UncertaintyContractError(
+                f"uncertainty {name!r} is declared {source.value!r}, which belongs in no single "
+                f"channel: a combined uncertainty is already a mixture of channels, and filing it under "
+                f"one and root-sum-squaring it with another counts what it contains twice. Declare the "
+                f"per-channel parts"
+            )
+        existing = channels.get(channel)
+        if existing is not None and existing != record:
+            raise UncertaintyContractError(
+                f"two different records claim channel {channel.value!r}: {existing} and {record}. One "
+                f"channel carries one uncertainty, and nothing here can say which of two it is"
+            )
+        channels[channel] = record
+    return channels
 
 
 def require_source_fits_channel(channel: "UncertaintyChannel", uncertainty: Uncertainty, *, where: str) -> None:
@@ -185,10 +260,14 @@ class UncertaintyDeclaration:
     def unattributed_channels(self) -> tuple[UncertaintyChannel, ...]:
         """Quantified channels whose record declares no source (R-43).
 
-        UNSPECIFIED is accepted -- every domain solver in this repository still emits it -- and it is not
-        the same as compatible. A budget built from these channels is summing numbers nobody has said are
-        the channel's, and this property is what lets a reader see that rather than infer it from a
-        default. It is derived, so a caller cannot set it.
+        UNSPECIFIED is accepted -- every domain solver in this repository still emits it, and the
+        SHA-256-pinned E1 and E2 harnesses file such records under channels -- and it is not the same as
+        compatible. A budget built from these channels is summing numbers nobody has said are the
+        channel's, and this property is what lets a reader see that rather than infer it from a default.
+
+        Batch 54 (I-25 part C) is what makes it more than a report: ``UncertaintyBudget.aggregate``
+        refuses to combine exactly these channels, so an unattributed number can be declared and read but
+        not turned into a total presented as the channel's. It is derived, so a caller cannot set it.
         """
         return tuple(
             sorted(

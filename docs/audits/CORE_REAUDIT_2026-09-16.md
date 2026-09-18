@@ -3254,3 +3254,55 @@ in **both** its id and its unit, so each rule needed the case only it sees — t
 dimension, and another id in the declared unit. Control green. `BATCH53_PINNED_MUTATIONS.log`: **NONE**.
 
 **Open decisions.** None.
+
+### Batch 54 — I-25 part C (R-43's producer half)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-25 | **DONE** (parts A–C) | `2e5b9565` + `ea9c9bf4` (A, R-55), `44137eb2` + `c162d9da` (B; R-63, R-73), `23d3ae84` (C preregistration + 7 strict xfails), this commit | **R-43 stays PARTIAL**, and the remaining half is a producer no rule can write: no domain solver in this repository quantifies uncertainty at all. Every one emits `Uncertainty.unknown` with a stated reason, and inventing a number for a channel is the defect this whole round is about |
+
+**R-43's audited harm is FIXED; the problem stays PARTIAL, and the ledger says why at length.** This was the
+last LIBRARY_ONLY row. Batch 8 gave the report an `uncertainty` field with `source_kind`, declared PARAMETER
+and COMBINED on the two V1 predictive intervals, and wrote the map refusing a record filed under a channel
+its own source contradicts. Its own status line named three things left open.
+
+| Claim | Status | How |
+|---|---|---|
+| a budget marking a channel KNOWN from a record that never said so | **FIXED** | `UncertaintyBudget.aggregate` refuses to combine a quantified channel record whose own `source_kind` is UNSPECIFIED. That is where the audited sentence — *"the SRIA budget marks aleatoric and model_form 'known' from a numerical-only record"* — becomes a **number**: root-sum-squaring produces a total attributed to each channel, and a record nobody attributed is a number nobody has said is that channel's. The record may still be declared and read, and `unattributed_channels` still names it, which is what makes the refusal readable rather than surprising. |
+| UNSPECIFIED named rather than acted on | **FIXED at the point of use** | Naming was all batch 8 did. It is now a refusal — at aggregation, and in the carrying function below. |
+| the producer and the budget as two unconnected halves | **FIXED** | New `channels_from_predictive_uncertainty` carries a declared V1 record onto the channel its own `source_kind` names, refuses COMBINED (a mixture filed under one channel counts what it contains twice), skips UNKNOWN, and **refuses** an unattributed quantified record rather than skipping it — skipping would drop a number silently. |
+| a producer in the domains | **OPEN, and stated** | No domain solver quantifies uncertainty. That silence is honest and is left visible as UNKNOWN. |
+
+**Amendments 1 and 2 — the preregistered rules 1 and 2 were withdrawn and replaced.** As preregistered, rule 1
+refused a quantified `Uncertainty` whose `source_kind` was UNSPECIFIED at the **constructor**; it failed 218
+FAST-tier tests. Most were fixtures, but two of the files that build such records are **SHA-256 pinned**:
+`experiments/electrical_e1/e1_harness.py` and `experiments/electrical_e2/e2_harness.py` construct quantified
+channel records with no declared source, and `test_3_frozen_experiment_artifacts_are_unchanged` and
+`test_2_e1_frozen_files_are_unchanged` compare their bytes with a frozen digest. Editing them is forbidden,
+and 54 tests fail without the edit — so a constructor refusal makes a **pinned experiment unrunnable** rather
+than making anything more honest. Rule 2 (removing UNSPECIFIED from `CHANNEL_ACCEPTS_SOURCE`) breaks the same
+files, because the E1 harness *files* such a record under the ALEATORIC channel. Both are replaced by the
+rule above, at the place the audit's own sentence locates the harm. The numbers and the digests are in the
+protocol's `amendment_log`.
+
+**Compatibility.** Additive only: one module-public function in `engcore.sria.uncertainty`, added to no
+package export list, so the frozen V1 symbol count stays 194. No field, default, enum member or signature
+moved, and no serialized shape changed. Four in-tree SRIA tests that **aggregate** now declare the source of
+each channel they file, each amended in place with the reason; `tests/test_guard_reach_ledger.py`'s
+LIBRARY_ONLY list and its tamper case are amended too — R-43 was the last row in that status, so the tamper
+now **makes** one, which is what exercising a refusal means when the tree has nothing left for it to catch.
+
+**Committed evidence.** Nothing to regenerate: no committed JSON carries a quantified uncertainty record —
+the only `"kind"` values in committed evidence are audit-record kinds — and the pinned harnesses are
+untouched.
+
+**Verification.** The batch's own file 11 passed. FAST tier **7160 passed, 5 skipped, 19 failed** — exactly
+the by-design set. Expensive tier **528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched. Guard reach ledger clean
+over **36** guards, with R-43 now PARTIAL/LATENT — and **no LIBRARY_ONLY row left in the ledger**.
+
+**Guard mutations.** `BATCH54_MUTATIONS.log`: **4 of 4 KILLED**, control green, none repointed.
+`BATCH54_PINNED_MUTATIONS.log`: **NONE**.
+
+**Open decisions.** None. The open half of R-43 is a producer, not a decision: a domain that has not
+quantified a channel says so, and this round does not fill that in.

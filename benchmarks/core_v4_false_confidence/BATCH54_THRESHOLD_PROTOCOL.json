@@ -17,33 +17,30 @@
   "finding 86 (R-43)": "The credibility report had no uncertainty field at all, so the record could not reach a verdict even where it existed. Closed in batch 8; what this batch is about is the producer and the budget it was supposed to feed."
  },
  "rules": {
-  "a_quantified_uncertainty_says_what_it_is_of": {
+  "an_unattributed_quantified_record_is_not_aggregated_into_a_total": {
    "improvement": "I-25",
    "problem": "R-43",
-   "rule": "`Uncertainty` refuses a STANDARD or INTERVAL record whose `source_kind` is UNSPECIFIED. UNKNOWN records are untouched: UNSPECIFIED is the honest state of an uncertainty nobody evaluated.",
+   "rule": "`UncertaintyBudget.aggregate` refuses to combine a quantified channel record whose own `source_kind` is UNSPECIFIED. The record may still be declared, read and named by `UncertaintyDeclaration.unattributed_channels`.",
    "class": "A",
-   "why": "This is the rule that makes 'no producer' impossible to reintroduce: any future quantified record must say what it is an uncertainty OF, at the one place every one of them is built. The distinction is the whole point of the CORE-016 field -- a discretization estimate and a measurement standard deviation are both STANDARD uncertainties and only one of them bounds how far the value may be from the world -- and it is meaningless for a record that carries no number at all, which is why UNKNOWN keeps UNSPECIFIED. The strictness rule says undeclared information lowers a claim; here the claim IS the number, so the record does not exist without the declaration.",
-   "closes": "finding 51's 'no producer', by making an undeclared quantified record unconstructible rather than named."
-  },
-  "an_unattributed_quantified_channel_is_refused_where_it_is_aggregated": {
-   "improvement": "I-25",
-   "problem": "R-43",
-   "rule": "`CHANNEL_ACCEPTS_SOURCE` stops accepting UNSPECIFIED, and `require_source_fits_channel` refuses an UNSPECIFIED record filed under a channel -- for a QUANTIFIED record. An UNKNOWN record stays acceptable under any channel, because filing 'nobody evaluated this' under a channel is how a declaration says so.",
-   "closes": "finding 51's budget claim: the SRIA budget can no longer mark aleatoric or model_form KNOWN from a record that does not say it is a measurement or a model-form estimate.",
-   "class": "A",
-   "why": "The map was written with UNSPECIFIED in every row because every producer emitted it, and the row above removes that reason. A quantified record filed under ALEATORIC without saying it is a measurement is exactly the audited case -- a numerical-only record counted as aleatoric -- and `unattributed_channels` reported it after the fact instead of refusing it."
+   "why": "The audit's finding 51 measures the aggregation: 'The SRIA budget marks aleatoric and model_form known from a numerical-only record' -- and a marked state becomes a NUMBER only through aggregate, which root-sum-squares channels into a total attributed to each of them. A record nobody attributed is a number nobody has said is that channel's, and combining it is where the claim is made. Refusing at construction or at declaration instead would break the SHA-256-pinned E1 and E2 harnesses, which is amendments 1 and 2.",
+   "closes": "finding 51's budget claim, at the point the claim is made.",
+   "amended": "This replaces the preregistered rules 1 and 2; see the amendment log for the pinned bytes that forced it."
   },
   "a_predictive_interval_can_be_carried_into_a_declaration": {
    "improvement": "I-25",
    "problem": "R-43",
-   "rule": "A new public function in `engcore.sria.uncertainty`: `channels_from_predictive_uncertainty(records)`, which maps each quantified V1 uncertainty onto the channel its own `source_kind` names, refuses COMBINED with the reason the map already gives, and skips UNKNOWN. The two halves are then connected by a call rather than by a reader's assumption.",
+   "rule": "A new public function in `engcore.sria.uncertainty`: `channels_from_predictive_uncertainty(records)`, which maps each quantified V1 uncertainty onto the channel its own `source_kind` names, refuses COMBINED with the reason the map already gives, and skips UNKNOWN. The two halves are then connected by a call rather than by a reader's assumption. An unattributed quantified record is REFUSED rather than skipped, because skipping would drop a number silently.",
    "class": "A",
    "why": "The third open sentence of batch 8's status, stated as code: the producer declares PARAMETER and the budget accepts PARAMETER only under EPISTEMIC_PARAMETER, and nothing carried the one to the other, so the map had nothing production-made to check. Deriving the channel from the record's own declaration is the only direction that cannot invent an attribution.",
    "closes": "the 'two unconnected halves' residual, to the extent a library can: the caller that builds a declaration is still SRIA's, and this is the function it now has."
   }
  },
  "thresholds": {
-  "none_introduced": {"value": null, "class": "A", "why": "every rule is a structural requirement about what a record declares. No number is introduced, and no existing threshold moves."}
+  "none_introduced": {
+   "value": null,
+   "class": "A",
+   "why": "every rule is a structural requirement about what a record declares. No number is introduced, and no existing threshold moves."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -74,5 +71,18 @@
   "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-18",
+   "amendment": "Rule 1 is WITHDRAWN: `Uncertainty` does not refuse a quantified record whose source_kind is UNSPECIFIED.",
+   "numbers_that_forced_it": "Implemented as preregistered, the constructor refusal failed 218 FAST-tier tests. Most were fixtures and were amended, but two of the files that build such records are SHA-256 PINNED: experiments/electrical_e1/e1_harness.py and experiments/electrical_e2/e2_harness.py each construct quantified channel records with no declared source, and tests/test_electrical_v01_demo.py::test_3_frozen_experiment_artifacts_are_unchanged and tests/test_sria_e2_model_adequacy.py::test_2_e1_frozen_files_are_unchanged compare their bytes with a frozen digest ('d9bcb71b11c94b8f755a6213b41dac7fc38b4d3903142b0d53495c0108112626' for e1_harness.py). Editing them is forbidden and 54 tests in tests/test_sria_e2_model_adequacy.py fail without the edit, so a constructor refusal makes a pinned experiment unrunnable rather than making anything more honest. The rule moves to where the audit measured the harm; see amendment 2.",
+   "threshold_moved": "none: no threshold is introduced by this batch."
+  },
+  {
+   "date": "2026-09-18",
+   "amendment": "Rules 1 and 2 are replaced by one rule at the place the number is USED: `UncertaintyBudget.aggregate` refuses to combine a quantified channel record whose own source_kind is UNSPECIFIED, and `channels_from_predictive_uncertainty` refuses to carry one. `CHANNEL_ACCEPTS_SOURCE` keeps UNSPECIFIED in every row, with the reason written beside it.",
+   "numbers_that_forced_it": "The same pinned bytes as amendment 1: the E1 harness FILES an unattributed quantified record under the ALEATORIC channel, so a refusal at declaration time -- rule 2 as preregistered -- breaks it too (tests/test_sria_e2_model_adequacy.py, 54 failures). What the audit's finding 51 actually measures is the aggregation: 'The SRIA budget marks aleatoric and model_form known from a numerical-only record', and a marked state becomes a number only through `aggregate`. So an unattributed record may be declared and read -- and `unattributed_channels` still names it, which is what makes the refusal readable -- and it may not be combined into a total attributed to channels nobody attributed. Four in-tree SRIA tests that aggregate now declare the source of each channel they file, each amended in place with the reason; the FAST tier is back at the by-design 19.",
+   "threshold_moved": "none."
+  }
+ ]
 }

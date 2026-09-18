@@ -10,7 +10,8 @@ central finding: the guards were not wrong, they were written where production d
 * `TrustedConsensusGate`, which requires byte-verified artifact independence before
   CROSS_SOLVER_VALIDATED, has no caller (R-21, open -- I-12).
 * `UncertaintySource` has no producer, so `source_kind` is UNSPECIFIED on everything production makes
-  (R-43, open -- I-25).
+  (R-43 -- PARTIAL after I-25 part C in batch 54: an unattributed record can no longer be aggregated,
+  and the remaining half is a producer no rule can write).
 * The production electrothermal coupling passes bare point values and `UncertaintyTransfer` has no caller
   (R-58 -- CLOSED by I-27 part C in batch 49: the loop records one `CrossedQuantity` per crossing).
 
@@ -86,8 +87,14 @@ def test_i16_the_three_it_did_not_fix_say_so_and_name_their_improvement():
     # production electrothermal loop record one CrossedQuantity per crossing, carrying the producing
     # result's own uncertainty, applicability verdicts and validation state, so the rule family stopped
     # being a library and the row moved to REACHED.
+    # R-43 left this list in batch 54, and it is the last row to leave it: I-25 part C closed the harm
+    # the audit measured -- an unattributed quantified record being aggregated into a total presented as
+    # the channels' own -- and connected the producer to the budget. What remains open is a PRODUCER no
+    # rule can write: no domain solver in this repository quantifies uncertainty at all, and every one
+    # emits Uncertainty.unknown with a stated reason. The row is PARTIAL and LATENT, and says so at
+    # length; what this test guards is that every row still names the improvement that closes it.
     for problem in ("R-43",):
-        assert rows[problem]["status"] == "LIBRARY_ONLY", rows[problem]
+        assert rows[problem]["status"] in {"LATENT", "LIBRARY_ONLY"}, rows[problem]
         assert rows[problem]["closed_by"].startswith("I-"), rows[problem]
     for problem in ("R-21", "R-58"):
         assert rows[problem]["status"] == "REACHED", rows[problem]
@@ -259,9 +266,14 @@ def _tamper_exercised_by(ledger):
 
 
 def _tamper_closed_by(ledger):
-    # R-43 rather than R-21, which stopped being LIBRARY_ONLY when I-12 part B landed (batch 25). The rule
-    # under test only applies to a row that IS LIBRARY_ONLY.
-    _row(ledger, "R-43")["closed_by"] = ""
+    # The rule under test only applies to a row that IS LIBRARY_ONLY, and after batch 54 no row is: R-21
+    # left that status when I-12 part B landed (batch 25), R-58 when I-27 part C did (batch 49), and R-43
+    # when I-25 part C did (batch 54). So the tamper MAKES one, which is what exercising a refusal means
+    # -- the rule has to stay armed for the next row that needs it, and there is nothing left in the tree
+    # for it to be armed against.
+    row = _row(ledger, "R-43")
+    row["status"] = "LIBRARY_ONLY"
+    row["closed_by"] = ""
     return "must name the improvement"
 
 
