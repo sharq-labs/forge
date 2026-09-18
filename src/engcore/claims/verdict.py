@@ -254,6 +254,9 @@ class VerdictBasis:
     assurance: str | None  # AssuranceVerdict value
     discrepancy_supported: bool | None  # None: not demanded
     comparison: ComparisonOutcome | None
+    #: Phase 3: whether the decision context's policy requirements the claim cannot state
+    #: (validation evidence, an independent route, applicability) are met. None: no context.
+    policy_satisfied: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -264,6 +267,7 @@ class VerdictBasis:
             "assurance": self.assurance,
             "discrepancy_supported": self.discrepancy_supported,
             "comparison": None if self.comparison is None else self.comparison.value,
+            **({} if self.policy_satisfied is None else {"policy_satisfied": self.policy_satisfied}),
         }
 
 
@@ -276,6 +280,7 @@ def admissible(basis: VerdictBasis) -> bool:
         and basis.credibility == "supported"
         and basis.assurance == "valid"
         and basis.discrepancy_supported is not False
+        and basis.policy_satisfied is not False
     )
 
 

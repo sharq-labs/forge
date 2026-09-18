@@ -59,6 +59,7 @@ from .explanation import ExplanationItem, ExplanationKind, explain
 from .planning import ExperimentPlan, PlanningError, plan_experiment, verify_plan
 from .repair import RepairAction, RepairKind, merge_repairs
 from .oracles import discover_oracles
+from .policy import derive_requirement, policy_findings
 from .selection import concrete
 from .sources import gather_evidence
 from .uncertainty import report_transport
@@ -313,6 +314,8 @@ def _reasons(basis: VerdictBasis, verdict: ClaimVerdict, record: Mapping[str, An
             out.append({"reason": f"the assurance decision is {basis.assurance}", "source": "/assurance/verdict"})
         if basis.discrepancy_supported is False:
             out.append({"reason": "the demanded model-form discrepancy is not supported", "source": "/assurance/discrepancy_check"})
+        if basis.policy_satisfied is False:
+            out.append({"reason": "the decision's evidence policy is not met", "source": "/policy/findings"})
     if admissible(basis):
         out.append({"reason": f"admissible evidence: the comparison is {basis.comparison.value}", "source": "/comparison/outcome"})
     return out
@@ -355,7 +358,23 @@ def _build_record(
     sources = gather_evidence({"simulation_evidence": evidence, "simulation_problem": evidence_problem})
     oracles = () if claim is None else discover_oracles(registry, qoi=claim.qoi.name, context=claim.supplied_inputs)
 
+    # Phase 3: the requirements the decision's policy adds that a claim cannot state are read off the
+    # run's own records. The policy grants nothing: it can only withhold admissibility.
+    policy_record = None
+    policy_satisfied = None
+    if claim is not None and claim.decision_context is not None:
+        requirement = derive_requirement(claim.decision_context)
+        findings = policy_findings(requirement, plan, report) if bound and report is not None else []
+        policy_satisfied = (not findings) if bound else None
+        policy_record = {
+            "requirement": requirement.to_dict(),
+            "requirement_digest": requirement.digest,
+            "evaluated": bound,
+            "findings": findings,
+            "satisfied": policy_satisfied,
+        }
     basis = VerdictBasis(
+        policy_satisfied=policy_satisfied,
         ready=ready,
         executed=executed,
         bound=bound,
@@ -369,6 +388,17 @@ def _build_record(
     verdict = derive_claim_verdict(basis)
 
     repairs = list(compiled.repairs)
+    for finding in policy_record["findings"] if policy_record is not None else ():
+        repairs.append(
+            RepairAction(
+                RepairKind.PROVIDE_EVIDENCE,
+                finding["requirement"],
+                finding["reason"],
+                required_for=(f"decision:{claim.decision.decision_id}",),
+                source=f"policy:{policy_record['requirement']['profile_id']}@{policy_record['requirement']['profile_version']}",
+                detail={"risk_class": policy_record["requirement"]["risk_class"]},
+            )
+        )
     if report is not None and claim is not None and plan is not None:
         # An advisory "may be needed" is moot once the run has assessed the
         # condition; the run's own UNKNOWNs produce the repairs that remain.
@@ -462,6 +492,7 @@ def _build_record(
         else {"verdict": report.verdict.value, "evidence_basis": report.evidence_basis, "report": report.to_dict()},
         "comparison": None if comparison is None else comparison.to_dict(),
         "basis": {**basis.to_dict(), "admissible": admissible(basis)},
+        **({"policy": policy_record} if policy_record is not None else {}),
         "repair_actions": [r.to_dict() for r in repairs],
     }
     items = explain(record)
