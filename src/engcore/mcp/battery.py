@@ -51,6 +51,7 @@ from ..domains.battery import solver as bsol
 from ..domains.thermal_models import lumped as lump
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.provenance import ProvenanceRecord
+from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.results.requirements import merged_requirement_checks
 from ..scientific.units.quantity import Quantity, dimensionality
 from .errors import MalformedPayloadError, MissingFieldError
@@ -515,6 +516,18 @@ def run_battery_case(
             "final_state_of_charge": final.final_state_of_charge,
             "heat_generation": final.heat_generation,
             "final_temperature": final.final_temperature,
+        },
+        uncertainty={
+            name: Uncertainty.unknown(
+                "battery production path has not quantified this output's "
+                "uncertainty; UNKNOWN is explicit and must not be read as zero"
+            )
+            for name in (
+                "terminal_voltage",
+                "final_state_of_charge",
+                "heat_generation",
+                "final_temperature",
+            )
         },
         provenance=_provenance(cell, load, thermal, identifier, steps, run),
         validity=validity,

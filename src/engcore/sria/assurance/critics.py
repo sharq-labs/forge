@@ -476,6 +476,31 @@ def model_discrepancy_check(
     * **contradicted** — evidence actually conflicts with zero discrepancy.
       That is evidence-backed and may support INVALID.
     """
+    discrepancy = budget.model_discrepancy
+    if discrepancy.kind is DiscrepancyKind.UNKNOWN:
+        return (
+            CheckRecord(
+                name="model_discrepancy_supported",
+                outcome=CriticVerdict.INCONCLUSIVE,
+                mandatory=mandatory,
+                detail="model-form discrepancy was not evaluated",
+            ),
+            (
+                Finding(
+                    code="domain.model_discrepancy_unknown",
+                    severity=Severity.MAJOR,
+                    impact=FindingImpact.ASSURANCE_BLOCKING,
+                    category="model_form",
+                    message=(
+                        "model-form discrepancy is UNKNOWN. UNKNOWN is not zero "
+                        "and cannot satisfy a policy that requires model-form "
+                        "discrepancy to be supported."
+                    ),
+                    check_name="model_discrepancy_supported",
+                ),
+            ),
+        )
+
     if str(contradicted_by).strip():
         return (
             CheckRecord(
@@ -498,7 +523,6 @@ def model_discrepancy_check(
                 ),
             ),
         )
-    discrepancy = budget.model_discrepancy
     if discrepancy.kind is DiscrepancyKind.CONSTRAINED_PRIOR:
         return (
             CheckRecord(

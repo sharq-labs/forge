@@ -86,17 +86,35 @@ _LEVEL_BY_KIND = {
     OracleKind.EXPERIMENTAL_DATASET: ValidationLevel.EXPERIMENTALLY_VALIDATED,
 }
 
-# Repository-owned authority pins. This mapping is intentionally immutable and
-# empty until a curated oracle is admitted by source change/review. Tests may
-# replace the module attribute with an isolated fixture mapping; production
-# callers receive no registration API because the party asking for a level must
-# not also be the party that grants itself authority.
+# Repository-owned authority pins. This mapping is intentionally immutable.
+# Admission requires a source change/review: production callers receive no
+# registration API because the party asking for a validation level must not
+# also be the party that grants itself authority.
 #
 # Key: (oracle_id, version)
 # Value: {"kind": <OracleKind.value>, "evidence_digest": <sha256>,
 #         "reference": <stable external reference>, "declared_by": <prose>}
 _TRUSTED_ORACLE_DECLARATIONS: Mapping[tuple[str, str], Mapping[str, str]] = (
-    MappingProxyType({})
+    MappingProxyType(
+        {
+            ("nafems.p18.t3.transient_heat_1d", "1"): MappingProxyType(
+                {
+                    "kind": OracleKind.BENCHMARK_DATASET.value,
+                    "evidence_digest": "eb6e2daf9a6ad6a957576fc9d3462175edf0525ebeea68bcd74778868d875328",
+                    "reference": (
+                        "NAFEMS P18.T3, The Standard NAFEMS Benchmarks, Rev. 3 (1990); "
+                        "public reproductions: Altair SimSolid SS-V:3070 and MOOSE nafems_t3_verif"
+                    ),
+                    "declared_by": (
+                        "Forge Sprint 2 external-evidence review: target and case "
+                        "conditions cross-checked against public NAFEMS T3 reproductions; "
+                        "the 0.05 K comparison envelope is recording precision, not a "
+                        "claimed NAFEMS acceptance threshold"
+                    ),
+                }
+            )
+        }
+    )
 )
 
 
