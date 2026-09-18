@@ -21,6 +21,8 @@ cannot grant itself a level by editing an envelope.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Iterable
 
 from ..scientific.results.uncertainty import UncertaintySource
@@ -48,6 +50,11 @@ __all__ = [
     "CredibilityReportCritic",
     "evidence_from_credibility_report",
 ]
+
+
+def _report_digest(report: CredibilityEvidenceReport) -> str:
+    blob = json.dumps(report.to_dict(), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def _uncertainty_declaration(
@@ -129,7 +136,11 @@ def evidence_from_credibility_report(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
         claim_type=ClaimType.QOI_VALUE,
-        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref=name),
+        claim_binding=ClaimBinding(
+            subject_kind="qoi",
+            subject_ref=name,
+            qualifiers={"credibility_report_digest": _report_digest(report)},
+        ),
         claim_payload={
             "value": quantity.magnitude,
             "units": str(quantity.units),
@@ -213,6 +224,7 @@ class CredibilityReportCritic:
                 metadata={
                     "evidence_basis": report.evidence_basis,
                     "credibility_verdict": report.verdict.value,
+                    "credibility_report_digest": _report_digest(report),
                 },
             ),
             checks=tuple(checks),
