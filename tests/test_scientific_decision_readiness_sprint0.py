@@ -17,14 +17,8 @@ from engcore.scientific import oracles
 from engcore.sria.assurance.arbiter import Arbiter
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-01: production Scientific Core/MCP does not yet bridge into SRIA "
-        "evidence/decision assurance"
-    ),
-)
 def test_sdr01_production_tree_has_a_sria_bridge() -> None:
+    """Closed in Sprint 1: integration/decision_evidence composes MCP and SRIA."""
     root = Path(__file__).resolve().parents[1] / "src" / "engcore"
     imports: list[str] = []
     patterns = (
@@ -49,14 +43,8 @@ def test_sdr01_production_tree_has_a_sria_bridge() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-03: obligations_from_charter records required ValidationLevel "
-        "tokens, but Arbiter.decide explicitly cannot evaluate them"
-    ),
-)
 def test_sdr03_arbiter_can_evaluate_charter_validation_levels() -> None:
+    """Closed in Sprint 1: validation-level obligations use named critic checks."""
     source = inspect.getsource(Arbiter.decide)
     assert "validation-level obligations are recorded but not evaluated" not in source
     assert "obligation {target} is not evaluable in M3" not in source
