@@ -1,20 +1,12 @@
 name: Tests
 
-# Ordinary PRs run the normal test suite here.
-# Core-changing PRs delegate FAST / scientific / mutation assurance to the
-# hardened-core workflow, which runs those independent gates in parallel and
-# produces a certificate-only child commit. Main pushes still run the full suite.
+# Manual-only normal/full test suite.
 #
-# Ownership is decided by tools/certification/recertification_scope.py, the same
-# classifier the recertify workflow calls, so the two workflows cannot disagree
-# about which one owns a change. Branch protection must require `tests-gate`
-# (and the recertify workflow's `recertification-gate`): every other job here is
-# conditional, and GitHub counts a skipped required job as passing.
+# In GitHub Actions choose "Tests", select the branch from the "Use workflow
+# from" dropdown, then click "Run workflow". Pushes and pull requests do not
+# start this workflow automatically.
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 concurrency:
