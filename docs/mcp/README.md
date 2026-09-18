@@ -213,7 +213,16 @@ Add to `claude_desktop_config.json` — on Windows
 
 On macOS or Linux the command is `<REPO>/.venv/bin/python`.
 
-## The two tools
+## The tools
+
+`describe_capabilities`, `run_electrothermal` and `run_battery` are described
+below. `assess_claim(request)` binds one caller-named system run to one
+decision, and is unchanged. `assess_scientific_claim(claim)`, added with server
+0.7.0, is the generic boundary. It takes a `scientific_claim/1` record, routes it
+by declared capabilities, and never lets the caller name a system. It then plans,
+executes and assures the claim, and returns SUPPORTED / CONTRADICTED /
+INSUFFICIENT_EVIDENCE with the full traceable record: see
+[`docs/scientific-core/claims-layer.md`](../scientific-core/claims-layer.md).
 
 ### `describe_capabilities()`
 
