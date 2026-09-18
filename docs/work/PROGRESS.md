@@ -27,6 +27,11 @@ No test command is recorded here yet for the latest agent-workflow additions.
 
 Status: **NOT RUN**
 
+Environment note (2026-09-19): an attempt to clone the branch into the
+assistant's local execution container was blocked before checkout because that
+container could not resolve `github.com`. No pytest command ran, so this is
+not a test result and the status remains NOT RUN.
+
 When a command is executed, append entries in this exact shape:
 
 ```text

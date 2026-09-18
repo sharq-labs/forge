@@ -34,6 +34,34 @@ is the gate for a milestone freeze.
 
 ---
 
+## Fast changed-file gate
+
+Before selecting a large tier by hand, Forge now has a small deterministic
+developer gate:
+
+```bash
+python tools/forge_check.py --changed
+```
+
+It always runs repository/layer guards and selects a fixed set of scientific
+regression sentinels from `tests/scientific_regression/manifest.json` according
+to the changed source paths. The sentinels target false-confidence failures:
+applicability, verification-vs-validation, context binding, uncertainty
+attribution, risk policy, evidence admission, evidence gaps, challenge and
+replay.
+
+To run the complete fixed sentinel pack:
+
+```bash
+python tools/forge_check.py --regression
+```
+
+Use `--dry-run --list` to inspect the selection without executing tests.
+This command is a fast development aid only. It does **not** replace FAST,
+SCIENTIFIC, FULL or hardened recertification.
+
+---
+
 ## The tiers
 
 Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;
