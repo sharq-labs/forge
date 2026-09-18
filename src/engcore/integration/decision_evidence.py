@@ -298,6 +298,7 @@ def evidence_from_credibility_report(
 def _binding_gaps(
     report: CredibilityEvidenceReport,
     evidence: Evidence,
+    charter: CampaignCharter,
 ) -> tuple[str, ...]:
     gaps: list[str] = []
     if evidence.source_class is not SourceClass.SIMULATION:
@@ -336,6 +337,32 @@ def _binding_gaps(
     if evidence.context_ref != evidence.claim_binding.qualifiers.get("context_ref", ""):
         gaps.append("claim binding is not scoped to evidence.context_ref")
 
+    context_meta = evidence.metadata.get("decision_context")
+    if not isinstance(context_meta, Mapping):
+        gaps.append("evidence carries no structured decision_context metadata")
+    else:
+        decision_id = str(context_meta.get("decision_id", ""))
+        operating_context_ref = str(context_meta.get("operating_context_ref", ""))
+        try:
+            expected_context = _decision_context_payload(
+                charter, decision_id, operating_context_ref
+            )
+            if dict(context_meta) != expected_context:
+                gaps.append(
+                    "evidence decision_context does not match the governing charter"
+                )
+            expected_context_ref = decision_context_ref(
+                charter,
+                decision_id,
+                operating_context_ref=operating_context_ref,
+            )
+            if evidence.context_ref != expected_context_ref:
+                gaps.append(
+                    "evidence context_ref is not derived from the governing charter"
+                )
+        except DecisionEvidenceBridgeError as exc:
+            gaps.append(f"decision context is not governed by this charter: {exc}")
+
     expected_digest = report_digest(report)
     if evidence.metadata.get("source_report_digest") != expected_digest:
         gaps.append("evidence does not pin the exact credibility report digest")
@@ -362,6 +389,7 @@ class CredibilityReportCritic:
         self,
         report: CredibilityEvidenceReport,
         evidence: Evidence,
+        charter: CampaignCharter,
         *,
         assessment_id: str,
     ) -> CriticAssessment:
@@ -369,8 +397,10 @@ class CredibilityReportCritic:
             raise TypeError("CredibilityReportCritic requires CredibilityEvidenceReport")
         if not isinstance(evidence, Evidence):
             raise TypeError("CredibilityReportCritic requires Evidence")
+        if not isinstance(charter, CampaignCharter):
+            raise TypeError("CredibilityReportCritic requires CampaignCharter")
 
-        gaps = _binding_gaps(report, evidence)
+        gaps = _binding_gaps(report, evidence, charter)
         checks: list[CheckRecord] = [
             CheckRecord(
                 name="credibility_report_binding",
@@ -471,11 +501,13 @@ class CredibilityReportCritic:
                     report.run_id,
                     report.provenance.run_id,
                     digest,
+                    charter.digest,
                 ),
                 metadata={
                     "source_report_digest": digest,
                     "source_report_verdict": report.verdict.value,
                     "source_evidence_basis": report.evidence_basis,
+                    "charter_digest": charter.digest,
                 },
             ),
             checks=tuple(checks),
