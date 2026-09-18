@@ -86,20 +86,38 @@ def _nodeid_of(case: ET.Element) -> str:
     return f"{path}::{name}"
 
 
+def _is_the_named_test(reported: str, wanted: str) -> bool:
+    """Whether a reported nodeid is the one an entry names.
+
+    Equal, or -- when the entry names the FUNCTION and the suite is parametrized -- one of its
+    parameter cases, whose nodeid pytest writes as ``name[case]``. An entry that names a case
+    explicitly (thirteen of them do, one per refusal in the reach ledger's table) still matches only
+    that case.
+    """
+    if reported == wanted:
+        return True
+    return "[" not in wanted and reported.startswith(wanted + "[") and reported.endswith("]")
+
+
 def verdict_from_junit(report: str | bytes, nodeid: str) -> str:
     """The round's verdict for one mutation, read from the JUnit report of its own test.
 
-    ``KILLED`` when the named nodeid is present and carries a ``<failure>``; ``SURVIVED`` when it is
-    present and carries neither a failure nor an error. Everything else is named rather than
-    counted:
+    ``KILLED`` when the named test is present and at least one of its cases carries a ``<failure>``;
+    ``SURVIVED`` when it is present and no case failed or errored. Everything else is named rather
+    than counted:
 
     * ``NOT_COLLECTED`` -- the named test is not in the report at all, which is what a mutation that
       breaks an import looks like. Under the audited rule this was a kill;
-    * ``ERRORED`` -- the named test is in the report and raised outside its own body (a fixture, a
+    * ``ERRORED`` -- the named test is present and raised outside its own body (a fixture, a
       collection error), which is not the guard firing;
     * ``SKIPPED`` -- the run did not exercise the guard.
 
     A report that is not XML is ``REPORT_UNREADABLE``: a round cannot be scored on it.
+
+    ONE FAILING CASE IS THE KILL for a parametrized target. The guard fired on the case the entry's
+    batch built it for, and a parametrization that also covers cases the guard says nothing about is
+    a property of the suite, not evidence that the mutation survived. Requiring every case to fail
+    would make a mutation's verdict depend on how many examples someone added later.
     """
     text = report.decode("utf-8", "replace") if isinstance(report, bytes) else report
     try:
@@ -107,17 +125,24 @@ def verdict_from_junit(report: str | bytes, nodeid: str) -> str:
     except ET.ParseError as exc:
         return f"REPORT_UNREADABLE({exc})"
     wanted = nodeid.replace("\\", "/")
+    outcomes: list[str] = []
     for case in root.iter("testcase"):
-        if _nodeid_of(case) != wanted:
+        if not _is_the_named_test(_nodeid_of(case), wanted):
             continue
         if case.find("failure") is not None:
-            return "KILLED"
-        if case.find("error") is not None:
-            return "ERRORED"
-        if case.find("skipped") is not None:
-            return "SKIPPED"
-        return "SURVIVED"
-    return "NOT_COLLECTED"
+            outcomes.append("KILLED")
+        elif case.find("error") is not None:
+            outcomes.append("ERRORED")
+        elif case.find("skipped") is not None:
+            outcomes.append("SKIPPED")
+        else:
+            outcomes.append("SURVIVED")
+    if not outcomes:
+        return "NOT_COLLECTED"
+    for verdict in ("KILLED", "ERRORED", "SKIPPED"):
+        if verdict in outcomes:
+            return verdict
+    return "SURVIVED"
 
 
 def require_an_isolated_tree(root: pathlib.Path, work: pathlib.Path) -> None:

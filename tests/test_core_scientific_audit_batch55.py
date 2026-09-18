@@ -71,8 +71,8 @@ def test_r67_the_rounds_guard_mutations_are_declared_inside_the_pinned_harness_a
     """563 mutations of evidence, and the certificate measured none of their bytes."""
     population = _module("mutation_population_v4")
     entries = _attribute(population, "POPULATION_V4")
-    assert len(entries) == 563, (
-        f"the population declares {len(entries)} of the round's 563 batch mutations")
+    assert len(entries) == 575, (
+        f"the population declares {len(entries)} of the round's 575 batch mutations")
     certificate = _module("tools.certification.core_certificate")
     harness = next(area for area in certificate.SCOPE if area.name == "harness")
     pinned = set(certificate.enumerate_area(REPO, harness))
@@ -118,11 +118,11 @@ def test_r67_the_entries_that_moved_and_the_declared_survivors_each_carry_their_
         if expect == not_mutated:
             unmutated.append(mid)
             assert note.strip(), f"{mid}: declared NOT MUTATED with no recorded reason"
-    # 25, not the 27 the protocol preregistered: see amendment 1. The two NOT MUTATED placeholders
+    # 26, and the protocol preregistered 27: see amendments 1 and 3. The two NOT MUTATED placeholders
     # carry an EMPTY `old`, which `str.count` finds everywhere, so the first measurement counted them
     # among the entries that no longer describe the tree. They are asserted separately below.
-    assert len(repointed) == 25, (
-        f"{len(repointed)} of the round's 25 moved entries are repointed; the rest are stale, dropped, or "
+    assert len(repointed) == 26, (
+        f"{len(repointed)} of the round's 26 moved entries are repointed; the rest are stale, dropped, or "
         f"silently rewritten: {sorted(repointed)}")
     assert len(unmutated) == 2, sorted(unmutated)
     assert sorted(fstring_only) == ["B31f", "B32e", "B34b", "B47e", "B48e"], sorted(fstring_only)
@@ -205,8 +205,14 @@ def test_r68_every_module_the_certified_suites_import_is_pinned_by_the_certifica
     """Finding 93: hybrid_synthetic.py is imported by ten certified targets and pinned by nothing."""
     certificate = _module("tools.certification.core_certificate")
     closure = _attribute(certificate, "harness_import_closure")(REPO)
-    harness = next(area for area in certificate.SCOPE if area.name == "harness")
-    pinned = set(certificate.enumerate_area(REPO, harness))
+    # Both classifications, as the rule itself reads them: the certification control plane pins the
+    # population's own FAST-tier check, and a file the certificate measures under that heading is
+    # measured whichever area names it.
+    pinned = {
+        relative
+        for area in certificate.SCOPE if area.classification in ("HARNESS", "CERTIFICATION_CONTROL")
+        for relative in certificate.enumerate_area(REPO, area)
+    }
     missing = sorted(set(closure) - pinned)
     assert "tests/hybrid_uq/hybrid_synthetic.py" in closure, (
         "the closure does not even reach the helper the finding names, so it is not the closure")
@@ -237,7 +243,7 @@ def test_r66_the_v4_population_digests_are_re_derived_from_the_definitions():
     """Finding 91: a copied population sha passed every assurance check."""
     module = _module("tools.certification.mutation_population")
     population = _attribute(module, "v4_population")(REPO)
-    assert population.count == 563, population.count
+    assert population.count == 575, population.count
     assert population.sha256 == module.sha256_lines(population.ids)
     assert population.definitions_sha256, "the population's bodies are not hashed, so the same ids with a different mutation are the same population"
     other = type(population)(ids=population.ids, definitions_sha256="")
@@ -272,6 +278,39 @@ _JUNIT_AS_PYTEST_WRITES_IT = """<?xml version="1.0" encoding="utf-8"?>
 <failure message="Failed: DID NOT RAISE">assert False</failure></testcase>
 </testsuite></testsuites>
 """
+
+
+_JUNIT_PARAMETRIZED = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2">
+<testcase classname="tests.test_thing" name="test_the_guard_fires[4.0-3]" time="0.001">
+<failure message="assert False">assert False</failure></testcase>
+<testcase classname="tests.test_thing" name="test_the_guard_fires[1.0-3]" time="0.001"/>
+</testsuite></testsuites>
+"""
+
+_JUNIT_A_LONGER_NAME = """<?xml version="1.0" encoding="utf-8"?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1">
+<testcase classname="tests.test_thing" name="test_the_guard_fires_on_a_subset" time="0.001">
+<failure message="assert False">assert False</failure></testcase>
+</testsuite></testsuites>
+"""
+
+
+def test_r67_a_parametrized_target_is_killed_by_the_case_its_guard_is_about():
+    """Four entries name a parametrized test, and pytest reports each case as ``name[case]``.
+
+    One failing case is the kill: the guard fired on the case its batch built the mutation for, and a
+    parametrization that also covers cases the guard says nothing about is a property of the suite.
+    Requiring every case would make a verdict depend on how many examples somebody added later. What
+    is NOT allowed is a different test whose name merely extends the entry's.
+    """
+    runner = _module("tools.certification.mutation_v4_runner")
+    named = "tests/test_thing.py::test_the_guard_fires"
+    assert runner.verdict_from_junit(_JUNIT_PARAMETRIZED, named) == "KILLED"
+    assert runner.verdict_from_junit(_JUNIT_PARAMETRIZED, named + "[1.0-3]") == "SURVIVED", (
+        "an entry that names ONE case is answered by another case's failure")
+    assert runner.verdict_from_junit(_JUNIT_A_LONGER_NAME, named) == "NOT_COLLECTED", (
+        "a differently named test whose name extends the entry's carries the kill")
 
 
 def test_r67_the_kill_rule_reads_the_report_pytest_actually_writes():

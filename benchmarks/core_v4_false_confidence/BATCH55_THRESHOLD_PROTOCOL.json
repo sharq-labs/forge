@@ -96,18 +96,19 @@
  },
  "thresholds_declared": {
   "population_count": {
-   "value": 563,
+   "value": 575,
    "class": "A",
-   "note": "the corpus, counted by the generator; not a chosen number"
+   "note": "the corpus, counted by the generator; 563 of batches 1-54 plus batch 55's own 12 -- see amendment 2"
   },
   "batch_scripts_folded": {
-   "value": 55,
-   "class": "A"
+   "value": 56,
+   "class": "A",
+   "note": "amended from 55, see amendment 2"
   },
   "repointed_entries": {
-   "value": 25,
+   "value": 26,
    "class": "A",
-   "note": "each with its reason in the generator and in the emitted note; amended from 27, see the amendment log"
+   "note": "25 repointed at their source and one (B17f) at its renamed target test; amended from 27, see amendments 1 and 3"
   },
   "not_mutated_entries": {
    "value": 2,
@@ -138,6 +139,20 @@
    "changes": "`repointed_entries` 27 -> 25, and `entries_that_no_longer_describe_the_tree` is restated as 25 moved entries plus 2 never-applied placeholders.",
    "numbers_that_forced_it": "The first measurement counted 27 entries whose `old` text does not match the live tree exactly once. Two of those -- B25j and B27g -- carry an EMPTY `old` and `new`: their batch declared them NOT MUTATED (a JSON edit breaks the parse; a prose edit changes no code) and excluded them from its own run. `str.count('')` returns len(text) + 1, so an empty pattern 'matches' 138459 times in certification/guard_reach_ledger.json and 103528 times in src/engcore/scientific/consensus.py -- which is why they appeared in the stale list at all. Neither can be repointed, because neither names a mutation. The entries that genuinely moved and are repointed with their reasons are 25.",
    "what_did_not_change": "No rule, no threshold class, and no entry. The two placeholders are carried with their batch's reason and marked NOT_MUTATED so nothing applies them, exactly as rule 4 preregistered; only the two counts the rule quotes are corrected."
+  },
+  {
+   "amendment": 2,
+   "date": "2026-09-18",
+   "changes": "`population_count` 563 -> 575 and `batch_scripts_folded` 55 -> 56: batch 55's own twelve guard mutations are folded into the population too.",
+   "numbers_that_forced_it": "563 was measured before this batch wrote its own guard script. Leaving it out would put the guards over the population's machinery -- the kill rule, the isolation refusal, the derived closure, the two digests -- exactly where R-67 found the other 563: in a benchmarks/ script nothing verifies. B55a-B55l are 12, so the population is 575 from 56 scripts. The generator's own self-check keeps them honest: it refuses to write if any entry no longer matches, which is what caught B55a after the kill rule was corrected.",
+   "what_did_not_change": "No rule and no class. The count is a DECISION recorded in `EXPECTED_V4_POPULATION`, so it moves in the same change that folds a batch in, which is what this is."
+  },
+  {
+   "amendment": 3,
+   "date": "2026-09-18",
+   "changes": "`repointed_entries` 25 -> 26: B17f is repointed at its target TEST, not its source.",
+   "numbers_that_forced_it": "The formal round's first shards reported NOT_COLLECTED for B17f: its target test `test_r02_the_claim_names_the_prediction_domain_it_cannot_yet_show` had been RENAMED inside its own batch to `test_r02_the_claim_names_the_prediction_domain`. Four more entries (B11a, B11j, B11k, B13l) reported NOT_COLLECTED for a different reason: their target tests are PARAMETRIZED, and pytest reports each case as `name[case]`, which the first kill rule did not match. The rule now matches a parameter case of the named function -- one failing case is the kill, and an entry that names one case explicitly, as thirteen reach-ledger entries do, still matches only that case.",
+   "what_did_not_change": "No mutation, no source rule, and no expectation. What changed is the nodeid a kill must carry, in one entry, and the rule's reading of a parametrized report. The FAST check now verifies the target FUNCTION exists and not only its file -- the check that would have caught B17f before a round ran."
   }
  ]
 }

@@ -111,7 +111,7 @@ def test_no_two_folded_mutations_share_an_id():
     """The runner writes its work tree at ``mut_<id>``, so two entries under one name is one run."""
     ids = [entry[0] for entry in pop.POPULATION_V4]
     assert len(ids) == len(set(ids)), sorted(i for i in set(ids) if ids.count(i) > 1)
-    assert len(ids) == 563, f"{len(ids)} entries; the population the certificate claims is 563"
+    assert len(ids) == 575, f"{len(ids)} entries; the population the certificate claims is 575"
 
 
 def test_every_folded_mutation_still_matches_the_source_it_names():
@@ -135,12 +135,24 @@ def test_the_entries_that_only_bite_on_3_12_are_exactly_the_five_declared():
 
 
 def test_every_entry_names_a_target_test_that_exists():
-    """A kill is the named test failing, so an entry naming no real test can never be killed."""
-    missing = sorted(
-        f"{entry[0]}: {entry[4]}" for entry in pop.POPULATION_V4
-        if not (REPO / entry[4].split("::")[0]).is_file()
-    )
-    assert missing == [], missing
+    """A kill is the named test failing, so an entry naming no real test can never be killed.
+
+    The FUNCTION, not just the file. The first version of this check looked at the file alone and the
+    formal round then found B17f naming a test that had been RENAMED inside its own batch -- which
+    the audited rule would have scored as a kill, because pytest exits non-zero when it collects
+    nothing. A parameter case (``name[case]``) is checked by its function, which is what a nodeid of
+    that shape means.
+    """
+    missing = []
+    for entry in pop.POPULATION_V4:
+        if entry[5] == pop.NOT_MUTATED:
+            continue
+        relative, _, nodeid = entry[4].partition("::")
+        name = nodeid.partition("[")[0]
+        path = REPO / relative
+        if not path.is_file() or f"def {name}(" not in path.read_text(encoding="utf-8"):
+            missing.append(f"{entry[0]}: {entry[4]}")
+    assert sorted(missing) == [], sorted(missing)
 
 
 def test_every_entry_declares_a_verdict_the_runner_can_report():
@@ -161,7 +173,7 @@ def test_the_population_is_pinned_by_the_certificate_and_its_digests_are_re_deri
     assert "tests/mutation_population_v4.py" in set(enumerate_area(REPO, harness))
     population = v4_population(REPO)
     assert population.ids == pop.POPULATION_V4_IDS
-    assert population.count == 563 and population.definitions_sha256
+    assert population.count == 575 and population.definitions_sha256
 
 
 def test_the_closure_reaches_every_suite_the_population_names():

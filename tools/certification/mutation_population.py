@@ -271,8 +271,9 @@ V4_POPULATION_PATH = "tests/mutation_population_v4.py"
 #: The population the V4 certificate claims. Like EXPECTED_FORMAL_POPULATION this is a DECISION: a
 #: change that folds another batch in must move this number in the same (recertified) change, so the
 #: figure in a record is something somebody decided rather than whatever the file held that day.
-#: 563 = every mutation the 2026-09-16 core re-audit's 55 batch scripts declare, none dropped.
-EXPECTED_V4_POPULATION = 563
+#: 575 = every mutation the 2026-09-16 core re-audit's 56 batch scripts declare, none dropped: the 563
+#: of batches 1-54 and the 12 of batch 55, which are the guards over this population's own machinery.
+EXPECTED_V4_POPULATION = 575
 
 _V4_VERDICT = re.compile(r"^(?P<id>[A-Za-z0-9]+) \S+ -> (?P<verdict>[^|]+?)(?:\s+<-- EXPECTED .*)?\s*(?:\|.*)?$")
 _V4_NOT_MUTATED = re.compile(r"^NOT MUTATED: (?P<id>[A-Za-z0-9]+) --")

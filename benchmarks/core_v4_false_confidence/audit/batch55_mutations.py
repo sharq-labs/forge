@@ -30,11 +30,18 @@ V = "tests/test_mutation_population_v4.py"
 MUTATIONS = [
     Mutation(
         "B55a", f"{R}::verdict_from_junit",
-        "        if _nodeid_of(case) != wanted:\n            continue\n",
+        "        if not _is_the_named_test(_nodeid_of(case), wanted):\n            continue\n",
         "        if False:\n            continue\n",
         f"{T}::test_r67_a_kill_requires_the_named_target_test_to_fail",
         "finding 97 restored: the FIRST reported case decides the verdict whatever its nodeid, so a "
         "failure in another test is credited to the guard this mutation names"),
+    Mutation(
+        "B55l", f"{R}::_is_the_named_test",
+        "    return \"[\" not in wanted and reported.startswith(wanted + \"[\") and reported.endswith(\"]\")\n",
+        "    return reported.startswith(wanted)\n",
+        f"{T}::test_r67_a_parametrized_target_is_killed_by_the_case_its_guard_is_about",
+        "a reported nodeid that merely STARTS WITH the entry's is the named test, so a differently "
+        "named test whose name extends it -- and every case of it -- can carry the kill"),
     Mutation(
         "B55b", f"{R}::verdict_from_junit",
         "        if case.find(\"failure\") is not None:\n",

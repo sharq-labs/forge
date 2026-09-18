@@ -177,6 +177,12 @@ REPOINTED: dict[str, dict[str, str]] = {
             "why": "I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the "
                    "re-derived requirement checks. The preceding line is carried so the mutation still names "
                    "the report field the target test reads, and not the checks"},
+    "B17f": {"test": "tests/test_core_scientific_audit_batch17.py::test_r02_the_claim_names_the_prediction_domain",
+             "why": "the target test was RENAMED inside its own batch -- the claim it checks is the one the "
+                    "audit's R-02 names and the '_it_cannot_yet_show' tail went away with a rewrite. The "
+                    "mutation and the rule are untouched; only the nodeid a kill must carry is corrected. "
+                    "Found by the formal round, which reported NOT_COLLECTED where the old rule would have "
+                    "read 'pytest exited 4' as a kill"},
     "B36c": {"scope": "local_gaussian_posterior",
              "why": "`_refused` now writes the same digest for a refused route, so the unscoped pattern matches "
                     "twice; the target test reads the FITTED record"},
@@ -247,6 +253,9 @@ def _repointed(entry: tuple) -> tuple:
     path, scope = move.get("path", path), move.get("scope", scope)
     moved = f"{path}::{scope}" if scope else path
     was = f"was {spec} {old!r} -> {new!r}"
+    if "test" in move:
+        was = f"was {spec} targeting {test}"
+    test = move.get("test", test)
     return (mid, moved, move.get("old", old), move.get("new", new), test, expect,
             f"{note} [REPOINTED 2026-09-18: {move['why']}; {was}]".strip(), also)
 
