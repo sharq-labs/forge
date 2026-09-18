@@ -114,68 +114,64 @@ def test_the_pinned_reference_posteriors_are_the_bytes_their_digest_names():
 
 @pytest.mark.expensive
 def test_the_pinned_reference_posteriors_are_re_derivable_from_the_models():
-    """The references are evidence, so they are re-derived, not trusted (about 30 s)."""
+    """Rebuild the scientific posterior; do not require provider-identical float bytes."""
     import importlib
 
-    module = importlib.import_module("benchmarks.core_v4_false_confidence.audit.reference_posteriors")
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
     rebuilt = module.build()
-    if rebuilt["digest"] != REFERENCE["digest"]:
-        differences = []
-        stored_cases = REFERENCE["cases"]
-        rebuilt_cases = rebuilt["cases"]
-        for label in sorted(set(stored_cases) | set(rebuilt_cases)):
-            if label not in stored_cases or label not in rebuilt_cases:
-                differences.append(
-                    f"{label}: present stored={label in stored_cases}, "
-                    f"rebuilt={label in rebuilt_cases}"
-                )
-                continue
-            stored = stored_cases[label]
-            fresh = rebuilt_cases[label]
-            if stored == fresh:
-                continue
-            scalar = {}
-            for key in (
-                "problem",
-                "parameter_names",
-                "nodes",
-                "bounds",
-                "mean",
-                "sd",
-                "halved_step_moved_sd",
-                "converged",
-                "quantile_steps",
-            ):
-                if stored.get(key) != fresh.get(key):
-                    scalar[key] = {
-                        "stored": stored.get(key),
-                        "rebuilt": fresh.get(key),
-                    }
-            stored_q = stored.get("quantiles_f8_base64", ())
-            fresh_q = fresh.get("quantiles_f8_base64", ())
-            quantile_digests = []
-            for axis in range(max(len(stored_q), len(fresh_q))):
-                old_q = stored_q[axis] if axis < len(stored_q) else ""
-                new_q = fresh_q[axis] if axis < len(fresh_q) else ""
-                old_digest = hashlib.sha256(old_q.encode("ascii")).hexdigest()
-                new_digest = hashlib.sha256(new_q.encode("ascii")).hexdigest()
-                if old_digest != new_digest:
-                    quantile_digests.append(
-                        {
-                            "axis": axis,
-                            "stored_sha256": old_digest,
-                            "rebuilt_sha256": new_digest,
-                        }
-                    )
-            differences.append(
-                f"{label}: scalar={scalar}; "
-                f"quantile_payload_digests={quantile_digests}"
-            )
-        pytest.fail(
-            "the pinned reference posteriors no longer match their models; "
-            f"pinned={REFERENCE['digest']} rebuilt={rebuilt['digest']}; "
-            + " | ".join(differences)
-        )
+    problems = module.rederivation_problems(REFERENCE, rebuilt)
+    assert not problems, (
+        "the pinned reference posteriors no longer match their models: "
+        + " | ".join(problems)
+    )
+
+
+def test_reference_rederivation_accepts_float64_roundoff_but_not_scientific_drift():
+    """The artifact digest is exact; model re-derivation has a separate ulp-scale gate."""
+    import importlib
+
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
+    tiny = json.loads(json.dumps(REFERENCE))
+    label = "off_axis_flat_tail"
+    sd = float(tiny["cases"][label]["sd"][0])
+    tiny["cases"][label]["mean"][0] += (
+        0.25 * module.REDERIVATION_SD_TOLERANCE * sd
+    )
+    assert module.rederivation_problems(REFERENCE, tiny) == ()
+
+    moved = json.loads(json.dumps(REFERENCE))
+    moved["cases"][label]["mean"][0] += (
+        2.0 * module.REDERIVATION_SD_TOLERANCE * sd
+    )
+    problems = module.rederivation_problems(REFERENCE, moved)
+    assert any("mean moved by" in problem for problem in problems)
+
+
+def test_reference_rederivation_rejects_quantile_shape_drift():
+    """The relaxed byte rule must not relax the pinned posterior distribution."""
+    import importlib
+
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
+    moved = json.loads(json.dumps(REFERENCE))
+    label = "admissibility_cut"
+    encoded = moved["cases"][label]["quantiles_f8_base64"][0]
+    values = np.frombuffer(base64.b64decode(encoded.encode("ascii")), dtype="<f8").copy()
+    values[len(values) // 2] += (
+        2.0
+        * module.REDERIVATION_SD_TOLERANCE
+        * float(moved["cases"][label]["sd"][0])
+    )
+    moved["cases"][label]["quantiles_f8_base64"][0] = base64.b64encode(
+        np.ascontiguousarray(values, dtype="<f8").tobytes()
+    ).decode("ascii")
+    problems = module.rederivation_problems(REFERENCE, moved)
+    assert any("quantile function moved by" in problem for problem in problems)
 
 
 # ---------------------------------------------------------------------------
