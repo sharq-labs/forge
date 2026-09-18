@@ -1,0 +1,78 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 54,
+ "improvements": [
+  "I-25 part C, R-43's producer half (the reach ledger's row for R-43 names I-25 as what closes it)"
+ ],
+ "problems_addressed": [
+  "R-43 (the audit's findings 51 and 86), the producer half"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "c162d9da",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "R-43 is the last LIBRARY_ONLY row in the guard reach ledger. Batch 8 (I-09/I-10) gave the credibility report an `uncertainty` field carrying `source_kind`, declared PARAMETER and COMBINED on the two V1 predictive intervals, and stated the map `CHANNEL_ACCEPTS_SOURCE` that refuses a record filed under a channel its own source contradicts. Its own status line says what stayed open, in three sentences: every domain solver still emits UNSPECIFIED so the map has something true to check only for those two intervals; UNSPECIFIED is NAMED through `unattributed_channels` rather than refused; and nothing carries a V1 interval into an `UncertaintyDeclaration`, so the producer and the budget are two unconnected halves.",
+ "reach": "The PRODUCER half is REACHED: `posterior_predictive_uq` is the V1 path the production calibration study predicts through (the audit's finding 84 says so in its own words), and it is where the two declared intervals are built. The BUDGET half is library-only: nothing in `src` builds an `UncertaintyDeclaration`, so `budget_from_declaration` has no production caller, and this batch does not invent one -- what it does is make the two halves connectable and refuse the shape that made the gap invisible.",
+ "what_was_already_seen": {
+  "finding 51 (R-43)": "`UncertaintySource` has no producer, so `source_kind` is UNSPECIFIED on every uncertainty production makes, and an UNSPECIFIED kind is indistinguishable from a kind nobody was asked for. The SRIA budget then marks aleatoric and model_form 'known' from a numerical-only record.",
+  "finding 86 (R-43)": "The credibility report had no uncertainty field at all, so the record could not reach a verdict even where it existed. Closed in batch 8; what this batch is about is the producer and the budget it was supposed to feed."
+ },
+ "rules": {
+  "a_quantified_uncertainty_says_what_it_is_of": {
+   "improvement": "I-25",
+   "problem": "R-43",
+   "rule": "`Uncertainty` refuses a STANDARD or INTERVAL record whose `source_kind` is UNSPECIFIED. UNKNOWN records are untouched: UNSPECIFIED is the honest state of an uncertainty nobody evaluated.",
+   "class": "A",
+   "why": "This is the rule that makes 'no producer' impossible to reintroduce: any future quantified record must say what it is an uncertainty OF, at the one place every one of them is built. The distinction is the whole point of the CORE-016 field -- a discretization estimate and a measurement standard deviation are both STANDARD uncertainties and only one of them bounds how far the value may be from the world -- and it is meaningless for a record that carries no number at all, which is why UNKNOWN keeps UNSPECIFIED. The strictness rule says undeclared information lowers a claim; here the claim IS the number, so the record does not exist without the declaration.",
+   "closes": "finding 51's 'no producer', by making an undeclared quantified record unconstructible rather than named."
+  },
+  "an_unattributed_quantified_channel_is_refused_where_it_is_aggregated": {
+   "improvement": "I-25",
+   "problem": "R-43",
+   "rule": "`CHANNEL_ACCEPTS_SOURCE` stops accepting UNSPECIFIED, and `require_source_fits_channel` refuses an UNSPECIFIED record filed under a channel -- for a QUANTIFIED record. An UNKNOWN record stays acceptable under any channel, because filing 'nobody evaluated this' under a channel is how a declaration says so.",
+   "closes": "finding 51's budget claim: the SRIA budget can no longer mark aleatoric or model_form KNOWN from a record that does not say it is a measurement or a model-form estimate.",
+   "class": "A",
+   "why": "The map was written with UNSPECIFIED in every row because every producer emitted it, and the row above removes that reason. A quantified record filed under ALEATORIC without saying it is a measurement is exactly the audited case -- a numerical-only record counted as aleatoric -- and `unattributed_channels` reported it after the fact instead of refusing it."
+  },
+  "a_predictive_interval_can_be_carried_into_a_declaration": {
+   "improvement": "I-25",
+   "problem": "R-43",
+   "rule": "A new public function in `engcore.sria.uncertainty`: `channels_from_predictive_uncertainty(records)`, which maps each quantified V1 uncertainty onto the channel its own `source_kind` names, refuses COMBINED with the reason the map already gives, and skips UNKNOWN. The two halves are then connected by a call rather than by a reader's assumption.",
+   "class": "A",
+   "why": "The third open sentence of batch 8's status, stated as code: the producer declares PARAMETER and the budget accepts PARAMETER only under EPISTEMIC_PARAMETER, and nothing carried the one to the other, so the map had nothing production-made to check. Deriving the channel from the record's own declaration is the only direction that cannot invent an attribution.",
+   "closes": "the 'two unconnected halves' residual, to the extent a library can: the caller that builds a declaration is still SRIA's, and this is the function it now has."
+  }
+ },
+ "thresholds": {
+  "none_introduced": {"value": null, "class": "A", "why": "every rule is a structural requirement about what a record declares. No number is introduced, and no existing threshold moves."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "channels_from_predictive_uncertainty in engcore/sria/uncertainty.py, module-public and NOT added to any package export list (batch 45's amendment 1: the frozen V1 symbol count stays 194 until I-30)"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "UncertaintyKind keeps its three members and Uncertainty keeps its fields; the serialized shape of every existing record is unchanged",
+   "UNKNOWN records -- which is what every domain solver in this repository emits -- are untouched on both rules"
+  ],
+  "records_that_already_exist": "A committed record carrying a QUANTIFIED uncertainty with no declared source becomes unreadable, because `from_dict` builds through the constructor. Every committed JSON is searched for one in this batch and the result is named in the audit document; the two V1 intervals production writes both declare their source as of batch 8, so a record written by this tree since then already satisfies the rule.",
+  "deliberate_narrowing": "A quantified uncertainty that does not say what it is an uncertainty of stops being constructible, and an UNSPECIFIED quantified record stops being filable under any channel. In the tree this falls on TEST fixtures only -- 42 construction sites across 14 files -- and each is amended in place with the reason."
+ },
+ "residuals_stated_in_advance": [
+  "No domain solver in this repository quantifies uncertainty at all: every one emits `Uncertainty.unknown` with a stated reason, which is the honest state of a solve nobody put an uncertainty budget on. This batch does not invent one -- fabricating a number for a channel is the defect the whole round is about -- so the producer that exists is the V1 predictive path, and the domains' silence stays visible as UNKNOWN.",
+  "`budget_from_declaration` still has no production caller: nothing in `src` builds an `UncertaintyDeclaration`. The ledger row keeps saying so, and the new function is what a caller would use.",
+  "The refusal is on KIND, not on truth: a caller may declare MEASUREMENT on a discretization estimate, and no rule here can tell. What is closed is silence.",
+  "`unattributed_channels` stays on the declaration record. With the rules above it can only report an UNKNOWN channel, which is what it then means, and it is left in place because a reader asking 'which channels said nothing' is asking a legitimate question."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_uncertainty_contract.py and the SRIA suites, the uq suites, and every test file that builds a quantified Uncertainty",
+  "a search of every committed JSON for a quantified uncertainty record with no declared source",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
