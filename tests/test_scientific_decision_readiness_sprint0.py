@@ -212,3 +212,55 @@ def test_sdr07_evidence_records_source_dependency_closure() -> None:
         "Evidence records provenance_ref but no first-class evidence ancestry; "
         "shared source observations cannot be detected generically"
     )
+
+
+from engcore.mcp.systems import SYSTEMS
+
+
+def test_sdr09_conflicting_claims_remain_distinct_records() -> None:
+    """Conflict is representable without averaging two incompatible values."""
+    base = dict(
+        source_class=SourceClass.SIMULATION,
+        claim_type=ClaimType.QOI_VALUE,
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="temperature"),
+        uncertainty=_audit_uncertainty(),
+        provenance_ref="run-conflict",
+        domain_pack_ref="thermal",
+        context_ref="context:same-use",
+    )
+    low = Evidence(
+        evidence_id="temperature-low",
+        claim_payload={"value": 350.0, "units": "kelvin"},
+        **base,
+    )
+    high = Evidence(
+        evidence_id="temperature-high",
+        claim_payload={"value": 370.0, "units": "kelvin"},
+        **base,
+    )
+
+    assert low.belief_key == high.belief_key
+    assert low.content_hash != high.content_hash
+    assert low.record_hash != high.record_hash
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-10: the public MCP boundary exposes only describe_capabilities "
+        "plus one run tool per registered system; no generic claim/decision "
+        "assessment boundary exists yet"
+    ),
+)
+def test_sdr10_public_boundary_has_a_cross_domain_decision_tool() -> None:
+    server_path = Path(__file__).resolve().parents[1] / "src" / "engcore" / "mcp" / "server.py"
+    source = server_path.read_text(encoding="utf-8")
+    registered = set(re.findall(r'name="([^"]+)"', source))
+    system_tools = {boundary.tool for boundary in SYSTEMS}
+
+    generic = registered - system_tools - {"describe_capabilities"}
+    assert generic, (
+        "MCP exposes only system-specific execution tools and capability "
+        "description; an AI cannot submit a generic scientific claim + "
+        "decision/context for assessment"
+    )
