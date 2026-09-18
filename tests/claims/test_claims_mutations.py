@@ -23,6 +23,7 @@ import engcore.claims.assessment as assessment_module
 import engcore.claims.capabilities as capabilities_module
 import engcore.claims.compiler as compiler_module
 import engcore.claims.context as context_module
+import engcore.claims.external_evidence as external_module
 import engcore.claims.planning as planning_module
 import engcore.claims.routes as routes_module
 import engcore.claims.selection as selection_module
@@ -135,9 +136,16 @@ def unpinned_route_is_refused():
         declaration(routes=(primary, RouteDeclaration("r", RouteKind.SOLVER_ROUTE, "x", check_name="c", pinned_route="made.up.route")))
 
 
-def unimplemented_source_answers_not_implemented():
-    outcomes = {o.source_class: o for o in sources_module.gather_evidence({"simulation_evidence": None})}
-    assert outcomes[SourceClass.MEASUREMENT].status is SourceStatus.NOT_IMPLEMENTED
+def an_unpinned_measurement_is_never_admissible():
+    """Phase 4 (replaces the NOT_IMPLEMENTED property, moot now every source class is ingested)."""
+    from test_phase4_external_evidence import _measurement
+
+    from engcore.claims import ExternalStanding, TrustedExternalRegistry, assess_measurement
+
+    result = assess_measurement(_measurement(), t3_claim(), context_ref="ctx", trust=TrustedExternalRegistry())
+    assert result.standing is ExternalStanding.WEAK
+    outcomes = {o.source_class: o for o in sources_module.gather_evidence({"simulation_evidence": None, "external_assessments": (result,)})}
+    assert outcomes[SourceClass.MEASUREMENT].status is SourceStatus.NO_EVIDENCE
 
 
 def unknown_never_beats_in_domain():
@@ -210,8 +218,8 @@ MUTANTS = [
      [(routes_module, "classify_dependencies", lambda a, b: (RouteClass.INDEPENDENT, ()))]),
     ("route_pins_unverified", unpinned_route_is_refused,
      [(capabilities_module.RouteDeclaration, "verify_references", lambda self: None)]),
-    ("every_source_implemented", unimplemented_source_answers_not_implemented,
-     [(sources_module.EvidenceSourceAdapter, "implemented", property(lambda self: True))]),
+    ("unpinned_external_trusted", an_unpinned_measurement_is_never_admissible,
+     [(external_module.TrustedExternalRegistry, "pin_for", lambda self, digest, source: object())]),
     ("unknown_beats_in_domain", unknown_never_beats_in_domain,
      [(selection_module, "select_capability", _select_without_preference)]),
 ]

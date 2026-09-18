@@ -84,7 +84,9 @@ class SourceClass(str, Enum):
     BENCHMARK = "benchmark"        # reserved
 
 
-IMPLEMENTED_SOURCE_CLASSES = frozenset({SourceClass.SIMULATION})
+#: Phase 4: every class now has an ingestion path (``engcore.claims.external_evidence`` for the three
+#: external ones). Ingestion is not admission: an ingested record's standing is judged separately.
+IMPLEMENTED_SOURCE_CLASSES = frozenset(SourceClass)
 
 
 class ClaimType(str, Enum):
