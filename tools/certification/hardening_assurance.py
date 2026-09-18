@@ -177,8 +177,9 @@ class RunContext:
     repository: str
     run_id: int
     run_attempt: int
-    pull_request: int
+    pull_request: int | None
     executed_commit: str
+    event: str = "pull_request"
     runner_os: str = ""
 
 
@@ -467,6 +468,7 @@ def build_assurance(
             "workflow": WORKFLOW_PATH,
             "workflow_run_id": run.run_id,
             "workflow_run_attempt": run.run_attempt,
+            "event": run.event,
             "pull_request": run.pull_request,
             "certify_job": "certify",
             "source_gates": list(RECERTIFY_SOURCE_GATES),
@@ -614,7 +616,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     build.add_argument("--repository", required=True)
     build.add_argument("--run-id", type=int, required=True)
     build.add_argument("--run-attempt", type=int, required=True)
-    build.add_argument("--pull-request", type=int, required=True)
+    build.add_argument("--pull-request", type=int)
+    build.add_argument(
+        "--event",
+        choices=("pull_request", "workflow_dispatch"),
+        default="pull_request",
+    )
     build.add_argument("--executed-commit", required=True)
     args = parser.parse_args(argv)
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
@@ -633,7 +640,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             run=RunContext(
                 repository=args.repository, run_id=args.run_id,
                 run_attempt=args.run_attempt, pull_request=args.pull_request,
-                executed_commit=args.executed_commit,
+                executed_commit=args.executed_commit, event=args.event,
                 runner_os=os.environ.get("RUNNER_OS", ""),
             ),
         )
