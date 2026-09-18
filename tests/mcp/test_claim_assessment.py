@@ -153,7 +153,6 @@ def test_multiple_reports_require_explicit_selection() -> None:
     case = example_electrothermal_payload()
     second = copy.deepcopy(case["stages"][0])
     second["component_id"] = "R2"
-    second["body"]["body_id"] = "B2"
     case["stages"].append(second)
 
     direct = run_electrothermal_case(copy.deepcopy(case))
