@@ -3466,3 +3466,156 @@ rebuilt artifacts close — the round's 19 by-design failures are **gone**. Guar
 `BATCH57_MUTATIONS.log`, **6/6 KILLED**, CONTROL GREEN; `BATCH57_PINNED_MUTATIONS.log` re-ran the one pinned
 mutation on the files this batch changed (`G32q`), KILLED, control green. Guard reach ledger clean over
 **44** guards, with R-62 and R-74 as the only LIBRARY_ONLY rows and both PARTIAL.
+
+
+## Final report — the round, closed
+
+**75 problems, 30 improvements** (I-01..I-31 with I-17 absorbed into I-08), **57 batches**, each
+preregistered in `benchmarks/core_v4_false_confidence/BATCH<k>_THRESHOLD_PROTOCOL.json` with every threshold
+and its class, each reproduction committed as a strict xfail and seen failing on its own assertion before any
+fix, each new guard mutated in an isolated copy and recorded in `BATCH<k>_MUTATIONS.log`.
+
+* **Risk closed: 98.4 %** — the sum of `risk_share_pct` over the 71 FIXED problems (96.8) plus half of the
+  four PARTIAL ones (3.2 / 2).
+* **Gain achieved: 100 %** — every one of the 30 improvements is DONE.
+* **589 guard mutations** in the pinned population (`tests/mutation_population_v4.py`), run in four shards
+  with a kill defined as the ONE test an entry names failing in that run's own JUnit report.
+* **Core Freeze V4** states the contract, and proves it: zero non-additive differences from the V1 surface
+  **as V1 committed it**, and from the V2 surface as V2 committed it.
+
+### The four PARTIAL problems, and what is left in each
+
+| ID | risk % | what is closed | what is not |
+|---|---|---|---|
+| R-27 | 0.3 | the probe geometry, the clipped-probe count and the condition-number rule (I-14) | the audit's own residual: a tail probe still cannot be placed in a direction a declared bound cuts off entirely, and the record says so rather than pretending otherwise |
+| R-43 | 1.6 | a quantified uncertainty nobody attributed can no longer be aggregated into a channel total, and a V1 predictive interval can be carried onto the channel its own source names (I-10, I-16, I-25) | no domain solver quantifies its uncertainty at all: every one reports UNKNOWN with a stated reason, and inventing a number for a channel is the defect this round is about |
+| R-62 | 0.8 | one canonical-magnitude rule, read by the mesh fingerprint AND by the geometry comparison, so a digest and a comparison cannot disagree (I-23) | nothing in `src/engcore` builds a `StructuredMesh` for a domain run, so no production path reaches either rule |
+| R-74 | 0.5 | the parameter digest and `differences()` read one rule, so a restated unit and a negative zero are one identity (I-23) | the grid-binding helpers finding 105 names still have no caller, and this batch adds none |
+
+### Open decisions for the owner
+
+1. **Inserted enum members** (batch 56). The compatibility rule forbids *reordering* members and allows *new*
+   ones. This round added 19 `RouteReason` members and placed 7 among the existing ones, grouped by meaning:
+   every existing member keeps its name, its value and its relative order, and absolute positions moved.
+   Core Freeze V4 accepts that as additive and RECORDS each insertion with its position
+   (`api.enum_insertions_are_recorded`). The alternative is to require appending, which means moving 7
+   members to the end of a 43-member enum and re-running the population. **Recommendation: accept, as V4
+   does.**
+2. **Where R-62 and R-74 go next.** Both rules are closed and neither is reached by production. Closing the
+   reach means a domain that meshes a field or a calibration that declares its parameters — a new capability,
+   not a fix, and outside this round's scope.
+
+### Every problem
+
+| R-xx | sev | risk % | status | improvement(s) | title |
+|---|---|---|---|---|---|
+| R-01 | P0 | 7.3 | **FIXED** | I-01, I-15 | A grid rebuild turns an unassessed or incomplete uniqueness search into a SUPPORTED one-mode grid |
+| R-02 | P2 | 2.5 | **FIXED** | I-03, I-16 | The production calibration study predicts and validates through frozen V1 functions, so no V2 evidence gate runs |
+| R-03 | P1 | 2.7 | **FIXED** | I-15, I-04 | Observations that carry no information dilute the pooled goodness-of-fit gate (CORE-001) |
+| R-04 | P2 | 2.9 | **FIXED** | I-09 | A verification-only SUPPORTED reads bare in the MCP verdict block, and verification levels need no issuer |
+| R-05 | P1 | 2.2 | **FIXED** | I-15, I-05 | The V1 grid resolution check fits one quadratic about the top node, so an unresolved second mode inside the box passes |
+| R-06 | P1 | 2.7 | **FIXED** | I-01, I-15 | A supplied grid over one of two equal modes is SUPPORTED, and a caller's MultistartPolicy is never run |
+| R-07 | P1 | 2.2 | **FIXED** | I-15, I-02 | Multistart dismisses a converged refit in another basin as WORSE_LOCAL_OPTIMUM on peak height alone |
+| R-08 | P2 | 2.1 | **FIXED** | I-15, I-02 | The minimum-search rule ignores max_evaluations and maximum_retractions, and failed refits are dropped |
+| R-09 | P2 | 2.9 | **FIXED** | I-11, I-16 | The CORE-014 operating-point binding never fires in production and is bypassable when enabled |
+| R-10 | P2 | 2.5 | **FIXED** | I-10 | The credibility report never reads result convergence |
+| R-11 | P2 | 1.6 | **FIXED** | I-15, I-06 | A posterior cut at the declared upper bound, with data bounding only the lower side, is SUPPORTED |
+| R-12 | P2 | 1.6 | **FIXED** | I-13 | calibration_observations for a routed prediction are bound to nothing |
+| R-13 | P2 | 1 | **FIXED** | I-15, I-08 | The pairwise +/-2 sd probes cannot see a curvature error spread over many pairs |
+| R-14 | P2 | 1.3 | **FIXED** | I-15, I-08 | The 3 and 6 sd tail probes run only along principal axes |
+| R-15 | P2 | 1.3 | **FIXED** | I-15, I-08 | A tail probe beyond a declared bound is skipped without being counted |
+| R-16 | P2 | 1.6 | **FIXED** | I-15, I-08 | Probe directions come from eigh(cov) in declared units, so a unit change moves the tested directions |
+| R-17 | P2 | 1.3 | **FIXED** | I-15, I-05 | A posterior cut by forward-model inadmissibility counts as contained |
+| R-18 | P2 | 1 | **FIXED** | I-15, I-02 | Retracted multistart starts count as full-span starts |
+| R-19 | P2 | 1 | **FIXED** | I-07 | Evidence binding spot-checks 8 nodes, 4 of them seeded from the supplier's bytes |
+| R-20 | P3 | 0.8 | **FIXED** | I-15, I-04 | With 1 or 2 residual dof the variance-ratio refusal can never fire |
+| R-21 | P2 | 1.6 | **FIXED** | I-16, I-12 | CROSS_SOLVER_VALIDATED is guarded only by string checks, and non-independent disagreement is absorbed as WARNING |
+| R-22 | P2 | 1 | **FIXED** | I-14 | Local RouteDiagnostics read-back trusts carried fields |
+| R-23 | P3 | 0.4 | **FIXED** | I-13 | Grid-route predictions ignore predict and never check the predictive table's values |
+| R-24 | P1 | 2.2 | **FIXED** | I-18 | Adequacy content binding omits split identity, likelihood sigma and twin, so compare pairs assessments that do not belong together |
+| R-25 | P3 | 0.3 | **FIXED** | I-14 | Renaming the parameterization or moving recorded bounds escapes the HUQ-12 bound-distance check |
+| R-26 | P3 | 0.8 | **FIXED** | I-15, I-08 | POORLY_SCALED_PARAMETERIZATION is judged on the unit-dependent raw condition number |
+| R-27 | P3 | 0.3 | **PARTIAL** | I-14 | Grid HybridUQResult read-back and prediction trust hand-built records |
+| R-28 | P2 | 1.3 | **FIXED** | I-14 | assess_routed_identifiability accepts loosened thresholds on the local route |
+| R-29 | P3 | 1 | **FIXED** | I-07 | The uniform-prior step tolerance refuses a grid that is effectively uniform |
+| R-30 | P3 | 0.7 | **FIXED** | I-07 | An evidence-binding mismatch raises instead of passing over |
+| R-31 | P2 | 1.6 | **FIXED** | I-13 | The prediction-domain gate compares only the conditions the prediction chooses to declare |
+| R-32 | P2 | 1.6 | **FIXED** | I-18 | Split duplicate handling: replicates within a half inflate n, and near-duplicates cross into held-out |
+| R-33 | P2 | 1.6 | **FIXED** | I-18 | The decisive-comparison gate uses a normal 2 SE critical value with an SE from n-1 dof |
+| R-34 | P3 | 0.5 | **FIXED** | I-18 | content_bound is a caller-settable flag that the decisive comparison treats as proof |
+| R-35 | P3 | 1.2 | **FIXED** | I-03 | HELD_OUT_VALIDATION_PASS is issued for any n>=1 with no power floor |
+| R-36 | P3 | 1 | **FIXED** | I-03 | The coverage verdict pools correlated intervals as independent trials |
+| R-37 | P2 | 1.6 | **FIXED** | I-13 | Linearized predictive nonlinearity is never refused and is pooled across specs |
+| R-38 | P3 | 1.2 | **FIXED** | I-03 | The TCR held-out study refuses heterogeneous declared sigmas, and coverage repetitions claim CONVERGED without a calibration run |
+| R-39 | P2 | 2 | **FIXED** | I-12 | evidence_basis labels agreement between two solvers of the same declared model as VALIDATED |
+| R-40 | P2 | 1.3 | **FIXED** | I-10 | A provenance override in from_result drops declared but unassessed models |
+| R-41 | P2 | 1.6 | **FIXED** | I-21 | Experiment.best judges feasibility from whatever checks a candidate carries |
+| R-42 | P2 | 1.3 | **FIXED** | I-21 | The objective-versus-result check is keyed by objective name, not metric |
+| R-43 | P2 | 1.6 | **PARTIAL** | I-10, I-16 | UncertaintySource never reaches a verdict or report, and SRIA budgets accept NUMERICAL as model-form |
+| R-44 | P3 | 1 | **FIXED** | I-21 | Unassessed candidates are ranked: best() admits NOT_RUN validation and design archives lack the CORE-015 rule |
+| R-45 | P3 | 0.8 | **FIXED** | I-20 | The CORE-013 status precedence changed without a schema bump |
+| R-46 | P3 | 0.8 | **FIXED** | I-20 | GUARD 21 compares signed residual and tolerance |
+| R-47 | P3 | 0.4 | **FIXED** | I-09 | The exported derive_verdict trusts any object's passed/establishes |
+| R-48 | P2 | 1.6 | **FIXED** | I-22 | Spreads on offset temperature scales convert as absolute temperatures |
+| R-49 | P3 | 0.5 | **FIXED** | I-26 | Oracle operating-point conditions are the caller's word, partial and optional |
+| R-50 | P3 | 0.5 | **FIXED** | I-11 | A result accepts an IN_DOMAIN assessment over conditions its model does not have |
+| R-51 | P3 | 1.2 | **FIXED** | I-31 | CrossLimitCondition reports a missing declaration as a core gap |
+| R-52 | P3 | 0.7 | **FIXED** | I-22 | The consensus verdict depends on route order through the first route's unit |
+| R-53 | P3 | 0.5 | **FIXED** | I-26 | Oracle comparison fails an unpredicted metric and cannot compare multi-point evidence |
+| R-54 | P3 | 0.8 | **FIXED** | I-31 | Validity condition primitives accept declarations whose meaning silently inverts |
+| R-55 | P3 | 0.7 | **FIXED** | I-25 | Field validity decides from an unbound self-declared summary and a component envelope |
+| R-56 | P2 | 2 | **FIXED** | I-24 | require_complete_boundary checks one condition per region id, not per edge |
+| R-57 | P2 | 1.6 | **FIXED** | I-22 | The corner-agreement guard compares magnitudes in each law's own unit |
+| R-58 | P3 | 1.5 | **FIXED** | I-16, I-27 | Cross-domain crossings carry bare point values, and UncertaintyTransfer binds nothing |
+| R-59 | P2 | 1.3 | **FIXED** | I-28 | Predictive-admission conditioning accepts any budget and returns an unmarked PosteriorGrid |
+| R-60 | P3 | 0.7 | **FIXED** | I-27 | The QuantityTransfer conversion budget check has a 1.0 absolute floor |
+| R-61 | P3 | 0.5 | **FIXED** | I-27 | Transfer records compare unit strings and bind neither source record nor instant order |
+| R-62 | P3 | 0.8 | **PARTIAL** | I-23 | Mesh identity depends on unit-conversion float rounding and a 1e-12 m floor |
+| R-63 | P3 | 0.3 | **FIXED** | I-25 | FieldTransferContract accepts any verdict |
+| R-64 | P3 | 0.8 | **FIXED** | I-27 | The energy-crossing guard matches only exact energy or power dimensions |
+| R-65 | P3 | 1 | **FIXED** | I-29 | The branch descends from no Core Freeze, and recertification is blocked |
+| R-66 | P3 | 0.3 | **FIXED** | I-30 | The V2 and V3 freeze verifiers accept a self-asserted assurance record |
+| R-67 | P3 | 1.1 | **FIXED** | I-30 | Batch-guard mutation evidence sits outside the pinned harness and counts any failure as a kill |
+| R-68 | P3 | 0.8 | **FIXED** | I-30 | The certificate harness area does not pin the helper modules its suites import |
+| R-69 | P3 | 0.8 | **FIXED** | I-29 | The frozen API snapshot cannot see method-level contracts or additive-only violations |
+| R-70 | P3 | 0.5 | **FIXED** | I-29 | The V3 supersession check passes on any exception |
+| R-71 | P2 | 1.6 | **FIXED** | I-28 | Forward-model admission is not bound to the source result, and tables bind observations by key label only |
+| R-72 | P2 | 2.5 | **FIXED** | I-19 | ScientificProblem validation_requirements and UncertaintySpecification are declared but enforced nowhere |
+| R-73 | P3 | 0.5 | **FIXED** | I-25 | FieldObservationOperator binds its region by label and snaps out-of-support probes to an edge |
+| R-74 | P3 | 0.5 | **PARTIAL** | I-23 | Parameter identity: the digest and differences() disagree, and unit restatement changes identity |
+| R-75 | P3 | 1.2 | **FIXED** | I-22 | Quantity.parse evaluates unit expressions, magnitudes accept bool or str, and delta units pass as absolute |
+
+### Every improvement
+
+| I-xx | gain % | status | last batch | commit |
+|---|---|---|---|---|
+| I-01 | 10.5 | **DONE** | 6 | `75872dca` |
+| I-02 | 5 | **DONE** | 10 | `70f4033c` |
+| I-03 | 7.5 | **DONE** | 18 | `ac5099f7` |
+| I-04 | 3.5 | **DONE** | 11 | `6d4a103e` |
+| I-05 | 3.5 | **DONE** | 12 | `0996d51c` |
+| I-06 | 1.5 | **DONE** | 31 | `18db6895` |
+| I-07 | 2 | **DONE** | 33 | `b5149ab5` |
+| I-08 | 5 | **DONE** | 21 | `d5b70d12` |
+| I-09 | 4.5 | **DONE** | 9 | `514e9102` |
+| I-10 | 5 | **DONE** | 7 | `763c37b8` |
+| I-11 | 4 | **DONE** | 14 | `61ca4ff2` |
+| I-12 | 3 | **DONE** | 25 | `e65345c3` |
+| I-13 | 4 | **DONE** | 23 | `99be6bf4` |
+| I-14 | 2 | **DONE** | 38 | `287b64fb` |
+| I-15 | 3 | **DONE** | 31 | `18db6895` |
+| I-16 | 3.5 | **DONE** | 19 | `1bbec148` |
+| I-18 | 4 | **DONE** | 13 | `590d4dd0` |
+| I-19 | 2.5 | **DONE** | 15 | `100cae16` |
+| I-20 | 1.5 | **DONE** | 41 | `02398cfd` |
+| I-21 | 2.5 | **DONE** | 43 | `6083d4fa` |
+| I-22 | 3.5 | **DONE** | 30 | `f678ce00` |
+| I-23 | 1 | **DONE** | 57 | `8f98e9f4` |
+| I-24 | 2 | **DONE** | 16 | `6cae6c40` |
+| I-25 | 1 | **DONE** | 54 | `098f36c7` |
+| I-26 | 0.8 | **DONE** | 51 | `8a75c9e8` |
+| I-27 | 2.2 | **DONE** | 49 | `7e5a0497` |
+| I-28 | 2 | **DONE** | 46 | `5ffb98df` |
+| I-29 | 5 | **DONE** | 56 | `8cf8f8e9` |
+| I-30 | 3 | **DONE** | 55 | `b05eeb81` |
+| I-31 | 1.5 | **DONE** | 50 | `cf034160` |
