@@ -143,7 +143,11 @@ The FAST tier (`python -m pytest -m "not expensive" -q -n 4 --dist loadfile`) ha
 throughout, all in the Core Freeze V4 list of `docs/CORE_FREEZE_POLICY.md`
 (`test_core_api_snapshot`, `test_core_freeze_manifest`, `test_core_freeze_policy`, `test_core_freeze_v2_manifest`,
 `test_core_freeze_v3_manifest`, `test_core_v2_api_snapshot`, `test_core_v2_compatibility`, `test_core_certificate`).
-Each batch below reports that count so a 19th failure would be visible.
+Each batch below reports that count so a 19th failure would be visible. (The count became 19 in batch 20,
+which added `test_core_api_contracts::test_the_frozen_digest_is_identical_in_fresh_processes` to the same
+list, and **0 in batch 56**: Core Freeze V4 regenerates those artifacts once, in the freeze, with the
+additive proof recorded beside them. The FAST tier at the end of the round is **7239 passed, 5 skipped,
+nothing failing**.)
 
 ### Batch 6 — I-01, I-15
 
