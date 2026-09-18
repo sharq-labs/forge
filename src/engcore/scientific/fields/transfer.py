@@ -91,6 +91,70 @@ class FieldTransferContract:
             raise InvalidScientificProblem(
                 "a field transfer contract states why it reached its verdict"
             )
+        self._require_the_verdict_follows_from_the_records()
+
+    #: How much crossability each verdict claims, weakest first. A contract may
+    #: state a verdict no STRONGER than its own records permit; a weaker one is
+    #: always allowed, because a caller may refuse for a reason the record does
+    #: not carry and this record must stay able to say so.
+    _STRENGTH = {
+        FieldTransferVerdict.REFUSED: 0,
+        FieldTransferVerdict.REQUIRES_PROJECTION: 1,
+        FieldTransferVerdict.REQUIRES_UNIT_CONVERSION: 2,
+        FieldTransferVerdict.COMPATIBLE: 3,
+    }
+
+    def _require_the_verdict_follows_from_the_records(self) -> None:
+        """R-63 (I-25 part B): re-derive the verdict parts this record already carries.
+
+        The contract holds both field definitions and both support fingerprints -- which is exactly what
+        :func:`check_field_transfer` decides from, apart from the geometry behind the fingerprints. It
+        checked the types, the fingerprint format and a non-empty reason, and never the verdict: a payload
+        computed as REFUSED for 1 component against 3, kelvin against pascal, read back as COMPATIBLE with
+        ``may_cross_directly`` True, and direct construction with invented fingerprints did the same.
+
+        Only a verdict claiming MORE than the records allow is refused. What cannot be re-derived here is
+        which REASON a refusal rests on: two supports covering different rectangles and two resolutions of
+        one rectangle both show up as two different fingerprints, and telling them apart needs the meshes.
+        """
+        ceiling = FieldTransferVerdict.COMPATIBLE
+        because = ""
+        if self.producer.components != self.consumer.components:
+            ceiling, because = (
+                FieldTransferVerdict.REFUSED,
+                f"the producer has {self.producer.components} component(s) and the consumer expects "
+                f"{self.consumer.components}",
+            )
+        elif dimensionality(self.producer.unit) != dimensionality(self.consumer.unit):
+            ceiling, because = (
+                FieldTransferVerdict.REFUSED,
+                f"the producer is measured in {self.producer.unit!r} and the consumer expects "
+                f"{self.consumer.unit!r}",
+            )
+        elif self.producer_fingerprint != self.consumer_fingerprint:
+            ceiling, because = (
+                FieldTransferVerdict.REQUIRES_PROJECTION,
+                f"the two supports are {self.producer_fingerprint[:12]}… and "
+                f"{self.consumer_fingerprint[:12]}…, which are not one support",
+            )
+        elif self.producer.location is not self.consumer.location:
+            ceiling, because = (
+                FieldTransferVerdict.REQUIRES_PROJECTION,
+                f"the producer stores values at {self.producer.location.value}s and the consumer expects "
+                f"{self.consumer.location.value}s",
+            )
+        elif self.producer.unit != self.consumer.unit:
+            ceiling, because = (
+                FieldTransferVerdict.REQUIRES_UNIT_CONVERSION,
+                f"one support and one dimension in two units ({self.producer.unit!r} against "
+                f"{self.consumer.unit!r})",
+            )
+        if self._STRENGTH[self.verdict] > self._STRENGTH[ceiling]:
+            raise InvalidScientificProblem(
+                f"a field transfer contract states {self.verdict.value!r} and its own records permit no "
+                f"more than {ceiling.value!r}: {because}. A verdict is what the record's reader acts on, "
+                f"and this one claims a crossing the two declarations it carries do not allow"
+            )
 
     @property
     def may_cross_directly(self) -> bool:

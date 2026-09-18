@@ -40,12 +40,25 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from ..scientific.fields.mesh import StructuredMesh
-from ..scientific.fields.regions import MeshRegion
-from ..scientific.serialization import require_schema, schema_string
-from ..scientific.units.quantity import Quantity, normalize_unit
+from ..scientific.fields.regions import BoundaryEdge, MeshRegion
+from ..scientific.serialization import require_schema_any, schema_string
+from ..scientific.units.quantity import Quantity, dimensionality, normalize_unit
 from .grid import InferenceProblemError
 
 FIELD_OBSERVATION_SCHEMA = schema_string("field_observation_operator")
+#: Bumped to /2 by the region's declared content, written only when a record
+#: carries it: an operator that declares none keeps its /1 bytes and its digest.
+FIELD_OBSERVATION_SCHEMA_V2 = schema_string("field_observation_operator", 2)
+
+#: How far outside the support's own extent a declared probe may sit and still
+#: count as on it.
+#:
+#: R-73 (I-25 part B): a representation allowance so a probe declared exactly at
+#: an edge is inside it whatever the float arithmetic of the axis coordinates
+#: gives. Not a modelling tolerance: a probe outside the rectangle by more than
+#: a part in a billion of its extent is outside it, and the audited case was
+#: metres away from a 10 mm plate.
+PROBE_CONTAINMENT_RTOL = 1e-9
 CANONICAL_LENGTH = "meter"
 
 
@@ -88,6 +101,19 @@ class FieldObservationOperator:
     probe_y: Quantity | None = None
     region_id: str | None = None
     description: str = ""
+    #: The support the named region is declared on, and which edge it is.
+    #:
+    #: R-73 (I-25 part B): ``apply`` compared the region's LABEL, so the same
+    #: operator, the same digest and the same region id returned the mean of the
+    #: left edge (400 K) or the right edge (300 K) depending on which
+    #: ``MeshRegion`` object was handed over -- and the region decides which
+    #: nodes are averaged. These two are the region's content, they are in the
+    #: canonical form and therefore in the digest, and ``apply`` refuses a
+    #: region that does not match them. Empty means the operator does not say,
+    #: which is the honest state of every record written before these fields
+    #: existed and is refused a region it cannot check.
+    region_mesh_id: str = ""
+    region_edge: str = ""
 
     def __post_init__(self) -> None:
         for label in ("operator_id", "field_id"):
@@ -108,6 +134,10 @@ class FieldObservationOperator:
         object.__setattr__(self, "mesh_fingerprint", fingerprint)
 
         if self.kind is FieldObservationKind.PROBE_AT_LOCATION:
+            if self.region_mesh_id or self.region_edge:
+                raise FieldObservationError(
+                    "a probe operator declares no region, and so no region content"
+                )
             if self.probe_x is None or self.probe_y is None:
                 raise FieldObservationError(
                     f"operator {self.operator_id!r} is a probe and must declare "
@@ -132,7 +162,18 @@ class FieldObservationOperator:
             object.__setattr__(self, "region_id", str(self.region_id).strip())
             if self.probe_x is not None or self.probe_y is not None:
                 raise FieldObservationError("a region operator declares no probe")
+            object.__setattr__(self, "region_mesh_id", str(self.region_mesh_id).strip())
+            object.__setattr__(self, "region_edge", str(self.region_edge).strip())
+            if self.region_edge and self.region_edge not in {edge.value for edge in BoundaryEdge}:
+                raise FieldObservationError(
+                    f"operator {self.operator_id!r} declares region edge "
+                    f"{self.region_edge!r}, which is no BoundaryEdge"
+                )
         else:  # FIELD_MAXIMUM
+            if self.region_mesh_id or self.region_edge:
+                raise FieldObservationError(
+                    "only a region-mean operator declares a region's content"
+                )
             if self.probe_x is not None or self.probe_y is not None or self.region_id:
                 raise FieldObservationError(
                     "a field-maximum operator declares neither probe nor region: "
@@ -173,9 +214,36 @@ class FieldObservationOperator:
         xs, ys = mesh.axis_coordinates()
         target_x = self.probe_x.magnitude_in(CANONICAL_LENGTH)
         target_y = self.probe_y.magnitude_in(CANONICAL_LENGTH)
+        self._require_the_probe_is_on_the_support(xs, ys, target_x, target_y)
         i = int(np.argmin([abs(x - target_x) for x in xs]))
         j = int(np.argmin([abs(y - target_y) for y in ys]))
         return (mesh.node_index(i, j),)
+
+    def _require_the_probe_is_on_the_support(
+        self, xs: Sequence[float], ys: Sequence[float], target_x: float, target_y: float
+    ) -> None:
+        """R-73: a probe metres from a 10 mm plate is not a measurement of that plate.
+
+        ``argmin`` answers any location with SOME node, so a probe declared 2 m and -5 m away returned a
+        corner node's value under the declared name, and the observation entered a calibration as a value
+        at a different physical place. ``probe_offset`` could always report 5.38 m, and ``apply`` never
+        asked.
+
+        Only containment in the support's rectangle is checked. A probe inside it that snaps half a cell
+        is still answered -- refusing there would delete every legitimate coarse-mesh probe -- and
+        ``probe_offset`` remains the place that says how far it moved.
+        """
+        for axis, target, coordinates in (("x", target_x, xs), ("y", target_y, ys)):
+            low, high = min(coordinates), max(coordinates)
+            allowance = PROBE_CONTAINMENT_RTOL * max(abs(high - low), abs(low), abs(high), 1.0)
+            if target < low - allowance or target > high + allowance:
+                raise FieldObservationError(
+                    f"operator {self.operator_id!r} declares {axis} = {target} "
+                    f"{CANONICAL_LENGTH}, which is outside the support's extent "
+                    f"[{low}, {high}] {CANONICAL_LENGTH}. The nearest node is on the edge of a support "
+                    f"the probe is not on, and reading it would report a value at a different physical "
+                    f"place under this operator's name"
+                )
 
     def probe_offset(self, mesh: StructuredMesh) -> Quantity:
         """How far the nearest node is from the declared location.
@@ -201,8 +269,17 @@ class FieldObservationOperator:
         *,
         region: MeshRegion | None = None,
     ) -> Quantity:
-        """The scalar this operator declares, read off one solved field."""
+        """The scalar this operator declares, read off one solved field.
+
+        ``values`` may be a bare sequence or a TYPED field -- anything carrying a ``definition`` and
+        ``values`` (a :class:`~engcore.data.field.FieldValue`). R-73 (I-25 part B): the unit and the
+        ``field_id`` on this record were assertions about an array nobody checked, so a velocity field
+        read through a temperature operator came back as a Quantity in kelvin. When the typed field is
+        given, its id, its dimension and its support are checked against what this operator declares.
+        Passing a sequence is still accepted, and still leaves the caller asserting both.
+        """
         self.require_support(mesh)
+        values = self._values_of_the_field_it_names(values, mesh)
         array = np.asarray(values, dtype=np.float64).reshape(-1)
         if array.size != mesh.node_count:
             raise FieldObservationError(
@@ -229,10 +306,68 @@ class FieldObservationOperator:
                     f"operator {self.operator_id!r} names region "
                     f"{self.region_id!r} and was given {region.region_id!r}"
                 )
+            self._require_the_region_is_the_declared_one(region)
             indices = region.node_indices(mesh)
             return Quantity(float(np.mean(array[list(indices)])), self.unit)
         index = self.resolve_indices(mesh)[0]
         return Quantity(float(array[index]), self.unit)
+
+    def _values_of_the_field_it_names(self, values: Any, mesh: StructuredMesh) -> Any:
+        """The array, and -- for a typed field -- the check that it is the field this operator names."""
+        definition = getattr(values, "definition", None)
+        if definition is None:
+            return values
+        field_id = str(getattr(definition, "field_id", ""))
+        if field_id != self.field_id:
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} reads field {self.field_id!r} and was given "
+                f"{field_id!r}"
+            )
+        unit = str(getattr(definition, "unit", ""))
+        if dimensionality(unit) != dimensionality(self.unit):
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} reports in {self.unit!r} and was given a field in "
+                f"{unit!r}; a scalar read off it would carry this operator's unit and that field's "
+                f"numbers"
+            )
+        mesh_id = str(getattr(definition, "mesh_id", ""))
+        if mesh_id and mesh_id != mesh.mesh_id:
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} was given a field declared on support {mesh_id!r} and a "
+                f"support named {mesh.mesh_id!r}"
+            )
+        array = getattr(values, "values", None)
+        if array is None:  # pragma: no cover - a definition with no values is not a field
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} was given a field-shaped object carrying no values"
+            )
+        return array
+
+    def _require_the_region_is_the_declared_one(self, region: MeshRegion) -> None:
+        """R-73: the region decides WHICH nodes are averaged, and it was matched by label alone.
+
+        The same operator, digest and region id returned the left edge or the right edge depending on
+        which object was supplied. The operator now declares the region's content -- its support and its
+        edge -- and those are in the digest, so two observations of two edges are two observations.
+
+        An operator that declares neither is refused the region it cannot check: it was written before
+        there was anywhere to say which content it reads, and answering from it would be the audited
+        state with a field added.
+        """
+        if not self.region_mesh_id or not self.region_edge:
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} names region {self.region_id!r} by id alone and declares "
+                f"neither the support it is on nor which edge it is, so any region carrying that id "
+                f"would be applied -- and the region decides which nodes are averaged. Declare "
+                f"region_mesh_id and region_edge"
+            )
+        edge = getattr(region.edge, "value", str(region.edge))
+        if region.mesh_id != self.region_mesh_id or edge != self.region_edge:
+            raise FieldObservationError(
+                f"operator {self.operator_id!r} reads region {self.region_id!r} on support "
+                f"{self.region_mesh_id!r} at its {self.region_edge!r} edge, and was given a region on "
+                f"{region.mesh_id!r} at its {edge!r} edge. Same label, different nodes"
+            )
 
     def _canonical(self) -> dict[str, Any]:
         return {
@@ -252,6 +387,16 @@ class FieldObservationOperator:
                 else None
             ),
             "region_id": self.region_id,
+            # R-73: written only when declared, so an operator that says nothing
+            # about the region's content keeps the digest it always had.
+            **(
+                {}
+                if not (self.region_mesh_id or self.region_edge)
+                else {
+                    "region_mesh_id": self.region_mesh_id,
+                    "region_edge": self.region_edge,
+                }
+            ),
         }
 
     @property
@@ -261,7 +406,11 @@ class FieldObservationOperator:
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
-            "schema": FIELD_OBSERVATION_SCHEMA,
+            "schema": (
+                FIELD_OBSERVATION_SCHEMA_V2
+                if (self.region_mesh_id or self.region_edge)
+                else FIELD_OBSERVATION_SCHEMA
+            ),
             **self._canonical(),
             "description": self.description,
             "digest": self.digest,
@@ -270,7 +419,18 @@ class FieldObservationOperator:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "FieldObservationOperator":
-        require_schema(payload, FIELD_OBSERVATION_SCHEMA)
+        version = require_schema_any(
+            payload, (FIELD_OBSERVATION_SCHEMA, FIELD_OBSERVATION_SCHEMA_V2)
+        )
+        content = (
+            str(payload.get("region_mesh_id", "")).strip(),
+            str(payload.get("region_edge", "")).strip(),
+        )
+        if any(content) and version != FIELD_OBSERVATION_SCHEMA_V2:
+            raise FieldObservationError(
+                f"serialized operator declares schema {version!r} and carries a region's content, which "
+                f"{FIELD_OBSERVATION_SCHEMA_V2!r} introduced"
+            )
         try:
             operator = cls(
                 operator_id=payload["operator_id"],
@@ -289,6 +449,8 @@ class FieldObservationOperator:
                     else None
                 ),
                 region_id=payload.get("region_id"),
+                region_mesh_id=content[0],
+                region_edge=content[1],
                 description=payload.get("description", ""),
             )
         except KeyError as exc:

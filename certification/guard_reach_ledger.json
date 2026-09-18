@@ -1130,6 +1130,64 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "The verification digest is an integrity binding, as every digest here is: it closes an unbound summary and a silent hand-off, not a determined edit by somebody who recomputes the digest too. `from_record` can only check what it resolves, so the reader this record exists for -- one that acts on the summary WITHOUT resolving a mesh-sized array -- is protected by the digest binding and the internal consistency rules rather than by a re-derivation it never performs. `magnitude_maximum` is a maximum only, because a minimum magnitude is not a bound anybody writes for a vector field; a condition stating only a minimum over a multi-component field therefore answers UNKNOWN. The per-component envelope stays on the record, because a component-wise bound is a legitimate statement -- what changed is which one the condition applies."
+  },
+  {
+   "problem": "R-63",
+   "title": "FieldTransferContract accepts any verdict",
+   "rule": "src/engcore/scientific/fields/transfer.py",
+   "rule_symbol": "FieldTransferContract._require_the_verdict_follows_from_the_records and the _STRENGTH ordering it compares against",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-25 part B (batch 53)",
+   "why": "LATENT, and the audit's own word for it. No `src` consumer builds a FieldTransferContract: the record exists to be the gate a field crossing passes, and the crossing does not exist yet. The rule is closed: the contract carries both field definitions and both support fingerprints -- which is what check_field_transfer decides from -- and it now refuses a verdict that claims more crossability than those records permit, while a more conservative verdict stays allowed.",
+   "what_would_create_it": "A field dependency actually crossing between two problems, which is what FieldDependency and check_field_transfer are for and what NEEDS.md's field-transfer milestone describes. The audited shapes are a payload computed as REFUSED for 1 component against 3 or kelvin against pascal reading back as COMPATIBLE, and direct construction with invented fingerprints.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch53.py::test_r63_an_honest_contract_is_unchanged",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_component_mismatch_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_dimension_mismatch_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_different_supports_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_locations_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_two_units_cannot_read_back_as_compatible",
+    "tests/test_core_scientific_audit_batch53.py::test_r63_a_more_conservative_verdict_is_still_allowed",
+    "tests/test_field_composition.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Geometry beyond fingerprint equality: two supports covering different rectangles and two resolutions of one rectangle both appear on the record as two different fingerprints, so a REFUSED-for-geometry verdict is indistinguishable from a REQUIRES_PROJECTION-for-resolution one without the meshes. The contract therefore refuses a verdict that claims too much and does not re-derive WHICH reason a refusal rests on. A conservative verdict is deliberately left constructible, because a caller may refuse for a reason the record does not carry and this record must stay able to say so."
+  },
+  {
+   "problem": "R-73",
+   "title": "FieldObservationOperator binds its region by label and snaps out-of-support probes to an edge",
+   "rule": "src/engcore/inference/field_observation.py",
+   "rule_symbol": "FieldObservationOperator.region_mesh_id and .region_edge with _require_the_region_is_the_declared_one, _require_the_probe_is_on_the_support with PROBE_CONTAINMENT_RTOL, and _values_of_the_field_it_names",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "latent",
+   "closed_by": "I-25 part B (batch 53)",
+   "why": "LATENT, and the audit's own word for it: the operator is reached from tests and benchmarks and from no production path -- no domain builds a field observation for a calibration yet. The rules are closed: the region's content (its support and its edge) is declared, is in the canonical form and therefore in the digest, and a region whose content differs is refused; a probe outside the support's rectangle is refused instead of being answered with a corner node; and a typed field handed to apply must be the field the operator names, in its dimension, on its support.",
+   "what_would_create_it": "A calibration that observes a solved field -- the thing this module is the spike for: a probe or an edge mean entering an inference problem as an observation. The audited shapes are two MeshRegion objects sharing a region id and differing in edge (the left edge at 400 K and the right at 300 K under one digest), a probe declared 2 m and -5 m from a 10 mm plate, and a bare float array whose unit and field id the operator asserted.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_region_mean_refuses_a_region_whose_content_is_not_the_declared_one",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_the_region_content_is_part_of_the_operators_identity",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_probe_on_its_support_still_reads_the_nearest_node",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_probe_outside_the_support_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_resolving_indices_outside_the_support_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_another_quantity_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_the_named_id_in_another_dimension_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_another_id_in_the_named_unit_is_refused",
+    "tests/test_core_scientific_audit_batch53.py::test_r73_a_typed_field_of_the_named_quantity_is_read",
+    "tests/inference/test_field_observation_spike.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "MeshRegion still binds its own mesh by `mesh_id`, which is a label two discretisations of one geometry share; putting a fingerprint on the region is a change to that record and is not this batch's. Containment is checked against the support's rectangle and not against the cell the probe falls in, so a probe inside the rectangle that snaps half a cell is still answered and `probe_offset` remains the only place that says so -- refusing there would delete every legitimate coarse-mesh probe. And `apply` still accepts a bare sequence, where the unit and the field id stay the caller's assertion; making the typed field mandatory is a signature change the compatibility rule forbids before the V4 round."
   }
  ]
 }

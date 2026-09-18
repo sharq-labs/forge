@@ -3211,3 +3211,46 @@ own bytes that still carries no magnitude. `BATCH52_PINNED_MUTATIONS.log`: **NON
 targets these files.
 
 **Open decisions.** None.
+
+### Batch 53 — I-25 part B (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-25 | **DONE** (parts A–B) | `2e5b9565` + `ea9c9bf4` (A, R-55), `44137eb2` (B preregistration + 11 strict xfails), this commit | The contract cannot re-derive **which** reason a refusal rests on (that needs the meshes); `MeshRegion` still binds its own mesh by label; probe containment is against the support's rectangle and not the cell; `apply` still accepts a bare sequence, where the unit and the field id stay the caller's assertion |
+
+**R-63 and R-73 are FIXED.** Two records whose whole purpose is to be a gate, and neither re-derived what
+it asserted.
+
+| Claim | Status | How |
+|---|---|---|
+| a verdict nobody checked | **FIXED** | `FieldTransferContract` carries **both** field definitions and **both** support fingerprints — which is what `check_field_transfer` decides from — and checked the types, the fingerprint format and a non-empty reason. A payload computed as REFUSED for 1 component against 3, kelvin against pascal, read back as **COMPATIBLE with `may_cross_directly` True**. The contract now derives the strongest verdict its own records permit (REFUSED for differing components or dimensions; no better than REQUIRES_PROJECTION for differing fingerprints or locations; no better than REQUIRES_UNIT_CONVERSION for differing units) and refuses a verdict above it. A **more conservative** verdict stays allowed, because a caller may refuse for a reason the record does not carry and the record must stay able to say so. |
+| a region matched by label | **FIXED** | The operator says an observation is identified by **content** rather than by an index, and for a region mean it compared `region_id` alone: the same operator, the same digest and the same region id returned the mean of the left edge (400 K) or the right edge (300 K) depending on which `MeshRegion` object was handed over — and the region decides which nodes are averaged. The operator now declares the region's support and edge, both in its canonical form and therefore **in its digest**, and refuses a region whose content differs. An operator that declares neither is refused the region it cannot check. |
+| a probe metres off the plate | **FIXED** | `argmin` answers any location with *some* node, so a probe declared 2 m and −5 m from a 10 mm plate silently returned a corner node's value under the declared name, with `probe_offset` reporting 5.38 m only if somebody asked. A probe outside the support's rectangle is now refused, by more than `PROBE_CONTAINMENT_RTOL = 1e-9` of its extent (class B). Inside it, the nearest node is still used and the offset is still reported — refusing there would delete every legitimate coarse-mesh probe. |
+| an array nobody checked | **FIXED** | The values were a bare float array whose unit and `field_id` the operator asserted, so a velocity field read through a temperature operator came back as a Quantity in kelvin. `apply` now accepts the **typed field** in place of a sequence, and checks its id, its dimension and its support against what the operator declares. |
+
+**Compatibility.** Additive only: two trailing fields with empty defaults on the operator, written into the
+canonical form **only when declared** — so every existing operator keeps its digest and its `/1` schema —
+and `apply` accepting a typed field with no signature change. Nothing on the contract moved; what changed is
+which combinations construct. One in-tree fixture is amended in place with the reason:
+`tests/inference/test_field_observation_spike.py`'s region-mean test now declares the region's content, and
+what it asserts is unchanged.
+
+**Committed evidence.** Nothing to regenerate: no committed JSON carries a transfer contract or an
+observation operator.
+
+**Verification.** The batch's own file 16 passed; `tests/inference`, `tests/test_field_ir_ceiling.py`,
+`tests/test_field_composition.py` and `tests/test_core_api_serialization.py` green. FAST tier **7147 passed,
+5 skipped, 19 failed** — exactly the by-design set. Expensive tier **528 passed, 18 failed, 14 errors** —
+the recorded baseline. `tests/test_mutation_harness.py` 6 passed with
+`tests/mutation_guards.py` untouched. Guard reach ledger clean over **36** guards, both rows LATENT/FIXED
+with what would create the shape they guard — a field crossing for the contract, a calibration that observes
+a field for the operator.
+
+**Guard mutations.** `BATCH53_MUTATIONS.log`: **8 KILLED, 1 SURVIVED on purpose and recorded as such** —
+B53g removes the refusal of a region the operator *cannot* check and leaves the id check standing, which is
+exactly what the in-tree test asserts; the audited rule is the content comparison, and B53f kills it. B53h
+and B53i were repointed while running them, with both cases added as named tests: the audited field differs
+in **both** its id and its unit, so each rule needed the case only it sees — the declared id in another
+dimension, and another id in the declared unit. Control green. `BATCH53_PINNED_MUTATIONS.log`: **NONE**.
+
+**Open decisions.** None.

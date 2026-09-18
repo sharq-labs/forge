@@ -9,6 +9,8 @@ pascal, reads back as COMPATIBLE with `may_cross_directly` True. `FieldObservati
 observation is identified by CONTENT rather than by an index, and identifies its region by LABEL: the same
 operator and digest return the mean of the left edge or the right edge depending on which region object is
 handed over. And a probe declared metres away from a 10 mm plate silently reads a corner node.
+
+Recorded as strict xfails in commit 44137eb2, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -106,7 +108,6 @@ def test_r63_an_honest_contract_is_unchanged():
     assert contract.may_cross_directly is True
 
 
-@pytest.mark.xfail(strict=True, reason="R-63 finding 77 as audited: a payload computed as REFUSED for 1 component against 3 reads back as COMPATIBLE, with may_cross_directly True")
 def test_r63_a_component_mismatch_cannot_read_back_as_compatible():
     mesh = _mesh()
     refused = check_field_transfer(_definition(), mesh, _definition(components=3), mesh)
@@ -117,25 +118,21 @@ def test_r63_a_component_mismatch_cannot_read_back_as_compatible():
         FieldTransferContract.from_dict(forged)
 
 
-@pytest.mark.xfail(strict=True, reason="R-63 as audited: kelvin against pascal does the same, and no projection repairs a dimension")
 def test_r63_a_dimension_mismatch_cannot_read_back_as_compatible():
     with pytest.raises(InvalidScientificProblem, match="dimension|verdict"):
         _contract(consumer=_definition(unit="pascal"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-63 as audited: direct construction with made-up fingerprints claims COMPATIBLE for two supports that are not the same one")
 def test_r63_two_different_supports_cannot_read_back_as_compatible():
     with pytest.raises(InvalidScientificProblem, match="fingerprint|support|verdict"):
         _contract(consumer_fingerprint="a" * 64)
 
 
-@pytest.mark.xfail(strict=True, reason="R-63: two locations on one geometry need a declared projection, and the verdict was never checked against the definitions that say so")
 def test_r63_two_locations_cannot_read_back_as_compatible():
     with pytest.raises(InvalidScientificProblem, match="location|verdict"):
         _contract(consumer=_definition(location=FieldLocation.CELL))
 
 
-@pytest.mark.xfail(strict=True, reason="R-63: and two units of one dimension need a conversion, which COMPATIBLE says is not needed")
 def test_r63_two_units_cannot_read_back_as_compatible():
     with pytest.raises(InvalidScientificProblem, match="unit|verdict"):
         _contract(consumer=_definition(unit="degC"))
@@ -151,7 +148,6 @@ def test_r63_a_more_conservative_verdict_is_still_allowed():
 # ---------------------------------------------------------------------------
 # a_region_mean_names_the_region_it_reads_by_content
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-73 finding 104 as audited: apply() checks region.region_id only, so the same operator and digest read the left edge or the right edge depending on which region object is supplied")
 def test_r73_a_region_mean_refuses_a_region_whose_content_is_not_the_declared_one():
     mesh = _mesh()
     values = _values(mesh)
@@ -167,7 +163,6 @@ def test_r73_a_region_mean_refuses_a_region_whose_content_is_not_the_declared_on
         operator.apply(mesh, values, region=right)
 
 
-@pytest.mark.xfail(strict=True, reason="R-73: and the region's content is not in the operator's digest, so two observations of different edges are one observation")
 def test_r73_the_region_content_is_part_of_the_operators_identity():
     names = {field.name for field in dataclasses.fields(FieldObservationOperator)}
     assert {"region_edge", "region_mesh_id"} <= names, (
@@ -189,7 +184,6 @@ def test_r73_a_probe_on_its_support_still_reads_the_nearest_node():
     assert probe.probe_offset(mesh).magnitude_in(METER) == pytest.approx(0.0, abs=1e-12)
 
 
-@pytest.mark.xfail(strict=True, reason="R-73 finding 104 as audited: a probe declared 2 m and -5 m away from a 10 mm plate silently returns a corner node's value, and probe_offset reports 5.38 m only if somebody asks")
 def test_r73_a_probe_outside_the_support_is_refused():
     mesh = _mesh()
     values = _values(mesh)
@@ -199,7 +193,6 @@ def test_r73_a_probe_outside_the_support_is_refused():
         away.apply(mesh, values)
 
 
-@pytest.mark.xfail(strict=True, reason="R-73: resolve_indices is where the snap happens, and it answered with a corner node for a location that is not on the support at all")
 def test_r73_resolving_indices_outside_the_support_is_refused():
     mesh = _mesh()
     away = _probe(probe_x=Quantity(2.0, METER), probe_y=Quantity(-5.0, METER))
@@ -210,7 +203,6 @@ def test_r73_resolving_indices_outside_the_support_is_refused():
 # ---------------------------------------------------------------------------
 # the_values_an_operator_reads_are_the_field_it_names
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-73 as audited: the field values are a bare float array whose unit and field_id are asserted by the operator and never checked")
 def test_r73_a_typed_field_of_another_quantity_is_refused():
     from engcore.data.field import FieldValue
 
@@ -234,7 +226,6 @@ def test_r73_a_typed_field_of_another_quantity_is_refused():
         f"a velocity field was read through a temperature operator and came back as {reading}")
 
 
-@pytest.mark.xfail(strict=True, reason="R-73: and the typed field of the quantity it DOES name is the case that has to keep working")
 def test_r73_a_typed_field_of_the_named_quantity_is_read():
     from engcore.data.field import FieldValue
 
@@ -248,3 +239,33 @@ def test_r73_a_typed_field_of_the_named_quantity_is_read():
         reading = None
         assert reading is not None, f"apply cannot be handed the typed field it names: {exc}"
     assert reading.magnitude_in(KELVIN) == pytest.approx(350.0)
+
+
+# ---------------------------------------------------------------------------
+# the two halves of the typed-field check, separated while running this batch's
+# guard mutations: the audited case differs in BOTH the id and the unit, so each
+# rule needs the case only it sees
+# ---------------------------------------------------------------------------
+def test_r73_a_typed_field_of_the_named_id_in_another_dimension_is_refused():
+    from engcore.data.field import FieldValue
+
+    mesh = _mesh()
+    same_name_other_dimension = FieldValue(
+        definition=_definition(unit="meter / second"), mesh=mesh,
+        values=_values(mesh).reshape(mesh.nodes_x, mesh.nodes_y),
+    )
+    with pytest.raises(FieldObservationError, match="meter / second|kelvin"):
+        _probe().apply(mesh, same_name_other_dimension)
+
+
+def test_r73_a_typed_field_of_another_id_in_the_named_unit_is_refused():
+    from engcore.data.field import FieldValue
+
+    mesh = _mesh()
+    other_name_same_unit = FieldValue(
+        definition=FieldDefinition(field_id="T_wall", unit=KELVIN, mesh_id="plate",
+                                   location=FieldLocation.NODE, components=1),
+        mesh=mesh, values=_values(mesh).reshape(mesh.nodes_x, mesh.nodes_y),
+    )
+    with pytest.raises(FieldObservationError, match="T_wall|field"):
+        _probe().apply(mesh, other_name_same_unit)
