@@ -126,7 +126,7 @@
     },
     {
       "id": "numerical-uq-quantified",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_a_second_order_sequence_is_quantified_and_brackets_the_exact_value",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_a_second_order_sequence_is_quantified_and_brackets_the_exact_value",
       "tags": [
         "uq"
       ],
@@ -134,7 +134,7 @@
     },
     {
       "id": "uq-failure-unknown",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_every_rule_failure_is_unknown_never_zero",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_every_rule_failure_is_unknown_never_zero",
       "tags": [
         "uq"
       ],
@@ -142,7 +142,7 @@
     },
     {
       "id": "guard-band-crossing-insufficient",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient",
       "tags": [
         "uq",
         "verdict"
@@ -151,7 +151,7 @@
     },
     {
       "id": "remove-uq-never-improves",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
       "tags": [
         "uq",
         "evidence"
@@ -160,7 +160,7 @@
     },
     {
       "id": "numerical-not-model-form",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
       "tags": [
         "uq"
       ],
@@ -168,7 +168,7 @@
     },
     {
       "id": "parameter-not-numerical",
-      "nodeid": "tests/claims/test_phase2_production_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
       "tags": [
         "uq"
       ],
@@ -176,7 +176,7 @@
     },
     {
       "id": "risk-monotone",
-      "nodeid": "tests/claims/test_phase3_policy.py::test_more_risk_never_requires_less_evidence_within_a_profile",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_more_risk_never_requires_less_evidence_within_a_profile",
       "tags": [
         "policy"
       ],
@@ -184,7 +184,7 @@
     },
     {
       "id": "consequence-stated-not-inferred",
-      "nodeid": "tests/claims/test_phase3_policy.py::test_consequence_is_stated_never_inferred",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_consequence_is_stated_never_inferred",
       "tags": [
         "policy"
       ],
@@ -192,7 +192,7 @@
     },
     {
       "id": "policy-not-evidence",
-      "nodeid": "tests/claims/test_phase3_policy.py::test_a_policy_cannot_grant_what_the_run_lacks",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_a_policy_cannot_grant_what_the_run_lacks",
       "tags": [
         "policy",
         "evidence"
@@ -201,7 +201,7 @@
     },
     {
       "id": "unpinned-measurement-weak",
-      "nodeid": "tests/claims/test_phase4_external_evidence.py::test_an_unpinned_measurement_is_weak_however_good_it_looks",
+      "nodeid": "tests/claims/test_external_evidence.py::test_an_unpinned_measurement_is_weak_however_good_it_looks",
       "tags": [
         "external",
         "evidence"
@@ -210,7 +210,7 @@
     },
     {
       "id": "measurement-not-validation",
-      "nodeid": "tests/claims/test_phase4_external_evidence.py::test_a_pinned_applicable_quantified_measurement_is_admissible_and_still_not_validation",
+      "nodeid": "tests/claims/test_external_evidence.py::test_a_pinned_applicable_quantified_measurement_is_admissible_and_still_not_validation",
       "tags": [
         "external",
         "evidence",
@@ -220,7 +220,7 @@
     },
     {
       "id": "external-never-silently-changes-verdict",
-      "nodeid": "tests/claims/test_phase4_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+      "nodeid": "tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
       "tags": [
         "external",
         "verdict"
@@ -229,7 +229,7 @@
     },
     {
       "id": "gaps-explain-insufficiency",
-      "nodeid": "tests/claims/test_phase5_6_gaps_and_next.py::test_every_verdict_is_fully_explained_by_its_blocking_gaps",
+      "nodeid": "tests/claims/test_evidence_gaps_next_experiment.py::test_every_verdict_is_fully_explained_by_its_blocking_gaps",
       "tags": [
         "gaps",
         "verdict"
@@ -238,7 +238,7 @@
     },
     {
       "id": "recommendation-promises-nothing",
-      "nodeid": "tests/claims/test_phase5_6_gaps_and_next.py::test_recommendations_address_real_gaps_and_promise_nothing",
+      "nodeid": "tests/claims/test_evidence_gaps_next_experiment.py::test_recommendations_address_real_gaps_and_promise_nothing",
       "tags": [
         "gaps"
       ],
@@ -246,7 +246,7 @@
     },
     {
       "id": "challenge-does-not-edit-verdict",
-      "nodeid": "tests/claims/test_phase7_8_sensitivity_challenge.py::test_a_challenge_never_changes_the_verdict",
+      "nodeid": "tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
       "tags": [
         "challenge",
         "verdict"
@@ -255,7 +255,7 @@
     },
     {
       "id": "bundle-edit-detected",
-      "nodeid": "tests/claims/test_phase9_10_impact_bundle.py::test_any_edit_to_a_bundle_is_detected",
+      "nodeid": "tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected",
       "tags": [
         "replay",
         "provenance"
@@ -264,7 +264,7 @@
     },
     {
       "id": "changed-solver-detected",
-      "nodeid": "tests/claims/test_phase9_10_impact_bundle.py::test_replay_detects_a_changed_solver_result",
+      "nodeid": "tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
       "tags": [
         "replay",
         "provenance"

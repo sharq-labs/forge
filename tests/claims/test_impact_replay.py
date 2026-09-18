@@ -1,4 +1,4 @@
-"""Phases 9 and 10 -- the decision dependency graph, impact analysis, and the replay bundle."""
+"""Impact analysis and replay -- the decision dependency graph, impact analysis, and the replay bundle."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from engcore.claims import (
     impact_of,
     record_digest,
 )
-from engcore.claims.bundle import (
+from engcore.claims.replay.bundle import (
     BundleStatus,
     ReplayTolerance,
     bundle_from_json,
@@ -73,7 +73,7 @@ def _digest(assessment):
 
 
 # ---------------------------------------------------------------------------
-# Phase 9
+# Impact analysis
 # ---------------------------------------------------------------------------
 
 
@@ -155,7 +155,7 @@ def test_a_changed_external_trust_registry_is_detected_and_impacts_the_bound_ass
 
 
 # ---------------------------------------------------------------------------
-# Phase 10
+# Replay / reproducibility
 # ---------------------------------------------------------------------------
 
 

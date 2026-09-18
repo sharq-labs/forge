@@ -1,4 +1,4 @@
-"""Phases 7 and 8 -- sensitivity, a bounded robustness envelope, and challenge mode, over real runs."""
+"""Sensitivity, robustness and challenge -- sensitivity, a bounded robustness envelope, and challenge mode, over real runs."""
 
 from __future__ import annotations
 

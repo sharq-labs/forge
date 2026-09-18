@@ -1,4 +1,4 @@
-"""Phase 4 -- benchmark, measurement and literature evidence: ingested, judged, never promoted to validation."""
+"""External evidence -- benchmark, measurement and literature evidence: ingested, judged, never promoted to validation."""
 
 from __future__ import annotations
 

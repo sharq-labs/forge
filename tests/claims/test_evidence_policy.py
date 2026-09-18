@@ -1,4 +1,4 @@
-"""Phase 3 -- risk-aware evidence policy. Risk sets the bar; it is never evidence."""
+"""Evidence policy -- risk-aware evidence policy. Risk sets the bar; it is never evidence."""
 
 from __future__ import annotations
 
