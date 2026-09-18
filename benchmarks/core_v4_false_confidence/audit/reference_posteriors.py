@@ -49,6 +49,19 @@ QUANTILE_STEPS = 2000
 #: A reference is admitted only when halving its step moves its moments by less than this many marginal sd.
 REFERENCE_CONVERGENCE_SD = 0.01
 
+#: Cross-provider re-derivation tolerance, expressed in each marginal's SD.
+#:
+#: The committed artifact's own SHA-256 remains exact. Rebuilding the same
+#: posterior through an unpinned NumPy/SciPy stack is a different question:
+#: reduction/interpolation order may move the final float by a few ulps while
+#: leaving the scientific posterior unchanged. 4096 float64 eps is about
+#: 9.1e-13 SD -- more than ten orders tighter than the 0.01 SD convergence
+#: criterion that admits a reference in the first place.
+REDERIVATION_FLOAT_EPS_MULTIPLIER = 4096
+REDERIVATION_SD_TOLERANCE = (
+    REDERIVATION_FLOAT_EPS_MULTIPLIER * np.finfo(np.float64).eps
+)
+
 
 #: label -> (builder, per-axis node counts of the reference).
 CASES = {
@@ -131,6 +144,133 @@ def build() -> dict:
     return payload
 
 
+def _decode(encoded: str) -> np.ndarray:
+    return np.frombuffer(base64.b64decode(encoded.encode("ascii")), dtype="<f8")
+
+
+def rederivation_problems(stored: dict, rebuilt: dict) -> tuple[str, ...]:
+    """Scientific differences between a pinned reference and a fresh rebuild.
+
+    The stored artifact's byte integrity is checked separately by its SHA-256.
+    This comparison answers whether the *posterior* was re-derived. It therefore
+    keeps structural declarations exact and allows only float64 round-off at a
+    tolerance many orders below the reference-admission criterion.
+    """
+
+    problems: list[str] = []
+    for key in ("schema", "reference_convergence_sd", "protocol"):
+        if stored.get(key) != rebuilt.get(key):
+            problems.append(
+                f"top-level {key} changed: stored={stored.get(key)!r}, "
+                f"rebuilt={rebuilt.get(key)!r}"
+            )
+
+    stored_cases = stored.get("cases", {})
+    rebuilt_cases = rebuilt.get("cases", {})
+    if set(stored_cases) != set(rebuilt_cases):
+        problems.append(
+            "case set changed: "
+            f"stored={sorted(stored_cases)}, rebuilt={sorted(rebuilt_cases)}"
+        )
+        return tuple(problems)
+
+    tolerance = REDERIVATION_SD_TOLERANCE
+    exact_fields = (
+        "problem",
+        "parameter_names",
+        "nodes",
+        "bounds",
+        "quantile_steps",
+        "converged",
+    )
+
+    for label in sorted(stored_cases):
+        old = stored_cases[label]
+        new = rebuilt_cases[label]
+        for key in exact_fields:
+            if old.get(key) != new.get(key):
+                problems.append(
+                    f"{label}: {key} changed: "
+                    f"stored={old.get(key)!r}, rebuilt={new.get(key)!r}"
+                )
+
+        old_mean = np.asarray(old["mean"], dtype=np.float64)
+        new_mean = np.asarray(new["mean"], dtype=np.float64)
+        old_sd = np.asarray(old["sd"], dtype=np.float64)
+        new_sd = np.asarray(new["sd"], dtype=np.float64)
+        if (
+            old_mean.shape != new_mean.shape
+            or old_sd.shape != new_sd.shape
+            or old_mean.shape != old_sd.shape
+        ):
+            problems.append(
+                f"{label}: moment vector shape changed: "
+                f"mean {old_mean.shape}->{new_mean.shape}, "
+                f"sd {old_sd.shape}->{new_sd.shape}"
+            )
+            continue
+
+        bounds = np.asarray(old["bounds"], dtype=np.float64)
+        span = (
+            np.abs(bounds[:, 1] - bounds[:, 0])
+            if bounds.shape == (len(old_sd), 2)
+            else np.ones_like(old_sd)
+        )
+        scale = np.where(old_sd > 0.0, old_sd, np.maximum(span, 1.0))
+
+        mean_move = np.abs(new_mean - old_mean) / scale
+        sd_move = np.abs(new_sd - old_sd) / scale
+        if np.any(~np.isfinite(mean_move)) or float(np.max(mean_move, initial=0.0)) > tolerance:
+            problems.append(
+                f"{label}: mean moved by "
+                f"{float(np.max(mean_move, initial=0.0)):.6g} SD "
+                f"(limit {tolerance:.6g})"
+            )
+        if np.any(~np.isfinite(sd_move)) or float(np.max(sd_move, initial=0.0)) > tolerance:
+            problems.append(
+                f"{label}: sd moved by "
+                f"{float(np.max(sd_move, initial=0.0)):.6g} SD "
+                f"(limit {tolerance:.6g})"
+            )
+
+        old_moved = float(old["halved_step_moved_sd"])
+        new_moved = float(new["halved_step_moved_sd"])
+        moved_delta = abs(new_moved - old_moved)
+        if not math.isfinite(moved_delta) or moved_delta > tolerance:
+            problems.append(
+                f"{label}: halved-step movement changed by "
+                f"{moved_delta:.6g} SD (limit {tolerance:.6g})"
+            )
+
+        old_q = tuple(old.get("quantiles_f8_base64", ()))
+        new_q = tuple(new.get("quantiles_f8_base64", ()))
+        if len(old_q) != len(new_q) or len(old_q) != len(old_sd):
+            problems.append(
+                f"{label}: quantile axis count changed: "
+                f"stored={len(old_q)}, rebuilt={len(new_q)}, "
+                f"marginals={len(old_sd)}"
+            )
+            continue
+        for axis, (old_encoded, new_encoded) in enumerate(zip(old_q, new_q)):
+            old_values = _decode(old_encoded)
+            new_values = _decode(new_encoded)
+            if old_values.shape != new_values.shape:
+                problems.append(
+                    f"{label} axis {axis}: quantile shape changed "
+                    f"{old_values.shape}->{new_values.shape}"
+                )
+                continue
+            q_move = np.abs(new_values - old_values) / scale[axis]
+            maximum = float(np.max(q_move, initial=0.0))
+            if np.any(~np.isfinite(q_move)) or maximum > tolerance:
+                problems.append(
+                    f"{label} axis {axis}: quantile function moved by "
+                    f"{maximum:.6g} SD (limit {tolerance:.6g})"
+                )
+
+    return tuple(problems)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--write", action="store_true")
@@ -145,9 +285,20 @@ def main() -> int:
         print(f"wrote {OUT} ({OUT.stat().st_size} bytes), digest {payload['digest']}")
         return 0
     stored = json.loads(OUT.read_text(encoding="utf-8"))
-    same = stored.get("digest") == payload["digest"]
-    print(f"{'MATCHES' if same else 'DIFFERS FROM'} the pinned file; pinned {stored.get('digest')}, rebuilt {payload['digest']}")
-    return 0 if same else 1
+    problems = rederivation_problems(stored, payload)
+    if problems:
+        print(
+            "DIFFERS SCIENTIFICALLY FROM the pinned file; "
+            f"pinned {stored.get('digest')}, rebuilt {payload['digest']}"
+        )
+        for problem in problems:
+            print(f"- {problem}")
+        return 1
+    print(
+        "SCIENTIFICALLY MATCHES the pinned file; exact rebuild digest "
+        f"{payload['digest']} (pinned artifact digest {stored.get('digest')})"
+    )
+    return 0
 
 
 if __name__ == "__main__":
