@@ -404,3 +404,38 @@ def test_sprint1_assurance_refuses_a_different_report_with_the_same_run_id() -> 
 
     assert "altered-report-assessment" in decision.refused_assessments
     assert any("not bound to the credibility report" in r for r in decision.reasons)
+
+
+
+def test_validation_level_issuer_flag_must_be_an_explicit_bool() -> None:
+    from engcore.sria.assurance import trusting_authority
+    from engcore.sria.assurance.assessment import (
+        CriticAssessment,
+        CriticClass,
+        CriticVerdict,
+    )
+    from engcore.sria.provenance import AssessmentProvenance
+
+    class AmbiguousIssuer:
+        critic_id = "ambiguous-level-issuer"
+        critic_version = "1"
+        critic_class = CriticClass.PROCESS
+        validation_level_issuer = "false"
+
+        def assess(self, evidence, *, assessment_id):
+            return CriticAssessment(
+                assessment_id=assessment_id,
+                critic_id=self.critic_id,
+                critic_version=self.critic_version,
+                critic_class=self.critic_class,
+                subject_ref=evidence.record_hash,
+                verdict=CriticVerdict.PASS,
+                provenance=AssessmentProvenance(
+                    assessment_id=assessment_id,
+                    critic_id=self.critic_id,
+                    critic_version=self.critic_version,
+                ),
+            )
+
+    with pytest.raises(TypeError, match="explicit bool"):
+        trusting_authority("bad-issuer-authority", critics=(AmbiguousIssuer(),))
