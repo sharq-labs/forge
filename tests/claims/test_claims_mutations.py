@@ -100,18 +100,11 @@ def foreign_context_is_refused():
 
 
 def straddling_band_decides_nothing():
-    genuine = _registry().get(NAFEMS_T3_CAPABILITY_ID).executor
-    from engcore.claims import CapabilityRun, InstanceReport
-
-    def run(case, *, run_id):
-        (item,) = genuine(case, run_id=run_id).reports
-        record = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.4, "kelvin"),
-                             method="study", source_kind=UncertaintySource.NUMERICAL)
-        return CapabilityRun(reports=(InstanceReport(None, replace(item.report, uncertainty={"temperature_at_probe": record})),))
-
-    registry = CapabilityRegistry(replace(d, executor=run) if d.capability_id == NAFEMS_T3_CAPABILITY_ID else d for d in _registry())
-    demand = UncertaintyDemand(frozenset({UncertaintyChannel.NUMERICAL}), 2.0, False)
-    assert assess_claim(t3_claim(uncertainty=demand), registry).to_dict()["verdict"] == "insufficient_evidence"
+    """Phase 2: the production T3 refinement study's GCI band (about 3.7 mK) straddles a 0.2 mK tolerance edge."""
+    demand = UncertaintyDemand(frozenset({UncertaintyChannel.NUMERICAL}), None, False)
+    record = assess_claim(t3_claim(uncertainty=demand, tolerance=Quantity(0.0002, "kelvin")), _registry()).to_dict()
+    assert record["comparison"]["point_satisfied"] is True
+    assert record["verdict"] == "insufficient_evidence"
 
 
 def mixture_enters_no_channel():

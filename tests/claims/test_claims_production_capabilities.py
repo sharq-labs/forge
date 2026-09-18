@@ -236,9 +236,18 @@ def test_cross_solver_validation_is_not_declared_attainable_on_the_mcp_path(regi
     assert route.kind is RouteKind.SOLVER_ROUTE and route.pinned_route == "electrical.dc.external_simulator"
 
 
-def test_no_production_capability_claims_quantified_uncertainty(registry, et_report, battery_report) -> None:
-    for declaration in registry:
-        assert dict(declaration.uncertainty.quantified) == {}
+def test_production_capabilities_claim_only_the_channels_a_declared_study_backs(registry, et_report, battery_report) -> None:
+    """Phase 2: a channel is declared quantifiable only where a study quantifies it; reports stay UNKNOWN."""
+    from engcore.sria.uncertainty import UncertaintyChannel as C
+
+    declared = {d.capability_id: {q: set(c) for q, c in d.uncertainty.quantified.items()} for d in registry}
+    assert declared[BATTERY_CAPABILITY_ID] == {}
+    assert declared[NAFEMS_T3_CAPABILITY_ID] == {"temperature_at_probe": {C.NUMERICAL}}
+    assert declared[ELECTROTHERMAL_CAPABILITY_ID] and all(
+        v == {C.EPISTEMIC_PARAMETER} for v in declared[ELECTROTHERMAL_CAPABILITY_ID].values()
+    )
+    assert registry.get(NAFEMS_T3_CAPABILITY_ID).refinement is not None
+    assert registry.get(ELECTROTHERMAL_CAPABILITY_ID).perturbable
     for report in (et_report, battery_report):
         assert all(not report.uncertainty[name].is_quantified for name in report.values)
 

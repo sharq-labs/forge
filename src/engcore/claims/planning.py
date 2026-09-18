@@ -39,6 +39,7 @@ from ..sria.assurance.obligations import charter_context_ref
 from ..sria.charter import CampaignCharter, ConfidenceRequirement
 from ._records import canonical_json, require_keys, require_mapping, require_schema_exact, tagged_digest
 from .capabilities import CapabilityRegistry, InputRole, build_case, declared_path
+from .uq_studies import run_inputs_for, study_spec
 from .compiler import CompilationStatus, CompiledClaim
 from .errors import ClaimLayerError
 from .routes import RouteAssessment, RouteClass, assess_routes
@@ -350,7 +351,7 @@ def plan_experiment(compiled: CompiledClaim, registry: CapabilityRegistry) -> Ex
         raise PlanningError("the selected capability changed after compilation")
 
     supplied = dict(claim.supplied_inputs)
-    run_inputs = {p: v for p, v in supplied.items() if p != claim.target.input_ref or declaration.input(p) is not None}
+    run_inputs = run_inputs_for(claim, declaration)
     case = build_case(declaration, run_inputs)
     routes = assess_routes(declaration, tuple(supplied))
     produced = declaration.produced(claim.qoi.name)
@@ -423,19 +424,23 @@ def plan_experiment(compiled: CompiledClaim, registry: CapabilityRegistry) -> Ex
                 },
             )
         )
-    quantified = declaration.uncertainty.channels_for(claim.qoi.name)
     for channel in claim.uncertainty.ordered_channels():
+        # Phase 2: the step names the exact study that will quantify the channel,
+        # so the plan digest (and the charter, and every context_ref) binds it.
+        study, unavailable = study_spec(declaration, claim, channel)
         steps.append(
             PlanStep(
                 f"uncertainty:{channel.value}",
                 StepKind.UNCERTAINTY,
                 channel.value,
                 depends_on=(execute,),
-                availability=StepAvailability.PLANNED if channel in quantified else StepAvailability.UNAVAILABLE,
+                availability=StepAvailability.PLANNED if study is not None else StepAvailability.UNAVAILABLE,
                 detail={
                     "channel": channel.value,
                     "coverage_factor": claim.uncertainty.coverage_factor,
                     "basis": declaration.uncertainty.basis,
+                    "study": study,
+                    "unavailable_reason": unavailable,
                 },
             )
         )

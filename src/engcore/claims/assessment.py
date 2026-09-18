@@ -62,6 +62,13 @@ from .oracles import discover_oracles
 from .selection import concrete
 from .sources import gather_evidence
 from .uncertainty import report_transport
+from .uq_studies import (
+    StudyOutcome,
+    UncertaintyStudyError,
+    planned_studies,
+    run_uncertainty_studies,
+    verify_study_records,
+)
 from .verdict import ClaimComparison, ClaimVerdict, VerdictBasis, admissible, compare, derive_claim_verdict
 
 ASSESSMENT_SCHEMA = schema_string("claim_assessment_record")
@@ -105,8 +112,21 @@ class Assurance:
 # ---------------------------------------------------------------------------
 
 
-def assemble_evidence(plan: ExperimentPlan, claim: ScientificClaim, report: CredibilityEvidenceReport) -> AssembledEvidence:
-    """SRIA evidence for the claim's quantity, bound to the plan's context. The value is the report's."""
+def assemble_evidence(
+    plan: ExperimentPlan,
+    claim: ScientificClaim,
+    report: CredibilityEvidenceReport,
+    studies: StudyOutcome | None = None,
+) -> AssembledEvidence:
+    """SRIA evidence for the claim's quantity, bound to the plan's context. The value is the report's.
+
+    ``studies`` adds the channel records the plan's uncertainty studies
+    quantified (never an UNKNOWN one), and names every run they executed.
+    """
+    channel_records = {} if studies is None else dict(studies.channel_records)
+    study_refs = () if studies is None else tuple(
+        f"run:{run['run_id']}" for record in studies.records for run in record["runs"]
+    )
     try:
         evidence = evidence_from_credibility_report(
             report,
@@ -119,6 +139,8 @@ def assemble_evidence(plan: ExperimentPlan, claim: ScientificClaim, report: Cred
             # COMBINED) is filed under none and every channel stays UNKNOWN --
             # stated in the declaration, never guessed into a channel, never zero.
             unattributable_uncertainty="unknown",
+            channel_records=channel_records,
+            study_refs=study_refs,
         )
     except ValueError as exc:  # pragma: no cover - the bridge's remaining refusals
         return AssembledEvidence(None, str(exc))
@@ -303,6 +325,7 @@ def _build_record(
     execution: Mapping[str, Any] | None,
     report: CredibilityEvidenceReport | None,
     registry: CapabilityRegistry,
+    studies: StudyOutcome | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """The assessment record, and the live objects it was built from."""
     live: dict[str, Any] = {}
@@ -313,7 +336,7 @@ def _build_record(
     evidence_problem = None
     context = ()
     if bound:
-        assembled = assemble_evidence(plan, claim, report)
+        assembled = assemble_evidence(plan, claim, report, studies)
         evidence, evidence_problem = assembled.evidence, assembled.problem
         if evidence is not None:
             # CORE-9: evidence counts only for the context it was made for.
@@ -416,6 +439,7 @@ def _build_record(
             "evidence_problem": evidence_problem,
             "transport": report_transport(report, qoi).to_dict() if qoi in report.values else None,
         },
+        "uncertainty_studies": [] if studies is None else studies.to_list(),
         "evidence": None
         if evidence is None
         else {
@@ -512,7 +536,10 @@ def assess_claim(claim: ScientificClaim | Mapping[str, Any], registry: Capabilit
         execution = execute_plan(plan, registry, dict(parsed.supplied_inputs))
         report = execution.report
         view = _execution_view(execution)
-    record, live = _build_record(parsed, compiled, plan, view, report, registry)
+    studies = None
+    if execution is not None and execution.bound and planned_studies(plan):
+        studies = run_uncertainty_studies(plan, registry, parsed, report)
+    record, live = _build_record(parsed, compiled, plan, view, report, registry, studies)
     return ClaimAssessment(
         claim=parsed,
         compiled=compiled,
@@ -573,7 +600,19 @@ def verify_assessment(record: Mapping[str, Any], registry: CapabilityRegistry) -
     elif view is not None or record.get("plan") is not None:
         raise AssessmentForgeryError("a claim that is not READY cannot carry a plan or an execution")
 
-    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry)
+    studies = None
+    recorded_studies = record.get("uncertainty_studies")
+    bound_run = plan is not None and report is not None and view is not None and not view.get("binding_problems")
+    if bound_run and planned_studies(plan) and not recorded_studies:
+        raise AssessmentForgeryError("the plan names uncertainty studies and the record carries none")
+    if recorded_studies:
+        if plan is None or report is None:
+            raise AssessmentForgeryError("uncertainty studies are recorded for a run that produced no bound report")
+        try:
+            studies = verify_study_records(_plain(recorded_studies), plan, report)
+        except UncertaintyStudyError as exc:
+            raise AssessmentForgeryError(f"uncertainty studies: {exc}") from exc
+    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry, studies)
     if canonical_json(rebuilt) != canonical_json(_plain(record)):
         differing = sorted(k for k in set(rebuilt) | set(record) if canonical_json(_plain(rebuilt.get(k))) != canonical_json(_plain(record.get(k))))
         raise AssessmentForgeryError(

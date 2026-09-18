@@ -75,6 +75,7 @@ from ._records import (
     tagged_digest,
 )
 from .errors import ClaimContractError
+from .parameter_uq import InputUncertainty
 
 CLAIM_SCHEMA = schema_string("scientific_claim")
 QOI_SCHEMA = schema_string("claim_quantity_of_interest")
@@ -485,6 +486,9 @@ class ScientificClaim:
     uncertainty: UncertaintyDemand
     discrepancy: ModelDiscrepancy
     requested_outputs: frozenset[RequestedOutput]
+    #: Phase 2B: what the caller states is uncertain about the inputs (a declaration, never evidence).
+    #: Serialized only when present, so a claim without it keeps its identity.
+    input_uncertainty: InputUncertainty | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim_id", require_text(self.claim_id, field="claim_id"))
@@ -510,6 +514,7 @@ class ScientificClaim:
 
         self._check_comparison()
         self._check_inputs()
+        self._check_input_uncertainty()
 
         caps = self.required_capabilities
         if isinstance(caps, (str, bytes)) or not isinstance(caps, (frozenset, set, tuple, list)):
@@ -615,6 +620,30 @@ class ScientificClaim:
         object.__setattr__(self, "known_inputs", freeze(known))
         object.__setattr__(self, "missing_inputs", frozenset(missing))
 
+    def _check_input_uncertainty(self) -> None:
+        spec = self.input_uncertainty
+        if spec is None:
+            return
+        if not isinstance(spec, InputUncertainty):
+            raise ClaimContractError("input_uncertainty must be an InputUncertainty record or None")
+        supplied = dict(self.known_inputs)
+        supplied.update(self.operating_context)
+        for dist in spec.distributions:
+            stated = supplied.get(dist.path)
+            if not isinstance(stated, Quantity):
+                raise ClaimContractError(
+                    f"input_uncertainty names {dist.path}, which the claim does not state as a quantity; "
+                    f"a distribution is about a stated input, and its center is the stated value"
+                )
+            if dimensionality(stated.units) != dimensionality(dist.center.units):
+                raise ClaimContractError(f"input_uncertainty for {dist.path} is not in the stated value's dimension")
+            center = dist.center.to(stated.units).magnitude
+            if not math.isclose(center, stated.magnitude, rel_tol=1e-12, abs_tol=0.0):
+                raise ClaimContractError(
+                    f"input_uncertainty for {dist.path} is centered at {dist.center}, but the claim states "
+                    f"{stated}; the reported run is the nominal of the propagated distribution, so they must agree"
+                )
+
     # ---- views ---------------------------------------------------------------
 
     @property
@@ -690,13 +719,14 @@ class ScientificClaim:
             "uncertainty": self.uncertainty.to_dict(),
             "discrepancy": self.discrepancy.to_dict(),
             "requested_outputs": sorted(output.value for output in self.requested_outputs),
+            **({"input_uncertainty": self.input_uncertainty.to_dict()} if self.input_uncertainty is not None else {}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificClaim":
         """Read a claim, refusing every unknown, missing or malformed field."""
         payload = require_mapping(payload, field="claim")
-        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, record="claim")
+        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, optional=("input_uncertainty",), record="claim")
         require_schema_exact(payload, CLAIM_SCHEMA, record="claim")
         tolerance = payload["tolerance"]
         if tolerance is not None:
@@ -727,6 +757,9 @@ class ScientificClaim:
             uncertainty=UncertaintyDemand.from_dict(payload["uncertainty"]),
             discrepancy=_discrepancy_from_dict(payload["discrepancy"]),
             requested_outputs=frozenset(require_list(payload["requested_outputs"], field="requested_outputs")),
+            input_uncertainty=None
+            if payload.get("input_uncertainty") is None
+            else InputUncertainty.from_dict(payload["input_uncertainty"]),
         )
 
 

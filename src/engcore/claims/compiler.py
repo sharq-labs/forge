@@ -46,6 +46,7 @@ from .capabilities import CapabilityDeclaration, CapabilityRegistry, MismatchRea
 from .contract import ScientificClaim
 from .errors import ClaimContractError
 from .repair import RepairAction, RepairKind, merge_repairs
+from .uq_studies import study_spec
 from .selection import (
     CandidateAssessment,
     CandidateStatus,
@@ -379,15 +380,15 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
                     detail={"attainable": [a.to_dict() for a in declaration.attainable_levels]},
                 )
             )
-    quantified = declaration.uncertainty.channels_for(claim.qoi.name)
     for channel in claim.uncertainty.ordered_channels():
-        if channel not in quantified:
+        study, unavailable = study_spec(declaration, claim, channel)
+        if study is None:
             gaps.append(
                 PredictedGap(
                     GapKind.CHANNEL_UNQUANTIFIED,
                     channel.value,
-                    f"{declaration.capability_id} does not quantify the {channel.value} uncertainty of "
-                    f"{claim.qoi.name}: {declaration.uncertainty.basis}",
+                    f"{declaration.capability_id} cannot quantify the {channel.value} uncertainty of "
+                    f"{claim.qoi.name} for this claim ({unavailable}): {declaration.uncertainty.basis}",
                 )
             )
             repairs.append(
