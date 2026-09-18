@@ -325,7 +325,7 @@ def test_sprint1_charter_validation_level_can_be_resolved_by_arbiter() -> None:
     authority = trusting_authority(
         "bridge-authority",
         critics=(critic,),
-        obligation_sets=(obligations,),
+        policies=(obligations,),
     )
     arbiter = Arbiter(authority, critics=(critic,))
 
