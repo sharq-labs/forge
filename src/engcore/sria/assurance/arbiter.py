@@ -741,6 +741,18 @@ class Arbiter:
                     f"{evidence.evidence_id!r} belongs to pack "
                     f"{evidence.domain_pack_ref!r}"
                 )
+            report_digest = evidence.claim_binding.qualifiers.get(
+                "credibility_report_digest"
+            )
+            if report_digest:
+                assessed_report_digest = assessment.provenance.metadata.get(
+                    "credibility_report_digest"
+                )
+                if assessed_report_digest != report_digest:
+                    return (
+                        f"assessment {label!r} is not bound to the credibility "
+                        "report that produced this evidence"
+                    )
             assessed = self._assessed_results.get(digest)
             if assessed is not None:
                 problem = claim_backing_problem(evidence, assessed)
