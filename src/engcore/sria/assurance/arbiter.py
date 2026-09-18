@@ -156,6 +156,10 @@ class CriticRegistration:
     #: so a look-alike critic with the same id, version and class is a
     #: different registry.
     implementation: str = ""
+    # Only a reviewed critic with this capability may discharge
+    # validation_level:* obligations. A matching check name alone is not
+    # scientific authority.
+    validation_level_issuer: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -165,6 +169,7 @@ class CriticRegistration:
             "entry_point": self.entry_point,
             "domain_pack_ref": self.domain_pack_ref,
             "implementation": self.implementation,
+            "validation_level_issuer": self.validation_level_issuer,
         }
 
 
@@ -205,6 +210,12 @@ def _registration_for(critic: Any) -> CriticRegistration:
                 f"it speaks for; a domain critic without a pack could discharge "
                 f"any pack's obligations"
             )
+    level_issuer = getattr(critic, "validation_level_issuer", False)
+    if not isinstance(level_issuer, bool):
+        raise TypeError(
+            f"critic {critic_id!r} validation_level_issuer must be an explicit "
+            "bool; truthiness cannot grant scientific issuing authority"
+        )
     return CriticRegistration(
         critic_id=critic_id,
         critic_version=version,
@@ -212,6 +223,7 @@ def _registration_for(critic: Any) -> CriticRegistration:
         entry_point=entry,
         domain_pack_ref=pack,
         implementation=f"{type(critic).__module__}.{type(critic).__qualname__}",
+        validation_level_issuer=level_issuer,
     )
 
 
@@ -741,6 +753,18 @@ class Arbiter:
                     f"{evidence.evidence_id!r} belongs to pack "
                     f"{evidence.domain_pack_ref!r}"
                 )
+            report_digest = evidence.claim_payload.get(
+                "_credibility_report_digest"
+            )
+            if report_digest:
+                assessed_report_digest = assessment.provenance.metadata.get(
+                    "credibility_report_digest"
+                )
+                if assessed_report_digest != report_digest:
+                    return (
+                        f"assessment {label!r} is not bound to the credibility "
+                        "report that produced this evidence"
+                    )
             assessed = self._assessed_results.get(digest)
             if assessed is not None:
                 problem = claim_backing_problem(evidence, assessed)
@@ -887,10 +911,16 @@ class Arbiter:
         # --- required named checks --------------------------------------
         for obligation in obligations.of_kind(ObligationKind.REQUIRED_CHECK):
             target = obligation.target
-            # Validation-level obligations use the same named-check path as
-            # every other requirement. A trusted process critic must emit the
-            # exact "validation_level:<level>" check; absence stays unmet.
-            state, record, refs = self._resolve_check(target, counted)
+            check_scope = counted
+            if target.startswith("validation_level:"):
+                check_scope = [
+                    assessment
+                    for assessment in counted
+                    if self._registrations[
+                        assessment.critic_id
+                    ].validation_level_issuer
+                ]
+            state, record, refs = self._resolve_check(target, check_scope)
             if state == "missing":
                 results.append(
                     ObligationResult(

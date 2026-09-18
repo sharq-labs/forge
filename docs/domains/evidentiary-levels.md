@@ -40,10 +40,10 @@ point of the table rather than a shortfall in it.
 |---|---|---|
 | earnable now (implemented) | **1** | **0** |
 | earnable later | **5** | **1** |
-| never earnable by this check | **17** | **9** |
-| **total audited** | **23** | **10** |
+| never earnable by this check | **20** | **12** |
+| **total audited** | **26** | **13** |
 
-**Checks that pass today while establishing nothing: 18.** Seventeen until the
+**Checks that pass today while establishing nothing: 21.** Seventeen until the
 consensus audit fix IND-04, which withdrew `CROSS_SOLVER_VALIDATED` from `cstr`'s
 `independent_steady_state_agreement` (row below, now *earnable later*): its
 reference is fed the same derived parameters the solver assembles from, so it
@@ -100,23 +100,18 @@ by running the solvers rather than read off the source:
 | `NUMERICALLY_CONVERGED` | **yes** | `dc/validation.py`'s linear residual; `cstr`'s `tolerance_independence`; the frozen conduction solver's refinement study |
 | `ANALYTICALLY_VERIFIED` | **yes** | `thermal_models/lumped.py`'s series-recurrence reference; `cstr`'s `analytic_invariant_agreement` |
 | `CROSS_SOLVER_VALIDATED` | **no** (in any check under `domains/**`) | nothing since IND-04 withdrew `cstr`'s `independent_steady_state_agreement`; the only route to the level is a pinned `CrossSolverConsensus` over executed results (the DC pair), and the report that runs it withholds the level |
-| `BENCHMARK_VALIDATED` | **no** | nothing, anywhere |
-| `EXPERIMENTALLY_VALIDATED` | **no** | nothing, anywhere |
+| `BENCHMARK_VALIDATED` | **yes** | repository-pinned NAFEMS P18.T3 oracle, exercised by `thermal_models/nafems_t3.py` |
+| `EXPERIMENTALLY_VALIDATED` | **no** | no reviewed laboratory measurement authority exists in the repository |
 
-**Three of six since IND-04** (`CROSS_SOLVER_VALIDATED` is reachable only
-through a pinned consensus, not by a domain check). **The two below are empty
-for a reason that no amount of
-work in this repository will change.** `BENCHMARK_VALIDATED` requires a curated
-reference benchmark — a published problem with published answers, maintained by
-somebody who is not us — and this repository has none and is not in a position
-to certify one. `EXPERIMENTALLY_VALIDATED` requires a laboratory measurement of
-a physical article, and there is no laboratory, no article and no instrument
-anywhere in this project. **Neither is earnable later either**, and neither is
-listed with a cost, because a cost would imply a route. Saying that plainly is
-worth more than finding a reading of "benchmark" loose enough to fit a test
-suite, which is exactly what `dc/models.py` and `cstr/problem.py` already
-refuse in their own words when they set `validation_status` to
-`SELF_CONSISTENT`.
+**Four of six are now occupied.** Sprint 2 admitted a repository-pinned
+NAFEMS P18.T3 external benchmark and Sprint 2.5 added a matching execution
+vertical. `BENCHMARK_VALIDATED` is therefore earned only through
+`OracleEvidenceSet.compare` over that exact content digest and operating point;
+none of the local domain self-checks below can mint it.
+`EXPERIMENTALLY_VALIDATED` remains empty: there is still no reviewed laboratory
+measurement authority in the repository. This distinction is load-bearing —
+a published benchmark is external validation, but it is not an experiment on a
+physical article.
 
 **The gap between a domain's ladder and a report's ladder.** The DC solver's
 own report attains two levels, measured. The electro-thermal report the MCP
@@ -213,6 +208,19 @@ names and carry those rows' verdicts unchanged, and one is new.
 | `field_linear_system_residual` | **never earnable by this check** | max\|A T − b\| / max\|b\| after the factorisation. **This row exists to refuse the level rather than to award it.** The DC domain awards `NUMERICALLY_CONVERGED` from a linear residual, and the *Found while auditing* section below already records why that is wrong, quoting the frozen conduction validation: the linear residual of a direct sparse factorization sits at round-off in every run, coarse or fine, so treating it as convergence would certify the coarse solve exactly as confidently as the fine one. This model is the same solver kind on the same equation, so it takes the same answer: the check reports its residual, states which declared threshold set it was judged against, and establishes nothing. Its gate is deliberately absent from `SCIENTIFIC_THRESHOLD_DECLARATIONS`, because a registered set is one authorised to award a level and this one awards none. **Earnable later, and by a different route**: the manufactured-solution study in `tests/test_conduction2d_convergence.py` measures an observed order of accuracy ≈ 2.0 against two closed-form solutions, which is the evidence `NUMERICALLY_CONVERGED` would need — a claim about a *sequence* of solves, which no single solve can make. Wiring that sequence into a report is the same decision, at the same cost, as the refinement study described for `conduction1d_schemes.py` above. |
 | `field_finite` | **never earnable by this check** | The name and the verdict of the `conduction1d_schemes.py` row, reused unchanged. Every node value is finite; a number is a number. |
 | `boundary_conditions_held` | **never earnable by this check** | The name and the verdict of the `conduction1d_schemes.py` row, reused unchanged. The prescribed Dirichlet values are read back off the solved field. The scheme imposing its own constraint and confirming it — a satisfied constraint is not an independently obtained solution. |
+
+### Thermal models — `src/engcore/domains/thermal_models/nafems_t3.py`
+
+Added by Scientific Decision Readiness Sprint 2.5. These are **local execution
+checks** around the NAFEMS T3 solve. The external benchmark comparison is
+issued separately by the repository-pinned oracle and is intentionally not one
+of these rows.
+
+| Check | Category | Decision |
+|---|---|---|
+| `nafems_t3_field_finite` | **never earnable by this check** | Confirms the reported probe value is finite. Necessary execution hygiene, not evidence that the value is scientifically correct. |
+| `nafems_t3_boundary_conditions_held` | **never earnable by this check** | Reads back the time-dependent Dirichlet boundary imposed by the same execution path. It can catch an implementation break but is not an independent solution or external reference. |
+| `nafems_t3_refinement_sensitivity` | **never earnable by this check** | Requires the reported 160/640 solve to remain within 0.025 K of its 80/320 companion. This is a deliberately conservative sensitivity gate before external comparison, not a convergence-order study; it therefore establishes no `NUMERICALLY_CONVERGED` level. The external `BENCHMARK_VALIDATED` level comes only from the pinned NAFEMS oracle. |
 
 ### Thermal models — `src/engcore/domains/thermal_models/lumped.py`
 

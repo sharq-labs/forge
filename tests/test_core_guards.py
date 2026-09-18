@@ -195,7 +195,7 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: directions and has to be updated deliberately, which is the moment somebody
 #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
 #: the pattern: derive the population, then assert its size.
-EXPECTED_MODELS = 16
+EXPECTED_MODELS = 17
 EXPECTED_RESERVING_MODELS = 15
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the
@@ -218,7 +218,11 @@ EXPECTED_RESERVING_MODELS = 15
 # self-heated resistor record, whose assumption "one resistance describes the
 # element over the whole run" had no condition while the coupled transient held
 # R(T_final) across the interval.
-EXPECTED_CONDITION_NAMES = 77
+# 77 -> 92 in Scientific Decision Readiness Sprint 2.5: the NAFEMS P18.T3
+# executable vertical is intentionally valid at exactly one reviewed operating
+# point. Its fifteen declared benchmark inputs each carry an exact validity
+# condition. None is derived, so EXPECTED_RESERVED_NAMES remains unchanged.
+EXPECTED_CONDITION_NAMES = 92
 EXPECTED_RESERVED_NAMES = 59
 
 

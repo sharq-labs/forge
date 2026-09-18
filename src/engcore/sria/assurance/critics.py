@@ -492,9 +492,9 @@ def model_discrepancy_check(
                     impact=FindingImpact.ASSURANCE_BLOCKING,
                     category="model_form",
                     message=(
-                        "model-form discrepancy is UNKNOWN. This blocks any "
-                        "assurance policy that requires the model-form channel; "
-                        "UNKNOWN is not zero and is never promoted to zero."
+                        "model-form discrepancy is UNKNOWN. UNKNOWN is not zero "
+                        "and cannot satisfy a policy that requires model-form "
+                        "discrepancy to be supported."
                     ),
                     check_name="model_discrepancy_supported",
                 ),

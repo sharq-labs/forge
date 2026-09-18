@@ -1,12 +1,16 @@
 """The MCP transport: this runtime, exposed to an agent, over stdio.
 
-A **transport and nothing else**. It computes no physics, evaluates no
-condition and decides no verdict. Every fact it returns was produced by
-:mod:`engcore.mcp.problem` and :mod:`engcore.mcp.evidence` and is carried here
-unaltered; every field it describes is read off the model registries by
-:func:`~engcore.mcp.problem.describe_electrothermal_case`, so a model input
-added or re-dimensioned in a domain changes the description rather than making
-it quietly false.
+The domain run tools remain **transport and nothing else**: they compute no
+physics here, evaluate no condition here and re-decide no credibility verdict.
+Every scientific fact they return was produced below this module.
+
+The public surface also exposes one explicit orchestration tool,
+`assess_claim`. It does not compute physics or invent scientific judgement;
+it binds an existing credibility report to the already-implemented SRIA
+Evidence -> Critic -> Arbiter path for a caller-declared decision standard.
+The caller must name the system, quantity, decision, required evidentiary
+levels and model-discrepancy declaration. No natural-language inference,
+automatic model selection or confidence default lives here.
 
 **The unflattering verdict is transmitted.** The nominal electro-thermal case
 reports ``INSUFFICIENT_EVIDENCE``, because the payload has no field for a
@@ -47,6 +51,11 @@ from .errors import (
 from ..scientific.solvers.protocol import ConvergenceState
 from .evidence import EVIDENCE_BASIS_ORDER, CredibilityVerdict
 from .battery import run_battery_case
+from .claim_assessment import (
+    ClaimAssessmentError,
+    assess_claim_request,
+    refused_claim_assessment,
+)
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -62,6 +71,7 @@ __all__ = [
     "SERVER_NAME",
     "SERVER_VERSION",
     "SYSTEM_NAME",
+    "assess_claim",
     "build_server",
     "describe_capabilities",
     "main",
@@ -70,7 +80,7 @@ __all__ = [
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -783,6 +793,25 @@ field, what you sent, what was expected and how to repair it -- fix that one \
 field and call again."""
 
 
+_ASSESS_CLAIM_DESCRIPTION = """Assess one structured scientific claim for one declared decision.
+
+The request must explicitly name a registered system, its case payload, the
+reported quantity to assess, the terminal decision statement, one or more
+required ValidationLevels, and a model-discrepancy declaration.
+
+This tool does not infer a scientific question from prose, select a model,
+choose a report when a system returns several, or invent a confidence target.
+It executes the existing system boundary and carries its credibility report
+through SRIA evidence and assurance.
+
+The result contains BOTH the production credibility verdict and the assurance
+verdict. A validation level cannot hide a NOT_SUPPORTED or
+INSUFFICIENT_EVIDENCE credibility report: the credibility critic itself is a
+required assurance critic.
+
+This is scientific decision support, not safety certification and not an
+automatic real-world decision."""
+
 _RUN_BATTERY_DESCRIPTION = """\
 Run one battery case and return its credibility evidence report.
 
@@ -830,6 +859,19 @@ error naming the field, what you sent, what was expected and how to repair \
 it -- fix that one field and call again."""
 
 
+def assess_claim(request: dict[str, Any]) -> dict[str, Any]:
+    """Public structured claim-assessment boundary.
+
+    Expected scientific refusals are returned as data. Unexpected programming
+    errors still raise: a transport must not turn an implementation defect
+    into an innocent-looking INSUFFICIENT_EVIDENCE answer.
+    """
+    try:
+        return assess_claim_request(request)
+    except (ClaimAssessmentError, ProblemPayloadError) as exc:
+        return refused_claim_assessment(exc)
+
+
 def build_server() -> MCPServer:
     """The server, with both tools registered. Used by the tests and by main."""
     server = MCPServer(
@@ -837,10 +879,11 @@ def build_server() -> MCPServer:
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
-            "its own results. Call describe_capabilities before writing a "
-            "case. Verdicts are advisory input to an engineer of record, and "
-            "an unflattering verdict is this runtime's real answer rather than "
-            "a failure to retry."
+            "its own results and can bind one structured claim to an explicit "
+            "decision standard. Call describe_capabilities before writing a "
+            "case. assess_claim requires the system, quantity, decision, "
+            "required evidence levels and discrepancy declaration explicitly. "
+            "Verdicts remain decision support, not certification."
         ),
     )
     server.add_tool(
@@ -860,6 +903,12 @@ def build_server() -> MCPServer:
         name="run_battery",
         title="Run a battery discharge case",
         description=_RUN_BATTERY_DESCRIPTION,
+    )
+    server.add_tool(
+        assess_claim,
+        name="assess_claim",
+        title="Assess a structured scientific claim",
+        description=_ASSESS_CLAIM_DESCRIPTION,
     )
     _audit_tools(server)
     return server

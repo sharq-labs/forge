@@ -99,12 +99,29 @@ class BeliefEntry:
     status: EvidenceStatus
     admitted_by: str
     claim_payload: Mapping[str, Any]
+    source_roots: tuple[str, ...] = ()
+    source_closure_complete: bool = False
 
     def __post_init__(self) -> None:
         # Part of the belief store: a read must not be able to edit stored belief
         # through a nested dict or list. frozen=True protects only the attribute.
         object.__setattr__(self, "status", EvidenceStatus(self.status))
         object.__setattr__(self, "claim_payload", freeze(dict(self.claim_payload)))
+        object.__setattr__(
+            self,
+            "source_roots",
+            tuple(
+                sorted(
+                    {
+                        str(ref).strip()
+                        for ref in self.source_roots
+                        if str(ref).strip()
+                    }
+                )
+            ),
+        )
+        if not isinstance(self.source_closure_complete, bool):
+            raise ValueError("source_closure_complete must be an explicit bool")
 
     @property
     def is_active(self) -> bool:
@@ -121,6 +138,16 @@ class BeliefEntry:
             "status": self.status.value,
             "admitted_by": self.admitted_by,
             "claim_payload": detach(self.claim_payload),
+            **(
+                {"source_roots": list(self.source_roots)}
+                if self.source_roots
+                else {}
+            ),
+            **(
+                {"source_closure_complete": True}
+                if self.source_closure_complete
+                else {}
+            ),
         }
 
 
@@ -189,12 +216,58 @@ class ScientificBelief:
         return tuple(self._history)
 
     def contributions(self, belief_key: str) -> tuple[BeliefEntry, ...]:
-        """Active contributions to one belief key."""
+        """Active records for one belief key.
+
+        This is a record inventory, not an independence count. Use
+        independence_groups() when corroboration requires distinct sources.
+        """
         return tuple(
             entry
             for entry in self.active_view().values()
             if entry.belief_key == belief_key
         )
+
+    def independence_groups(
+        self, belief_key: str
+    ) -> tuple[tuple[BeliefEntry, ...], ...]:
+        """Partition active contributions into source-dependency groups.
+
+        Fail-closed rule: if even one contribution says its source closure is
+        incomplete, no pair can be certified independent and all records form
+        one group. Once every contribution carries a complete closure, records
+        are connected whenever their root sets overlap; connectivity is
+        transitive, so A sharing with B and B sharing with C yields one group.
+        """
+        entries = list(self.contributions(belief_key))
+        if not entries:
+            return ()
+        if any(not entry.source_closure_complete for entry in entries):
+            return (tuple(entries),)
+
+        remaining = list(entries)
+        groups: list[tuple[BeliefEntry, ...]] = []
+        while remaining:
+            component = [remaining.pop(0)]
+            roots = set(component[0].source_roots)
+            changed = True
+            while changed:
+                changed = False
+                kept: list[BeliefEntry] = []
+                for candidate in remaining:
+                    candidate_roots = set(candidate.source_roots)
+                    if roots & candidate_roots:
+                        component.append(candidate)
+                        roots |= candidate_roots
+                        changed = True
+                    else:
+                        kept.append(candidate)
+                remaining = kept
+            groups.append(tuple(component))
+        return tuple(groups)
+
+    def independent_source_count(self, belief_key: str) -> int:
+        """How many dependency-disjoint source groups are established."""
+        return len(self.independence_groups(belief_key))
 
     def keys(self) -> tuple[str, ...]:
         return tuple(sorted({e.belief_key for e in self.active_view().values()}))
@@ -323,6 +396,8 @@ class BeliefUpdateGateway:
             status=evidence.status,
             admitted_by=evidence.admission.arbiter_id,
             claim_payload=dict(evidence.claim_payload),
+            source_roots=evidence.independence_roots,
+            source_closure_complete=evidence.source_closure_complete,
         )
         self._belief._apply(_TOKEN, entry)
         # M3.4: retire the authorization. It admitted once; replaying it to
@@ -394,6 +469,8 @@ class BeliefUpdateGateway:
                 evidence.admission.arbiter_id if evidence.admission else ""
             ),
             claim_payload=dict(evidence.claim_payload),
+            source_roots=evidence.independence_roots,
+            source_closure_complete=evidence.source_closure_complete,
         )
         self._belief._apply(_TOKEN, entry)
         return entry

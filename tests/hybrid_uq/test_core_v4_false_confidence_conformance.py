@@ -114,12 +114,64 @@ def test_the_pinned_reference_posteriors_are_the_bytes_their_digest_names():
 
 @pytest.mark.expensive
 def test_the_pinned_reference_posteriors_are_re_derivable_from_the_models():
-    """The references are evidence, so they are re-derived, not trusted (about 30 s)."""
+    """Rebuild the scientific posterior; do not require provider-identical float bytes."""
     import importlib
 
-    module = importlib.import_module("benchmarks.core_v4_false_confidence.audit.reference_posteriors")
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
     rebuilt = module.build()
-    assert rebuilt["digest"] == REFERENCE["digest"], "the pinned reference posteriors no longer match their models"
+    problems = module.rederivation_problems(REFERENCE, rebuilt)
+    assert not problems, (
+        "the pinned reference posteriors no longer match their models: "
+        + " | ".join(problems)
+    )
+
+
+def test_reference_rederivation_accepts_float64_roundoff_but_not_scientific_drift():
+    """The artifact digest is exact; model re-derivation has a separate ulp-scale gate."""
+    import importlib
+
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
+    tiny = json.loads(json.dumps(REFERENCE))
+    label = "off_axis_flat_tail"
+    sd = float(tiny["cases"][label]["sd"][0])
+    tiny["cases"][label]["mean"][0] += (
+        0.25 * module.REDERIVATION_SD_TOLERANCE * sd
+    )
+    assert module.rederivation_problems(REFERENCE, tiny) == ()
+
+    moved = json.loads(json.dumps(REFERENCE))
+    moved["cases"][label]["mean"][0] += (
+        2.0 * module.REDERIVATION_SD_TOLERANCE * sd
+    )
+    problems = module.rederivation_problems(REFERENCE, moved)
+    assert any("mean moved by" in problem for problem in problems)
+
+
+def test_reference_rederivation_rejects_quantile_shape_drift():
+    """The relaxed byte rule must not relax the pinned posterior distribution."""
+    import importlib
+
+    module = importlib.import_module(
+        "benchmarks.core_v4_false_confidence.audit.reference_posteriors"
+    )
+    moved = json.loads(json.dumps(REFERENCE))
+    label = "admissibility_cut"
+    encoded = moved["cases"][label]["quantiles_f8_base64"][0]
+    values = np.frombuffer(base64.b64decode(encoded.encode("ascii")), dtype="<f8").copy()
+    values[len(values) // 2] += (
+        2.0
+        * module.REDERIVATION_SD_TOLERANCE
+        * float(moved["cases"][label]["sd"][0])
+    )
+    moved["cases"][label]["quantiles_f8_base64"][0] = base64.b64encode(
+        np.ascontiguousarray(values, dtype="<f8").tobytes()
+    ).decode("ascii")
+    problems = module.rederivation_problems(REFERENCE, moved)
+    assert any("quantile function moved by" in problem for problem in problems)
 
 
 # ---------------------------------------------------------------------------

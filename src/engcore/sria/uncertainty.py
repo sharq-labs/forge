@@ -10,9 +10,9 @@ implicit:
 
 * ``subject_model`` — is this uncertainty about the prediction, or about the
   observation process? Confusing the two is what makes calibration circular.
-* ``discrepancy`` — model-form discrepancy must be declared, even when the
-  declaration is "we are asserting zero". ``ZERO_DECLARED`` is a claim someone
-  is accountable for; a missing field is not.
+* ``discrepancy`` — model-form discrepancy must be declared. When it has not
+  been quantified or bounded, the explicit declaration is ``UNKNOWN``;
+  ``ZERO_DECLARED`` remains a separate claim someone is accountable for.
 
 No inference is performed here. This module defines vocabulary and refuses
 incomplete declarations.
@@ -179,9 +179,9 @@ class SubjectModel(str, Enum):
 
 
 class DiscrepancyKind(str, Enum):
-    #: Nothing quantified or bounded model-form discrepancy for this claim.
-    #: This is deliberately distinct from ZERO_DECLARED: absence of an
-    #: estimate must never be turned into an assertion that discrepancy is zero.
+    #: Model-form discrepancy has not been quantified or bounded for this claim.
+    #: This is deliberately distinct from ZERO_DECLARED: absence of an estimate
+    #: must never become an assertion that the model discrepancy is zero.
     UNKNOWN = "unknown"
     ZERO_DECLARED = "zero_declared"
     CONSTRAINED_PRIOR = "constrained_prior"
