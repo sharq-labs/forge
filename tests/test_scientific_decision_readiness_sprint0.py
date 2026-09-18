@@ -15,15 +15,9 @@ import pytest
 
 from engcore.scientific import oracles
 from engcore.sria.assurance.arbiter import Arbiter
+from engcore.sria.assurance import obligations_from_charter
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-01: production Scientific Core/MCP does not yet bridge into SRIA "
-        "evidence/decision assurance"
-    ),
-)
 def test_sdr01_production_tree_has_a_sria_bridge() -> None:
     root = Path(__file__).resolve().parents[1] / "src" / "engcore"
     imports: list[str] = []
@@ -49,13 +43,6 @@ def test_sdr01_production_tree_has_a_sria_bridge() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-03: obligations_from_charter records required ValidationLevel "
-        "tokens, but Arbiter.decide explicitly cannot evaluate them"
-    ),
-)
 def test_sdr03_arbiter_can_evaluate_charter_validation_levels() -> None:
     source = inspect.getsource(Arbiter.decide)
     assert "validation-level obligations are recorded but not evaluated" not in source
@@ -90,6 +77,7 @@ from engcore.mcp import (
     run_electrothermal_case,
 )
 from engcore.mcp.battery import example_battery_payload, run_battery_case
+from engcore.mcp.sria_bridge import CredibilityReportCritic, evidence_from_credibility_report
 
 
 def test_sdr04_verification_only_support_cannot_satisfy_a_validated_use() -> None:
@@ -148,6 +136,9 @@ from engcore.sria import (
     SourceClass,
     SubjectModel,
     UncertaintyDeclaration,
+    CampaignCharter,
+    ConfidenceRequirement,
+    TerminalDecision,
 )
 
 
@@ -159,13 +150,6 @@ def _audit_uncertainty() -> UncertaintyDeclaration:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "SDR-02: evidence content identity includes context_ref but belief_key "
-        "does not, so different contexts currently share one contribution key"
-    ),
-)
 def test_sdr02_belief_key_separates_different_contexts() -> None:
     base = dict(
         source_class=SourceClass.SIMULATION,
@@ -264,3 +248,117 @@ def test_sdr10_public_boundary_has_a_cross_domain_decision_tool() -> None:
         "description; an AI cannot submit a generic scientific claim + "
         "decision/context for assessment"
     )
+
+
+
+def test_sprint1_bridge_derives_claim_value_from_report() -> None:
+    report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
+    quantity_name = next(iter(report.values))
+    evidence = evidence_from_credibility_report(
+        report,
+        quantity_name=quantity_name,
+        evidence_id="bridge-evidence",
+        domain_pack_ref="electrothermal",
+        context_ref="campaign:test#decision:d1",
+        discrepancy=ModelDiscrepancy(
+            kind=DiscrepancyKind.ZERO_DECLARED,
+            rationale="fixture only: model discrepancy deliberately declared zero",
+        ),
+    )
+
+    quantity = report.values[quantity_name]
+    assert evidence.claim_binding.subject_ref == quantity_name
+    assert evidence.claim_payload["value"] == quantity.magnitude
+    assert evidence.claim_payload["units"] == str(quantity.units)
+    assert evidence.provenance_ref == report.provenance.run_id
+    assert evidence.context_ref == "campaign:test#decision:d1"
+
+
+def test_sprint1_bridge_refuses_to_invent_model_discrepancy() -> None:
+    report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
+    quantity_name = next(iter(report.values))
+    with pytest.raises(TypeError):
+        evidence_from_credibility_report(
+            report,
+            quantity_name=quantity_name,
+            evidence_id="bridge-no-discrepancy",
+            domain_pack_ref="electrothermal",
+            context_ref="campaign:test#decision:d1",
+            discrepancy=None,
+        )
+
+
+def test_sprint1_credibility_critic_exposes_attained_validation_levels() -> None:
+    report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
+    critic = CredibilityReportCritic()
+    assessment = critic.assess(report, assessment_id="cred-1")
+
+    by_name = {check.name: check for check in assessment.checks}
+    for level in report.attained_levels:
+        assert by_name[f"validation_level:{level.value}"].outcome.value == "pass"
+
+
+def test_sprint1_charter_validation_level_can_be_resolved_by_arbiter() -> None:
+    from engcore.sria.admission import AdmissionAuthority
+    from engcore.sria.assurance import trusting_authority
+
+    report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
+    attained = sorted(report.attained_levels, key=lambda x: x.value)
+    assert attained
+    required = attained[0]
+
+    charter = CampaignCharter(
+        campaign_id="bridge-campaign",
+        terminal_decisions=(
+            TerminalDecision(decision_id="d1", statement="Use the computed QOI"),
+        ),
+        confidence_requirements=(
+            ConfidenceRequirement(
+                requirement_id="r1",
+                required_levels=(required,),
+                description="fixture requirement",
+            ),
+        ),
+    )
+    obligations = obligations_from_charter(charter)
+    critic = CredibilityReportCritic()
+    authority = trusting_authority(
+        "bridge-authority",
+        critics=(critic,),
+        obligation_sets=(obligations,),
+    )
+    arbiter = Arbiter(authority, critics=(critic,))
+
+    quantity_name = next(iter(report.values))
+    evidence = evidence_from_credibility_report(
+        report,
+        quantity_name=quantity_name,
+        evidence_id="bridge-decision-evidence",
+        domain_pack_ref="electrothermal",
+        context_ref=f"charter:{charter.digest}#decision:d1",
+        discrepancy=ModelDiscrepancy(
+            kind=DiscrepancyKind.ZERO_DECLARED,
+            rationale="fixture only",
+        ),
+    )
+
+    mandatory = tuple(o.target for o in obligations.obligations if o.target.startswith("validation_level:"))
+    assessment = arbiter.run_critic(
+        critic.critic_id,
+        report,
+        subject=evidence,
+        assessment_id="credibility-levels",
+        mandatory_checks=mandatory,
+    )
+    decision = arbiter.decide(
+        decision_id="decision-1",
+        evidence=evidence,
+        assessments=(assessment,),
+        obligations=obligations,
+    )
+
+    level_result = next(
+        item for item in decision.obligation_results
+        if item.obligation_id.startswith("confidence:")
+    )
+    assert level_result.satisfied is True
