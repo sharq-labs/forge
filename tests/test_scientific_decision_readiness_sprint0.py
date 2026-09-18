@@ -76,3 +76,64 @@ def test_sdr06_production_has_reviewed_trusted_external_oracle() -> None:
         "experimental validation are representable but no external oracle "
         "currently has repository-pinned authority"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass 2 — executable production traces
+# ---------------------------------------------------------------------------
+
+import dataclasses
+
+from engcore.mcp import (
+    CredibilityVerdict,
+    example_electrothermal_payload,
+    run_electrothermal_case,
+)
+from engcore.mcp.battery import example_battery_payload, run_battery_case
+
+
+def test_sdr04_verification_only_support_cannot_satisfy_a_validated_use() -> None:
+    """The MCP layer already owns the right fail-closed evidence-basis rule.
+
+    This is a CLOSED sub-invariant of SDR-04 and must survive the future bridge:
+    a numerically credible result is not silently upgraded to evidence that the
+    model matches the world.
+    """
+    outcome = run_electrothermal_case(example_electrothermal_payload())
+    report = outcome.reports[0]
+
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+    assert report.evidence_basis == "VERIFICATION_ONLY"
+
+    decision_grade = dataclasses.replace(
+        report,
+        required_evidence_basis="VALIDATED",
+    )
+    assert (
+        decision_grade.verdict
+        is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    )
+    assert decision_grade.missing_evidence_basis == "VALIDATED"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "SDR-05: the production battery report emits quantitative values but "
+        "does not yet carry per-value uncertainty declarations"
+    ),
+)
+def test_sdr05_battery_quantitative_values_close_the_uncertainty_chain() -> None:
+    """Every quantitative value used by a later claim needs an uncertainty state.
+
+    UNKNOWN is acceptable.  Silence is not: an absent entry cannot be mapped
+    honestly into SRIA's decomposed uncertainty budget without inventing what
+    the solver never declared.
+    """
+    report = run_battery_case(example_battery_payload()).report
+
+    missing = sorted(set(report.values) - set(report.uncertainty))
+    assert not missing, (
+        "battery report has quantitative values with no uncertainty record: "
+        f"{missing}"
+    )
