@@ -355,3 +355,55 @@ def test_sprint1_charter_validation_level_can_be_resolved_by_arbiter() -> None:
         if item.obligation_id.startswith("confidence:")
     )
     assert level_result.satisfied is True
+
+
+
+def test_sprint1_assurance_refuses_a_different_report_with_the_same_run_id() -> None:
+    from engcore.sria.assurance import trusting_authority
+
+    report = run_electrothermal_case(example_electrothermal_payload()).reports[0]
+    altered = dataclasses.replace(report, notes="same run id, different report content")
+
+    critic = CredibilityReportCritic()
+    charter = CampaignCharter(
+        campaign_id="digest-campaign",
+        terminal_decisions=(
+            TerminalDecision(decision_id="d1", statement="Use the computed QOI"),
+        ),
+    )
+    obligations = obligations_from_charter(charter)
+    authority = trusting_authority(
+        "digest-authority",
+        (critic,),
+        policies=(obligations,),
+    )
+    arbiter = Arbiter(authority, critics=(critic,))
+
+    quantity_name = next(iter(report.values))
+    evidence = evidence_from_credibility_report(
+        report,
+        quantity_name=quantity_name,
+        evidence_id="digest-bound-evidence",
+        domain_pack_ref="electrothermal",
+        context_ref=f"charter:{charter.digest}#decision:d1",
+        discrepancy=ModelDiscrepancy(
+            kind=DiscrepancyKind.ZERO_DECLARED,
+            rationale="fixture only",
+        ),
+    )
+
+    assessment = arbiter.run_critic(
+        critic.critic_id,
+        altered,
+        subject=evidence,
+        assessment_id="altered-report-assessment",
+    )
+    decision = arbiter.decide(
+        decision_id="digest-decision",
+        evidence=evidence,
+        assessments=(assessment,),
+        obligations=obligations,
+    )
+
+    assert "altered-report-assessment" in decision.refused_assessments
+    assert any("not bound to the credibility report" in r for r in decision.reasons)
