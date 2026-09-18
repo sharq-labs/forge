@@ -1182,6 +1182,51 @@ def build_case(declaration: CapabilityDeclaration, inputs: Mapping[str, Any]) ->
     return tree
 
 
+def inputs_from_case(declaration: CapabilityDeclaration, case: Mapping[str, Any]) -> dict[str, Any]:
+    """The claim-input form of an existing case payload: the inverse of :func:`build_case`.
+
+    Every leaf must be a declared input and every value is read as its declared
+    kind: a quantity text through :meth:`Quantity.parse`, a fraction into a
+    dimensionless Quantity. Nothing is dropped and nothing is added, and
+    ``build_case(declaration, inputs_from_case(declaration, case))`` writes the
+    same case back (up to the canonical spelling of units).
+    """
+    out: dict[str, Any] = {}
+
+    def walk(node: Any, where: str) -> None:
+        if isinstance(node, Mapping):
+            for key, child in node.items():
+                walk(child, f"{where}.{key}" if where else str(key))
+            return
+        if isinstance(node, list):
+            for index, child in enumerate(node):
+                walk(child, f"{where}[{index}]")
+            return
+        item = declaration.input(where)
+        if item is None:
+            raise CapabilityInputError(f"{declaration.capability_id} declares no input {where!r}")
+        if item.kind is InputKind.QUANTITY:
+            if not isinstance(node, str):
+                raise CapabilityInputError(f"{where} must be quantity text, got {node!r}")
+            try:
+                value: Any = Quantity.parse(node)
+            except ScientificCoreError as exc:
+                raise CapabilityInputError(f"{where}: {exc}") from exc
+        elif item.kind is InputKind.FRACTION:
+            if isinstance(node, bool) or not isinstance(node, (int, float)):
+                raise CapabilityInputError(f"{where} must be a bare fraction, got {node!r}")
+            value = Quantity(float(node), "dimensionless")
+        else:
+            value = node
+        problem = input_problem(item, where, value)
+        if problem is not None:
+            raise CapabilityInputError(problem)
+        out[where] = value
+
+    walk(case, "")
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Matching
 # ---------------------------------------------------------------------------
@@ -1377,5 +1422,6 @@ __all__ = [
     "build_case",
     "declared_path",
     "input_problem",
+    "inputs_from_case",
     "match_declaration",
 ]
