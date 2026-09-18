@@ -288,6 +288,13 @@ class Evidence:
     provenance_ref: str
     domain_pack_ref: str
     context_ref: str = ""
+    # Atomic upstream source identities used only for dependency/independence
+    # reasoning. They are record identity, not scientific claim content:
+    # two sources may make the same claim and therefore share content_hash.
+    source_refs: tuple[str, ...] = ()
+    # False is the conservative default. An incomplete ancestry must never be
+    # read as proof that this record is independent of another one.
+    source_closure_complete: bool = False
     content_hash: str = ""
     status: EvidenceStatus = EvidenceStatus.CANDIDATE
     assessments: tuple[Assessment, ...] = ()
@@ -307,6 +314,22 @@ class Evidence:
         object.__setattr__(self, "source_class", SourceClass(self.source_class))
         object.__setattr__(self, "claim_type", ClaimType(self.claim_type))
         object.__setattr__(self, "status", EvidenceStatus(self.status))
+
+        roots = tuple(
+            sorted(
+                {
+                    str(ref).strip()
+                    for ref in self.source_refs
+                    if str(ref).strip()
+                }
+            )
+        )
+        object.__setattr__(self, "source_refs", roots)
+        if not isinstance(self.source_closure_complete, bool):
+            raise EvidenceError(
+                "source_closure_complete must be an explicit bool; lineage "
+                "completeness cannot be inferred from truthiness"
+            )
 
         if not isinstance(self.claim_binding, ClaimBinding):
             raise EvidenceError("evidence requires a ClaimBinding")
@@ -375,6 +398,16 @@ class Evidence:
                 "evidence_id": self.evidence_id,
                 "source_class": self.source_class.value,
                 "provenance_ref": self.provenance_ref,
+                **(
+                    {"source_refs": list(self.source_refs)}
+                    if self.source_refs
+                    else {}
+                ),
+                **(
+                    {"source_closure_complete": True}
+                    if self.source_closure_complete
+                    else {}
+                ),
             }
         )
         return payload
@@ -407,17 +440,42 @@ class Evidence:
         different sources or runs.
         """
         self.require_integrity()
+        identity = {
+            "evidence_id": self.evidence_id,
+            "source_class": self.source_class.value,
+            "provenance_ref": self.provenance_ref,
+            "content_hash": self.content_hash,
+        }
+        # Preserve legacy record hashes exactly when the new lineage contract
+        # carries no information.
+        if self.source_refs:
+            identity["source_refs"] = list(self.source_refs)
+        if self.source_closure_complete:
+            identity["source_closure_complete"] = True
         blob = json.dumps(
-            {
-                "evidence_id": self.evidence_id,
-                "source_class": self.source_class.value,
-                "provenance_ref": self.provenance_ref,
-                "content_hash": self.content_hash,
-            },
+            identity,
             sort_keys=True,
             separators=(",", ":"),
         )
         return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+    @property
+    def independence_roots(self) -> tuple[str, ...]:
+        """Roots that can reveal shared ancestry between evidence records.
+
+        The producing run is always a root. Explicit source_refs extend the
+        closure across runs, for example to a shared dataset or parent
+        observation. Whether this is the *complete* closure is stated
+        separately by source_closure_complete.
+        """
+        return tuple(
+            sorted(
+                {
+                    f"run:{self.provenance_ref}",
+                    *self.source_refs,
+                }
+            )
+        )
 
     @property
     def belief_key(self) -> str:
@@ -628,6 +686,10 @@ class Evidence:
             provenance_ref=payload["provenance_ref"],
             domain_pack_ref=payload["domain_pack_ref"],
             context_ref=payload.get("context_ref", ""),
+            source_refs=tuple(payload.get("source_refs", ())),
+            source_closure_complete=payload.get(
+                "source_closure_complete", False
+            ),
             content_hash=payload.get("content_hash", ""),
             status=EvidenceStatus(payload.get("status", "candidate")),
             assessments=tuple(
