@@ -278,7 +278,7 @@ V4_POPULATION_PATH = "tests/mutation_population_v4.py"
 #: batch 56 (the guards over the Core Freeze V4 control plane that certifies it). Each batch folds its
 #: own guards in for the same reason R-67 exists: a guard whose evidence sits outside the pinned area
 #: is verified by nobody, and that includes the guards over the pinned area itself.
-EXPECTED_V4_POPULATION = 654
+EXPECTED_V4_POPULATION = 673
 
 _V4_VERDICT = re.compile(r"^(?P<id>[A-Za-z0-9]+) \S+ -> (?P<verdict>[^|]+?)(?:\s+<-- EXPECTED .*)?\s*(?:\|.*)?$")
 _V4_NOT_MUTATED = re.compile(r"^NOT MUTATED: (?P<id>[A-Za-z0-9]+) --")

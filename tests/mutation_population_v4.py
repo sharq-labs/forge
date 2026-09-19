@@ -7014,6 +7014,82 @@ POPULATION_V4: tuple[tuple, ...] = (
         "N61o", "src/engcore/credibility/replay_binding.py::knowledge_snapshot_artifact", "        snapshot.digest,\n", "        \"0\" * 64,\n", "tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts", 'KILLED',
         "replay artifact binds the exact knowledge snapshot digest", (), 'knowledge_evidence_round61',
     ),
+    (
+        "N62a", "src/engcore/scientific/replay_core/environment.py::RuntimeEnvironment.__post_init__", "        if not re.fullmatch(r\"[0-9a-f]{64}\",digest):\n            raise InvalidScientificProblem(\"dependencies_digest must be lowercase SHA-256\")\n", "        if False:\n            raise InvalidScientificProblem(\"dependencies_digest must be lowercase SHA-256\")\n", "tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length", 'KILLED',
+        "runtime dependency identity requires real SHA-256 syntax", (), 'unified_replay_round62',
+    ),
+    (
+        "N62b", "src/engcore/scientific/replay_core/tolerance.py::ReplayTolerance.__post_init__", "        if not math.isfinite(a) or not math.isfinite(r) or a < 0 or r < 0:\n            raise InvalidScientificProblem(\n                \"replay tolerances must be finite and non-negative\"\n            )\n", "        if a < 0 or r < 0:\n            raise InvalidScientificProblem(\n                \"replay tolerances must be finite and non-negative\"\n            )\n", "tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity", 'KILLED',
+        "NaN/infinite replay tolerances cannot become permissive evidence", (), 'unified_replay_round62',
+    ),
+    (
+        "N62c", "src/engcore/scientific/replay_core/profile.py::RunManifestProfile.__post_init__", "        if any(not x for x in exact) or not set(exact)<=set(required):\n            raise InvalidScientificProblem(\n                \"replay-exact artifact kinds must be a subset of required artifact kinds\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"replay-exact artifact kinds must be a subset of required artifact kinds\"\n            )\n", "tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile", 'KILLED',
+        "replay-exact kinds must also be required artifacts", (), 'unified_replay_round62',
+    ),
+    (
+        "N62d", "src/engcore/scientific/replay_core/profile.py::RunManifestProfile.validate", "        if missing:\n            raise InvalidScientificProblem(f\"run manifest is missing required artifact kinds {missing}\")\n", "        if False:\n            raise InvalidScientificProblem(f\"run manifest is missing required artifact kinds {missing}\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused", 'KILLED',
+        "run manifests cannot omit profile-required scientific artifacts", (), 'unified_replay_round62',
+    ),
+    (
+        "N62e", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if len(keys)!=len(set(keys)):\n            raise InvalidScientificProblem(\"run manifest contains duplicate artifact kind/identifier bindings\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest contains duplicate artifact kind/identifier bindings\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_same_artifact_kind_and_identifier_cannot_bind_two_digests", 'KILLED',
+        "one artifact identity key cannot bind two digests", (), 'unified_replay_round62',
+    ),
+    (
+        "N62f", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if (parent_run is None)!=(parent_digest is None):\n            raise InvalidScientificProblem(\"run manifest parent_run_id and parent_manifest_digest must be declared together\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest parent_run_id and parent_manifest_digest must be declared together\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_parent_lineage_requires_both_parent_id_and_parent_digest", 'KILLED',
+        "parent run and parent manifest digest are one lineage claim", (), 'unified_replay_round62',
+    ),
+    (
+        "N62g", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.from_dict", "        if \"manifest_digest\" in payload and payload[\"manifest_digest\"]!=value.digest:\n            raise InvalidScientificProblem(\"serialized scientific run manifest digest is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized scientific run manifest digest is forged or stale\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived", 'KILLED',
+        "run manifest digest is re-derived on read", (), 'unified_replay_round62',
+    ),
+    (
+        "N62h", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    if actual.replay_of_manifest_digest!=expected.digest:\n        problems.append(\"actual run is not bound to the expected manifest digest\")\n", "    if False:\n        problems.append(\"actual run is not bound to the expected manifest digest\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract", 'KILLED',
+        "actual replay explicitly binds the expected manifest digest", (), 'unified_replay_round62',
+    ),
+    (
+        "N62i", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    for kind in expected.profile.replay_exact_artifact_kinds:\n", "    for kind in expected.profile.required_artifact_kinds:\n", "tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance", 'KILLED',
+        "run-specific required artifacts are not silently promoted to replay-exact identities", (), 'unified_replay_round62',
+    ),
+    (
+        "N62j", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    if expected.environment!=actual.environment:\n        problems.append(\"runtime environment differs\")\n", "    if False:\n        problems.append(\"runtime environment differs\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_environment_drift_refuses_run_replay", 'KILLED',
+        "runtime environment drift refuses strict replay", (), 'unified_replay_round62',
+    ),
+    (
+        "N62k", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.verification", "        if missing: problems.append(f\"missing replay outputs {missing}\")\n", "        if False: problems.append(f\"missing replay outputs {missing}\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay", 'KILLED',
+        "missing replay outputs cannot be treated as matching", (), 'unified_replay_round62',
+    ),
+    (
+        "N62l", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.verification", "            if not comparison.matched:\n                problems.append(\n                    f\"output {expectation.output_id!r} differs beyond declared tolerance\"\n                    + (f\": {comparison.problem}\" if comparison.problem else \"\")\n                )\n", "            if False:\n                problems.append(\n                    f\"output {expectation.output_id!r} differs beyond declared tolerance\"\n                    + (f\": {comparison.problem}\" if comparison.problem else \"\")\n                )\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay", 'KILLED',
+        "out-of-tolerance replay output refuses verification", (), 'unified_replay_round62',
+    ),
+    (
+        "N62m", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.from_dict", "        if payload.get(\"verification\")!=value.to_dict()[\"verification\"]:\n            raise InvalidScientificProblem(\"serialized run replay verification is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized run replay verification is forged or stale\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived", 'KILLED',
+        "run replay verdict is re-derived on read", (), 'unified_replay_round62',
+    ),
+    (
+        "N62n", "src/engcore/scientific/replay_core/lineage.py::verify_manifest_lineage", "        if parent.digest!=manifest.parent_manifest_digest:\n            problems.append(f\"run {manifest.run_id!r} parent digest does not match named parent\")\n", "        if False:\n            problems.append(f\"run {manifest.run_id!r} parent digest does not match named parent\")\n", "tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity", 'KILLED',
+        "scientific lineage binds parent run id to exact parent manifest digest", (), 'unified_replay_round62',
+    ),
+    (
+        "N62o", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if derived_validation.decision is not validation.decision:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag", 'KILLED',
+        "production assurance re-derives validation decision", (), 'unified_replay_round62',
+    ),
+    (
+        "N62p", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if not verification_result.complete or verification_result.verification.decision is not VerificationDecision.VERIFIED:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
+        "production assurance requires complete independently verified evidence", (), 'unified_replay_round62',
+    ),
+    (
+        "N62q", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if not certification.profile.required_gates:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate", 'KILLED',
+        "production assurance certification profile cannot certify nothing", (), 'unified_replay_round62',
+    ),
+    (
+        "N62r", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if provenance.git_commit and provenance.git_commit!=certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
+        "provenance commit is bound to the certified commit", (), 'unified_replay_round62',
+    ),
+    (
+        "N62s", "src/engcore/credibility/assurance_manifest.py::_validate_knowledge_evidence", "        if not node.provenance.trusted:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted", 'KILLED',
+        "production assurance refuses untrusted knowledge provenance", (), 'unified_replay_round62',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on

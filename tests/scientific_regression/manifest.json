@@ -1051,6 +1051,139 @@
         "provenance"
       ],
       "invariant": "knowledge snapshot and evidence graph are content-addressed replay artifacts"
+    },
+    {
+      "id": "replay-v2-environment-sha",
+      "nodeid": "tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "runtime dependency identity is SHA-256, not arbitrary 64 characters"
+    },
+    {
+      "id": "replay-v2-finite-tolerance",
+      "nodeid": "tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity",
+      "tags": [
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "replay tolerance cannot be NaN or infinite"
+    },
+    {
+      "id": "replay-v2-profile-required",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused",
+      "tags": [
+        "replay",
+        "provenance",
+        "policy"
+      ],
+      "invariant": "manifest profile required artifact kinds cannot be omitted"
+    },
+    {
+      "id": "replay-v2-profile-exact-subset",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile",
+      "tags": [
+        "replay",
+        "policy"
+      ],
+      "invariant": "replay-exact artifacts are a subset of required artifacts"
+    },
+    {
+      "id": "replay-v2-manifest-digest",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "manifest digest is content-derived on read"
+    },
+    {
+      "id": "replay-v2-expected-binding",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "actual replay binds exact expected manifest"
+    },
+    {
+      "id": "replay-v2-output-coverage",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay",
+      "tags": [
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "missing or out-of-tolerance outputs refuse replay"
+    },
+    {
+      "id": "replay-v2-wire",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized replay verdict is re-derived"
+    },
+    {
+      "id": "replay-v2-lineage",
+      "nodeid": "tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "parent lineage binds exact manifest digest"
+    },
+    {
+      "id": "assurance-manifest-validation",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "production manifest re-derives validation"
+    },
+    {
+      "id": "assurance-manifest-verification",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "production manifest requires complete independent verification"
+    },
+    {
+      "id": "assurance-manifest-certification",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate",
+      "tags": [
+        "replay",
+        "policy",
+        "provenance"
+      ],
+      "invariant": "production certification profile must require work"
+    },
+    {
+      "id": "assurance-manifest-provenance",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "provenance commit equals certified commit"
+    },
+    {
+      "id": "assurance-manifest-full-replay",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance",
+      "tags": [
+        "replay",
+        "provenance",
+        "vnv",
+        "uq"
+      ],
+      "invariant": "full assurance chain replays with exact contracts and typed output tolerance"
     }
   ]
 }
