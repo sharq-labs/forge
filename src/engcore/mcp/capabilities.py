@@ -106,6 +106,31 @@ _ET_PARAMETER_UQ = (
     "is reported (no normality or linearity assumed). NUMERICAL, ALEATORIC and MODEL_FORM are not quantified"
 )
 
+#: Battery inputs whose declared uncertainty can be propagated by real reruns.
+#: Applicability limits are intentionally absent: uncertainty in a validity
+#: threshold is not uncertainty in the simulated physical state.
+_BATTERY_PERTURBABLE = (
+    ("cell.nominal_capacity", "cell capacity entering charge removal and state-of-charge evolution"),
+    ("cell.internal_resistance", "series resistance setting terminal voltage and I^2 R heat"),
+    ("cell.open_circuit_voltage_at_full", "upper endpoint of the production OCV chord"),
+    ("cell.open_circuit_voltage_at_empty", "lower endpoint of the production OCV chord"),
+    ("cell.limits.cell_thermal_conductance", "the physical heat-transfer conductance shared by cell and body"),
+    ("load.discharge_current", "the imposed continuous-current operating condition"),
+    ("load.state_of_charge", "the declared initial state of charge"),
+    ("load.cell_temperature", "the declared initial cell/body temperature"),
+    ("thermal.heat_capacity", "the lumped body's total heat capacity"),
+    ("thermal.ambient_temperature", "the imposed ambient boundary temperature"),
+)
+
+_BATTERY_PARAMETER_UQ = (
+    "EPISTEMIC_PARAMETER is quantified when the claim supplies distributions over declared "
+    "battery or thermal perturbable inputs. Each draw rebuilds and executes the complete marched "
+    "battery/thermal case, invalid draws or scientifically unusable runs are not silently retained, "
+    "and the reported interval is the runtime's Wilks two-sided tolerance interval over the usable "
+    "reruns. NUMERICAL, ALEATORIC, MEASUREMENT and MODEL_FORM remain UNKNOWN unless separate evidence "
+    "quantifies them."
+)
+
 _KIND = {
     "quantity": InputKind.QUANTITY,
     "fraction": InputKind.FRACTION,
@@ -394,6 +419,7 @@ def battery_capability() -> CapabilityDeclaration:
         },
         prefixes={
             "cell.limits.": InputRole.APPLICABILITY,
+            "thermal.applicability.": InputRole.APPLICABILITY,
             "load.": InputRole.OPERATING_CONDITION,
             "march.": InputRole.NUMERICS,
         },
@@ -415,7 +441,7 @@ def battery_capability() -> CapabilityDeclaration:
     )
     return CapabilityDeclaration(
         capability_id=BATTERY_CAPABILITY_ID,
-        version="1",
+        version="2",
         domain="battery",
         summary=(
             "One equivalent-circuit cell discharged over a marched interval, heating "
@@ -445,20 +471,21 @@ def battery_capability() -> CapabilityDeclaration:
                 condition="the lumped body's closed form agrees with the pinned series-recurrence reference",
             ),
         ),
-        uncertainty=UncertaintyCapability(quantified={}, basis=_NO_UQ),
-        # The battery boundary runs the lumped body against an EMPTY applicability
-        # declaration (engcore.mcp.battery), so none of the body's derived groups
-        # is ever assembled. Derived from the model rather than listed: every
-        # condition over one of its reserved derived quantities.
-        unassessable_conditions=tuple(
-            UnassessableCondition(
-                lumped.LUMPED_CAPACITY_MODEL.model_id,
-                condition.name,
-                "the battery boundary accepts no body-applicability declaration, so this "
-                "derived group of the lumped thermal body is never assembled",
-            )
-            for condition in lumped.LUMPED_CAPACITY_MODEL.validity.conditions
-            if condition.name in lumped.LUMPED_CAPACITY_MODEL.validity.derived_quantities
+        uncertainty=UncertaintyCapability(
+            quantified={
+                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
+                for name in (
+                    "terminal_voltage",
+                    "heat_generation",
+                    "final_state_of_charge",
+                    "final_temperature",
+                )
+            },
+            basis=_BATTERY_PARAMETER_UQ,
+        ),
+        perturbable=tuple(
+            PerturbableInput(path, rationale)
+            for path, rationale in _BATTERY_PERTURBABLE
         ),
         routes=(
             RouteDeclaration(
@@ -648,14 +675,25 @@ def nafems_t3_capability() -> CapabilityDeclaration:
 
 
 @lru_cache(maxsize=1)
-def production_registry() -> CapabilityRegistry:
-    """The capabilities this runtime can execute. Built once per process.
+def _builtin_production_capabilities() -> tuple[CapabilityDeclaration, ...]:
+    """Built-in declarations are immutable for the life of this process."""
+    return (
+        electrothermal_capability(),
+        battery_capability(),
+        nafems_t3_capability(),
+    )
 
-    Building reads the case descriptions (which measure their ``unlocks`` by
-    omission) and verifies every route pin; doing that per request would cost
-    more than routing itself, and nothing it reads can change while the
-    process runs.
+
+def production_registry() -> CapabilityRegistry:
+    """Every capability the production claim router may execute.
+
+    Built-ins are cached because deriving their field unlocks is relatively
+    expensive. Enabled Domain Packs are read on every registry build so an
+    explicitly registered pack cannot be hidden by a singleton created before
+    it was enabled. CapabilityRegistry itself rejects duplicate ids.
     """
+    from .production_packs import production_pack_capabilities
+
     return CapabilityRegistry(
-        (electrothermal_capability(), battery_capability(), nafems_t3_capability())
+        (*_builtin_production_capabilities(), *production_pack_capabilities())
     )

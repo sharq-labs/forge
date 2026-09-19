@@ -587,6 +587,7 @@ def run_self_heating_discharge(
     *,
     heat_capacity: Quantity,
     ambient_temperature: Quantity,
+    thermal_applicability: lump.LumpedApplicabilityDeclaration | None = None,
     initial_temperature: Quantity | None = None,
     steps: int = 10,
     step_limit: int = DEFAULT_STEP_LIMIT,
@@ -666,6 +667,7 @@ def run_self_heating_discharge(
             ambient_temperature=ambient_temperature,
             initial_temperature=temperature,
             step_duration=load.duration,
+            applicability=thermal_applicability,
         )
         thermal = _advance_body(body, heat)
         executed.extend(thermal.bindings)
@@ -702,6 +704,19 @@ def run_self_heating_discharge(
             )
         }
         verdicts = _over_the_step([by_instant[i] for i in ASSESSED_INSTANTS])
+
+        # The thermal model participates in every step and is assessed against
+        # the exact applicability declaration carried by the body that was
+        # actually solved.  This closes the old boundary split where battery
+        # validity lived in the march but thermal validity was reconstructed
+        # once, after the march, from an empty declaration.
+        thermal_assessment = lump.assess_lumped_validity(
+            lump.build_lumped_thermal_problem(body),
+            initial_temperature=temperature,
+            ambient_temperature=ambient_temperature,
+            heat_input=heat,
+        )
+        verdicts[lump.LUMPED_CAPACITY_MODEL.model_id] = thermal_assessment
 
         elapsed_s = elapsed_end_s
         final_soc = cell_solve.metrics[mdl.FINAL_STATE_OF_CHARGE_METRIC]
@@ -755,5 +770,7 @@ def run_self_heating_discharge(
 
 
 def coupled_model_ids() -> tuple[str, ...]:
-    """The battery models a coupled run reports a verdict for, in fixed order."""
-    return tuple(model.model_id for model in mdl.BATTERY_MODELS)
+    """Every model the coupled run assesses, in fixed order."""
+    return tuple(model.model_id for model in mdl.BATTERY_MODELS) + (
+        lump.LUMPED_CAPACITY_MODEL.model_id,
+    )

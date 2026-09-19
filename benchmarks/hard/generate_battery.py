@@ -75,7 +75,7 @@ def q(x, u):
 
 
 def nominal():
-    """A declaration comfortably clear of every one of the fourteen bounds.
+    """A declaration comfortably clear of every battery and thermal bound.
 
     Checked by `verify_sound()` on every case built from it, so "comfortably"
     is asserted rather than asserted-to-be. A shaper then moves exactly one
@@ -97,7 +97,10 @@ def nominal():
         "t_k_ref": 298.15, "k_span": 25.0,
         # load
         "current": 1.5, "z0": 0.9, "t_cell": 298.15, "step_s": 60.0,
-        "i_pulse": 4.0, "t_pulse": 10.0,
+        # The nominal pulse is deliberately in the undeveloped polarization
+        # regime and at the continuous current.  CAP-02 is therefore satisfied
+        # by physics, not omitted from the truth model.
+        "i_pulse": 1.5, "t_pulse": 0.5,
         "v_cutoff": 3.0, "z_cutoff": 0.15,
         # thermal + march
         "c_th": 60.0, "t_amb": 298.15, "steps": 10,
@@ -124,7 +127,10 @@ def march(p):
         temperature = t_ss + (temperature - t_ss) * math.exp(-p["step_s"] / tau_th)
     hot, cold = max(p["t_cell"], temperature), min(p["t_cell"], temperature)
 
-    dz = p["eta"] * p["current"] * (p["step_s"] / SECONDS_PER_HOUR) / p["q_nom_ah"]
+    # Correct coulomb counting: the cell must lose I*dt/eta internally to
+    # deliver I*dt externally. The old benchmark multiplied by eta and
+    # therefore encoded the pre-fix physics.
+    dz = p["current"] * (p["step_s"] / SECONDS_PER_HOUR) / (p["eta"] * p["q_nom_ah"])
     return hot, cold, p["z0"], p["z0"] - dz * p["steps"], dz
 
 
@@ -149,6 +155,8 @@ def conditions(p):
     # inverting V = OCV(z) - I R.
     slope = p["ocv_full"] - p["ocv_empty"]
     z_at_v = (p["v_cutoff"] + p["current"] * p["r_int"] - p["ocv_empty"]) / slope
+    z_at_v_pulse = (p["v_cutoff"] + p["i_pulse"] * p["r_int"] - p["ocv_empty"]) / slope
+    binding_cutoff = max(p["z_cutoff"], z_at_v)
     worst_z = z_end
     return {
         "continuous_c_rate_utilization":
@@ -170,8 +178,14 @@ def conditions(p):
         "polarization_unmodelled_fraction": (
             lambda f: min(f, 1.0 - f)
         )(1.0 - math.exp(-p["step_s"] / p["tau_pol"])),
+        "pulse_polarization_unmodelled_fraction": (
+            lambda f: min(f, 1.0 - f)
+        )(1.0 - math.exp(-p["t_pulse"] / p["tau_pol"])),
         "terminal_voltage_ratio":
             (ocv(p, worst_z) - p["current"] * p["r_int"]) / ocv(p, worst_z),
+        "pulse_terminal_voltage_ratio":
+            (ocv(p, worst_z) - p["i_pulse"] * p["r_int"]) / ocv(p, worst_z),
+        "pulse_cutoff_state_of_charge_shift": z_at_v_pulse - binding_cutoff,
         "soc_step_resolution_ratio": dz / p["soc_res"],
         "capacity_temperature_drift_ratio": worst(p["t_q_ref"]) / p["q_span"],
         "cutoff_consistency_margin": p["z_cutoff"] - z_at_v,
@@ -194,7 +208,10 @@ _RULES = {
     "internal_resistance_drift_ratio": ("le", UTILIZATION_LIMIT),
     "self_heating_rise_ratio": ("le", UTILIZATION_LIMIT),
     "polarization_unmodelled_fraction": ("le", POLARIZATION_CEILING),
+    "pulse_polarization_unmodelled_fraction": ("le", POLARIZATION_CEILING),
     "terminal_voltage_ratio": ("gt", 0.0),
+    "pulse_terminal_voltage_ratio": ("gt", 0.0),
+    "pulse_cutoff_state_of_charge_shift": ("le", 0.0),
     "soc_step_resolution_ratio": ("le", UTILIZATION_LIMIT),
     "capacity_temperature_drift_ratio": ("le", UTILIZATION_LIMIT),
     "cutoff_consistency_margin": ("ge", CUTOFF_FLOOR),
@@ -218,7 +235,12 @@ _CONDITION_NAME = {
 #: sits at 0.98 and demanding ten per cent of headroom would reject every
 #: realistic declaration. `terminal_voltage_ratio` is > 0 strictly, and there
 #: is no margin to take against zero. Neither is shaped, for the same reason.
-_NO_MARGIN = frozenset({"peukert_capacity_ratio", "terminal_voltage_ratio"})
+_NO_MARGIN = frozenset({
+    "peukert_capacity_ratio",
+    "terminal_voltage_ratio",
+    "pulse_terminal_voltage_ratio",
+    "pulse_cutoff_state_of_charge_shift",
+})
 
 
 def _holds(name, value, *, slack=1.0):
@@ -259,6 +281,34 @@ def verify_sound(p, exempt=""):
 # =====================================================================
 # The payload
 # =====================================================================
+
+def thermal_applicability(p):
+    area = 0.01
+    length = 0.05
+    nu = 1.589e-5
+    pr = 0.707
+    re = 1.0e4
+    velocity = re * nu / length
+    nusselt = 0.664 * re ** 0.5 * pr ** (1.0 / 3.0)
+    h = p["hA"] / area
+    fluid_k = h * length / nusselt
+    return {
+        "characteristic_length": q(0.002, "meter"),
+        "body_volume": q(2.0e-5, "meter**3"),
+        "surface_area": q(area, "meter**2"),
+        "body_conductivity": q(200.0, "watt/meter/kelvin"),
+        "surface_emissivity": q(0.02, "dimensionless"),
+        "convection_regime": "forced",
+        "conductance_excursion_bound": q(100.0, "kelvin"),
+        "capacity_excursion_bound": q(100.0, "kelvin"),
+        "melting_temperature": q(1200.0, "kelvin"),
+        "fluid_conductivity": q(fluid_k, "watt/meter/kelvin"),
+        "fluid_kinematic_viscosity": q(nu, "meter**2/second"),
+        "fluid_prandtl_number": q(pr, "dimensionless"),
+        "fluid_velocity": q(velocity, "meter/second"),
+        "convection_length": q(length, "meter"),
+    }
+
 
 def build(p):
     return {
@@ -306,6 +356,11 @@ def build(p):
         "thermal": {
             "heat_capacity": q(p["c_th"], "joule/kelvin"),
             "ambient_temperature": q(p["t_amb"], "kelvin"),
+            # Production Battery V2 closes the old permanent UNKNOWN thermal
+            # half. These values are independently constructed to sit well
+            # inside the lumped model's domain and to reproduce hA through a
+            # forced-convection flat-plate correlation.
+            "applicability": thermal_applicability(p),
         },
         "march": {"steps": p["steps"]},
     }
@@ -460,6 +515,37 @@ def shape_polarization(p, m, inside):
     return p["tau_pol"] > 0.0
 
 
+@shaper("pulse_polarization_unmodelled_fraction", "t_pulse")
+def shape_pulse_polarization(p, m, inside):
+    """Place the declared pulse on the undeveloped side of the CAP-02 screen.
+
+    f = 1-exp(-t/tau). Using the short-pulse branch keeps the shaped pulse
+    comfortably inside its separate rated-duration condition.
+    """
+    target = POLARIZATION_CEILING * ((1 - m) if inside else (1 + m))
+    if not 0.0 < target < 0.5:
+        return False
+    p["t_pulse"] = -p["tau_pol"] * math.log(1.0 - target)
+    return 0.0 < p["t_pulse"] < p["t_pulse_rated"]
+
+
+@shaper("pulse_cutoff_state_of_charge_shift", "i_pulse")
+def shape_pulse_cutoff(p, m, inside):
+    """Move pulse current around the current that makes the cutoff shift zero."""
+    slope = p["ocv_full"] - p["ocv_empty"]
+    z_at_cont = (p["v_cutoff"] + p["current"] * p["r_int"] - p["ocv_empty"]) / slope
+    binding = max(p["z_cutoff"], z_at_cont)
+    current_at_binding = (
+        p["ocv_empty"] + slope * binding - p["v_cutoff"]
+    ) / p["r_int"]
+    # State-of-charge shift target, not a hidden current tolerance.
+    target_shift = -m if inside else m
+    p["i_pulse"] = current_at_binding + target_shift * slope / p["r_int"]
+    return 0.0 < p["i_pulse"] / p["q_nom_ah"] < p["c_pulse"]
+
+
+
+
 # =====================================================================
 # Omission
 # =====================================================================
@@ -484,7 +570,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=400)
     ap.add_argument("--seed", type=int, default=20260906)
-    ap.add_argument("--out", default="cases_battery")
+    ap.add_argument("--out", default="cases_battery_v2")
+    ap.add_argument("--index", default="index_battery_v2.json")
     args = ap.parse_args()
     rng = random.Random(args.seed)
 
@@ -510,8 +597,15 @@ def main() -> None:
             if not fn(p, margin, inside):
                 continue
             tag = f"{condition}_{'in' if inside else 'out'}@{margin:g}"
-            label = "valid" if inside else "model_inapplicable"
-            verdict = "SUPPORTED" if inside else "NOT_SUPPORTED"
+            if inside:
+                label, verdict = "valid", "SUPPORTED"
+            elif condition == "pulse_polarization_unmodelled_fraction":
+                # This CAP-02 condition is explicitly a conservative screen:
+                # crossing it withholds applicability; it does not falsify an
+                # output the Rint model never computed at the pulse.
+                label, verdict = "insufficient_evidence", "INSUFFICIENT_EVIDENCE"
+            else:
+                label, verdict = "model_inapplicable", "NOT_SUPPORTED"
             why = (
                 f"{condition} placed {margin:.1%} "
                 f"{'inside' if inside else 'outside'} its bound."
@@ -541,6 +635,7 @@ def main() -> None:
             "id": f"{prefix}{n:05d}",
             "title": tag,
             "system": "battery",
+            "benchmark_version": 2,
             "payload": payload,
             "ground_truth": {
                 "label": label, "expected_verdict": verdict, "reason": why,
@@ -559,7 +654,7 @@ def main() -> None:
         "sound": sound, "unsound": len(cases) - sound,
         "by_defect": dict(sorted(tags.items(), key=lambda kv: -kv[1])),
     }
-    pathlib.Path("index_battery.json").write_text(
+    pathlib.Path(args.index).write_text(
         json.dumps(index, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"{len(cases)} battery cases -> {out}/  "
           f"(sound {sound}, unsound {len(cases) - sound})")

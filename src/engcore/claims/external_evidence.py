@@ -24,11 +24,13 @@ caller calling it a "measurement":
     about another quantity or dimension, at a mismatched operating point, or a
     pin whose content does not reproduce.
 
-The trusted registry has no registration API. The production pins are the
-repository's own (empty today for measurement and literature: nothing curated
-exists yet, and saying so is the honest state). A test or an organization
-supplies another :class:`TrustedExternalRegistry` explicitly, and the
-assessment records which registry (by digest) judged each record.
+The trusted registry has no registration API. Production pins are curated
+from evidence already frozen in the repository's model-to-measurement round.
+They remain ordinary evidence records: a pin establishes identity and curation,
+not a validation level, and a caller still has to present a record whose
+operating conditions apply to the claim. A test or an organization may supply
+another :class:`TrustedExternalRegistry` explicitly, and the assessment
+records which registry (by digest) judged each record.
 
 Literature is held to the same bar as measurement: a citation is not a
 validation, and a reported value with no reported uncertainty is WEAK.
@@ -236,9 +238,134 @@ class TrustedExternalRegistry:
         return tagged_digest(_REGISTRY_TAG, [p.to_dict() for p in self.pins])
 
 
-#: The repository's own pins. Empty: no measurement or literature record has been curated for a production
-#: capability yet. Benchmarks are trusted through the oracle pins instead.
-PRODUCTION_EXTERNAL_REGISTRY = TrustedExternalRegistry(())
+def _production_external_catalog() -> tuple[MeasurementRecord | LiteratureRecord, ...]:
+    """Small, auditable production catalog backed by frozen repository evidence.
+
+    The battery points are HELD_OUT observations from two different LiFePO4
+    cells in S-OCV (DOI 10.21227/651q-8v82).  Their expanded k=2 intervals are
+    the preregistered measurement budgets recorded in
+    benchmarks/model_measurement_validation/VALIDATION_RESULTS.json.  They are
+    deliberately not auto-applied to arbitrary cells: subject identity is
+    carried in provenance/independence roots and the caller must explicitly
+    offer the exact record it intends to use.
+
+    The literature/reference record is the 100 degC Pt100 table point from the
+    SHA-256-pinned DIN 43760 / IEC 751 transcription used by the same evidence
+    round.  Its +/-0.005 ohm interval is half the last printed digit.  The
+    record says exactly that; it does not claim specimen uncertainty.
+    """
+    batt_001_soc04 = MeasurementRecord(
+        quantity="terminal_voltage",
+        value=Quantity(3.299, "volt"),
+        uncertainty=Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(3.2968452062743734, "volt"),
+            upper=Quantity(3.3011547937256265, "volt"),
+            source="S-OCV DOI 10.21227/651q-8v82; BATT_001 charge-conditioned SOC 0.4",
+            method="expanded k=2 instrument+SOC+temperature+relaxation budget frozen in VALIDATION_RESULTS.json",
+            notes="held-out published measurement; not a calibration row",
+            source_kind=UncertaintySource.MEASUREMENT,
+        ),
+        calibration_ref="model_measurement_validation:S-OCV:uncertainty-budget-v1",
+        provenance_ref=(
+            "S-OCV:sha256:9b8c541675256c08c24cc6ebeb486a46"
+            "d07c533a70bf4dabcca4955dba90e08a:BATT_001:soc=0.4:charge:24h"
+        ),
+        conditions={
+            "load.state_of_charge": Quantity(0.4, "dimensionless"),
+            "load.discharge_current": Quantity(0.0, "ampere"),
+        },
+        dataset_version="DOI:10.21227/651q-8v82:v1",
+        independence_roots=(
+            "dataset:10.21227/651q-8v82",
+            "cell:BATT_001",
+            "trace:BATT_001:charge:soc=0.4:24h",
+        ),
+    )
+    batt_002_soc05 = MeasurementRecord(
+        quantity="terminal_voltage",
+        value=Quantity(3.302, "volt"),
+        uncertainty=Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(3.301143766387018, "volt"),
+            upper=Quantity(3.302856233612982, "volt"),
+            source="S-OCV DOI 10.21227/651q-8v82; BATT_002 charge-conditioned SOC 0.5",
+            method="expanded k=2 instrument+SOC+temperature+relaxation budget frozen in VALIDATION_RESULTS.json",
+            notes="held-out replicate-cell published measurement",
+            source_kind=UncertaintySource.MEASUREMENT,
+        ),
+        calibration_ref="model_measurement_validation:S-OCV:uncertainty-budget-v1",
+        provenance_ref=(
+            "S-OCV:sha256:9b8c541675256c08c24cc6ebeb486a46"
+            "d07c533a70bf4dabcca4955dba90e08a:BATT_002:soc=0.5:charge:24h"
+        ),
+        conditions={
+            "load.state_of_charge": Quantity(0.5, "dimensionless"),
+            "load.discharge_current": Quantity(0.0, "ampere"),
+        },
+        dataset_version="DOI:10.21227/651q-8v82:v1",
+        independence_roots=(
+            "dataset:10.21227/651q-8v82",
+            "cell:BATT_002",
+            "trace:BATT_002:charge:soc=0.5:24h",
+        ),
+    )
+    pt100_100c = LiteratureRecord(
+        citation_id=(
+            "pt100rtd:d09fc50e9cbe04742273b1b6c023fb23863d72f"
+            "de63d4bdbab0ae2757a0be693:DIN43760-IEC751"
+        ),
+        extracted_claim=(
+            "The pinned Pt100 reference table gives 138.51 ohm at 100 degC."
+        ),
+        quantity="resistance",
+        value=Quantity(138.51, "ohm"),
+        uncertainty=Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(138.505, "ohm"),
+            upper=Quantity(138.515, "ohm"),
+            source="DIN 43760 / IEC 751 table transcription",
+            method="half of the 0.01 ohm printed table increment",
+            notes=(
+                "reference-table quantisation only; this is not uncertainty "
+                "of an individual platinum thermometer specimen"
+            ),
+        ),
+        conditions={"temperature": Quantity(100.0, "degC")},
+        extracted_by="forge:model_measurement_validation",
+        extraction_method=(
+            "direct indexed read of the SHA-256-pinned 1051-point table; "
+            "anchor values and Callendar-Van Dusen consistency were checked "
+            "in the frozen evidence round"
+        ),
+    )
+    return (batt_001_soc04, batt_002_soc05, pt100_100c)
+
+
+PRODUCTION_EXTERNAL_RECORDS = _production_external_catalog()
+
+#: Repository-owned trust pins.  The curated records above are still subject
+#: to applicability and uncertainty checks on every claim; a pin never awards
+#: a validation level by itself.
+PRODUCTION_EXTERNAL_REGISTRY = TrustedExternalRegistry(
+    tuple(
+        TrustedPin(
+            record_digest=record.digest,
+            source_class=(
+                SourceClass.MEASUREMENT
+                if isinstance(record, MeasurementRecord)
+                else SourceClass.LITERATURE
+            ),
+            curator="forge:model_measurement_validation",
+            rationale=(
+                "record derived from the repository-frozen evidence provenance, "
+                "held-out/independent measurement split or pinned reference table, "
+                "with the uncertainty statement carried in the record"
+            ),
+        )
+        for record in PRODUCTION_EXTERNAL_RECORDS
+    )
+)
 
 
 @dataclass(frozen=True)
@@ -440,6 +567,7 @@ def read_external_record(payload: Mapping[str, Any]) -> MeasurementRecord | Lite
 
 
 __all__ = [
+    "PRODUCTION_EXTERNAL_RECORDS",
     "PRODUCTION_EXTERNAL_REGISTRY",
     "ExternalEvidenceAssessment",
     "ExternalStanding",
