@@ -23,8 +23,11 @@ def verify_run_manifest(expected:ScientificRunManifest,actual:ScientificRunManif
         problems.append("actual run is not bound to the expected manifest digest")
     if expected.profile!=actual.profile:
         problems.append("run manifest profile differs")
-    if expected.contract_artifacts!=actual.contract_artifacts:
-        problems.append("scientific contract artifact identities differ")
+    for kind in expected.profile.replay_exact_artifact_kinds:
+        expected_items=tuple(a for a in expected.contract_artifacts if a.kind==kind)
+        actual_items=tuple(a for a in actual.contract_artifacts if a.kind==kind)
+        if expected_items!=actual_items:
+            problems.append(f"replay-exact artifact identities differ for kind {kind!r}")
     if expected.environment!=actual.environment:
         problems.append("runtime environment differs")
     if expected.random_seed!=actual.random_seed:

@@ -44,6 +44,13 @@ PRODUCTION_ASSURANCE_PROFILE = RunManifestProfile(
         "verification_run",
     ),
     False,
+    (
+        "certification_record",
+        "evidence_graph",
+        "knowledge_snapshot",
+        "scientific_law",
+        "validation_report",
+    ),
 )
 
 

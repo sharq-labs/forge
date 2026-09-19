@@ -17,6 +17,7 @@ class RunManifestProfile:
     required_artifact_kinds:tuple[str,...]
     singleton_artifact_kinds:tuple[str,...]=()
     allow_extra_artifact_kinds:bool=True
+    replay_exact_artifact_kinds:tuple[str,...]|None=None
 
     def __post_init__(self)->None:
         profile_id=str(self.profile_id).strip()
@@ -28,9 +29,17 @@ class RunManifestProfile:
             raise InvalidScientificProblem("singleton artifact kinds must also be required")
         if not isinstance(self.allow_extra_artifact_kinds,bool):
             raise InvalidScientificProblem("allow_extra_artifact_kinds must be bool")
+        exact = required if self.replay_exact_artifact_kinds is None else tuple(
+            sorted(set(str(x).strip() for x in self.replay_exact_artifact_kinds))
+        )
+        if any(not x for x in exact) or not set(exact)<=set(required):
+            raise InvalidScientificProblem(
+                "replay-exact artifact kinds must be a subset of required artifact kinds"
+            )
         object.__setattr__(self,"profile_id",profile_id)
         object.__setattr__(self,"required_artifact_kinds",required)
         object.__setattr__(self,"singleton_artifact_kinds",singleton)
+        object.__setattr__(self,"replay_exact_artifact_kinds",exact)
 
     def validate(self,artifacts:tuple[ArtifactIdentity,...])->None:
         kinds=[a.kind for a in artifacts]
@@ -49,14 +58,17 @@ class RunManifestProfile:
         return {"schema":RUN_MANIFEST_PROFILE_SCHEMA,"profile_id":self.profile_id,
                 "required_artifact_kinds":list(self.required_artifact_kinds),
                 "singleton_artifact_kinds":list(self.singleton_artifact_kinds),
-                "allow_extra_artifact_kinds":self.allow_extra_artifact_kinds}
+                "allow_extra_artifact_kinds":self.allow_extra_artifact_kinds,
+                "replay_exact_artifact_kinds":list(self.replay_exact_artifact_kinds)}
 
     @classmethod
     def from_dict(cls,payload:Mapping[str,Any])->"RunManifestProfile":
         require_schema(payload,RUN_MANIFEST_PROFILE_SCHEMA)
         return cls(payload["profile_id"],tuple(payload.get("required_artifact_kinds",())),
                    tuple(payload.get("singleton_artifact_kinds",())),
-                   payload.get("allow_extra_artifact_kinds",True))
+                   payload.get("allow_extra_artifact_kinds",True),
+                   tuple(payload.get("replay_exact_artifact_kinds",()))
+                   if "replay_exact_artifact_kinds" in payload else None)
 
     @property
     def digest(self)->str:
