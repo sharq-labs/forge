@@ -157,10 +157,15 @@ def evaluate_thevenin_step(
     if not isinstance(state, TheveninState):
         raise InvalidScientificProblem("state must be TheveninState")
 
-    current = _required(current, ctx.CURRENT_UNIT, ctx.DISCHARGE_CURRENT, positive=True)
+    current = _required(current, ctx.CURRENT_UNIT, ctx.DISCHARGE_CURRENT)
     duration = _required(duration, ctx.TIME_UNIT, ctx.DURATION, positive=True)
 
     current_a = current.magnitude_in(ctx.CURRENT_UNIT)
+    if current_a < 0.0:
+        raise InvalidScientificProblem(
+            "the current 1RC kernel is discharge/rest only: negative current would be charge "
+            "and needs separate charge/hysteresis validity evidence"
+        )
     duration_h = duration.magnitude_in("hour")
     duration_s = duration.magnitude_in("second")
     capacity_ah = cell.nominal_capacity.magnitude_in(ctx.CAPACITY_UNIT)
