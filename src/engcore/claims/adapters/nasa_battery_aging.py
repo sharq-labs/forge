@@ -139,7 +139,7 @@ def nasa_terminal_voltage_observation(
     overrides = dict(context_overrides or {})
     # Sign-normalized current is a transformation with an explicit convention,
     # so it overrides the raw channel mapping rather than silently taking abs().
-    overrides["load.current"] = Quantity(current, "ampere")
+    overrides["load.discharge_current"] = Quantity(current, "ampere")
     overrides["load.cell_temperature"] = Quantity(sample.temperature_measured_c, "degC")
     overrides["thermal.ambient_temperature"] = Quantity(sample.ambient_temperature_c, "degC")
 
