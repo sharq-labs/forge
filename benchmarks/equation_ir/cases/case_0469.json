@@ -1,0 +1,22 @@
+{
+  "schema": "equation_ir_case/1",
+  "id": "function-valid-019",
+  "variables": [
+    {
+      "name": "x",
+      "unit": "dimensionless"
+    }
+  ],
+  "expression": {
+    "schema": "equation_function/1",
+    "function": "cos",
+    "argument": {
+      "schema": "equation_symbol/1",
+      "name": "x"
+    }
+  },
+  "expected": {
+    "status": "valid",
+    "unit": "dimensionless"
+  }
+}

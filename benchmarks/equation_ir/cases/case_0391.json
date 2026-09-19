@@ -1,0 +1,30 @@
+{
+  "schema": "equation_ir_case/1",
+  "id": "divide-091",
+  "variables": [
+    {
+      "name": "x",
+      "unit": "meter"
+    },
+    {
+      "name": "y",
+      "unit": "ampere"
+    }
+  ],
+  "expression": {
+    "schema": "equation_binary/1",
+    "operator": "divide",
+    "left": {
+      "schema": "equation_symbol/1",
+      "name": "x"
+    },
+    "right": {
+      "schema": "equation_symbol/1",
+      "name": "y"
+    }
+  },
+  "expected": {
+    "status": "valid",
+    "unit": "meter / ampere"
+  }
+}

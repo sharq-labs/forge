@@ -1,0 +1,22 @@
+{
+  "schema": "equation_ir_case/1",
+  "id": "function-invalid-009",
+  "variables": [
+    {
+      "name": "x",
+      "unit": "second"
+    }
+  ],
+  "expression": {
+    "schema": "equation_function/1",
+    "function": "cos",
+    "argument": {
+      "schema": "equation_symbol/1",
+      "name": "x"
+    }
+  },
+  "expected": {
+    "status": "invalid",
+    "error": "dimensionless_required"
+  }
+}

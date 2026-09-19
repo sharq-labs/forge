@@ -40,3 +40,11 @@ def test_build_command_can_emit_junit_evidence_for_certification():
     )
     assert "--junitxml" in command
     assert "/tmp/regression.xml" in command
+
+
+def test_equation_core_changes_select_equation_ir_sentinels():
+    tags = forge_check.tags_for_paths(["src/engcore/scientific/equations/dimensions.py"])
+    assert {"equation_ir", "compiler", "applicability", "diagnostics"} <= tags
+    selected = forge_check.cases_for_tags(tags)
+    assert any("test_addition_rejects_incompatible_dimensions" in item for item in selected)
+    assert any("test_expression_payload_is_data_not_python_code" in item for item in selected)

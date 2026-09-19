@@ -422,6 +422,51 @@
         "selection"
       ],
       "invariant": "a domain pack whose runtime artifacts differ from its declared manifest is refused before activation"
+    },
+    {
+      "id": "equation-ir-addition-dimension-mismatch",
+      "nodeid": "tests/scientific/equations/test_dimensions.py::test_addition_rejects_incompatible_dimensions",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "addition and subtraction cannot combine incompatible physical dimensions"
+    },
+    {
+      "id": "equation-ir-transcendental-dimensionless",
+      "nodeid": "tests/scientific/equations/test_dimensions.py::test_dimensionless_functions_reject_dimensional_arguments",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "transcendental functions cannot accept a dimensional argument"
+    },
+    {
+      "id": "equation-ir-law-symbol-authority",
+      "nodeid": "tests/scientific/equations/test_law.py::test_law_rejects_undeclared_symbol",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "a scientific law cannot reference a symbol whose unit contract was never declared"
+    },
+    {
+      "id": "equation-ir-binding-dimension",
+      "nodeid": "tests/scientific/equations/test_law.py::test_law_rejects_wrong_binding_dimension",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "runtime bindings cannot change a law symbol's physical dimension"
+    },
+    {
+      "id": "equation-ir-no-code-execution",
+      "nodeid": "tests/scientific/equations/test_adversarial.py::test_expression_payload_is_data_not_python_code",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "equation payload text is data and never an executable expression"
     }
   ]
 }

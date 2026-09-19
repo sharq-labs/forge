@@ -1,0 +1,22 @@
+{
+  "schema": "equation_ir_case/1",
+  "id": "function-invalid-008",
+  "variables": [
+    {
+      "name": "x",
+      "unit": "meter"
+    }
+  ],
+  "expression": {
+    "schema": "equation_function/1",
+    "function": "sin",
+    "argument": {
+      "schema": "equation_symbol/1",
+      "name": "x"
+    }
+  },
+  "expected": {
+    "status": "invalid",
+    "error": "dimensionless_required"
+  }
+}
