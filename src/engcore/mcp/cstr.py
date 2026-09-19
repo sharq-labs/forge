@@ -269,7 +269,7 @@ def cstr_capability() -> CapabilityDeclaration:
 
     return CapabilityDeclaration(
         capability_id=CSTR_CAPABILITY_ID,
-        version="2",
+        version="3",
         domain="kinetics",
         summary=(
             "Transient non-isothermal first-order CSTR with Arrhenius kinetics, "
