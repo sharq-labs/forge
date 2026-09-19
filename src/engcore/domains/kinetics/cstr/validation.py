@@ -22,9 +22,15 @@ THE VERIFICATION GATE establishes the claims that need more than one solve:
     ANALYTICALLY_VERIFIED     the trajectory reproduces the exact reaction-free
                               invariant — available for an adiabatic reactor
                               only, where that invariant is a closed form
+    CROSS_SOLVER_VALIDATED    after tolerance independence, the production
+                              solve_ivp route agrees with the pinned separately
+                              translated ODEPACK/LSODA implementation on all
+                              required quantities and the Core verifies their
+                              dependency independence
 
-and it REPORTS, establishing nothing, whether the stationary end state agrees
-with a steady state found by an algebraic root search (see below).
+It also REPORTS, establishing nothing, whether the stationary end state agrees
+with a steady state found by an algebraic root search (see below), and keeps
+BDF-vs-Radau as same-infrastructure corroboration.
 
 THE ORDERING IS NOT DECORATIVE
 -------------------------------
@@ -137,6 +143,7 @@ register_validation_check_kinds(
     "analytic_invariant_agreement",
     "independent_steady_state_agreement",
     "cross_method_agreement",
+    "independent_solver_agreement",
 )
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -316,10 +323,11 @@ def build_validation_report(
             name="integration_reported_success",
             outcome=ValidationOutcome.PASS,
             detail=(
-                f"solve_ivp completed the horizon with status 0 using "
-                f"{run.integration.method} at rtol={run.integration.rtol:.3g}. "
-                f"This is the integrator's opinion of its own local error "
-                f"control and establishes nothing about accuracy"
+                f"{raw.diagnostics.get('integrator', 'solve_ivp')} completed "
+                f"the horizon using {raw.diagnostics.get('method', run.integration.method)} "
+                f"at rtol={run.integration.rtol:.3g}. This is the integrator's "
+                f"opinion of its own local error control and establishes nothing "
+                f"about accuracy"
             ),
             # Deliberately establishes nothing. See the module docstring.
             establishes=None,
@@ -642,6 +650,38 @@ INTEGRATION_ROUTE_DEPENDENCIES = MappingProxyType({
 })
 
 
+#: A genuinely separate verification route.  Only the physical problem
+#: declaration is shared with the production path; the parameter translation,
+#: ODE implementation, numerical method, and backend are all distinct.
+INDEPENDENT_LSODA_ROUTE_DEPENDENCIES = RouteDependencies({
+    IndependenceDimension.PROBLEM_DECLARATION: {
+        "py:engcore.domains.kinetics.cstr.problem:ReactorRun",
+    },
+    IndependenceDimension.PREPROCESSING: {
+        "py:engcore.domains.kinetics.cstr.independent_solver:independent_parameters",
+    },
+    IndependenceDimension.NUMERICAL_METHOD: {"ext:odepack:lsoda"},
+    IndependenceDimension.IMPLEMENTATION: {
+        "py:engcore.domains.kinetics.cstr.independent_solver:IndependentLSODASolver",
+    },
+    IndependenceDimension.BACKEND: {"py:scipy.integrate:odeint"},
+})
+
+
+def independent_lsoda_route(solver: Any) -> SolveRoute:
+    return SolveRoute(
+        route_id="kinetics.cstr.independent:LSODA",
+        solver=solver,
+        components=frozenset(),
+        dependencies=INDEPENDENT_LSODA_ROUTE_DEPENDENCIES,
+        notes=(
+            "independent CSTR translation through scipy.integrate.odeint/"
+            "ODEPACK LSODA; shares only the ReactorRun problem declaration "
+            "with the production solve_ivp/BDF route"
+        ),
+    )
+
+
 def integration_route(method: str, solver: Any) -> SolveRoute:
     """One integration method, declaring what it is made of.
 
@@ -727,6 +767,10 @@ class CSTRVerificationReport:
     cross_method_agrees: bool | None
     cross_method_detail: str
     cross_method_max_rel_difference: float | None
+    independent_solver_agrees: bool | None
+    independent_solver_detail: str
+    independent_solver_max_rel_difference: float | None
+    independent_solver_consensus: CrossSolverConsensus | None
     #: The core record behind the cross-method arm, or ``None`` when no
     #: comparison was made. It is what decides that the arm establishes
     #: nothing; see :meth:`to_report`.
@@ -767,7 +811,12 @@ class CSTRVerificationReport:
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 earned=self.invariant_verified,
             ),
-            # No third level (IND-04): the algebraic steady state shares the
+            (
+                self.independent_solver_consensus.establishes
+                if self.independent_solver_consensus is not None
+                else None
+            ),
+            # The algebraic steady state shares the
             # solver's derived parameters, so its agreement is reported by the
             # check and establishes nothing. See the module docstring.
         )
@@ -794,6 +843,15 @@ class CSTRVerificationReport:
                 "and the stationary end state agrees with an algebraic steady "
                 "state found by a separate root search from the same derived "
                 "parameters (reported; establishes no level)"
+            )
+        if (
+            self.independent_solver_consensus is not None
+            and self.independent_solver_consensus.establishes
+            is ValidationLevel.CROSS_SOLVER_VALIDATED
+        ):
+            parts.append(
+                "and a separately translated ODEPACK/LSODA implementation "
+                "reproduces every required quantity inside the declared gate"
             )
         return "; ".join(parts) + (
             ". No comparison against any physical measurement was performed"
@@ -885,13 +943,6 @@ class CSTRVerificationReport:
                 detail=self.cross_method_detail,
                 residual=self.cross_method_max_rel_difference,
                 tolerance=self.tolerance_rel_tol,
-                # Establishes nothing, and no longer because this line says so.
-                # The level comes from the consensus record, which refuses it
-                # because both routes declare the same right-hand side, the
-                # same analytic Jacobian and the same step control. A hard
-                # `None` here would have been a rule one reader had to trust;
-                # this is a rule a reader can check, against a declaration that
-                # travels in the record.
                 establishes=(
                     self.cross_method_consensus.establishes
                     if self.cross_method_consensus is not None
@@ -902,6 +953,18 @@ class CSTRVerificationReport:
                     if self.cross_method_consensus is not None
                     else ()
                 ),
+            ),
+            (
+                self.independent_solver_consensus.to_check(
+                    name="independent_solver_agreement"
+                )
+                if self.independent_solver_consensus is not None
+                else ValidationCheck(
+                    name="independent_solver_agreement",
+                    outcome=ValidationOutcome.NOT_RUN,
+                    detail=self.independent_solver_detail,
+                    establishes=None,
+                )
             ),
         ]
         return ValidationReport(checks=tuple(checks), notes=self.claim)
@@ -932,6 +995,15 @@ class CSTRVerificationReport:
             "cross_method_consensus": (
                 self.cross_method_consensus.to_dict()
                 if self.cross_method_consensus is not None
+                else None
+            ),
+            "independent_solver_agrees": self.independent_solver_agrees,
+            "independent_solver_detail": self.independent_solver_detail,
+            "independent_solver_max_rel_difference":
+                self.independent_solver_max_rel_difference,
+            "independent_solver_consensus": (
+                self.independent_solver_consensus.to_dict()
+                if self.independent_solver_consensus is not None
                 else None
             ),
             "levels_earned": [level.value for level in self.levels_earned],
@@ -1361,6 +1433,77 @@ def run_verification_gate(
                 run.integration.method, cross_method, ladder[-1].label, comparison
             )
 
+    # --- independent implementation arm ---------------------------------
+    independent_solver_agrees: bool | None = None
+    independent_solver_max_rel_difference: float | None = None
+    independent_solver_consensus: CrossSolverConsensus | None = None
+    if finest_result is None:
+        independent_solver_detail = (
+            "no completed production reference rung to compare against"
+        )
+    elif not tolerance_independent:
+        independent_solver_detail = (
+            "the independent implementation was withheld because the production "
+            "tolerance ladder did not establish numerical adequacy first"
+        )
+    else:
+        from .independent_solver import IndependentLSODASolver
+        from .problem import build_cstr_problem as _independent_problem
+        from .solver import solve_reactor as _execute_independent
+
+        tight = run.with_integration(
+            run.integration.with_tolerances(
+                rtol=ladder[-1].rtol,
+                atol_concentration=ladder[-1].atol_concentration,
+                atol_temperature=ladder[-1].atol_temperature,
+            )
+        )
+        independent_problem = _independent_problem(
+            tight, problem_id=finest_result.problem_id
+        )
+        independent_solver = IndependentLSODASolver()
+        independent_result = _execute_independent(
+            tight,
+            run_id=f"{run_id_prefix}-independent-lsoda",
+            solver=independent_solver,
+            problem=independent_problem,
+        )
+        if not independent_result.values:
+            independent_solver_detail = (
+                "the independent ODEPACK/LSODA route did not complete the "
+                f"horizon ({independent_result.convergence.value})"
+            )
+        else:
+            independent_solver_consensus = CrossSolverConsensus.from_results(
+                consensus_id=f"kinetics.cstr.independent:{run_id_prefix}",
+                routes=(
+                    integration_route(run.integration.method, finest_result.solver),
+                    independent_lsoda_route(independent_result.solver),
+                ),
+                results={
+                    f"kinetics.cstr.integration:{run.integration.method}":
+                        finest_result,
+                    "kinetics.cstr.independent:LSODA": independent_result,
+                },
+                thresholds=thresholds,
+                tolerance_key="tolerance_rel_tol",
+                required_outputs=CONVERGENCE_QOIS,
+                notes=(
+                    "production solve_ivp/BDF compared with a separately "
+                    "translated scipy.integrate.odeint/ODEPACK LSODA route"
+                ),
+            )
+            independent_comparison = independent_solver_consensus.comparison
+            independent_solver_max_rel_difference = (
+                independent_comparison.worst_relative_difference
+            )
+            independent_solver_agrees = (
+                independent_comparison.agreed
+                if independent_comparison.compared_anything
+                else None
+            )
+            independent_solver_detail = independent_solver_consensus.reason
+
     return CSTRVerificationReport(
         rungs=tuple(rows),
         tolerance_independent=tolerance_independent,
@@ -1375,6 +1518,10 @@ def run_verification_gate(
         cross_method_agrees=cross_method_agrees,
         cross_method_detail=cross_method_detail,
         cross_method_max_rel_difference=cross_method_max_rel_difference,
+        independent_solver_agrees=independent_solver_agrees,
+        independent_solver_detail=independent_solver_detail,
+        independent_solver_max_rel_difference=independent_solver_max_rel_difference,
+        independent_solver_consensus=independent_solver_consensus,
         cross_method_consensus=cross_method_consensus,
         thresholds=thresholds,
     )

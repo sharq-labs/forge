@@ -766,7 +766,7 @@ def solve_reactor(
     run: ReactorRun,
     *,
     run_id: str,
-    solver: CSTRSolver | None = None,
+    solver: Any | None = None,
     problem: ScientificProblem | None = None,
     software_version: str = "engcore.domains.kinetics.cstr/0.1.0",
     source_commit: str | None = None,
@@ -830,7 +830,7 @@ def solve_reactor_bundle(
     run: ReactorRun,
     *,
     run_id: str,
-    solver: CSTRSolver | None = None,
+    solver: Any | None = None,
     problem: ScientificProblem | None = None,
     software_version: str = "engcore.domains.kinetics.cstr/0.1.0",
     source_commit: str | None = None,
@@ -926,13 +926,16 @@ def solve_reactor_bundle(
     }
     diagnostics = {k: v for k, v in raw.diagnostics.items() if k not in bulky}
 
+    solver_identity = solver.identity
     provenance = ProvenanceRecord(
         run_id=run_id,
         software_version=software_version,
         # The EXECUTING revision. Never the Core baseline — see the docstring.
         git_commit=source_commit,
         models=model_identities,
-        solvers=((SOLVER_ID, SOLVER_VERSION),),
+        # Record the solver that actually executed this route.  The wrapper is
+        # shared by production BDF and independent verification adapters.
+        solvers=((solver_identity.solver_id, solver_identity.version),),
         inputs=inputs,
         assumptions=assumptions,
         tolerances=run.integration.as_tolerance_mapping(),
@@ -942,10 +945,14 @@ def solve_reactor_bundle(
         metadata={
             "run_label": run.run_label,
             "physics_fingerprint": run.physics_fingerprint(),
-            "integration_method": run.integration.method,
-            "jacobian": "analytic",
-            "backend": BACKEND,
-            "solver_backend_identity": solver.identity.backend,
+            "integration_method": str(
+                raw.diagnostics.get("method", run.integration.method)
+            ),
+            "jacobian": str(raw.diagnostics.get("jacobian", "analytic")),
+            "backend": str(
+                raw.diagnostics.get("backend", solver_identity.backend or BACKEND)
+            ),
+            "solver_backend_identity": solver_identity.backend,
             "run_canonical": run.to_dict(),
             # Context, not execution identity. Recorded under its own name so
             # it can never be mistaken for the revision that ran.

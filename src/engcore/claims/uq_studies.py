@@ -29,15 +29,39 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import ValidityStatus
-from ..scientific.results.uncertainty import Uncertainty
+from ..scientific.results.uncertainty import (
+    Uncertainty,
+    UncertaintyKind,
+    UncertaintySource,
+)
+from ..scientific.units.quantity import Quantity
 from ..scientific.results.validation import ValidationOutcome
 from ..scientific.solvers.protocol import ConvergenceState
 from ..sria.uncertainty import UncertaintyChannel
 from ._records import canonical_json, tagged_digest
+from .aleatoric_uq import ReplicateObservation, estimate_aleatoric_replicates
+from .analysis.model_discrepancy import (
+    DiscrepancyProtocol,
+    PairedObservation,
+    estimate_model_form_discrepancy,
+)
+from .measurement_dataset import DatasetObservation
+from .empirical_uq_trust import (
+    EmpiricalObservationRegistry,
+    PRODUCTION_EMPIRICAL_OBSERVATIONS,
+)
+from .model_form_uq import evaluate_discrepancy_for_model_form
+from .model_form_uncertainty import ModelFormAuthorityError, promote_model_form_interval
+from .model_form_trust import (
+    ModelFormQualificationRegistry,
+    PRODUCTION_MODEL_FORM_QUALIFICATIONS,
+)
+from ..uq.model_form import ModelFormPolicy, ModelFormScope
+from ..uq.model_form.qualification import ProducerQualification
 from .capabilities import CapabilityDeclaration, CapabilityRegistry, build_case, declared_path
 from .contract import ScientificClaim
 from .errors import CapabilityExecutionRefused, CapabilityInputError, ClaimLayerError
@@ -53,6 +77,9 @@ from .parameter_uq import (
 )
 
 _REPORT_TAG = "crafty.claims.variant_report/1"
+_EMPIRICAL_CONTEXT_TAG = "crafty.claims.empirical_context/1"
+_MODEL_SCOPE_TAG = "crafty.claims.model_scope/1"
+_MODEL_DATASET_TAG = "crafty.claims.model_form_dataset/1"
 
 
 class UncertaintyStudyError(ClaimLayerError):
@@ -105,6 +132,41 @@ def study_spec(declaration: CapabilityDeclaration, claim: ScientificClaim, chann
             "input_uncertainty": spec.to_dict(),
             "content": TOLERANCE_CONTENT,
             "confidence": TOLERANCE_CONFIDENCE,
+        }, None
+    if channel is UncertaintyChannel.ALEATORIC:
+        return {
+            "kind": "aleatoric_replicates",
+            "content": TOLERANCE_CONTENT,
+            "confidence": TOLERANCE_CONFIDENCE,
+            "admission": (
+                "independent same-population, exact-context physical replicates "
+                "with calibrated MEASUREMENT intervals"
+            ),
+        }, None
+    if channel is UncertaintyChannel.MODEL_FORM:
+        policy = ModelFormPolicy()
+        return {
+            "kind": "model_form_empirical",
+            "discrepancy_protocol": {
+                "protocol_id": "claim_model_form_empirical_v1",
+                "minimum_calibration_groups": policy.minimum_calibration_groups,
+                "minimum_validation_groups": policy.minimum_validation_groups,
+                "require_all_holdout_compatible": True,
+            },
+            "promotion_policy": {
+                "minimum_calibration_groups": policy.minimum_calibration_groups,
+                "minimum_validation_groups": policy.minimum_validation_groups,
+                "minimum_calibration_observations": policy.minimum_calibration_observations,
+                "minimum_validation_observations": policy.minimum_validation_observations,
+                "minimum_holdout_coverage": policy.minimum_holdout_coverage,
+                "coverage_factor": policy.coverage_factor,
+                "estimator": policy.estimator.value,
+                "empirical_quantile": policy.empirical_quantile,
+            },
+            "admission": (
+                "curated DatasetObservation records with explicit calibration/"
+                "validation split plus an independently reviewed producer qualification"
+            ),
         }, None
     return None, f"no study in this runtime quantifies {channel.value}"  # pragma: no cover - declaration-gated
 
@@ -262,76 +324,825 @@ def _propagation(plan, registry, claim, report, spec) -> tuple[dict[str, Any], U
     return record, uncertainty
 
 
-def run_uncertainty_studies(plan: Any, registry: CapabilityRegistry, claim: ScientificClaim, report: Any) -> StudyOutcome:
-    """Run every study the plan names, in step order. Only quantified records are filed under a channel."""
+
+def _recordable(value: Any) -> Any:
+    if isinstance(value, Quantity):
+        return value.to_dict()
+    if isinstance(value, Mapping):
+        return {str(k): _recordable(v) for k, v in sorted(value.items())}
+    if isinstance(value, (list, tuple)):
+        return [_recordable(v) for v in value]
+    return value
+
+
+def _context_digest(inputs: Mapping[str, Any]) -> str:
+    return tagged_digest(
+        _EMPIRICAL_CONTEXT_TAG,
+        {str(k): _recordable(v) for k, v in sorted(inputs.items())},
+    )
+
+
+def _aleatoric(
+    plan,
+    report,
+    spec,
+    observations: Sequence[DatasetObservation],
+    empirical_trust: EmpiricalObservationRegistry,
+) -> tuple[dict[str, Any], Uncertainty]:
+    qoi = plan.content["qoi"]
+    nominal = report.values[qoi["name"]].to(qoi["units"])
+    replicates: list[ReplicateObservation] = []
+    source_observations: list[DatasetObservation] = []
+    for item in observations:
+        if (
+            item.quantity != qoi["name"]
+            or not item.ready_for_measurement_evidence
+            or empirical_trust.pin_for(item) is None
+        ):
+            continue
+        if (
+            item.uncertainty.kind is not UncertaintyKind.INTERVAL
+            or UncertaintySource(item.uncertainty.source_kind)
+            is not UncertaintySource.MEASUREMENT
+        ):
+            continue
+        source_observations.append(item)
+        replicates.append(
+            ReplicateObservation(
+                observation_id=item.observation_id,
+                population_ref=f"{item.manifest_digest}:{item.dataset_version}",
+                context_digest=_context_digest(item.conditions),
+                independence_group=item.independence_group,
+                quantity=item.quantity,
+                value=item.value,
+                measurement_uncertainty=item.uncertainty,
+            )
+        )
+
+    if not replicates:
+        problem = (
+            "no eligible same-context physical replicate observations were supplied"
+        )
+        uncertainty = Uncertainty.unknown(
+            f"aleatoric uncertainty not quantified: {problem}"
+        )
+        estimate = None
+    else:
+        estimate = estimate_aleatoric_replicates(
+            replicates,
+            nominal=nominal,
+            content=float(spec["content"]),
+            required_confidence=float(spec["confidence"]),
+        )
+        uncertainty = estimate.to_uncertainty()
+        problem = estimate.failure_reason
+
+    record = {
+        "channel": UncertaintyChannel.ALEATORIC.value,
+        "kind": "aleatoric_replicates",
+        "spec": spec,
+        "source_observations": [item.to_dict() for item in source_observations],
+        "empirical_trust_registry_digest": empirical_trust.digest,
+        "replicates": [item.to_dict() for item in replicates],
+        "estimate": None if estimate is None else estimate.to_dict(),
+        "problem": problem,
+        "uncertainty": uncertainty.to_dict(),
+    }
+    return record, uncertainty
+
+
+def _model_policy(spec: Mapping[str, Any]) -> ModelFormPolicy:
+    raw = dict(spec["promotion_policy"])
+    return ModelFormPolicy(
+        minimum_calibration_groups=raw["minimum_calibration_groups"],
+        minimum_validation_groups=raw["minimum_validation_groups"],
+        minimum_calibration_observations=raw["minimum_calibration_observations"],
+        minimum_validation_observations=raw["minimum_validation_observations"],
+        minimum_holdout_coverage=raw["minimum_holdout_coverage"],
+        coverage_factor=raw["coverage_factor"],
+        estimator=raw["estimator"],
+        empirical_quantile=raw["empirical_quantile"],
+    )
+
+
+def _discrepancy_protocol(spec: Mapping[str, Any]) -> DiscrepancyProtocol:
+    raw = dict(spec["discrepancy_protocol"])
+    return DiscrepancyProtocol(
+        protocol_id=raw["protocol_id"],
+        minimum_calibration_groups=raw["minimum_calibration_groups"],
+        minimum_validation_groups=raw["minimum_validation_groups"],
+        require_all_holdout_compatible=raw["require_all_holdout_compatible"],
+    )
+
+
+def _model_form(
+    plan,
+    registry,
+    claim,
+    report,
+    spec,
+    observations: Sequence[DatasetObservation],
+    qualification: ProducerQualification | None,
+    qualification_trust: ModelFormQualificationRegistry,
+    empirical_trust: EmpiricalObservationRegistry,
+) -> tuple[dict[str, Any], Uncertainty]:
+    declaration = registry.get(plan.capability_id)
+    qoi = plan.content["qoi"]
+    produced = declaration.produced(qoi["name"])
+    base = run_inputs_for(claim, declaration)
+    eligible = tuple(
+        item
+        for item in observations
+        if (
+            item.quantity == qoi["name"]
+            and item.ready_for_measurement_evidence
+            and empirical_trust.pin_for(item) is not None
+        )
+    )
+    pairs: list[PairedObservation] = []
+    runs: list[VariantRun] = []
+    problems: list[str] = []
+
+    for index, item in enumerate(eligible):
+        inputs = {**base, **dict(item.conditions)}
+        variant = run_variant(
+            plan,
+            registry,
+            inputs,
+            f"{plan.run_id}~model_form~{index}",
+        )
+        runs.append(variant)
+        if not variant.usable or variant.report is None or variant.value is None:
+            problems.append(
+                f"{item.observation_id}: prediction run is unusable ({variant.problem})"
+            )
+            continue
+        predicted = Quantity(variant.value, qoi["units"])
+        prediction_u: list[Uncertainty] = []
+        carried = variant.report.uncertainty.get(qoi["name"])
+        if (
+            carried is not None
+            and carried.is_quantified
+            and carried.kind is UncertaintyKind.INTERVAL
+            and UncertaintySource(carried.source_kind)
+            in (UncertaintySource.NUMERICAL, UncertaintySource.PARAMETER)
+        ):
+            prediction_u.append(carried)
+        measurement = item.to_measurement_record()
+        pairs.append(
+            PairedObservation(
+                observation_id=item.observation_id,
+                independence_group=item.independence_group,
+                split=item.split,
+                quantity=item.quantity,
+                observed=item.value,
+                predicted=predicted,
+                measurement_uncertainty=item.uncertainty,
+                prediction_uncertainties=tuple(prediction_u),
+                context_digest=_context_digest(inputs),
+                measurement_digest=measurement.digest,
+            )
+        )
+
+    scope = None
+    discrepancy = None
+    attempt = None
+    problem: str | None = None
+    uncertainty: Uncertainty
+    if not eligible:
+        problem = "no eligible curated model/data observations were supplied"
+    elif problems:
+        problem = "; ".join(problems)
+    elif not pairs:
+        problem = "no usable paired model/data observations were produced"
+    else:
+        model_id = (
+            produced.model_id
+            if produced is not None and produced.model_id is not None
+            else declaration.models[0].model_id
+        )
+        model_use = declaration.model(model_id)
+        if model_use is None:
+            problem = f"no declared model record for produced quantity {qoi['name']!r}"
+        else:
+            model_fingerprint = tagged_digest(_MODEL_SCOPE_TAG, model_use.to_dict())
+            operating_digest = tagged_digest(
+                _EMPIRICAL_CONTEXT_TAG,
+                sorted(pair.context_digest for pair in pairs),
+            )
+            dataset_digest = tagged_digest(
+                _MODEL_DATASET_TAG,
+                [item.to_dict() for item in sorted(eligible, key=lambda o: o.observation_id)],
+            )
+            scope = ModelFormScope(
+                model_id=model_id,
+                model_fingerprint=model_fingerprint,
+                operating_context_digest=operating_digest,
+                evidence_dataset_digest=dataset_digest,
+                quantity=qoi["name"],
+                units=qoi["units"],
+            )
+            discrepancy = estimate_model_form_discrepancy(
+                pairs, _discrepancy_protocol(spec)
+            )
+            attempt = evaluate_discrepancy_for_model_form(
+                discrepancy,
+                scope=scope,
+                policy=_model_policy(spec),
+            )
+            if qualification is None:
+                problem = (
+                    "no independently reviewed model-form producer qualification "
+                    "was supplied; held-out discrepancy evidence is not authority "
+                    "to promote itself"
+                )
+            elif qualification_trust.pin_for(qualification) is None:
+                problem = (
+                    "the supplied model-form producer qualification is not pinned "
+                    "by the active trust registry; a caller-created qualification "
+                    "cannot promote its own discrepancy estimate"
+                )
+            else:
+                try:
+                    uncertainty = promote_model_form_interval(
+                        attempt.estimate,
+                        qualification,
+                        report.values[qoi["name"]].to(qoi["units"]),
+                        target_scope=scope,
+                        policy=_model_policy(spec),
+                    )
+                except ModelFormAuthorityError as exc:
+                    problem = f"model-form promotion refused: {exc}"
+
+    if problem is not None:
+        uncertainty = Uncertainty.unknown(
+            f"model-form uncertainty not quantified: {problem}"
+        )
+
+    record = {
+        "channel": UncertaintyChannel.MODEL_FORM.value,
+        "kind": "model_form_empirical",
+        "spec": spec,
+        "source_observations": [item.to_dict() for item in eligible],
+        "empirical_trust_registry_digest": empirical_trust.digest,
+        "runs": [item.to_dict() for item in runs],
+        "pairs": [item.to_dict() for item in pairs],
+        "scope": None if scope is None else scope.to_dict(),
+        "qualification": (
+            None if qualification is None else qualification.to_dict()
+        ),
+        "qualification_digest": (
+            None if qualification is None else qualification.digest
+        ),
+        "qualification_trust_registry_digest": qualification_trust.digest,
+        "qualification_trusted": (
+            False
+            if qualification is None
+            else qualification_trust.pin_for(qualification) is not None
+        ),
+        "discrepancy": None if discrepancy is None else discrepancy.to_dict(),
+        "model_form_estimate": (
+            None
+            if attempt is None
+            else {
+                "status": attempt.estimate.status.value,
+                "half_width": attempt.estimate.half_width,
+                "empirical_holdout_coverage":
+                    attempt.estimate.empirical_holdout_coverage,
+                "reason": attempt.estimate.reason,
+                "promotion_allowed": attempt.promotion.decision.value == "promotable",
+                "promotion_reasons": list(attempt.promotion.reasons),
+            }
+        ),
+        "problem": problem,
+        "uncertainty": uncertainty.to_dict(),
+    }
+    return record, uncertainty
+
+
+def run_uncertainty_studies(
+    plan: Any,
+    registry: CapabilityRegistry,
+    claim: ScientificClaim,
+    report: Any,
+    *,
+    empirical_observations: Sequence[DatasetObservation] = (),
+    model_form_qualification: ProducerQualification | None = None,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
+    ),
+) -> StudyOutcome:
+    """Run every planned UQ study; missing empirical evidence stays explicit UNKNOWN."""
     records = []
     channels: dict[UncertaintyChannel, Uncertainty] = {}
+    empirical_observations = tuple(empirical_observations)
+    if any(not isinstance(item, DatasetObservation) for item in empirical_observations):
+        raise UncertaintyStudyError(
+            "empirical_observations must contain DatasetObservation records"
+        )
+    if (
+        model_form_qualification is not None
+        and not isinstance(model_form_qualification, ProducerQualification)
+    ):
+        raise UncertaintyStudyError(
+            "model_form_qualification must be ProducerQualification"
+        )
     for channel, spec in planned_studies(plan):
-        if spec["kind"] == "refinement":
+        kind = spec["kind"]
+        if kind == "refinement":
             record, uncertainty = _refinement(plan, registry, claim, report, spec)
-        else:
+        elif kind == "propagation":
             record, uncertainty = _propagation(plan, registry, claim, report, spec)
+        elif kind == "aleatoric_replicates":
+            record, uncertainty = _aleatoric(
+                plan,
+                report,
+                spec,
+                empirical_observations,
+                empirical_observation_trust,
+            )
+        elif kind == "model_form_empirical":
+            record, uncertainty = _model_form(
+                plan,
+                registry,
+                claim,
+                report,
+                spec,
+                empirical_observations,
+                model_form_qualification,
+                model_form_qualification_trust,
+                empirical_observation_trust,
+            )
+        else:  # pragma: no cover - study_spec is the closed producer
+            raise UncertaintyStudyError(f"unsupported planned study kind {kind!r}")
         records.append(record)
         if uncertainty.is_quantified:
             channels[channel] = uncertainty
     return StudyOutcome(tuple(records), channels)
 
 
-def verify_study_records(records: Any, plan: Any, report: Any) -> StudyOutcome:
-    """Re-derive every recorded estimate and channel record; refuse any record that does not re-derive."""
+def verify_study_records(
+    records: Any,
+    plan: Any,
+    report: Any,
+    *,
+    registry: CapabilityRegistry | None = None,
+    claim: ScientificClaim | None = None,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
+    ),
+) -> StudyOutcome:
+    """Re-derive every stored UQ record without re-running numerical variants."""
     expected = planned_studies(plan)
     if not isinstance(records, list) or len(records) != len(expected):
-        raise UncertaintyStudyError("the recorded studies are not the studies the plan names")
+        raise UncertaintyStudyError(
+            "the recorded studies are not the studies the plan names"
+        )
     qoi = plan.content["qoi"]
     reported = float(report.values[qoi["name"]].to(qoi["units"]).magnitude)
-    out, channels = [], {}
+    out: list[dict[str, Any]] = []
+    channels: dict[UncertaintyChannel, Uncertainty] = {}
+
     for record, (channel, spec) in zip(records, expected):
-        if record.get("channel") != channel.value or canonical_json(record.get("spec")) != canonical_json(spec):
-            raise UncertaintyStudyError(f"the {channel.value} study record is not the planned study")
-        try:
-            if spec["kind"] == "refinement":
-                estimate = estimate_from_dict(record["estimate"])
-                values = [lv.value for lv in estimate.levels]
-                names = [f"{plan.run_id}~numerical~{k}" for k in range(len(spec["ladder"]))]
+        if (
+            record.get("channel") != channel.value
+            or canonical_json(record.get("spec")) != canonical_json(spec)
+        ):
+            raise UncertaintyStudyError(
+                f"the {channel.value} study record is not the planned study"
+            )
+        kind = spec["kind"]
+
+        if kind in ("refinement", "propagation"):
+            try:
+                if kind == "refinement":
+                    estimate = estimate_from_dict(record["estimate"])
+                    values = [lv.value for lv in estimate.levels]
+                    names = [
+                        f"{plan.run_id}~numerical~{k}"
+                        for k in range(len(spec["ladder"]))
+                    ]
+                else:
+                    estimate = parameter_estimate_from_dict(record["estimate"])
+                    if not math.isclose(
+                        estimate.nominal, reported, rel_tol=0.0, abs_tol=0.0
+                    ):
+                        raise UncertaintyStudyError(
+                            "the propagation's nominal is not the reported value"
+                        )
+                    values = [r.value for r in estimate.runs]
+                    names = [
+                        f"{plan.run_id}~parameter~{i}"
+                        for i in range(len(estimate.runs))
+                    ]
+                    draws = draw_samples(
+                        InputUncertainty.from_dict(spec["input_uncertainty"]),
+                        plan.content["core_digest"],
+                    )
+                    if [
+                        canonical_json(
+                            {k: v.to_dict() for k, v in sorted(d.items())}
+                        )
+                        for d in draws
+                    ] != [
+                        canonical_json(
+                            {k: v.to_dict() for k, v in sorted(r.inputs.items())}
+                        )
+                        for r in estimate.runs
+                    ]:
+                        raise UncertaintyStudyError(
+                            "the propagated inputs are not the plan's seeded draws"
+                        )
+            except (KeyError, TypeError) as exc:
+                raise UncertaintyStudyError(
+                    f"the {channel.value} study record is not readable: {exc}"
+                ) from exc
+            except ClaimLayerError as exc:
+                raise UncertaintyStudyError(str(exc)) from exc
+
+            runs = record.get("runs", [])
+            if [r.get("run_id") for r in runs] != names:
+                raise UncertaintyStudyError(
+                    f"the {channel.value} study's runs are not the planned variant runs"
+                )
+            for r, v in zip(runs, values):
+                if r.get("value") != v:
+                    raise UncertaintyStudyError(
+                        f"run {r.get('run_id')} records a value its estimate does not carry"
+                    )
+            if kind == "refinement":
+                problem = None
+                unusable = [
+                    (k, r) for k, r in enumerate(runs) if not r.get("usable")
+                ]
+                if unusable:
+                    problem = (
+                        f"refinement level {unusable[0][0]} is not usable: "
+                        f"{unusable[0][1].get('problem')}"
+                    )
+                elif not math.isclose(
+                    runs[0]["value"], reported, rel_tol=1e-12, abs_tol=0.0
+                ):
+                    problem = (
+                        f"level 0 ({runs[0]['value']!r}) does not reproduce "
+                        f"the reported value ({reported!r}); the study is not "
+                        "about the reported run"
+                    )
+                uncertainty = (
+                    estimate.to_uncertainty()
+                    if problem is None
+                    else Uncertainty.unknown(
+                        f"numerical uncertainty not quantified: {problem}"
+                    )
+                )
             else:
-                estimate = parameter_estimate_from_dict(record["estimate"])
-                if not math.isclose(estimate.nominal, reported, rel_tol=0.0, abs_tol=0.0):
-                    raise UncertaintyStudyError("the propagation's nominal is not the reported value")
-                values = [r.value for r in estimate.runs]
-                names = [f"{plan.run_id}~parameter~{i}" for i in range(len(estimate.runs))]
-                draws = draw_samples(InputUncertainty.from_dict(spec["input_uncertainty"]), plan.content["core_digest"])
-                if [canonical_json({k: v.to_dict() for k, v in sorted(d.items())}) for d in draws] != [
-                    canonical_json({k: v.to_dict() for k, v in sorted(r.inputs.items())}) for r in estimate.runs
+                problem = None
+                if [bool(r.get("usable")) for r in runs] != [
+                    p.usable for p in estimate.runs
                 ]:
-                    raise UncertaintyStudyError("the propagated inputs are not the plan's seeded draws")
-        except (KeyError, TypeError) as exc:
-            raise UncertaintyStudyError(f"the {channel.value} study record is not readable: {exc}") from exc
-        except ClaimLayerError as exc:
-            raise UncertaintyStudyError(str(exc)) from exc
-        runs = record.get("runs", [])
-        if [r.get("run_id") for r in runs] != names:
-            raise UncertaintyStudyError(f"the {channel.value} study's runs are not the planned variant runs")
-        for r, v in zip(runs, values):
-            if r.get("value") != v:
-                raise UncertaintyStudyError(f"run {r.get('run_id')} records a value its estimate does not carry")
-        if spec["kind"] == "refinement":
+                    raise UncertaintyStudyError(
+                        "a propagated run's usability does not match its estimate"
+                    )
+                uncertainty = estimate.to_uncertainty()
+
+            if (
+                record.get("problem") != problem
+                or canonical_json(record.get("uncertainty"))
+                != canonical_json(uncertainty.to_dict())
+            ):
+                raise UncertaintyStudyError(
+                    f"the {channel.value} study's result does not re-derive from its runs"
+                )
+            out.append(dict(record))
+            if uncertainty.is_quantified:
+                channels[channel] = uncertainty
+            continue
+
+        if kind == "aleatoric_replicates":
+            source = tuple(
+                DatasetObservation.from_dict(item)
+                for item in record.get("source_observations", ())
+            )
+            if record.get("empirical_trust_registry_digest") != empirical_observation_trust.digest:
+                raise UncertaintyStudyError(
+                    "the aleatoric study was judged under another empirical trust registry"
+                )
+            if any(empirical_observation_trust.pin_for(item) is None for item in source):
+                raise UncertaintyStudyError(
+                    "an aleatoric source observation is not pinned by the active empirical trust registry"
+                )
+            expected_replicates = []
+            for item in source:
+                if (
+                    item.quantity != qoi["name"]
+                    or not item.ready_for_measurement_evidence
+                    or item.uncertainty.kind is not UncertaintyKind.INTERVAL
+                    or UncertaintySource(item.uncertainty.source_kind)
+                    is not UncertaintySource.MEASUREMENT
+                ):
+                    raise UncertaintyStudyError(
+                        "an aleatoric source observation no longer meets replicate admission"
+                    )
+                expected_replicates.append(
+                    ReplicateObservation(
+                        observation_id=item.observation_id,
+                        population_ref=(
+                            f"{item.manifest_digest}:{item.dataset_version}"
+                        ),
+                        context_digest=_context_digest(item.conditions),
+                        independence_group=item.independence_group,
+                        quantity=item.quantity,
+                        value=item.value,
+                        measurement_uncertainty=item.uncertainty,
+                    )
+                )
+            if canonical_json(record.get("replicates", [])) != canonical_json(
+                [item.to_dict() for item in expected_replicates]
+            ):
+                raise UncertaintyStudyError(
+                    "the aleatoric replicate records do not derive from their source observations"
+                )
+            if not expected_replicates:
+                problem = (
+                    "no eligible same-context physical replicate observations were supplied"
+                )
+                uncertainty = Uncertainty.unknown(
+                    f"aleatoric uncertainty not quantified: {problem}"
+                )
+                estimate_dict = None
+            else:
+                estimate = estimate_aleatoric_replicates(
+                    expected_replicates,
+                    nominal=report.values[qoi["name"]].to(qoi["units"]),
+                    content=float(spec["content"]),
+                    required_confidence=float(spec["confidence"]),
+                )
+                problem = estimate.failure_reason
+                uncertainty = estimate.to_uncertainty()
+                estimate_dict = estimate.to_dict()
+            if (
+                record.get("estimate") != estimate_dict
+                or record.get("problem") != problem
+                or canonical_json(record.get("uncertainty"))
+                != canonical_json(uncertainty.to_dict())
+            ):
+                raise UncertaintyStudyError(
+                    "the aleatoric estimate does not re-derive from its physical replicates"
+                )
+            out.append(dict(record))
+            if uncertainty.is_quantified:
+                channels[channel] = uncertainty
+            continue
+
+        if kind == "model_form_empirical":
+            if registry is None or claim is None:
+                raise UncertaintyStudyError(
+                    "model-form replay requires the capability registry and claim"
+                )
+            source = tuple(
+                DatasetObservation.from_dict(item)
+                for item in record.get("source_observations", ())
+            )
+            if record.get("empirical_trust_registry_digest") != empirical_observation_trust.digest:
+                raise UncertaintyStudyError(
+                    "the model-form study was judged under another empirical trust registry"
+                )
+            if any(empirical_observation_trust.pin_for(item) is None for item in source):
+                raise UncertaintyStudyError(
+                    "a model-form source observation is not pinned by the active empirical trust registry"
+                )
+            runs = list(record.get("runs", ()))
+            pairs = tuple(
+                PairedObservation.from_dict(item)
+                for item in record.get("pairs", ())
+            )
+            if len(runs) != len(source):
+                raise UncertaintyStudyError(
+                    "model-form runs do not cover every admitted source observation"
+                )
+            expected_run_ids = [
+                f"{plan.run_id}~model_form~{i}" for i in range(len(source))
+            ]
+            if [item.get("run_id") for item in runs] != expected_run_ids:
+                raise UncertaintyStudyError(
+                    "model-form variant run identities do not match the planned study"
+                )
+
+            declaration = registry.get(plan.capability_id)
+            base = run_inputs_for(claim, declaration)
+            usable_ids = []
+            run_problems = []
+            for item, run_record in zip(source, runs):
+                if (
+                    item.quantity != qoi["name"]
+                    or not item.ready_for_measurement_evidence
+                ):
+                    raise UncertaintyStudyError(
+                        "a stored model-form observation no longer satisfies admission"
+                    )
+                expected_context = _context_digest(
+                    {**base, **dict(item.conditions)}
+                )
+                if run_record.get("usable"):
+                    usable_ids.append(item.observation_id)
+                else:
+                    run_problems.append(
+                        f"{item.observation_id}: prediction run is unusable "
+                        f"({run_record.get('problem')})"
+                    )
+                matching = [
+                    pair for pair in pairs
+                    if pair.observation_id == item.observation_id
+                ]
+                if run_record.get("usable"):
+                    if len(matching) != 1:
+                        raise UncertaintyStudyError(
+                            "each usable model-form run must have one paired observation"
+                        )
+                    pair = matching[0]
+                    if pair.context_digest != expected_context:
+                        raise UncertaintyStudyError(
+                            "a model-form pair's operating context digest was edited"
+                        )
+                    if pair.independence_group != item.independence_group:
+                        raise UncertaintyStudyError(
+                            "a model-form pair changed its independence group"
+                        )
+                    if pair.split is not item.split:
+                        raise UncertaintyStudyError(
+                            "a model-form pair changed its calibration/validation split"
+                        )
+                    if pair.observed != item.value:
+                        raise UncertaintyStudyError(
+                            "a model-form pair changed its observed value"
+                        )
+                    if pair.measurement_uncertainty != item.uncertainty:
+                        raise UncertaintyStudyError(
+                            "a model-form pair changed measurement uncertainty"
+                        )
+                    if pair.measurement_digest != item.to_measurement_record().digest:
+                        raise UncertaintyStudyError(
+                            "a model-form pair changed its measurement identity"
+                        )
+                    predicted = pair.predicted.to(qoi["units"]).magnitude
+                    if run_record.get("value") != predicted:
+                        raise UncertaintyStudyError(
+                            "a model-form pair's prediction does not match its variant run"
+                        )
+                elif matching:
+                    raise UncertaintyStudyError(
+                        "an unusable model-form run cannot contribute a residual pair"
+                    )
+
+            if sorted(pair.observation_id for pair in pairs) != sorted(usable_ids):
+                raise UncertaintyStudyError(
+                    "model-form pairs are not exactly the usable observation set"
+                )
+
+            scope = None
+            discrepancy = None
+            attempt = None
             problem = None
-            unusable = [(k, r) for k, r in enumerate(runs) if not r.get("usable")]
-            if unusable:
-                problem = f"refinement level {unusable[0][0]} is not usable: {unusable[0][1].get('problem')}"
-            elif not math.isclose(runs[0]["value"], reported, rel_tol=1e-12, abs_tol=0.0):
-                problem = f"level 0 ({runs[0]['value']!r}) does not reproduce the reported value ({reported!r}); the study is not about the reported run"
-            uncertainty = estimate.to_uncertainty() if problem is None else Uncertainty.unknown(f"numerical uncertainty not quantified: {problem}")
-        else:
-            problem = None
-            if [bool(r.get("usable")) for r in runs] != [p.usable for p in estimate.runs]:
-                raise UncertaintyStudyError("a propagated run's usability does not match its estimate")
-            uncertainty = estimate.to_uncertainty()
-        if record.get("problem") != problem or canonical_json(record.get("uncertainty")) != canonical_json(uncertainty.to_dict()):
-            raise UncertaintyStudyError(f"the {channel.value} study's result does not re-derive from its runs")
-        out.append(dict(record))
-        if uncertainty.is_quantified:
-            channels[channel] = uncertainty
+            if not source:
+                problem = "no eligible curated model/data observations were supplied"
+            elif run_problems:
+                problem = "; ".join(run_problems)
+            elif not pairs:
+                problem = "no usable paired model/data observations were produced"
+            else:
+                produced = declaration.produced(qoi["name"])
+                model_id = (
+                    produced.model_id
+                    if produced is not None and produced.model_id is not None
+                    else declaration.models[0].model_id
+                )
+                model_use = declaration.model(model_id)
+                if model_use is None:
+                    problem = (
+                        f"no declared model record for produced quantity {qoi['name']!r}"
+                    )
+                else:
+                    scope = ModelFormScope(
+                        model_id=model_id,
+                        model_fingerprint=tagged_digest(
+                            _MODEL_SCOPE_TAG, model_use.to_dict()
+                        ),
+                        operating_context_digest=tagged_digest(
+                            _EMPIRICAL_CONTEXT_TAG,
+                            sorted(pair.context_digest for pair in pairs),
+                        ),
+                        evidence_dataset_digest=tagged_digest(
+                            _MODEL_DATASET_TAG,
+                            [
+                                item.to_dict()
+                                for item in sorted(
+                                    source, key=lambda o: o.observation_id
+                                )
+                            ],
+                        ),
+                        quantity=qoi["name"],
+                        units=qoi["units"],
+                    )
+                    discrepancy = estimate_model_form_discrepancy(
+                        pairs, _discrepancy_protocol(spec)
+                    )
+                    attempt = evaluate_discrepancy_for_model_form(
+                        discrepancy,
+                        scope=scope,
+                        policy=_model_policy(spec),
+                    )
+                    raw_qualification = record.get("qualification")
+                    qualification = (
+                        None
+                        if raw_qualification is None
+                        else ProducerQualification.from_dict(raw_qualification)
+                    )
+                    if qualification is None:
+                        problem = (
+                            "no independently reviewed model-form producer "
+                            "qualification was supplied; held-out discrepancy "
+                            "evidence is not authority to promote itself"
+                        )
+                    elif model_form_qualification_trust.pin_for(qualification) is None:
+                        problem = (
+                            "the supplied model-form producer qualification is "
+                            "not pinned by the active trust registry; a caller-"
+                            "created qualification cannot promote its own "
+                            "discrepancy estimate"
+                        )
+                    else:
+                        try:
+                            uncertainty = promote_model_form_interval(
+                                attempt.estimate,
+                                qualification,
+                                report.values[qoi["name"]].to(qoi["units"]),
+                                target_scope=scope,
+                                policy=_model_policy(spec),
+                            )
+                        except ModelFormAuthorityError as exc:
+                            problem = f"model-form promotion refused: {exc}"
+
+            if problem is not None:
+                uncertainty = Uncertainty.unknown(
+                    f"model-form uncertainty not quantified: {problem}"
+                )
+
+            expected_summary = (
+                None
+                if attempt is None
+                else {
+                    "status": attempt.estimate.status.value,
+                    "half_width": attempt.estimate.half_width,
+                    "empirical_holdout_coverage":
+                        attempt.estimate.empirical_holdout_coverage,
+                    "reason": attempt.estimate.reason,
+                    "promotion_allowed":
+                        attempt.promotion.decision.value == "promotable",
+                    "promotion_reasons": list(attempt.promotion.reasons),
+                }
+            )
+            expected_qualification_digest = (
+                None if qualification is None else qualification.digest
+            )
+            expected_trusted = (
+                False
+                if qualification is None
+                else model_form_qualification_trust.pin_for(qualification)
+                is not None
+            )
+            if (
+                record.get("qualification_digest") != expected_qualification_digest
+                or record.get("qualification_trust_registry_digest")
+                != model_form_qualification_trust.digest
+                or bool(record.get("qualification_trusted")) != expected_trusted
+                or canonical_json(record.get("scope"))
+                != canonical_json(None if scope is None else scope.to_dict())
+                or canonical_json(record.get("discrepancy"))
+                != canonical_json(
+                    None if discrepancy is None else discrepancy.to_dict()
+                )
+                or canonical_json(record.get("model_form_estimate"))
+                != canonical_json(expected_summary)
+                or record.get("problem") != problem
+                or canonical_json(record.get("uncertainty"))
+                != canonical_json(uncertainty.to_dict())
+            ):
+                raise UncertaintyStudyError(
+                    "the model-form UQ record does not re-derive from its held-out evidence"
+                )
+            out.append(dict(record))
+            if uncertainty.is_quantified:
+                channels[channel] = uncertainty
+            continue
+
+        raise UncertaintyStudyError(f"unsupported recorded study kind {kind!r}")
+
     return StudyOutcome(tuple(out), channels)
 
 

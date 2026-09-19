@@ -26,6 +26,7 @@ from .external_evidence import MeasurementRecord
 
 MEASUREMENT_DATASET_SCHEMA = schema_string("claim_measurement_dataset_manifest")
 _DATASET_TAG = "crafty.claims.measurement_dataset/1"
+_OBSERVATION_TAG = "crafty.claims.dataset_observation/1"
 
 
 class MeasurementDatasetError(ClaimContractError):
@@ -233,6 +234,51 @@ class DatasetObservation:
             "missing_context": list(self.missing_context),
             "ready_for_measurement_evidence": self.ready_for_measurement_evidence,
         }
+
+    @property
+    def digest(self) -> str:
+        """Stable identity of this interpreted empirical observation."""
+        return tagged_digest(_OBSERVATION_TAG, self.to_dict())
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "DatasetObservation":
+        if not isinstance(payload, Mapping):
+            raise MeasurementDatasetError("dataset observation must be an object")
+        required = {
+            "manifest_digest", "observation_id", "independence_group", "split",
+            "quantity", "value", "conditions", "uncertainty", "calibration_ref",
+            "provenance_ref", "dataset_version", "observed_at", "missing_context",
+            "ready_for_measurement_evidence",
+        }
+        if set(payload) != required:
+            raise MeasurementDatasetError(
+                f"dataset observation shape mismatch: "
+                f"missing={sorted(required-set(payload))}, "
+                f"extra={sorted(set(payload)-required)}"
+            )
+        item = cls(
+            manifest_digest=payload["manifest_digest"],
+            observation_id=payload["observation_id"],
+            independence_group=payload["independence_group"],
+            split=DatasetSplit(payload["split"]),
+            quantity=payload["quantity"],
+            value=Quantity.from_dict(payload["value"]),
+            conditions={
+                path: Quantity.from_dict(value)
+                for path, value in dict(payload["conditions"]).items()
+            },
+            uncertainty=Uncertainty.from_dict(payload["uncertainty"]),
+            calibration_ref=payload["calibration_ref"],
+            provenance_ref=payload["provenance_ref"],
+            dataset_version=payload["dataset_version"],
+            observed_at=payload["observed_at"],
+            missing_context=tuple(payload["missing_context"]),
+        )
+        if bool(payload["ready_for_measurement_evidence"]) != item.ready_for_measurement_evidence:
+            raise MeasurementDatasetError(
+                "dataset observation's derived readiness flag does not match its contents"
+            )
+        return item
 
 
 def required_physical_context(declaration: CapabilityDeclaration) -> tuple[str, ...]:

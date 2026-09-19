@@ -328,6 +328,20 @@ SCIENTIFIC_ROUTE_DECLARATIONS = MappingProxyType({
         "threshold_gate_id": "kinetics.cstr.verification_gate",
         "tolerance_key": "tolerance_rel_tol",
     }),
+    "kinetics.cstr.independent:LSODA": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INDEPENDENT_LSODA_ROUTE_DEPENDENCIES",
+        "solver_id": "kinetics.cstr.odepack_lsoda_independent",
+        "dependency_digest": "e77972dcd6839d6babca16f616cb178fd698f0749659c00dc1b7e24d6cd3db13",
+        "identities": MappingProxyType({
+            "problem_declaration": ("py:engcore.domains.kinetics.cstr.problem:ReactorRun",),
+            "preprocessing": ("py:engcore.domains.kinetics.cstr.independent_solver:independent_parameters",),
+            "numerical_method": ("ext:odepack:lsoda",),
+            "implementation": ("py:engcore.domains.kinetics.cstr.independent_solver:IndependentLSODASolver",),
+            "backend": ("py:scipy.integrate:odeint",),
+        }),
+        "threshold_gate_id": "kinetics.cstr.verification_gate",
+        "tolerance_key": "tolerance_rel_tol",
+    }),
 })
 
 assert _ROUTE_ATTRIBUTE == "SCIENTIFIC_ROUTE_DECLARATIONS", (

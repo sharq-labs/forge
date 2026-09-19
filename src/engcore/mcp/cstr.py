@@ -49,6 +49,10 @@ from ..domains.kinetics.cstr.realization import (
     CSTR_REALIZATION,
     CSTR_TRANSIENT_SCIENCE,
 )
+from ..domains.kinetics.cstr.independent_solver import (
+    SOLVER_ID as INDEPENDENT_SOLVER_ID,
+    SOLVER_VERSION as INDEPENDENT_SOLVER_VERSION,
+)
 from ..scientific.results.validation import ValidationLevel
 from ..scientific.units.quantity import Quantity
 from ..sria.uncertainty import UncertaintyChannel
@@ -138,7 +142,9 @@ def run_cstr_case(case: Mapping[str, Any], *, run_id: str) -> CapabilityRun:
             "declared tolerance-ladder/analytic-reference verification gate. "
             "The BDF-vs-Radau arm is retained as corroboration and earns no "
             "cross-solver level because the implementations share the RHS, "
-            "Jacobian and SciPy infrastructure."
+            "Jacobian and SciPy infrastructure. A second pinned ODEPACK/LSODA "
+            "route separately translates the equations and may earn "
+            "CROSS_SOLVER_VALIDATED only through execution-bound Core consensus."
         ),
     )
 
@@ -256,7 +262,7 @@ def cstr_capability() -> CapabilityDeclaration:
 
     return CapabilityDeclaration(
         capability_id=CSTR_CAPABILITY_ID,
-        version="1",
+        version="2",
         domain="kinetics",
         summary=(
             "Transient non-isothermal first-order CSTR with Arrhenius kinetics, "
@@ -284,6 +290,11 @@ def cstr_capability() -> CapabilityDeclaration:
                 SOLVER_VERSION,
                 ("core:ode", "kinetics:cstr_nonisothermal_transient"),
             ),
+            SolverUse(
+                INDEPENDENT_SOLVER_ID,
+                INDEPENDENT_SOLVER_VERSION,
+                ("core:ode", "kinetics:cstr_nonisothermal_transient"),
+            ),
         ),
         claim_shapes=frozenset({ClaimKind.THRESHOLD, ClaimKind.TOLERANCE_BAND}),
         attainable_levels=(
@@ -305,14 +316,27 @@ def cstr_capability() -> CapabilityDeclaration:
                 route_id="kinetics.cstr.adiabatic_reaction_free_invariant",
                 condition="the adiabatic trajectory reproduces the exact reaction-free invariant",
             ),
+            AttainableLevel(
+                ValidationLevel.CROSS_SOLVER_VALIDATED,
+                check_name="independent_solver_agreement",
+                route_id="kinetics.cstr.independent:LSODA",
+                condition=(
+                    "the tolerance-independent production solve agrees with the "
+                    "pinned separately translated ODEPACK/LSODA implementation "
+                    "on every required quantity"
+                ),
+            ),
         ),
         uncertainty=UncertaintyCapability(
             quantified={},
             basis=(
-                "The production gate verifies tolerance independence but does not "
-                "turn that verification residual into an uncertainty interval. "
-                "Parameter, aleatoric and model-form channels remain explicit UNKNOWN "
-                "until their dedicated study producers are attached."
+                "The empirical ALEATORIC and MODEL_FORM study engines are implemented "
+                "and fail closed, but no qualifying measured CSTR dataset is curated in "
+                "the repository and no repository-pinned independent model-form producer "
+                "qualification exists. The production declaration therefore keeps every "
+                "CSTR uncertainty channel UNKNOWN. The tolerance ladder and independent "
+                "LSODA consensus are verification evidence, not scientific uncertainty, "
+                "and are deliberately not relabelled as UQ."
             ),
         ),
         routes=(
@@ -321,6 +345,17 @@ def cstr_capability() -> CapabilityDeclaration:
                 kind=RouteKind.PRIMARY_SIMULATION,
                 pinned_route="kinetics.cstr.integration:BDF",
                 description="production implicit BDF integration",
+            ),
+            RouteDeclaration(
+                route_id="kinetics.cstr.independent:LSODA",
+                kind=RouteKind.SOLVER_ROUTE,
+                pinned_route="kinetics.cstr.independent:LSODA",
+                check_name="independent_solver_agreement",
+                description=(
+                    "separately translated CSTR equations through scipy.integrate."
+                    "odeint/ODEPACK LSODA; independent preprocessing, implementation, "
+                    "numerical method and backend"
+                ),
             ),
             RouteDeclaration(
                 route_id="kinetics.cstr.integration:Radau",

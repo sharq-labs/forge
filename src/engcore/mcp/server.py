@@ -75,13 +75,14 @@ __all__ = [
     "assess_scientific_claim",
     "build_server",
     "describe_capabilities",
+    "describe_empirical_uq",
     "main",
     "run_battery",
     "run_electrothermal",
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.7.0"
+SERVER_VERSION = "0.8.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -163,12 +164,12 @@ _REPAIR: Mapping[type, str] = {
 #: The same three questions, answered for each (verdict, evidence basis) pair (R-04, core re-audit
 #: 2026-09-16). ``_VERDICT_GUIDANCE`` above is the VALIDATED reading and is what
 #: ``describe_capabilities`` has always listed per verdict; it is left byte-identical. What the audit
-#: found is that an agent reading ``means`` on a SUPPORTED report was told "nothing in this report
-#: argues against relying on the result" when the only evidence attained was that the DECLARED MODEL
-#: WAS SOLVED CORRECTLY -- and every SUPPORTED verdict either MCP tool can return today is exactly
-#: that, because the trusted oracle registry is empty and the only cross-solver check has its level
-#: withheld on purpose. The word stays SUPPORTED; the sentence beside it now says which kind of
-#: evidence it rests on.
+#: found is that an agent reading ``means`` on a SUPPORTED report could be told
+#: more than its attained evidence basis justified. Some capabilities now carry benchmark
+#: or independently implemented solver evidence and others remain verification-only, so the
+#: response must render the basis actually attained on this run rather than make a server-wide
+#: assumption. The word stays SUPPORTED; the sentence beside it says which kind of evidence
+#: this particular report rests on.
 _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
     (CredibilityVerdict.SUPPORTED, "VALIDATED"): {
         "means": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["means"]
@@ -938,9 +939,119 @@ def describe_external_evidence() -> dict[str, Any]:
     }
 
 
+def describe_empirical_uq() -> dict[str, Any]:
+    """Describe the empirical-UQ admission, available data and trust blockers."""
+    from ..claims.aleatoric_uq import estimate_aleatoric_replicates
+    from ..claims.empirical_uq_trust import (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS,
+        PRODUCTION_EMPIRICAL_RECORDS,
+    )
+    from ..claims.model_form_trust import PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    from ..claims.parameter_uq import (
+        TOLERANCE_CONFIDENCE,
+        TOLERANCE_CONTENT,
+        minimum_samples,
+    )
+
+    by_context: dict[tuple[str, str], set[str]] = {}
+    for item in PRODUCTION_EMPIRICAL_RECORDS:
+        context = (
+            str(item.conditions.get("load.state_of_charge")),
+            str(item.conditions.get("load.cell_temperature")),
+        )
+        by_context.setdefault(context, set()).add(item.independence_group)
+    max_replicates = max((len(groups) for groups in by_context.values()), default=0)
+    required_replicates = minimum_samples(
+        TOLERANCE_CONTENT, TOLERANCE_CONFIDENCE
+    )
+    split_counts = {
+        "calibration": sum(
+            item.split.value == "calibration"
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ),
+        "validation": sum(
+            item.split.value == "validation"
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ),
+    }
+
+    return {
+        "empirical_observation_registry_digest":
+            PRODUCTION_EMPIRICAL_OBSERVATIONS.digest,
+        "empirical_observation_pin_count":
+            len(PRODUCTION_EMPIRICAL_OBSERVATIONS.pins),
+        "empirical_records": [
+            {
+                "observation_id": item.observation_id,
+                "digest": item.digest,
+                "split": item.split.value,
+                "independence_group": item.independence_group,
+                "quantity": item.quantity,
+                "conditions": {
+                    name: value.to_dict()
+                    for name, value in item.conditions.items()
+                },
+                "uncertainty": item.uncertainty.to_dict(),
+            }
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ],
+        "aleatoric": {
+            "engine": estimate_aleatoric_replicates.__name__,
+            "source_record": "claim DatasetObservation",
+            "target_content": TOLERANCE_CONTENT,
+            "target_confidence": TOLERANCE_CONFIDENCE,
+            "required_independent_replicates_per_exact_context":
+                required_replicates,
+            "maximum_current_pinned_replicates_per_exact_context":
+                max_replicates,
+            "production_ready": max_replicates >= required_replicates,
+            "blocker": (
+                None
+                if max_replicates >= required_replicates
+                else (
+                    f"only {max_replicates} exact-context independent physical "
+                    f"replicates are pinned; {required_replicates} are required "
+                    "for the declared two-sided 95/95 Wilks interval"
+                )
+            ),
+            "missing_evidence_semantics": "UNKNOWN, never zero",
+        },
+        "model_form": {
+            "source_record": "claim DatasetObservation",
+            "split_counts": split_counts,
+            "independence_groups": sorted(
+                {item.independence_group for item in PRODUCTION_EMPIRICAL_RECORDS}
+            ),
+            "production_qualification_registry_digest":
+                PRODUCTION_MODEL_FORM_QUALIFICATIONS.digest,
+            "production_qualification_pin_count":
+                len(PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins),
+            "production_ready":
+                bool(PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins),
+            "blocker": (
+                None
+                if PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins
+                else (
+                    "curated calibration/validation observations now exist, but "
+                    "no independently reviewed model-form producer qualification "
+                    "is repository-pinned; discrepancy evidence cannot authorize "
+                    "its own promotion"
+                )
+            ),
+            "missing_evidence_semantics": "UNKNOWN, never zero",
+        },
+        "notice": (
+            "Empirical study engines are implemented and replay-verifiable. "
+            "Production capability declarations advertise a channel as quantified "
+            "only after its evidence/trust prerequisites are actually satisfied."
+        ),
+    }
+
 def assess_scientific_claim(
     claim: dict[str, Any],
     external: list[dict[str, Any]] | None = None,
+    empirical_observations: list[dict[str, Any]] | None = None,
+    model_form_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Generic claim assessment: route, plan, execute, add offered curated evidence and assure.
 
@@ -948,6 +1059,12 @@ def assess_scientific_claim(
     by :func:`describe_external_evidence`.  They are never trusted by being
     passed: the production trust registry and the ordinary applicability/
     uncertainty gates decide their standing.
+
+    ``empirical_observations`` accepts serialized DatasetObservation records
+    for ALEATORIC and MODEL_FORM studies. ``model_form_qualification`` may
+    carry a ProducerQualification, but it can authorize promotion only when its
+    content digest is pinned by the repository-owned production qualification
+    registry. Missing empirical evidence stays UNKNOWN.
 
     Every expected outcome -- a malformed claim, a missing input, an
     unsupported capability, an insufficient verdict -- is returned as a
@@ -958,6 +1075,8 @@ def assess_scientific_claim(
         PRODUCTION_EXTERNAL_REGISTRY,
         read_external_record,
     )
+    from ..claims.measurement_dataset import DatasetObservation
+    from ..uq.model_form.qualification import ProducerQualification
     from .capabilities import production_registry
 
     offered = []
@@ -965,10 +1084,22 @@ def assess_scientific_claim(
         raw = item.get("record", item) if isinstance(item, dict) else item
         offered.append(read_external_record(raw))
 
+    empirical = tuple(
+        DatasetObservation.from_dict(item)
+        for item in (empirical_observations or ())
+    )
+    qualification = (
+        None
+        if model_form_qualification is None
+        else ProducerQualification.from_dict(model_form_qualification)
+    )
+
     return assess(
         claim,
         production_registry(),
         external=tuple(offered),
+        empirical_observations=empirical,
+        model_form_qualification=qualification,
         trust=PRODUCTION_EXTERNAL_REGISTRY,
     ).to_dict()
 
@@ -1022,13 +1153,25 @@ def build_server() -> MCPServer:
         ),
     )
     server.add_tool(
+        describe_empirical_uq,
+        name="describe_empirical_uq",
+        title="Describe empirical uncertainty requirements",
+        description=(
+            "Describe the fail-closed admission rules for ALEATORIC and "
+            "MODEL_FORM uncertainty, including the production model-form "
+            "qualification trust-registry identity and current pin count."
+        ),
+    )
+    server.add_tool(
         assess_scientific_claim,
         name="assess_scientific_claim",
         title="Route, run and assess a structured scientific claim",
         description=_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION + (
             "\n\nOptional external records may be supplied from "
-            "describe_external_evidence; passing a record never bypasses its "
-            "trust, applicability or uncertainty checks."
+            "describe_external_evidence; empirical DatasetObservation records "
+            "may be supplied for ALEATORIC/MODEL_FORM studies. Call "
+            "describe_empirical_uq for admission and trust requirements. Passing "
+            "a record never bypasses trust, applicability or uncertainty checks."
         ),
     )
     _audit_tools(server)
