@@ -19,32 +19,14 @@
     "data.Capacity"
   ],
   "value_columns": {
-    "terminal_voltage": {
-      "column": "data.Voltage_measured",
-      "unit": "volt"
-    },
-    "battery_temperature": {
-      "column": "data.Temperature_measured",
-      "unit": "degC"
-    },
-    "discharge_capacity": {
-      "column": "data.Capacity",
-      "unit": "ampere_hour"
-    }
+    "terminal_voltage": {"column": "data.Voltage_measured", "unit": "volt"},
+    "battery_temperature": {"column": "data.Temperature_measured", "unit": "degC"},
+    "discharge_capacity": {"column": "data.Capacity", "unit": "ampere_hour"}
   },
   "condition_columns": {
-    "load.cell_temperature": {
-      "column": "data.Temperature_measured",
-      "unit": "degC"
-    },
-    "thermal.ambient_temperature": {
-      "column": "cycle.ambient_temperature",
-      "unit": "degC"
-    },
-    "load.discharge_current": {
-      "column": "data.Current_measured",
-      "unit": "ampere"
-    }
+    "load.discharge_current": {"column": "data.Current_measured", "unit": "ampere"},
+    "load.cell_temperature": {"column": "data.Temperature_measured", "unit": "degC"},
+    "thermal.ambient_temperature": {"column": "cycle.ambient_temperature", "unit": "degC"}
   },
   "independence_unit": "cell_id",
   "measurement_uncertainty_declared": false,
