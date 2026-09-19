@@ -422,6 +422,265 @@
         "selection"
       ],
       "invariant": "a domain pack whose runtime artifacts differ from its declared manifest is refused before activation"
+    },
+    {
+      "id": "equation-ir-addition-dimension-mismatch",
+      "nodeid": "tests/scientific/equations/test_dimensions.py::test_addition_rejects_incompatible_dimensions",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "addition and subtraction cannot combine incompatible physical dimensions"
+    },
+    {
+      "id": "equation-ir-transcendental-dimensionless",
+      "nodeid": "tests/scientific/equations/test_dimensions.py::test_dimensionless_functions_reject_dimensional_arguments",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "transcendental functions cannot accept a dimensional argument"
+    },
+    {
+      "id": "equation-ir-law-symbol-authority",
+      "nodeid": "tests/scientific/equations/test_law.py::test_law_rejects_undeclared_symbol",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "a scientific law cannot reference a symbol whose unit contract was never declared"
+    },
+    {
+      "id": "equation-ir-binding-dimension",
+      "nodeid": "tests/scientific/equations/test_law.py::test_law_rejects_wrong_binding_dimension",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "runtime bindings cannot change a law symbol's physical dimension"
+    },
+    {
+      "id": "equation-ir-no-code-execution",
+      "nodeid": "tests/scientific/equations/test_adversarial.py::test_expression_payload_is_data_not_python_code",
+      "tags": [
+        "equation_ir",
+        "compiler"
+      ],
+      "invariant": "equation payload text is data and never an executable expression"
+    },
+    {
+      "id": "equation-ir-law-reference-binding",
+      "nodeid": "tests/scientific/equations/test_reference.py::test_law_reference_rejects_changed_contract_under_same_id",
+      "tags": [
+        "equation_ir",
+        "provenance",
+        "replay"
+      ],
+      "invariant": "replay/provenance cannot resolve one law id to changed law content"
+    },
+    {
+      "id": "validation-core-failed-stage",
+      "nodeid": "tests/scientific/validation_core/test_report.py::test_accepted_report_cannot_hide_failed_stage",
+      "tags": [
+        "verdict",
+        "vnv"
+      ],
+      "invariant": "accepted validation cannot conceal a failed stage"
+    },
+    {
+      "id": "replay-core-environment-drift",
+      "nodeid": "tests/scientific/replay_core/test_verify.py::test_environment_drift_refuses_replay_verification",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "replay refuses runtime environment drift"
+    },
+    {
+      "id": "evidence-graph-direct-conflict",
+      "nodeid": "tests/credibility/evidence_graph/test_conflict.py::test_support_and_contradict_same_edge_is_conflict",
+      "tags": [
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "same directed evidence relation cannot simultaneously support and contradict without conflict"
+    },
+    {
+      "id": "uq-budget-correlation-identity",
+      "nodeid": "tests/uq/budget/test_correlation.py::test_unknown_correlation_component_is_refused",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "uncertainty correlations must reference declared budget components"
+    },
+    {
+      "id": "verification-independence-gate",
+      "nodeid": "tests/scientific/verification/test_adjudication.py::test_agreement_without_independence_is_not_verified",
+      "tags": [
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "agreement without independence is not scientific verification"
+    },
+    {
+      "id": "orchestration-budget-gate",
+      "nodeid": "tests/execution/orchestration/test_retry.py::test_failed_attempt_retries_only_inside_budget",
+      "tags": [
+        "vnv",
+        "replay"
+      ],
+      "invariant": "simulation retry cannot exceed declared execution budget"
+    },
+    {
+      "id": "certification-required-gates",
+      "nodeid": "tests/scientific/certification_core/test_verify.py::test_missing_required_gate_refuses_certification",
+      "tags": [
+        "vnv",
+        "policy",
+        "provenance"
+      ],
+      "invariant": "scientific certification cannot omit profile-required gates"
+    },
+    {
+      "id": "assurance-three-layer-gate",
+      "nodeid": "tests/scientific/assurance_flow/test_decision.py::test_trust_requires_all_three_layers_green",
+      "tags": [
+        "verdict",
+        "vnv",
+        "evidence",
+        "replay"
+      ],
+      "invariant": "trusted assurance requires validation verification and certification to be green"
+    },
+    {
+      "id": "new-core-mutation-guards",
+      "nodeid": "tests/core_extensions/test_new_core_mutations.py::test_new_core_guard_mutations_are_killed",
+      "tags": [
+        "vnv",
+        "replay",
+        "evidence",
+        "uq",
+        "policy",
+        "diagnostics"
+      ],
+      "invariant": "new validation/replay/evidence/UQ/certification/retry guards are load-bearing under targeted mutants"
+    },
+    {
+      "id": "new-core-adversarial-records",
+      "nodeid": "tests/core_extensions/test_new_core_adversarial.py::test_validated_model_form_cannot_have_zero_half_width",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "validated model-form uncertainty cannot be represented by a zero-width interval"
+    },
+    {
+      "id": "model-form-physical-unit-binding",
+      "nodeid": "tests/uq/model_form/test_study.py::test_compatible_units_are_normalized_before_residual_comparison",
+      "tags": [
+        "uq",
+        "vnv"
+      ],
+      "invariant": "model-form residuals retain physical quantity/unit identity and normalize compatible units before comparison"
+    },
+    {
+      "id": "model-form-authority-qualification",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_independent_review_identity",
+      "tags": [
+        "uq",
+        "policy",
+        "evidence"
+      ],
+      "invariant": "model-form promotion requires distinct producer validation and review evidence identities"
+    },
+    {
+      "id": "model-form-claims-authority-boundary",
+      "nodeid": "tests/claims/test_model_form_uncertainty.py::test_unvalidated_model_form_cannot_cross_authority_boundary",
+      "tags": [
+        "uq",
+        "verdict",
+        "evidence"
+      ],
+      "invariant": "unvalidated model-form estimates cannot become authoritative MODEL_FORM uncertainty"
+    },
+    {
+      "id": "verification-serialization-rederivation",
+      "nodeid": "tests/scientific/verification/test_serialization.py::test_verification_round_trip_rederives_decision",
+      "tags": [
+        "vnv",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "serialized verification decisions are recomputed and forged/stale decisions are refused"
+    },
+    {
+      "id": "certification-serialization-rederivation",
+      "nodeid": "tests/scientific/certification_core/test_serialization.py::test_certification_round_trip_rederives_verification",
+      "tags": [
+        "vnv",
+        "policy",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized certification state cannot override recomputed gate verification"
+    },
+    {
+      "id": "uq-budget-serialization-rederivation",
+      "nodeid": "tests/uq/budget/test_serialization.py::test_budget_round_trip_recomputes_aggregate",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "serialized uncertainty totals are recomputed from components and correlations"
+    },
+    {
+      "id": "assurance-replay-binding",
+      "nodeid": "tests/credibility/test_replay_binding.py::test_assurance_bundle_becomes_content_addressed_replay_artifact",
+      "tags": [
+        "replay",
+        "provenance",
+        "evidence"
+      ],
+      "invariant": "composite assurance evidence is content-addressed before replay binding"
+    },
+    {
+      "id": "verification-route-bound-independence",
+      "nodeid": "tests/scientific/verification/test_route_bound_independence.py::test_every_agreeing_route_requires_its_own_independence_evidence",
+      "tags": [
+        "vnv",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "each verification comparison requires independence evidence bound to that exact route pair"
+    },
+    {
+      "id": "uq-correlation-psd",
+      "nodeid": "tests/uq/budget/test_psd.py::test_non_psd_correlation_matrix_is_refused_even_when_each_pair_is_in_range",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "pairwise-valid correlations cannot form an invalid non-PSD uncertainty correlation matrix"
+    },
+    {
+      "id": "evidence-lineage-cycle",
+      "nodeid": "tests/credibility/evidence_graph/test_lineage.py::test_derived_from_cycle_is_refused",
+      "tags": [
+        "evidence",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "evidence derivation/supersession lineage must remain acyclic"
+    },
+    {
+      "id": "simulation-orchestration-runner",
+      "nodeid": "tests/execution/orchestration/test_runner.py::test_runner_falls_back_deterministically_until_converged",
+      "tags": [
+        "vnv",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "simulation orchestration executes the declared deterministic fallback order and stops on convergence"
     }
   ]
 }

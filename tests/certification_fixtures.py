@@ -37,8 +37,10 @@ from tools.certification.recertification_scope import (
 
 FORMAL_IDS = ("G1a", "G1b", "G2a", "G2b", "G3a", "G3b", "G4a", "G4b")
 TRUST_IDS = ("TRUST-X1", "TRUST-X2")
+V4_IDS = ("V4X1", "V4X2", "V4X3", "V4X4", "V4X5", "V4X6", "V4X7", "V4X8")
 POLICY = Policy(expected_formal_population=len(FORMAL_IDS), shard_count=4,
-                expected_trust_population=len(TRUST_IDS))
+                expected_trust_population=len(TRUST_IDS),
+                expected_v4_population=len(V4_IDS), v4_shard_count=4)
 RUN = dict(repository="owner/repo", run_id=4242, run_attempt=1, pull_request=7)
 
 CONTROL_REASONS = (
@@ -94,6 +96,16 @@ def make_repo(root: pathlib.Path) -> str:
         f"    ({mid!r}, 'src/engcore/scientific/record.py', 'VALUE = 1', 'VALUE = 2', 'mutation {mid}'),\n"
         for mid in FORMAL_IDS
     ) + ")\n")
+    write(root, "tests/mutation_population_v4.py", (
+        "NOT_MUTATED = 'NOT_MUTATED'\n"
+        "POPULATION_V4 = (\n"
+        + "".join(
+            f"    ({mid!r}, 'src/engcore/scientific/record.py', 'VALUE = 1', 'VALUE = 2', "
+            f"'tests/test_v4.py::test_guard', 'KILLED', 'synthetic guard', (), 'synthetic'),\n"
+            for mid in V4_IDS
+        )
+        + ")\n"
+    ))
     write(root, "benchmarks/trust_hardening/audit/mutations.py", (
         "from __future__ import annotations\n\n"
         "from dataclasses import dataclass\n\n\n"
@@ -135,6 +147,12 @@ def harness_log(
     lines.append("")
     done, total = tally if tally is not None else (killed, len(ids))
     lines.append(f"{done}/{total} mutations were killed by the guard they name.")
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def v4_log(ids: Sequence[str], *, control: str = "GREEN") -> bytes:
+    lines = [f"{mid} test_guard -> KILLED | synthetic" for mid in ids]
+    lines.append(f"CONTROL (unmutated, 1 test(s)) {control} | synthetic")
     return ("\n".join(lines) + "\n").encode("utf-8")
 
 
@@ -194,6 +212,19 @@ def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path) -> 
         record = mutation_population.build_shard_record(
             root, index=index, count=POLICY.shard_count, ids_text=ids_text,
             log_bytes=log, source_commit=source, expected_count=POLICY.expected_formal_population,
+        )
+        put(gate, "record", json.dumps(record).encode())
+    v4_population = mutation_population.v4_population(root)
+    for index in range(POLICY.v4_shard_count):
+        gate = f"v4_mutations_{index}"
+        ids = v4_population.shard(index, POLICY.v4_shard_count)
+        ids_text = "\n".join(ids) + "\n"
+        log = v4_log(ids)
+        put(gate, "ids", ids_text.encode())
+        put(gate, "log", log)
+        record = mutation_population.build_v4_shard_record(
+            root, index=index, count=POLICY.v4_shard_count, ids_text=ids_text,
+            log_bytes=log, source_commit=source, expected_count=POLICY.expected_v4_population,
         )
         put(gate, "record", json.dumps(record).encode())
     put("trust_mutations", "result", json.dumps(trust_result()).encode())

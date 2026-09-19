@@ -65,7 +65,7 @@ from tools.certification.recertification_scope import (
     match,
 )
 
-ASSURANCE_SCHEMA = "forge.core_hardening_assurance/4"
+ASSURANCE_SCHEMA = "forge.core_hardening_assurance/5"
 ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
@@ -129,6 +129,15 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         })
         for index in range(formal.SHARD_COUNT)
     },
+    **{
+        f"v4_mutations_{index}": (f"core-v4-mutations-{index}", {
+            "ids": f"v4-mutation-ids-{index}.txt",
+            "log": f"v4-mutations-{index}.log",
+            "record": f"v4-mutations-{index}.json",
+            "gate": f"gate-v4_mutations_{index}.json",
+        })
+        for index in range(formal.V4_SHARD_COUNT)
+    },
     "trust_mutations": ("core-trust-mutations", {
         "result": "trust-mutations.json",
         "gate": "gate-trust_mutations.json",
@@ -188,6 +197,8 @@ class Policy:
     expected_formal_population: int = formal.EXPECTED_FORMAL_POPULATION
     shard_count: int = formal.SHARD_COUNT
     expected_trust_population: int = EXPECTED_TRUST_POPULATION
+    expected_v4_population: int = formal.EXPECTED_V4_POPULATION
+    v4_shard_count: int = formal.V4_SHARD_COUNT
 
 
 @dataclass(frozen=True)
@@ -403,6 +414,27 @@ def build_assurance(
         source_commit=source_commit,
     )
 
+    # V4 false-confidence mutations: every declared verdict is re-derived from transcripts.
+    v4_population = formal.v4_population(root)
+    v4_records: list[dict[str, Any]] = []
+    v4_logs: dict[int, bytes] = {}
+    for index in range(policy.v4_shard_count):
+        gate = f"v4_mutations_{index}"
+        record_blob, log_blob, ids_blob = (evidence.read(gate, k) for k in ("record", "log", "ids"))
+        if record_blob is None or log_blob is None or ids_blob is None:
+            continue
+        record = json.loads(record_blob)
+        listed = tuple(line for line in ids_blob.decode("utf-8").splitlines() if line)
+        if listed != tuple(record.get("selected_ids") or ()):
+            problems.append(f"{gate}: its id file and its record disagree about what it ran")
+        v4_records.append(record)
+        v4_logs[index] = log_blob
+    problems += formal.v4_coverage_problems(
+        v4_population, v4_records, shard_count=policy.v4_shard_count,
+        expected_count=policy.expected_v4_population, logs=v4_logs,
+        source_commit=source_commit,
+    )
+
     # trust-hardening mutations: statuses from the result, population from the runner
     trust_blob = evidence.read("trust_mutations", "result")
     trust_ids = trust_population(root)
@@ -463,6 +495,9 @@ def build_assurance(
         "execution_model": "parallel_gates_then_certificate",
         "functional": functional,
         "formal_guard_mutations": formal.assurance_section(population, records, shard_count=policy.shard_count),
+        "v4_guard_mutations": formal.v4_assurance_section(
+            v4_population, v4_records, shard_count=policy.v4_shard_count
+        ),
         "trust_hardening_mutations": trust_section,
         "environment": {
             "schema": ENVIRONMENT_SCHEMA,
@@ -587,6 +622,31 @@ def assurance_problems(
         })
     problems += formal.coverage_problems(population, records, shard_count=policy.shard_count,
                                          expected_count=policy.expected_formal_population)
+
+    v4 = assurance.get("v4_guard_mutations") or {}
+    v4_population = formal.v4_population(root)
+    if v4.get("population_sha256") != v4_population.sha256 or list(v4.get("ids") or ()) != list(v4_population.ids):
+        problems.append("v4_guard_mutations: recorded population is not tests/mutation_population_v4.py")
+    if v4.get("definitions_sha256") != v4_population.definitions_sha256:
+        problems.append("v4_guard_mutations: mutation definitions differ from the tree")
+    if v4.get("population") != policy.expected_v4_population or v4.get("shard_count") != policy.v4_shard_count:
+        problems.append(
+            f"v4_guard_mutations: population {v4.get('population')} in {v4.get('shard_count')} shards, "
+            f"expected {policy.expected_v4_population} in {policy.v4_shard_count}"
+        )
+    v4_records = []
+    for key, shard in sorted((v4.get("shards") or {}).items()):
+        v4_records.append({
+            "schema": formal.V4_SHARD_RECORD_SCHEMA,
+            "shard_index": int(key), "shard_count": v4.get("shard_count"),
+            "population_sha256": v4.get("population_sha256"),
+            "definitions_sha256": v4.get("definitions_sha256"),
+            "population_count": v4.get("population"), **shard,
+        })
+    problems += formal.v4_coverage_problems(
+        v4_population, v4_records, shard_count=policy.v4_shard_count,
+        expected_count=policy.expected_v4_population,
+    )
 
     trust = assurance.get("trust_hardening_mutations") or {}
     ids = trust_population(root)

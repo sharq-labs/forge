@@ -40,6 +40,6 @@ def test_regression_pack_covers_every_load_bearing_category():
     required = {
         "verdict", "evidence", "vnv", "applicability", "compiler", "selection",
         "context", "uq", "policy", "external", "gaps", "challenge", "replay",
-        "provenance", "diagnostics",
+        "provenance", "diagnostics", "equation_ir",
     }
     assert required <= tags
