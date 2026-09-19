@@ -1,9 +1,10 @@
 """Held-out model/data discrepancy estimation.
 
 This is deliberately a *candidate* producer, not an authority that can satisfy a
-claim. Calibration residuals define a deterministic max-excess envelope only
-after known measurement/prediction intervals are removed conservatively.
-Independent held-out groups must then fit inside that envelope.
+claim. Calibration residuals constrain a minimum discrepancy magnitude and a
+conservative compatible bound after known measurement/prediction intervals are
+accounted for. Independent held-out groups must remain compatible with those
+predeclared calibration constraints.
 
 Passing this protocol does not prove the model is true and does not grant a
 validation level. It produces an auditable candidate for later scientific
@@ -46,7 +47,7 @@ class DiscrepancyProtocol:
     protocol_id: str
     minimum_calibration_groups: int
     minimum_validation_groups: int
-    require_all_holdout_within_envelope: bool = True
+    require_all_holdout_compatible: bool = True
 
     def __post_init__(self) -> None:
         if not str(self.protocol_id).strip():
@@ -56,9 +57,9 @@ class DiscrepancyProtocol:
             if value < 1:
                 raise ModelFormDiscrepancyError(f"{label} must be at least 1")
             object.__setattr__(self, label, value)
-        if self.require_all_holdout_within_envelope is not True:
+        if self.require_all_holdout_compatible is not True:
             raise ModelFormDiscrepancyError(
-                "this foundation supports only the fail-closed rule that every held-out group fits the calibrated envelope"
+                "this foundation supports only the fail-closed rule that every held-out group remains compatible with the calibration constraints"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -66,8 +67,8 @@ class DiscrepancyProtocol:
             "protocol_id": self.protocol_id,
             "minimum_calibration_groups": self.minimum_calibration_groups,
             "minimum_validation_groups": self.minimum_validation_groups,
-            "require_all_holdout_within_envelope": self.require_all_holdout_within_envelope,
-            "method": "max absolute residual excess after conservative interval subtraction",
+            "require_all_holdout_within_envelope": self.require_all_holdout_compatible,
+            "method": "interval-constrained residual bounds with independent-group holdout",
             "notice": "the protocol sets an acceptance rule; it is not scientific evidence",
         }
 
@@ -231,7 +232,7 @@ def _interval_half_width(
     allowed_sources: frozenset[UncertaintySource],
 ) -> tuple[float | None, str | None]:
     if uncertainty.kind is not UncertaintyKind.INTERVAL:
-        return None, "only explicit uncertainty intervals can be subtracted from a residual in this foundation"
+        return None, "only explicit uncertainty intervals can constrain a residual in this foundation"
     source = UncertaintySource(uncertainty.source_kind)
     if source not in allowed_sources:
         return None, f"uncertainty source {source.value!r} is not admissible for this side of the comparison"
