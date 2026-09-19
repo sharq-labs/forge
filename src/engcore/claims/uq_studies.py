@@ -341,14 +341,43 @@ def _context_digest(inputs: Mapping[str, Any]) -> str:
         {str(k): _recordable(v) for k, v in sorted(inputs.items())},
     )
 
+def _matches_assessed_claim_context(
+    observation: DatasetObservation,
+    claim: ScientificClaim,
+    declaration: CapabilityDeclaration,
+) -> bool:
+    """Whether every empirical operating condition equals the assessed claim."""
+    stated = run_inputs_for(claim, declaration)
+    for path, observed in observation.conditions.items():
+        if declaration.input(path) is None:
+            return False
+        claimed = stated.get(path)
+        if not isinstance(claimed, Quantity):
+            return False
+        try:
+            converted = claimed.to(observed.units)
+        except Exception:
+            return False
+        if not math.isclose(
+            float(converted.magnitude),
+            float(observed.magnitude),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        ):
+            return False
+    return True
+
 
 def _aleatoric(
     plan,
+    registry: CapabilityRegistry,
+    claim: ScientificClaim,
     report,
     spec,
     observations: Sequence[DatasetObservation],
     empirical_trust: EmpiricalObservationRegistry,
 ) -> tuple[dict[str, Any], Uncertainty]:
+    declaration = registry.get(plan.capability_id)
     qoi = plan.content["qoi"]
     nominal = report.values[qoi["name"]].to(qoi["units"])
     replicates: list[ReplicateObservation] = []
@@ -366,6 +395,8 @@ def _aleatoric(
             is not UncertaintySource.MEASUREMENT
         ):
             continue
+        if not _matches_assessed_claim_context(item, claim, declaration):
+            continue
         source_observations.append(item)
         replicates.append(
             ReplicateObservation(
@@ -381,7 +412,7 @@ def _aleatoric(
 
     if not replicates:
         problem = (
-            "no eligible same-context physical replicate observations were supplied"
+            "no eligible physical replicate observations match the assessed claim context"
         )
         uncertainty = Uncertainty.unknown(
             f"aleatoric uncertainty not quantified: {problem}"
@@ -659,6 +690,8 @@ def run_uncertainty_studies(
         elif kind == "aleatoric_replicates":
             record, uncertainty = _aleatoric(
                 plan,
+                registry,
+                claim,
                 report,
                 spec,
                 empirical_observations,
@@ -825,6 +858,11 @@ def verify_study_records(
             continue
 
         if kind == "aleatoric_replicates":
+            if registry is None or claim is None:
+                raise UncertaintyStudyError(
+                    "aleatoric replay requires the capability registry and claim"
+                )
+            declaration = registry.get(plan.capability_id)
             source = tuple(
                 DatasetObservation.from_dict(item)
                 for item in record.get("source_observations", ())
@@ -849,6 +887,10 @@ def verify_study_records(
                     raise UncertaintyStudyError(
                         "an aleatoric source observation no longer meets replicate admission"
                     )
+                if not _matches_assessed_claim_context(item, claim, declaration):
+                    raise UncertaintyStudyError(
+                        "an aleatoric source observation does not match the assessed claim context"
+                    )
                 expected_replicates.append(
                     ReplicateObservation(
                         observation_id=item.observation_id,
@@ -870,7 +912,7 @@ def verify_study_records(
                 )
             if not expected_replicates:
                 problem = (
-                    "no eligible same-context physical replicate observations were supplied"
+                    "no eligible physical replicate observations match the assessed claim context"
                 )
                 uncertainty = Uncertainty.unknown(
                     f"aleatoric uncertainty not quantified: {problem}"
