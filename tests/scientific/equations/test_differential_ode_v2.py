@@ -38,3 +38,13 @@ def test_differential_wire_kind_is_derived_not_trusted():
     payload=cooling_problem().to_dict();payload["kind"]="pde"
     with pytest.raises(InvalidScientificProblem,match="forged"):
         DifferentialProblem.from_dict(payload)
+
+
+def test_differential_problem_rejects_derivative_on_undeclared_independent_variable():
+    rate=DerivativeExpression(Symbol("T"),("x",))
+    equation=Equation(rate,Constant(Quantity(0,"kelvin / meter")))
+    with pytest.raises(InvalidScientificProblem,match="undeclared independent"):
+        DifferentialProblem(
+            "bad",(equation,),("t",),("T",),
+            {"T":"kelvin","t":"second","x":"meter"},(),
+        )

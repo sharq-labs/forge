@@ -44,3 +44,16 @@ def test_law_system_binds_assumptions_conditions_and_differential_evidence():
     )
     assert evaluation.residual.magnitude_in("kelvin / second")==pytest.approx(0)
     assert ScientificLawSystem.from_dict(law_system.to_dict()).to_dict()==law_system.to_dict()
+
+
+def test_law_system_rejects_dimensionally_invalid_machine_assumption():
+    law_system,_=system()
+    bad=CheckableAssumption(
+        "bad",
+        ExpressionConstraint(
+            "bad-dimension",Symbol("k"),RelationOperator.LESS_EQUAL,
+            Constant(Quantity(1,"kelvin")),
+        ),
+    )
+    with pytest.raises(Exception):
+        ScientificLawSystem(law_system.law,(bad,),law_system.conditions)
