@@ -292,6 +292,10 @@ class SelfHeatingStep:
     #: ``validity`` is combined from, kept because "outside its domain by the
     #: end" and "outside it from the start" are different findings.
     validity_at: Mapping[str, Mapping[str, ValidityAssessment]]
+    #: OCV produced by the same cell solve. Additive/defaulted so historical
+    #: callers constructing a step do not break; production marches always
+    #: populate it from the solver metric.
+    open_circuit_voltage: Quantity | None = None
 
     def __post_init__(self) -> None:
         missing = [i for i in ASSESSED_INSTANTS if i not in self.validity_at]
@@ -730,6 +734,7 @@ def run_self_heating_discharge(
                 final_state_of_charge=final_soc,
                 terminal_voltage=cell_solve.metrics[mdl.TERMINAL_VOLTAGE_METRIC],
                 heat_generation=heat,
+                open_circuit_voltage=cell_solve.metrics[mdl.OPEN_CIRCUIT_VOLTAGE_METRIC],
                 thermal_convergence=convergence,
                 thermal_validation=thermal_validation,
                 cell_validation=cell_solve.validation,
