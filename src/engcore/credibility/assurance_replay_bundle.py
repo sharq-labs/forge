@@ -13,6 +13,7 @@ from ..scientific.certification_core.serialization import (
 from ..scientific.equations import LawReference
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.knowledge import KnowledgeSnapshot
+from ..scientific.measurements import CalibratedMeasurementObservation
 from ..scientific.replay_core import ScientificRunManifest
 from ..scientific.results.provenance import ProvenanceRecord
 from ..scientific.serialization import require_schema, schema_string
@@ -28,7 +29,7 @@ from .assurance_manifest import (
 from .evidence_graph import EvidenceGraph
 
 PRODUCTION_ASSURANCE_BUNDLE_SCHEMA = schema_string(
-    "production_scientific_assurance_bundle"
+    "production_scientific_assurance_bundle", 2
 )
 
 
@@ -43,6 +44,7 @@ class ProductionAssuranceBundle:
     verification: VerificationRunRecord
     certification: CertificationRecord
     provenance: ProvenanceRecord
+    measurement_observations: tuple[CalibratedMeasurementObservation, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.manifest, ScientificRunManifest):
@@ -63,6 +65,7 @@ class ProductionAssuranceBundle:
             verification=self.verification,
             certification=self.certification,
             provenance=self.provenance,
+            measurement_observations=tuple(self.measurement_observations),
         )
         expected = tuple(
             sorted(
@@ -75,6 +78,7 @@ class ProductionAssuranceBundle:
                     verification=self.verification,
                     certification=self.certification,
                     provenance=self.provenance,
+                    measurement_observations=tuple(self.measurement_observations),
                 ),
                 key=lambda a: (a.kind, a.identifier, a.digest),
             )
@@ -96,6 +100,10 @@ class ProductionAssuranceBundle:
             "verification": self.verification.to_dict(),
             "certification": certification_to_dict(self.certification),
             "provenance": self.provenance.to_dict(),
+            "measurement_observations": [
+                observation.to_dict()
+                for observation in self.measurement_observations
+            ],
         }
 
     @classmethod
@@ -111,6 +119,10 @@ class ProductionAssuranceBundle:
             VerificationRunRecord.from_dict(payload["verification"]),
             certification_from_dict(payload["certification"]),
             ProvenanceRecord.from_dict(payload["provenance"]),
+            tuple(
+                CalibratedMeasurementObservation.from_dict(item)
+                for item in payload.get("measurement_observations", ())
+            ),
         )
 
 
@@ -126,4 +138,5 @@ def build_production_assurance_bundle(**kwargs: Any) -> ProductionAssuranceBundl
         kwargs["verification"],
         kwargs["certification"],
         kwargs["provenance"],
+        tuple(kwargs.get("measurement_observations", ())),
     )
