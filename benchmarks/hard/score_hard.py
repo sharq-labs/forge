@@ -46,21 +46,12 @@ from scoring import (
 # had the second one's cases silently scored against the wrong boundary.
 RUNNERS = {"electrothermal": run_electrothermal_case, "battery": run_battery_case}
 
-# A battery case is scored over the BATTERY MODELS' verdicts, not the whole
-# report's, and the reason is a finding rather than a convenience.
-#
-# `run_self_heating_discharge` accepts no applicability declaration for the
-# thermal body it marches, so the lumped model in every battery report is
-# honestly UNKNOWN and NO battery case can reach SUPPORTED -- catch rate 100 %,
-# false accept 0 %, false reject 100 %, which is the unearned catch rate this
-# benchmark's README already warns about. Scoring the whole report would
-# measure that one gap 400 times and nothing else.
-#
-# So the verdict is derived over the four battery models by the same precedence
-# `derive_verdict` uses -- a violation outranks a gap -- and the thermal gap is
-# reported separately in the README rather than swallowed. This is scoped, not
-# softened: every battery condition still has to be right.
-def _battery_scope(report):
+# Battery V1 is historical: its payloads predate thermal applicability and
+# therefore cannot exercise the complete coupled verdict.  Battery V2 carries
+# thermal.applicability and is scored over the ACTUAL whole report.  Keeping the
+# V1 helper makes old records reproducible without letting their scoped verdict
+# masquerade as the current production contract.
+def _legacy_battery_scope(report):
     statuses = {r.model_id: r.assessment.status.value for r in report.validity
                 if r.model_id.startswith("battery.")}
     if any(v == "outside_validated_domain" for v in statuses.values()):
@@ -68,6 +59,10 @@ def _battery_scope(report):
     if any(v == "unknown" for v in statuses.values()):
         return "INSUFFICIENT_EVIDENCE"
     return "SUPPORTED"
+
+
+def _battery_v2(case):
+    return case.get("benchmark_version") == 2
 BOUND={"MissingUnitError","WrongDimensionError","UnknownFieldError","MissingFieldError",
        "MalformedPayloadError","InvalidScientificProblem","ScientificValidationError"}
 files=sorted(pathlib.Path(a.cases).glob("*.json"))
@@ -171,11 +166,16 @@ def work(f):
     try:
         r=RUNNERS[system](c["payload"])
         if system=="battery":
-            actual=_battery_scope(r.report)
             reports=(r.report,)
-            # Same scope as the verdict: a battery case is answered over the
-            # battery models, so its catcher is looked for there too.
-            violated,unknown,satisfied,reasons=_condition_facts(reports,scope="battery.")
+            if _battery_v2(c):
+                # V2 closes the permanent thermal UNKNOWN and measures the
+                # exact production verdict, including the lumped thermal model.
+                actual=r.report.verdict.value.upper()
+                violated,unknown,satisfied,reasons=_condition_facts(reports)
+            else:
+                # Historical reproducibility only.
+                actual=_legacy_battery_scope(r.report)
+                violated,unknown,satisfied,reasons=_condition_facts(reports,scope="battery.")
             refused=False
         else:
             reports=r.reports
