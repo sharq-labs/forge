@@ -164,12 +164,12 @@ _REPAIR: Mapping[type, str] = {
 #: The same three questions, answered for each (verdict, evidence basis) pair (R-04, core re-audit
 #: 2026-09-16). ``_VERDICT_GUIDANCE`` above is the VALIDATED reading and is what
 #: ``describe_capabilities`` has always listed per verdict; it is left byte-identical. What the audit
-#: found is that an agent reading ``means`` on a SUPPORTED report was told "nothing in this report
-#: argues against relying on the result" when the only evidence attained was that the DECLARED MODEL
-#: WAS SOLVED CORRECTLY -- and every SUPPORTED verdict either MCP tool can return today is exactly
-#: that, because the trusted oracle registry is empty and the only cross-solver check has its level
-#: withheld on purpose. The word stays SUPPORTED; the sentence beside it now says which kind of
-#: evidence it rests on.
+#: found is that an agent reading ``means`` on a SUPPORTED report could be told
+#: more than its attained evidence basis justified. Some capabilities now carry benchmark
+#: or independently implemented solver evidence and others remain verification-only, so the
+#: response must render the basis actually attained on this run rather than make a server-wide
+#: assumption. The word stays SUPPORTED; the sentence beside it says which kind of evidence
+#: this particular report rests on.
 _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
     (CredibilityVerdict.SUPPORTED, "VALIDATED"): {
         "means": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["means"]
