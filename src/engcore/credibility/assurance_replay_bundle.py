@@ -174,14 +174,19 @@ class ProductionAssuranceBundle:
                 "production assurance bundle freshness policy shape is not canonical"
             )
         require_timestamp = raw_freshness["require_timestamp"]
+        max_age_days = raw_freshness["max_age_days"]
         if not isinstance(require_timestamp, bool):
             raise InvalidScientificProblem(
                 "production assurance bundle freshness require_timestamp must be bool"
             )
+        if not isinstance(max_age_days, Mapping):
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness max_age_days must be a mapping"
+            )
         carried_freshness = FreshnessPolicy(
             {
                 KnowledgeSourceClass(key): value
-                for key, value in dict(raw_freshness["max_age_days"]).items()
+                for key, value in dict(max_age_days).items()
             },
             require_timestamp,
         )
