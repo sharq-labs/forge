@@ -47,6 +47,16 @@ class ProductionAssuranceBundle:
     measurement_observations: tuple[CalibratedMeasurementObservation, ...] = ()
 
     def __post_init__(self) -> None:
+        observations = tuple(
+            sorted(
+                tuple(self.measurement_observations),
+                key=lambda item: (
+                    getattr(item, "observation_id", ""),
+                    getattr(item, "digest", ""),
+                ),
+            )
+        )
+        object.__setattr__(self, "measurement_observations", observations)
         if not isinstance(self.manifest, ScientificRunManifest):
             raise InvalidScientificProblem(
                 "production assurance bundle requires ScientificRunManifest"
@@ -65,7 +75,7 @@ class ProductionAssuranceBundle:
             verification=self.verification,
             certification=self.certification,
             provenance=self.provenance,
-            measurement_observations=tuple(self.measurement_observations),
+            measurement_observations=self.measurement_observations,
         )
         expected = tuple(
             sorted(
@@ -78,7 +88,7 @@ class ProductionAssuranceBundle:
                     verification=self.verification,
                     certification=self.certification,
                     provenance=self.provenance,
-                    measurement_observations=tuple(self.measurement_observations),
+                    measurement_observations=self.measurement_observations,
                 ),
                 key=lambda a: (a.kind, a.identifier, a.digest),
             )
