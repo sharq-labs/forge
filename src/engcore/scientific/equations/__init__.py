@@ -106,3 +106,6 @@ __all__ += [
     "DifferentialProblem","derivative","ordinary_derivative","partial_derivative",
     "laplacian","ScientificLawSystem",
 ]
+
+from .conservation import SymbolicBalanceTerm, SymbolicConservationBalance
+__all__ += ["SymbolicBalanceTerm", "SymbolicConservationBalance"]
