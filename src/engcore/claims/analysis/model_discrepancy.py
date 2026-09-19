@@ -35,6 +35,7 @@ class DiscrepancyEstimateStatus(str, Enum):
     INSUFFICIENT_UNCERTAINTY = "insufficient_uncertainty"
     CALIBRATED_UNVALIDATED = "calibrated_unvalidated"
     FAILED_VALIDATION = "failed_validation"
+    UNRESOLVED_BELOW_KNOWN_UNCERTAINTY = "unresolved_below_known_uncertainty"
     VALIDATED_CANDIDATE = "validated_candidate"
 
 
@@ -337,6 +338,17 @@ def estimate_model_form_discrepancy(
             quantity, units, protocol, DiscrepancyEstimateStatus.FAILED_VALIDATION,
             points, envelope, failed,
             "held-out observations exceed the envelope calibrated on independent groups",
+        )
+
+    if envelope <= 0.0:
+        return ModelFormDiscrepancyEstimate(
+            quantity, units, protocol,
+            DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY,
+            points, envelope, (),
+            (
+                "all observed residuals are covered by already-known measurement/prediction uncertainty; "
+                "that bounds unresolved model discrepancy below the current resolution but does not establish zero"
+            ),
         )
 
     return ModelFormDiscrepancyEstimate(
