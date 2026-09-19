@@ -108,6 +108,53 @@ class PairedObservation:
             raise ModelFormDiscrepancyError("prediction_uncertainties must contain only Uncertainty records")
         object.__setattr__(self, "prediction_uncertainties", predictions)
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observation_id": self.observation_id,
+            "independence_group": self.independence_group,
+            "split": self.split.value,
+            "quantity": self.quantity,
+            "observed": self.observed.to_dict(),
+            "predicted": self.predicted.to_dict(),
+            "measurement_uncertainty": self.measurement_uncertainty.to_dict(),
+            "prediction_uncertainties": [
+                item.to_dict() for item in self.prediction_uncertainties
+            ],
+            "context_digest": self.context_digest,
+            "measurement_digest": self.measurement_digest,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PairedObservation":
+        if not isinstance(payload, Mapping):
+            raise ModelFormDiscrepancyError("paired observation must be an object")
+        expected = {
+            "observation_id", "independence_group", "split", "quantity",
+            "observed", "predicted", "measurement_uncertainty",
+            "prediction_uncertainties", "context_digest", "measurement_digest",
+        }
+        if set(payload) != expected:
+            raise ModelFormDiscrepancyError(
+                "paired observation shape mismatch"
+            )
+        return cls(
+            observation_id=payload["observation_id"],
+            independence_group=payload["independence_group"],
+            split=DatasetSplit(payload["split"]),
+            quantity=payload["quantity"],
+            observed=Quantity.from_dict(payload["observed"]),
+            predicted=Quantity.from_dict(payload["predicted"]),
+            measurement_uncertainty=Uncertainty.from_dict(
+                payload["measurement_uncertainty"]
+            ),
+            prediction_uncertainties=tuple(
+                Uncertainty.from_dict(item)
+                for item in payload["prediction_uncertainties"]
+            ),
+            context_digest=payload["context_digest"],
+            measurement_digest=payload["measurement_digest"],
+        )
+
 
 @dataclass(frozen=True)
 class ResidualPoint:
