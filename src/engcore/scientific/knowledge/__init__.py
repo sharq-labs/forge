@@ -13,3 +13,18 @@ __all__=["KnowledgeSource","KnowledgeSourceClass","SourcePin","SourceStanding","
 "TrustedSourceRegistry","FreshnessPolicy","KnowledgeFreshness","KnowledgeClaim","KnowledgeKind",
 "KnowledgeSnapshot","KnowledgeAdmission","KnowledgeAdmissionStatus","admit_claim","KnowledgeConflict",
 "KnowledgeConflictStatus","compare_claims","KnowledgeIngestionReceipt","verify_ingestion_receipt"]
+
+from .query import KnowledgeQuery
+from .resolution import KnowledgeSetAssessment, KnowledgeSetStatus, assess_knowledge_set
+from .versioning import (
+    SourceSupersession, SourceVersionKey, SourceVersionRelation,
+    compare_source_versions,
+)
+from .registry import ScientificKnowledgeRegistry
+
+__all__ += [
+    "KnowledgeQuery", "KnowledgeSetAssessment", "KnowledgeSetStatus",
+    "assess_knowledge_set", "SourceVersionKey", "SourceVersionRelation",
+    "SourceSupersession", "compare_source_versions",
+    "ScientificKnowledgeRegistry",
+]
