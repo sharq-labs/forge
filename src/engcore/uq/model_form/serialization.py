@@ -12,7 +12,7 @@ def model_form_to_dict(estimate:ModelFormEstimate)->dict[str,Any]:
     return {
         "schema":MODEL_FORM_ESTIMATE_SCHEMA,
         "status":estimate.status.value,
-        "standard_uncertainty":estimate.standard_uncertainty,
+        "half_width":estimate.half_width,
         "calibration_groups":list(estimate.calibration_groups),
         "validation_groups":list(estimate.validation_groups),
         "empirical_holdout_coverage":estimate.empirical_holdout_coverage,
@@ -24,7 +24,7 @@ def model_form_from_dict(payload:Mapping[str,Any])->ModelFormEstimate:
     require_schema(payload,MODEL_FORM_ESTIMATE_SCHEMA)
     return ModelFormEstimate(
         ModelFormStatus(payload["status"]),
-        payload.get("standard_uncertainty"),
+        payload.get("half_width"),
         tuple(payload.get("calibration_groups",())),
         tuple(payload.get("validation_groups",())),
         payload.get("empirical_holdout_coverage"),

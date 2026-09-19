@@ -26,7 +26,7 @@ class ModelFormStudy:
 
 
 def _excess(observation:ModelResidualObservation)->float:
-    return max(0.0,abs(observation.residual)-observation.known_standard_uncertainty)
+    return max(0.0,abs(observation.residual)-observation.known_uncertainty_half_width)
 
 
 def evaluate_model_form_study(study:ModelFormStudy)->ModelFormEstimate:

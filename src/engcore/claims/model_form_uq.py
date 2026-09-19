@@ -41,7 +41,7 @@ def evaluate_discrepancy_for_model_form(
                 observation_id=point.observation_id,
                 independence_group=point.independence_group,
                 residual=point.residual,
-                known_standard_uncertainty=float(point.known_half_width),
+                known_uncertainty_half_width=float(point.known_half_width),
                 held_out=point.split is DatasetSplit.VALIDATION,
             )
         )

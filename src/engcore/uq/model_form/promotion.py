@@ -22,8 +22,8 @@ def assess_promotion(estimate:ModelFormEstimate,policy:ModelFormPolicy)->Promoti
     reasons=[]
     if estimate.status is not ModelFormStatus.VALIDATED:
         reasons.append(f"estimate status is {estimate.status.value}, not validated")
-    if estimate.standard_uncertainty is None or estimate.standard_uncertainty<=0:
-        reasons.append("positive model-form uncertainty was not established")
+    if estimate.half_width is None or estimate.half_width<=0:
+        reasons.append("positive model-form interval half-width was not established")
     if len(estimate.validation_groups)<policy.minimum_validation_groups:
         reasons.append("insufficient independent validation groups")
     if estimate.empirical_holdout_coverage is None or estimate.empirical_holdout_coverage<policy.minimum_holdout_coverage:

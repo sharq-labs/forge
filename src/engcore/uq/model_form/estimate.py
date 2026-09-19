@@ -16,7 +16,7 @@ class ModelFormStatus(str,Enum):
 @dataclass(frozen=True)
 class ModelFormEstimate:
     status:ModelFormStatus
-    standard_uncertainty:float|None
+    half_width:float|None
     calibration_groups:tuple[str,...]
     validation_groups:tuple[str,...]
     empirical_holdout_coverage:float|None
@@ -26,17 +26,17 @@ class ModelFormEstimate:
         object.__setattr__(self,"status",ModelFormStatus(self.status))
         object.__setattr__(self,"calibration_groups",tuple(sorted(set(self.calibration_groups))))
         object.__setattr__(self,"validation_groups",tuple(sorted(set(self.validation_groups))))
-        if self.standard_uncertainty is not None:
-            value=float(self.standard_uncertainty)
+        if self.half_width is not None:
+            value=float(self.half_width)
             if not math.isfinite(value) or value<0:
-                raise ValueError("model-form standard uncertainty must be finite and non-negative")
-            object.__setattr__(self,"standard_uncertainty",value)
+                raise ValueError("model-form interval half-width must be finite and non-negative")
+            object.__setattr__(self,"half_width",value)
         if self.empirical_holdout_coverage is not None:
             coverage=float(self.empirical_holdout_coverage)
             if coverage<0 or coverage>1:
                 raise ValueError("empirical holdout coverage must be in [0,1]")
             object.__setattr__(self,"empirical_holdout_coverage",coverage)
         if self.status is ModelFormStatus.VALIDATED and (
-            self.standard_uncertainty is None or self.empirical_holdout_coverage is None
+            self.half_width is None or self.half_width <= 0 or self.empirical_holdout_coverage is None
         ):
-            raise ValueError("validated model-form estimate requires uncertainty and holdout coverage")
+            raise ValueError("validated model-form estimate requires a positive interval half-width and holdout coverage")
