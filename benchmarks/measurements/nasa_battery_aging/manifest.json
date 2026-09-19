@@ -1,0 +1,34 @@
+{
+  "schema": "claim_measurement_dataset_manifest/1",
+  "dataset_id": "nasa.li_ion_battery_aging",
+  "title": "Li-ion Battery Aging Datasets",
+  "publisher": "NASA Ames Prognostics Center of Excellence / DASHlink",
+  "citation": "B. Saha and K. Goebel (2007), Battery Data Set, NASA Prognostics Data Repository, NASA Ames Research Center",
+  "landing_page": "https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
+  "resource_url": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip",
+  "license_url": "https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
+  "version": "2022-07-14",
+  "catalog_source_hash": "47c3dde529c2351e6fd890ab7a64c13e046d4a642c7fdea36749cd1309aa752c",
+  "columns": [
+    "cycle.type",
+    "cycle.ambient_temperature",
+    "data.Voltage_measured",
+    "data.Current_measured",
+    "data.Temperature_measured",
+    "data.Time",
+    "data.Capacity"
+  ],
+  "value_columns": {
+    "terminal_voltage": {"column": "data.Voltage_measured", "unit": "volt"},
+    "battery_temperature": {"column": "data.Temperature_measured", "unit": "degC"},
+    "discharge_capacity": {"column": "data.Capacity", "unit": "ampere_hour"}
+  },
+  "condition_columns": {
+    "load.current": {"column": "data.Current_measured", "unit": "ampere"},
+    "load.cell_temperature": {"column": "data.Temperature_measured", "unit": "degC"},
+    "thermal.ambient_temperature": {"column": "cycle.ambient_temperature", "unit": "degC"}
+  },
+  "independence_unit": "cell_id",
+  "measurement_uncertainty_declared": false,
+  "notes": "NASA describes commercially available 18650 cells measured with a voltmeter, ammeter and thermocouple suite at about 10 Hz. The catalog states License not specified and does not state per-sample calibrated sensor uncertainty. The license_url field therefore points back to the source catalog for review, not to a claimed license grant. State of charge is not a direct measurement field in this manifest and must never be invented from cycle index or voltage."
+}
