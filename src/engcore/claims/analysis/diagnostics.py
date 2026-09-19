@@ -50,6 +50,29 @@ class DiagnosticClass(str, Enum):
     UNEXPLAINED = "unexplained"
 
 
+_CAUSE_PRIORITY = {
+    DiagnosticClass.CLAIM_DEFINITION: 0,
+    DiagnosticClass.CAPABILITY: 1,
+    DiagnosticClass.EXECUTION: 2,
+    DiagnosticClass.CONTEXT: 3,
+    DiagnosticClass.APPLICABILITY: 4,
+    DiagnosticClass.VERIFICATION: 5,
+    DiagnosticClass.VALIDATION: 6,
+    DiagnosticClass.NUMERICAL_UNCERTAINTY: 7,
+    DiagnosticClass.PARAMETER_UNCERTAINTY: 7,
+    DiagnosticClass.MEASUREMENT_UNCERTAINTY: 7,
+    DiagnosticClass.MODEL_FORM: 7,
+    DiagnosticClass.EXTERNAL_EVIDENCE: 8,
+    DiagnosticClass.INDEPENDENCE: 8,
+    DiagnosticClass.DECISION_MARGIN: 9,
+    DiagnosticClass.ASSURANCE: 10,
+    DiagnosticClass.EVIDENCE_ASSEMBLY: 11,
+    DiagnosticClass.PROVENANCE: 12,
+    DiagnosticClass.MODEL_DATA_MISMATCH: 20,
+    DiagnosticClass.UNEXPLAINED: 99,
+}
+
+
 _GAP_CAUSE = {
     GapClass.MISSING_INPUT: DiagnosticClass.CLAIM_DEFINITION,
     GapClass.INPUT_INVALID: DiagnosticClass.CLAIM_DEFINITION,
@@ -448,9 +471,17 @@ class ScientificDiagnosticReport:
 
     @property
     def primary_cause(self) -> RootCauseFinding | None:
-        return next((item for item in self.root_causes if item.blocking), None) or (
-            self.root_causes[0] if self.root_causes else None
-        )
+        blocking = [item for item in self.root_causes if item.blocking]
+        if blocking:
+            return min(
+                blocking,
+                key=lambda item: (
+                    _CAUSE_PRIORITY[item.cause_class],
+                    item.target,
+                    item.source,
+                ),
+            )
+        return self.root_causes[0] if self.root_causes else None
 
     def to_dict(self) -> dict[str, Any]:
         primary = self.primary_cause
