@@ -905,17 +905,63 @@ The verdict is advisory input to an engineer of record. It is not a decision,
 not a certification, and not a claim of conformance with any standard."""
 
 
-def assess_scientific_claim(claim: dict[str, Any]) -> dict[str, Any]:
-    """Generic claim assessment: route, plan, execute and assure a structured claim.
+def describe_external_evidence() -> dict[str, Any]:
+    """Production-curated measurement/literature records and their trust identity.
+
+    A listed record is curated, not automatically applicable.  The claim
+    assessment still checks quantity, dimension, operating conditions and
+    uncertainty before the record can bear on a result.
+    """
+    from ..claims.external_evidence import (
+        PRODUCTION_EXTERNAL_RECORDS,
+        PRODUCTION_EXTERNAL_REGISTRY,
+        MeasurementRecord,
+    )
+
+    return {
+        "registry_digest": PRODUCTION_EXTERNAL_REGISTRY.digest,
+        "records": [
+            {
+                "source_class": (
+                    "measurement" if isinstance(record, MeasurementRecord) else "literature"
+                ),
+                "record_digest": record.digest,
+                "record": record.to_dict(),
+            }
+            for record in PRODUCTION_EXTERNAL_RECORDS
+        ],
+        "rule": (
+            "curation is not applicability and never awards a validation level; "
+            "pass only records that describe the subject/operating point being assessed"
+        ),
+    }
+
+
+def assess_scientific_claim(
+    claim: dict[str, Any],
+    external: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Generic claim assessment: route, plan, execute, add offered curated evidence and assure.
+
+    ``external`` accepts measurement/literature records such as those returned
+    by :func:`describe_external_evidence`.  They are never trusted by being
+    passed: the production trust registry and the ordinary applicability/
+    uncertainty gates decide their standing.
 
     Every expected outcome -- a malformed claim, a missing input, an
     unsupported capability, an insufficient verdict -- is returned as a
     record. An unexpected exception is a defect and is not caught.
     """
     from ..claims.assessment import assess_claim as assess
+    from ..claims.external_evidence import PRODUCTION_EXTERNAL_REGISTRY
     from .capabilities import production_registry
 
-    return assess(claim, production_registry()).to_dict()
+    return assess(
+        claim,
+        production_registry(),
+        external=tuple(external or ()),
+        trust=PRODUCTION_EXTERNAL_REGISTRY,
+    ).to_dict()
 
 
 def build_server() -> MCPServer:
@@ -957,10 +1003,24 @@ def build_server() -> MCPServer:
         description=_ASSESS_CLAIM_DESCRIPTION,
     )
     server.add_tool(
+        describe_external_evidence,
+        name="describe_external_evidence",
+        title="Describe curated production evidence",
+        description=(
+            "List repository-curated measurement and literature records, their "
+            "content digests and the production trust-registry identity. A listed "
+            "record is still checked for applicability when used."
+        ),
+    )
+    server.add_tool(
         assess_scientific_claim,
         name="assess_scientific_claim",
         title="Route, run and assess a structured scientific claim",
-        description=_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION,
+        description=_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION + (
+            "\n\nOptional external records may be supplied from "
+            "describe_external_evidence; passing a record never bypasses its "
+            "trust, applicability or uncertainty checks."
+        ),
     )
     _audit_tools(server)
     return server
