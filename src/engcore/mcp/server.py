@@ -942,21 +942,26 @@ def describe_external_evidence() -> dict[str, Any]:
 def describe_empirical_uq() -> dict[str, Any]:
     """Describe the empirical-UQ admission and model-form trust boundary."""
     from ..claims.model_form_trust import PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    from ..claims.empirical_uq_trust import PRODUCTION_EMPIRICAL_OBSERVATIONS
 
     return {
+        "empirical_observation_registry_digest":
+            PRODUCTION_EMPIRICAL_OBSERVATIONS.digest,
+        "empirical_observation_pin_count":
+            len(PRODUCTION_EMPIRICAL_OBSERVATIONS.pins),
         "aleatoric": {
             "source_record": "claim DatasetObservation",
             "requires": (
-                "independent physical replicates of one QOI; one exact operating "
-                "context and population; calibrated MEASUREMENT uncertainty "
-                "intervals; sufficient Wilks sample count"
+                "repository-pinned independent physical replicates of one QOI; "
+                "one exact operating context and population; calibrated "
+                "MEASUREMENT uncertainty intervals; sufficient Wilks sample count"
             ),
             "missing_evidence_semantics": "UNKNOWN, never zero",
         },
         "model_form": {
             "source_record": "claim DatasetObservation",
             "requires": (
-                "independent calibration and held-out validation groups; usable "
+                "repository-pinned independent calibration and held-out validation groups; usable "
                 "prediction runs at every observation; separated measurement/"
                 "prediction uncertainty; a producer qualification pinned by the "
                 "active model-form trust registry"
