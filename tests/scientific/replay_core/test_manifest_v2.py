@@ -78,3 +78,8 @@ def test_same_artifact_kind_and_identifier_cannot_bind_two_digests():
     )
     with pytest.raises(InvalidScientificProblem,match="duplicate artifact"):
         manifest(artifacts=duplicate)
+
+
+def test_whitespace_parent_run_id_is_refused_even_with_a_digest():
+    with pytest.raises(InvalidScientificProblem,match="non-empty"):
+        manifest(parent_run_id="   ",parent_manifest_digest="e"*64)

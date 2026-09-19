@@ -62,3 +62,14 @@ def test_environment_drift_refuses_run_replay():
     exp=expected()
     drift=actual(exp,environment=env("b"))
     assert not record(actual_manifest=drift).verification.verified
+
+
+def test_run_replay_boundary_requires_typed_manifests_expectations_and_observations():
+    exp=expected()
+    act=actual(exp)
+    with pytest.raises(InvalidScientificProblem,match="ScientificRunManifest"):
+        RunReplayRecord("not-a-manifest",act,(),())
+    with pytest.raises(InvalidScientificProblem,match="OutputExpectation"):
+        RunReplayRecord(exp,act,("not-an-expectation",),())
+    with pytest.raises(InvalidScientificProblem,match="OutputObservation"):
+        RunReplayRecord(exp,act,(),("not-an-observation",))

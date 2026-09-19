@@ -41,6 +41,8 @@ class ScientificRunManifest:
             raise InvalidScientificProblem("run manifest random_seed must be int or None")
         parent_run=None if self.parent_run_id is None else str(self.parent_run_id).strip()
         parent_digest=None if self.parent_manifest_digest is None else str(self.parent_manifest_digest).strip().lower()
+        if parent_run == "":
+            raise InvalidScientificProblem("run manifest parent_run_id must be non-empty when declared")
         if (parent_run is None)!=(parent_digest is None):
             raise InvalidScientificProblem("run manifest parent_run_id and parent_manifest_digest must be declared together")
         if parent_run==run_id:

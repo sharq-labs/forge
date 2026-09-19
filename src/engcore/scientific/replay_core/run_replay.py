@@ -53,9 +53,17 @@ class RunReplayRecord:
     observations:tuple[OutputObservation,...]
 
     def __post_init__(self)->None:
-        object.__setattr__(self,"expectations",tuple(self.expectations))
-        object.__setattr__(self,"observations",tuple(self.observations))
-        eids=[x.output_id for x in self.expectations];oids=[x.output_id for x in self.observations]
+        if not isinstance(self.expected_manifest,ScientificRunManifest) or not isinstance(self.actual_manifest,ScientificRunManifest):
+            raise InvalidScientificProblem("run replay record requires typed ScientificRunManifest records")
+        expectations=tuple(self.expectations)
+        observations=tuple(self.observations)
+        if any(not isinstance(x,OutputExpectation) for x in expectations):
+            raise InvalidScientificProblem("run replay expectations must be OutputExpectation records")
+        if any(not isinstance(x,OutputObservation) for x in observations):
+            raise InvalidScientificProblem("run replay observations must be OutputObservation records")
+        object.__setattr__(self,"expectations",expectations)
+        object.__setattr__(self,"observations",observations)
+        eids=[x.output_id for x in expectations];oids=[x.output_id for x in observations]
         if len(eids)!=len(set(eids)) or len(oids)!=len(set(oids)):
             raise InvalidScientificProblem("replay outputs contain duplicate ids")
 
