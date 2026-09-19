@@ -22,9 +22,15 @@ THE VERIFICATION GATE establishes the claims that need more than one solve:
     ANALYTICALLY_VERIFIED     the trajectory reproduces the exact reaction-free
                               invariant — available for an adiabatic reactor
                               only, where that invariant is a closed form
+    CROSS_SOLVER_VALIDATED    after tolerance independence, the production
+                              solve_ivp route agrees with the pinned separately
+                              translated ODEPACK/LSODA implementation on all
+                              required quantities and the Core verifies their
+                              dependency independence
 
-and it REPORTS, establishing nothing, whether the stationary end state agrees
-with a steady state found by an algebraic root search (see below).
+It also REPORTS, establishing nothing, whether the stationary end state agrees
+with a steady state found by an algebraic root search (see below), and keeps
+BDF-vs-Radau as same-infrastructure corroboration.
 
 THE ORDERING IS NOT DECORATIVE
 -------------------------------
