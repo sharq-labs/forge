@@ -826,6 +826,56 @@ def _unknown_battery_conditions(
     )
 
 
+def _probe_thermal_applicability(
+    *, forced: bool = False
+) -> lump.LumpedApplicabilityDeclaration:
+    """A complete thermal declaration used only to measure field unlocks."""
+    route = (
+        {"fluid_velocity": Quantity(2.0, "meter/second")}
+        if forced
+        else {"fluid_expansion_coefficient": Quantity(1.0 / 300.0, "1/kelvin")}
+    )
+    return lump.LumpedApplicabilityDeclaration(
+        characteristic_length=Quantity(0.002, "meter"),
+        volume=Quantity(2e-5, "meter**3"),
+        surface_area=Quantity(0.01, "meter**2"),
+        body_conductivity=Quantity(200.0, "watt/meter/kelvin"),
+        surface_emissivity=Quantity(0.05, "dimensionless"),
+        convection_regime=thermal_ctx.FORCED_CONVECTION if forced else thermal_ctx.NATURAL_CONVECTION,
+        conductance_excursion_bound=Quantity(60.0, "kelvin"),
+        capacity_excursion_bound=Quantity(100.0, "kelvin"),
+        melting_temperature=Quantity(900.0, "kelvin"),
+        fluid_conductivity=Quantity(0.0263, "watt/meter/kelvin"),
+        fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+        fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+        convection_length=Quantity(0.05, "meter"),
+        **route,
+    )
+
+
+def _unknown_thermal_conditions(
+    declaration: lump.LumpedApplicabilityDeclaration,
+) -> frozenset[str]:
+    """Thermal conditions still UNKNOWN when this declaration is supplied."""
+    cell = _probe_cell(_probe_limits())
+    body = bcp.thermal_body_for(
+        cell,
+        heat_capacity=Quantity(60.0, "joule/kelvin"),
+        ambient_temperature=Quantity(298.15, "kelvin"),
+        initial_temperature=Quantity(298.15, "kelvin"),
+        step_duration=Quantity(60.0, "second"),
+        applicability=declaration,
+    )
+    problem = lump.build_lumped_thermal_problem(body)
+    assessment = lump.assess_lumped_validity(
+        problem,
+        initial_temperature=body.initial_temperature,
+        ambient_temperature=body.ambient_temperature,
+        heat_input=Quantity(0.0675, "watt"),
+    )
+    return frozenset(assessment.unknown)
+
+
 def describe_battery_case() -> CaseDescription:
     """Every field this boundary accepts, as the battery models declare it.
 
@@ -837,6 +887,10 @@ def describe_battery_case() -> CaseDescription:
     limit_bindings = [b for b in _BINDINGS if b.section == LIMITS]
     load_optional = [
         b for b in _BINDINGS if b.section == LOAD and not b.is_required
+    ]
+    thermal_optional = [
+        b for b in _BINDINGS
+        if b.section == THERMAL_APPLICABILITY and not b.is_required
     ]
 
     measured = _measure_section_unlocks(
@@ -862,6 +916,33 @@ def describe_battery_case() -> CaseDescription:
             _probe_load(),
         )
     )
+
+    # Thermal applicability has two mutually exclusive convection routes.
+    # Measure both and union the conditions each field unlocks so the
+    # description remains a fact about the live thermal model rather than a
+    # hand-maintained table.
+    thermal_solo: dict[str, set[str]] = {b.key: set() for b in thermal_optional}
+    thermal_alternates: dict[str, set[str]] = {b.key: set() for b in thermal_optional}
+    thermal_groups: dict[str, set[str]] = {b.key: set() for b in thermal_optional}
+    for forced in (False, True):
+        route_measured = _measure_section_unlocks(
+            thermal_optional,
+            lambda full, drop: replace(full, **drop),
+            _unknown_thermal_conditions,
+            _probe_thermal_applicability(forced=forced),
+        )
+        for key, (unlocks, alternates, group) in route_measured.items():
+            thermal_solo[key].update(unlocks)
+            thermal_alternates[key].update(alternates)
+            thermal_groups[key].update(group)
+    measured.update({
+        key: (
+            tuple(sorted(thermal_solo[key])),
+            tuple(sorted(thermal_alternates[key])),
+            tuple(sorted(thermal_groups[key])),
+        )
+        for key in thermal_solo
+    })
 
     fields = []
     for binding in _BINDINGS:
