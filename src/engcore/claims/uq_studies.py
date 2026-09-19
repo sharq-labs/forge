@@ -29,15 +29,31 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import ValidityStatus
-from ..scientific.results.uncertainty import Uncertainty
+from ..scientific.results.uncertainty import (
+    Uncertainty,
+    UncertaintyKind,
+    UncertaintySource,
+)
+from ..scientific.units.quantity import Quantity
 from ..scientific.results.validation import ValidationOutcome
 from ..scientific.solvers.protocol import ConvergenceState
 from ..sria.uncertainty import UncertaintyChannel
 from ._records import canonical_json, tagged_digest
+from .aleatoric_uq import ReplicateObservation, estimate_aleatoric_replicates
+from .analysis.model_discrepancy import (
+    DiscrepancyProtocol,
+    PairedObservation,
+    estimate_model_form_discrepancy,
+)
+from .measurement_dataset import DatasetObservation
+from .model_form_uq import evaluate_discrepancy_for_model_form
+from .model_form_uncertainty import ModelFormAuthorityError, promote_model_form_interval
+from ..uq.model_form import ModelFormPolicy, ModelFormScope
+from ..uq.model_form.qualification import ProducerQualification
 from .capabilities import CapabilityDeclaration, CapabilityRegistry, build_case, declared_path
 from .contract import ScientificClaim
 from .errors import CapabilityExecutionRefused, CapabilityInputError, ClaimLayerError
@@ -105,6 +121,41 @@ def study_spec(declaration: CapabilityDeclaration, claim: ScientificClaim, chann
             "input_uncertainty": spec.to_dict(),
             "content": TOLERANCE_CONTENT,
             "confidence": TOLERANCE_CONFIDENCE,
+        }, None
+    if channel is UncertaintyChannel.ALEATORIC:
+        return {
+            "kind": "aleatoric_replicates",
+            "content": TOLERANCE_CONTENT,
+            "confidence": TOLERANCE_CONFIDENCE,
+            "admission": (
+                "independent same-population, exact-context physical replicates "
+                "with calibrated MEASUREMENT intervals"
+            ),
+        }, None
+    if channel is UncertaintyChannel.MODEL_FORM:
+        policy = ModelFormPolicy()
+        return {
+            "kind": "model_form_empirical",
+            "discrepancy_protocol": {
+                "protocol_id": "claim_model_form_empirical_v1",
+                "minimum_calibration_groups": policy.minimum_calibration_groups,
+                "minimum_validation_groups": policy.minimum_validation_groups,
+                "require_all_holdout_compatible": True,
+            },
+            "promotion_policy": {
+                "minimum_calibration_groups": policy.minimum_calibration_groups,
+                "minimum_validation_groups": policy.minimum_validation_groups,
+                "minimum_calibration_observations": policy.minimum_calibration_observations,
+                "minimum_validation_observations": policy.minimum_validation_observations,
+                "minimum_holdout_coverage": policy.minimum_holdout_coverage,
+                "coverage_factor": policy.coverage_factor,
+                "estimator": policy.estimator.value,
+                "empirical_quantile": policy.empirical_quantile,
+            },
+            "admission": (
+                "curated DatasetObservation records with explicit calibration/"
+                "validation split plus an independently reviewed producer qualification"
+            ),
         }, None
     return None, f"no study in this runtime quantifies {channel.value}"  # pragma: no cover - declaration-gated
 
