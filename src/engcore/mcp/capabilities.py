@@ -676,14 +676,25 @@ def nafems_t3_capability() -> CapabilityDeclaration:
 
 
 @lru_cache(maxsize=1)
-def production_registry() -> CapabilityRegistry:
-    """The capabilities this runtime can execute. Built once per process.
+def _builtin_production_capabilities() -> tuple[CapabilityDeclaration, ...]:
+    """Built-in declarations are immutable for the life of this process."""
+    return (
+        electrothermal_capability(),
+        battery_capability(),
+        nafems_t3_capability(),
+    )
 
-    Building reads the case descriptions (which measure their ``unlocks`` by
-    omission) and verifies every route pin; doing that per request would cost
-    more than routing itself, and nothing it reads can change while the
-    process runs.
+
+def production_registry() -> CapabilityRegistry:
+    """Every capability the production claim router may execute.
+
+    Built-ins are cached because deriving their field unlocks is relatively
+    expensive. Enabled Domain Packs are read on every registry build so an
+    explicitly registered pack cannot be hidden by a singleton created before
+    it was enabled. CapabilityRegistry itself rejects duplicate ids.
     """
+    from .production_packs import production_pack_capabilities
+
     return CapabilityRegistry(
-        (electrothermal_capability(), battery_capability(), nafems_t3_capability())
+        (*_builtin_production_capabilities(), *production_pack_capabilities())
     )
