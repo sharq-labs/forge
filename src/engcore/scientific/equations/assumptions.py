@@ -72,6 +72,25 @@ class AssumptionAssessment:
             if self.status is not expected:
                 raise InvalidScientificProblem("assumption status disagrees with its constraint evaluation")
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": ASSUMPTION_ASSESSMENT_SCHEMA,
+            "assumption_id": self.assumption_id,
+            "status": self.status.value,
+            "evaluation": None if self.evaluation is None else self.evaluation.to_dict(),
+            "problem": self.problem,
+        }
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"AssumptionAssessment":
+        require_schema(payload,ASSUMPTION_ASSESSMENT_SCHEMA)
+        evaluation=payload.get("evaluation")
+        return cls(
+            payload["assumption_id"],AssumptionStatus(payload["status"]),
+            ConstraintEvaluation.from_dict(evaluation) if evaluation is not None else None,
+            payload.get("problem",""),
+        )
+
 
 def assess_assumption(
     assumption: CheckableAssumption,

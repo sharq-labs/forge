@@ -112,12 +112,27 @@ class ConstraintEvaluation:
     margin: Quantity
 
     def __post_init__(self) -> None:
+        cid=str(self.constraint_id).strip()
+        if not cid:
+            raise InvalidScientificProblem("constraint evaluation requires id")
+        object.__setattr__(self,"constraint_id",cid)
+        object.__setattr__(self, "operator", RelationOperator(self.operator))
         if not isinstance(self.satisfied, bool):
             raise InvalidScientificProblem("constraint evaluation satisfied must be bool")
-        object.__setattr__(self, "operator", RelationOperator(self.operator))
         for value in (self.left, self.right, self.margin):
             if not isinstance(value, Quantity):
                 raise InvalidScientificProblem("constraint evaluation quantities must be typed Quantity records")
+        expected_ok, expected_margin, measured, right = _constraint_outcome(
+            self.operator,self.left,self.right,self.tolerance
+        )
+        if self.satisfied is not expected_ok:
+            raise InvalidScientificProblem("constraint evaluation verdict disagrees with its quantities")
+        try:
+            recorded=self.margin.magnitude_in(expected_margin.units)
+        except Exception as exc:
+            raise InvalidScientificProblem("constraint evaluation margin has wrong dimension") from exc
+        if not math.isclose(recorded,expected_margin.magnitude,rel_tol=1e-12,abs_tol=1e-15):
+            raise InvalidScientificProblem("constraint evaluation margin disagrees with its quantities")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -131,6 +146,51 @@ class ConstraintEvaluation:
             "margin": self.margin.to_dict(),
         }
 
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"ConstraintEvaluation":
+        require_schema(payload,CONSTRAINT_EVALUATION_SCHEMA)
+        tolerance=payload.get("tolerance")
+        return cls(
+            payload["constraint_id"],RelationOperator(payload["operator"]),
+            Quantity.from_dict(payload["left"]),Quantity.from_dict(payload["right"]),
+            Quantity.from_dict(tolerance) if tolerance is not None else None,
+            payload["satisfied"],Quantity.from_dict(payload["margin"]),
+        )
+
+
+def _constraint_outcome(
+    operator:RelationOperator,left:Quantity,right:Quantity,tolerance:Quantity|None
+)->tuple[bool,Quantity,Quantity,Quantity]:
+    try:
+        left.require_compatible(right,context="expression constraint")
+        measured=left.to(right.units)
+    except UnitCompatibilityError as exc:
+        raise EquationEvaluationError("constraint_dimension_mismatch",str(exc)) from exc
+    tol=0.0
+    if tolerance is not None:
+        if not isinstance(tolerance,Quantity):
+            raise EquationEvaluationError("constraint_tolerance_invalid","constraint tolerance must be Quantity")
+        try:
+            tol=tolerance.magnitude_as_spread_in(right.units)
+        except Exception as exc:
+            raise EquationEvaluationError("constraint_tolerance_dimension_mismatch",str(exc)) from exc
+    x,b=measured.magnitude,right.magnitude
+    if operator is RelationOperator.LESS_EQUAL:
+        boundary=b+tol; ok=x<=boundary; margin=boundary-x
+    elif operator is RelationOperator.LESS_THAN:
+        boundary=b-tol; ok=x<boundary; margin=boundary-x
+    elif operator is RelationOperator.GREATER_EQUAL:
+        boundary=b-tol; ok=x>=boundary; margin=x-boundary
+    elif operator is RelationOperator.GREATER_THAN:
+        boundary=b+tol; ok=x>boundary; margin=x-boundary
+    elif operator is RelationOperator.EQUAL:
+        margin=tol-abs(x-b); ok=abs(x-b)<=tol
+    else:
+        margin=abs(x-b)-tol; ok=abs(x-b)>tol
+    margin_unit=right.units if is_ratio_scale(right.units) else base_unit(right.units)
+    margin_q=Quantity(Quantity(margin,right.units).magnitude_as_spread_in(margin_unit),margin_unit)
+    return bool(ok),margin_q,measured,right
+
 
 def evaluate_constraint(
     constraint: ExpressionConstraint,
@@ -138,35 +198,12 @@ def evaluate_constraint(
     *,
     derivative_bindings: Mapping[str, Quantity] | None = None,
 ) -> ConstraintEvaluation:
-    left = evaluate_expression(constraint.left, bindings, derivative_bindings=derivative_bindings)
-    right = evaluate_expression(constraint.right, bindings, derivative_bindings=derivative_bindings)
-    try:
-        left.require_compatible(right, context=f"constraint {constraint.constraint_id!r}")
-        measured = left.to(right.units)
-    except UnitCompatibilityError as exc:
-        raise EquationEvaluationError("constraint_dimension_mismatch", str(exc)) from exc
-    tol = 0.0
-    if constraint.tolerance is not None:
-        try:
-            tol = constraint.tolerance.magnitude_as_spread_in(right.units)
-        except Exception as exc:
-            raise EquationEvaluationError("constraint_tolerance_dimension_mismatch", str(exc)) from exc
-    x, b = measured.magnitude, right.magnitude
-    if constraint.operator is RelationOperator.LESS_EQUAL:
-        boundary=b+tol; ok=x<=boundary; margin=boundary-x
-    elif constraint.operator is RelationOperator.LESS_THAN:
-        boundary=b-tol; ok=x<boundary; margin=boundary-x
-    elif constraint.operator is RelationOperator.GREATER_EQUAL:
-        boundary=b-tol; ok=x>=boundary; margin=x-boundary
-    elif constraint.operator is RelationOperator.GREATER_THAN:
-        boundary=b+tol; ok=x>boundary; margin=x-boundary
-    elif constraint.operator is RelationOperator.EQUAL:
-        margin=tol-abs(x-b); ok=abs(x-b)<=tol
-    else:
-        margin=abs(x-b)-tol; ok=abs(x-b)>tol
-    margin_unit = right.units if is_ratio_scale(right.units) else base_unit(right.units)
-    margin_q = Quantity(Quantity(margin, right.units).magnitude_as_spread_in(margin_unit), margin_unit)
+    left=evaluate_expression(constraint.left,bindings,derivative_bindings=derivative_bindings)
+    right=evaluate_expression(constraint.right,bindings,derivative_bindings=derivative_bindings)
+    ok,margin,measured,right=_constraint_outcome(
+        constraint.operator,left,right,constraint.tolerance
+    )
     return ConstraintEvaluation(
-        constraint.constraint_id, constraint.operator, measured, right,
-        constraint.tolerance, bool(ok), margin_q,
+        constraint.constraint_id,constraint.operator,measured,right,
+        constraint.tolerance,ok,margin,
     )
