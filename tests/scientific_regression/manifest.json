@@ -299,6 +299,42 @@
         "challenge"
       ],
       "invariant": "sensitivity can prioritize repair hypotheses but never establishes causality or guarantees correction"
+    },
+    {
+      "id": "diagnostic-foreign-artifact-refused",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+      "tags": [
+        "diagnostics",
+        "provenance"
+      ],
+      "invariant": "a sealed sensitivity artifact from another assessment cannot influence diagnostic repair hypotheses"
+    },
+    {
+      "id": "impact-oracle-drift-current-state",
+      "nodeid": "tests/claims/test_impact_replay.py::test_current_oracle_digest_drift_is_detected",
+      "tags": [
+        "external",
+        "provenance"
+      ],
+      "invariant": "impact analysis compares the current oracle identity and trust state, not only the historical record"
+    },
+    {
+      "id": "impact-policy-removal",
+      "nodeid": "tests/claims/test_impact_replay.py::test_a_removed_policy_profile_is_detected",
+      "tags": [
+        "policy",
+        "provenance"
+      ],
+      "invariant": "removing a policy profile triggers reassessment instead of being silently ignored"
+    },
+    {
+      "id": "replay-untracked-content-fingerprint",
+      "nodeid": "tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "different untracked working-tree contents produce different reproducibility fingerprints"
     }
   ]
 }

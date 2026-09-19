@@ -44,6 +44,8 @@ python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json
 python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json --robustness robustness.json
 ```
 
+The CLI first verifies the assessment (or replay bundle) against the current registry. Optional sensitivity/robustness artifacts must be digest-sealed and bound to the same assessment, plan and capability.
+
 The report combines evidence gaps, explicit assumptions, admissible model-data
 comparisons and the existing next-experiment plan. It distinguishes recorded
 blocking conditions from repair hypotheses. A hypothesis is never evidence,

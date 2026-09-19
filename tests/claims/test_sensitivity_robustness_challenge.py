@@ -118,7 +118,7 @@ def test_a_domain_end_is_unknown_beyond_not_holds(envelope, registry) -> None:
     assert assess_claim(_with_ambient(side["first_not_holding"]), registry).verdict.value == "insufficient_evidence"
 
 
-def test_an_insensitive_input_reaches_the_search_limit_and_claims_nothing_beyond(envelope) -> None:
+def test_an_insensitive_input_reaches_the_search_limit_and_claims_nothing_beyond(envelope, et_supported) -> None:
     for direction in ("decrease", "increase"):
         side = envelope.parameters["stages[0].body.heat_capacity"][direction]
         assert side["kind"] == BoundaryKind.SEARCH_LIMIT.value and side["beyond"] == "unknown" and side["first_not_holding"] is None
