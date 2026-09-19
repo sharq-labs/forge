@@ -223,18 +223,24 @@ class ModelFormDiscrepancyEstimate:
         return tagged_digest(_ESTIMATE_TAG, self.to_dict())
 
 
-def _interval_half_width(uncertainty: Uncertainty, center: Quantity, *, allowed_sources: frozenset[UncertaintySource]) -> tuple[float | None, str | None]:
+def _interval_half_width(
+    uncertainty: Uncertainty,
+    center: Quantity,
+    *,
+    target_units: str,
+    allowed_sources: frozenset[UncertaintySource],
+) -> tuple[float | None, str | None]:
     if uncertainty.kind is not UncertaintyKind.INTERVAL:
         return None, "only explicit uncertainty intervals can be subtracted from a residual in this foundation"
     source = UncertaintySource(uncertainty.source_kind)
     if source not in allowed_sources:
         return None, f"uncertainty source {source.value!r} is not admissible for this side of the comparison"
     try:
-        lower = uncertainty.lower.to(center.units).magnitude
-        upper = uncertainty.upper.to(center.units).magnitude
+        lower = uncertainty.lower.to(target_units).magnitude
+        upper = uncertainty.upper.to(target_units).magnitude
+        value = center.to(target_units).magnitude
     except Exception as exc:
-        return None, f"uncertainty interval is not compatible with {center.units}: {exc}"
-    value = center.magnitude
+        return None, f"uncertainty interval is not compatible with {target_units}: {exc}"
     if lower > value or upper < value:
         return None, "uncertainty interval does not contain the value it is attached to"
     return max(value - lower, upper - value), None
@@ -247,6 +253,7 @@ def _point(pair: PairedObservation) -> ResidualPoint:
     measurement, problem = _interval_half_width(
         pair.measurement_uncertainty,
         pair.observed,
+        target_units=str(pair.predicted.units),
         allowed_sources=frozenset({UncertaintySource.MEASUREMENT}),
     )
     if problem is not None:
@@ -260,6 +267,7 @@ def _point(pair: PairedObservation) -> ResidualPoint:
         width, problem = _interval_half_width(
             item,
             pair.predicted,
+            target_units=str(pair.predicted.units),
             allowed_sources=frozenset({UncertaintySource.NUMERICAL, UncertaintySource.PARAMETER}),
         )
         if problem is not None:
