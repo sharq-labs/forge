@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..uq.model_form import (
+    ModelFormEstimate,
     ModelFormPolicy,
     ModelFormStudy,
     ModelResidualObservation,
@@ -23,7 +24,7 @@ from .measurement_dataset import DatasetSplit
 
 @dataclass(frozen=True)
 class ModelFormPromotionAttempt:
-    estimate: object
+    estimate: ModelFormEstimate
     promotion: PromotionReport
 
 
@@ -40,6 +41,8 @@ def evaluate_discrepancy_for_model_form(
             ModelResidualObservation(
                 observation_id=point.observation_id,
                 independence_group=point.independence_group,
+                quantity=discrepancy.quantity,
+                units=point.units,
                 residual=point.residual,
                 known_uncertainty_half_width=float(point.known_half_width),
                 held_out=point.split is DatasetSplit.VALIDATION,

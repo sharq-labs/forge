@@ -65,6 +65,8 @@ def unknown_evidence_authority_is_not_admissible():
 
 def unvalidated_model_form_is_not_promotable():
     estimate = ModelFormEstimate(
+        "temperature",
+        "kelvin",
         ModelFormStatus.CALIBRATED_UNVALIDATED,
         1.0,
         ("c1", "c2"),

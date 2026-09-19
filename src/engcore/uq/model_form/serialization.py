@@ -11,6 +11,8 @@ MODEL_FORM_ESTIMATE_SCHEMA=schema_string("model_form_uncertainty_estimate")
 def model_form_to_dict(estimate:ModelFormEstimate)->dict[str,Any]:
     return {
         "schema":MODEL_FORM_ESTIMATE_SCHEMA,
+        "quantity":estimate.quantity,
+        "units":estimate.units,
         "status":estimate.status.value,
         "half_width":estimate.half_width,
         "calibration_groups":list(estimate.calibration_groups),
@@ -23,6 +25,8 @@ def model_form_to_dict(estimate:ModelFormEstimate)->dict[str,Any]:
 def model_form_from_dict(payload:Mapping[str,Any])->ModelFormEstimate:
     require_schema(payload,MODEL_FORM_ESTIMATE_SCHEMA)
     return ModelFormEstimate(
+        payload["quantity"],
+        payload["units"],
         ModelFormStatus(payload["status"]),
         payload.get("half_width"),
         tuple(payload.get("calibration_groups",())),

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 import math
 
+from engcore.scientific.units.validation import require_unit
+
 
 class ModelFormStatus(str,Enum):
     INSUFFICIENT_DATA="insufficient_data"
@@ -15,6 +17,8 @@ class ModelFormStatus(str,Enum):
 
 @dataclass(frozen=True)
 class ModelFormEstimate:
+    quantity:str
+    units:str
     status:ModelFormStatus
     half_width:float|None
     calibration_groups:tuple[str,...]
@@ -23,6 +27,11 @@ class ModelFormEstimate:
     reason:str
 
     def __post_init__(self)->None:
+        quantity=str(self.quantity).strip()
+        if not quantity:
+            raise ValueError("model-form estimate requires quantity")
+        object.__setattr__(self,"quantity",quantity)
+        object.__setattr__(self,"units",require_unit(self.units,context="model-form estimate units"))
         object.__setattr__(self,"status",ModelFormStatus(self.status))
         object.__setattr__(self,"calibration_groups",tuple(sorted(set(self.calibration_groups))))
         object.__setattr__(self,"validation_groups",tuple(sorted(set(self.validation_groups))))

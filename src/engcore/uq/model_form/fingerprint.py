@@ -6,6 +6,8 @@ from .estimate import ModelFormEstimate
 
 def model_form_estimate_fingerprint(estimate:ModelFormEstimate)->str:
     payload={
+        "quantity":estimate.quantity,
+        "units":estimate.units,
         "status":estimate.status.value,
         "half_width":estimate.half_width,
         "calibration_groups":list(estimate.calibration_groups),

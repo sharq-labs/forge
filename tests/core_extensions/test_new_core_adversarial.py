@@ -56,7 +56,7 @@ def test_invalid_correlation_above_one_is_refused():
 
 def test_validated_model_form_cannot_have_zero_half_width():
     with pytest.raises(ValueError):
-        ModelFormEstimate(ModelFormStatus.VALIDATED, 0.0, ("c1","c2"), ("v1","v2"), 1.0, "bad")
+        ModelFormEstimate("temperature", "kelvin", ModelFormStatus.VALIDATED, 0.0, ("c1","c2"), ("v1","v2"), 1.0, "bad")
 
 
 def test_failed_simulation_attempt_requires_failure_identity():
