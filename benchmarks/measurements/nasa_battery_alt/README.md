@@ -11,8 +11,10 @@ Source:
 
 The source describes continuous pack-level CSV logging with columns for time,
 mode, charger/load voltage, battery/load-board temperatures, load current and
-mission type. The dataset contains independent battery packs under constant and
-variable loading conditions.
+mission type. The dataset contains two-cell battery packs under constant and
+variable loading conditions. Forge's current battery capability models one
+equivalent cell, so the manifest deliberately does not map these pack-level
+channels onto Forge single-cell QOIs or input paths.
 
 ## Forge admission rule
 
@@ -40,5 +42,6 @@ test.
 - NASA publication does not validate Forge's battery model.
 - A public dataset is not automatically trusted evidence.
 - Agreement with these measurements does not establish zero model-form error.
-- The current discrepancy producer emits a non-authoritative candidate only;
-  it does not satisfy a MODEL_FORM uncertainty requirement.
+- The current discrepancy producer emits non-authoritative lower/upper
+  compatibility constraints only; these are not an uncertainty record and do
+  not satisfy a MODEL_FORM uncertainty requirement.
