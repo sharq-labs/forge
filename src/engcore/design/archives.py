@@ -32,19 +32,19 @@ PARETO_ARCHIVE_SCHEMA = schema_string("pareto_archive")
 SCOPED_ELITE_ARCHIVE_SCHEMA = schema_string("scoped_elite_archive")
 
 
-#: R-44: the two labels a caller may compare under. ELIGIBLE now means the result stands behind its own
-#: numbers (`DesignEvaluation` refuses it otherwise); RANKED_WITHOUT_ASSESSMENT says the models'
-#: applicability was never assessed, which is what a study whose models declare no validity domain records
-#: on every evaluation. Both are ranked -- refusing would delete such a study rather than correct it -- and
-#: an archive records which of its members were the second kind, because a persisted archive does not carry
-#: its evaluations' labels.
-_RANKABLE = (SelectionEligibility.ELIGIBLE, SelectionEligibility.RANKED_WITHOUT_ASSESSMENT)
+#: Decision-grade archives compare only evaluations whose scientific models
+#: were actually assessed and whose result is eligible.  An exploratory result
+#: may still carry RANKED_WITHOUT_ASSESSMENT in its own DesignEvaluation, but
+#: it cannot become a Pareto/elite recommendation merely because objective
+#: numbers exist.  This is a trust boundary: applicability is not a cosmetic
+#: annotation on a decision-grade ranking.
+_RANKABLE = (SelectionEligibility.ELIGIBLE,)
 
 
 def _require_eligible(evaluation: DesignEvaluation) -> None:
     if evaluation.eligibility not in _RANKABLE:
         raise InvalidScientificProblem(
-            "Pareto comparison requires explicitly ELIGIBLE evaluations"
+            "decision-grade Pareto comparison requires scientifically assessed ELIGIBLE evaluations"
         )
 
 
