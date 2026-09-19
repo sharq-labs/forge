@@ -72,6 +72,10 @@ from .external_evidence import (
 from .oracles import discover_oracles
 from .measurement_dataset import DatasetObservation
 from ..uq.model_form.qualification import ProducerQualification
+from .model_form_trust import (
+    ModelFormQualificationRegistry,
+    PRODUCTION_MODEL_FORM_QUALIFICATIONS,
+)
 from .gaps import analyze_gaps
 from .next_experiment import recommend_next
 from .policy import derive_requirement, policy_findings
@@ -625,6 +629,9 @@ def assess_claim(
     external: tuple[Any, ...] = (),
     empirical_observations: tuple[DatasetObservation, ...] = (),
     model_form_qualification: ProducerQualification | None = None,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
 ) -> ClaimAssessment:
     """Assess one structured claim end to end. Expected outcomes are records, never exceptions.
@@ -650,6 +657,7 @@ def assess_claim(
             report,
             empirical_observations=empirical_observations,
             model_form_qualification=model_form_qualification,
+            model_form_qualification_trust=model_form_qualification_trust,
         )
     offered = tuple(read_external_record(r) if isinstance(r, Mapping) else r for r in external)
     record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust)
@@ -674,6 +682,9 @@ def verify_assessment(
     registry: CapabilityRegistry,
     *,
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
 ) -> ClaimAssessment:
     """Read an assessment record back by re-deriving every part of it.
 
@@ -733,6 +744,7 @@ def verify_assessment(
                 report,
                 registry=registry,
                 claim=claim,
+                model_form_qualification_trust=model_form_qualification_trust,
             )
         except UncertaintyStudyError as exc:
             raise AssessmentForgeryError(f"uncertainty studies: {exc}") from exc
