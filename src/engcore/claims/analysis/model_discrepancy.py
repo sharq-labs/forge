@@ -67,7 +67,7 @@ class DiscrepancyProtocol:
             "protocol_id": self.protocol_id,
             "minimum_calibration_groups": self.minimum_calibration_groups,
             "minimum_validation_groups": self.minimum_validation_groups,
-            "require_all_holdout_within_envelope": self.require_all_holdout_compatible,
+            "require_all_holdout_compatible": self.require_all_holdout_compatible,
             "method": "interval-constrained residual bounds with independent-group holdout",
             "notice": "the protocol sets an acceptance rule; it is not scientific evidence",
         }
