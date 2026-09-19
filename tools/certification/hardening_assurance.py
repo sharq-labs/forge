@@ -66,7 +66,7 @@ from tools.certification.recertification_scope import (
 )
 
 ASSURANCE_SCHEMA = "forge.core_hardening_assurance/4"
-ENVIRONMENT_SCHEMA = "forge.certification_environment/3"
+ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
 DEPENDENCY_MANIFEST = "pyproject.toml"
