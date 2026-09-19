@@ -15,9 +15,9 @@ from .manifest import ArtifactRef, DOMAIN_PACK_API, DomainPackManifest
 from .provider import ProvidedArtifact
 
 PACK_ID = "kinetics.cstr"
-PACK_VERSION = "1"
+PACK_VERSION = "2"
 
-_VALIDATION_REF = ArtifactRef("kinetics.cstr.verification_gate", "0.1.0")
+_VALIDATION_REF = ArtifactRef("kinetics.cstr.verification_gate", "0.2.0")
 
 MANIFEST = DomainPackManifest(
     pack_id=PACK_ID,
