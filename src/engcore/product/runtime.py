@@ -22,6 +22,7 @@ from ..claims.assessment import assess_claim
 from ..claims.capabilities import CapabilityRegistry
 from ..claims.external_evidence import read_external_record
 from ..claims.measurement_dataset import DatasetObservation
+from ..claims.errors import ClaimLayerError
 from ..scientific.serialization import schema_string
 from ..uq.model_form.qualification import ProducerQualification
 
@@ -138,19 +139,25 @@ def describe_product(registry: CapabilityRegistry) -> dict[str, Any]:
     }
 
 
-def prepare_simulation(
+def _compile_proposal(
     text: str,
     proposal: Mapping[str, Any],
     spans: Mapping[str, Sequence[int]],
     registry: CapabilityRegistry,
-) -> dict[str, Any]:
-    """Ground an LLM proposal in the user's prose and compile it without executing."""
-    compilation = compile_natural_language(
-        text,
-        proposal,
-        _wire_spans(spans),
-        registry,
-    )
+):
+    """Compile one provider proposal once, translating contract refusals to product input errors."""
+    try:
+        return compile_natural_language(
+            text,
+            proposal,
+            _wire_spans(spans),
+            registry,
+        )
+    except ClaimLayerError as exc:
+        raise ProductRequestError(str(exc)) from exc
+
+
+def _preparation_view(compilation: Any) -> dict[str, Any]:
     return {
         "schema": PRODUCT_PREPARATION_SCHEMA,
         "status": compilation.status,
@@ -167,6 +174,16 @@ def prepare_simulation(
             "compilation decided whether it is executable."
         ),
     }
+
+
+def prepare_simulation(
+    text: str,
+    proposal: Mapping[str, Any],
+    spans: Mapping[str, Sequence[int]],
+    registry: CapabilityRegistry,
+) -> dict[str, Any]:
+    """Ground an LLM proposal in the user's prose and compile it without executing."""
+    return _preparation_view(_compile_proposal(text, proposal, spans, registry))
 
 
 def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any]:
@@ -252,7 +269,8 @@ def run_proposed_simulation(
     A proposal that is not READY is returned as preparation data and is never
     executed. No missing value is defaulted merely to make the product flow.
     """
-    preparation = prepare_simulation(text, proposal, spans, registry)
+    compilation = _compile_proposal(text, proposal, spans, registry)
+    preparation = _preparation_view(compilation)
     if not preparation["ready"] or preparation["compilation"] is None:
         return {
             "schema": PRODUCT_RUN_SCHEMA,
@@ -262,12 +280,6 @@ def run_proposed_simulation(
             "notice": "The proposal was not executable; no simulation was run.",
         }
 
-    compilation = compile_natural_language(
-        text,
-        proposal,
-        _wire_spans(spans),
-        registry,
-    )
     if compilation.compiled is None or compilation.compiled.claim is None:
         raise ProductRequestError("a READY preparation produced no parsed scientific claim")
     result = run_simulation(
