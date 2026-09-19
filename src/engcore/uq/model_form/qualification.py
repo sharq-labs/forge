@@ -1,5 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import hashlib
+import json
 import re
 from .estimators import ModelFormEstimatorKind
 
@@ -63,3 +65,15 @@ class ProducerQualification:
             payload["independent_reviewer_id"],payload["independent_review_digest"],
             tuple(payload["approved_quantities"]),tuple(payload["approved_estimator_methods"]),
         )
+
+    @property
+    def digest(self)->str:
+        """Content identity of the reviewed qualification statement."""
+        return hashlib.sha256(
+            json.dumps(
+                self.to_dict(),
+                sort_keys=True,
+                separators=(",",":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest()
