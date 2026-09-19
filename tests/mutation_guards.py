@@ -355,7 +355,7 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "",
      "a shipped model stops declaring what it does not represent, and the "
      "constructor refuses it before the tree sweep can be reached"),
-    ("G14b", "src/engcore/mcp/evidence.py",
+    ("G14b", "src/engcore/credibility/evidence.py",
      # Repointed: the line this named changed when the property learned to
      # tell NOT_DECLARED from None, and the harness said so rather than going
      # green. The claim is unchanged.
@@ -461,7 +461,7 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
     # mutation naming a package that does not exist would also go red, on
     # ImportError, from every test that touches the module -- red for a
     # reason that says nothing about the guard.
-    ("G19a", "src/engcore/mcp/evidence.py",
+    ("G19a", "src/engcore/credibility/evidence.py",
      "from __future__ import annotations",
      "from __future__ import annotations\n\nimport joblib\n",
      "a module acquires an undeclared dependency by import statement, and a "
@@ -486,7 +486,7 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "            transfers=ambient_transfers(system, final),",
      "the coupled run goes back to dropping every converting crossing from "
      "its provenance, so a declared efficiency is spent and recorded nowhere"),
-    ("G20b", "src/engcore/mcp/evidence.py",
+    ("G20b", "src/engcore/credibility/evidence.py",
      "            conversion = transfer.dependency.conversion\n"
      "            if conversion is None:\n"
      "                continue",
@@ -1049,7 +1049,7 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      '        object.__setattr__(self, _ATTRIBUTION_GAP_ATTRIBUTE, (*existing, gap))',
      '        return',
      'RES-01 (results-RES01c-gap-never-recorded) -- tests/test_audit_results_stored_results.py'),
-    ('G31b', 'src/engcore/mcp/evidence.py',
+    ('G31b', 'src/engcore/credibility/evidence.py',
      '            + _attribution_gap_checks(result)\n',
      '',
      'RES-01 (results-RES01d-report-launders-gap) -- tests/test_audit_results_stored_results.py'),
@@ -1089,19 +1089,19 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      '        if payload.get(key) is None:',
      '        if False:',
      'RES-05 (results-RES05a-missing-convergence-validation) -- tests/test_audit_results_stored_results.py'),
-    ('G31l', 'src/engcore/mcp/evidence.py',
+    ('G31l', 'src/engcore/credibility/evidence.py',
      '        self._require_conditions_of_the_declared_model(assessment)\n',
      '',
      'RES-04 (results-RES04a-condition-binding-skipped) -- tests/mcp/test_audit_results_validity_binding.py'),
-    ('G31m', 'src/engcore/mcp/evidence.py',
+    ('G31m', 'src/engcore/credibility/evidence.py',
      '        if stray or missing:',
      '        if False:',
      'RES-04 (results-RES04b-omitted-conditions-accepted) -- tests/mcp/test_audit_results_validity_binding.py'),
-    ('G31n', 'src/engcore/mcp/evidence.py',
+    ('G31n', 'src/engcore/credibility/evidence.py',
      '        if repeated:',
      '        if False:',
      'RES-04 (results-RES04c-condition-in-two-lists) -- tests/mcp/test_audit_results_validity_binding.py'),
-    ('G31o', 'src/engcore/mcp/evidence.py',
+    ('G31o', 'src/engcore/credibility/evidence.py',
      '    if unresolved_models:\n        return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
      '',
      'RES-04 (results-RES04d-unresolved-model-supported) -- tests/mcp/test_audit_results_validity_binding.py'),
@@ -1129,23 +1129,23 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      '                        consumed_by_verdict=True,\n',
      '',
      'CAP-04 (results-CAP04b-electrothermal-flag-unstated) -- tests/mcp/test_audit_results_declarations.py'),
-    ('G31v', 'src/engcore/mcp/evidence.py',
+    ('G31v', 'src/engcore/credibility/evidence.py',
      '            "consumed_by_verdict": self.consumed_by_verdict,',
      '            "consumed_by_verdict": False,',
      'CAP-04 (results-CAP04c-literal-false-on-wire) -- tests/mcp/test_audit_results_declarations.py'),
-    ('G31w', 'src/engcore/mcp/evidence.py',
+    ('G31w', 'src/engcore/credibility/evidence.py',
      '                None\n                if version == ASSERTED_CONTEXT_SCHEMA_V1\n                else payload.get("consumed_by_verdict")',
      '                payload.get("consumed_by_verdict")',
      'CAP-04 (results-CAP04d-v1-false-believed) -- tests/mcp/test_audit_results_declarations.py'),
-    ('G31x', 'src/engcore/mcp/evidence.py',
+    ('G31x', 'src/engcore/credibility/evidence.py',
      '        if "verdict" not in payload:\n            raise CredibilityEvidenceError(\n                "serialized report carries no verdict; every writer of "\n                f"{EVIDENCE_PACKAGE_SCHEMA} emits the derived verdict beside "\n                "the contents, and a report with it removed cannot be checked "\n                "against them"\n            )\n        declared = payload.get("verdict")\n        if declared != report.verdict.value:',
      '        declared = payload.get("verdict")\n        if declared is not None and declared != report.verdict.value:',
      'RES-08 (results-RES08a-verdict-optional-again) -- tests/mcp/test_audit_results_declarations.py'),
-    ('G31y', 'src/engcore/mcp/evidence.py',
+    ('G31y', 'src/engcore/credibility/evidence.py',
      '        if stated is not None:\n            _require_qualifiers_as_derived(stated, report)\n',
      '',
      'RES-08 (results-RES08b-qualifiers-not-read-back) -- tests/mcp/test_audit_results_declarations.py'),
-    ('G31z', 'src/engcore/mcp/evidence.py',
+    ('G31z', 'src/engcore/credibility/evidence.py',
      '        if value != derived[name]:',
      '        if False:',
      'RES-08 (results-RES08c-qualifier-mismatch-accepted) -- tests/mcp/test_audit_results_declarations.py'),
