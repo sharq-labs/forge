@@ -642,6 +642,45 @@
         "evidence"
       ],
       "invariant": "composite assurance evidence is content-addressed before replay binding"
+    },
+    {
+      "id": "verification-route-bound-independence",
+      "nodeid": "tests/scientific/verification/test_route_bound_independence.py::test_every_agreeing_route_requires_its_own_independence_evidence",
+      "tags": [
+        "vnv",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "each verification comparison requires independence evidence bound to that exact route pair"
+    },
+    {
+      "id": "uq-correlation-psd",
+      "nodeid": "tests/uq/budget/test_psd.py::test_non_psd_correlation_matrix_is_refused_even_when_each_pair_is_in_range",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "pairwise-valid correlations cannot form an invalid non-PSD uncertainty correlation matrix"
+    },
+    {
+      "id": "evidence-lineage-cycle",
+      "nodeid": "tests/credibility/evidence_graph/test_lineage.py::test_derived_from_cycle_is_refused",
+      "tags": [
+        "evidence",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "evidence derivation/supersession lineage must remain acyclic"
+    },
+    {
+      "id": "simulation-orchestration-runner",
+      "nodeid": "tests/execution/orchestration/test_runner.py::test_runner_falls_back_deterministically_until_converged",
+      "tags": [
+        "vnv",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "simulation orchestration executes the declared deterministic fallback order and stops on convergence"
     }
   ]
 }
