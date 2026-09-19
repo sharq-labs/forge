@@ -142,12 +142,14 @@ def validate_domain_pack(provider: DomainPackProvider) -> DomainPackValidationRe
     else:
         checks.append("capability manifest matches realizations")
 
+    solvers = ()
     try:
         factories = tuple(provider.solver_factories())
         solver_registry = SolverRegistry(factories)
+        solvers = tuple(solver_registry.list())
         solver_refs = tuple(sorted(
             ArtifactRef(solver.identity.solver_id, solver.identity.version)
-            for solver in solver_registry.list()
+            for solver in solvers
         ))
     except Exception as exc:
         errors.append(f"solver factories violate the Scientific Core solver contract: {exc}")
@@ -158,6 +160,31 @@ def validate_domain_pack(provider: DomainPackProvider) -> DomainPackValidationRe
         )
     else:
         checks.append("solver manifest matches validated factories")
+
+    uncovered_realizations: list[str] = []
+    for realization in realizations:
+        if not isinstance(realization, ModelRealizationDefinition):
+            continue
+        required = {item.name for item in realization.required_solver_capabilities}
+        served = False
+        for solver in solvers:
+            declared = {item.name for item in solver.capabilities}
+            solver_models = {model.key for model in solver.served_models}
+            model_ok = not solver_models or realization.model_key in solver_models
+            if model_ok and required <= declared:
+                served = True
+                break
+        if not served:
+            uncovered_realizations.append(
+                f"{realization.realization_id}@{realization.version}"
+            )
+    if uncovered_realizations:
+        errors.append(
+            "realizations have no in-pack solver covering their exact model and required "
+            f"solver capabilities: {sorted(uncovered_realizations)}"
+        )
+    else:
+        checks.append("every realization is executable by an in-pack solver declaration")
 
     aux = (
         ("calibration_protocols", provider.calibration_protocols, manifest.calibration_protocols),
