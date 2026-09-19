@@ -500,6 +500,421 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+  v4_mutations_0:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "0"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_1:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "1"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_2:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "2"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_3:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "3"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_4:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "4"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_5:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "5"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_6:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "6"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+
+  v4_mutations_7:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    env:
+      SHARD_INDEX: "7"
+      SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Select V4 mutation shard from the pinned population
+        run: >-
+          python -m tools.certification.mutation_population v4-select
+          --index "$SHARD_INDEX" --count 8
+          --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      - name: Certified V4 false-confidence mutation shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.certification.mutation_v4_runner             --scratch "${RUNNER_TEMP}/v4-mutation-scratch-${SHARD_INDEX}"             --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"             --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+      - name: Record V4 shard evidence from its transcript
+        run: >-
+          python -m tools.certification.mutation_population v4-record
+          --index "$SHARD_INDEX" --count 8
+          --ids "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+          --log "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.log"
+          --source-commit "$SOURCE_SHA"
+          --out "${RUNNER_TEMP}/v4-mutations-${SHARD_INDEX}.json"
+      - name: Prove this gate left the checkout byte-identical to the source commit
+        run: >-
+          python -m tools.certification.assert_clean_tree
+          --gate "v4_mutations_${SHARD_INDEX}"
+          --record "${RUNNER_TEMP}/gate-v4_mutations_${SHARD_INDEX}.json"
+      - name: Upload V4 mutation shard evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-v4-mutations-${{ env.SHARD_INDEX }}-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/v4-mutation-ids-${{ env.SHARD_INDEX }}.txt
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.log
+            ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
+            ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
+          if-no-files-found: error
+          retention-days: 90
+
   trust_mutations:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
@@ -543,6 +958,14 @@ jobs:
       - formal_mutations_1
       - formal_mutations_2
       - formal_mutations_3
+      - v4_mutations_0
+      - v4_mutations_1
+      - v4_mutations_2
+      - v4_mutations_3
+      - v4_mutations_4
+      - v4_mutations_5
+      - v4_mutations_6
+      - v4_mutations_7
       - trust_mutations
     if: >-
       always() &&
@@ -736,6 +1159,14 @@ jobs:
       - formal_mutations_1
       - formal_mutations_2
       - formal_mutations_3
+      - v4_mutations_0
+      - v4_mutations_1
+      - v4_mutations_2
+      - v4_mutations_3
+      - v4_mutations_4
+      - v4_mutations_5
+      - v4_mutations_6
+      - v4_mutations_7
       - trust_mutations
       - certify
       - verify_certificate_child
