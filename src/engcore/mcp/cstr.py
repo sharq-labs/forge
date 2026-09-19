@@ -142,7 +142,9 @@ def run_cstr_case(case: Mapping[str, Any], *, run_id: str) -> CapabilityRun:
             "declared tolerance-ladder/analytic-reference verification gate. "
             "The BDF-vs-Radau arm is retained as corroboration and earns no "
             "cross-solver level because the implementations share the RHS, "
-            "Jacobian and SciPy infrastructure."
+            "Jacobian and SciPy infrastructure. A second pinned ODEPACK/LSODA "
+            "route separately translates the equations and may earn "
+            "CROSS_SOLVER_VALIDATED only through execution-bound Core consensus."
         ),
     )
 
