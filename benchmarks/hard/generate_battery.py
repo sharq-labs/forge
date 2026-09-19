@@ -597,8 +597,15 @@ def main() -> None:
             if not fn(p, margin, inside):
                 continue
             tag = f"{condition}_{'in' if inside else 'out'}@{margin:g}"
-            label = "valid" if inside else "model_inapplicable"
-            verdict = "SUPPORTED" if inside else "NOT_SUPPORTED"
+            if inside:
+                label, verdict = "valid", "SUPPORTED"
+            elif condition == "pulse_polarization_unmodelled_fraction":
+                # This CAP-02 condition is explicitly a conservative screen:
+                # crossing it withholds applicability; it does not falsify an
+                # output the Rint model never computed at the pulse.
+                label, verdict = "insufficient_evidence", "INSUFFICIENT_EVIDENCE"
+            else:
+                label, verdict = "model_inapplicable", "NOT_SUPPORTED"
             why = (
                 f"{condition} placed {margin:.1%} "
                 f"{'inside' if inside else 'outside'} its bound."
