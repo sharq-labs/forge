@@ -555,7 +555,7 @@ def junit_problems(
 #: succeed for the mode it was classified in, and branch protection requires
 #: the gates.
 RECERTIFY_SOURCE_GATES = (
-    "fast311", "fast312", "scientific312",
+    "fast311", "fast312", "scientific312", "campaign312", "regression312",
     "formal_mutations_0", "formal_mutations_1", "formal_mutations_2",
     "formal_mutations_3", "trust_mutations",
 )
