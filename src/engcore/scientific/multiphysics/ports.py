@@ -142,6 +142,14 @@ class PortDefinition:
                 f"{self.algebra.value} field port {port_id!r} cannot declare a "
                 f"coordinate frame transform semantics"
             )
+        if (
+            self.algebra in (FieldAlgebra.VECTOR, FieldAlgebra.TENSOR_2)
+            and not self.coordinate_frame
+        ):
+            raise InvalidScientificProblem(
+                f"{self.algebra.value} field port {port_id!r} must declare "
+                "coordinate_frame so its components have an explicit basis"
+            )
 
     @property
     def dimension(self) -> str:

@@ -1,4 +1,4 @@
-"""Coordinate-frame transformations declared as part of PhysicsGraph."""
+"""Coordinate-frame transforms as scientific topology declarations."""
 
 from __future__ import annotations
 
@@ -9,31 +9,33 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
 
-FRAME_TRANSFORM_SCHEMA = schema_string("multiphysics_frame_transform")
-_ORTHONORMAL_TOLERANCE = 1e-10
+FRAME_TRANSFORM_SCHEMA = schema_string(
+    "multiphysics_frame_transform"
+)
 
 
 @dataclass(frozen=True)
 class FrameTransform:
+    """Orthonormal 2D/3D transform between two named coordinate frames."""
+
     transform_id: str
     source_frame: str
     target_frame: str
     matrix: tuple[tuple[float, ...], ...]
-    description: str = ""
 
     def __post_init__(self) -> None:
         transform_id = str(self.transform_id).strip()
         source = str(self.source_frame).strip()
         target = str(self.target_frame).strip()
-        if (
-            not transform_id
-            or not source
-            or not target
-            or source == target
-        ):
+        if not transform_id or not source or not target:
             raise InvalidScientificProblem(
-                "frame transform requires id and two distinct named frames"
+                "frame transform requires id and named source/target frames"
             )
+        if source == target:
+            raise InvalidScientificProblem(
+                "frame transform source and target frames must differ"
+            )
+
         matrix = tuple(
             tuple(float(value) for value in row)
             for row in self.matrix
@@ -43,7 +45,7 @@ class FrameTransform:
             len(row) != dimension for row in matrix
         ):
             raise InvalidScientificProblem(
-                "frame transform matrix must be square 2D or 3D"
+                "frame transform matrix must be 2x2 or 3x3"
             )
         if any(
             not math.isfinite(value)
@@ -53,24 +55,29 @@ class FrameTransform:
             raise InvalidScientificProblem(
                 "frame transform matrix must be finite"
             )
+
+        tolerance = 1e-10
         for i in range(dimension):
             for j in range(dimension):
-                dot = math.fsum(
+                dot = sum(
                     matrix[k][i] * matrix[k][j]
                     for k in range(dimension)
                 )
                 expected = 1.0 if i == j else 0.0
-                if abs(dot - expected) > _ORTHONORMAL_TOLERANCE:
+                if not math.isclose(
+                    dot,
+                    expected,
+                    rel_tol=tolerance,
+                    abs_tol=1e-12,
+                ):
                     raise InvalidScientificProblem(
-                        "frame transform matrix must be orthonormal"
+                        "frame transform must be orthonormal"
                     )
+
         object.__setattr__(self, "transform_id", transform_id)
         object.__setattr__(self, "source_frame", source)
         object.__setattr__(self, "target_frame", target)
         object.__setattr__(self, "matrix", matrix)
-        object.__setattr__(
-            self, "description", str(self.description).strip()
-        )
 
     @property
     def dimension(self) -> int:
@@ -83,7 +90,6 @@ class FrameTransform:
             "source_frame": self.source_frame,
             "target_frame": self.target_frame,
             "matrix": [list(row) for row in self.matrix],
-            "description": self.description,
         }
 
     @classmethod
@@ -96,7 +102,7 @@ class FrameTransform:
             source_frame=payload["source_frame"],
             target_frame=payload["target_frame"],
             matrix=tuple(
-                tuple(row) for row in payload["matrix"]
+                tuple(float(value) for value in row)
+                for row in payload["matrix"]
             ),
-            description=payload.get("description", ""),
         )

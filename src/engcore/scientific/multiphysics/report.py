@@ -1,4 +1,4 @@
-"""Auditable records emitted by the multiphysics runtime."""
+"""Auditable run records for the generic multiphysics coupling runtime."""
 
 from __future__ import annotations
 
@@ -8,21 +8,27 @@ import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..fields import (
-    MeshSupport,
-    StructuredMesh,
-    UnstructuredMesh,
-    read_mesh_support,
-)
+from ..fields import FieldRecord
+from ..results.uncertainty import Uncertainty
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .graph import PhysicsGraph
 from .plan import CouplingPlan
+from .ports import PortDirection, PortRef
+from .value import (
+    CouplingValue,
+    coupling_value_from_dict,
+    coupling_value_to_dict,
+    validate_port_coupling_value,
+    validate_port_uncertainty,
+)
 
 EDGE_RESIDUAL_SCHEMA = schema_string("multiphysics_edge_residual")
 PARTICIPANT_STEP_SCHEMA = schema_string("multiphysics_participant_step")
 ITERATION_SCHEMA = schema_string("multiphysics_iteration")
 WINDOW_SCHEMA = schema_string("multiphysics_window")
+EXTERNAL_INPUT_SCHEMA = schema_string("multiphysics_external_input")
+INITIAL_COUPLING_SCHEMA = schema_string("multiphysics_initial_coupling")
 RUN_SCHEMA = schema_string("multiphysics_run")
 
 _TIME_DIMENSION = dimensionality("second")
@@ -38,22 +44,15 @@ class WindowOutcome(str, Enum):
 
 
 def _time(value: Quantity, *, label: str) -> Quantity:
-    if (
-        not isinstance(value, Quantity)
-        or value.dimensionality != _TIME_DIMENSION
-    ):
-        raise InvalidScientificProblem(
-            f"{label} must be a time Quantity"
-        )
+    if not isinstance(value, Quantity) or value.dimensionality != _TIME_DIMENSION:
+        raise InvalidScientificProblem(f"{label} must be a time Quantity")
     return value.to("second")
 
 
 def _same_time(left: Quantity, right: Quantity) -> bool:
     a = left.magnitude_in("second")
     b = right.magnitude_in("second")
-    return math.isclose(
-        a, b, rel_tol=1e-12, abs_tol=1e-15
-    )
+    return math.isclose(a, b, rel_tol=1e-12, abs_tol=1e-15)
 
 
 @dataclass(frozen=True)
@@ -66,9 +65,7 @@ class EdgeResidual:
 
     def __post_init__(self) -> None:
         edge_id = str(self.edge_id).strip()
-        if not edge_id or not isinstance(
-            self.absolute, Quantity
-        ):
+        if not edge_id or not isinstance(self.absolute, Quantity):
             raise InvalidScientificProblem(
                 "edge residual requires edge id and Quantity"
             )
@@ -84,7 +81,7 @@ class EdgeResidual:
         norm = str(self.norm).strip()
         if norm not in {"linf", "l2"}:
             raise InvalidScientificProblem(
-                f"edge residual has unsupported norm {norm!r}"
+                f"edge residual norm must be 'linf' or 'l2', got {norm!r}"
             )
         if not isinstance(self.satisfied, bool):
             raise InvalidScientificProblem(
@@ -105,9 +102,7 @@ class EdgeResidual:
         }
 
     @classmethod
-    def from_dict(
-        cls, payload: Mapping[str, Any]
-    ) -> "EdgeResidual":
+    def from_dict(cls, payload: Mapping[str, Any]) -> "EdgeResidual":
         require_schema(payload, EDGE_RESIDUAL_SCHEMA)
         return cls(
             edge_id=payload["edge_id"],
@@ -134,12 +129,8 @@ class ParticipantStepRecord:
             raise InvalidScientificProblem(
                 "participant step requires participant_id"
             )
-        start = _time(
-            self.start, label="participant step start"
-        )
-        end = _time(
-            self.end, label="participant step end"
-        )
+        start = _time(self.start, label="participant step start")
+        end = _time(self.end, label="participant step end")
         if end.magnitude < start.magnitude:
             raise InvalidScientificProblem(
                 "participant step end cannot precede start"
@@ -157,23 +148,17 @@ class ParticipantStepRecord:
                 "internal_converged must be boolean"
             )
         events = tuple(self.events)
-        if any(
-            not isinstance(event, Mapping)
-            for event in events
-        ):
+        if any(not isinstance(event, Mapping) for event in events):
             raise InvalidScientificProblem(
                 "participant step events must be mappings"
             )
-        if (
-            self.diagnostics is not None
-            and not isinstance(self.diagnostics, Mapping)
+        if self.diagnostics is not None and not isinstance(
+            self.diagnostics, Mapping
         ):
             raise InvalidScientificProblem(
-                "participant diagnostics must be mapping"
+                "participant diagnostics must be a mapping"
             )
-        object.__setattr__(
-            self, "participant_id", participant_id
-        )
+        object.__setattr__(self, "participant_id", participant_id)
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "end", end)
         object.__setattr__(self, "events", events)
@@ -186,13 +171,9 @@ class ParticipantStepRecord:
             "end": self.end.to_dict(),
             "substeps": self.substeps,
             "internal_converged": self.internal_converged,
-            "events": [
-                dict(event) for event in self.events
-            ],
+            "events": [dict(event) for event in self.events],
             "diagnostics": (
-                {}
-                if self.diagnostics is None
-                else dict(self.diagnostics)
+                {} if self.diagnostics is None else dict(self.diagnostics)
             ),
         }
 
@@ -207,14 +188,10 @@ class ParticipantStepRecord:
             start=Quantity.from_dict(payload["start"]),
             end=Quantity.from_dict(payload["end"]),
             substeps=payload["substeps"],
-            internal_converged=payload[
-                "internal_converged"
-            ],
+            internal_converged=payload["internal_converged"],
             events=tuple(payload.get("events", ())),
             diagnostics=(
-                None
-                if diagnostics is None
-                else dict(diagnostics)
+                None if diagnostics is None else dict(diagnostics)
             ),
         )
 
@@ -222,17 +199,11 @@ class ParticipantStepRecord:
 @dataclass(frozen=True)
 class CouplingIterationRecord:
     iteration: int
-    participant_steps: tuple[
-        ParticipantStepRecord, ...
-    ]
+    participant_steps: tuple[ParticipantStepRecord, ...]
     residuals: tuple[EdgeResidual, ...]
     relaxation_factors: Mapping[str, float]
-    mapping_diagnostics: tuple[
-        Mapping[str, Any], ...
-    ] = ()
-    transfer_diagnostics: tuple[
-        Mapping[str, Any], ...
-    ] = ()
+    mapping_diagnostics: tuple[Mapping[str, Any], ...] = ()
+    transfer_diagnostics: tuple[Mapping[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -246,84 +217,60 @@ class CouplingIterationRecord:
         steps = tuple(self.participant_steps)
         residuals = tuple(self.residuals)
         if not steps or any(
-            not isinstance(
-                step, ParticipantStepRecord
-            )
-            for step in steps
+            not isinstance(step, ParticipantStepRecord) for step in steps
         ):
             raise InvalidScientificProblem(
-                "coupling iteration requires participant steps"
+                "coupling iteration requires participant step records"
             )
-        participant_ids = [
-            step.participant_id for step in steps
-        ]
-        if len(participant_ids) != len(
-            set(participant_ids)
-        ):
+        if any(not isinstance(item, EdgeResidual) for item in residuals):
             raise InvalidScientificProblem(
-                "participant may execute only once per iteration"
+                "coupling iteration residuals must be EdgeResidual records"
             )
-        if any(
-            not isinstance(residual, EdgeResidual)
-            for residual in residuals
-        ):
+        participants = [step.participant_id for step in steps]
+        if len(participants) != len(set(participants)):
             raise InvalidScientificProblem(
-                "iteration residuals must be EdgeResidual"
+                "participant may execute only once per coupling iteration"
             )
-        residual_ids = [
-            residual.edge_id for residual in residuals
-        ]
-        if len(residual_ids) != len(
-            set(residual_ids)
-        ):
+        edge_ids = [item.edge_id for item in residuals]
+        if len(edge_ids) != len(set(edge_ids)):
             raise InvalidScientificProblem(
                 "one residual per edge per iteration"
             )
 
         factors: dict[str, float] = {}
-        for raw_id, raw_factor in dict(
-            self.relaxation_factors
-        ).items():
-            edge_id = str(raw_id).strip()
-            factor = float(raw_factor)
-            if (
-                not edge_id
-                or not math.isfinite(factor)
-                or factor <= 0.0
-            ):
+        for edge_id, raw in dict(self.relaxation_factors).items():
+            edge_id = str(edge_id).strip()
+            factor = float(raw)
+            if not edge_id or not math.isfinite(factor) or factor <= 0.0:
                 raise InvalidScientificProblem(
                     "relaxation factors require edge id and finite positive value"
                 )
             factors[edge_id] = factor
 
-        mappings = tuple(self.mapping_diagnostics)
-        transfers = tuple(self.transfer_diagnostics)
-        if any(
-            not isinstance(item, Mapping)
-            for item in mappings + transfers
-        ):
+        mapping_diagnostics = tuple(self.mapping_diagnostics)
+        transfer_diagnostics = tuple(self.transfer_diagnostics)
+        if any(not isinstance(item, Mapping) for item in mapping_diagnostics):
             raise InvalidScientificProblem(
-                "coupling diagnostics must be mappings"
+                "mapping diagnostics must be mappings"
             )
-        object.__setattr__(
-            self, "participant_steps", steps
-        )
+        if any(not isinstance(item, Mapping) for item in transfer_diagnostics):
+            raise InvalidScientificProblem(
+                "transfer diagnostics must be mappings"
+            )
+        object.__setattr__(self, "participant_steps", steps)
         object.__setattr__(self, "residuals", residuals)
+        object.__setattr__(self, "relaxation_factors", factors)
         object.__setattr__(
-            self, "relaxation_factors", factors
+            self, "mapping_diagnostics", mapping_diagnostics
         )
         object.__setattr__(
-            self, "mapping_diagnostics", mappings
-        )
-        object.__setattr__(
-            self, "transfer_diagnostics", transfers
+            self, "transfer_diagnostics", transfer_diagnostics
         )
 
     @property
     def converged(self) -> bool:
         return bool(self.residuals) and all(
-            residual.satisfied
-            for residual in self.residuals
+            residual.satisfied for residual in self.residuals
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -331,25 +278,19 @@ class CouplingIterationRecord:
             "schema": ITERATION_SCHEMA,
             "iteration": self.iteration,
             "participant_steps": [
-                step.to_dict()
-                for step in self.participant_steps
+                step.to_dict() for step in self.participant_steps
             ],
             "residuals": [
-                residual.to_dict()
-                for residual in self.residuals
+                residual.to_dict() for residual in self.residuals
             ],
             "relaxation_factors": dict(
-                sorted(
-                    self.relaxation_factors.items()
-                )
+                sorted(self.relaxation_factors.items())
             ),
             "mapping_diagnostics": [
-                dict(item)
-                for item in self.mapping_diagnostics
+                dict(item) for item in self.mapping_diagnostics
             ],
             "transfer_diagnostics": [
-                dict(item)
-                for item in self.transfer_diagnostics
+                dict(item) for item in self.transfer_diagnostics
             ],
             "converged": self.converged,
         }
@@ -363,39 +304,26 @@ class CouplingIterationRecord:
             iteration=payload["iteration"],
             participant_steps=tuple(
                 ParticipantStepRecord.from_dict(item)
-                for item in payload[
-                    "participant_steps"
-                ]
+                for item in payload["participant_steps"]
             ),
             residuals=tuple(
                 EdgeResidual.from_dict(item)
-                for item in payload.get(
-                    "residuals", ()
-                )
+                for item in payload.get("residuals", ())
             ),
             relaxation_factors=dict(
-                payload.get(
-                    "relaxation_factors", {}
-                )
+                payload.get("relaxation_factors", {})
             ),
             mapping_diagnostics=tuple(
-                payload.get(
-                    "mapping_diagnostics", ()
-                )
+                payload.get("mapping_diagnostics", ())
             ),
             transfer_diagnostics=tuple(
-                payload.get(
-                    "transfer_diagnostics", ()
-                )
+                payload.get("transfer_diagnostics", ())
             ),
         )
-        if (
-            "converged" in payload
-            and payload["converged"] != made.converged
-        ):
+        if "converged" in payload and payload["converged"] != made.converged:
             raise InvalidScientificProblem(
-                "serialized iteration convergence flag "
-                "disagrees with residuals"
+                "serialized coupling iteration converged flag disagrees "
+                "with its residuals"
             )
         return made
 
@@ -406,9 +334,7 @@ class CouplingWindowRecord:
     start: Quantity
     end: Quantity
     outcome: WindowOutcome
-    iterations: tuple[
-        CouplingIterationRecord, ...
-    ]
+    iterations: tuple[CouplingIterationRecord, ...]
     event: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
@@ -420,58 +346,40 @@ class CouplingWindowRecord:
             raise InvalidScientificProblem(
                 "window index must be non-negative"
             )
-        start = _time(
-            self.start, label="coupling window start"
-        )
-        end = _time(
-            self.end, label="coupling window end"
-        )
+        start = _time(self.start, label="coupling window start")
+        end = _time(self.end, label="coupling window end")
         if end.magnitude <= start.magnitude:
             raise InvalidScientificProblem(
                 "coupling window end must be after start"
             )
         iterations = tuple(self.iterations)
         if not iterations or any(
-            not isinstance(
-                item, CouplingIterationRecord
-            )
+            not isinstance(item, CouplingIterationRecord)
             for item in iterations
         ):
             raise InvalidScientificProblem(
-                "coupling window requires iterations"
+                "coupling window requires iteration records"
             )
-        expected = tuple(
-            range(1, len(iterations) + 1)
-        )
-        actual = tuple(
-            item.iteration for item in iterations
-        )
+        expected = tuple(range(1, len(iterations) + 1))
+        actual = tuple(item.iteration for item in iterations)
         if actual != expected:
             raise InvalidScientificProblem(
-                f"iteration indices must be contiguous; "
-                f"expected {expected}, got {actual}"
+                f"coupling window iteration indices must be contiguous "
+                f"from 1; got {actual}"
             )
         outcome = WindowOutcome(self.outcome)
         event = self.event
-        if (
-            event is not None
-            and not isinstance(event, Mapping)
-        ):
+        if event is not None and not isinstance(event, Mapping):
             raise InvalidScientificProblem(
-                "coupling window event must be mapping"
+                "coupling window event must be a mapping"
             )
-        if (
-            outcome is WindowOutcome.EVENT_ALIGNED
-            and event is None
-        ):
+        if outcome is WindowOutcome.EVENT_ALIGNED and event is None:
             raise InvalidScientificProblem(
-                "EVENT_ALIGNED window must carry event"
+                "EVENT_ALIGNED window must carry the event that shortened it"
             )
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "end", end)
-        object.__setattr__(
-            self, "iterations", iterations
-        )
+        object.__setattr__(self, "iterations", iterations)
         object.__setattr__(self, "outcome", outcome)
 
     def to_dict(self) -> dict[str, Any]:
@@ -482,14 +390,9 @@ class CouplingWindowRecord:
             "end": self.end.to_dict(),
             "outcome": self.outcome.value,
             "iterations": [
-                item.to_dict()
-                for item in self.iterations
+                iteration.to_dict() for iteration in self.iterations
             ],
-            "event": (
-                None
-                if self.event is None
-                else dict(self.event)
-            ),
+            "event": None if self.event is None else dict(self.event),
         }
 
     @classmethod
@@ -499,13 +402,9 @@ class CouplingWindowRecord:
         require_schema(payload, WINDOW_SCHEMA)
         return cls(
             index=payload["index"],
-            start=Quantity.from_dict(
-                payload["start"]
-            ),
+            start=Quantity.from_dict(payload["start"]),
             end=Quantity.from_dict(payload["end"]),
-            outcome=WindowOutcome(
-                payload["outcome"]
-            ),
+            outcome=WindowOutcome(payload["outcome"]),
             iterations=tuple(
                 CouplingIterationRecord.from_dict(item)
                 for item in payload["iterations"]
@@ -515,16 +414,96 @@ class CouplingWindowRecord:
 
 
 @dataclass(frozen=True)
+class ExternalInputRecord:
+    port: PortRef
+    value: CouplingValue
+    uncertainty: Uncertainty
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.port, PortRef):
+            raise InvalidScientificProblem("external input requires PortRef")
+        if not isinstance(self.value, (Quantity, FieldRecord)):
+            raise InvalidScientificProblem(
+                "external input value must be Quantity or FieldRecord"
+            )
+        if not isinstance(self.uncertainty, Uncertainty):
+            raise InvalidScientificProblem(
+                "external input uncertainty must be Uncertainty"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": EXTERNAL_INPUT_SCHEMA,
+            "port": self.port.to_dict(),
+            "value": coupling_value_to_dict(self.value),
+            "uncertainty": self.uncertainty.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "ExternalInputRecord":
+        require_schema(payload, EXTERNAL_INPUT_SCHEMA)
+        return cls(
+            port=PortRef.from_dict(payload["port"]),
+            value=coupling_value_from_dict(payload["value"]),
+            uncertainty=Uncertainty.from_dict(payload["uncertainty"]),
+        )
+
+
+@dataclass(frozen=True)
+class InitialCouplingRecord:
+    edge_id: str
+    value: CouplingValue
+    uncertainty: Uncertainty
+
+    def __post_init__(self) -> None:
+        edge_id = str(self.edge_id).strip()
+        if not edge_id:
+            raise InvalidScientificProblem(
+                "initial coupling record requires edge_id"
+            )
+        if not isinstance(self.value, (Quantity, FieldRecord)):
+            raise InvalidScientificProblem(
+                "initial coupling value must be Quantity or FieldRecord"
+            )
+        if not isinstance(self.uncertainty, Uncertainty):
+            raise InvalidScientificProblem(
+                "initial coupling uncertainty must be Uncertainty"
+            )
+        object.__setattr__(self, "edge_id", edge_id)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": INITIAL_COUPLING_SCHEMA,
+            "edge_id": self.edge_id,
+            "value": coupling_value_to_dict(self.value),
+            "uncertainty": self.uncertainty.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "InitialCouplingRecord":
+        require_schema(payload, INITIAL_COUPLING_SCHEMA)
+        return cls(
+            edge_id=payload["edge_id"],
+            value=coupling_value_from_dict(payload["value"]),
+            uncertainty=Uncertainty.from_dict(payload["uncertainty"]),
+        )
+
+@dataclass(frozen=True)
 class MultiphysicsRunRecord:
     run_id: str
     graph: PhysicsGraph
     plan: CouplingPlan
-    meshes: tuple[MeshSupport, ...]
     started_at: Quantity
     ended_at: Quantity
+    external_inputs: tuple[ExternalInputRecord, ...]
+    initial_coupling: tuple[InitialCouplingRecord, ...]
     windows: tuple[CouplingWindowRecord, ...]
     final_outputs: Mapping[str, Any]
-    coupling_error_indicator: float | None = None
+    coupling_error_bound: float | None = None
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -532,7 +511,6 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem(
                 "multiphysics run requires run_id"
             )
-        object.__setattr__(self, "run_id", run_id)
         if not isinstance(self.graph, PhysicsGraph):
             raise InvalidScientificProblem(
                 "multiphysics run requires PhysicsGraph"
@@ -542,136 +520,136 @@ class MultiphysicsRunRecord:
                 "multiphysics run requires CouplingPlan"
             )
         self.plan.validate_against(self.graph)
-        meshes = tuple(self.meshes)
-        if any(
-            not isinstance(mesh, (StructuredMesh, UnstructuredMesh))
-            for mesh in meshes
-        ):
-            raise InvalidScientificProblem(
-                "multiphysics run meshes must be declared mesh supports"
-            )
-        mesh_ids = [mesh.mesh_id for mesh in meshes]
-        if len(mesh_ids) != len(set(mesh_ids)):
-            raise InvalidScientificProblem(
-                "multiphysics run mesh ids must be unique"
-            )
-        required_mesh_ids = {
-            port.field.mesh_id
-            for participant in self.graph.participants
-            for port in participant.ports
-            if port.field is not None
-        }
-        if set(mesh_ids) != required_mesh_ids:
-            raise InvalidScientificProblem(
-                f"multiphysics run mesh bindings mismatch graph; "
-                f"missing={sorted(required_mesh_ids-set(mesh_ids))}, "
-                f"extra={sorted(set(mesh_ids)-required_mesh_ids)}"
-            )
-        by_mesh = {mesh.mesh_id: mesh for mesh in meshes}
-        for participant in self.graph.participants:
-            for port in participant.ports:
-                if port.field is not None:
-                    port.field.require_support(
-                        by_mesh[port.field.mesh_id]
-                    )
-        object.__setattr__(
-            self,
-            "meshes",
-            tuple(sorted(meshes, key=lambda mesh: mesh.mesh_id)),
-        )
 
-        started = _time(
-            self.started_at, label="run started_at"
-        )
-        ended = _time(
-            self.ended_at, label="run ended_at"
-        )
-        if ended.magnitude <= started.magnitude:
+        started = _time(self.started_at, label="run started_at")
+        ended = _time(self.ended_at, label="run ended_at")
+        if not _same_time(started, self.plan.time.start):
             raise InvalidScientificProblem(
-                "run ended_at must be after started_at"
+                "run started_at disagrees with coupling plan"
             )
-        if not _same_time(
-            started, self.plan.time.start
+        if not _same_time(ended, self.plan.time.end):
+            raise InvalidScientificProblem(
+                "successful multiphysics run must end at coupling plan end"
+            )
+
+        external_inputs = tuple(self.external_inputs)
+        if any(
+            not isinstance(item, ExternalInputRecord)
+            for item in external_inputs
         ):
             raise InvalidScientificProblem(
-                "run started_at disagrees with CouplingPlan"
+                "external_inputs must be ExternalInputRecord records"
             )
-        if not _same_time(
-            ended, self.plan.time.end
+        refs = [item.port for item in external_inputs]
+        if len(refs) != len(set(refs)):
+            raise InvalidScientificProblem(
+                "external input ports must be unique"
+            )
+
+        connected = {edge.target for edge in self.graph.edges}
+        expected_external: set[PortRef] = set()
+        for participant in self.graph.participants:
+            for port in participant.inputs:
+                ref = PortRef(
+                    participant.participant_id, port.port_id
+                )
+                if ref not in connected:
+                    expected_external.add(ref)
+        if set(refs) != expected_external:
+            raise InvalidScientificProblem(
+                "run external inputs do not exactly cover graph inputs "
+                "not supplied by coupling edges; expected="
+                f"{sorted(ref.key for ref in expected_external)}, got="
+                f"{sorted(ref.key for ref in refs)}"
+            )
+        for item in external_inputs:
+            participant = self.graph.participant(
+                item.port.participant_id
+            )
+            port = participant.port(item.port.port_id)
+            if port.direction is not PortDirection.INPUT:
+                raise InvalidScientificProblem(
+                    f"run external input {item.port.key} is not an input"
+                )
+            validate_port_coupling_value(port, item.value)
+            validate_port_uncertainty(port, item.uncertainty)
+
+        initial = tuple(self.initial_coupling)
+        if any(
+            not isinstance(item, InitialCouplingRecord)
+            for item in initial
         ):
             raise InvalidScientificProblem(
-                "run ended_at disagrees with CouplingPlan"
+                "initial_coupling must be InitialCouplingRecord records"
             )
+        edge_ids = [item.edge_id for item in initial]
+        if len(edge_ids) != len(set(edge_ids)):
+            raise InvalidScientificProblem(
+                "initial coupling edge ids must be unique"
+            )
+        for item in initial:
+            edge = self.graph.edge(item.edge_id)
+            port = self.graph.participant(
+                edge.target.participant_id
+            ).port(edge.target.port_id)
+            validate_port_coupling_value(port, item.value)
+            validate_port_uncertainty(port, item.uncertainty)
 
         windows = tuple(self.windows)
         if not windows or any(
-            not isinstance(
-                window, CouplingWindowRecord
-            )
+            not isinstance(window, CouplingWindowRecord)
             for window in windows
         ):
             raise InvalidScientificProblem(
                 "multiphysics run requires coupling windows"
             )
-        indices = tuple(
-            window.index for window in windows
-        )
-        expected_indices = tuple(
-            range(len(windows))
-        )
+        indices = tuple(window.index for window in windows)
+        expected_indices = tuple(range(len(windows)))
         if indices != expected_indices:
             raise InvalidScientificProblem(
-                f"window indices must be "
-                f"{expected_indices}, got {indices}"
+                f"coupling window indices must be {expected_indices}, "
+                f"got {indices}"
             )
-        if not _same_time(
-            windows[0].start, started
-        ):
+        if not _same_time(windows[0].start, started):
             raise InvalidScientificProblem(
-                "first window does not start at run start"
+                "first coupling window does not start at run started_at"
             )
-        if not _same_time(
-            windows[-1].end, ended
-        ):
+        if not _same_time(windows[-1].end, ended):
             raise InvalidScientificProblem(
-                "last window does not end at run end"
+                "last coupling window does not end at run ended_at"
             )
-        for left, right in zip(
-            windows, windows[1:]
-        ):
+        for left, right in zip(windows, windows[1:]):
             if not _same_time(left.end, right.start):
                 raise InvalidScientificProblem(
-                    f"windows {left.index} and "
-                    f"{right.index} are not contiguous"
+                    f"coupling windows {left.index} and {right.index} "
+                    "are not temporally contiguous"
                 )
 
-        if not isinstance(
-            self.final_outputs, Mapping
-        ):
+        if not isinstance(self.final_outputs, Mapping):
             raise InvalidScientificProblem(
-                "final_outputs must be mapping"
+                "multiphysics run final_outputs must be a mapping"
             )
-        if self.coupling_error_indicator is not None:
-            indicator = float(
-                self.coupling_error_indicator
-            )
-            if (
-                not math.isfinite(indicator)
-                or indicator < 0.0
-            ):
+        if self.coupling_error_bound is not None:
+            value = float(self.coupling_error_bound)
+            if not math.isfinite(value) or value < 0.0:
                 raise InvalidScientificProblem(
-                    "coupling_error_indicator must be "
-                    "finite and non-negative"
+                    "coupling_error_bound must be finite and non-negative"
                 )
-            object.__setattr__(
-                self,
-                "coupling_error_indicator",
-                indicator,
-            )
-        object.__setattr__(
-            self, "started_at", started
-        )
+            object.__setattr__(self, "coupling_error_bound", value)
+
+        object.__setattr__(self, "run_id", run_id)
+        object.__setattr__(self, "started_at", started)
         object.__setattr__(self, "ended_at", ended)
+        object.__setattr__(
+            self,
+            "external_inputs",
+            tuple(sorted(external_inputs, key=lambda item: item.port.key)),
+        )
+        object.__setattr__(
+            self,
+            "initial_coupling",
+            tuple(sorted(initial, key=lambda item: item.edge_id)),
+        )
         object.__setattr__(self, "windows", windows)
 
     @property
@@ -679,30 +657,40 @@ class MultiphysicsRunRecord:
         return self.graph.graph_id
 
     @property
+    def graph_fingerprint(self) -> str:
+        return self.graph.fingerprint()
+
+    @property
     def plan_id(self) -> str:
         return self.plan.plan_id
+
+    @property
+    def plan_fingerprint(self) -> str:
+        return self.plan.fingerprint()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": RUN_SCHEMA,
             "run_id": self.run_id,
             "graph_id": self.graph_id,
+            "graph_fingerprint": self.graph_fingerprint,
             "plan_id": self.plan_id,
+            "plan_fingerprint": self.plan_fingerprint,
             "graph": self.graph.to_dict(),
             "plan": self.plan.to_dict(),
-            "meshes": [mesh.to_dict() for mesh in self.meshes],
             "started_at": self.started_at.to_dict(),
             "ended_at": self.ended_at.to_dict(),
-            "windows": [
-                window.to_dict()
-                for window in self.windows
+            "external_inputs": [
+                item.to_dict() for item in self.external_inputs
             ],
-            "final_outputs": dict(
-                self.final_outputs
-            ),
-            "coupling_error_indicator": (
-                self.coupling_error_indicator
-            ),
+            "initial_coupling": [
+                item.to_dict() for item in self.initial_coupling
+            ],
+            "windows": [
+                window.to_dict() for window in self.windows
+            ],
+            "final_outputs": dict(self.final_outputs),
+            "coupling_error_bound": self.coupling_error_bound,
         }
 
     @classmethod
@@ -710,41 +698,40 @@ class MultiphysicsRunRecord:
         cls, payload: Mapping[str, Any]
     ) -> "MultiphysicsRunRecord":
         require_schema(payload, RUN_SCHEMA)
+        graph = PhysicsGraph.from_dict(payload["graph"])
+        plan = CouplingPlan.from_dict(payload["plan"])
         made = cls(
             run_id=payload["run_id"],
-            graph=PhysicsGraph.from_dict(
-                payload["graph"]
+            graph=graph,
+            plan=plan,
+            started_at=Quantity.from_dict(payload["started_at"]),
+            ended_at=Quantity.from_dict(payload["ended_at"]),
+            external_inputs=tuple(
+                ExternalInputRecord.from_dict(item)
+                for item in payload.get("external_inputs", ())
             ),
-            plan=CouplingPlan.from_dict(
-                payload["plan"]
-            ),
-            meshes=tuple(
-                read_mesh_support(item)
-                for item in payload.get("meshes", ())
-            ),
-            started_at=Quantity.from_dict(
-                payload["started_at"]
-            ),
-            ended_at=Quantity.from_dict(
-                payload["ended_at"]
+            initial_coupling=tuple(
+                InitialCouplingRecord.from_dict(item)
+                for item in payload.get("initial_coupling", ())
             ),
             windows=tuple(
                 CouplingWindowRecord.from_dict(item)
                 for item in payload["windows"]
             ),
-            final_outputs=dict(
-                payload["final_outputs"]
-            ),
-            coupling_error_indicator=payload.get(
-                "coupling_error_indicator"
-            ),
+            final_outputs=dict(payload["final_outputs"]),
+            coupling_error_bound=payload.get("coupling_error_bound"),
         )
-        if payload.get("graph_id") != made.graph_id:
-            raise InvalidScientificProblem(
-                "serialized graph_id disagrees with embedded PhysicsGraph"
-            )
-        if payload.get("plan_id") != made.plan_id:
-            raise InvalidScientificProblem(
-                "serialized plan_id disagrees with embedded CouplingPlan"
-            )
+        derived = {
+            "graph_id": made.graph_id,
+            "graph_fingerprint": made.graph_fingerprint,
+            "plan_id": made.plan_id,
+            "plan_fingerprint": made.plan_fingerprint,
+        }
+        for key, value in derived.items():
+            if payload.get(key) != value:
+                raise InvalidScientificProblem(
+                    f"serialized multiphysics run {key} "
+                    f"{payload.get(key)!r} disagrees with embedded "
+                    f"declaration {value!r}"
+                )
         return made

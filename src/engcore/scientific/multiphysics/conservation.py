@@ -1,4 +1,4 @@
-"""Conservation declarations bound to actual coupling-edge transfers."""
+"""Conservation declarations bound to executed multiphysics transfers."""
 
 from __future__ import annotations
 
@@ -8,10 +8,14 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, require_spread_unit
 
-CONSERVATION_TERM_BINDING_SCHEMA = schema_string("multiphysics_conservation_term_binding")
-COUPLED_CONSERVATION_SCHEMA = schema_string("multiphysics_conservation")
+CONSERVATION_TERM_BINDING_SCHEMA = schema_string(
+    "multiphysics_conservation_term_binding"
+)
+COUPLED_CONSERVATION_SCHEMA = schema_string(
+    "multiphysics_conservation"
+)
 
 
 class BalanceSide(str, Enum):
@@ -27,6 +31,8 @@ class TransferMeasure(str, Enum):
 
 @dataclass(frozen=True)
 class ConservationTermBinding:
+    """One term in a balance, read from a concrete coupling transfer."""
+
     name: str
     edge_id: str
     side: BalanceSide
@@ -37,15 +43,24 @@ class ConservationTermBinding:
         for label in ("name", "edge_id"):
             value = str(getattr(self, label)).strip()
             if not value:
-                raise InvalidScientificProblem(f"conservation term requires {label}")
+                raise InvalidScientificProblem(
+                    f"conservation term requires {label}"
+                )
             object.__setattr__(self, label, value)
         object.__setattr__(self, "side", BalanceSide(self.side))
-        object.__setattr__(self, "measure", TransferMeasure(self.measure))
-        object.__setattr__(self, "loss_form", str(self.loss_form).strip())
-        if self.measure is TransferMeasure.LOSS and not self.loss_form:
-            raise InvalidScientificProblem("LOSS conservation term requires loss_form")
-        if self.measure is not TransferMeasure.LOSS and self.loss_form:
-            raise InvalidScientificProblem("loss_form is valid only for LOSS terms")
+        object.__setattr__(
+            self, "measure", TransferMeasure(self.measure)
+        )
+        loss_form = str(self.loss_form).strip()
+        object.__setattr__(self, "loss_form", loss_form)
+        if self.measure is TransferMeasure.LOSS and not loss_form:
+            raise InvalidScientificProblem(
+                "LOSS conservation term requires loss_form"
+            )
+        if self.measure is not TransferMeasure.LOSS and loss_form:
+            raise InvalidScientificProblem(
+                "loss_form is valid only for LOSS terms"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -58,19 +73,25 @@ class ConservationTermBinding:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "ConservationTermBinding":
-        require_schema(payload, CONSERVATION_TERM_BINDING_SCHEMA)
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "ConservationTermBinding":
+        require_schema(
+            payload, CONSERVATION_TERM_BINDING_SCHEMA
+        )
         return cls(
-            payload["name"],
-            payload["edge_id"],
-            BalanceSide(payload["side"]),
-            TransferMeasure(payload["measure"]),
-            payload.get("loss_form", ""),
+            name=payload["name"],
+            edge_id=payload["edge_id"],
+            side=BalanceSide(payload["side"]),
+            measure=TransferMeasure(payload["measure"]),
+            loss_form=payload.get("loss_form", ""),
         )
 
 
 @dataclass(frozen=True)
 class CoupledConservation:
+    """A domain-neutral balance whose terms are realized transfers."""
+
     balance_id: str
     terms: tuple[ConservationTermBinding, ...]
     tolerance: Quantity
@@ -79,38 +100,71 @@ class CoupledConservation:
     def __post_init__(self) -> None:
         balance_id = str(self.balance_id).strip()
         if not balance_id:
-            raise InvalidScientificProblem("coupled conservation requires balance_id")
+            raise InvalidScientificProblem(
+                "coupled conservation requires balance_id"
+            )
         terms = tuple(self.terms)
-        if len(terms) < 2 or any(not isinstance(t, ConservationTermBinding) for t in terms):
-            raise InvalidScientificProblem("coupled conservation requires at least two typed terms")
-        names = [t.name for t in terms]
-        if len(names) != len(set(names)):
-            raise InvalidScientificProblem("conservation term names must be unique")
-        if not any(t.side is BalanceSide.LEFT for t in terms) or not any(
-            t.side is BalanceSide.RIGHT for t in terms
+        if len(terms) < 2 or any(
+            not isinstance(term, ConservationTermBinding)
+            for term in terms
         ):
-            raise InvalidScientificProblem("conservation balance requires both left and right terms")
-        if not isinstance(self.tolerance, Quantity) or self.tolerance.magnitude < 0.0:
-            raise InvalidScientificProblem("conservation tolerance must be a non-negative Quantity")
+            raise InvalidScientificProblem(
+                "coupled conservation requires at least two typed terms"
+            )
+        names = [term.name for term in terms]
+        if len(names) != len(set(names)):
+            raise InvalidScientificProblem(
+                "conservation term names must be unique"
+            )
+        if not any(
+            term.side is BalanceSide.LEFT for term in terms
+        ) or not any(
+            term.side is BalanceSide.RIGHT for term in terms
+        ):
+            raise InvalidScientificProblem(
+                "conservation balance requires both left and right terms"
+            )
+        if (
+            not isinstance(self.tolerance, Quantity)
+            or self.tolerance.magnitude < 0.0
+        ):
+            raise InvalidScientificProblem(
+                "conservation tolerance must be a non-negative Quantity"
+            )
+        require_spread_unit(
+            self.tolerance.units,
+            context=f"coupled conservation {balance_id!r}",
+        )
         object.__setattr__(self, "balance_id", balance_id)
-        object.__setattr__(self, "terms", tuple(sorted(terms, key=lambda t: t.name)))
-        object.__setattr__(self, "description", str(self.description).strip())
+        object.__setattr__(
+            self,
+            "terms",
+            tuple(sorted(terms, key=lambda term: term.name)),
+        )
+        object.__setattr__(
+            self, "description", str(self.description).strip()
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": COUPLED_CONSERVATION_SCHEMA,
             "balance_id": self.balance_id,
-            "terms": [t.to_dict() for t in self.terms],
+            "terms": [term.to_dict() for term in self.terms],
             "tolerance": self.tolerance.to_dict(),
             "description": self.description,
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "CoupledConservation":
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "CoupledConservation":
         require_schema(payload, COUPLED_CONSERVATION_SCHEMA)
         return cls(
             balance_id=payload["balance_id"],
-            terms=tuple(ConservationTermBinding.from_dict(t) for t in payload["terms"]),
+            terms=tuple(
+                ConservationTermBinding.from_dict(term)
+                for term in payload["terms"]
+            ),
             tolerance=Quantity.from_dict(payload["tolerance"]),
             description=payload.get("description", ""),
         )

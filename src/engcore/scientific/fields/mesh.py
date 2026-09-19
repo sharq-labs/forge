@@ -150,6 +150,11 @@ class StructuredMesh:
         return 2
 
     @property
+    def spatial_dimension(self) -> int:
+        """Number of geometric coordinate axes used by the support."""
+        return 2
+
+    @property
     def node_count(self) -> int:
         return self.nodes_x * self.nodes_y
 

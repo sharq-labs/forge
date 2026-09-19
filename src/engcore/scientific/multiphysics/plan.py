@@ -9,12 +9,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import hashlib
+import json
 import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity, dimensionality
+from ..units.quantity import (
+    Quantity,
+    dimensionality,
+    require_spread_unit,
+)
 from .graph import PhysicsGraph
 
 TIME_POLICY_SCHEMA = schema_string("multiphysics_time_policy")
@@ -111,10 +117,21 @@ class ConvergenceCriterion:
         object.__setattr__(self, "edge_id", edge_id)
         relative = float(self.relative_tolerance)
         if not math.isfinite(relative) or relative < 0.0:
-            raise InvalidScientificProblem("relative_tolerance must be non-negative")
+            raise InvalidScientificProblem(
+                "relative_tolerance must be finite and non-negative"
+            )
         object.__setattr__(self, "relative_tolerance", relative)
-        if not isinstance(self.absolute_tolerance, Quantity) or self.absolute_tolerance.magnitude < 0.0:
-            raise InvalidScientificProblem("absolute_tolerance must be a non-negative Quantity")
+        if (
+            not isinstance(self.absolute_tolerance, Quantity)
+            or self.absolute_tolerance.magnitude < 0.0
+        ):
+            raise InvalidScientificProblem(
+                "absolute_tolerance must be a non-negative Quantity"
+            )
+        require_spread_unit(
+            self.absolute_tolerance.units,
+            context=f"coupling criterion {edge_id!r}",
+        )
         object.__setattr__(self, "norm", ResidualNorm(self.norm))
 
     def to_dict(self) -> dict[str, Any]:
@@ -149,10 +166,17 @@ class RelaxationPolicy:
         factor = float(self.factor)
         minimum = float(self.minimum_factor)
         maximum = float(self.maximum_factor)
-        if not all(math.isfinite(value) for value in (factor, minimum, maximum)):
-            raise InvalidScientificProblem("relaxation factors must be finite")
+        if not all(
+            math.isfinite(value)
+            for value in (factor, minimum, maximum)
+        ):
+            raise InvalidScientificProblem(
+                "relaxation factor and bounds must be finite"
+            )
         if not 0.0 < minimum <= maximum:
-            raise InvalidScientificProblem("relaxation bounds must satisfy 0 < min <= max")
+            raise InvalidScientificProblem(
+                "relaxation bounds must satisfy 0 < min <= max"
+            )
         if not minimum <= factor <= maximum:
             raise InvalidScientificProblem("relaxation factor must lie inside its bounds")
         if self.kind is RelaxationKind.NONE and factor != 1.0:
@@ -280,16 +304,6 @@ class CouplingPlan:
                     f"[{source.dimension}]"
                 )
         if self.scheme is CouplingScheme.IMPLICIT:
-            covered = {criterion.edge_id for criterion in self.criteria}
-            missing_cycle_edges = sorted(
-                graph.cyclic_edge_ids() - covered
-            )
-            if missing_cycle_edges:
-                raise InvalidScientificProblem(
-                    f"implicit coupling must monitor every edge in a feedback "
-                    f"cycle; missing convergence criteria for "
-                    f"{missing_cycle_edges}"
-                )
             bad = [
                 participant.participant_id
                 for participant in graph.participants
@@ -325,6 +339,14 @@ class CouplingPlan:
             "max_iterations": self.max_iterations,
             "fail_on_nonconvergence": self.fail_on_nonconvergence,
         }
+
+    def fingerprint(self) -> str:
+        payload = json.dumps(
+            self.to_dict(),
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CouplingPlan":

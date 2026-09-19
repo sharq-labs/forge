@@ -1,4 +1,4 @@
-"""Domain-neutral multiphysics scientific contracts."""
+"""Domain-neutral multiphysics declarations and run records."""
 
 from .conservation import (
     CONSERVATION_TERM_BINDING_SCHEMA,
@@ -50,6 +50,8 @@ from .ports import (
 )
 from .report import (
     EDGE_RESIDUAL_SCHEMA,
+    EXTERNAL_INPUT_SCHEMA,
+    INITIAL_COUPLING_SCHEMA,
     ITERATION_SCHEMA,
     PARTICIPANT_STEP_SCHEMA,
     RUN_SCHEMA,
@@ -57,11 +59,20 @@ from .report import (
     CouplingIterationRecord,
     CouplingWindowRecord,
     EdgeResidual,
+    ExternalInputRecord,
+    InitialCouplingRecord,
     MultiphysicsRunRecord,
     ParticipantStepRecord,
     WindowOutcome,
 )
 from .state import CHECKPOINT_SCHEMA, CheckpointRecord
+from .value import (
+    CouplingValue,
+    coupling_value_from_dict,
+    coupling_value_to_dict,
+    validate_port_coupling_value,
+    validate_port_uncertainty,
+)
 
 __all__ = [
     "CHECKPOINT_SCHEMA",
@@ -71,7 +82,9 @@ __all__ = [
     "COUPLING_PLAN_SCHEMA",
     "CONVERGENCE_CRITERION_SCHEMA",
     "EDGE_RESIDUAL_SCHEMA",
+    "EXTERNAL_INPUT_SCHEMA",
     "FIELD_MAPPING_SCHEMA",
+    "INITIAL_COUPLING_SCHEMA",
     "FRAME_TRANSFORM_SCHEMA",
     "ITERATION_SCHEMA",
     "MAPPING_DIAGNOSTICS_SCHEMA",
@@ -94,13 +107,16 @@ __all__ = [
     "CouplingPlan",
     "CouplingScheme",
     "CouplingWindowRecord",
+    "CouplingValue",
     "EdgeResidual",
+    "ExternalInputRecord",
     "ExtrapolationPolicy",
     "FieldAlgebra",
     "FieldMappingDefinition",
     "FieldMappingMethod",
     "FrameTransform",
     "IterationSemantics",
+    "InitialCouplingRecord",
     "MappingDiagnostics",
     "MultiphysicsRunRecord",
     "ParticipantSpec",
@@ -117,4 +133,8 @@ __all__ = [
     "TimePolicy",
     "TransferMeasure",
     "WindowOutcome",
+    "coupling_value_from_dict",
+    "coupling_value_to_dict",
+    "validate_port_coupling_value",
+    "validate_port_uncertainty",
 ]

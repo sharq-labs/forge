@@ -23,6 +23,7 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+from ..scientific.composition.conversion import EnergyConversion
 from ..scientific.composition.transfer import (
     BUDGET_TOLERANCE,
     TRANSFER_VALUE_CONFIGURED_INPUT,
@@ -487,6 +488,216 @@ class CrossedQuantity:
         )
 
 
+def _require_interval_contains_value(
+    value: Quantity,
+    uncertainty: Uncertainty,
+    *,
+    context: str,
+) -> None:
+    """Generic interval/value binding used by every cross-domain transport."""
+    lower, upper = uncertainty.lower, uncertainty.upper
+    if lower is None or upper is None:
+        return
+    require_same_dimension(value, lower, context=context)
+    unit = lower.units
+    magnitude = value.magnitude_in(unit)
+    low = lower.magnitude_in(unit)
+    high = upper.magnitude_in(unit)
+    if not (
+        low <= magnitude <= high
+        or _agree_relatively(magnitude, low)
+        or _agree_relatively(magnitude, high)
+    ):
+        raise InvalidScientificProblem(
+            f"{context}: interval [{low}, {high}] {unit} does not contain "
+            f"{magnitude} {unit}, the value whose uncertainty it claims to bound"
+        )
+
+
+def propagate_declared_mapping_uncertainty(
+    source_value: Quantity,
+    target_value: Quantity,
+    source_uncertainty: Uncertainty,
+    *,
+    source_label: str,
+    target_label: str,
+    instant: str,
+    conversion: EnergyConversion | None = None,
+    attribution: str | None = None,
+) -> Uncertainty:
+    """Propagate uncertainty through one declared deterministic cross-domain mapping.
+
+    This is the arithmetic shared by the historical QuantityTransfer path and
+    the generic multiphysics runtime.  It does not decide whether an uncertainty
+    is attributable to a producer record; callers that own such a record must
+    establish that binding before calling here.
+
+    UNKNOWN stays UNKNOWN. STANDARD widths are converted as deltas and scaled
+    by the declared conversion efficiency. A declared standard uncertainty of
+    the efficiency is combined in quadrature, with the independence assumption
+    stated in the method/notes. INTERVAL bounds retain absolute-value
+    conversion semantics and do not silently absorb an efficiency uncertainty.
+    """
+    if not isinstance(source_value, Quantity) or not isinstance(target_value, Quantity):
+        raise InvalidScientificProblem(
+            "cross-domain uncertainty propagation requires typed source and target values"
+        )
+    if not isinstance(source_uncertainty, Uncertainty):
+        raise InvalidScientificProblem(
+            "cross-domain uncertainty propagation requires Uncertainty"
+        )
+    source_label = str(source_label).strip()
+    target_label = str(target_label).strip()
+    instant = str(instant).strip()
+    if not source_label or not target_label or not instant:
+        raise InvalidScientificProblem(
+            "cross-domain uncertainty propagation requires source, target and instant identities"
+        )
+    require_same_dimension(
+        source_value,
+        target_value,
+        context="cross-domain mapped value",
+    )
+    if conversion is not None:
+        if not isinstance(conversion, EnergyConversion):
+            raise InvalidScientificProblem(
+                "cross-domain conversion must be EnergyConversion"
+            )
+        outcome = conversion.convert(source_value)
+        if outcome.value is None:
+            raise InvalidScientificProblem(
+                f"cannot propagate uncertainty across conversion {conversion.name!r}: "
+                f"{outcome.reason}"
+            )
+        expected = outcome.value.magnitude_in(target_value.units)
+        actual = target_value.magnitude
+        if not _agree_relatively(expected, actual):
+            raise InvalidScientificProblem(
+                f"cross-domain mapped target {actual} {target_value.units} does not "
+                f"match conversion {conversion.name!r}, which gives "
+                f"{expected} {target_value.units}"
+            )
+
+    if source_uncertainty.kind is UncertaintyKind.INTERVAL:
+        _require_interval_contains_value(
+            source_value,
+            source_uncertainty,
+            context=f"uncertainty of {source_label}",
+        )
+
+    method_prefix = (
+        "cross_domain_transport"
+        if conversion is None
+        else f"cross_domain_conversion:{conversion.name}"
+    )
+    source_attribution = (
+        str(attribution).strip()
+        if attribution is not None
+        else f"coupling:{source_label}->{target_label}|from:{source_uncertainty.source}"
+    )
+
+    if source_uncertainty.kind is UncertaintyKind.UNKNOWN:
+        return Uncertainty.unknown(
+            notes=(
+                f"uncertainty remained unknown while transferring "
+                f"{source_label} -> {target_label} at {instant}; "
+                f"source said: {source_uncertainty.notes or 'not evaluated'}"
+            )
+        )
+
+    factor = 1.0 if conversion is None else float(conversion.efficiency)
+    source_unit = source_value.units
+    target_unit = target_value.units
+    efficiency_width = (
+        None if conversion is None else conversion.efficiency_uncertainty
+    )
+
+    if source_uncertainty.kind is UncertaintyKind.STANDARD:
+        standard = source_uncertainty.standard_uncertainty
+        assert standard is not None
+        require_same_dimension(
+            standard,
+            source_value,
+            context="cross-domain standard uncertainty",
+        )
+        source_delta = _delta_magnitude_in(standard, source_unit) * abs(factor)
+        efficiency_note = (
+            "conversion has no efficiency uncertainty"
+            if conversion is None
+            else "conversion efficiency treated as deterministic because the "
+                 "conversion record carries no uncertainty for it"
+        )
+        if efficiency_width is not None:
+            entering = source_value.magnitude_in(source_unit)
+            if entering != 0.0:
+                relative_input = (
+                    _delta_magnitude_in(standard, source_unit) / abs(entering)
+                )
+                relative_efficiency = efficiency_width / abs(factor)
+                combined = math.sqrt(
+                    relative_input ** 2 + relative_efficiency ** 2
+                )
+                source_delta = combined * abs(entering * factor)
+            efficiency_note = (
+                f"declared efficiency uncertainty {efficiency_width} was combined "
+                f"in quadrature with the input uncertainty; this records an "
+                f"independence assumption, it does not establish independence"
+            )
+        propagated = Quantity(
+            _delta_magnitude_in(Quantity(source_delta, source_unit), target_unit),
+            target_unit,
+        )
+        return Uncertainty(
+            kind=UncertaintyKind.STANDARD,
+            standard_uncertainty=propagated,
+            source=source_attribution,
+            source_kind=source_uncertainty.source_kind,
+            method=(
+                method_prefix
+                if efficiency_width is None
+                else f"{method_prefix}+efficiency_uncertainty_in_quadrature"
+            ),
+            notes=(
+                f"propagated from "
+                f"{source_uncertainty.method or 'declared source method'}; "
+                f"standard uncertainty converted as a delta (scale only); "
+                f"{efficiency_note}"
+            ),
+        )
+
+    if source_uncertainty.kind is UncertaintyKind.INTERVAL:
+        lower, upper = source_uncertainty.lower, source_uncertainty.upper
+        assert lower is not None and upper is not None
+        require_same_dimension(
+            lower, source_value, context="cross-domain interval lower"
+        )
+        require_same_dimension(
+            upper, source_value, context="cross-domain interval upper"
+        )
+        low_mag = lower.magnitude_in(source_unit) * factor
+        high_mag = upper.magnitude_in(source_unit) * factor
+        lo, hi = sorted((low_mag, high_mag))
+        return Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(lo, source_unit).to(target_unit),
+            upper=Quantity(hi, source_unit).to(target_unit),
+            confidence_level=source_uncertainty.confidence_level,
+            source=source_attribution,
+            source_kind=source_uncertainty.source_kind,
+            method=method_prefix,
+            notes=(
+                f"propagated interval from "
+                f"{source_uncertainty.method or 'declared source method'}; "
+                "no distribution or correlation was inferred, so a declared "
+                "efficiency uncertainty is not combined into interval bounds"
+            ),
+        )
+
+    raise InvalidScientificProblem(
+        f"unsupported uncertainty kind {source_uncertainty.kind!r}"
+    )
+
+
 def propagate_transfer_uncertainty(
     transfer: QuantityTransfer,
     source_uncertainty: Uncertainty,
@@ -500,122 +711,28 @@ def propagate_transfer_uncertainty(
         raise InvalidScientificProblem("propagation requires Uncertainty")
 
     if source_uncertainty.kind is not UncertaintyKind.UNKNOWN:
-        # An UNKNOWN uncertainty asserts nothing about any value, so there is
-        # nothing to bind and nothing to contain; it propagates as the honest
-        # absence it already is, with the source's own words carried in a note.
-        _require_the_uncertainty_names_the_source(transfer, source_uncertainty, upstream)
+        _require_the_uncertainty_names_the_source(
+            transfer, source_uncertainty, upstream
+        )
     if source_uncertainty.kind is UncertaintyKind.INTERVAL:
         _require_the_interval_contains_the_value(transfer, source_uncertainty)
 
-    conversion = transfer.dependency.conversion
-    method_prefix = "cross_domain_transport"
-    if conversion is not None:
-        method_prefix = f"cross_domain_conversion:{conversion.name}"
-
-    if source_uncertainty.kind is UncertaintyKind.UNKNOWN:
-        return Uncertainty.unknown(
-            notes=(
-                f"uncertainty remained unknown while transferring "
-                f"{transfer.dependency.source_problem_id}."
-                f"{transfer.dependency.source_quantity} -> "
-                f"{transfer.dependency.target_problem_id}."
-                f"{transfer.dependency.target_quantity} at {transfer.instant}; "
-                f"source said: {source_uncertainty.notes or 'not evaluated'}"
-            )
-        )
-
-    factor = _factor(transfer)
-    source_unit = _source_unit(transfer)
-    target_unit = transfer.value.units
-
-    if source_uncertainty.kind is UncertaintyKind.STANDARD:
-        standard = source_uncertainty.standard_uncertainty
-        assert standard is not None
-        require_same_dimension(
-            standard,
-            Quantity(1.0, source_unit),
-            context="cross-domain standard uncertainty",
-        )
-        source_delta = _delta_magnitude_in(standard, source_unit) * abs(factor)
-        efficiency_note = (
-            "conversion efficiency treated as deterministic because the "
-            "conversion record carries no uncertainty for it"
-        )
-        width = _efficiency_width(transfer)
-        if width is not None:
-            # First-order propagation of a product, in RELATIVE terms: the only
-            # combination a record carrying two standard uncertainties supports.
-            # It assumes the efficiency's uncertainty is independent of the
-            # input's, which is RECORDED here and in the method rather than
-            # established -- nothing in these records establishes independence.
-            entering = _entering_value(transfer).magnitude_in(source_unit)
-            if entering != 0.0:
-                relative_input = _delta_magnitude_in(standard, source_unit) / abs(entering)
-                relative_efficiency = width / abs(factor)
-                combined = math.sqrt(relative_input ** 2 + relative_efficiency ** 2)
-                source_delta = combined * abs(entering * factor)
-            efficiency_note = (
-                f"the declared efficiency uncertainty {width} was combined in "
-                f"quadrature with the input's, which assumes the two are "
-                f"independent; that independence is recorded here and is "
-                f"established nowhere"
-            )
-        as_source = Quantity(source_delta, source_unit)
-        propagated_delta = _delta_magnitude_in(as_source, target_unit)
-        propagated = Quantity(propagated_delta, target_unit)
-        return Uncertainty(
-            kind=UncertaintyKind.STANDARD,
-            standard_uncertainty=propagated,
-            source=_attribution(transfer, source_uncertainty),
-            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
-            method=(
-                method_prefix
-                if _efficiency_width(transfer) is None
-                else f"{method_prefix}+efficiency_uncertainty_in_quadrature"
-            ),
-            notes=(
-                f"propagated from {source_uncertainty.method or 'declared source method'}; "
-                "standard uncertainty was converted as a delta (scale only); "
-                f"{efficiency_note}"
-            ),
-        )
-
-    if source_uncertainty.kind is UncertaintyKind.INTERVAL:
-        lower, upper = source_uncertainty.lower, source_uncertainty.upper
-        assert lower is not None and upper is not None
-        require_same_dimension(
-            lower,
-            Quantity(1.0, source_unit),
-            context="cross-domain interval lower",
-        )
-        require_same_dimension(
-            upper,
-            Quantity(1.0, source_unit),
-            context="cross-domain interval upper",
-        )
-        low_mag = lower.magnitude_in(source_unit) * factor
-        high_mag = upper.magnitude_in(source_unit) * factor
-        lo, hi = sorted((low_mag, high_mag))
-        return Uncertainty(
-            kind=UncertaintyKind.INTERVAL,
-            lower=Quantity(lo, source_unit).to(target_unit),
-            upper=Quantity(hi, source_unit).to(target_unit),
-            confidence_level=source_uncertainty.confidence_level,
-            source=_attribution(transfer, source_uncertainty),
-            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
-            method=method_prefix,
-            notes=(
-                f"propagated interval from {source_uncertainty.method or 'declared source method'}; "
-                "no distribution or correlation was inferred, so a declared "
-                "efficiency uncertainty is not combined into these bounds and "
-                "the record says so in its completeness"
-            ),
-        )
-
-    raise InvalidScientificProblem(
-        f"unsupported uncertainty kind {source_uncertainty.kind!r}"
+    return propagate_declared_mapping_uncertainty(
+        source_value=_entering_value(transfer),
+        target_value=transfer.value,
+        source_uncertainty=source_uncertainty,
+        source_label=(
+            f"{transfer.dependency.source_problem_id}."
+            f"{transfer.dependency.source_quantity}"
+        ),
+        target_label=(
+            f"{transfer.dependency.target_problem_id}."
+            f"{transfer.dependency.target_quantity}"
+        ),
+        instant=transfer.instant,
+        conversion=transfer.dependency.conversion,
+        attribution=_attribution(transfer, source_uncertainty),
     )
-
 
 def _efficiency_width(transfer: QuantityTransfer) -> float | None:
     """The declared standard uncertainty of this crossing's efficiency, if any."""
@@ -717,6 +834,7 @@ __all__ = [
     "UNCERTAINTY_TRANSFER_SCHEMA_V2",
     "TRANSFER_COMPLETENESS",
     "UncertaintyTransfer",
+    "propagate_declared_mapping_uncertainty",
     "propagate_transfer_uncertainty",
     "make_uncertainty_transfer",
     "propagate_uncertainty_chain",
