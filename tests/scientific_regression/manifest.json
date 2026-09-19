@@ -1222,6 +1222,26 @@
         "provenance"
       ],
       "invariant": "rehashing cannot detach provenance from certified commit"
+    },
+    {
+      "id": "replay-v2-parent-nonempty",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "parent run identity cannot be blank"
+    },
+    {
+      "id": "replay-v2-typed-boundary",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "run replay wire boundary accepts only typed manifests expectations and observations"
     }
   ]
 }

@@ -7102,6 +7102,22 @@ POPULATION_V4: tuple[tuple, ...] = (
         "N63c", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.contract_artifacts != expected:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing", 'KILLED',
         "bundle payloads must hash to the identities pinned by the manifest", (), 'assurance_bundle_round63',
     ),
+    (
+        "N64a", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if parent_run == \"\":\n            raise InvalidScientificProblem(\"run manifest parent_run_id must be non-empty when declared\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest parent_run_id must be non-empty when declared\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest", 'KILLED',
+        "blank scientific parent identity is never a valid lineage claim", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64b", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if not isinstance(self.expected_manifest,ScientificRunManifest) or not isinstance(self.actual_manifest,ScientificRunManifest):\n            raise InvalidScientificProblem(\"run replay record requires typed ScientificRunManifest records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay record requires typed ScientificRunManifest records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed manifests", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64c", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if any(not isinstance(x,OutputExpectation) for x in expectations):\n            raise InvalidScientificProblem(\"run replay expectations must be OutputExpectation records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay expectations must be OutputExpectation records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed output expectations", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64d", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if any(not isinstance(x,OutputObservation) for x in observations):\n            raise InvalidScientificProblem(\"run replay observations must be OutputObservation records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay observations must be OutputObservation records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed output observations", (), 'replay_boundary_round64',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on
