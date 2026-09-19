@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
@@ -23,6 +24,15 @@ class PortDirection(str, Enum):
 class PortKind(str, Enum):
     SCALAR = "scalar"
     FIELD = "field"
+
+
+class FieldAlgebra(str, Enum):
+    """How multi-component field values transform between coordinate frames."""
+
+    SCALAR = "scalar"
+    VECTOR = "vector"
+    TENSOR_2 = "tensor_2"
+    CUSTOM = "custom"
 
 
 @dataclass(frozen=True, order=True)
@@ -64,6 +74,7 @@ class PortDefinition:
     quantity: str
     unit: str
     field: FieldDefinition | None = None
+    algebra: FieldAlgebra = FieldAlgebra.SCALAR
     coordinate_frame: str = ""
     description: str = ""
 
@@ -76,23 +87,60 @@ class PortDefinition:
         object.__setattr__(self, "quantity", quantity)
         object.__setattr__(self, "direction", PortDirection(self.direction))
         object.__setattr__(self, "kind", PortKind(self.kind))
+        object.__setattr__(self, "algebra", FieldAlgebra(self.algebra))
         object.__setattr__(self, "unit", normalize_unit(self.unit))
         object.__setattr__(self, "coordinate_frame", str(self.coordinate_frame).strip())
         object.__setattr__(self, "description", str(self.description).strip())
 
-        if self.kind is PortKind.FIELD:
-            if not isinstance(self.field, FieldDefinition):
+        if self.kind is PortKind.SCALAR:
+            if self.field is not None:
                 raise InvalidScientificProblem(
-                    f"field port {port_id!r} requires a FieldDefinition"
+                    f"scalar port {port_id!r} cannot carry a FieldDefinition"
                 )
-            if dimensionality(self.field.unit) != dimensionality(self.unit):
+            if self.algebra is not FieldAlgebra.SCALAR:
                 raise InvalidScientificProblem(
-                    f"field port {port_id!r} declares {self.unit!r} while its "
-                    f"field is {self.field.unit!r}"
+                    f"scalar port {port_id!r} must use scalar algebra"
                 )
-        elif self.field is not None:
+            if self.coordinate_frame:
+                raise InvalidScientificProblem(
+                    f"scalar port {port_id!r} cannot declare coordinate_frame; "
+                    f"frame transforms apply to vector/tensor fields"
+                )
+            return
+
+        if not isinstance(self.field, FieldDefinition):
             raise InvalidScientificProblem(
-                f"scalar port {port_id!r} cannot carry a FieldDefinition"
+                f"field port {port_id!r} requires a FieldDefinition"
+            )
+        if dimensionality(self.field.unit) != dimensionality(self.unit):
+            raise InvalidScientificProblem(
+                f"field port {port_id!r} declares {self.unit!r} while its "
+                f"field is {self.field.unit!r}"
+            )
+
+        components = self.field.components
+        if self.algebra is FieldAlgebra.SCALAR and components != 1:
+            raise InvalidScientificProblem(
+                f"scalar field port {port_id!r} must have one component"
+            )
+        if self.algebra is FieldAlgebra.VECTOR and components not in (2, 3):
+            raise InvalidScientificProblem(
+                f"vector field port {port_id!r} must have 2 or 3 components"
+            )
+        if self.algebra is FieldAlgebra.TENSOR_2:
+            dimension = math.isqrt(components)
+            if dimension not in (2, 3) or dimension * dimension != components:
+                raise InvalidScientificProblem(
+                    f"rank-2 tensor field port {port_id!r} must store a full "
+                    f"2x2 or 3x3 tensor (4 or 9 components), got {components}"
+                )
+        if (
+            self.algebra in (FieldAlgebra.SCALAR, FieldAlgebra.CUSTOM)
+            and self.coordinate_frame
+        ):
+            raise InvalidScientificProblem(
+                f"{self.algebra.value} field port {port_id!r} cannot declare a "
+                f"coordinate frame transform semantics"
             )
 
     @property
@@ -108,6 +156,7 @@ class PortDefinition:
             "quantity": self.quantity,
             "unit": self.unit,
             "field": None if self.field is None else self.field.to_dict(),
+            "algebra": self.algebra.value,
             "coordinate_frame": self.coordinate_frame,
             "description": self.description,
         }
@@ -123,6 +172,7 @@ class PortDefinition:
             quantity=payload["quantity"],
             unit=payload["unit"],
             field=None if raw_field is None else FieldDefinition.from_dict(raw_field),
+            algebra=FieldAlgebra(payload.get("algebra", "scalar")),
             coordinate_frame=payload.get("coordinate_frame", ""),
             description=payload.get("description", ""),
         )
