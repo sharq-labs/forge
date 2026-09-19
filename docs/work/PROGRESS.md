@@ -37,9 +37,11 @@ No test command is recorded here yet for the latest agent-workflow additions.
 Status: **NOT RUN**
 
 Environment note (2026-09-19): attempts to access the branch from the
-assistant's local execution container, including the latest diagnostic-engine syntax/test attempt,
-were blocked before checkout because that container could not resolve `github.com`.
-No pytest command ran, so this is not a test result and the status remains NOT RUN.
+assistant's local execution container were blocked before checkout because that
+container could not resolve `github.com`. The latest hardening verification attempt
+ran `git clone ... && python -m compileall -q src tools tests`, but clone failed first
+with `Could not resolve host: github.com`; therefore compileall and pytest did not run.
+This is not a test result and the status remains NOT RUN.
 
 When a command is executed, append entries in this exact shape:
 
