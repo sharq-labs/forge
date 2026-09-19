@@ -11,7 +11,10 @@ def estimate(status=ModelFormStatus.VALIDATED):
 
 
 def qualification():
-    return ProducerQualification("reviewed.producer","interval.v1","a"*64,"b"*64,("temperature",))
+    return ProducerQualification(
+        "reviewed.producer","interval.v1","a"*64,
+        "independent.reviewer","b"*64,("temperature",)
+    )
 
 
 def test_authorized_model_form_produces_explicit_interval_source():
