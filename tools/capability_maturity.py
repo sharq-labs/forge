@@ -92,7 +92,22 @@ def validate(data: dict[str, Any]) -> tuple[str, ...]:
         if not isinstance(cap, dict):
             errors.append("every capability must be an object")
             continue
+        expected_fields = {
+            "id", "kind", "title", "owner", "declared_stage",
+            "summary", "next_actions", "gates",
+        }
+        if set(cap) != expected_fields:
+            errors.append(
+                f"{prefix if 'prefix' in locals() else cid}: capability fields must be exactly "
+                f"{sorted(expected_fields)}"
+            )
         cid = str(cap.get("id", "")).strip() or "<missing>"
+        for field_name in ("kind", "title", "owner", "summary"):
+            if not str(cap.get(field_name, "")).strip():
+                errors.append(f"{cid}: {field_name} must be non-empty")
+        owner = str(cap.get("owner", "")).strip()
+        if owner and not (ROOT / owner).exists():
+            errors.append(f"{cid}: owner path does not exist: {owner}")
         stage = cap.get("declared_stage")
         if stage not in STAGES:
             errors.append(f"{cid}: invalid declared_stage {stage!r}")
