@@ -530,7 +530,7 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "measurements, frozen artefacts, and the certificate itself — a "
      "certificate whose scope contained its own bytes would need a fixed point"),
     (".github/** (except the two certification workflows), tools/** (except "
-     "tools/__init__.py and tools/certification/*.py)",
+     "tools/__init__.py, tools/forge_check.py and tools/certification/*.py)",
      "repository automation that does not decide whether a certificate "
      "verifies. .github/workflows/trust-mutations.yml in particular is an "
      "advisory run of a population the recertify workflow re-executes itself"),
