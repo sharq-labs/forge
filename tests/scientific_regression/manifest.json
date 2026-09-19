@@ -402,6 +402,26 @@
         "provenance"
       ],
       "invariant": "SOC reconstructed from measured current remains a derived model artifact, not a direct measurement"
+    },
+    {
+      "id": "domain-pack-registration-not-activation",
+      "nodeid": "tests/domainpacks/test_domain_pack_v1.py::test_registering_a_pack_does_not_enable_it",
+      "tags": [
+        "selection",
+        "context",
+        "provenance"
+      ],
+      "invariant": "installing/registering a scientific domain pack never changes active science until explicit enablement"
+    },
+    {
+      "id": "domain-pack-manifest-runtime-drift-refused",
+      "nodeid": "tests/domainpacks/test_domain_pack_v1.py::test_manifest_runtime_drift_is_refused_before_registration",
+      "tags": [
+        "provenance",
+        "evidence",
+        "selection"
+      ],
+      "invariant": "a domain pack whose runtime artifacts differ from its declared manifest is refused before activation"
     }
   ]
 }
