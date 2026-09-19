@@ -7090,6 +7090,18 @@ POPULATION_V4: tuple[tuple, ...] = (
         "N62s", "src/engcore/credibility/assurance_manifest.py::_validate_knowledge_evidence", "        if not node.provenance.trusted:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted", 'KILLED',
         "production assurance refuses untrusted knowledge provenance", (), 'unified_replay_round62',
     ),
+    (
+        "N63a", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.profile != PRODUCTION_ASSURANCE_PROFILE:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest", 'KILLED',
+        "production assurance bundle is bound to its exact manifest profile", (), 'assurance_bundle_round63',
+    ),
+    (
+        "N63b", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        validate_production_assurance_components(\n            run_id=self.manifest.run_id,\n            law=self.law,\n            knowledge=self.knowledge,\n            evidence=self.evidence,\n            validation=self.validation,\n            combined_uq=self.combined_uq,\n            verification=self.verification,\n            certification=self.certification,\n            provenance=self.provenance,\n        )\n", "        _ = self.manifest.run_id\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation", 'KILLED',
+        "rehashing forged payloads does not bypass scientific semantic revalidation", (), 'assurance_bundle_round63',
+    ),
+    (
+        "N63c", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.contract_artifacts != expected:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing", 'KILLED',
+        "bundle payloads must hash to the identities pinned by the manifest", (), 'assurance_bundle_round63',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on

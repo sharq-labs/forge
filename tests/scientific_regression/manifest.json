@@ -1184,6 +1184,44 @@
         "uq"
       ],
       "invariant": "full assurance chain replays with exact contracts and typed output tolerance"
+    },
+    {
+      "id": "assurance-bundle-roundtrip",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest",
+      "tags": [
+        "replay",
+        "provenance",
+        "evidence"
+      ],
+      "invariant": "full assurance payload bundle round-trips through typed readers"
+    },
+    {
+      "id": "assurance-bundle-content-addressing",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "payload changes cannot retain an old manifest identity"
+    },
+    {
+      "id": "assurance-bundle-semantic-revalidation",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "rehashing cannot promote semantically invalid validation evidence"
+    },
+    {
+      "id": "assurance-bundle-provenance-revalidation",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_provenance_with_wrong_certified_commit_is_still_refused",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "rehashing cannot detach provenance from certified commit"
     }
   ]
 }
