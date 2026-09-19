@@ -25,10 +25,12 @@ checked against the runtime but can never influence what the runtime concludes.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import platform
 import subprocess
+from pathlib import Path
 from importlib import metadata as importlib_metadata
 from dataclasses import dataclass
 from enum import Enum
@@ -65,29 +67,61 @@ def _distribution_version(name: str) -> str:
         return "not-installed"
 
 
-def _git_identity() -> dict[str, Any]:
-    """Best-effort source identity. Missing Git metadata never becomes authority."""
+def _git_bytes(*args: str) -> bytes | None:
+    try:
+        proc = subprocess.run(
+            ["git", *args],
+            check=False,
+            capture_output=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return proc.stdout if proc.returncode == 0 else None
 
-    def run(*args: str) -> str | None:
+
+def _digest_bytes(data: bytes | None) -> str | None:
+    return None if data is None else hashlib.sha256(data).hexdigest()
+
+
+def _untracked_manifest(root: Path | None, names: bytes | None) -> bytes | None:
+    if root is None or names is None:
+        return None
+    rows: list[bytes] = []
+    for raw in sorted(name for name in names.split(b"\0") if name):
+        relative = raw.decode("utf-8", errors="surrogateescape")
+        path = root / relative
         try:
-            proc = subprocess.run(
-                ["git", *args],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=2,
-            )
-        except (OSError, subprocess.SubprocessError):
-            return None
-        return proc.stdout.strip() if proc.returncode == 0 else None
+            if path.is_symlink():
+                content_digest = hashlib.sha256(str(path.readlink()).encode("utf-8", errors="surrogateescape")).hexdigest()
+            elif path.is_file():
+                content_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            else:
+                content_digest = "non-file"
+        except OSError:
+            content_digest = "unreadable"
+        rows.append(raw + b"\0" + content_digest.encode("ascii"))
+    return b"\n".join(rows)
 
-    commit = run("rev-parse", "HEAD")
-    status = run("status", "--porcelain")
+
+def _git_identity() -> dict[str, Any]:
+    """Best-effort source identity including the exact dirty-tree content."""
+
+    commit_raw = _git_bytes("rev-parse", "HEAD")
+    status = _git_bytes("status", "--porcelain")
+    diff = _git_bytes("diff", "--binary", "HEAD")
+    root_raw = _git_bytes("rev-parse", "--show-toplevel")
+    untracked = _git_bytes("ls-files", "--others", "--exclude-standard", "-z")
+    root = None
+    if root_raw:
+        root = Path(root_raw.decode("utf-8", errors="surrogateescape").strip())
+    manifest = _untracked_manifest(root, untracked)
     return {
-        "commit": commit or "unknown",
+        "commit": "unknown" if not commit_raw else commit_raw.decode("ascii", errors="replace").strip(),
         "dirty": None if status is None else bool(status),
+        "tracked_diff_digest": _digest_bytes(diff),
+        "untracked_manifest_digest": _digest_bytes(manifest),
     }
-
 
 def _environment() -> dict[str, Any]:
     """Reproducibility metadata only; it never grants scientific standing."""

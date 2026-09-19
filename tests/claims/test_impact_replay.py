@@ -203,7 +203,9 @@ def test_bundle_environment_carries_a_reproducibility_fingerprint(bundled) -> No
     assert set(environment["distribution"]) == {"crafty", "numpy", "scipy", "pint"}
     assert set(environment["python"]) == {"version", "implementation"}
     assert set(environment["platform"]) == {"system", "release", "machine"}
-    assert set(environment["git"]) == {"commit", "dirty"}
+    assert set(environment["git"]) == {"commit", "dirty", "tracked_diff_digest", "untracked_manifest_digest"}
+    assert environment["git"]["tracked_diff_digest"] is None or len(environment["git"]["tracked_diff_digest"]) == 64
+    assert environment["git"]["untracked_manifest_digest"] is None or len(environment["git"]["untracked_manifest_digest"]) == 64
 
 def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, registry, monkeypatch) -> None:
     import engcore.claims.execution as execution

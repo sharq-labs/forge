@@ -3,7 +3,7 @@
 Two families, and the difference between them is the difference between the
 two boundaries this layer owns.
 
-**Reading a report: one type.** The V&V layer has exactly one failure mode
+**Reading a report: one compatibility type.** The credibility layer owns exactly one failure mode
 worth distinguishing from the rest of the platform — "this report does not say
 what it claims to say" — and splitting that into a taxonomy would suggest a
 caller could usefully branch on which way a report was malformed. It cannot:
@@ -14,7 +14,7 @@ applies, for the opposite reason. The caller here is upstream of the run and is
 frequently an agent assembling a payload it has never seen validated. Every
 distinction below maps to a *different repair*: add a unit, change a unit, fix
 a spelling, supply a missing field, fix the shape. A caller can branch on these
-usefully, which is the test the report side fails and this side passes. Each
+usefully, which is the test the credibility-report side fails and this problem-builder side passes. Each
 carries the field, what arrived and what was expected, so that the repair needs
 no second attempt to discover.
 
@@ -104,6 +104,6 @@ class WrongDimensionError(ProblemPayloadError):
 
 
 #: Deprecated alias, kept for one release alongside
-#: :class:`~engcore.mcp.evidence.EvidencePackage`. New code should use
+#: the legacy MCP evidence surface. New code should use
 #: :class:`CredibilityEvidenceError`.
 EvidencePackageError = CredibilityEvidenceError
