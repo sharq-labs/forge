@@ -22,14 +22,21 @@
     "mission type"
   ],
   "value_columns": {
-    "battery_temperature": {"column": "temperature battery", "unit": "degC"},
-    "terminal_voltage": {"column": "voltage load", "unit": "volt"}
+    "battery_pack_temperature": {
+      "column": "temperature battery",
+      "unit": "degC"
+    },
+    "battery_pack_load_voltage": {
+      "column": "voltage load",
+      "unit": "volt"
+    },
+    "battery_pack_load_current": {
+      "column": "current load",
+      "unit": "ampere"
+    }
   },
-  "condition_columns": {
-    "load.cell_temperature": {"column": "temperature battery", "unit": "degC"},
-    "load.current": {"column": "current load", "unit": "ampere"}
-  },
+  "condition_columns": {},
   "independence_unit": "battery_pack",
   "measurement_uncertainty_declared": false,
-  "notes": "NASA documents measured voltage, current and temperature channels and the pack-level CSV organization. The reviewed landing page/data description does not state a per-observation calibrated sensor uncertainty. Raw rows therefore remain non-admissible dataset observations until calibration/uncertainty and the complete Forge operating context are supplied. Calibration and validation splits must be by whole battery pack, never random rows from the same pack."
+  "notes": "NASA documents pack-level voltage, current and temperature channels for two-cell battery packs. Forge's current battery capability models one equivalent cell, so this manifest deliberately makes no direct Forge input/QOI mapping. Raw rows remain non-admissible dataset observations until a reviewed pack-to-cell transformation (if scientifically justified), exact operating context, calibrated measurement uncertainty and provenance are supplied. Calibration and validation splits must be by whole battery pack, never random rows from the same pack."
 }
