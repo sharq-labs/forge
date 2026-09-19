@@ -151,7 +151,12 @@ class LawDefinition:
     def dimension_report(self) -> DimensionReport:
         return assess_equation_dimensions(self.equation, self.symbol_units)
 
-    def evaluate(self, bindings: Mapping[str, Quantity]) -> EquationEvaluation:
+    def evaluate(
+        self,
+        bindings: Mapping[str, Quantity],
+        *,
+        derivative_bindings: Mapping[str, Quantity] | None = None,
+    ) -> EquationEvaluation:
         required = set(self.symbol_units)
         provided = set(bindings)
         if required != provided:
@@ -175,7 +180,9 @@ class LawDefinition:
                 )
             except UnitCompatibilityError as exc:
                 raise EquationEvaluationError("binding_dimension_mismatch", str(exc)) from exc
-        return evaluate_equation(self.equation, bindings)
+        return evaluate_equation(
+            self.equation, bindings, derivative_bindings=derivative_bindings
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
