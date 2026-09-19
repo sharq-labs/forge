@@ -296,13 +296,13 @@ def cstr_capability() -> CapabilityDeclaration:
             AttainableLevel(
                 ValidationLevel.NUMERICALLY_CONVERGED,
                 check_name="tolerance_independence",
-                route_id="kinetics.cstr.bdf",
+                route_id="kinetics.cstr.integration:BDF",
                 condition="the declared tolerance ladder is complete and the QOIs stop moving",
             ),
             AttainableLevel(
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 check_name="analytic_invariant_agreement",
-                route_id="kinetics.cstr.adiabatic_invariant",
+                route_id="kinetics.cstr.adiabatic_reaction_free_invariant",
                 condition="the adiabatic trajectory reproduces the exact reaction-free invariant",
             ),
         ),
@@ -317,15 +317,15 @@ def cstr_capability() -> CapabilityDeclaration:
         ),
         routes=(
             RouteDeclaration(
-                route_id="kinetics.cstr.bdf",
+                route_id="kinetics.cstr.integration:BDF",
                 kind=RouteKind.PRIMARY_SIMULATION,
-                pinned_route="kinetics.cstr.bdf",
+                pinned_route="kinetics.cstr.integration:BDF",
                 description="production implicit BDF integration",
             ),
             RouteDeclaration(
-                route_id="kinetics.cstr.radau",
+                route_id="kinetics.cstr.integration:Radau",
                 kind=RouteKind.SOLVER_ROUTE,
-                pinned_route="kinetics.cstr.radau",
+                pinned_route="kinetics.cstr.integration:Radau",
                 check_name="cross_method_agreement",
                 description=(
                     "Radau cross-method corroboration. It shares the RHS/Jacobian/"
@@ -333,9 +333,9 @@ def cstr_capability() -> CapabilityDeclaration:
                 ),
             ),
             RouteDeclaration(
-                route_id="kinetics.cstr.adiabatic_invariant",
+                route_id="kinetics.cstr.adiabatic_reaction_free_invariant",
                 kind=RouteKind.ANALYTIC_REFERENCE,
-                analytic_reference="kinetics.cstr.adiabatic_invariant",
+                analytic_reference="kinetics.cstr.adiabatic_reaction_free_invariant",
                 check_name="analytic_invariant_agreement",
                 description="exact reaction-free invariant for an adiabatic CSTR",
             ),
