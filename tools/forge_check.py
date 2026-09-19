@@ -108,10 +108,18 @@ def build_targets(paths: Iterable[str], *, regression: bool = False) -> list[str
     return list(dict.fromkeys(targets))
 
 
-def build_command(targets: Iterable[str], workers: int) -> list[str]:
+def build_command(
+    targets: Iterable[str],
+    workers: int,
+    *,
+    junitxml: str | None = None,
+) -> list[str]:
+    """Build the deterministic pytest command used by the developer/certification gate."""
     cmd = [sys.executable, "-m", "pytest", "-q"]
     if workers:
         cmd += ["-n", str(workers), "--dist", "loadfile"]
+    if junitxml:
+        cmd += ["--junitxml", junitxml]
     cmd += list(targets)
     return cmd
 
@@ -123,6 +131,11 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--regression", action="store_true", help="run the complete fixed scientific regression pack")
     parser.add_argument("--base", default=os.environ.get("FORGE_BASE", "main"), help="base ref for --changed")
     parser.add_argument("--workers", type=int, default=0, help="pytest-xdist workers; 0 runs serially")
+    parser.add_argument(
+        "--junitxml",
+        default=None,
+        help="write pytest JUnit XML evidence to this path (used by certification)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="print selection without executing pytest")
     parser.add_argument("--list", action="store_true", help="print selected test targets")
     args = parser.parse_args(argv)
@@ -145,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         for target in targets:
             print(f"  {target}")
 
-    cmd = build_command(targets, args.workers)
+    cmd = build_command(targets, args.workers, junitxml=args.junitxml)
     print("$ " + shlex.join(cmd))
 
     if args.dry_run:

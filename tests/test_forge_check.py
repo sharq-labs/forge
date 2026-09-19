@@ -30,3 +30,13 @@ def test_regression_mode_selects_every_manifest_case_once():
     expected = {case["nodeid"] for case in data["cases"]}
     selected = {target for target in targets if "::" in target}
     assert selected == expected
+
+
+def test_build_command_can_emit_junit_evidence_for_certification():
+    command = forge_check.build_command(
+        ["tests/test_forge_check.py::test_regression_mode_selects_every_manifest_case_once"],
+        4,
+        junitxml="/tmp/regression.xml",
+    )
+    assert "--junitxml" in command
+    assert "/tmp/regression.xml" in command

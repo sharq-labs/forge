@@ -147,6 +147,29 @@ def test_a_functional_suite_without_a_clean_report_is_refused(source, suite, xml
     _file(evidence, head, "fast311", suite).write_bytes(xml)
     _refused(root, head, evidence, fragment)
 
+@pytest.mark.parametrize(
+    ("gate", "suite"),
+    [
+        ("campaign312", "junit_campaign"),
+        ("regression312", "junit_regression"),
+    ],
+)
+def test_certification_refuses_skipped_campaign_or_regression_evidence(source, gate, suite):
+    root, head, evidence = source
+    skipped = (
+        b'<testsuites><testsuite tests="1" failures="0" errors="0" skipped="1">'
+        b'<testcase classname="tests.t" name="a"><skipped/></testcase>'
+        b'</testsuite></testsuites>'
+    )
+    _file(evidence, head, gate, suite).write_bytes(skipped)
+    _refused(root, head, evidence, "exceeds ceiling 0")
+
+
+def test_a_source_gate_with_different_resolved_dependencies_is_refused(source):
+    root, head, evidence = source
+    _file(evidence, head, "campaign312", "pip_freeze").write_bytes(b"numpy==999.0\n")
+    _refused(root, head, evidence, "resolved dependency environment differs from fast312")
+
 
 def test_a_wrong_interpreter_is_refused(source):
     root, head, evidence = source

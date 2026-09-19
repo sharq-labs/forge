@@ -65,8 +65,8 @@ from tools.certification.recertification_scope import (
     match,
 )
 
-ASSURANCE_SCHEMA = "forge.core_hardening_assurance/3"
-ENVIRONMENT_SCHEMA = "forge.certification_environment/3"
+ASSURANCE_SCHEMA = "forge.core_hardening_assurance/4"
+ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
 DEPENDENCY_MANIFEST = "pyproject.toml"
@@ -102,9 +102,23 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         "gate": "gate-fast312.json",
     }),
     "scientific312": ("core-scientific", {
+        "python": "python-scientific-3.12.txt",
+        "pip_freeze": "pip-freeze-scientific-3.12.txt",
         "ngspice": "ngspice-version.txt",
         "junit_scientific": "junit-scientific-3.12.xml",
         "gate": "gate-scientific312.json",
+    }),
+    "campaign312": ("core-campaign", {
+        "python": "python-campaign-3.12.txt",
+        "pip_freeze": "pip-freeze-campaign-3.12.txt",
+        "junit_campaign": "junit-campaign-3.12.xml",
+        "gate": "gate-campaign312.json",
+    }),
+    "regression312": ("core-regression", {
+        "python": "python-regression-3.12.txt",
+        "pip_freeze": "pip-freeze-regression-3.12.txt",
+        "junit_regression": "junit-regression-3.12.xml",
+        "gate": "gate-regression312.json",
     }),
     **{
         f"formal_mutations_{index}": (f"core-formal-mutations-{index}", {
@@ -125,6 +139,8 @@ FUNCTIONAL = (
     ("fast_python_3_11", "fast311", ("junit_dependency_guard", "junit_fast")),
     ("fast_python_3_12", "fast312", ("junit_dependency_guard", "junit_fast")),
     ("scientific_python_3_12", "scientific312", ("junit_scientific",)),
+    ("campaign_python_3_12", "campaign312", ("junit_campaign",)),
+    ("false_confidence_regression_python_3_12", "regression312", ("junit_regression",)),
 )
 
 #: The most skipped tests each functional suite may report and still count as a
@@ -138,6 +154,8 @@ SKIP_CEILING: Mapping[str, int] = {
     "junit_dependency_guard": 0,
     "junit_fast": 19,
     "junit_scientific": 5,
+    "junit_campaign": 0,
+    "junit_regression": 0,
 }
 
 
@@ -414,6 +432,18 @@ def build_assurance(
     python_312 = _first_line(evidence.read("fast312", "python"))
     freeze_311 = evidence.read("fast311", "pip_freeze")
     freeze_312 = evidence.read("fast312", "pip_freeze")
+    runtime_312: dict[str, dict[str, str]] = {}
+    for gate in ("scientific312", "campaign312", "regression312"):
+        gate_python = _first_line(evidence.read(gate, "python"))
+        gate_freeze = evidence.read(gate, "pip_freeze")
+        if gate_python and not gate_python.startswith("Python 3.12."):
+            problems.append(f"{gate} ran under {gate_python!r}")
+        if gate_freeze is not None and freeze_312 is not None and gate_freeze != freeze_312:
+            problems.append(f"{gate}: resolved dependency environment differs from fast312")
+        runtime_312[gate] = {
+            "python": gate_python,
+            "pip_freeze_sha256": sha256_bytes(gate_freeze or b""),
+        }
     ngspice_blob = evidence.read("scientific312", "ngspice")
     ngspice = ngspice_version(ngspice_blob)
     if python_311 and not python_311.startswith("Python 3.11."):
@@ -444,6 +474,7 @@ def build_assurance(
             "python_3_12": python_312,
             "pip_freeze_3_11_sha256": sha256_bytes(freeze_311 or b""),
             "pip_freeze_3_12_sha256": sha256_bytes(freeze_312 or b""),
+            "python_3_12_source_gates": runtime_312,
             "ngspice": ngspice,
             "install": INSTALL_COMMAND,
             "dependency_manifest": {
@@ -576,6 +607,13 @@ def assurance_problems(
     for key in ("python_3_11", "python_3_12", "ngspice", "pip_freeze_3_11_sha256", "pip_freeze_3_12_sha256"):
         if not environment.get(key):
             problems.append(f"environment.{key} is absent")
+    runtime_312 = environment.get("python_3_12_source_gates") or {}
+    for gate in ("scientific312", "campaign312", "regression312"):
+        gate_runtime = runtime_312.get(gate) or {}
+        if not str(gate_runtime.get("python") or "").startswith("Python 3.12."):
+            problems.append(f"environment.python_3_12_source_gates.{gate}.python is absent or wrong")
+        if gate_runtime.get("pip_freeze_sha256") != environment.get("pip_freeze_3_12_sha256"):
+            problems.append(f"environment.python_3_12_source_gates.{gate} does not match fast312 dependencies")
 
     control = assurance.get("control_plane") or {}
     identity = control_plane_identity(root)

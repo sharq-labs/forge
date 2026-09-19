@@ -172,8 +172,17 @@ def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path) -> 
         put(gate, "pip_freeze", f"numpy==2.0.0\npytest==8.0.0 # {version}\n".encode())
         put(gate, "junit_dependency_guard", JUNIT_OK)
         put(gate, "junit_fast", JUNIT_OK)
+    shared_312_freeze = b"numpy==2.0.0\npytest==8.0.0 # 3.12\n"
+    put("scientific312", "python", b"Python 3.12.9\n")
+    put("scientific312", "pip_freeze", shared_312_freeze)
     put("scientific312", "ngspice", b"******\n** ngspice-42 : Circuit level simulation program\n******\n")
     put("scientific312", "junit_scientific", JUNIT_OK)
+    put("campaign312", "python", b"Python 3.12.9\n")
+    put("campaign312", "pip_freeze", shared_312_freeze)
+    put("campaign312", "junit_campaign", JUNIT_OK)
+    put("regression312", "python", b"Python 3.12.9\n")
+    put("regression312", "pip_freeze", shared_312_freeze)
+    put("regression312", "junit_regression", JUNIT_OK)
     population = mutation_population.canonical_population(root)
     for index in range(POLICY.shard_count):
         gate = f"formal_mutations_{index}"
