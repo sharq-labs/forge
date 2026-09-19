@@ -297,3 +297,15 @@ def test_a_bundle_with_external_evidence_carries_its_trust_and_replays(registry)
     assert replay_bundle(bundle, registry).status is BundleStatus.VERIFIED
     with pytest.raises(Exception):
         make_bundle(assessment, registry)  # the production registry is not the one it was judged under
+
+
+def test_untracked_manifest_digest_changes_with_file_content(tmp_path) -> None:
+    from engcore.claims.replay.bundle import _digest_bytes, _untracked_manifest
+
+    path = tmp_path / "candidate.txt"
+    path.write_text("first", encoding="utf-8")
+    first = _digest_bytes(_untracked_manifest(tmp_path, b"candidate.txt\0"))
+    path.write_text("second", encoding="utf-8")
+    second = _digest_bytes(_untracked_manifest(tmp_path, b"candidate.txt\0"))
+
+    assert first is not None and second is not None and first != second

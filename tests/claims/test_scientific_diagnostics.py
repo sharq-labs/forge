@@ -170,3 +170,15 @@ def test_foreign_or_edited_sensitivity_is_refused(registry) -> None:
     edited["assessment_digest"] = "0" * 64
     with pytest.raises(DiagnosticInputBindingError):
         diagnose_assessment(assessment.to_dict(), registry, sensitivity=edited)
+
+
+def test_sealed_sensitivity_from_another_assessment_is_refused(registry) -> None:
+    from engcore.claims.analysis.diagnostics import DiagnosticInputBindingError
+    original = assess_claim(_numerical_t3_claim(), registry)
+    foreign = assess_claim(t3_claim(
+        tolerance=Quantity(0.0002, "kelvin"),
+        uncertainty=UncertaintyDemand(frozenset({C.NUMERICAL}), None, False),
+    ), registry)
+    sealed_foreign = _bound_sensitivity(foreign, [])
+    with pytest.raises(DiagnosticInputBindingError, match="belongs to another assessment"):
+        diagnose_assessment(original.to_dict(), registry, sensitivity=sealed_foreign)

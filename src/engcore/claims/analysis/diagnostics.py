@@ -495,6 +495,7 @@ class ScientificDiagnosticReport:
     def root_causes(self) -> tuple[DiagnosticFinding, ...]:
         """Compatibility alias; prefer findings."""
         return self.findings
+
     def to_dict(self) -> dict[str, Any]:
         primary = self.primary_finding
         return {
@@ -559,6 +560,7 @@ def _require_analysis_binding(record: Mapping[str, Any], artifact: Mapping[str, 
                 f"{label} belongs to another assessment: {field} is {got!r}, expected {wanted!r}"
             )
 
+
 def diagnose_assessment(
     record: Mapping[str, Any],
     registry: Any,
@@ -604,7 +606,7 @@ __all__ = [
     "HypothesisKind",
     "ModelDiscrepancyAnalysis",
     "RepairHypothesis",
-    "DiagnosticFinding",
+    "RootCauseFinding",
     "ScientificDiagnosticReport",
     "analyze_assumptions",
     "analyze_model_discrepancy",
