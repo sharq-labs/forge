@@ -76,7 +76,7 @@ def test_raw_nasa_row_cannot_masquerade_as_complete_battery_evidence() -> None:
     )
 
     assert observation.conditions == {}
-    assert "load.current" in observation.missing_context
+    assert "load.discharge_current" in observation.missing_context
     assert "load.cell_temperature" in observation.missing_context
     assert observation.missing_context
     assert not observation.uncertainty.is_quantified
@@ -101,9 +101,9 @@ def test_complete_context_and_calibration_are_required_before_promotion() -> Non
         independence_group="fixture-pack:a",
         split=DatasetSplit.VALIDATION,
         quantity="battery_pack_load_voltage",
-        required_context=("load.current", "load.cell_temperature"),
+        required_context=("load.discharge_current", "load.cell_temperature"),
         context_overrides={
-            "load.current": Quantity(9.3, "ampere"),
+            "load.discharge_current": Quantity(9.3, "ampere"),
             "load.cell_temperature": Quantity(25.0, "degC"),
         },
         uncertainty=uncertainty,
