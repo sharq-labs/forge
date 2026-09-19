@@ -283,7 +283,8 @@ class ReplayTolerance:
 def _study_replay_inputs(
     record: Mapping[str, Any],
 ) -> tuple[tuple[DatasetObservation, ...], ProducerQualification | None, tuple[str, ...]]:
-    observations: dict[str, DatasetObservation] = {}
+    observations: list[DatasetObservation] = []
+    observation_digests: set[str] = set()
     qualification: ProducerQualification | None = None
     problems: list[str] = []
     for index, study in enumerate(record.get("uncertainty_studies") or ()):
@@ -299,7 +300,9 @@ def _study_replay_inputs(
                     f"{type(exc).__name__}: {exc}"
                 )
                 continue
-            observations[observation.digest] = observation
+            if observation.digest not in observation_digests:
+                observations.append(observation)
+                observation_digests.add(observation.digest)
         raw_qualification = study.get("qualification")
         if raw_qualification is None:
             continue
@@ -318,10 +321,36 @@ def _study_replay_inputs(
         else:
             qualification = candidate
     return (
-        tuple(observations[key] for key in sorted(observations)),
+        tuple(observations),
         qualification,
         tuple(problems),
     )
+
+
+def _tolerates_numeric(path: str) -> bool:
+    parts = tuple(part for part in path.split("/") if part)
+    if parts[:2] == ("result", "value"):
+        return True
+    if parts[:1] == ("comparison",):
+        return True
+    if parts[:3] in {
+        ("credibility", "report", "values"),
+        ("credibility", "report", "uncertainty"),
+    }:
+        return True
+    if parts[:1] == ("uncertainty_studies",):
+        return any(
+            part in {
+                "runs",
+                "pairs",
+                "estimate",
+                "uncertainty",
+                "discrepancy",
+                "model_form_estimate",
+            }
+            for part in parts[2:]
+        )
+    return False
 
 
 def _compare_replay_nodes(
@@ -334,9 +363,9 @@ def _compare_replay_nodes(
 ) -> int:
     """Compare the complete public assessment record.
 
-    JSON integers are compared exactly.  Floating-point leaves use the declared
-    replay tolerance.  Everything else -- keys, list shape, units, methods,
-    identities, evidence hashes, checks, policy and prose records -- is exact.
+    Configuration, inputs, identities, evidence, trust, checks and policy are
+    exact.  The declared tolerance is used only for scientific result/estimate
+    leaves; it can never blur a changed threshold, input or trust decision.
     """
     differences = [] if differences is None else differences
     if isinstance(before, Mapping) and isinstance(after, Mapping):
@@ -377,10 +406,10 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 0
     if isinstance(before, (int, float)) and isinstance(after, (int, float)):
-        if isinstance(before, int) and isinstance(after, int):
-            if before != after:
+        if _tolerates_numeric(path):
+            if not tolerance.same(float(before), float(after)):
                 differences.append(f"{path or '/'}: {before!r} -> {after!r}")
-        elif not tolerance.same(float(before), float(after)):
+        elif type(before) is not type(after) or before != after:
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 1
     if type(before) is not type(after) or before != after:
