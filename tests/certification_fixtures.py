@@ -174,6 +174,8 @@ def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path) -> 
         put(gate, "junit_fast", JUNIT_OK)
     put("scientific312", "ngspice", b"******\n** ngspice-42 : Circuit level simulation program\n******\n")
     put("scientific312", "junit_scientific", JUNIT_OK)
+    put("campaign312", "junit_campaign", JUNIT_OK)
+    put("regression312", "junit_regression", JUNIT_OK)
     population = mutation_population.canonical_population(root)
     for index in range(POLICY.shard_count):
         gate = f"formal_mutations_{index}"
