@@ -274,7 +274,8 @@ def cstr_capability() -> CapabilityDeclaration:
         summary=(
             "Transient non-isothermal first-order CSTR with Arrhenius kinetics, "
             "production BDF integration, tolerance-ladder numerical verification "
-            "and an exact adiabatic-invariant verification route when applicable."
+            "and an exact adiabatic-invariant diagnostic route when applicable. "
+            "The invariant verifies the coupled relation, not an individual output QoI."
         ),
         provides=(
             ProvidedCapability(
@@ -323,13 +324,6 @@ def cstr_capability() -> CapabilityDeclaration:
                     "the declared tolerance ladder is complete and the verified "
                     "QOIs stop moving"
                 ),
-                quantities=_CSTR_VERIFICATION_QOIS,
-            ),
-            AttainableLevel(
-                ValidationLevel.ANALYTICALLY_VERIFIED,
-                check_name="analytic_invariant_agreement",
-                route_id="kinetics.cstr.adiabatic_reaction_free_invariant",
-                condition="the adiabatic trajectory reproduces the exact reaction-free invariant",
                 quantities=_CSTR_VERIFICATION_QOIS,
             ),
             AttainableLevel(
