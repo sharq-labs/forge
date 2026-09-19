@@ -31,3 +31,8 @@ __all__ += [
     "PlannedVerificationRoute","VerificationPlan","plan_verification","VerificationExecutionReport",
     "build_execution_report",
 ]
+
+from .plan_serialization import plan_from_dict,plan_to_dict
+from .run_record import VerificationRunRecord
+
+__all__ += ["plan_to_dict","plan_from_dict","VerificationRunRecord"]

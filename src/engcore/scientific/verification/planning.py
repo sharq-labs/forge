@@ -44,6 +44,7 @@ class PlannedVerificationRoute:
 class VerificationPlan:
     primary_route:VerificationRoute
     primary_dependencies:RouteDependencyManifest
+    candidates:tuple[VerificationCandidate,...]
     selected:tuple[PlannedVerificationRoute,...]
     rejected:tuple[tuple[str,str],...]
     policy:VerificationPolicy
@@ -71,4 +72,4 @@ def plan_verification(primary_route:VerificationRoute,primary_dependencies:Route
         selected.append(PlannedVerificationRoute(candidate,independence))
     selected.sort(key=lambda x:(-int(level_for_route(x.candidate.route.kind)),
                                 -_INDEPENDENCE_RANK[x.independence.level],x.candidate.route.route_id))
-    return VerificationPlan(primary_route,primary_dependencies,tuple(selected),tuple(rejected),policy)
+    return VerificationPlan(primary_route,primary_dependencies,tuple(candidates),tuple(selected),tuple(rejected),policy)
