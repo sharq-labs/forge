@@ -54,7 +54,9 @@ def test_nasa_manifest_is_round_trip_identified_and_not_pretrusted() -> None:
     assert manifest.dataset_id == "nasa.randomized_recommissioned_battery_alt"
     assert manifest.independence_unit == "battery_pack"
     assert manifest.measurement_uncertainty_declared is False
-    assert manifest.value_columns["terminal_voltage"] == ("voltage load", "volt")
+    assert manifest.value_columns["battery_pack_load_voltage"] == ("voltage load", "volt")
+    assert manifest.condition_columns == {}
+    assert "two-cell battery packs" in manifest.notes
     assert MeasurementDatasetManifest.from_dict(manifest.to_dict()).digest == manifest.digest
 
 
@@ -68,13 +70,14 @@ def test_raw_nasa_row_cannot_masquerade_as_complete_battery_evidence() -> None:
         observation_id="shape:0.1:row0",
         independence_group="battery-pack:0.1",
         split=DatasetSplit.CALIBRATION,
-        quantity="terminal_voltage",
+        quantity="battery_pack_load_voltage",
         required_context=required,
         provenance_ref="nasa-ntrs:20230014884#shape-fixture",
     )
 
-    assert observation.conditions["load.current"].to("ampere").magnitude == pytest.approx(9.3)
-    assert observation.conditions["load.cell_temperature"].to("degC").magnitude == pytest.approx(25.0)
+    assert observation.conditions == {}
+    assert "load.current" in observation.missing_context
+    assert "load.cell_temperature" in observation.missing_context
     assert observation.missing_context
     assert not observation.uncertainty.is_quantified
     assert observation.ready_for_measurement_evidence is False
@@ -97,8 +100,12 @@ def test_complete_context_and_calibration_are_required_before_promotion() -> Non
         observation_id="fixture:complete",
         independence_group="fixture-pack:a",
         split=DatasetSplit.VALIDATION,
-        quantity="terminal_voltage",
+        quantity="battery_pack_load_voltage",
         required_context=("load.current", "load.cell_temperature"),
+        context_overrides={
+            "load.current": Quantity(9.3, "ampere"),
+            "load.cell_temperature": Quantity(25.0, "degC"),
+        },
         uncertainty=uncertainty,
         calibration_ref="calibration:fixture-voltmeter",
         provenance_ref="fixture:measurement-run",
@@ -107,7 +114,8 @@ def test_complete_context_and_calibration_are_required_before_promotion() -> Non
     assert observation.missing_context == ()
     assert observation.ready_for_measurement_evidence
     record = observation.to_measurement_record()
-    assert record.quantity == "terminal_voltage"
+    assert record.quantity == "battery_pack_load_voltage"
+    assert record.quantity != "terminal_voltage"
     assert record.uncertainty.source_kind is UncertaintySource.MEASUREMENT
     assert set(record.independence_roots) == {"fixture-pack:a", "fixture:measurement-run"}
 
