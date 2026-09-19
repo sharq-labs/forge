@@ -233,6 +233,7 @@ class CredibilityReportCritic:
         *,
         assessment_id: str,
         mandatory_checks: Iterable[str] = (),
+        allowed_levels: Iterable[ValidationLevel] | None = None,
         assessed_at: str | None = None,
     ) -> CriticAssessment:
         if not isinstance(report, CredibilityEvidenceReport):
@@ -240,6 +241,8 @@ class CredibilityReportCritic:
 
         mandatory = {str(item) for item in mandatory_checks}
         attained = set(report.attained_levels)
+        if allowed_levels is not None:
+            attained &= {ValidationLevel(item) for item in allowed_levels}
         checks = []
         missing_mandatory = False
 
