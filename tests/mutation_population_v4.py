@@ -7075,7 +7075,7 @@ POPULATION_V4: tuple[tuple, ...] = (
         "production assurance re-derives validation decision", (), 'unified_replay_round62',
     ),
     (
-        "N62p", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if not verification_result.complete or verification_result.verification.decision is not VerificationDecision.VERIFIED:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
+        "N62p", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if (\n        not verification_result.complete\n        or verification_result.verification.decision is not VerificationDecision.VERIFIED\n    ):\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
         "production assurance requires complete independently verified evidence", (), 'unified_replay_round62',
     ),
     (
@@ -7083,7 +7083,7 @@ POPULATION_V4: tuple[tuple, ...] = (
         "production assurance certification profile cannot certify nothing", (), 'unified_replay_round62',
     ),
     (
-        "N62r", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if provenance.git_commit and provenance.git_commit!=certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
+        "N62r", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if provenance.git_commit and provenance.git_commit != certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
         "provenance commit is bound to the certified commit", (), 'unified_replay_round62',
     ),
     (
