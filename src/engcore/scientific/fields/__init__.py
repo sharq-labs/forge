@@ -19,12 +19,12 @@ imports no array library, and this package does not change that.
     data/field.py          one unit-bearing array bound to those declarations
     domains/…              the physics that produces and consumes them
 
-Scope, stated so it is not mistaken for a framework: one structured
-two-dimensional rectilinear support, four edge regions, scalar or
-multi-component fields at nodes or cells, and the two boundary-condition
-families a conduction slice needs. Everything else — unstructured supports,
-refinement, curvilinear geometry, faces, ghost layers — is absent rather than
-stubbed.
+Structured two-dimensional rectilinear supports retain their profile/region
+helpers. The support contract also accepts content-addressed unstructured
+surface/volume meshes so CFD/FEM participants can exchange fields without
+putting mesh-sized coordinate/connectivity arrays in scientific records.
+Regions/profiles remain structured-only; external solvers own their own mesh
+assembly and expose fields through the common support identity.
 """
 
 from .conditions import (
@@ -45,6 +45,12 @@ from .mesh import (
     MINIMUM_NODES,
     MeshTopology,
     StructuredMesh,
+)
+from .support import MeshSupport, read_mesh_support
+from .unstructured import (
+    UNSTRUCTURED_MESH_SCHEMA,
+    CellType,
+    UnstructuredMesh,
 )
 from .regions import (
     REGION_SCHEMA,
@@ -107,6 +113,7 @@ __all__ = [
     "MESH_SCHEMA",
     "MINIMUM_NODES",
     "REGION_SCHEMA",
+    "UNSTRUCTURED_MESH_SCHEMA",
     "BoundaryEdge",
     "FieldBoundaryCondition",
     "FieldDefinition",
@@ -117,10 +124,14 @@ __all__ = [
     "FieldTransferContract",
     "FieldTransferVerdict",
     "MeshRegion",
+    "MeshSupport",
     "MeshTopology",
+    "CellType",
     "StructuredMesh",
+    "UnstructuredMesh",
     "TransferKind",
     "boundary_regions",
     "check_field_transfer",
+    "read_mesh_support",
     "require_complete_boundary",
 ]
