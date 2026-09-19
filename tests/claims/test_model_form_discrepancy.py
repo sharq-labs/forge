@@ -194,3 +194,47 @@ def test_residuals_below_known_uncertainty_do_not_establish_zero_model_form() ->
     assert estimate.status is DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY
     assert estimate.candidate is None
     assert "does not establish zero" in estimate.reason
+
+
+def test_known_uncertainty_widths_are_normalized_before_residual_constraints() -> None:
+    def mixed(observation_id: str, group: str, split: DatasetSplit) -> PairedObservation:
+        return PairedObservation(
+            observation_id=observation_id,
+            independence_group=group,
+            split=split,
+            quantity="terminal_voltage",
+            observed=Quantity(300000.0, "millivolt"),
+            predicted=Quantity(300.0, "volt"),
+            measurement_uncertainty=Uncertainty(
+                kind=UncertaintyKind.INTERVAL,
+                lower=Quantity(299950.0, "millivolt"),
+                upper=Quantity(300050.0, "millivolt"),
+                method="fixture interval",
+                source_kind=UncertaintySource.MEASUREMENT,
+            ),
+            prediction_uncertainties=(
+                Uncertainty(
+                    kind=UncertaintyKind.INTERVAL,
+                    lower=Quantity(299.95, "volt"),
+                    upper=Quantity(300.05, "volt"),
+                    method="fixture interval",
+                    source_kind=UncertaintySource.NUMERICAL,
+                ),
+            ),
+            context_digest=f"context:{observation_id}",
+            measurement_digest=f"measurement:{observation_id}",
+        )
+
+    estimate = estimate_model_form_discrepancy(
+        (
+            mixed("c1", "pack:c1", DatasetSplit.CALIBRATION),
+            mixed("c2", "pack:c2", DatasetSplit.CALIBRATION),
+            mixed("v1", "pack:v1", DatasetSplit.VALIDATION),
+            mixed("v2", "pack:v2", DatasetSplit.VALIDATION),
+        ),
+        _protocol(),
+    )
+
+    assert estimate.status is DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY
+    assert estimate.points[0].known_half_width == pytest.approx(0.10)
+    assert estimate.points[0].minimum_discrepancy == pytest.approx(0.0)
