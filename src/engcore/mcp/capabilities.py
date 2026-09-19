@@ -358,7 +358,7 @@ def electrothermal_capability() -> CapabilityDeclaration:
 
     return CapabilityDeclaration(
         capability_id=ELECTROTHERMAL_CAPABILITY_ID,
-        version="2",
+        version="3",
         domain="electrothermal",
         summary=(
             "Self-heating conductors in series across one ideal DC voltage source, "
@@ -390,7 +390,11 @@ def electrothermal_capability() -> CapabilityDeclaration:
         ),
         uncertainty=UncertaintyCapability(
             quantified={
-                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
+                name: (
+                    UncertaintyChannel.EPISTEMIC_PARAMETER,
+                    UncertaintyChannel.ALEATORIC,
+                    UncertaintyChannel.MODEL_FORM,
+                )
                 for name in ("final_temperature", "steady_state_temperature", "time_constant")
             },
             basis=_ET_PARAMETER_UQ,
@@ -487,7 +491,7 @@ def battery_capability() -> CapabilityDeclaration:
     )
     return CapabilityDeclaration(
         capability_id=BATTERY_CAPABILITY_ID,
-        version="2",
+        version="3",
         domain="battery",
         summary=(
             "One equivalent-circuit cell discharged over a marched interval, heating "
@@ -519,7 +523,11 @@ def battery_capability() -> CapabilityDeclaration:
         ),
         uncertainty=UncertaintyCapability(
             quantified={
-                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
+                name: (
+                    UncertaintyChannel.EPISTEMIC_PARAMETER,
+                    UncertaintyChannel.ALEATORIC,
+                    UncertaintyChannel.MODEL_FORM,
+                )
                 for name in (
                     "terminal_voltage",
                     "open_circuit_voltage",
