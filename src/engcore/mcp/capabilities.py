@@ -84,6 +84,14 @@ NAFEMS_T3_CAPABILITY_ID = "benchmark.nafems_t3"
 
 _BOTH_SHAPES = frozenset({ClaimKind.THRESHOLD, ClaimKind.TOLERANCE_BAND})
 
+_THERMAL_REFERENCE_QOIS = ("final_temperature",)
+_BATTERY_CELL_DIMENSION_QOIS = (
+    "terminal_voltage",
+    "open_circuit_voltage",
+    "heat_generation",
+    "final_state_of_charge",
+)
+
 _NO_UQ = (
     "every reported value carries Uncertainty.unknown: this path performs no "
     "numerical, parameter, measurement or model-form uncertainty quantification"
@@ -358,7 +366,7 @@ def electrothermal_capability() -> CapabilityDeclaration:
 
     return CapabilityDeclaration(
         capability_id=ELECTROTHERMAL_CAPABILITY_ID,
-        version="3",
+        version="4",
         domain="electrothermal",
         summary=(
             "Self-heating conductors in series across one ideal DC voltage source, "
@@ -385,7 +393,11 @@ def electrothermal_capability() -> CapabilityDeclaration:
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 check_name="analytic_reference_agreement",
                 route_id="thermal.lumped.series_recurrence",
-                condition="the lumped body's closed form agrees with the pinned series-recurrence reference",
+                condition=(
+                    "the lumped body's final temperature agrees with the pinned "
+                    "series-recurrence reference"
+                ),
+                quantities=_THERMAL_REFERENCE_QOIS,
             ),
         ),
         uncertainty=UncertaintyCapability(
@@ -493,7 +505,7 @@ def battery_capability() -> CapabilityDeclaration:
     )
     return CapabilityDeclaration(
         capability_id=BATTERY_CAPABILITY_ID,
-        version="3",
+        version="4",
         domain="battery",
         summary=(
             "One equivalent-circuit cell discharged over a marched interval, heating "
@@ -514,13 +526,18 @@ def battery_capability() -> CapabilityDeclaration:
                 ValidationLevel.DIMENSIONALLY_VALID,
                 check_name="metric_dimensions",
                 route_id=None,
-                condition="every reported metric carries its declared dimension",
+                condition="every battery-cell metric carries its declared dimension",
+                quantities=_BATTERY_CELL_DIMENSION_QOIS,
             ),
             AttainableLevel(
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 check_name="analytic_reference_agreement",
                 route_id="thermal.lumped.series_recurrence",
-                condition="the lumped body's closed form agrees with the pinned series-recurrence reference",
+                condition=(
+                    "the lumped body's final temperature agrees with the pinned "
+                    "series-recurrence reference"
+                ),
+                quantities=_THERMAL_REFERENCE_QOIS,
             ),
         ),
         uncertainty=UncertaintyCapability(
