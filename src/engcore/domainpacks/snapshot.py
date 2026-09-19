@@ -27,6 +27,12 @@ class DomainPackSnapshot:
     models: tuple[ArtifactRef, ...]
     realizations: tuple[ArtifactRef, ...]
     solvers: tuple[ArtifactRef, ...]
+    calibration_protocols: tuple[ArtifactRef, ...]
+    validation_protocols: tuple[ArtifactRef, ...]
+    uq_producers: tuple[ArtifactRef, ...]
+    measurement_adapters: tuple[ArtifactRef, ...]
+    transformations: tuple[ArtifactRef, ...]
+    benchmarks: tuple[ArtifactRef, ...]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -45,6 +51,12 @@ class DomainPackSnapshot:
             "models": [v.to_dict() for v in self.models],
             "realizations": [v.to_dict() for v in self.realizations],
             "solvers": [v.to_dict() for v in self.solvers],
+            "calibration_protocols": [v.to_dict() for v in self.calibration_protocols],
+            "validation_protocols": [v.to_dict() for v in self.validation_protocols],
+            "uq_producers": [v.to_dict() for v in self.uq_producers],
+            "measurement_adapters": [v.to_dict() for v in self.measurement_adapters],
+            "transformations": [v.to_dict() for v in self.transformations],
+            "benchmarks": [v.to_dict() for v in self.benchmarks],
         }
 
     @property
@@ -71,4 +83,10 @@ def snapshot_domain_pack(registration: RegisteredDomainPack) -> DomainPackSnapsh
         models=manifest.models,
         realizations=manifest.realizations,
         solvers=manifest.solvers,
+        calibration_protocols=manifest.calibration_protocols,
+        validation_protocols=manifest.validation_protocols,
+        uq_producers=manifest.uq_producers,
+        measurement_adapters=manifest.measurement_adapters,
+        transformations=manifest.transformations,
+        benchmarks=manifest.benchmarks,
     )
