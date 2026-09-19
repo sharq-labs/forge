@@ -63,3 +63,19 @@ def test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge():
             now=datetime(2026,9,19,tzinfo=timezone.utc),
             target_context_digest="d"*64,
         )
+
+
+def test_evidence_node_content_digest_must_match_provenance_claim_digest():
+    payload=node().to_dict()
+    payload["content_digest"]="e"*64
+    with pytest.raises(InvalidScientificProblem,match="claim digest"):
+        EvidenceNode.from_dict(payload)
+
+
+def test_strict_provenance_policy_refuses_legacy_unprovenanced_evidence():
+    legacy=EvidenceNode("legacy", "standard", "a"*64, "legacy-source")
+    result=assess_graph(
+        EvidenceGraph((legacy,)),
+        EvidenceGraphPolicy(require_provenance=True),
+    )
+    assert not result.admissible
