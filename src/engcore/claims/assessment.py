@@ -145,12 +145,25 @@ def assemble_evidence(
     """SRIA evidence for the claim's quantity, bound to the plan's context. The value is the report's.
 
     ``studies`` adds the channel records the plan's uncertainty studies
-    quantified (never an UNKNOWN one), and names every run they executed.
+    quantified (never an UNKNOWN one), and binds the run ids, pinned empirical
+    observation digests and reviewed qualification digest that produced them.
     """
     channel_records = {} if studies is None else dict(studies.channel_records)
-    study_refs = () if studies is None else tuple(
-        f"run:{run['run_id']}" for record in studies.records for run in record["runs"]
-    )
+    if studies is None:
+        study_refs = ()
+    else:
+        refs: set[str] = set()
+        for record in studies.records:
+            for run in record.get("runs", ()):
+                if run.get("run_id"):
+                    refs.add(f"run:{run['run_id']}")
+            for raw in record.get("source_observations", ()):
+                observation = DatasetObservation.from_dict(raw)
+                refs.add(f"empirical:{observation.digest}")
+            qualification_digest = record.get("qualification_digest")
+            if qualification_digest:
+                refs.add(f"model_form_qualification:{qualification_digest}")
+        study_refs = tuple(sorted(refs))
     try:
         evidence = evidence_from_credibility_report(
             report,
