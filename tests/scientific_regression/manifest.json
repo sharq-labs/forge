@@ -335,6 +335,44 @@
         "provenance"
       ],
       "invariant": "different untracked working-tree contents produce different reproducibility fingerprints"
+    },
+    {
+      "id": "measurement-dataset-not-auto-evidence",
+      "nodeid": "tests/claims/test_measurement_dataset.py::test_raw_nasa_row_cannot_masquerade_as_complete_battery_evidence",
+      "tags": [
+        "external",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "a public real-world dataset row cannot become measurement evidence without complete context and calibrated uncertainty"
+    },
+    {
+      "id": "model-form-heldout-candidate-only",
+      "nodeid": "tests/claims/test_model_form_discrepancy.py::test_calibration_envelope_must_survive_independent_holdout",
+      "tags": [
+        "uq",
+        "external",
+        "diagnostics"
+      ],
+      "invariant": "held-out discrepancy analysis may produce only a non-authoritative model-form candidate"
+    },
+    {
+      "id": "model-form-holdout-leakage-refused",
+      "nodeid": "tests/claims/test_model_form_discrepancy.py::test_same_independence_group_cannot_leak_across_the_split",
+      "tags": [
+        "uq",
+        "provenance"
+      ],
+      "invariant": "calibration and validation cannot share an independence group"
+    },
+    {
+      "id": "model-form-zero-not-inferred",
+      "nodeid": "tests/claims/test_model_form_discrepancy.py::test_residuals_below_known_uncertainty_do_not_establish_zero_model_form",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "residuals hidden below known uncertainty do not establish zero model-form discrepancy"
     }
   ]
 }
