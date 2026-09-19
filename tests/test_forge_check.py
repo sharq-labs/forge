@@ -70,3 +70,8 @@ def test_verification_changes_select_vnv_sentinels():
 def test_certification_core_changes_select_policy_and_provenance_sentinels():
     tags = forge_check.tags_for_paths(["src/engcore/scientific/certification_core/verifier.py"])
     assert {"vnv", "policy", "provenance"} <= tags
+
+
+def test_credibility_changes_select_provenance_and_replay_sentinels():
+    tags = forge_check.tags_for_paths(["src/engcore/credibility/assurance_bundle.py"])
+    assert {"evidence", "provenance", "replay"} <= tags

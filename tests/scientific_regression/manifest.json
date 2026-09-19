@@ -551,6 +551,97 @@
         "replay"
       ],
       "invariant": "trusted assurance requires validation verification and certification to be green"
+    },
+    {
+      "id": "new-core-mutation-guards",
+      "nodeid": "tests/core_extensions/test_new_core_mutations.py::test_new_core_guard_mutations_are_killed",
+      "tags": [
+        "vnv",
+        "replay",
+        "evidence",
+        "uq",
+        "policy",
+        "diagnostics"
+      ],
+      "invariant": "new validation/replay/evidence/UQ/certification/retry guards are load-bearing under targeted mutants"
+    },
+    {
+      "id": "new-core-adversarial-records",
+      "nodeid": "tests/core_extensions/test_new_core_adversarial.py::test_validated_model_form_cannot_have_zero_half_width",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "validated model-form uncertainty cannot be represented by a zero-width interval"
+    },
+    {
+      "id": "model-form-physical-unit-binding",
+      "nodeid": "tests/uq/model_form/test_study.py::test_compatible_units_are_normalized_before_residual_comparison",
+      "tags": [
+        "uq",
+        "vnv"
+      ],
+      "invariant": "model-form residuals retain physical quantity/unit identity and normalize compatible units before comparison"
+    },
+    {
+      "id": "model-form-authority-qualification",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_independent_review_identity",
+      "tags": [
+        "uq",
+        "policy",
+        "evidence"
+      ],
+      "invariant": "model-form promotion requires distinct producer validation and review evidence identities"
+    },
+    {
+      "id": "model-form-claims-authority-boundary",
+      "nodeid": "tests/claims/test_model_form_uncertainty.py::test_unvalidated_model_form_cannot_cross_authority_boundary",
+      "tags": [
+        "uq",
+        "verdict",
+        "evidence"
+      ],
+      "invariant": "unvalidated model-form estimates cannot become authoritative MODEL_FORM uncertainty"
+    },
+    {
+      "id": "verification-serialization-rederivation",
+      "nodeid": "tests/scientific/verification/test_serialization.py::test_verification_round_trip_rederives_decision",
+      "tags": [
+        "vnv",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "serialized verification decisions are recomputed and forged/stale decisions are refused"
+    },
+    {
+      "id": "certification-serialization-rederivation",
+      "nodeid": "tests/scientific/certification_core/test_serialization.py::test_certification_round_trip_rederives_verification",
+      "tags": [
+        "vnv",
+        "policy",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized certification state cannot override recomputed gate verification"
+    },
+    {
+      "id": "uq-budget-serialization-rederivation",
+      "nodeid": "tests/uq/budget/test_serialization.py::test_budget_round_trip_recomputes_aggregate",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "serialized uncertainty totals are recomputed from components and correlations"
+    },
+    {
+      "id": "assurance-replay-binding",
+      "nodeid": "tests/credibility/test_replay_binding.py::test_assurance_bundle_becomes_content_addressed_replay_artifact",
+      "tags": [
+        "replay",
+        "provenance",
+        "evidence"
+      ],
+      "invariant": "composite assurance evidence is content-addressed before replay binding"
     }
   ]
 }

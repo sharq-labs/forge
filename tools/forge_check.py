@@ -45,7 +45,7 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
         return set(ALL_SCIENTIFIC_TAGS)
 
     if any(p.startswith("src/engcore/credibility/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics"}
+        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics", "provenance", "replay"}
 
     if any(p.startswith("src/engcore/sria/") for p in paths):
         tags |= {"verdict", "evidence", "context", "policy", "uq", "external", "diagnostics"}
