@@ -23,3 +23,11 @@ class EquationEvaluationError(EquationIRError):
     def __init__(self, code: str, message: str) -> None:
         self.code = str(code)
         super().__init__(message)
+
+
+class LawIdentityError(EquationIRError):
+    """A law reference does not match the exact law contract it names."""
+
+    def __init__(self, code: str, message: str) -> None:
+        self.code = str(code)
+        super().__init__(message)

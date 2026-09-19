@@ -22,15 +22,23 @@ from .dimensions import (
     infer_dimension,
     require_equation_dimensions,
 )
-from .errors import EquationDimensionError, EquationEvaluationError, EquationIRError
+from .errors import (
+    EquationDimensionError,
+    EquationEvaluationError,
+    EquationIRError,
+    LawIdentityError,
+)
 from .evaluation import EquationEvaluation, evaluate_equation, evaluate_expression
 from .fingerprint import equation_fingerprint, law_fingerprint
 from .law import EquationSymbol, LawAssumption, LawDefinition
+from .reference import LawReference
+from .registry import LawRegistry
 
 __all__ = [
     "EquationIRError",
     "EquationDimensionError",
     "EquationEvaluationError",
+    "LawIdentityError",
     "Symbol",
     "Constant",
     "UnaryExpression",
@@ -57,4 +65,6 @@ __all__ = [
     "EquationSymbol",
     "LawAssumption",
     "LawDefinition",
+    "LawReference",
+    "LawRegistry",
 ]

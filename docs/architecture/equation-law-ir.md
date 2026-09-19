@@ -31,3 +31,13 @@ freeze.
 content, so provenance can bind an assessment to the exact equation/law
 contract it used. Dimension reports and equation evaluations revalidate their
 own claims when deserialized; a forged PASS or forged residual is refused.
+
+## Provenance binding
+
+`LawReference` records both the semantic `law_id` and the SHA-256 content
+fingerprint. A replay that resolves the same id to different equation bytes,
+symbol units, assumptions or references is refused as
+`law_fingerprint_mismatch`.
+
+`LawRegistry` is explicit and instance-owned; the Core creates no global law
+catalogue and never silently replaces an existing identity.

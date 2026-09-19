@@ -467,6 +467,16 @@
         "compiler"
       ],
       "invariant": "equation payload text is data and never an executable expression"
+    },
+    {
+      "id": "equation-ir-law-reference-binding",
+      "nodeid": "tests/scientific/equations/test_reference.py::test_law_reference_rejects_changed_contract_under_same_id",
+      "tags": [
+        "equation_ir",
+        "provenance",
+        "replay"
+      ],
+      "invariant": "replay/provenance cannot resolve one law id to changed law content"
     }
   ]
 }
