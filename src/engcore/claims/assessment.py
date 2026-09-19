@@ -203,21 +203,21 @@ def assure(plan: ExperimentPlan, claim: ScientificClaim, evidence: Any, report: 
     authority = trusting_authority(f"claims-authority:{plan.capability_id}", critics=(critic,), policies=(obligations,))
     arbiter = Arbiter(authority, critics=(critic,))
     mandatory = tuple(o.target for o in obligations.obligations if o.target.startswith("validation_level:"))
-    blocked_levels = {
-        ValidationLevel(step.detail["level"])
+    planned_level_checks = {
+        ValidationLevel(step.detail["level"]): str(step.detail["check_name"])
         for step in plan.steps_of(StepKind.VALIDATION_CHECK)
-        if step.availability is StepAvailability.UNAVAILABLE
+        if (
+            step.availability is StepAvailability.PLANNED
+            and step.detail.get("check_name")
+        )
     }
-    allowed_levels = tuple(
-        level for level in report.attained_levels if level not in blocked_levels
-    )
     assessment = arbiter.run_critic(
         critic.critic_id,
         report,
         subject=evidence,
         assessment_id=f"credibility:{report.run_id}:{claim.qoi.name}",
         mandatory_checks=mandatory,
-        allowed_levels=allowed_levels,
+        planned_level_checks=planned_level_checks,
     )
     budget = budget_from_declaration(evidence.claim_binding.key, evidence.uncertainty)
     decision = arbiter.decide(
