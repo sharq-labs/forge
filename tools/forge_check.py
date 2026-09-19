@@ -29,7 +29,7 @@ ARCHITECTURE_TESTS = (
 ALL_SCIENTIFIC_TAGS = frozenset({
     "verdict", "evidence", "vnv", "applicability", "compiler", "selection",
     "context", "uq", "policy", "external", "gaps", "challenge", "replay",
-    "provenance", "diagnostics",
+    "provenance", "diagnostics", "equation_ir",
 })
 
 
@@ -45,7 +45,7 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
         return set(ALL_SCIENTIFIC_TAGS)
 
     if any(p.startswith("src/engcore/credibility/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics"}
+        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics", "provenance", "replay"}
 
     if any(p.startswith("src/engcore/sria/") for p in paths):
         tags |= {"verdict", "evidence", "context", "policy", "uq", "external", "diagnostics"}
@@ -65,8 +65,32 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
     if any(p.startswith("src/engcore/scientific/models/") for p in paths):
         tags |= {"applicability", "compiler", "selection"}
 
+    if any(p.startswith("src/engcore/scientific/equations/") for p in paths):
+        tags |= {"equation_ir", "compiler", "applicability", "diagnostics", "provenance", "replay"}
+
     if any(p.startswith("src/engcore/uq/") or p.startswith("src/engcore/hybrid_uq/") for p in paths):
         tags |= {"uq", "verdict", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/validation_core/") for p in paths):
+        tags |= {"verdict", "vnv", "applicability", "uq", "evidence", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/replay_core/") for p in paths):
+        tags |= {"replay", "provenance", "diagnostics"}
+
+    if any(p.startswith("src/engcore/credibility/evidence_graph/") for p in paths):
+        tags |= {"evidence", "provenance", "external", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/verification/") for p in paths):
+        tags |= {"vnv", "evidence", "provenance", "diagnostics"}
+
+    if any(p.startswith("src/engcore/execution/orchestration/") for p in paths):
+        tags |= {"vnv", "replay", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/certification_core/") for p in paths):
+        tags |= {"vnv", "replay", "provenance", "policy", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/assurance_flow/") for p in paths):
+        tags |= {"verdict", "vnv", "evidence", "replay", "provenance", "diagnostics"}
 
     return tags
 

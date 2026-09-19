@@ -342,6 +342,21 @@ SCOPE: tuple[ScopeArea, ...] = (
         ),
     ),
     ScopeArea(
+        name="credibility_assurance",
+        classification="CORE_CERTIFIED",
+        patterns=(
+            "src/engcore/credibility/evidence_graph/**/*.py",
+            "src/engcore/credibility/assurance_bundle.py",
+            "src/engcore/credibility/replay_binding.py",
+        ),
+        why=(
+            "the trust-critical credibility boundary added by the production hardening round: "
+            "evidence authority/conflict/lineage, the composite assurance identity and its replay "
+            "binding. These bytes now decide whether evidence may enter a trusted assurance chain, "
+            "so leaving them outside the certificate would measure their consumers but not the rule."
+        ),
+    ),
+    ScopeArea(
         name="assurance_admission",
         classification="CORE_CERTIFIED",
         patterns=(
@@ -443,6 +458,14 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_guard_reach_ledger.py",
             "tests/test_scientific_core.py",
             "tests/test_trusted_consensus_gate.py",
+            "tests/scientific/validation_core/*.py",
+            "tests/scientific/replay_core/*.py",
+            "tests/scientific/verification/*.py",
+            "tests/scientific/certification_core/*.py",
+            "tests/credibility/evidence_graph/*.py",
+            "tests/uq/model_form/*.py",
+            "tests/uq/budget/*.py",
+            "tests/execution/orchestration/*.py",
         ),
         why=(
             "the mutation harness, every suite in its TARGETS, every suite the V4 "
@@ -505,10 +528,10 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "scientific models and solvers. They produce answers rather than decide "
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
-    ("src/engcore/credibility/**",
-     "non-Core credibility/V&V report semantics and the bridge into SRIA "
-     "evidence. It consumes certified scientific records but is not itself a "
-     "frozen Core API"),
+    ("src/engcore/credibility/** (except evidence_graph/**, assurance_bundle.py, replay_binding.py)",
+     "the remaining outer credibility/V&V report semantics and SRIA bridge stay outside the "
+     "certified core. The trust-critical evidence graph and assurance/replay identity files are "
+     "explicitly certified in the credibility_assurance area"),
     ("src/engcore/mcp/**",
      "the outer product/tool transport boundary: a consumer of claims and "
      "credibility, never scientific authority"),

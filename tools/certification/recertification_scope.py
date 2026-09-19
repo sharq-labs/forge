@@ -241,6 +241,7 @@ def scope_triggers(scope: Sequence[ScopeArea] | None = None) -> tuple[Trigger, .
 #: Where the two mutation populations live, relative to the repository root.
 FORMAL_MUTATION_HARNESS = "tests/mutation_guards.py"
 TRUST_MUTATION_POPULATION = "benchmarks/trust_hardening/audit/mutations.py"
+V4_MUTATION_POPULATION = "tests/mutation_population_v4.py"
 
 
 def _formal_mutation_targets(source: str) -> tuple[str, ...]:
@@ -278,6 +279,23 @@ def _trust_mutation_targets(source: str) -> tuple[str, ...]:
     return tuple(found)
 
 
+def _v4_mutation_targets(source: str) -> tuple[str, ...]:
+    """Every primary/paired source file named by POPULATION_V4."""
+    import ast
+
+    tree = ast.parse(source)
+    for node in tree.body:
+        targets = [getattr(node, "target", None), *list(getattr(node, "targets", ()))]
+        if any(isinstance(t, ast.Name) and t.id == "POPULATION_V4" for t in targets if t is not None):
+            entries = ast.literal_eval(node.value)
+            found: list[str] = []
+            for entry in entries:
+                found.append(entry[1].split("::", 1)[0])
+                found.extend(edit[0].split("::", 1)[0] for edit in entry[7])
+            return tuple(found)
+    raise OwnershipError(f"{V4_MUTATION_POPULATION} defines no POPULATION_V4")
+
+
 @lru_cache(maxsize=4)
 def _mutation_targets(root: str) -> tuple[str, ...]:
     base = pathlib.Path(root)
@@ -287,7 +305,10 @@ def _mutation_targets(root: str) -> tuple[str, ...]:
     trust = _trust_mutation_targets(
         (base / TRUST_MUTATION_POPULATION).read_text(encoding="utf-8-sig")
     )
-    return tuple(sorted(set(formal) | set(trust)))
+    v4 = _v4_mutation_targets(
+        (base / V4_MUTATION_POPULATION).read_text(encoding="utf-8-sig")
+    )
+    return tuple(sorted(set(formal) | set(trust) | set(v4)))
 
 
 def mutation_target_triggers(root: pathlib.Path | None = None) -> tuple[Trigger, ...]:
@@ -557,7 +578,10 @@ def junit_problems(
 RECERTIFY_SOURCE_GATES = (
     "fast311", "fast312", "scientific312", "campaign312", "regression312",
     "formal_mutations_0", "formal_mutations_1", "formal_mutations_2",
-    "formal_mutations_3", "trust_mutations",
+    "formal_mutations_3",
+    "v4_mutations_0", "v4_mutations_1", "v4_mutations_2", "v4_mutations_3",
+    "v4_mutations_4", "v4_mutations_5", "v4_mutations_6", "v4_mutations_7",
+    "trust_mutations",
 )
 RECERTIFY_JOBS = ("classify", *RECERTIFY_SOURCE_GATES, "certify", "verify_certificate_child")
 TESTS_ORDINARY_JOBS = ("repo-layout", "fast", "mutations", "scientific")

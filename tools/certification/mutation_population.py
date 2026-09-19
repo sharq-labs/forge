@@ -79,6 +79,8 @@ EXPECTED_FORMAL_POPULATION = 284
 SHARD_COUNT = 4
 
 SHARD_RECORD_SCHEMA = "forge.formal_mutation_shard/1"
+V4_SHARD_RECORD_SCHEMA = "forge.v4_mutation_shard/1"
+V4_SHARD_COUNT = 8
 
 _ID_SHAPE = re.compile(r"^G\d+[a-z]+$")
 _TALLY = re.compile(r"^(\d+)/(\d+) mutations were killed by the guard they name\.\s*$")
@@ -276,7 +278,7 @@ V4_POPULATION_PATH = "tests/mutation_population_v4.py"
 #: batch 56 (the guards over the Core Freeze V4 control plane that certifies it). Each batch folds its
 #: own guards in for the same reason R-67 exists: a guard whose evidence sits outside the pinned area
 #: is verified by nobody, and that includes the guards over the pinned area itself.
-EXPECTED_V4_POPULATION = 589
+EXPECTED_V4_POPULATION = 605
 
 _V4_VERDICT = re.compile(r"^(?P<id>[A-Za-z0-9]+) \S+ -> (?P<verdict>[^|]+?)(?:\s+<-- EXPECTED .*)?\s*(?:\|.*)?$")
 _V4_NOT_MUTATED = re.compile(r"^NOT MUTATED: (?P<id>[A-Za-z0-9]+) --")
@@ -380,6 +382,122 @@ def v4_log_problems(text: str, population: Population, selected: Sequence[str]) 
     if wrong:
         problems.append(f"entries that did not reach their declared verdict: {wrong}")
     return problems
+
+
+# ---------------------------------------------------------------------------
+# V4 shard evidence -- certified false-confidence mutation population
+# ---------------------------------------------------------------------------
+def build_v4_shard_record(
+    root: pathlib.Path, *, index: int, count: int, ids_text: str,
+    log_bytes: bytes, source_commit: str,
+    expected_count: int = EXPECTED_V4_POPULATION,
+) -> dict[str, Any]:
+    population = v4_population(root)
+    problems = population.problems(expected_count)
+    selected = population.shard(index, count)
+    listed = tuple(line for line in ids_text.splitlines() if line)
+    if listed != selected:
+        problems.append(f"V4 shard {index}: id file does not match shard rule")
+    problems += v4_log_problems(log_bytes.decode("utf-8", "replace"), population, selected)
+    if problems:
+        raise PopulationError(f"V4 shard {index}/{count}: " + "; ".join(problems))
+    return {
+        "schema": V4_SHARD_RECORD_SCHEMA, "source_commit": source_commit,
+        "harness": "tools/certification/mutation_v4_runner.py",
+        "population_path": V4_POPULATION_PATH, "shard_index": index,
+        "shard_count": count, "population_count": population.count,
+        "population_sha256": population.sha256,
+        "definitions_sha256": population.definitions_sha256,
+        "selected_ids": list(selected), "selected_count": len(selected),
+        "selected_ids_sha256": sha256_lines(selected),
+        "execution_log_sha256": hashlib.sha256(log_bytes).hexdigest(),
+        "execution_log_bytes": len(log_bytes), "verified_count": len(selected),
+        "control": "GREEN",
+    }
+
+
+def v4_coverage_problems(
+    population: Population, records: Sequence[Mapping[str, Any]], *,
+    shard_count: int = V4_SHARD_COUNT,
+    expected_count: int = EXPECTED_V4_POPULATION,
+    logs: Mapping[int, bytes] | None = None,
+    source_commit: str | None = None,
+) -> list[str]:
+    problems = list(population.problems(expected_count))
+    indices = [r.get("shard_index") for r in records]
+    for i in range(shard_count):
+        if indices.count(i) != 1:
+            problems.append(f"V4 shard {i} recorded {indices.count(i)} times")
+    union: list[str] = []
+    known = set(population.ids)
+    for record in records:
+        index = record.get("shard_index")
+        label = f"V4 shard {index}"
+        selected = tuple(record.get("selected_ids") or ())
+        union.extend(selected)
+        if record.get("schema") != V4_SHARD_RECORD_SCHEMA:
+            problems.append(f"{label}: wrong schema")
+        if record.get("shard_count") != shard_count:
+            problems.append(f"{label}: wrong shard_count")
+        if source_commit is not None and record.get("source_commit") != source_commit:
+            problems.append(f"{label}: wrong source commit")
+        if record.get("population_sha256") != population.sha256:
+            problems.append(f"{label}: wrong population digest")
+        if record.get("definitions_sha256") != population.definitions_sha256:
+            problems.append(f"{label}: wrong definitions digest")
+        if record.get("population_count") != population.count:
+            problems.append(f"{label}: wrong population count")
+        if set(selected) - known:
+            problems.append(f"{label}: unknown ids")
+        if len(selected) != len(set(selected)):
+            problems.append(f"{label}: duplicate ids")
+        if record.get("selected_count") != len(selected):
+            problems.append(f"{label}: selected count mismatch")
+        if record.get("selected_ids_sha256") != sha256_lines(selected):
+            problems.append(f"{label}: selected digest mismatch")
+        if record.get("verified_count") != len(selected) or record.get("control") != "GREEN":
+            problems.append(f"{label}: not fully verified after green control")
+        if isinstance(index, int) and 0 <= index < shard_count and selected != population.shard(index, shard_count):
+            problems.append(f"{label}: selection differs from shard rule")
+        if logs is not None:
+            log = logs.get(index) if isinstance(index, int) else None
+            if log is None:
+                problems.append(f"{label}: transcript absent")
+            else:
+                if hashlib.sha256(log).hexdigest() != record.get("execution_log_sha256"):
+                    problems.append(f"{label}: transcript digest mismatch")
+                problems += [f"{label}: {p}" for p in v4_log_problems(
+                    log.decode("utf-8", "replace"), population, selected)]
+    duplicates = sorted({x for x in union if union.count(x) > 1})
+    missing = [x for x in population.ids if x not in set(union)]
+    if duplicates: problems.append(f"V4 duplicate execution: {duplicates}")
+    if missing: problems.append(f"V4 unexecuted mutations: {missing}")
+    if len(union) != population.count:
+        problems.append(f"V4 executed {len(union)} slots for {population.count} entries")
+    return problems
+
+
+def v4_assurance_section(population: Population, records: Sequence[Mapping[str, Any]], *,
+                         shard_count: int = V4_SHARD_COUNT) -> dict[str, Any]:
+    return {
+        "harness": "tools/certification/mutation_v4_runner.py",
+        "population_path": V4_POPULATION_PATH,
+        "population": population.count,
+        "expected_population": EXPECTED_V4_POPULATION,
+        "population_sha256": population.sha256,
+        "definitions_sha256": population.definitions_sha256,
+        "ids": list(population.ids), "shard_count": shard_count,
+        "sharding_rule": "position % shard_count",
+        "shards": {str(r["shard_index"]): {
+            "selected_ids": list(r["selected_ids"]), "selected_count": r["selected_count"],
+            "selected_ids_sha256": r["selected_ids_sha256"],
+            "execution_log_sha256": r["execution_log_sha256"],
+            "verified_count": r["verified_count"], "control": r["control"],
+        } for r in sorted(records, key=lambda x: x["shard_index"])},
+        "coverage": {"union_equals_population": True, "pairwise_disjoint": True,
+                     "every_entry_reached_declared_verdict": True,
+                     "control_green_per_shard": True},
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -565,57 +683,52 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("identity")
-    select = commands.add_parser("select")
-    select.add_argument("--index", type=int, required=True)
-    select.add_argument("--count", type=int, default=SHARD_COUNT)
-    select.add_argument("--out", required=True)
-    record = commands.add_parser("record")
-    record.add_argument("--index", type=int, required=True)
-    record.add_argument("--count", type=int, default=SHARD_COUNT)
-    record.add_argument("--ids", required=True)
-    record.add_argument("--log", required=True)
-    record.add_argument("--source-commit", required=True)
-    record.add_argument("--out", required=True)
+    commands.add_parser("v4-identity")
+    for name, default_count in (("select", SHARD_COUNT), ("v4-select", V4_SHARD_COUNT)):
+        command = commands.add_parser(name)
+        command.add_argument("--index", type=int, required=True)
+        command.add_argument("--count", type=int, default=default_count)
+        command.add_argument("--out", required=True)
+    for name, default_count in (("record", SHARD_COUNT), ("v4-record", V4_SHARD_COUNT)):
+        command = commands.add_parser(name)
+        command.add_argument("--index", type=int, required=True)
+        command.add_argument("--count", type=int, default=default_count)
+        command.add_argument("--ids", required=True)
+        command.add_argument("--log", required=True)
+        command.add_argument("--source-commit", required=True)
+        command.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     root = _root()
-
+    is_v4 = args.command.startswith("v4-")
     try:
-        population = canonical_population(root)
-        if args.command == "identity":
-            problems = population.problems()
+        population = v4_population(root) if is_v4 else canonical_population(root)
+        expected = EXPECTED_V4_POPULATION if is_v4 else EXPECTED_FORMAL_POPULATION
+        default_count = V4_SHARD_COUNT if is_v4 else SHARD_COUNT
+        if args.command in ("identity", "v4-identity"):
+            problems = population.problems(expected)
             print(json.dumps({
-                "population": population.count,
-                "population_sha256": population.sha256,
+                "population": population.count, "population_sha256": population.sha256,
                 "definitions_sha256": population.definitions_sha256,
-                "shards": {str(i): list(population.shard(i)) for i in range(SHARD_COUNT)},
+                "shards": {str(i): list(population.shard(i, default_count)) for i in range(default_count)},
                 "problems": problems,
             }, indent=2))
             return 0 if not problems else 1
-        if args.command == "select":
-            problems = population.problems()
-            if problems:
-                raise PopulationError("; ".join(problems))
+        if args.command in ("select", "v4-select"):
+            problems = population.problems(expected)
+            if problems: raise PopulationError("; ".join(problems))
             selected = population.shard(args.index, args.count)
-            if not selected:
-                raise PopulationError(f"shard {args.index}/{args.count} is empty")
-            pathlib.Path(args.out).write_bytes(("\n".join(selected) + "\n").encode("utf-8"))
-            print(f"shard {args.index}/{args.count}: {len(selected)} mutation(s) "
-                  f"of population {population.sha256[:16]}")
+            if not selected: raise PopulationError(f"shard {args.index}/{args.count} is empty")
+            pathlib.Path(args.out).write_bytes(("\n".join(selected) + "\n").encode())
             return 0
-        shard = build_shard_record(
-            root, index=args.index, count=args.count,
-            ids_text=pathlib.Path(args.ids).read_bytes().decode("utf-8"),
-            log_bytes=pathlib.Path(args.log).read_bytes(),
-            source_commit=args.source_commit,
-        )
+        ids_text = pathlib.Path(args.ids).read_text(encoding="utf-8")
+        log_bytes = pathlib.Path(args.log).read_bytes()
+        shard = (build_v4_shard_record if is_v4 else build_shard_record)(
+            root, index=args.index, count=args.count, ids_text=ids_text,
+            log_bytes=log_bytes, source_commit=args.source_commit)
     except PopulationError as exc:
-        print(f"MUTATION POPULATION PROBLEM: {exc}", file=sys.stderr)
-        return 1
-    pathlib.Path(args.out).write_bytes((json.dumps(shard, indent=2, sort_keys=True) + "\n").encode("utf-8"))
-    print(f"shard {args.index}/{args.count}: {shard['selected_count']} killed, "
-          f"log {shard['execution_log_sha256'][:16]}")
+        print(f"MUTATION POPULATION PROBLEM: {exc}", file=sys.stderr); return 1
+    pathlib.Path(args.out).write_bytes((json.dumps(shard, indent=2, sort_keys=True) + "\n").encode())
     return 0
-
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
