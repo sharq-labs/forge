@@ -40,3 +40,15 @@ __all__ = [
     "DiscoveryReview",
     "review_discovery_candidate",
 ]
+
+from .closed_loop import (
+    ClosedLoopDiscoveryCampaign,
+    DiscoveryCampaignStage,
+    FalsificationRecord,
+)
+
+__all__ += [
+    "DiscoveryCampaignStage",
+    "FalsificationRecord",
+    "ClosedLoopDiscoveryCampaign",
+]
