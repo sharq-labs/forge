@@ -211,7 +211,7 @@ def _environment_replay_problem(environment: Mapping[str, Any]) -> str | None:
     if not isinstance(git, Mapping):
         return "source-control identity is absent from the replay environment"
     commit = str(git.get("commit") or "").strip().lower()
-    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+    if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", commit):
         return "source-control commit identity is unavailable"
     if not isinstance(git.get("dirty"), bool):
         return "source-control dirty-tree state is unavailable"
