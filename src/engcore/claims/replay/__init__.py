@@ -1,1 +1,1 @@
-"""Assessment replay package. Import concrete APIs from :mod:`engcore.claims.replay.bundle`."""\n
+"""Assessment replay package. Import concrete APIs from :mod:`engcore.claims.replay.bundle`."""
