@@ -311,11 +311,54 @@ def electrothermal_capability() -> CapabilityDeclaration:
             "coupling.": InputRole.NUMERICS,
             "cross_solver_check.": InputRole.NUMERICS,
         },
+        required_overrides={
+            "stages[].conductor.element.element_to_body_thermal_resistance": (
+                "decision-grade electrothermal claims must characterize the element/body thermal path"
+            ),
+            "stages[].conductor.element.permissible_element_temperature": (
+                "decision-grade electrothermal claims must carry the element temperature limit"
+            ),
+            "stages[].conductor.element.resistance_variation_budget": (
+                "the quasi-static R(T) approximation must be bounded over each thermal interval"
+            ),
+        },
+    )
+    # Capacity evidence belongs to the assembled system rather than to either
+    # scientific model, so it is declared here explicitly instead of pretending
+    # density/cp are inputs to a balance that consumes only total C.
+    inputs = inputs + (
+        InputDeclaration(
+            path="stages[].body.capacity_evidence.bulk_density",
+            kind=InputKind.QUANTITY,
+            role=InputRole.APPLICABILITY,
+            required=True,
+            unit_exemplar="kg/meter**3",
+            description="Bulk density used to reconstruct rho*c_p*V.",
+        ),
+        InputDeclaration(
+            path="stages[].body.capacity_evidence.bulk_specific_heat",
+            kind=InputKind.QUANTITY,
+            role=InputRole.APPLICABILITY,
+            required=True,
+            unit_exemplar="joule/kg/kelvin",
+            description="Bulk specific heat used to reconstruct rho*c_p*V.",
+        ),
+        InputDeclaration(
+            path="stages[].body.capacity_evidence.extra_heat_capacity",
+            kind=InputKind.QUANTITY,
+            role=InputRole.APPLICABILITY,
+            required=True,
+            unit_exemplar="joule/kelvin",
+            description=(
+                "Heat capacity not represented by the declared bulk volume; "
+                "declare 0 J/K explicitly when there is none."
+            ),
+        ),
     )
 
     return CapabilityDeclaration(
         capability_id=ELECTROTHERMAL_CAPABILITY_ID,
-        version="1",
+        version="2",
         domain="electrothermal",
         summary=(
             "Self-heating conductors in series across one ideal DC voltage source, "
