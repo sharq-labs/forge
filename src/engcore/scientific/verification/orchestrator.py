@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .adjudication import adjudicate
+from .adjudication import VerificationDecision, adjudicate
 from .comparison import RouteComparison
 from .independence import IndependenceEvidence
 from .report import VerificationReport
