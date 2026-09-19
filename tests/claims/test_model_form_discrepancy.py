@@ -68,11 +68,14 @@ def test_calibration_envelope_must_survive_independent_holdout() -> None:
     )
 
     assert estimate.status is DiscrepancyEstimateStatus.VALIDATED_CANDIDATE
-    assert estimate.calibrated_half_width == pytest.approx(0.20)
+    assert estimate.minimum_required_half_width == pytest.approx(0.20)
+    assert estimate.conservative_compatible_half_width == pytest.approx(0.40)
     candidate = estimate.candidate
     assert candidate is not None
-    assert candidate.half_width == pytest.approx(0.20)
-    assert candidate.to_dict()["source_kind"] == "model_form"
+    assert candidate.minimum_required_half_width == pytest.approx(0.20)
+    assert candidate.conservative_compatible_half_width == pytest.approx(0.40)
+    assert candidate.to_dict()["zero_established"] is False
+    assert candidate.to_dict()["is_uncertainty_record"] is False
     assert candidate.to_dict()["can_satisfy_claim"] is False
     assert estimate.to_dict()["promotes_model_form_uncertainty"] is False
 
@@ -130,7 +133,8 @@ def test_unknown_or_wrong_uncertainty_never_becomes_zero() -> None:
         _protocol(),
     )
     assert estimate.status is DiscrepancyEstimateStatus.INSUFFICIENT_UNCERTAINTY
-    assert estimate.calibrated_half_width is None
+    assert estimate.minimum_required_half_width is None
+    assert estimate.conservative_compatible_half_width is None
     assert estimate.candidate is None
 
 
@@ -185,7 +189,8 @@ def test_residuals_below_known_uncertainty_do_not_establish_zero_model_form() ->
         _protocol(),
     )
 
-    assert estimate.calibrated_half_width == pytest.approx(0.0)
+    assert estimate.minimum_required_half_width == pytest.approx(0.0)
+    assert estimate.conservative_compatible_half_width is not None
     assert estimate.status is DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY
     assert estimate.candidate is None
     assert "does not establish zero" in estimate.reason
