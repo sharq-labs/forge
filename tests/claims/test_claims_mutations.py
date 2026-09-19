@@ -143,7 +143,7 @@ def unpinned_route_is_refused():
 
 def an_unpinned_measurement_is_never_admissible():
     """Phase 4 (replaces the NOT_IMPLEMENTED property, moot now every source class is ingested)."""
-    from test_phase4_external_evidence import _measurement
+    from test_external_evidence import _measurement
 
     from engcore.claims import ExternalStanding, TrustedExternalRegistry, assess_measurement
 
