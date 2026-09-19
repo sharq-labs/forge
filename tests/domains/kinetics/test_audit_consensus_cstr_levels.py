@@ -42,13 +42,18 @@ def test_the_steady_state_arm_still_runs_and_agrees(gate):
 
 
 def test_the_steady_state_arm_establishes_no_cross_solver_level(gate):
-    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in gate.levels_earned
     check = next(
         c for c in gate.to_report().checks if c.name == "independent_steady_state_agreement"
     )
     assert check.establishes is None
-    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in gate.to_report().attained_levels
-    assert "cross_solver_validated" not in gate.to_dict()["levels_earned"]
+    # CROSS_SOLVER_VALIDATED may now be earned by the separately translated
+    # LSODA route. This audit continues to pin the original IND-04 rule:
+    # the algebraic steady-state arm itself has no authority to award it.
+    independent = next(
+        c for c in gate.to_report().checks if c.name == "independent_solver_agreement"
+    )
+    if ValidationLevel.CROSS_SOLVER_VALIDATED in gate.to_report().attained_levels:
+        assert independent.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
 
 
 def test_the_steady_state_detail_no_longer_claims_it_shares_no_arithmetic(gate):
@@ -58,9 +63,13 @@ def test_the_steady_state_detail_no_longer_claims_it_shares_no_arithmetic(gate):
     assert "shares no arithmetic with the integrator" not in source
 
 
-def test_no_cstr_gate_arm_awards_cross_solver_validated_in_source():
+def test_only_verified_independent_arm_may_award_cross_solver_validated_in_source():
     source = inspect.getsource(cstr_validation.CSTRVerificationReport)
-    assert "ValidationLevel.CROSS_SOLVER_VALIDATED" not in source
+    assert "independent_solver_consensus.establishes" in source
+    assert "steady_state_verified" in source
+    # The legacy steady-state arm remains evidence-only; the level comes from
+    # the Core-verified consensus record, never directly from that comparison.
+    assert "steady_state_verified else ValidationLevel.CROSS_SOLVER_VALIDATED" not in source
 
 
 # ---- IND-06 -----------------------------------------------------------------------------
