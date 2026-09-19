@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from ...scientific.errors import InvalidScientificProblem
 from .edge import EvidenceEdge
+from .lineage import lineage_cycle
 from .node import EvidenceNode
 
 
@@ -22,11 +23,17 @@ class EvidenceGraph:
         ids=[n.evidence_id for n in self.nodes]
         if len(ids)!=len(set(ids)):
             raise InvalidScientificProblem("evidence graph contains duplicate node ids")
+        edge_keys=[(e.source_id,e.target_id,e.relation) for e in self.edges]
+        if len(edge_keys)!=len(set(edge_keys)):
+            raise InvalidScientificProblem("evidence graph contains duplicate edges")
         known=set(ids)
         dangling=[(e.source_id,e.target_id) for e in self.edges
                   if e.source_id not in known or e.target_id not in known]
         if dangling:
             raise InvalidScientificProblem(f"evidence graph contains dangling edges {dangling}")
+        cycle=lineage_cycle(self.edges)
+        if cycle:
+            raise InvalidScientificProblem(f"evidence graph lineage contains a cycle {list(cycle)}")
 
     def node(self,evidence_id:str)->EvidenceNode:
         for node in self.nodes:
