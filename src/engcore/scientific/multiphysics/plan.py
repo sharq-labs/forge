@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
@@ -109,7 +110,7 @@ class ConvergenceCriterion:
             raise InvalidScientificProblem("convergence criterion requires edge_id")
         object.__setattr__(self, "edge_id", edge_id)
         relative = float(self.relative_tolerance)
-        if relative < 0.0:
+        if not math.isfinite(relative) or relative < 0.0:
             raise InvalidScientificProblem("relative_tolerance must be non-negative")
         object.__setattr__(self, "relative_tolerance", relative)
         if not isinstance(self.absolute_tolerance, Quantity) or self.absolute_tolerance.magnitude < 0.0:
@@ -148,6 +149,8 @@ class RelaxationPolicy:
         factor = float(self.factor)
         minimum = float(self.minimum_factor)
         maximum = float(self.maximum_factor)
+        if not all(math.isfinite(value) for value in (factor, minimum, maximum)):
+            raise InvalidScientificProblem("relaxation factors must be finite")
         if not 0.0 < minimum <= maximum:
             raise InvalidScientificProblem("relaxation bounds must satisfy 0 < min <= max")
         if not minimum <= factor <= maximum:
@@ -184,6 +187,7 @@ class CouplingPlan:
     scheme: CouplingScheme
     iteration_semantics: IterationSemantics
     time: TimePolicy
+    participant_order: tuple[str, ...] = ()
     criteria: tuple[ConvergenceCriterion, ...] = ()
     relaxation: RelaxationPolicy = RelaxationPolicy()
     max_iterations: int = 1
@@ -198,6 +202,10 @@ class CouplingPlan:
         object.__setattr__(self, "iteration_semantics", IterationSemantics(self.iteration_semantics))
         if not isinstance(self.time, TimePolicy):
             raise InvalidScientificProblem("coupling plan requires TimePolicy")
+        order = tuple(str(item).strip() for item in self.participant_order)
+        if any(not item for item in order) or len(order) != len(set(order)):
+            raise InvalidScientificProblem("participant_order must contain unique non-empty ids")
+        object.__setattr__(self, "participant_order", order)
         criteria = tuple(self.criteria)
         if any(not isinstance(c, ConvergenceCriterion) for c in criteria):
             raise InvalidScientificProblem("criteria must be ConvergenceCriterion records")
@@ -220,7 +228,48 @@ class CouplingPlan:
         elif not criteria:
             raise InvalidScientificProblem("implicit coupling requires convergence criteria")
 
+    def resolved_order(self, graph: PhysicsGraph) -> tuple[str, ...]:
+        declared = tuple(self.participant_order)
+        ids = {participant.participant_id for participant in graph.participants}
+        if declared:
+            if set(declared) != ids or len(declared) != len(ids):
+                raise InvalidScientificProblem(
+                    f"participant_order must name every graph participant exactly once; "
+                    f"declared={list(declared)}, graph={sorted(ids)}"
+                )
+            return declared
+        if self.iteration_semantics is IterationSemantics.JACOBI:
+            return tuple(sorted(ids))
+        if graph.cyclic:
+            raise InvalidScientificProblem(
+                "serial coupling over a cyclic PhysicsGraph requires explicit participant_order; "
+                "Gauss-Seidel order changes the numerical method and cannot be hidden"
+            )
+        indegree = {pid: 0 for pid in ids}
+        adjacency = {pid: set() for pid in ids}
+        for edge in graph.edges:
+            source = edge.source.participant_id
+            target = edge.target.participant_id
+            if source == target or target in adjacency[source]:
+                continue
+            adjacency[source].add(target)
+            indegree[target] += 1
+        ready = sorted(pid for pid, degree in indegree.items() if degree == 0)
+        order: list[str] = []
+        while ready:
+            node = ready.pop(0)
+            order.append(node)
+            for target in sorted(adjacency[node]):
+                indegree[target] -= 1
+                if indegree[target] == 0:
+                    ready.append(target)
+                    ready.sort()
+        if len(order) != len(ids):
+            raise InvalidScientificProblem("failed to derive serial order from graph")
+        return tuple(order)
+
     def validate_against(self, graph: PhysicsGraph) -> None:
+        self.resolved_order(graph)
         for criterion in self.criteria:
             edge = graph.edge(criterion.edge_id)
             source = graph.participant(edge.source.participant_id).port(edge.source.port_id)
@@ -231,28 +280,36 @@ class CouplingPlan:
                     f"[{source.dimension}]"
                 )
         if self.scheme is CouplingScheme.IMPLICIT:
-            touched = {
-                pid
-                for edge in graph.edges
-                for pid in (edge.source.participant_id, edge.target.participant_id)
-            }
+            covered = {criterion.edge_id for criterion in self.criteria}
+            missing_cycle_edges = sorted(
+                graph.cyclic_edge_ids() - covered
+            )
+            if missing_cycle_edges:
+                raise InvalidScientificProblem(
+                    f"implicit coupling must monitor every edge in a feedback "
+                    f"cycle; missing convergence criteria for "
+                    f"{missing_cycle_edges}"
+                )
             bad = [
-                p.participant_id
-                for p in graph.participants
-                if p.participant_id in touched
-                and (not p.checkpointable or not p.deterministic_restore)
+                participant.participant_id
+                for participant in graph.participants
+                if not participant.checkpointable or not participant.deterministic_restore
             ]
             if bad:
                 raise InvalidScientificProblem(
-                    f"implicit coupling requires deterministic checkpoint/restore; missing on {bad}"
+                    f"implicit coupling replays a time window and requires deterministic "
+                    f"checkpoint/restore on every participant; missing on {bad}"
                 )
-        if self.time.align_events:
-            eventful = [p for p in graph.participants if p.event_capable]
-            bad = [p.participant_id for p in eventful if not p.checkpointable]
+        if self.time.align_events and any(p.event_capable for p in graph.participants):
+            bad = [
+                participant.participant_id
+                for participant in graph.participants
+                if not participant.checkpointable or not participant.deterministic_restore
+            ]
             if bad:
                 raise InvalidScientificProblem(
-                    f"event alignment can require rollback; event-capable participants "
-                    f"must be checkpointable: {bad}"
+                    f"event alignment can roll back participants that already advanced; "
+                    f"deterministic checkpoint/restore is required on all participants: {bad}"
                 )
 
     def to_dict(self) -> dict[str, Any]:
@@ -262,6 +319,7 @@ class CouplingPlan:
             "scheme": self.scheme.value,
             "iteration_semantics": self.iteration_semantics.value,
             "time": self.time.to_dict(),
+            "participant_order": list(self.participant_order),
             "criteria": [c.to_dict() for c in self.criteria],
             "relaxation": self.relaxation.to_dict(),
             "max_iterations": self.max_iterations,
@@ -276,6 +334,7 @@ class CouplingPlan:
             scheme=CouplingScheme(payload["scheme"]),
             iteration_semantics=IterationSemantics(payload["iteration_semantics"]),
             time=TimePolicy.from_dict(payload["time"]),
+            participant_order=tuple(payload.get("participant_order", ())),
             criteria=tuple(ConvergenceCriterion.from_dict(c) for c in payload.get("criteria", ())),
             relaxation=RelaxationPolicy.from_dict(payload["relaxation"]),
             max_iterations=payload.get("max_iterations", 1),
