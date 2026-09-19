@@ -71,6 +71,27 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
     if any(p.startswith("src/engcore/uq/") or p.startswith("src/engcore/hybrid_uq/") for p in paths):
         tags |= {"uq", "verdict", "diagnostics"}
 
+    if any(p.startswith("src/engcore/scientific/validation_core/") for p in paths):
+        tags |= {"verdict", "vnv", "applicability", "uq", "evidence", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/replay_core/") for p in paths):
+        tags |= {"replay", "provenance", "diagnostics"}
+
+    if any(p.startswith("src/engcore/credibility/evidence_graph/") for p in paths):
+        tags |= {"evidence", "provenance", "external", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/verification/") for p in paths):
+        tags |= {"vnv", "evidence", "provenance", "diagnostics"}
+
+    if any(p.startswith("src/engcore/execution/orchestration/") for p in paths):
+        tags |= {"vnv", "replay", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/certification_core/") for p in paths):
+        tags |= {"vnv", "replay", "provenance", "policy", "diagnostics"}
+
+    if any(p.startswith("src/engcore/scientific/assurance_flow/") for p in paths):
+        tags |= {"verdict", "vnv", "evidence", "replay", "provenance", "diagnostics"}
+
     return tags
 
 
