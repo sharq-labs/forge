@@ -49,6 +49,8 @@ class ArtifactRef:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ArtifactRef":
+        if not isinstance(payload, Mapping):
+            raise InvalidDomainPackManifest("artifact ref must be a JSON object")
         if set(payload) != {"artifact_id", "version"}:
             raise InvalidDomainPackManifest(
                 "artifact ref must contain exactly artifact_id and version"
