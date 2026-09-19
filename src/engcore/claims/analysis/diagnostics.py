@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
-from .._records import tagged_digest
+from .._records import assessment_record_digest, tagged_digest
 from ..gaps import EvidenceGapAnalysis, GapClass, analyze_gaps
 from ..next_experiment import NextExperimentPlan, recommend_next
 from ..planning import ExperimentPlan
@@ -534,7 +534,7 @@ def _expected_binding(record: Mapping[str, Any]) -> dict[str, str | None]:
         plan_digest = plan.digest
         capability_digest = plan.capability_digest
     return {
-        "assessment_digest": record_digest(record),
+        "assessment_digest": assessment_record_digest(record),
         "plan_digest": plan_digest,
         "capability_digest": capability_digest,
     }
@@ -576,7 +576,7 @@ def diagnose_assessment(
     next_plan = recommend_next(record, registry, gaps)
     discrepancy = analyze_model_discrepancy(record)
     return ScientificDiagnosticReport(
-        assessment_digest=record_digest(record),
+        assessment_digest=assessment_record_digest(record),
         verdict=str(record.get("verdict")),
         findings=_diagnostic_findings(gaps, discrepancy, record),
         assumptions=analyze_assumptions(record, robustness=robustness),
