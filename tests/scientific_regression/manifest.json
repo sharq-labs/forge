@@ -867,6 +867,80 @@
         "evidence"
       ],
       "invariant": "authorized model-form and numerical UQ combine while retaining source semantics"
+    },
+    {
+      "id": "verification-dependency-derived",
+      "nodeid": "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external",
+      "tags": [
+        "vnv",
+        "provenance"
+      ],
+      "invariant": "independence is derived from dependency families implementations and authority boundary"
+    },
+    {
+      "id": "verification-policy-plan",
+      "nodeid": "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence",
+      "tags": [
+        "vnv",
+        "policy"
+      ],
+      "invariant": "verification planner enforces level and independence policy"
+    },
+    {
+      "id": "verification-external-required",
+      "nodeid": "tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists",
+      "tags": [
+        "vnv",
+        "policy",
+        "external"
+      ],
+      "invariant": "external verification requirement needs external authority"
+    },
+    {
+      "id": "verification-typed-comparison",
+      "nodeid": "tests/scientific/verification/test_quantity_comparison_v2.py::test_dimensionally_foreign_verification_value_is_refused",
+      "tags": [
+        "vnv",
+        "diagnostics"
+      ],
+      "invariant": "verification compares typed compatible quantities"
+    },
+    {
+      "id": "verification-runner-identity",
+      "nodeid": "tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution",
+      "tags": [
+        "vnv",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "execution backend identity is bound to planned route"
+    },
+    {
+      "id": "verification-plan-replay",
+      "nodeid": "tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route",
+      "tags": [
+        "vnv",
+        "replay"
+      ],
+      "invariant": "verification route selection is re-derived on replay"
+    },
+    {
+      "id": "verification-verdict-replay",
+      "nodeid": "tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict",
+      "tags": [
+        "vnv",
+        "replay"
+      ],
+      "invariant": "verification verdict is re-derived from observations"
+    },
+    {
+      "id": "verification-end-to-end",
+      "nodeid": "tests/scientific/verification/test_orchestration_v2.py::test_plan_observations_produce_verified_report_only_when_all_required_routes_arrive_and_agree",
+      "tags": [
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "policy plan plus complete agreeing observations produces verified evidence"
     }
   ]
 }

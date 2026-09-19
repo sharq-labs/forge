@@ -467,6 +467,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/uq/budget/*.py",
             "tests/uq/combined/*.py",
             "tests/execution/orchestration/*.py",
+            "tests/execution/test_verification_runner*.py",
         ),
         why=(
             "the mutation harness, every suite in its TARGETS, every suite the V4 "

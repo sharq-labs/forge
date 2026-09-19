@@ -6914,6 +6914,46 @@ POPULATION_V4: tuple[tuple, ...] = (
         "N59m", "src/engcore/uq/model_form/serialization.py::model_form_from_dict", "        ModelFormScope.from_dict(scope) if scope is not None else None)\n", "        None)\n", "tests/uq/model_form/test_serialization.py::test_model_form_v2_round_trip_preserves_scope_and_fail_closed_status", 'KILLED',
         "model-form V2 serialization preserves scope authority", (), 'combined_uq_round59',
     ),
+    (
+        "N60a", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    if p_exact==q_exact:\n        level=IndependenceLevel.NONE\n", "    if False:\n        level=IndependenceLevel.NONE\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "identical dependency implementation sets have no independence", (), 'verification_v2_round60',
+    ),
+    (
+        "N60b", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    elif shared_families:\n        level=IndependenceLevel.PARTIAL\n", "    elif False:\n        level=IndependenceLevel.PARTIAL\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "shared dependency families prevent a strong-independence claim", (), 'verification_v2_round60',
+    ),
+    (
+        "N60c", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    elif candidate.externally_operated and candidate.authority_id!=primary.authority_id:\n        level=IndependenceLevel.EXTERNAL\n", "    elif False:\n        level=IndependenceLevel.EXTERNAL\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "external independence requires a disjoint external authority boundary", (), 'verification_v2_round60',
+    ),
+    (
+        "N60d", "src/engcore/scientific/verification/planning.py::plan_verification", "        if level<policy.minimum_level:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',
+        "verification planning enforces minimum verification level", (), 'verification_v2_round60',
+    ),
+    (
+        "N60e", "src/engcore/scientific/verification/planning.py::plan_verification", "        if _INDEPENDENCE_RANK[independence.level]<_INDEPENDENCE_RANK[policy.minimum_independence]:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',
+        "verification planning enforces minimum independence", (), 'verification_v2_round60',
+    ),
+    (
+        "N60f", "src/engcore/scientific/verification/planning.py::VerificationPlan.complete", "        if self.policy.require_external and not any(x.independence.level is IndependenceLevel.EXTERNAL for x in self.selected): return False\n", "        if False: return False\n", "tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists", 'KILLED',
+        "external-verification policy cannot be satisfied by internal routes", (), 'verification_v2_round60',
+    ),
+    (
+        "N60g", "src/engcore/scientific/verification/quantity_comparison.py::compare_observations", "    if not primary.converged or not candidate.converged:\n        return RouteComparison(primary.route_id,candidate.route_id,False,None)\n", "    if False:\n        return RouteComparison(primary.route_id,candidate.route_id,False,None)\n", "tests/scientific/verification/test_quantity_comparison_v2.py::test_nonconverged_route_cannot_agree", 'KILLED',
+        "nonconverged verification output cannot agree", (), 'verification_v2_round60',
+    ),
+    (
+        "N60h", "src/engcore/execution/verification_runner.py::execute_verification_plan", "        if str(getattr(backend,\"route_id\",\"\"))!=route_id:\n            problems.append(f\"{route_id}:backend_route_identity_mismatch\");continue\n", "        if False:\n            problems.append(f\"{route_id}:backend_route_identity_mismatch\");continue\n", "tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution", 'KILLED',
+        "execution backend identity is bound to planned route", (), 'verification_v2_round60',
+    ),
+    (
+        "N60i", "src/engcore/scientific/verification/plan_serialization.py::plan_from_dict", "    if payload.get(\"selected\")!=derived_selected or payload.get(\"rejected\")!=derived_rejected or payload.get(\"complete\") is not plan.complete:\n        raise InvalidScientificProblem(\"serialized verification plan selection is forged or stale\")\n", "    if False:\n        raise InvalidScientificProblem(\"serialized verification plan selection is forged or stale\")\n", "tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route", 'KILLED',
+        "verification plan selection is re-derived on replay", (), 'verification_v2_round60',
+    ),
+    (
+        "N60j", "src/engcore/scientific/verification/run_record.py::VerificationRunRecord.from_dict", "        if payload.get(\"result\")!=derived:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict", 'KILLED',
+        "verification run verdict is re-derived on replay", (), 'verification_v2_round60',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on
