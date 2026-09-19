@@ -1,37 +1,27 @@
 from __future__ import annotations
 
 from engcore.claims.analysis.model_discrepancy import (
-    DiscrepancyEstimateStatus, DiscrepancyProtocol,
-    ModelFormDiscrepancyEstimate, ResidualPoint,
+    DiscrepancyEstimateStatus,DiscrepancyProtocol,ModelFormDiscrepancyEstimate,ResidualPoint,
 )
 from engcore.claims.measurement_dataset import DatasetSplit
 from engcore.claims.model_form_uq import evaluate_discrepancy_for_model_form
-from engcore.uq.model_form import ModelFormStatus, PromotionDecision
+from engcore.uq.model_form import ModelFormScope,ModelFormStatus,PromotionDecision
 
+def scope():
+    return ModelFormScope("model","a"*64,"b"*64,"c"*64,"temperature","kelvin")
 
-def point(oid, group, split, residual, known):
-    return ResidualPoint(
-        oid, group, split, residual, known,
-        max(0.0, abs(residual)-known), abs(residual)+known,
-        "kelvin", f"digest-{oid}", None,
-    )
-
+def point(oid,group,split,residual,known):
+    return ResidualPoint(oid,group,split,residual,known,max(0.0,abs(residual)-known),
+                         abs(residual)+known,"kelvin",f"digest-{oid}",None)
 
 def test_discrepancy_candidate_is_not_automatically_promoted_without_holdout_groups():
-    discrepancy = ModelFormDiscrepancyEstimate(
-        "temperature",
-        "kelvin",
-        DiscrepancyProtocol("p", 2, 2),
+    discrepancy=ModelFormDiscrepancyEstimate(
+        "temperature","kelvin",DiscrepancyProtocol("p",2,2),
         DiscrepancyEstimateStatus.CALIBRATED_UNVALIDATED,
-        (
-            point("c1","c1",DatasetSplit.CALIBRATION,3.0,1.0),
-            point("c2","c2",DatasetSplit.CALIBRATION,4.0,1.0),
-        ),
-        3.0,
-        5.0,
-        (),
-        "no holdout",
-    )
-    attempt = evaluate_discrepancy_for_model_form(discrepancy)
+        (point("c1","c1",DatasetSplit.CALIBRATION,3,1),
+         point("c2","c2",DatasetSplit.CALIBRATION,4,1)),
+        3,5,(),"no holdout")
+    attempt=evaluate_discrepancy_for_model_form(discrepancy,scope=scope())
     assert attempt.estimate.status is ModelFormStatus.CALIBRATED_UNVALIDATED
+    assert attempt.estimate.scope==scope()
     assert attempt.promotion.decision is PromotionDecision.REFUSED

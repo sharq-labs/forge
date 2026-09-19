@@ -30,7 +30,8 @@ class ModelFormStudy:
         if self.observations:
             quantity=self.observations[0].quantity;unit=self.observations[0].units
             for observation in self.observations:
-                if observation.quantity!=quantity: raise ValueError("one model-form study may assess only one quantity")
+                if observation.quantity != quantity:
+                    raise ValueError("one model-form study may assess only one quantity")
                 require_same_dimension(observation.units,unit,context="model-form study residual units")
             if self.scope is not None:
                 if self.scope.quantity!=quantity:

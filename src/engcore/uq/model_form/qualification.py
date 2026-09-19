@@ -20,7 +20,8 @@ class ProducerQualification:
         quantities=tuple(sorted(set(str(q).strip() for q in self.approved_quantities)))
         estimators=tuple(sorted(set(ModelFormEstimatorKind(x).value for x in self.approved_estimator_methods)))
         if not producer or not method or not reviewer or not quantities or any(not q for q in quantities): raise ValueError("model-form producer qualification requires producer, method, independent reviewer and approved quantities")
-        if producer==reviewer: raise ValueError("model-form independent reviewer must not be the producer")
+        if producer==reviewer:
+            raise ValueError("model-form independent reviewer must not be the producer")
         if not estimators: raise ValueError("qualification requires at least one approved estimator method")
         for label in ("validation_digest","independent_review_digest"):
             digest=str(getattr(self,label)).strip().lower()

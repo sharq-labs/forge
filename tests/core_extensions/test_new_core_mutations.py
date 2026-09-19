@@ -35,7 +35,7 @@ from engcore.scientific.verification import (
     VerificationDecision, adjudicate,
 )
 from engcore.uq.model_form import (
-    ModelFormEstimate, ModelFormPolicy, ModelFormStatus,
+    ModelFormEstimate, ModelFormPolicy, ModelFormScope, ModelFormStatus,
     PromotionDecision, assess_promotion,
 )
 
@@ -65,14 +65,9 @@ def unknown_evidence_authority_is_not_admissible():
 
 def unvalidated_model_form_is_not_promotable():
     estimate = ModelFormEstimate(
-        "temperature",
-        "kelvin",
-        ModelFormStatus.CALIBRATED_UNVALIDATED,
-        1.0,
-        ("c1", "c2"),
-        (),
-        None,
-        "no holdout",
+        "temperature", "kelvin", ModelFormStatus.CALIBRATED_UNVALIDATED,
+        1.0, ("c1", "c2"), ("v1", "v2"), 1.0, "not validated",
+        scope=ModelFormScope("model","a"*64,"b"*64,"c"*64,"temperature","kelvin"),
     )
     assert model_form_promotion_module.assess_promotion(estimate, ModelFormPolicy()).decision is PromotionDecision.REFUSED
 
