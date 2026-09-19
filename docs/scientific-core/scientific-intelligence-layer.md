@@ -47,7 +47,7 @@ evidence, levels, uncertainty, models or input values.
 | 9/10 | Impact over existing identities; digest + re-derivation + replay | Edits to historical records |
 | Diagnostic | Recorded blockers, explicit assumptions, model-data mismatch and testable repair hypotheses | A physical-causality claim, automatic model-form UQ, or a promised fix |
 | Measurement dataset | Curated source manifest, row interpretation, missing-context/UQ/calibration gates | Public data treated as trusted/admissible by origin alone |
-| Model-form candidate | Max residual excess calibrated on independent groups and tested on held-out groups | Zero discrepancy from non-detection; automatic MODEL_FORM channel; validation level |
+| Model-form candidate | Residual-derived minimum discrepancy and conservative compatibility bounds, calibrated on independent groups and tested on held-out groups | Calling either bound MODEL_FORM uncertainty; zero discrepancy from non-detection; automatic MODEL_FORM channel; validation level |
 
 ## Invariants
 
@@ -80,11 +80,13 @@ done locally.
   evidence. A NASA battery source manifest now exists under
   `benchmarks/measurements/nasa_battery_alt/`, but its rows remain non-admissible
   until exact context, calibrated measurement uncertainty and provenance close.
-- MODEL_FORM now has a **candidate** discrepancy producer: known measurement and
-  prediction intervals are removed conservatively from residuals, calibration
-  uses independent groups, and the envelope must survive held-out groups.
-  The candidate explicitly cannot satisfy a claim and is not wired into the
-  MODEL_FORM uncertainty channel; an authoritative reviewed promotion step is
+- MODEL_FORM now has a **candidate discrepancy-constraint** producer: known
+  measurement and prediction intervals are accounted for explicitly, yielding
+  a minimum required discrepancy and a conservative compatible bound.
+  Calibration uses independent groups and those constraints must survive held-out
+  groups. Neither bound is called MODEL_FORM uncertainty: the lower bound would
+  understate uncertainty and the conservative bound still contains known
+  uncertainty. An authoritative statistical/physical MODEL_FORM producer is
   still missing. Residuals hidden below known uncertainty remain unresolved,
   never zero.
 - NUMERICAL is quantified only where a capability declares a ladder (T3), and
