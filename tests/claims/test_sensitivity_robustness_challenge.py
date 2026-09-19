@@ -1,4 +1,4 @@
-"""Phases 7 and 8 -- sensitivity, a bounded robustness envelope, and challenge mode, over real runs."""
+"""Sensitivity, robustness and challenge -- sensitivity, a bounded robustness envelope, and challenge mode, over real runs."""
 
 from __future__ import annotations
 
@@ -61,6 +61,10 @@ def test_sensitivity_signs_follow_the_declared_physics(et_supported, registry) -
     assert by_path["source_voltage"].derivative > 0
     assert all(p.problem is None for p in report.parameters)
     assert "not a causal relationship" in report.to_dict()["notice"]
+    assert report.assessment_digest == et_supported.digest
+    assert report.plan_digest == et_supported.plan.digest
+    assert report.capability_digest == et_supported.plan.capability_digest
+    assert report.to_dict()["report_digest"] == report.digest
     assert report.ranked()[0].path == AMB  # the dominant normalized sensitivity
 
 
@@ -114,11 +118,15 @@ def test_a_domain_end_is_unknown_beyond_not_holds(envelope, registry) -> None:
     assert assess_claim(_with_ambient(side["first_not_holding"]), registry).verdict.value == "insufficient_evidence"
 
 
-def test_an_insensitive_input_reaches_the_search_limit_and_claims_nothing_beyond(envelope) -> None:
+def test_an_insensitive_input_reaches_the_search_limit_and_claims_nothing_beyond(envelope, et_supported) -> None:
     for direction in ("decrease", "increase"):
         side = envelope.parameters["stages[0].body.heat_capacity"][direction]
         assert side["kind"] == BoundaryKind.SEARCH_LIMIT.value and side["beyond"] == "unknown" and side["first_not_holding"] is None
     assert any("joint variation is not explored" in a for a in envelope.assumptions)
+    assert envelope.assessment_digest == et_supported.digest
+    assert envelope.plan_digest == et_supported.plan.digest
+    assert envelope.capability_digest == et_supported.plan.capability_digest
+    assert envelope.to_dict()["report_digest"] == envelope.digest
 
 
 def test_there_is_no_envelope_around_a_claim_that_is_not_supported(registry) -> None:

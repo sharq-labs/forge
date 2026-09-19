@@ -34,6 +34,71 @@ is the gate for a milestone freeze.
 
 ---
 
+## Scientific diagnostic tool
+
+A stored assessment can be explained without changing its verdict:
+
+```bash
+python tools/forge_diagnose.py assessment.json
+python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json
+python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json --robustness robustness.json
+```
+
+The CLI first verifies the assessment (or replay bundle) against the current registry. Optional sensitivity/robustness artifacts must be digest-sealed and bound to the same assessment, plan and capability.
+
+The report combines evidence gaps, explicit assumptions, admissible model-data
+comparisons and the existing next-experiment plan. It distinguishes recorded
+blocking conditions from repair hypotheses. A hypothesis is never evidence,
+local sensitivity is never causality, and a corrective action never guarantees
+that reassessment will become SUPPORTED.
+
+---
+
+## Impact query tool
+
+Stored assessment records can be queried without rerunning physics:
+
+```bash
+python tools/forge_impact.py query assessment.json --kind model --key thermal.model
+python tools/forge_impact.py query assessment.json --kind trust_registry --key <recorded-registry-digest>
+python tools/forge_impact.py detect assessment.json
+```
+
+`query` asks which assessments depend on a declared identity. `detect`
+compares stored capability/policy/trust identities with the current production
+registries and returns a reassessment report. Neither command edits historical
+decisions or changes scientific standing.
+
+---
+
+## Fast changed-file gate
+
+Before selecting a large tier by hand, Forge now has a small deterministic
+developer gate:
+
+```bash
+python tools/forge_check.py --changed
+```
+
+It always runs repository/layer guards and selects a fixed set of scientific
+regression sentinels from `tests/scientific_regression/manifest.json` according
+to the changed source paths. The sentinels target false-confidence failures:
+applicability, verification-vs-validation, context binding, uncertainty
+attribution, risk policy, evidence admission, evidence gaps, challenge and
+replay.
+
+To run the complete fixed sentinel pack:
+
+```bash
+python tools/forge_check.py --regression
+```
+
+Use `--dry-run --list` to inspect the selection without executing tests.
+This command is a fast development aid only. It does **not** replace FAST,
+SCIENTIFIC, FULL or hardened recertification.
+
+---
+
 ## The tiers
 
 Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;

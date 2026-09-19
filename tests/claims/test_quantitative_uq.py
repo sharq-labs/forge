@@ -1,4 +1,4 @@
-"""Phase 2 -- production quantitative UQ: numerical (refinement) and parameter (propagation), end to end.
+"""Quantitative UQ -- production quantitative UQ: numerical (refinement) and parameter (propagation), end to end.
 
 Every quantified channel here comes from real executions of a production capability: the NAFEMS T3
 refinement ladder for NUMERICAL, and seeded propagation through the electrothermal system for

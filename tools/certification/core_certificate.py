@@ -495,12 +495,17 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "scientific models and solvers. They produce answers rather than decide "
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
-    ("src/engcore/mcp/**", "the product boundary: a consumer of the core"),
+    ("src/engcore/credibility/**",
+     "non-Core credibility/V&V report semantics and the bridge into SRIA "
+     "evidence. It consumes certified scientific records but is not itself a "
+     "frozen Core API"),
+    ("src/engcore/mcp/**",
+     "the outer product/tool transport boundary: a consumer of claims and "
+     "credibility, never scientific authority"),
     ("src/engcore/claims/**",
-     "the scientific claim layer (EXPERIMENTAL): routing, planning and claim "
-     "assessment above the core, SRIA and the MCP boundary. It defines no "
-     "verdict of its own below the claim level -- run credibility, levels and "
-     "assurance stay with the certified records it reads"),
+     "the scientific intelligence layer (EXPERIMENTAL): routing, planning, "
+     "assessment and analysis above the Core and credibility/SRIA. It defines "
+     "claim-level orchestration without extending the frozen Core API"),
     ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
      "applications built on the core"),
     ("tests/** (except the harness area and the two self-check modules)",

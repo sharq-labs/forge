@@ -1,0 +1,340 @@
+{
+  "schema": "forge.scientific_regression/1",
+  "description": "Small fixed sentinels for false-confidence and scientific-authority regressions. These reference existing tests rather than duplicate physics cases.",
+  "cases": [
+    {
+      "id": "benchmark-supported",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+      "tags": [
+        "verdict"
+      ],
+      "invariant": "support requires attained benchmark evidence"
+    },
+    {
+      "id": "caller-value-not-evidence",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+      "tags": [
+        "verdict",
+        "evidence"
+      ],
+      "invariant": "caller assertions never replace produced result"
+    },
+    {
+      "id": "contradiction-needs-evidence",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+      "tags": [
+        "verdict",
+        "evidence"
+      ],
+      "invariant": "contradiction requires admissible evidence"
+    },
+    {
+      "id": "verification-not-validation",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+      "tags": [
+        "verdict",
+        "vnv"
+      ],
+      "invariant": "verification never satisfies validation"
+    },
+    {
+      "id": "outside-domain-not-contradiction",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_a_model_outside_its_domain_never_contradicts_the_claim",
+      "tags": [
+        "verdict",
+        "applicability"
+      ],
+      "invariant": "outside applicability is insufficiency, not scientific contradiction"
+    },
+    {
+      "id": "more-evidence-never-strengthens-by-request",
+      "nodeid": "tests/claims/test_claims_assessment.py::test_asking_for_more_evidence_never_firms_up_the_answer",
+      "tags": [
+        "verdict",
+        "evidence"
+      ],
+      "invariant": "asking for stricter evidence cannot improve verdict"
+    },
+    {
+      "id": "compiler-ready",
+      "nodeid": "tests/claims/test_claims_compiler.py::test_a_complete_t3_claim_is_ready_on_the_benchmark_capability",
+      "tags": [
+        "compiler"
+      ],
+      "invariant": "complete supported claim compiles deterministically"
+    },
+    {
+      "id": "compiler-never-executes",
+      "nodeid": "tests/claims/test_claims_compiler.py::test_compilation_never_executes",
+      "tags": [
+        "compiler"
+      ],
+      "invariant": "planning/compilation is not execution"
+    },
+    {
+      "id": "outside-domain-unsupported",
+      "nodeid": "tests/claims/test_claims_compiler.py::test_a_candidate_outside_its_validated_domain_is_unsupported_not_contradicted",
+      "tags": [
+        "compiler",
+        "applicability"
+      ],
+      "invariant": "outside-domain candidate is not contradiction"
+    },
+    {
+      "id": "unknown-never-beats-known",
+      "nodeid": "tests/claims/test_claims_selection.py::test_unknown_applicability_never_beats_a_known_in_domain_candidate",
+      "tags": [
+        "selection",
+        "applicability"
+      ],
+      "invariant": "UNKNOWN applicability never outranks IN_DOMAIN"
+    },
+    {
+      "id": "ambiguous-not-ranked",
+      "nodeid": "tests/claims/test_claims_selection.py::test_two_applicable_candidates_are_ambiguous_not_ranked",
+      "tags": [
+        "selection"
+      ],
+      "invariant": "multiple applicable candidates are not silently ranked"
+    },
+    {
+      "id": "wrong-charter-not-valid",
+      "nodeid": "tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+      "tags": [
+        "context",
+        "evidence"
+      ],
+      "invariant": "foreign charter evidence cannot become valid"
+    },
+    {
+      "id": "wrong-decision-not-valid",
+      "nodeid": "tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+      "tags": [
+        "context",
+        "evidence"
+      ],
+      "invariant": "evidence is terminal-decision bound"
+    },
+    {
+      "id": "changed-context-not-valid",
+      "nodeid": "tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid",
+      "tags": [
+        "context",
+        "evidence"
+      ],
+      "invariant": "changed context cannot reuse evidence"
+    },
+    {
+      "id": "numerical-uq-quantified",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_a_second_order_sequence_is_quantified_and_brackets_the_exact_value",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "valid refinement sequence can quantify numerical uncertainty"
+    },
+    {
+      "id": "uq-failure-unknown",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_every_rule_failure_is_unknown_never_zero",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "failed UQ rule yields UNKNOWN, never zero"
+    },
+    {
+      "id": "guard-band-crossing-insufficient",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient",
+      "tags": [
+        "uq",
+        "verdict"
+      ],
+      "invariant": "uncertainty crossing threshold withholds decision"
+    },
+    {
+      "id": "remove-uq-never-improves",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+      "tags": [
+        "uq",
+        "evidence"
+      ],
+      "invariant": "removing uncertainty evidence cannot improve verdict"
+    },
+    {
+      "id": "numerical-not-model-form",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "uncertainty channels are not interchangeable"
+    },
+    {
+      "id": "parameter-not-numerical",
+      "nodeid": "tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "parameter uncertainty cannot satisfy numerical uncertainty"
+    },
+    {
+      "id": "risk-monotone",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_more_risk_never_requires_less_evidence_within_a_profile",
+      "tags": [
+        "policy"
+      ],
+      "invariant": "higher risk cannot lower evidence bar"
+    },
+    {
+      "id": "consequence-stated-not-inferred",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_consequence_is_stated_never_inferred",
+      "tags": [
+        "policy"
+      ],
+      "invariant": "decision consequence is policy input, not LLM inference"
+    },
+    {
+      "id": "policy-not-evidence",
+      "nodeid": "tests/claims/test_evidence_policy.py::test_a_policy_cannot_grant_what_the_run_lacks",
+      "tags": [
+        "policy",
+        "evidence"
+      ],
+      "invariant": "policy cannot grant scientific evidence"
+    },
+    {
+      "id": "unpinned-measurement-weak",
+      "nodeid": "tests/claims/test_external_evidence.py::test_an_unpinned_measurement_is_weak_however_good_it_looks",
+      "tags": [
+        "external",
+        "evidence"
+      ],
+      "invariant": "untrusted measurement cannot become authoritative by appearance"
+    },
+    {
+      "id": "measurement-not-validation",
+      "nodeid": "tests/claims/test_external_evidence.py::test_a_pinned_applicable_quantified_measurement_is_admissible_and_still_not_validation",
+      "tags": [
+        "external",
+        "evidence",
+        "vnv"
+      ],
+      "invariant": "admissible measurement is not automatically validation"
+    },
+    {
+      "id": "external-never-silently-changes-verdict",
+      "nodeid": "tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+      "tags": [
+        "external",
+        "verdict"
+      ],
+      "invariant": "external record standing is explicit, not a hidden verdict override"
+    },
+    {
+      "id": "gaps-explain-insufficiency",
+      "nodeid": "tests/claims/test_evidence_gaps_next_experiment.py::test_every_verdict_is_fully_explained_by_its_blocking_gaps",
+      "tags": [
+        "gaps",
+        "verdict"
+      ],
+      "invariant": "insufficiency has typed authoritative causes"
+    },
+    {
+      "id": "recommendation-promises-nothing",
+      "nodeid": "tests/claims/test_evidence_gaps_next_experiment.py::test_recommendations_address_real_gaps_and_promise_nothing",
+      "tags": [
+        "gaps"
+      ],
+      "invariant": "next experiment addresses gaps without promising support"
+    },
+    {
+      "id": "challenge-does-not-edit-verdict",
+      "nodeid": "tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+      "tags": [
+        "challenge",
+        "verdict"
+      ],
+      "invariant": "challenge report is not authority by itself"
+    },
+    {
+      "id": "bundle-edit-detected",
+      "nodeid": "tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "replay bundle tampering is detected"
+    },
+    {
+      "id": "changed-solver-detected",
+      "nodeid": "tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "replay detects changed scientific execution"
+    },
+    {
+      "id": "diagnostic-model-form-root-cause",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+      "tags": [
+        "diagnostics",
+        "gaps",
+        "uq"
+      ],
+      "invariant": "diagnostics may identify a recorded model-form blocker and propose an action, but never guarantee a fix"
+    },
+    {
+      "id": "diagnostic-mismatch-not-model-form-uq",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+      "tags": [
+        "diagnostics",
+        "external",
+        "uq"
+      ],
+      "invariant": "an admissible model-data mismatch is diagnostic evidence of disagreement, not automatic model-form uncertainty"
+    },
+    {
+      "id": "diagnostic-sensitivity-not-causality",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+      "tags": [
+        "diagnostics",
+        "challenge"
+      ],
+      "invariant": "sensitivity can prioritize repair hypotheses but never establishes causality or guarantees correction"
+    },
+    {
+      "id": "diagnostic-foreign-artifact-refused",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+      "tags": [
+        "diagnostics",
+        "provenance"
+      ],
+      "invariant": "a sealed sensitivity artifact from another assessment cannot influence diagnostic repair hypotheses"
+    },
+    {
+      "id": "impact-oracle-drift-current-state",
+      "nodeid": "tests/claims/test_impact_replay.py::test_current_oracle_digest_drift_is_detected",
+      "tags": [
+        "external",
+        "provenance"
+      ],
+      "invariant": "impact analysis compares the current oracle identity and trust state, not only the historical record"
+    },
+    {
+      "id": "impact-policy-removal",
+      "nodeid": "tests/claims/test_impact_replay.py::test_a_removed_policy_profile_is_detected",
+      "tags": [
+        "policy",
+        "provenance"
+      ],
+      "invariant": "removing a policy profile triggers reassessment instead of being silently ignored"
+    },
+    {
+      "id": "replay-untracked-content-fingerprint",
+      "nodeid": "tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "different untracked working-tree contents produce different reproducibility fingerprints"
+    }
+  ]
+}

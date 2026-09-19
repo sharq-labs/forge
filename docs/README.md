@@ -17,19 +17,23 @@ A Markdown claim must never be broader than the code, declared applicability/cap
 
 ## Layout
 
+- `architecture/` — **current architecture entry point and layer map**.
+- `work/` — small persistent execution state for long-running agent sessions; not scientific evidence.
+
 - `CORE_FREEZE_POLICY.md` — compatibility/freeze policy used by the certification process.
 - `TESTING.md` — developer testing guidance.
 - `SRIA.md` — SRIA concepts and architecture.
 - `domains/` — domain-specific documentation.
 - `assurance/` — assurance and evidence explanations.
 - `reviews/` — review records and claim/capability audits.
+- `audits/` — dated historical audit snapshots; read its README before treating a finding as current.
 - `project/` — project needs and planning material.
 - `architecture-study/` — historical/reference architecture studies; not current executable truth.
 - `archive/` — superseded historical material.
 
 ## Repository hygiene
 
-- Keep the repository root limited to entry-point/project files; long-form Markdown belongs here under `docs/`.
+- Keep the repository root limited to entry-point/project files. `README.md` and the agent control file `CLAUDE.md` are allowed; long-form human documentation belongs here under `docs/`.
 - Do not add Markdown documentation inside `src/`; implementation details belong in docstrings and executable contracts.
 - Keep benchmark/campaign reports beside the evidence they describe when their proximity is necessary for reproducibility.
 - Do not move certification records out of `certification/` merely to make documentation look tidier.

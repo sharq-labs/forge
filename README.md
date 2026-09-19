@@ -39,13 +39,11 @@ src/engcore/
                  kinetics/ (CSTR)
   systems/       electrothermal/ (closed-loop electro-thermal coupling)
                  aerospace/multirotor/ (reference design study)
-  sria/          evidence records, admission, assurance, decision, campaigns —
-                 19,887 lines, 26% of src/, an independent layer that is NOT on
-                 the verification path and is imported by nothing else in src/.
-                 Read the section below before reading the tree; see docs/SRIA.md
-  mcp/           verification and validation (V&V) layer: assembles a
-                 credibility evidence report for consumers and derives its
-                 advisory verdict
+  credibility/  V&V credibility reports and the bridge into SRIA evidence
+  sria/          evidence records, admission, assurance, decision and campaigns
+  claims/        scientific-intelligence orchestration: claim, routing, planning,
+                 evidence requirements, assessment and analysis
+  mcp/           external MCP transport/tools; legacy credibility imports are shims
   design/        design generation and design memory
   inference/ uq/ adequacy/ data/
 tests/           the suite, tiered (see docs/TESTING.md)
@@ -61,36 +59,13 @@ docs/
   architecture-study/              MOOSE, PETSc, OpenFOAM, preCICE, FEniCSx, OpenMDAO studies
 ```
 
-### A third of `src/` is not on the verification path
+### Layer boundaries
 
-`src/engcore/sria/` is **19,887 lines across 53 modules — 25.6% of the source
-tree — and nothing in `src/` outside it imports it.** Verify that in one
-command:
+The frozen Scientific Core is protected by executable import-direction tests. Non-Core layers sit above it: domains and systems provide science, `credibility/` owns V&V report semantics, SRIA owns evidence/assurance authority, `claims/` orchestrates scientific claims, and `mcp/` is the external transport boundary.
 
-```bash
-grep -rn "engcore\.sria\|from \.\.sria\|from \.sria\|import sria" --include=*.py src/ | grep -v "^src/engcore/sria/"
-```
+A repository invariant now enforces that **`claims` never imports `mcp`**. MCP can call claims; scientific reasoning cannot call back into its transport adapter. The old `engcore.mcp.evidence` and `engcore.mcp.sria_bridge` paths remain identity-preserving compatibility shims for the canonical implementation in `engcore.credibility`.
 
-It returns nothing. The MCP credibility layer, the electro-thermal system, the
-battery and kinetics domains and every solver run without it; removing the tree
-would leave every domain result, every coupling and every advisory verdict
-identical.
-
-That is a statement about **layering, not about worth**. SRIA is an
-experimental-campaign, decision and assurance layer that sits one altitude above
-the domains: where they answer *what does this system do*, it answers *what
-should we measure next, what may change belief, and on whose authority*. It has
-its own frozen milestone sequence (M1 through V0.1, plus Core V0.3 and the E1–E3
-experiment line) and 630 of the suite's 3,095 tests, two of its test modules
-being SHA-256 byte-pinned by frozen experiment configs.
-
-It is called out here rather than only in `docs/SRIA.md` because a reader
-opening this repository will meet a third of the code before they meet an
-explanation of it. [docs/SRIA.md](docs/SRIA.md) has the full account: what it
-was built for, what depends on it, and what separating it would cost.
-
-The package is still named `engcore` because several frozen experiments pin
-source paths by SHA-256; it is renamed at the next planned re-freeze.
+See [docs/architecture/README.md](docs/architecture/README.md) for the current layer map and [docs/SRIA.md](docs/SRIA.md) for the assurance layer.
 
 ## Where this stands
 

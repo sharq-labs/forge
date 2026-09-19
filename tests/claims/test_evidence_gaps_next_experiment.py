@@ -1,4 +1,4 @@
-"""Phases 5 and 6 -- evidence gaps that point at their records, and next experiments derived from declarations."""
+"""Evidence gaps and next experiment -- evidence gaps that point at their records, and next experiments derived from declarations."""
 
 from __future__ import annotations
 

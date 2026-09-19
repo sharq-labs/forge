@@ -35,8 +35,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from ..mcp.evidence import CredibilityEvidenceReport
-from ..mcp.sria_bridge import CredibilityReportCritic, evidence_from_credibility_report
+from ..credibility.evidence import CredibilityEvidenceReport
+from ..credibility.sria_bridge import CredibilityReportCritic, evidence_from_credibility_report
 from ..scientific.results.validation import VALIDATION_LEVELS, VERIFICATION_LEVELS, ValidationLevel
 from ..scientific.serialization import schema_string
 from ..sria.assurance import (

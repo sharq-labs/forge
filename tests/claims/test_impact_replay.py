@@ -1,4 +1,4 @@
-"""Phases 9 and 10 -- the decision dependency graph, impact analysis, and the replay bundle."""
+"""Impact analysis and replay -- the decision dependency graph, impact analysis, and the replay bundle."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from engcore.claims import (
     impact_of,
     record_digest,
 )
-from engcore.claims.bundle import (
+from engcore.claims.replay.bundle import (
     BundleStatus,
     ReplayTolerance,
     bundle_from_json,
@@ -73,7 +73,7 @@ def _digest(assessment):
 
 
 # ---------------------------------------------------------------------------
-# Phase 9
+# Impact analysis
 # ---------------------------------------------------------------------------
 
 
@@ -122,8 +122,69 @@ def test_a_changed_policy_profile_is_detected(corpus, registry) -> None:
     assert [c.kind for c in changes] == [ChangeKind.POLICY]
 
 
+def test_a_removed_policy_profile_is_detected(corpus, registry) -> None:
+    profiles = {k: v for k, v in BUILTIN_PROFILES.items() if k != "engineering_decision"}
+    changes = detect_changes([corpus["t3_policy"].to_dict()], registry, policy_profiles=profiles)
+    assert [c.kind for c in changes] == [ChangeKind.POLICY]
+    assert "no longer registered" in changes[0].detail
+
+
+def test_current_oracle_digest_drift_is_detected(corpus, registry, monkeypatch) -> None:
+    from types import SimpleNamespace
+    import engcore.claims.analysis.impact as impact_module
+
+    record = corpus["t3"].to_dict()
+    historical = record["external_evidence"][0]
+    current = SimpleNamespace(
+        oracle_id=historical["oracle_id"],
+        version=historical["version"],
+        metric=historical["metric"],
+        capability_id=historical["capability_id"],
+        route_id=historical["route_id"],
+        trusted=historical["trusted"],
+        trusted_digest="f" * 64,
+    )
+    monkeypatch.setattr(impact_module, "discover_oracles", lambda *args, **kwargs: (current,))
+    changes = detect_changes([record], registry)
+    oracle_changes = [c for c in changes if c.kind is ChangeKind.ORACLE]
+    assert len(oracle_changes) == 1
+    assert historical["trusted_digest"] in oracle_changes[0].key
+
+def test_a_changed_external_trust_registry_is_detected_and_impacts_the_bound_assessment(registry) -> None:
+    measurement = MeasurementRecord(
+        "temperature_at_probe",
+        Quantity(309.76, "kelvin"),
+        Uncertainty(
+            kind=UncertaintyKind.INTERVAL,
+            lower=Quantity(309.66, "kelvin"),
+            upper=Quantity(309.86, "kelvin"),
+            method="m",
+            source_kind=UncertaintySource.MEASUREMENT,
+        ),
+        "cal:1",
+        "lab:1",
+        dict(t3_point()),
+        "v1",
+    )
+    old_trust = TrustedExternalRegistry(
+        (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "reviewed"),)
+    )
+    assessment = assess_claim(t3_claim(), registry, external=(measurement,), trust=old_trust)
+    record = assessment.to_dict()
+
+    assert detect_changes([record], registry, trust_registry=old_trust) == ()
+
+    new_trust = TrustedExternalRegistry(())
+    changes = detect_changes([record], registry, trust_registry=new_trust)
+    assert [change.kind for change in changes] == [ChangeKind.TRUST_REGISTRY]
+    assert changes[0].key == old_trust.digest
+
+    affected = impact_of(DecisionGraph([record]), changes).to_dict()["requires_reassessment"]
+    assert [item["assessment"] for item in affected] == [record_digest(record)]
+
+
 # ---------------------------------------------------------------------------
-# Phase 10
+# Replay / reproducibility
 # ---------------------------------------------------------------------------
 
 
@@ -134,6 +195,17 @@ def bundled(registry):
     assessment = assess_claim(claim, registry)
     return bundle_from_json(bundle_to_json(make_bundle(assessment, registry)))
 
+
+def test_bundle_environment_carries_a_reproducibility_fingerprint(bundled) -> None:
+    environment = bundled["environment"]
+    assert environment["schema"] == "claim_replay_environment/1"
+    assert len(environment["fingerprint"]) == 64
+    assert set(environment["distribution"]) == {"crafty", "numpy", "scipy", "pint"}
+    assert set(environment["python"]) == {"version", "implementation"}
+    assert set(environment["platform"]) == {"system", "release", "machine"}
+    assert set(environment["git"]) == {"commit", "dirty", "tracked_diff_digest", "untracked_manifest_digest"}
+    assert environment["git"]["tracked_diff_digest"] is None or len(environment["git"]["tracked_diff_digest"]) == 64
+    assert environment["git"]["untracked_manifest_digest"] is None or len(environment["git"]["untracked_manifest_digest"]) == 64
 
 def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, registry, monkeypatch) -> None:
     import engcore.claims.execution as execution
@@ -225,3 +297,15 @@ def test_a_bundle_with_external_evidence_carries_its_trust_and_replays(registry)
     assert replay_bundle(bundle, registry).status is BundleStatus.VERIFIED
     with pytest.raises(Exception):
         make_bundle(assessment, registry)  # the production registry is not the one it was judged under
+
+
+def test_untracked_manifest_digest_changes_with_file_content(tmp_path) -> None:
+    from engcore.claims.replay.bundle import _digest_bytes, _untracked_manifest
+
+    path = tmp_path / "candidate.txt"
+    path.write_text("first", encoding="utf-8")
+    first = _digest_bytes(_untracked_manifest(tmp_path, b"candidate.txt\0"))
+    path.write_text("second", encoding="utf-8")
+    second = _digest_bytes(_untracked_manifest(tmp_path, b"candidate.txt\0"))
+
+    assert first is not None and second is not None and first != second

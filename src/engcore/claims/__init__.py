@@ -1,7 +1,7 @@
 """The scientific claim layer: claims, capabilities, routing, planning, assessment.
 
 **Status: EXPERIMENTAL.** Not part of any Core Freeze. It sits *above* the
-Scientific Core, the domains, the MCP credibility layer and SRIA, and owns no
+Scientific Core, the domains, the credibility layer and SRIA, and owns no
 physics, no validation vocabulary and no decision engine of its own:
 
 * a claim's comparison is the Core's ``ConstraintDefinition``;
@@ -28,11 +28,12 @@ quantitative UQ (:mod:`.numerical_uq`, :mod:`.parameter_uq`,
 :mod:`.uq_studies`), the risk-aware evidence policy (:mod:`.policy`),
 benchmark / measurement / literature ingestion (:mod:`.external_evidence`),
 evidence gaps and next experiments (:mod:`.gaps`, :mod:`.next_experiment`),
-sensitivity, robustness and challenge mode (:mod:`.sensitivity`,
-:mod:`.challenge`), and the impact graph (:mod:`.impact`). Two modules are
-reachable only by their own path, on purpose: ``engcore.claims.bundle`` (a
-view the runtime never reads back) and ``engcore.claims.nl_adapter`` (the
-outer boundary for language-model proposals).
+sensitivity, robustness and challenge mode (:mod:`.analysis.sensitivity`,
+:mod:`.analysis.challenge`), scientific diagnostics (:mod:`.analysis.diagnostics`),
+and the impact graph (:mod:`.analysis.impact`). Governance lives under
+``engcore.claims.governance``, replay under ``engcore.claims.replay`` and the
+natural-language proposal boundary under ``engcore.claims.adapters``. The old
+flat module paths remain compatibility shims, not canonical implementation paths.
 
 Nothing here parses natural language and nothing here imports an AI provider.
 """

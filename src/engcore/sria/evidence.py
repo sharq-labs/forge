@@ -73,19 +73,20 @@ CLAIM_BINDING_SCHEMA = schema_string("sria_claim_binding")
 class SourceClass(str, Enum):
     """Where evidence came from.
 
-    Only ``SIMULATION`` has an ingestion path in V0.1. The others are reserved
-    so that the storage format, the lifecycle and the gateway do not change
-    when they arrive.
+    All four source classes have ingestion paths. Simulation enters through the
+    runtime credibility path; benchmark, measurement and literature enter through
+    the claim-layer external-evidence adapters. Ingestion is not admission:
+    source class alone grants no scientific standing.
     """
 
     SIMULATION = "simulation"
-    MEASUREMENT = "measurement"    # reserved
-    LITERATURE = "literature"      # reserved
-    BENCHMARK = "benchmark"        # reserved
+    MEASUREMENT = "measurement"
+    LITERATURE = "literature"
+    BENCHMARK = "benchmark"
 
 
-#: Phase 4: every class now has an ingestion path (``engcore.claims.external_evidence`` for the three
-#: external ones). Ingestion is not admission: an ingested record's standing is judged separately.
+#: Every source class has an ingestion path (``engcore.claims.external_evidence`` for
+#: the three external ones). Ingestion is not admission: standing is judged separately.
 IMPLEMENTED_SOURCE_CLASSES = frozenset(SourceClass)
 
 

@@ -1,5 +1,7 @@
 # The verification and validation (V&V) layer
 
+> **Architecture note (2026-09-19):** credibility-report semantics and the SRIA bridge now live in `engcore.credibility`. `engcore.mcp.evidence` and `engcore.mcp.sria_bridge` are compatibility shims. New scientific reasoning must not depend on MCP transport.
+
 > **A credibility evidence report is advisory input to an engineer of record.
 > It is not a decision, not a certification, and not a claim of conformance
 > with any standard.**

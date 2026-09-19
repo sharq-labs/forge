@@ -259,11 +259,15 @@ NON_CORE_PACKAGES = {
     "systems": "cross-domain compositions, built on domains",
     "sria": "the evidence / admission / assurance / campaign layer, above Core",
     "design": "design generation and design memory, above Core",
-    "mcp": "the tool-server adapter -- a consumer of the Core, not the Core",
+    "credibility": (
+        "scientific credibility/V&V reports and the SRIA evidence bridge; "
+        "above the Core and independent of the MCP transport adapter"
+    ),
+    "mcp": "the tool-server adapter -- an outer consumer, not scientific authority",
     "claims": (
-        "the scientific claim layer -- claim contract, capability registry, "
-        "routing, planning and claim assessment. EXPERIMENTAL, and above sria "
-        "and mcp: it consumes the Core's records and never defines one"
+        "the scientific intelligence layer -- claim contract, capability registry, "
+        "routing, planning and assessment. EXPERIMENTAL, above credibility/SRIA, "
+        "and forbidden from depending on MCP transport"
     ),
 }
 
