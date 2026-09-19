@@ -1427,6 +1427,77 @@ def run_verification_gate(
                 run.integration.method, cross_method, ladder[-1].label, comparison
             )
 
+    # --- independent implementation arm ---------------------------------
+    independent_solver_agrees: bool | None = None
+    independent_solver_max_rel_difference: float | None = None
+    independent_solver_consensus: CrossSolverConsensus | None = None
+    if finest_result is None:
+        independent_solver_detail = (
+            "no completed production reference rung to compare against"
+        )
+    elif not tolerance_independent:
+        independent_solver_detail = (
+            "the independent implementation was withheld because the production "
+            "tolerance ladder did not establish numerical adequacy first"
+        )
+    else:
+        from .independent_solver import IndependentLSODASolver
+        from .problem import build_cstr_problem as _independent_problem
+        from .solver import solve_reactor as _execute_independent
+
+        tight = run.with_integration(
+            run.integration.with_tolerances(
+                rtol=ladder[-1].rtol,
+                atol_concentration=ladder[-1].atol_concentration,
+                atol_temperature=ladder[-1].atol_temperature,
+            )
+        )
+        independent_problem = _independent_problem(
+            tight, problem_id=finest_result.problem_id
+        )
+        independent_solver = IndependentLSODASolver()
+        independent_result = _execute_independent(
+            tight,
+            run_id=f"{run_id_prefix}-independent-lsoda",
+            solver=independent_solver,
+            problem=independent_problem,
+        )
+        if not independent_result.values:
+            independent_solver_detail = (
+                "the independent ODEPACK/LSODA route did not complete the "
+                f"horizon ({independent_result.convergence.value})"
+            )
+        else:
+            independent_solver_consensus = CrossSolverConsensus.from_results(
+                consensus_id=f"kinetics.cstr.independent:{run_id_prefix}",
+                routes=(
+                    integration_route(run.integration.method, finest_result.solver),
+                    independent_lsoda_route(independent_result.solver),
+                ),
+                results={
+                    f"kinetics.cstr.integration:{run.integration.method}":
+                        finest_result,
+                    "kinetics.cstr.independent:LSODA": independent_result,
+                },
+                thresholds=thresholds,
+                tolerance_key="tolerance_rel_tol",
+                required_outputs=CONVERGENCE_QOIS,
+                notes=(
+                    "production solve_ivp/BDF compared with a separately "
+                    "translated scipy.integrate.odeint/ODEPACK LSODA route"
+                ),
+            )
+            independent_comparison = independent_solver_consensus.comparison
+            independent_solver_max_rel_difference = (
+                independent_comparison.worst_relative_difference
+            )
+            independent_solver_agrees = (
+                independent_comparison.agreed
+                if independent_comparison.compared_anything
+                else None
+            )
+            independent_solver_detail = independent_solver_consensus.reason
+
     return CSTRVerificationReport(
         rungs=tuple(rows),
         tolerance_independent=tolerance_independent,
@@ -1441,6 +1512,10 @@ def run_verification_gate(
         cross_method_agrees=cross_method_agrees,
         cross_method_detail=cross_method_detail,
         cross_method_max_rel_difference=cross_method_max_rel_difference,
+        independent_solver_agrees=independent_solver_agrees,
+        independent_solver_detail=independent_solver_detail,
+        independent_solver_max_rel_difference=independent_solver_max_rel_difference,
+        independent_solver_consensus=independent_solver_consensus,
         cross_method_consensus=cross_method_consensus,
         thresholds=thresholds,
     )
