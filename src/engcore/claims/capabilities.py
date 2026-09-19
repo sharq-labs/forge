@@ -702,20 +702,34 @@ class AttainableLevel:
     def from_dict(cls, payload: Mapping[str, Any]) -> "AttainableLevel":
         payload = require_mapping(payload, field="level", error=CapabilityDeclarationError)
         schema = require_schema_any(payload, (LEVEL_SCHEMA, LEVEL_SCHEMA_SCOPED))
+        required = ("schema", "level", "check_name", "route_id", "condition")
+        if schema == LEVEL_SCHEMA_SCOPED:
+            required = required + ("quantities",)
         require_keys(
             payload,
-            required=("schema", "level", "check_name", "route_id", "condition"),
-            optional=("quantities",) if schema == LEVEL_SCHEMA_SCOPED else (),
+            required=required,
             record="level",
             error=CapabilityDeclarationError,
+        )
+        quantities = (
+            tuple(
+                require_list(
+                    payload["quantities"],
+                    field="level.quantities",
+                    error=CapabilityDeclarationError,
+                )
+            )
+            if schema == LEVEL_SCHEMA_SCOPED
+            else ()
         )
         return cls(
             ValidationLevel(payload["level"]),
             payload["check_name"],
             payload["route_id"],
             payload["condition"],
-            tuple(payload.get("quantities", ())),
+            quantities,
         )
+
 
 @dataclass(frozen=True)
 class UncertaintyCapability:
