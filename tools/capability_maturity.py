@@ -118,6 +118,15 @@ def validate(data: dict[str, Any]) -> tuple[str, ...]:
                 errors.append(f"{cid}.{name}: evidence must be an array")
             if status == "PASS" and not evidence:
                 errors.append(f"{cid}.{name}: PASS requires evidence")
+            if status == "PASS" and isinstance(evidence, list):
+                for reference in evidence:
+                    if not isinstance(reference, str) or not reference.strip():
+                        continue
+                    path_text = reference.split("::", 1)[0]
+                    if not (ROOT / path_text).exists():
+                        errors.append(
+                            f"{cid}.{name}: evidence path does not exist: {path_text}"
+                        )
             if status == "NOT_APPLICABLE" and not str(gate.get("rationale", "")).strip():
                 errors.append(f"{cid}.{name}: NOT_APPLICABLE requires rationale")
             if status == "MISSING" and not str(gate.get("next_action", "")).strip():
