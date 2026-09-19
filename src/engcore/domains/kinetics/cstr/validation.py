@@ -761,6 +761,10 @@ class CSTRVerificationReport:
     cross_method_agrees: bool | None
     cross_method_detail: str
     cross_method_max_rel_difference: float | None
+    independent_solver_agrees: bool | None
+    independent_solver_detail: str
+    independent_solver_max_rel_difference: float | None
+    independent_solver_consensus: CrossSolverConsensus | None
     #: The core record behind the cross-method arm, or ``None`` when no
     #: comparison was made. It is what decides that the arm establishes
     #: nothing; see :meth:`to_report`.
@@ -801,7 +805,12 @@ class CSTRVerificationReport:
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 earned=self.invariant_verified,
             ),
-            # No third level (IND-04): the algebraic steady state shares the
+            (
+                self.independent_solver_consensus.establishes
+                if self.independent_solver_consensus is not None
+                else None
+            ),
+            # The algebraic steady state shares the
             # solver's derived parameters, so its agreement is reported by the
             # check and establishes nothing. See the module docstring.
         )
@@ -828,6 +837,15 @@ class CSTRVerificationReport:
                 "and the stationary end state agrees with an algebraic steady "
                 "state found by a separate root search from the same derived "
                 "parameters (reported; establishes no level)"
+            )
+        if (
+            self.independent_solver_consensus is not None
+            and self.independent_solver_consensus.establishes
+            is ValidationLevel.CROSS_SOLVER_VALIDATED
+        ):
+            parts.append(
+                "and a separately translated ODEPACK/LSODA implementation "
+                "reproduces every required quantity inside the declared gate"
             )
         return "; ".join(parts) + (
             ". No comparison against any physical measurement was performed"
@@ -919,13 +937,6 @@ class CSTRVerificationReport:
                 detail=self.cross_method_detail,
                 residual=self.cross_method_max_rel_difference,
                 tolerance=self.tolerance_rel_tol,
-                # Establishes nothing, and no longer because this line says so.
-                # The level comes from the consensus record, which refuses it
-                # because both routes declare the same right-hand side, the
-                # same analytic Jacobian and the same step control. A hard
-                # `None` here would have been a rule one reader had to trust;
-                # this is a rule a reader can check, against a declaration that
-                # travels in the record.
                 establishes=(
                     self.cross_method_consensus.establishes
                     if self.cross_method_consensus is not None
@@ -936,6 +947,18 @@ class CSTRVerificationReport:
                     if self.cross_method_consensus is not None
                     else ()
                 ),
+            ),
+            (
+                self.independent_solver_consensus.to_check(
+                    name="independent_solver_agreement"
+                )
+                if self.independent_solver_consensus is not None
+                else ValidationCheck(
+                    name="independent_solver_agreement",
+                    outcome=ValidationOutcome.NOT_RUN,
+                    detail=self.independent_solver_detail,
+                    establishes=None,
+                )
             ),
         ]
         return ValidationReport(checks=tuple(checks), notes=self.claim)
@@ -966,6 +989,15 @@ class CSTRVerificationReport:
             "cross_method_consensus": (
                 self.cross_method_consensus.to_dict()
                 if self.cross_method_consensus is not None
+                else None
+            ),
+            "independent_solver_agrees": self.independent_solver_agrees,
+            "independent_solver_detail": self.independent_solver_detail,
+            "independent_solver_max_rel_difference":
+                self.independent_solver_max_rel_difference,
+            "independent_solver_consensus": (
+                self.independent_solver_consensus.to_dict()
+                if self.independent_solver_consensus is not None
                 else None
             ),
             "levels_earned": [level.value for level in self.levels_earned],
