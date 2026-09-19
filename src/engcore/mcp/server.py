@@ -845,11 +845,12 @@ though the models mark it optional: it is both the conductance the \
 self-heating condition is stated over and the one the body exchanges \
 through, and this runtime will not invent a second source for it.
 
-Expect INSUFFICIENT_EVIDENCE on a well-formed nominal case. The battery \
-domain's coupled runner accepts no applicability declaration for the thermal \
-body, so the lumped model is honestly UNKNOWN. That is the runtime's real \
-answer, it is transmitted unchanged, and it is neither an error nor a reason \
-to retry.
+The thermal body's applicability is part of this payload under \
+thermal.applicability. A fully declared nominal case can therefore reach \
+SUPPORTED when the battery and thermal models are in-domain and the report's \
+validation checks earn evidence. Omitting thermal applicability remains \
+backward-compatible and yields the honest UNKNOWN/INSUFFICIENT_EVIDENCE path; \
+the runtime never fills those scientific declarations with defaults.
 
 The verdict is advisory input to an engineer of record. It is not a decision, \
 not a certification, and not a claim of conformance with any standard.
