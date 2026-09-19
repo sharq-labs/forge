@@ -373,6 +373,35 @@
         "diagnostics"
       ],
       "invariant": "residuals hidden below known uncertainty do not establish zero model-form discrepancy"
+    },
+    {
+      "id": "battery-thevenin-relaxation",
+      "nodeid": "tests/domains/test_battery_thevenin.py::test_rest_interval_relaxes_polarization_without_changing_soc",
+      "tags": [
+        "applicability",
+        "uq"
+      ],
+      "invariant": "the dynamic battery kernel carries a real RC polarization state that relaxes during zero-current rest"
+    },
+    {
+      "id": "nasa-battery-raw-not-admissible",
+      "nodeid": "tests/claims/test_nasa_battery_aging_adapter.py::test_direct_voltage_observation_remains_nonadmissible_without_calibration_uq",
+      "tags": [
+        "external",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "NASA terminal-voltage samples do not become admissible evidence without calibrated measurement uncertainty and full context"
+    },
+    {
+      "id": "nasa-derived-soc-not-measurement",
+      "nodeid": "tests/claims/test_nasa_battery_aging_adapter.py::test_soc_trace_is_explicitly_derived_not_measurement_evidence",
+      "tags": [
+        "external",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "SOC reconstructed from measured current remains a derived model artifact, not a direct measurement"
     }
   ]
 }
