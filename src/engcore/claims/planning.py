@@ -405,7 +405,11 @@ def plan_experiment(compiled: CompiledClaim, registry: CapabilityRegistry) -> Ex
                 detail=route.to_dict(),
             )
         )
-    attainable = {a.level: a for a in declaration.attainable_levels}
+    attainable = {
+        a.level: a
+        for a in declaration.attainable_levels
+        if a.applies_to(claim.qoi.name)
+    }
     for level in claim.evidence.required_levels:
         found = attainable.get(level)
         steps.append(
