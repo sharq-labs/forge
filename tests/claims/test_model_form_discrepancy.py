@@ -172,3 +172,20 @@ def test_model_form_uncertainty_cannot_be_subtracted_from_itself() -> None:
     )
     assert estimate.status is DiscrepancyEstimateStatus.INSUFFICIENT_UNCERTAINTY
     assert "not admissible" in next(p.problem for p in estimate.points if p.problem)
+
+
+def test_residuals_below_known_uncertainty_do_not_establish_zero_model_form() -> None:
+    estimate = estimate_model_form_discrepancy(
+        (
+            _pair("c1", "pack:c1", DatasetSplit.CALIBRATION, predicted=300.04),
+            _pair("c2", "pack:c2", DatasetSplit.CALIBRATION, predicted=300.03),
+            _pair("v1", "pack:v1", DatasetSplit.VALIDATION, predicted=300.02),
+            _pair("v2", "pack:v2", DatasetSplit.VALIDATION, predicted=300.01),
+        ),
+        _protocol(),
+    )
+
+    assert estimate.calibrated_half_width == pytest.approx(0.0)
+    assert estimate.status is DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY
+    assert estimate.candidate is None
+    assert "does not establish zero" in estimate.reason
