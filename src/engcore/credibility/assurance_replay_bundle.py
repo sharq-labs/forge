@@ -1,4 +1,4 @@
-"""Self-contained, revalidated payload bundle for production scientific assurance."""
+"""Revalidated production assurance bundle with an external knowledge-trust root."""
 
 from __future__ import annotations
 
@@ -169,14 +169,21 @@ class ProductionAssuranceBundle:
             raise InvalidScientificProblem(
                 "production assurance bundle carries no freshness policy"
             )
+        if set(raw_freshness) != {"max_age_days", "require_timestamp"}:
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness policy shape is not canonical"
+            )
+        require_timestamp = raw_freshness["require_timestamp"]
+        if not isinstance(require_timestamp, bool):
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness require_timestamp must be bool"
+            )
         carried_freshness = FreshnessPolicy(
             {
                 KnowledgeSourceClass(key): value
-                for key, value in dict(
-                    raw_freshness.get("max_age_days", {})
-                ).items()
+                for key, value in dict(raw_freshness["max_age_days"]).items()
             },
-            bool(raw_freshness.get("require_timestamp", True)),
+            require_timestamp,
         )
         if carried_trust.digest != knowledge_trust.digest:
             raise InvalidScientificProblem(
