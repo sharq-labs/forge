@@ -102,8 +102,9 @@ def test_every_file_a_certified_mutation_names_requires_recertification():
     """
     formal = rs._formal_mutation_targets((REPO / rs.FORMAL_MUTATION_HARNESS).read_text(encoding="utf-8-sig"))
     trust = rs._trust_mutation_targets((REPO / rs.TRUST_MUTATION_POPULATION).read_text(encoding="utf-8-sig"))
-    assert formal and trust
-    for path in sorted(set(formal) | set(trust)):
+    v4 = rs._v4_mutation_targets((REPO / rs.V4_MUTATION_POPULATION).read_text(encoding="utf-8-sig"))
+    assert formal and trust and v4
+    for path in sorted(set(formal) | set(trust) | set(v4)):
         assert (REPO / path).is_file(), path
         assert rs.requires_recertification(path), path
 
