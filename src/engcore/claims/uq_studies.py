@@ -52,6 +52,10 @@ from .analysis.model_discrepancy import (
 from .measurement_dataset import DatasetObservation
 from .model_form_uq import evaluate_discrepancy_for_model_form
 from .model_form_uncertainty import ModelFormAuthorityError, promote_model_form_interval
+from .model_form_trust import (
+    ModelFormQualificationRegistry,
+    PRODUCTION_MODEL_FORM_QUALIFICATIONS,
+)
 from ..uq.model_form import ModelFormPolicy, ModelFormScope
 from ..uq.model_form.qualification import ProducerQualification
 from .capabilities import CapabilityDeclaration, CapabilityRegistry, build_case, declared_path
@@ -429,6 +433,7 @@ def _model_form(
     spec,
     observations: Sequence[DatasetObservation],
     qualification: ProducerQualification | None,
+    qualification_trust: ModelFormQualificationRegistry,
 ) -> tuple[dict[str, Any], Uncertainty]:
     declaration = registry.get(plan.capability_id)
     qoi = plan.content["qoi"]
@@ -536,6 +541,12 @@ def _model_form(
                     "was supplied; held-out discrepancy evidence is not authority "
                     "to promote itself"
                 )
+            elif qualification_trust.pin_for(qualification) is None:
+                problem = (
+                    "the supplied model-form producer qualification is not pinned "
+                    "by the active trust registry; a caller-created qualification "
+                    "cannot promote its own discrepancy estimate"
+                )
             else:
                 try:
                     uncertainty = promote_model_form_interval(
@@ -563,6 +574,15 @@ def _model_form(
         "scope": None if scope is None else scope.to_dict(),
         "qualification": (
             None if qualification is None else qualification.to_dict()
+        ),
+        "qualification_digest": (
+            None if qualification is None else qualification.digest
+        ),
+        "qualification_trust_registry_digest": qualification_trust.digest,
+        "qualification_trusted": (
+            False
+            if qualification is None
+            else qualification_trust.pin_for(qualification) is not None
         ),
         "discrepancy": None if discrepancy is None else discrepancy.to_dict(),
         "model_form_estimate": (
@@ -592,6 +612,9 @@ def run_uncertainty_studies(
     *,
     empirical_observations: Sequence[DatasetObservation] = (),
     model_form_qualification: ProducerQualification | None = None,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
 ) -> StudyOutcome:
     """Run every planned UQ study; missing empirical evidence stays explicit UNKNOWN."""
     records = []
@@ -627,6 +650,7 @@ def run_uncertainty_studies(
                 spec,
                 empirical_observations,
                 model_form_qualification,
+                model_form_qualification_trust,
             )
         else:  # pragma: no cover - study_spec is the closed producer
             raise UncertaintyStudyError(f"unsupported planned study kind {kind!r}")
@@ -643,6 +667,9 @@ def verify_study_records(
     *,
     registry: CapabilityRegistry | None = None,
     claim: ScientificClaim | None = None,
+    model_form_qualification_trust: ModelFormQualificationRegistry = (
+        PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
 ) -> StudyOutcome:
     """Re-derive every stored UQ record without re-running numerical variants."""
     expected = planned_studies(plan)
@@ -999,6 +1026,13 @@ def verify_study_records(
                             "qualification was supplied; held-out discrepancy "
                             "evidence is not authority to promote itself"
                         )
+                    elif model_form_qualification_trust.pin_for(qualification) is None:
+                        problem = (
+                            "the supplied model-form producer qualification is "
+                            "not pinned by the active trust registry; a caller-"
+                            "created qualification cannot promote its own "
+                            "discrepancy estimate"
+                        )
                     else:
                         try:
                             uncertainty = promote_model_form_interval(
@@ -1030,8 +1064,21 @@ def verify_study_records(
                     "promotion_reasons": list(attempt.promotion.reasons),
                 }
             )
+            expected_qualification_digest = (
+                None if qualification is None else qualification.digest
+            )
+            expected_trusted = (
+                False
+                if qualification is None
+                else model_form_qualification_trust.pin_for(qualification)
+                is not None
+            )
             if (
-                canonical_json(record.get("scope"))
+                record.get("qualification_digest") != expected_qualification_digest
+                or record.get("qualification_trust_registry_digest")
+                != model_form_qualification_trust.digest
+                or bool(record.get("qualification_trusted")) != expected_trusted
+                or canonical_json(record.get("scope"))
                 != canonical_json(None if scope is None else scope.to_dict())
                 or canonical_json(record.get("discrepancy"))
                 != canonical_json(
