@@ -4,13 +4,12 @@ The domain run tools remain **transport and nothing else**: they compute no
 physics here, evaluate no condition here and re-decide no credibility verdict.
 Every scientific fact they return was produced below this module.
 
-The public surface also exposes one explicit orchestration tool,
-`assess_claim`. It does not compute physics or invent scientific judgement;
-it binds an existing credibility report to the already-implemented SRIA
-Evidence -> Critic -> Arbiter path for a caller-declared decision standard.
-The caller must name the system, quantity, decision, required evidentiary
-levels and model-discrepancy declaration. No natural-language inference,
-automatic model selection or confidence default lives here.
+The public surface also exposes structured claim orchestration and a product
+gateway. The product tools do not compute physics or invent scientific
+judgement: they ground an outer LLM proposal, compile it against the production
+capability registry and execute only when the deterministic compiler says the
+claim is READY. The LLM remains a proposer, never the authority that chooses
+model applicability, evidence, uncertainty or a verdict.
 
 **The unflattering verdict is transmitted.** The nominal electro-thermal case
 reports ``INSUFFICIENT_EVIDENCE``, because the payload has no field for a
@@ -39,6 +38,13 @@ import mcp.types as mcp_types
 from mcp.server.mcpserver import MCPServer
 
 from ..scientific.models.definition import ValidityStatus
+from ..product import (
+    ProductRequestError,
+    describe_product as _describe_product,
+    prepare_simulation as _prepare_simulation,
+    run_proposed_simulation as _run_proposed_simulation,
+    run_simulation as _run_simulation,
+)
 from ..systems.electrothermal import coupled as cp
 from .errors import (
     MalformedPayloadError,
@@ -76,13 +82,17 @@ __all__ = [
     "build_server",
     "describe_capabilities",
     "describe_empirical_uq",
+    "describe_product",
     "main",
+    "prepare_simulation",
     "run_battery",
+    "run_proposed_simulation",
+    "run_simulation",
     "run_electrothermal",
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.8.0"
+SERVER_VERSION = "0.9.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -1104,6 +1114,108 @@ def assess_scientific_claim(
     ).to_dict()
 
 
+def describe_product() -> dict[str, Any]:
+    """Product discovery surface derived from the production capability registry."""
+    from .capabilities import production_registry
+
+    return _describe_product(production_registry())
+
+
+def prepare_simulation(
+    text: str,
+    proposal: dict[str, Any],
+    spans: dict[str, list[int]],
+) -> dict[str, Any]:
+    """Ground and compile an LLM-proposed simulation without executing physics."""
+    from .capabilities import production_registry
+
+    try:
+        return _prepare_simulation(text, proposal, spans, production_registry())
+    except ProductRequestError as exc:
+        return {
+            "error": type(exc).__name__,
+            "message": str(exc),
+            "status": "refused",
+        }
+
+
+def run_simulation(
+    claim: dict[str, Any],
+    external: list[dict[str, Any]] | None = None,
+    empirical_observations: list[dict[str, Any]] | None = None,
+    model_form_qualification: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Run a structured product claim through the production scientific runtime."""
+    from .capabilities import production_registry
+
+    return _run_simulation(
+        claim,
+        production_registry(),
+        external=external or (),
+        empirical_observations=empirical_observations or (),
+        model_form_qualification=model_form_qualification,
+    )
+
+
+def run_proposed_simulation(
+    text: str,
+    proposal: dict[str, Any],
+    spans: dict[str, list[int]],
+    external: list[dict[str, Any]] | None = None,
+    empirical_observations: list[dict[str, Any]] | None = None,
+    model_form_qualification: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Ground an LLM proposal and execute it only when the compiler says READY."""
+    from .capabilities import production_registry
+
+    try:
+        return _run_proposed_simulation(
+            text,
+            proposal,
+            spans,
+            production_registry(),
+            external=external or (),
+            empirical_observations=empirical_observations or (),
+            model_form_qualification=model_form_qualification,
+        )
+    except ProductRequestError as exc:
+        return {
+            "error": type(exc).__name__,
+            "message": str(exc),
+            "status": "refused",
+        }
+
+
+_PRODUCT_DESCRIBE_DESCRIPTION = """Discover Forge's product-facing scientific capabilities.
+
+Returns the executable production capabilities, quantities, inputs, evidence
+routes, uncertainty channels and the explicit LLM authority boundary. The
+result is derived from the same capability registry used for execution."""
+
+
+_PRODUCT_PREPARE_DESCRIPTION = """Prepare a simulation proposed by an LLM without running physics.
+
+Pass the user's exact text, the provider's structured scientific-claim
+proposal, and source spans for every physical value. Values not grounded in the
+user text are moved to missing inputs. Authority fields are refused. The
+deterministic compiler returns READY, NEEDS_INPUT, AMBIGUOUS,
+UNSUPPORTED_CAPABILITY or REFUSED."""
+
+
+_PRODUCT_RUN_DESCRIPTION = """Run one structured scientific claim through the Forge product gateway.
+
+The production registry routes, plans, executes and assesses the claim. The
+response contains a compact UI/API view and the complete canonical assessment
+record. The language model does not choose the verdict."""
+
+
+_PRODUCT_RUN_PROPOSED_DESCRIPTION = """Run the end-to-end product flow from an LLM proposal.
+
+Forge first grounds the proposal in the user's text and compiles it. Physics is
+executed only when the deterministic compiler returns READY. A non-ready
+proposal returns its missing inputs, ambiguity or refusal and never runs."""
+
+
 def build_server() -> MCPServer:
     """The server, with every tool registered. Used by the tests and by main."""
     server = MCPServer(
@@ -1111,11 +1223,12 @@ def build_server() -> MCPServer:
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
-            "its own results and can bind one structured claim to an explicit "
-            "decision standard. Call describe_capabilities before writing a "
-            "case. assess_claim requires the system, quantity, decision, "
-            "required evidence levels and discrepancy declaration explicitly. "
-            "Verdicts remain decision support, not certification."
+            "its own results. Product clients should call describe_product, "
+            "then prepare_simulation or run_proposed_simulation. Language models "
+            "may propose structured claims but never supply scientific authority. "
+            "Lower-level callers can still use describe_capabilities, direct "
+            "system tools and assess_claim. Verdicts remain decision support, "
+            "not certification."
         ),
     )
     server.add_tool(
@@ -1173,6 +1286,30 @@ def build_server() -> MCPServer:
             "describe_empirical_uq for admission and trust requirements. Passing "
             "a record never bypasses trust, applicability or uncertainty checks."
         ),
+    )
+    server.add_tool(
+        describe_product,
+        name="describe_product",
+        title="Discover Forge product capabilities",
+        description=_PRODUCT_DESCRIBE_DESCRIPTION,
+    )
+    server.add_tool(
+        prepare_simulation,
+        name="prepare_simulation",
+        title="Prepare an LLM-proposed simulation",
+        description=_PRODUCT_PREPARE_DESCRIPTION,
+    )
+    server.add_tool(
+        run_simulation,
+        name="run_simulation",
+        title="Run a structured product simulation",
+        description=_PRODUCT_RUN_DESCRIPTION,
+    )
+    server.add_tool(
+        run_proposed_simulation,
+        name="run_proposed_simulation",
+        title="Run an LLM-proposed simulation when ready",
+        description=_PRODUCT_RUN_PROPOSED_DESCRIPTION,
     )
     _audit_tools(server)
     return server
