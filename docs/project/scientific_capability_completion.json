@@ -1,0 +1,870 @@
+{
+  "schema": "forge.scientific_capability_completion/1",
+  "policy": {
+    "completion_rule": "A capability is complete only when its computed stage reaches PRODUCTION_READY; file/class existence is never completion.",
+    "horizontal_expansion_paused": true,
+    "exception_process": "Any new capability foundation before the active epic is PRODUCTION_READY requires an explicit reviewed exception in the PR rationale."
+  },
+  "active_epic": "battery.thevenin_1rc",
+  "capabilities": [
+    {
+      "id": "battery.thevenin_1rc",
+      "kind": "scientific",
+      "title": "Battery Thevenin 1RC",
+      "owner": "src/engcore/domains/battery",
+      "declared_stage": "FOUNDATION",
+      "summary": "Dynamic discharge/rest 1RC kernel exists, but it is not yet a formal production model/realization and has no fitted or held-out evidence path.",
+      "next_actions": [
+        "Raw NASA ingestion and deterministic cycle segmentation.",
+        "R0/R1/C1 + OCV identification on calibration cells.",
+        "Held-out validation with quantitative Rint-vs-1RC metrics.",
+        "Measurement/parameter/discrepancy uncertainty closure.",
+        "Only then register 1RC in claims and BatteryDomainPack."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/thevenin.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/thevenin.py",
+            "tests/domains/test_battery_thevenin.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/thevenin.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domains/test_battery_thevenin.py"
+          ]
+        },
+        "execution": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Add formal ScientificModelDefinition + realization + end-to-end battery execution route for 1RC."
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domains/test_battery_thevenin.py::test_constant_current_step_matches_the_closed_form",
+            "tests/domains/test_battery_thevenin.py::test_rest_interval_relaxes_polarization_without_changing_soc"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domains/test_battery_thevenin.py::test_negative_current_is_refused_until_charge_physics_is_declared",
+            "tests/domains/test_battery_thevenin.py::test_step_that_leaves_soc_domain_is_refused_not_clipped"
+          ]
+        },
+        "provenance_replay": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Bind a formal 1RC model/realization identity and selected parameter set into replay/provenance artifacts."
+        },
+        "real_data": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Ingest pinned NASA single-cell raw files and build reproducible discharge/pulse/rest traces."
+        },
+        "calibration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Implement OCV/R0/R1/C1 identification with calibration cells frozen before validation."
+        },
+        "independent_validation": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Evaluate frozen parameters on held-out cells/cycles."
+        },
+        "measurement_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Attach calibrated voltage/current/temperature measurement uncertainty or keep evidence inadmissible."
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Publish Rint vs 1RC RMSE, MAE, bias, max error and residual autocorrelation on held-out data."
+        },
+        "parameter_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Propagate uncertainty in OCV/R0/R1/C1, including dependencies where supported by evidence."
+        },
+        "numerical_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The current constant-current 1RC state transition is closed form; no discretization solver is used in this kernel."
+        },
+        "model_discrepancy": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Estimate context-dependent model/data discrepancy on held-out measurements after known uncertainty is accounted for."
+        },
+        "claims_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Expose the validated 1RC realization to claim planning without auto-strengthening verdicts."
+        },
+        "domainpack_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Promote 1RC into BatteryDomainPack only after formal model/realization and validation gates are satisfied."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "benchmarks/measurements/nasa_battery_aging/README.md"
+          ]
+        }
+      }
+    },
+    {
+      "id": "battery.rint",
+      "kind": "scientific",
+      "title": "Battery Rint production route",
+      "owner": "src/engcore/domains/battery",
+      "declared_stage": "FUNCTIONAL",
+      "summary": "Existing Rint/OCV battery route executes and is exposed to claims, but it lacks real held-out validation and production UQ closure.",
+      "next_actions": [
+        "Establish a pinned real-data Rint baseline.",
+        "Add measurement and parameter UQ.",
+        "Measure held-out discrepancy and benchmark metrics."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/models.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/cell.py",
+            "src/engcore/mcp/battery.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/solver.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domains",
+            "tests/mcp"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/battery.py",
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domains",
+            "tests/mcp"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/battery.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/scientific/results/provenance.py"
+          ]
+        },
+        "real_data": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Run the production Rint route against a pinned single-cell held-out measurement set."
+        },
+        "calibration": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The current production route consumes declared cell parameters rather than a repository-owned fitted Rint parameter set."
+        },
+        "independent_validation": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Validate voltage/runtime predictions on independent cells/cycles."
+        },
+        "measurement_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Attach calibrated measurement uncertainty to external battery evidence."
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Publish quantitative held-out Rint metrics as the baseline for richer battery models."
+        },
+        "parameter_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Quantify uncertainty of declared cell parameters and propagate it through the route."
+        },
+        "numerical_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The Rint electrical relation and current constant-current state updates are closed form."
+        },
+        "model_discrepancy": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Quantify residual model discrepancy on real measurements."
+        },
+        "claims_integration": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "domainpack_integration": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/pack.py"
+          ]
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "docs/domains",
+            "src/engcore/domains/battery"
+          ]
+        }
+      }
+    },
+    {
+      "id": "thermal.nafems_t3",
+      "kind": "scientific",
+      "title": "NAFEMS P18.T3 thermal benchmark",
+      "owner": "src/engcore/domains/thermal_models",
+      "declared_stage": "EVIDENCE_BACKED",
+      "summary": "Benchmark-specific transient conduction route has an external oracle and numerical refinement, but Thermal is not yet normalized into a Domain Pack.",
+      "next_actions": [
+        "Normalize thermal/thermal_models ownership.",
+        "Create ThermalDomainPack without changing scientific authority.",
+        "Re-run benchmark and provenance regression after normalization."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/mcp",
+            "tests/test_core_numerical_integrity.py"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "real_data": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This capability is a fixed external verification benchmark, not an experimental measurement workflow."
+        },
+        "calibration": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The NAFEMS T3 operating point is fixed; no parameters are fitted."
+        },
+        "independent_validation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3_oracle.py"
+          ]
+        },
+        "measurement_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The evidence route is a benchmark target, not calibrated sensor measurements."
+        },
+        "benchmark_metrics": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "parameter_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "The benchmark inputs are fixed by the external case rather than uncertain fitted parameters."
+        },
+        "numerical_uq": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        },
+        "model_discrepancy": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This route verifies a benchmark-specific numerical implementation rather than calibrating an empirical model against measurements."
+        },
+        "claims_integration": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "domainpack_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Create ThermalDomainPack and expose the T3 benchmark through the same atomic domain contract."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "docs/domains",
+            "src/engcore/domains/thermal_models/nafems_t3.py"
+          ]
+        }
+      }
+    },
+    {
+      "id": "electrical.electrothermal",
+      "kind": "scientific",
+      "title": "Electrothermal DC/thermal route",
+      "owner": "src/engcore/domains/electrical",
+      "declared_stage": "FUNCTIONAL",
+      "summary": "Executable electrothermal route and cross-solver support exist, but real measurement validation and full UQ/benchmark closure are incomplete.",
+      "next_actions": [
+        "Add a real electrothermal measurement pack.",
+        "Freeze calibration/validation split and publish metrics.",
+        "Close UQ channels and move the domain under ElectricalDomainPack."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/electrical",
+            "src/engcore/systems/electrothermal.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/electrical/dc_applicability.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/electrical",
+            "src/engcore/systems/electrothermal.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/test_electrothermal_vertical.py",
+            "tests/test_heterogeneous_ngspice.py"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "tests/test_cross_solver_consensus.py",
+            "tests/test_heterogeneous_ngspice.py"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/electrical/dc_applicability.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/scientific/results/provenance.py"
+          ]
+        },
+        "real_data": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Add a pinned experimental electrothermal dataset spanning current and temperature."
+        },
+        "calibration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Define a frozen material/TCR calibration protocol when parameters are fitted from data."
+        },
+        "independent_validation": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Validate against held-out experiments, not only an alternate solver."
+        },
+        "measurement_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Add calibrated electrical/thermal sensor uncertainty."
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Publish held-out error/coverage metrics and native-vs-independent-solver metrics."
+        },
+        "parameter_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Close joint material/electrical parameter uncertainty."
+        },
+        "numerical_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Generalize numerical uncertainty across the production electrothermal route."
+        },
+        "model_discrepancy": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Estimate residual context-dependent discrepancy against measurements."
+        },
+        "claims_integration": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/mcp/capabilities.py"
+          ]
+        },
+        "domainpack_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Create ElectricalDomainPack and declare native/external routes atomically."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "docs/domains",
+            "docs/scientific-core"
+          ]
+        }
+      }
+    },
+    {
+      "id": "kinetics.cstr",
+      "kind": "scientific",
+      "title": "Kinetics CSTR",
+      "owner": "src/engcore/domains/kinetics/cstr",
+      "declared_stage": "FOUNDATION",
+      "summary": "CSTR domain has executable scientific components, but it is still a narrow vertical without full provenance/evidence/UQ completion.",
+      "next_actions": [
+        "Close provenance/replay first.",
+        "Add a benchmark/measurement dataset and held-out validation.",
+        "Then add UQ and claims/DomainPack integration."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/problem.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/validation.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/solver.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/test_kinetics_k1.py"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/solver.py"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/reference.py"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr/errors.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Bind CSTR runs into the same replay/provenance contract used by production claim routes."
+        },
+        "real_data": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Add a real or externally benchmarked kinetics dataset beyond internal reference cases."
+        },
+        "calibration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Define parameter identification for kinetic constants when fitted from observations."
+        },
+        "independent_validation": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Validate frozen parameters on held-out reactor conditions."
+        },
+        "measurement_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Represent concentration/temperature/flow measurement uncertainty."
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Publish error and conservation metrics over a declared benchmark suite."
+        },
+        "parameter_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Propagate kinetic/transport parameter uncertainty."
+        },
+        "numerical_uq": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Quantify solver tolerance/stiffness sensitivity for supported regimes."
+        },
+        "model_discrepancy": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Assess structural mismatch on held-out reactor data."
+        },
+        "claims_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Expose validated kinetics capabilities to the claim planner."
+        },
+        "domainpack_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Create KineticsDomainPack after the execution/evidence contract is stable."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/kinetics/cstr"
+          ]
+        }
+      }
+    },
+    {
+      "id": "claims.model_form_discrepancy",
+      "kind": "scientific_analysis",
+      "title": "Held-out model/data discrepancy constraints",
+      "owner": "src/engcore/claims/analysis",
+      "declared_stage": "FUNCTIONAL",
+      "summary": "Fail-closed held-out discrepancy constraints work, but production measurements, benchmark metrics and authoritative MODEL_FORM UQ promotion are intentionally absent.",
+      "next_actions": [
+        "Exercise against real pinned measurement packs.",
+        "Add benchmark coverage metrics.",
+        "Design a separate authoritative MODEL_FORM uncertainty producer rather than promoting these bounds directly."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py"
+          ]
+        },
+        "applicability": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py"
+          ]
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/claims/test_model_form_discrepancy.py"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py::estimate_model_form_discrepancy"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "tests/claims/test_model_form_discrepancy.py"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "tests/claims/test_model_form_discrepancy.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py::ModelFormDiscrepancyEstimate.digest"
+          ]
+        },
+        "real_data": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Run the protocol on pinned production measurement packs rather than fixtures only."
+        },
+        "calibration": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py::DatasetSplit.CALIBRATION"
+          ]
+        },
+        "independent_validation": {
+          "status": "PASS",
+          "evidence": [
+            "tests/claims/test_model_form_discrepancy.py::test_same_independence_group_cannot_leak_across_the_split"
+          ]
+        },
+        "measurement_uq": {
+          "status": "PASS",
+          "evidence": [
+            "tests/claims/test_model_form_discrepancy.py::test_unknown_or_wrong_uncertainty_never_becomes_zero"
+          ]
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Create a public discrepancy benchmark with coverage/failure metrics."
+        },
+        "parameter_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This analysis consumes declared prediction uncertainty; it is not the producer of parameter uncertainty."
+        },
+        "numerical_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This analysis consumes declared prediction uncertainty; it is not the producer of numerical uncertainty."
+        },
+        "model_discrepancy": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/claims/analysis/model_discrepancy.py"
+          ]
+        },
+        "claims_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Keep the candidate non-authoritative but expose diagnostics/repair flow to claim assessment where appropriate."
+        },
+        "domainpack_integration": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This is a generic claims-analysis capability, not domain-owned physics."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "docs/scientific-core/scientific-intelligence-layer.md"
+          ]
+        }
+      }
+    },
+    {
+      "id": "platform.domain_pack",
+      "kind": "platform",
+      "title": "Domain Pack v1",
+      "owner": "src/engcore/domainpacks",
+      "declared_stage": "FUNCTIONAL",
+      "summary": "Atomic manifest/provider/registry/discovery/snapshot infrastructure exists, but planner consumption and a real external package workflow are not complete.",
+      "next_actions": [
+        "Add a real external test package through Python entry points.",
+        "Wire enabled packs into planner/model selection.",
+        "Add ambiguity refusal and compatibility migration integration tests.",
+        "Normalize Thermal and Electrical only after the contract is exercised externally."
+      ],
+      "gates": {
+        "scientific_definition": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Domain Pack is platform infrastructure, not a physical/scientific model."
+        },
+        "applicability": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Domain Pack is platform infrastructure; compatibility is governed by its API/manifest contract."
+        },
+        "implementation": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domainpacks"
+          ]
+        },
+        "regression_tests": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domainpacks/test_domain_pack_v1.py"
+          ]
+        },
+        "execution": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domainpacks/discovery.py",
+            "src/engcore/domainpacks/registry.py"
+          ]
+        },
+        "verification": {
+          "status": "PASS",
+          "evidence": [
+            "tests/domainpacks/test_domain_pack_v1.py"
+          ]
+        },
+        "failure_cases": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domainpacks/validation.py",
+            "tests/domainpacks/test_domain_pack_v1.py"
+          ]
+        },
+        "provenance_replay": {
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domainpacks/snapshot.py"
+          ]
+        },
+        "real_data": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not require scientific measurement data."
+        },
+        "calibration": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not fit scientific parameters."
+        },
+        "independent_validation": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Package and load at least one real external forge.domainpacks distribution in an integration test."
+        },
+        "measurement_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not produce measurement uncertainty."
+        },
+        "benchmark_metrics": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Add discovery/load/validation/selection integration benchmarks and compatibility regression fixtures."
+        },
+        "parameter_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not produce parameter uncertainty."
+        },
+        "numerical_uq": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not run numerical physics."
+        },
+        "model_discrepancy": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "Plugin infrastructure does not produce model discrepancy."
+        },
+        "claims_integration": {
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "Make the planner consume explicitly enabled DomainPack providers rather than concrete domain internals."
+        },
+        "domainpack_integration": {
+          "status": "NOT_APPLICABLE",
+          "evidence": [],
+          "rationale": "This capability is the Domain Pack infrastructure itself."
+        },
+        "documentation": {
+          "status": "PASS",
+          "evidence": [
+            "docs/architecture/domain-packs.md"
+          ]
+        }
+      }
+    }
+  ]
+}
