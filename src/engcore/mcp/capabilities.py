@@ -114,7 +114,6 @@ _BATTERY_PERTURBABLE = (
     ("cell.internal_resistance", "series resistance setting terminal voltage and I^2 R heat"),
     ("cell.open_circuit_voltage_at_full", "upper endpoint of the production OCV chord"),
     ("cell.open_circuit_voltage_at_empty", "lower endpoint of the production OCV chord"),
-    ("cell.coulombic_efficiency", "charge-removal efficiency in coulomb counting"),
     ("cell.limits.cell_thermal_conductance", "the physical heat-transfer conductance shared by cell and body"),
     ("load.discharge_current", "the imposed continuous-current operating condition"),
     ("load.state_of_charge", "the declared initial state of charge"),
