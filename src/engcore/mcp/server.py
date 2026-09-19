@@ -940,45 +940,112 @@ def describe_external_evidence() -> dict[str, Any]:
 
 
 def describe_empirical_uq() -> dict[str, Any]:
-    """Describe the empirical-UQ admission and model-form trust boundary."""
+    """Describe the empirical-UQ admission, available data and trust blockers."""
+    from ..claims.aleatoric_uq import estimate_aleatoric_replicates
+    from ..claims.empirical_uq_trust import (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS,
+        PRODUCTION_EMPIRICAL_RECORDS,
+    )
     from ..claims.model_form_trust import PRODUCTION_MODEL_FORM_QUALIFICATIONS
-    from ..claims.empirical_uq_trust import PRODUCTION_EMPIRICAL_OBSERVATIONS
+    from ..claims.parameter_uq import (
+        TOLERANCE_CONFIDENCE,
+        TOLERANCE_CONTENT,
+        minimum_samples,
+    )
+
+    by_context: dict[tuple[str, str], set[str]] = {}
+    for item in PRODUCTION_EMPIRICAL_RECORDS:
+        context = (
+            str(item.conditions.get("load.state_of_charge")),
+            str(item.conditions.get("load.cell_temperature")),
+        )
+        by_context.setdefault(context, set()).add(item.independence_group)
+    max_replicates = max((len(groups) for groups in by_context.values()), default=0)
+    required_replicates = minimum_samples(
+        TOLERANCE_CONTENT, TOLERANCE_CONFIDENCE
+    )
+    split_counts = {
+        "calibration": sum(
+            item.split.value == "calibration"
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ),
+        "validation": sum(
+            item.split.value == "validation"
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ),
+    }
 
     return {
         "empirical_observation_registry_digest":
             PRODUCTION_EMPIRICAL_OBSERVATIONS.digest,
         "empirical_observation_pin_count":
             len(PRODUCTION_EMPIRICAL_OBSERVATIONS.pins),
+        "empirical_records": [
+            {
+                "observation_id": item.observation_id,
+                "digest": item.digest,
+                "split": item.split.value,
+                "independence_group": item.independence_group,
+                "quantity": item.quantity,
+                "conditions": {
+                    name: value.to_dict()
+                    for name, value in item.conditions.items()
+                },
+                "uncertainty": item.uncertainty.to_dict(),
+            }
+            for item in PRODUCTION_EMPIRICAL_RECORDS
+        ],
         "aleatoric": {
+            "engine": estimate_aleatoric_replicates.__name__,
             "source_record": "claim DatasetObservation",
-            "requires": (
-                "repository-pinned independent physical replicates of one QOI; "
-                "one exact operating context and population; calibrated "
-                "MEASUREMENT uncertainty intervals; sufficient Wilks sample count"
+            "target_content": TOLERANCE_CONTENT,
+            "target_confidence": TOLERANCE_CONFIDENCE,
+            "required_independent_replicates_per_exact_context":
+                required_replicates,
+            "maximum_current_pinned_replicates_per_exact_context":
+                max_replicates,
+            "production_ready": max_replicates >= required_replicates,
+            "blocker": (
+                None
+                if max_replicates >= required_replicates
+                else (
+                    f"only {max_replicates} exact-context independent physical "
+                    f"replicates are pinned; {required_replicates} are required "
+                    "for the declared two-sided 95/95 Wilks interval"
+                )
             ),
             "missing_evidence_semantics": "UNKNOWN, never zero",
         },
         "model_form": {
             "source_record": "claim DatasetObservation",
-            "requires": (
-                "repository-pinned independent calibration and held-out validation groups; usable "
-                "prediction runs at every observation; separated measurement/"
-                "prediction uncertainty; a producer qualification pinned by the "
-                "active model-form trust registry"
+            "split_counts": split_counts,
+            "independence_groups": sorted(
+                {item.independence_group for item in PRODUCTION_EMPIRICAL_RECORDS}
             ),
             "production_qualification_registry_digest":
                 PRODUCTION_MODEL_FORM_QUALIFICATIONS.digest,
             "production_qualification_pin_count":
                 len(PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins),
+            "production_ready":
+                bool(PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins),
+            "blocker": (
+                None
+                if PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins
+                else (
+                    "curated calibration/validation observations now exist, but "
+                    "no independently reviewed model-form producer qualification "
+                    "is repository-pinned; discrepancy evidence cannot authorize "
+                    "its own promotion"
+                )
+            ),
             "missing_evidence_semantics": "UNKNOWN, never zero",
         },
         "notice": (
-            "The production qualification registry is repository-owned and "
-            "immutable at runtime. A caller-supplied qualification that is not "
-            "pinned cannot promote its own model-form estimate."
+            "Empirical study engines are implemented and replay-verifiable. "
+            "Production capability declarations advertise a channel as quantified "
+            "only after its evidence/trust prerequisites are actually satisfied."
         ),
     }
-
 
 def assess_scientific_claim(
     claim: dict[str, Any],
