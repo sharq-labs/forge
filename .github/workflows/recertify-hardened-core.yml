@@ -183,6 +183,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python --version > "${RUNNER_TEMP}/python-scientific-3.12.txt" 2>&1
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-scientific-3.12.txt"
           ngspice --version > "${RUNNER_TEMP}/ngspice-version.txt" 2>&1
       - name: Prove this gate left the checkout byte-identical to the source commit
         run: >-
@@ -193,6 +195,8 @@ jobs:
         with:
           name: core-scientific-${{ needs.classify.outputs.source_sha }}
           path: |
+            ${{ runner.temp }}/python-scientific-3.12.txt
+            ${{ runner.temp }}/pip-freeze-scientific-3.12.txt
             ${{ runner.temp }}/ngspice-version.txt
             ${{ runner.temp }}/junit-scientific-3.12.xml
             ${{ runner.temp }}/gate-scientific312.json
@@ -218,6 +222,12 @@ jobs:
           set -euo pipefail
           python -m pytest -m "campaign" -q \
             --junitxml "${RUNNER_TEMP}/junit-campaign-3.12.xml"
+      - name: Record campaign runtime environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version > "${RUNNER_TEMP}/python-campaign-3.12.txt" 2>&1
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-campaign-3.12.txt"
       - name: Prove this gate left the checkout byte-identical to the source commit
         run: >-
           python -m tools.certification.assert_clean_tree
@@ -227,6 +237,8 @@ jobs:
         with:
           name: core-campaign-${{ needs.classify.outputs.source_sha }}
           path: |
+            ${{ runner.temp }}/python-campaign-3.12.txt
+            ${{ runner.temp }}/pip-freeze-campaign-3.12.txt
             ${{ runner.temp }}/junit-campaign-3.12.xml
             ${{ runner.temp }}/gate-campaign312.json
           if-no-files-found: error
@@ -251,6 +263,12 @@ jobs:
           set -euo pipefail
           python tools/forge_check.py --regression --workers 4 \
             --junitxml "${RUNNER_TEMP}/junit-regression-3.12.xml"
+      - name: Record regression runtime environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version > "${RUNNER_TEMP}/python-regression-3.12.txt" 2>&1
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-regression-3.12.txt"
       - name: Prove this gate left the checkout byte-identical to the source commit
         run: >-
           python -m tools.certification.assert_clean_tree
@@ -260,6 +278,8 @@ jobs:
         with:
           name: core-regression-${{ needs.classify.outputs.source_sha }}
           path: |
+            ${{ runner.temp }}/python-regression-3.12.txt
+            ${{ runner.temp }}/pip-freeze-regression-3.12.txt
             ${{ runner.temp }}/junit-regression-3.12.xml
             ${{ runner.temp }}/gate-regression312.json
           if-no-files-found: error
