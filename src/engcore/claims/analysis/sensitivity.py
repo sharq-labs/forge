@@ -100,21 +100,31 @@ class SensitivityReport:
     units: str
     nominal_value: float
     parameters: tuple[ParameterSensitivity, ...]
+    assessment_digest: str | None = None
+    plan_digest: str | None = None
+    capability_digest: str | None = None
 
     def ranked(self) -> tuple[ParameterSensitivity, ...]:
         """By |normalized| (or |derivative| where no normalization is meaningful); unknowns last."""
         return tuple(sorted(self.parameters, key=lambda p: (p.derivative is None, -abs(p.normalized if p.normalized is not None else (p.derivative or 0.0)), p.path)))
 
-    def to_dict(self) -> dict[str, Any]:
+    def _content_dict(self) -> dict[str, Any]:
         return {
             "quantity": self.quantity, "units": self.units, "nominal_value": self.nominal_value,
             "parameters": [p.to_dict() for p in self.parameters],
+            "assessment_digest": self.assessment_digest,
+            "plan_digest": self.plan_digest,
+            "capability_digest": self.capability_digest,
             "notice": "numerical sensitivity of the declared model at this operating point; not a causal relationship",
         }
 
+    def to_dict(self) -> dict[str, Any]:
+        body = self._content_dict()
+        return {**body, "report_digest": tagged_digest(_SENS_TAG, body)}
+
     @property
     def digest(self) -> str:
-        return tagged_digest(_SENS_TAG, self.to_dict())
+        return tagged_digest(_SENS_TAG, self._content_dict())
 
 
 def sensitivity_study(assessment: Any, registry: Any, *, relative_step: float = 0.01, parameters: tuple[str, ...] | None = None) -> SensitivityReport:
@@ -156,7 +166,12 @@ def sensitivity_study(assessment: Any, registry: Any, *, relative_step: float = 
         elif x0 == 0.0:
             problem = "a zero nominal has no relative perturbation"
         out.append(ParameterSensitivity(path, x0, str(nominal.units), relative_step, runs["minus"], runs["plus"], derivative, normalized, monotone, tuple(warnings), problem))
-    return SensitivityReport(qoi["name"], qoi["units"], y0, tuple(out))
+    return SensitivityReport(
+        qoi["name"], qoi["units"], y0, tuple(out),
+        assessment_digest=assessment.digest,
+        plan_digest=plan.digest,
+        capability_digest=plan.capability_digest,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -193,16 +208,26 @@ class RobustnessEnvelope:
     assumptions: tuple[str, ...]
     established: bool
     reason: str | None = None
+    assessment_digest: str | None = None
+    plan_digest: str | None = None
+    capability_digest: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def _content_dict(self) -> dict[str, Any]:
         return {
             "quantity": self.quantity, "established": self.established, "reason": self.reason,
             "parameters": {k: dict(v) for k, v in sorted(self.parameters.items())}, "assumptions": list(self.assumptions),
+            "assessment_digest": self.assessment_digest,
+            "plan_digest": self.plan_digest,
+            "capability_digest": self.capability_digest,
         }
+
+    def to_dict(self) -> dict[str, Any]:
+        body = self._content_dict()
+        return {**body, "report_digest": tagged_digest(_ROBUST_TAG, body)}
 
     @property
     def digest(self) -> str:
-        return tagged_digest(_ROBUST_TAG, self.to_dict())
+        return tagged_digest(_ROBUST_TAG, self._content_dict())
 
 
 def _holds(assessment: Any, value: float) -> bool:
@@ -226,7 +251,13 @@ def robustness_envelope(assessment: Any, registry: Any, *, search_limit: float =
         f"searched to +/-{search_limit:.0%} of each nominal; beyond a boundary the answer is UNKNOWN",
     )
     if assessment.verdict.value != "supported":
-        return RobustnessEnvelope(qoi or "", {}, assumptions, False, f"the claim is {assessment.verdict.value} at its nominal point; there is no support to bound")
+        return RobustnessEnvelope(
+            qoi or "", {}, assumptions, False,
+            f"the claim is {assessment.verdict.value} at its nominal point; there is no support to bound",
+            assessment_digest=assessment.digest,
+            plan_digest=None if assessment.plan is None else assessment.plan.digest,
+            capability_digest=None if assessment.plan is None else assessment.plan.capability_digest,
+        )
     if not 0.0 < search_limit <= 0.95:
         raise SensitivityError("search_limit must lie in (0, 0.95]")
     declaration, inputs = _perturbable(assessment, registry)
@@ -271,8 +302,28 @@ def robustness_envelope(assessment: Any, registry: Any, *, search_limit: float =
             to_abs = lambda r: None if r is None else nominal.magnitude * (1.0 + r)
             sides[direction] = EnvelopeSide(direction, kind, to_abs(last_ok), to_abs(bad), tuple(evaluations)).to_dict()
         out[path] = {"nominal": nominal.magnitude, "units": str(nominal.units), **sides}
-    return RobustnessEnvelope(qoi, out, assumptions, True)
+    return RobustnessEnvelope(
+        qoi, out, assumptions, True,
+        assessment_digest=assessment.digest,
+        plan_digest=plan.digest,
+        capability_digest=plan.capability_digest,
+    )
 
+
+def verify_sensitivity_record(payload: Mapping[str, Any]) -> None:
+    """Refuse an edited or unsealed serialized sensitivity report."""
+    expected = payload.get("report_digest")
+    body = {k: v for k, v in payload.items() if k != "report_digest"}
+    if not isinstance(expected, str) or tagged_digest(_SENS_TAG, body) != expected:
+        raise SensitivityError("the sensitivity report digest does not match its content")
+
+
+def verify_robustness_record(payload: Mapping[str, Any]) -> None:
+    """Refuse an edited or unsealed serialized robustness envelope."""
+    expected = payload.get("report_digest")
+    body = {k: v for k, v in payload.items() if k != "report_digest"}
+    if not isinstance(expected, str) or tagged_digest(_ROBUST_TAG, body) != expected:
+        raise SensitivityError("the robustness report digest does not match its content")
 
 __all__ = [
     "BoundaryKind",
@@ -283,4 +334,6 @@ __all__ = [
     "SensitivityReport",
     "robustness_envelope",
     "sensitivity_study",
+    "verify_robustness_record",
+    "verify_sensitivity_record",
 ]
