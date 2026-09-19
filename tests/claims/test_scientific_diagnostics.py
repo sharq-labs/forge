@@ -58,8 +58,8 @@ def test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_act
     report = diagnose_assessment(before, registry)
 
     assert report.verdict == "insufficient_evidence"
-    assert report.primary_cause is not None
-    assert report.primary_cause.cause_class is DiagnosticClass.MODEL_FORM
+    assert report.primary_finding is not None
+    assert report.primary_finding.cause_class is DiagnosticClass.MODEL_FORM
     assert any(action.action == "quantify_model_form" for action in report.corrective_actions)
     assert all(action.to_dict()["guarantees_fix"] is False for action in report.corrective_actions)
     assert report.assumptions.assumptions[0].status is AssumptionStatus.DECLARED_NOT_EVIDENCE
@@ -88,9 +88,26 @@ def test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form
     comparison = measurement_comparisons[0]
     assert comparison.outcome == "inconsistent"
     assert comparison.excess is not None and comparison.excess > 0
-    assert any(item.cause_class is DiagnosticClass.MODEL_DATA_MISMATCH for item in report.root_causes)
+    assert any(item.cause_class is DiagnosticClass.MODEL_DATA_MISMATCH for item in report.findings)
     assert report.verdict == assessment.verdict.value
 
+
+def _bound_sensitivity(assessment, parameters):
+    from engcore.claims.analysis.sensitivity import SensitivityReport, ParameterSensitivity
+    items = tuple(
+        ParameterSensitivity(
+            item["path"], 1.0, "dimensionless", 0.01, {}, {},
+            item["derivative"], item["normalized"], None, (), item.get("problem"),
+        )
+        for item in parameters
+    )
+    return SensitivityReport(
+        "temperature_at_probe", "kelvin",
+        float(assessment.report.values["temperature_at_probe"].magnitude), items,
+        assessment_digest=assessment.digest,
+        plan_digest=assessment.plan.digest,
+        capability_digest=assessment.plan.capability_digest,
+    ).to_dict()
 
 def test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality(registry) -> None:
     measurement = _mismatch_measurement()
@@ -98,23 +115,10 @@ def test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality(re
         (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "independent calibrated run"),)
     )
     assessment = assess_claim(_numerical_t3_claim(), registry, external=(measurement,), trust=trust)
-    sensitivity = {
-        "quantity": "temperature_at_probe",
-        "parameters": [
-            {
-                "path": "material.conductivity",
-                "derivative": 1.0,
-                "normalized": 0.1,
-                "problem": None,
-            },
-            {
-                "path": "boundary.heat_transfer",
-                "derivative": 5.0,
-                "normalized": 0.8,
-                "problem": None,
-            },
-        ],
-    }
+    sensitivity = _bound_sensitivity(assessment, [
+        {"path": "material.conductivity", "derivative": 1.0, "normalized": 0.1, "problem": None},
+        {"path": "boundary.heat_transfer", "derivative": 5.0, "normalized": 0.8, "problem": None},
+    ])
 
     report = diagnose_assessment(assessment.to_dict(), registry, sensitivity=sensitivity)
 
@@ -143,13 +147,26 @@ def test_without_sensitivity_a_mismatch_stays_a_broad_testable_hypothesis(regist
 
 def test_robustness_method_assumptions_are_visible_and_not_evidence(registry) -> None:
     assessment = assess_claim(t3_claim(), registry)
-    robustness = {
-        "assumptions": [
-            "one input varied at a time",
-            "uncertainty band is not re-quantified away from nominal",
-        ]
-    }
+    from engcore.claims.analysis.sensitivity import RobustnessEnvelope
+    robustness = RobustnessEnvelope(
+        "temperature_at_probe", {},
+        ("one input varied at a time", "uncertainty band is not re-quantified away from nominal"),
+        False, "diagnostic fixture",
+        assessment_digest=assessment.digest,
+        plan_digest=assessment.plan.digest,
+        capability_digest=assessment.plan.capability_digest,
+    ).to_dict()
     report = diagnose_assessment(assessment.to_dict(), registry, robustness=robustness)
     entries = report.assumptions.assumptions
     assert [entry.assumption_id for entry in entries] == ["robustness:0", "robustness:1"]
     assert all(entry.to_dict()["can_grant_evidence"] is False for entry in entries)
+
+
+def test_foreign_or_edited_sensitivity_is_refused(registry) -> None:
+    from engcore.claims.analysis.diagnostics import DiagnosticInputBindingError
+    assessment = assess_claim(_numerical_t3_claim(), registry)
+    sensitivity = _bound_sensitivity(assessment, [])
+    edited = copy.deepcopy(sensitivity)
+    edited["assessment_digest"] = "0" * 64
+    with pytest.raises(DiagnosticInputBindingError):
+        diagnose_assessment(assessment.to_dict(), registry, sensitivity=edited)

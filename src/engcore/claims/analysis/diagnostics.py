@@ -23,7 +23,9 @@ from typing import Any, Mapping
 from .._records import tagged_digest
 from ..gaps import EvidenceGapAnalysis, GapClass, analyze_gaps
 from ..next_experiment import NextExperimentPlan, recommend_next
+from ..planning import ExperimentPlan
 from .impact import record_digest
+from .sensitivity import SensitivityError, verify_robustness_record, verify_sensitivity_record
 
 _TAG = "crafty.claims.scientific_diagnostic/1"
 
@@ -102,7 +104,7 @@ _GAP_CAUSE = {
 
 
 @dataclass(frozen=True)
-class RootCauseFinding:
+class DiagnosticFinding:
     """A recorded blocker or diagnostic condition, not a physical-causality claim."""
 
     cause_class: DiagnosticClass
@@ -425,13 +427,13 @@ def _repair_hypotheses(
     return tuple(hypotheses)
 
 
-def _root_causes(
+def _diagnostic_findings(
     gaps: EvidenceGapAnalysis,
     discrepancy: ModelDiscrepancyAnalysis,
     record: Mapping[str, Any],
-) -> tuple[RootCauseFinding, ...]:
+) -> tuple[DiagnosticFinding, ...]:
     findings = [
-        RootCauseFinding(
+        DiagnosticFinding(
             cause_class=_GAP_CAUSE[gap.kind],
             target=gap.target,
             blocking=gap.blocking,
@@ -444,7 +446,7 @@ def _root_causes(
     if discrepancy.status is DiscrepancyStatus.OBSERVED_MISMATCH:
         qoi = ((record.get("claim") or {}).get("qoi") or {}).get("name") or "qoi"
         findings.append(
-            RootCauseFinding(
+            DiagnosticFinding(
                 cause_class=DiagnosticClass.MODEL_DATA_MISMATCH,
                 target=str(qoi),
                 blocking=False,
@@ -460,7 +462,7 @@ def _root_causes(
 class ScientificDiagnosticReport:
     assessment_digest: str
     verdict: str
-    root_causes: tuple[RootCauseFinding, ...]
+    findings: tuple[DiagnosticFinding, ...]
     assumptions: AssumptionAnalysis
     discrepancy: ModelDiscrepancyAnalysis
     corrective_actions: tuple[CorrectiveAction, ...]
@@ -470,8 +472,8 @@ class ScientificDiagnosticReport:
     next_experiment_digest: str
 
     @property
-    def primary_cause(self) -> RootCauseFinding | None:
-        blocking = [item for item in self.root_causes if item.blocking]
+    def primary_finding(self) -> DiagnosticFinding | None:
+        blocking = [item for item in self.findings if item.blocking]
         if blocking:
             return min(
                 blocking,
@@ -481,15 +483,25 @@ class ScientificDiagnosticReport:
                     item.source,
                 ),
             )
-        return self.root_causes[0] if self.root_causes else None
+        return self.findings[0] if self.findings else None
 
+
+    @property
+    def primary_cause(self) -> DiagnosticFinding | None:
+        """Compatibility alias; diagnostics do not establish physical causality."""
+        return self.primary_finding
+
+    @property
+    def root_causes(self) -> tuple[DiagnosticFinding, ...]:
+        """Compatibility alias; prefer findings."""
+        return self.findings
     def to_dict(self) -> dict[str, Any]:
-        primary = self.primary_cause
+        primary = self.primary_finding
         return {
             "assessment_digest": self.assessment_digest,
             "verdict": self.verdict,
-            "primary_cause": None if primary is None else primary.to_dict(),
-            "root_causes": [item.to_dict() for item in self.root_causes],
+            "primary_finding": None if primary is None else primary.to_dict(),
+            "findings": [item.to_dict() for item in self.findings],
             "assumptions": self.assumptions.to_dict(),
             "model_discrepancy": self.discrepancy.to_dict(),
             "corrective_actions": [item.to_dict() for item in self.corrective_actions],
@@ -508,6 +520,45 @@ class ScientificDiagnosticReport:
         return tagged_digest(_TAG, self.to_dict())
 
 
+class DiagnosticInputBindingError(ValueError):
+    """A derived analysis artifact is edited or belongs to another assessment."""
+
+
+def _expected_binding(record: Mapping[str, Any]) -> dict[str, str | None]:
+    plan_payload = record.get("plan")
+    if plan_payload is None:
+        plan_digest = capability_digest = None
+    else:
+        plan = ExperimentPlan.from_dict(plan_payload)
+        plan_digest = plan.digest
+        capability_digest = plan.capability_digest
+    return {
+        "assessment_digest": record_digest(record),
+        "plan_digest": plan_digest,
+        "capability_digest": capability_digest,
+    }
+
+
+def _require_analysis_binding(record: Mapping[str, Any], artifact: Mapping[str, Any] | None, *, label: str) -> None:
+    if artifact is None:
+        return
+    try:
+        if label == "sensitivity":
+            verify_sensitivity_record(artifact)
+        elif label == "robustness":
+            verify_robustness_record(artifact)
+        else:
+            raise DiagnosticInputBindingError(f"unknown diagnostic artifact kind {label!r}")
+    except SensitivityError as exc:
+        raise DiagnosticInputBindingError(f"{label}: {exc}") from exc
+    expected = _expected_binding(record)
+    for field, wanted in expected.items():
+        got = artifact.get(field)
+        if got != wanted:
+            raise DiagnosticInputBindingError(
+                f"{label} belongs to another assessment: {field} is {got!r}, expected {wanted!r}"
+            )
+
 def diagnose_assessment(
     record: Mapping[str, Any],
     registry: Any,
@@ -517,13 +568,15 @@ def diagnose_assessment(
 ) -> ScientificDiagnosticReport:
     """Explain blockers and propose testable repairs without changing authority."""
 
+    _require_analysis_binding(record, sensitivity, label="sensitivity")
+    _require_analysis_binding(record, robustness, label="robustness")
     gaps = analyze_gaps(record)
     next_plan = recommend_next(record, registry, gaps)
     discrepancy = analyze_model_discrepancy(record)
     return ScientificDiagnosticReport(
         assessment_digest=record_digest(record),
         verdict=str(record.get("verdict")),
-        root_causes=_root_causes(gaps, discrepancy, record),
+        findings=_diagnostic_findings(gaps, discrepancy, record),
         assumptions=analyze_assumptions(record, robustness=robustness),
         discrepancy=discrepancy,
         corrective_actions=_corrective_actions(next_plan),
@@ -534,6 +587,9 @@ def diagnose_assessment(
     )
 
 
+# Compatibility name for the first experimental diagnostic API.
+RootCauseFinding = DiagnosticFinding
+
 __all__ = [
     "AssumptionAnalysis",
     "AssumptionEntry",
@@ -541,12 +597,14 @@ __all__ = [
     "AssumptionStatus",
     "CorrectiveAction",
     "DiagnosticClass",
+    "DiagnosticFinding",
+    "DiagnosticInputBindingError",
     "DiscrepancyComparison",
     "DiscrepancyStatus",
     "HypothesisKind",
     "ModelDiscrepancyAnalysis",
     "RepairHypothesis",
-    "RootCauseFinding",
+    "DiagnosticFinding",
     "ScientificDiagnosticReport",
     "analyze_assumptions",
     "analyze_model_discrepancy",

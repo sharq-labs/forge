@@ -23,3 +23,15 @@ def test_parser_accepts_optional_diagnostic_artifacts():
     assert args.assessment == "assessment.json"
     assert args.sensitivity == "s.json"
     assert args.robustness == "r.json"
+
+
+def test_verified_record_requires_bundle_for_custom_trust():
+    payload = {"schema": "claim_assessment/1", "external_trust_registry": "custom"}
+    class Registry:
+        pass
+    try:
+        forge_diagnose._verified_record(payload, Registry(), source="assessment.json")
+    except ValueError as exc:
+        assert "replay bundle" in str(exc)
+    else:
+        raise AssertionError("custom-trust raw assessment must require a replay bundle")
