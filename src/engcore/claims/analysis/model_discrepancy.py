@@ -115,7 +115,8 @@ class ResidualPoint:
     split: DatasetSplit
     residual: float
     known_half_width: float | None
-    unexplained_excess: float | None
+    minimum_discrepancy: float | None
+    conservative_compatible_bound: float | None
     units: str
     measurement_digest: str
     problem: str | None = None
@@ -127,7 +128,8 @@ class ResidualPoint:
             "split": self.split.value,
             "residual": self.residual,
             "known_half_width": self.known_half_width,
-            "unexplained_excess": self.unexplained_excess,
+            "minimum_discrepancy": self.minimum_discrepancy,
+            "conservative_compatible_bound": self.conservative_compatible_bound,
             "units": self.units,
             "measurement_digest": self.measurement_digest,
             "problem": self.problem,
@@ -135,12 +137,13 @@ class ResidualPoint:
 
 
 @dataclass(frozen=True)
-class ModelFormUncertaintyCandidate:
-    """A held-out-tested empirical envelope that still requires promotion."""
+class ModelFormDiscrepancyCandidate:
+    """Held-out-tested discrepancy constraints, never an uncertainty record."""
 
     quantity: str
     units: str
-    half_width: float
+    minimum_required_half_width: float
+    conservative_compatible_half_width: float
     protocol_digest: str
     calibration_groups: tuple[str, ...]
     validation_groups: tuple[str, ...]
@@ -150,18 +153,21 @@ class ModelFormUncertaintyCandidate:
         return {
             "quantity": self.quantity,
             "units": self.units,
-            "half_width": self.half_width,
+            "minimum_required_half_width": self.minimum_required_half_width,
+            "conservative_compatible_half_width": self.conservative_compatible_half_width,
             "protocol_digest": self.protocol_digest,
             "calibration_groups": list(self.calibration_groups),
             "validation_groups": list(self.validation_groups),
             "measurement_digests": list(self.measurement_digests),
-            "source_kind": UncertaintySource.MODEL_FORM.value,
             "status": "candidate",
+            "zero_established": False,
             "can_satisfy_claim": False,
+            "is_uncertainty_record": False,
             "is_validation_level": False,
             "notice": (
-                "held-out empirical discrepancy candidate only; promotion into an authoritative MODEL_FORM "
-                "uncertainty channel requires an explicit reviewed producer and is not performed here"
+                "held-out empirical discrepancy constraints only; the lower bound is not an uncertainty "
+                "estimate and the conservative compatible bound includes known uncertainty. Promotion into "
+                "MODEL_FORM requires a separate reviewed statistical or physical producer."
             ),
         }
 
@@ -173,20 +179,22 @@ class ModelFormDiscrepancyEstimate:
     protocol: DiscrepancyProtocol
     status: DiscrepancyEstimateStatus
     points: tuple[ResidualPoint, ...]
-    calibrated_half_width: float | None
+    minimum_required_half_width: float | None
+    conservative_compatible_half_width: float | None
     failed_validation_groups: tuple[str, ...]
     reason: str
 
     @property
-    def candidate(self) -> ModelFormUncertaintyCandidate | None:
+    def candidate(self) -> ModelFormDiscrepancyCandidate | None:
         if self.status is not DiscrepancyEstimateStatus.VALIDATED_CANDIDATE:
             return None
         calibration = tuple(sorted({p.independence_group for p in self.points if p.split is DatasetSplit.CALIBRATION}))
         validation = tuple(sorted({p.independence_group for p in self.points if p.split is DatasetSplit.VALIDATION}))
-        return ModelFormUncertaintyCandidate(
+        return ModelFormDiscrepancyCandidate(
             quantity=self.quantity,
             units=self.units,
-            half_width=float(self.calibrated_half_width),
+            minimum_required_half_width=float(self.minimum_required_half_width),
+            conservative_compatible_half_width=float(self.conservative_compatible_half_width),
             protocol_digest=self.protocol.digest,
             calibration_groups=calibration,
             validation_groups=validation,
@@ -202,7 +210,8 @@ class ModelFormDiscrepancyEstimate:
             "protocol_digest": self.protocol.digest,
             "status": self.status.value,
             "points": [p.to_dict() for p in self.points],
-            "calibrated_half_width": self.calibrated_half_width,
+            "minimum_required_half_width": self.minimum_required_half_width,
+            "conservative_compatible_half_width": self.conservative_compatible_half_width,
             "failed_validation_groups": list(self.failed_validation_groups),
             "reason": self.reason,
             "candidate": None if candidate is None else candidate.to_dict(),
@@ -243,7 +252,7 @@ def _point(pair: PairedObservation) -> ResidualPoint:
     if problem is not None:
         return ResidualPoint(
             pair.observation_id, pair.independence_group, pair.split, residual,
-            None, None, str(pair.predicted.units), pair.measurement_digest, problem,
+            None, None, None, str(pair.predicted.units), pair.measurement_digest, problem,
         )
 
     known = float(measurement)
@@ -256,7 +265,7 @@ def _point(pair: PairedObservation) -> ResidualPoint:
         if problem is not None:
             return ResidualPoint(
                 pair.observation_id, pair.independence_group, pair.split, residual,
-                None, None, str(pair.predicted.units), pair.measurement_digest, problem,
+                None, None, None, str(pair.predicted.units), pair.measurement_digest, problem,
             )
         known += float(width)
 
@@ -267,6 +276,7 @@ def _point(pair: PairedObservation) -> ResidualPoint:
         residual,
         known,
         max(0.0, abs(residual) - known),
+        abs(residual) + known,
         str(pair.predicted.units),
         pair.measurement_digest,
         None,
@@ -304,57 +314,64 @@ def estimate_model_form_discrepancy(
     if problems:
         return ModelFormDiscrepancyEstimate(
             quantity, units, protocol, DiscrepancyEstimateStatus.INSUFFICIENT_UNCERTAINTY,
-            points, None, (), f"{len(problems)} paired observation(s) lack usable separated uncertainty intervals",
+            points, None, None, (), f"{len(problems)} paired observation(s) lack usable separated uncertainty intervals",
         )
 
     if len(calibration_groups) < protocol.minimum_calibration_groups:
         return ModelFormDiscrepancyEstimate(
             quantity, units, protocol, DiscrepancyEstimateStatus.INSUFFICIENT_DATA,
-            points, None, (), (
+            points, None, None, (), (
                 f"only {len(calibration_groups)} independent calibration group(s); "
                 f"protocol requires {protocol.minimum_calibration_groups}"
             ),
         )
 
     calibration_points = [p for p in points if p.split is DatasetSplit.CALIBRATION]
-    envelope = max(float(p.unexplained_excess) for p in calibration_points)
+    minimum_required = max(float(p.minimum_discrepancy) for p in calibration_points)
+    conservative_compatible = max(float(p.conservative_compatible_bound) for p in calibration_points)
 
     if len(validation_groups) < protocol.minimum_validation_groups:
         return ModelFormDiscrepancyEstimate(
             quantity, units, protocol, DiscrepancyEstimateStatus.CALIBRATED_UNVALIDATED,
-            points, envelope, (), (
-                f"calibration envelope is {envelope:g} {units}, but only {len(validation_groups)} independent "
-                f"held-out group(s) are present; protocol requires {protocol.minimum_validation_groups}"
+            points, minimum_required, conservative_compatible, (), (
+                f"calibration requires at least {minimum_required:g} {units} discrepancy in the most discrepant "
+                f"case and remains compatible up to {conservative_compatible:g} {units}; only "
+                f"{len(validation_groups)} independent held-out group(s) are present; "
+                f"protocol requires {protocol.minimum_validation_groups}"
             ),
         )
 
     failed = tuple(sorted({
         p.independence_group
         for p in points
-        if p.split is DatasetSplit.VALIDATION and float(p.unexplained_excess) > envelope
+        if p.split is DatasetSplit.VALIDATION
+        and float(p.minimum_discrepancy) > conservative_compatible
     }))
     if failed:
         return ModelFormDiscrepancyEstimate(
             quantity, units, protocol, DiscrepancyEstimateStatus.FAILED_VALIDATION,
-            points, envelope, failed,
-            "held-out observations exceed the envelope calibrated on independent groups",
+            points, minimum_required, conservative_compatible, failed,
+            "held-out observations require more discrepancy than the conservative calibration bound permits",
         )
 
-    if envelope <= 0.0:
+    if minimum_required <= 0.0:
         return ModelFormDiscrepancyEstimate(
             quantity, units, protocol,
             DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY,
-            points, envelope, (),
+            points, minimum_required, conservative_compatible, (),
             (
-                "all observed residuals are covered by already-known measurement/prediction uncertainty; "
-                "that bounds unresolved model discrepancy below the current resolution but does not establish zero"
+                "calibration residuals are fully covered by already-known measurement/prediction uncertainty; "
+                "the data may bound discrepancy below current resolution but do not establish zero model-form error"
             ),
         )
 
     return ModelFormDiscrepancyEstimate(
         quantity, units, protocol, DiscrepancyEstimateStatus.VALIDATED_CANDIDATE,
-        points, envelope, (),
-        "every held-out independence group stays within the predeclared calibration envelope",
+        points, minimum_required, conservative_compatible, (),
+        (
+            "the calibration discrepancy constraints survive every independent held-out group; "
+            "the result remains a non-authoritative discrepancy candidate, not MODEL_FORM uncertainty"
+        ),
     )
 
 
@@ -363,7 +380,7 @@ __all__ = [
     "DiscrepancyProtocol",
     "ModelFormDiscrepancyError",
     "ModelFormDiscrepancyEstimate",
-    "ModelFormUncertaintyCandidate",
+    "ModelFormDiscrepancyCandidate",
     "PairedObservation",
     "ResidualPoint",
     "estimate_model_form_discrepancy",
