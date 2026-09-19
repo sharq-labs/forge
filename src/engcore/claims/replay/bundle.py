@@ -8,7 +8,7 @@ A bundle carries everything needed to re-check one assessed claim:
 * the declaration of the capability that ran (so a changed registry is
   *reported*, not mistaken for tampering);
 * the trusted-external registry the record was judged under;
-* the environment it was produced in (for the reader; never used to decide);
+* the environment it was produced in (never grants scientific standing, but exact replay requires it);
 * a digest over all of it.
 
 :func:`verify_bundle` executes nothing. It checks the digest, then re-derives
@@ -29,6 +29,7 @@ import hashlib
 import json
 import math
 import platform
+import re
 import subprocess
 from pathlib import Path
 from importlib import metadata as importlib_metadata
@@ -205,6 +206,22 @@ def _environment_problem(environment: Any) -> str | None:
     return None
 
 
+def _environment_replay_problem(environment: Mapping[str, Any]) -> str | None:
+    git = environment.get("git")
+    if not isinstance(git, Mapping):
+        return "source-control identity is absent from the replay environment"
+    commit = str(git.get("commit") or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return "source-control commit identity is unavailable"
+    if not isinstance(git.get("dirty"), bool):
+        return "source-control dirty-tree state is unavailable"
+    for field in ("tracked_diff_digest", "untracked_manifest_digest"):
+        value = str(git.get(field) or "").strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            return f"source-control {field} is unavailable"
+    return None
+
+
 def verify_bundle(
     bundle: Mapping[str, Any],
     registry: CapabilityRegistry,
@@ -271,10 +288,23 @@ def verify_bundle(
 
 @dataclass(frozen=True)
 class ReplayTolerance:
-    """How far a replayed number may move and still be the same result. Declared by the replayer."""
+    """How far a replayed result number may move and still be the same result."""
 
     relative: float = 0.0
     absolute: float = 0.0
+
+    def __post_init__(self) -> None:
+        relative = float(self.relative)
+        absolute = float(self.absolute)
+        if (
+            not math.isfinite(relative)
+            or not math.isfinite(absolute)
+            or relative < 0.0
+            or absolute < 0.0
+        ):
+            raise ValueError("replay tolerances must be finite and non-negative")
+        object.__setattr__(self, "relative", relative)
+        object.__setattr__(self, "absolute", absolute)
 
     def same(self, a: float, b: float) -> bool:
         return math.isclose(a, b, rel_tol=self.relative, abs_tol=self.absolute)
@@ -450,6 +480,17 @@ def replay_bundle(
     if require_same_environment:
         current_environment = _environment()
         stored_environment = bundle["environment"]
+        for label, environment in (
+            ("stored", stored_environment),
+            ("current", current_environment),
+        ):
+            problem = _environment_replay_problem(environment)
+            if problem is not None:
+                return ReplayResult(
+                    BundleStatus.NOT_REPRODUCIBLE,
+                    (f"{label} replay environment: {problem}",),
+                    0,
+                )
         if stored_environment.get("fingerprint") != current_environment.get("fingerprint"):
             return ReplayResult(
                 BundleStatus.NOT_REPRODUCIBLE,
