@@ -20,6 +20,6 @@ def test_one_study_cannot_mix_incompatible_dimensions():
         ModelFormStudy((item("a","a",False),item("b","b",False,unit="volt")),scope=scope())
 
 def test_study_scope_must_name_the_same_quantity():
-    wrong=ModelFormScope("model","a"*64,"b"*64,"c"*64,"voltage","volt")
+    wrong=ModelFormScope("model","a"*64,"b"*64,"c"*64,"voltage","kelvin")
     with pytest.raises(ValueError,match="scope"):
         ModelFormStudy((item("a","a",False),item("b","b",False)),scope=wrong)

@@ -31,3 +31,10 @@ def test_hybrid_interval_requires_explicit_k_and_records_it():
     assert report.output.lower.magnitude_in("kelvin")==pytest.approx(296)
     assert report.output.upper.magnitude_in("kelvin")==pytest.approx(304)
     assert "declared_k=2.0" in report.assumptions[0]
+
+
+def test_interval_that_does_not_contain_nominal_is_refused():
+    bad=interval("bad",UncertaintySource.MEASUREMENT,290,299,"3")
+    with pytest.raises(Exception,match="does not contain nominal"):
+        combine_uncertainties(Quantity(300,"kelvin"),(bad,),
+            CombinationPolicy(CombinationMode.CONSERVATIVE_INTERVAL))
