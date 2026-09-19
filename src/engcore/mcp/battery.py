@@ -647,10 +647,16 @@ def run_battery_case(
         for model_id, assessment in sorted(run.validity_over_the_march.items())
     )
 
+    if final.open_circuit_voltage is None:
+        raise InvalidScientificProblem(
+            "battery march did not carry the open-circuit-voltage metric produced by its cell solver"
+        )
+
     report = CredibilityEvidenceReport(
         run_id=identifier,
         values={
             "terminal_voltage": final.terminal_voltage,
+            "open_circuit_voltage": final.open_circuit_voltage,
             "final_state_of_charge": final.final_state_of_charge,
             "heat_generation": final.heat_generation,
             "final_temperature": final.final_temperature,
@@ -662,6 +668,7 @@ def run_battery_case(
             )
             for name in (
                 "terminal_voltage",
+                "open_circuit_voltage",
                 "final_state_of_charge",
                 "heat_generation",
                 "final_temperature",
