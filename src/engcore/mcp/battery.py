@@ -29,18 +29,18 @@ would report a converged iteration where there was none, so the report carries
 ``coupling=None`` and the response carries the march's own outcome as its own
 field. ``NEEDS.md`` records the gap.
 
-**The thermal model's applicability cannot be declared.**
-``run_self_heating_discharge`` takes no applicability declaration, so the
-lumped body it builds internally has an empty one and the thermal half of a
-coupled battery run can never be better than UNKNOWN. Adding the parameter is a
-change to the battery domain, which this task is forbidden to make. The lumped
-model is still reported — a model left out of a report is a model the report
-silently claims nothing about — and it is reported as what it is.
+**The thermal model's applicability is first-class.**
+The payload accepts ``thermal.applicability`` using the same declaration
+record as the standalone lumped-thermal path. The declaration is passed into
+the body that is actually marched, and the thermal validity assessment is made
+inside every march step before the run-wide verdict is combined. Thermal
+evidence is therefore no longer reconstructed after execution or forced to
+UNKNOWN by an empty declaration.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from ..domains.battery import cell as bat
@@ -49,6 +49,7 @@ from ..domains.battery import coupling as bcp
 from ..domains.battery import models as bmdl
 from ..domains.battery import solver as bsol
 from ..domains.thermal_models import lumped as lump
+from ..domains.thermal_models import context as thermal_ctx
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.provenance import ProvenanceRecord
 from ..scientific.results.uncertainty import Uncertainty
@@ -113,6 +114,7 @@ CELL = "cell"
 LIMITS = "cell.limits"
 LOAD = "load"
 THERMAL = "thermal"
+THERMAL_APPLICABILITY = "thermal.applicability"
 MARCH = "march"
 
 #: How many intervals the march is cut into when the caller does not say. The
@@ -276,6 +278,118 @@ _BINDINGS: tuple[Binding, ...] = (
         model=_LUMPED,
         input_name=lump.AMBIENT_TEMPERATURE,
     ),
+    # ---- thermal-model applicability ---------------------------------
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="characteristic_length",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.CHARACTERISTIC_LENGTH,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="body_volume",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.BODY_VOLUME,
+        target="volume",
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="surface_area",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.SURFACE_AREA,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="body_conductivity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.BODY_CONDUCTIVITY,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="surface_emissivity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.SURFACE_EMISSIVITY,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="conductance_excursion_bound",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.CONDUCTANCE_EXCURSION_BOUND,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="capacity_excursion_bound",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.CAPACITY_EXCURSION_BOUND,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="melting_temperature",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.MELTING_TEMPERATURE,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="fluid_conductivity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_CONDUCTIVITY,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="fluid_kinematic_viscosity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_VISCOSITY,
+        target="fluid_kinematic_viscosity",
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="fluid_prandtl_number",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_PRANDTL_NUMBER,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="fluid_expansion_coefficient",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_EXPANSION_COEFFICIENT,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="fluid_velocity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_VELOCITY,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="convection_length",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.CONVECTION_LENGTH,
+    ),
+    Binding(
+        section=THERMAL_APPLICABILITY,
+        key="convection_regime",
+        kind="category",
+        required=False,
+        vocabulary=tuple(thermal_ctx.CONVECTION_REGIME_VOCABULARY),
+        note=(
+            "Recorded convection intent. It never decides validity; the "
+            "declared fluid quantities select and justify the correlation."
+        ),
+    ),
     # ---- how finely the march resolves the rise ----------------------
     Binding(
         section=MARCH,
@@ -330,7 +444,24 @@ def build_battery_case(payload: Mapping[str, Any]):
         bindings=_BINDINGS,
     )
     load_values = _section_of(payload, LOAD)
-    thermal_values = _section_of(payload, THERMAL)
+    thermal_raw = _require_mapping(payload.get("thermal"), where=THERMAL)
+    thermal_values = _read_section(
+        thermal_raw,
+        THERMAL,
+        extra=("applicability",),
+        bindings=_BINDINGS,
+    )
+    applicability_values = _read_section(
+        _require_mapping(
+            thermal_raw.get("applicability"),
+            where=THERMAL_APPLICABILITY,
+        ),
+        THERMAL_APPLICABILITY,
+        bindings=_BINDINGS,
+    )
+    thermal_values["applicability"] = lump.LumpedApplicabilityDeclaration(
+        **applicability_values
+    )
     march_values = _section_of(payload, MARCH)
 
     limits = bctx.CellLimits(**limit_values)
@@ -368,7 +499,7 @@ class BatteryCaseRun:
 def _provenance(
     cell: bat.CellSpecification,
     load: bat.DischargeLoad,
-    thermal: Mapping[str, Quantity],
+    thermal: Mapping[str, Any],
     run_id: str,
     steps: int,
     march: bcp.SelfHeatingRun,
@@ -417,6 +548,27 @@ def _provenance(
         if value is not None:
             inputs[label] = value
 
+    applicability = thermal["applicability"]
+    for input_name, attribute in (
+        (thermal_ctx.CHARACTERISTIC_LENGTH, "characteristic_length"),
+        (thermal_ctx.BODY_VOLUME, "volume"),
+        (thermal_ctx.SURFACE_AREA, "surface_area"),
+        (thermal_ctx.BODY_CONDUCTIVITY, "body_conductivity"),
+        (thermal_ctx.SURFACE_EMISSIVITY, "surface_emissivity"),
+        (thermal_ctx.CONDUCTANCE_EXCURSION_BOUND, "conductance_excursion_bound"),
+        (thermal_ctx.CAPACITY_EXCURSION_BOUND, "capacity_excursion_bound"),
+        (thermal_ctx.MELTING_TEMPERATURE, "melting_temperature"),
+        (thermal_ctx.FLUID_CONDUCTIVITY, "fluid_conductivity"),
+        (thermal_ctx.FLUID_VISCOSITY, "fluid_kinematic_viscosity"),
+        (thermal_ctx.FLUID_PRANDTL_NUMBER, "fluid_prandtl_number"),
+        (thermal_ctx.FLUID_EXPANSION_COEFFICIENT, "fluid_expansion_coefficient"),
+        (thermal_ctx.FLUID_VELOCITY, "fluid_velocity"),
+        (thermal_ctx.CONVECTION_LENGTH, "convection_length"),
+    ):
+        value = getattr(applicability, attribute)
+        if value is not None:
+            inputs[input_name] = value
+
     return ProvenanceRecord(
         run_id=run_id,
         # `models` and `solvers` are left to be derived from the bindings.
@@ -456,11 +608,10 @@ def run_battery_case(
     while the march itself had recorded step 1 as
     OUTSIDE_VALIDATED_DOMAIN.
 
-    The lumped model is assessed here, because the march does not return its
-    body and the coupling API accepts no applicability declaration for it. It
-    is reported as UNKNOWN, which is the truth: an empty declaration supports
-    no thermal verdict, and leaving the model out would be a report claiming
-    nothing about a model that produced half its numbers.
+    The lumped model is assessed inside every executed march step using the
+    same applicability declaration carried by the body that was solved. The
+    run-wide validity therefore includes both the battery models and the
+    thermal model over the complete executed horizon.
     """
     cell, load, thermal, steps = build_battery_case(payload)
     identifier = run_id or f"battery-{cell.cell_id}-{load.load_id}"
@@ -470,43 +621,30 @@ def run_battery_case(
         load,
         heat_capacity=thermal["heat_capacity"],
         ambient_temperature=thermal["ambient_temperature"],
+        thermal_applicability=thermal["applicability"],
         steps=steps,
     )
     final = run.final
 
-    # The same body the march built internally, rebuilt here only so the
-    # thermal model can be assessed at all. Same constructor, same arguments.
+    # Rebuild only the declared thermal problem for requirement metadata.
+    # Validity itself comes from the bodies that were actually executed in the
+    # march and is already combined over every step.
     body = bcp.thermal_body_for(
         cell,
         heat_capacity=thermal["heat_capacity"],
         ambient_temperature=thermal["ambient_temperature"],
         initial_temperature=load.cell_temperature,
-        # `load.duration` IS the step duration, not the horizon: the march
-        # multiplies it by `steps` and the total elapsed time is the product.
-        # Dividing here would rebuild a different body than the one the march
-        # advanced, and the thermal verdict would be about a step that never
-        # ran.
         step_duration=load.duration,
+        applicability=thermal["applicability"],
     )
     thermal_problem = lump.build_lumped_thermal_problem(body)
-    thermal_assessment = lump.assess_lumped_validity(
-        thermal_problem,
-        initial_temperature=load.cell_temperature,
-        ambient_temperature=thermal["ambient_temperature"],
-        heat_input=final.heat_generation,
-    )
 
     versions = {m.model_id: m.version for m in (*_MODELS, _LUMPED)}
     validity = tuple(
         ModelValidityRecord(
             model_id=model_id, version=versions[model_id], assessment=assessment
         )
-        for model_id, assessment in sorted(
-            {
-                **run.validity_over_the_march,
-                _LUMPED.model_id: thermal_assessment,
-            }.items()
-        )
+        for model_id, assessment in sorted(run.validity_over_the_march.items())
     )
 
     report = CredibilityEvidenceReport(
@@ -584,6 +722,12 @@ def run_battery_case(
                 source="DischargeLoad",
                 payload=load.to_dict(),
                 description="caller-declared duty and stopping rule",
+                consumed_by_verdict=True,
+            ),
+            AssertedContext(
+                source="ThermalApplicability",
+                payload=thermal["applicability"].to_dict(),
+                description="caller-declared applicability evidence for the lumped thermal model",
                 consumed_by_verdict=True,
             ),
         ),
@@ -812,6 +956,22 @@ def example_battery_payload() -> dict[str, Any]:
         "thermal": {
             "heat_capacity": "60 joule/kelvin",
             "ambient_temperature": "298.15 kelvin",
+            "applicability": {
+                "characteristic_length": "0.002 meter",
+                "body_volume": "0.00002 meter**3",
+                "surface_area": "0.01 meter**2",
+                "body_conductivity": "200 watt/meter/kelvin",
+                "surface_emissivity": "0.05 dimensionless",
+                "convection_regime": "forced",
+                "conductance_excursion_bound": "60 kelvin",
+                "capacity_excursion_bound": "100 kelvin",
+                "melting_temperature": "900 kelvin",
+                "fluid_conductivity": "0.0263 watt/meter/kelvin",
+                "fluid_kinematic_viscosity": "1.589e-5 meter**2/second",
+                "fluid_prandtl_number": "0.707 dimensionless",
+                "fluid_velocity": "2 meter/second",
+                "convection_length": "0.05 meter",
+            },
         },
         "march": {"steps": 10},
     }
