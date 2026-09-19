@@ -13,8 +13,8 @@ from fractions import Fraction
 import math
 from typing import Any, Mapping
 
-from ..errors import UnitCompatibilityError
-from ..serialization import schema_string
+from ..errors import InvalidScientificProblem, UnitCompatibilityError
+from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, registry
 from .ast import (
     BinaryExpression,
@@ -154,6 +154,38 @@ class EquationEvaluation:
     right: Quantity
     residual: Quantity
 
+    def __post_init__(self) -> None:
+        for label, value in (
+            ("left", self.left),
+            ("right", self.right),
+            ("residual", self.residual),
+        ):
+            if not isinstance(value, Quantity):
+                raise InvalidScientificProblem(
+                    f"equation evaluation {label} must be a Quantity"
+                )
+        try:
+            self.left.require_compatible(self.right, context="equation evaluation sides")
+            expected = self.left - self.right
+            expected.require_compatible(
+                self.residual,
+                context="equation evaluation residual",
+            )
+            recorded = self.residual.magnitude_in(expected.units)
+        except UnitCompatibilityError as exc:
+            raise InvalidScientificProblem(
+                f"equation evaluation carries incompatible quantities: {exc}"
+            ) from exc
+        if not math.isclose(
+            recorded,
+            expected.magnitude,
+            rel_tol=1e-12,
+            abs_tol=1e-15,
+        ):
+            raise InvalidScientificProblem(
+                "equation evaluation residual does not equal left - right"
+            )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": EQUATION_EVALUATION_SCHEMA,
@@ -161,6 +193,15 @@ class EquationEvaluation:
             "right": self.right.to_dict(),
             "residual": self.residual.to_dict(),
         }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "EquationEvaluation":
+        require_schema(payload, EQUATION_EVALUATION_SCHEMA)
+        return cls(
+            left=Quantity.from_dict(payload["left"]),
+            right=Quantity.from_dict(payload["right"]),
+            residual=Quantity.from_dict(payload["residual"]),
+        )
 
 
 def evaluate_equation(

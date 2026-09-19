@@ -138,6 +138,29 @@ class DimensionReport:
     issue_code: str | None = None
     message: str = ""
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.valid, bool):
+            raise EquationDimensionError(
+                "invalid_dimension_report",
+                "dimension report valid flag must be bool",
+            )
+        if self.valid:
+            if self.left is None or self.right is None or self.left != self.right:
+                raise EquationDimensionError(
+                    "invalid_dimension_report",
+                    "a valid dimension report requires equal recorded left/right dimensions",
+                )
+            if self.issue_code is not None:
+                raise EquationDimensionError(
+                    "invalid_dimension_report",
+                    "a valid dimension report cannot carry an issue code",
+                )
+        elif not str(self.issue_code or "").strip():
+            raise EquationDimensionError(
+                "invalid_dimension_report",
+                "an invalid dimension report must state an issue code",
+            )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": DIMENSION_REPORT_SCHEMA,
@@ -147,6 +170,19 @@ class DimensionReport:
             "issue_code": self.issue_code,
             "message": self.message,
         }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "DimensionReport":
+        require_schema(payload, DIMENSION_REPORT_SCHEMA)
+        left = payload.get("left")
+        right = payload.get("right")
+        return cls(
+            valid=payload["valid"],
+            left=DimensionVector.from_dict(left) if left is not None else None,
+            right=DimensionVector.from_dict(right) if right is not None else None,
+            issue_code=payload.get("issue_code"),
+            message=payload.get("message", ""),
+        )
 
 
 def infer_dimension(

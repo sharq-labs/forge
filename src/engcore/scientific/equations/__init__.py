@@ -24,6 +24,7 @@ from .dimensions import (
 )
 from .errors import EquationDimensionError, EquationEvaluationError, EquationIRError
 from .evaluation import EquationEvaluation, evaluate_equation, evaluate_expression
+from .fingerprint import equation_fingerprint, law_fingerprint
 from .law import EquationSymbol, LawAssumption, LawDefinition
 
 __all__ = [
@@ -51,6 +52,8 @@ __all__ = [
     "EquationEvaluation",
     "evaluate_expression",
     "evaluate_equation",
+    "equation_fingerprint",
+    "law_fingerprint",
     "EquationSymbol",
     "LawAssumption",
     "LawDefinition",

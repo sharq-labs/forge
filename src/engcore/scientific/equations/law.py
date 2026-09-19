@@ -106,6 +106,14 @@ class LawDefinition:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "symbols", tuple(self.symbols))
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
+        if any(not isinstance(symbol, EquationSymbol) for symbol in self.symbols):
+            raise InvalidScientificProblem(
+                "scientific law symbols must be EquationSymbol records"
+            )
+        if any(not isinstance(item, LawAssumption) for item in self.assumptions):
+            raise InvalidScientificProblem(
+                "scientific law assumptions must be LawAssumption records"
+            )
         refs = tuple(str(ref).strip() for ref in self.references)
         if any(not ref for ref in refs):
             raise InvalidScientificProblem("law references must be non-empty strings")

@@ -19,3 +19,15 @@ validation. It represents equations as typed data rather than executable text.
 
 Applicability, evidence, uncertainty and validation remain separate layers.
 A dimensionally correct equation can still be scientifically inapplicable.
+
+## Stability and identity
+
+V1 is exposed as the `engcore.scientific.equations` subpackage rather than
+being added immediately to the frozen `engcore.scientific.__all__` surface.
+That lets the contract be exercised and hardened before a future explicit API
+freeze.
+
+`equation_fingerprint` and `law_fingerprint` hash deterministic serialized
+content, so provenance can bind an assessment to the exact equation/law
+contract it used. Dimension reports and equation evaluations revalidate their
+own claims when deserialized; a forged PASS or forged residual is refused.
