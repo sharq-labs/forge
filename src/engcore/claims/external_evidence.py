@@ -255,7 +255,7 @@ def _production_external_catalog() -> tuple[MeasurementRecord | LiteratureRecord
     record says exactly that; it does not claim specimen uncertainty.
     """
     batt_001_soc04 = MeasurementRecord(
-        quantity="terminal_voltage",
+        quantity="open_circuit_voltage",
         value=Quantity(3.299, "volt"),
         uncertainty=Uncertainty(
             kind=UncertaintyKind.INTERVAL,
@@ -273,7 +273,6 @@ def _production_external_catalog() -> tuple[MeasurementRecord | LiteratureRecord
         ),
         conditions={
             "load.state_of_charge": Quantity(0.4, "dimensionless"),
-            "load.discharge_current": Quantity(0.0, "ampere"),
         },
         dataset_version="DOI:10.21227/651q-8v82:v1",
         independence_roots=(
@@ -283,7 +282,7 @@ def _production_external_catalog() -> tuple[MeasurementRecord | LiteratureRecord
         ),
     )
     batt_002_soc05 = MeasurementRecord(
-        quantity="terminal_voltage",
+        quantity="open_circuit_voltage",
         value=Quantity(3.302, "volt"),
         uncertainty=Uncertainty(
             kind=UncertaintyKind.INTERVAL,
@@ -301,7 +300,6 @@ def _production_external_catalog() -> tuple[MeasurementRecord | LiteratureRecord
         ),
         conditions={
             "load.state_of_charge": Quantity(0.5, "dimensionless"),
-            "load.discharge_current": Quantity(0.0, "ampere"),
         },
         dataset_version="DOI:10.21227/651q-8v82:v1",
         independence_roots=(
