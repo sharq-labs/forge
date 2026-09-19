@@ -328,27 +328,15 @@ def cstr_capability() -> CapabilityDeclaration:
             ),
         ),
         uncertainty=UncertaintyCapability(
-            quantified={
-                name: (
-                    UncertaintyChannel.ALEATORIC,
-                    UncertaintyChannel.MODEL_FORM,
-                )
-                for name in (
-                    "final_concentration",
-                    "final_temperature",
-                    "peak_temperature",
-                    "peak_temperature_time",
-                    "conversion",
-                )
-            },
+            quantified={},
             basis=(
-                "ALEATORIC is quantifiable only from curated independent physical "
-                "replicates at one exact context. MODEL_FORM is quantifiable only "
-                "from calibration/held-out DatasetObservation groups whose prediction "
-                "runs are usable and whose discrepancy estimate is promoted by an "
-                "independently reviewed ProducerQualification. Missing evidence leaves "
-                "the channel UNKNOWN; the tolerance gate is verification and is not "
-                "silently converted into scientific uncertainty."
+                "The empirical ALEATORIC and MODEL_FORM study engines are implemented "
+                "and fail closed, but no qualifying measured CSTR dataset is curated in "
+                "the repository and no repository-pinned independent model-form producer "
+                "qualification exists. The production declaration therefore keeps every "
+                "CSTR uncertainty channel UNKNOWN. The tolerance ladder and independent "
+                "LSODA consensus are verification evidence, not scientific uncertainty, "
+                "and are deliberately not relabelled as UQ."
             ),
         ),
         routes=(
