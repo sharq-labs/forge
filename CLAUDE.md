@@ -30,6 +30,7 @@ These are load-bearing invariants, not style preferences:
 - Evidence must remain bound to the exact context / decision it was produced for.
 - Removing evidence must not increase assurance.
 - Risk policy sets the evidence bar; it never becomes evidence.
+- Diagnostic hypotheses are not evidence; sensitivity is not causality; a proposed corrective action never guarantees support.
 - A language model may propose structured inputs; it has no authority to select
   an applicable model, invent measurements, grant validation, quantify unknown
   uncertainty, or issue a scientific verdict.

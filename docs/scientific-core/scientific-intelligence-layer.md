@@ -20,8 +20,10 @@ ScientificClaim (+ DecisionContext, + InputUncertainty)
       literature, judged standing, never a level
   → verdict (policy_satisfied withholds admissibility)   claims/verdict.py
   → evidence gaps → next best experiment                 claims/gaps.py, next_experiment.py
-  → sensitivity / robustness / challenge                 claims/sensitivity.py, challenge.py
-  → impact graph / replay bundle                         claims/impact.py, claims/bundle.py
+  → sensitivity / robustness / challenge                 claims/analysis/sensitivity.py, challenge.py
+  → scientific diagnostics: blockers → assumptions →      claims/analysis/diagnostics.py
+      model-data discrepancy → repair hypotheses/actions
+  → impact graph / replay bundle                         claims/analysis/impact.py, claims/replay/bundle.py
 ```
 
 The natural-language boundary is `claims/nl_adapter.py`, an outer contract.
@@ -39,6 +41,7 @@ evidence, levels, uncertainty, models or input values.
 | 5/6 Gaps | Every insufficiency explained, with pointers; actions derived from declarations | Invented prose; promised support |
 | 7/8 | Sensitivity, a one-at-a-time envelope, challenges backed by run ids | Causal claims; weakening from weak evidence |
 | 9/10 | Impact over existing identities; digest + re-derivation + replay | Edits to historical records |
+| Diagnostic | Recorded blockers, explicit assumptions, model-data mismatch and testable repair hypotheses | A physical-causality claim, automatic model-form UQ, or a promised fix |
 
 ## Invariants
 
@@ -69,7 +72,7 @@ done locally.
 - Measurement and literature have no production pins yet (the pin list is
   empty on purpose), so no production claim reaches ADMISSIBLE measurement
   evidence.
-- MODEL_FORM uncertainty and supported discrepancy have no producer.
+- MODEL_FORM uncertainty and supported discrepancy still have no quantitative producer. The diagnostic layer can now identify an admissible model-data mismatch, but explicitly does not convert that mismatch into MODEL_FORM uncertainty.
 - NUMERICAL is quantified only where a capability declares a ladder (T3), and
   EPISTEMIC_PARAMETER only for electrothermal.
 - The robustness envelope is one-at-a-time, and it treats the demanded band

@@ -34,6 +34,24 @@ is the gate for a milestone freeze.
 
 ---
 
+## Scientific diagnostic tool
+
+A stored assessment can be explained without changing its verdict:
+
+```bash
+python tools/forge_diagnose.py assessment.json
+python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json
+python tools/forge_diagnose.py assessment.json --sensitivity sensitivity.json --robustness robustness.json
+```
+
+The report combines evidence gaps, explicit assumptions, admissible model-data
+comparisons and the existing next-experiment plan. It distinguishes recorded
+blocking conditions from repair hypotheses. A hypothesis is never evidence,
+local sensitivity is never causality, and a corrective action never guarantees
+that reassessment will become SUPPORTED.
+
+---
+
 ## Impact query tool
 
 Stored assessment records can be queried without rerunning physics:

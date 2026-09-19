@@ -270,6 +270,35 @@
         "provenance"
       ],
       "invariant": "replay detects changed scientific execution"
+    },
+    {
+      "id": "diagnostic-model-form-root-cause",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+      "tags": [
+        "diagnostics",
+        "gaps",
+        "uq"
+      ],
+      "invariant": "diagnostics may identify a recorded model-form blocker and propose an action, but never guarantee a fix"
+    },
+    {
+      "id": "diagnostic-mismatch-not-model-form-uq",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+      "tags": [
+        "diagnostics",
+        "external",
+        "uq"
+      ],
+      "invariant": "an admissible model-data mismatch is diagnostic evidence of disagreement, not automatic model-form uncertainty"
+    },
+    {
+      "id": "diagnostic-sensitivity-not-causality",
+      "nodeid": "tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+      "tags": [
+        "diagnostics",
+        "challenge"
+      ],
+      "invariant": "sensitivity can prioritize repair hypotheses but never establishes causality or guarantees correction"
     }
   ]
 }

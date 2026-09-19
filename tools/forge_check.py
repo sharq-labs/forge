@@ -29,7 +29,7 @@ ARCHITECTURE_TESTS = (
 ALL_SCIENTIFIC_TAGS = frozenset({
     "verdict", "evidence", "vnv", "applicability", "compiler", "selection",
     "context", "uq", "policy", "external", "gaps", "challenge", "replay",
-    "provenance",
+    "provenance", "diagnostics",
 })
 
 
@@ -45,22 +45,22 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
         return set(ALL_SCIENTIFIC_TAGS)
 
     if any(p.startswith("src/engcore/credibility/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv"}
+        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics"}
 
     if any(p.startswith("src/engcore/sria/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "policy", "uq", "external"}
+        tags |= {"verdict", "evidence", "context", "policy", "uq", "external", "diagnostics"}
 
     if any(p.startswith("src/engcore/mcp/") for p in paths):
         tags |= {"verdict", "evidence", "context"}
 
     if any(p.startswith("src/engcore/scientific/results/") for p in paths):
-        tags |= {"verdict", "vnv", "uq", "provenance"}
+        tags |= {"verdict", "vnv", "uq", "provenance", "diagnostics"}
 
     if any(p.startswith("src/engcore/scientific/models/") for p in paths):
         tags |= {"applicability", "compiler", "selection"}
 
     if any(p.startswith("src/engcore/uq/") or p.startswith("src/engcore/hybrid_uq/") for p in paths):
-        tags |= {"uq", "verdict"}
+        tags |= {"uq", "verdict", "diagnostics"}
 
     return tags
 

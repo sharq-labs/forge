@@ -24,6 +24,8 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay bundles with source/runtime environment fingerprints.
 - Renamed sprint-phase claim tests by scientific feature.
 - Added `tools/forge_impact.py` for dependency and reassessment queries.
+- Added the Scientific Diagnostic Engine: blocking-cause classification, explicit assumption registry, model-data discrepancy diagnostics, corrective actions and sensitivity-ranked repair hypotheses.
+- Added `tools/forge_diagnose.py`; diagnostics remain derived/non-authoritative and cannot alter verdicts.
 
 ## Verification log
 
