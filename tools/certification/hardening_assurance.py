@@ -65,7 +65,7 @@ from tools.certification.recertification_scope import (
     match,
 )
 
-ASSURANCE_SCHEMA = "forge.core_hardening_assurance/3"
+ASSURANCE_SCHEMA = "forge.core_hardening_assurance/4"
 ENVIRONMENT_SCHEMA = "forge.certification_environment/3"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
@@ -106,6 +106,14 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         "junit_scientific": "junit-scientific-3.12.xml",
         "gate": "gate-scientific312.json",
     }),
+    "campaign312": ("core-campaign", {
+        "junit_campaign": "junit-campaign-3.12.xml",
+        "gate": "gate-campaign312.json",
+    }),
+    "regression312": ("core-regression", {
+        "junit_regression": "junit-regression-3.12.xml",
+        "gate": "gate-regression312.json",
+    }),
     **{
         f"formal_mutations_{index}": (f"core-formal-mutations-{index}", {
             "ids": f"formal-mutation-ids-{index}.txt",
@@ -125,6 +133,8 @@ FUNCTIONAL = (
     ("fast_python_3_11", "fast311", ("junit_dependency_guard", "junit_fast")),
     ("fast_python_3_12", "fast312", ("junit_dependency_guard", "junit_fast")),
     ("scientific_python_3_12", "scientific312", ("junit_scientific",)),
+    ("campaign_python_3_12", "campaign312", ("junit_campaign",)),
+    ("false_confidence_regression_python_3_12", "regression312", ("junit_regression",)),
 )
 
 #: The most skipped tests each functional suite may report and still count as a
@@ -138,6 +148,8 @@ SKIP_CEILING: Mapping[str, int] = {
     "junit_dependency_guard": 0,
     "junit_fast": 19,
     "junit_scientific": 5,
+    "junit_campaign": 0,
+    "junit_regression": 0,
 }
 
 
