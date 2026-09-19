@@ -8,3 +8,4 @@ from .sensitivity import *
 from .challenge import *
 from .impact import *
 from .diagnostics import *
+from .model_discrepancy import *
