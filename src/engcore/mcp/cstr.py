@@ -59,6 +59,13 @@ from ..sria.uncertainty import UncertaintyChannel
 
 CSTR_CAPABILITY_ID = "kinetics.cstr.production"
 
+_CSTR_VERIFICATION_QOIS = (
+    "final_concentration",
+    "final_temperature",
+    "peak_temperature",
+    "conversion",
+)
+
 _ALIAS = {
     CA_FINAL_METRIC: "final_concentration",
     T_FINAL_METRIC: "final_temperature",
@@ -302,19 +309,28 @@ def cstr_capability() -> CapabilityDeclaration:
                 ValidationLevel.DIMENSIONALLY_VALID,
                 check_name="dimensional_consistency",
                 route_id=None,
-                condition="produced CSTR metrics match the model's declared dimensions",
+                condition=(
+                    "the verified CSTR state-derived metrics match the model's "
+                    "declared dimensions"
+                ),
+                quantities=_CSTR_VERIFICATION_QOIS,
             ),
             AttainableLevel(
                 ValidationLevel.NUMERICALLY_CONVERGED,
                 check_name="tolerance_independence",
                 route_id="kinetics.cstr.integration:BDF",
-                condition="the declared tolerance ladder is complete and the QOIs stop moving",
+                condition=(
+                    "the declared tolerance ladder is complete and the verified "
+                    "QOIs stop moving"
+                ),
+                quantities=_CSTR_VERIFICATION_QOIS,
             ),
             AttainableLevel(
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 check_name="analytic_invariant_agreement",
                 route_id="kinetics.cstr.adiabatic_reaction_free_invariant",
                 condition="the adiabatic trajectory reproduces the exact reaction-free invariant",
+                quantities=_CSTR_VERIFICATION_QOIS,
             ),
             AttainableLevel(
                 ValidationLevel.CROSS_SOLVER_VALIDATED,
@@ -323,8 +339,9 @@ def cstr_capability() -> CapabilityDeclaration:
                 condition=(
                     "the tolerance-independent production solve agrees with the "
                     "pinned separately translated ODEPACK/LSODA implementation "
-                    "on every required quantity"
+                    "on every declared verification quantity"
                 ),
+                quantities=_CSTR_VERIFICATION_QOIS,
             ),
         ),
         uncertainty=UncertaintyCapability(
