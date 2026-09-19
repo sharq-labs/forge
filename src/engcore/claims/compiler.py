@@ -360,7 +360,7 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
     gaps: list[PredictedGap] = []
     repairs: list[RepairAction] = []
     source = f"capability:{declaration.capability_id}"
-    attainable = declaration.attainable()
+    attainable = declaration.attainable(claim.qoi.name)
     for level in claim.evidence.required_levels:
         if level not in attainable:
             gaps.append(
@@ -378,7 +378,13 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
                     "the decision requires this level and no declared route of the selected capability attains it",
                     required_for=(f"decision:{claim.decision.decision_id}",),
                     source=source,
-                    detail={"attainable": [a.to_dict() for a in declaration.attainable_levels]},
+                    detail={
+                        "attainable": [
+                            a.to_dict()
+                            for a in declaration.attainable_levels
+                            if a.applies_to(claim.qoi.name)
+                        ]
+                    },
                 )
             )
     for channel in claim.uncertainty.ordered_channels():

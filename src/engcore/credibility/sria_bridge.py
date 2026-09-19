@@ -233,6 +233,7 @@ class CredibilityReportCritic:
         *,
         assessment_id: str,
         mandatory_checks: Iterable[str] = (),
+        planned_level_checks: Mapping[ValidationLevel | str, str] | None = None,
         assessed_at: str | None = None,
     ) -> CriticAssessment:
         if not isinstance(report, CredibilityEvidenceReport):
@@ -240,6 +241,23 @@ class CredibilityReportCritic:
 
         mandatory = {str(item) for item in mandatory_checks}
         attained = set(report.attained_levels)
+        if planned_level_checks is not None:
+            expected = {
+                ValidationLevel(level): str(check_name).strip()
+                for level, check_name in planned_level_checks.items()
+            }
+            if any(not name for name in expected.values()):
+                raise ValueError("planned validation-level checks require non-empty check names")
+            by_name = {check.name: check for check in report.validation}
+            attained = {
+                level
+                for level, check_name in expected.items()
+                if (
+                    check_name in by_name
+                    and by_name[check_name].passed
+                    and by_name[check_name].establishes is level
+                )
+            }
         checks = []
         missing_mandatory = False
 

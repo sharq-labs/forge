@@ -76,6 +76,7 @@ MODEL_USE_SCHEMA = schema_string("capability_model_use")
 SOLVER_USE_SCHEMA = schema_string("capability_solver_use")
 PROVIDED_SCHEMA = schema_string("capability_provided")
 LEVEL_SCHEMA = schema_string("capability_attainable_level")
+LEVEL_SCHEMA_SCOPED = schema_string("capability_attainable_level", 2)
 ROUTE_SCHEMA = schema_string("capability_route")
 UNCERTAINTY_SCHEMA = schema_string("capability_uncertainty")
 UNASSESSABLE_SCHEMA = schema_string("capability_unassessable_condition")
@@ -652,6 +653,10 @@ class RouteDeclaration:
 class AttainableLevel:
     """An evidentiary level the capability CAN attain, the check that earns it, and when.
 
+    ``quantities`` scopes the declaration to the produced QoIs the check
+    actually establishes. An empty tuple preserves the historical
+    capability-wide declaration for checks that genuinely cover every output.
+
     An upper bound for prediction, never an award: the credibility report the
     run produces is the only thing that attains a level.
     """
@@ -660,6 +665,7 @@ class AttainableLevel:
     check_name: str
     route_id: str | None
     condition: str
+    quantities: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "level", ValidationLevel(self.level))
@@ -667,22 +673,67 @@ class AttainableLevel:
             raise _err("UNVERIFIED is not an attainable level")
         object.__setattr__(self, "check_name", _text(self.check_name, "level.check_name"))
         object.__setattr__(self, "condition", _text(self.condition, "level.condition"))
+        quantities = tuple(
+            require_identifier(
+                item,
+                field="level.quantities",
+                error=CapabilityDeclarationError,
+            )
+            for item in self.quantities
+        )
+        if len(quantities) != len(set(quantities)):
+            raise _err("level.quantities contains duplicate produced quantities")
+        object.__setattr__(self, "quantities", tuple(sorted(quantities)))
+
+    def applies_to(self, quantity: str) -> bool:
+        return not self.quantities or quantity in self.quantities
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": LEVEL_SCHEMA,
+            "schema": LEVEL_SCHEMA_SCOPED if self.quantities else LEVEL_SCHEMA,
             "level": self.level.value,
             "check_name": self.check_name,
             "route_id": self.route_id,
             "condition": self.condition,
+            **({"quantities": list(self.quantities)} if self.quantities else {}),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "AttainableLevel":
         payload = require_mapping(payload, field="level", error=CapabilityDeclarationError)
-        require_keys(payload, required=("schema", "level", "check_name", "route_id", "condition"), record="level", error=CapabilityDeclarationError)
-        require_schema_exact(payload, LEVEL_SCHEMA, record="level", error=CapabilityDeclarationError)
-        return cls(ValidationLevel(payload["level"]), payload["check_name"], payload["route_id"], payload["condition"])
+        schema = payload.get("schema")
+        if schema not in (LEVEL_SCHEMA, LEVEL_SCHEMA_SCOPED):
+            raise CapabilityDeclarationError(
+                f"level: expected schema {LEVEL_SCHEMA!r} or "
+                f"{LEVEL_SCHEMA_SCOPED!r}, found {schema!r}"
+            )
+        required = ("schema", "level", "check_name", "route_id", "condition")
+        if schema == LEVEL_SCHEMA_SCOPED:
+            required = required + ("quantities",)
+        require_keys(
+            payload,
+            required=required,
+            record="level",
+            error=CapabilityDeclarationError,
+        )
+        quantities = (
+            tuple(
+                require_list(
+                    payload["quantities"],
+                    field="level.quantities",
+                    error=CapabilityDeclarationError,
+                )
+            )
+            if schema == LEVEL_SCHEMA_SCOPED
+            else ()
+        )
+        return cls(
+            ValidationLevel(payload["level"]),
+            payload["check_name"],
+            payload["route_id"],
+            payload["condition"],
+            quantities,
+        )
 
 
 @dataclass(frozen=True)
@@ -1026,6 +1077,23 @@ class CapabilityDeclaration:
                     f"{self.capability_id}: {item.model_id} has no validity condition {item.condition!r}"
                 )
         produced = {q.name for q in self.produces}
+        for level in self.attainable_levels:
+            unknown_quantities = sorted(set(level.quantities) - produced)
+            if unknown_quantities:
+                raise _err(
+                    f"{self.capability_id}: level {level.level.value} scopes to "
+                    f"unproduced quantities {unknown_quantities}"
+                )
+        for quantity in produced:
+            applicable = [level for level in self.attainable_levels if level.applies_to(quantity)]
+            seen: set[ValidationLevel] = set()
+            for level in applicable:
+                if level.level in seen:
+                    raise _err(
+                        f"{self.capability_id}: {quantity} has more than one "
+                        f"attainable declaration for {level.level.value}"
+                    )
+                seen.add(level.level)
         for name in self.uncertainty.quantified:
             if name not in produced:
                 raise _err(f"{self.capability_id}: uncertainty declared for {name}, which is not produced")
@@ -1081,8 +1149,15 @@ class CapabilityDeclaration:
     def required_inputs(self) -> tuple[InputDeclaration, ...]:
         return tuple(i for i in self.inputs if i.required)
 
-    def attainable(self) -> frozenset[ValidationLevel]:
-        return frozenset(a.level for a in self.attainable_levels)
+    def attainable(self, quantity: str | None = None) -> frozenset[ValidationLevel]:
+        """Levels this capability can establish, optionally for one produced QoI."""
+        if quantity is None:
+            return frozenset(a.level for a in self.attainable_levels)
+        if self.produced(quantity) is None:
+            raise _err(f"{self.capability_id}: {quantity!r} is not a produced quantity")
+        return frozenset(
+            a.level for a in self.attainable_levels if a.applies_to(quantity)
+        )
 
     def unassessable(self, model_id: str) -> Mapping[str, str]:
         """Condition name -> reason, for the conditions of ``model_id`` never assessable here."""
