@@ -260,7 +260,7 @@ def cstr_capability() -> CapabilityDeclaration:
 
     return CapabilityDeclaration(
         capability_id=CSTR_CAPABILITY_ID,
-        version="1",
+        version="2",
         domain="kinetics",
         summary=(
             "Transient non-isothermal first-order CSTR with Arrhenius kinetics, "
@@ -326,12 +326,27 @@ def cstr_capability() -> CapabilityDeclaration:
             ),
         ),
         uncertainty=UncertaintyCapability(
-            quantified={},
+            quantified={
+                name: (
+                    UncertaintyChannel.ALEATORIC,
+                    UncertaintyChannel.MODEL_FORM,
+                )
+                for name in (
+                    "final_concentration",
+                    "final_temperature",
+                    "peak_temperature",
+                    "peak_temperature_time",
+                    "conversion",
+                )
+            },
             basis=(
-                "The production gate verifies tolerance independence but does not "
-                "turn that verification residual into an uncertainty interval. "
-                "Parameter, aleatoric and model-form channels remain explicit UNKNOWN "
-                "until their dedicated study producers are attached."
+                "ALEATORIC is quantifiable only from curated independent physical "
+                "replicates at one exact context. MODEL_FORM is quantifiable only "
+                "from calibration/held-out DatasetObservation groups whose prediction "
+                "runs are usable and whose discrepancy estimate is promoted by an "
+                "independently reviewed ProducerQualification. Missing evidence leaves "
+                "the channel UNKNOWN; the tolerance gate is verification and is not "
+                "silently converted into scientific uncertainty."
             ),
         ),
         routes=(
