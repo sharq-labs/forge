@@ -19,7 +19,7 @@ from typing import Any, Mapping
 from ..scientific.results.uncertainty import Uncertainty, UncertaintySource
 from ..scientific.serialization import schema_string
 from ..scientific.units.quantity import Quantity
-from ._records import require_keys, require_mapping, require_schema_exact, require_text, tagged_digest
+from ._records import require_bool, require_keys, require_mapping, require_schema_exact, require_text, tagged_digest
 from .capabilities import CapabilityDeclaration, InputRole
 from .errors import ClaimContractError
 from .external_evidence import MeasurementRecord
@@ -84,9 +84,15 @@ class MeasurementDatasetManifest:
         missing = sorted(referenced - set(columns))
         if missing:
             raise MeasurementDatasetError(f"dataset mappings reference columns not declared by the manifest: {missing}")
+        if len(self.catalog_source_hash) != 64 or any(ch not in "0123456789abcdef" for ch in self.catalog_source_hash.lower()):
+            raise MeasurementDatasetError("catalog_source_hash must be a 64-character hexadecimal SHA-256")
         object.__setattr__(self, "value_columns", dict(sorted(values.items())))
         object.__setattr__(self, "condition_columns", dict(sorted(conditions.items())))
-        object.__setattr__(self, "measurement_uncertainty_declared", bool(self.measurement_uncertainty_declared))
+        require_bool(
+            self.measurement_uncertainty_declared,
+            field="dataset.measurement_uncertainty_declared",
+            error=MeasurementDatasetError,
+        )
         object.__setattr__(self, "notes", str(self.notes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -169,7 +175,11 @@ class DatasetObservation:
             raise MeasurementDatasetError("observation.value must be a Quantity")
         if not isinstance(self.uncertainty, Uncertainty):
             raise MeasurementDatasetError("observation.uncertainty must be an Uncertainty")
-        object.__setattr__(self, "conditions", dict(sorted(self.conditions.items())))
+        conditions = dict(self.conditions)
+        bad = sorted(path for path, value in conditions.items() if not isinstance(value, Quantity))
+        if bad:
+            raise MeasurementDatasetError(f"observation conditions must be Quantity records: {bad}")
+        object.__setattr__(self, "conditions", dict(sorted(conditions.items())))
         object.__setattr__(self, "missing_context", tuple(sorted(set(self.missing_context))))
 
     @property
@@ -243,7 +253,7 @@ def observation_from_row(
     split: DatasetSplit,
     quantity: str,
     required_context: tuple[str, ...],
-    context_overrides: Mapping[str, Quantity] = {},
+    context_overrides: Mapping[str, Quantity] | None = None,
     uncertainty: Uncertainty | None = None,
     calibration_ref: str | None = None,
     provenance_ref: str,
@@ -270,7 +280,7 @@ def observation_from_row(
             conditions[path] = Quantity(float(raw), unit)
         except (TypeError, ValueError) as exc:
             raise MeasurementDatasetError(f"{column!r} is not a numeric condition") from exc
-    for path, value_override in context_overrides.items():
+    for path, value_override in dict(context_overrides or {}).items():
         if not isinstance(value_override, Quantity):
             raise MeasurementDatasetError(f"context override {path!r} must be a Quantity")
         conditions[path] = value_override
