@@ -68,9 +68,9 @@ def _claim_declarations(provider) -> tuple[CapabilityDeclaration, ...]:
                 f"does not match pack domain {manifest.domain!r}"
             )
         undeclared_science = sorted(
-            c.identifier
-            for c in declaration.provided_capabilities
-            if c.identifier not in manifest_caps
+            item.capability.identifier
+            for item in declaration.provides
+            if item.capability.identifier not in manifest_caps
         )
         if undeclared_science:
             errors.append(
