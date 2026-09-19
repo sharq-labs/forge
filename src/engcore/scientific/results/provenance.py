@@ -13,6 +13,7 @@ identical).
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -386,8 +387,23 @@ class ProvenanceRecord:
             self, "transfers", require_agreeing_transfers(tuple(self.transfers))
         )
 
-        models = tuple((str(a), str(b)) for a, b in self.models)
-        solvers = tuple((str(a), str(b)) for a, b in self.solvers)
+        commit = None if self.git_commit is None else str(self.git_commit).strip().lower()
+        if commit is not None and not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", commit):
+            raise ScientificCoreError(
+                "provenance git_commit must be a lowercase 40- or 64-hex Git object id"
+            )
+        object.__setattr__(self, "git_commit", commit)
+
+        models = tuple(sorted(set((str(a).strip(), str(b).strip()) for a, b in self.models)))
+        solvers = tuple(sorted(set((str(a).strip(), str(b).strip()) for a, b in self.solvers)))
+        if any(not model_id or not version for model_id, version in models):
+            raise ScientificCoreError(
+                "provenance model participants require non-empty id and version"
+            )
+        if any(not solver_id or not version for solver_id, version in solvers):
+            raise ScientificCoreError(
+                "provenance solver participants require non-empty id and version"
+            )
 
         bindings = tuple(self.bindings)
         for binding in bindings:
