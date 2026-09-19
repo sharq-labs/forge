@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from ..scientific.certification_core import CertificationRecord, verify_certification_record
 from ..scientific.certification_core.serialization import certification_to_dict
 from ..scientific.equations import LawReference
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.knowledge import KnowledgeSnapshot
+from ..scientific.knowledge import FreshnessPolicy, KnowledgeSnapshot, TrustedSourceRegistry
 from ..scientific.measurements import CalibratedMeasurementObservation
 from ..scientific.replay_core import (
     ArtifactIdentity,
@@ -32,6 +34,7 @@ from .evidence_graph import (
     EvidenceGraphPolicy,
     assess_graph,
 )
+from .knowledge_evidence import evidence_from_knowledge
 from .replay_binding import (
     evidence_graph_artifact,
     knowledge_snapshot_artifact,
@@ -46,6 +49,8 @@ PRODUCTION_ASSURANCE_PROFILE = RunManifestProfile(
         "combined_uq",
         "evidence_graph",
         "knowledge_snapshot",
+        "knowledge_trust_registry",
+        "knowledge_freshness_policy",
         "measurement_evidence",
         "provenance_record",
         "scientific_law",
@@ -57,6 +62,8 @@ PRODUCTION_ASSURANCE_PROFILE = RunManifestProfile(
         "combined_uq",
         "evidence_graph",
         "knowledge_snapshot",
+        "knowledge_trust_registry",
+        "knowledge_freshness_policy",
         "measurement_evidence",
         "provenance_record",
         "scientific_law",
@@ -68,6 +75,8 @@ PRODUCTION_ASSURANCE_PROFILE = RunManifestProfile(
         "certification_record",
         "evidence_graph",
         "knowledge_snapshot",
+        "knowledge_trust_registry",
+        "knowledge_freshness_policy",
         "measurement_evidence",
         "scientific_law",
         "validation_report",
@@ -78,9 +87,18 @@ PRODUCTION_ASSURANCE_PROFILE = RunManifestProfile(
 def _validate_knowledge_evidence(
     snapshot: KnowledgeSnapshot,
     graph: EvidenceGraph,
+    trust: TrustedSourceRegistry,
+    freshness: FreshnessPolicy,
 ) -> None:
+    if not isinstance(trust, TrustedSourceRegistry):
+        raise InvalidScientificProblem(
+            "production assurance requires an authoritative TrustedSourceRegistry"
+        )
+    if not isinstance(freshness, FreshnessPolicy):
+        raise InvalidScientificProblem(
+            "production assurance requires an authoritative FreshnessPolicy"
+        )
     claims = {claim.digest: claim for claim in snapshot.claims}
-    sources = {source.source_id: source for source in snapshot.sources}
     for node in graph.nodes:
         if not node.evidence_id.startswith("knowledge:"):
             continue
@@ -88,27 +106,30 @@ def _validate_knowledge_evidence(
             raise InvalidScientificProblem(
                 f"knowledge evidence {node.evidence_id!r} has no typed provenance"
             )
-        if not node.provenance.trusted:
-            raise InvalidScientificProblem(
-                f"knowledge evidence {node.evidence_id!r} is not pinned/trusted"
-            )
-        if not node.provenance.fresh_enough:
-            raise InvalidScientificProblem(
-                f"knowledge evidence {node.evidence_id!r} is stale or freshness is unknown"
-            )
         claim = claims.get(node.content_digest)
         if claim is None:
             raise InvalidScientificProblem(
                 f"knowledge evidence {node.evidence_id!r} does not bind a claim in the supplied snapshot"
             )
-        source = sources.get(claim.source_id)
-        if source is None or source.document_digest != node.provenance.document_digest:
-            raise InvalidScientificProblem(
-                f"knowledge evidence {node.evidence_id!r} source identity differs from the supplied snapshot"
+        assessed_at = datetime.fromisoformat(
+            node.provenance.assessed_at.replace("Z", "+00:00")
+        )
+        try:
+            expected = evidence_from_knowledge(
+                snapshot,
+                claim.claim_id,
+                trust,
+                freshness,
+                now=assessed_at,
+                target_context_digest=claim.applicability_context_digest,
             )
-        if claim.applicability_context_digest != node.provenance.context_digest:
+        except InvalidScientificProblem as exc:
             raise InvalidScientificProblem(
-                f"knowledge evidence {node.evidence_id!r} applicability differs from the supplied snapshot claim"
+                f"knowledge evidence {node.evidence_id!r} no longer derives from the authoritative trust/freshness policy: {exc}"
+            ) from exc
+        if expected.to_dict() != node.to_dict():
+            raise InvalidScientificProblem(
+                f"knowledge evidence {node.evidence_id!r} provenance does not re-derive from the authoritative trust/freshness policy"
             )
 
 
@@ -198,6 +219,10 @@ def _validate_evidence_witnesses(
     for node in graph.nodes:
         if node.authority not in _PIN_REQUIRED_AUTHORITIES:
             continue
+        if not node.evidence_id.startswith("knowledge:"):
+            raise InvalidScientificProblem(
+                f"external source evidence {node.evidence_id!r} is not bound to the authoritative knowledge snapshot"
+            )
         if node.provenance is None:
             raise InvalidScientificProblem(
                 f"external evidence {node.evidence_id!r} has no typed source provenance"
@@ -223,6 +248,8 @@ def validate_production_assurance_components(
     verification: VerificationRunRecord,
     certification: CertificationRecord,
     provenance: ProvenanceRecord,
+    knowledge_trust: TrustedSourceRegistry,
+    knowledge_freshness: FreshnessPolicy,
     measurement_observations: tuple[CalibratedMeasurementObservation, ...] = (),
 ) -> None:
     if not isinstance(law, LawReference):
@@ -310,7 +337,12 @@ def validate_production_assurance_components(
             "production assurance evidence graph is inadmissible: "
             + "; ".join(graph_assessment.problems)
         )
-    _validate_knowledge_evidence(knowledge, evidence)
+    _validate_knowledge_evidence(
+        knowledge,
+        evidence,
+        knowledge_trust,
+        knowledge_freshness,
+    )
     _validate_evidence_witnesses(evidence, tuple(measurement_observations))
 
 
@@ -324,11 +356,31 @@ def production_assurance_artifacts(
     verification: VerificationRunRecord,
     certification: CertificationRecord,
     provenance: ProvenanceRecord,
+    knowledge_trust: TrustedSourceRegistry,
+    knowledge_freshness: FreshnessPolicy,
     measurement_observations: tuple[CalibratedMeasurementObservation, ...] = (),
 ) -> tuple[ArtifactIdentity, ...]:
     return (
         law_artifact(law),
         knowledge_snapshot_artifact(knowledge),
+        artifact_from_payload(
+            "knowledge_trust_registry",
+            "authoritative-source-pins",
+            {
+                "pins": [
+                    pin.to_dict()
+                    for pin in sorted(
+                        knowledge_trust.pins,
+                        key=lambda item: item.source_id,
+                    )
+                ]
+            },
+        ),
+        artifact_from_payload(
+            "knowledge_freshness_policy",
+            "authoritative-freshness-policy",
+            knowledge_freshness.to_dict(),
+        ),
         evidence_graph_artifact(evidence),
         artifact_from_payload(
             "measurement_evidence",
@@ -365,6 +417,8 @@ def build_production_assurance_manifest(
     verification: VerificationRunRecord,
     certification: CertificationRecord,
     provenance: ProvenanceRecord,
+    knowledge_trust: TrustedSourceRegistry,
+    knowledge_freshness: FreshnessPolicy,
     measurement_observations: tuple[CalibratedMeasurementObservation, ...] = (),
     random_seed: int | None = None,
     parent: ScientificRunManifest | None = None,
@@ -380,6 +434,8 @@ def build_production_assurance_manifest(
         verification=verification,
         certification=certification,
         provenance=provenance,
+        knowledge_trust=knowledge_trust,
+        knowledge_freshness=knowledge_freshness,
         measurement_observations=measurement_observations,
     )
     artifacts = production_assurance_artifacts(
@@ -391,6 +447,8 @@ def build_production_assurance_manifest(
         verification=verification,
         certification=certification,
         provenance=provenance,
+        knowledge_trust=knowledge_trust,
+        knowledge_freshness=knowledge_freshness,
         measurement_observations=measurement_observations,
     )
     return ScientificRunManifest(
