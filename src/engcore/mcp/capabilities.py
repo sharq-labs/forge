@@ -390,14 +390,16 @@ def electrothermal_capability() -> CapabilityDeclaration:
         ),
         uncertainty=UncertaintyCapability(
             quantified={
-                name: (
-                    UncertaintyChannel.EPISTEMIC_PARAMETER,
-                    UncertaintyChannel.ALEATORIC,
-                    UncertaintyChannel.MODEL_FORM,
-                )
+                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
                 for name in ("final_temperature", "steady_state_temperature", "time_constant")
             },
-            basis=_ET_PARAMETER_UQ,
+            basis=(
+                _ET_PARAMETER_UQ
+                + ". Empirical ALEATORIC and MODEL_FORM study engines exist, but "
+                  "this production capability does not advertise them as quantified "
+                  "until repository-pinned observations satisfy the study admission "
+                  "rules and a trusted model-form producer qualification exists."
+            ),
         ),
         perturbable=tuple(PerturbableInput(path, why) for path, why in _ET_PERTURBABLE),
         routes=(
@@ -523,11 +525,7 @@ def battery_capability() -> CapabilityDeclaration:
         ),
         uncertainty=UncertaintyCapability(
             quantified={
-                name: (
-                    UncertaintyChannel.EPISTEMIC_PARAMETER,
-                    UncertaintyChannel.ALEATORIC,
-                    UncertaintyChannel.MODEL_FORM,
-                )
+                name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
                 for name in (
                     "terminal_voltage",
                     "open_circuit_voltage",
@@ -536,7 +534,14 @@ def battery_capability() -> CapabilityDeclaration:
                     "final_temperature",
                 )
             },
-            basis=_BATTERY_PARAMETER_UQ,
+            basis=(
+                _BATTERY_PARAMETER_UQ
+                + ". Curated battery measurements are admitted separately, but "
+                  "the current repository has too few exact-context independent "
+                  "replicates for the declared 95/95 Wilks ALEATORIC interval, and "
+                  "no repository-pinned independent model-form producer qualification. "
+                  "Those channels therefore remain UNKNOWN in the production declaration."
+            ),
         ),
         perturbable=tuple(
             PerturbableInput(path, rationale)
