@@ -23,19 +23,18 @@ class ReplayBundle:
         if not run_id:
             raise InvalidScientificProblem("replay bundle requires run_id")
         object.__setattr__(self, "run_id", run_id)
+        artifacts = tuple(self.artifacts)
+        if any(not isinstance(a, ArtifactIdentity) for a in artifacts):
+            raise InvalidScientificProblem(
+                "replay bundle artifacts must be ArtifactIdentity records"
+            )
         artifacts = tuple(
             sorted(
-                tuple(self.artifacts),
-                key=lambda a: (
-                    getattr(a, "kind", ""),
-                    getattr(a, "identifier", ""),
-                    getattr(a, "digest", ""),
-                ),
+                artifacts,
+                key=lambda a: (a.kind, a.identifier, a.digest),
             )
         )
         object.__setattr__(self, "artifacts", artifacts)
-        if any(not isinstance(a, ArtifactIdentity) for a in self.artifacts):
-            raise InvalidScientificProblem("replay bundle artifacts must be ArtifactIdentity records")
         keys=[(a.kind,a.identifier) for a in self.artifacts]
         if len(keys) != len(set(keys)):
             raise InvalidScientificProblem("replay bundle contains duplicate artifact identities")
