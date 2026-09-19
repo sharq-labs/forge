@@ -29,7 +29,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from ..mcp.errors import ProblemPayloadError
 from ..scientific.errors import ScientificCoreError
 from ..scientific.units.quantity import Quantity, dimensionality
 from .capabilities import CapabilityRegistry, InstanceReport
@@ -138,7 +137,7 @@ def execute_plan(plan: ExperimentPlan, registry: CapabilityRegistry, stated: dic
     base = dict(plan_digest=plan.digest, run_id=plan.run_id, capability_id=plan.capability_id)
     try:
         run = declaration.executor(dict(plan.case), run_id=plan.run_id)
-    except (ProblemPayloadError, CapabilityExecutionRefused, CapabilityInputError) as exc:
+    except (CapabilityExecutionRefused, CapabilityInputError) as exc:
         return PlanExecution(outcome=ExecutionOutcome.REFUSED_BY_SYSTEM, failure=f"{type(exc).__name__}: {exc}", **base)
     except ScientificCoreError as exc:
         return PlanExecution(outcome=ExecutionOutcome.REFUSED_BY_SYSTEM, failure=f"{type(exc).__name__}: {exc}", **base)
