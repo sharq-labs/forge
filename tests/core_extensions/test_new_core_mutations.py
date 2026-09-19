@@ -53,14 +53,14 @@ def replay_environment_drift_is_not_verified():
     actual = ReplayBundle(
         "run", (artifact,), RuntimeEnvironment("Python 3.12", "linux", "c" * 64), 7
     )
-    assert not verify_replay_bundle(expected, actual).verified
+    assert not replay_verifier_module.verify_replay_bundle(expected, actual).verified
 
 
 def unknown_evidence_authority_is_not_admissible():
     graph = EvidenceGraph((
         EvidenceNode("e", EvidenceAuthority.UNKNOWN, "d" * 64, "unclassified"),
     ))
-    assert not assess_graph(graph).admissible
+    assert not evidence_policy_module.assess_graph(graph).admissible
 
 
 def unvalidated_model_form_is_not_promotable():
@@ -72,7 +72,7 @@ def unvalidated_model_form_is_not_promotable():
         None,
         "no holdout",
     )
-    assert assess_promotion(estimate, ModelFormPolicy()).decision is PromotionDecision.REFUSED
+    assert model_form_promotion_module.assess_promotion(estimate, ModelFormPolicy()).decision is PromotionDecision.REFUSED
 
 
 def agreement_without_independence_is_not_verified():
@@ -80,7 +80,7 @@ def agreement_without_independence_is_not_verified():
     independence = (
         IndependenceEvidence(IndependenceLevel.PARTIAL, ("shared_model",)),
     )
-    assert adjudicate(comparisons, independence) is VerificationDecision.INSUFFICIENT_INDEPENDENCE
+    assert verification_adjudication_module.adjudicate(comparisons, independence) is VerificationDecision.INSUFFICIENT_INDEPENDENCE
 
 
 def missing_certification_gate_is_not_verified():
@@ -91,12 +91,12 @@ def missing_certification_gate_is_not_verified():
         (CertificationGateResult("fast", True, "b" * 64),),
         (CertificationArtifact("report", "c" * 64),),
     )
-    assert not verify_certification_record(record).verified
+    assert not certification_verifier_module.verify_certification_record(record).verified
 
 
 def retry_budget_is_not_bypassed():
     attempt = SimulationAttempt("a", AttemptState.FAILED, 0, "solver_failure")
-    assert decide_retry(attempt, 1, ExecutionBudget(max_attempts=1)).decision is RetryDecision.STOP_BUDGET
+    assert retry_module.decide_retry(attempt, 1, ExecutionBudget(max_attempts=1)).decision is RetryDecision.STOP_BUDGET
 
 
 MUTANTS = (
