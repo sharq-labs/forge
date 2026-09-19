@@ -28,6 +28,8 @@ class FreshnessPolicy:
             cls=KnowledgeSourceClass(key)
             if value is not None and int(value)<0: raise ValueError("freshness max age must be non-negative or None")
             normalized[cls]=None if value is None else int(value)
+        if not isinstance(self.require_timestamp, bool):
+            raise ValueError("require_timestamp must be bool")
         object.__setattr__(self,"max_age_days",MappingProxyType(normalized))
 
     def to_dict(self) -> dict[str, Any]:
@@ -50,7 +52,9 @@ class FreshnessPolicy:
     def assess(self,source:KnowledgeSource,*,now:datetime)->KnowledgeFreshness:
         if now.tzinfo is None:
             raise ValueError("freshness assessment time must be timezone-aware")
-        limit=self.max_age_days.get(source.source_class)
+        if source.source_class not in self.max_age_days:
+            return KnowledgeFreshness.UNKNOWN
+        limit=self.max_age_days[source.source_class]
         if limit is None:
             return KnowledgeFreshness.NOT_APPLICABLE
         if not source.published_at:

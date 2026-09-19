@@ -23,3 +23,17 @@ def test_future_or_missing_publication_time_is_not_current():
 def test_naive_assessment_time_is_refused_for_reproducibility():
     with pytest.raises(ValueError,match="timezone-aware"):
         freshness().assess(source(),now=datetime(2026,9,19))
+
+
+def test_unconfigured_source_class_is_unknown_not_not_applicable():
+    from engcore.scientific.knowledge import FreshnessPolicy, KnowledgeSourceClass
+    policy=FreshnessPolicy({KnowledgeSourceClass.PEER_REVIEWED:365})
+    now=datetime(2026,9,19,tzinfo=timezone.utc)
+    assert policy.assess(source(),now=now) is KnowledgeFreshness.UNKNOWN
+
+
+def test_explicit_none_is_the_only_not_applicable_freshness_rule():
+    from engcore.scientific.knowledge import FreshnessPolicy, KnowledgeSourceClass
+    policy=FreshnessPolicy({KnowledgeSourceClass.STANDARD:None})
+    now=datetime(2026,9,19,tzinfo=timezone.utc)
+    assert policy.assess(source(),now=now) is KnowledgeFreshness.NOT_APPLICABLE
