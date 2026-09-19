@@ -96,12 +96,11 @@ def validate(data: dict[str, Any]) -> tuple[str, ...]:
             "id", "kind", "title", "owner", "declared_stage",
             "summary", "next_actions", "gates",
         }
+        cid = str(cap.get("id", "")).strip() or "<missing>"
         if set(cap) != expected_fields:
             errors.append(
-                f"{prefix if 'prefix' in locals() else cid}: capability fields must be exactly "
-                f"{sorted(expected_fields)}"
+                f"{cid}: capability fields must be exactly {sorted(expected_fields)}"
             )
-        cid = str(cap.get("id", "")).strip() or "<missing>"
         for field_name in ("kind", "title", "owner", "summary"):
             if not str(cap.get(field_name, "")).strip():
                 errors.append(f"{cid}: {field_name} must be non-empty")
