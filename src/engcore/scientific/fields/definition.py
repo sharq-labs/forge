@@ -20,7 +20,9 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
 from ..units.quantity import normalize_unit
+from .support import MeshSupport
 from .mesh import StructuredMesh
+from .unstructured import UnstructuredMesh
 
 FIELD_DEFINITION_SCHEMA = schema_string("field_definition")
 
@@ -81,10 +83,10 @@ class FieldDefinition:
             )
 
     # ---- what it demands of a support --------------------------------------
-    def require_support(self, mesh: StructuredMesh) -> None:
-        if not isinstance(mesh, StructuredMesh):
+    def require_support(self, mesh: MeshSupport) -> None:
+        if not isinstance(mesh, (StructuredMesh, UnstructuredMesh)):
             raise InvalidScientificProblem(
-                f"field {self.field_id!r} is defined on a StructuredMesh, got "
+                f"field {self.field_id!r} requires a declared mesh support, got "
                 f"{type(mesh).__name__}"
             )
         if mesh.mesh_id != self.mesh_id:
@@ -94,13 +96,13 @@ class FieldDefinition:
                 f"not a field of another"
             )
 
-    def expected_shape(self, mesh: StructuredMesh) -> tuple[int, ...]:
+    def expected_shape(self, mesh: MeshSupport) -> tuple[int, ...]:
         """The shape an array of this field on ``mesh`` must have."""
         self.require_support(mesh)
         base = mesh.node_shape if self.location is FieldLocation.NODE else mesh.cell_shape
         return base if self.components == 1 else (*base, self.components)
 
-    def expected_count(self, mesh: StructuredMesh) -> int:
+    def expected_count(self, mesh: MeshSupport) -> int:
         """How many values that is. A count is derived, never declared."""
         self.require_support(mesh)
         sites = (
