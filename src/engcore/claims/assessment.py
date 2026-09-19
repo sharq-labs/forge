@@ -70,6 +70,8 @@ from .external_evidence import (
     read_external_record,
 )
 from .oracles import discover_oracles
+from .measurement_dataset import DatasetObservation
+from ..uq.model_form.qualification import ProducerQualification
 from .gaps import analyze_gaps
 from .next_experiment import recommend_next
 from .policy import derive_requirement, policy_findings
@@ -621,6 +623,8 @@ def assess_claim(
     registry: CapabilityRegistry,
     *,
     external: tuple[Any, ...] = (),
+    empirical_observations: tuple[DatasetObservation, ...] = (),
+    model_form_qualification: ProducerQualification | None = None,
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
 ) -> ClaimAssessment:
     """Assess one structured claim end to end. Expected outcomes are records, never exceptions.
@@ -639,7 +643,14 @@ def assess_claim(
         view = _execution_view(execution)
     studies = None
     if execution is not None and execution.bound and planned_studies(plan):
-        studies = run_uncertainty_studies(plan, registry, parsed, report)
+        studies = run_uncertainty_studies(
+            plan,
+            registry,
+            parsed,
+            report,
+            empirical_observations=empirical_observations,
+            model_form_qualification=model_form_qualification,
+        )
     offered = tuple(read_external_record(r) if isinstance(r, Mapping) else r for r in external)
     record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust)
     return ClaimAssessment(
@@ -716,7 +727,13 @@ def verify_assessment(
         if plan is None or report is None:
             raise AssessmentForgeryError("uncertainty studies are recorded for a run that produced no bound report")
         try:
-            studies = verify_study_records(_plain(recorded_studies), plan, report)
+            studies = verify_study_records(
+                _plain(recorded_studies),
+                plan,
+                report,
+                registry=registry,
+                claim=claim,
+            )
         except UncertaintyStudyError as exc:
             raise AssessmentForgeryError(f"uncertainty studies: {exc}") from exc
     try:
