@@ -76,6 +76,10 @@ from .model_form_trust import (
     ModelFormQualificationRegistry,
     PRODUCTION_MODEL_FORM_QUALIFICATIONS,
 )
+from .empirical_uq_trust import (
+    EmpiricalObservationRegistry,
+    PRODUCTION_EMPIRICAL_OBSERVATIONS,
+)
 from .gaps import analyze_gaps
 from .next_experiment import recommend_next
 from .policy import derive_requirement, policy_findings
@@ -632,6 +636,9 @@ def assess_claim(
     model_form_qualification_trust: ModelFormQualificationRegistry = (
         PRODUCTION_MODEL_FORM_QUALIFICATIONS
     ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
+    ),
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
 ) -> ClaimAssessment:
     """Assess one structured claim end to end. Expected outcomes are records, never exceptions.
@@ -658,6 +665,7 @@ def assess_claim(
             empirical_observations=empirical_observations,
             model_form_qualification=model_form_qualification,
             model_form_qualification_trust=model_form_qualification_trust,
+            empirical_observation_trust=empirical_observation_trust,
         )
     offered = tuple(read_external_record(r) if isinstance(r, Mapping) else r for r in external)
     record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust)
@@ -684,6 +692,9 @@ def verify_assessment(
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
     model_form_qualification_trust: ModelFormQualificationRegistry = (
         PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
     ),
 ) -> ClaimAssessment:
     """Read an assessment record back by re-deriving every part of it.
@@ -745,6 +756,7 @@ def verify_assessment(
                 registry=registry,
                 claim=claim,
                 model_form_qualification_trust=model_form_qualification_trust,
+                empirical_observation_trust=empirical_observation_trust,
             )
         except UncertaintyStudyError as exc:
             raise AssessmentForgeryError(f"uncertainty studies: {exc}") from exc
