@@ -1,6 +1,6 @@
 """The V4 guard-mutation population's own guard: every folded mutation still bites (I-30, R-67).
 
-`tests/mutation_population_v4.py` holds the 605 guard mutations the 2026-09-16 core re-audit's 55
+`tests/mutation_population_v4.py` holds the 616 guard mutations the 2026-09-16 core re-audit's 55
 batches wrote. Each was run once, in its own batch, against the tree as it stood that day -- and then
 the tree moved. Twenty-five of them had already stopped describing the source when this round folded
 them in, which is the same defect `tests/test_mutation_harness.py` exists for one level up: a
@@ -81,7 +81,7 @@ def applied() -> tuple[dict[str, str], dict[str, str], tuple[str, ...]]:
     """``(stale, inert, changes code only on 3.12+)``, measured once for every caller.
 
     Cached because two suites ask -- this one and the batch that introduced the population -- and the
-    scan reads 605 entries against the tree. One measurement, one answer, no chance of the two
+    scan reads 616 entries against the tree. One measurement, one answer, no chance of the two
     disagreeing.
     """
     stale: dict[str, str] = {}
@@ -111,7 +111,7 @@ def test_no_two_folded_mutations_share_an_id():
     """The runner writes its work tree at ``mut_<id>``, so two entries under one name is one run."""
     ids = [entry[0] for entry in pop.POPULATION_V4]
     assert len(ids) == len(set(ids)), sorted(i for i in set(ids) if ids.count(i) > 1)
-    assert len(ids) == 605, f"{len(ids)} entries; the population the certificate claims is 605"
+    assert len(ids) == 616, f"{len(ids)} entries; the population the certificate claims is 616"
 
 
 def test_every_folded_mutation_still_matches_the_source_it_names():
@@ -179,14 +179,14 @@ def test_the_population_is_pinned_by_the_certificate_and_its_digests_are_re_deri
     assert "tests/mutation_population_v4.py" in set(enumerate_area(REPO, harness))
     population = v4_population(REPO)
     assert population.ids == pop.POPULATION_V4_IDS
-    assert population.count == 605 and population.definitions_sha256
+    assert population.count == 616 and population.definitions_sha256
 
 
 def test_the_closure_reaches_every_suite_the_population_names():
     """The seeds are half the derivation (R-68).
 
     A closure taken from the harness TARGETS alone would already contain `hybrid_synthetic.py` and
-    would still not contain the suites this round's 605 entries name -- which are exactly the suites
+    would still not contain the suites this round's 616 entries name -- which are exactly the suites
     a V4 kill is a statement about.
     """
     from tools.certification.core_certificate import harness_import_closure  # noqa: PLC0415

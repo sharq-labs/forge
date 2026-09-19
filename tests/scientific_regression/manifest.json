@@ -681,6 +681,101 @@
         "diagnostics"
       ],
       "invariant": "simulation orchestration executes the declared deterministic fallback order and stops on convergence"
+    },
+    {
+      "id": "equation-v2-derivative-evidence",
+      "nodeid": "tests/scientific/equations/test_derivatives_v2.py::test_derivative_binding_with_wrong_dimension_is_refused",
+      "tags": [
+        "equation_ir",
+        "vnv",
+        "diagnostics"
+      ],
+      "invariant": "derivative evidence is explicit and dimensionally checked"
+    },
+    {
+      "id": "equation-v2-constraint-wire",
+      "nodeid": "tests/scientific/equations/test_constraints_v2.py::test_constraint_wire_verdict_is_rederived",
+      "tags": [
+        "equation_ir",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "constraint decisions are re-derived across serialization"
+    },
+    {
+      "id": "equation-v2-assumption-unknown",
+      "nodeid": "tests/scientific/equations/test_assumptions_v2.py::test_checkable_assumption_can_be_satisfied_violated_or_unknown",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "machine assumptions retain UNKNOWN instead of inventing satisfaction"
+    },
+    {
+      "id": "equation-v2-condition-location",
+      "nodeid": "tests/scientific/equations/test_conditions_v2.py::test_condition_refuses_a_conflicting_location_binding",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "initial/boundary condition location cannot be overridden"
+    },
+    {
+      "id": "equation-v2-safe-isolation",
+      "nodeid": "tests/scientific/equations/test_transformations_v2.py::test_safe_symbol_isolation_records_nonzero_side_condition",
+      "tags": [
+        "equation_ir",
+        "diagnostics"
+      ],
+      "invariant": "symbolic rearrangement records nonzero side conditions"
+    },
+    {
+      "id": "equation-v2-nondimensional",
+      "nodeid": "tests/scientific/equations/test_nondimensional_v2.py::test_ohm_law_nondimensionalization_produces_dimensionless_residual_equation",
+      "tags": [
+        "equation_ir",
+        "uq"
+      ],
+      "invariant": "nondimensionalization produces a dimensionless residual contract"
+    },
+    {
+      "id": "equation-v2-ode",
+      "nodeid": "tests/scientific/equations/test_differential_ode_v2.py::test_ode_contract_classifies_order_conditions_and_round_trips",
+      "tags": [
+        "equation_ir",
+        "vnv",
+        "replay"
+      ],
+      "invariant": "ODE kind/order/conditions survive validated serialization"
+    },
+    {
+      "id": "equation-v2-pde",
+      "nodeid": "tests/scientific/equations/test_differential_pde_v2.py::test_two_space_dimensional_heat_equation_is_dimensionally_complete",
+      "tags": [
+        "equation_ir",
+        "vnv"
+      ],
+      "invariant": "typed PDE operators are dimensionally complete"
+    },
+    {
+      "id": "equation-v2-law-system",
+      "nodeid": "tests/scientific/equations/test_law_system_v2.py::test_law_system_binds_assumptions_conditions_and_differential_evidence",
+      "tags": [
+        "equation_ir",
+        "applicability",
+        "evidence"
+      ],
+      "invariant": "law systems bind differential evidence assumptions and conditions"
+    },
+    {
+      "id": "equation-v2-differential-variable-authority",
+      "nodeid": "tests/scientific/equations/test_differential_ode_v2.py::test_differential_problem_rejects_derivative_on_undeclared_independent_variable",
+      "tags": [
+        "equation_ir",
+        "applicability",
+        "diagnostics"
+      ],
+      "invariant": "derivatives cannot use undeclared independent variables"
     }
   ]
 }
