@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
+from ..errors import InvalidScientificProblem
 from .claim import KnowledgeClaim
 from .freshness import FreshnessPolicy,KnowledgeFreshness
 from .snapshot import KnowledgeSnapshot
@@ -31,8 +32,14 @@ class KnowledgeAdmission:
 
 def admit_claim(snapshot:KnowledgeSnapshot,claim_id:str,registry:TrustedSourceRegistry,
                 freshness_policy:FreshnessPolicy,*,now:datetime,target_context_digest:str)->KnowledgeAdmission:
-    claim=next(c for c in snapshot.claims if c.claim_id==claim_id)
-    source=next(s for s in snapshot.sources if s.source_id==claim.source_id)
+    claim=next((c for c in snapshot.claims if c.claim_id==claim_id),None)
+    if claim is None:
+        raise InvalidScientificProblem(f"knowledge snapshot has no claim {claim_id!r}")
+    source=next((s for s in snapshot.sources if s.source_id==claim.source_id),None)
+    if source is None:
+        raise InvalidScientificProblem(
+            f"knowledge claim {claim.claim_id!r} references source absent from snapshot"
+        )
     trust=registry.assess(source);freshness=freshness_policy.assess(source,now=now);reasons=[]
     if not trust.trusted: reasons.append(trust.reason)
     if freshness is KnowledgeFreshness.STALE: reasons.append("source is stale under declared freshness policy")

@@ -57,6 +57,13 @@ class KnowledgeClaim:
             else:
                 require_same_dimension(self.uncertainty.lower,self.numeric_value,context="knowledge claim interval")
                 require_same_dimension(self.uncertainty.upper,self.numeric_value,context="knowledge claim interval")
+                lower=self.uncertainty.lower.to(self.numeric_value.units).magnitude
+                upper=self.uncertainty.upper.to(self.numeric_value.units).magnitude
+                value=self.numeric_value.magnitude
+                if lower > value or upper < value:
+                    raise InvalidScientificProblem(
+                        "knowledge claim uncertainty interval must contain the numeric value"
+                    )
         object.__setattr__(self,"claim_id",cid);object.__setattr__(self,"kind",KnowledgeKind(self.kind))
         object.__setattr__(self,"subject",subject);object.__setattr__(self,"quantity_name",q)
         object.__setattr__(self,"text_value",text);object.__setattr__(self,"source_id",source)
