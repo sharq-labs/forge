@@ -453,7 +453,7 @@ def build_battery_case(payload: Mapping[str, Any]):
     )
     applicability_values = _read_section(
         _require_mapping(
-            thermal_raw.get("applicability"),
+            thermal_raw.get("applicability", {}),
             where=THERMAL_APPLICABILITY,
         ),
         THERMAL_APPLICABILITY,
