@@ -50,6 +50,10 @@ from .analysis.model_discrepancy import (
     estimate_model_form_discrepancy,
 )
 from .measurement_dataset import DatasetObservation
+from .empirical_uq_trust import (
+    EmpiricalObservationRegistry,
+    PRODUCTION_EMPIRICAL_OBSERVATIONS,
+)
 from .model_form_uq import evaluate_discrepancy_for_model_form
 from .model_form_uncertainty import ModelFormAuthorityError, promote_model_form_interval
 from .model_form_trust import (
@@ -343,13 +347,18 @@ def _aleatoric(
     report,
     spec,
     observations: Sequence[DatasetObservation],
+    empirical_trust: EmpiricalObservationRegistry,
 ) -> tuple[dict[str, Any], Uncertainty]:
     qoi = plan.content["qoi"]
     nominal = report.values[qoi["name"]].to(qoi["units"])
     replicates: list[ReplicateObservation] = []
     source_observations: list[DatasetObservation] = []
     for item in observations:
-        if item.quantity != qoi["name"] or not item.ready_for_measurement_evidence:
+        if (
+            item.quantity != qoi["name"]
+            or not item.ready_for_measurement_evidence
+            or empirical_trust.pin_for(item) is None
+        ):
             continue
         if (
             item.uncertainty.kind is not UncertaintyKind.INTERVAL
@@ -393,6 +402,7 @@ def _aleatoric(
         "kind": "aleatoric_replicates",
         "spec": spec,
         "source_observations": [item.to_dict() for item in source_observations],
+        "empirical_trust_registry_digest": empirical_trust.digest,
         "replicates": [item.to_dict() for item in replicates],
         "estimate": None if estimate is None else estimate.to_dict(),
         "problem": problem,
@@ -434,6 +444,7 @@ def _model_form(
     observations: Sequence[DatasetObservation],
     qualification: ProducerQualification | None,
     qualification_trust: ModelFormQualificationRegistry,
+    empirical_trust: EmpiricalObservationRegistry,
 ) -> tuple[dict[str, Any], Uncertainty]:
     declaration = registry.get(plan.capability_id)
     qoi = plan.content["qoi"]
@@ -442,7 +453,11 @@ def _model_form(
     eligible = tuple(
         item
         for item in observations
-        if item.quantity == qoi["name"] and item.ready_for_measurement_evidence
+        if (
+            item.quantity == qoi["name"]
+            and item.ready_for_measurement_evidence
+            and empirical_trust.pin_for(item) is not None
+        )
     )
     pairs: list[PairedObservation] = []
     runs: list[VariantRun] = []
@@ -569,6 +584,7 @@ def _model_form(
         "kind": "model_form_empirical",
         "spec": spec,
         "source_observations": [item.to_dict() for item in eligible],
+        "empirical_trust_registry_digest": empirical_trust.digest,
         "runs": [item.to_dict() for item in runs],
         "pairs": [item.to_dict() for item in pairs],
         "scope": None if scope is None else scope.to_dict(),
@@ -615,6 +631,9 @@ def run_uncertainty_studies(
     model_form_qualification_trust: ModelFormQualificationRegistry = (
         PRODUCTION_MODEL_FORM_QUALIFICATIONS
     ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
+    ),
 ) -> StudyOutcome:
     """Run every planned UQ study; missing empirical evidence stays explicit UNKNOWN."""
     records = []
@@ -639,7 +658,11 @@ def run_uncertainty_studies(
             record, uncertainty = _propagation(plan, registry, claim, report, spec)
         elif kind == "aleatoric_replicates":
             record, uncertainty = _aleatoric(
-                plan, report, spec, empirical_observations
+                plan,
+                report,
+                spec,
+                empirical_observations,
+                empirical_observation_trust,
             )
         elif kind == "model_form_empirical":
             record, uncertainty = _model_form(
@@ -651,6 +674,7 @@ def run_uncertainty_studies(
                 empirical_observations,
                 model_form_qualification,
                 model_form_qualification_trust,
+                empirical_observation_trust,
             )
         else:  # pragma: no cover - study_spec is the closed producer
             raise UncertaintyStudyError(f"unsupported planned study kind {kind!r}")
@@ -669,6 +693,9 @@ def verify_study_records(
     claim: ScientificClaim | None = None,
     model_form_qualification_trust: ModelFormQualificationRegistry = (
         PRODUCTION_MODEL_FORM_QUALIFICATIONS
+    ),
+    empirical_observation_trust: EmpiricalObservationRegistry = (
+        PRODUCTION_EMPIRICAL_OBSERVATIONS
     ),
 ) -> StudyOutcome:
     """Re-derive every stored UQ record without re-running numerical variants."""
@@ -802,6 +829,14 @@ def verify_study_records(
                 DatasetObservation.from_dict(item)
                 for item in record.get("source_observations", ())
             )
+            if record.get("empirical_trust_registry_digest") != empirical_observation_trust.digest:
+                raise UncertaintyStudyError(
+                    "the aleatoric study was judged under another empirical trust registry"
+                )
+            if any(empirical_observation_trust.pin_for(item) is None for item in source):
+                raise UncertaintyStudyError(
+                    "an aleatoric source observation is not pinned by the active empirical trust registry"
+                )
             expected_replicates = []
             for item in source:
                 if (
@@ -874,6 +909,14 @@ def verify_study_records(
                 DatasetObservation.from_dict(item)
                 for item in record.get("source_observations", ())
             )
+            if record.get("empirical_trust_registry_digest") != empirical_observation_trust.digest:
+                raise UncertaintyStudyError(
+                    "the model-form study was judged under another empirical trust registry"
+                )
+            if any(empirical_observation_trust.pin_for(item) is None for item in source):
+                raise UncertaintyStudyError(
+                    "a model-form source observation is not pinned by the active empirical trust registry"
+                )
             runs = list(record.get("runs", ()))
             pairs = tuple(
                 PairedObservation.from_dict(item)
