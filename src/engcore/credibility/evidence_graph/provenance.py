@@ -25,6 +25,7 @@ class EvidenceProvenance:
     pin_issuer: str
     pin_document_digest: str
     pin_version: str
+    freshness_rule_configured: bool
     freshness_limit_days: int | None
     freshness_requires_timestamp: bool
     assessed_at: str
@@ -53,6 +54,10 @@ class EvidenceProvenance:
                     f"evidence provenance {label} must be lowercase SHA-256"
                 )
             object.__setattr__(self, label, value)
+        if not isinstance(self.freshness_rule_configured, bool):
+            raise InvalidScientificProblem(
+                "freshness_rule_configured must be bool"
+            )
         if self.freshness_limit_days is not None:
             limit = int(self.freshness_limit_days)
             if limit < 0:
@@ -95,6 +100,8 @@ class EvidenceProvenance:
 
     @property
     def freshness(self) -> str:
+        if not self.freshness_rule_configured:
+            return "unknown"
         if self.freshness_limit_days is None:
             return "not_applicable"
         if not self.published_at:
@@ -134,6 +141,7 @@ class EvidenceProvenance:
             "pin_issuer": self.pin_issuer,
             "pin_document_digest": self.pin_document_digest,
             "pin_version": self.pin_version,
+            "freshness_rule_configured": self.freshness_rule_configured,
             "freshness_limit_days": self.freshness_limit_days,
             "freshness_requires_timestamp": self.freshness_requires_timestamp,
             "assessed_at": self.assessed_at,
@@ -158,6 +166,7 @@ class EvidenceProvenance:
             payload["pin_issuer"],
             payload["pin_document_digest"],
             payload["pin_version"],
+            payload["freshness_rule_configured"],
             payload.get("freshness_limit_days"),
             payload["freshness_requires_timestamp"],
             payload["assessed_at"],

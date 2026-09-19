@@ -68,6 +68,7 @@ def evidence_from_knowledge(
         pin.issuer,
         pin.document_digest,
         pin.version,
+        source.source_class in freshness_policy.max_age_days,
         freshness_policy.max_age_days.get(source.source_class),
         freshness_policy.require_timestamp,
         now.isoformat(),
