@@ -75,13 +75,14 @@ __all__ = [
     "assess_scientific_claim",
     "build_server",
     "describe_capabilities",
+    "describe_empirical_uq",
     "main",
     "run_battery",
     "run_electrothermal",
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.7.0"
+SERVER_VERSION = "0.8.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -938,9 +939,47 @@ def describe_external_evidence() -> dict[str, Any]:
     }
 
 
+def describe_empirical_uq() -> dict[str, Any]:
+    """Describe the empirical-UQ admission and model-form trust boundary."""
+    from ..claims.model_form_trust import PRODUCTION_MODEL_FORM_QUALIFICATIONS
+
+    return {
+        "aleatoric": {
+            "source_record": "claim DatasetObservation",
+            "requires": (
+                "independent physical replicates of one QOI; one exact operating "
+                "context and population; calibrated MEASUREMENT uncertainty "
+                "intervals; sufficient Wilks sample count"
+            ),
+            "missing_evidence_semantics": "UNKNOWN, never zero",
+        },
+        "model_form": {
+            "source_record": "claim DatasetObservation",
+            "requires": (
+                "independent calibration and held-out validation groups; usable "
+                "prediction runs at every observation; separated measurement/"
+                "prediction uncertainty; a producer qualification pinned by the "
+                "active model-form trust registry"
+            ),
+            "production_qualification_registry_digest":
+                PRODUCTION_MODEL_FORM_QUALIFICATIONS.digest,
+            "production_qualification_pin_count":
+                len(PRODUCTION_MODEL_FORM_QUALIFICATIONS.pins),
+            "missing_evidence_semantics": "UNKNOWN, never zero",
+        },
+        "notice": (
+            "The production qualification registry is repository-owned and "
+            "immutable at runtime. A caller-supplied qualification that is not "
+            "pinned cannot promote its own model-form estimate."
+        ),
+    }
+
+
 def assess_scientific_claim(
     claim: dict[str, Any],
     external: list[dict[str, Any]] | None = None,
+    empirical_observations: list[dict[str, Any]] | None = None,
+    model_form_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Generic claim assessment: route, plan, execute, add offered curated evidence and assure.
 
@@ -948,6 +987,12 @@ def assess_scientific_claim(
     by :func:`describe_external_evidence`.  They are never trusted by being
     passed: the production trust registry and the ordinary applicability/
     uncertainty gates decide their standing.
+
+    ``empirical_observations`` accepts serialized DatasetObservation records
+    for ALEATORIC and MODEL_FORM studies. ``model_form_qualification`` may
+    carry a ProducerQualification, but it can authorize promotion only when its
+    content digest is pinned by the repository-owned production qualification
+    registry. Missing empirical evidence stays UNKNOWN.
 
     Every expected outcome -- a malformed claim, a missing input, an
     unsupported capability, an insufficient verdict -- is returned as a
@@ -958,6 +1003,8 @@ def assess_scientific_claim(
         PRODUCTION_EXTERNAL_REGISTRY,
         read_external_record,
     )
+    from ..claims.measurement_dataset import DatasetObservation
+    from ..uq.model_form.qualification import ProducerQualification
     from .capabilities import production_registry
 
     offered = []
@@ -965,10 +1012,22 @@ def assess_scientific_claim(
         raw = item.get("record", item) if isinstance(item, dict) else item
         offered.append(read_external_record(raw))
 
+    empirical = tuple(
+        DatasetObservation.from_dict(item)
+        for item in (empirical_observations or ())
+    )
+    qualification = (
+        None
+        if model_form_qualification is None
+        else ProducerQualification.from_dict(model_form_qualification)
+    )
+
     return assess(
         claim,
         production_registry(),
         external=tuple(offered),
+        empirical_observations=empirical,
+        model_form_qualification=qualification,
         trust=PRODUCTION_EXTERNAL_REGISTRY,
     ).to_dict()
 
@@ -1022,13 +1081,25 @@ def build_server() -> MCPServer:
         ),
     )
     server.add_tool(
+        describe_empirical_uq,
+        name="describe_empirical_uq",
+        title="Describe empirical uncertainty requirements",
+        description=(
+            "Describe the fail-closed admission rules for ALEATORIC and "
+            "MODEL_FORM uncertainty, including the production model-form "
+            "qualification trust-registry identity and current pin count."
+        ),
+    )
+    server.add_tool(
         assess_scientific_claim,
         name="assess_scientific_claim",
         title="Route, run and assess a structured scientific claim",
         description=_ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION + (
             "\n\nOptional external records may be supplied from "
-            "describe_external_evidence; passing a record never bypasses its "
-            "trust, applicability or uncertainty checks."
+            "describe_external_evidence; empirical DatasetObservation records "
+            "may be supplied for ALEATORIC/MODEL_FORM studies. Call "
+            "describe_empirical_uq for admission and trust requirements. Passing "
+            "a record never bypasses trust, applicability or uncertainty checks."
         ),
     )
     _audit_tools(server)
