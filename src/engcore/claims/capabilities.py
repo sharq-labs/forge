@@ -50,7 +50,7 @@ from ..scientific.capabilities import ScientificCapability
 from ..scientific.errors import ScientificCoreError
 from ..scientific.results.immutable import freeze
 from ..scientific.results.validation import ValidationLevel
-from ..scientific.serialization import require_schema_any, schema_string
+from ..scientific.serialization import schema_string
 from ..scientific.units.quantity import dimensionality, is_delta_unit, normalize_unit
 from ..sria.uncertainty import UncertaintyChannel
 from ..scientific.units.quantity import Quantity
@@ -701,7 +701,12 @@ class AttainableLevel:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "AttainableLevel":
         payload = require_mapping(payload, field="level", error=CapabilityDeclarationError)
-        schema = require_schema_any(payload, (LEVEL_SCHEMA, LEVEL_SCHEMA_SCOPED))
+        schema = payload.get("schema")
+        if schema not in (LEVEL_SCHEMA, LEVEL_SCHEMA_SCOPED):
+            raise CapabilityDeclarationError(
+                f"level: expected schema {LEVEL_SCHEMA!r} or "
+                f"{LEVEL_SCHEMA_SCOPED!r}, found {schema!r}"
+            )
         required = ("schema", "level", "check_name", "route_id", "condition")
         if schema == LEVEL_SCHEMA_SCOPED:
             required = required + ("quantities",)
