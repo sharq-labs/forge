@@ -571,7 +571,7 @@ def _model_form(
                 "empirical_holdout_coverage":
                     attempt.estimate.empirical_holdout_coverage,
                 "reason": attempt.estimate.reason,
-                "promotion_allowed": attempt.promotion.promotable,
+                "promotion_allowed": attempt.promotion.decision.value == "promotable",
                 "promotion_reasons": list(attempt.promotion.reasons),
             }
         ),
