@@ -31,7 +31,6 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from ..mcp.errors import ProblemPayloadError
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import ValidityStatus
 from ..scientific.results.uncertainty import Uncertainty
@@ -160,7 +159,7 @@ def run_variant(plan: Any, registry: CapabilityRegistry, inputs: Mapping[str, An
     try:
         case = build_case(declaration, dict(inputs))
         run = declaration.executor(case, run_id=run_id)
-    except (ProblemPayloadError, CapabilityExecutionRefused, CapabilityInputError, ScientificCoreError, ValueError) as exc:
+    except (CapabilityExecutionRefused, CapabilityInputError, ScientificCoreError, ValueError) as exc:
         return VariantRun(run_id, None, None, False, f"refused: {type(exc).__name__}: {exc}")
     chosen = [item for item in run.reports if item.instance == plan.instance]
     if not chosen and len(run.reports) == 1 and run.reports[0].instance is None:

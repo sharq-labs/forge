@@ -1,0 +1,42 @@
+{
+  "schema": "claim_measurement_dataset_manifest/1",
+  "dataset_id": "nasa.randomized_recommissioned_battery_alt",
+  "title": "Randomized and Recommissioned Battery Dataset",
+  "publisher": "NASA Prognostics Center of Excellence",
+  "citation": "Fricke, Nascimento, Corbetta, Kulkarni, Viana (2023), An Accelerated Life Testing Dataset for Lithium-Ion Batteries With Constant and Variable Loading Conditions, NASA NTRS 20230014884",
+  "landing_page": "https://data.nasa.gov/dataset/randomized-and-recommissioned-battery-dataset",
+  "resource_url": "https://data.nasa.gov/docs/legacy/battery_alt_dataset.zip",
+  "license_url": "https://www.usa.gov/government-works",
+  "version": "2025-05-29",
+  "catalog_source_hash": "c090a8fc0704df3dabeccf20d3efd96372af602d0c4c1fb140002e76cdcb9fff",
+  "columns": [
+    "start time",
+    "relative time",
+    "mode",
+    "voltage charger",
+    "temperature battery",
+    "voltage load",
+    "current load",
+    "temperature mosfet",
+    "temperature resistor",
+    "mission type"
+  ],
+  "value_columns": {
+    "battery_pack_temperature": {
+      "column": "temperature battery",
+      "unit": "degC"
+    },
+    "battery_pack_load_voltage": {
+      "column": "voltage load",
+      "unit": "volt"
+    },
+    "battery_pack_load_current": {
+      "column": "current load",
+      "unit": "ampere"
+    }
+  },
+  "condition_columns": {},
+  "independence_unit": "battery_pack",
+  "measurement_uncertainty_declared": false,
+  "notes": "NASA documents pack-level voltage, current and temperature channels for two-cell battery packs. Forge's current battery capability models one equivalent cell, so this manifest deliberately makes no direct Forge input/QOI mapping. Raw rows remain non-admissible dataset observations until a reviewed pack-to-cell transformation (if scientifically justified), exact operating context, calibrated measurement uncertainty and provenance are supplied. Calibration and validation splits must be by whole battery pack, never random rows from the same pack."
+}

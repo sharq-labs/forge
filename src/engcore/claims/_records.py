@@ -138,6 +138,14 @@ def tagged_digest(tag: str, value: Any) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+ASSESSMENT_DIGEST_TAG = "crafty.claims.assessment/1"
+
+
+def assessment_record_digest(record: Mapping[str, Any]) -> str:
+    """The public ClaimAssessment identity over its canonical record."""
+    return tagged_digest(ASSESSMENT_DIGEST_TAG, record)
+
+
 # ---------------------------------------------------------------------------
 # Input values
 # ---------------------------------------------------------------------------

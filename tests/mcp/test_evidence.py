@@ -177,7 +177,7 @@ class _FixtureModel:
 
 @pytest.fixture(autouse=True)
 def _fixture_models_are_declared(monkeypatch):
-    from engcore.mcp import evidence
+    from engcore.credibility import evidence
 
     index = dict(evidence._declared_models())
     for key, names in FIXTURE_MODELS.items():
