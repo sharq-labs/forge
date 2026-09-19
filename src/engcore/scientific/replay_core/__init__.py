@@ -31,3 +31,8 @@ __all__ += [
     "LineageVerification","verify_manifest_lineage","artifact_from_payload",
     "provenance_artifact",
 ]
+
+from .derivation import DerivationStep, ScientificDerivationGraph
+from .provenance_binding import bind_derivation_to_run
+
+__all__ += ["DerivationStep", "ScientificDerivationGraph", "bind_derivation_to_run"]
