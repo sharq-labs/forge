@@ -339,11 +339,17 @@ class IndependentLSODASolver(DeclaredSupport):
         caf = p.feed_concentration_mol_per_m3
         final_concentration = float(concentration[-1])
         conversion = (caf - final_concentration) / caf if caf > 0.0 else 0.0
+        # This verification route deliberately reports only the declared
+        # convergence/consensus QoIs. t:T_max is a sampled argmax coordinate,
+        # excluded from CONVERGENCE_QOIS because adjacent grids may choose
+        # adjacent samples on a plateau while agreeing on the physical peak.
+        # Its diagnostic value remains available as peak_time_s below, but it
+        # is not presented to CrossSolverConsensus as an answer this route is
+        # claiming to verify.
         values = {
             CA_FINAL_METRIC: final_concentration,
             T_FINAL_METRIC: float(temperature[-1]),
             T_MAX_METRIC: float(temperature[peak_index]),
-            T_AT_MAX_METRIC: float(payload.output_grid[peak_index]),
             CONVERSION_METRIC: float(conversion),
         }
         nfe = info.get("nfe")
