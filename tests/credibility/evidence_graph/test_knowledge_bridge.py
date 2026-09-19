@@ -7,6 +7,7 @@ from engcore.credibility.evidence_graph import (
 from engcore.credibility.knowledge_evidence import evidence_from_knowledge
 from engcore.scientific.errors import InvalidScientificProblem
 from tests.scientific.knowledge.helpers import CONTEXT, freshness, registry, snapshot
+from engcore.scientific.knowledge import FreshnessPolicy, KnowledgeSourceClass
 
 
 def node():
@@ -79,3 +80,26 @@ def test_strict_provenance_policy_refuses_legacy_unprovenanced_evidence():
         EvidenceGraphPolicy(require_provenance=True),
     )
     assert not result.admissible
+
+
+def test_provenance_freshness_status_is_rederived_not_trusted():
+    payload=node().to_dict()
+    payload["provenance"]["freshness"]="stale"
+    with pytest.raises(InvalidScientificProblem,match="freshness"):
+        EvidenceNode.from_dict(payload)
+
+
+def test_unconfigured_freshness_rule_remains_unknown_across_evidence_replay():
+    policy=FreshnessPolicy(
+        {KnowledgeSourceClass.PEER_REVIEWED:365},
+        require_timestamp=False,
+    )
+    evidence=evidence_from_knowledge(
+        snapshot(),"claim-1",registry(),policy,
+        now=datetime(2026,9,19,tzinfo=timezone.utc),
+        target_context_digest=CONTEXT,
+    )
+    assert evidence.provenance.freshness=="unknown"
+    assert evidence.provenance.fresh_enough
+    restored=EvidenceNode.from_dict(evidence.to_dict())
+    assert restored.provenance.freshness=="unknown"
