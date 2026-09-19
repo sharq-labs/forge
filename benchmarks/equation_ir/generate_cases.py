@@ -138,14 +138,12 @@ def build_cases() -> list[dict[str, Any]]:
     return cases
 
 
-def write_cases(directory: Path) -> None:
-    directory.mkdir(parents=True, exist_ok=True)
-    for index, payload in enumerate(build_cases(), start=1):
-        target = directory / f"case_{index:04d}.json"
-        target.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+def write_cases(target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(build_cases(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def main() -> int:
@@ -153,11 +151,11 @@ def main() -> int:
     parser.add_argument(
         "--out",
         type=Path,
-        default=Path(__file__).resolve().parent / "cases",
+        default=Path(__file__).resolve().parent / "cases.json",
     )
     args = parser.parse_args()
     write_cases(args.out)
-    print(f"wrote 500 deterministic equation IR cases to {args.out}")
+    print(f"wrote one deterministic 500-case Equation IR corpus to {args.out}")
     return 0
 
 

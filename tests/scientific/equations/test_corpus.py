@@ -14,14 +14,11 @@ from engcore.scientific.equations import (
 )
 
 ROOT = Path(__file__).resolve().parents[3]
-CASES = ROOT / "benchmarks" / "equation_ir" / "cases"
+CASES = ROOT / "benchmarks" / "equation_ir" / "cases.json"
 
 
 def load_cases() -> list[dict]:
-    return [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in sorted(CASES.glob("case_*.json"))
-    ]
+    return json.loads(CASES.read_text(encoding="utf-8"))
 
 
 def test_corpus_contains_exactly_500_unique_cases():
