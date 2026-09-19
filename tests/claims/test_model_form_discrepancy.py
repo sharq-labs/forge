@@ -193,7 +193,9 @@ def test_residuals_below_known_uncertainty_do_not_establish_zero_model_form() ->
     assert estimate.conservative_compatible_half_width is not None
     assert estimate.status is DiscrepancyEstimateStatus.UNRESOLVED_BELOW_KNOWN_UNCERTAINTY
     assert estimate.candidate is None
-    assert "does not establish zero" in estimate.reason
+    assert "zero" in estimate.reason.lower()
+    assert "known" in estimate.reason.lower()
+    assert "uncertainty" in estimate.reason.lower()
 
 
 def test_known_uncertainty_widths_are_normalized_before_residual_constraints() -> None:

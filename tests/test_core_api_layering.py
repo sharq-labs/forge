@@ -252,6 +252,10 @@ def test_the_canonical_modules_are_exactly_the_core_packages():
 #: would simply be unclassified, which is how an accidental public surface
 #: starts.
 NON_CORE_PACKAGES = {
+    "domainpacks": (
+        "plugin discovery, validation, registration and provenance infrastructure; "
+        "above the Scientific Core and deliberately outside the frozen scientific API"
+    ),
     "domains": (
         "scientific domains built ON the Core. Read-only for this round by "
         "standing instruction, and above the Core rather than in it"

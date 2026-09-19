@@ -24,7 +24,7 @@
     "discharge_capacity": {"column": "data.Capacity", "unit": "ampere_hour"}
   },
   "condition_columns": {
-    "load.current": {"column": "data.Current_measured", "unit": "ampere"},
+    "load.discharge_current": {"column": "data.Current_measured", "unit": "ampere"},
     "load.cell_temperature": {"column": "data.Temperature_measured", "unit": "degC"},
     "thermal.ambient_temperature": {"column": "cycle.ambient_temperature", "unit": "degC"}
   },
