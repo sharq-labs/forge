@@ -316,6 +316,38 @@ tool refuses a part over its rating at the point it converges to, and a
 benchmark whose labels are now sized at that same point could not catch a
 regression in it.
 
+## Battery benchmark status after Production Closure
+
+`results_battery.json` and `cases_battery/` are now **Battery V1 historical
+artifacts**. They deliberately remain unchanged so the 2026-09-15 CAP-02
+transition can still be reproduced; their 54.8% exact-match figure is not a
+current quality claim.
+
+The current generator is Battery V2:
+
+```bash
+cd benchmarks/hard
+python generate_battery.py --out cases_battery_v2 --index index_battery_v2.json
+python score_hard.py --src ../../src --cases cases_battery_v2 \
+  --results results_battery_v2.json --workers 4
+```
+
+V2 changes the *truth model*, not the runtime to chase a score:
+
+- coulomb counting uses `I*dt/(eta*Q)`, matching the corrected physics;
+- CAP-02 pulse polarization, pulse terminal voltage and pulse-cutoff shift are
+  independently recomputed by the generator;
+- the conservative pulse-polarization screen expects
+  `INSUFFICIENT_EVIDENCE`, never `NOT_SUPPORTED`;
+- every generated case carries a complete thermal applicability declaration,
+  so the scorer uses the **whole production credibility report**, not the old
+  four-battery-model projection;
+- each case carries `"benchmark_version": 2`; the scorer keeps V1's scoped
+  interpretation only to reproduce historical records.
+
+A V2 score is not published in this repository until V2 is actually generated
+and scored. Never copy the V1 number into V2 or relabel old cases in place.
+
 ## The battery benchmark — 400 cases
 
     python benchmarks/hard/score_hard.py --src src \
