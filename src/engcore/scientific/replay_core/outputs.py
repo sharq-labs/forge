@@ -24,10 +24,26 @@ class OutputExpectation:
         output_id=str(self.output_id).strip()
         if not output_id or not isinstance(self.expected,Quantity) or not isinstance(self.absolute_tolerance,Quantity):
             raise InvalidScientificProblem("output expectation requires id and typed quantities")
-        if self.absolute_tolerance.magnitude<0:
-            raise InvalidScientificProblem("output absolute tolerance must be non-negative")
-        try: self.absolute_tolerance.magnitude_as_spread_in(self.expected.units)
-        except Exception as exc: raise InvalidScientificProblem(f"output tolerance dimension differs from expected output: {exc}") from exc
+        expected_magnitude = float(self.expected.magnitude)
+        tolerance_magnitude = float(self.absolute_tolerance.magnitude)
+        if not math.isfinite(expected_magnitude):
+            raise InvalidScientificProblem("expected replay output must be finite")
+        if not math.isfinite(tolerance_magnitude) or tolerance_magnitude < 0:
+            raise InvalidScientificProblem(
+                "output absolute tolerance must be finite and non-negative"
+            )
+        try:
+            converted_tolerance = self.absolute_tolerance.magnitude_as_spread_in(
+                self.expected.units
+            )
+        except Exception as exc:
+            raise InvalidScientificProblem(
+                f"output tolerance dimension differs from expected output: {exc}"
+            ) from exc
+        if not math.isfinite(float(converted_tolerance)):
+            raise InvalidScientificProblem(
+                "converted output absolute tolerance must be finite"
+            )
         relative=float(self.relative_tolerance)
         if not math.isfinite(relative) or relative<0:
             raise InvalidScientificProblem("output relative tolerance must be finite and non-negative")

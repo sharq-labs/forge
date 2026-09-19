@@ -23,15 +23,27 @@ class ReplayBundle:
         if not run_id:
             raise InvalidScientificProblem("replay bundle requires run_id")
         object.__setattr__(self, "run_id", run_id)
-        object.__setattr__(self, "artifacts", tuple(self.artifacts))
-        if any(not isinstance(a, ArtifactIdentity) for a in self.artifacts):
-            raise InvalidScientificProblem("replay bundle artifacts must be ArtifactIdentity records")
+        artifacts = tuple(self.artifacts)
+        if any(not isinstance(a, ArtifactIdentity) for a in artifacts):
+            raise InvalidScientificProblem(
+                "replay bundle artifacts must be ArtifactIdentity records"
+            )
+        artifacts = tuple(
+            sorted(
+                artifacts,
+                key=lambda a: (a.kind, a.identifier, a.digest),
+            )
+        )
+        object.__setattr__(self, "artifacts", artifacts)
         keys=[(a.kind,a.identifier) for a in self.artifacts]
         if len(keys) != len(set(keys)):
             raise InvalidScientificProblem("replay bundle contains duplicate artifact identities")
         if not isinstance(self.environment, RuntimeEnvironment):
             raise InvalidScientificProblem("replay bundle requires RuntimeEnvironment")
-        if self.random_seed is not None and isinstance(self.random_seed, bool):
+        if self.random_seed is not None and (
+            isinstance(self.random_seed, bool)
+            or not isinstance(self.random_seed, int)
+        ):
             raise InvalidScientificProblem("random_seed must be int or None")
 
     def to_dict(self) -> dict[str, Any]:

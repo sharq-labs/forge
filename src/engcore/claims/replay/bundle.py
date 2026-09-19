@@ -8,7 +8,7 @@ A bundle carries everything needed to re-check one assessed claim:
 * the declaration of the capability that ran (so a changed registry is
   *reported*, not mistaken for tampering);
 * the trusted-external registry the record was judged under;
-* the environment it was produced in (for the reader; never used to decide);
+* the environment it was produced in (never grants scientific standing, but exact replay requires it);
 * a digest over all of it.
 
 :func:`verify_bundle` executes nothing. It checks the digest, then re-derives
@@ -29,6 +29,7 @@ import hashlib
 import json
 import math
 import platform
+import re
 import subprocess
 from pathlib import Path
 from importlib import metadata as importlib_metadata
@@ -41,7 +42,14 @@ from ...sria.evidence import SourceClass
 from .._records import canonical_json, tagged_digest
 from ..capabilities import CapabilityDeclaration, CapabilityRegistry
 from ..errors import ClaimLayerError
-from ..external_evidence import TrustedExternalRegistry, TrustedPin, read_external_record
+from ..external_evidence import (
+    PRODUCTION_EXTERNAL_REGISTRY,
+    TrustedExternalRegistry,
+    TrustedPin,
+    read_external_record,
+)
+from ..measurement_dataset import DatasetObservation
+from ...uq.model_form.qualification import ProducerQualification
 
 BUNDLE_SCHEMA = schema_string("claim_assessment_bundle")
 ENVIRONMENT_SCHEMA = schema_string("claim_replay_environment")
@@ -153,8 +161,6 @@ def _environment() -> dict[str, Any]:
 
 def make_bundle(assessment: Any, registry: CapabilityRegistry, *, trust: TrustedExternalRegistry | None = None) -> dict[str, Any]:
     """The bundle of one assessment. ``trust`` must be the registry it was assessed under (default: production)."""
-    from ..external_evidence import PRODUCTION_EXTERNAL_REGISTRY
-
     trust = PRODUCTION_EXTERNAL_REGISTRY if trust is None else trust
     record = assessment.to_dict()
     if record.get("external_trust_registry") != trust.digest:
@@ -189,8 +195,46 @@ class BundleCheck:
         return {"status": self.status.value, "problems": list(self.problems), "verdict": self.verdict}
 
 
-def verify_bundle(bundle: Mapping[str, Any], registry: CapabilityRegistry) -> BundleCheck:
-    """Re-verify a bundle without executing physics."""
+def _environment_problem(environment: Any) -> str | None:
+    if not isinstance(environment, Mapping):
+        return "bundle environment is not a mapping"
+    if environment.get("schema") != ENVIRONMENT_SCHEMA:
+        return f"bundle environment uses unexpected schema {environment.get('schema')!r}"
+    body = {k: v for k, v in environment.items() if k != "fingerprint"}
+    if tagged_digest(_ENVIRONMENT_TAG, body) != environment.get("fingerprint"):
+        return "bundle environment fingerprint does not match its content"
+    return None
+
+
+def _environment_replay_problem(environment: Mapping[str, Any]) -> str | None:
+    git = environment.get("git")
+    if not isinstance(git, Mapping):
+        return "source-control identity is absent from the replay environment"
+    commit = str(git.get("commit") or "").strip().lower()
+    if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", commit):
+        return "source-control commit identity is unavailable"
+    if not isinstance(git.get("dirty"), bool):
+        return "source-control dirty-tree state is unavailable"
+    for field in ("tracked_diff_digest", "untracked_manifest_digest"):
+        value = str(git.get(field) or "").strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            return f"source-control {field} is unavailable"
+    return None
+
+
+def verify_bundle(
+    bundle: Mapping[str, Any],
+    registry: CapabilityRegistry,
+    *,
+    trust: TrustedExternalRegistry | None = None,
+) -> BundleCheck:
+    """Re-verify a bundle without executing physics.
+
+    The trust registry carried by the bundle is evidence of what the historical
+    assessment used, never authority to trust itself.  It must match the
+    caller's authoritative registry (production by default).
+    """
+    trust = PRODUCTION_EXTERNAL_REGISTRY if trust is None else trust
     from ..assessment import AssessmentForgeryError, verify_assessment
 
     try:
@@ -199,10 +243,30 @@ def verify_bundle(bundle: Mapping[str, Any], registry: CapabilityRegistry) -> Bu
             return BundleCheck(BundleStatus.TAMPERED, (f"not a bundle: schema {bundle.get('schema')!r}",))
         if tagged_digest(_TAG, body) != bundle.get("bundle_digest"):
             return BundleCheck(BundleStatus.TAMPERED, ("the bundle digest does not match its content",))
+        environment_problem = _environment_problem(bundle.get("environment"))
+        if environment_problem is not None:
+            return BundleCheck(BundleStatus.TAMPERED, (environment_problem,))
         record = bundle["record"]
-        trust = _trust_of(bundle)
-        if record.get("external_trust_registry") != trust.digest:
+        carried_trust = _trust_of(bundle)
+        if record.get("external_trust_registry") != carried_trust.digest:
             return BundleCheck(BundleStatus.TAMPERED, ("the carried trust pins are not the registry the record was judged under",))
+        if carried_trust.digest != trust.digest:
+            return BundleCheck(
+                BundleStatus.REGISTRY_CHANGED,
+                (
+                    "the bundle was judged under a different external trust registry; "
+                    "carried trust pins cannot authorize themselves",
+                ),
+                record.get("verdict"),
+            )
+        if bundle.get("registry_digest") != registry.digest:
+            return BundleCheck(
+                BundleStatus.REGISTRY_CHANGED,
+                (
+                    "the capability registry digest differs from the registry that produced the bundle",
+                ),
+                record.get("verdict"),
+            )
         capability = bundle.get("capability")
         if capability is not None:
             carried = CapabilityDeclaration.from_dict(capability)
@@ -224,54 +288,163 @@ def verify_bundle(bundle: Mapping[str, Any], registry: CapabilityRegistry) -> Bu
 
 @dataclass(frozen=True)
 class ReplayTolerance:
-    """How far a replayed number may move and still be the same result. Declared by the replayer."""
+    """How far a replayed result number may move and still be the same result."""
 
     relative: float = 0.0
     absolute: float = 0.0
+
+    def __post_init__(self) -> None:
+        relative = float(self.relative)
+        absolute = float(self.absolute)
+        if (
+            not math.isfinite(relative)
+            or not math.isfinite(absolute)
+            or relative < 0.0
+            or absolute < 0.0
+        ):
+            raise ValueError("replay tolerances must be finite and non-negative")
+        object.__setattr__(self, "relative", relative)
+        object.__setattr__(self, "absolute", absolute)
 
     def same(self, a: float, b: float) -> bool:
         return math.isclose(a, b, rel_tol=self.relative, abs_tol=self.absolute)
 
 
-def _numbers(node: Any, prefix: str = "") -> dict[str, float]:
-    out: dict[str, float] = {}
-    if isinstance(node, Mapping):
-        for k, v in node.items():
-            out.update(_numbers(v, f"{prefix}/{k}"))
-    elif isinstance(node, list):
-        for i, v in enumerate(node):
-            out.update(_numbers(v, f"{prefix}/{i}"))
-    elif isinstance(node, float):
-        out[prefix] = node
-    return out
+def _study_replay_inputs(
+    record: Mapping[str, Any],
+) -> tuple[tuple[DatasetObservation, ...], ProducerQualification | None, tuple[str, ...]]:
+    observations: list[DatasetObservation] = []
+    observation_digests: set[str] = set()
+    qualification: ProducerQualification | None = None
+    problems: list[str] = []
+    for index, study in enumerate(record.get("uncertainty_studies") or ()):
+        if not isinstance(study, Mapping):
+            problems.append(f"/uncertainty_studies/{index}: study is not a mapping")
+            continue
+        for raw in study.get("source_observations") or ():
+            try:
+                observation = DatasetObservation.from_dict(raw)
+            except Exception as exc:
+                problems.append(
+                    f"/uncertainty_studies/{index}/source_observations: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+                continue
+            if observation.digest not in observation_digests:
+                observations.append(observation)
+                observation_digests.add(observation.digest)
+        raw_qualification = study.get("qualification")
+        if raw_qualification is None:
+            continue
+        try:
+            candidate = ProducerQualification.from_dict(raw_qualification)
+        except Exception as exc:
+            problems.append(
+                f"/uncertainty_studies/{index}/qualification: "
+                f"{type(exc).__name__}: {exc}"
+            )
+            continue
+        if qualification is not None and candidate.digest != qualification.digest:
+            problems.append(
+                "uncertainty studies carry more than one model-form producer qualification"
+            )
+        else:
+            qualification = candidate
+    return (
+        tuple(observations),
+        qualification,
+        tuple(problems),
+    )
 
 
-_IDENTITY_FIELDS = (
-    ("/compilation/claim_identity", ("compilation", "claim_identity")),
-    ("/plan/content/core_digest", ("plan", "content", "core_digest")),
-    ("/plan/content/run_id", ("plan", "content", "run_id")),
-    ("/plan/content/capability", ("plan", "content", "capability")),
-    ("/plan/content/models", ("plan", "content", "models")),
-    ("/plan/content/solvers", ("plan", "content", "solvers")),
-    ("/plan/content/case_digest", ("plan", "content", "case_digest")),
-    ("/plan/content/decision", ("plan", "content", "decision")),
-    ("/verdict", ("verdict",)),
-    ("/credibility/verdict", ("credibility", "verdict")),
-    ("/validation/attained", ("validation", "attained")),
-    ("/verification/attained", ("verification", "attained")),
-    ("/assurance/verdict", ("assurance", "verdict")),
-    ("/comparison/outcome", ("comparison", "outcome")),
-    ("/uncertainty/channels", ("uncertainty", "channels")),
-)
+def _tolerates_numeric(path: str) -> bool:
+    parts = tuple(part for part in path.split("/") if part)
+    if parts[:2] == ("result", "value"):
+        return True
+    if parts[:1] == ("comparison",):
+        return True
+    if parts[:3] in {
+        ("credibility", "report", "values"),
+        ("credibility", "report", "uncertainty"),
+    }:
+        return True
+    if parts[:1] == ("uncertainty_studies",):
+        return any(
+            part in {
+                "runs",
+                "pairs",
+                "estimate",
+                "uncertainty",
+                "discrepancy",
+                "model_form_estimate",
+            }
+            for part in parts[2:]
+        )
+    return False
 
 
-def _at(record: Mapping[str, Any], path: tuple[str, ...]) -> Any:
-    node: Any = record
-    for key in path:
-        if node is None:
-            return None
-        node = node.get(key)
-    return node
+def _compare_replay_nodes(
+    before: Any,
+    after: Any,
+    tolerance: ReplayTolerance,
+    *,
+    path: str = "",
+    differences: list[str] | None = None,
+) -> int:
+    """Compare the complete public assessment record.
+
+    Configuration, inputs, identities, evidence, trust, checks and policy are
+    exact.  The declared tolerance is used only for scientific result/estimate
+    leaves; it can never blur a changed threshold, input or trust decision.
+    """
+    differences = [] if differences is None else differences
+    if isinstance(before, Mapping) and isinstance(after, Mapping):
+        before_keys, after_keys = set(before), set(after)
+        missing = sorted(before_keys - after_keys)
+        extra = sorted(after_keys - before_keys)
+        if missing:
+            differences.append(f"{path or '/'}: missing fields {missing}")
+        if extra:
+            differences.append(f"{path or '/'}: unexpected fields {extra}")
+        compared = 0
+        for key in sorted(before_keys & after_keys):
+            compared += _compare_replay_nodes(
+                before[key],
+                after[key],
+                tolerance,
+                path=f"{path}/{key}",
+                differences=differences,
+            )
+        return compared
+    if isinstance(before, list) and isinstance(after, list):
+        if len(before) != len(after):
+            differences.append(
+                f"{path or '/'}: list length {len(before)} -> {len(after)}"
+            )
+        compared = 0
+        for index, (left, right) in enumerate(zip(before, after)):
+            compared += _compare_replay_nodes(
+                left,
+                right,
+                tolerance,
+                path=f"{path}/{index}",
+                differences=differences,
+            )
+        return compared
+    if isinstance(before, bool) or isinstance(after, bool):
+        if type(before) is not type(after) or before != after:
+            differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        return 0
+    if isinstance(before, (int, float)) and isinstance(after, (int, float)):
+        if _tolerates_numeric(path):
+            if not tolerance.same(float(before), float(after)):
+                differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        elif type(before) is not type(after) or before != after:
+            differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        return 1
+    if type(before) is not type(after) or before != after:
+        differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+    return 0
 
 
 @dataclass(frozen=True)
@@ -284,35 +457,79 @@ class ReplayResult:
         return {"status": self.status.value, "differences": list(self.differences), "compared_numbers": self.compared_numbers}
 
 
-def replay_bundle(bundle: Mapping[str, Any], registry: CapabilityRegistry, *, tolerance: ReplayTolerance = ReplayTolerance()) -> ReplayResult:
-    """Execute the bundled claim again and compare identities exactly and numbers within ``tolerance``."""
-    from ..assessment import assess_claim
+def replay_bundle(
+    bundle: Mapping[str, Any],
+    registry: CapabilityRegistry,
+    *,
+    tolerance: ReplayTolerance = ReplayTolerance(),
+    trust: TrustedExternalRegistry | None = None,
+    require_same_environment: bool = True,
+) -> ReplayResult:
+    """Execute the bundled claim again and compare the complete assessment record.
 
-    check = verify_bundle(bundle, registry)
+    Exact replay is fail-closed on the authoritative trust registry, registry
+    identity and (by default) runtime/source environment.  Empirical replicate
+    observations and the reviewed model-form qualification are reconstructed
+    from the study records and supplied to the fresh assessment rather than
+    silently disappearing during replay.
+    """
+    trust = PRODUCTION_EXTERNAL_REGISTRY if trust is None else trust
+    check = verify_bundle(bundle, registry, trust=trust)
     if check.status is not BundleStatus.VERIFIED:
         return ReplayResult(check.status, check.problems, 0)
+    if require_same_environment:
+        current_environment = _environment()
+        stored_environment = bundle["environment"]
+        for label, environment in (
+            ("stored", stored_environment),
+            ("current", current_environment),
+        ):
+            problem = _environment_replay_problem(environment)
+            if problem is not None:
+                return ReplayResult(
+                    BundleStatus.NOT_REPRODUCIBLE,
+                    (f"{label} replay environment: {problem}",),
+                    0,
+                )
+        if stored_environment.get("fingerprint") != current_environment.get("fingerprint"):
+            return ReplayResult(
+                BundleStatus.NOT_REPRODUCIBLE,
+                (
+                    "runtime/source environment differs from the bundle: "
+                    f"{stored_environment.get('fingerprint')} -> "
+                    f"{current_environment.get('fingerprint')}",
+                ),
+                0,
+            )
     record = bundle["record"]
     external = tuple(
-        read_external_record(a["record"]) for a in record.get("external_evidence_assessments", [])
+        read_external_record(a["record"])
+        for a in record.get("external_evidence_assessments", [])
         if a.get("source_class") in ("measurement", "literature")
     )
-    replayed = assess_claim(record["claim"], registry, external=external, trust=_trust_of(bundle)).to_dict()
-    differences = []
-    for label, path in _IDENTITY_FIELDS:
-        if canonical_json(_at(record, path)) != canonical_json(_at(replayed, path)):
-            differences.append(f"{label}: {_at(record, path)!r} -> {_at(replayed, path)!r}")
-    # Numbers: the reported values, the study estimates and the comparison band.
-    compared = 0
-    for section in ("result", "uncertainty_studies", "comparison"):
-        before, after = _numbers(record.get(section), f"/{section}"), _numbers(replayed.get(section), f"/{section}")
-        if set(before) != set(after):
-            differences.append(f"/{section}: the replay carries different numeric fields")
-            continue
-        for key in sorted(before):
-            compared += 1
-            if not tolerance.same(before[key], after[key]):
-                differences.append(f"{key}: {before[key]!r} -> {after[key]!r}")
-    return ReplayResult(BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE, tuple(differences), compared)
+    empirical, qualification, study_problems = _study_replay_inputs(record)
+    if study_problems:
+        return ReplayResult(BundleStatus.NOT_REPRODUCIBLE, study_problems, 0)
+    replayed = assess_claim(
+        record["claim"],
+        registry,
+        external=external,
+        empirical_observations=empirical,
+        model_form_qualification=qualification,
+        trust=trust,
+    ).to_dict()
+    differences: list[str] = []
+    compared = _compare_replay_nodes(
+        record,
+        replayed,
+        tolerance,
+        differences=differences,
+    )
+    return ReplayResult(
+        BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE,
+        tuple(differences),
+        compared,
+    )
 
 
 def bundle_to_json(bundle: Mapping[str, Any]) -> str:

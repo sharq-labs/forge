@@ -1,4 +1,4 @@
-"""Self-contained, revalidated payload bundle for production scientific assurance."""
+"""Revalidated production assurance bundle with an external knowledge-trust root."""
 
 from __future__ import annotations
 
@@ -12,7 +12,14 @@ from ..scientific.certification_core.serialization import (
 )
 from ..scientific.equations import LawReference
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.knowledge import KnowledgeSnapshot
+from ..scientific.knowledge import (
+    FreshnessPolicy,
+    KnowledgeSnapshot,
+    KnowledgeSourceClass,
+    SourcePin,
+    TrustedSourceRegistry,
+)
+from ..scientific.measurements import CalibratedMeasurementObservation
 from ..scientific.replay_core import ScientificRunManifest
 from ..scientific.results.provenance import ProvenanceRecord
 from ..scientific.serialization import require_schema, schema_string
@@ -28,7 +35,7 @@ from .assurance_manifest import (
 from .evidence_graph import EvidenceGraph
 
 PRODUCTION_ASSURANCE_BUNDLE_SCHEMA = schema_string(
-    "production_scientific_assurance_bundle"
+    "production_scientific_assurance_bundle", 2
 )
 
 
@@ -43,8 +50,21 @@ class ProductionAssuranceBundle:
     verification: VerificationRunRecord
     certification: CertificationRecord
     provenance: ProvenanceRecord
+    knowledge_trust: TrustedSourceRegistry
+    knowledge_freshness: FreshnessPolicy
+    measurement_observations: tuple[CalibratedMeasurementObservation, ...] = ()
 
     def __post_init__(self) -> None:
+        observations = tuple(
+            sorted(
+                tuple(self.measurement_observations),
+                key=lambda item: (
+                    getattr(item, "observation_id", ""),
+                    getattr(item, "digest", ""),
+                ),
+            )
+        )
+        object.__setattr__(self, "measurement_observations", observations)
         if not isinstance(self.manifest, ScientificRunManifest):
             raise InvalidScientificProblem(
                 "production assurance bundle requires ScientificRunManifest"
@@ -63,6 +83,9 @@ class ProductionAssuranceBundle:
             verification=self.verification,
             certification=self.certification,
             provenance=self.provenance,
+            knowledge_trust=self.knowledge_trust,
+            knowledge_freshness=self.knowledge_freshness,
+            measurement_observations=self.measurement_observations,
         )
         expected = tuple(
             sorted(
@@ -75,6 +98,9 @@ class ProductionAssuranceBundle:
                     verification=self.verification,
                     certification=self.certification,
                     provenance=self.provenance,
+                    knowledge_trust=self.knowledge_trust,
+                    knowledge_freshness=self.knowledge_freshness,
+                    measurement_observations=self.measurement_observations,
                 ),
                 key=lambda a: (a.kind, a.identifier, a.digest),
             )
@@ -96,11 +122,82 @@ class ProductionAssuranceBundle:
             "verification": self.verification.to_dict(),
             "certification": certification_to_dict(self.certification),
             "provenance": self.provenance.to_dict(),
+            "knowledge_trust_pins": [
+                pin.to_dict()
+                for pin in sorted(
+                    self.knowledge_trust.pins,
+                    key=lambda item: item.source_id,
+                )
+            ],
+            "knowledge_freshness_policy": self.knowledge_freshness.to_dict(),
+            "measurement_observations": [
+                observation.to_dict()
+                for observation in self.measurement_observations
+            ],
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "ProductionAssuranceBundle":
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+        *,
+        knowledge_trust: TrustedSourceRegistry,
+        knowledge_freshness: FreshnessPolicy,
+    ) -> "ProductionAssuranceBundle":
         require_schema(payload, PRODUCTION_ASSURANCE_BUNDLE_SCHEMA)
+        if not isinstance(knowledge_trust, TrustedSourceRegistry):
+            raise InvalidScientificProblem(
+                "production assurance bundle reader requires authoritative knowledge trust"
+            )
+        if not isinstance(knowledge_freshness, FreshnessPolicy):
+            raise InvalidScientificProblem(
+                "production assurance bundle reader requires authoritative freshness policy"
+            )
+        carried_trust = TrustedSourceRegistry(
+            tuple(
+                SourcePin(
+                    item["source_id"],
+                    item["issuer"],
+                    item["document_digest"],
+                    item["version"],
+                )
+                for item in payload.get("knowledge_trust_pins", ())
+            )
+        )
+        raw_freshness = payload.get("knowledge_freshness_policy")
+        if not isinstance(raw_freshness, Mapping):
+            raise InvalidScientificProblem(
+                "production assurance bundle carries no freshness policy"
+            )
+        if set(raw_freshness) != {"max_age_days", "require_timestamp"}:
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness policy shape is not canonical"
+            )
+        require_timestamp = raw_freshness["require_timestamp"]
+        max_age_days = raw_freshness["max_age_days"]
+        if not isinstance(require_timestamp, bool):
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness require_timestamp must be bool"
+            )
+        if not isinstance(max_age_days, Mapping):
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness max_age_days must be a mapping"
+            )
+        carried_freshness = FreshnessPolicy(
+            {
+                KnowledgeSourceClass(key): value
+                for key, value in dict(max_age_days).items()
+            },
+            require_timestamp,
+        )
+        if carried_trust.digest != knowledge_trust.digest:
+            raise InvalidScientificProblem(
+                "production assurance bundle knowledge trust registry differs from the authoritative registry"
+            )
+        if carried_freshness.digest != knowledge_freshness.digest:
+            raise InvalidScientificProblem(
+                "production assurance bundle freshness policy differs from the authoritative policy"
+            )
         return cls(
             ScientificRunManifest.from_dict(payload["manifest"]),
             LawReference.from_dict(payload["law"]),
@@ -111,6 +208,12 @@ class ProductionAssuranceBundle:
             VerificationRunRecord.from_dict(payload["verification"]),
             certification_from_dict(payload["certification"]),
             ProvenanceRecord.from_dict(payload["provenance"]),
+            knowledge_trust,
+            knowledge_freshness,
+            tuple(
+                CalibratedMeasurementObservation.from_dict(item)
+                for item in payload.get("measurement_observations", ())
+            ),
         )
 
 
@@ -126,4 +229,7 @@ def build_production_assurance_bundle(**kwargs: Any) -> ProductionAssuranceBundl
         kwargs["verification"],
         kwargs["certification"],
         kwargs["provenance"],
+        kwargs["knowledge_trust"],
+        kwargs["knowledge_freshness"],
+        tuple(kwargs.get("measurement_observations", ())),
     )
