@@ -59,3 +59,22 @@ def test_manifest_wire_digest_is_rederived():
 def test_parent_lineage_requires_both_parent_id_and_parent_digest():
     with pytest.raises(InvalidScientificProblem,match="declared together"):
         manifest(parent_run_id="parent")
+
+
+def test_replay_exact_kinds_must_be_required_by_profile():
+    with pytest.raises(InvalidScientificProblem,match="subset"):
+        RunManifestProfile(
+            "bad",("scientific_law",),("scientific_law",),True,
+            ("knowledge_snapshot",),
+        )
+
+
+def test_same_artifact_kind_and_identifier_cannot_bind_two_digests():
+    duplicate=(
+        ArtifactIdentity("scientific_law","law","1"*64),
+        ArtifactIdentity("scientific_law","law","2"*64),
+        ArtifactIdentity("knowledge_snapshot","k","3"*64),
+        ArtifactIdentity("evidence_graph","e","4"*64),
+    )
+    with pytest.raises(InvalidScientificProblem,match="duplicate artifact"):
+        manifest(artifacts=duplicate)
