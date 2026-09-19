@@ -121,6 +121,35 @@ def test_a_changed_policy_profile_is_detected(corpus, registry) -> None:
     changes = detect_changes([a.to_dict() for a in corpus.values()], registry, policy_profiles=profiles)
     assert [c.kind for c in changes] == [ChangeKind.POLICY]
 
+
+def test_a_removed_policy_profile_is_detected(corpus, registry) -> None:
+    profiles = {k: v for k, v in BUILTIN_PROFILES.items() if k != "engineering_decision"}
+    changes = detect_changes([corpus["t3_policy"].to_dict()], registry, policy_profiles=profiles)
+    assert [c.kind for c in changes] == [ChangeKind.POLICY]
+    assert "no longer registered" in changes[0].detail
+
+
+def test_current_oracle_digest_drift_is_detected(corpus, registry, monkeypatch) -> None:
+    from types import SimpleNamespace
+    import engcore.claims.analysis.impact as impact_module
+
+    record = corpus["t3"].to_dict()
+    historical = record["external_evidence"][0]
+    current = SimpleNamespace(
+        oracle_id=historical["oracle_id"],
+        version=historical["version"],
+        metric=historical["metric"],
+        capability_id=historical["capability_id"],
+        route_id=historical["route_id"],
+        trusted=historical["trusted"],
+        trusted_digest="f" * 64,
+    )
+    monkeypatch.setattr(impact_module, "discover_oracles", lambda *args, **kwargs: (current,))
+    changes = detect_changes([record], registry)
+    oracle_changes = [c for c in changes if c.kind is ChangeKind.ORACLE]
+    assert len(oracle_changes) == 1
+    assert historical["trusted_digest"] in oracle_changes[0].key
+
 def test_a_changed_external_trust_registry_is_detected_and_impacts_the_bound_assessment(registry) -> None:
     measurement = MeasurementRecord(
         "temperature_at_probe",

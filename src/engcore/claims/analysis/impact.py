@@ -24,6 +24,8 @@ from enum import Enum
 from typing import Any, Iterable, Mapping
 
 from .._records import tagged_digest
+from ..contract import ScientificClaim
+from ..oracles import discover_oracles
 
 _RECORD_TAG = "crafty.claims.assessment_record/1"
 _IMPACT_TAG = "crafty.claims.impact/1"
@@ -283,19 +285,52 @@ def detect_changes(
         if policy is not None:
             req = policy["requirement"]
             current = profiles.get(req["profile_id"])
-            if current is not None and current.digest != req["profile_digest"]:
+            if current is None:
+                changes[(ChangeKind.POLICY, req["profile_id"], req["profile_digest"])] = Change(
+                    ChangeKind.POLICY,
+                    f"{req['profile_id']}@{req['profile_version']}#{req['profile_digest']}",
+                    "the policy profile is no longer registered",
+                )
+            elif current.digest != req["profile_digest"]:
                 changes[(ChangeKind.POLICY, req["profile_id"], req["profile_digest"])] = Change(
                     ChangeKind.POLICY,
                     f"{req['profile_id']}@{req['profile_version']}#{req['profile_digest']}",
                     f"the profile is now {current.version} ({current.digest[:16]})",
                 )
-        for match in record.get("external_evidence") or []:
-            if not match["trusted"]:
-                changes[(ChangeKind.ORACLE, match["oracle_id"])] = Change(
-                    ChangeKind.ORACLE,
-                    f"{match['oracle_id']}@{match['version']}",
-                    "the oracle no longer reproduces its pin",
+
+        claim_payload = record.get("claim")
+        historical_oracles = record.get("external_evidence") or []
+        if claim_payload is not None and historical_oracles:
+            claim = ScientificClaim.from_dict(claim_payload)
+            current_oracles = {
+                (item.oracle_id, item.version, item.metric, item.capability_id, item.route_id): item
+                for item in discover_oracles(registry, qoi=claim.qoi.name, context=claim.supplied_inputs)
+            }
+            for match in historical_oracles:
+                key = (
+                    match["oracle_id"], match["version"], match["metric"],
+                    match["capability_id"], match["route_id"],
                 )
+                current_oracle = current_oracles.get(key)
+                historical_identity = f"{match['oracle_id']}@{match['version']}#{match['trusted_digest']}"
+                if current_oracle is None:
+                    changes[(ChangeKind.ORACLE, historical_identity)] = Change(
+                        ChangeKind.ORACLE,
+                        historical_identity,
+                        "the recorded oracle route/observation is no longer discoverable",
+                    )
+                elif (
+                    current_oracle.trusted_digest != match["trusted_digest"]
+                    or current_oracle.trusted != match["trusted"]
+                ):
+                    changes[(ChangeKind.ORACLE, historical_identity)] = Change(
+                        ChangeKind.ORACLE,
+                        historical_identity,
+                        (
+                            f"oracle is now trusted={current_oracle.trusted} "
+                            f"with digest {current_oracle.trusted_digest[:16]}"
+                        ),
+                    )
         recorded_trust = record.get("external_trust_registry")
         current_trust = getattr(trust, "digest", None)
         if recorded_trust and current_trust != recorded_trust:
