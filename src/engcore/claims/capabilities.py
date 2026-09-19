@@ -1174,7 +1174,7 @@ class InstanceReport:
     report: Any
 
     def __post_init__(self) -> None:
-        from ..mcp.evidence import CredibilityEvidenceReport
+        from ..credibility.evidence import CredibilityEvidenceReport
 
         if not isinstance(self.report, CredibilityEvidenceReport):
             raise _err("an executor returns CredibilityEvidenceReport records, nothing else")
