@@ -7,9 +7,9 @@ from .claim import KnowledgeClaim,KnowledgeKind
 from .snapshot import KnowledgeSnapshot
 from .admission import KnowledgeAdmission,KnowledgeAdmissionStatus,admit_claim
 from .conflicts import KnowledgeConflict,KnowledgeConflictStatus,compare_claims
-from .ingestion import KnowledgeIngestionReceipt
+from .ingestion import KnowledgeIngestionReceipt,verify_ingestion_receipt
 
 __all__=["KnowledgeSource","KnowledgeSourceClass","SourcePin","SourceStanding","SourceTrustAssessment",
 "TrustedSourceRegistry","FreshnessPolicy","KnowledgeFreshness","KnowledgeClaim","KnowledgeKind",
 "KnowledgeSnapshot","KnowledgeAdmission","KnowledgeAdmissionStatus","admit_claim","KnowledgeConflict",
-"KnowledgeConflictStatus","compare_claims","KnowledgeIngestionReceipt"]
+"KnowledgeConflictStatus","compare_claims","KnowledgeIngestionReceipt","verify_ingestion_receipt"]

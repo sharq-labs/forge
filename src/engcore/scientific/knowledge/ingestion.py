@@ -5,6 +5,7 @@ import hashlib,re
 
 from ..errors import InvalidScientificProblem
 from .source import KnowledgeSource
+from .snapshot import KnowledgeSnapshot
 
 
 @dataclass(frozen=True)
@@ -31,3 +32,33 @@ class KnowledgeIngestionReceipt:
     def from_payload(cls,source:KnowledgeSource,payload:bytes,parser_id:str,parser_version:str,
                      claim_digests:tuple[str,...])->"KnowledgeIngestionReceipt":
         return cls(source,hashlib.sha256(payload).hexdigest(),parser_id,parser_version,claim_digests)
+
+
+def verify_ingestion_receipt(
+    snapshot: KnowledgeSnapshot,
+    receipt: KnowledgeIngestionReceipt,
+) -> None:
+    source = next(
+        (s for s in snapshot.sources if s.source_id == receipt.source.source_id),
+        None,
+    )
+    if source is None:
+        raise InvalidScientificProblem(
+            "ingestion receipt source is absent from knowledge snapshot"
+        )
+    if source.to_dict() != receipt.source.to_dict():
+        raise InvalidScientificProblem(
+            "ingestion receipt source identity differs from snapshot source"
+        )
+    expected = tuple(
+        sorted(
+            claim.digest
+            for claim in snapshot.claims
+            if claim.source_id == source.source_id
+        )
+    )
+    recorded = tuple(sorted(receipt.imported_claim_digests))
+    if recorded != expected:
+        raise InvalidScientificProblem(
+            "ingestion receipt claim digests do not exactly match snapshot claims"
+        )
