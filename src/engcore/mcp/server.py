@@ -755,11 +755,11 @@ resistance of its end-of-interval temperature, held constant across the whole \
 interval: the real resistance moves from R(T_0) to R(T_final) and that \
 transient is approximated, not resolved. Declaring \
 stages[].conductor.element.resistance_variation_budget lets the element record \
-check how far R moved against what you accept. KNOWN LIMITATION: that check \
-exists only when the stage declares element data; a stage with no \
-stages[].conductor.element block gets no check of the resistance held constant \
-and can be SUPPORTED without one. Nor is a body's heat_capacity checked against \
-its declared volume. Each report carries: the values with units, each model's validity (status plus \
+check how far R moved against what you accept. A stage that omits this element \
+evidence now carries a NOT_RUN validation check and cannot be SUPPORTED. The \
+body also accepts capacity_evidence (bulk_density, bulk_specific_heat and an \
+explicit extra_heat_capacity) and verifies heat_capacity = rho*c_p*V + C_extra; \
+omitting the basis likewise fails closed as INSUFFICIENT_EVIDENCE. Each report carries: the values with units, each model's validity (status plus \
 the satisfied, violated and UNKNOWN condition names), every validation check \
 with its outcome and what it established -- including checks that did NOT run \
 -- the coupling outcome as its own field, full provenance, and anything you \

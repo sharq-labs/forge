@@ -25,11 +25,28 @@ ENV_DOMAIN_PACKS = "FORGE_DOMAIN_PACKS"
 
 _PRODUCTION_PACKS = DomainPackRegistry()
 _ENV_CONFIGURED = False
+_BUILTINS_CONFIGURED = False
+
+
+def _configure_builtin_packs() -> DomainPackRegistry:
+    """Register first-party packs through the same admission gate as plugins."""
+    global _BUILTINS_CONFIGURED
+    if _BUILTINS_CONFIGURED:
+        return _PRODUCTION_PACKS
+    from ..domainpacks.builtin_cstr import BUILTIN_CSTR_PACK
+
+    register_production_domain_pack(
+        BUILTIN_CSTR_PACK,
+        origin=PackOrigin.builtin(),
+        enable=True,
+    )
+    _BUILTINS_CONFIGURED = True
+    return _PRODUCTION_PACKS
 
 
 def production_domain_packs() -> DomainPackRegistry:
     """The application-layer registry used by the production claim router."""
-    return _PRODUCTION_PACKS
+    return _configure_builtin_packs()
 
 
 def _claim_declarations(provider) -> tuple[CapabilityDeclaration, ...]:
@@ -142,8 +159,9 @@ def _resolve_configured(
 
 
 def configure_production_domain_packs_from_env() -> DomainPackRegistry:
-    """Load exactly the packs an operator named in FORGE_DOMAIN_PACKS, once."""
+    """Load built-ins plus exactly the external packs named in FORGE_DOMAIN_PACKS."""
     global _ENV_CONFIGURED
+    _configure_builtin_packs()
     if _ENV_CONFIGURED:
         return _PRODUCTION_PACKS
     raw = os.environ.get(ENV_DOMAIN_PACKS, "")

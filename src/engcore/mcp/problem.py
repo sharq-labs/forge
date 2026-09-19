@@ -1167,6 +1167,145 @@ def _read_coupling(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 DECLARED_LIMITS_CHECK = "declared_limits_are_mutually_consistent"
+HEAT_CAPACITY_BASIS_CHECK = "heat_capacity_matches_declared_body"
+RESISTANCE_TRANSIENT_EVIDENCE_CHECK = "resistance_transient_is_characterized"
+
+
+def _capacity_evidence_check(
+    payload: Mapping[str, Any],
+    index: int,
+    stage: cp.CoupledStage,
+) -> tuple[ValidationCheck, ...]:
+    """Verify C = rho*c_p*V + C_extra from independently declared body facts.
+
+    This is a boundary check because the lumped model legitimately accepts a
+    total heat capacity; only the assembled electro-thermal product knows that
+    the caller also claims a geometric body.  Missing evidence is NOT_RUN,
+    never an assumed density/cp and never a zero extra capacity.
+    """
+    root = _require_mapping(payload, where="payload")
+    raw_stage = _require_mapping((root.get("stages") or ())[index], where=f"stages[{index}]")
+    body = _require_mapping(raw_stage.get("body"), where=f"stages[{index}].body")
+    raw = body.get("capacity_evidence")
+    if raw is None:
+        return (
+            ValidationCheck(
+                name=HEAT_CAPACITY_BASIS_CHECK,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"stages[{index}].body.capacity_evidence is absent, so the "
+                    "declared heat_capacity cannot be checked against rho*c_p*V. "
+                    "Declare bulk_density, bulk_specific_heat and extra_heat_capacity "
+                    "(explicitly 0 J/K when there is no extra body)."
+                ),
+            ),
+        )
+    evidence = _require_mapping(raw, where=f"stages[{index}].body.capacity_evidence")
+    expected_keys = {"bulk_density", "bulk_specific_heat", "extra_heat_capacity"}
+    unknown = sorted(set(evidence) - expected_keys)
+    missing = sorted(expected_keys - set(evidence))
+    if unknown:
+        raise MalformedPayloadError(
+            f"stages[{index}].body.capacity_evidence has unknown fields {unknown}; "
+            f"allowed fields are {sorted(expected_keys)}"
+        )
+    if missing:
+        raise MissingFieldError(
+            f"stages[{index}].body.capacity_evidence is missing {missing}; "
+            "the capacity basis is complete or it is no evidence"
+        )
+    try:
+        density = Quantity.parse(evidence["bulk_density"]).to("kg/meter**3")
+        specific_heat = Quantity.parse(evidence["bulk_specific_heat"]).to("joule/kg/kelvin")
+        extra = Quantity.parse(evidence["extra_heat_capacity"]).to("joule/kelvin")
+    except Exception as exc:
+        raise MalformedPayloadError(
+            f"stages[{index}].body.capacity_evidence contains an invalid quantity: {exc}"
+        ) from exc
+    if density.magnitude <= 0 or specific_heat.magnitude <= 0 or extra.magnitude < 0:
+        raise MalformedPayloadError(
+            f"stages[{index}].body.capacity_evidence requires positive density/cp "
+            "and non-negative extra_heat_capacity"
+        )
+    volume = stage.body.applicability.volume
+    if volume is None:
+        return (
+            ValidationCheck(
+                name=HEAT_CAPACITY_BASIS_CHECK,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"stages[{index}].body.applicability.body_volume is absent; "
+                    "rho*c_p*V cannot be formed from the declared capacity evidence"
+                ),
+            ),
+        )
+    reconstructed = (
+        density * specific_heat * volume.to("meter**3") + extra
+    ).to("joule/kelvin")
+    declared = stage.body.heat_capacity.to("joule/kelvin")
+    scale = max(abs(declared.magnitude), abs(reconstructed.magnitude), 1.0)
+    relative = abs(declared.magnitude - reconstructed.magnitude) / scale
+    # Arithmetic consistency threshold only. This is not a material-property
+    # tolerance: those uncertainties belong in UQ, not in a hidden pass band.
+    tolerance = 1e-9
+    outcome = ValidationOutcome.PASS if relative <= tolerance else ValidationOutcome.FAIL
+    return (
+        ValidationCheck(
+            name=HEAT_CAPACITY_BASIS_CHECK,
+            outcome=outcome,
+            detail=(
+                f"declared C={declared}; reconstructed rho*c_p*V+C_extra="
+                f"{reconstructed}; relative mismatch={relative:.6g}"
+            ),
+            residual=relative,
+            tolerance=tolerance,
+        ),
+    )
+
+
+def _element_characterization_check(
+    payload: Mapping[str, Any], index: int
+) -> tuple[ValidationCheck, ...]:
+    """Require the quasi-static R(T) approximation to be characterized."""
+    root = _require_mapping(payload, where="payload")
+    raw_stage = _require_mapping((root.get("stages") or ())[index], where=f"stages[{index}]")
+    conductor = _require_mapping(raw_stage.get("conductor"), where=f"stages[{index}].conductor")
+    element = conductor.get("element")
+    if element is None:
+        return (
+            ValidationCheck(
+                name=RESISTANCE_TRANSIENT_EVIDENCE_CHECK,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"stages[{index}].conductor.element is absent. The coupled solver "
+                    "holds R(T_final) constant across the thermal interval, so a "
+                    "resistance_variation_budget must be declared and assessed before "
+                    "this stage can be decision-grade."
+                ),
+            ),
+        )
+    raw = _require_mapping(element, where=f"stages[{index}].conductor.element")
+    if dc_app.RESISTANCE_VARIATION_BUDGET not in raw:
+        return (
+            ValidationCheck(
+                name=RESISTANCE_TRANSIENT_EVIDENCE_CHECK,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"stages[{index}].conductor.element."
+                    f"{dc_app.RESISTANCE_VARIATION_BUDGET} is absent"
+                ),
+            ),
+        )
+    return (
+        ValidationCheck(
+            name=RESISTANCE_TRANSIENT_EVIDENCE_CHECK,
+            outcome=ValidationOutcome.PASS,
+            detail=(
+                "the stage declares a resistance-variation budget; the companion "
+                "self-heated-element validity record evaluates the actual R(T) excursion"
+            ),
+        ),
+    )
 
 
 def _declared_limit_checks(
@@ -1572,7 +1711,7 @@ def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
         body_id=component_id,
         applicability=applicability,
         **_read_section(
-            body_raw, BODY, extra=("applicability",),
+            body_raw, BODY, extra=("applicability", "capacity_evidence"),
             label=f"stages[{index}].body",
         ),
     )
@@ -2304,9 +2443,9 @@ def run_electrothermal_case(
 
     reports = []
     repairs: list[tuple[ConditionRepair, ...]] = []
-    for stage, (_, _prop, thermal_problem) in zip(
+    for stage_index, (stage, (_, _prop, thermal_problem)) in enumerate(zip(
         system.stages, cp.stage_problems(system)
-    ):
+    )):
         power = electrical.value(
             RESISTOR_POWER_METRIC.format(component_id=stage.component_id)
         )
@@ -2367,7 +2506,12 @@ def run_electrothermal_case(
                     )
                     for model_id, assessment in sorted(assessments.items())
                 ),
-                validation=_declared_limit_checks(stage) + cross_checks,
+                validation=(
+                    _declared_limit_checks(stage)
+                    + _capacity_evidence_check(payload, stage_index, stage)
+                    + _element_characterization_check(payload, stage_index)
+                    + cross_checks
+                ),
                 # Stated, not defaulted: the lumped assessment above is
                 # computed from this declaration (Biot, Fourier, excursion
                 # budgets), so its values decide the verdict -- a body
@@ -3045,6 +3189,11 @@ def example_electrothermal_payload() -> dict[str, Any]:
                     # The part on its aluminium plate; see "THE CONDUCTOR AND
                     # THE BODY" above the example for every figure below.
                     "heat_capacity": "50 joule/kelvin",
+                    "capacity_evidence": {
+                        "bulk_density": "2700 kg/meter**3",
+                        "bulk_specific_heat": "896 joule/kg/kelvin",
+                        "extra_heat_capacity": "1.616 joule/kelvin",
+                    },
                     "ambient_conductance": "0.1225 watt/kelvin",
                     "ambient_temperature": "300 kelvin",
                     "initial_temperature": "300 kelvin",

@@ -50,6 +50,17 @@ from .memory import (
 from .population import DesignPopulation
 from .sampling import MixedVariableSampler
 from .space import DesignSpace, DesignSpaceReference
+from .successor_generation import (
+    SUCCESSOR_BINDING_METADATA_KEY,
+    SUCCESSOR_STRATEGY,
+    SuccessorGate,
+    SuccessorGenerationBatch,
+    SuccessorGenerationPlan,
+    SuccessorProposal,
+    SuccessorRejection,
+    SuccessorTwinMaterializer,
+    generate_successors,
+)
 
 __all__ = [
     "AssessmentContext",
@@ -85,6 +96,14 @@ __all__ = [
     "ResultBinding",
     "ScopedEliteArchive",
     "SelectionEligibility",
+    "SUCCESSOR_BINDING_METADATA_KEY",
+    "SUCCESSOR_STRATEGY",
+    "SuccessorGate",
+    "SuccessorGenerationBatch",
+    "SuccessorGenerationPlan",
+    "SuccessorProposal",
+    "SuccessorRejection",
+    "SuccessorTwinMaterializer",
     "TwinMaterializer",
     "assignment_digest",
     "bind_generation_to_twin",
@@ -92,6 +111,7 @@ __all__ = [
     "compare_entries",
     "dominates",
     "generate_initial_population",
+    "generate_successors",
     "generation_binding_payload",
     "merge_layer_a_records",
     "pareto_member_identities",
