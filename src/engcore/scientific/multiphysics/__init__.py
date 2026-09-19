@@ -1,5 +1,14 @@
-"""Domain-neutral multiphysics declarations and run records."""
+"""Domain-neutral multiphysics scientific contracts."""
 
+from .conservation import (
+    CONSERVATION_TERM_BINDING_SCHEMA,
+    COUPLED_CONSERVATION_SCHEMA,
+    BalanceSide,
+    ConservationTermBinding,
+    CoupledConservation,
+    TransferMeasure,
+)
+from .frames import FRAME_TRANSFORM_SCHEMA, FrameTransform
 from .graph import (
     COUPLING_EDGE_SCHEMA,
     PHYSICS_GRAPH_SCHEMA,
@@ -30,8 +39,21 @@ from .plan import (
     ResidualNorm,
     TimePolicy,
 )
-from .ports import PORT_REF_SCHEMA, PORT_SCHEMA, PortDefinition, PortDirection, PortKind, PortRef
+from .ports import (
+    PORT_REF_SCHEMA,
+    PORT_SCHEMA,
+    FieldAlgebra,
+    PortDefinition,
+    PortDirection,
+    PortKind,
+    PortRef,
+)
 from .report import (
+    EDGE_RESIDUAL_SCHEMA,
+    ITERATION_SCHEMA,
+    PARTICIPANT_STEP_SCHEMA,
+    RUN_SCHEMA,
+    WINDOW_SCHEMA,
     CouplingIterationRecord,
     CouplingWindowRecord,
     EdgeResidual,
@@ -43,19 +65,30 @@ from .state import CHECKPOINT_SCHEMA, CheckpointRecord
 
 __all__ = [
     "CHECKPOINT_SCHEMA",
+    "CONSERVATION_TERM_BINDING_SCHEMA",
+    "COUPLED_CONSERVATION_SCHEMA",
     "COUPLING_EDGE_SCHEMA",
     "COUPLING_PLAN_SCHEMA",
     "CONVERGENCE_CRITERION_SCHEMA",
+    "EDGE_RESIDUAL_SCHEMA",
     "FIELD_MAPPING_SCHEMA",
+    "FRAME_TRANSFORM_SCHEMA",
+    "ITERATION_SCHEMA",
     "MAPPING_DIAGNOSTICS_SCHEMA",
     "PARTICIPANT_SCHEMA",
+    "PARTICIPANT_STEP_SCHEMA",
     "PHYSICS_GRAPH_SCHEMA",
     "PORT_REF_SCHEMA",
     "PORT_SCHEMA",
     "RELAXATION_POLICY_SCHEMA",
+    "RUN_SCHEMA",
     "TIME_POLICY_SCHEMA",
+    "WINDOW_SCHEMA",
+    "BalanceSide",
     "CheckpointRecord",
+    "ConservationTermBinding",
     "ConvergenceCriterion",
+    "CoupledConservation",
     "CouplingEdge",
     "CouplingIterationRecord",
     "CouplingPlan",
@@ -63,8 +96,10 @@ __all__ = [
     "CouplingWindowRecord",
     "EdgeResidual",
     "ExtrapolationPolicy",
+    "FieldAlgebra",
     "FieldMappingDefinition",
     "FieldMappingMethod",
+    "FrameTransform",
     "IterationSemantics",
     "MappingDiagnostics",
     "MultiphysicsRunRecord",
@@ -80,5 +115,6 @@ __all__ = [
     "RelaxationPolicy",
     "ResidualNorm",
     "TimePolicy",
+    "TransferMeasure",
     "WindowOutcome",
 ]
