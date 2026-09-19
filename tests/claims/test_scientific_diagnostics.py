@@ -66,18 +66,26 @@ def test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_act
     assert assessment.to_dict() == before
 
 
+def _numerical_t3_claim():
+    return t3_claim(uncertainty=UncertaintyDemand(frozenset({C.NUMERICAL}), None, False))
+
+
 def test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq(registry) -> None:
     measurement = _mismatch_measurement()
     trust = TrustedExternalRegistry(
         (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "independent calibrated run"),)
     )
-    assessment = assess_claim(t3_claim(), registry, external=(measurement,), trust=trust)
+    assessment = assess_claim(_numerical_t3_claim(), registry, external=(measurement,), trust=trust)
 
     report = diagnose_assessment(assessment.to_dict(), registry)
 
     assert report.discrepancy.status is DiscrepancyStatus.OBSERVED_MISMATCH
     assert report.discrepancy.to_dict()["quantifies_model_form_uncertainty"] is False
-    (comparison,) = report.discrepancy.comparisons
+    measurement_comparisons = [
+        item for item in report.discrepancy.comparisons if item.source_class == "measurement"
+    ]
+    assert len(measurement_comparisons) == 1
+    comparison = measurement_comparisons[0]
     assert comparison.outcome == "inconsistent"
     assert comparison.excess is not None and comparison.excess > 0
     assert any(item.cause_class is DiagnosticClass.MODEL_DATA_MISMATCH for item in report.root_causes)
@@ -89,7 +97,7 @@ def test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality(re
     trust = TrustedExternalRegistry(
         (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "independent calibrated run"),)
     )
-    assessment = assess_claim(t3_claim(), registry, external=(measurement,), trust=trust)
+    assessment = assess_claim(_numerical_t3_claim(), registry, external=(measurement,), trust=trust)
     sensitivity = {
         "quantity": "temperature_at_probe",
         "parameters": [
@@ -124,7 +132,7 @@ def test_without_sensitivity_a_mismatch_stays_a_broad_testable_hypothesis(regist
     trust = TrustedExternalRegistry(
         (TrustedPin(measurement.digest, SourceClass.MEASUREMENT, "curator", "independent calibrated run"),)
     )
-    assessment = assess_claim(t3_claim(), registry, external=(measurement,), trust=trust)
+    assessment = assess_claim(_numerical_t3_claim(), registry, external=(measurement,), trust=trust)
 
     report = diagnose_assessment(assessment.to_dict(), registry)
 

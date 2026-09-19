@@ -18,11 +18,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 from .._records import tagged_digest
-from ..gaps import EvidenceGap, EvidenceGapAnalysis, GapClass, analyze_gaps
-from ..next_experiment import ExperimentRecommendation, NextExperimentPlan, recommend_next
+from ..gaps import EvidenceGapAnalysis, GapClass, analyze_gaps
+from ..next_experiment import NextExperimentPlan, recommend_next
 from .impact import record_digest
 
 _TAG = "crafty.claims.scientific_diagnostic/1"
@@ -336,23 +336,23 @@ def _sensitivity_candidates(
     sensitivity: Mapping[str, Any] | None,
     *,
     qoi: str | None,
-) -> list[Mapping[str, Any]]:
+) -> list[tuple[int, Mapping[str, Any]]]:
     if sensitivity is None or sensitivity.get("quantity") != qoi:
         return []
     usable = [
-        item
-        for item in sensitivity.get("parameters") or []
+        (index, item)
+        for index, item in enumerate(sensitivity.get("parameters") or [])
         if item.get("problem") is None and isinstance(item.get("derivative"), (int, float))
     ]
     return sorted(
         usable,
-        key=lambda item: (
+        key=lambda pair: (
             -abs(
-                float(item["normalized"])
-                if isinstance(item.get("normalized"), (int, float))
-                else float(item["derivative"])
+                float(pair[1]["normalized"])
+                if isinstance(pair[1].get("normalized"), (int, float))
+                else float(pair[1]["derivative"])
             ),
-            str(item.get("path")),
+            str(pair[1].get("path")),
         ),
     )
 
@@ -382,10 +382,10 @@ def _repair_hypotheses(
             ),
         )
     hypotheses: list[RepairHypothesis] = []
-    for index, item in enumerate(candidates[:3]):
+    for rank, (source_index, item) in enumerate(candidates[:3], start=1):
         hypotheses.append(
             RepairHypothesis(
-                rank=index + 1,
+                rank=rank,
                 kind=HypothesisKind.PARAMETER_CONTRIBUTOR,
                 target=str(item["path"]),
                 basis=(
@@ -396,7 +396,7 @@ def _repair_hypotheses(
                     "measure or otherwise characterize this input independently, rerun the model, "
                     "and test the corrected prediction on independent validation data"
                 ),
-                source=f"/sensitivity/parameters/{index}",
+                source=f"/sensitivity/parameters/{source_index}",
             )
         )
     return tuple(hypotheses)
