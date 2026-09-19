@@ -18,6 +18,10 @@ ScientificClaim (+ DecisionContext, + InputUncertainty)
   → Arbiter: context of use enforced by the authority    sria/assurance/arbiter.py (certified area)
   → external evidence: benchmark / measurement /         claims/external_evidence.py
       literature, judged standing, never a level
+  → real measurement dataset admission                   claims/measurement_dataset.py
+      source manifest → incomplete observation → evidence only when context/UQ/calibration close
+  → held-out model/data discrepancy candidate            claims/analysis/model_discrepancy.py
+      calibration groups ≠ validation groups; never auto-promoted to MODEL_FORM UQ
   → verdict (policy_satisfied withholds admissibility)   claims/verdict.py
   → evidence gaps → next best experiment                 claims/gaps.py, next_experiment.py
   → sensitivity / robustness / challenge                 claims/analysis/sensitivity.py, challenge.py
@@ -42,6 +46,8 @@ evidence, levels, uncertainty, models or input values.
 | 7/8 | Sensitivity, a one-at-a-time envelope, challenges backed by run ids | Causal claims; weakening from weak evidence |
 | 9/10 | Impact over existing identities; digest + re-derivation + replay | Edits to historical records |
 | Diagnostic | Recorded blockers, explicit assumptions, model-data mismatch and testable repair hypotheses | A physical-causality claim, automatic model-form UQ, or a promised fix |
+| Measurement dataset | Curated source manifest, row interpretation, missing-context/UQ/calibration gates | Public data treated as trusted/admissible by origin alone |
+| Model-form candidate | Max residual excess calibrated on independent groups and tested on held-out groups | Zero discrepancy from non-detection; automatic MODEL_FORM channel; validation level |
 
 ## Invariants
 
@@ -71,8 +77,16 @@ done locally.
 
 - Measurement and literature have no production pins yet (the pin list is
   empty on purpose), so no production claim reaches ADMISSIBLE measurement
-  evidence.
-- MODEL_FORM uncertainty and supported discrepancy still have no quantitative producer. The diagnostic layer can now identify an admissible model-data mismatch, but explicitly does not convert that mismatch into MODEL_FORM uncertainty.
+  evidence. A NASA battery source manifest now exists under
+  `benchmarks/measurements/nasa_battery_alt/`, but its rows remain non-admissible
+  until exact context, calibrated measurement uncertainty and provenance close.
+- MODEL_FORM now has a **candidate** discrepancy producer: known measurement and
+  prediction intervals are removed conservatively from residuals, calibration
+  uses independent groups, and the envelope must survive held-out groups.
+  The candidate explicitly cannot satisfy a claim and is not wired into the
+  MODEL_FORM uncertainty channel; an authoritative reviewed promotion step is
+  still missing. Residuals hidden below known uncertainty remain unresolved,
+  never zero.
 - NUMERICAL is quantified only where a capability declares a ladder (T3), and
   EPISTEMIC_PARAMETER only for electrothermal.
 - The robustness envelope is one-at-a-time, and it treats the demanded band
