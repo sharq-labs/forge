@@ -26,6 +26,7 @@ from .external_evidence import MeasurementRecord
 
 MEASUREMENT_DATASET_SCHEMA = schema_string("claim_measurement_dataset_manifest")
 _DATASET_TAG = "crafty.claims.measurement_dataset/1"
+_OBSERVATION_TAG = "crafty.claims.dataset_observation/1"
 
 
 class MeasurementDatasetError(ClaimContractError):
@@ -233,6 +234,11 @@ class DatasetObservation:
             "missing_context": list(self.missing_context),
             "ready_for_measurement_evidence": self.ready_for_measurement_evidence,
         }
+
+    @property
+    def digest(self) -> str:
+        """Stable identity of this interpreted empirical observation."""
+        return tagged_digest(_OBSERVATION_TAG, self.to_dict())
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "DatasetObservation":
