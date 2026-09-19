@@ -50,7 +50,7 @@ from ..scientific.capabilities import ScientificCapability
 from ..scientific.errors import ScientificCoreError
 from ..scientific.results.immutable import freeze
 from ..scientific.results.validation import ValidationLevel
-from ..scientific.serialization import schema_string
+from ..scientific.serialization import require_schema_any, schema_string
 from ..scientific.units.quantity import dimensionality, is_delta_unit, normalize_unit
 from ..sria.uncertainty import UncertaintyChannel
 from ..scientific.units.quantity import Quantity
@@ -76,6 +76,7 @@ MODEL_USE_SCHEMA = schema_string("capability_model_use")
 SOLVER_USE_SCHEMA = schema_string("capability_solver_use")
 PROVIDED_SCHEMA = schema_string("capability_provided")
 LEVEL_SCHEMA = schema_string("capability_attainable_level")
+LEVEL_SCHEMA_SCOPED = schema_string("capability_attainable_level", 2)
 ROUTE_SCHEMA = schema_string("capability_route")
 UNCERTAINTY_SCHEMA = schema_string("capability_uncertainty")
 UNASSESSABLE_SCHEMA = schema_string("capability_unassessable_condition")
@@ -689,7 +690,7 @@ class AttainableLevel:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": LEVEL_SCHEMA,
+            "schema": LEVEL_SCHEMA_SCOPED if self.quantities else LEVEL_SCHEMA,
             "level": self.level.value,
             "check_name": self.check_name,
             "route_id": self.route_id,
@@ -700,14 +701,14 @@ class AttainableLevel:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "AttainableLevel":
         payload = require_mapping(payload, field="level", error=CapabilityDeclarationError)
+        schema = require_schema_any(payload, (LEVEL_SCHEMA, LEVEL_SCHEMA_SCOPED))
         require_keys(
             payload,
             required=("schema", "level", "check_name", "route_id", "condition"),
-            optional=("quantities",),
+            optional=("quantities",) if schema == LEVEL_SCHEMA_SCOPED else (),
             record="level",
             error=CapabilityDeclarationError,
         )
-        require_schema_exact(payload, LEVEL_SCHEMA, record="level", error=CapabilityDeclarationError)
         return cls(
             ValidationLevel(payload["level"]),
             payload["check_name"],
