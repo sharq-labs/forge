@@ -953,13 +953,21 @@ def assess_scientific_claim(
     record. An unexpected exception is a defect and is not caught.
     """
     from ..claims.assessment import assess_claim as assess
-    from ..claims.external_evidence import PRODUCTION_EXTERNAL_REGISTRY
+    from ..claims.external_evidence import (
+        PRODUCTION_EXTERNAL_REGISTRY,
+        read_external_record,
+    )
     from .capabilities import production_registry
+
+    offered = []
+    for item in external or ():
+        raw = item.get("record", item) if isinstance(item, dict) else item
+        offered.append(read_external_record(raw))
 
     return assess(
         claim,
         production_registry(),
-        external=tuple(external or ()),
+        external=tuple(offered),
         trust=PRODUCTION_EXTERNAL_REGISTRY,
     ).to_dict()
 
