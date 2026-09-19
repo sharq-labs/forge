@@ -5,14 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import json
-from typing import Mapping
+from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..serialization import require_schema, schema_string
 from .ast import (
     BinaryExpression, BinaryOperator, Constant, DerivativeExpression, Equation,
     Expression, FunctionExpression, PowerExpression, Symbol, UnaryExpression,
-    UnaryOperator, referenced_symbols,
+    UnaryOperator, decode_expression, referenced_symbols,
 )
+
+TRANSFORMATION_CONDITION_SCHEMA=schema_string("equation_transformation_condition")
+TRANSFORMATION_RESULT_SCHEMA=schema_string("equation_transformation_result")
 
 
 class TransformationPredicate(str, Enum):
@@ -27,6 +31,18 @@ class TransformationCondition:
     def __post_init__(self) -> None:
         object.__setattr__(self, "predicate", TransformationPredicate(self.predicate))
 
+        if not isinstance(self.expression,(Symbol,Constant,UnaryExpression,BinaryExpression,PowerExpression,FunctionExpression,DerivativeExpression)):
+            raise InvalidScientificProblem("transformation side condition requires typed expression")
+
+    def to_dict(self)->dict[str,Any]:
+        return {"schema":TRANSFORMATION_CONDITION_SCHEMA,
+                "predicate":self.predicate.value,"expression":self.expression.to_dict()}
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"TransformationCondition":
+        require_schema(payload,TRANSFORMATION_CONDITION_SCHEMA)
+        return cls(TransformationPredicate(payload["predicate"]),decode_expression(payload["expression"]))
+
 
 @dataclass(frozen=True)
 class TransformationResult:
@@ -37,6 +53,19 @@ class TransformationResult:
         if not isinstance(self.equation, Equation):
             raise InvalidScientificProblem("transformation result requires Equation")
         object.__setattr__(self, "conditions", tuple(self.conditions))
+
+        if any(not isinstance(c,TransformationCondition) for c in self.conditions):
+            raise InvalidScientificProblem("transformation result conditions must be typed")
+
+    def to_dict(self)->dict[str,Any]:
+        return {"schema":TRANSFORMATION_RESULT_SCHEMA,"equation":self.equation.to_dict(),
+                "conditions":[c.to_dict() for c in self.conditions]}
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"TransformationResult":
+        require_schema(payload,TRANSFORMATION_RESULT_SCHEMA)
+        return cls(Equation.from_dict(payload["equation"]),
+                   tuple(TransformationCondition.from_dict(c) for c in payload.get("conditions",())))
 
 
 def _key(expression: Expression) -> str:

@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
 from .ast import BinaryExpression, BinaryOperator, Constant, Equation, Symbol
 from .dimensions import infer_dimension, require_equation_dimensions, DimensionVector
 from .transformations import substitute_equation
+
+VARIABLE_SCALE_SCHEMA=schema_string("equation_variable_scale")
+NONDIMENSIONALIZATION_SCHEMA=schema_string("equation_nondimensionalization")
 
 
 @dataclass(frozen=True)
@@ -27,13 +33,54 @@ class VariableScale:
         object.__setattr__(self,"symbol",symbol)
         object.__setattr__(self,"dimensionless_symbol",hat)
 
+    def to_dict(self)->dict[str,Any]:
+        return {"schema":VARIABLE_SCALE_SCHEMA,"symbol":self.symbol,
+                "dimensionless_symbol":self.dimensionless_symbol,"scale":self.scale.to_dict()}
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"VariableScale":
+        require_schema(payload,VARIABLE_SCALE_SCHEMA)
+        return cls(payload["symbol"],payload["dimensionless_symbol"],Quantity.from_dict(payload["scale"]))
+
 
 @dataclass(frozen=True)
 class NondimensionalizationResult:
     equation: Equation
-    symbol_units: dict[str,str]
+    symbol_units: Mapping[str,str]
     scales: tuple[VariableScale,...]
     equation_scale: Quantity
+
+    def __post_init__(self)->None:
+        if not isinstance(self.equation,Equation) or not isinstance(self.equation_scale,Quantity):
+            raise InvalidScientificProblem("nondimensionalization result requires Equation and Quantity scale")
+        scales=tuple(self.scales)
+        if any(not isinstance(s,VariableScale) for s in scales):
+            raise InvalidScientificProblem("nondimensionalization scales must be VariableScale records")
+        units={str(k):str(v) for k,v in dict(self.symbol_units).items()}
+        for scale in scales:
+            if units.get(scale.dimensionless_symbol)!="dimensionless":
+                raise InvalidScientificProblem(
+                    f"dimensionless symbol {scale.dimensionless_symbol!r} is not declared dimensionless"
+                )
+        require_equation_dimensions(self.equation,units)
+        left=infer_dimension(self.equation.left,units)
+        if not left.is_dimensionless:
+            raise InvalidScientificProblem("nondimensionalized equation must be dimensionless")
+        object.__setattr__(self,"symbol_units",MappingProxyType(units))
+        object.__setattr__(self,"scales",scales)
+
+    def to_dict(self)->dict[str,Any]:
+        return {"schema":NONDIMENSIONALIZATION_SCHEMA,"equation":self.equation.to_dict(),
+                "symbol_units":dict(sorted(self.symbol_units.items())),
+                "scales":[s.to_dict() for s in self.scales],
+                "equation_scale":self.equation_scale.to_dict()}
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"NondimensionalizationResult":
+        require_schema(payload,NONDIMENSIONALIZATION_SCHEMA)
+        return cls(Equation.from_dict(payload["equation"]),dict(payload["symbol_units"]),
+                   tuple(VariableScale.from_dict(s) for s in payload.get("scales",())),
+                   Quantity.from_dict(payload["equation_scale"]))
 
 
 def nondimensionalize_equation(
