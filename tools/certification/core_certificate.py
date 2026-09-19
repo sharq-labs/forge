@@ -146,6 +146,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tests/test_core_freeze_manifest.py",
      "holds the freeze self-checks the certificate child executes, for the "
      "same reason as the certificate self-checks"),
+    ("tests/scientific_regression/manifest.json",
+     "is the fixed false-confidence regression population executed by the "
+     "regression312 source gate. Changing its membership changes what that "
+     "gate proves, so the certificate must pin the exact manifest bytes"),
     ("src/__init__.py",
      "the src.engcore alias package; executed before any certified module when "
      "the core is imported through that path, so an import-time side effect here "
@@ -160,6 +164,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/__init__.py",
      "executed on every import of tools.certification, before any verifier "
      "code runs; an import-time side effect here could replace a verifier"),
+    ("tools/forge_check.py",
+     "selects the fixed scientific regression node ids and builds the pytest "
+     "command used by regression312. Weakening this selector could make the "
+     "gate pass while exercising less than the pinned regression manifest"),
     ("tools/certification/__init__.py",
      "package initialisation executed before every certification module"),
     ("tools/certification/assert_clean_tree.py",
@@ -461,7 +469,9 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_core_certificate.py",
             "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
+            "tests/scientific_regression/manifest.json",
             "tools/__init__.py",
+            "tools/forge_check.py",
             "tools/certification/*.py",
         ),
         why=(
