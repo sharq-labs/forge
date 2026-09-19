@@ -435,7 +435,10 @@ def battery_capability() -> CapabilityDeclaration:
         },
     )
     produced = (
-        _produced(battery_models.RINT_OCV_MODEL, ("terminal_voltage", "heat_generation"))
+        _produced(
+            battery_models.RINT_OCV_MODEL,
+            ("terminal_voltage", "open_circuit_voltage", "heat_generation"),
+        )
         + _produced(battery_models.COULOMB_COUNTING_MODEL, ("final_state_of_charge",))
         + _produced(lumped.LUMPED_CAPACITY_MODEL, ("final_temperature",))
     )
@@ -476,6 +479,7 @@ def battery_capability() -> CapabilityDeclaration:
                 name: (UncertaintyChannel.EPISTEMIC_PARAMETER,)
                 for name in (
                     "terminal_voltage",
+                    "open_circuit_voltage",
                     "heat_generation",
                     "final_state_of_charge",
                     "final_temperature",
