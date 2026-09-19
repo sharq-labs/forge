@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any,Mapping
+import hashlib, json
 
 from ..errors import InvalidScientificProblem
 from .source import KnowledgeSource
@@ -20,6 +21,14 @@ class SourcePin:
                               "pinned://identity","other")
         object.__setattr__(self,"source_id",probe.source_id);object.__setattr__(self,"issuer",probe.issuer)
         object.__setattr__(self,"document_digest",probe.document_digest);object.__setattr__(self,"version",probe.version)
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "source_id": self.source_id,
+            "issuer": self.issuer,
+            "document_digest": self.document_digest,
+            "version": self.version,
+        }
 
 
 class SourceStanding(str,Enum):
@@ -48,6 +57,16 @@ class TrustedSourceRegistry:
         ids=[p.source_id for p in pins]
         if len(ids)!=len(set(ids)): raise InvalidScientificProblem("trusted source registry contains duplicate source ids")
         object.__setattr__(self,"pins",pins)
+
+    def pin_for(self, source_id: str) -> SourcePin | None:
+        return next((p for p in self.pins if p.source_id == source_id), None)
+
+    @property
+    def digest(self) -> str:
+        payload = [p.to_dict() for p in sorted(self.pins, key=lambda p: p.source_id)]
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
     def assess(self,source:KnowledgeSource)->SourceTrustAssessment:
         pin=next((p for p in self.pins if p.source_id==source.source_id),None)

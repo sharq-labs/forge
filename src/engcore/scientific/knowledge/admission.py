@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import re
 from enum import Enum
 
 from ..errors import InvalidScientificProblem
@@ -32,6 +33,9 @@ class KnowledgeAdmission:
 
 def admit_claim(snapshot:KnowledgeSnapshot,claim_id:str,registry:TrustedSourceRegistry,
                 freshness_policy:FreshnessPolicy,*,now:datetime,target_context_digest:str)->KnowledgeAdmission:
+    target_context_digest=str(target_context_digest).strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}",target_context_digest):
+        raise InvalidScientificProblem("target knowledge context must be lowercase SHA-256")
     claim=next((c for c in snapshot.claims if c.claim_id==claim_id),None)
     if claim is None:
         raise InvalidScientificProblem(f"knowledge snapshot has no claim {claim_id!r}")

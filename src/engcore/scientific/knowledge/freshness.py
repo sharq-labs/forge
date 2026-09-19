@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime,timezone
 from enum import Enum
 from types import MappingProxyType
-from typing import Mapping
+from typing import Mapping, Any
+import hashlib, json
 
 from .source import KnowledgeSource,KnowledgeSourceClass
 
@@ -29,7 +30,26 @@ class FreshnessPolicy:
             normalized[cls]=None if value is None else int(value)
         object.__setattr__(self,"max_age_days",MappingProxyType(normalized))
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "max_age_days": {
+                key.value: value
+                for key, value in sorted(
+                    self.max_age_days.items(), key=lambda item: item[0].value
+                )
+            },
+            "require_timestamp": self.require_timestamp,
+        }
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+
     def assess(self,source:KnowledgeSource,*,now:datetime)->KnowledgeFreshness:
+        if now.tzinfo is None:
+            raise ValueError("freshness assessment time must be timezone-aware")
         limit=self.max_age_days.get(source.source_class)
         if limit is None:
             return KnowledgeFreshness.NOT_APPLICABLE
@@ -39,4 +59,6 @@ class FreshnessPolicy:
         except ValueError: return KnowledgeFreshness.UNKNOWN
         if stamp.tzinfo is None: return KnowledgeFreshness.UNKNOWN
         age=(now.astimezone(timezone.utc)-stamp.astimezone(timezone.utc)).total_seconds()/86400
+        if age < 0:
+            return KnowledgeFreshness.UNKNOWN
         return KnowledgeFreshness.CURRENT if age<=limit else KnowledgeFreshness.STALE

@@ -1,17 +1,17 @@
-"""Bridge admitted scientific knowledge into the evidence graph.
-
-The bridge consumes an already-derived KnowledgeAdmission.  A URL, source class
-or citation string never becomes trusted evidence by itself.
-"""
+"""Bridge scientific knowledge into the evidence graph by re-deriving admission."""
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.knowledge import (
-    KnowledgeAdmission,
+    FreshnessPolicy,
     KnowledgeAdmissionStatus,
     KnowledgeSnapshot,
     KnowledgeSourceClass,
+    TrustedSourceRegistry,
+    admit_claim,
 )
 from .evidence_graph.node import EvidenceAuthority, EvidenceNode
 from .evidence_graph.provenance import EvidenceProvenance
@@ -28,36 +28,33 @@ _AUTHORITY = {
 }
 
 
-def evidence_from_admitted_knowledge(
+def evidence_from_knowledge(
     snapshot: KnowledgeSnapshot,
-    admission: KnowledgeAdmission,
+    claim_id: str,
+    registry: TrustedSourceRegistry,
+    freshness_policy: FreshnessPolicy,
+    *,
+    now: datetime,
+    target_context_digest: str,
 ) -> EvidenceNode:
-    if (
-        admission.status is not KnowledgeAdmissionStatus.ADMISSIBLE
-        or not admission.admissible
-    ):
-        raise InvalidScientificProblem(
-            "only an admissible knowledge claim may become evidence"
-        )
-    claim = next(
-        (c for c in snapshot.claims if c.claim_id == admission.claim_id),
-        None,
+    admission = admit_claim(
+        snapshot,
+        claim_id,
+        registry,
+        freshness_policy,
+        now=now,
+        target_context_digest=target_context_digest,
     )
-    if claim is None:
+    if admission.status is not KnowledgeAdmissionStatus.ADMISSIBLE:
         raise InvalidScientificProblem(
-            "knowledge admission references a claim absent from snapshot"
+            "knowledge claim is not admissible: " + "; ".join(admission.reasons)
         )
-    source = next(
-        (s for s in snapshot.sources if s.source_id == claim.source_id),
-        None,
-    )
-    if source is None:
+    claim = next(c for c in snapshot.claims if c.claim_id == claim_id)
+    source = next(s for s in snapshot.sources if s.source_id == claim.source_id)
+    pin = registry.pin_for(source.source_id)
+    if pin is None:
         raise InvalidScientificProblem(
-            "knowledge claim source is absent from snapshot"
-        )
-    if claim.source_document_digest != source.document_digest:
-        raise InvalidScientificProblem(
-            "knowledge claim source digest differs from snapshot source"
+            "admissible knowledge source unexpectedly has no trust pin"
         )
     provenance = EvidenceProvenance(
         source.source_id,
@@ -65,10 +62,15 @@ def evidence_from_admitted_knowledge(
         source.document_digest,
         source.version,
         source.locator,
+        source.published_at,
         source.retrieved_at,
         source.source_class.value,
-        admission.source_standing.value,
-        admission.freshness.value,
+        pin.issuer,
+        pin.document_digest,
+        pin.version,
+        freshness_policy.max_age_days.get(source.source_class),
+        freshness_policy.require_timestamp,
+        now.isoformat(),
         claim.applicability_context_digest,
         claim.digest,
     )
