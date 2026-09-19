@@ -137,6 +137,7 @@ register_validation_check_kinds(
     "analytic_invariant_agreement",
     "independent_steady_state_agreement",
     "cross_method_agreement",
+    "independent_solver_agreement",
 )
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -316,10 +317,11 @@ def build_validation_report(
             name="integration_reported_success",
             outcome=ValidationOutcome.PASS,
             detail=(
-                f"solve_ivp completed the horizon with status 0 using "
-                f"{run.integration.method} at rtol={run.integration.rtol:.3g}. "
-                f"This is the integrator's opinion of its own local error "
-                f"control and establishes nothing about accuracy"
+                f"{raw.diagnostics.get('integrator', 'solve_ivp')} completed "
+                f"the horizon using {raw.diagnostics.get('method', run.integration.method)} "
+                f"at rtol={run.integration.rtol:.3g}. This is the integrator's "
+                f"opinion of its own local error control and establishes nothing "
+                f"about accuracy"
             ),
             # Deliberately establishes nothing. See the module docstring.
             establishes=None,
@@ -640,6 +642,38 @@ INTEGRATION_ROUTE_DEPENDENCIES = MappingProxyType({
     })
     for method in ("BDF", "Radau")
 })
+
+
+#: A genuinely separate verification route.  Only the physical problem
+#: declaration is shared with the production path; the parameter translation,
+#: ODE implementation, numerical method, and backend are all distinct.
+INDEPENDENT_LSODA_ROUTE_DEPENDENCIES = RouteDependencies({
+    IndependenceDimension.PROBLEM_DECLARATION: {
+        "py:engcore.domains.kinetics.cstr.problem:ReactorRun",
+    },
+    IndependenceDimension.PREPROCESSING: {
+        "py:engcore.domains.kinetics.cstr.independent_solver:independent_parameters",
+    },
+    IndependenceDimension.NUMERICAL_METHOD: {"ext:odepack:lsoda"},
+    IndependenceDimension.IMPLEMENTATION: {
+        "py:engcore.domains.kinetics.cstr.independent_solver:IndependentLSODASolver",
+    },
+    IndependenceDimension.BACKEND: {"py:scipy.integrate:odeint"},
+})
+
+
+def independent_lsoda_route(solver: Any) -> SolveRoute:
+    return SolveRoute(
+        route_id="kinetics.cstr.independent:LSODA",
+        solver=solver,
+        components=frozenset(),
+        dependencies=INDEPENDENT_LSODA_ROUTE_DEPENDENCIES,
+        notes=(
+            "independent CSTR translation through scipy.integrate.odeint/"
+            "ODEPACK LSODA; shares only the ReactorRun problem declaration "
+            "with the production solve_ivp/BDF route"
+        ),
+    )
 
 
 def integration_route(method: str, solver: Any) -> SolveRoute:
