@@ -7,7 +7,7 @@ half — the runtime object that actually holds the values, checks them against
 the declaration, and hands them to the data plane through the reference the
 control plane already understands.
 
-    FieldDefinition + StructuredMesh      what it is and where       (control)
+    FieldDefinition + MeshSupport         what it is and where       (control)
     FieldValue                            the numbers                (here)
     ScientificDataReference               which numbers, by digest   (boundary)
     BulkDataStore / BulkDataResolver      where the bytes are        (runtime)
@@ -35,6 +35,7 @@ import numpy as np
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.fields.definition import FieldDefinition
 from ..scientific.fields.mesh import CANONICAL_LENGTH, StructuredMesh
+from ..scientific.fields.support import MeshSupport
 from ..scientific.fields.profiles import SpatialProfile
 from ..scientific.fields.regions import MeshRegion
 from ..scientific.fields.result import (
@@ -123,7 +124,7 @@ class FieldValue:
     """
 
     definition: FieldDefinition
-    mesh: StructuredMesh
+    mesh: MeshSupport
     values: np.ndarray
 
     def __post_init__(self) -> None:
@@ -251,7 +252,7 @@ class FieldValue:
 
     @classmethod
     def from_record(
-        cls, record: FieldRecord, mesh: StructuredMesh, resolver: BulkDataResolver
+        cls, record: FieldRecord, mesh: MeshSupport, resolver: BulkDataResolver
     ) -> "FieldValue":
         """Read a field back, against the support it says it was solved on.
 
