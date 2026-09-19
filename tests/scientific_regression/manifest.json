@@ -776,6 +776,97 @@
         "diagnostics"
       ],
       "invariant": "derivatives cannot use undeclared independent variables"
+    },
+    {
+      "id": "model-form-scope-bound",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope",
+      "tags": [
+        "uq",
+        "applicability",
+        "provenance"
+      ],
+      "invariant": "model-form uncertainty cannot transfer across model/context/dataset scope"
+    },
+    {
+      "id": "model-form-estimator-authority",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification",
+      "tags": [
+        "uq",
+        "policy"
+      ],
+      "invariant": "producer qualification binds estimator method"
+    },
+    {
+      "id": "model-form-legacy-unscoped",
+      "nodeid": "tests/uq/model_form/test_serialization.py::test_v1_payload_is_read_as_unscoped_and_cannot_gain_scope",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "legacy unscoped model-form records cannot gain authority on read"
+    },
+    {
+      "id": "combined-uq-lineage",
+      "nodeid": "tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination",
+      "tags": [
+        "uq",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "primitive uncertainty evidence cannot be double-counted"
+    },
+    {
+      "id": "combined-uq-correlation",
+      "nodeid": "tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "RSS refuses unspecified pair correlations by default"
+    },
+    {
+      "id": "combined-uq-psd",
+      "nodeid": "tests/uq/combined/test_psd.py::test_combined_standard_uq_refuses_non_psd_declared_correlation_matrix",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "declared correlation matrix must be PSD"
+    },
+    {
+      "id": "combined-uq-conservative-interval",
+      "nodeid": "tests/uq/combined/test_intervals.py::test_conservative_interval_adds_asymmetric_widths_without_independence_claim",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "interval envelope combines without hidden independence"
+    },
+    {
+      "id": "combined-uq-hybrid-k",
+      "nodeid": "tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it",
+      "tags": [
+        "uq",
+        "policy"
+      ],
+      "invariant": "standard-to-interval expansion requires explicit k"
+    },
+    {
+      "id": "combined-uq-wire",
+      "nodeid": "tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "combined uncertainty output is re-derived on read"
+    },
+    {
+      "id": "combined-uq-model-form",
+      "nodeid": "tests/uq/combined/test_model_form_integration.py::test_authorized_model_form_interval_combines_with_numerical_without_losing_source_identity",
+      "tags": [
+        "uq",
+        "evidence"
+      ],
+      "invariant": "authorized model-form and numerical UQ combine while retaining source semantics"
     }
   ]
 }

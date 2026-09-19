@@ -6862,6 +6862,58 @@ POPULATION_V4: tuple[tuple, ...] = (
         (),
         'equation_ir_v2_round58',
     ),
+    (
+        "N59a", "src/engcore/uq/model_form/promotion.py::assess_promotion", "    if estimate.scope is None: reasons.append(\"model-form estimate is not bound to a model/context/dataset scope\")\n", "    if False: reasons.append(\"model-form estimate is not bound to a model/context/dataset scope\")\n", "tests/uq/model_form/test_promotion.py::test_even_validated_unscoped_estimate_is_not_promotable", 'KILLED',
+        "unscoped model-form estimates cannot become authoritative", (), 'combined_uq_round59',
+    ),
+    (
+        "N59b", "src/engcore/uq/model_form/authority.py::authorize_model_form", "    if estimate.scope is None or estimate.scope!=target_scope: reasons.append(\"model-form estimate scope does not match the target model/context/dataset\")\n", "    if False: reasons.append(\"model-form estimate scope does not match the target model/context/dataset\")\n", "tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope", 'KILLED',
+        "model-form authority is exact-scope bound", (), 'combined_uq_round59',
+    ),
+    (
+        "N59c", "src/engcore/uq/model_form/authority.py::authorize_model_form", "    if not qualification.approves(estimate.quantity,estimate.estimator_method): reasons.append(\"producer is not qualified for this quantity/estimator\")\n", "    if False: reasons.append(\"producer is not qualified for this quantity/estimator\")\n", "tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification", 'KILLED',
+        "producer qualification binds estimator identity", (), 'combined_uq_round59',
+    ),
+    (
+        "N59d", "src/engcore/uq/model_form/study.py::ModelFormStudy.__post_init__", "                if self.scope.quantity!=quantity:\n                    raise ValueError(\"model-form study quantity disagrees with scope\")\n", "                if False:\n                    raise ValueError(\"model-form study quantity disagrees with scope\")\n", "tests/uq/model_form/test_leakage.py::test_study_scope_must_name_the_same_quantity", 'KILLED',
+        "model-form studies cannot drift from declared scope quantity", (), 'combined_uq_round59',
+    ),
+    (
+        "N59e", "src/engcore/uq/combined/combine.py::_validate_common", "            if prior is not None:\n                raise InvalidScientificProblem(\n                    f\"double-counted uncertainty lineage {lineage}: {prior!r} and {contribution.contribution_id!r}\"\n                )\n", "            if False:\n                raise InvalidScientificProblem(\n                    f\"double-counted uncertainty lineage {lineage}: {prior!r} and {contribution.contribution_id!r}\"\n                )\n", "tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination", 'KILLED',
+        "shared primitive evidence lineage cannot be counted twice", (), 'combined_uq_round59',
+    ),
+    (
+        "N59f", "src/engcore/uq/combined/combine.py::_explicit_correlations", "    if missing and policy.missing_correlation is MissingCorrelationPolicy.REFUSE:\n        raise InvalidScientificProblem(f\"correlations are unspecified for contribution pairs {missing}\")\n", "    if False:\n        raise InvalidScientificProblem(f\"correlations are unspecified for contribution pairs {missing}\")\n", "tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default", 'KILLED',
+        "RSS never assumes independence silently", (), 'combined_uq_round59',
+    ),
+    (
+        "N59g", "src/engcore/uq/combined/combine.py::_interval_widths", "    if lower>center or upper<center:\n        raise InvalidScientificProblem(f\"contribution {contribution.contribution_id!r} interval does not contain nominal value\")\n", "    if False:\n        raise InvalidScientificProblem(f\"contribution {contribution.contribution_id!r} interval does not contain nominal value\")\n", "tests/uq/combined/test_intervals.py::test_interval_that_does_not_contain_nominal_is_refused", 'KILLED',
+        "combined interval contributions must contain the nominal value", (), 'combined_uq_round59',
+    ),
+    (
+        "N59h", "src/engcore/uq/combined/policy.py::CombinationPolicy.__post_init__", "        if self.mode is CombinationMode.HYBRID_INTERVAL and self.standard_coverage_factor is None:\n            raise ValueError(\"HYBRID_INTERVAL requires an explicit standard_coverage_factor\")\n", "        if False:\n            raise ValueError(\"HYBRID_INTERVAL requires an explicit standard_coverage_factor\")\n", "tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it", 'KILLED',
+        "standard-to-interval conversion requires an explicit coverage factor", (), 'combined_uq_round59',
+    ),
+    (
+        "N59i", "src/engcore/uq/combined/contribution.py::UncertaintyContribution.__post_init__", "        if source in {UncertaintySource.UNSPECIFIED,UncertaintySource.COMBINED}:\n            raise InvalidScientificProblem(\"combined UQ accepts only attributed primitive uncertainty sources\")\n", "        if False:\n            raise InvalidScientificProblem(\"combined UQ accepts only attributed primitive uncertainty sources\")\n", "tests/uq/combined/test_dimensions.py::test_combined_or_unknown_source_cannot_reenter_combiner", 'KILLED',
+        "combined or unattributed uncertainty cannot reenter as primitive evidence", (), 'combined_uq_round59',
+    ),
+    (
+        "N59j", "src/engcore/uq/combined/serialization.py::report_from_dict", "    if rebuilt.output.to_dict()!=payload.get(\"output\"):\n        raise InvalidScientificProblem(\"serialized combined uncertainty output is forged or stale\")\n", "    if False:\n        raise InvalidScientificProblem(\"serialized combined uncertainty output is forged or stale\")\n", "tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs", 'KILLED',
+        "combined-UQ wire output is re-derived", (), 'combined_uq_round59',
+    ),
+    (
+        "N59k", "src/engcore/uq/combined/combine.py::_validate_common", "    if missing: raise InvalidScientificProblem(f\"combined UQ is missing required sources {sorted(x.value for x in missing)}\")\n", "    if False: raise InvalidScientificProblem(f\"combined UQ is missing required sources {sorted(x.value for x in missing)}\")\n", "tests/uq/combined/test_lineage.py::test_required_uncertainty_channels_must_be_present", 'KILLED',
+        "declared required UQ channels cannot be omitted", (), 'combined_uq_round59',
+    ),
+    (
+        "N59l", "src/engcore/uq/model_form/fingerprint.py::model_form_estimate_fingerprint", "             \"scope\":None if estimate.scope is None else estimate.scope.to_dict()}\n", "             \"scope\":None}\n", "tests/uq/model_form/test_fingerprint.py::test_model_form_fingerprint_binds_model_context_and_dataset_scope", 'KILLED',
+        "model-form fingerprint binds exact model/context/dataset scope", (), 'combined_uq_round59',
+    ),
+    (
+        "N59m", "src/engcore/uq/model_form/serialization.py::model_form_from_dict", "        ModelFormScope.from_dict(scope) if scope is not None else None)\n", "        None)\n", "tests/uq/model_form/test_serialization.py::test_model_form_v2_round_trip_preserves_scope_and_fail_closed_status", 'KILLED',
+        "model-form V2 serialization preserves scope authority", (), 'combined_uq_round59',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on

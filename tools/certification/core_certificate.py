@@ -465,6 +465,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/credibility/evidence_graph/*.py",
             "tests/uq/model_form/*.py",
             "tests/uq/budget/*.py",
+            "tests/uq/combined/*.py",
             "tests/execution/orchestration/*.py",
         ),
         why=(
