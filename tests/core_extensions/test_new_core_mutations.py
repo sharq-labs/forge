@@ -80,7 +80,7 @@ def unvalidated_model_form_is_not_promotable():
 def agreement_without_independence_is_not_verified():
     comparisons = (RouteComparison("primary", "verify", True, 0.0),)
     independence = (
-        IndependenceEvidence(IndependenceLevel.PARTIAL, ("shared_model",)),
+        IndependenceEvidence("primary", "verify", IndependenceLevel.PARTIAL, ("shared_model",)),
     )
     assert verification_adjudication_module.adjudicate(comparisons, independence) is VerificationDecision.INSUFFICIENT_INDEPENDENCE
 

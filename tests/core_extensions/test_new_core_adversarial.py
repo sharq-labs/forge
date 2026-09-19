@@ -46,7 +46,7 @@ def test_certification_digest_shape_is_validated():
 
 def test_full_independence_cannot_list_shared_components():
     with pytest.raises(ValueError):
-        IndependenceEvidence(IndependenceLevel.EXTERNAL, ("same_solver",))
+        IndependenceEvidence("p", "v", IndependenceLevel.EXTERNAL, ("same_solver",))
 
 
 def test_invalid_correlation_above_one_is_refused():
