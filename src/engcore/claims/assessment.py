@@ -48,7 +48,7 @@ from ..sria.assurance import (
     trusting_authority,
 )
 from ..sria.assurance.assessment import CriticVerdict
-from ._records import canonical_json, require_mapping, tagged_digest
+from ._records import assessment_record_digest, canonical_json, require_mapping, tagged_digest
 from .capabilities import CapabilityRegistry
 from .compiler import CompilationStatus, CompiledClaim, compile_claim
 from .context import context_problems
@@ -599,7 +599,7 @@ class ClaimAssessment:
 
     @property
     def digest(self) -> str:
-        return tagged_digest(_TAG, self.to_dict())
+        return assessment_record_digest(self.to_dict())
 
 
 def _execution_view(execution: PlanExecution) -> dict[str, Any]:
