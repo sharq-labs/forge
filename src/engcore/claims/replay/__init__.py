@@ -1,3 +1,1 @@
-"""Assessment bundle verification and deterministic replay."""
-
-from .bundle import *
+"""Assessment replay package. Import concrete APIs from :mod:`engcore.claims.replay.bundle`."""\n
