@@ -11,6 +11,7 @@ from engcore.domainpacks import (
     DomainPackNotEnabled,
     DomainPackNotFound,
     DomainPackRegistry,
+    InvalidDomainPackManifest,
     InvalidDomainPackProvider,
     PackOrigin,
     discover_domain_packs,
@@ -192,5 +193,5 @@ def test_manifest_reader_refuses_string_where_json_array_is_required() -> None:
     payload = provider.manifest.to_dict()
     payload["capabilities"] = "battery:cell_terminal_state"
 
-    with pytest.raises(Exception, match="capabilities must be a JSON array"):
+    with pytest.raises(InvalidDomainPackManifest, match="capabilities must be a JSON array"):
         type(provider.manifest).from_dict(payload)
