@@ -75,3 +75,12 @@ def test_certification_core_changes_select_policy_and_provenance_sentinels():
 def test_credibility_changes_select_provenance_and_replay_sentinels():
     tags = forge_check.tags_for_paths(["src/engcore/credibility/assurance_bundle.py"])
     assert {"evidence", "provenance", "replay"} <= tags
+
+
+def test_knowledge_core_changes_select_knowledge_evidence_and_replay_sentinels():
+    tags = forge_check.tags_for_paths(["src/engcore/scientific/knowledge/admission.py"])
+    assert {"knowledge","evidence","provenance","replay","applicability","policy"} <= tags
+    selected = forge_check.cases_for_tags(tags)
+    assert any("test_changed_context_is_refused_even_for_pinned_current_source" in item for item in selected)
+    assert any("test_ingestion_receipt_refuses_missing_or_extra_claim_digest" in item for item in selected)
+    assert any("test_evidence_wire_trust_status_is_rederived_not_trusted" in item for item in selected)

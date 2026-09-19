@@ -6954,6 +6954,66 @@ POPULATION_V4: tuple[tuple, ...] = (
         "N60j", "src/engcore/scientific/verification/run_record.py::VerificationRunRecord.from_dict", "        if payload.get(\"result\")!=derived:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict", 'KILLED',
         "verification run verdict is re-derived on replay", (), 'verification_v2_round60',
     ),
+    (
+        "N61a", "src/engcore/scientific/knowledge/trust.py::TrustedSourceRegistry.assess", "        if pin.document_digest!=source.document_digest: return SourceTrustAssessment(SourceStanding.DIGEST_MISMATCH,\"document digest differs from trust pin\")\n", "        if False: return SourceTrustAssessment(SourceStanding.DIGEST_MISMATCH,\"document digest differs from trust pin\")\n", "tests/scientific/knowledge/test_source_trust.py::test_same_source_id_with_changed_document_digest_is_not_trusted", 'KILLED',
+        "content digest is part of scientific source trust", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61b", "src/engcore/scientific/knowledge/freshness.py::FreshnessPolicy.assess", "        if source.source_class not in self.max_age_days:\n            return KnowledgeFreshness.UNKNOWN\n", "        if False:\n            return KnowledgeFreshness.UNKNOWN\n", "tests/scientific/knowledge/test_freshness.py::test_unconfigured_source_class_is_unknown_not_not_applicable", 'KILLED',
+        "missing freshness policy is UNKNOWN, never silently not-applicable", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61c", "src/engcore/scientific/knowledge/freshness.py::FreshnessPolicy.assess", "        if age < 0:\n            return KnowledgeFreshness.UNKNOWN\n", "        if False:\n            return KnowledgeFreshness.UNKNOWN\n", "tests/scientific/knowledge/test_freshness.py::test_future_or_missing_publication_time_is_not_current", 'KILLED',
+        "future publication timestamps cannot become current evidence", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61d", "src/engcore/scientific/knowledge/claim.py::KnowledgeClaim.__post_init__", "                if lower > value or upper < value:\n                    raise InvalidScientificProblem(\n                        \"knowledge claim uncertainty interval must contain the numeric value\"\n                    )\n", "                if False:\n                    raise InvalidScientificProblem(\n                        \"knowledge claim uncertainty interval must contain the numeric value\"\n                    )\n", "tests/scientific/knowledge/test_claim_snapshot.py::test_numeric_claim_interval_must_contain_claimed_value", 'KILLED',
+        "numeric knowledge value must lie inside its stated uncertainty interval", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61e", "src/engcore/scientific/knowledge/snapshot.py::KnowledgeSnapshot.__post_init__", "            if source.document_digest!=claim.source_document_digest:\n                raise InvalidScientificProblem(f\"claim {claim.claim_id!r} source digest does not match snapshot source\")\n", "            if False:\n                raise InvalidScientificProblem(f\"claim {claim.claim_id!r} source digest does not match snapshot source\")\n", "tests/scientific/knowledge/test_claim_snapshot.py::test_snapshot_refuses_claim_whose_source_digest_differs", 'KILLED',
+        "knowledge snapshots bind each claim to exact source bytes", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61f", "src/engcore/scientific/knowledge/admission.py::admit_claim", "    elif claim.applicability_context_digest!=target_context_digest: status=KnowledgeAdmissionStatus.CONTEXT_MISMATCH\n", "    elif False: status=KnowledgeAdmissionStatus.CONTEXT_MISMATCH\n", "tests/scientific/knowledge/test_admission.py::test_changed_context_is_refused_even_for_pinned_current_source", 'KILLED',
+        "knowledge admission is exact-context bound", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61g", "src/engcore/scientific/knowledge/ingestion.py::verify_ingestion_receipt", "    if recorded != expected:\n        raise InvalidScientificProblem(\n            \"ingestion receipt claim digests do not exactly match snapshot claims\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"ingestion receipt claim digests do not exactly match snapshot claims\"\n        )\n", "tests/scientific/knowledge/test_ingestion.py::test_ingestion_receipt_refuses_missing_or_extra_claim_digest", 'KILLED',
+        "ingestion receipts bind the exact imported claim set", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61h", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.from_dict", "        if \"trust_status\" in payload and payload[\"trust_status\"] != value.trust_status:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance trust status is forged or stale\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance trust status is forged or stale\"\n            )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_wire_trust_status_is_rederived_not_trusted", 'KILLED',
+        "evidence trust status is re-derived on replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61i", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.from_dict", "        if \"freshness\" in payload and payload[\"freshness\"] != value.freshness:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance freshness is forged or stale\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance freshness is forged or stale\"\n            )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_provenance_freshness_status_is_rederived_not_trusted", 'KILLED',
+        "evidence freshness is re-derived on replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61j", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.freshness", "        if not self.freshness_rule_configured:\n            return \"unknown\"\n", "        if False:\n            return \"unknown\"\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unconfigured_freshness_rule_remains_unknown_across_evidence_replay", 'KILLED',
+        "unconfigured freshness remains UNKNOWN across evidence replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61k", "src/engcore/credibility/evidence_graph/node.py::EvidenceNode.__post_init__", "            if self.provenance.claim_digest != digest:\n                raise InvalidScientificProblem(\n                    \"evidence content digest must equal provenance claim digest\"\n                )\n", "            if False:\n                raise InvalidScientificProblem(\n                    \"evidence content digest must equal provenance claim digest\"\n                )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_node_content_digest_must_match_provenance_claim_digest", 'KILLED',
+        "evidence identity is bound to the exact knowledge claim", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61l", "src/engcore/credibility/evidence_graph/policy.py::assess_graph", "    if policy.require_trusted_provenance and any(\n        n.provenance is None or not n.provenance.trusted for n in graph.nodes\n    ):\n        problems.append(\"evidence provenance is not pinned/trusted\")\n", "    if False:\n        problems.append(\"evidence provenance is not pinned/trusted\")\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_tampered_pin_identity_rederives_untrusted_and_strict_policy_refuses", 'KILLED',
+        "strict evidence policy requires re-derived pinned provenance", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61m", "src/engcore/credibility/evidence_graph/policy.py::assess_graph", "    if policy.require_provenance and any(n.provenance is None for n in graph.nodes):\n        problems.append(\"missing evidence provenance\")\n", "    if False:\n        problems.append(\"missing evidence provenance\")\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_strict_provenance_policy_refuses_legacy_unprovenanced_evidence", 'KILLED',
+        "strict evidence policy refuses unprovenanced legacy nodes", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61n", "src/engcore/credibility/knowledge_evidence.py::evidence_from_knowledge", "    if admission.status is not KnowledgeAdmissionStatus.ADMISSIBLE:\n        raise InvalidScientificProblem(\n            \"knowledge claim is not admissible: \" + \"; \".join(admission.reasons)\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"knowledge claim is not admissible: \" + \"; \".join(admission.reasons)\n        )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge", 'KILLED',
+        "only re-derived admissible knowledge can cross into evidence", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61o", "src/engcore/credibility/replay_binding.py::knowledge_snapshot_artifact", "        snapshot.digest,\n", "        \"0\" * 64,\n", "tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts", 'KILLED',
+        "replay artifact binds the exact knowledge snapshot digest", (), 'knowledge_evidence_round61',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on
