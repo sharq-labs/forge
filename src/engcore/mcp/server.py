@@ -4,13 +4,12 @@ The domain run tools remain **transport and nothing else**: they compute no
 physics here, evaluate no condition here and re-decide no credibility verdict.
 Every scientific fact they return was produced below this module.
 
-The public surface also exposes one explicit orchestration tool,
-`assess_claim`. It does not compute physics or invent scientific judgement;
-it binds an existing credibility report to the already-implemented SRIA
-Evidence -> Critic -> Arbiter path for a caller-declared decision standard.
-The caller must name the system, quantity, decision, required evidentiary
-levels and model-discrepancy declaration. No natural-language inference,
-automatic model selection or confidence default lives here.
+The public surface also exposes structured claim orchestration and a product
+gateway. The product tools do not compute physics or invent scientific
+judgement: they ground an outer LLM proposal, compile it against the production
+capability registry and execute only when the deterministic compiler says the
+claim is READY. The LLM remains a proposer, never the authority that chooses
+model applicability, evidence, uncertainty or a verdict.
 
 **The unflattering verdict is transmitted.** The nominal electro-thermal case
 reports ``INSUFFICIENT_EVIDENCE``, because the payload has no field for a
@@ -1224,11 +1223,12 @@ def build_server() -> MCPServer:
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
-            "its own results and can bind one structured claim to an explicit "
-            "decision standard. Call describe_capabilities before writing a "
-            "case. assess_claim requires the system, quantity, decision, "
-            "required evidence levels and discrepancy declaration explicitly. "
-            "Verdicts remain decision support, not certification."
+            "its own results. Product clients should call describe_product, "
+            "then prepare_simulation or run_proposed_simulation. Language models "
+            "may propose structured claims but never supply scientific authority. "
+            "Lower-level callers can still use describe_capabilities, direct "
+            "system tools and assess_claim. Verdicts remain decision support, "
+            "not certification."
         ),
     )
     server.add_tool(
