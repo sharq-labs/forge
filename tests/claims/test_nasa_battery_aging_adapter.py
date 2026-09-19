@@ -65,7 +65,7 @@ def test_direct_voltage_observation_remains_nonadmissible_without_calibration_uq
     )
 
     assert observation.value.magnitude_in("volt") == pytest.approx(3.8)
-    assert observation.conditions["load.current"].magnitude_in("ampere") == pytest.approx(2.0)
+    assert observation.conditions["load.discharge_current"].magnitude_in("ampere") == pytest.approx(2.0)
     assert observation.conditions["load.cell_temperature"].magnitude_in("degC") == pytest.approx(25.0)
     assert not observation.uncertainty.is_quantified
     assert observation.ready_for_measurement_evidence is False
@@ -92,7 +92,7 @@ def test_current_sign_convention_is_declared_not_hidden_by_abs() -> None:
         split=DatasetSplit.CALIBRATION,
         current_convention=CurrentSignConvention.NEGATIVE_DISCHARGE,
     )
-    assert observation.conditions["load.current"].magnitude_in("ampere") == pytest.approx(2.0)
+    assert observation.conditions["load.discharge_current"].magnitude_in("ampere") == pytest.approx(2.0)
 
 
 def test_soc_trace_is_explicitly_derived_not_measurement_evidence() -> None:
