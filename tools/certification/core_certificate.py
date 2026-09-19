@@ -518,7 +518,7 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "claim-level orchestration without extending the frozen Core API"),
     ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
      "applications built on the core"),
-    ("tests/** (except the harness area and the two self-check modules)",
+    ("tests/** (except the harness area, the two self-check modules and the pinned regression manifest)",
      "assurance for everything above, not part of what is certified. They "
      "still trigger recertification (tools/certification/recertification_scope.py), "
      "because the gates' results are claims about them"),
