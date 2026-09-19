@@ -169,3 +169,28 @@ def test_discovery_loading_still_does_not_register_or_enable() -> None:
 
     assert len(registry) == 0
     assert registry.list(enabled_only=True) == ()
+
+
+class _NoSolverProvider(BatteryDomainPack):
+    @property
+    def manifest(self):
+        return replace(super().manifest, solvers=())
+
+    def solver_factories(self):
+        return ()
+
+
+def test_atomic_pack_refuses_realizations_without_an_in_pack_solver() -> None:
+    report = validate_domain_pack(_NoSolverProvider())
+
+    assert not report.valid
+    assert any("no in-pack solver" in error for error in report.errors)
+
+
+def test_manifest_reader_refuses_string_where_json_array_is_required() -> None:
+    provider = BatteryDomainPack()
+    payload = provider.manifest.to_dict()
+    payload["capabilities"] = "battery:cell_terminal_state"
+
+    with pytest.raises(Exception, match="capabilities must be a JSON array"):
+        type(provider.manifest).from_dict(payload)
