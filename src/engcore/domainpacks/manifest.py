@@ -158,13 +158,21 @@ class DomainPackManifest:
             raise InvalidDomainPackManifest(
                 f"domain pack manifest shape mismatch; missing={missing}, extra={extra}"
             )
-        decode = lambda name: tuple(ArtifactRef.from_dict(v) for v in payload[name])
+        def sequence(name: str) -> tuple:
+            value = payload[name]
+            if not isinstance(value, list):
+                raise InvalidDomainPackManifest(f"{name} must be a JSON array")
+            return tuple(value)
+
+        def decode(name: str) -> tuple[ArtifactRef, ...]:
+            return tuple(ArtifactRef.from_dict(v) for v in sequence(name))
+
         return cls(
             pack_id=payload["pack_id"],
             pack_version=payload["pack_version"],
             domain=payload["domain"],
-            compatible_core_apis=tuple(payload["compatible_core_apis"]),
-            capabilities=tuple(payload["capabilities"]),
+            compatible_core_apis=sequence("compatible_core_apis"),
+            capabilities=sequence("capabilities"),
             models=decode("models"),
             realizations=decode("realizations"),
             solvers=decode("solvers"),
