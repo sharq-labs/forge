@@ -343,6 +343,7 @@ def _aleatoric(
     qoi = plan.content["qoi"]
     nominal = report.values[qoi["name"]].to(qoi["units"])
     replicates: list[ReplicateObservation] = []
+    source_observations: list[DatasetObservation] = []
     for item in observations:
         if item.quantity != qoi["name"] or not item.ready_for_measurement_evidence:
             continue
@@ -352,6 +353,7 @@ def _aleatoric(
             is not UncertaintySource.MEASUREMENT
         ):
             continue
+        source_observations.append(item)
         replicates.append(
             ReplicateObservation(
                 observation_id=item.observation_id,
@@ -386,6 +388,7 @@ def _aleatoric(
         "channel": UncertaintyChannel.ALEATORIC.value,
         "kind": "aleatoric_replicates",
         "spec": spec,
+        "source_observations": [item.to_dict() for item in source_observations],
         "replicates": [item.to_dict() for item in replicates],
         "estimate": None if estimate is None else estimate.to_dict(),
         "problem": problem,
