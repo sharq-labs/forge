@@ -29,7 +29,7 @@ ARCHITECTURE_TESTS = (
 ALL_SCIENTIFIC_TAGS = frozenset({
     "verdict", "evidence", "vnv", "applicability", "compiler", "selection",
     "context", "uq", "policy", "external", "gaps", "challenge", "replay",
-    "provenance", "diagnostics", "equation_ir",
+    "provenance", "diagnostics", "equation_ir", "knowledge",
 })
 
 
@@ -67,6 +67,12 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
 
     if any(p.startswith("src/engcore/scientific/equations/") for p in paths):
         tags |= {"equation_ir", "compiler", "applicability", "diagnostics", "provenance", "replay"}
+
+    if any(p.startswith("src/engcore/scientific/knowledge/") for p in paths):
+        tags |= {"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics", "policy"}
+
+    if any(p == "src/engcore/credibility/knowledge_evidence.py" for p in paths):
+        tags |= {"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics"}
 
     if any(p.startswith("src/engcore/uq/") or p.startswith("src/engcore/hybrid_uq/") for p in paths):
         tags |= {"uq", "verdict", "diagnostics"}

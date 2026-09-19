@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
+from ...scientific.serialization import require_schema, schema_string
 from .edge import EvidenceEdge
 from .lineage import lineage_cycle
 from .node import EvidenceNode
+
+EVIDENCE_GRAPH_SCHEMA=schema_string("scientific_evidence_graph")
 
 
 @dataclass(frozen=True)
@@ -40,3 +44,19 @@ class EvidenceGraph:
             if node.evidence_id==evidence_id:
                 return node
         raise KeyError(evidence_id)
+
+
+    def to_dict(self)->dict[str,Any]:
+        return {
+            "schema":EVIDENCE_GRAPH_SCHEMA,
+            "nodes":[n.to_dict() for n in self.nodes],
+            "edges":[e.to_dict() for e in self.edges],
+        }
+
+    @classmethod
+    def from_dict(cls,payload:Mapping[str,Any])->"EvidenceGraph":
+        require_schema(payload,EVIDENCE_GRAPH_SCHEMA)
+        return cls(
+            tuple(EvidenceNode.from_dict(n) for n in payload.get("nodes",())),
+            tuple(EvidenceEdge.from_dict(e) for e in payload.get("edges",())),
+        )

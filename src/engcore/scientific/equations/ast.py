@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from fractions import Fraction
+import hashlib
+import json
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
@@ -24,6 +26,7 @@ UNARY_SCHEMA = schema_string("equation_unary")
 BINARY_SCHEMA = schema_string("equation_binary")
 POWER_SCHEMA = schema_string("equation_power")
 FUNCTION_SCHEMA = schema_string("equation_function")
+DERIVATIVE_SCHEMA = schema_string("equation_derivative")
 EQUATION_SCHEMA = schema_string("scientific_equation")
 
 
@@ -209,7 +212,51 @@ class FunctionExpression:
         )
 
 
-Expression = Symbol | Constant | UnaryExpression | BinaryExpression | PowerExpression | FunctionExpression
+@dataclass(frozen=True)
+class DerivativeExpression:
+    """A typed ordinary/partial derivative.
+
+    variables is the ordered differentiation sequence.  (x, x) is a second x
+    derivative; (x, t) is a mixed partial.  This node records the operator only:
+    numerical derivative values must come from a solver/discretization.
+    """
+
+    operand: "Expression"
+    variables: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _require_expression(self.operand, context="derivative operand")
+        variables = tuple(str(v).strip() for v in self.variables)
+        if not variables or any(not v for v in variables):
+            raise InvalidScientificProblem("equation derivative requires one or more variable names")
+        object.__setattr__(self, "variables", variables)
+
+    @property
+    def order(self) -> int:
+        return len(self.variables)
+
+    @property
+    def binding_key(self) -> str:
+        payload = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        return "derivative:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": DERIVATIVE_SCHEMA,
+            "operand": self.operand.to_dict(),
+            "variables": list(self.variables),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "DerivativeExpression":
+        require_schema(payload, DERIVATIVE_SCHEMA)
+        return cls(
+            operand=decode_expression(payload["operand"]),
+            variables=tuple(payload.get("variables", ())),
+        )
+
+
+Expression = Symbol | Constant | UnaryExpression | BinaryExpression | PowerExpression | FunctionExpression | DerivativeExpression
 _EXPRESSION_TYPES = (
     Symbol,
     Constant,
@@ -217,6 +264,7 @@ _EXPRESSION_TYPES = (
     BinaryExpression,
     PowerExpression,
     FunctionExpression,
+    DerivativeExpression,
 )
 
 
@@ -235,6 +283,7 @@ _DECODERS = {
     BINARY_SCHEMA: BinaryExpression,
     POWER_SCHEMA: PowerExpression,
     FUNCTION_SCHEMA: FunctionExpression,
+    DERIVATIVE_SCHEMA: DerivativeExpression,
 }
 
 
@@ -265,6 +314,8 @@ def referenced_symbols(expression: Expression) -> frozenset[str]:
         return referenced_symbols(expression.base)
     if isinstance(expression, FunctionExpression):
         return referenced_symbols(expression.argument)
+    if isinstance(expression, DerivativeExpression):
+        return referenced_symbols(expression.operand) | frozenset(expression.variables)
     raise AssertionError("closed expression union exhausted")
 
 

@@ -14,3 +14,25 @@ __all__ = [
     "ReplayComparison", "compare_numeric", "MigrationDecision", "assess_migration",
     "verify_replay_bundle", "replay_bundle_fingerprint",
 ]
+
+from .profile import RunManifestProfile
+from .manifest import ScientificRunManifest
+from .outputs import OutputComparison,OutputExpectation,OutputObservation,compare_output
+from .run_replay import (
+    ManifestReplayVerification,RunReplayRecord,RunReplayVerification,verify_run_manifest,
+)
+from .lineage import LineageVerification,verify_manifest_lineage
+from .artifact_factory import artifact_from_payload,provenance_artifact
+
+__all__ += [
+    "RunManifestProfile","ScientificRunManifest","OutputExpectation",
+    "OutputObservation","OutputComparison","compare_output","ManifestReplayVerification",
+    "RunReplayVerification","RunReplayRecord","verify_run_manifest",
+    "LineageVerification","verify_manifest_lineage","artifact_from_payload",
+    "provenance_artifact",
+]
+
+from .derivation import DerivationStep, ScientificDerivationGraph
+from .provenance_binding import bind_derivation_to_run
+
+__all__ += ["DerivationStep", "ScientificDerivationGraph", "bind_derivation_to_run"]

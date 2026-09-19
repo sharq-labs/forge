@@ -20,6 +20,7 @@ from .ast import (
     BinaryExpression,
     BinaryOperator,
     Constant,
+    DerivativeExpression,
     Equation,
     Expression,
     FunctionExpression,
@@ -29,7 +30,7 @@ from .ast import (
     UnaryExpression,
     UnaryOperator,
 )
-from .dimensions import DimensionVector
+from .dimensions import DimensionVector, infer_dimension
 from .errors import EquationEvaluationError
 
 EQUATION_EVALUATION_SCHEMA = schema_string("equation_evaluation")
@@ -62,6 +63,8 @@ def _dimensionless_magnitude(value: Quantity, function: FunctionName) -> float:
 def evaluate_expression(
     expression: Expression,
     bindings: Mapping[str, Quantity],
+    *,
+    derivative_bindings: Mapping[str, Quantity] | None = None,
 ) -> Quantity:
     if isinstance(expression, Symbol):
         value = bindings.get(expression.name)
@@ -82,7 +85,7 @@ def evaluate_expression(
         return expression.value
 
     if isinstance(expression, UnaryExpression):
-        value = evaluate_expression(expression.operand, bindings)
+        value = evaluate_expression(expression.operand, bindings, derivative_bindings=derivative_bindings)
         if expression.operator is UnaryOperator.NEGATE:
             return Quantity(-value.magnitude, value.units)
         if expression.operator is UnaryOperator.ABSOLUTE:
@@ -90,8 +93,8 @@ def evaluate_expression(
         raise AssertionError("closed UnaryOperator exhausted")
 
     if isinstance(expression, BinaryExpression):
-        left = evaluate_expression(expression.left, bindings)
-        right = evaluate_expression(expression.right, bindings)
+        left = evaluate_expression(expression.left, bindings, derivative_bindings=derivative_bindings)
+        right = evaluate_expression(expression.right, bindings, derivative_bindings=derivative_bindings)
         try:
             if expression.operator is BinaryOperator.ADD:
                 return left + right
@@ -112,10 +115,34 @@ def evaluate_expression(
         raise AssertionError("closed BinaryOperator exhausted")
 
     if isinstance(expression, PowerExpression):
-        return _power(evaluate_expression(expression.base, bindings), expression.exponent)
+        return _power(evaluate_expression(expression.base, bindings, derivative_bindings=derivative_bindings), expression.exponent)
+
+    if isinstance(expression, DerivativeExpression):
+        supplied = (derivative_bindings or {}).get(expression.binding_key)
+        if supplied is None:
+            raise EquationEvaluationError(
+                "derivative_binding_required",
+                f"derivative order {expression.order} requires an explicit solver/discretization binding",
+            )
+        if not isinstance(supplied, Quantity):
+            raise EquationEvaluationError(
+                "untyped_derivative_binding",
+                "derivative binding must be a Quantity",
+            )
+        symbol_units = {
+            name: value.units for name, value in bindings.items() if isinstance(value, Quantity)
+        }
+        expected = infer_dimension(expression, symbol_units)
+        found = DimensionVector.from_unit(supplied.units)
+        if found != expected:
+            raise EquationEvaluationError(
+                "derivative_dimension_mismatch",
+                f"derivative binding has {found.render()}, expected {expected.render()}",
+            )
+        return supplied
 
     if isinstance(expression, FunctionExpression):
-        value = evaluate_expression(expression.argument, bindings)
+        value = evaluate_expression(expression.argument, bindings, derivative_bindings=derivative_bindings)
         if expression.function is FunctionName.SQRT:
             if value.magnitude < 0:
                 raise EquationEvaluationError(
@@ -207,9 +234,11 @@ class EquationEvaluation:
 def evaluate_equation(
     equation: Equation,
     bindings: Mapping[str, Quantity],
+    *,
+    derivative_bindings: Mapping[str, Quantity] | None = None,
 ) -> EquationEvaluation:
-    left = evaluate_expression(equation.left, bindings)
-    right = evaluate_expression(equation.right, bindings)
+    left = evaluate_expression(equation.left, bindings, derivative_bindings=derivative_bindings)
+    right = evaluate_expression(equation.right, bindings, derivative_bindings=derivative_bindings)
     try:
         left.require_compatible(right, context="equation residual")
         residual = left - right

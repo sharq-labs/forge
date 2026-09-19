@@ -6741,6 +6741,383 @@ POPULATION_V4: tuple[tuple, ...] = (
         (),
         'core_extension_round57',
     ),
+    (
+        "N58a",
+        "src/engcore/scientific/equations/evaluation.py::evaluate_expression",
+        "        if supplied is None:\n            raise EquationEvaluationError(\n                \"derivative_binding_required\",\n                f\"derivative order {expression.order} requires an explicit solver/discretization binding\",\n            )\n",
+        "        if False:\n            raise EquationEvaluationError(\n                \"derivative_binding_required\",\n                f\"derivative order {expression.order} requires an explicit solver/discretization binding\",\n            )\n",
+        "tests/scientific/equations/test_derivatives_v2.py::test_derivative_round_trip_dimension_and_explicit_solver_binding",
+        'KILLED',
+        "derivatives require explicit solver/discretization evidence",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58b",
+        "src/engcore/scientific/equations/evaluation.py::evaluate_expression",
+        "        if found != expected:\n            raise EquationEvaluationError(\n                \"derivative_dimension_mismatch\",\n                f\"derivative binding has {found.render()}, expected {expected.render()}\",\n            )\n",
+        "        if False:\n            raise EquationEvaluationError(\n                \"derivative_dimension_mismatch\",\n                f\"derivative binding has {found.render()}, expected {expected.render()}\",\n            )\n",
+        "tests/scientific/equations/test_derivatives_v2.py::test_derivative_binding_with_wrong_dimension_is_refused",
+        'KILLED',
+        "derivative evidence must have the inferred derivative dimension",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58c",
+        "src/engcore/scientific/equations/constraints.py::ConstraintEvaluation.__post_init__",
+        "        if self.satisfied is not expected_ok:\n            raise InvalidScientificProblem(\"constraint evaluation verdict disagrees with its quantities\")\n",
+        "        if False:\n            raise InvalidScientificProblem(\"constraint evaluation verdict disagrees with its quantities\")\n",
+        "tests/scientific/equations/test_constraints_v2.py::test_constraint_wire_verdict_is_rederived",
+        'KILLED',
+        "serialized constraint verdicts are re-derived",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58d",
+        "src/engcore/scientific/equations/conditions.py::evaluate_condition",
+        "            if not math.isclose(actual, fixed.value.magnitude, rel_tol=1e-12, abs_tol=1e-15):\n                raise InvalidScientificProblem(\n                    f\"binding for {fixed.symbol!r} conflicts with condition location\"\n                )\n",
+        "            if False:\n                raise InvalidScientificProblem(\n                    f\"binding for {fixed.symbol!r} conflicts with condition location\"\n                )\n",
+        "tests/scientific/equations/test_conditions_v2.py::test_condition_refuses_a_conflicting_location_binding",
+        'KILLED',
+        "boundary/initial location bindings cannot be silently overridden",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58e",
+        "src/engcore/scientific/equations/differential.py::DifferentialProblem.from_dict",
+        "            if key in payload and payload[key]!=value:\n                raise InvalidScientificProblem(f\"serialized differential {key} is forged or stale\")\n",
+        "            if False:\n                raise InvalidScientificProblem(f\"serialized differential {key} is forged or stale\")\n",
+        "tests/scientific/equations/test_differential_ode_v2.py::test_differential_wire_kind_is_derived_not_trusted",
+        'KILLED',
+        "ODE/PDE classification and derivative order are derived fields",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58f",
+        "src/engcore/scientific/equations/transformations.py::isolate_symbol",
+        "    if left_count+right_count != 1:\n        raise InvalidScientificProblem(\"safe isolation requires exactly one target occurrence\")\n",
+        "    if False:\n        raise InvalidScientificProblem(\"safe isolation requires exactly one target occurrence\")\n",
+        "tests/scientific/equations/test_transformations_v2.py::test_isolation_refuses_multiple_target_occurrences",
+        'KILLED',
+        "safe symbolic isolation refuses ambiguous multiple occurrences",
+        (("src/engcore/scientific/equations/transformations.py::isolate_symbol", "        if lc+rc != 1:\n            raise InvalidScientificProblem(\"safe isolation encountered multiple target occurrences\")\n", "        if False:\n            raise InvalidScientificProblem(\"safe isolation encountered multiple target occurrences\")\n"),),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58g",
+        "src/engcore/scientific/equations/nondimensional.py::VariableScale.__post_init__",
+        "        if self.scale.magnitude == 0:\n            raise InvalidScientificProblem(\"nondimensional variable scale cannot be zero\")\n",
+        "        if False:\n            raise InvalidScientificProblem(\"nondimensional variable scale cannot be zero\")\n",
+        "tests/scientific/equations/test_nondimensional_v2.py::test_nondimensional_variable_scale_cannot_be_zero",
+        'KILLED',
+        "nondimensional characteristic scales cannot be zero",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58h",
+        "src/engcore/scientific/equations/law_system.py::ScientificLawSystem.__post_init__",
+        "        assumptions.require_dimensions(self.law.symbol_units)\n",
+        "        _ = assumptions\n",
+        "tests/scientific/equations/test_law_system_v2.py::test_law_system_rejects_dimensionally_invalid_machine_assumption",
+        'KILLED',
+        "machine-checkable law assumptions are dimensionally bound to the law",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58i",
+        "src/engcore/scientific/equations/differential.py::DifferentialProblem.__post_init__",
+        "            if unknown:\n                raise InvalidScientificProblem(f\"derivative uses undeclared independent variables {sorted(unknown)}\")\n",
+        "            if False:\n                raise InvalidScientificProblem(f\"derivative uses undeclared independent variables {sorted(unknown)}\")\n",
+        "tests/scientific/equations/test_differential_ode_v2.py::test_differential_problem_rejects_derivative_on_undeclared_independent_variable",
+        'KILLED',
+        "differential operators may only differentiate over declared independent variables",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58j",
+        "src/engcore/scientific/equations/transformations.py::isolate_symbol",
+        "            conditions.append(TransformationCondition(TransformationPredicate.NONZERO,factor))\n",
+        "            _ = factor\n",
+        "tests/scientific/equations/test_transformations_v2.py::test_safe_symbol_isolation_records_nonzero_side_condition",
+        'KILLED',
+        "symbolic division records its nonzero side condition",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N58k",
+        "src/engcore/scientific/equations/nondimensional.py::nondimensionalize_equation",
+        "    if DimensionVector.from_unit(equation_scale.units)!=left_dim:\n        raise InvalidScientificProblem(\"equation scale does not have the equation residual dimension\")\n",
+        "    if False:\n        raise InvalidScientificProblem(\"equation scale does not have the equation residual dimension\")\n",
+        "tests/scientific/equations/test_nondimensional_v2.py::test_nondimensional_equation_scale_must_match_residual_dimension",
+        'KILLED',
+        "equation normalization scale must match the residual dimension",
+        (),
+        'equation_ir_v2_round58',
+    ),
+    (
+        "N59a", "src/engcore/uq/model_form/promotion.py::assess_promotion", "    if estimate.scope is None: reasons.append(\"model-form estimate is not bound to a model/context/dataset scope\")\n", "    if False: reasons.append(\"model-form estimate is not bound to a model/context/dataset scope\")\n", "tests/uq/model_form/test_promotion.py::test_even_validated_unscoped_estimate_is_not_promotable", 'KILLED',
+        "unscoped model-form estimates cannot become authoritative", (), 'combined_uq_round59',
+    ),
+    (
+        "N59b", "src/engcore/uq/model_form/authority.py::authorize_model_form", "    if estimate.scope is None or estimate.scope!=target_scope: reasons.append(\"model-form estimate scope does not match the target model/context/dataset\")\n", "    if False: reasons.append(\"model-form estimate scope does not match the target model/context/dataset\")\n", "tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope", 'KILLED',
+        "model-form authority is exact-scope bound", (), 'combined_uq_round59',
+    ),
+    (
+        "N59c", "src/engcore/uq/model_form/authority.py::authorize_model_form", "    if not qualification.approves(estimate.quantity,estimate.estimator_method): reasons.append(\"producer is not qualified for this quantity/estimator\")\n", "    if False: reasons.append(\"producer is not qualified for this quantity/estimator\")\n", "tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification", 'KILLED',
+        "producer qualification binds estimator identity", (), 'combined_uq_round59',
+    ),
+    (
+        "N59d", "src/engcore/uq/model_form/study.py::ModelFormStudy.__post_init__", "                if self.scope.quantity!=quantity:\n                    raise ValueError(\"model-form study quantity disagrees with scope\")\n", "                if False:\n                    raise ValueError(\"model-form study quantity disagrees with scope\")\n", "tests/uq/model_form/test_leakage.py::test_study_scope_must_name_the_same_quantity", 'KILLED',
+        "model-form studies cannot drift from declared scope quantity", (), 'combined_uq_round59',
+    ),
+    (
+        "N59e", "src/engcore/uq/combined/combine.py::_validate_common", "            if prior is not None:\n                raise InvalidScientificProblem(\n                    f\"double-counted uncertainty lineage {lineage}: {prior!r} and {contribution.contribution_id!r}\"\n                )\n", "            if False:\n                raise InvalidScientificProblem(\n                    f\"double-counted uncertainty lineage {lineage}: {prior!r} and {contribution.contribution_id!r}\"\n                )\n", "tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination", 'KILLED',
+        "shared primitive evidence lineage cannot be counted twice", (), 'combined_uq_round59',
+    ),
+    (
+        "N59f", "src/engcore/uq/combined/combine.py::_explicit_correlations", "    if missing and policy.missing_correlation is MissingCorrelationPolicy.REFUSE:\n        raise InvalidScientificProblem(f\"correlations are unspecified for contribution pairs {missing}\")\n", "    if False:\n        raise InvalidScientificProblem(f\"correlations are unspecified for contribution pairs {missing}\")\n", "tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default", 'KILLED',
+        "RSS never assumes independence silently", (), 'combined_uq_round59',
+    ),
+    (
+        "N59g", "src/engcore/uq/combined/combine.py::_interval_widths", "    if lower>center or upper<center:\n        raise InvalidScientificProblem(f\"contribution {contribution.contribution_id!r} interval does not contain nominal value\")\n", "    if False:\n        raise InvalidScientificProblem(f\"contribution {contribution.contribution_id!r} interval does not contain nominal value\")\n", "tests/uq/combined/test_intervals.py::test_interval_that_does_not_contain_nominal_is_refused", 'KILLED',
+        "combined interval contributions must contain the nominal value", (), 'combined_uq_round59',
+    ),
+    (
+        "N59h", "src/engcore/uq/combined/policy.py::CombinationPolicy.__post_init__", "        if self.mode is CombinationMode.HYBRID_INTERVAL and self.standard_coverage_factor is None:\n            raise ValueError(\"HYBRID_INTERVAL requires an explicit standard_coverage_factor\")\n", "        if False:\n            raise ValueError(\"HYBRID_INTERVAL requires an explicit standard_coverage_factor\")\n", "tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it", 'KILLED',
+        "standard-to-interval conversion requires an explicit coverage factor", (), 'combined_uq_round59',
+    ),
+    (
+        "N59i", "src/engcore/uq/combined/contribution.py::UncertaintyContribution.__post_init__", "        if source in {UncertaintySource.UNSPECIFIED,UncertaintySource.COMBINED}:\n            raise InvalidScientificProblem(\"combined UQ accepts only attributed primitive uncertainty sources\")\n", "        if False:\n            raise InvalidScientificProblem(\"combined UQ accepts only attributed primitive uncertainty sources\")\n", "tests/uq/combined/test_dimensions.py::test_combined_or_unknown_source_cannot_reenter_combiner", 'KILLED',
+        "combined or unattributed uncertainty cannot reenter as primitive evidence", (), 'combined_uq_round59',
+    ),
+    (
+        "N59j", "src/engcore/uq/combined/serialization.py::report_from_dict", "    if rebuilt.output.to_dict()!=payload.get(\"output\"):\n        raise InvalidScientificProblem(\"serialized combined uncertainty output is forged or stale\")\n", "    if False:\n        raise InvalidScientificProblem(\"serialized combined uncertainty output is forged or stale\")\n", "tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs", 'KILLED',
+        "combined-UQ wire output is re-derived", (), 'combined_uq_round59',
+    ),
+    (
+        "N59k", "src/engcore/uq/combined/combine.py::_validate_common", "    if missing: raise InvalidScientificProblem(f\"combined UQ is missing required sources {sorted(x.value for x in missing)}\")\n", "    if False: raise InvalidScientificProblem(f\"combined UQ is missing required sources {sorted(x.value for x in missing)}\")\n", "tests/uq/combined/test_lineage.py::test_required_uncertainty_channels_must_be_present", 'KILLED',
+        "declared required UQ channels cannot be omitted", (), 'combined_uq_round59',
+    ),
+    (
+        "N59l", "src/engcore/uq/model_form/fingerprint.py::model_form_estimate_fingerprint", "             \"scope\":None if estimate.scope is None else estimate.scope.to_dict()}\n", "             \"scope\":None}\n", "tests/uq/model_form/test_fingerprint.py::test_model_form_fingerprint_binds_model_context_and_dataset_scope", 'KILLED',
+        "model-form fingerprint binds exact model/context/dataset scope", (), 'combined_uq_round59',
+    ),
+    (
+        "N59m", "src/engcore/uq/model_form/serialization.py::model_form_from_dict", "        ModelFormScope.from_dict(scope) if scope is not None else None)\n", "        None)\n", "tests/uq/model_form/test_serialization.py::test_model_form_v2_round_trip_preserves_scope_and_fail_closed_status", 'KILLED',
+        "model-form V2 serialization preserves scope authority", (), 'combined_uq_round59',
+    ),
+    (
+        "N60a", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    if p_exact==q_exact:\n        level=IndependenceLevel.NONE\n", "    if False:\n        level=IndependenceLevel.NONE\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "identical dependency implementation sets have no independence", (), 'verification_v2_round60',
+    ),
+    (
+        "N60b", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    elif shared_families:\n        level=IndependenceLevel.PARTIAL\n", "    elif False:\n        level=IndependenceLevel.PARTIAL\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "shared dependency families prevent a strong-independence claim", (), 'verification_v2_round60',
+    ),
+    (
+        "N60c", "src/engcore/scientific/verification/dependencies.py::derive_independence", "    elif candidate.externally_operated and candidate.authority_id!=primary.authority_id:\n        level=IndependenceLevel.EXTERNAL\n", "    elif False:\n        level=IndependenceLevel.EXTERNAL\n", "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external", 'KILLED',
+        "external independence requires a disjoint external authority boundary", (), 'verification_v2_round60',
+    ),
+    (
+        "N60d", "src/engcore/scientific/verification/planning.py::plan_verification", "        if level<policy.minimum_level:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',
+        "verification planning enforces minimum verification level", (), 'verification_v2_round60',
+    ),
+    (
+        "N60e", "src/engcore/scientific/verification/planning.py::plan_verification", "        if _INDEPENDENCE_RANK[independence.level]<_INDEPENDENCE_RANK[policy.minimum_independence]:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',
+        "verification planning enforces minimum independence", (), 'verification_v2_round60',
+    ),
+    (
+        "N60f", "src/engcore/scientific/verification/planning.py::VerificationPlan.complete", "        if self.policy.require_external and not any(x.independence.level is IndependenceLevel.EXTERNAL for x in self.selected): return False\n", "        if False: return False\n", "tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists", 'KILLED',
+        "external-verification policy cannot be satisfied by internal routes", (), 'verification_v2_round60',
+    ),
+    (
+        "N60g", "src/engcore/scientific/verification/quantity_comparison.py::compare_observations", "    if not primary.converged or not candidate.converged:\n        return RouteComparison(primary.route_id,candidate.route_id,False,None)\n", "    if False:\n        return RouteComparison(primary.route_id,candidate.route_id,False,None)\n", "tests/scientific/verification/test_quantity_comparison_v2.py::test_nonconverged_route_cannot_agree", 'KILLED',
+        "nonconverged verification output cannot agree", (), 'verification_v2_round60',
+    ),
+    (
+        "N60h", "src/engcore/execution/verification_runner.py::execute_verification_plan", "        if str(getattr(backend,\"route_id\",\"\"))!=route_id:\n            problems.append(f\"{route_id}:backend_route_identity_mismatch\");continue\n", "        if False:\n            problems.append(f\"{route_id}:backend_route_identity_mismatch\");continue\n", "tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution", 'KILLED',
+        "execution backend identity is bound to planned route", (), 'verification_v2_round60',
+    ),
+    (
+        "N60i", "src/engcore/scientific/verification/plan_serialization.py::plan_from_dict", "    if payload.get(\"selected\")!=derived_selected or payload.get(\"rejected\")!=derived_rejected or payload.get(\"complete\") is not plan.complete:\n        raise InvalidScientificProblem(\"serialized verification plan selection is forged or stale\")\n", "    if False:\n        raise InvalidScientificProblem(\"serialized verification plan selection is forged or stale\")\n", "tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route", 'KILLED',
+        "verification plan selection is re-derived on replay", (), 'verification_v2_round60',
+    ),
+    (
+        "N60j", "src/engcore/scientific/verification/run_record.py::VerificationRunRecord.from_dict", "        if payload.get(\"result\")!=derived:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized verification run result is forged or stale\")\n", "tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict", 'KILLED',
+        "verification run verdict is re-derived on replay", (), 'verification_v2_round60',
+    ),
+    (
+        "N61a", "src/engcore/scientific/knowledge/trust.py::TrustedSourceRegistry.assess", "        if pin.document_digest!=source.document_digest: return SourceTrustAssessment(SourceStanding.DIGEST_MISMATCH,\"document digest differs from trust pin\")\n", "        if False: return SourceTrustAssessment(SourceStanding.DIGEST_MISMATCH,\"document digest differs from trust pin\")\n", "tests/scientific/knowledge/test_source_trust.py::test_same_source_id_with_changed_document_digest_is_not_trusted", 'KILLED',
+        "content digest is part of scientific source trust", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61b", "src/engcore/scientific/knowledge/freshness.py::FreshnessPolicy.assess", "        if source.source_class not in self.max_age_days:\n            return KnowledgeFreshness.UNKNOWN\n", "        if False:\n            return KnowledgeFreshness.UNKNOWN\n", "tests/scientific/knowledge/test_freshness.py::test_unconfigured_source_class_is_unknown_not_not_applicable", 'KILLED',
+        "missing freshness policy is UNKNOWN, never silently not-applicable", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61c", "src/engcore/scientific/knowledge/freshness.py::FreshnessPolicy.assess", "        if age < 0:\n            return KnowledgeFreshness.UNKNOWN\n", "        if False:\n            return KnowledgeFreshness.UNKNOWN\n", "tests/scientific/knowledge/test_freshness.py::test_future_or_missing_publication_time_is_not_current", 'KILLED',
+        "future publication timestamps cannot become current evidence", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61d", "src/engcore/scientific/knowledge/claim.py::KnowledgeClaim.__post_init__", "                if lower > value or upper < value:\n                    raise InvalidScientificProblem(\n                        \"knowledge claim uncertainty interval must contain the numeric value\"\n                    )\n", "                if False:\n                    raise InvalidScientificProblem(\n                        \"knowledge claim uncertainty interval must contain the numeric value\"\n                    )\n", "tests/scientific/knowledge/test_claim_snapshot.py::test_numeric_claim_interval_must_contain_claimed_value", 'KILLED',
+        "numeric knowledge value must lie inside its stated uncertainty interval", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61e", "src/engcore/scientific/knowledge/snapshot.py::KnowledgeSnapshot.__post_init__", "            if source.document_digest!=claim.source_document_digest:\n                raise InvalidScientificProblem(f\"claim {claim.claim_id!r} source digest does not match snapshot source\")\n", "            if False:\n                raise InvalidScientificProblem(f\"claim {claim.claim_id!r} source digest does not match snapshot source\")\n", "tests/scientific/knowledge/test_claim_snapshot.py::test_snapshot_refuses_claim_whose_source_digest_differs", 'KILLED',
+        "knowledge snapshots bind each claim to exact source bytes", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61f", "src/engcore/scientific/knowledge/admission.py::admit_claim", "    elif claim.applicability_context_digest!=target_context_digest: status=KnowledgeAdmissionStatus.CONTEXT_MISMATCH\n", "    elif False: status=KnowledgeAdmissionStatus.CONTEXT_MISMATCH\n", "tests/scientific/knowledge/test_admission.py::test_changed_context_is_refused_even_for_pinned_current_source", 'KILLED',
+        "knowledge admission is exact-context bound", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61g", "src/engcore/scientific/knowledge/ingestion.py::verify_ingestion_receipt", "    if recorded != expected:\n        raise InvalidScientificProblem(\n            \"ingestion receipt claim digests do not exactly match snapshot claims\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"ingestion receipt claim digests do not exactly match snapshot claims\"\n        )\n", "tests/scientific/knowledge/test_ingestion.py::test_ingestion_receipt_refuses_missing_or_extra_claim_digest", 'KILLED',
+        "ingestion receipts bind the exact imported claim set", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61h", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.from_dict", "        if \"trust_status\" in payload and payload[\"trust_status\"] != value.trust_status:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance trust status is forged or stale\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance trust status is forged or stale\"\n            )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_wire_trust_status_is_rederived_not_trusted", 'KILLED',
+        "evidence trust status is re-derived on replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61i", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.from_dict", "        if \"freshness\" in payload and payload[\"freshness\"] != value.freshness:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance freshness is forged or stale\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"serialized evidence provenance freshness is forged or stale\"\n            )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_provenance_freshness_status_is_rederived_not_trusted", 'KILLED',
+        "evidence freshness is re-derived on replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61j", "src/engcore/credibility/evidence_graph/provenance.py::EvidenceProvenance.freshness", "        if not self.freshness_rule_configured:\n            return \"unknown\"\n", "        if False:\n            return \"unknown\"\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unconfigured_freshness_rule_remains_unknown_across_evidence_replay", 'KILLED',
+        "unconfigured freshness remains UNKNOWN across evidence replay", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61k", "src/engcore/credibility/evidence_graph/node.py::EvidenceNode.__post_init__", "            if self.provenance.claim_digest != digest:\n                raise InvalidScientificProblem(\n                    \"evidence content digest must equal provenance claim digest\"\n                )\n", "            if False:\n                raise InvalidScientificProblem(\n                    \"evidence content digest must equal provenance claim digest\"\n                )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_node_content_digest_must_match_provenance_claim_digest", 'KILLED',
+        "evidence identity is bound to the exact knowledge claim", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61l", "src/engcore/credibility/evidence_graph/policy.py::assess_graph", "    if policy.require_trusted_provenance and any(\n        n.provenance is None or not n.provenance.trusted for n in graph.nodes\n    ):\n        problems.append(\"evidence provenance is not pinned/trusted\")\n", "    if False:\n        problems.append(\"evidence provenance is not pinned/trusted\")\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_tampered_pin_identity_rederives_untrusted_and_strict_policy_refuses", 'KILLED',
+        "strict evidence policy requires re-derived pinned provenance", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61m", "src/engcore/credibility/evidence_graph/policy.py::assess_graph", "    if policy.require_provenance and any(n.provenance is None for n in graph.nodes):\n        problems.append(\"missing evidence provenance\")\n", "    if False:\n        problems.append(\"missing evidence provenance\")\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_strict_provenance_policy_refuses_legacy_unprovenanced_evidence", 'KILLED',
+        "strict evidence policy refuses unprovenanced legacy nodes", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61n", "src/engcore/credibility/knowledge_evidence.py::evidence_from_knowledge", "    if admission.status is not KnowledgeAdmissionStatus.ADMISSIBLE:\n        raise InvalidScientificProblem(\n            \"knowledge claim is not admissible: \" + \"; \".join(admission.reasons)\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"knowledge claim is not admissible: \" + \"; \".join(admission.reasons)\n        )\n", "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge", 'KILLED',
+        "only re-derived admissible knowledge can cross into evidence", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N61o", "src/engcore/credibility/replay_binding.py::knowledge_snapshot_artifact", "        snapshot.digest,\n", "        \"0\" * 64,\n", "tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts", 'KILLED',
+        "replay artifact binds the exact knowledge snapshot digest", (), 'knowledge_evidence_round61',
+    ),
+    (
+        "N62a", "src/engcore/scientific/replay_core/environment.py::RuntimeEnvironment.__post_init__", "        if not re.fullmatch(r\"[0-9a-f]{64}\",digest):\n            raise InvalidScientificProblem(\"dependencies_digest must be lowercase SHA-256\")\n", "        if False:\n            raise InvalidScientificProblem(\"dependencies_digest must be lowercase SHA-256\")\n", "tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length", 'KILLED',
+        "runtime dependency identity requires real SHA-256 syntax", (), 'unified_replay_round62',
+    ),
+    (
+        "N62b", "src/engcore/scientific/replay_core/tolerance.py::ReplayTolerance.__post_init__", "        if not math.isfinite(a) or not math.isfinite(r) or a < 0 or r < 0:\n            raise InvalidScientificProblem(\n                \"replay tolerances must be finite and non-negative\"\n            )\n", "        if a < 0 or r < 0:\n            raise InvalidScientificProblem(\n                \"replay tolerances must be finite and non-negative\"\n            )\n", "tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity", 'KILLED',
+        "NaN/infinite replay tolerances cannot become permissive evidence", (), 'unified_replay_round62',
+    ),
+    (
+        "N62c", "src/engcore/scientific/replay_core/profile.py::RunManifestProfile.__post_init__", "        if any(not x for x in exact) or not set(exact)<=set(required):\n            raise InvalidScientificProblem(\n                \"replay-exact artifact kinds must be a subset of required artifact kinds\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"replay-exact artifact kinds must be a subset of required artifact kinds\"\n            )\n", "tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile", 'KILLED',
+        "replay-exact kinds must also be required artifacts", (), 'unified_replay_round62',
+    ),
+    (
+        "N62d", "src/engcore/scientific/replay_core/profile.py::RunManifestProfile.validate", "        if missing:\n            raise InvalidScientificProblem(f\"run manifest is missing required artifact kinds {missing}\")\n", "        if False:\n            raise InvalidScientificProblem(f\"run manifest is missing required artifact kinds {missing}\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused", 'KILLED',
+        "run manifests cannot omit profile-required scientific artifacts", (), 'unified_replay_round62',
+    ),
+    (
+        "N62e", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if len(keys)!=len(set(keys)):\n            raise InvalidScientificProblem(\"run manifest contains duplicate artifact kind/identifier bindings\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest contains duplicate artifact kind/identifier bindings\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_same_artifact_kind_and_identifier_cannot_bind_two_digests", 'KILLED',
+        "one artifact identity key cannot bind two digests", (), 'unified_replay_round62',
+    ),
+    (
+        "N62f", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if (parent_run is None)!=(parent_digest is None):\n            raise InvalidScientificProblem(\"run manifest parent_run_id and parent_manifest_digest must be declared together\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest parent_run_id and parent_manifest_digest must be declared together\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_parent_lineage_requires_both_parent_id_and_parent_digest", 'KILLED',
+        "parent run and parent manifest digest are one lineage claim", (), 'unified_replay_round62',
+    ),
+    (
+        "N62g", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.from_dict", "        if \"manifest_digest\" in payload and payload[\"manifest_digest\"]!=value.digest:\n            raise InvalidScientificProblem(\"serialized scientific run manifest digest is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized scientific run manifest digest is forged or stale\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived", 'KILLED',
+        "run manifest digest is re-derived on read", (), 'unified_replay_round62',
+    ),
+    (
+        "N62h", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    if actual.replay_of_manifest_digest!=expected.digest:\n        problems.append(\"actual run is not bound to the expected manifest digest\")\n", "    if False:\n        problems.append(\"actual run is not bound to the expected manifest digest\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract", 'KILLED',
+        "actual replay explicitly binds the expected manifest digest", (), 'unified_replay_round62',
+    ),
+    (
+        "N62i", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    for kind in expected.profile.replay_exact_artifact_kinds:\n", "    for kind in expected.profile.required_artifact_kinds:\n", "tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance", 'KILLED',
+        "run-specific required artifacts are not silently promoted to replay-exact identities", (), 'unified_replay_round62',
+    ),
+    (
+        "N62j", "src/engcore/scientific/replay_core/run_replay.py::verify_run_manifest", "    if expected.environment!=actual.environment:\n        problems.append(\"runtime environment differs\")\n", "    if False:\n        problems.append(\"runtime environment differs\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_environment_drift_refuses_run_replay", 'KILLED',
+        "runtime environment drift refuses strict replay", (), 'unified_replay_round62',
+    ),
+    (
+        "N62k", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.verification", "        if missing: problems.append(f\"missing replay outputs {missing}\")\n", "        if False: problems.append(f\"missing replay outputs {missing}\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay", 'KILLED',
+        "missing replay outputs cannot be treated as matching", (), 'unified_replay_round62',
+    ),
+    (
+        "N62l", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.verification", "            if not comparison.matched:\n                problems.append(\n                    f\"output {expectation.output_id!r} differs beyond declared tolerance\"\n                    + (f\": {comparison.problem}\" if comparison.problem else \"\")\n                )\n", "            if False:\n                problems.append(\n                    f\"output {expectation.output_id!r} differs beyond declared tolerance\"\n                    + (f\": {comparison.problem}\" if comparison.problem else \"\")\n                )\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay", 'KILLED',
+        "out-of-tolerance replay output refuses verification", (), 'unified_replay_round62',
+    ),
+    (
+        "N62m", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.from_dict", "        if payload.get(\"verification\")!=value.to_dict()[\"verification\"]:\n            raise InvalidScientificProblem(\"serialized run replay verification is forged or stale\")\n", "        if False:\n            raise InvalidScientificProblem(\"serialized run replay verification is forged or stale\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived", 'KILLED',
+        "run replay verdict is re-derived on read", (), 'unified_replay_round62',
+    ),
+    (
+        "N62n", "src/engcore/scientific/replay_core/lineage.py::verify_manifest_lineage", "        if parent.digest!=manifest.parent_manifest_digest:\n            problems.append(f\"run {manifest.run_id!r} parent digest does not match named parent\")\n", "        if False:\n            problems.append(f\"run {manifest.run_id!r} parent digest does not match named parent\")\n", "tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity", 'KILLED',
+        "scientific lineage binds parent run id to exact parent manifest digest", (), 'unified_replay_round62',
+    ),
+    (
+        "N62o", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if derived_validation.decision is not validation.decision:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag", 'KILLED',
+        "production assurance re-derives validation decision", (), 'unified_replay_round62',
+    ),
+    (
+        "N62p", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if (\n        not verification_result.complete\n        or verification_result.verification.decision is not VerificationDecision.VERIFIED\n    ):\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
+        "production assurance requires complete independently verified evidence", (), 'unified_replay_round62',
+    ),
+    (
+        "N62q", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if not certification.profile.required_gates:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate", 'KILLED',
+        "production assurance certification profile cannot certify nothing", (), 'unified_replay_round62',
+    ),
+    (
+        "N62r", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if provenance.git_commit and provenance.git_commit != certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
+        "provenance commit is bound to the certified commit", (), 'unified_replay_round62',
+    ),
+    (
+        "N62s", "src/engcore/credibility/assurance_manifest.py::_validate_knowledge_evidence", "        if not node.provenance.trusted:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted", 'KILLED',
+        "production assurance refuses untrusted knowledge provenance", (), 'unified_replay_round62',
+    ),
+    (
+        "N63a", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.profile != PRODUCTION_ASSURANCE_PROFILE:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest", 'KILLED',
+        "production assurance bundle is bound to its exact manifest profile", (), 'assurance_bundle_round63',
+    ),
+    (
+        "N63b", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        validate_production_assurance_components(\n            run_id=self.manifest.run_id,\n            law=self.law,\n            knowledge=self.knowledge,\n            evidence=self.evidence,\n            validation=self.validation,\n            combined_uq=self.combined_uq,\n            verification=self.verification,\n            certification=self.certification,\n            provenance=self.provenance,\n        )\n", "        _ = self.manifest.run_id\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation", 'KILLED',
+        "rehashing forged payloads does not bypass scientific semantic revalidation", (), 'assurance_bundle_round63',
+    ),
+    (
+        "N63c", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.contract_artifacts != expected:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle payload digests do not match its manifest\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing", 'KILLED',
+        "bundle payloads must hash to the identities pinned by the manifest", (), 'assurance_bundle_round63',
+    ),
+    (
+        "N64a", "src/engcore/scientific/replay_core/manifest.py::ScientificRunManifest.__post_init__", "        if parent_run == \"\":\n            raise InvalidScientificProblem(\"run manifest parent_run_id must be non-empty when declared\")\n", "        if False:\n            raise InvalidScientificProblem(\"run manifest parent_run_id must be non-empty when declared\")\n", "tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest", 'KILLED',
+        "blank scientific parent identity is never a valid lineage claim", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64b", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if not isinstance(self.expected_manifest,ScientificRunManifest) or not isinstance(self.actual_manifest,ScientificRunManifest):\n            raise InvalidScientificProblem(\"run replay record requires typed ScientificRunManifest records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay record requires typed ScientificRunManifest records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed manifests", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64c", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if any(not isinstance(x,OutputExpectation) for x in expectations):\n            raise InvalidScientificProblem(\"run replay expectations must be OutputExpectation records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay expectations must be OutputExpectation records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed output expectations", (), 'replay_boundary_round64',
+    ),
+    (
+        "N64d", "src/engcore/scientific/replay_core/run_replay.py::RunReplayRecord.__post_init__", "        if any(not isinstance(x,OutputObservation) for x in observations):\n            raise InvalidScientificProblem(\"run replay observations must be OutputObservation records\")\n", "        if False:\n            raise InvalidScientificProblem(\"run replay observations must be OutputObservation records\")\n", "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations", 'KILLED',
+        "replay boundary requires typed output observations", (), 'replay_boundary_round64',
+    ),
 )
 
 #: The entries whose only effect is INSIDE an f-string, so they change executable tokens on

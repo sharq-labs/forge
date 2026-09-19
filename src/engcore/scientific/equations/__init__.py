@@ -4,6 +4,7 @@ from .ast import (
     BinaryExpression,
     BinaryOperator,
     Constant,
+    DerivativeExpression,
     Equation,
     Expression,
     FunctionExpression,
@@ -41,6 +42,7 @@ __all__ = [
     "LawIdentityError",
     "Symbol",
     "Constant",
+    "DerivativeExpression",
     "UnaryExpression",
     "BinaryExpression",
     "PowerExpression",
@@ -68,3 +70,42 @@ __all__ = [
     "LawReference",
     "LawRegistry",
 ]
+
+from .constraints import (
+    ConstraintEvaluation, ExpressionConstraint, RelationOperator, evaluate_constraint,
+)
+from .assumptions import (
+    AssumptionAssessment, AssumptionSet, AssumptionStatus, CheckableAssumption,
+    assess_assumption,
+)
+from .conditions import ConditionBinding, ConditionKind, EquationCondition, evaluate_condition
+from .residuals import ResidualDefinition, residual_expression
+from .transformations import (
+    TransformationCondition, TransformationPredicate, TransformationResult,
+    canonicalize, canonicalize_equation, isolate_symbol, scale_equation,
+    structurally_equivalent, substitute, substitute_equation,
+)
+from .nondimensional import (
+    NondimensionalizationResult, VariableScale, nondimensionalize_equation,
+)
+from .differential import (
+    DifferentialProblem, DifferentialProblemKind, derivative, laplacian,
+    ordinary_derivative, partial_derivative,
+)
+from .law_system import ScientificLawSystem
+
+__all__ += [
+    "RelationOperator","ExpressionConstraint","ConstraintEvaluation","evaluate_constraint",
+    "AssumptionStatus","CheckableAssumption","AssumptionAssessment","AssumptionSet",
+    "assess_assumption","ConditionKind","ConditionBinding","EquationCondition",
+    "evaluate_condition","ResidualDefinition","residual_expression",
+    "TransformationPredicate","TransformationCondition","TransformationResult",
+    "canonicalize","canonicalize_equation","structurally_equivalent","substitute",
+    "substitute_equation","isolate_symbol","scale_equation","VariableScale",
+    "NondimensionalizationResult","nondimensionalize_equation","DifferentialProblemKind",
+    "DifferentialProblem","derivative","ordinary_derivative","partial_derivative",
+    "laplacian","ScientificLawSystem",
+]
+
+from .conservation import SymbolicBalanceTerm, SymbolicConservationBalance
+__all__ += ["SymbolicBalanceTerm", "SymbolicConservationBalance"]

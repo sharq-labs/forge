@@ -15,3 +15,24 @@ __all__=[
     "VerificationDecision","adjudicate","VerificationReport",
     "VerificationOrchestrator","verification_report_fingerprint",
 ]
+
+from .dependencies import DependencyComponent,DependencyRole,RouteDependencyManifest,derive_independence
+from .observations import VerificationObservation
+from .quantity_comparison import compare_observations
+from .planning import (
+    PlannedVerificationRoute,VerificationCandidate,VerificationPlan,VerificationPolicy,plan_verification,
+)
+from .execution_report import VerificationExecutionReport
+from .orchestrator import build_execution_report
+
+__all__ += [
+    "DependencyRole","DependencyComponent","RouteDependencyManifest","derive_independence",
+    "VerificationObservation","compare_observations","VerificationPolicy","VerificationCandidate",
+    "PlannedVerificationRoute","VerificationPlan","plan_verification","VerificationExecutionReport",
+    "build_execution_report",
+]
+
+from .plan_serialization import plan_from_dict,plan_to_dict
+from .run_record import VerificationRunRecord
+
+__all__ += ["plan_to_dict","plan_from_dict","VerificationRunRecord"]

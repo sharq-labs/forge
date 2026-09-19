@@ -18,6 +18,7 @@ from .ast import (
     BinaryExpression,
     BinaryOperator,
     Constant,
+    DerivativeExpression,
     Equation,
     Expression,
     FunctionExpression,
@@ -223,6 +224,18 @@ def infer_dimension(
 
     if isinstance(expression, PowerExpression):
         return infer_dimension(expression.base, symbol_units).power(expression.exponent)
+
+    if isinstance(expression, DerivativeExpression):
+        result = infer_dimension(expression.operand, symbol_units)
+        for variable in expression.variables:
+            unit = symbol_units.get(variable)
+            if unit is None:
+                raise EquationDimensionError(
+                    "unknown_derivative_variable",
+                    f"derivative variable {variable!r} has no declared unit",
+                )
+            result = result.divide(DimensionVector.from_unit(unit))
+        return result
 
     if isinstance(expression, FunctionExpression):
         argument = infer_dimension(expression.argument, symbol_units)

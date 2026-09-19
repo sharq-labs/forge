@@ -681,6 +681,567 @@
         "diagnostics"
       ],
       "invariant": "simulation orchestration executes the declared deterministic fallback order and stops on convergence"
+    },
+    {
+      "id": "equation-v2-derivative-evidence",
+      "nodeid": "tests/scientific/equations/test_derivatives_v2.py::test_derivative_binding_with_wrong_dimension_is_refused",
+      "tags": [
+        "equation_ir",
+        "vnv",
+        "diagnostics"
+      ],
+      "invariant": "derivative evidence is explicit and dimensionally checked"
+    },
+    {
+      "id": "equation-v2-constraint-wire",
+      "nodeid": "tests/scientific/equations/test_constraints_v2.py::test_constraint_wire_verdict_is_rederived",
+      "tags": [
+        "equation_ir",
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "constraint decisions are re-derived across serialization"
+    },
+    {
+      "id": "equation-v2-assumption-unknown",
+      "nodeid": "tests/scientific/equations/test_assumptions_v2.py::test_checkable_assumption_can_be_satisfied_violated_or_unknown",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "machine assumptions retain UNKNOWN instead of inventing satisfaction"
+    },
+    {
+      "id": "equation-v2-condition-location",
+      "nodeid": "tests/scientific/equations/test_conditions_v2.py::test_condition_refuses_a_conflicting_location_binding",
+      "tags": [
+        "equation_ir",
+        "applicability"
+      ],
+      "invariant": "initial/boundary condition location cannot be overridden"
+    },
+    {
+      "id": "equation-v2-safe-isolation",
+      "nodeid": "tests/scientific/equations/test_transformations_v2.py::test_safe_symbol_isolation_records_nonzero_side_condition",
+      "tags": [
+        "equation_ir",
+        "diagnostics"
+      ],
+      "invariant": "symbolic rearrangement records nonzero side conditions"
+    },
+    {
+      "id": "equation-v2-nondimensional",
+      "nodeid": "tests/scientific/equations/test_nondimensional_v2.py::test_ohm_law_nondimensionalization_produces_dimensionless_residual_equation",
+      "tags": [
+        "equation_ir",
+        "uq"
+      ],
+      "invariant": "nondimensionalization produces a dimensionless residual contract"
+    },
+    {
+      "id": "equation-v2-ode",
+      "nodeid": "tests/scientific/equations/test_differential_ode_v2.py::test_ode_contract_classifies_order_conditions_and_round_trips",
+      "tags": [
+        "equation_ir",
+        "vnv",
+        "replay"
+      ],
+      "invariant": "ODE kind/order/conditions survive validated serialization"
+    },
+    {
+      "id": "equation-v2-pde",
+      "nodeid": "tests/scientific/equations/test_differential_pde_v2.py::test_two_space_dimensional_heat_equation_is_dimensionally_complete",
+      "tags": [
+        "equation_ir",
+        "vnv"
+      ],
+      "invariant": "typed PDE operators are dimensionally complete"
+    },
+    {
+      "id": "equation-v2-law-system",
+      "nodeid": "tests/scientific/equations/test_law_system_v2.py::test_law_system_binds_assumptions_conditions_and_differential_evidence",
+      "tags": [
+        "equation_ir",
+        "applicability",
+        "evidence"
+      ],
+      "invariant": "law systems bind differential evidence assumptions and conditions"
+    },
+    {
+      "id": "equation-v2-differential-variable-authority",
+      "nodeid": "tests/scientific/equations/test_differential_ode_v2.py::test_differential_problem_rejects_derivative_on_undeclared_independent_variable",
+      "tags": [
+        "equation_ir",
+        "applicability",
+        "diagnostics"
+      ],
+      "invariant": "derivatives cannot use undeclared independent variables"
+    },
+    {
+      "id": "model-form-scope-bound",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope",
+      "tags": [
+        "uq",
+        "applicability",
+        "provenance"
+      ],
+      "invariant": "model-form uncertainty cannot transfer across model/context/dataset scope"
+    },
+    {
+      "id": "model-form-estimator-authority",
+      "nodeid": "tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification",
+      "tags": [
+        "uq",
+        "policy"
+      ],
+      "invariant": "producer qualification binds estimator method"
+    },
+    {
+      "id": "model-form-legacy-unscoped",
+      "nodeid": "tests/uq/model_form/test_serialization.py::test_v1_payload_is_read_as_unscoped_and_cannot_gain_scope",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "legacy unscoped model-form records cannot gain authority on read"
+    },
+    {
+      "id": "combined-uq-lineage",
+      "nodeid": "tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination",
+      "tags": [
+        "uq",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "primitive uncertainty evidence cannot be double-counted"
+    },
+    {
+      "id": "combined-uq-correlation",
+      "nodeid": "tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "RSS refuses unspecified pair correlations by default"
+    },
+    {
+      "id": "combined-uq-psd",
+      "nodeid": "tests/uq/combined/test_psd.py::test_combined_standard_uq_refuses_non_psd_declared_correlation_matrix",
+      "tags": [
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "declared correlation matrix must be PSD"
+    },
+    {
+      "id": "combined-uq-conservative-interval",
+      "nodeid": "tests/uq/combined/test_intervals.py::test_conservative_interval_adds_asymmetric_widths_without_independence_claim",
+      "tags": [
+        "uq"
+      ],
+      "invariant": "interval envelope combines without hidden independence"
+    },
+    {
+      "id": "combined-uq-hybrid-k",
+      "nodeid": "tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it",
+      "tags": [
+        "uq",
+        "policy"
+      ],
+      "invariant": "standard-to-interval expansion requires explicit k"
+    },
+    {
+      "id": "combined-uq-wire",
+      "nodeid": "tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs",
+      "tags": [
+        "uq",
+        "replay"
+      ],
+      "invariant": "combined uncertainty output is re-derived on read"
+    },
+    {
+      "id": "combined-uq-model-form",
+      "nodeid": "tests/uq/combined/test_model_form_integration.py::test_authorized_model_form_interval_combines_with_numerical_without_losing_source_identity",
+      "tags": [
+        "uq",
+        "evidence"
+      ],
+      "invariant": "authorized model-form and numerical UQ combine while retaining source semantics"
+    },
+    {
+      "id": "verification-dependency-derived",
+      "nodeid": "tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external",
+      "tags": [
+        "vnv",
+        "provenance"
+      ],
+      "invariant": "independence is derived from dependency families implementations and authority boundary"
+    },
+    {
+      "id": "verification-policy-plan",
+      "nodeid": "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence",
+      "tags": [
+        "vnv",
+        "policy"
+      ],
+      "invariant": "verification planner enforces level and independence policy"
+    },
+    {
+      "id": "verification-external-required",
+      "nodeid": "tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists",
+      "tags": [
+        "vnv",
+        "policy",
+        "external"
+      ],
+      "invariant": "external verification requirement needs external authority"
+    },
+    {
+      "id": "verification-typed-comparison",
+      "nodeid": "tests/scientific/verification/test_quantity_comparison_v2.py::test_dimensionally_foreign_verification_value_is_refused",
+      "tags": [
+        "vnv",
+        "diagnostics"
+      ],
+      "invariant": "verification compares typed compatible quantities"
+    },
+    {
+      "id": "verification-runner-identity",
+      "nodeid": "tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution",
+      "tags": [
+        "vnv",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "execution backend identity is bound to planned route"
+    },
+    {
+      "id": "verification-plan-replay",
+      "nodeid": "tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route",
+      "tags": [
+        "vnv",
+        "replay"
+      ],
+      "invariant": "verification route selection is re-derived on replay"
+    },
+    {
+      "id": "verification-verdict-replay",
+      "nodeid": "tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict",
+      "tags": [
+        "vnv",
+        "replay"
+      ],
+      "invariant": "verification verdict is re-derived from observations"
+    },
+    {
+      "id": "verification-end-to-end",
+      "nodeid": "tests/scientific/verification/test_orchestration_v2.py::test_plan_observations_produce_verified_report_only_when_all_required_routes_arrive_and_agree",
+      "tags": [
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "policy plan plus complete agreeing observations produces verified evidence"
+    },
+    {
+      "id": "knowledge-source-pin",
+      "nodeid": "tests/scientific/knowledge/test_source_trust.py::test_same_source_id_with_changed_document_digest_is_not_trusted",
+      "tags": [
+        "knowledge",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "source trust binds exact document bytes"
+    },
+    {
+      "id": "knowledge-freshness-policy",
+      "nodeid": "tests/scientific/knowledge/test_freshness.py::test_unconfigured_source_class_is_unknown_not_not_applicable",
+      "tags": [
+        "knowledge",
+        "policy",
+        "diagnostics"
+      ],
+      "invariant": "missing freshness policy remains UNKNOWN"
+    },
+    {
+      "id": "knowledge-claim-interval",
+      "nodeid": "tests/scientific/knowledge/test_claim_snapshot.py::test_numeric_claim_interval_must_contain_claimed_value",
+      "tags": [
+        "knowledge",
+        "uq",
+        "diagnostics"
+      ],
+      "invariant": "knowledge numeric value lies within its explicit uncertainty"
+    },
+    {
+      "id": "knowledge-context-admission",
+      "nodeid": "tests/scientific/knowledge/test_admission.py::test_changed_context_is_refused_even_for_pinned_current_source",
+      "tags": [
+        "knowledge",
+        "applicability",
+        "evidence"
+      ],
+      "invariant": "knowledge admission is exact-context bound"
+    },
+    {
+      "id": "knowledge-ingestion-identity",
+      "nodeid": "tests/scientific/knowledge/test_ingestion.py::test_ingestion_receipt_refuses_missing_or_extra_claim_digest",
+      "tags": [
+        "knowledge",
+        "provenance",
+        "replay"
+      ],
+      "invariant": "ingestion binds exact source bytes and imported claims"
+    },
+    {
+      "id": "knowledge-conflict",
+      "nodeid": "tests/scientific/knowledge/test_conflicts.py::test_nonoverlapping_explicit_intervals_are_recorded_as_disagreement",
+      "tags": [
+        "knowledge",
+        "evidence",
+        "diagnostics"
+      ],
+      "invariant": "conflicting sourced values are recorded, not auto-resolved"
+    },
+    {
+      "id": "knowledge-evidence-trust",
+      "nodeid": "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_tampered_pin_identity_rederives_untrusted_and_strict_policy_refuses",
+      "tags": [
+        "knowledge",
+        "evidence",
+        "provenance"
+      ],
+      "invariant": "evidence trust is derived from exact source pin"
+    },
+    {
+      "id": "knowledge-evidence-wire",
+      "nodeid": "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_wire_trust_status_is_rederived_not_trusted",
+      "tags": [
+        "knowledge",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized trust status cannot upgrade evidence"
+    },
+    {
+      "id": "knowledge-freshness-wire",
+      "nodeid": "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_provenance_freshness_status_is_rederived_not_trusted",
+      "tags": [
+        "knowledge",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized freshness cannot upgrade evidence"
+    },
+    {
+      "id": "knowledge-bridge-admission",
+      "nodeid": "tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge",
+      "tags": [
+        "knowledge",
+        "evidence",
+        "applicability"
+      ],
+      "invariant": "inadmissible knowledge never crosses into evidence"
+    },
+    {
+      "id": "knowledge-replay-binding",
+      "nodeid": "tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts",
+      "tags": [
+        "knowledge",
+        "replay",
+        "provenance"
+      ],
+      "invariant": "knowledge snapshot and evidence graph are content-addressed replay artifacts"
+    },
+    {
+      "id": "replay-v2-environment-sha",
+      "nodeid": "tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "runtime dependency identity is SHA-256, not arbitrary 64 characters"
+    },
+    {
+      "id": "replay-v2-finite-tolerance",
+      "nodeid": "tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity",
+      "tags": [
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "replay tolerance cannot be NaN or infinite"
+    },
+    {
+      "id": "replay-v2-profile-required",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused",
+      "tags": [
+        "replay",
+        "provenance",
+        "policy"
+      ],
+      "invariant": "manifest profile required artifact kinds cannot be omitted"
+    },
+    {
+      "id": "replay-v2-profile-exact-subset",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile",
+      "tags": [
+        "replay",
+        "policy"
+      ],
+      "invariant": "replay-exact artifacts are a subset of required artifacts"
+    },
+    {
+      "id": "replay-v2-manifest-digest",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "manifest digest is content-derived on read"
+    },
+    {
+      "id": "replay-v2-expected-binding",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "actual replay binds exact expected manifest"
+    },
+    {
+      "id": "replay-v2-output-coverage",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay",
+      "tags": [
+        "replay",
+        "diagnostics"
+      ],
+      "invariant": "missing or out-of-tolerance outputs refuse replay"
+    },
+    {
+      "id": "replay-v2-wire",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "serialized replay verdict is re-derived"
+    },
+    {
+      "id": "replay-v2-lineage",
+      "nodeid": "tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "parent lineage binds exact manifest digest"
+    },
+    {
+      "id": "assurance-manifest-validation",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "production manifest re-derives validation"
+    },
+    {
+      "id": "assurance-manifest-verification",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "production manifest requires complete independent verification"
+    },
+    {
+      "id": "assurance-manifest-certification",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate",
+      "tags": [
+        "replay",
+        "policy",
+        "provenance"
+      ],
+      "invariant": "production certification profile must require work"
+    },
+    {
+      "id": "assurance-manifest-provenance",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "provenance commit equals certified commit"
+    },
+    {
+      "id": "assurance-manifest-full-replay",
+      "nodeid": "tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance",
+      "tags": [
+        "replay",
+        "provenance",
+        "vnv",
+        "uq"
+      ],
+      "invariant": "full assurance chain replays with exact contracts and typed output tolerance"
+    },
+    {
+      "id": "assurance-bundle-roundtrip",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest",
+      "tags": [
+        "replay",
+        "provenance",
+        "evidence"
+      ],
+      "invariant": "full assurance payload bundle round-trips through typed readers"
+    },
+    {
+      "id": "assurance-bundle-content-addressing",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "payload changes cannot retain an old manifest identity"
+    },
+    {
+      "id": "assurance-bundle-semantic-revalidation",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation",
+      "tags": [
+        "replay",
+        "vnv",
+        "evidence"
+      ],
+      "invariant": "rehashing cannot promote semantically invalid validation evidence"
+    },
+    {
+      "id": "assurance-bundle-provenance-revalidation",
+      "nodeid": "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_provenance_with_wrong_certified_commit_is_still_refused",
+      "tags": [
+        "replay",
+        "provenance"
+      ],
+      "invariant": "rehashing cannot detach provenance from certified commit"
+    },
+    {
+      "id": "replay-v2-parent-nonempty",
+      "nodeid": "tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "parent run identity cannot be blank"
+    },
+    {
+      "id": "replay-v2-typed-boundary",
+      "nodeid": "tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations",
+      "tags": [
+        "replay",
+        "provenance",
+        "diagnostics"
+      ],
+      "invariant": "run replay wire boundary accepts only typed manifests expectations and observations"
     }
   ]
 }

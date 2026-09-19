@@ -347,7 +347,10 @@ SCOPE: tuple[ScopeArea, ...] = (
         patterns=(
             "src/engcore/credibility/evidence_graph/**/*.py",
             "src/engcore/credibility/assurance_bundle.py",
+            "src/engcore/credibility/assurance_manifest.py",
+            "src/engcore/credibility/assurance_replay_bundle.py",
             "src/engcore/credibility/replay_binding.py",
+            "src/engcore/credibility/knowledge_evidence.py",
         ),
         why=(
             "the trust-critical credibility boundary added by the production hardening round: "
@@ -432,7 +435,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_audit_sria_policy_binding.py",
             "tests/test_audit_sria_stop_review_grounds.py",
             "tests/test_audit_sria_trust_root.py",
-            # The V4 population (R-67) and the suites its 563 entries name, which a kill
+            # The V4 population (R-67) and the suites its 676 entries name, which a kill
             # in that round is a statement about, plus the support modules all of these
             # import. Derived rather than remembered: `harness_import_closure` computes
             # the closure and `harness_pinning_problems` refuses a scope that does not
@@ -465,7 +468,14 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/credibility/evidence_graph/*.py",
             "tests/uq/model_form/*.py",
             "tests/uq/budget/*.py",
+            "tests/uq/combined/*.py",
             "tests/execution/orchestration/*.py",
+            "tests/execution/test_verification_runner*.py",
+            "tests/scientific/knowledge/*.py",
+            "tests/credibility/evidence_graph/test_knowledge_bridge.py",
+            "tests/credibility/test_knowledge_replay_binding.py",
+            "tests/credibility/test_assurance_manifest_v2.py",
+            "tests/credibility/test_assurance_replay_bundle_v2.py",
         ),
         why=(
             "the mutation harness, every suite in its TARGETS, every suite the V4 "

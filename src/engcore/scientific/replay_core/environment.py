@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
@@ -20,8 +21,10 @@ class RuntimeEnvironment:
     def __post_init__(self) -> None:
         if not str(self.python).strip() or not str(self.platform).strip():
             raise InvalidScientificProblem("replay environment requires python and platform identity")
-        if len(str(self.dependencies_digest).strip()) != 64:
-            raise InvalidScientificProblem("dependencies_digest must be SHA-256 hex length")
+        digest=str(self.dependencies_digest).strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}",digest):
+            raise InvalidScientificProblem("dependencies_digest must be lowercase SHA-256")
+        object.__setattr__(self,"dependencies_digest",digest)
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": RUNTIME_ENVIRONMENT_SCHEMA, "python": self.python,

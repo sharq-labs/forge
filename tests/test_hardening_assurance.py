@@ -102,6 +102,8 @@ def test_complete_evidence_builds_a_record_that_distinguishes_its_claims(source)
     assert functional["suites"]["fast"]["tests"] == 3 and "junit_sha256" in functional["suites"]["fast"]
     assert "passed" not in json.dumps(record["functional"]).replace("PASSED", "")
     assert record["formal_guard_mutations"]["ids"] == list(fx.FORMAL_IDS)
+    assert record["v4_guard_mutations"]["ids"] == list(fx.V4_IDS)
+    assert record["v4_guard_mutations"]["coverage"]["union_equals_population"] is True
     assert record["trust_hardening_mutations"]["ids"] == list(fx.TRUST_IDS)
     assert record["environment"]["ngspice"] == "ngspice-42 : Circuit level simulation program"
     assert record["control_plane"]["area"] == "certification_control"
@@ -229,3 +231,19 @@ def test_certify_must_run_on_the_source_commit(source):
     fx.write(root, "README.md", "moved on\n")
     fx.commit(root, "another commit")
     _refused(root, head, evidence, "certify is running on")
+
+
+
+def test_v4_mutation_transcript_is_rederived_not_trusted_from_record(source):
+    root, head, evidence = source
+    path = _file(evidence, head, "v4_mutations_0", "log")
+    text = path.read_text(encoding="utf-8")
+    first = fx.V4_IDS[0]
+    path.write_text(text.replace(f"{first} test_guard -> KILLED", f"{first} test_guard -> SURVIVED"), encoding="utf-8")
+    _refused(root, head, evidence, "V4 shard 0")
+
+
+def test_missing_v4_shard_evidence_is_refused(source):
+    root, head, evidence = source
+    _file(evidence, head, "v4_mutations_3", "record").unlink()
+    _refused(root, head, evidence, "V4 shard 3")
