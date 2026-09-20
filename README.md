@@ -124,6 +124,68 @@ python -m pytest -m "not campaign"  -q -n auto   # SCIENTIFIC — after core cha
 python -m pytest -q                              # FULL       — before a freeze
 ```
 
+## Natural-language vertical slice
+
+The MCP server also exposes `plan_engineering_problem`,
+`compile_engineering_problem`, `run_engineering_problem` and
+`answer_engineering_problem`. They are the first
+narrow language-to-evidence path. A deterministic router selects the
+electro-thermal or battery boundary only when the user's own domain terms make
+one choice unambiguous; generic or tied descriptions return `needs_system`
+instead of being forced into a model. Controlled Arabic or English
+electro-thermal descriptions can be extracted directly, and either registered
+system can be completed with exact declarations before it enters the same case
+boundary used by a hand-authored payload. The required physical declarations
+for both electro-thermal and battery cases can also be extracted directly from
+controlled Arabic or English prose; generated component IDs are disclosed as
+non-physical assumptions.
+
+The compiler never fills a physical value from an example.  An incomplete
+description returns `needs_input` with one question per missing declaration,
+including the expected dimension and an example unit.  Every extracted value
+records its source text and span; a complete case is checked by the ordinary
+unit and shape boundary before it may run. Optional declarations are also
+read from the live model registry: the intent reports which absent inputs
+would unlock still-undecidable validity conditions, and understands when an
+alternative input has already unlocked the same condition. This is a bounded
+interface over the two registered systems, not yet a general model-selection
+planner or a general multiphysics graph.
+
+The answer tool adds a stable engineering-facing envelope without replacing
+the evidence record. For each component it groups values, the unchanged
+verdict, model applicability and exclusions, validation checks, attained
+levels and provenance. Predictive uncertainty that was not produced is stated
+as `not_quantified` with no intervals; absence is never presented as zero
+uncertainty. The complete execution response remains attached for audit.
+
+`answer_engineering_scenarios` is the first uncertainty path over these
+systems. The caller supplies 2–100 named declaration scenarios on a common
+base; Forge runs every one through the ordinary evidence boundary and reports
+unit-aware min/max envelopes for outputs present in every scenario. These are
+explicitly non-probabilistic bounds: no confidence level or distribution is
+attached, and the response lists observation noise, model-form uncertainty,
+unexplored input space and residual numerical error among what it does not
+cover. A scenario outside model validity remains visible beside the bounds.
+
+`evaluate_engineering_context` evaluates explicit output criteria such as
+`R1.final_temperature <= 350 kelvin`, using either a point result or a scenario
+envelope. Numerical satisfaction and evidential credibility are separate:
+a threshold can be numerically satisfied while the decision remains
+`indeterminate_evidence`, and an envelope crossing the threshold returns
+`indeterminate_uncertainty`. The evaluation is advisory and does not claim
+certification.
+
+`answer_engineering_uncertainty` propagates caller-declared uniform or normal
+input distributions with deterministic stratified Latin-hypercube samples.
+The caller must explicitly declare `dependence="independent"`; correlated
+inputs are refused until a correlation model is implemented. Every equal-mass
+sample crosses the ordinary validity and evidence boundary. If any sample is
+not `SUPPORTED`, no predictive interval is emitted: the tool reports
+`predictive_support_not_admitted` rather than silently conditioning on the
+survivors. Successful results carry empirical central intervals, mean,
+standard uncertainty, sample count and stated exclusions including model-form
+uncertainty.
+
 ## Development discipline
 
 - A milestone starts with a preregistration (`*-prereg.md`) that states the

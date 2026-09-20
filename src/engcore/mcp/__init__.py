@@ -70,9 +70,21 @@ from .problem import (
     example_over_rating_payload,
     run_electrothermal_case,
 )
+from .intent import INTENT_SCHEMA, compile_engineering_intent
+from .planning import PLAN_SCHEMA, plan_engineering_intent
+from .answer import ANSWER_SCHEMA, summarize_engineering_run
+from .scenario_uq import SCENARIO_UQ_SCHEMA, scenario_envelope
+from .context import CONTEXT_SCHEMA, evaluate_context
+from .probabilistic_uq import (
+    PROBABILISTIC_UQ_SCHEMA,
+    build_deterministic_samples,
+    predictive_intervals,
+)
 
 __all__ = [
     "ASSERTED_CONTEXT_SCHEMA",
+    "ANSWER_SCHEMA",
+    "CONTEXT_SCHEMA",
     "COUPLING_SUPPLIED_INPUTS",
     "EVIDENCE_PACKAGE_SCHEMA",
     "MODEL_VALIDITY_SCHEMA",
@@ -87,11 +99,17 @@ __all__ = [
     "EvidencePackage",  # deprecated alias
     "EvidencePackageError",  # deprecated alias
     "FieldDescription",
+    "INTENT_SCHEMA",
+    "PLAN_SCHEMA",
+    "PROBABILISTIC_UQ_SCHEMA",
+    "SCENARIO_UQ_SCHEMA",
     "MalformedPayloadError",
     "MissingFieldError",
     "MissingUnitError",
     "ModelValidityRecord",
     "classify_assessment",
+    "compile_engineering_intent",
+    "plan_engineering_intent",
     "combine_assessments",
     "ProblemPayloadError",
     "UnknownFieldError",
@@ -103,4 +121,9 @@ __all__ = [
     "example_electrothermal_payload",
     "example_over_rating_payload",
     "run_electrothermal_case",
+    "summarize_engineering_run",
+    "scenario_envelope",
+    "evaluate_context",
+    "build_deterministic_samples",
+    "predictive_intervals",
 ]

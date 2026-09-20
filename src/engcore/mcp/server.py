@@ -62,6 +62,12 @@ from .claim_assessment import (
     assess_claim_request,
     refused_claim_assessment,
 )
+from .intent import compile_engineering_intent
+from .planning import plan_engineering_intent
+from .answer import summarize_engineering_run
+from .scenario_uq import scenario_envelope
+from .context import evaluate_context
+from .probabilistic_uq import build_deterministic_samples, predictive_intervals
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -80,6 +86,12 @@ __all__ = [
     "assess_claim",
     "assess_scientific_claim",
     "build_server",
+    "answer_engineering_problem",
+    "answer_engineering_scenarios",
+    "evaluate_engineering_context",
+    "answer_engineering_uncertainty",
+    "compile_engineering_problem",
+    "plan_engineering_problem",
     "describe_capabilities",
     "describe_empirical_uq",
     "describe_product",
@@ -89,10 +101,11 @@ __all__ = [
     "run_proposed_simulation",
     "run_simulation",
     "run_electrothermal",
+    "run_engineering_problem",
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.9.0"
+SERVER_VERSION = "0.10.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -727,6 +740,191 @@ def run_electrothermal(case: dict[str, Any]) -> dict[str, Any]:
         return _payload_error(exc, case)
 
 
+def compile_engineering_problem(
+    description: str,
+    declarations: dict[str, Any] | None = None,
+    system_name: str | None = None,
+) -> dict[str, Any]:
+    """Route and compile controlled engineering prose into a reviewed case."""
+    plan = plan_engineering_intent(description)
+    selected = system_name or plan["selected_system"]
+    if selected is None:
+        return {
+            "schema": "engineering_compilation/1",
+            "status": "needs_system",
+            "plan": plan,
+            "intent": None,
+        }
+    intent = compile_engineering_intent(
+        description, declarations, system_name=selected
+    )
+    intent["selection"] = {
+        "source": "explicit" if system_name else "deterministic_router",
+        "plan": plan,
+    }
+    return intent
+
+
+def plan_engineering_problem(description: str) -> dict[str, Any]:
+    """Route prose to a supported system without making a scientific claim."""
+    return plan_engineering_intent(description)
+
+
+def run_engineering_problem(
+    description: str,
+    declarations: dict[str, Any] | None = None,
+    system_name: str | None = None,
+) -> dict[str, Any]:
+    """Compile prose and run only when every required declaration exists."""
+    intent = compile_engineering_problem(description, declarations, system_name)
+    if intent["status"] == "needs_system":
+        return {
+            "schema": "engineering_run/1",
+            "status": "needs_system",
+            "intent": intent,
+            "result": None,
+        }
+    if intent["status"] != "ready":
+        return {
+            "schema": "engineering_run/1",
+            "status": intent["status"],
+            "intent": intent,
+            "result": None,
+        }
+    return {
+        "schema": "engineering_run/1",
+        "status": "completed",
+        "intent": intent,
+        "result": (
+            _response(intent["case"])
+            if intent["system"] == "electrothermal"
+            else _battery_response(intent["case"])
+        ),
+    }
+
+
+def answer_engineering_problem(
+    description: str,
+    declarations: dict[str, Any] | None = None,
+    system_name: str | None = None,
+) -> dict[str, Any]:
+    """Return an engineering-facing view while retaining the raw evidence."""
+    return summarize_engineering_run(
+        run_engineering_problem(description, declarations, system_name)
+    )
+
+
+def answer_engineering_scenarios(
+    description: str,
+    scenarios: list[dict[str, Any]],
+    declarations: dict[str, Any] | None = None,
+    system_name: str | None = None,
+) -> dict[str, Any]:
+    """Run caller-declared scenarios and return a non-probabilistic envelope."""
+    if not isinstance(scenarios, list) or not 2 <= len(scenarios) <= 100:
+        raise ValueError("scenarios must contain between 2 and 100 entries")
+    base = dict(declarations or {})
+    ids = []
+    answers = []
+    for index, scenario in enumerate(scenarios):
+        if not isinstance(scenario, Mapping):
+            raise TypeError(f"scenarios[{index}] must be an object")
+        scenario_id = str(scenario.get("scenario_id", "")).strip()
+        overrides = scenario.get("declarations")
+        if not scenario_id:
+            raise ValueError(f"scenarios[{index}].scenario_id must be non-empty")
+        if not isinstance(overrides, Mapping):
+            raise TypeError(f"scenarios[{index}].declarations must be an object")
+        merged = {**base, **dict(overrides)}
+        ids.append(scenario_id)
+        answers.append(answer_engineering_problem(
+            description, merged, system_name
+        ))
+    return {
+        "schema": "engineering_scenario_answer/1",
+        "status": "completed" if all(
+            answer["status"] == "completed" for answer in answers
+        ) else "incomplete",
+        "uncertainty": scenario_envelope(answers, scenario_ids=ids),
+        "scenarios": [
+            {"scenario_id": scenario_id, "answer": answer}
+            for scenario_id, answer in zip(ids, answers)
+        ],
+    }
+
+
+def evaluate_engineering_context(
+    description: str,
+    criteria: list[dict[str, Any]],
+    declarations: dict[str, Any] | None = None,
+    scenarios: list[dict[str, Any]] | None = None,
+    system_name: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate caller-declared decision criteria against point or scenario results."""
+    if scenarios:
+        scenario_answer = answer_engineering_scenarios(
+            description, scenarios, declarations, system_name
+        )
+        first = scenario_answer["scenarios"][0]["answer"]
+        evaluation = evaluate_context(
+            first, criteria, uncertainty=scenario_answer["uncertainty"]
+        )
+        return {**evaluation, "engineering": scenario_answer}
+    answer = answer_engineering_problem(description, declarations, system_name)
+    return {**evaluate_context(answer, criteria), "engineering": answer}
+
+
+def answer_engineering_uncertainty(
+    description: str,
+    uncertain_inputs: list[dict[str, Any]],
+    dependence: str,
+    declarations: dict[str, Any] | None = None,
+    system_name: str | None = None,
+    sample_count: int = 32,
+    credible_mass: float = 0.95,
+) -> dict[str, Any]:
+    """Propagate caller-declared independent distributions, fail closed."""
+    samples = build_deterministic_samples(
+        uncertain_inputs, sample_count=sample_count, dependence=dependence
+    )
+    base = dict(declarations or {})
+    answers = [
+        answer_engineering_problem(
+            description, {**base, **sample}, system_name
+        )
+        for sample in samples
+    ]
+    incomplete = [
+        index for index, answer in enumerate(answers)
+        if answer["status"] != "completed"
+    ]
+    uq = (
+        {
+            "schema": "engineering_probabilistic_uq/1",
+            "status": "incomplete",
+            "sample_count": len(samples),
+            "incomplete_sample_indices": incomplete,
+            "intervals": [],
+        }
+        if incomplete else predictive_intervals(answers, credible_mass=credible_mass)
+    )
+    return {
+        "schema": "engineering_uncertainty_answer/1",
+        "status": uq["status"],
+        "dependence": dependence,
+        "declared_inputs": uncertain_inputs,
+        "uncertainty": uq,
+        "samples": [
+            {
+                "sample_index": index,
+                "declarations": sample,
+                "answer": answer,
+            }
+            for index, (sample, answer) in enumerate(zip(samples, answers))
+        ],
+    }
+
+
 # =====================================================================
 # The server
 # =====================================================================
@@ -1216,8 +1414,82 @@ executed only when the deterministic compiler returns READY. A non-ready
 proposal returns its missing inputs, ambiguity or refusal and never runs."""
 
 
+_COMPILE_INTENT_DESCRIPTION = """\
+Route and compile a controlled Arabic or English engineering description.
+
+Returns values extracted from the user's words with their text spans, every \
+missing required declaration as a concrete question with its dimension and \
+example unit, and a runnable case only when the description is complete. No \
+physical value is guessed or copied from an example. Use `declarations` to \
+answer questions by exact dotted path. Pass `system_name` to make the system \
+explicit; otherwise deterministic routing must find one unambiguous match."""
+
+
+_PLAN_INTENT_DESCRIPTION = """\
+Route an Arabic or English engineering description to a supported system.
+
+Selection is deterministic and reports the exact matched terms and all
+candidates. Ambiguous or generic prose returns `needs_system` instead of
+guessing. Selection establishes no model applicability, adequacy, solver
+compatibility or scientific validity."""
+
+
+_RUN_INTENT_DESCRIPTION = """\
+Route, compile and run a controlled Arabic or English engineering description.
+
+If declarations are missing, returns `needs_input` and explicit questions; no \
+simulation runs. If complete, the case passes through the ordinary \
+deterministic boundary and returns the unchanged validity, validation, \
+uncertainty, provenance and advisory evidence verdict."""
+
+
+_ANSWER_DESCRIPTION = """\
+Route, compile, run and present an engineering problem.
+
+Returns one engineer-facing result per component with values, the unchanged
+advisory verdict, per-model applicability boundaries and exclusions, explicit
+uncertainty status, validation evidence and provenance. If predictive
+uncertainty was not quantified, it says `not_quantified`; absence is never
+reported as zero uncertainty. The complete execution response remains attached
+verbatim for audit. Incomplete intent returns questions and runs nothing."""
+
+
+_SCENARIO_DESCRIPTION = """\
+Run between 2 and 100 caller-declared input scenarios and report output bounds.
+
+Each scenario supplies an id and declaration overrides on a common base. Every
+scenario passes through the normal planning, unit, validity, validation and
+evidence path. Output bounds are a declared-scenario envelope with no
+probability model and no confidence level; Forge does not invent distributions.
+The response states what the envelope excludes and retains every scenario's
+complete engineering answer and verdict."""
+
+
+_CONTEXT_DESCRIPTION = """\
+Evaluate explicit engineering decision criteria against a point result or a
+declared scenario envelope. Each criterion names a subject, output quantity,
+operator (`<=` or `>=`) and unit-bearing threshold. Numerical satisfaction is
+kept separate from evidence status: a value may meet its threshold while the
+decision remains `indeterminate_evidence` because validity or evidence is
+insufficient. Scenario bounds that straddle a threshold produce
+`indeterminate_uncertainty`. The result is advisory, never certification."""
+
+
+_PROBABILISTIC_UQ_DESCRIPTION = """\
+Propagate caller-declared uniform or normal input distributions through an
+engineering system using deterministic stratified Latin-hypercube samples.
+
+The caller must explicitly declare `dependence="independent"`; this version
+refuses correlated inputs rather than silently ignoring correlation. Every
+equal-mass sample passes through normal validity, validation and evidence. If
+any sample is not SUPPORTED, the tool returns
+`predictive_support_not_admitted` with no intervals, refusing silent
+conditioning. Successful output includes empirical central intervals, mean and
+standard uncertainty, and explicitly excludes model-form uncertainty."""
+
+
 def build_server() -> MCPServer:
-    """The server, with every tool registered. Used by the tests and by main."""
+    """The server with product, system and language-workflow tools registered."""
     server = MCPServer(
         name=SERVER_NAME,
         version=SERVER_VERSION,
@@ -1310,6 +1582,48 @@ def build_server() -> MCPServer:
         name="run_proposed_simulation",
         title="Run an LLM-proposed simulation when ready",
         description=_PRODUCT_RUN_PROPOSED_DESCRIPTION,
+    )
+    server.add_tool(
+        plan_engineering_problem,
+        name="plan_engineering_problem",
+        title="Select a supported engineering system",
+        description=_PLAN_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        compile_engineering_problem,
+        name="compile_engineering_problem",
+        title="Compile an engineering description",
+        description=_COMPILE_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        run_engineering_problem,
+        name="run_engineering_problem",
+        title="Compile and run an engineering description",
+        description=_RUN_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_problem,
+        name="answer_engineering_problem",
+        title="Answer an engineering problem with evidence",
+        description=_ANSWER_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_scenarios,
+        name="answer_engineering_scenarios",
+        title="Run a declared uncertainty scenario set",
+        description=_SCENARIO_DESCRIPTION,
+    )
+    server.add_tool(
+        evaluate_engineering_context,
+        name="evaluate_engineering_context",
+        title="Evaluate an engineering context of use",
+        description=_CONTEXT_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_uncertainty,
+        name="answer_engineering_uncertainty",
+        title="Propagate declared probabilistic input uncertainty",
+        description=_PROBABILISTIC_UQ_DESCRIPTION,
     )
     _audit_tools(server)
     return server

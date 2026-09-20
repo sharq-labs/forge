@@ -226,6 +226,39 @@ executes and assures the claim, and returns SUPPORTED / CONTRADICTED /
 INSUFFICIENT_EVIDENCE with the full traceable record: see
 [`docs/scientific-core/claims-layer.md`](../scientific-core/claims-layer.md).
 
+The language-to-evidence workflow tools are:
+
+The two system run tools remain the scientific execution boundary. Two
+workflow tools sit in front of the electro-thermal one:
+
+| Tool | What it does |
+|---|---|
+| `plan_engineering_problem` | Scores every registered system against explicit Arabic/English domain terms. It reports matches and returns `needs_system` on a tie or no match; selection makes no scientific-validity claim. |
+| `compile_engineering_problem` | Routes then extracts required declarations from controlled Arabic/English prose, attributes each extraction to a source span, and asks explicit questions for anything missing. An explicit `system_name` may replace routing. It never guesses physical values. |
+| `run_engineering_problem` | Runs only a `ready` compilation; otherwise returns the routing/field questions and no result. A ready case is passed unchanged through its registered system boundary. |
+| `answer_engineering_problem` | Adds an engineering-facing view of values, verdict, applicability boundaries, uncertainty status, evidence and provenance. It retains the complete execution record verbatim and never upgrades a verdict. |
+| `answer_engineering_scenarios` | Runs 2–100 named declaration scenarios through the same boundary and returns unit-aware output envelopes. It attaches no probability or confidence level the caller did not supply and retains every scenario answer and verdict. |
+| `evaluate_engineering_context` | Evaluates caller-declared `<=`/`>=` output criteria against point or scenario results. It keeps numerical satisfaction separate from evidence sufficiency and reports indeterminate decisions explicitly. |
+| `answer_engineering_uncertainty` | Propagates declared uniform/normal independent inputs with deterministic stratified samples. It refuses unsupported sampled mass instead of conditioning silently and reports empirical central intervals only when every sample is supported. |
+
+The compilation also returns `optional_declarations` and
+`unresolved_evidence_inputs`. Both are derived from the live case description,
+not copied into the language layer. The latter includes only inputs that would
+unlock a condition no supplied declaration has already unlocked; two
+alternative convection routes therefore do not get presented as two mandatory
+facts. Supplying the complete example through `declarations` reaches the same
+`SUPPORTED` report as supplying that case directly. Supplying only the required
+physics runs successfully but remains `INSUFFICIENT_EVIDENCE`, because the
+compiler does not invent ratings or applicability limits to improve a verdict.
+
+This first language path is deliberately bounded to the registered
+electro-thermal and battery systems. Both have controlled Arabic/English
+extractors for their required physical declarations; exact declarations remain
+the correction and completion channel for optional validity evidence. Generated
+component IDs are reported as non-physical assumptions. It is not yet a general
+model-selection planner and does not claim that arbitrary prose or arbitrary
+multiphysics systems are supported.
+
 ### `describe_capabilities()`
 
 Takes no arguments. Returns what an agent must know before it can ask anything,
