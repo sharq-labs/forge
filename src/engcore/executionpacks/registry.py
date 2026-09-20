@@ -264,14 +264,16 @@ class ExecutionPackRegistry:
             served_models = {
                 item.key for item in solver.served_models
             }
-            if (
-                served_models
-                and realization.model_key not in served_models
-            ):
-                raise InvalidExecutionPackProvider(
-                    f"factory solver {solver_key} does not declare support "
-                    f"for realization model {realization.model_key}"
+            if served_models:
+                unsupported_models = sorted(
+                    set(declaration.model_keys) - served_models
                 )
+                if unsupported_models:
+                    raise InvalidExecutionPackProvider(
+                        f"factory solver {solver_key} does not declare support "
+                        f"for participant model assembly members "
+                        f"{unsupported_models}"
+                    )
             missing_solver_caps = sorted(
                 required_solver_caps - declared_solver_caps
             )
