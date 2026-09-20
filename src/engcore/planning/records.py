@@ -62,6 +62,12 @@ class GapKind(str, Enum):
     COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
     SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
     EXECUTION_FACTORY_UNAVAILABLE = "execution_factory_unavailable"
+    SYSTEM_APPLICABILITY_EVIDENCE_MISSING = (
+        "system_applicability_evidence_missing"
+    )
+    SYSTEM_UNCERTAINTY_COMPOSITION_UNAVAILABLE = (
+        "system_uncertainty_composition_unavailable"
+    )
     FIDELITY_LADDER_MISSING = "fidelity_ladder_missing"
     FIDELITY_UNAVAILABLE = "fidelity_unavailable"
     EVIDENCE_GAP = "evidence_gap"
