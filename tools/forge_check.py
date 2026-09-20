@@ -24,6 +24,7 @@ ARCHITECTURE_TESTS = (
     "tests/test_scientific_regression_manifest.py",
     "tests/test_forge_check.py",
     "tests/test_agent_workflow_contract.py",
+    "tests/test_capability_completion.py",
 )
 
 ALL_SCIENTIFIC_TAGS = frozenset({
