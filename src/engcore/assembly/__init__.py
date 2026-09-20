@@ -4,3 +4,4 @@ from .domainpacks import *
 
 from .multiphysics import *
 from .certification import *
+from .replay_catalog import *
