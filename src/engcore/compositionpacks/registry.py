@@ -71,6 +71,14 @@ class RegisteredCompositionPack:
     def authority_digest(self) -> str:
         payload = {
             "manifest_digest": self.manifest.digest,
+            "claim_capability_digests": [
+                {
+                    "capability_id": item.capability_id,
+                    "version": item.version,
+                    "digest": item.digest,
+                }
+                for item in self.claim_capabilities
+            ],
             "dependency_authority_digests": [
                 {
                     "pack_id": pack_id,
