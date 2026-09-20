@@ -14,6 +14,8 @@ from __future__ import annotations
 from .clarification import clarification_questions
 from .intent import EngineeringIntent
 from .policy import PlannerPolicy
+from ..scientific.multiphysics import PortRef
+from ..scientific.multiphysics.value import validate_port_coupling_value
 from .records import (
     ExecutionMode,
     FidelityDecision,
@@ -21,6 +23,7 @@ from .records import (
     GraphPlan,
     ModelExecutionChoice,
     PlanningGap,
+    PlannedExternalInput,
     PlanningRegistries,
     PlanningStatus,
     QOIPlan,
@@ -254,7 +257,50 @@ def _composition_graph_plan(
         graph_id=f"planning.{capability_id}",
     )
 
-    applicability_rules = tuple(
+    planned_external_inputs: list[PlannedExternalInput] = []
+    for binding in registration.external_input_bindings:
+        if binding.blueprint_id != blueprint.blueprint_id:
+            continue
+        ref = PortRef(binding.participant_id, binding.port_id)
+        value = intent.fact_map.get(binding.fact_path)
+        if value is None:
+            gaps.append(
+                PlanningGap(
+                    GapKind.GRAPH_EXTERNAL_INPUT_MISSING,
+                    ref.key,
+                    (
+                        f"graph external input {ref.key} requires canonical "
+                        f"intent fact {binding.fact_path!r}"
+                    ),
+                    True,
+                )
+            )
+            continue
+        port = graph.participant(ref.participant_id).port(ref.port_id)
+        try:
+            validate_port_coupling_value(port, value)
+        except Exception as exc:
+            gaps.append(
+                PlanningGap(
+                    GapKind.GRAPH_EXTERNAL_INPUT_INVALID,
+                    ref.key,
+                    (
+                        f"intent fact {binding.fact_path!r} cannot feed "
+                        f"{ref.key}: {exc}"
+                    ),
+                    True,
+                )
+            )
+            continue
+        planned_external_inputs.append(
+            PlannedExternalInput(
+                port=ref,
+                fact_path=binding.fact_path,
+                value=value,
+            )
+        )
+
+    applicability_rules = tuple
         item
         for item in registration.applicability_rules
         if item.blueprint_id == blueprint.blueprint_id
@@ -433,6 +479,7 @@ def _composition_graph_plan(
                 else selected_policy.version
             ),
             execution_registry_fingerprint=execution_fingerprint,
+            external_inputs=tuple(planned_external_inputs),
         ),
         tuple(gaps),
     )
