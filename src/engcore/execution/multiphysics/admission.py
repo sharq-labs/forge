@@ -34,6 +34,50 @@ class MultiphysicsExecutionAdmission:
     factory_registry_fingerprint: str
     factory_coverage: tuple[ParticipantFactoryCoverage, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.graph_interface, GraphInterfaceManifest):
+            raise TypeError(
+                "execution admission requires GraphInterfaceManifest"
+            )
+        plan_id = str(self.plan_id).strip()
+        if not plan_id:
+            raise ValueError("execution admission requires plan_id")
+        object.__setattr__(self, "plan_id", plan_id)
+
+        for label in (
+            "plan_fingerprint",
+            "factory_registry_fingerprint",
+        ):
+            value = str(getattr(self, label)).strip().lower()
+            if (
+                len(value) != 64
+                or any(char not in "0123456789abcdef" for char in value)
+            ):
+                raise ValueError(
+                    f"execution admission {label} must be sha256 hex"
+                )
+            object.__setattr__(self, label, value)
+
+        coverage = tuple(self.factory_coverage)
+        if any(
+            not isinstance(item, ParticipantFactoryCoverage)
+            for item in coverage
+        ):
+            raise TypeError(
+                "execution admission factory_coverage must contain "
+                "ParticipantFactoryCoverage records"
+            )
+        object.__setattr__(
+            self,
+            "factory_coverage",
+            tuple(
+                sorted(
+                    coverage,
+                    key=lambda item: item.participant_id,
+                )
+            ),
+        )
+
     @property
     def executable(self) -> bool:
         return all(item.available for item in self.factory_coverage)
