@@ -386,6 +386,25 @@ def compile_natural_language_intent(
             None,
         )
 
+
+    horizon = proposal.get("simulation_horizon")
+    if isinstance(horizon, Mapping):
+        for field in ("start", "end"):
+            value = horizon.get(field)
+            if value is None:
+                continue
+            key = f"simulation_horizon.{field}"
+            if not _grounded(text, spans, key, value):
+                return NaturalLanguageIntent(
+                    "refused",
+                    (
+                        f"{key} changes the simulated physical horizon but "
+                        "is not grounded in the cited user text",
+                    ),
+                    tuple(sorted(dropped)),
+                    None,
+                )
+
     fidelity = proposal.get("fidelity")
     if isinstance(fidelity, Mapping):
         for field in ("ladder_id", "ladder_version"):
