@@ -286,12 +286,21 @@ def _validate_system_contracts(
             raise InvalidCompositionPackProvider(
                 f"blueprint {blueprint_id!r} has no system applicability rule"
             )
-        if not any(
-            item.blueprint_id == blueprint_id for item in uncertainty
-        ):
+        uncertainty_for_blueprint = tuple(
+            item
+            for item in uncertainty
+            if item.blueprint_id == blueprint_id
+        )
+        if not uncertainty_for_blueprint:
             raise InvalidCompositionPackProvider(
                 f"blueprint {blueprint_id!r} has no explicit uncertainty "
                 "composition rule; use strategy='unknown' rather than silence"
+            )
+        if len(uncertainty_for_blueprint) != 1:
+            raise InvalidCompositionPackProvider(
+                f"blueprint {blueprint_id!r} must declare exactly one "
+                "uncertainty composition rule so the planner never chooses "
+                "a propagation strategy from registration order"
             )
         if not any(
             item.blueprint_id == blueprint_id for item in validations
