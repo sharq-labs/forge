@@ -13,25 +13,32 @@ from ..scientific.models.registry import ModelRegistry
 from ..scientific.multiphysics import (
     CouplingPlan,
     GraphInterfaceManifest,
+    PortRef,
+    coupling_value_from_dict,
+    coupling_value_to_dict,
     PhysicsGraph,
     graph_interface_manifest,
 )
 from ..scientific.realizations.registry import RealizationRegistry
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.solvers.registry import SolverRegistry
 from ..scientific.units.quantity import Quantity
 from .blueprint import BlueprintRegistry
 from .clarification import ClarificationQuestion
 from .verification import VerificationPlanningRegistry
 
-SCIENTIFIC_PLAN_SCHEMA = schema_string("scientific_planning_record")
+SCIENTIFIC_PLAN_SCHEMA_V1 = schema_string("scientific_planning_record")
+SCIENTIFIC_PLAN_SCHEMA = schema_string("scientific_planning_record", 2)
 QOI_PLAN_SCHEMA = schema_string("scientific_qoi_plan")
 MODEL_CHOICE_SCHEMA = schema_string("scientific_model_execution_choice")
 PLANNING_GAP_SCHEMA = schema_string("scientific_planning_gap")
 FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan")
-_TAG = "forge.scientific_planning_record/1"
+GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
+PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
+_TAG_V1 = "forge.scientific_planning_record/1"
+_TAG = "forge.scientific_planning_record/2"
 
 
 class PlanningStatus(str, Enum):
@@ -52,11 +59,28 @@ class GapKind(str, Enum):
     REALIZATION_REGISTRY_MISSING = "realization_registry_missing"
     REALIZATION_NOT_FOUND = "realization_not_found"
     REALIZATION_AMBIGUOUS = "realization_ambiguous"
+    REALIZATION_CAPABILITY_UNSATISFIED = (
+        "realization_capability_unsatisfied"
+    )
     SOLVER_REGISTRY_MISSING = "solver_registry_missing"
     SOLVER_NOT_FOUND = "solver_not_found"
     SOLVER_AMBIGUOUS = "solver_ambiguous"
     GRAPH_BLUEPRINT_UNAVAILABLE = "graph_blueprint_unavailable"
     GRAPH_BLUEPRINT_AMBIGUOUS = "graph_blueprint_ambiguous"
+    COMPOSITION_PACK_AMBIGUOUS = "composition_pack_ambiguous"
+    COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
+    SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
+    EXECUTION_PACK_UNAVAILABLE = "execution_pack_unavailable"
+    EXECUTION_PACK_AMBIGUOUS = "execution_pack_ambiguous"
+    EXECUTION_FACTORY_UNAVAILABLE = "execution_factory_unavailable"
+    GRAPH_EXTERNAL_INPUT_MISSING = "graph_external_input_missing"
+    GRAPH_EXTERNAL_INPUT_INVALID = "graph_external_input_invalid"
+    SYSTEM_APPLICABILITY_EVIDENCE_MISSING = (
+        "system_applicability_evidence_missing"
+    )
+    SYSTEM_UNCERTAINTY_COMPOSITION_UNAVAILABLE = (
+        "system_uncertainty_composition_unavailable"
+    )
     FIDELITY_LADDER_MISSING = "fidelity_ladder_missing"
     FIDELITY_UNAVAILABLE = "fidelity_unavailable"
     EVIDENCE_GAP = "evidence_gap"
@@ -388,13 +412,168 @@ class ResourceEstimate:
 
 
 @dataclass(frozen=True)
+class PlannedExternalInput:
+    port: PortRef
+    fact_path: str
+    value: Any
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.port, PortRef):
+            raise TypeError("planned external input requires PortRef")
+        path = str(self.fact_path).strip()
+        if not path:
+            raise ValueError("planned external input requires fact_path")
+        object.__setattr__(self, "fact_path", path)
+
+    @property
+    def key(self) -> str:
+        return self.port.key
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": PLANNED_EXTERNAL_INPUT_SCHEMA,
+            "port": self.port.to_dict(),
+            "fact_path": self.fact_path,
+            "value": coupling_value_to_dict(self.value),
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "PlannedExternalInput":
+        require_schema(payload, PLANNED_EXTERNAL_INPUT_SCHEMA)
+        return cls(
+            port=PortRef.from_dict(payload["port"]),
+            fact_path=payload["fact_path"],
+            value=coupling_value_from_dict(payload["value"]),
+        )
+
+
+@dataclass(frozen=True)
 class GraphPlan:
     capability_id: str
     blueprint_id: str
     blueprint_version: str
     graph: PhysicsGraph
-    coupling_plan: CouplingPlan
-    resource_estimate: ResourceEstimate
+    coupling_plan: CouplingPlan | None
+    resource_estimate: ResourceEstimate | None
+    authority_pack_id: str = ""
+    authority_pack_version: str = ""
+    authority_pack_digest: str = ""
+    coupling_policy_template_id: str = ""
+    coupling_policy_template_version: str = ""
+    execution_registry_fingerprint: str = ""
+    execution_pack_id: str = ""
+    execution_pack_version: str = ""
+    execution_pack_digest: str = ""
+    external_inputs: tuple[PlannedExternalInput, ...] = ()
+
+    def __post_init__(self) -> None:
+        for label in (
+            "capability_id",
+            "blueprint_id",
+            "blueprint_version",
+        ):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise ValueError(f"graph plan requires {label}")
+            object.__setattr__(self, label, value)
+        if not isinstance(self.graph, PhysicsGraph):
+            raise TypeError("graph plan requires PhysicsGraph")
+        if (
+            self.coupling_plan is not None
+            and not isinstance(self.coupling_plan, CouplingPlan)
+        ):
+            raise TypeError("graph plan coupling_plan must be CouplingPlan or None")
+        if (
+            self.resource_estimate is not None
+            and not isinstance(self.resource_estimate, ResourceEstimate)
+        ):
+            raise TypeError(
+                "graph plan resource_estimate must be ResourceEstimate or None"
+            )
+        if (self.coupling_plan is None) != (self.resource_estimate is None):
+            raise ValueError(
+                "graph plan coupling plan and resource estimate are both "
+                "present or both absent"
+            )
+        external = tuple(self.external_inputs)
+        if any(not isinstance(item, PlannedExternalInput) for item in external):
+            raise TypeError(
+                "graph plan external_inputs must contain PlannedExternalInput records"
+            )
+        keys = [item.key for item in external]
+        if len(keys) != len(set(keys)):
+            raise ValueError("graph plan external_inputs contain duplicate ports")
+        object.__setattr__(
+            self,
+            "external_inputs",
+            tuple(sorted(external, key=lambda item: item.key)),
+        )
+        for label in (
+            "authority_pack_id",
+            "authority_pack_version",
+            "authority_pack_digest",
+            "coupling_policy_template_id",
+            "coupling_policy_template_version",
+            "execution_registry_fingerprint",
+            "execution_pack_id",
+            "execution_pack_version",
+            "execution_pack_digest",
+        ):
+            object.__setattr__(
+                self,
+                label,
+                str(getattr(self, label)).strip(),
+            )
+
+        composition_group = (
+            self.authority_pack_id,
+            self.authority_pack_version,
+            self.authority_pack_digest,
+        )
+        if any(composition_group) and not all(composition_group):
+            raise ValueError(
+                "graph plan composition authority id/version/digest must be "
+                "present together"
+            )
+        execution_group = (
+            self.execution_pack_id,
+            self.execution_pack_version,
+            self.execution_pack_digest,
+            self.execution_registry_fingerprint,
+        )
+        if any(execution_group) and not all(execution_group):
+            raise ValueError(
+                "graph plan execution authority id/version/digest/fingerprint "
+                "must be present together"
+            )
+        policy_group = (
+            self.coupling_policy_template_id,
+            self.coupling_policy_template_version,
+        )
+        if any(policy_group) and not all(policy_group):
+            raise ValueError(
+                "graph plan coupling policy id/version must be present together"
+            )
+        for label in (
+            "authority_pack_digest",
+            "execution_pack_digest",
+            "execution_registry_fingerprint",
+        ):
+            digest = getattr(self, label)
+            if digest and (
+                len(digest) != 64
+                or any(ch not in "0123456789abcdef" for ch in digest.lower())
+            ):
+                raise ValueError(
+                    f"graph plan {label} must be a sha256 hex digest"
+                )
+
+    @property
+    def executable(self) -> bool:
+        return self.coupling_plan is not None
 
     @property
     def interface_manifest(self) -> GraphInterfaceManifest:
@@ -407,20 +586,80 @@ class GraphPlan:
             "blueprint_id": self.blueprint_id,
             "blueprint_version": self.blueprint_version,
             "graph": self.graph.to_dict(),
-            "coupling_plan": self.coupling_plan.to_dict(),
-            "resource_estimate": self.resource_estimate.to_dict(),
+            "coupling_plan": (
+                None
+                if self.coupling_plan is None
+                else self.coupling_plan.to_dict()
+            ),
+            "resource_estimate": (
+                None
+                if self.resource_estimate is None
+                else self.resource_estimate.to_dict()
+            ),
+            "authority_pack_id": self.authority_pack_id,
+            "authority_pack_version": self.authority_pack_version,
+            "authority_pack_digest": self.authority_pack_digest,
+            "coupling_policy_template_id": self.coupling_policy_template_id,
+            "coupling_policy_template_version": (
+                self.coupling_policy_template_version
+            ),
+            "execution_registry_fingerprint": (
+                self.execution_registry_fingerprint
+            ),
+            "execution_pack_id": self.execution_pack_id,
+            "execution_pack_version": self.execution_pack_version,
+            "execution_pack_digest": self.execution_pack_digest,
+            "external_inputs": [
+                item.to_dict() for item in self.external_inputs
+            ],
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
-        require_schema(payload, GRAPH_PLAN_SCHEMA)
+        require_schema_any(
+            payload,
+            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA),
+        )
+        raw_plan = payload.get("coupling_plan")
+        raw_estimate = payload.get("resource_estimate")
         return cls(
             payload["capability_id"],
             payload["blueprint_id"],
             payload["blueprint_version"],
             PhysicsGraph.from_dict(payload["graph"]),
-            CouplingPlan.from_dict(payload["coupling_plan"]),
-            ResourceEstimate.from_dict(payload["resource_estimate"]),
+            None if raw_plan is None else CouplingPlan.from_dict(raw_plan),
+            (
+                None
+                if raw_estimate is None
+                else ResourceEstimate.from_dict(raw_estimate)
+            ),
+            authority_pack_id=payload.get("authority_pack_id", ""),
+            authority_pack_version=payload.get(
+                "authority_pack_version", ""
+            ),
+            authority_pack_digest=payload.get(
+                "authority_pack_digest", ""
+            ),
+            coupling_policy_template_id=payload.get(
+                "coupling_policy_template_id", ""
+            ),
+            coupling_policy_template_version=payload.get(
+                "coupling_policy_template_version", ""
+            ),
+            execution_registry_fingerprint=payload.get(
+                "execution_registry_fingerprint", ""
+            ),
+            execution_pack_id=payload.get("execution_pack_id", ""),
+            execution_pack_version=payload.get(
+                "execution_pack_version", ""
+            ),
+            execution_pack_digest=payload.get(
+                "execution_pack_digest", ""
+            ),
+            external_inputs=tuple(
+                PlannedExternalInput.from_dict(item)
+                for item in payload.get("external_inputs", ())
+            ),
         )
 
 
@@ -511,7 +750,23 @@ class ScientificPlanningRecord:
         cls,
         payload: Mapping[str, Any],
     ) -> "ScientificPlanningRecord":
-        require_schema(payload, SCIENTIFIC_PLAN_SCHEMA)
+        version = require_schema_any(
+            payload,
+            (SCIENTIFIC_PLAN_SCHEMA_V1, SCIENTIFIC_PLAN_SCHEMA),
+        )
+        supplied_digest = payload.get("record_digest")
+        if version == SCIENTIFIC_PLAN_SCHEMA_V1:
+            raw_content = {
+                key: value
+                for key, value in payload.items()
+                if key != "record_digest"
+            }
+            expected_legacy = tagged_digest(_TAG_V1, raw_content)
+            if supplied_digest != expected_legacy:
+                raise ValueError(
+                    "legacy scientific planning record digest disagrees "
+                    "with its serialized content"
+                )
         raw_fidelity = payload.get("fidelity")
         made = cls(
             intent_identity=payload["intent_identity"],
@@ -542,7 +797,10 @@ class ScientificPlanningRecord:
                 else FidelityDecision.from_dict(raw_fidelity)
             ),
         )
-        if payload.get("record_digest") != made.digest:
+        if (
+            version == SCIENTIFIC_PLAN_SCHEMA
+            and supplied_digest != made.digest
+        ):
             raise ValueError(
                 "scientific planning record digest disagrees with its content"
             )
@@ -556,6 +814,9 @@ class PlanningRegistries:
     realizations: RealizationRegistry | None = None
     solvers: SolverRegistry | None = None
     blueprints: BlueprintRegistry | None = None
+    composition_packs: Any | None = None
+    participant_factories: Any | None = None
+    execution_packs: Any | None = None
     verification: VerificationPlanningRegistry | None = None
     fidelity_ladders: tuple[FidelityLadder, ...] = ()
 
@@ -578,11 +839,16 @@ __all__ = [
     "FidelityDecision",
     "GapKind",
     "GraphPlan",
+    "GRAPH_PLAN_SCHEMA",
+    "GRAPH_PLAN_SCHEMA_V1",
     "ModelExecutionChoice",
     "PlanningGap",
+    "PlannedExternalInput",
     "PlanningRegistries",
     "PlanningStatus",
     "QOIPlan",
     "ResourceEstimate",
+    "SCIENTIFIC_PLAN_SCHEMA",
+    "SCIENTIFIC_PLAN_SCHEMA_V1",
     "ScientificPlanningRecord",
 ]

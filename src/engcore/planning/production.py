@@ -1,10 +1,8 @@
-"""Production assembly for the engineering planner.
+"""Production assembly for deterministic engineering planning.
 
-This module is deliberately the place that knows which built-in domain packs
-are installed.  The generic planner never imports battery/thermal/electrical
-modules or branches on their names; product assembly supplies their registries.
-Enabled Domain Packs can add capabilities plus validated models, realizations,
-solvers and PhysicsGraph blueprints through explicit production dependencies.
+Transport layers are deliberately absent from this module. Product capability
+declarations come from engcore.product; installed scientific artifacts and
+cross-domain authorities come from engcore.assembly.
 """
 
 from __future__ import annotations
@@ -19,11 +17,19 @@ from .verification import VerificationPlanningRegistry
 
 
 def _production_capabilities() -> CapabilityRegistry:
-    # Import lazily: planning is a core/product concern and importing it must
-    # not initialize MCP or production domains unless a product asks for them.
-    from ..mcp.capabilities import production_registry
+    from ..product.capabilities import production_registry
 
     return production_registry()
+
+
+def _enabled_domain_packs():
+    from ..assembly.domainpacks import (
+        configure_production_domain_packs_from_env,
+    )
+
+    return configure_production_domain_packs_from_env().list(
+        enabled_only=True
+    )
 
 
 def _production_models(
@@ -38,22 +44,17 @@ def _production_models(
             existing = by_key.get(definition.key)
             if existing is not None and existing != definition:
                 raise ValueError(
-                    f"production capabilities attach conflicting definitions "
+                    "production capabilities attach conflicting definitions "
                     f"for model {definition.model_id}@{definition.version}"
                 )
             by_key[definition.key] = definition
 
-    from ..mcp.production_packs import (
-        configure_production_domain_packs_from_env,
-    )
-
-    packs = configure_production_domain_packs_from_env()
-    for registered in packs.list(enabled_only=True):
-        for definition in registered.provider.models():
+    for registration in _enabled_domain_packs():
+        for definition in registration.provider.models():
             existing = by_key.get(definition.key)
             if existing is not None and existing != definition:
                 raise ValueError(
-                    "production domain packs declare conflicting model "
+                    "production Domain Packs declare conflicting model "
                     f"{definition.model_id}@{definition.version}"
                 )
             by_key[definition.key] = definition
@@ -76,22 +77,17 @@ def _production_realizations() -> RealizationRegistry:
             existing = by_key.get(realization.key)
             if existing is not None and existing != realization:
                 raise ValueError(
-                    f"built-in domains declare conflicting realization "
+                    "built-in domains declare conflicting realization "
                     f"{realization.realization_id}@{realization.version}"
                 )
             by_key[realization.key] = realization
 
-    from ..mcp.production_packs import (
-        configure_production_domain_packs_from_env,
-    )
-
-    packs = configure_production_domain_packs_from_env()
-    for registered in packs.list(enabled_only=True):
-        for realization in registered.provider.realizations():
+    for registration in _enabled_domain_packs():
+        for realization in registration.provider.realizations():
             existing = by_key.get(realization.key)
             if existing is not None and existing != realization:
                 raise ValueError(
-                    "production domain packs declare conflicting realization "
+                    "production Domain Packs declare conflicting realization "
                     f"{realization.realization_id}@{realization.version}"
                 )
             by_key[realization.key] = realization
@@ -105,22 +101,14 @@ def _production_solvers() -> SolverRegistry:
     from ..domains.electrical.material import ResistancePropertySolver
     from ..domains.thermal_models.lumped import LumpedThermalSolver
 
-    # SolverRegistry requires factories and proves every issued session is
-    # fresh. Merge built-ins and enabled pack factories by exact identity.
     factories = [
         BatteryCellSolver,
         ElectricalDCSolver,
         ResistancePropertySolver,
         LumpedThermalSolver,
     ]
-
-    from ..mcp.production_packs import (
-        configure_production_domain_packs_from_env,
-    )
-
-    packs = configure_production_domain_packs_from_env()
-    for registered in packs.list(enabled_only=True):
-        factories.extend(registered.provider.solver_factories())
+    for registration in _enabled_domain_packs():
+        factories.extend(registration.provider.solver_factories())
 
     by_key = {}
     for factory in factories:
@@ -128,6 +116,8 @@ def _production_solvers() -> SolverRegistry:
         key = probe.identity.key
         existing = by_key.get(key)
         if existing is not None and existing is not factory:
+            # Same identity is allowed only when the callable itself is the
+            # same frozen implementation.
             raise ValueError(
                 "production solver identity collision for "
                 f"{key[0]}@{key[1]}"
@@ -138,24 +128,30 @@ def _production_solvers() -> SolverRegistry:
 
 
 def production_planning_registries() -> PlanningRegistries:
-    """The currently installed product planning universe.
+    """The exact currently-enabled scientific planning universe."""
 
-    No blueprint or verification-independence metadata is invented here.
-    Enabled packs may explicitly contribute validated PhysicsGraph blueprints,
-    realizations and solver factories. Generic graph synthesis still refuses
-    to guess missing scientific wiring; only declared stronger contracts enter
-    the planning universe.
-    """
+    from ..assembly.domainpacks import (
+        production_composition_packs,
+        production_execution_packs,
+    )
+
     capabilities = _production_capabilities()
-
-    from ..mcp.production_packs import production_pack_blueprints
+    compositions = production_composition_packs()
+    executions = production_execution_packs()
 
     return PlanningRegistries(
         capabilities=capabilities,
         models=_production_models(capabilities),
         realizations=_production_realizations(),
         solvers=_production_solvers(),
-        blueprints=BlueprintRegistry(production_pack_blueprints()),
+        # Legacy single-pack blueprints remain readable but are no longer
+        # populated by production Domain Packs.
+        blueprints=BlueprintRegistry(),
+        composition_packs=compositions,
+        participant_factories=executions.participant_factory_registry(
+            enabled_only=True
+        ),
+        execution_packs=executions,
         verification=VerificationPlanningRegistry(),
         fidelity_ladders=(),
     )

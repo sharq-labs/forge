@@ -10,7 +10,7 @@ from typing import Any
 from .manifest import ArtifactRef
 from .registry import RegisteredDomainPack
 
-SNAPSHOT_SCHEMA = "forge.domain_pack_snapshot/1"
+SNAPSHOT_SCHEMA = "forge.domain_pack_snapshot/2"
 
 
 @dataclass(frozen=True)
@@ -33,6 +33,10 @@ class DomainPackSnapshot:
     measurement_adapters: tuple[ArtifactRef, ...]
     transformations: tuple[ArtifactRef, ...]
     benchmarks: tuple[ArtifactRef, ...]
+    implementation_digest: str
+    implementation_fingerprints: tuple[dict[str, str], ...]
+    semantic_authority: dict[str, Any] | None
+    authority_digest: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -57,6 +61,12 @@ class DomainPackSnapshot:
             "measurement_adapters": [v.to_dict() for v in self.measurement_adapters],
             "transformations": [v.to_dict() for v in self.transformations],
             "benchmarks": [v.to_dict() for v in self.benchmarks],
+            "implementation_digest": self.implementation_digest,
+            "implementation_fingerprints": list(
+                self.implementation_fingerprints
+            ),
+            "semantic_authority": self.semantic_authority,
+            "authority_digest": self.authority_digest,
         }
 
     @property
@@ -89,4 +99,15 @@ def snapshot_domain_pack(registration: RegisteredDomainPack) -> DomainPackSnapsh
         measurement_adapters=manifest.measurement_adapters,
         transformations=manifest.transformations,
         benchmarks=manifest.benchmarks,
+        implementation_digest=registration.implementation_digest,
+        implementation_fingerprints=tuple(
+            item.to_dict()
+            for item in registration.implementation_fingerprints
+        ),
+        semantic_authority=(
+            None
+            if registration.semantic_authority is None
+            else registration.semantic_authority.to_dict()
+        ),
+        authority_digest=registration.authority_digest,
     )

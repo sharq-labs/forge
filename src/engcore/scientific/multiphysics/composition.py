@@ -14,15 +14,23 @@ import json
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema_any, schema_string
 from .participant import ParticipantSpec
 from .ports import PortKind, PortRef
 
-COUPLING_CANDIDATE_SCHEMA = schema_string(
+COUPLING_CANDIDATE_SCHEMA_V1 = schema_string(
     "multiphysics_coupling_candidate"
 )
-COMPOSITION_ANALYSIS_SCHEMA = schema_string(
+COUPLING_CANDIDATE_SCHEMA = schema_string(
+    "multiphysics_coupling_candidate",
+    2,
+)
+COMPOSITION_ANALYSIS_SCHEMA_V1 = schema_string(
     "multiphysics_composition_analysis"
+)
+COMPOSITION_ANALYSIS_SCHEMA = schema_string(
+    "multiphysics_composition_analysis",
+    2,
 )
 
 
@@ -35,6 +43,7 @@ class CouplingCandidate:
     kind: PortKind
     requires_field_mapping: bool
     requires_frame_transform: bool
+    semantic_id: str = ""
 
     def __post_init__(self) -> None:
         if self.source.participant_id == self.target.participant_id:
@@ -42,6 +51,11 @@ class CouplingCandidate:
                 "coupling candidate must cross participant boundaries"
             )
         object.__setattr__(self, "kind", PortKind(self.kind))
+        object.__setattr__(
+            self,
+            "semantic_id",
+            str(self.semantic_id).strip(),
+        )
 
     @property
     def key(self) -> str:
@@ -64,6 +78,7 @@ class CouplingCandidate:
             "kind": self.kind.value,
             "requires_field_mapping": self.requires_field_mapping,
             "requires_frame_transform": self.requires_frame_transform,
+            "semantic_id": self.semantic_id,
             "directly_connectable": self.directly_connectable,
         }
 
@@ -72,7 +87,13 @@ class CouplingCandidate:
         cls,
         payload: Mapping[str, Any],
     ) -> "CouplingCandidate":
-        require_schema(payload, COUPLING_CANDIDATE_SCHEMA)
+        require_schema_any(
+            payload,
+            (
+                COUPLING_CANDIDATE_SCHEMA_V1,
+                COUPLING_CANDIDATE_SCHEMA,
+            ),
+        )
         return cls(
             source=PortRef.from_dict(payload["source"]),
             target=PortRef.from_dict(payload["target"]),
@@ -85,6 +106,7 @@ class CouplingCandidate:
             requires_frame_transform=bool(
                 payload["requires_frame_transform"]
             ),
+            semantic_id=payload.get("semantic_id", ""),
         )
 
 
@@ -166,7 +188,13 @@ class CompositionAnalysis:
         cls,
         payload: Mapping[str, Any],
     ) -> "CompositionAnalysis":
-        require_schema(payload, COMPOSITION_ANALYSIS_SCHEMA)
+        version = require_schema_any(
+            payload,
+            (
+                COMPOSITION_ANALYSIS_SCHEMA_V1,
+                COMPOSITION_ANALYSIS_SCHEMA,
+            ),
+        )
         made = cls(
             candidates=tuple(
                 CouplingCandidate.from_dict(item)
@@ -186,17 +214,44 @@ class CompositionAnalysis:
             ),
         )
         supplied = payload.get("record_fingerprint")
-        if supplied is not None and supplied != made.fingerprint:
-            raise ValueError(
-                "composition analysis fingerprint disagrees with its content"
-            )
+        if supplied is not None:
+            if version == COMPOSITION_ANALYSIS_SCHEMA_V1:
+                raw_payload = {
+                    key: value
+                    for key, value in payload.items()
+                    if key != "record_fingerprint"
+                }
+                expected = hashlib.sha256(
+                    json.dumps(
+                        raw_payload,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()
+            else:
+                expected = made.fingerprint
+            if supplied != expected:
+                raise ValueError(
+                    "composition analysis fingerprint disagrees with its content"
+                )
         return made
 
 
-def _compatible(source, target) -> bool:
+def _compatible(
+    source,
+    target,
+    *,
+    source_semantic: str = "",
+    target_semantic: str = "",
+) -> bool:
     if source.kind is not target.kind:
         return False
-    if source.quantity != target.quantity:
+    if source_semantic or target_semantic:
+        if not source_semantic or not target_semantic:
+            return False
+        if source_semantic != target_semantic:
+            return False
+    elif source.quantity != target.quantity:
         return False
     if source.dimension != target.dimension:
         return False
@@ -211,6 +266,8 @@ def _compatible(source, target) -> bool:
 
 def analyze_composition(
     participants: tuple[ParticipantSpec, ...],
+    *,
+    semantic_ids: Mapping[PortRef, str] | None = None,
 ) -> CompositionAnalysis:
     """Discover candidate coupling sources without establishing any edge."""
 
@@ -228,6 +285,28 @@ def analyze_composition(
         raise InvalidScientificProblem(
             "composition analysis participant ids must be unique"
         )
+
+    semantic_map: dict[PortRef, str] = {}
+    if semantic_ids is not None:
+        semantic_map = {
+            key: str(value).strip()
+            for key, value in semantic_ids.items()
+        }
+        expected = {
+            PortRef(participant.participant_id, port.port_id)
+            for participant in participants
+            for port in participant.ports
+        }
+        if set(semantic_map) != expected:
+            raise InvalidScientificProblem(
+                "canonical semantic_ids must cover every participant port "
+                f"exactly; missing={sorted(ref.key for ref in expected-set(semantic_map))}, "
+                f"extra={sorted(ref.key for ref in set(semantic_map)-expected)}"
+            )
+        if any(not value for value in semantic_map.values()):
+            raise InvalidScientificProblem(
+                "canonical semantic_ids may not contain empty identities"
+            )
 
     outputs = [
         (participant, port)
@@ -253,15 +332,23 @@ def analyze_composition(
                     == target_participant.participant_id
                 ):
                     continue
-                if not _compatible(source, target):
+                source_ref = PortRef(
+                    source_participant.participant_id,
+                    source.port_id,
+                )
+                source_semantic = semantic_map.get(source_ref, "")
+                target_semantic = semantic_map.get(target_ref, "")
+                if not _compatible(
+                    source,
+                    target,
+                    source_semantic=source_semantic,
+                    target_semantic=target_semantic,
+                ):
                     continue
 
                 matches.append(
                     CouplingCandidate(
-                        source=PortRef(
-                            source_participant.participant_id,
-                            source.port_id,
-                        ),
+                        source=source_ref,
                         target=target_ref,
                         quantity=target.quantity,
                         dimension=target.dimension,
@@ -277,6 +364,7 @@ def analyze_composition(
                             source.coordinate_frame
                             != target.coordinate_frame
                         ),
+                        semantic_id=target_semantic,
                     )
                 )
 
@@ -298,7 +386,9 @@ def analyze_composition(
 
 __all__ = [
     "COMPOSITION_ANALYSIS_SCHEMA",
+    "COMPOSITION_ANALYSIS_SCHEMA_V1",
     "COUPLING_CANDIDATE_SCHEMA",
+    "COUPLING_CANDIDATE_SCHEMA_V1",
     "CompositionAnalysis",
     "CouplingCandidate",
     "analyze_composition",

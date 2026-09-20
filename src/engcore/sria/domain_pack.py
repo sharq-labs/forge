@@ -129,6 +129,11 @@ class DomainPack(Protocol):
         """Vocabulary this pack owns, for calibration-key contamination checks."""
 
 
+# Explicit name for the semantic contract. DomainPack remains as a
+# compatibility alias because older callers import it directly.
+SemanticDomainPack = DomainPack
+
+
 REQUIRED_PACK_METHODS = (
     "model_references",
     "parameter_semantics",
@@ -187,3 +192,8 @@ def guard_from_packs(packs: Iterable[Any]) -> SemanticGuard:
         terms.append(str(getattr(pack, "pack_id", "")))
         terms.extend(str(t) for t in pack.semantic_terms())
     return SemanticGuard(t for t in terms if t)
+
+
+# Explicit authority naming for new code.
+validate_semantic_domain_pack = validate_domain_pack
+

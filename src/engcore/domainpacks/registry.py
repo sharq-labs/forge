@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Iterator
 
 from ..scientific.capabilities import ScientificCapability
 from .errors import DuplicateDomainPack, DomainPackNotEnabled, DomainPackNotFound
+from .authority import SemanticAuthoritySnapshot, bind_semantic_authority
+from .frozen import (
+    ArtifactImplementationFingerprint,
+    FrozenDomainPackProvider,
+    freeze_domain_pack_provider,
+)
 from .provider import DomainPackProvider
 from .validation import DomainPackValidationReport, validate_domain_pack
 
@@ -40,9 +48,37 @@ class PackOrigin:
 
 @dataclass(frozen=True)
 class RegisteredDomainPack:
-    provider: DomainPackProvider
+    provider: FrozenDomainPackProvider
     validation: DomainPackValidationReport
     origin: PackOrigin
+    implementation_fingerprints: tuple[
+        ArtifactImplementationFingerprint, ...
+    ]
+    implementation_digest: str
+    semantic_authority: SemanticAuthoritySnapshot | None = None
+
+    @property
+    def manifest(self):
+        return self.provider.manifest
+
+    @property
+    def authority_digest(self) -> str:
+        payload = {
+            "manifest_digest": self.manifest.digest,
+            "implementation_digest": self.implementation_digest,
+            "semantic_authority_digest": (
+                None
+                if self.semantic_authority is None
+                else self.semantic_authority.digest
+            ),
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 class DomainPackRegistry:
@@ -58,17 +94,48 @@ class DomainPackRegistry:
         *,
         origin: PackOrigin | None = None,
     ) -> RegisteredDomainPack:
-        report = validate_domain_pack(provider)
+        manifest = getattr(provider, "manifest", None)
+        semantic_authority = bind_semantic_authority(
+            provider,
+            manifest,
+        )
+        frozen = freeze_domain_pack_provider(
+            provider,
+            manifest=manifest,
+        )
+        return self.register_frozen(
+            frozen,
+            semantic_authority=semantic_authority,
+            origin=origin,
+        )
+
+    def register_frozen(
+        self,
+        frozen,
+        *,
+        semantic_authority: SemanticAuthoritySnapshot | None = None,
+        origin: PackOrigin | None = None,
+    ) -> RegisteredDomainPack:
+        from .frozen import FrozenDomainPack
+
+        if not isinstance(frozen, FrozenDomainPack):
+            raise TypeError("register_frozen requires FrozenDomainPack")
+        report = validate_domain_pack(frozen.provider)
         report.require_valid()
-        key = provider.manifest.key
+        key = frozen.manifest.key
         if key in self._packs:
             raise DuplicateDomainPack(
                 f"domain pack {key[0]}@{key[1]} is already registered"
             )
         registration = RegisteredDomainPack(
-            provider=provider,
+            provider=frozen.provider,
             validation=report,
             origin=origin or PackOrigin.builtin(),
+            implementation_fingerprints=(
+                frozen.implementation_fingerprints
+            ),
+            implementation_digest=frozen.implementation_digest,
+            semantic_authority=semantic_authority,
         )
         self._packs[key] = registration
         return registration
@@ -121,7 +188,7 @@ class DomainPackRegistry:
         wanted = ScientificCapability.coerce(capability).identifier
         registrations = self.list(enabled_only=enabled_only)
         return tuple(
-            item for item in registrations if wanted in item.provider.manifest.capabilities
+            item for item in registrations if wanted in item.manifest.capabilities
         )
 
     def __len__(self) -> int:

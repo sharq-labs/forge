@@ -75,6 +75,14 @@ def _solver_candidates(
         provided = {item.name for item in solver.capabilities}
         if required - provided:
             continue
+        served_models = {
+            item.key for item in getattr(solver, "served_models", ())
+        }
+        if (
+            served_models
+            and realization.model_key not in served_models
+        ):
+            continue
         if (
             declared_ids
             and solver.identity.solver_id not in declared_ids
@@ -180,6 +188,30 @@ def execution_choices(
         solver_candidates: tuple[Any, ...] = ()
         selected_solver = None
         if selected_realization is not None:
+            provided_science = {
+                item.capability
+                for item in declaration.provides
+            }
+            missing_science = sorted(
+                capability.identifier
+                for capability in (
+                    selected_realization.required_capabilities
+                    - provided_science
+                )
+            )
+            if missing_science:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.REALIZATION_CAPABILITY_UNSATISFIED,
+                        selected_realization.realization_id,
+                        (
+                            "selected realization requires scientific "
+                            f"capabilities not provided by the capability "
+                            f"declaration: {missing_science}"
+                        ),
+                        graph_required,
+                    )
+                )
             if not selected_realization.required_solver_capabilities:
                 basis.append(
                     "selected realization declares no external solver "
@@ -539,7 +571,7 @@ def blueprint_choice(
 
 
 def bindings_for_blueprint(
-    blueprint: PhysicsGraphBlueprint,
+    blueprint: Any,
     qoi_plans: tuple[QOIPlan, ...],
 ) -> tuple[
     Mapping[str, ParticipantBinding] | None,

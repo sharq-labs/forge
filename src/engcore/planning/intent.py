@@ -19,11 +19,12 @@ from ..scientific.ir.constraints import ConstraintDefinition
 from ..scientific.ir.values import ScientificValue, decode_value, encode_value, require_scientific_value
 from ..scientific.results.immutable import freeze
 from ..scientific.results.validation import ValidationLevel
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.units.quantity import Quantity, dimensionality
 from ..sria.uncertainty import UncertaintyChannel
 
-ENGINEERING_INTENT_SCHEMA = schema_string("engineering_intent")
+ENGINEERING_INTENT_SCHEMA_V1 = schema_string("engineering_intent")
+ENGINEERING_INTENT_SCHEMA = schema_string("engineering_intent", 2)
 CONTEXT_SCHEMA = schema_string("engineering_context_of_use")
 COMPONENT_SCHEMA = schema_string("engineering_component")
 INTERFACE_SCHEMA = schema_string("engineering_interface")
@@ -34,9 +35,10 @@ QOI_CONSTRAINT_SCHEMA = schema_string("engineering_qoi_constraint")
 OBJECTIVE_SCHEMA = schema_string("engineering_objective")
 FIDELITY_REQUEST_SCHEMA = schema_string("engineering_fidelity_request")
 COMPUTE_BUDGET_SCHEMA = schema_string("engineering_compute_budget")
+SIMULATION_HORIZON_SCHEMA = schema_string("engineering_simulation_horizon")
 
-_IDENTITY_TAG = "forge.engineering_intent.identity/1"
-_RECORD_TAG = "forge.engineering_intent.record/1"
+_IDENTITY_TAG = "forge.engineering_intent.identity/2"
+_RECORD_TAG = "forge.engineering_intent.record/2"
 _IDENTIFIER = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.:-]*$")
 _PATH_SEGMENT = r"[a-zA-Z_][a-zA-Z0-9_]*(?:\[\d+\])?"
 _PATH = re.compile(rf"^{_PATH_SEGMENT}(?:\.{_PATH_SEGMENT})*$")
@@ -561,6 +563,58 @@ class ComputeBudget:
 
 
 @dataclass(frozen=True)
+class SimulationHorizon:
+    start: Quantity
+    end: Quantity
+
+    def __post_init__(self) -> None:
+        for label in ("start", "end"):
+            value = getattr(self, label)
+            if (
+                not isinstance(value, Quantity)
+                or value.dimensionality != dimensionality("second")
+            ):
+                raise InvalidScientificProblem(
+                    f"simulation horizon {label} must be a time Quantity"
+                )
+            object.__setattr__(self, label, value.to("second"))
+        if self.start.magnitude_in("second") < 0.0:
+            raise InvalidScientificProblem(
+                "simulation horizon start must be non-negative"
+            )
+        if (
+            self.end.magnitude_in("second")
+            <= self.start.magnitude_in("second")
+        ):
+            raise InvalidScientificProblem(
+                "simulation horizon end must be after start"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": SIMULATION_HORIZON_SCHEMA,
+            "start": self.start.to_dict(),
+            "end": self.end.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        p: Mapping[str, Any],
+    ) -> "SimulationHorizon":
+        require_schema(p, SIMULATION_HORIZON_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({"schema", "start", "end"}),
+            "engineering simulation horizon",
+        )
+        return cls(
+            Quantity.from_dict(p["start"]),
+            Quantity.from_dict(p["end"]),
+        )
+
+
+@dataclass(frozen=True)
 class EngineeringIntent:
     statement: str
     context: ContextOfUse
@@ -573,6 +627,7 @@ class EngineeringIntent:
     required_capabilities: frozenset[ScientificCapability] = frozenset()
     fidelity: FidelityRequest | None = None
     compute_budget: ComputeBudget = ComputeBudget()
+    simulation_horizon: SimulationHorizon | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "statement", _text(self.statement, "intent.statement"))
@@ -622,6 +677,13 @@ class EngineeringIntent:
             raise InvalidScientificProblem("intent fidelity must be FidelityRequest")
         if not isinstance(self.compute_budget, ComputeBudget):
             raise InvalidScientificProblem("intent compute_budget must be ComputeBudget")
+        if (
+            self.simulation_horizon is not None
+            and not isinstance(self.simulation_horizon, SimulationHorizon)
+        ):
+            raise InvalidScientificProblem(
+                "intent simulation_horizon must be SimulationHorizon"
+            )
         object.__setattr__(self, "required_capabilities", scientific_capabilities(self.required_capabilities))
 
     @property
@@ -660,6 +722,11 @@ class EngineeringIntent:
             "required_capabilities": sorted(x.identifier for x in self.required_capabilities),
             "fidelity": None if self.fidelity is None else self.fidelity.to_dict(),
             "compute_budget": self.compute_budget.to_dict(),
+            "simulation_horizon": (
+                None
+                if self.simulation_horizon is None
+                else self.simulation_horizon.to_dict()
+            ),
         }
 
     @property
@@ -672,10 +739,20 @@ class EngineeringIntent:
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringIntent":
-        require_schema(p, ENGINEERING_INTENT_SCHEMA)
+        schema = require_schema_any(
+            p,
+            (ENGINEERING_INTENT_SCHEMA_V1, ENGINEERING_INTENT_SCHEMA),
+        )
         _reject_unknown_keys(
             p,
             frozenset({
+                "schema", "statement", "context", "components", "interfaces",
+                "facts", "qois", "constraints", "objectives",
+                "required_capabilities", "fidelity", "compute_budget",
+                "simulation_horizon",
+            })
+            if schema == ENGINEERING_INTENT_SCHEMA
+            else frozenset({
                 "schema", "statement", "context", "components", "interfaces",
                 "facts", "qois", "constraints", "objectives",
                 "required_capabilities", "fidelity", "compute_budget",
@@ -683,6 +760,7 @@ class EngineeringIntent:
             "engineering intent",
         )
         fidelity = p.get("fidelity")
+        horizon = p.get("simulation_horizon")
         return cls(
             statement=p["statement"],
             context=ContextOfUse.from_dict(p["context"]),
@@ -695,16 +773,23 @@ class EngineeringIntent:
             required_capabilities=frozenset(p.get("required_capabilities", ())),
             fidelity=None if fidelity is None else FidelityRequest.from_dict(fidelity),
             compute_budget=ComputeBudget.from_dict(p.get("compute_budget", {"schema": COMPUTE_BUDGET_SCHEMA})),
+            simulation_horizon=(
+                None
+                if horizon is None
+                else SimulationHorizon.from_dict(horizon)
+            ),
         )
 
 
 __all__ = [
     "COMPUTE_BUDGET_SCHEMA", "COMPONENT_SCHEMA", "CONTEXT_SCHEMA",
-    "ENGINEERING_INTENT_SCHEMA", "EXCHANGE_SCHEMA", "FACT_SCHEMA",
+    "ENGINEERING_INTENT_SCHEMA", "ENGINEERING_INTENT_SCHEMA_V1",
+    "EXCHANGE_SCHEMA", "FACT_SCHEMA",
     "FIDELITY_REQUEST_SCHEMA", "INTERFACE_SCHEMA", "OBJECTIVE_SCHEMA",
+    "SIMULATION_HORIZON_SCHEMA",
     "QOI_CONSTRAINT_SCHEMA", "QOI_SCHEMA", "ComputeBudget", "ContextOfUse",
     "EngineeringComponent", "EngineeringIntent", "EngineeringInterface",
     "EngineeringObjective", "FactRole", "FidelityRequest", "IntentFact",
     "IntentQuantityOfInterest", "InterfaceExchange", "ObjectiveKind",
-    "QOIConstraint",
+    "QOIConstraint", "SimulationHorizon",
 ]
