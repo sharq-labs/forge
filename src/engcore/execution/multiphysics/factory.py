@@ -20,19 +20,27 @@ ParticipantFactory = Callable[[ParticipantSpec], ExecutableParticipant]
 
 @dataclass(frozen=True)
 class ParticipantFactoryDeclaration:
-    adapter_id: str
-    adapter_version: str
+    model_id: str
+    model_version: str
+    realization_id: str
+    realization_version: str
     solver_id: str
     solver_version: str
+    adapter_id: str
+    adapter_version: str
     factory: ParticipantFactory
     description: str = ""
 
     def __post_init__(self) -> None:
         for label in (
-            "adapter_id",
-            "adapter_version",
+            "model_id",
+            "model_version",
+            "realization_id",
+            "realization_version",
             "solver_id",
             "solver_version",
+            "adapter_id",
+            "adapter_version",
         ):
             value = str(getattr(self, label)).strip()
             if not value:
@@ -51,39 +59,55 @@ class ParticipantFactoryDeclaration:
         )
 
     @property
-    def key(self) -> tuple[str, str, str, str]:
+    def key(self) -> tuple[str, str, str, str, str, str, str, str]:
         return (
-            self.adapter_id,
-            self.adapter_version,
+            self.model_id,
+            self.model_version,
+            self.realization_id,
+            self.realization_version,
             self.solver_id,
             self.solver_version,
+            self.adapter_id,
+            self.adapter_version,
         )
 
     def matches(self, spec: ParticipantSpec) -> bool:
         return self.key == (
-            spec.adapter_id,
-            spec.adapter_version,
+            spec.model_id,
+            spec.model_version,
+            spec.realization_id,
+            spec.realization_version,
             spec.solver_id,
             spec.solver_version,
+            spec.adapter_id,
+            spec.adapter_version,
         )
 
 
 @dataclass(frozen=True)
 class ParticipantFactoryCoverage:
     participant_id: str
-    adapter_id: str
-    adapter_version: str
+    model_id: str
+    model_version: str
+    realization_id: str
+    realization_version: str
     solver_id: str
     solver_version: str
+    adapter_id: str
+    adapter_version: str
     available: bool
 
     def to_dict(self) -> dict[str, object]:
         return {
             "participant_id": self.participant_id,
-            "adapter_id": self.adapter_id,
-            "adapter_version": self.adapter_version,
+            "model_id": self.model_id,
+            "model_version": self.model_version,
+            "realization_id": self.realization_id,
+            "realization_version": self.realization_version,
             "solver_id": self.solver_id,
             "solver_version": self.solver_version,
+            "adapter_id": self.adapter_id,
+            "adapter_version": self.adapter_version,
             "available": self.available,
         }
 
@@ -96,7 +120,7 @@ class ParticipantFactoryRegistry:
         declarations: Iterable[ParticipantFactoryDeclaration] = (),
     ) -> None:
         self._items: dict[
-            tuple[str, str, str, str],
+            tuple[str, str, str, str, str, str, str, str],
             ParticipantFactoryDeclaration,
         ] = {}
         for declaration in declarations:
@@ -117,8 +141,10 @@ class ParticipantFactoryRegistry:
         if declaration.key in self._items:
             raise InvalidScientificProblem(
                 "duplicate participant factory for "
-                f"{declaration.adapter_id}@{declaration.adapter_version} / "
-                f"{declaration.solver_id}@{declaration.solver_version}"
+                f"model={declaration.model_id}@{declaration.model_version}, "
+                f"realization={declaration.realization_id}@{declaration.realization_version}, "
+                f"solver={declaration.solver_id}@{declaration.solver_version}, "
+                f"adapter={declaration.adapter_id}@{declaration.adapter_version}"
             )
         self._items[declaration.key] = declaration
 
@@ -129,10 +155,14 @@ class ParticipantFactoryRegistry:
         if not isinstance(spec, ParticipantSpec):
             raise TypeError("declaration_for requires ParticipantSpec")
         key = (
-            spec.adapter_id,
-            spec.adapter_version,
+            spec.model_id,
+            spec.model_version,
+            spec.realization_id,
+            spec.realization_version,
             spec.solver_id,
             spec.solver_version,
+            spec.adapter_id,
+            spec.adapter_version,
         )
         try:
             return self._items[key]
@@ -140,8 +170,10 @@ class ParticipantFactoryRegistry:
             raise InvalidScientificProblem(
                 "no executable participant factory for "
                 f"{spec.participant_id!r}: "
-                f"adapter={spec.adapter_id}@{spec.adapter_version}, "
-                f"solver={spec.solver_id}@{spec.solver_version}"
+                f"model={spec.model_id}@{spec.model_version}, "
+                f"realization={spec.realization_id}@{spec.realization_version}, "
+                f"solver={spec.solver_id}@{spec.solver_version}, "
+                f"adapter={spec.adapter_id}@{spec.adapter_version}"
             ) from None
 
     def coverage(
@@ -153,18 +185,26 @@ class ParticipantFactoryRegistry:
         result = []
         for spec in graph.participants:
             key = (
-                spec.adapter_id,
-                spec.adapter_version,
+                spec.model_id,
+                spec.model_version,
+                spec.realization_id,
+                spec.realization_version,
                 spec.solver_id,
                 spec.solver_version,
+                spec.adapter_id,
+                spec.adapter_version,
             )
             result.append(
                 ParticipantFactoryCoverage(
                     participant_id=spec.participant_id,
-                    adapter_id=spec.adapter_id,
-                    adapter_version=spec.adapter_version,
+                    model_id=spec.model_id,
+                    model_version=spec.model_version,
+                    realization_id=spec.realization_id,
+                    realization_version=spec.realization_version,
                     solver_id=spec.solver_id,
                     solver_version=spec.solver_version,
+                    adapter_id=spec.adapter_id,
+                    adapter_version=spec.adapter_version,
                     available=key in self._items,
                 )
             )
@@ -208,8 +248,10 @@ class ParticipantFactoryRegistry:
             detail = [
                 (
                     item.participant_id,
-                    f"{item.adapter_id}@{item.adapter_version}",
+                    f"{item.model_id}@{item.model_version}",
+                    f"{item.realization_id}@{item.realization_version}",
                     f"{item.solver_id}@{item.solver_version}",
+                    f"{item.adapter_id}@{item.adapter_version}",
                 )
                 for item in missing
             ]
