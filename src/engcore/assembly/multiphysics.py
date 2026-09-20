@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
 from ..compositionpacks.contracts import SystemValidationResult
+from ..compositionpacks.uncertainty import SystemUncertaintyResult
 from ..compositionpacks.participant import ParticipantBinding
 from ..compositionpacks.registry import CompositionPackRegistry
 from ..compositionpacks.snapshot import (
@@ -27,10 +28,19 @@ from ..executionpacks.snapshot import (
 )
 from ..planning.records import GraphPlan
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.multiphysics import MultiphysicsRunRecord
-from ..scientific.serialization import schema_string
+from ..scientific.multiphysics import (
+    MultiphysicsRunRecord,
+    PortRef,
+)
+from ..scientific.results.uncertainty import Uncertainty
+from ..scientific.serialization import (
+    require_schema_any,
+    schema_string,
+)
+from ..scientific.verification.run_record import VerificationRunRecord
 
-AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run")
+AUTHORIZED_RUN_SCHEMA_V1 = schema_string("authorized_multiphysics_run")
+AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run", 2)
 
 
 @dataclass(frozen=True)
@@ -59,6 +69,117 @@ class AuthorizedSystemValidation:
             "result": self.result.to_dict(),
         }
 
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "AuthorizedSystemValidation":
+        return cls(
+            protocol_id=payload["protocol_id"],
+            protocol_version=payload["protocol_version"],
+            result=SystemValidationResult.from_dict(payload["result"]),
+        )
+
+
+@dataclass(frozen=True)
+class AuthorizedSystemUncertainty:
+    protocol_id: str
+    protocol_version: str
+    result: SystemUncertaintyResult
+
+    def __post_init__(self) -> None:
+        for label in ("protocol_id", "protocol_version"):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise InvalidScientificProblem(
+                    f"authorized system uncertainty requires {label}"
+                )
+            object.__setattr__(self, label, value)
+        if not isinstance(self.result, SystemUncertaintyResult):
+            raise InvalidScientificProblem(
+                "authorized system uncertainty requires SystemUncertaintyResult"
+            )
+
+    @property
+    def key(self) -> tuple[str, str, str, str]:
+        return (
+            self.protocol_id,
+            self.protocol_version,
+            self.result.quantity,
+            self.result.channel.value,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "protocol_id": self.protocol_id,
+            "protocol_version": self.protocol_version,
+            "result": self.result.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "AuthorizedSystemUncertainty":
+        return cls(
+            protocol_id=payload["protocol_id"],
+            protocol_version=payload["protocol_version"],
+            result=SystemUncertaintyResult.from_dict(payload["result"]),
+        )
+
+
+@dataclass(frozen=True)
+class AuthorizedSystemVerification:
+    protocol_id: str
+    protocol_version: str
+    quantity: str
+    run: VerificationRunRecord
+
+    def __post_init__(self) -> None:
+        for label in (
+            "protocol_id",
+            "protocol_version",
+            "quantity",
+        ):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise InvalidScientificProblem(
+                    f"authorized system verification requires {label}"
+                )
+            object.__setattr__(self, label, value)
+        if not isinstance(self.run, VerificationRunRecord):
+            raise InvalidScientificProblem(
+                "authorized system verification requires VerificationRunRecord"
+            )
+
+    @property
+    def key(self) -> tuple[str, str, str]:
+        return (
+            self.protocol_id,
+            self.protocol_version,
+            self.quantity,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "protocol_id": self.protocol_id,
+            "protocol_version": self.protocol_version,
+            "quantity": self.quantity,
+            "run": self.run.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "AuthorizedSystemVerification":
+        return cls(
+            protocol_id=payload["protocol_id"],
+            protocol_version=payload["protocol_version"],
+            quantity=payload["quantity"],
+            run=VerificationRunRecord.from_dict(payload["run"]),
+        )
+
 
 @dataclass(frozen=True)
 class AuthorizedMultiphysicsRun:
@@ -67,6 +188,8 @@ class AuthorizedMultiphysicsRun:
     execution_snapshot: ExecutionPackSnapshot
     run: MultiphysicsRunRecord
     system_validation: tuple[AuthorizedSystemValidation, ...]
+    system_uncertainty: tuple[AuthorizedSystemUncertainty, ...] = ()
+    system_verification: tuple[AuthorizedSystemVerification, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.graph_plan, GraphPlan):
@@ -111,6 +234,44 @@ class AuthorizedMultiphysicsRun:
             ),
         )
 
+        uncertainties = tuple(self.system_uncertainty)
+        if any(
+            not isinstance(item, AuthorizedSystemUncertainty)
+            for item in uncertainties
+        ):
+            raise TypeError(
+                "system_uncertainty must contain AuthorizedSystemUncertainty"
+            )
+        uncertainty_keys = [item.key for item in uncertainties]
+        if len(uncertainty_keys) != len(set(uncertainty_keys)):
+            raise InvalidScientificProblem(
+                "authorized run contains duplicate system uncertainty results"
+            )
+        object.__setattr__(
+            self,
+            "system_uncertainty",
+            tuple(sorted(uncertainties, key=lambda item: item.key)),
+        )
+
+        verifications = tuple(self.system_verification)
+        if any(
+            not isinstance(item, AuthorizedSystemVerification)
+            for item in verifications
+        ):
+            raise TypeError(
+                "system_verification must contain AuthorizedSystemVerification"
+            )
+        verification_keys = [item.key for item in verifications]
+        if len(verification_keys) != len(set(verification_keys)):
+            raise InvalidScientificProblem(
+                "authorized run contains duplicate system verification results"
+            )
+        object.__setattr__(
+            self,
+            "system_verification",
+            tuple(sorted(verifications, key=lambda item: item.key)),
+        )
+
     def _content_dict(self) -> dict[str, Any]:
         return {
             "schema": AUTHORIZED_RUN_SCHEMA,
@@ -120,6 +281,12 @@ class AuthorizedMultiphysicsRun:
             "run": self.run.to_dict(),
             "system_validation": [
                 item.to_dict() for item in self.system_validation
+            ],
+            "system_uncertainty": [
+                item.to_dict() for item in self.system_uncertainty
+            ],
+            "system_verification": [
+                item.to_dict() for item in self.system_verification
             ],
         }
 
@@ -139,6 +306,72 @@ class AuthorizedMultiphysicsRun:
             **self._content_dict(),
             "record_digest": self.digest,
         }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "AuthorizedMultiphysicsRun":
+        schema = require_schema_any(
+            payload,
+            (AUTHORIZED_RUN_SCHEMA_V1, AUTHORIZED_RUN_SCHEMA),
+        )
+        supplied = payload.get("record_digest")
+        if schema == AUTHORIZED_RUN_SCHEMA_V1:
+            raw = {
+                key: value
+                for key, value in payload.items()
+                if key != "record_digest"
+            }
+            expected = hashlib.sha256(
+                json.dumps(
+                    raw,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                ).encode("utf-8")
+            ).hexdigest()
+            if supplied != expected:
+                raise InvalidScientificProblem(
+                    "legacy authorized multiphysics run digest disagrees "
+                    "with its original wire content"
+                )
+
+        made = cls(
+            graph_plan=GraphPlan.from_dict(payload["graph_plan"]),
+            composition_snapshot=CompositionPackSnapshot.from_dict(
+                payload["composition_snapshot"]
+            ),
+            execution_snapshot=ExecutionPackSnapshot.from_dict(
+                payload["execution_snapshot"]
+            ),
+            run=MultiphysicsRunRecord.from_dict(payload["run"]),
+            system_validation=tuple(
+                AuthorizedSystemValidation.from_dict(item)
+                for item in payload.get("system_validation", ())
+            ),
+            system_uncertainty=(
+                ()
+                if schema == AUTHORIZED_RUN_SCHEMA_V1
+                else tuple(
+                    AuthorizedSystemUncertainty.from_dict(item)
+                    for item in payload.get("system_uncertainty", ())
+                )
+            ),
+            system_verification=(
+                ()
+                if schema == AUTHORIZED_RUN_SCHEMA_V1
+                else tuple(
+                    AuthorizedSystemVerification.from_dict(item)
+                    for item in payload.get("system_verification", ())
+                )
+            ),
+        )
+        if schema == AUTHORIZED_RUN_SCHEMA and supplied != made.digest:
+            raise InvalidScientificProblem(
+                "authorized multiphysics run digest disagrees with content"
+            )
+        return made
 
 
 def _composition_blueprint(registration, graph_plan: GraphPlan):
@@ -225,6 +458,7 @@ def execute_authorized_graph_plan(
     executions: ExecutionPackRegistry,
     resolver: BulkDataResolver,
     store: BulkDataStore,
+    external_uncertainty: Mapping[PortRef, Uncertainty] | None = None,
 ) -> AuthorizedMultiphysicsRun:
     """Execute one ready GraphPlan without re-selecting scientific authority."""
 
@@ -294,12 +528,30 @@ def execute_authorized_graph_plan(
         resolver=resolver,
         store=store,
     )
+    planned_ports = {
+        item.port for item in graph_plan.external_inputs
+    }
+    external_uncertainty = (
+        {}
+        if external_uncertainty is None
+        else dict(external_uncertainty)
+    )
+    unknown_uq_ports = sorted(
+        ref.key
+        for ref in set(external_uncertainty) - planned_ports
+    )
+    if unknown_uq_ports:
+        raise InvalidScientificProblem(
+            "external uncertainty names ports outside GraphPlan inputs: "
+            f"{unknown_uq_ports}"
+        )
     run = runtime.run(
         run_id,
         external_inputs={
             item.port: item.value
             for item in graph_plan.external_inputs
         },
+        external_uncertainty=external_uncertainty,
     )
 
     validation: list[AuthorizedSystemValidation] = []
@@ -326,18 +578,78 @@ def execute_authorized_graph_plan(
             "the executed blueprint"
         )
 
+    uncertainty_results: list[AuthorizedSystemUncertainty] = []
+    for producer in composition.uncertainty_producers:
+        if producer.blueprint_id != graph_plan.blueprint_id:
+            continue
+        produced = tuple(producer.implementation(run))
+        seen = set()
+        for result in produced:
+            if not isinstance(result, SystemUncertaintyResult):
+                raise InvalidScientificProblem(
+                    f"composition uncertainty {producer.ref.artifact_id}@"
+                    f"{producer.ref.version} returned "
+                    f"{type(result).__name__}, expected SystemUncertaintyResult"
+                )
+            if result.quantity not in producer.quantities:
+                raise InvalidScientificProblem(
+                    f"composition uncertainty producer emitted undeclared "
+                    f"quantity {result.quantity!r}"
+                )
+            if result.channel not in producer.channels:
+                raise InvalidScientificProblem(
+                    f"composition uncertainty producer emitted undeclared "
+                    f"channel {result.channel.value!r}"
+                )
+            if result.key in seen:
+                raise InvalidScientificProblem(
+                    "composition uncertainty producer emitted duplicate result "
+                    f"{result.key}"
+                )
+            seen.add(result.key)
+            uncertainty_results.append(
+                AuthorizedSystemUncertainty(
+                    producer.ref.artifact_id,
+                    producer.ref.version,
+                    result,
+                )
+            )
+
+    verification_results: list[AuthorizedSystemVerification] = []
+    for protocol in composition.verification_protocols:
+        if protocol.blueprint_id != graph_plan.blueprint_id:
+            continue
+        verification_results.append(
+            AuthorizedSystemVerification(
+                protocol.ref.artifact_id,
+                protocol.ref.version,
+                protocol.quantity,
+                protocol.execute(run),
+            )
+        )
+    if not verification_results:
+        raise InvalidScientificProblem(
+            "selected CompositionPack has no executable independent "
+            "verification protocol for the executed blueprint"
+        )
+
     return AuthorizedMultiphysicsRun(
         graph_plan=graph_plan,
         composition_snapshot=snapshot_composition_pack(composition),
         execution_snapshot=snapshot_execution_pack(execution),
         run=run,
         system_validation=tuple(validation),
+        system_uncertainty=tuple(uncertainty_results),
+        system_verification=tuple(verification_results),
     )
 
 
 __all__ = [
     "AUTHORIZED_RUN_SCHEMA",
+    "AUTHORIZED_RUN_SCHEMA_V1",
     "AuthorizedMultiphysicsRun",
+    "AuthorizedSystemUncertainty",
     "AuthorizedSystemValidation",
+    "AuthorizedSystemVerification",
     "execute_authorized_graph_plan",
 ]
