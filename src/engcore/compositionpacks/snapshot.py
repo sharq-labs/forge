@@ -21,6 +21,7 @@ class CompositionPackSnapshot:
     blueprint_digests: tuple[tuple[str, str, str], ...]
     coupling_policy_digests: tuple[tuple[str, str, str], ...]
     system_contract_digest: str
+    claim_capability_digests: tuple[tuple[str, str, str], ...]
     validation_implementations: tuple[dict[str, str], ...]
     dependency_authority_digests: tuple[tuple[str, str, str], ...]
     authority_digest: str
@@ -56,6 +57,15 @@ class CompositionPackSnapshot:
                 for template_id, version, digest in self.coupling_policy_digests
             ],
             "system_contract_digest": self.system_contract_digest,
+            "claim_capability_digests": [
+                {
+                    "capability_id": capability_id,
+                    "version": version,
+                    "digest": digest,
+                }
+                for capability_id, version, digest
+                in self.claim_capability_digests
+            ],
             "validation_implementations": list(self.validation_implementations),
             "dependency_authority_digests": [
                 {
@@ -106,6 +116,14 @@ def snapshot_composition_pack(
             for item in manifest.coupling_policies
         ),
         system_contract_digest=manifest.system_contract_digest,
+        claim_capability_digests=tuple(
+            (
+                item.capability_id,
+                item.version,
+                item.digest,
+            )
+            for item in registration.claim_capabilities
+        ),
         validation_implementations=tuple(
             item.to_dict()
             for item in registration.validation_fingerprints
