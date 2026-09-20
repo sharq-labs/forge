@@ -27,7 +27,8 @@ from .blueprint import BlueprintRegistry
 from .clarification import ClarificationQuestion
 from .verification import VerificationPlanningRegistry
 
-SCIENTIFIC_PLAN_SCHEMA = schema_string("scientific_planning_record")
+SCIENTIFIC_PLAN_SCHEMA_V1 = schema_string("scientific_planning_record")
+SCIENTIFIC_PLAN_SCHEMA = schema_string("scientific_planning_record", 2)
 QOI_PLAN_SCHEMA = schema_string("scientific_qoi_plan")
 MODEL_CHOICE_SCHEMA = schema_string("scientific_model_execution_choice")
 PLANNING_GAP_SCHEMA = schema_string("scientific_planning_gap")
@@ -36,7 +37,8 @@ RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
 GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
 PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
-_TAG = "forge.scientific_planning_record/1"
+_TAG_V1 = "forge.scientific_planning_record/1"
+_TAG = "forge.scientific_planning_record/2"
 
 
 class PlanningStatus(str, Enum):
@@ -684,7 +686,23 @@ class ScientificPlanningRecord:
         cls,
         payload: Mapping[str, Any],
     ) -> "ScientificPlanningRecord":
-        require_schema(payload, SCIENTIFIC_PLAN_SCHEMA)
+        version = require_schema_any(
+            payload,
+            (SCIENTIFIC_PLAN_SCHEMA_V1, SCIENTIFIC_PLAN_SCHEMA),
+        )
+        supplied_digest = payload.get("record_digest")
+        if version == SCIENTIFIC_PLAN_SCHEMA_V1:
+            raw_content = {
+                key: value
+                for key, value in payload.items()
+                if key != "record_digest"
+            }
+            expected_legacy = tagged_digest(_TAG_V1, raw_content)
+            if supplied_digest != expected_legacy:
+                raise ValueError(
+                    "legacy scientific planning record digest disagrees "
+                    "with its serialized content"
+                )
         raw_fidelity = payload.get("fidelity")
         made = cls(
             intent_identity=payload["intent_identity"],
@@ -715,7 +733,10 @@ class ScientificPlanningRecord:
                 else FidelityDecision.from_dict(raw_fidelity)
             ),
         )
-        if payload.get("record_digest") != made.digest:
+        if (
+            version == SCIENTIFIC_PLAN_SCHEMA
+            and supplied_digest != made.digest
+        ):
             raise ValueError(
                 "scientific planning record digest disagrees with its content"
             )
@@ -762,5 +783,7 @@ __all__ = [
     "PlanningStatus",
     "QOIPlan",
     "ResourceEstimate",
+    "SCIENTIFIC_PLAN_SCHEMA",
+    "SCIENTIFIC_PLAN_SCHEMA_V1",
     "ScientificPlanningRecord",
 ]
