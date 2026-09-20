@@ -75,15 +75,25 @@ def clarification_questions(
     intent: EngineeringIntent,
     validation: IntentValidation,
     registry: CapabilityRegistry,
+    *,
+    selected_capabilities: Mapping[str, str] | None = None,
 ) -> tuple[ClarificationQuestion, ...]:
     if validation.intent_identity != intent.identity_digest:
         raise ValueError("validation belongs to another engineering intent")
     if validation.registry_digest != registry.digest:
         raise ValueError("validation belongs to another capability registry")
 
+    selected_capabilities = dict(selected_capabilities or {})
     questions: list[ClarificationQuestion] = []
     for qoi in intent.qois:
         eligible = validation.eligible_for(qoi.qoi_id)
+        selected = selected_capabilities.get(qoi.qoi_id)
+        if selected is not None:
+            eligible = tuple(
+                screen
+                for screen in eligible
+                if screen.capability_id == selected
+            )
         if len(eligible) > 1:
             options = tuple(
                 f"{screen.capability_id}@{screen.capability_version} — "
