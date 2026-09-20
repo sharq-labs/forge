@@ -250,9 +250,6 @@ def _screen(
         reasons.append(
             f"does not provide required scientific capabilities {missing_science}"
         )
-    if not declaration.executable:
-        reasons.append("has no executable route in this registry")
-
     missing_inputs: list[str] = []
     invalid_inputs: list[str] = []
     if not reasons:
