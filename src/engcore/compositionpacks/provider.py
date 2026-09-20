@@ -13,6 +13,8 @@ from .contracts import (
 )
 from .inputs import ExternalInputBinding
 from .manifest import CompositionPackManifest
+from .uncertainty import ProvidedCompositionUncertainty
+from .verification import ProvidedCompositionVerification
 from .semantics import CouplingSemantic, PortSemanticBinding
 
 
@@ -46,6 +48,14 @@ class CompositionPackProvider(Protocol):
     def validation_protocols(
         self,
     ) -> tuple[ProvidedCompositionValidation, ...]: ...
+
+    def uncertainty_producers(
+        self,
+    ) -> tuple[ProvidedCompositionUncertainty, ...]: ...
+
+    def verification_protocols(
+        self,
+    ) -> tuple[ProvidedCompositionVerification, ...]: ...
 
 
 __all__ = ["CompositionPackProvider"]
