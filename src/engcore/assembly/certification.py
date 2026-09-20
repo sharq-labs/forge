@@ -94,6 +94,10 @@ def certify_authorized_multiphysics_run(
         "verification_implementations_pinned": bool(
             composition.verification_implementations
         ),
+        "semantic_authority_pinned": bool(
+            composition.semantic_authority
+            and composition.semantic_authority.get("digest")
+        ),
     }
     authority_gate = _gate(
         "authority_chain_pinned",
