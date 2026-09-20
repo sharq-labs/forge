@@ -29,7 +29,6 @@ from ..domainpacks.frozen import implementation_fingerprint
 from ..domainpacks.manifest import ArtifactRef
 from ..domains.electrical import material
 from ..domains.thermal_models import lumped
-from ..execution.multiphysics import MultiphysicsRuntime
 from ..scientific.multiphysics import (
     CouplingEdge,
     CouplingScheme,
@@ -734,59 +733,14 @@ def _json_digest(payload) -> str:
     ).hexdigest()
 
 
-def _model_digest(definition) -> str:
-    return _json_digest(definition.to_dict())
-
-
-_PRIMARY_RUNTIME_DIGEST = implementation_fingerprint(
-    MultiphysicsRuntime.run
-)[0]
 _ANALYTIC_REFERENCE_DIGEST = implementation_fingerprint(
     analytical_terminal_state
 )[0]
 
-PRIMARY_VERIFICATION_ROUTE = VerificationRoute(
-    route_id="thermal_resistance.generic_multiphysics",
-    kind=VerificationRouteKind.DIFFERENT_IMPLEMENTATION,
-    implementation_digest=_PRIMARY_RUNTIME_DIGEST,
-)
 ANALYTIC_VERIFICATION_ROUTE = VerificationRoute(
     route_id="thermal_resistance.closed_form_reference",
     kind=VerificationRouteKind.ANALYTICAL_REFERENCE,
     implementation_digest=_ANALYTIC_REFERENCE_DIGEST,
-)
-PRIMARY_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
-    route_id=PRIMARY_VERIFICATION_ROUTE.route_id,
-    components=(
-        DependencyComponent(
-            "model.thermal.lumped_capacity",
-            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "model.electrical.linear_tcr",
-            _model_digest(material.LINEAR_TCR_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "solver.thermal.lumped",
-            implementation_fingerprint(lumped.LumpedThermalSolver)[0],
-            DependencyRole.SOLVER,
-        ),
-        DependencyComponent(
-            "solver.electrical.material",
-            implementation_fingerprint(
-                material.ResistancePropertySolver
-            )[0],
-            DependencyRole.SOLVER,
-        ),
-        DependencyComponent(
-            "runtime.multiphysics",
-            _PRIMARY_RUNTIME_DIGEST,
-            DependencyRole.RUNTIME,
-        ),
-    ),
-    authority_id="forge",
 )
 ANALYTIC_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
     route_id=ANALYTIC_VERIFICATION_ROUTE.route_id,
@@ -832,7 +786,7 @@ def verify_thermal_resistance_run(record, plan):
     )
     primary_evidence = _json_digest(record.to_dict())
     primary = VerificationObservation(
-        route_id=PRIMARY_VERIFICATION_ROUTE.route_id,
+        route_id=plan.primary_route.route_id,
         value=primary_value,
         evidence_digest=primary_evidence,
         converged=True,
@@ -884,8 +838,6 @@ VERIFICATION_PROTOCOLS = (
         blueprint_id=BLUEPRINT_ID,
         ref=VERIFICATION_REF,
         quantity=material.RESISTANCE_METRIC,
-        primary_route=PRIMARY_VERIFICATION_ROUTE,
-        primary_dependencies=PRIMARY_VERIFICATION_DEPENDENCIES,
         candidates=(
             VerificationCandidate(
                 ANALYTIC_VERIFICATION_ROUTE,
