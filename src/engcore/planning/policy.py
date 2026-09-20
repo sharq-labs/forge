@@ -6,9 +6,10 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ..scientific.results.immutable import freeze
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema_any, schema_string
 
-PLANNER_POLICY_SCHEMA = schema_string("scientific_planner_policy")
+PLANNER_POLICY_SCHEMA_V1 = schema_string("scientific_planner_policy")
+PLANNER_POLICY_SCHEMA = schema_string("scientific_planner_policy", 2)
 
 
 @dataclass(frozen=True)
@@ -55,7 +56,10 @@ class PlannerPolicy:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "PlannerPolicy":
-        require_schema(payload, PLANNER_POLICY_SCHEMA)
+        require_schema_any(
+            payload,
+            (PLANNER_POLICY_SCHEMA_V1, PLANNER_POLICY_SCHEMA),
+        )
         return cls(
             capability_by_qoi=dict(payload.get("capability_by_qoi", {})),
             realization_by_model=dict(payload.get("realization_by_model", {})),
@@ -68,4 +72,8 @@ class PlannerPolicy:
         )
 
 
-__all__ = ["PLANNER_POLICY_SCHEMA", "PlannerPolicy"]
+__all__ = [
+    "PLANNER_POLICY_SCHEMA",
+    "PLANNER_POLICY_SCHEMA_V1",
+    "PlannerPolicy",
+]
