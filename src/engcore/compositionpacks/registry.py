@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Any, Iterator
 
 from ..claims.capabilities import CapabilityDeclaration
@@ -52,6 +54,9 @@ class RegisteredCompositionPack:
     validation_fingerprints: tuple[
         ArtifactImplementationFingerprint, ...
     ]
+    dependency_authority_digests: tuple[
+        tuple[str, str, str], ...
+    ]
     source_provider_type: str
 
     @property
@@ -61,6 +66,32 @@ class RegisteredCompositionPack:
     @property
     def dependency_keys(self) -> tuple[tuple[str, str], ...]:
         return tuple(item.key for item in self.manifest.requires_domain_packs)
+
+    @property
+    def authority_digest(self) -> str:
+        payload = {
+            "manifest_digest": self.manifest.digest,
+            "dependency_authority_digests": [
+                {
+                    "pack_id": pack_id,
+                    "pack_version": version,
+                    "authority_digest": digest,
+                }
+                for pack_id, version, digest
+                in self.dependency_authority_digests
+            ],
+            "validation_fingerprints": [
+                item.to_dict()
+                for item in self.validation_fingerprints
+            ],
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 def _records(provider: Any, name: str) -> tuple[Any, ...]:
@@ -650,6 +681,16 @@ class CompositionPackRegistry:
             ),
             validation_fingerprints=tuple(
                 sorted(validation_fingerprints)
+            ),
+            dependency_authority_digests=tuple(
+                sorted(
+                    (
+                        item.manifest.pack_id,
+                        item.manifest.pack_version,
+                        item.authority_digest,
+                    )
+                    for item in dependencies
+                )
             ),
             source_provider_type=(
                 f"{type(provider).__module__}."
