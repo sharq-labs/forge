@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from ..planning import (
+    FORBIDDEN_PLANNER_AUTHORITY_FIELDS,
     EngineeringIntent,
     PlannerPolicy,
     plan_engineering_intent,
@@ -25,6 +26,25 @@ from ..scientific.serialization import schema_string, unwritable
 CANONICAL_ENGINEERING_PLAN_SCHEMA = schema_string(
     "canonical_engineering_plan"
 )
+
+
+def _forbidden_authority_fields(
+    node: Any,
+    path: str = "",
+) -> tuple[str, ...]:
+    found: list[str] = []
+    if isinstance(node, Mapping):
+        for key, child in node.items():
+            key_text = str(key)
+            child_path = f"{path}.{key_text}" if path else key_text
+            if key_text in FORBIDDEN_PLANNER_AUTHORITY_FIELDS:
+                found.append(child_path)
+            found.extend(_forbidden_authority_fields(child, child_path))
+    elif isinstance(node, list):
+        for index, child in enumerate(node):
+            child_path = f"{path}[{index}]"
+            found.extend(_forbidden_authority_fields(child, child_path))
+    return tuple(sorted(set(found)))
 
 
 def _display_metadata(
@@ -57,6 +77,12 @@ def plan_canonical_engineering_intent(
     if not isinstance(intent, Mapping):
         raise TypeError(
             "intent must be a canonical EngineeringIntent JSON object"
+        )
+    forbidden = _forbidden_authority_fields(intent)
+    if forbidden:
+        raise ValueError(
+            "canonical MCP intent contains planner/runtime authority fields: "
+            f"{list(forbidden)}"
         )
     typed_intent = EngineeringIntent.from_dict(intent)
 
