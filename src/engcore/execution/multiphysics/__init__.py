@@ -1,5 +1,9 @@
 """Generic multiphysics execution runtime."""
 
+from .admission import (
+    MultiphysicsExecutionAdmission,
+    admit_multiphysics_execution,
+)
 from .convergence import ResidualCalculator
 from .error import CouplingErrorBudget, CouplingErrorContribution
 from .external import (
@@ -7,6 +11,12 @@ from .external import (
     ExternalSnapshot,
     ExternalSolverParticipant,
     ExternalSolverSession,
+)
+from .factory import (
+    ParticipantFactory,
+    ParticipantFactoryCoverage,
+    ParticipantFactoryDeclaration,
+    ParticipantFactoryRegistry,
 )
 from .mapping import FieldMapper, FieldMappingResult, StructuredFieldMapper
 from .participant import (
@@ -48,15 +58,21 @@ __all__ = [
     "FieldMappingResult",
     "FrameTransform",
     "InitializationResult",
+    "MultiphysicsExecutionAdmission",
     "MultiphysicsExecutionError",
     "MultiphysicsRuntime",
     "ParticipantEvent",
+    "ParticipantFactory",
+    "ParticipantFactoryCoverage",
+    "ParticipantFactoryDeclaration",
+    "ParticipantFactoryRegistry",
     "RelaxationController",
     "ResidualCalculator",
     "RuntimeCheckpoint",
     "StructuredFieldMapper",
     "TransferEngine",
     "TransferResult",
+    "admit_multiphysics_execution",
     "combine_fan_in_uncertainty",
     "relax_uncertainty",
     "validate_inputs",
