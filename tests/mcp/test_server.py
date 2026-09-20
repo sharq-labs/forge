@@ -164,7 +164,16 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     """
     tools = {tool.name: tool for tool in list_tools().tools}
     assert sorted(tools) == sorted(
-        ["describe_capabilities", "assess_claim", "assess_scientific_claim"] + [s.tool for s in SYSTEMS]
+        ["describe_capabilities", "plan_engineering_problem",
+         "compile_engineering_problem",
+         "run_engineering_problem", "answer_engineering_problem",
+         "answer_engineering_scenarios", "evaluate_engineering_context"]
+        + ["answer_engineering_uncertainty"]
+        + ["assess_claim", "assess_scientific_claim",
+           "describe_external_evidence", "describe_empirical_uq",
+           "describe_product", "prepare_simulation", "run_simulation",
+           "run_proposed_simulation"]
+        + [s.tool for s in SYSTEMS]
     )
 
     describe = tools["describe_capabilities"]
@@ -187,6 +196,42 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     assert generic.input_schema["required"] == ["claim"]
     assert generic.output_schema is not None
 
+    for name in (
+        "compile_engineering_problem", "run_engineering_problem",
+        "answer_engineering_problem",
+    ):
+        workflow = tools[name]
+        assert list(workflow.input_schema["properties"]) == [
+            "description", "declarations", "system_name"
+        ]
+        assert workflow.input_schema["required"] == ["description"]
+        assert workflow.output_schema is not None
+
+    planner = tools["plan_engineering_problem"]
+    assert list(planner.input_schema["properties"]) == ["description"]
+    assert planner.input_schema["required"] == ["description"]
+
+    scenarios = tools["answer_engineering_scenarios"]
+    assert list(scenarios.input_schema["properties"]) == [
+        "description", "scenarios", "declarations", "system_name"
+    ]
+    assert scenarios.input_schema["required"] == ["description", "scenarios"]
+
+    context = tools["evaluate_engineering_context"]
+    assert list(context.input_schema["properties"]) == [
+        "description", "criteria", "declarations", "scenarios", "system_name"
+    ]
+    assert context.input_schema["required"] == ["description", "criteria"]
+
+    probabilistic = tools["answer_engineering_uncertainty"]
+    assert list(probabilistic.input_schema["properties"]) == [
+        "description", "uncertain_inputs", "dependence", "declarations",
+        "system_name", "sample_count", "credible_mass",
+    ]
+    assert probabilistic.input_schema["required"] == [
+        "description", "uncertain_inputs", "dependence"
+    ]
+
 
 def test_the_descriptions_say_what_an_agent_must_know_before_calling():
     """The tool text is the product. These are the facts it cannot omit."""
@@ -203,6 +248,257 @@ def test_the_descriptions_say_what_an_agent_must_know_before_calling():
     # agent does not read it as a failure and retry.
     assert "Expect INSUFFICIENT_EVIDENCE" in run
     assert "advisory input to an engineer of record" in run
+
+
+def test_language_workflow_stops_and_asks_before_any_run():
+    response = call(
+        "run_engineering_problem", {"description": "جهد المصدر 5 فولت"}
+    ).structured_content
+
+    assert response["status"] == "needs_input"
+    assert response["result"] is None
+    assert response["intent"]["questions"]
+
+
+def test_planner_selects_only_from_the_users_own_domain_terms():
+    battery = call("plan_engineering_problem", {
+        "description": "فرّغ بطارية بتيار ثابت واحسب حالة الشحن"
+    }).structured_content
+    assert battery["status"] == "selected"
+    assert battery["selected_system"] == "battery"
+    assert "بطارية" in battery["candidates"][0]["matched_terms"]
+
+    ambiguous = call("plan_engineering_problem", {
+        "description": "شغّل محاكاة هندسية"
+    }).structured_content
+    assert ambiguous["status"] == "needs_system"
+    assert ambiguous["selected_system"] is None
+    assert ambiguous["question"]
+
+
+def test_language_workflow_reaches_the_unchanged_evidence_response():
+    description = (
+        "source voltage 5 volt; reference resistance 10 ohm; "
+        "temperature coefficient 0.00393 1/kelvin; "
+        "reference temperature 293.15 kelvin; heat capacity 2.5 joule/kelvin; "
+        "ambient conductance 0.05 watt/kelvin; ambient temperature 300 kelvin; "
+        "initial temperature 300 kelvin; duration 120 second"
+    )
+    response = call(
+        "run_engineering_problem", {"description": description}
+    ).structured_content
+
+    assert response["status"] == "completed"
+    assert response["intent"]["status"] == "ready"
+    assert response["result"]["schema"] == RESPONSE_SCHEMA
+    assert response["result"]["system"] == "electrothermal"
+    # No optional applicability declarations were invented, so the honest
+    # report is under-evidenced rather than cosmetically upgraded.
+    assert response["result"]["stages"][0]["verdict"]["value"] == (
+        "insufficient_evidence"
+    )
+
+
+def test_language_workflow_can_supply_full_evidence_without_a_side_door():
+    def flatten(value, prefix=""):
+        flat = {}
+        if isinstance(value, dict):
+            for key, child in value.items():
+                path = f"{prefix}.{key}" if prefix else key
+                flat.update(flatten(child, path))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                flat.update(flatten(child, f"{prefix}[{index}]"))
+        else:
+            flat[prefix] = value
+        return flat
+
+    declarations = flatten(example_electrothermal_payload())
+    response = call("run_engineering_problem", {
+        "description": "مسألة حرارية كهربائية موثقة بالكامل",
+        "declarations": declarations,
+    }).structured_content
+
+    assert response["status"] == "completed"
+    assert response["intent"]["unresolved_evidence_inputs"] == []
+    assert response["result"]["stages"][0]["verdict"]["value"] == "supported"
+
+
+def test_the_same_workflow_routes_and_runs_the_second_registered_system():
+    from engcore.mcp.battery import example_battery_payload
+
+    def flatten(value, prefix=""):
+        flat = {}
+        if isinstance(value, dict):
+            for key, child in value.items():
+                path = f"{prefix}.{key}" if prefix else key
+                flat.update(flatten(child, path))
+        else:
+            flat[prefix] = value
+        return flat
+
+    response = call("run_engineering_problem", {
+        "description": "فرّغ بطارية بتيار ثابت",
+        "declarations": flatten(example_battery_payload()),
+    }).structured_content
+
+    assert response["status"] == "completed"
+    assert response["intent"]["system"] == "battery"
+    assert response["intent"]["selection"]["source"] == "deterministic_router"
+    assert response["result"]["system"] == "battery"
+    assert response["result"]["report"]
+
+
+def test_arabic_battery_prose_reaches_a_real_march_without_case_json():
+    description = (
+        "بطارية: السعة الاسمية 2.5 أمبير ساعة. المقاومة الداخلية 0.03 أوم. "
+        "جهد الامتلاء 4.2 فولت. جهد الفراغ 3.0 فولت. "
+        "الكفاءة الكولومية 0.99 بلا أبعاد. تيار التفريغ 1.5 أمبير. "
+        "حالة الشحن 0.9 بلا أبعاد. درجة حرارة الخلية 298.15 كلفن. "
+        "مدة الخطوة 60 ثانية. السعة الحرارية للخلية 60 جول/كلفن. "
+        "درجة حرارة المحيط 298.15 كلفن. "
+        "التوصيل الحراري للخلية 0.4 وات/كلفن."
+    )
+    response = call(
+        "run_engineering_problem", {"description": description}
+    ).structured_content
+
+    assert response["status"] == "completed"
+    assert response["intent"]["system"] == "battery"
+    assert response["result"]["system"] == "battery"
+    assert response["result"]["march"]["steps_run"] >= 1
+
+
+def test_answer_tool_surfaces_absent_uncertainty_instead_of_zero():
+    response = call("answer_engineering_problem", {
+        "description": (
+            "source voltage 5 volt; reference resistance 10 ohm; "
+            "temperature coefficient 0.00393 1/kelvin; "
+            "reference temperature 293.15 kelvin; "
+            "heat capacity 2.5 joule/kelvin; "
+            "ambient conductance 0.05 watt/kelvin; "
+            "ambient temperature 300 kelvin; initial temperature 300 kelvin; "
+            "duration 120 second"
+        )
+    }).structured_content
+
+    assert response["status"] == "completed"
+    assert response["verdict"] == "insufficient_evidence"
+    assert response["results"][0]["uncertainty"] == {
+        "status": "not_quantified",
+        "reason": (
+            "This credibility report carries no predictive uncertainty "
+            "record for these values. Do not interpret absence as zero."
+        ),
+        "intervals": [],
+    }
+
+
+def test_scenario_tool_returns_bounds_without_inventing_probability():
+    def flatten(value, prefix=""):
+        flat = {}
+        if isinstance(value, dict):
+            for key, child in value.items():
+                path = f"{prefix}.{key}" if prefix else key
+                flat.update(flatten(child, path))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                flat.update(flatten(child, f"{prefix}[{index}]"))
+        else:
+            flat[prefix] = value
+        return flat
+
+    response = call("answer_engineering_scenarios", {
+        "description": "مقاومة في نظام حراري كهربائي",
+        "declarations": flatten(example_electrothermal_payload()),
+        "scenarios": [
+            {"scenario_id": "cool", "declarations": {
+                "stages[0].body.ambient_temperature": "295 kelvin",
+                "stages[0].body.initial_temperature": "295 kelvin",
+            }},
+            {"scenario_id": "hot", "declarations": {
+                "stages[0].body.ambient_temperature": "305 kelvin",
+                "stages[0].body.initial_temperature": "305 kelvin",
+            }},
+        ],
+    }).structured_content
+
+    assert response["status"] == "completed"
+    uncertainty = response["uncertainty"]
+    assert uncertainty["status"] == "completed"
+    assert uncertainty["probability_model"] is None
+    assert uncertainty["scenario_count"] == 2
+    temperature = next(
+        interval for interval in uncertainty["intervals"]
+        if interval["quantity"] == "final_temperature"
+    )
+    assert temperature["lower_scenario_id"] == "cool"
+    assert temperature["upper_scenario_id"] == "hot"
+    assert temperature["confidence_level"] is None
+    assert temperature["method"] == "declared_scenario_envelope"
+
+
+def test_context_tool_separates_threshold_satisfaction_from_evidence():
+    response = call("evaluate_engineering_context", {
+        "description": (
+            "source voltage 5 volt; reference resistance 10 ohm; "
+            "temperature coefficient 0.00393 1/kelvin; "
+            "reference temperature 293.15 kelvin; heat capacity 2.5 joule/kelvin; "
+            "ambient conductance 0.05 watt/kelvin; ambient temperature 300 kelvin; "
+            "initial temperature 300 kelvin; duration 120 second"
+        ),
+        "criteria": [{
+            "criterion_id": "temperature-limit",
+            "subject": "R1",
+            "quantity": "final_temperature",
+            "operator": "<=",
+            "threshold": "350 kelvin",
+        }],
+    }).structured_content
+
+    criterion = response["criteria"][0]
+    assert criterion["numerical_status"] == "satisfied"
+    assert criterion["evidence_status"] == "insufficient_evidence"
+    assert response["decision"] == "indeterminate_evidence"
+
+
+def test_probabilistic_tool_propagates_declared_distribution_only():
+    def flatten(value, prefix=""):
+        flat = {}
+        if isinstance(value, dict):
+            for key, child in value.items():
+                path = f"{prefix}.{key}" if prefix else key
+                flat.update(flatten(child, path))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                flat.update(flatten(child, f"{prefix}[{index}]"))
+        else:
+            flat[prefix] = value
+        return flat
+
+    response = call("answer_engineering_uncertainty", {
+        "description": "مقاومة في نظام حراري كهربائي",
+        "declarations": flatten(example_electrothermal_payload()),
+        "dependence": "independent",
+        "sample_count": 8,
+        "credible_mass": 0.8,
+        "uncertain_inputs": [{
+            "path": "stages[0].body.ambient_temperature",
+            "distribution": "uniform",
+            "lower": "298 kelvin",
+            "upper": "302 kelvin",
+        }],
+    }).structured_content
+
+    assert response["status"] == "completed"
+    assert response["dependence"] == "independent"
+    assert len(response["samples"]) == 8
+    interval = next(
+        item for item in response["uncertainty"]["intervals"]
+        if item["quantity"] == "final_temperature"
+    )
+    assert interval["credible_mass"] == 0.8
+    assert interval["sample_count"] == 8
 
 
 # =====================================================================
