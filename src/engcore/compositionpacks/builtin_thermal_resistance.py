@@ -39,6 +39,7 @@ from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
     SystemEvidenceRequirement,
+    SystemValidationResult,
     UncertaintyCompositionRule,
     UncertaintyCompositionStrategy,
     system_contract_digest,
@@ -491,7 +492,9 @@ UNCERTAINTY_RULES = (
 )
 
 
-def validate_temperature_resistance_run(record) -> dict[str, object]:
+def validate_temperature_resistance_run(
+    record,
+) -> SystemValidationResult:
     """System validation hook over a completed multiphysics run record."""
 
     final_outputs = getattr(record, "final_outputs", {})
@@ -500,11 +503,16 @@ def validate_temperature_resistance_run(record) -> dict[str, object]:
         f"{MATERIAL_PARTICIPANT}.resistance",
     }
     missing = sorted(required - set(final_outputs))
-    return {
-        "valid": not missing,
-        "missing_outputs": missing,
-        "basis": "required cross-domain terminal outputs are present",
-    }
+    return SystemValidationResult(
+        valid=not missing,
+        findings=tuple(
+            f"missing terminal output {item}" for item in missing
+        ),
+        evidence=(
+            "thermal.temperature terminal output recorded",
+            "material.resistance terminal output recorded",
+        ) if not missing else (),
+    )
 
 
 VALIDATION_REF = ArtifactRef(VALIDATION_ID, VALIDATION_VERSION)
