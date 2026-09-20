@@ -10,7 +10,7 @@ from ..domains.kinetics.cstr.independent_solver import (
     SOLVER_VERSION as INDEPENDENT_SOLVER_VERSION,
 )
 from ..domains.kinetics.cstr.validation import run_verification_gate
-from ..mcp.cstr import cstr_capability
+from ..product.cstr import cstr_capability
 from .manifest import ArtifactRef, DOMAIN_PACK_API, DomainPackManifest
 from .provider import ProvidedArtifact
 
