@@ -9,11 +9,21 @@ the decision to establish an edge.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+import hashlib
+import json
+from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..serialization import require_schema, schema_string
 from .participant import ParticipantSpec
 from .ports import PortKind, PortRef
+
+COUPLING_CANDIDATE_SCHEMA = schema_string(
+    "multiphysics_coupling_candidate"
+)
+COMPOSITION_ANALYSIS_SCHEMA = schema_string(
+    "multiphysics_composition_analysis"
+)
 
 
 @dataclass(frozen=True)
@@ -46,6 +56,7 @@ class CouplingCandidate:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema": COUPLING_CANDIDATE_SCHEMA,
             "source": self.source.to_dict(),
             "target": self.target.to_dict(),
             "quantity": self.quantity,
@@ -55,6 +66,26 @@ class CouplingCandidate:
             "requires_frame_transform": self.requires_frame_transform,
             "directly_connectable": self.directly_connectable,
         }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "CouplingCandidate":
+        require_schema(payload, COUPLING_CANDIDATE_SCHEMA)
+        return cls(
+            source=PortRef.from_dict(payload["source"]),
+            target=PortRef.from_dict(payload["target"]),
+            quantity=payload["quantity"],
+            dimension=payload["dimension"],
+            kind=PortKind(payload["kind"]),
+            requires_field_mapping=bool(
+                payload["requires_field_mapping"]
+            ),
+            requires_frame_transform=bool(
+                payload["requires_frame_transform"]
+            ),
+        )
 
 
 @dataclass(frozen=True)
@@ -100,6 +131,7 @@ class CompositionAnalysis:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema": COMPOSITION_ANALYSIS_SCHEMA,
             "candidates": [item.to_dict() for item in self.candidates],
             "external_inputs": [
                 item.to_dict() for item in self.external_inputs
@@ -111,7 +143,54 @@ class CompositionAnalysis:
                 item.to_dict() for item in self.ambiguous_targets
             ],
             "has_ambiguity": self.has_ambiguity,
+            "record_fingerprint": self.fingerprint,
         }
+
+    @property
+    def fingerprint(self) -> str:
+        payload = {
+            key: value
+            for key, value in self.to_dict().items()
+            if key != "record_fingerprint"
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "CompositionAnalysis":
+        require_schema(payload, COMPOSITION_ANALYSIS_SCHEMA)
+        made = cls(
+            candidates=tuple(
+                CouplingCandidate.from_dict(item)
+                for item in payload.get("candidates", ())
+            ),
+            external_inputs=tuple(
+                PortRef.from_dict(item)
+                for item in payload.get("external_inputs", ())
+            ),
+            unique_targets=tuple(
+                PortRef.from_dict(item)
+                for item in payload.get("unique_targets", ())
+            ),
+            ambiguous_targets=tuple(
+                PortRef.from_dict(item)
+                for item in payload.get("ambiguous_targets", ())
+            ),
+        )
+        supplied = payload.get("record_fingerprint")
+        if supplied is not None and supplied != made.fingerprint:
+            raise ValueError(
+                "composition analysis fingerprint disagrees with its content"
+            )
+        return made
 
 
 def _compatible(source, target) -> bool:
@@ -218,6 +297,8 @@ def analyze_composition(
 
 
 __all__ = [
+    "COMPOSITION_ANALYSIS_SCHEMA",
+    "COUPLING_CANDIDATE_SCHEMA",
     "CompositionAnalysis",
     "CouplingCandidate",
     "analyze_composition",
