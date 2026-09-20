@@ -1,3 +1,4 @@
+from .applicability import *
 """Cross-domain composition authority.
 
 Domain Packs own domain science. Composition Packs own only cross-domain
