@@ -42,6 +42,7 @@ from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
 from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
+    SystemValidationCheck,
     SystemValidationResult,
     UncertaintyCompositionRule,
     UncertaintyCompositionStrategy,
@@ -502,23 +503,124 @@ UNCERTAINTY_RULES = (
 def validate_temperature_resistance_run(
     record,
 ) -> SystemValidationResult:
-    """System validation hook over a completed multiphysics run record."""
+    """Verify terminal outputs against the declared linear-TCR relation."""
 
     final_outputs = getattr(record, "final_outputs", {})
-    required = {
-        f"{THERMAL_PARTICIPANT}.temperature",
-        f"{MATERIAL_PARTICIPANT}.resistance",
+    temperature = final_outputs.get(
+        f"{THERMAL_PARTICIPANT}.temperature"
+    )
+    resistance = final_outputs.get(
+        f"{MATERIAL_PARTICIPANT}.resistance"
+    )
+    external = {
+        item.port.key: item.value
+        for item in getattr(record, "external_inputs", ())
     }
-    missing = sorted(required - set(final_outputs))
+    r_ref = external.get(
+        f"{MATERIAL_PARTICIPANT}.reference_resistance"
+    )
+    alpha = external.get(
+        f"{MATERIAL_PARTICIPANT}.temperature_coefficient"
+    )
+    t_ref = external.get(
+        f"{MATERIAL_PARTICIPANT}.reference_temperature"
+    )
+
+    checks: list[SystemValidationCheck] = []
+    complete = all(
+        item is not None
+        for item in (temperature, resistance, r_ref, alpha, t_ref)
+    )
+    checks.append(
+        SystemValidationCheck(
+            check_id="terminal_contract_complete",
+            passed=complete,
+            evidence=(
+                "thermal.temperature",
+                "material.resistance",
+                "material.reference_resistance",
+                "material.temperature_coefficient",
+                "material.reference_temperature",
+            ),
+            detail=(
+                "all quantities required to independently evaluate R(T) "
+                "are present"
+                if complete
+                else "one or more quantities required for R(T) are absent"
+            ),
+        )
+    )
+
+    if complete:
+        expected = r_ref * (
+            Quantity(1.0, "dimensionless")
+            + alpha * (temperature - t_ref)
+        )
+        error = abs(resistance - expected)
+        scale = max(
+            1.0,
+            abs(expected.magnitude_in(material.RESISTANCE_UNIT)),
+        )
+        tolerance = Quantity(
+            1e-12 * scale,
+            material.RESISTANCE_UNIT,
+        )
+        relative_error = (
+            error.magnitude_in(material.RESISTANCE_UNIT) / scale
+        )
+        relation_ok = (
+            error.magnitude_in(material.RESISTANCE_UNIT)
+            <= tolerance.magnitude_in(material.RESISTANCE_UNIT)
+        )
+        checks.append(
+            SystemValidationCheck(
+                check_id="linear_tcr_relation",
+                passed=relation_ok,
+                observed=resistance,
+                expected=expected,
+                tolerance=tolerance,
+                absolute_error=error,
+                relative_error=relative_error,
+                evidence=(
+                    "R = R_ref * (1 + alpha * (T - T_ref))",
+                    "temperature sourced from terminal thermal output",
+                ),
+                detail=(
+                    "terminal material resistance agrees with the "
+                    "declared linear-TCR relation"
+                    if relation_ok
+                    else "terminal material resistance disagrees with R(T)"
+                ),
+            )
+        )
+        positive = (
+            resistance.magnitude_in(material.RESISTANCE_UNIT) > 0.0
+        )
+        checks.append(
+            SystemValidationCheck(
+                check_id="positive_resistance",
+                passed=positive,
+                observed=resistance,
+                expected=Quantity(0.0, material.RESISTANCE_UNIT),
+                evidence=("electrical DC admissibility requires R > 0",),
+                detail=(
+                    "resistance is physically admissible"
+                    if positive
+                    else "non-positive resistance is outside DC scope"
+                ),
+            )
+        )
+
+    valid = bool(checks) and all(item.passed for item in checks)
     return SystemValidationResult(
-        valid=not missing,
+        valid=valid,
+        checks=tuple(checks),
         findings=tuple(
-            f"missing terminal output {item}" for item in missing
+            item.detail for item in checks if not item.passed
         ),
         evidence=(
-            "thermal.temperature terminal output recorded",
-            "material.resistance terminal output recorded",
-        ) if not missing else (),
+            "independent composition-level evaluation of the TCR equation",
+        ),
     )
 
 
