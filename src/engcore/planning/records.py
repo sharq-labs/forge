@@ -69,6 +69,7 @@ class GapKind(str, Enum):
     GRAPH_BLUEPRINT_AMBIGUOUS = "graph_blueprint_ambiguous"
     COMPOSITION_PACK_AMBIGUOUS = "composition_pack_ambiguous"
     COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
+    COUPLING_POLICY_UNSATISFIED = "coupling_policy_unsatisfied"
     SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
     EXECUTION_PACK_UNAVAILABLE = "execution_pack_unavailable"
     EXECUTION_PACK_AMBIGUOUS = "execution_pack_ambiguous"
