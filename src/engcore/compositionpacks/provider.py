@@ -11,6 +11,7 @@ from .contracts import (
     SystemApplicabilityRule,
     UncertaintyCompositionRule,
 )
+from .inputs import ExternalInputBinding
 from .manifest import CompositionPackManifest
 from .semantics import CouplingSemantic, PortSemanticBinding
 
@@ -33,6 +34,10 @@ class CompositionPackProvider(Protocol):
     def port_semantics(self) -> tuple[PortSemanticBinding, ...]: ...
 
     def coupling_semantics(self) -> tuple[CouplingSemantic, ...]: ...
+
+    def external_input_bindings(
+        self,
+    ) -> tuple[ExternalInputBinding, ...]: ...
 
     def applicability_rules(self) -> tuple[SystemApplicabilityRule, ...]: ...
 
