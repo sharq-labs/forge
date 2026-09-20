@@ -82,10 +82,6 @@ class PlanningGap:
         if not isinstance(self.blocking, bool):
             raise ValueError("planning gap blocking must be boolean")
 
-    @property
-    def interface_manifest(self) -> GraphInterfaceManifest:
-        return graph_interface_manifest(self.graph)
-
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": PLANNING_GAP_SCHEMA,
@@ -399,6 +395,10 @@ class GraphPlan:
     graph: PhysicsGraph
     coupling_plan: CouplingPlan
     resource_estimate: ResourceEstimate
+
+    @property
+    def interface_manifest(self) -> GraphInterfaceManifest:
+        return graph_interface_manifest(self.graph)
 
     def to_dict(self) -> dict[str, Any]:
         return {
