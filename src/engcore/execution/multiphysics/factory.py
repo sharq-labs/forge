@@ -9,6 +9,8 @@ adapter guessing.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Callable, Iterable, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
@@ -70,6 +72,18 @@ class ParticipantFactoryDeclaration:
             self.adapter_id,
             self.adapter_version,
         )
+
+    def identity_dict(self) -> dict[str, str]:
+        return {
+            "model_id": self.model_id,
+            "model_version": self.model_version,
+            "realization_id": self.realization_id,
+            "realization_version": self.realization_version,
+            "solver_id": self.solver_id,
+            "solver_version": self.solver_version,
+            "adapter_id": self.adapter_id,
+            "adapter_version": self.adapter_version,
+        }
 
     def matches(self, spec: ParticipantSpec) -> bool:
         return self.key == (
@@ -218,6 +232,18 @@ class ParticipantFactoryRegistry:
             item for item in self.coverage(graph) if not item.available
         )
 
+    @property
+    def fingerprint(self) -> str:
+        payload = json.dumps(
+            [
+                self._items[key].identity_dict()
+                for key in sorted(self._items)
+            ],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
     def build(
         self,
         spec: ParticipantSpec,
@@ -258,10 +284,18 @@ class ParticipantFactoryRegistry:
             raise InvalidScientificProblem(
                 f"multiphysics graph has no executable factories for {detail}"
             )
-        return {
-            spec.participant_id: self.build(spec)
-            for spec in graph.participants
-        }
+        built: dict[str, ExecutableParticipant] = {}
+        try:
+            for spec in graph.participants:
+                built[spec.participant_id] = self.build(spec)
+        except Exception:
+            for participant_id in sorted(built, reverse=True):
+                try:
+                    built[participant_id].finalize()
+                except Exception:
+                    pass
+            raise
+        return built
 
     def __iter__(self):
         for key in sorted(self._items):
