@@ -200,10 +200,15 @@ def _verify_graph_authority(registration, graph_plan: GraphPlan) -> None:
         raise InvalidScientificProblem(
             "GraphPlan has no materialized CouplingPlan"
         )
+    facts = {
+        item.fact_path: item.value
+        for item in graph_plan.external_inputs
+    }
     expected_plan = policies[0].materialize(
         start=graph_plan.coupling_plan.time.start,
         end=graph_plan.coupling_plan.time.end,
         plan_id=graph_plan.coupling_plan.plan_id,
+        facts=facts,
     )
     if expected_plan != graph_plan.coupling_plan:
         raise InvalidScientificProblem(
