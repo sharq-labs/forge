@@ -46,7 +46,6 @@ def _display_metadata(
 
 def plan_canonical_engineering_intent(
     intent: dict[str, Any],
-    policy: dict[str, Any] | None = None,
     display_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Plan an already-canonical EngineeringIntent.
@@ -61,17 +60,33 @@ def plan_canonical_engineering_intent(
         )
     typed_intent = EngineeringIntent.from_dict(intent)
 
-    if policy is None:
-        typed_policy = PlannerPolicy()
-    else:
-        if not isinstance(policy, Mapping):
-            raise TypeError("policy must be a PlannerPolicy JSON object")
-        typed_policy = PlannerPolicy.from_dict(policy)
+    capability_authority = {
+        capability.identifier
+        for capability in typed_intent.required_capabilities
+    }
+    capability_authority.update(
+        capability.identifier
+        for capability in typed_intent.context.required_capabilities
+    )
+    for component in typed_intent.components:
+        capability_authority.update(
+            capability.identifier
+            for capability in component.required_capabilities
+        )
+    if capability_authority:
+        raise ValueError(
+            "canonical MCP intent may not supply internal scientific capability "
+            f"authority: {sorted(capability_authority)}"
+        )
 
+    # The public MCP caller cannot inject PlannerPolicy. Model, realization,
+    # solver and blueprint preferences are operator/server authority, not LLM
+    # proposal fields. Ambiguity therefore remains explicit unless the product
+    # assembly supplies a trusted policy through a different boundary.
     plan = plan_engineering_intent(
         typed_intent,
         production_planning_registries(),
-        typed_policy,
+        PlannerPolicy(),
     )
 
     return {
