@@ -199,15 +199,24 @@ def _configure_builtin_packs() -> DomainPackRegistry:
     if _BUILTINS_CONFIGURED:
         return _PRODUCTION_DOMAIN_PACKS
 
+    from ..compositionpacks.builtin_electrothermal_feedback import (
+        BUILTIN_ELECTROTHERMAL_FEEDBACK_COMPOSITION,
+    )
     from ..compositionpacks.builtin_thermal_resistance import (
         BUILTIN_THERMAL_RESISTANCE_COMPOSITION,
     )
     from ..domainpacks.builtin_cstr import BUILTIN_CSTR_PACK
+    from ..domainpacks.builtin_electrical_dc import (
+        BUILTIN_ELECTRICAL_DC_PACK,
+    )
     from ..domainpacks.builtin_electrical_material import (
         BUILTIN_ELECTRICAL_MATERIAL_PACK,
     )
     from ..domainpacks.builtin_thermal_lumped import (
         BUILTIN_THERMAL_LUMPED_PACK,
+    )
+    from ..executionpacks.builtin_electrothermal_feedback import (
+        BUILTIN_ELECTROTHERMAL_FEEDBACK_EXECUTION,
     )
     from ..executionpacks.builtin_thermal_resistance import (
         BUILTIN_THERMAL_RESISTANCE_EXECUTION,
@@ -217,6 +226,7 @@ def _configure_builtin_packs() -> DomainPackRegistry:
         BUILTIN_CSTR_PACK,
         BUILTIN_THERMAL_LUMPED_PACK,
         BUILTIN_ELECTRICAL_MATERIAL_PACK,
+        BUILTIN_ELECTRICAL_DC_PACK,
     ):
         register_production_domain_pack(
             provider,
@@ -228,8 +238,16 @@ def _configure_builtin_packs() -> DomainPackRegistry:
         BUILTIN_THERMAL_RESISTANCE_COMPOSITION,
         enable=True,
     )
+    register_production_composition_pack(
+        BUILTIN_ELECTROTHERMAL_FEEDBACK_COMPOSITION,
+        enable=True,
+    )
     register_production_execution_pack(
         BUILTIN_THERMAL_RESISTANCE_EXECUTION,
+        enable=True,
+    )
+    register_production_execution_pack(
+        BUILTIN_ELECTROTHERMAL_FEEDBACK_EXECUTION,
         enable=True,
     )
 
