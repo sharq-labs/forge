@@ -159,6 +159,222 @@ def _build_qoi_plan(
     return plan, selection_gaps
 
 
+def _select_versioned_record(
+    candidates,
+    preferred: str | None,
+    *,
+    identity_attr: str,
+    version_attr: str = "version",
+):
+    candidates = tuple(candidates)
+    if preferred is not None:
+        if "@" in preferred:
+            wanted_id, wanted_version = preferred.rsplit("@", 1)
+            matches = tuple(
+                item
+                for item in candidates
+                if getattr(item, identity_attr) == wanted_id
+                and getattr(item, version_attr) == wanted_version
+            )
+        else:
+            matches = tuple(
+                item
+                for item in candidates
+                if getattr(item, identity_attr) == preferred
+            )
+        if len(matches) == 1:
+            return matches[0], None
+        return None, (
+            f"policy requested {preferred!r}, not one exact candidate"
+        )
+    if len(candidates) == 1:
+        return candidates[0], None
+    if not candidates:
+        return None, "no candidates"
+    return None, (
+        f"{len(candidates)} candidates require explicit planner policy"
+    )
+
+
+def _composition_graph_plan(
+    *,
+    capability_id: str,
+    intent: EngineeringIntent,
+    qoi_plans: tuple[QOIPlan, ...],
+    registration,
+    registries: PlanningRegistries,
+    policy: PlannerPolicy,
+    graph_required: bool,
+) -> tuple[GraphPlan | None, tuple[PlanningGap, ...]]:
+    gaps: list[PlanningGap] = []
+
+    blueprints = tuple(
+        item
+        for item in registration.blueprints
+        if item.capability_id == capability_id
+    )
+    blueprint, reason = _select_versioned_record(
+        blueprints,
+        policy.blueprint_by_capability.get(capability_id),
+        identity_attr="blueprint_id",
+    )
+    if blueprint is None:
+        gaps.append(
+            PlanningGap(
+                (
+                    GapKind.GRAPH_BLUEPRINT_UNAVAILABLE
+                    if not blueprints
+                    else GapKind.GRAPH_BLUEPRINT_AMBIGUOUS
+                ),
+                capability_id,
+                reason or "composition blueprint selection failed",
+                graph_required,
+            )
+        )
+        return None, tuple(gaps)
+
+    bindings, binding_reason = bindings_for_blueprint(
+        blueprint,
+        qoi_plans,
+    )
+    if bindings is None:
+        gaps.append(
+            PlanningGap(
+                GapKind.GRAPH_BLUEPRINT_UNAVAILABLE,
+                capability_id,
+                binding_reason
+                or "composition participant bindings are unavailable",
+                graph_required,
+            )
+        )
+        return None, tuple(gaps)
+
+    graph = blueprint.materialize(
+        bindings,
+        graph_id=f"planning.{capability_id}",
+    )
+
+    policy_candidates = tuple(
+        item
+        for item in registration.coupling_policy_templates
+        if item.blueprint_id == blueprint.blueprint_id
+    )
+    selected_policy, policy_reason = _select_versioned_record(
+        policy_candidates,
+        policy.coupling_policy_by_blueprint.get(
+            blueprint.blueprint_id
+        ),
+        identity_attr="template_id",
+    )
+    if selected_policy is None:
+        gaps.append(
+            PlanningGap(
+                GapKind.COUPLING_POLICY_AMBIGUOUS,
+                blueprint.blueprint_id,
+                policy_reason or "coupling policy selection failed",
+                graph_required,
+            )
+        )
+
+    coupling_plan = None
+    estimate = None
+    if selected_policy is not None:
+        if intent.simulation_horizon is None:
+            gaps.append(
+                PlanningGap(
+                    GapKind.SIMULATION_HORIZON_REQUIRED,
+                    blueprint.blueprint_id,
+                    (
+                        "cross-domain execution requires a canonical "
+                        "simulation_horizon with start/end; Forge does not "
+                        "invent an execution horizon"
+                    ),
+                    graph_required,
+                )
+            )
+        else:
+            coupling_plan = selected_policy.materialize(
+                start=intent.simulation_horizon.start,
+                end=intent.simulation_horizon.end,
+                plan_id=(
+                    f"planning.{capability_id}."
+                    f"{selected_policy.template_id}"
+                ),
+            )
+            coupling_plan.validate_against(graph)
+            estimate = resource_estimate(
+                coupling_plan,
+                len(graph.participants),
+                intent,
+            )
+            if estimate.within_declared_budget is False:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.BUDGET_EXCEEDED,
+                        capability_id,
+                        (
+                            "declared compute budget is below the "
+                            "deterministic upper bound for the selected "
+                            "coupling policy"
+                        ),
+                        True,
+                    )
+                )
+
+    execution_fingerprint = ""
+    if registries.participant_factories is None:
+        gaps.append(
+            PlanningGap(
+                GapKind.EXECUTION_FACTORY_UNAVAILABLE,
+                blueprint.blueprint_id,
+                "no ParticipantFactoryRegistry was supplied for the "
+                "selected CompositionPack",
+                graph_required,
+            )
+        )
+    else:
+        execution_fingerprint = (
+            registries.participant_factories.fingerprint
+        )
+        missing = registries.participant_factories.missing(graph)
+        if missing:
+            gaps.append(
+                PlanningGap(
+                    GapKind.EXECUTION_FACTORY_UNAVAILABLE,
+                    blueprint.blueprint_id,
+                    "no exact Model/Realization/Solver/Adapter factory for "
+                    f"participants {[item.participant_id for item in missing]}",
+                    graph_required,
+                )
+            )
+
+    return (
+        GraphPlan(
+            capability_id=capability_id,
+            blueprint_id=blueprint.blueprint_id,
+            blueprint_version=blueprint.version,
+            graph=graph,
+            coupling_plan=coupling_plan,
+            resource_estimate=estimate,
+            authority_pack_id=registration.manifest.pack_id,
+            authority_pack_version=registration.manifest.pack_version,
+            authority_pack_digest=registration.manifest.digest,
+            coupling_policy_template_id=(
+                ""
+                if selected_policy is None
+                else selected_policy.template_id
+            ),
+            coupling_policy_template_version=(
+                ""
+                if selected_policy is None
+                else selected_policy.version
+            ),
+            execution_registry_fingerprint=execution_fingerprint,
+        ),
+        tuple(gaps),
+    )
+
+
 def _graph_plans(
     intent: EngineeringIntent,
     qoi_plans: tuple[QOIPlan, ...],
@@ -174,6 +390,47 @@ def _graph_plans(
     for capability_id in sorted(by_capability):
         declaration = registries.capabilities.get(capability_id)
         graph_required = not declaration.executable
+
+        composition_matches = ()
+        if registries.composition_packs is not None:
+            composition_matches = (
+                registries.composition_packs.providing(
+                    capability_id,
+                    enabled_only=True,
+                )
+            )
+
+        if len(composition_matches) > 1:
+            gaps.append(
+                PlanningGap(
+                    GapKind.COMPOSITION_PACK_AMBIGUOUS,
+                    capability_id,
+                    (
+                        f"{len(composition_matches)} enabled CompositionPacks "
+                        "provide this capability; explicit product authority "
+                        "must enable/select exactly one"
+                    ),
+                    graph_required,
+                )
+            )
+            continue
+
+        if len(composition_matches) == 1:
+            graph_plan, local_gaps = _composition_graph_plan(
+                capability_id=capability_id,
+                intent=intent,
+                qoi_plans=qoi_plans,
+                registration=composition_matches[0],
+                registries=registries,
+                policy=policy,
+                graph_required=graph_required,
+            )
+            gaps.extend(local_gaps)
+            if graph_plan is not None:
+                graph_plans.append(graph_plan)
+            continue
+
+        # Backward-compatible path for pre-CompositionPack blueprints.
         blueprint, gap = blueprint_choice(
             capability_id,
             registries.blueprints,
@@ -185,7 +442,10 @@ def _graph_plans(
         if blueprint is None:
             continue
 
-        bindings, reason = bindings_for_blueprint(blueprint, qoi_plans)
+        bindings, reason = bindings_for_blueprint(
+            blueprint,
+            qoi_plans,
+        )
         if bindings is None:
             gaps.append(
                 PlanningGap(
