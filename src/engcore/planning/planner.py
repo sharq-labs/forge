@@ -534,6 +534,7 @@ def _composition_graph_plan(
                     f"planning.{capability_id}."
                     f"{selected_policy.template_id}"
                 ),
+                facts=intent.fact_map,
             )
             coupling_plan.validate_against(graph)
             estimate = resource_estimate(
