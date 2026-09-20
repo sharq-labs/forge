@@ -8,6 +8,7 @@ cross-domain authorities come from engcore.assembly.
 from __future__ import annotations
 
 from ..claims.capabilities import CapabilityRegistry
+from ..design.fidelity import FidelityLadder, FidelityRung
 from ..scientific.models.registry import ModelRegistry
 from ..scientific.realizations.registry import RealizationRegistry
 from ..scientific.solvers.registry import SolverRegistry
@@ -127,6 +128,47 @@ def _production_solvers() -> SolverRegistry:
     return SolverRegistry(by_key[key] for key in sorted(by_key))
 
 
+def _production_fidelity_ladders() -> tuple[FidelityLadder, ...]:
+    """Study-scoped ladders backed by executable production capabilities.
+
+    This is deliberately not a universal low/high-fidelity taxonomy.  The
+    ordering is meaningful only for an electrothermal coupling study: the
+    one-way composition omits electrical/thermal feedback, while the feedback
+    composition resolves that interaction through its declared coupling plan.
+    """
+
+    return (
+        FidelityLadder(
+            ladder_id="system.electrothermal.coupling",
+            version="1",
+            rungs=(
+                FidelityRung(
+                    rung_id="one_way",
+                    rank=0,
+                    required_capabilities=frozenset({
+                        "system.thermal_resistance_property",
+                    }),
+                    description=(
+                        "One-way thermal-to-resistance composition; electrical "
+                        "heating does not feed back into temperature."
+                    ),
+                ),
+                FidelityRung(
+                    rung_id="feedback",
+                    rank=1,
+                    required_capabilities=frozenset({
+                        "system.electrothermal_feedback",
+                    }),
+                    description=(
+                        "Closed-loop electrothermal feedback using the pinned "
+                        "production coupling and execution packs."
+                    ),
+                ),
+            ),
+        ),
+    )
+
+
 def production_planning_registries() -> PlanningRegistries:
     """The exact currently-enabled scientific planning universe."""
 
@@ -153,7 +195,7 @@ def production_planning_registries() -> PlanningRegistries:
         ),
         execution_packs=executions,
         verification=VerificationPlanningRegistry(),
-        fidelity_ladders=(),
+        fidelity_ladders=_production_fidelity_ladders(),
     )
 
 

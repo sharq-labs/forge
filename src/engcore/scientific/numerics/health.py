@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
+import numbers
 
 
 class NumericHealthStatus(str, Enum):
@@ -34,6 +35,17 @@ class NumericHealth:
                 )
             object.__setattr__(self, "cancellation_risk", risk)
         object.__setattr__(self, "notes", tuple(str(x) for x in self.notes))
+        if self.nonfinite_count and self.status is not NumericHealthStatus.INVALID:
+            raise ValueError(
+                "non-finite values require INVALID numeric health"
+            )
+        if (
+            self.status is NumericHealthStatus.HEALTHY
+            and self.extreme_magnitude_count
+        ):
+            raise ValueError(
+                "extreme magnitudes cannot be reported as HEALTHY"
+            )
 
 
 def assess_numeric_values(
@@ -41,16 +53,24 @@ def assess_numeric_values(
     *,
     extreme_magnitude: float = 1e300,
 ) -> NumericHealth:
+    threshold = float(extreme_magnitude)
+    if not math.isfinite(threshold) or threshold <= 0.0:
+        raise ValueError("extreme_magnitude must be finite and positive")
     finite = []
     nonfinite = 0
     extreme = 0
     for value in values:
+        if isinstance(value, bool) or not isinstance(value, numbers.Real):
+            raise ValueError(
+                "numeric health values must be real numbers, not "
+                f"{type(value).__name__}"
+            )
         number = float(value)
         if not math.isfinite(number):
             nonfinite += 1
             continue
         finite.append(number)
-        if abs(number) >= extreme_magnitude:
+        if abs(number) >= threshold:
             extreme += 1
     if nonfinite:
         return NumericHealth(

@@ -4,6 +4,7 @@ import pytest
 
 from engcore.assembly.certification import certify_authorized_multiphysics_run
 from engcore.assembly.domainpacks import (
+    production_domain_packs,
     production_composition_packs,
     production_execution_packs,
 )
@@ -17,6 +18,7 @@ from engcore.planning import (
     EngineeringComponent,
     EngineeringIntent,
     FactRole,
+    FidelityRequest,
     IntentFact,
     IntentQuantityOfInterest,
     PlannerPolicy,
@@ -67,6 +69,46 @@ def _intent(*, omit=(), overrides=None):
             Quantity(0, "s"), Quantity(10, "s")
         ),
     )
+
+
+def test_production_fidelity_ladder_is_registered_and_selects_feedback():
+    intent = _intent()
+    intent = EngineeringIntent(
+        intent.statement,
+        intent.context,
+        intent.components,
+        intent.interfaces,
+        intent.facts,
+        intent.qois,
+        simulation_horizon=intent.simulation_horizon,
+        fidelity=FidelityRequest(
+            "system.electrothermal.coupling",
+            "1",
+            minimum_rung="one_way",
+            preferred_rung="feedback",
+        ),
+    )
+
+    planning = _plan(intent)
+
+    assert planning.status is PlanningStatus.READY
+    assert planning.fidelity is not None
+    assert planning.fidelity.selected_rung == "feedback"
+    assert planning.fidelity.available_rungs == ("feedback",)
+
+
+def test_battery_science_is_registered_as_an_atomic_production_domain_pack():
+    registrations = {
+        item.manifest.pack_id: item
+        for item in production_domain_packs().list(enabled_only=True)
+    }
+
+    battery = registrations["battery.cell"]
+    assert battery.manifest.domain == "battery"
+    assert battery.manifest.capabilities == ("battery:cell_terminal_state",)
+    assert len(battery.manifest.models) == 4
+    assert len(battery.manifest.realizations) == 4
+    assert len(battery.manifest.solvers) == 1
 
 
 def _plan(intent):

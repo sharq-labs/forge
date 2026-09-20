@@ -132,6 +132,29 @@ def test_a_dimensionally_wrong_extraction_never_becomes_runnable():
     assert intent["diagnostics"][0]["type"] == "WrongDimensionError"
 
 
+def test_wrong_dimension_is_rejected_even_while_other_inputs_are_missing():
+    intent = compile_engineering_intent("جهد المصدر 5 كلفن")
+
+    assert intent["status"] == "invalid"
+    assert intent["case"] is None
+    assert intent["diagnostics"] == [{
+        "type": "WrongDimensionError",
+        "path": "source_voltage",
+        "message": intent["diagnostics"][0]["message"],
+    }]
+
+
+def test_explicit_quantity_without_a_unit_is_rejected_before_completion():
+    intent = compile_engineering_intent(
+        "جهد المصدر 5 فولت",
+        {"stages[0].body.duration": 120},
+    )
+
+    assert intent["status"] == "invalid"
+    assert intent["diagnostics"][0]["type"] == "MissingUnitError"
+    assert intent["diagnostics"][0]["path"] == "stages[0].body.duration"
+
+
 def test_complete_arabic_battery_prose_compiles_without_payload_scaffolding():
     intent = compile_engineering_intent(
         ARABIC_BATTERY_CASE, system_name="battery"

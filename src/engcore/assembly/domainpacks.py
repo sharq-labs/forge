@@ -205,6 +205,7 @@ def _configure_builtin_packs() -> DomainPackRegistry:
     from ..compositionpacks.builtin_thermal_resistance import (
         BUILTIN_THERMAL_RESISTANCE_COMPOSITION,
     )
+    from ..domainpacks.builtin_battery import BUILTIN_BATTERY_CELL_PACK
     from ..domainpacks.builtin_cstr import BUILTIN_CSTR_PACK
     from ..domainpacks.builtin_electrical_dc import (
         BUILTIN_ELECTRICAL_DC_PACK,
@@ -223,6 +224,7 @@ def _configure_builtin_packs() -> DomainPackRegistry:
     )
 
     for provider in (
+        BUILTIN_BATTERY_CELL_PACK,
         BUILTIN_CSTR_PACK,
         BUILTIN_THERMAL_LUMPED_PACK,
         BUILTIN_ELECTRICAL_MATERIAL_PACK,

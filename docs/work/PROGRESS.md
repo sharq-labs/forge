@@ -32,9 +32,56 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Verification log
 
-No test command is recorded here yet for the latest agent-workflow additions.
+2026-09-20 21:51 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_numerical_reliability.py tests/test_multidomain_science_hardening.py tests/domainpacks tests/domains/battery/test_battery_solver.py`
+result: PASS
+summary: 51 passed; numerical-health contradictions are refused and the atomic battery production Domain Pack is frozen/registered
+commit: 979e9159 (working tree changes)
 
-Status: **NOT RUN**
+2026-09-20 21:51 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest --import-mode=importlib -q tests/test_numerical_reliability.py tests/test_multidomain_science_hardening.py tests/domainpacks tests/domains/battery/test_battery_solver.py`
+result: FAIL
+summary: battery solver test collection cannot resolve its sibling helper `battery_cases` under importlib mode; the same suite passes in the repository's normal import mode
+commit: 979e9159 (working tree changes)
+
+2026-09-20 21:51 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m tools.certification.core_freeze --verify; py -3 -m tools.certification.core_freeze_v2 --verify; py -3 -m tools.certification.core_freeze_v3 --verify`
+result: FAIL
+summary: historical freeze verifiers fail on the already-drifted live API/serialization and stale certificates; V2 also aborts on a hardened Hybrid UQ fixture, while dirty-tree checks additionally report the current worktree
+commit: 979e9159 (working tree changes)
+
+2026-09-20 21:51 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/domainpacks/builtin_battery.py src/engcore/scientific/numerics/health.py; py -3 -m pytest -q tests/test_numerical_reliability.py tests/test_multidomain_science_hardening.py tests/domainpacks tests/domains/battery/test_battery_solver.py tests/test_domain_pack_extension_binding.py; git diff --check`
+result: PASS
+summary: compileall passed, 57 tests passed, and diff whitespace validation passed
+commit: 979e9159 (working tree changes)
+
+2026-09-20 21:46 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/mcp/test_intent.py tests/test_multidomain_science_hardening.py`
+result: PASS
+summary: 16 passed; production fidelity selection and immediate unit grounding regressions passed
+commit: 9143516e (working tree changes)
+
+2026-09-20 21:46 +03:00
+command: `$env:PYTHONPATH='src'; py -3 tools/forge_check.py --changed`
+result: FAIL
+summary: collection stopped on 7 pre-existing duplicate test-module basename import mismatches (`test_verify`, `test_serialization`, `test_lineage`, `test_psd`)
+commit: 9143516e (working tree changes)
+
+2026-09-20 21:46 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest --import-mode=importlib -q tests/mcp/test_intent.py tests/mcp/test_planning.py tests/test_multidomain_science_hardening.py tests/test_design_d0_contracts.py`
+result: PASS
+summary: 25 passed
+commit: 9143516e (working tree changes)
+
+2026-09-20 21:46 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/mcp/intent.py src/engcore/planning/production.py; py -3 -m pytest --import-mode=importlib -q tests/mcp/test_intent.py tests/mcp/test_planning.py tests/test_multidomain_science_hardening.py tests/test_design_d0_contracts.py tests/test_design_d1_evaluation_archives.py tests/test_model0r_realization_foundation.py; git diff --check`
+result: PASS
+summary: compileall passed, 145 tests passed, and diff whitespace validation passed
+commit: 9143516e (working tree changes)
+
+Status: targeted changed-area tests pass; the repository changed-file gate is
+blocked by duplicate test-module basename collection errors recorded above.
 
 Environment note (2026-09-19): attempts to access the branch from the
 assistant's local execution container were blocked before checkout because that
