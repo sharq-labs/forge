@@ -57,6 +57,10 @@ class GapKind(str, Enum):
     SOLVER_AMBIGUOUS = "solver_ambiguous"
     GRAPH_BLUEPRINT_UNAVAILABLE = "graph_blueprint_unavailable"
     GRAPH_BLUEPRINT_AMBIGUOUS = "graph_blueprint_ambiguous"
+    COMPOSITION_PACK_AMBIGUOUS = "composition_pack_ambiguous"
+    COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
+    SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
+    EXECUTION_FACTORY_UNAVAILABLE = "execution_factory_unavailable"
     FIDELITY_LADDER_MISSING = "fidelity_ladder_missing"
     FIDELITY_UNAVAILABLE = "fidelity_unavailable"
     EVIDENCE_GAP = "evidence_gap"
@@ -393,8 +397,61 @@ class GraphPlan:
     blueprint_id: str
     blueprint_version: str
     graph: PhysicsGraph
-    coupling_plan: CouplingPlan
-    resource_estimate: ResourceEstimate
+    coupling_plan: CouplingPlan | None
+    resource_estimate: ResourceEstimate | None
+    authority_pack_id: str = ""
+    authority_pack_version: str = ""
+    authority_pack_digest: str = ""
+    coupling_policy_template_id: str = ""
+    coupling_policy_template_version: str = ""
+    execution_registry_fingerprint: str = ""
+
+    def __post_init__(self) -> None:
+        for label in (
+            "capability_id",
+            "blueprint_id",
+            "blueprint_version",
+        ):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise ValueError(f"graph plan requires {label}")
+            object.__setattr__(self, label, value)
+        if not isinstance(self.graph, PhysicsGraph):
+            raise TypeError("graph plan requires PhysicsGraph")
+        if (
+            self.coupling_plan is not None
+            and not isinstance(self.coupling_plan, CouplingPlan)
+        ):
+            raise TypeError("graph plan coupling_plan must be CouplingPlan or None")
+        if (
+            self.resource_estimate is not None
+            and not isinstance(self.resource_estimate, ResourceEstimate)
+        ):
+            raise TypeError(
+                "graph plan resource_estimate must be ResourceEstimate or None"
+            )
+        if (self.coupling_plan is None) != (self.resource_estimate is None):
+            raise ValueError(
+                "graph plan coupling plan and resource estimate are both "
+                "present or both absent"
+            )
+        for label in (
+            "authority_pack_id",
+            "authority_pack_version",
+            "authority_pack_digest",
+            "coupling_policy_template_id",
+            "coupling_policy_template_version",
+            "execution_registry_fingerprint",
+        ):
+            object.__setattr__(
+                self,
+                label,
+                str(getattr(self, label)).strip(),
+            )
+
+    @property
+    def executable(self) -> bool:
+        return self.coupling_plan is not None
 
     @property
     def interface_manifest(self) -> GraphInterfaceManifest:
@@ -407,20 +464,60 @@ class GraphPlan:
             "blueprint_id": self.blueprint_id,
             "blueprint_version": self.blueprint_version,
             "graph": self.graph.to_dict(),
-            "coupling_plan": self.coupling_plan.to_dict(),
-            "resource_estimate": self.resource_estimate.to_dict(),
+            "coupling_plan": (
+                None
+                if self.coupling_plan is None
+                else self.coupling_plan.to_dict()
+            ),
+            "resource_estimate": (
+                None
+                if self.resource_estimate is None
+                else self.resource_estimate.to_dict()
+            ),
+            "authority_pack_id": self.authority_pack_id,
+            "authority_pack_version": self.authority_pack_version,
+            "authority_pack_digest": self.authority_pack_digest,
+            "coupling_policy_template_id": self.coupling_policy_template_id,
+            "coupling_policy_template_version": (
+                self.coupling_policy_template_version
+            ),
+            "execution_registry_fingerprint": (
+                self.execution_registry_fingerprint
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
         require_schema(payload, GRAPH_PLAN_SCHEMA)
+        raw_plan = payload.get("coupling_plan")
+        raw_estimate = payload.get("resource_estimate")
         return cls(
             payload["capability_id"],
             payload["blueprint_id"],
             payload["blueprint_version"],
             PhysicsGraph.from_dict(payload["graph"]),
-            CouplingPlan.from_dict(payload["coupling_plan"]),
-            ResourceEstimate.from_dict(payload["resource_estimate"]),
+            None if raw_plan is None else CouplingPlan.from_dict(raw_plan),
+            (
+                None
+                if raw_estimate is None
+                else ResourceEstimate.from_dict(raw_estimate)
+            ),
+            authority_pack_id=payload.get("authority_pack_id", ""),
+            authority_pack_version=payload.get(
+                "authority_pack_version", ""
+            ),
+            authority_pack_digest=payload.get(
+                "authority_pack_digest", ""
+            ),
+            coupling_policy_template_id=payload.get(
+                "coupling_policy_template_id", ""
+            ),
+            coupling_policy_template_version=payload.get(
+                "coupling_policy_template_version", ""
+            ),
+            execution_registry_fingerprint=payload.get(
+                "execution_registry_fingerprint", ""
+            ),
         )
 
 
@@ -556,6 +653,8 @@ class PlanningRegistries:
     realizations: RealizationRegistry | None = None
     solvers: SolverRegistry | None = None
     blueprints: BlueprintRegistry | None = None
+    composition_packs: Any | None = None
+    participant_factories: Any | None = None
     verification: VerificationPlanningRegistry | None = None
     fidelity_ladders: tuple[FidelityLadder, ...] = ()
 
