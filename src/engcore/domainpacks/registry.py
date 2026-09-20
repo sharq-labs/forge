@@ -73,11 +73,15 @@ class DomainPackRegistry:
         *,
         origin: PackOrigin | None = None,
     ) -> RegisteredDomainPack:
+        manifest = getattr(provider, "manifest", None)
         semantic_authority = bind_semantic_authority(
             provider,
-            provider.manifest,
+            manifest,
         )
-        frozen = freeze_domain_pack_provider(provider)
+        frozen = freeze_domain_pack_provider(
+            provider,
+            manifest=manifest,
+        )
         report = validate_domain_pack(frozen.provider)
         report.require_valid()
         key = frozen.manifest.key
