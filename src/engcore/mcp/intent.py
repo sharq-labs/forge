@@ -276,6 +276,14 @@ def compile_engineering_intent(
         field.path.replace("stages[]", "stages[0]")
         for field in description_record.fields
     }
+    if system_name == "electrothermal":
+        accepted.update(
+            {
+                "stages[0].body.capacity_evidence.bulk_density",
+                "stages[0].body.capacity_evidence.bulk_specific_heat",
+                "stages[0].body.capacity_evidence.extra_heat_capacity",
+            }
+        )
     for path, value in (declarations or {}).items():
         if path not in accepted:
             raise ValueError(

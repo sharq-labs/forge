@@ -8,6 +8,7 @@ import json
 from typing import Any, Mapping
 
 from ..scientific.serialization import require_schema_any
+from ..scientific.results.immutable import detach, freeze
 from .registry import RegisteredExecutionPack
 
 EXECUTION_SNAPSHOT_SCHEMA_V1 = "forge.execution_pack_snapshot/1"
@@ -26,6 +27,13 @@ class ExecutionPackSnapshot:
     composition_authority_digest: str
     authority_digest: str
 
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "participant_factories",
+            tuple(freeze(dict(item)) for item in self.participant_factories),
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": EXECUTION_SNAPSHOT_SCHEMA,
@@ -37,7 +45,7 @@ class ExecutionPackSnapshot:
                 "pack_version": self.composition_pack_version,
                 "manifest_digest": self.composition_manifest_digest,
             },
-            "participant_factories": list(self.participant_factories),
+            "participant_factories": detach(self.participant_factories),
             "composition_authority_digest": (
                 self.composition_authority_digest
             ),

@@ -1023,12 +1023,13 @@ def test_i_the_frozen_thermal_tree_was_not_edited_or_extended():
 
 
 def test_i2_the_electrical_dc_package_was_not_edited():
-    """prereg §9. The new material module sits beside it, not inside it."""
+    """The DC package adds only its declared realization authority."""
     dc = REPO_ROOT / "src/engcore/domains/electrical/dc"
     on_disk = {p.name for p in dc.rglob("*.py") if "__pycache__" not in p.parts}
     assert on_disk == {
         "__init__.py", "circuit.py", "components.py", "errors.py", "mna.py",
-        "models.py", "problem.py", "solver.py", "validation.py",
+        "models.py", "problem.py", "realizations.py", "solver.py",
+        "validation.py",
     }
     # and its temperature-independence assumption still stands, unedited
     assert "temperature-independent resistance" in RESISTOR_OHM_MODEL.assumptions

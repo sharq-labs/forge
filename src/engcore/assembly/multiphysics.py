@@ -230,6 +230,14 @@ class AuthorizedMultiphysicsRun:
             raise TypeError(
                 "system_validation must contain AuthorizedSystemValidation"
             )
+        validation_keys = [
+            (item.protocol_id, item.protocol_version)
+            for item in validations
+        ]
+        if len(validation_keys) != len(set(validation_keys)):
+            raise InvalidScientificProblem(
+                "authorized run contains duplicate system validation results"
+            )
         object.__setattr__(
             self,
             "system_validation",
@@ -281,6 +289,90 @@ class AuthorizedMultiphysicsRun:
             "system_verification",
             tuple(sorted(verifications, key=lambda item: item.key)),
         )
+
+        if self.graph_plan.graph != self.run.graph:
+            raise InvalidScientificProblem(
+                "authorized run graph differs from its GraphPlan"
+            )
+        if self.graph_plan.coupling_plan != self.run.plan:
+            raise InvalidScientificProblem(
+                "authorized run coupling plan differs from its GraphPlan"
+            )
+        if (
+            self.graph_plan.authority_pack_id,
+            self.graph_plan.authority_pack_version,
+            self.graph_plan.authority_pack_digest,
+        ) != (
+            self.composition_snapshot.pack_id,
+            self.composition_snapshot.pack_version,
+            self.composition_snapshot.authority_digest,
+        ):
+            raise InvalidScientificProblem(
+                "GraphPlan composition authority differs from its snapshot"
+            )
+        if (
+            self.graph_plan.execution_pack_id,
+            self.graph_plan.execution_pack_version,
+            self.graph_plan.execution_pack_digest,
+        ) != (
+            self.execution_snapshot.pack_id,
+            self.execution_snapshot.pack_version,
+            self.execution_snapshot.authority_digest,
+        ):
+            raise InvalidScientificProblem(
+                "GraphPlan execution authority differs from its snapshot"
+            )
+        if (
+            self.execution_snapshot.composition_pack_id,
+            self.execution_snapshot.composition_pack_version,
+            self.execution_snapshot.composition_manifest_digest,
+            self.execution_snapshot.composition_authority_digest,
+        ) != (
+            self.composition_snapshot.pack_id,
+            self.composition_snapshot.pack_version,
+            self.composition_snapshot.manifest_digest,
+            self.composition_snapshot.authority_digest,
+        ):
+            raise InvalidScientificProblem(
+                "ExecutionPack snapshot is not bound to the "
+                "CompositionPack snapshot"
+            )
+
+        def declared(items):
+            return {
+                (str(item["artifact_id"]), str(item["version"]))
+                for item in items
+            }
+
+        validation_authority = declared(
+            self.composition_snapshot.validation_implementations
+        )
+        if any(key not in validation_authority for key in validation_keys):
+            raise InvalidScientificProblem(
+                "system validation result is not bound to a pinned implementation"
+            )
+        uncertainty_authority = declared(
+            self.composition_snapshot.uncertainty_implementations
+        )
+        if any(
+            (item.protocol_id, item.protocol_version)
+            not in uncertainty_authority
+            for item in uncertainties
+        ):
+            raise InvalidScientificProblem(
+                "system uncertainty result is not bound to a pinned implementation"
+            )
+        verification_authority = declared(
+            self.composition_snapshot.verification_implementations
+        )
+        if any(
+            (item.protocol_id, item.protocol_version)
+            not in verification_authority
+            for item in verifications
+        ):
+            raise InvalidScientificProblem(
+                "system verification result is not bound to a pinned implementation"
+            )
 
     def _content_dict(self) -> dict[str, Any]:
         return {
