@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..executionpacks.manifest import (
+    EXECUTION_PACK_API,
     EXECUTION_PACK_SCHEMA,
     EXECUTION_PACK_SCHEMA_V1,
     ExecutionPackManifest,
@@ -33,6 +34,7 @@ from .blueprint import (
     CouplingPolicyTemplate,
 )
 from .manifest import (
+    COMPOSITION_PACK_API,
     COMPOSITION_PACK_SCHEMA,
     COMPOSITION_PACK_SCHEMA_V1,
     CompositionPackManifest,
@@ -75,7 +77,8 @@ def migrate_composition_manifest(
     made = CompositionPackManifest.from_dict(payload)
     upgraded = made.to_dict()
     missing_current_authority = (
-        not upgraded["uncertainty_protocols"]
+        COMPOSITION_PACK_API not in upgraded["compatible_core_apis"]
+        or not upgraded["uncertainty_protocols"]
         or not upgraded["verification_protocols"]
     )
     return MigrationResult(
@@ -113,7 +116,11 @@ def migrate_execution_manifest(
         source_schema=source,
         target_schema=EXECUTION_PACK_SCHEMA,
         payload=upgraded,
-        production_ready=not legacy,
+        production_ready=(
+            not legacy
+            and EXECUTION_PACK_API
+            in upgraded["compatible_core_apis"]
+        ),
         notes=(
             (
                 "v1 factory records identify only one model. The migration "
