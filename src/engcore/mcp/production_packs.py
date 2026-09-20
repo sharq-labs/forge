@@ -19,6 +19,7 @@ from ..domainpacks.discovery import (
     load_discovered_domain_pack,
 )
 from ..domainpacks.errors import DomainPackDiscoveryError, InvalidDomainPackProvider
+from ..domainpacks.multiphysics import load_multiphysics_extension
 from ..domainpacks.registry import DomainPackRegistry, PackOrigin
 
 ENV_DOMAIN_PACKS = "FORGE_DOMAIN_PACKS"
@@ -128,8 +129,9 @@ def _claim_declarations(provider) -> tuple[CapabilityDeclaration, ...]:
 
 def register_production_domain_pack(provider, *, origin: PackOrigin | None = None, enable: bool = True):
     """Validate/register one pack and optionally make its claims routable."""
-    # Validate claim declarations before mutating the production registry.
+    # Validate every optional production extension before mutating the registry.
     _claim_declarations(provider)
+    load_multiphysics_extension(provider)
     registration = _PRODUCTION_PACKS.register(provider, origin=origin)
     if enable:
         _PRODUCTION_PACKS.enable(provider.manifest.pack_id, provider.manifest.pack_version)
@@ -183,6 +185,47 @@ def configure_production_domain_packs_from_env() -> DomainPackRegistry:
     return _PRODUCTION_PACKS
 
 
+
+
+def production_pack_blueprints():
+    """Validated PhysicsGraph blueprints from enabled production packs."""
+    registry = configure_production_domain_packs_from_env()
+    out = []
+    for registered in registry.list(enabled_only=True):
+        out.extend(
+            load_multiphysics_extension(
+                registered.provider
+            ).blueprints
+        )
+    return tuple(
+        sorted(out, key=lambda item: item.key)
+    )
+
+
+def production_pack_participant_factories():
+    """Validated executable participant factories from enabled packs."""
+    registry = configure_production_domain_packs_from_env()
+    out = []
+    for registered in registry.list(enabled_only=True):
+        out.extend(
+            load_multiphysics_extension(
+                registered.provider
+            ).participant_factories
+        )
+    return tuple(
+        sorted(out, key=lambda item: item.key)
+    )
+
+
+def production_multiphysics_factory_registry():
+    """Build the exact execution registry for enabled pack extensions."""
+    from ..execution.multiphysics import ParticipantFactoryRegistry
+
+    return ParticipantFactoryRegistry(
+        production_pack_participant_factories()
+    )
+
+
 def production_pack_capabilities() -> tuple[CapabilityDeclaration, ...]:
     """Validated executable claim declarations from every enabled production pack."""
     registry = configure_production_domain_packs_from_env()
@@ -196,6 +239,9 @@ __all__ = [
     "ENV_DOMAIN_PACKS",
     "configure_production_domain_packs_from_env",
     "production_domain_packs",
+    "production_pack_blueprints",
     "production_pack_capabilities",
+    "production_pack_participant_factories",
+    "production_multiphysics_factory_registry",
     "register_production_domain_pack",
 ]

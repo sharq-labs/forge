@@ -10,7 +10,12 @@ from ..claims._records import tagged_digest
 from ..claims.capabilities import CapabilityRegistry
 from ..design.fidelity import FidelityLadder
 from ..scientific.models.registry import ModelRegistry
-from ..scientific.multiphysics import CouplingPlan, PhysicsGraph
+from ..scientific.multiphysics import (
+    CouplingPlan,
+    GraphInterfaceManifest,
+    PhysicsGraph,
+    graph_interface_manifest,
+)
 from ..scientific.realizations.registry import RealizationRegistry
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.solvers.registry import SolverRegistry
@@ -390,6 +395,10 @@ class GraphPlan:
     graph: PhysicsGraph
     coupling_plan: CouplingPlan
     resource_estimate: ResourceEstimate
+
+    @property
+    def interface_manifest(self) -> GraphInterfaceManifest:
+        return graph_interface_manifest(self.graph)
 
     def to_dict(self) -> dict[str, Any]:
         return {

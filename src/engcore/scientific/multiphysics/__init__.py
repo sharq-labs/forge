@@ -1,5 +1,12 @@
 """Domain-neutral multiphysics declarations and run records."""
 
+from .composition import (
+    COMPOSITION_ANALYSIS_SCHEMA,
+    COUPLING_CANDIDATE_SCHEMA,
+    CompositionAnalysis,
+    CouplingCandidate,
+    analyze_composition,
+)
 from .conservation import (
     CONSERVATION_TERM_BINDING_SCHEMA,
     COUPLED_CONSERVATION_SCHEMA,
@@ -15,6 +22,11 @@ from .graph import (
     CouplingEdge,
     PhysicsGraph,
     ReductionOperator,
+)
+from .interface import (
+    GRAPH_INTERFACE_SCHEMA,
+    GraphInterfaceManifest,
+    graph_interface_manifest,
 )
 from .mapping import (
     FIELD_MAPPING_SCHEMA,
@@ -76,6 +88,8 @@ from .value import (
 
 __all__ = [
     "CHECKPOINT_SCHEMA",
+    "COMPOSITION_ANALYSIS_SCHEMA",
+    "COUPLING_CANDIDATE_SCHEMA",
     "CONSERVATION_TERM_BINDING_SCHEMA",
     "COUPLED_CONSERVATION_SCHEMA",
     "COUPLING_EDGE_SCHEMA",
@@ -86,6 +100,7 @@ __all__ = [
     "FIELD_MAPPING_SCHEMA",
     "INITIAL_COUPLING_SCHEMA",
     "FRAME_TRANSFORM_SCHEMA",
+    "GRAPH_INTERFACE_SCHEMA",
     "ITERATION_SCHEMA",
     "MAPPING_DIAGNOSTICS_SCHEMA",
     "PARTICIPANT_SCHEMA",
@@ -99,9 +114,11 @@ __all__ = [
     "WINDOW_SCHEMA",
     "BalanceSide",
     "CheckpointRecord",
+    "CompositionAnalysis",
     "ConservationTermBinding",
     "ConvergenceCriterion",
     "CoupledConservation",
+    "CouplingCandidate",
     "CouplingEdge",
     "CouplingIterationRecord",
     "CouplingPlan",
@@ -115,6 +132,7 @@ __all__ = [
     "FieldMappingDefinition",
     "FieldMappingMethod",
     "FrameTransform",
+    "GraphInterfaceManifest",
     "IterationSemantics",
     "InitialCouplingRecord",
     "MappingDiagnostics",
@@ -133,8 +151,10 @@ __all__ = [
     "TimePolicy",
     "TransferMeasure",
     "WindowOutcome",
+    "analyze_composition",
     "coupling_value_from_dict",
     "coupling_value_to_dict",
+    "graph_interface_manifest",
     "validate_port_coupling_value",
     "validate_port_uncertainty",
 ]

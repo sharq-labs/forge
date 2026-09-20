@@ -29,6 +29,7 @@ from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
 from .convergence import ResidualCalculator
 from .error import CouplingErrorBudget
+from .factory import ParticipantFactoryRegistry
 from .participant import (
     AdvanceRequest,
     AdvanceResult,
@@ -63,6 +64,100 @@ class _IterationOutcome:
 
 
 class MultiphysicsRuntime:
+    @classmethod
+    def from_factory_registry(
+        cls,
+        graph: PhysicsGraph,
+        plan: CouplingPlan,
+        registry: ParticipantFactoryRegistry,
+        *,
+        resolver: BulkDataResolver,
+        store: BulkDataStore,
+    ) -> "MultiphysicsRuntime":
+        """Materialize exact graph participants and construct the runtime."""
+        if not isinstance(registry, ParticipantFactoryRegistry):
+            raise TypeError(
+                "from_factory_registry requires ParticipantFactoryRegistry"
+            )
+
+        # Validate graph/policy before factories allocate solver/provider state.
+        plan.validate_against(graph)
+        participants = registry.build_graph(graph)
+        try:
+            return cls(
+                graph,
+                plan,
+                participants,
+                resolver=resolver,
+                store=store,
+            )
+        except Exception:
+            for participant_id in sorted(participants, reverse=True):
+                try:
+                    participants[participant_id].finalize()
+                except Exception:
+                    pass
+            raise
+
+    @classmethod
+    def from_record_with_factory_registry(
+        cls,
+        record: MultiphysicsRunRecord,
+        registry: ParticipantFactoryRegistry,
+        *,
+        resolver: BulkDataResolver,
+        store: BulkDataStore,
+    ) -> "MultiphysicsRuntime":
+        """Rebuild a runtime from an evidence record without manual wiring."""
+        if not isinstance(record, MultiphysicsRunRecord):
+            raise InvalidScientificProblem(
+                "multiphysics replay requires MultiphysicsRunRecord"
+            )
+        return cls.from_factory_registry(
+            record.graph,
+            record.plan,
+            registry,
+            resolver=resolver,
+            store=store,
+        )
+
+    @classmethod
+    def replay_with_factory_registry(
+        cls,
+        record: MultiphysicsRunRecord,
+        registry: ParticipantFactoryRegistry,
+        *,
+        replay_run_id: str,
+        resolver: BulkDataResolver,
+        store: BulkDataStore,
+    ) -> MultiphysicsRunRecord:
+        """Replay a recorded graph using exact registered execution factories."""
+        runtime = cls.from_record_with_factory_registry(
+            record,
+            registry,
+            resolver=resolver,
+            store=store,
+        )
+        return runtime.run(
+            replay_run_id,
+            external_inputs={
+                item.port: item.value
+                for item in record.external_inputs
+            },
+            external_uncertainty={
+                item.port: item.uncertainty
+                for item in record.external_inputs
+            },
+            initial_coupling_values={
+                item.edge_id: item.value
+                for item in record.initial_coupling
+            },
+            initial_coupling_uncertainty={
+                item.edge_id: item.uncertainty
+                for item in record.initial_coupling
+            },
+        )
+
     @classmethod
     def from_record(
         cls,

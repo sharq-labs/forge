@@ -3,8 +3,8 @@
 This module is deliberately the place that knows which built-in domain packs
 are installed.  The generic planner never imports battery/thermal/electrical
 modules or branches on their names; product assembly supplies their registries.
-Enabled external Domain Packs can add capability declarations today and can add
-planning registries/blueprints through the same explicit dependencies later.
+Enabled Domain Packs can add capabilities plus validated models, realizations,
+solvers and PhysicsGraph blueprints through explicit production dependencies.
 """
 
 from __future__ import annotations
@@ -26,7 +26,9 @@ def _production_capabilities() -> CapabilityRegistry:
     return production_registry()
 
 
-def _models_from_capabilities(capabilities: CapabilityRegistry) -> ModelRegistry:
+def _production_models(
+    capabilities: CapabilityRegistry,
+) -> ModelRegistry:
     by_key = {}
     for declaration in capabilities:
         for use in declaration.models:
@@ -40,10 +42,26 @@ def _models_from_capabilities(capabilities: CapabilityRegistry) -> ModelRegistry
                     f"for model {definition.model_id}@{definition.version}"
                 )
             by_key[definition.key] = definition
+
+    from ..mcp.production_packs import (
+        configure_production_domain_packs_from_env,
+    )
+
+    packs = configure_production_domain_packs_from_env()
+    for registered in packs.list(enabled_only=True):
+        for definition in registered.provider.models():
+            existing = by_key.get(definition.key)
+            if existing is not None and existing != definition:
+                raise ValueError(
+                    "production domain packs declare conflicting model "
+                    f"{definition.model_id}@{definition.version}"
+                )
+            by_key[definition.key] = definition
+
     return ModelRegistry(by_key[key] for key in sorted(by_key))
 
 
-def _builtin_realizations() -> RealizationRegistry:
+def _production_realizations() -> RealizationRegistry:
     from ..domains.battery.models import battery_realizations
     from ..domains.electrical.material import resistance_realizations
     from ..domains.thermal_models.lumped import lumped_realizations
@@ -62,42 +80,82 @@ def _builtin_realizations() -> RealizationRegistry:
                     f"{realization.realization_id}@{realization.version}"
                 )
             by_key[realization.key] = realization
+
+    from ..mcp.production_packs import (
+        configure_production_domain_packs_from_env,
+    )
+
+    packs = configure_production_domain_packs_from_env()
+    for registered in packs.list(enabled_only=True):
+        for realization in registered.provider.realizations():
+            existing = by_key.get(realization.key)
+            if existing is not None and existing != realization:
+                raise ValueError(
+                    "production domain packs declare conflicting realization "
+                    f"{realization.realization_id}@{realization.version}"
+                )
+            by_key[realization.key] = realization
+
     return RealizationRegistry(by_key[key] for key in sorted(by_key))
 
 
-def _builtin_solvers() -> SolverRegistry:
+def _production_solvers() -> SolverRegistry:
     from ..domains.battery.solver import BatteryCellSolver
     from ..domains.electrical.dc.solver import ElectricalDCSolver
     from ..domains.electrical.material import ResistancePropertySolver
     from ..domains.thermal_models.lumped import LumpedThermalSolver
 
     # SolverRegistry requires factories and proves every issued session is
-    # fresh. Classes are the simplest zero-argument factories here.
-    return SolverRegistry(
-        (
-            BatteryCellSolver,
-            ElectricalDCSolver,
-            ResistancePropertySolver,
-            LumpedThermalSolver,
-        )
+    # fresh. Merge built-ins and enabled pack factories by exact identity.
+    factories = [
+        BatteryCellSolver,
+        ElectricalDCSolver,
+        ResistancePropertySolver,
+        LumpedThermalSolver,
+    ]
+
+    from ..mcp.production_packs import (
+        configure_production_domain_packs_from_env,
     )
+
+    packs = configure_production_domain_packs_from_env()
+    for registered in packs.list(enabled_only=True):
+        factories.extend(registered.provider.solver_factories())
+
+    by_key = {}
+    for factory in factories:
+        probe = factory()
+        key = probe.identity.key
+        existing = by_key.get(key)
+        if existing is not None and existing is not factory:
+            raise ValueError(
+                "production solver identity collision for "
+                f"{key[0]}@{key[1]}"
+            )
+        by_key[key] = factory
+
+    return SolverRegistry(by_key[key] for key in sorted(by_key))
 
 
 def production_planning_registries() -> PlanningRegistries:
     """The currently installed product planning universe.
 
-    No blueprint or verification-independence metadata is invented here.  A
-    capability can still plan/run through its production executor. Generic
-    PhysicsGraph synthesis and independence-demand satisfaction appear only
-    when a domain/system pack explicitly registers those stronger contracts.
+    No blueprint or verification-independence metadata is invented here.
+    Enabled packs may explicitly contribute validated PhysicsGraph blueprints,
+    realizations and solver factories. Generic graph synthesis still refuses
+    to guess missing scientific wiring; only declared stronger contracts enter
+    the planning universe.
     """
     capabilities = _production_capabilities()
+
+    from ..mcp.production_packs import production_pack_blueprints
+
     return PlanningRegistries(
         capabilities=capabilities,
-        models=_models_from_capabilities(capabilities),
-        realizations=_builtin_realizations(),
-        solvers=_builtin_solvers(),
-        blueprints=BlueprintRegistry(),
+        models=_production_models(capabilities),
+        realizations=_production_realizations(),
+        solvers=_production_solvers(),
+        blueprints=BlueprintRegistry(production_pack_blueprints()),
         verification=VerificationPlanningRegistry(),
         fidelity_ladders=(),
     )
