@@ -29,7 +29,7 @@ NASA_BATTERY_AGING = ReferenceSourceSpec(
     source_version="repository snapshot",
     landing_url="https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
     oracle_kind=OracleKind.EXPERIMENTAL_DATASET,
-    allowed_hosts=("data.nasa.gov", "nasa.gov"),
+    allowed_hosts=(\n        "data.nasa.gov",\n        "www.nasa.gov",\n        "nasa.gov",\n        "c3.nasa.gov",\n        "phm-datasets.s3.amazonaws.com",\n    ),
     scale_note=(
         "Run-to-failure charge/discharge/impedance measurements at multiple "
         "temperatures and loads."
