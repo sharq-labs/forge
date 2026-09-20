@@ -196,6 +196,7 @@ def system_contract_digest(
     *,
     port_semantics: Iterable[Any],
     coupling_semantics: Iterable[Any],
+    external_input_bindings: Iterable[Any],
     applicability_rules: Iterable[SystemApplicabilityRule],
     uncertainty_rules: Iterable[UncertaintyCompositionRule],
 ) -> str:
@@ -211,6 +212,13 @@ def system_contract_digest(
             item.to_dict()
             for item in sorted(
                 tuple(coupling_semantics),
+                key=lambda item: item.key,
+            )
+        ],
+        "external_input_bindings": [
+            item.to_dict()
+            for item in sorted(
+                tuple(external_input_bindings),
                 key=lambda item: item.key,
             )
         ],
