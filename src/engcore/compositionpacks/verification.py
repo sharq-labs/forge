@@ -1,4 +1,10 @@
-"""Independent system-verification authority for Composition Packs."""
+"""Independent system-verification authority for Composition Packs.
+
+Composition authority owns candidate verification routes. The primary route is
+not pinned here: it is derived at execution time from the exact authorized
+ExecutionPack snapshot, so verification independence is measured against what
+actually ran.
+"""
 
 from __future__ import annotations
 
@@ -22,8 +28,6 @@ class ProvidedCompositionVerification:
     blueprint_id: str
     ref: ArtifactRef
     quantity: str
-    primary_route: VerificationRoute
-    primary_dependencies: RouteDependencyManifest
     candidates: tuple[VerificationCandidate, ...]
     policy: VerificationPolicy
     implementation: Any
@@ -41,16 +45,6 @@ class ProvidedCompositionVerification:
             raise InvalidCompositionPackProvider(
                 "composition verification ref must be ArtifactRef"
             )
-        if not isinstance(self.primary_route, VerificationRoute):
-            raise InvalidCompositionPackProvider(
-                "composition verification requires primary VerificationRoute"
-            )
-        if not isinstance(
-            self.primary_dependencies, RouteDependencyManifest
-        ):
-            raise InvalidCompositionPackProvider(
-                "composition verification requires primary dependency manifest"
-            )
         candidates = tuple(self.candidates)
         if not candidates or any(
             not isinstance(item, VerificationCandidate)
@@ -59,21 +53,15 @@ class ProvidedCompositionVerification:
             raise InvalidCompositionPackProvider(
                 "composition verification requires VerificationCandidate records"
             )
+        route_ids = [item.route.route_id for item in candidates]
+        if len(route_ids) != len(set(route_ids)):
+            raise InvalidCompositionPackProvider(
+                "composition verification contains duplicate candidate routes"
+            )
         object.__setattr__(self, "candidates", candidates)
         if not isinstance(self.policy, VerificationPolicy):
             raise InvalidCompositionPackProvider(
                 "composition verification requires VerificationPolicy"
-            )
-        plan = plan_verification(
-            self.primary_route,
-            self.primary_dependencies,
-            candidates,
-            self.policy,
-        )
-        if not plan.complete:
-            raise InvalidCompositionPackProvider(
-                "composition verification declaration has no complete "
-                f"independent plan; rejected={plan.rejected}"
             )
         if not callable(self.implementation):
             raise InvalidCompositionPackProvider(
@@ -84,16 +72,32 @@ class ProvidedCompositionVerification:
     def key(self) -> tuple[str, str]:
         return self.blueprint_id, self.ref.artifact_id
 
-    def plan(self):
-        return plan_verification(
-            self.primary_route,
-            self.primary_dependencies,
+    def plan(
+        self,
+        primary_route: VerificationRoute,
+        primary_dependencies: RouteDependencyManifest,
+    ):
+        plan = plan_verification(
+            primary_route,
+            primary_dependencies,
             self.candidates,
             self.policy,
         )
+        if not plan.complete:
+            raise InvalidCompositionPackProvider(
+                "composition verification has no complete independent plan "
+                f"against authorized execution; rejected={plan.rejected}"
+            )
+        return plan
 
-    def execute(self, record) -> VerificationRunRecord:
-        made = self.implementation(record, self.plan())
+    def execute(
+        self,
+        record,
+        primary_route: VerificationRoute,
+        primary_dependencies: RouteDependencyManifest,
+    ) -> VerificationRunRecord:
+        plan = self.plan(primary_route, primary_dependencies)
+        made = self.implementation(record, plan)
         if not isinstance(made, VerificationRunRecord):
             raise InvalidCompositionPackProvider(
                 f"verification {self.ref.artifact_id}@{self.ref.version} "
