@@ -1,5 +1,10 @@
 """Domain-neutral multiphysics declarations and run records."""
 
+from .composition import (
+    CompositionAnalysis,
+    CouplingCandidate,
+    analyze_composition,
+)
 from .conservation import (
     CONSERVATION_TERM_BINDING_SCHEMA,
     COUPLED_CONSERVATION_SCHEMA,
@@ -105,9 +110,11 @@ __all__ = [
     "WINDOW_SCHEMA",
     "BalanceSide",
     "CheckpointRecord",
+    "CompositionAnalysis",
     "ConservationTermBinding",
     "ConvergenceCriterion",
     "CoupledConservation",
+    "CouplingCandidate",
     "CouplingEdge",
     "CouplingIterationRecord",
     "CouplingPlan",
@@ -140,6 +147,7 @@ __all__ = [
     "TimePolicy",
     "TransferMeasure",
     "WindowOutcome",
+    "analyze_composition",
     "coupling_value_from_dict",
     "coupling_value_to_dict",
     "graph_interface_manifest",
