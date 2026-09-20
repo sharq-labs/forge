@@ -90,21 +90,35 @@ def _unit(value: Any, label: str) -> str:
 _NON_AUTHORITATIVE_TEXT_FIELDS = frozenset({
     "description",
     "statement",
+})
+_NON_AUTHORITATIVE_CONTEXT_FIELDS = frozenset({
     "decision",
     "application",
     "consequence_if_wrong",
 })
 
 
-def _identity_payload(value: Any) -> Any:
+def _identity_payload(
+    value: Any,
+    path: tuple[str, ...] = (),
+) -> Any:
     if isinstance(value, Mapping):
-        return {
-            key: _identity_payload(child)
-            for key, child in sorted(value.items())
-            if key not in _NON_AUTHORITATIVE_TEXT_FIELDS
-        }
+        result = {}
+        for key, child in sorted(value.items()):
+            if key in _NON_AUTHORITATIVE_TEXT_FIELDS:
+                continue
+            if (
+                path == ("context",)
+                and key in _NON_AUTHORITATIVE_CONTEXT_FIELDS
+            ):
+                continue
+            result[key] = _identity_payload(child, (*path, str(key)))
+        return result
     if isinstance(value, list):
-        return [_identity_payload(child) for child in value]
+        return [
+            _identity_payload(child, (*path, str(index)))
+            for index, child in enumerate(value)
+        ]
     return value
 
 
