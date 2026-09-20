@@ -19,6 +19,7 @@ class PlannerPolicy:
     solver_by_realization: Mapping[str, str] = field(default_factory=dict)
     blueprint_by_capability: Mapping[str, str] = field(default_factory=dict)
     coupling_policy_by_blueprint: Mapping[str, str] = field(default_factory=dict)
+    execution_pack_by_composition: Mapping[str, str] = field(default_factory=dict)
     allow_fidelity_downgrade: bool = False
 
     def __post_init__(self) -> None:
@@ -28,6 +29,7 @@ class PlannerPolicy:
             "solver_by_realization",
             "blueprint_by_capability",
             "coupling_policy_by_blueprint",
+            "execution_pack_by_composition",
         ):
             raw = dict(getattr(self, label))
             clean = {}
@@ -51,6 +53,9 @@ class PlannerPolicy:
             "coupling_policy_by_blueprint": dict(
                 sorted(self.coupling_policy_by_blueprint.items())
             ),
+            "execution_pack_by_composition": dict(
+                sorted(self.execution_pack_by_composition.items())
+            ),
             "allow_fidelity_downgrade": self.allow_fidelity_downgrade,
         }
 
@@ -67,6 +72,9 @@ class PlannerPolicy:
             blueprint_by_capability=dict(payload.get("blueprint_by_capability", {})),
             coupling_policy_by_blueprint=dict(
                 payload.get("coupling_policy_by_blueprint", {})
+            ),
+            execution_pack_by_composition=dict(
+                payload.get("execution_pack_by_composition", {})
             ),
             allow_fidelity_downgrade=payload.get("allow_fidelity_downgrade", False),
         )
