@@ -170,6 +170,10 @@ class ParticipantBlueprint:
             str(self.description).strip(),
         )
 
+    @property
+    def model_keys(self) -> tuple[tuple[str, str], ...]:
+        return tuple(item.key for item in self.models)
+
     def materialize(self, binding: Any) -> ParticipantSpec:
         if binding.participant_id != self.participant_id:
             raise InvalidScientificProblem(
