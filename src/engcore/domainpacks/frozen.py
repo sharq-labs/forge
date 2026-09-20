@@ -207,8 +207,13 @@ def _records(provider: Any, name: str) -> tuple[Any, ...]:
         ) from exc
 
 
-def freeze_domain_pack_provider(provider: Any) -> FrozenDomainPack:
-    manifest = getattr(provider, "manifest", None)
+def freeze_domain_pack_provider(
+    provider: Any,
+    *,
+    manifest: DomainPackManifest | None = None,
+) -> FrozenDomainPack:
+    if manifest is None:
+        manifest = getattr(provider, "manifest", None)
     if not isinstance(manifest, DomainPackManifest):
         raise InvalidDomainPackProvider(
             "provider manifest must be DomainPackManifest before freezing"
