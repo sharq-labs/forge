@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 from ..claims.capabilities import (
     CapabilityDeclaration,
     InputDeclaration,
     InputKind,
     InputRole,
     ModelUse,
+    PerturbableInput,
     ProducedQuantity,
     ProvidedCapability,
     RouteDeclaration,
@@ -21,9 +25,11 @@ from ..domainpacks.builtin_electrical_material import (
 from ..domainpacks.builtin_thermal_lumped import (
     MANIFEST as THERMAL_LUMPED_MANIFEST,
 )
+from ..domainpacks.frozen import implementation_fingerprint
 from ..domainpacks.manifest import ArtifactRef
 from ..domains.electrical import material
 from ..domains.thermal_models import lumped
+from ..execution.multiphysics import MultiphysicsRuntime
 from ..scientific.multiphysics import (
     CouplingEdge,
     CouplingScheme,
@@ -34,6 +40,24 @@ from ..scientific.multiphysics import (
     PortRef,
 )
 from ..scientific.units.quantity import Quantity
+from ..scientific.verification.dependencies import (
+    DependencyComponent,
+    DependencyRole,
+    RouteDependencyManifest,
+)
+from ..scientific.verification.independence import IndependenceLevel
+from ..scientific.verification.ladder import VerificationLevel
+from ..scientific.verification.observations import VerificationObservation
+from ..scientific.verification.planning import (
+    VerificationCandidate,
+    VerificationPolicy,
+)
+from ..scientific.verification.route import (
+    VerificationRoute,
+    VerificationRouteKind,
+)
+from ..scientific.verification.run_record import VerificationRunRecord
+from ..sria.uncertainty import UncertaintyChannel
 from .applicability import (
     ApplicabilityPredicate,
     ApplicabilityPredicateKind,
@@ -62,11 +86,21 @@ from .manifest import (
     PolicyTemplateRef,
 )
 from .participant import ParticipantBlueprint
+from .references.thermal_resistance import (
+    analytical_terminal_state,
+    propagate_parameter_uncertainty,
+    reference_evidence_digest,
+)
 from .semantics import (
     CouplingSemantic,
     CouplingSignConvention,
     PortSemanticBinding,
 )
+from .uncertainty import (
+    ProvidedCompositionUncertainty,
+    SystemUncertaintyResult,
+)
+from .verification import ProvidedCompositionVerification
 
 PACK_ID = "system.thermal_resistance"
 PACK_VERSION = "1"
