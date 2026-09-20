@@ -5,11 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
+from ..scientific.serialization import require_schema_any
 from .registry import RegisteredCompositionPack
 
-COMPOSITION_SNAPSHOT_SCHEMA = "forge.composition_pack_snapshot/1"
+COMPOSITION_SNAPSHOT_SCHEMA_V1 = "forge.composition_pack_snapshot/1"
+COMPOSITION_SNAPSHOT_SCHEMA = "forge.composition_pack_snapshot/2"
 
 
 @dataclass(frozen=True)
@@ -25,6 +27,8 @@ class CompositionPackSnapshot:
     validation_implementations: tuple[dict[str, str], ...]
     dependency_authority_digests: tuple[tuple[str, str, str], ...]
     authority_digest: str
+    uncertainty_implementations: tuple[dict[str, str], ...] = ()
+    verification_implementations: tuple[dict[str, str], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -66,7 +70,15 @@ class CompositionPackSnapshot:
                 for capability_id, version, digest
                 in self.claim_capability_digests
             ],
-            "validation_implementations": list(self.validation_implementations),
+            "validation_implementations": list(
+                self.validation_implementations
+            ),
+            "uncertainty_implementations": list(
+                self.uncertainty_implementations
+            ),
+            "verification_implementations": list(
+                self.verification_implementations
+            ),
             "dependency_authority_digests": [
                 {
                     "pack_id": pack_id,
@@ -89,6 +101,96 @@ class CompositionPackSnapshot:
                 ensure_ascii=False,
             ).encode("utf-8")
         ).hexdigest()
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "CompositionPackSnapshot":
+        schema = require_schema_any(
+            payload,
+            (
+                COMPOSITION_SNAPSHOT_SCHEMA_V1,
+                COMPOSITION_SNAPSHOT_SCHEMA,
+            ),
+        )
+
+        def deps(items, digest_key):
+            return tuple(
+                (
+                    item["pack_id"],
+                    item["pack_version"],
+                    item[digest_key],
+                )
+                for item in items
+            )
+
+        made = cls(
+            pack_id=payload["pack_id"],
+            pack_version=payload["pack_version"],
+            manifest_digest=payload["manifest_digest"],
+            dependency_manifests=deps(
+                payload.get("dependency_manifests", ()),
+                "manifest_digest",
+            ),
+            blueprint_digests=tuple(
+                (
+                    item["blueprint_id"],
+                    item["version"],
+                    item["digest"],
+                )
+                for item in payload.get("blueprint_digests", ())
+            ),
+            coupling_policy_digests=tuple(
+                (
+                    item["template_id"],
+                    item["version"],
+                    item["digest"],
+                )
+                for item in payload.get("coupling_policy_digests", ())
+            ),
+            system_contract_digest=payload["system_contract_digest"],
+            claim_capability_digests=tuple(
+                (
+                    item["capability_id"],
+                    item["version"],
+                    item["digest"],
+                )
+                for item in payload.get("claim_capability_digests", ())
+            ),
+            validation_implementations=tuple(
+                dict(item)
+                for item in payload.get(
+                    "validation_implementations", ()
+                )
+            ),
+            uncertainty_implementations=(
+                ()
+                if schema == COMPOSITION_SNAPSHOT_SCHEMA_V1
+                else tuple(
+                    dict(item)
+                    for item in payload.get(
+                        "uncertainty_implementations", ()
+                    )
+                )
+            ),
+            verification_implementations=(
+                ()
+                if schema == COMPOSITION_SNAPSHOT_SCHEMA_V1
+                else tuple(
+                    dict(item)
+                    for item in payload.get(
+                        "verification_implementations", ()
+                    )
+                )
+            ),
+            dependency_authority_digests=deps(
+                payload.get("dependency_authority_digests", ()),
+                "authority_digest",
+            ),
+            authority_digest=payload["authority_digest"],
+        )
+        return made
 
 
 def snapshot_composition_pack(
@@ -128,6 +230,14 @@ def snapshot_composition_pack(
             item.to_dict()
             for item in registration.validation_fingerprints
         ),
+        uncertainty_implementations=tuple(
+            item.to_dict()
+            for item in registration.uncertainty_fingerprints
+        ),
+        verification_implementations=tuple(
+            item.to_dict()
+            for item in registration.verification_fingerprints
+        ),
         dependency_authority_digests=(
             registration.dependency_authority_digests
         ),
@@ -137,6 +247,7 @@ def snapshot_composition_pack(
 
 __all__ = [
     "COMPOSITION_SNAPSHOT_SCHEMA",
+    "COMPOSITION_SNAPSHOT_SCHEMA_V1",
     "CompositionPackSnapshot",
     "snapshot_composition_pack",
 ]
