@@ -14,15 +14,23 @@ import json
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema_any, schema_string
 from .participant import ParticipantSpec
 from .ports import PortKind, PortRef
 
-COUPLING_CANDIDATE_SCHEMA = schema_string(
+COUPLING_CANDIDATE_SCHEMA_V1 = schema_string(
     "multiphysics_coupling_candidate"
 )
-COMPOSITION_ANALYSIS_SCHEMA = schema_string(
+COUPLING_CANDIDATE_SCHEMA = schema_string(
+    "multiphysics_coupling_candidate",
+    2,
+)
+COMPOSITION_ANALYSIS_SCHEMA_V1 = schema_string(
     "multiphysics_composition_analysis"
+)
+COMPOSITION_ANALYSIS_SCHEMA = schema_string(
+    "multiphysics_composition_analysis",
+    2,
 )
 
 
@@ -79,7 +87,13 @@ class CouplingCandidate:
         cls,
         payload: Mapping[str, Any],
     ) -> "CouplingCandidate":
-        require_schema(payload, COUPLING_CANDIDATE_SCHEMA)
+        require_schema_any(
+            payload,
+            (
+                COUPLING_CANDIDATE_SCHEMA_V1,
+                COUPLING_CANDIDATE_SCHEMA,
+            ),
+        )
         return cls(
             source=PortRef.from_dict(payload["source"]),
             target=PortRef.from_dict(payload["target"]),
@@ -174,7 +188,13 @@ class CompositionAnalysis:
         cls,
         payload: Mapping[str, Any],
     ) -> "CompositionAnalysis":
-        require_schema(payload, COMPOSITION_ANALYSIS_SCHEMA)
+        require_schema_any(
+            payload,
+            (
+                COMPOSITION_ANALYSIS_SCHEMA_V1,
+                COMPOSITION_ANALYSIS_SCHEMA,
+            ),
+        )
         made = cls(
             candidates=tuple(
                 CouplingCandidate.from_dict(item)
@@ -350,7 +370,9 @@ def analyze_composition(
 
 __all__ = [
     "COMPOSITION_ANALYSIS_SCHEMA",
+    "COMPOSITION_ANALYSIS_SCHEMA_V1",
     "COUPLING_CANDIDATE_SCHEMA",
+    "COUPLING_CANDIDATE_SCHEMA_V1",
     "CompositionAnalysis",
     "CouplingCandidate",
     "analyze_composition",
