@@ -16,6 +16,7 @@ from .intent import EngineeringIntent
 from .policy import PlannerPolicy
 from ..scientific.multiphysics import PortRef
 from ..scientific.multiphysics.value import validate_port_coupling_value
+from ..execution.multiphysics import ParticipantFactoryRegistry
 from .records import (
     ExecutionMode,
     FidelityDecision,
@@ -431,21 +432,80 @@ def _composition_graph_plan(
                 )
 
     execution_fingerprint = ""
-    if registries.participant_factories is None:
+    execution_pack_id = ""
+    execution_pack_version = ""
+    execution_pack_digest = ""
+    execution_registry = None
+
+    if registries.execution_packs is None:
+        gaps.append(
+            PlanningGap(
+                GapKind.EXECUTION_PACK_UNAVAILABLE,
+                blueprint.blueprint_id,
+                "no ExecutionPackRegistry was supplied for the selected "
+                "CompositionPack; exact executable authority is unavailable",
+                graph_required,
+            )
+        )
+        execution_registry = registries.participant_factories
+    else:
+        execution_matches = registries.execution_packs.for_composition(
+            registration.manifest.pack_id,
+            registration.manifest.pack_version,
+            registration.manifest.digest,
+            enabled_only=True,
+        )
+        if len(execution_matches) == 1:
+            execution_registration = execution_matches[0]
+            execution_pack_id = execution_registration.manifest.pack_id
+            execution_pack_version = (
+                execution_registration.manifest.pack_version
+            )
+            execution_pack_digest = execution_registration.manifest.digest
+            execution_registry = ParticipantFactoryRegistry(
+                execution_registration.participant_factories
+            )
+        elif not execution_matches:
+            gaps.append(
+                PlanningGap(
+                    GapKind.EXECUTION_PACK_UNAVAILABLE,
+                    blueprint.blueprint_id,
+                    (
+                        "no enabled ExecutionPack is bound to exact "
+                        f"CompositionPack {registration.manifest.pack_id}@"
+                        f"{registration.manifest.pack_version}#"
+                        f"{registration.manifest.digest}"
+                    ),
+                    graph_required,
+                )
+            )
+        else:
+            gaps.append(
+                PlanningGap(
+                    GapKind.EXECUTION_PACK_AMBIGUOUS,
+                    blueprint.blueprint_id,
+                    (
+                        f"{len(execution_matches)} enabled ExecutionPacks bind "
+                        "the exact same CompositionPack; product authority must "
+                        "enable exactly one"
+                    ),
+                    graph_required,
+                )
+            )
+
+    if execution_registry is None:
         gaps.append(
             PlanningGap(
                 GapKind.EXECUTION_FACTORY_UNAVAILABLE,
                 blueprint.blueprint_id,
-                "no ParticipantFactoryRegistry was supplied for the "
-                "selected CompositionPack",
+                "no exact participant factory registry is available for "
+                "the selected execution authority",
                 graph_required,
             )
         )
     else:
-        execution_fingerprint = (
-            registries.participant_factories.fingerprint
-        )
-        missing = registries.participant_factories.missing(graph)
+        execution_fingerprint = execution_registry.fingerprint
+        missing = execution_registry.missing(graph)
         if missing:
             gaps.append(
                 PlanningGap(
@@ -479,6 +539,9 @@ def _composition_graph_plan(
                 else selected_policy.version
             ),
             execution_registry_fingerprint=execution_fingerprint,
+            execution_pack_id=execution_pack_id,
+            execution_pack_version=execution_pack_version,
+            execution_pack_digest=execution_pack_digest,
             external_inputs=tuple(planned_external_inputs),
         ),
         tuple(gaps),
