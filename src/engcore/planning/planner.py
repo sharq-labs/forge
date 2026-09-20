@@ -120,11 +120,37 @@ def _build_qoi_plan(
     policy: PlannerPolicy,
 ) -> tuple[QOIPlan, tuple[PlanningGap, ...]]:
     declaration = registries.capabilities.get(screen.capability_id)
-    model_choices, selection_gaps = execution_choices(
-        declaration,
-        registries,
-        policy,
+    composition_owned = bool(
+        not declaration.executable
+        and registries.composition_packs is not None
+        and registries.composition_packs.providing(
+            declaration.capability_id,
+            enabled_only=True,
+        )
     )
+    if composition_owned:
+        model_choices = tuple(
+            ModelExecutionChoice(
+                model_id=item.model_id,
+                model_version=item.version,
+                realization_candidates=(),
+                selected_realization=None,
+                solver_candidates=(),
+                selected_solver=None,
+                selection_basis=(
+                    "scientific model dependency; executable stack is "
+                    "selected from exact ExecutionPack authority",
+                ),
+            )
+            for item in declaration.models
+        )
+        selection_gaps = ()
+    else:
+        model_choices, selection_gaps = execution_choices(
+            declaration,
+            registries,
+            policy,
+        )
 
     execution_mode = (
         ExecutionMode.CAPABILITY_ROUTE
