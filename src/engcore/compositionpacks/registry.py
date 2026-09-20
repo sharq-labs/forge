@@ -369,6 +369,38 @@ class CompositionPackRegistry:
                 "CompositionPack capability declarations may not embed direct "
                 "executors; execution belongs to an ExecutionPack"
             )
+        if any(item.solvers for item in claims):
+            raise InvalidCompositionPackProvider(
+                "CompositionPack capability declarations may not pin concrete "
+                "solvers; solver authority belongs to an ExecutionPack"
+            )
+
+        dependency_models = {}
+        for dependency_registration in dependencies:
+            for definition in dependency_registration.provider.models():
+                dependency_models.setdefault(definition.key, []).append(
+                    definition
+                )
+        for declaration in claims:
+            for model_use in declaration.models:
+                key = (model_use.model_id, model_use.version)
+                matches = dependency_models.get(key, [])
+                if len(matches) != 1:
+                    raise InvalidCompositionPackProvider(
+                        f"composition capability {declaration.capability_id!r} "
+                        f"references model {key[0]}@{key[1]} with "
+                        f"{len(matches)} exact Domain Pack owners"
+                    )
+                if (
+                    model_use.definition is not None
+                    and model_use.definition != matches[0]
+                ):
+                    raise InvalidCompositionPackProvider(
+                        f"composition capability {declaration.capability_id!r} "
+                        f"embeds a model definition that differs from its "
+                        f"required Domain Pack authority for {key[0]}@{key[1]}"
+                    )
+
         claim_ids = tuple(sorted(item.capability_id for item in claims))
         if claim_ids != manifest.capabilities:
             raise InvalidCompositionPackProvider(
