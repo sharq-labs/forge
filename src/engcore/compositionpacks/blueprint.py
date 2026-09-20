@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from ..planning.blueprint import ParticipantBinding, ParticipantBlueprint
 from ..scientific.errors import InvalidScientificProblem
+from .participant import ParticipantBinding, ParticipantBlueprint
 from ..scientific.fields import MeshSupport, read_mesh_support
 from ..scientific.multiphysics import (
     CoupledConservation,
