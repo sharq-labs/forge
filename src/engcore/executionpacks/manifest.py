@@ -13,7 +13,8 @@ from .errors import InvalidExecutionPackManifest
 
 EXECUTION_PACK_SCHEMA_V1 = "forge.execution_pack/1"
 EXECUTION_PACK_SCHEMA = "forge.execution_pack/2"
-EXECUTION_PACK_API = "forge.executionpack_api/1"
+EXECUTION_PACK_API_V1 = "forge.executionpack_api/1"
+EXECUTION_PACK_API = "forge.executionpack_api/2"
 
 _ID = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
 
@@ -297,6 +298,7 @@ class ExecutionPackManifest:
 
 __all__ = [
     "EXECUTION_PACK_API",
+    "EXECUTION_PACK_API_V1",
     "EXECUTION_PACK_SCHEMA",
     "EXECUTION_PACK_SCHEMA_V1",
     "CompositionDependency",
