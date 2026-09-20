@@ -125,6 +125,24 @@ class ParticipantFactoryCoverage:
             "available": self.available,
         }
 
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, object],
+    ) -> "ParticipantFactoryCoverage":
+        return cls(
+            participant_id=str(payload["participant_id"]),
+            model_id=str(payload["model_id"]),
+            model_version=str(payload["model_version"]),
+            realization_id=str(payload["realization_id"]),
+            realization_version=str(payload["realization_version"]),
+            solver_id=str(payload["solver_id"]),
+            solver_version=str(payload["solver_version"]),
+            adapter_id=str(payload["adapter_id"]),
+            adapter_version=str(payload["adapter_version"]),
+            available=bool(payload["available"]),
+        )
+
 
 class ParticipantFactoryRegistry:
     """Exact execution factory registry for PhysicsGraph participants."""
