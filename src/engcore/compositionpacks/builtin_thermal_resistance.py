@@ -34,11 +34,14 @@ from ..scientific.multiphysics import (
     PortRef,
 )
 from ..scientific.units.quantity import Quantity
+from .applicability import (
+    ApplicabilityPredicate,
+    ApplicabilityPredicateKind,
+)
 from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
 from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
-    SystemEvidenceRequirement,
     SystemValidationResult,
     UncertaintyCompositionRule,
     UncertaintyCompositionStrategy,
@@ -459,14 +462,18 @@ APPLICABILITY_RULES = (
     SystemApplicabilityRule(
         blueprint_id=BLUEPRINT_ID,
         rule_id="thermal_resistance.one_way_state_transfer",
-        assumptions=(
-            (
-                "the thermal body's final temperature is the conductor "
-                "temperature used by the linear-TCR relation"
-            ),
-            (
-                "external thermal and material parameters are constant over "
-                "the requested simulation horizon"
+        predicates=(
+            ApplicabilityPredicate(
+                predicate_id=(
+                    "thermal_resistance.static_external_inputs"
+                ),
+                kind=(
+                    ApplicabilityPredicateKind.STATIC_EXTERNAL_INPUTS
+                ),
+                description=(
+                    "This composition is admitted only when external "
+                    "parameters are constant over the run horizon."
+                ),
             ),
         ),
         required_evidence=(),
