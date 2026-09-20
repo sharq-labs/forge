@@ -30,7 +30,7 @@ from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity
 from ..results.data_reference import ScientificDataReference
 from .definition import FieldDefinition
-from .mesh import StructuredMesh
+from .support import MeshSupport
 
 FIELD_SUMMARY_SCHEMA = schema_string("field_summary")
 #: Bumped to /2 by `magnitude_maximum`, and written only when a summary carries
@@ -270,7 +270,7 @@ class FieldRecord:
         object.__setattr__(self, "summary_verified_against", digest)
 
     # ---- checks a consumer makes -------------------------------------------
-    def verify_against(self, mesh: StructuredMesh) -> None:
+    def verify_against(self, mesh: MeshSupport) -> None:
         """Refuse this record against a support it does not describe."""
         self.definition.require_support(mesh)
         if mesh.fingerprint() != self.mesh_fingerprint:

@@ -42,6 +42,7 @@ from .errors import (
     BulkDataIntegrityError,
     BulkDataUnavailable,
 )
+from .mesh import UnstructuredMeshData
 from .resolver import BulkDataResolver, relocate
 from .store import (
     BulkDataStore,
@@ -59,6 +60,7 @@ __all__ = [
     "BulkDataUnavailable",
     "FilesystemBulkStore",
     "InMemoryBulkStore",
+    "UnstructuredMeshData",
     "capture_bulk",
     "relocate",
     "store_values",
