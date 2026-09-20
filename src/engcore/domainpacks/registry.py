@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Iterator
 
 from ..scientific.capabilities import ScientificCapability
@@ -58,6 +60,25 @@ class RegisteredDomainPack:
     @property
     def manifest(self):
         return self.provider.manifest
+
+    @property
+    def authority_digest(self) -> str:
+        payload = {
+            "manifest_digest": self.manifest.digest,
+            "implementation_digest": self.implementation_digest,
+            "semantic_authority_digest": (
+                None
+                if self.semantic_authority is None
+                else self.semantic_authority.digest
+            ),
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 class DomainPackRegistry:
