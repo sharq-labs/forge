@@ -141,6 +141,56 @@ class BlueprintRef:
 
 
 @dataclass(frozen=True)
+class PolicyTemplateRef:
+    template_id: str
+    version: str
+    digest: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "template_id", _id(self.template_id, "template_id")
+        )
+        object.__setattr__(self, "version", _text(self.version, "version"))
+        object.__setattr__(self, "digest", _sha(self.digest, "digest"))
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return self.template_id, self.version
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "template_id": self.template_id,
+            "version": self.version,
+            "digest": self.digest,
+        }
+
+    @classmethod
+    def from_template(cls, template: Any) -> "PolicyTemplateRef":
+        payload = template.to_dict()
+        digest = hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        return cls(template.template_id, template.version, digest)
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PolicyTemplateRef":
+        if set(payload) != {"template_id", "version", "digest"}:
+            raise InvalidCompositionPackManifest(
+                "policy template ref shape mismatch"
+            )
+        return cls(
+            payload["template_id"],
+            payload["version"],
+            payload["digest"],
+        )
+
+
+@dataclass(frozen=True)
 class CompositionPackManifest:
     pack_id: str
     pack_version: str
@@ -148,6 +198,8 @@ class CompositionPackManifest:
     requires_domain_packs: tuple[DomainPackDependency, ...]
     capabilities: tuple[str, ...]
     blueprints: tuple[BlueprintRef, ...]
+    coupling_policies: tuple[PolicyTemplateRef, ...]
+    system_contract_digest: str
     validation_protocols: tuple[ArtifactRef, ...] = ()
 
     def __post_init__(self) -> None:
@@ -195,6 +247,22 @@ class CompositionPackManifest:
             )
         object.__setattr__(self, "blueprints", blueprints)
 
+        policies = tuple(sorted(self.coupling_policies))
+        if not policies:
+            raise InvalidCompositionPackManifest(
+                "CompositionPack requires at least one coupling policy template"
+            )
+        if len({item.key for item in policies}) != len(policies):
+            raise InvalidCompositionPackManifest(
+                "CompositionPack contains duplicate coupling policy identities"
+            )
+        object.__setattr__(self, "coupling_policies", policies)
+        object.__setattr__(
+            self,
+            "system_contract_digest",
+            _sha(self.system_contract_digest, "system_contract_digest"),
+        )
+
         protocols = tuple(sorted(self.validation_protocols))
         if len(set(protocols)) != len(protocols):
             raise InvalidCompositionPackManifest(
@@ -217,6 +285,10 @@ class CompositionPackManifest:
             ],
             "capabilities": list(self.capabilities),
             "blueprints": [item.to_dict() for item in self.blueprints],
+            "coupling_policies": [
+                item.to_dict() for item in self.coupling_policies
+            ],
+            "system_contract_digest": self.system_contract_digest,
             "validation_protocols": [
                 item.to_dict() for item in self.validation_protocols
             ],
@@ -247,6 +319,8 @@ class CompositionPackManifest:
             "requires_domain_packs",
             "capabilities",
             "blueprints",
+            "coupling_policies",
+            "system_contract_digest",
             "validation_protocols",
         }
         if set(payload) != expected:
@@ -266,6 +340,11 @@ class CompositionPackManifest:
                 BlueprintRef.from_dict(item)
                 for item in payload["blueprints"]
             ),
+            coupling_policies=tuple(
+                PolicyTemplateRef.from_dict(item)
+                for item in payload["coupling_policies"]
+            ),
+            system_contract_digest=payload["system_contract_digest"],
             validation_protocols=tuple(
                 ArtifactRef.from_dict(item)
                 for item in payload["validation_protocols"]
@@ -274,9 +353,10 @@ class CompositionPackManifest:
 
 
 __all__ = [
-    "BLUEPRINT_REF_SCHEMA" if False else "BlueprintRef",
+    "BlueprintRef",
     "COMPOSITION_PACK_API",
     "COMPOSITION_PACK_SCHEMA",
     "CompositionPackManifest",
     "DomainPackDependency",
+    "PolicyTemplateRef",
 ]
