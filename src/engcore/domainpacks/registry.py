@@ -7,6 +7,11 @@ from typing import Iterator
 
 from ..scientific.capabilities import ScientificCapability
 from .errors import DuplicateDomainPack, DomainPackNotEnabled, DomainPackNotFound
+from .frozen import (
+    ArtifactImplementationFingerprint,
+    FrozenDomainPackProvider,
+    freeze_domain_pack_provider,
+)
 from .provider import DomainPackProvider
 from .validation import DomainPackValidationReport, validate_domain_pack
 
@@ -40,9 +45,17 @@ class PackOrigin:
 
 @dataclass(frozen=True)
 class RegisteredDomainPack:
-    provider: DomainPackProvider
+    provider: FrozenDomainPackProvider
     validation: DomainPackValidationReport
     origin: PackOrigin
+    implementation_fingerprints: tuple[
+        ArtifactImplementationFingerprint, ...
+    ]
+    implementation_digest: str
+
+    @property
+    def manifest(self):
+        return self.provider.manifest
 
 
 class DomainPackRegistry:
@@ -58,17 +71,22 @@ class DomainPackRegistry:
         *,
         origin: PackOrigin | None = None,
     ) -> RegisteredDomainPack:
-        report = validate_domain_pack(provider)
+        frozen = freeze_domain_pack_provider(provider)
+        report = validate_domain_pack(frozen.provider)
         report.require_valid()
-        key = provider.manifest.key
+        key = frozen.manifest.key
         if key in self._packs:
             raise DuplicateDomainPack(
                 f"domain pack {key[0]}@{key[1]} is already registered"
             )
         registration = RegisteredDomainPack(
-            provider=provider,
+            provider=frozen.provider,
             validation=report,
             origin=origin or PackOrigin.builtin(),
+            implementation_fingerprints=(
+                frozen.implementation_fingerprints
+            ),
+            implementation_digest=frozen.implementation_digest,
         )
         self._packs[key] = registration
         return registration
@@ -121,7 +139,7 @@ class DomainPackRegistry:
         wanted = ScientificCapability.coerce(capability).identifier
         registrations = self.list(enabled_only=enabled_only)
         return tuple(
-            item for item in registrations if wanted in item.provider.manifest.capabilities
+            item for item in registrations if wanted in item.manifest.capabilities
         )
 
     def __len__(self) -> int:
