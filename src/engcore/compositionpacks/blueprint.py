@@ -302,6 +302,23 @@ class CouplingPolicyTemplate:
             raise InvalidScientificProblem(
                 "template fail_on_nonconvergence must be boolean"
             )
+        if self.scheme is CouplingScheme.EXPLICIT:
+            if self.max_iterations != 1:
+                raise InvalidScientificProblem(
+                    "explicit coupling policy executes exactly one iteration"
+                )
+            if self.criteria:
+                raise InvalidScientificProblem(
+                    "explicit coupling policy cannot declare convergence criteria"
+                )
+            if self.relaxation.kind.value != "none":
+                raise InvalidScientificProblem(
+                    "explicit coupling policy cannot declare relaxation"
+                )
+        elif not self.criteria:
+            raise InvalidScientificProblem(
+                "implicit coupling policy requires convergence criteria"
+            )
 
     @property
     def key(self) -> tuple[str, str]:
