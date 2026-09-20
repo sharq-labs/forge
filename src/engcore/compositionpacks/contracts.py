@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+import hashlib
+import json
+from typing import Any, Iterable
 
 from ..domainpacks.manifest import ArtifactRef
 from .errors import InvalidCompositionPackProvider
@@ -143,9 +145,57 @@ class ProvidedCompositionValidation:
             )
 
 
+def system_contract_digest(
+    *,
+    port_semantics: Iterable[Any],
+    coupling_semantics: Iterable[Any],
+    applicability_rules: Iterable[SystemApplicabilityRule],
+    uncertainty_rules: Iterable[UncertaintyCompositionRule],
+) -> str:
+    payload = {
+        "port_semantics": [
+            item.to_dict()
+            for item in sorted(
+                tuple(port_semantics),
+                key=lambda item: item.key,
+            )
+        ],
+        "coupling_semantics": [
+            item.to_dict()
+            for item in sorted(
+                tuple(coupling_semantics),
+                key=lambda item: item.key,
+            )
+        ],
+        "applicability_rules": [
+            item.to_dict()
+            for item in sorted(
+                tuple(applicability_rules),
+                key=lambda item: item.key,
+            )
+        ],
+        "uncertainty_rules": [
+            item.to_dict()
+            for item in sorted(
+                tuple(uncertainty_rules),
+                key=lambda item: item.key,
+            )
+        ],
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
 __all__ = [
     "ProvidedCompositionValidation",
     "SystemApplicabilityRule",
     "UncertaintyCompositionRule",
     "UncertaintyCompositionStrategy",
+    "system_contract_digest",
 ]
