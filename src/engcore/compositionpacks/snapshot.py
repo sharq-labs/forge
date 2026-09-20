@@ -11,7 +11,8 @@ from ..scientific.serialization import require_schema_any
 from .registry import RegisteredCompositionPack
 
 COMPOSITION_SNAPSHOT_SCHEMA_V1 = "forge.composition_pack_snapshot/1"
-COMPOSITION_SNAPSHOT_SCHEMA = "forge.composition_pack_snapshot/2"
+COMPOSITION_SNAPSHOT_SCHEMA_V2 = "forge.composition_pack_snapshot/2"
+COMPOSITION_SNAPSHOT_SCHEMA = "forge.composition_pack_snapshot/3"
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class CompositionPackSnapshot:
     authority_digest: str
     uncertainty_implementations: tuple[dict[str, str], ...] = ()
     verification_implementations: tuple[dict[str, str], ...] = ()
+    semantic_authority: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -79,6 +81,7 @@ class CompositionPackSnapshot:
             "verification_implementations": list(
                 self.verification_implementations
             ),
+            "semantic_authority": self.semantic_authority,
             "dependency_authority_digests": [
                 {
                     "pack_id": pack_id,
@@ -111,6 +114,7 @@ class CompositionPackSnapshot:
             payload,
             (
                 COMPOSITION_SNAPSHOT_SCHEMA_V1,
+                COMPOSITION_SNAPSHOT_SCHEMA_V2,
                 COMPOSITION_SNAPSHOT_SCHEMA,
             ),
         )
@@ -184,6 +188,14 @@ class CompositionPackSnapshot:
                     )
                 )
             ),
+            semantic_authority=(
+                None
+                if schema in (
+                    COMPOSITION_SNAPSHOT_SCHEMA_V1,
+                    COMPOSITION_SNAPSHOT_SCHEMA_V2,
+                )
+                else dict(payload["semantic_authority"])
+            ),
             dependency_authority_digests=deps(
                 payload.get("dependency_authority_digests", ()),
                 "authority_digest",
@@ -238,6 +250,7 @@ def snapshot_composition_pack(
             item.to_dict()
             for item in registration.verification_fingerprints
         ),
+        semantic_authority=registration.semantic_authority.to_dict(),
         dependency_authority_digests=(
             registration.dependency_authority_digests
         ),
@@ -248,6 +261,7 @@ def snapshot_composition_pack(
 __all__ = [
     "COMPOSITION_SNAPSHOT_SCHEMA",
     "COMPOSITION_SNAPSHOT_SCHEMA_V1",
+    "COMPOSITION_SNAPSHOT_SCHEMA_V2",
     "CompositionPackSnapshot",
     "snapshot_composition_pack",
 ]
