@@ -121,6 +121,12 @@ def _optional_records(provider: Any, name: str) -> tuple[Any, ...]:
 def load_multiphysics_extension(
     provider: Any,
 ) -> MultiphysicsPackExtension:
+    warnings.warn(
+        "DomainPack multiphysics extensions are deprecated; migrate topology "
+        "to engcore.compositionpacks and factories to engcore.executionpacks",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     manifest = getattr(provider, "manifest", None)
     if not isinstance(manifest, DomainPackManifest):
         raise InvalidDomainPackProvider(
