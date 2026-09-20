@@ -110,6 +110,43 @@ class MultiphysicsRuntime:
         )
 
     @classmethod
+    def replay_with_factory_registry(
+        cls,
+        record: MultiphysicsRunRecord,
+        registry: ParticipantFactoryRegistry,
+        *,
+        replay_run_id: str,
+        resolver: BulkDataResolver,
+        store: BulkDataStore,
+    ) -> MultiphysicsRunRecord:
+        """Replay a recorded graph using exact registered execution factories."""
+        runtime = cls.from_record_with_factory_registry(
+            record,
+            registry,
+            resolver=resolver,
+            store=store,
+        )
+        return runtime.run(
+            replay_run_id,
+            external_inputs={
+                item.port: item.value
+                for item in record.external_inputs
+            },
+            external_uncertainty={
+                item.port: item.uncertainty
+                for item in record.external_inputs
+            },
+            initial_coupling_values={
+                item.edge_id: item.value
+                for item in record.initial_coupling
+            },
+            initial_coupling_uncertainty={
+                item.edge_id: item.uncertainty
+                for item in record.initial_coupling
+            },
+        )
+
+    @classmethod
     def from_record(
         cls,
         record: MultiphysicsRunRecord,
