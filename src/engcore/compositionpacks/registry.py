@@ -162,15 +162,15 @@ def _validate_blueprint_model_ownership(
             )
 
     for participant in blueprint.participants:
-        key = (participant.model_id, participant.model_version)
-        matched = owners.get(key, [])
-        if len(matched) != 1:
-            raise InvalidCompositionPackProvider(
-                f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
-                f"participant {participant.participant_id!r} references "
-                f"model {key[0]}@{key[1]} with {len(matched)} exact "
-                f"Domain Pack owners: {matched}"
-            )
+        for key in participant.model_keys:
+            matched = owners.get(key, [])
+            if len(matched) != 1:
+                raise InvalidCompositionPackProvider(
+                    f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
+                    f"participant {participant.participant_id!r} references "
+                    f"model {key[0]}@{key[1]} with {len(matched)} exact "
+                    f"Domain Pack owners: {matched}"
+                )
 
 
 def _validate_port_and_edge_semantics(
