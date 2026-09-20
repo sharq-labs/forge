@@ -7,6 +7,7 @@ from typing import Iterator
 
 from ..scientific.capabilities import ScientificCapability
 from .errors import DuplicateDomainPack, DomainPackNotEnabled, DomainPackNotFound
+from .authority import SemanticAuthoritySnapshot, bind_semantic_authority
 from .frozen import (
     ArtifactImplementationFingerprint,
     FrozenDomainPackProvider,
@@ -52,6 +53,7 @@ class RegisteredDomainPack:
         ArtifactImplementationFingerprint, ...
     ]
     implementation_digest: str
+    semantic_authority: SemanticAuthoritySnapshot | None = None
 
     @property
     def manifest(self):
@@ -71,6 +73,10 @@ class DomainPackRegistry:
         *,
         origin: PackOrigin | None = None,
     ) -> RegisteredDomainPack:
+        semantic_authority = bind_semantic_authority(
+            provider,
+            provider.manifest,
+        )
         frozen = freeze_domain_pack_provider(provider)
         report = validate_domain_pack(frozen.provider)
         report.require_valid()
@@ -87,6 +93,7 @@ class DomainPackRegistry:
                 frozen.implementation_fingerprints
             ),
             implementation_digest=frozen.implementation_digest,
+            semantic_authority=semantic_authority,
         )
         self._packs[key] = registration
         return registration
