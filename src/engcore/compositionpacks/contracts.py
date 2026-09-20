@@ -170,6 +170,44 @@ class UncertaintyCompositionRule:
 
 
 @dataclass(frozen=True)
+class SystemValidationResult:
+    valid: bool
+    findings: tuple[str, ...] = ()
+    evidence: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.valid, bool):
+            raise InvalidCompositionPackProvider(
+                "system validation result valid must be boolean"
+            )
+        object.__setattr__(
+            self,
+            "findings",
+            tuple(
+                str(item).strip()
+                for item in self.findings
+                if str(item).strip()
+            ),
+        )
+        object.__setattr__(
+            self,
+            "evidence",
+            tuple(
+                str(item).strip()
+                for item in self.evidence
+                if str(item).strip()
+            ),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "valid": self.valid,
+            "findings": list(self.findings),
+            "evidence": list(self.evidence),
+        }
+
+
+@dataclass(frozen=True)
 class ProvidedCompositionValidation:
     blueprint_id: str
     ref: ArtifactRef
@@ -251,6 +289,7 @@ __all__ = [
     "ProvidedCompositionValidation",
     "SystemApplicabilityRule",
     "SystemEvidenceRequirement",
+    "SystemValidationResult",
     "UncertaintyCompositionRule",
     "UncertaintyCompositionStrategy",
     "system_contract_digest",
