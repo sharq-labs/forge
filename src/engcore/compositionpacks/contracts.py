@@ -10,9 +10,14 @@ import re
 from typing import Any, Iterable
 
 from ..domainpacks.manifest import ArtifactRef
+from ..scientific.serialization import require_schema, schema_string
 from ..sria.uncertainty import UncertaintyChannel
 from .errors import InvalidCompositionPackProvider
 
+
+SYSTEM_VALIDATION_RESULT_SCHEMA = schema_string(
+    "composition_system_validation_result"
+)
 
 _PATH_SEGMENT = r"[a-zA-Z_][a-zA-Z0-9_]*(?:\[\d+\])?"
 _PATH = re.compile(rf"^{_PATH_SEGMENT}(?:\.{_PATH_SEGMENT})*$")
@@ -201,10 +206,23 @@ class SystemValidationResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema": SYSTEM_VALIDATION_RESULT_SCHEMA,
             "valid": self.valid,
             "findings": list(self.findings),
             "evidence": list(self.evidence),
         }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: dict[str, Any],
+    ) -> "SystemValidationResult":
+        require_schema(payload, SYSTEM_VALIDATION_RESULT_SCHEMA)
+        return cls(
+            valid=payload["valid"],
+            findings=tuple(payload.get("findings", ())),
+            evidence=tuple(payload.get("evidence", ())),
+        )
 
 
 @dataclass(frozen=True)
@@ -289,6 +307,7 @@ __all__ = [
     "ProvidedCompositionValidation",
     "SystemApplicabilityRule",
     "SystemEvidenceRequirement",
+    "SYSTEM_VALIDATION_RESULT_SCHEMA",
     "SystemValidationResult",
     "UncertaintyCompositionRule",
     "UncertaintyCompositionStrategy",
