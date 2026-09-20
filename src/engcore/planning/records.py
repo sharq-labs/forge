@@ -59,6 +59,9 @@ class GapKind(str, Enum):
     REALIZATION_REGISTRY_MISSING = "realization_registry_missing"
     REALIZATION_NOT_FOUND = "realization_not_found"
     REALIZATION_AMBIGUOUS = "realization_ambiguous"
+    REALIZATION_CAPABILITY_UNSATISFIED = (
+        "realization_capability_unsatisfied"
+    )
     SOLVER_REGISTRY_MISSING = "solver_registry_missing"
     SOLVER_NOT_FOUND = "solver_not_found"
     SOLVER_AMBIGUOUS = "solver_ambiguous"
