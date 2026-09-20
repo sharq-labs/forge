@@ -49,7 +49,8 @@ from ..scientific.verification.route import (
 from ..scientific.verification.run_record import VerificationRunRecord
 
 AUTHORIZED_RUN_SCHEMA_V1 = schema_string("authorized_multiphysics_run")
-AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run", 2)
+AUTHORIZED_RUN_SCHEMA_V2 = schema_string("authorized_multiphysics_run", 2)
+AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run", 3)
 
 
 @dataclass(frozen=True)
@@ -323,10 +324,17 @@ class AuthorizedMultiphysicsRun:
     ) -> "AuthorizedMultiphysicsRun":
         schema = require_schema_any(
             payload,
-            (AUTHORIZED_RUN_SCHEMA_V1, AUTHORIZED_RUN_SCHEMA),
+            (
+                AUTHORIZED_RUN_SCHEMA_V1,
+                AUTHORIZED_RUN_SCHEMA_V2,
+                AUTHORIZED_RUN_SCHEMA,
+            ),
         )
         supplied = payload.get("record_digest")
-        if schema == AUTHORIZED_RUN_SCHEMA_V1:
+        if schema in (
+            AUTHORIZED_RUN_SCHEMA_V1,
+            AUTHORIZED_RUN_SCHEMA_V2,
+        ):
             raw = {
                 key: value
                 for key, value in payload.items()
@@ -729,6 +737,7 @@ def execute_authorized_graph_plan(
 __all__ = [
     "AUTHORIZED_RUN_SCHEMA",
     "AUTHORIZED_RUN_SCHEMA_V1",
+    "AUTHORIZED_RUN_SCHEMA_V2",
     "AuthorizedMultiphysicsRun",
     "AuthorizedSystemUncertainty",
     "AuthorizedSystemValidation",
