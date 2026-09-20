@@ -188,7 +188,7 @@ class CompositionAnalysis:
         cls,
         payload: Mapping[str, Any],
     ) -> "CompositionAnalysis":
-        require_schema_any(
+        version = require_schema_any(
             payload,
             (
                 COMPOSITION_ANALYSIS_SCHEMA_V1,
@@ -214,10 +214,26 @@ class CompositionAnalysis:
             ),
         )
         supplied = payload.get("record_fingerprint")
-        if supplied is not None and supplied != made.fingerprint:
-            raise ValueError(
-                "composition analysis fingerprint disagrees with its content"
-            )
+        if supplied is not None:
+            if version == COMPOSITION_ANALYSIS_SCHEMA_V1:
+                raw_payload = {
+                    key: value
+                    for key, value in payload.items()
+                    if key != "record_fingerprint"
+                }
+                expected = hashlib.sha256(
+                    json.dumps(
+                        raw_payload,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()
+            else:
+                expected = made.fingerprint
+            if supplied != expected:
+                raise ValueError(
+                    "composition analysis fingerprint disagrees with its content"
+                )
         return made
 
 
