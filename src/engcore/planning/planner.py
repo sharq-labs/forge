@@ -301,7 +301,7 @@ def _composition_graph_plan(
             )
         )
 
-    applicability_rules = tuple
+    applicability_rules = tuple(
         item
         for item in registration.applicability_rules
         if item.blueprint_id == blueprint.blueprint_id
