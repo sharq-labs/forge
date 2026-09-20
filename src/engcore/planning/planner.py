@@ -254,6 +254,69 @@ def _composition_graph_plan(
         graph_id=f"planning.{capability_id}",
     )
 
+    applicability_rules = tuple(
+        item
+        for item in registration.applicability_rules
+        if item.blueprint_id == blueprint.blueprint_id
+    )
+    fact_paths = set(intent.fact_map)
+    missing_system_evidence = sorted(
+        {
+            requirement.path
+            for rule in applicability_rules
+            for requirement in rule.required_evidence
+            if requirement.path not in fact_paths
+        }
+    )
+    if missing_system_evidence:
+        gaps.append(
+            PlanningGap(
+                GapKind.SYSTEM_APPLICABILITY_EVIDENCE_MISSING,
+                blueprint.blueprint_id,
+                (
+                    "system-level applicability requires canonical intent "
+                    f"facts at {missing_system_evidence}"
+                ),
+                True,
+            )
+        )
+
+    uncertainty_rule = next(
+        item
+        for item in registration.uncertainty_rules
+        if item.blueprint_id == blueprint.blueprint_id
+    )
+    required_uncertainty = set(intent.context.required_uncertainty)
+    if required_uncertainty:
+        declared_channels = set(uncertainty_rule.channels)
+        missing_channels = sorted(
+            (
+                item.value
+                for item in required_uncertainty - declared_channels
+            )
+        )
+        if (
+            uncertainty_rule.strategy.value == "unknown"
+            or missing_channels
+        ):
+            detail = (
+                "system uncertainty composition strategy is explicitly "
+                "UNKNOWN"
+                if uncertainty_rule.strategy.value == "unknown"
+                else (
+                    "system uncertainty composition does not cover "
+                    f"required channels {missing_channels}"
+                )
+            )
+            gaps.append(
+                PlanningGap(
+                    GapKind.SYSTEM_UNCERTAINTY_COMPOSITION_UNAVAILABLE,
+                    blueprint.blueprint_id,
+                    detail,
+                    True,
+                )
+            )
+
     policy_candidates = tuple(
         item
         for item in registration.coupling_policy_templates
