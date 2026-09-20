@@ -14,10 +14,12 @@ from dataclasses import dataclass
 import re
 from typing import Any, Mapping
 
-from .errors import ProblemPayloadError
+from .errors import MissingUnitError, ProblemPayloadError, WrongDimensionError
 from .battery import build_battery_case
 from .problem import build_electrothermal_system
 from .systems import system
+from ..scientific.errors import UnitCompatibilityError
+from ..scientific.units.quantity import Quantity
 
 __all__ = ["INTENT_SCHEMA", "compile_engineering_intent"]
 
@@ -231,6 +233,44 @@ def _set_path(case: dict[str, Any], path: str, value: Any) -> None:
     node[parts[-1]] = value
 
 
+def _validate_quantity_grounding(
+    path: str,
+    value: Any,
+    description_record: Any,
+) -> None:
+    """Reject unparseable or dimensionally wrong quantities immediately.
+
+    The full system builder remains the final authority on payload shape and
+    scientific applicability.  This guard closes the earlier partial-intent
+    hole where a bad unit was presented as a successful extraction until all
+    other required fields happened to be supplied.
+    """
+
+    canonical_path = path.replace("stages[0]", "stages[]")
+    try:
+        field = description_record.field(canonical_path)
+    except KeyError:
+        return
+    if field.kind not in {"quantity", "fraction"}:
+        return
+    if not isinstance(value, str):
+        raise MissingUnitError(
+            f"{path}: expected a unit-bearing quantity string, got {value!r}"
+        )
+    try:
+        quantity = Quantity.parse(value)
+    except (UnitCompatibilityError, TypeError, ValueError) as exc:
+        raise MissingUnitError(
+            f"{path}: could not parse a unit-bearing quantity from {value!r}"
+        ) from exc
+    expected = field.unit_exemplar
+    if expected is not None and not quantity.is_compatible_with(expected):
+        raise WrongDimensionError(
+            f"{path}: got {quantity.units!r} [{quantity.dimensionality}], "
+            f"expected {expected!r} [{field.dimension}]"
+        )
+
+
 def compile_engineering_intent(
     description: str,
     declarations: Mapping[str, Any] | None = None,
@@ -299,6 +339,19 @@ def compile_engineering_intent(
             "span": None,
             "text": None,
         })
+
+    grounding_diagnostics = []
+    for item in extracted:
+        try:
+            _validate_quantity_grounding(
+                item["path"], item["value"], description_record
+            )
+        except ProblemPayloadError as exc:
+            grounding_diagnostics.append({
+                "type": type(exc).__name__,
+                "path": item["path"],
+                "message": str(exc),
+            })
 
     # A generated identifier carries no physical claim, but it is still made
     # visible instead of pretending the user supplied it.
@@ -391,6 +444,10 @@ def compile_engineering_intent(
         ],
         "case": None,
     }
+    if grounding_diagnostics:
+        result["status"] = "invalid"
+        result["diagnostics"] = grounding_diagnostics
+        return result
     if questions:
         return result
 

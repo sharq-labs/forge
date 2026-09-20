@@ -17,6 +17,7 @@ from engcore.planning import (
     EngineeringComponent,
     EngineeringIntent,
     FactRole,
+    FidelityRequest,
     IntentFact,
     IntentQuantityOfInterest,
     PlannerPolicy,
@@ -67,6 +68,32 @@ def _intent(*, omit=(), overrides=None):
             Quantity(0, "s"), Quantity(10, "s")
         ),
     )
+
+
+def test_production_fidelity_ladder_is_registered_and_selects_feedback():
+    intent = _intent()
+    intent = EngineeringIntent(
+        intent.statement,
+        intent.context,
+        intent.components,
+        intent.interfaces,
+        intent.facts,
+        intent.qois,
+        simulation_horizon=intent.simulation_horizon,
+        fidelity=FidelityRequest(
+            "system.electrothermal.coupling",
+            "1",
+            minimum_rung="one_way",
+            preferred_rung="feedback",
+        ),
+    )
+
+    planning = _plan(intent)
+
+    assert planning.status is PlanningStatus.READY
+    assert planning.fidelity is not None
+    assert planning.fidelity.selected_rung == "feedback"
+    assert planning.fidelity.available_rungs == ("feedback",)
 
 
 def _plan(intent):
