@@ -12,6 +12,7 @@ from typing import Any, Iterable
 from ..domainpacks.manifest import ArtifactRef
 from ..scientific.serialization import require_schema, schema_string
 from ..sria.uncertainty import UncertaintyChannel
+from .applicability import ApplicabilityPredicate
 from .errors import InvalidCompositionPackProvider
 
 
@@ -52,7 +53,7 @@ class SystemEvidenceRequirement:
 class SystemApplicabilityRule:
     blueprint_id: str
     rule_id: str
-    assumptions: tuple[str, ...]
+    predicates: tuple[ApplicabilityPredicate, ...]
     required_evidence: tuple[SystemEvidenceRequirement, ...]
     description: str = ""
 
@@ -64,10 +65,23 @@ class SystemApplicabilityRule:
                     f"system applicability rule requires {label}"
                 )
             object.__setattr__(self, label, value)
+        predicates = tuple(self.predicates)
+        if any(
+            not isinstance(item, ApplicabilityPredicate)
+            for item in predicates
+        ):
+            raise InvalidCompositionPackProvider(
+                "system applicability predicates must be ApplicabilityPredicate records"
+            )
+        ids = [item.predicate_id for item in predicates]
+        if len(ids) != len(set(ids)):
+            raise InvalidCompositionPackProvider(
+                "system applicability contains duplicate predicate ids"
+            )
         object.__setattr__(
             self,
-            "assumptions",
-            tuple(sorted({str(item).strip() for item in self.assumptions if str(item).strip()})),
+            "predicates",
+            tuple(sorted(predicates, key=lambda item: item.predicate_id)),
         )
         evidence = tuple(self.required_evidence)
         if any(
@@ -96,7 +110,9 @@ class SystemApplicabilityRule:
         return {
             "blueprint_id": self.blueprint_id,
             "rule_id": self.rule_id,
-            "assumptions": list(self.assumptions),
+            "predicates": [
+                item.to_dict() for item in self.predicates
+            ],
             "required_evidence": [
                 item.to_dict() for item in self.required_evidence
             ],
