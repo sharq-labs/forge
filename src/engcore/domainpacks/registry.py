@@ -82,6 +82,23 @@ class DomainPackRegistry:
             provider,
             manifest=manifest,
         )
+        return self.register_frozen(
+            frozen,
+            semantic_authority=semantic_authority,
+            origin=origin,
+        )
+
+    def register_frozen(
+        self,
+        frozen,
+        *,
+        semantic_authority: SemanticAuthoritySnapshot | None = None,
+        origin: PackOrigin | None = None,
+    ) -> RegisteredDomainPack:
+        from .frozen import FrozenDomainPack
+
+        if not isinstance(frozen, FrozenDomainPack):
+            raise TypeError("register_frozen requires FrozenDomainPack")
         report = validate_domain_pack(frozen.provider)
         report.require_valid()
         key = frozen.manifest.key
