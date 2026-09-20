@@ -14,6 +14,10 @@ from ..domainpacks.frozen import (
 )
 from ..domainpacks.registry import DomainPackRegistry
 from ..scientific.multiphysics import PortDirection
+from .authority import (
+    CompositionSemanticAuthoritySnapshot,
+    bind_composition_semantic_authority,
+)
 from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
 from .contracts import (
     ProvidedCompositionValidation,
@@ -65,6 +69,7 @@ class RegisteredCompositionPack:
     verification_fingerprints: tuple[
         ArtifactImplementationFingerprint, ...
     ]
+    semantic_authority: CompositionSemanticAuthoritySnapshot
     dependency_authority_digests: tuple[
         tuple[str, str, str], ...
     ]
@@ -111,6 +116,7 @@ class RegisteredCompositionPack:
                 item.to_dict()
                 for item in self.verification_fingerprints
             ],
+            "semantic_authority": self.semantic_authority.to_dict(),
         }
         return hashlib.sha256(
             json.dumps(
@@ -802,6 +808,14 @@ class CompositionPackRegistry:
                 )
             )
 
+        semantic_authority = bind_composition_semantic_authority(
+            manifest=manifest,
+            claims=claims,
+            blueprints=blueprints,
+            port_semantics=ports,
+            coupling_semantics=couplings,
+        )
+
         registration = RegisteredCompositionPack(
             manifest=manifest,
             claim_capabilities=tuple(
@@ -843,6 +857,7 @@ class CompositionPackRegistry:
             verification_fingerprints=tuple(
                 sorted(verification_fingerprints)
             ),
+            semantic_authority=semantic_authority,
             dependency_authority_digests=tuple(
                 sorted(
                     (
