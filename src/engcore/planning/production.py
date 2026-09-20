@@ -151,6 +151,7 @@ def production_planning_registries() -> PlanningRegistries:
         participant_factories=executions.participant_factory_registry(
             enabled_only=True
         ),
+        execution_packs=executions,
         verification=VerificationPlanningRegistry(),
         fidelity_ladders=(),
     )
