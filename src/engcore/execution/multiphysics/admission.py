@@ -8,8 +8,11 @@ participant can be materialized by an exact execution factory.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+import hashlib
+import json
+from typing import Any, Mapping
 
+from ...scientific.serialization import require_schema, schema_string
 from ...scientific.multiphysics import (
     CouplingPlan,
     GraphInterfaceManifest,
@@ -17,6 +20,10 @@ from ...scientific.multiphysics import (
     graph_interface_manifest,
 )
 from .factory import ParticipantFactoryCoverage, ParticipantFactoryRegistry
+
+MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA = schema_string(
+    "multiphysics_execution_admission"
+)
 
 
 @dataclass(frozen=True)
@@ -41,6 +48,7 @@ class MultiphysicsExecutionAdmission:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema": MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA,
             "graph_interface": self.graph_interface.to_dict(),
             "plan_id": self.plan_id,
             "plan_fingerprint": self.plan_fingerprint,
@@ -50,7 +58,54 @@ class MultiphysicsExecutionAdmission:
             ],
             "executable": self.executable,
             "missing_participants": list(self.missing_participants),
+            "record_fingerprint": self.fingerprint,
         }
+
+    @property
+    def fingerprint(self) -> str:
+        payload = {
+            key: value
+            for key, value in self.to_dict().items()
+            if key != "record_fingerprint"
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "MultiphysicsExecutionAdmission":
+        require_schema(
+            payload,
+            MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA,
+        )
+        made = cls(
+            graph_interface=GraphInterfaceManifest.from_dict(
+                payload["graph_interface"]
+            ),
+            plan_id=payload["plan_id"],
+            plan_fingerprint=payload["plan_fingerprint"],
+            factory_registry_fingerprint=payload[
+                "factory_registry_fingerprint"
+            ],
+            factory_coverage=tuple(
+                ParticipantFactoryCoverage.from_dict(item)
+                for item in payload.get("factory_coverage", ())
+            ),
+        )
+        supplied = payload.get("record_fingerprint")
+        if supplied is not None and supplied != made.fingerprint:
+            raise ValueError(
+                "multiphysics execution admission fingerprint "
+                "disagrees with its content"
+            )
+        return made
 
 
 def admit_multiphysics_execution(
@@ -82,6 +137,7 @@ def admit_multiphysics_execution(
 
 
 __all__ = [
+    "MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA",
     "MultiphysicsExecutionAdmission",
     "admit_multiphysics_execution",
 ]
