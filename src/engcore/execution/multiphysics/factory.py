@@ -110,7 +110,7 @@ class ParticipantFactoryDeclaration:
             self.adapter_version,
         )
 
-    def identity_dict(self) -> dict[str, str]:
+    def identity_dict(self) -> dict[str, object]:
         return {
             "model_id": self.model_id,
             "model_version": self.model_version,
