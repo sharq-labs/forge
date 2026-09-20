@@ -32,6 +32,7 @@ from .intent import (
     InterfaceExchange,
     ObjectiveKind,
     QOIConstraint,
+    SimulationHorizon,
 )
 from .nl import (
     FORBIDDEN_PLANNER_AUTHORITY_FIELDS,
@@ -108,6 +109,7 @@ __all__ = [
     "QOIPlan",
     "ResourceEstimate",
     "ScientificPlanningRecord",
+    "SimulationHorizon",
     "VerificationPlanningOption",
     "VerificationPlanningRegistry",
     "clarification_questions",
