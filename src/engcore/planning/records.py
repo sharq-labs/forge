@@ -528,6 +528,49 @@ class GraphPlan:
                 str(getattr(self, label)).strip(),
             )
 
+        composition_group = (
+            self.authority_pack_id,
+            self.authority_pack_version,
+            self.authority_pack_digest,
+        )
+        if any(composition_group) and not all(composition_group):
+            raise ValueError(
+                "graph plan composition authority id/version/digest must be "
+                "present together"
+            )
+        execution_group = (
+            self.execution_pack_id,
+            self.execution_pack_version,
+            self.execution_pack_digest,
+            self.execution_registry_fingerprint,
+        )
+        if any(execution_group) and not all(execution_group):
+            raise ValueError(
+                "graph plan execution authority id/version/digest/fingerprint "
+                "must be present together"
+            )
+        policy_group = (
+            self.coupling_policy_template_id,
+            self.coupling_policy_template_version,
+        )
+        if any(policy_group) and not all(policy_group):
+            raise ValueError(
+                "graph plan coupling policy id/version must be present together"
+            )
+        for label in (
+            "authority_pack_digest",
+            "execution_pack_digest",
+            "execution_registry_fingerprint",
+        ):
+            digest = getattr(self, label)
+            if digest and (
+                len(digest) != 64
+                or any(ch not in "0123456789abcdef" for ch in digest.lower())
+            ):
+                raise ValueError(
+                    f"graph plan {label} must be a sha256 hex digest"
+                )
+
     @property
     def executable(self) -> bool:
         return self.coupling_plan is not None
