@@ -461,7 +461,7 @@ def _composition_graph_plan(
             execution_pack_version = (
                 execution_registration.manifest.pack_version
             )
-            execution_pack_digest = execution_registration.manifest.digest
+            execution_pack_digest = execution_registration.authority_digest
             execution_registry = ParticipantFactoryRegistry(
                 execution_registration.participant_factories
             )
@@ -527,7 +527,7 @@ def _composition_graph_plan(
             resource_estimate=estimate,
             authority_pack_id=registration.manifest.pack_id,
             authority_pack_version=registration.manifest.pack_version,
-            authority_pack_digest=registration.manifest.digest,
+            authority_pack_digest=registration.authority_digest,
             coupling_policy_template_id=(
                 ""
                 if selected_policy is None
