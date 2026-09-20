@@ -200,4 +200,4 @@ def parse_nasa_battery_mat(
     )
 
 
-__all__ = ["parse_nasa_battery_mat"]
+__all__ = ["NASA_BATTERY_ARCHIVE_URL", "parse_nasa_battery_mat"]
