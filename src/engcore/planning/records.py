@@ -17,7 +17,7 @@ from ..scientific.multiphysics import (
     graph_interface_manifest,
 )
 from ..scientific.realizations.registry import RealizationRegistry
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.solvers.registry import SolverRegistry
 from ..scientific.units.quantity import Quantity
 from .blueprint import BlueprintRegistry
@@ -30,7 +30,8 @@ MODEL_CHOICE_SCHEMA = schema_string("scientific_model_execution_choice")
 PLANNING_GAP_SCHEMA = schema_string("scientific_planning_gap")
 FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan")
+GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
 _TAG = "forge.scientific_planning_record/1"
 
 
@@ -488,7 +489,10 @@ class GraphPlan:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
-        require_schema(payload, GRAPH_PLAN_SCHEMA)
+        require_schema_any(
+            payload,
+            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA),
+        )
         raw_plan = payload.get("coupling_plan")
         raw_estimate = payload.get("resource_estimate")
         return cls(
@@ -677,6 +681,8 @@ __all__ = [
     "FidelityDecision",
     "GapKind",
     "GraphPlan",
+    "GRAPH_PLAN_SCHEMA",
+    "GRAPH_PLAN_SCHEMA_V1",
     "ModelExecutionChoice",
     "PlanningGap",
     "PlanningRegistries",
