@@ -24,6 +24,7 @@ class MultiphysicsExecutionAdmission:
     graph_interface: GraphInterfaceManifest
     plan_id: str
     plan_fingerprint: str
+    factory_registry_fingerprint: str
     factory_coverage: tuple[ParticipantFactoryCoverage, ...]
 
     @property
@@ -43,6 +44,7 @@ class MultiphysicsExecutionAdmission:
             "graph_interface": self.graph_interface.to_dict(),
             "plan_id": self.plan_id,
             "plan_fingerprint": self.plan_fingerprint,
+            "factory_registry_fingerprint": self.factory_registry_fingerprint,
             "factory_coverage": [
                 item.to_dict() for item in self.factory_coverage
             ],
@@ -74,6 +76,7 @@ def admit_multiphysics_execution(
         graph_interface=graph_interface_manifest(graph),
         plan_id=plan.plan_id,
         plan_fingerprint=plan.fingerprint(),
+        factory_registry_fingerprint=registry.fingerprint,
         factory_coverage=registry.coverage(graph),
     )
 
