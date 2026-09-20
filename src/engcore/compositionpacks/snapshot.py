@@ -22,6 +22,8 @@ class CompositionPackSnapshot:
     coupling_policy_digests: tuple[tuple[str, str, str], ...]
     system_contract_digest: str
     validation_implementations: tuple[dict[str, str], ...]
+    dependency_authority_digests: tuple[tuple[str, str, str], ...]
+    authority_digest: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -55,6 +57,16 @@ class CompositionPackSnapshot:
             ],
             "system_contract_digest": self.system_contract_digest,
             "validation_implementations": list(self.validation_implementations),
+            "dependency_authority_digests": [
+                {
+                    "pack_id": pack_id,
+                    "pack_version": version,
+                    "authority_digest": digest,
+                }
+                for pack_id, version, digest
+                in self.dependency_authority_digests
+            ],
+            "authority_digest": self.authority_digest,
         }
 
     @property
@@ -98,6 +110,10 @@ def snapshot_composition_pack(
             item.to_dict()
             for item in registration.validation_fingerprints
         ),
+        dependency_authority_digests=(
+            registration.dependency_authority_digests
+        ),
+        authority_digest=registration.authority_digest,
     )
 
 
