@@ -714,6 +714,55 @@ class CompositionPackRegistry:
         blueprint_by_id = {
             item.blueprint_id: item for item in blueprints
         }
+        claim_by_id = {
+            item.capability_id: item for item in claims
+        }
+        for producer in uncertainty_producers:
+            blueprint = blueprint_by_id.get(producer.blueprint_id)
+            if blueprint is None:
+                continue
+            declaration = claim_by_id[blueprint.capability_id]
+            produced = {
+                item.name for item in declaration.produces
+            }
+            unknown = sorted(set(producer.quantities) - produced)
+            if unknown:
+                raise InvalidCompositionPackProvider(
+                    f"uncertainty producer {producer.ref.artifact_id!r} "
+                    f"names unproduced quantities {unknown}"
+                )
+            for quantity in producer.quantities:
+                declared_channels = (
+                    declaration.uncertainty.channels_for(quantity)
+                )
+                extra_channels = sorted(
+                    item.value
+                    for item in (
+                        set(producer.channels) - set(declared_channels)
+                    )
+                )
+                if extra_channels:
+                    raise InvalidCompositionPackProvider(
+                        f"uncertainty producer {producer.ref.artifact_id!r} "
+                        f"emits channels not declared for {quantity!r}: "
+                        f"{extra_channels}"
+                    )
+
+        for verification in verifications:
+            blueprint = blueprint_by_id.get(verification.blueprint_id)
+            if blueprint is None:
+                continue
+            declaration = claim_by_id[blueprint.capability_id]
+            produced = {
+                item.name for item in declaration.produces
+            }
+            if verification.quantity not in produced:
+                raise InvalidCompositionPackProvider(
+                    f"verification protocol {verification.ref.artifact_id!r} "
+                    f"targets unproduced quantity "
+                    f"{verification.quantity!r}"
+                )
+
         for blueprint in blueprints:
             if blueprint.capability_id not in manifest.capabilities:
                 raise InvalidCompositionPackProvider(
