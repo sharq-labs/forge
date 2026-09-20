@@ -1,6 +1,8 @@
 """Domain-neutral multiphysics declarations and run records."""
 
 from .composition import (
+    COMPOSITION_ANALYSIS_SCHEMA,
+    COUPLING_CANDIDATE_SCHEMA,
     CompositionAnalysis,
     CouplingCandidate,
     analyze_composition,
@@ -86,6 +88,8 @@ from .value import (
 
 __all__ = [
     "CHECKPOINT_SCHEMA",
+    "COMPOSITION_ANALYSIS_SCHEMA",
+    "COUPLING_CANDIDATE_SCHEMA",
     "CONSERVATION_TERM_BINDING_SCHEMA",
     "COUPLED_CONSERVATION_SCHEMA",
     "COUPLING_EDGE_SCHEMA",
