@@ -17,7 +17,8 @@ from .errors import InvalidCompositionPackManifest
 
 COMPOSITION_PACK_SCHEMA_V1 = "forge.composition_pack/1"
 COMPOSITION_PACK_SCHEMA = "forge.composition_pack/2"
-COMPOSITION_PACK_API = "forge.compositionpack_api/1"
+COMPOSITION_PACK_API_V1 = "forge.compositionpack_api/1"
+COMPOSITION_PACK_API = "forge.compositionpack_api/2"
 
 _ID = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
 
@@ -397,6 +398,7 @@ class CompositionPackManifest:
 __all__ = [
     "BlueprintRef",
     "COMPOSITION_PACK_API",
+    "COMPOSITION_PACK_API_V1",
     "COMPOSITION_PACK_SCHEMA",
     "COMPOSITION_PACK_SCHEMA_V1",
     "CompositionPackManifest",

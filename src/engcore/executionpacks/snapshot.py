@@ -7,10 +7,11 @@ import hashlib
 import json
 from typing import Any, Mapping
 
-from ..scientific.serialization import require_schema
+from ..scientific.serialization import require_schema_any
 from .registry import RegisteredExecutionPack
 
-EXECUTION_SNAPSHOT_SCHEMA = "forge.execution_pack_snapshot/1"
+EXECUTION_SNAPSHOT_SCHEMA_V1 = "forge.execution_pack_snapshot/1"
+EXECUTION_SNAPSHOT_SCHEMA = "forge.execution_pack_snapshot/2"
 
 
 @dataclass(frozen=True)
@@ -58,7 +59,10 @@ class ExecutionPackSnapshot:
         cls,
         payload: Mapping[str, Any],
     ) -> "ExecutionPackSnapshot":
-        require_schema(payload, EXECUTION_SNAPSHOT_SCHEMA)
+        require_schema_any(
+            payload,
+            (EXECUTION_SNAPSHOT_SCHEMA_V1, EXECUTION_SNAPSHOT_SCHEMA),
+        )
         composition = payload["composition"]
         return cls(
             pack_id=payload["pack_id"],
@@ -102,6 +106,7 @@ def snapshot_execution_pack(
 
 __all__ = [
     "EXECUTION_SNAPSHOT_SCHEMA",
+    "EXECUTION_SNAPSHOT_SCHEMA_V1",
     "ExecutionPackSnapshot",
     "snapshot_execution_pack",
 ]

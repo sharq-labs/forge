@@ -37,10 +37,20 @@ from ..scientific.serialization import (
     require_schema_any,
     schema_string,
 )
+from ..scientific.verification.dependencies import (
+    DependencyComponent,
+    DependencyRole,
+    RouteDependencyManifest,
+)
+from ..scientific.verification.route import (
+    VerificationRoute,
+    VerificationRouteKind,
+)
 from ..scientific.verification.run_record import VerificationRunRecord
 
 AUTHORIZED_RUN_SCHEMA_V1 = schema_string("authorized_multiphysics_run")
-AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run", 2)
+AUTHORIZED_RUN_SCHEMA_V2 = schema_string("authorized_multiphysics_run", 2)
+AUTHORIZED_RUN_SCHEMA = schema_string("authorized_multiphysics_run", 3)
 
 
 @dataclass(frozen=True)
@@ -314,10 +324,17 @@ class AuthorizedMultiphysicsRun:
     ) -> "AuthorizedMultiphysicsRun":
         schema = require_schema_any(
             payload,
-            (AUTHORIZED_RUN_SCHEMA_V1, AUTHORIZED_RUN_SCHEMA),
+            (
+                AUTHORIZED_RUN_SCHEMA_V1,
+                AUTHORIZED_RUN_SCHEMA_V2,
+                AUTHORIZED_RUN_SCHEMA,
+            ),
         )
         supplied = payload.get("record_digest")
-        if schema == AUTHORIZED_RUN_SCHEMA_V1:
+        if schema in (
+            AUTHORIZED_RUN_SCHEMA_V1,
+            AUTHORIZED_RUN_SCHEMA_V2,
+        ):
             raw = {
                 key: value
                 for key, value in payload.items()
@@ -448,6 +465,69 @@ def _verify_graph_authority(registration, graph_plan: GraphPlan) -> None:
             "GraphPlan CouplingPlan differs from its authoritative "
             "CouplingPolicyTemplate"
         )
+
+
+def _authorized_execution_verification_authority(
+    execution_snapshot: ExecutionPackSnapshot,
+) -> tuple[VerificationRoute, RouteDependencyManifest]:
+    """Describe the exact primary execution stack for independence analysis."""
+
+    route_id = (
+        f"authorized_execution.{execution_snapshot.pack_id}."
+        f"{execution_snapshot.pack_version}"
+    )
+    route = VerificationRoute(
+        route_id=route_id,
+        kind=VerificationRouteKind.DIFFERENT_IMPLEMENTATION,
+        implementation_digest=execution_snapshot.authority_digest,
+    )
+
+    components = [
+        DependencyComponent(
+            family_id=(
+                f"composition_authority."
+                f"{execution_snapshot.composition_pack_id}"
+            ),
+            implementation_digest=(
+                execution_snapshot.composition_authority_digest
+            ),
+            role=DependencyRole.MODEL,
+        ),
+        DependencyComponent(
+            family_id=(
+                f"execution_pack.{execution_snapshot.pack_id}"
+            ),
+            implementation_digest=execution_snapshot.authority_digest,
+            role=DependencyRole.RUNTIME,
+        ),
+    ]
+    seen_adapter_families = set()
+    for item in execution_snapshot.participant_factories:
+        family = (
+            f"adapter.{item['adapter_id']}@"
+            f"{item['adapter_version']}"
+        )
+        if family in seen_adapter_families:
+            continue
+        seen_adapter_families.add(family)
+        components.append(
+            DependencyComponent(
+                family_id=family,
+                implementation_digest=item["implementation_digest"],
+                role=DependencyRole.SOLVER,
+            )
+        )
+
+    dependencies = RouteDependencyManifest(
+        route_id=route_id,
+        components=tuple(components),
+        authority_id=(
+            f"execution:{execution_snapshot.pack_id}@"
+            f"{execution_snapshot.pack_version}"
+        ),
+        externally_operated=False,
+    )
+    return route, dependencies
 
 
 def execute_authorized_graph_plan(
@@ -615,6 +695,12 @@ def execute_authorized_graph_plan(
                 )
             )
 
+    execution_snapshot = snapshot_execution_pack(execution)
+    primary_route, primary_dependencies = (
+        _authorized_execution_verification_authority(
+            execution_snapshot
+        )
+    )
     verification_results: list[AuthorizedSystemVerification] = []
     for protocol in composition.verification_protocols:
         if protocol.blueprint_id != graph_plan.blueprint_id:
@@ -624,7 +710,11 @@ def execute_authorized_graph_plan(
                 protocol.ref.artifact_id,
                 protocol.ref.version,
                 protocol.quantity,
-                protocol.execute(run),
+                protocol.execute(
+                    run,
+                    primary_route,
+                    primary_dependencies,
+                ),
             )
         )
     if not verification_results:
@@ -636,7 +726,7 @@ def execute_authorized_graph_plan(
     return AuthorizedMultiphysicsRun(
         graph_plan=graph_plan,
         composition_snapshot=snapshot_composition_pack(composition),
-        execution_snapshot=snapshot_execution_pack(execution),
+        execution_snapshot=execution_snapshot,
         run=run,
         system_validation=tuple(validation),
         system_uncertainty=tuple(uncertainty_results),
@@ -647,6 +737,7 @@ def execute_authorized_graph_plan(
 __all__ = [
     "AUTHORIZED_RUN_SCHEMA",
     "AUTHORIZED_RUN_SCHEMA_V1",
+    "AUTHORIZED_RUN_SCHEMA_V2",
     "AuthorizedMultiphysicsRun",
     "AuthorizedSystemUncertainty",
     "AuthorizedSystemValidation",

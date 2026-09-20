@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 import hashlib
 import json
 import re
@@ -251,7 +252,7 @@ class SystemValidationCheck:
                 )
         if self.relative_error is not None:
             value = float(self.relative_error)
-            if value < 0.0 or value != value:
+            if not math.isfinite(value) or value < 0.0:
                 raise InvalidCompositionPackProvider(
                     "system validation relative_error must be finite non-negative"
                 )

@@ -36,7 +36,13 @@ from .mapping import (
     FieldMappingMethod,
     MappingDiagnostics,
 )
-from .participant import PARTICIPANT_SCHEMA, ParticipantSpec
+from .participant import (
+    PARTICIPANT_MODEL_SCHEMA,
+    PARTICIPANT_SCHEMA,
+    PARTICIPANT_SCHEMA_V1,
+    ParticipantModelRef,
+    ParticipantSpec,
+)
 from .plan import (
     COUPLING_PLAN_SCHEMA,
     CONVERGENCE_CRITERION_SCHEMA,
@@ -103,7 +109,9 @@ __all__ = [
     "GRAPH_INTERFACE_SCHEMA",
     "ITERATION_SCHEMA",
     "MAPPING_DIAGNOSTICS_SCHEMA",
+    "PARTICIPANT_MODEL_SCHEMA",
     "PARTICIPANT_SCHEMA",
+    "PARTICIPANT_SCHEMA_V1",
     "PARTICIPANT_STEP_SCHEMA",
     "PHYSICS_GRAPH_SCHEMA",
     "PORT_REF_SCHEMA",
@@ -137,6 +145,7 @@ __all__ = [
     "InitialCouplingRecord",
     "MappingDiagnostics",
     "MultiphysicsRunRecord",
+    "ParticipantModelRef",
     "ParticipantSpec",
     "ParticipantStepRecord",
     "PhysicsGraph",

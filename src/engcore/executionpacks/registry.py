@@ -264,14 +264,16 @@ class ExecutionPackRegistry:
             served_models = {
                 item.key for item in solver.served_models
             }
-            if (
-                served_models
-                and realization.model_key not in served_models
-            ):
-                raise InvalidExecutionPackProvider(
-                    f"factory solver {solver_key} does not declare support "
-                    f"for realization model {realization.model_key}"
+            if served_models:
+                unsupported_models = sorted(
+                    set(declaration.model_keys) - served_models
                 )
+                if unsupported_models:
+                    raise InvalidExecutionPackProvider(
+                        f"factory solver {solver_key} does not declare support "
+                        f"for participant model assembly members "
+                        f"{unsupported_models}"
+                    )
             missing_solver_caps = sorted(
                 required_solver_caps - declared_solver_caps
             )
@@ -382,12 +384,24 @@ class ExecutionPackRegistry:
         *,
         enabled_only: bool = True,
     ) -> ParticipantFactoryRegistry:
-        declarations = [
-            declaration
-            for registration in self.list(enabled_only=enabled_only)
-            for declaration in registration.participant_factories
-        ]
-        return ParticipantFactoryRegistry(declarations)
+        by_key = {}
+        refs = {}
+        for registration in self.list(enabled_only=enabled_only):
+            for declaration in registration.participant_factories:
+                reference = _factory_ref(declaration)
+                existing = by_key.get(declaration.key)
+                if existing is None:
+                    by_key[declaration.key] = declaration
+                    refs[declaration.key] = reference
+                    continue
+                if refs[declaration.key] != reference:
+                    raise InvalidExecutionPackProvider(
+                        "enabled ExecutionPacks provide conflicting factories "
+                        f"for exact execution identity {declaration.key}"
+                    )
+        return ParticipantFactoryRegistry(
+            by_key[key] for key in sorted(by_key)
+        )
 
     def __iter__(self) -> Iterator[RegisteredExecutionPack]:
         return iter(self.list())
