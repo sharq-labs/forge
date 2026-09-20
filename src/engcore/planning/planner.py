@@ -11,8 +11,6 @@ combines those declarations into an auditable ScientificPlanningRecord.
 
 from __future__ import annotations
 
-from typing import Mapping
-
 from .clarification import clarification_questions
 from .intent import EngineeringIntent
 from .policy import PlannerPolicy
@@ -109,6 +107,7 @@ def _build_qoi_plan(
     qoi,
     screen,
     selection_reason: str,
+    alternatives: tuple[str, ...],
     registries: PlanningRegistries,
     policy: PlannerPolicy,
 ) -> tuple[QOIPlan, tuple[PlanningGap, ...]]:
@@ -123,13 +122,6 @@ def _build_qoi_plan(
         ExecutionMode.CAPABILITY_ROUTE
         if declaration.executable
         else ExecutionMode.MULTIPHYSICS_GRAPH
-    )
-
-    alternatives = tuple(
-        item.capability_id
-        for item in registries.capabilities.declarations
-        if item.capability_id != declaration.capability_id
-        and item.produced(qoi.name) is not None
     )
 
     plan = QOIPlan(
@@ -277,11 +269,17 @@ def plan_engineering_intent(
             continue
 
         selected_by_qoi[qoi.qoi_id] = screen.capability_id
+        alternatives = tuple(
+            item.capability_id
+            for item in validation.eligible_for(qoi.qoi_id)
+            if item.capability_id != screen.capability_id
+        )
         qoi_plan, qoi_gaps = _build_qoi_plan(
             intent,
             qoi,
             screen,
             reason,
+            alternatives,
             registries,
             policy,
         )
