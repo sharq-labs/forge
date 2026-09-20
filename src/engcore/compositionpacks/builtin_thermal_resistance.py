@@ -519,11 +519,21 @@ def validate_temperature_resistance_run(
     """Verify terminal outputs against the declared linear-TCR relation."""
 
     final_outputs = getattr(record, "final_outputs", {})
-    temperature = final_outputs.get(
+    raw_temperature = final_outputs.get(
         f"{THERMAL_PARTICIPANT}.temperature"
     )
-    resistance = final_outputs.get(
+    raw_resistance = final_outputs.get(
         f"{MATERIAL_PARTICIPANT}.resistance"
+    )
+    temperature = (
+        None
+        if raw_temperature is None
+        else Quantity.from_dict(raw_temperature)
+    )
+    resistance = (
+        None
+        if raw_resistance is None
+        else Quantity.from_dict(raw_resistance)
     )
     external = {
         item.port.key: item.value
