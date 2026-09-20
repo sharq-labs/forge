@@ -583,6 +583,19 @@ class CompositionPackRegistry:
         keys = sorted(self._enabled if enabled_only else self._packs)
         return tuple(self._packs[key] for key in keys)
 
+    def providing(
+        self,
+        capability_id: str,
+        *,
+        enabled_only: bool = True,
+    ) -> tuple[RegisteredCompositionPack, ...]:
+        wanted = str(capability_id).strip()
+        return tuple(
+            item
+            for item in self.list(enabled_only=enabled_only)
+            if wanted in item.manifest.capabilities
+        )
+
     def __iter__(self) -> Iterator[RegisteredCompositionPack]:
         return iter(self.list())
 
