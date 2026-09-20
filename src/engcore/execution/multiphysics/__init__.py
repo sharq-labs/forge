@@ -1,6 +1,7 @@
 """Generic multiphysics execution runtime."""
 
 from .admission import (
+    MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA,
     MultiphysicsExecutionAdmission,
     admit_multiphysics_execution,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "FieldMappingResult",
     "FrameTransform",
     "InitializationResult",
+    "MULTIPHYSICS_EXECUTION_ADMISSION_SCHEMA",
     "MultiphysicsExecutionAdmission",
     "MultiphysicsExecutionError",
     "MultiphysicsRuntime",
