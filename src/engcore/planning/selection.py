@@ -539,7 +539,7 @@ def blueprint_choice(
 
 
 def bindings_for_blueprint(
-    blueprint: PhysicsGraphBlueprint,
+    blueprint: Any,
     qoi_plans: tuple[QOIPlan, ...],
 ) -> tuple[
     Mapping[str, ParticipantBinding] | None,
