@@ -67,6 +67,8 @@ class GapKind(str, Enum):
     COMPOSITION_PACK_AMBIGUOUS = "composition_pack_ambiguous"
     COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
     SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
+    EXECUTION_PACK_UNAVAILABLE = "execution_pack_unavailable"
+    EXECUTION_PACK_AMBIGUOUS = "execution_pack_ambiguous"
     EXECUTION_FACTORY_UNAVAILABLE = "execution_factory_unavailable"
     GRAPH_EXTERNAL_INPUT_MISSING = "graph_external_input_missing"
     GRAPH_EXTERNAL_INPUT_INVALID = "graph_external_input_invalid"
@@ -459,6 +461,9 @@ class GraphPlan:
     coupling_policy_template_id: str = ""
     coupling_policy_template_version: str = ""
     execution_registry_fingerprint: str = ""
+    execution_pack_id: str = ""
+    execution_pack_version: str = ""
+    execution_pack_digest: str = ""
     external_inputs: tuple[PlannedExternalInput, ...] = ()
 
     def __post_init__(self) -> None:
@@ -510,6 +515,9 @@ class GraphPlan:
             "coupling_policy_template_id",
             "coupling_policy_template_version",
             "execution_registry_fingerprint",
+            "execution_pack_id",
+            "execution_pack_version",
+            "execution_pack_digest",
         ):
             object.__setattr__(
                 self,
@@ -552,6 +560,9 @@ class GraphPlan:
             "execution_registry_fingerprint": (
                 self.execution_registry_fingerprint
             ),
+            "execution_pack_id": self.execution_pack_id,
+            "execution_pack_version": self.execution_pack_version,
+            "execution_pack_digest": self.execution_pack_digest,
             "external_inputs": [
                 item.to_dict() for item in self.external_inputs
             ],
@@ -591,6 +602,13 @@ class GraphPlan:
             ),
             execution_registry_fingerprint=payload.get(
                 "execution_registry_fingerprint", ""
+            ),
+            execution_pack_id=payload.get("execution_pack_id", ""),
+            execution_pack_version=payload.get(
+                "execution_pack_version", ""
+            ),
+            execution_pack_digest=payload.get(
+                "execution_pack_digest", ""
             ),
             external_inputs=tuple(
                 PlannedExternalInput.from_dict(item)
@@ -752,6 +770,7 @@ class PlanningRegistries:
     blueprints: BlueprintRegistry | None = None
     composition_packs: Any | None = None
     participant_factories: Any | None = None
+    execution_packs: Any | None = None
     verification: VerificationPlanningRegistry | None = None
     fidelity_ladders: tuple[FidelityLadder, ...] = ()
 
