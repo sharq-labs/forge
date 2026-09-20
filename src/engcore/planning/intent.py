@@ -19,11 +19,12 @@ from ..scientific.ir.constraints import ConstraintDefinition
 from ..scientific.ir.values import ScientificValue, decode_value, encode_value, require_scientific_value
 from ..scientific.results.immutable import freeze
 from ..scientific.results.validation import ValidationLevel
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.units.quantity import Quantity, dimensionality
 from ..sria.uncertainty import UncertaintyChannel
 
-ENGINEERING_INTENT_SCHEMA = schema_string("engineering_intent")
+ENGINEERING_INTENT_SCHEMA_V1 = schema_string("engineering_intent")
+ENGINEERING_INTENT_SCHEMA = schema_string("engineering_intent", 2)
 CONTEXT_SCHEMA = schema_string("engineering_context_of_use")
 COMPONENT_SCHEMA = schema_string("engineering_component")
 INTERFACE_SCHEMA = schema_string("engineering_interface")
@@ -36,8 +37,8 @@ FIDELITY_REQUEST_SCHEMA = schema_string("engineering_fidelity_request")
 COMPUTE_BUDGET_SCHEMA = schema_string("engineering_compute_budget")
 SIMULATION_HORIZON_SCHEMA = schema_string("engineering_simulation_horizon")
 
-_IDENTITY_TAG = "forge.engineering_intent.identity/1"
-_RECORD_TAG = "forge.engineering_intent.record/1"
+_IDENTITY_TAG = "forge.engineering_intent.identity/2"
+_RECORD_TAG = "forge.engineering_intent.record/2"
 _IDENTIFIER = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.:-]*$")
 _PATH_SEGMENT = r"[a-zA-Z_][a-zA-Z0-9_]*(?:\[\d+\])?"
 _PATH = re.compile(rf"^{_PATH_SEGMENT}(?:\.{_PATH_SEGMENT})*$")
@@ -738,7 +739,10 @@ class EngineeringIntent:
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringIntent":
-        require_schema(p, ENGINEERING_INTENT_SCHEMA)
+        schema = require_schema_any(
+            p,
+            (ENGINEERING_INTENT_SCHEMA_V1, ENGINEERING_INTENT_SCHEMA),
+        )
         _reject_unknown_keys(
             p,
             frozenset({
@@ -746,6 +750,12 @@ class EngineeringIntent:
                 "facts", "qois", "constraints", "objectives",
                 "required_capabilities", "fidelity", "compute_budget",
                 "simulation_horizon",
+            })
+            if schema == ENGINEERING_INTENT_SCHEMA
+            else frozenset({
+                "schema", "statement", "context", "components", "interfaces",
+                "facts", "qois", "constraints", "objectives",
+                "required_capabilities", "fidelity", "compute_budget",
             }),
             "engineering intent",
         )
@@ -773,7 +783,8 @@ class EngineeringIntent:
 
 __all__ = [
     "COMPUTE_BUDGET_SCHEMA", "COMPONENT_SCHEMA", "CONTEXT_SCHEMA",
-    "ENGINEERING_INTENT_SCHEMA", "EXCHANGE_SCHEMA", "FACT_SCHEMA",
+    "ENGINEERING_INTENT_SCHEMA", "ENGINEERING_INTENT_SCHEMA_V1",
+    "EXCHANGE_SCHEMA", "FACT_SCHEMA",
     "FIDELITY_REQUEST_SCHEMA", "INTERFACE_SCHEMA", "OBJECTIVE_SCHEMA",
     "SIMULATION_HORIZON_SCHEMA",
     "QOI_CONSTRAINT_SCHEMA", "QOI_SCHEMA", "ComputeBudget", "ContextOfUse",
