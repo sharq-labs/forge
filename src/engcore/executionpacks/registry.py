@@ -214,6 +214,33 @@ class ExecutionPackRegistry:
                     f"factory solver {solver_key} resolves to "
                     f"{len(solver_matches)} exact domain artifacts"
                 )
+            solver = solver_matches[0][1]
+            required_solver_caps = {
+                item.name
+                for item in realization.required_solver_capabilities
+            }
+            declared_solver_caps = {
+                item.name for item in solver.capabilities
+            }
+            served_models = {
+                item.key for item in solver.served_models
+            }
+            if (
+                served_models
+                and realization.model_key not in served_models
+            ):
+                raise InvalidExecutionPackProvider(
+                    f"factory solver {solver_key} does not declare support "
+                    f"for realization model {realization.model_key}"
+                )
+            missing_solver_caps = sorted(
+                required_solver_caps - declared_solver_caps
+            )
+            if missing_solver_caps:
+                raise InvalidExecutionPackProvider(
+                    f"factory solver {solver_key} lacks realization-required "
+                    f"solver capabilities {missing_solver_caps}"
+                )
 
         uncovered = []
         for role_key in sorted(role_keys):
