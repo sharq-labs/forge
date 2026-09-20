@@ -314,6 +314,30 @@ class ExecutionPackRegistry:
         keys = sorted(self._enabled if enabled_only else self._packs)
         return tuple(self._packs[key] for key in keys)
 
+    def for_composition(
+        self,
+        pack_id: str,
+        pack_version: str,
+        manifest_digest: str,
+        *,
+        enabled_only: bool = True,
+    ) -> tuple[RegisteredExecutionPack, ...]:
+        wanted = (
+            str(pack_id),
+            str(pack_version),
+            str(manifest_digest).strip().lower(),
+        )
+        return tuple(
+            registration
+            for registration in self.list(enabled_only=enabled_only)
+            if (
+                registration.manifest.composition.pack_id,
+                registration.manifest.composition.pack_version,
+                registration.manifest.composition.manifest_digest,
+            )
+            == wanted
+        )
+
     def participant_factory_registry(
         self,
         *,
