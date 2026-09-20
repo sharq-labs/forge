@@ -17,6 +17,10 @@ from .policy import PlannerPolicy
 from ..scientific.multiphysics import PortRef
 from ..scientific.multiphysics.value import validate_port_coupling_value
 from ..execution.multiphysics import ParticipantFactoryRegistry
+from ..compositionpacks.applicability import (
+    ApplicabilityState,
+    evaluate_applicability_predicate,
+)
 from .records import (
     ExecutionMode,
     FidelityDecision,
@@ -307,6 +311,32 @@ def _composition_graph_plan(
         if item.blueprint_id == blueprint.blueprint_id
     )
     fact_paths = set(intent.fact_map)
+    for rule in applicability_rules:
+        for predicate in rule.predicates:
+            evaluation = evaluate_applicability_predicate(
+                predicate,
+                facts=intent.fact_map,
+                static_external_inputs=True,
+            )
+            if evaluation.state is ApplicabilityState.UNKNOWN:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.SYSTEM_APPLICABILITY_UNKNOWN,
+                        predicate.predicate_id,
+                        evaluation.reason,
+                        True,
+                    )
+                )
+            elif evaluation.state is ApplicabilityState.VIOLATED:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.SYSTEM_APPLICABILITY_VIOLATED,
+                        predicate.predicate_id,
+                        evaluation.reason,
+                        True,
+                    )
+                )
+
     missing_system_evidence = sorted(
         {
             requirement.path
