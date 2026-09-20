@@ -153,8 +153,36 @@ def load_multiphysics_extension(
         for item in manifest.solvers
     }
 
+    claim_getter = getattr(provider, "claim_capabilities", None)
+    declared_capability_ids: set[str] = set()
+    if claim_getter is not None:
+        if not callable(claim_getter):
+            raise InvalidDomainPackProvider(
+                "claim_capabilities must be callable when multiphysics "
+                "blueprints are declared"
+            )
+        declared_capability_ids = {
+            str(item.capability_id)
+            for item in claim_getter()
+        }
+
     errors: list[str] = []
     for blueprint in extension.blueprints:
+        if (
+            declared_capability_ids
+            and blueprint.capability_id not in declared_capability_ids
+        ):
+            errors.append(
+                f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
+                f"targets capability {blueprint.capability_id!r} that the "
+                "same pack does not expose through claim_capabilities()"
+            )
+        elif not declared_capability_ids:
+            errors.append(
+                f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
+                "has no same-pack claim capability to attach to"
+            )
+
         for participant in blueprint.participants:
             model_key = (
                 participant.model_id,
