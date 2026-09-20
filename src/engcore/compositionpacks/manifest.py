@@ -15,7 +15,8 @@ from typing import Any, Mapping
 from ..domainpacks.manifest import ArtifactRef
 from .errors import InvalidCompositionPackManifest
 
-COMPOSITION_PACK_SCHEMA = "forge.composition_pack/1"
+COMPOSITION_PACK_SCHEMA_V1 = "forge.composition_pack/1"
+COMPOSITION_PACK_SCHEMA = "forge.composition_pack/2"
 COMPOSITION_PACK_API = "forge.compositionpack_api/1"
 
 _ID = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
@@ -201,6 +202,8 @@ class CompositionPackManifest:
     coupling_policies: tuple[PolicyTemplateRef, ...]
     system_contract_digest: str
     validation_protocols: tuple[ArtifactRef, ...] = ()
+    uncertainty_protocols: tuple[ArtifactRef, ...] = ()
+    verification_protocols: tuple[ArtifactRef, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "pack_id", _id(self.pack_id, "pack_id"))
@@ -270,6 +273,20 @@ class CompositionPackManifest:
             )
         object.__setattr__(self, "validation_protocols", protocols)
 
+        uncertainty = tuple(sorted(self.uncertainty_protocols))
+        if len(set(uncertainty)) != len(uncertainty):
+            raise InvalidCompositionPackManifest(
+                "duplicate composition uncertainty protocol identities"
+            )
+        object.__setattr__(self, "uncertainty_protocols", uncertainty)
+
+        verification = tuple(sorted(self.verification_protocols))
+        if len(set(verification)) != len(verification):
+            raise InvalidCompositionPackManifest(
+                "duplicate composition verification protocol identities"
+            )
+        object.__setattr__(self, "verification_protocols", verification)
+
     @property
     def key(self) -> tuple[str, str]:
         return self.pack_id, self.pack_version
@@ -292,6 +309,12 @@ class CompositionPackManifest:
             "validation_protocols": [
                 item.to_dict() for item in self.validation_protocols
             ],
+            "uncertainty_protocols": [
+                item.to_dict() for item in self.uncertainty_protocols
+            ],
+            "verification_protocols": [
+                item.to_dict() for item in self.verification_protocols
+            ],
         }
 
     @property
@@ -307,10 +330,15 @@ class CompositionPackManifest:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CompositionPackManifest":
-        if payload.get("schema") != COMPOSITION_PACK_SCHEMA:
+        schema = payload.get("schema")
+        if schema not in (
+            COMPOSITION_PACK_SCHEMA_V1,
+            COMPOSITION_PACK_SCHEMA,
+        ):
             raise InvalidCompositionPackManifest(
-                f"unsupported schema {payload.get('schema')!r}"
+                f"unsupported schema {schema!r}"
             )
+        legacy = schema == COMPOSITION_PACK_SCHEMA_V1
         expected = {
             "schema",
             "pack_id",
@@ -323,6 +351,11 @@ class CompositionPackManifest:
             "system_contract_digest",
             "validation_protocols",
         }
+        if not legacy:
+            expected |= {
+                "uncertainty_protocols",
+                "verification_protocols",
+            }
         if set(payload) != expected:
             raise InvalidCompositionPackManifest(
                 "composition pack manifest shape mismatch"
@@ -349,13 +382,23 @@ class CompositionPackManifest:
                 ArtifactRef.from_dict(item)
                 for item in payload["validation_protocols"]
             ),
+            uncertainty_protocols=tuple(
+                ArtifactRef.from_dict(item)
+                for item in payload.get("uncertainty_protocols", ())
+            ),
+            verification_protocols=tuple(
+                ArtifactRef.from_dict(item)
+                for item in payload.get("verification_protocols", ())
+            ),
         )
+
 
 
 __all__ = [
     "BlueprintRef",
     "COMPOSITION_PACK_API",
     "COMPOSITION_PACK_SCHEMA",
+    "COMPOSITION_PACK_SCHEMA_V1",
     "CompositionPackManifest",
     "DomainPackDependency",
     "PolicyTemplateRef",
