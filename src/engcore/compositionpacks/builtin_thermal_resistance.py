@@ -792,17 +792,12 @@ ANALYTIC_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
     route_id=ANALYTIC_VERIFICATION_ROUTE.route_id,
     components=(
         DependencyComponent(
-            "model.thermal.lumped_capacity",
-            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
+            "reference_model.thermal_resistance.closed_form",
+            _ANALYTIC_REFERENCE_DIGEST,
             DependencyRole.MODEL,
         ),
         DependencyComponent(
-            "model.electrical.linear_tcr",
-            _model_digest(material.LINEAR_TCR_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "reference.thermal_resistance.closed_form",
+            "reference_solver.thermal_resistance.closed_form",
             _ANALYTIC_REFERENCE_DIGEST,
             DependencyRole.SOLVER,
         ),
@@ -811,7 +806,7 @@ ANALYTIC_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
 )
 VERIFICATION_POLICY = VerificationPolicy(
     minimum_level=VerificationLevel.V4,
-    minimum_independence=IndependenceLevel.PARTIAL,
+    minimum_independence=IndependenceLevel.STRONG,
     minimum_routes=1,
     require_external=False,
 )
