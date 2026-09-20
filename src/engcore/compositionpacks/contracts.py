@@ -6,10 +6,41 @@ from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import json
+import re
 from typing import Any, Iterable
 
 from ..domainpacks.manifest import ArtifactRef
+from ..sria.uncertainty import UncertaintyChannel
 from .errors import InvalidCompositionPackProvider
+
+
+_PATH_SEGMENT = r"[a-zA-Z_][a-zA-Z0-9_]*(?:\[\d+\])?"
+_PATH = re.compile(rf"^{_PATH_SEGMENT}(?:\.{_PATH_SEGMENT})*$")
+
+
+@dataclass(frozen=True, order=True)
+class SystemEvidenceRequirement:
+    path: str
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        path = str(self.path).strip()
+        if not _PATH.fullmatch(path):
+            raise InvalidCompositionPackProvider(
+                f"system evidence path {path!r} must be a dotted concrete path"
+            )
+        object.__setattr__(self, "path", path)
+        object.__setattr__(
+            self,
+            "description",
+            str(self.description).strip(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "path": self.path,
+            "description": self.description,
+        }
 
 
 @dataclass(frozen=True, order=True)
@@ -17,7 +48,7 @@ class SystemApplicabilityRule:
     blueprint_id: str
     rule_id: str
     assumptions: tuple[str, ...]
-    required_evidence: tuple[str, ...]
+    required_evidence: tuple[SystemEvidenceRequirement, ...]
     description: str = ""
 
     def __post_init__(self) -> None:
@@ -33,10 +64,22 @@ class SystemApplicabilityRule:
             "assumptions",
             tuple(sorted({str(item).strip() for item in self.assumptions if str(item).strip()})),
         )
+        evidence = tuple(self.required_evidence)
+        if any(
+            not isinstance(item, SystemEvidenceRequirement)
+            for item in evidence
+        ):
+            raise InvalidCompositionPackProvider(
+                "required_evidence must contain SystemEvidenceRequirement records"
+            )
+        if len({item.path for item in evidence}) != len(evidence):
+            raise InvalidCompositionPackProvider(
+                "system applicability required_evidence contains duplicate paths"
+            )
         object.__setattr__(
             self,
             "required_evidence",
-            tuple(sorted({str(item).strip() for item in self.required_evidence if str(item).strip()})),
+            tuple(sorted(evidence, key=lambda item: item.path)),
         )
         object.__setattr__(self, "description", str(self.description).strip())
 
@@ -49,7 +92,9 @@ class SystemApplicabilityRule:
             "blueprint_id": self.blueprint_id,
             "rule_id": self.rule_id,
             "assumptions": list(self.assumptions),
-            "required_evidence": list(self.required_evidence),
+            "required_evidence": [
+                item.to_dict() for item in self.required_evidence
+            ],
             "description": self.description,
         }
 
@@ -67,7 +112,7 @@ class UncertaintyCompositionRule:
     blueprint_id: str
     rule_id: str
     strategy: UncertaintyCompositionStrategy
-    channels: tuple[str, ...] = ()
+    channels: tuple[UncertaintyChannel, ...] = ()
     correlation_model_id: str = ""
     description: str = ""
 
@@ -84,11 +129,13 @@ class UncertaintyCompositionRule:
             "strategy",
             UncertaintyCompositionStrategy(self.strategy),
         )
-        object.__setattr__(
-            self,
-            "channels",
-            tuple(sorted({str(item).strip() for item in self.channels if str(item).strip()})),
+        channels = tuple(
+            sorted(
+                {UncertaintyChannel(item) for item in self.channels},
+                key=lambda item: item.value,
+            )
         )
+        object.__setattr__(self, "channels", channels)
         correlation = str(self.correlation_model_id).strip()
         if (
             self.strategy is UncertaintyCompositionStrategy.CORRELATED
@@ -116,7 +163,7 @@ class UncertaintyCompositionRule:
             "blueprint_id": self.blueprint_id,
             "rule_id": self.rule_id,
             "strategy": self.strategy.value,
-            "channels": list(self.channels),
+            "channels": [item.value for item in self.channels],
             "correlation_model_id": self.correlation_model_id,
             "description": self.description,
         }
@@ -195,6 +242,7 @@ def system_contract_digest(
 __all__ = [
     "ProvidedCompositionValidation",
     "SystemApplicabilityRule",
+    "SystemEvidenceRequirement",
     "UncertaintyCompositionRule",
     "UncertaintyCompositionStrategy",
     "system_contract_digest",
