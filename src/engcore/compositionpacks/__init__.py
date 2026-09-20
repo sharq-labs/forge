@@ -15,3 +15,6 @@ from .provider import *
 from .registry import *
 from .semantics import *
 from .snapshot import *
+
+from .uncertainty import *
+from .verification import *
