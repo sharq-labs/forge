@@ -369,6 +369,93 @@ def production_multiphysics_factory_registry():
     )
 
 
+def production_pack_schema_inventory() -> dict[str, tuple[dict, ...]]:
+    """Return deterministic current-schema inventory for release tooling."""
+
+    from ..compositionpacks.manifest import COMPOSITION_PACK_SCHEMA
+    from ..executionpacks.manifest import EXECUTION_PACK_SCHEMA
+
+    _configure_builtin_packs()
+    compositions = tuple(
+        {
+            "pack_id": item.manifest.pack_id,
+            "pack_version": item.manifest.pack_version,
+            "schema": item.manifest.to_dict()["schema"],
+            "expected_schema": COMPOSITION_PACK_SCHEMA,
+            "authority_digest": item.authority_digest,
+            "semantic_authority_digest": item.semantic_authority.digest,
+            "uncertainty_protocols": len(
+                item.manifest.uncertainty_protocols
+            ),
+            "verification_protocols": len(
+                item.manifest.verification_protocols
+            ),
+        }
+        for item in _PRODUCTION_COMPOSITIONS.list(enabled_only=True)
+    )
+    executions = tuple(
+        {
+            "pack_id": item.manifest.pack_id,
+            "pack_version": item.manifest.pack_version,
+            "schema": item.manifest.to_dict()["schema"],
+            "expected_schema": EXECUTION_PACK_SCHEMA,
+            "authority_digest": item.authority_digest,
+            "composition_authority_digest": (
+                item.composition_authority_digest
+            ),
+        }
+        for item in _PRODUCTION_EXECUTIONS.list(enabled_only=True)
+    )
+    return {
+        "composition": compositions,
+        "execution": executions,
+    }
+
+
+def assert_current_production_pack_schemas() -> None:
+    """Fail a release when enabled multiphysics authority is legacy/incomplete."""
+
+    inventory = production_pack_schema_inventory()
+    problems = []
+    for item in inventory["composition"]:
+        if item["schema"] != item["expected_schema"]:
+            problems.append(
+                f"composition {item['pack_id']}@{item['pack_version']} "
+                f"uses {item['schema']}, expected {item['expected_schema']}"
+            )
+        if not item["semantic_authority_digest"]:
+            problems.append(
+                f"composition {item['pack_id']}@{item['pack_version']} "
+                "has no semantic authority digest"
+            )
+        if item["uncertainty_protocols"] < 1:
+            problems.append(
+                f"composition {item['pack_id']}@{item['pack_version']} "
+                "has no pinned uncertainty protocol"
+            )
+        if item["verification_protocols"] < 1:
+            problems.append(
+                f"composition {item['pack_id']}@{item['pack_version']} "
+                "has no pinned verification protocol"
+            )
+    for item in inventory["execution"]:
+        if item["schema"] != item["expected_schema"]:
+            problems.append(
+                f"execution {item['pack_id']}@{item['pack_version']} "
+                f"uses {item['schema']}, expected {item['expected_schema']}"
+            )
+        if not item["composition_authority_digest"]:
+            problems.append(
+                f"execution {item['pack_id']}@{item['pack_version']} "
+                "is not bound to composition authority"
+            )
+    if problems:
+        raise RuntimeError(
+            "production multiphysics catalog is not release-ready: "
+            + "; ".join(problems)
+        )
+
+
 __all__ = [
     "ENV_DOMAIN_PACKS",
     "configure_production_domain_packs_from_env",
@@ -378,6 +465,8 @@ __all__ = [
     "production_domain_packs",
     "production_execution_packs",
     "production_multiphysics_factory_registry",
+    "production_pack_schema_inventory",
+    "assert_current_production_pack_schemas",
     "production_pack_capabilities",
     "register_production_composition_pack",
     "register_production_domain_pack",
