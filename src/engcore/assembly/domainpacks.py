@@ -376,6 +376,9 @@ def production_pack_schema_inventory() -> dict[str, tuple[dict, ...]]:
     from ..executionpacks.manifest import EXECUTION_PACK_SCHEMA
 
     _configure_builtin_packs()
+    from .replay_catalog import builtin_golden_replay_catalog
+
+    golden = builtin_golden_replay_catalog()
     compositions = tuple(
         {
             "pack_id": item.manifest.pack_id,
@@ -389,6 +392,12 @@ def production_pack_schema_inventory() -> dict[str, tuple[dict, ...]]:
             ),
             "verification_protocols": len(
                 item.manifest.verification_protocols
+            ),
+            "golden_replay_scenarios": len(
+                golden.for_composition(
+                    item.manifest.pack_id,
+                    item.manifest.pack_version,
+                )
             ),
         }
         for item in _PRODUCTION_COMPOSITIONS.list(enabled_only=True)
@@ -437,6 +446,11 @@ def assert_current_production_pack_schemas() -> None:
             problems.append(
                 f"composition {item['pack_id']}@{item['pack_version']} "
                 "has no pinned verification protocol"
+            )
+        if item["golden_replay_scenarios"] < 1:
+            problems.append(
+                f"composition {item['pack_id']}@{item['pack_version']} "
+                "has no golden replay baseline"
             )
     for item in inventory["execution"]:
         if item["schema"] != item["expected_schema"]:
