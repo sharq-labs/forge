@@ -26,6 +26,7 @@ from .errors import (
     DuplicateCompositionPack,
     InvalidCompositionPackProvider,
 )
+from .inputs import ExternalInputBinding
 from .manifest import (
     BlueprintRef,
     COMPOSITION_PACK_API,
@@ -44,6 +45,7 @@ class RegisteredCompositionPack:
     coupling_policy_templates: tuple[CouplingPolicyTemplate, ...]
     port_semantics: tuple[PortSemanticBinding, ...]
     coupling_semantics: tuple[CouplingSemantic, ...]
+    external_input_bindings: tuple[ExternalInputBinding, ...]
     applicability_rules: tuple[SystemApplicabilityRule, ...]
     uncertainty_rules: tuple[UncertaintyCompositionRule, ...]
     validation_protocols: tuple[ProvidedCompositionValidation, ...]
@@ -242,6 +244,65 @@ def _validate_port_and_edge_semantics(
                 )
 
 
+def _validate_external_input_bindings(
+    blueprint: SystemGraphBlueprint,
+    bindings: tuple[ExternalInputBinding, ...],
+) -> None:
+    by_key = {
+        item.key: item
+        for item in bindings
+        if item.blueprint_id == blueprint.blueprint_id
+    }
+    participants = {
+        item.participant_id: item for item in blueprint.participants
+    }
+    connected_targets = {
+        (edge.target.participant_id, edge.target.port_id)
+        for edge in blueprint.edges
+    }
+    expected = {
+        (blueprint.blueprint_id, participant.participant_id, port.port_id)
+        for participant in blueprint.participants
+        for port in participant.ports
+        if (
+            port.direction is PortDirection.INPUT
+            and (participant.participant_id, port.port_id)
+            not in connected_targets
+        )
+    }
+    actual = set(by_key)
+    if actual != expected:
+        raise InvalidCompositionPackProvider(
+            f"blueprint {blueprint.blueprint_id!r} external input bindings "
+            f"mismatch; missing={sorted(expected-actual)}, "
+            f"extra={sorted(actual-expected)}"
+        )
+    for item in by_key.values():
+        participant = participants.get(item.participant_id)
+        if participant is None:
+            raise InvalidCompositionPackProvider(
+                f"external input binding references unknown participant "
+                f"{item.participant_id!r}"
+            )
+        port = next(
+            (
+                port
+                for port in participant.ports
+                if port.port_id == item.port_id
+            ),
+            None,
+        )
+        if port is None or port.direction is not PortDirection.INPUT:
+            raise InvalidCompositionPackProvider(
+                f"external input binding {item.key!r} must target an input port"
+            )
+        if (item.participant_id, item.port_id) in connected_targets:
+            raise InvalidCompositionPackProvider(
+                f"external input binding {item.key!r} targets an internally "
+                "connected graph input"
+            )
+
+
 def _validate_system_contracts(
     blueprints: tuple[SystemGraphBlueprint, ...],
     applicability: tuple[SystemApplicabilityRule, ...],
@@ -353,6 +414,7 @@ class CompositionPackRegistry:
         policies = _records(provider, "coupling_policy_templates")
         ports = _records(provider, "port_semantics")
         couplings = _records(provider, "coupling_semantics")
+        external_inputs = _records(provider, "external_input_bindings")
         applicability = _records(provider, "applicability_rules")
         uncertainty = _records(provider, "uncertainty_rules")
         validations = _records(provider, "validation_protocols")
@@ -429,6 +491,7 @@ class CompositionPackRegistry:
         for records, cls, label in (
             (ports, PortSemanticBinding, "port_semantics"),
             (couplings, CouplingSemantic, "coupling_semantics"),
+            (external_inputs, ExternalInputBinding, "external_input_bindings"),
             (applicability, SystemApplicabilityRule, "applicability_rules"),
             (uncertainty, UncertaintyCompositionRule, "uncertainty_rules"),
             (validations, ProvidedCompositionValidation, "validation_protocols"),
@@ -443,6 +506,7 @@ class CompositionPackRegistry:
             (policies, "coupling policy templates"),
             (ports, "port semantics"),
             (couplings, "coupling semantics"),
+            (external_inputs, "external input bindings"),
             (applicability, "applicability rules"),
             (uncertainty, "uncertainty rules"),
         ):
@@ -476,6 +540,7 @@ class CompositionPackRegistry:
         contract_digest = system_contract_digest(
             port_semantics=ports,
             coupling_semantics=couplings,
+            external_input_bindings=external_inputs,
             applicability_rules=applicability,
             uncertainty_rules=uncertainty,
         )
@@ -510,6 +575,10 @@ class CompositionPackRegistry:
                 blueprint,
                 ports,
                 couplings,
+            )
+            _validate_external_input_bindings(
+                blueprint,
+                external_inputs,
             )
 
         for policy in policies:
@@ -566,6 +635,7 @@ class CompositionPackRegistry:
             ),
             port_semantics=tuple(sorted(ports)),
             coupling_semantics=tuple(sorted(couplings)),
+            external_input_bindings=tuple(sorted(external_inputs)),
             applicability_rules=tuple(sorted(applicability)),
             uncertainty_rules=tuple(sorted(uncertainty)),
             validation_protocols=tuple(
