@@ -36,7 +36,7 @@ def _json_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _implementation_digest(value: Any) -> tuple[str, str]:
+def implementation_fingerprint(value: Any) -> tuple[str, str]:
     """Return (digest, basis) for executable Python-backed artifacts."""
 
     module = inspect.getmodule(value)
@@ -273,7 +273,7 @@ def freeze_domain_pack_provider(
             raise InvalidDomainPackProvider(
                 "solver factory produced object with no identity"
             )
-        digest, basis = _implementation_digest(factory)
+        digest, basis = implementation_fingerprint(factory)
         fingerprints.append(
             ArtifactImplementationFingerprint(
                 "solver_implementation",
@@ -296,7 +296,7 @@ def freeze_domain_pack_provider(
         for item in records:
             if not isinstance(item, ProvidedArtifact):
                 continue
-            digest, basis = _implementation_digest(item.implementation)
+            digest, basis = implementation_fingerprint(item.implementation)
             fingerprints.append(
                 ArtifactImplementationFingerprint(
                     kind,
@@ -318,4 +318,5 @@ __all__ = [
     "FrozenDomainPack",
     "FrozenDomainPackProvider",
     "freeze_domain_pack_provider",
+    "implementation_fingerprint",
 ]
