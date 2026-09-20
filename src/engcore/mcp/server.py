@@ -62,6 +62,7 @@ from .claim_assessment import (
     assess_claim_request,
     refused_claim_assessment,
 )
+from .canonical import plan_canonical_engineering_intent
 from .intent import compile_engineering_intent
 from .planning import plan_engineering_intent
 from .answer import summarize_engineering_run
@@ -91,6 +92,7 @@ __all__ = [
     "evaluate_engineering_context",
     "answer_engineering_uncertainty",
     "compile_engineering_problem",
+    "plan_canonical_engineering_intent",
     "plan_engineering_problem",
     "describe_capabilities",
     "describe_empirical_uq",
@@ -105,7 +107,7 @@ __all__ = [
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.10.0"
+SERVER_VERSION = "0.11.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
 BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
@@ -1489,15 +1491,18 @@ standard uncertainty, and explicitly excludes model-form uncertainty."""
 
 
 def build_server() -> MCPServer:
-    """The server with product, system and language-workflow tools registered."""
+    """The server with product, system and canonical planning tools registered."""
     server = MCPServer(
         name=SERVER_NAME,
         version=SERVER_VERSION,
         instructions=(
             "A scientific simulation runtime that reports the credibility of "
             "its own results. Product clients should call describe_product, "
-            "then prepare_simulation or run_proposed_simulation. Language models "
-            "may propose structured claims but never supply scientific authority. "
+            "then prepare_simulation or run_proposed_simulation. Engineering "
+            "planning accepts only canonical EngineeringIntent records through "
+            "plan_canonical_engineering_intent; natural-language interpretation "
+            "belongs outside MCP. Language models may propose structured records "
+            "but never supply model, solver, graph, evidence or verdict authority. "
             "Lower-level callers can still use describe_capabilities, direct "
             "system tools and assess_claim. Verdicts remain decision support, "
             "not certification."
@@ -1584,46 +1589,15 @@ def build_server() -> MCPServer:
         description=_PRODUCT_RUN_PROPOSED_DESCRIPTION,
     )
     server.add_tool(
-        plan_engineering_problem,
-        name="plan_engineering_problem",
-        title="Select a supported engineering system",
-        description=_PLAN_INTENT_DESCRIPTION,
-    )
-    server.add_tool(
-        compile_engineering_problem,
-        name="compile_engineering_problem",
-        title="Compile an engineering description",
-        description=_COMPILE_INTENT_DESCRIPTION,
-    )
-    server.add_tool(
-        run_engineering_problem,
-        name="run_engineering_problem",
-        title="Compile and run an engineering description",
-        description=_RUN_INTENT_DESCRIPTION,
-    )
-    server.add_tool(
-        answer_engineering_problem,
-        name="answer_engineering_problem",
-        title="Answer an engineering problem with evidence",
-        description=_ANSWER_DESCRIPTION,
-    )
-    server.add_tool(
-        answer_engineering_scenarios,
-        name="answer_engineering_scenarios",
-        title="Run a declared uncertainty scenario set",
-        description=_SCENARIO_DESCRIPTION,
-    )
-    server.add_tool(
-        evaluate_engineering_context,
-        name="evaluate_engineering_context",
-        title="Evaluate an engineering context of use",
-        description=_CONTEXT_DESCRIPTION,
-    )
-    server.add_tool(
-        answer_engineering_uncertainty,
-        name="answer_engineering_uncertainty",
-        title="Propagate declared probabilistic input uncertainty",
-        description=_PROBABILISTIC_UQ_DESCRIPTION,
+        plan_canonical_engineering_intent,
+        name="plan_canonical_engineering_intent",
+        title="Plan a canonical engineering intent",
+        description=(
+            "Plan a versioned typed EngineeringIntent JSON record. This tool "
+            "does not accept or interpret natural language. Optional "
+            "display_metadata may preserve user-language text, but it is "
+            "non-authoritative and never affects scientific identity or planning."
+        ),
     )
     _audit_tools(server)
     return server
