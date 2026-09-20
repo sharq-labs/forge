@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from ..planning.blueprint import PhysicsGraphBlueprint
+from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
 from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
@@ -19,7 +19,11 @@ class CompositionPackProvider(Protocol):
     @property
     def manifest(self) -> CompositionPackManifest: ...
 
-    def blueprints(self) -> tuple[PhysicsGraphBlueprint, ...]: ...
+    def blueprints(self) -> tuple[SystemGraphBlueprint, ...]: ...
+
+    def coupling_policy_templates(
+        self,
+    ) -> tuple[CouplingPolicyTemplate, ...]: ...
 
     def port_semantics(self) -> tuple[PortSemanticBinding, ...]: ...
 
