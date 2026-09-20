@@ -13,8 +13,8 @@ import hashlib
 import json
 from typing import Any, Mapping
 
-from ...scientific.errors import InvalidScientificProblem
-from ...scientific.serialization import require_schema, schema_string
+from ..errors import InvalidScientificProblem
+from ..serialization import require_schema, schema_string
 from .graph import PhysicsGraph
 from .ports import PortRef
 
