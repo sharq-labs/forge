@@ -70,6 +70,10 @@ from .problem import (
     example_over_rating_payload,
     run_electrothermal_case,
 )
+from .canonical import (
+    CANONICAL_ENGINEERING_PLAN_SCHEMA,
+    plan_canonical_engineering_intent,
+)
 from .intent import INTENT_SCHEMA, compile_engineering_intent
 from .planning import PLAN_SCHEMA, plan_engineering_intent
 from .answer import ANSWER_SCHEMA, summarize_engineering_run
@@ -84,6 +88,7 @@ from .probabilistic_uq import (
 __all__ = [
     "ASSERTED_CONTEXT_SCHEMA",
     "ANSWER_SCHEMA",
+    "CANONICAL_ENGINEERING_PLAN_SCHEMA",
     "CONTEXT_SCHEMA",
     "COUPLING_SUPPLIED_INPUTS",
     "EVIDENCE_PACKAGE_SCHEMA",
@@ -110,6 +115,7 @@ __all__ = [
     "classify_assessment",
     "compile_engineering_intent",
     "plan_engineering_intent",
+    "plan_canonical_engineering_intent",
     "combine_assessments",
     "ProblemPayloadError",
     "UnknownFieldError",

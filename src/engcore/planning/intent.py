@@ -65,6 +65,19 @@ def _path(value: Any, label: str) -> str:
     return value
 
 
+def _reject_unknown_keys(
+    payload: Mapping[str, Any],
+    allowed: frozenset[str],
+    label: str,
+) -> None:
+    extra = sorted(set(payload) - allowed)
+    if extra:
+        raise InvalidScientificProblem(
+            f"{label} contains unknown fields {extra}; canonical contracts "
+            "refuse undeclared data rather than silently ignoring it"
+        )
+
+
 def _unit(value: Any, label: str) -> str:
     value = _text(value, label)
     try:
@@ -74,15 +87,38 @@ def _unit(value: Any, label: str) -> str:
     return value
 
 
-def _identity_payload(value: Any) -> Any:
+_NON_AUTHORITATIVE_TEXT_FIELDS = frozenset({
+    "description",
+    "statement",
+})
+_NON_AUTHORITATIVE_CONTEXT_FIELDS = frozenset({
+    "decision",
+    "application",
+    "consequence_if_wrong",
+})
+
+
+def _identity_payload(
+    value: Any,
+    path: tuple[str, ...] = (),
+) -> Any:
     if isinstance(value, Mapping):
-        return {
-            key: _identity_payload(child)
-            for key, child in sorted(value.items())
-            if key not in {"description", "statement"}
-        }
+        result = {}
+        for key, child in sorted(value.items()):
+            if key in _NON_AUTHORITATIVE_TEXT_FIELDS:
+                continue
+            if (
+                path == ("context",)
+                and key in _NON_AUTHORITATIVE_CONTEXT_FIELDS
+            ):
+                continue
+            result[key] = _identity_payload(child, (*path, str(key)))
+        return result
     if isinstance(value, list):
-        return [_identity_payload(child) for child in value]
+        return [
+            _identity_payload(child, (*path, str(index)))
+            for index, child in enumerate(value)
+        ]
     return value
 
 
@@ -142,6 +178,15 @@ class ContextOfUse:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "ContextOfUse":
         require_schema(p, CONTEXT_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "decision", "application", "consequence_if_wrong",
+                "required_levels", "required_uncertainty",
+                "required_capabilities", "require_independent_verification",
+            }),
+            "engineering context",
+        )
         return cls(
             p["decision"], p["application"], p["consequence_if_wrong"],
             tuple(p.get("required_levels", ())),
@@ -176,6 +221,14 @@ class EngineeringComponent:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringComponent":
         require_schema(p, COMPONENT_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "component_id", "kind",
+                "required_capabilities", "description",
+            }),
+            "engineering component",
+        )
         return cls(p["component_id"], p["kind"], frozenset(p.get("required_capabilities", ())), p.get("description", ""))
 
 
@@ -206,6 +259,14 @@ class InterfaceExchange:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "InterfaceExchange":
         require_schema(p, EXCHANGE_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "quantity", "unit_exemplar",
+                "dimension", "description",
+            }),
+            "engineering interface exchange",
+        )
         made = cls(p["quantity"], p["unit_exemplar"], p.get("description", ""))
         if p.get("dimension", made.dimension) != made.dimension:
             raise InvalidScientificProblem("serialized exchange dimension disagrees with its unit")
@@ -249,6 +310,15 @@ class EngineeringInterface:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringInterface":
         require_schema(p, INTERFACE_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "interface_id", "source_component",
+                "target_component", "exchanges", "bidirectional",
+                "description",
+            }),
+            "engineering interface",
+        )
         return cls(
             p["interface_id"], p["source_component"], p["target_component"],
             tuple(InterfaceExchange.from_dict(x) for x in p["exchanges"]),
@@ -281,6 +351,11 @@ class IntentFact:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "IntentFact":
         require_schema(p, FACT_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({"schema", "path", "role", "value", "description"}),
+            "engineering intent fact",
+        )
         return cls(p["path"], FactRole(p["role"]), decode_value(p["value"]), p.get("description", ""))
 
 
@@ -322,6 +397,14 @@ class IntentQuantityOfInterest:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "IntentQuantityOfInterest":
         require_schema(p, QOI_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "qoi_id", "name", "unit", "dimension",
+                "subject", "qualifiers", "description",
+            }),
+            "engineering quantity of interest",
+        )
         made = cls(p["qoi_id"], p["name"], p["unit"], p.get("subject"), dict(p.get("qualifiers", {})), p.get("description", ""))
         if p.get("dimension", made.dimension) != made.dimension:
             raise InvalidScientificProblem(f"qoi {made.qoi_id!r} dimension disagrees with its unit")
@@ -344,6 +427,11 @@ class QOIConstraint:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "QOIConstraint":
         require_schema(p, QOI_CONSTRAINT_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({"schema", "qoi_id", "constraint"}),
+            "engineering qoi constraint",
+        )
         return cls(p["qoi_id"], ConstraintDefinition.from_dict(p["constraint"]))
 
 
@@ -384,6 +472,14 @@ class EngineeringObjective:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringObjective":
         require_schema(p, OBJECTIVE_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "objective_id", "qoi_id", "kind",
+                "target", "weight", "description",
+            }),
+            "engineering objective",
+        )
         target = p.get("target")
         return cls(p["objective_id"], p["qoi_id"], ObjectiveKind(p["kind"]), None if target is None else Quantity.from_dict(target), p.get("weight", 1.0), p.get("description", ""))
 
@@ -415,6 +511,14 @@ class FidelityRequest:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "FidelityRequest":
         require_schema(p, FIDELITY_REQUEST_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "ladder_id", "ladder_version",
+                "minimum_rung", "preferred_rung",
+            }),
+            "engineering fidelity request",
+        )
         return cls(p["ladder_id"], p["ladder_version"], p.get("minimum_rung"), p.get("preferred_rung"))
 
 
@@ -447,6 +551,11 @@ class ComputeBudget:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "ComputeBudget":
         require_schema(p, COMPUTE_BUDGET_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({"schema", "max_wall_time", "max_solver_calls"}),
+            "engineering compute budget",
+        )
         wall = p.get("max_wall_time")
         return cls(None if wall is None else Quantity.from_dict(wall), p.get("max_solver_calls"))
 
@@ -564,6 +673,15 @@ class EngineeringIntent:
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "EngineeringIntent":
         require_schema(p, ENGINEERING_INTENT_SCHEMA)
+        _reject_unknown_keys(
+            p,
+            frozenset({
+                "schema", "statement", "context", "components", "interfaces",
+                "facts", "qois", "constraints", "objectives",
+                "required_capabilities", "fidelity", "compute_budget",
+            }),
+            "engineering intent",
+        )
         fidelity = p.get("fidelity")
         return cls(
             statement=p["statement"],
