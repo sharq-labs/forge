@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterator
 
+from ..claims.capabilities import CapabilityDeclaration
 from ..domainpacks.frozen import (
     ArtifactImplementationFingerprint,
     implementation_fingerprint,
@@ -38,6 +39,7 @@ from .semantics import CouplingSemantic, PortSemanticBinding
 @dataclass(frozen=True)
 class RegisteredCompositionPack:
     manifest: CompositionPackManifest
+    claim_capabilities: tuple[CapabilityDeclaration, ...]
     blueprints: tuple[SystemGraphBlueprint, ...]
     coupling_policy_templates: tuple[CouplingPolicyTemplate, ...]
     port_semantics: tuple[PortSemanticBinding, ...]
@@ -337,6 +339,7 @@ class CompositionPackRegistry:
             require_enabled=require_enabled_dependencies,
         )
 
+        claims = _records(provider, "claim_capabilities")
         blueprints = _records(provider, "blueprints")
         policies = _records(provider, "coupling_policy_templates")
         ports = _records(provider, "port_semantics")
@@ -344,6 +347,23 @@ class CompositionPackRegistry:
         applicability = _records(provider, "applicability_rules")
         uncertainty = _records(provider, "uncertainty_rules")
         validations = _records(provider, "validation_protocols")
+
+        if any(
+            not isinstance(item, CapabilityDeclaration)
+            for item in claims
+        ):
+            raise InvalidCompositionPackProvider(
+                "claim_capabilities() must return CapabilityDeclaration records only"
+            )
+        claim_ids = tuple(sorted(item.capability_id for item in claims))
+        if claim_ids != manifest.capabilities:
+            raise InvalidCompositionPackProvider(
+                "composition claim capability ids must exactly match manifest.capabilities"
+            )
+        if len(set(claim_ids)) != len(claim_ids):
+            raise InvalidCompositionPackProvider(
+                "composition claim capabilities contain duplicate ids"
+            )
 
         if any(
             not isinstance(item, SystemGraphBlueprint)
@@ -489,6 +509,9 @@ class CompositionPackRegistry:
 
         registration = RegisteredCompositionPack(
             manifest=manifest,
+            claim_capabilities=tuple(
+                sorted(claims, key=lambda item: item.capability_id)
+            ),
             blueprints=tuple(
                 sorted(blueprints, key=lambda item: item.key)
             ),
