@@ -5,8 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
+from ..scientific.serialization import require_schema
 from .manifest import ArtifactRef
 from .registry import RegisteredDomainPack
 
@@ -75,6 +76,54 @@ class DomainPackSnapshot:
             self.to_dict(), sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "DomainPackSnapshot":
+        require_schema(payload, SNAPSHOT_SCHEMA)
+        origin = payload["origin"]
+
+        def refs(name: str) -> tuple[ArtifactRef, ...]:
+            return tuple(
+                ArtifactRef.from_dict(item)
+                for item in payload.get(name, ())
+            )
+
+        return cls(
+            pack_id=payload["pack_id"],
+            pack_version=payload["pack_version"],
+            domain=payload["domain"],
+            manifest_digest=payload["manifest_digest"],
+            origin_kind=origin["kind"],
+            distribution_name=origin.get("distribution_name"),
+            distribution_version=origin.get("distribution_version"),
+            entry_point=origin.get("entry_point"),
+            capabilities=tuple(payload.get("capabilities", ())),
+            models=refs("models"),
+            realizations=refs("realizations"),
+            solvers=refs("solvers"),
+            calibration_protocols=refs("calibration_protocols"),
+            validation_protocols=refs("validation_protocols"),
+            uq_producers=refs("uq_producers"),
+            measurement_adapters=refs("measurement_adapters"),
+            transformations=refs("transformations"),
+            benchmarks=refs("benchmarks"),
+            implementation_digest=payload["implementation_digest"],
+            implementation_fingerprints=tuple(
+                dict(item)
+                for item in payload.get(
+                    "implementation_fingerprints", ()
+                )
+            ),
+            semantic_authority=(
+                None
+                if payload.get("semantic_authority") is None
+                else dict(payload["semantic_authority"])
+            ),
+            authority_digest=payload["authority_digest"],
+        )
 
 
 def snapshot_domain_pack(registration: RegisteredDomainPack) -> DomainPackSnapshot:
