@@ -5,8 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
+from ..scientific.serialization import require_schema
 from .registry import RegisteredExecutionPack
 
 EXECUTION_SNAPSHOT_SCHEMA = "forge.execution_pack_snapshot/1"
@@ -20,7 +21,7 @@ class ExecutionPackSnapshot:
     composition_pack_id: str
     composition_pack_version: str
     composition_manifest_digest: str
-    participant_factories: tuple[dict[str, str], ...]
+    participant_factories: tuple[dict[str, Any], ...]
     composition_authority_digest: str
     authority_digest: str
 
@@ -51,6 +52,30 @@ class ExecutionPackSnapshot:
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "ExecutionPackSnapshot":
+        require_schema(payload, EXECUTION_SNAPSHOT_SCHEMA)
+        composition = payload["composition"]
+        return cls(
+            pack_id=payload["pack_id"],
+            pack_version=payload["pack_version"],
+            manifest_digest=payload["manifest_digest"],
+            composition_pack_id=composition["pack_id"],
+            composition_pack_version=composition["pack_version"],
+            composition_manifest_digest=composition["manifest_digest"],
+            participant_factories=tuple(
+                dict(item)
+                for item in payload.get("participant_factories", ())
+            ),
+            composition_authority_digest=payload[
+                "composition_authority_digest"
+            ],
+            authority_digest=payload["authority_digest"],
+        )
 
 
 def snapshot_execution_pack(

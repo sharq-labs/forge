@@ -8,6 +8,7 @@ or execution request, so the same system topology is reusable across studies.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
@@ -25,14 +26,25 @@ from ..scientific.multiphysics import (
     RelaxationPolicy,
     TimePolicy,
 )
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+)
 from ..scientific.units.quantity import Quantity
 
 SYSTEM_GRAPH_BLUEPRINT_SCHEMA = schema_string(
     "composition_system_graph_blueprint"
 )
-COUPLING_POLICY_TEMPLATE_SCHEMA = schema_string(
+COUPLING_WINDOW_RULE_SCHEMA = schema_string(
+    "composition_coupling_window_rule"
+)
+COUPLING_POLICY_TEMPLATE_SCHEMA_V1 = schema_string(
     "composition_coupling_policy_template"
+)
+COUPLING_POLICY_TEMPLATE_SCHEMA = schema_string(
+    "composition_coupling_policy_template",
+    2,
 )
 
 
@@ -211,6 +223,219 @@ class SystemGraphBlueprint:
         )
 
 
+class CouplingWindowRuleKind(str, Enum):
+    FIXED = "fixed"
+    HORIZON_DIVISIONS = "horizon_divisions"
+    FACT_RATIO = "fact_ratio"
+
+
+@dataclass(frozen=True)
+class CouplingWindowRule:
+    kind: CouplingWindowRuleKind
+    fixed_window: Quantity | None = None
+    divisions: int | None = None
+    numerator_path: str = ""
+    denominator_path: str = ""
+    factor: float = 1.0
+    minimum: Quantity | None = None
+    maximum: Quantity | None = None
+    justification: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", CouplingWindowRuleKind(self.kind))
+        object.__setattr__(
+            self, "numerator_path", str(self.numerator_path).strip()
+        )
+        object.__setattr__(
+            self, "denominator_path", str(self.denominator_path).strip()
+        )
+        factor = float(self.factor)
+        if not factor > 0.0:
+            raise InvalidScientificProblem(
+                "coupling window rule factor must be positive"
+            )
+        object.__setattr__(self, "factor", factor)
+        object.__setattr__(
+            self, "justification", str(self.justification).strip()
+        )
+
+        def time_value(value, label):
+            if value is None:
+                return None
+            if (
+                not isinstance(value, Quantity)
+                or value.dimensionality
+                != Quantity(1.0, "second").dimensionality
+                or value.magnitude_in("second") <= 0.0
+            ):
+                raise InvalidScientificProblem(
+                    f"coupling window rule {label} must be positive time"
+                )
+            return value.to("second")
+
+        fixed = time_value(self.fixed_window, "fixed_window")
+        lower = time_value(self.minimum, "minimum")
+        upper = time_value(self.maximum, "maximum")
+        if (
+            lower is not None
+            and upper is not None
+            and lower.magnitude_in("second")
+            > upper.magnitude_in("second")
+        ):
+            raise InvalidScientificProblem(
+                "coupling window rule minimum exceeds maximum"
+            )
+        object.__setattr__(self, "fixed_window", fixed)
+        object.__setattr__(self, "minimum", lower)
+        object.__setattr__(self, "maximum", upper)
+
+        if self.kind is CouplingWindowRuleKind.FIXED:
+            if fixed is None:
+                raise InvalidScientificProblem(
+                    "FIXED coupling window rule requires fixed_window"
+                )
+            if self.divisions is not None or self.numerator_path or self.denominator_path:
+                raise InvalidScientificProblem(
+                    "FIXED coupling window rule carries unrelated operands"
+                )
+        elif self.kind is CouplingWindowRuleKind.HORIZON_DIVISIONS:
+            if (
+                isinstance(self.divisions, bool)
+                or not isinstance(self.divisions, int)
+                or self.divisions < 1
+            ):
+                raise InvalidScientificProblem(
+                    "HORIZON_DIVISIONS requires positive integer divisions"
+                )
+            if fixed is not None or self.numerator_path or self.denominator_path:
+                raise InvalidScientificProblem(
+                    "HORIZON_DIVISIONS carries unrelated operands"
+                )
+        else:
+            if not self.numerator_path or not self.denominator_path:
+                raise InvalidScientificProblem(
+                    "FACT_RATIO requires numerator_path and denominator_path"
+                )
+            if fixed is not None or self.divisions is not None:
+                raise InvalidScientificProblem(
+                    "FACT_RATIO carries unrelated fixed/divisions operands"
+                )
+
+    @classmethod
+    def fixed(cls, window: Quantity, *, justification: str = ""):
+        return cls(
+            CouplingWindowRuleKind.FIXED,
+            fixed_window=window,
+            justification=justification,
+        )
+
+    def resolve(
+        self,
+        *,
+        start: Quantity,
+        end: Quantity,
+        facts: Mapping[str, Any],
+    ) -> Quantity:
+        horizon = Quantity(
+            end.magnitude_in("second") - start.magnitude_in("second"),
+            "second",
+        )
+        if self.kind is CouplingWindowRuleKind.FIXED:
+            assert self.fixed_window is not None
+            made = self.fixed_window
+        elif self.kind is CouplingWindowRuleKind.HORIZON_DIVISIONS:
+            assert self.divisions is not None
+            made = Quantity(
+                horizon.magnitude_in("second") / self.divisions,
+                "second",
+            )
+        else:
+            numerator = facts.get(self.numerator_path)
+            denominator = facts.get(self.denominator_path)
+            if not isinstance(numerator, Quantity) or not isinstance(
+                denominator, Quantity
+            ):
+                raise InvalidScientificProblem(
+                    "FACT_RATIO coupling window requires Quantity facts "
+                    f"{self.numerator_path!r} and {self.denominator_path!r}"
+                )
+            made = numerator / denominator
+            if (
+                not isinstance(made, Quantity)
+                or made.dimensionality
+                != Quantity(1.0, "second").dimensionality
+            ):
+                raise InvalidScientificProblem(
+                    "FACT_RATIO numerator/denominator does not produce time"
+                )
+            made = Quantity(
+                made.magnitude_in("second") * self.factor,
+                "second",
+            )
+
+        seconds = made.magnitude_in("second")
+        seconds = min(seconds, horizon.magnitude_in("second"))
+        if self.minimum is not None:
+            seconds = max(
+                seconds, self.minimum.magnitude_in("second")
+            )
+        if self.maximum is not None:
+            seconds = min(
+                seconds, self.maximum.magnitude_in("second")
+            )
+        seconds = min(seconds, horizon.magnitude_in("second"))
+        if seconds <= 0.0:
+            raise InvalidScientificProblem(
+                "coupling window rule resolved to non-positive time"
+            )
+        return Quantity(seconds, "second")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": COUPLING_WINDOW_RULE_SCHEMA,
+            "kind": self.kind.value,
+            "fixed_window": (
+                None
+                if self.fixed_window is None
+                else self.fixed_window.to_dict()
+            ),
+            "divisions": self.divisions,
+            "numerator_path": self.numerator_path,
+            "denominator_path": self.denominator_path,
+            "factor": self.factor,
+            "minimum": (
+                None if self.minimum is None else self.minimum.to_dict()
+            ),
+            "maximum": (
+                None if self.maximum is None else self.maximum.to_dict()
+            ),
+            "justification": self.justification,
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "CouplingWindowRule":
+        require_schema(payload, COUPLING_WINDOW_RULE_SCHEMA)
+
+        def q(name):
+            raw = payload.get(name)
+            return None if raw is None else Quantity.from_dict(raw)
+
+        return cls(
+            kind=CouplingWindowRuleKind(payload["kind"]),
+            fixed_window=q("fixed_window"),
+            divisions=payload.get("divisions"),
+            numerator_path=payload.get("numerator_path", ""),
+            denominator_path=payload.get("denominator_path", ""),
+            factor=payload.get("factor", 1.0),
+            minimum=q("minimum"),
+            maximum=q("maximum"),
+            justification=payload.get("justification", ""),
+        )
+
+
 @dataclass(frozen=True)
 class CouplingPolicyTemplate:
     template_id: str
@@ -218,7 +443,8 @@ class CouplingPolicyTemplate:
     blueprint_id: str
     scheme: CouplingScheme
     iteration_semantics: IterationSemantics
-    coupling_window: Quantity
+    coupling_window: Quantity | None = None
+    window_rule: CouplingWindowRule | None = None
     align_events: bool = True
     max_windows: int = 100000
     participant_order: tuple[str, ...] = ()
@@ -241,19 +467,34 @@ class CouplingPolicyTemplate:
             "iteration_semantics",
             IterationSemantics(self.iteration_semantics),
         )
-        if (
-            not isinstance(self.coupling_window, Quantity)
-            or self.coupling_window.dimensionality
-            != Quantity(1.0, "second").dimensionality
-            or self.coupling_window.magnitude_in("second") <= 0.0
-        ):
+        legacy_window = self.coupling_window
+        rule = self.window_rule
+        if legacy_window is not None and rule is not None:
             raise InvalidScientificProblem(
-                "coupling policy template requires positive coupling_window"
+                "coupling policy declares both legacy coupling_window and window_rule"
             )
+        if rule is None:
+            if legacy_window is None:
+                raise InvalidScientificProblem(
+                    "coupling policy requires window_rule"
+                )
+            rule = CouplingWindowRule.fixed(
+                legacy_window,
+                justification="legacy fixed coupling-window declaration",
+            )
+        if not isinstance(rule, CouplingWindowRule):
+            raise InvalidScientificProblem(
+                "coupling policy window_rule must be CouplingWindowRule"
+            )
+        object.__setattr__(self, "window_rule", rule)
         object.__setattr__(
             self,
             "coupling_window",
-            self.coupling_window.to("second"),
+            (
+                rule.fixed_window
+                if rule.kind is CouplingWindowRuleKind.FIXED
+                else None
+            ),
         )
         if not isinstance(self.align_events, bool):
             raise InvalidScientificProblem(
@@ -330,11 +571,18 @@ class CouplingPolicyTemplate:
         start: Quantity,
         end: Quantity,
         plan_id: str | None = None,
+        facts: Mapping[str, Any] | None = None,
     ) -> CouplingPlan:
+        assert self.window_rule is not None
+        resolved_window = self.window_rule.resolve(
+            start=start,
+            end=end,
+            facts={} if facts is None else facts,
+        )
         time = TimePolicy(
             start=start,
             end=end,
-            coupling_window=self.coupling_window,
+            coupling_window=resolved_window,
             align_events=self.align_events,
             max_windows=self.max_windows,
         )
@@ -385,7 +633,7 @@ class CouplingPolicyTemplate:
             "blueprint_id": self.blueprint_id,
             "scheme": self.scheme.value,
             "iteration_semantics": self.iteration_semantics.value,
-            "coupling_window": self.coupling_window.to_dict(),
+            "window_rule": self.window_rule.to_dict(),
             "align_events": self.align_events,
             "max_windows": self.max_windows,
             "participant_order": list(self.participant_order),
@@ -400,7 +648,13 @@ class CouplingPolicyTemplate:
         cls,
         payload: Mapping[str, Any],
     ) -> "CouplingPolicyTemplate":
-        require_schema(payload, COUPLING_POLICY_TEMPLATE_SCHEMA)
+        schema = require_schema_any(
+            payload,
+            (
+                COUPLING_POLICY_TEMPLATE_SCHEMA_V1,
+                COUPLING_POLICY_TEMPLATE_SCHEMA,
+            ),
+        )
         return cls(
             template_id=payload["template_id"],
             version=payload["version"],
@@ -409,8 +663,15 @@ class CouplingPolicyTemplate:
             iteration_semantics=IterationSemantics(
                 payload["iteration_semantics"]
             ),
-            coupling_window=Quantity.from_dict(
-                payload["coupling_window"]
+            coupling_window=(
+                Quantity.from_dict(payload["coupling_window"])
+                if schema == COUPLING_POLICY_TEMPLATE_SCHEMA_V1
+                else None
+            ),
+            window_rule=(
+                None
+                if schema == COUPLING_POLICY_TEMPLATE_SCHEMA_V1
+                else CouplingWindowRule.from_dict(payload["window_rule"])
             ),
             align_events=payload.get("align_events", True),
             max_windows=payload.get("max_windows", 100000),
@@ -434,7 +695,11 @@ class CouplingPolicyTemplate:
 
 __all__ = [
     "COUPLING_POLICY_TEMPLATE_SCHEMA",
+    "COUPLING_POLICY_TEMPLATE_SCHEMA_V1",
+    "COUPLING_WINDOW_RULE_SCHEMA",
     "SYSTEM_GRAPH_BLUEPRINT_SCHEMA",
     "CouplingPolicyTemplate",
+    "CouplingWindowRule",
+    "CouplingWindowRuleKind",
     "SystemGraphBlueprint",
 ]

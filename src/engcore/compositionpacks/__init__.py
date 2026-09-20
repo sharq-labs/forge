@@ -1,3 +1,4 @@
+from .applicability import *
 """Cross-domain composition authority.
 
 Domain Packs own domain science. Composition Packs own only cross-domain
@@ -14,3 +15,6 @@ from .provider import *
 from .registry import *
 from .semantics import *
 from .snapshot import *
+
+from .uncertainty import *
+from .verification import *

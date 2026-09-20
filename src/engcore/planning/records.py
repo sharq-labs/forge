@@ -78,6 +78,8 @@ class GapKind(str, Enum):
     SYSTEM_APPLICABILITY_EVIDENCE_MISSING = (
         "system_applicability_evidence_missing"
     )
+    SYSTEM_APPLICABILITY_UNKNOWN = "system_applicability_unknown"
+    SYSTEM_APPLICABILITY_VIOLATED = "system_applicability_violated"
     SYSTEM_UNCERTAINTY_COMPOSITION_UNAVAILABLE = (
         "system_uncertainty_composition_unavailable"
     )

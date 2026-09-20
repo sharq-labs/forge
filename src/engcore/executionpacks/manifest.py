@@ -8,9 +8,11 @@ import json
 import re
 from typing import Any, Mapping
 
+from ..scientific.multiphysics import ParticipantModelRef
 from .errors import InvalidExecutionPackManifest
 
-EXECUTION_PACK_SCHEMA = "forge.execution_pack/1"
+EXECUTION_PACK_SCHEMA_V1 = "forge.execution_pack/1"
+EXECUTION_PACK_SCHEMA = "forge.execution_pack/2"
 EXECUTION_PACK_API = "forge.executionpack_api/1"
 
 _ID = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
@@ -70,6 +72,16 @@ class CompositionDependency:
             "manifest_digest": self.manifest_digest,
         }
 
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "CompositionDependency":
+        return cls(
+            payload["pack_id"],
+            payload["pack_version"],
+            payload["manifest_digest"],
+        )
+
 
 @dataclass(frozen=True, order=True)
 class ParticipantFactoryRef:
@@ -82,6 +94,7 @@ class ParticipantFactoryRef:
     adapter_id: str
     adapter_version: str
     implementation_digest: str
+    models: tuple[ParticipantModelRef, ...] = ()
 
     def __post_init__(self) -> None:
         for label in (
@@ -105,12 +118,38 @@ class ParticipantFactoryRef:
             "implementation_digest",
             _sha(self.implementation_digest, "implementation_digest"),
         )
+        models = tuple(self.models)
+        if not models:
+            models = (
+                ParticipantModelRef(self.model_id, self.model_version),
+            )
+        if any(not isinstance(item, ParticipantModelRef) for item in models):
+            raise InvalidExecutionPackManifest(
+                "participant factory ref models must be ParticipantModelRef"
+            )
+        keys = [item.key for item in models]
+        if len(keys) != len(set(keys)):
+            raise InvalidExecutionPackManifest(
+                "participant factory ref model assembly contains duplicates"
+            )
+        if (self.model_id, self.model_version) not in set(keys):
+            raise InvalidExecutionPackManifest(
+                "participant factory ref primary model must be in assembly"
+            )
+        object.__setattr__(
+            self,
+            "models",
+            tuple(sorted(models, key=lambda item: item.key)),
+        )
 
     @property
-    def key(self) -> tuple[str, ...]:
+    def model_keys(self) -> tuple[tuple[str, str], ...]:
+        return tuple(item.key for item in self.models)
+
+    @property
+    def key(self) -> tuple[object, ...]:
         return (
-            self.model_id,
-            self.model_version,
+            self.model_keys,
             self.realization_id,
             self.realization_version,
             self.solver_id,
@@ -119,10 +158,11 @@ class ParticipantFactoryRef:
             self.adapter_version,
         )
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "model_id": self.model_id,
             "model_version": self.model_version,
+            "models": [item.to_dict() for item in self.models],
             "realization_id": self.realization_id,
             "realization_version": self.realization_version,
             "solver_id": self.solver_id,
@@ -133,8 +173,32 @@ class ParticipantFactoryRef:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "ParticipantFactoryRef":
-        return cls(**dict(payload))
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+        *,
+        legacy: bool = False,
+    ) -> "ParticipantFactoryRef":
+        models = (
+            ()
+            if legacy
+            else tuple(
+                ParticipantModelRef.from_dict(item)
+                for item in payload.get("models", ())
+            )
+        )
+        return cls(
+            model_id=payload["model_id"],
+            model_version=payload["model_version"],
+            realization_id=payload["realization_id"],
+            realization_version=payload["realization_version"],
+            solver_id=payload["solver_id"],
+            solver_version=payload["solver_version"],
+            adapter_id=payload["adapter_id"],
+            adapter_version=payload["adapter_version"],
+            implementation_digest=payload["implementation_digest"],
+            models=models,
+        )
 
 
 @dataclass(frozen=True)
@@ -151,7 +215,12 @@ class ExecutionPackManifest:
             self, "pack_version", _text(self.pack_version, "pack_version")
         )
         apis = tuple(
-            sorted({_text(item, "compatible_core_api") for item in self.compatible_core_apis})
+            sorted(
+                {
+                    _text(item, "compatible_core_api")
+                    for item in self.compatible_core_apis
+                }
+            )
         )
         if not apis:
             raise InvalidExecutionPackManifest(
@@ -199,10 +268,37 @@ class ExecutionPackManifest:
             ).encode("utf-8")
         ).hexdigest()
 
+    @classmethod
+    def from_dict(
+        cls, payload: Mapping[str, Any]
+    ) -> "ExecutionPackManifest":
+        schema = payload.get("schema")
+        if schema not in (EXECUTION_PACK_SCHEMA_V1, EXECUTION_PACK_SCHEMA):
+            raise InvalidExecutionPackManifest(
+                f"unsupported execution pack schema {schema!r}"
+            )
+        legacy = schema == EXECUTION_PACK_SCHEMA_V1
+        return cls(
+            pack_id=payload["pack_id"],
+            pack_version=payload["pack_version"],
+            compatible_core_apis=tuple(payload["compatible_core_apis"]),
+            composition=CompositionDependency.from_dict(
+                payload["composition"]
+            ),
+            participant_factories=tuple(
+                ParticipantFactoryRef.from_dict(
+                    item,
+                    legacy=legacy,
+                )
+                for item in payload["participant_factories"]
+            ),
+        )
+
 
 __all__ = [
     "EXECUTION_PACK_API",
     "EXECUTION_PACK_SCHEMA",
+    "EXECUTION_PACK_SCHEMA_V1",
     "CompositionDependency",
     "ExecutionPackManifest",
     "ParticipantFactoryRef",

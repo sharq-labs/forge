@@ -573,6 +573,8 @@ def blueprint_choice(
 def bindings_for_blueprint(
     blueprint: Any,
     qoi_plans: tuple[QOIPlan, ...],
+    *,
+    execution_factories: tuple[Any, ...] = (),
 ) -> tuple[
     Mapping[str, ParticipantBinding] | None,
     str | None,
@@ -586,7 +588,66 @@ def bindings_for_blueprint(
     bindings: dict[str, ParticipantBinding] = {}
 
     for participant in blueprint.participants:
-        choice = choices.get(participant.model_id)
+        factory_candidates = tuple(
+            item
+            for item in execution_factories
+            if (
+                getattr(item, "model_keys", ()) == participant.model_keys
+                and item.adapter_id == participant.adapter_id
+                and item.adapter_version == participant.adapter_version
+            )
+        )
+
+        primary_choice = choices.get(participant.model_id)
+        if factory_candidates:
+            narrowed = factory_candidates
+            if (
+                primary_choice is not None
+                and primary_choice.selected_realization is not None
+                and primary_choice.selected_solver is not None
+            ):
+                realization_id, realization_version = (
+                    primary_choice.selected_realization.rsplit("@", 1)
+                )
+                solver_id, solver_version = (
+                    primary_choice.selected_solver.rsplit("@", 1)
+                )
+                narrowed = tuple(
+                    item
+                    for item in factory_candidates
+                    if (
+                        item.realization_id == realization_id
+                        and item.realization_version == realization_version
+                        and item.solver_id == solver_id
+                        and item.solver_version == solver_version
+                    )
+                )
+
+            if len(narrowed) == 1:
+                item = narrowed[0]
+                bindings[participant.participant_id] = ParticipantBinding(
+                    participant_id=participant.participant_id,
+                    realization_id=item.realization_id,
+                    realization_version=item.realization_version,
+                    solver_id=item.solver_id,
+                    solver_version=item.solver_version,
+                )
+                continue
+            if not narrowed:
+                return (
+                    None,
+                    f"participant {participant.participant_id} has no "
+                    "ExecutionPack factory matching its selected execution "
+                    "stack and complete model assembly",
+                )
+            return (
+                None,
+                f"participant {participant.participant_id} has "
+                f"{len(narrowed)} execution factories; select an exact "
+                "ExecutionPack or execution policy",
+            )
+
+        choice = primary_choice
         if (
             choice is None
             or choice.selected_realization is None
@@ -594,9 +655,9 @@ def bindings_for_blueprint(
         ):
             return (
                 None,
-                f"participant {participant.participant_id} needs "
-                "selected realization and solver for model "
-                f"{participant.model_id}",
+                f"participant {participant.participant_id} needs either one "
+                "exact ExecutionPack factory or selected realization and "
+                f"solver for primary model {participant.model_id}",
             )
 
         realization_id, realization_version = (
@@ -605,14 +666,12 @@ def bindings_for_blueprint(
         solver_id, solver_version = (
             choice.selected_solver.rsplit("@", 1)
         )
-        bindings[participant.participant_id] = (
-            ParticipantBinding(
-                participant_id=participant.participant_id,
-                realization_id=realization_id,
-                realization_version=realization_version,
-                solver_id=solver_id,
-                solver_version=solver_version,
-            )
+        bindings[participant.participant_id] = ParticipantBinding(
+            participant_id=participant.participant_id,
+            realization_id=realization_id,
+            realization_version=realization_version,
+            solver_id=solver_id,
+            solver_version=solver_version,
         )
 
     return bindings, None

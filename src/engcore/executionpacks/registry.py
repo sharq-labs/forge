@@ -41,6 +41,14 @@ class RegisteredExecutionPack:
         return self.manifest.key
 
     @property
+    def pack_id(self) -> str:
+        return self.manifest.pack_id
+
+    @property
+    def pack_version(self) -> str:
+        return self.manifest.pack_version
+
+    @property
     def authority_digest(self) -> str:
         payload = {
             "manifest_digest": self.manifest.digest,
@@ -71,6 +79,7 @@ def _factory_ref(
         adapter_id=declaration.adapter_id,
         adapter_version=declaration.adapter_version,
         implementation_digest=digest,
+        models=declaration.models,
     )
 
 
@@ -83,9 +92,14 @@ def _domain_artifacts(composition, domain_packs: DomainPackRegistry):
         )
         for item in composition.manifest.requires_domain_packs
     )
+    models = {}
     realizations = {}
     solvers = {}
     for registration in registrations:
+        for model in registration.provider.models():
+            models.setdefault(model.key, []).append(
+                (registration, model)
+            )
         for realization in registration.provider.realizations():
             realizations.setdefault(realization.key, []).append(
                 (registration, realization)
@@ -95,7 +109,7 @@ def _domain_artifacts(composition, domain_packs: DomainPackRegistry):
             solvers.setdefault(probe.identity.key, []).append(
                 (registration, probe)
             )
-    return registrations, realizations, solvers
+    return registrations, models, realizations, solvers
 
 
 class ExecutionPackRegistry:
@@ -168,7 +182,7 @@ class ExecutionPackRegistry:
                 "implementation digests disagree with provider"
             )
 
-        _registrations, realizations, solvers = _domain_artifacts(
+        _registrations, models, realizations, solvers = _domain_artifacts(
             composition,
             domain_packs,
         )
@@ -180,8 +194,7 @@ class ExecutionPackRegistry:
         ]
         role_keys = {
             (
-                participant.model_id,
-                participant.model_version,
+                participant.model_keys,
                 participant.adapter_id,
                 participant.adapter_version,
             )
@@ -190,8 +203,7 @@ class ExecutionPackRegistry:
 
         for declaration in declarations:
             role_key = (
-                declaration.model_id,
-                declaration.model_version,
+                declaration.model_keys,
                 declaration.adapter_id,
                 declaration.adapter_version,
             )
@@ -201,6 +213,14 @@ class ExecutionPackRegistry:
                     "composition participant role: "
                     f"{role_key}"
                 )
+
+            for model_key in declaration.model_keys:
+                model_matches = models.get(model_key, [])
+                if len(model_matches) != 1:
+                    raise InvalidExecutionPackProvider(
+                        f"factory model {model_key} resolves to "
+                        f"{len(model_matches)} exact Domain Pack artifacts"
+                    )
 
             realization_key = (
                 declaration.realization_id,
@@ -265,8 +285,7 @@ class ExecutionPackRegistry:
         for role_key in sorted(role_keys):
             if not any(
                 (
-                    item.model_id,
-                    item.model_version,
+                    item.model_keys,
                     item.adapter_id,
                     item.adapter_version,
                 )

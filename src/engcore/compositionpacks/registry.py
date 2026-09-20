@@ -19,6 +19,7 @@ from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
     UncertaintyCompositionRule,
+    UncertaintyCompositionStrategy,
     system_contract_digest,
 )
 from .errors import (
@@ -37,6 +38,8 @@ from .manifest import (
 )
 from .provider import CompositionPackProvider
 from .semantics import CouplingSemantic, PortSemanticBinding
+from .uncertainty import ProvidedCompositionUncertainty
+from .verification import ProvidedCompositionVerification
 
 
 @dataclass(frozen=True)
@@ -51,7 +54,15 @@ class RegisteredCompositionPack:
     applicability_rules: tuple[SystemApplicabilityRule, ...]
     uncertainty_rules: tuple[UncertaintyCompositionRule, ...]
     validation_protocols: tuple[ProvidedCompositionValidation, ...]
+    uncertainty_producers: tuple[ProvidedCompositionUncertainty, ...]
+    verification_protocols: tuple[ProvidedCompositionVerification, ...]
     validation_fingerprints: tuple[
+        ArtifactImplementationFingerprint, ...
+    ]
+    uncertainty_fingerprints: tuple[
+        ArtifactImplementationFingerprint, ...
+    ]
+    verification_fingerprints: tuple[
         ArtifactImplementationFingerprint, ...
     ]
     dependency_authority_digests: tuple[
@@ -91,6 +102,14 @@ class RegisteredCompositionPack:
             "validation_fingerprints": [
                 item.to_dict()
                 for item in self.validation_fingerprints
+            ],
+            "uncertainty_fingerprints": [
+                item.to_dict()
+                for item in self.uncertainty_fingerprints
+            ],
+            "verification_fingerprints": [
+                item.to_dict()
+                for item in self.verification_fingerprints
             ],
         }
         return hashlib.sha256(
@@ -162,15 +181,15 @@ def _validate_blueprint_model_ownership(
             )
 
     for participant in blueprint.participants:
-        key = (participant.model_id, participant.model_version)
-        matched = owners.get(key, [])
-        if len(matched) != 1:
-            raise InvalidCompositionPackProvider(
-                f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
-                f"participant {participant.participant_id!r} references "
-                f"model {key[0]}@{key[1]} with {len(matched)} exact "
-                f"Domain Pack owners: {matched}"
-            )
+        for key in participant.model_keys:
+            matched = owners.get(key, [])
+            if len(matched) != 1:
+                raise InvalidCompositionPackProvider(
+                    f"blueprint {blueprint.blueprint_id}@{blueprint.version} "
+                    f"participant {participant.participant_id!r} references "
+                    f"model {key[0]}@{key[1]} with {len(matched)} exact "
+                    f"Domain Pack owners: {matched}"
+                )
 
 
 def _validate_port_and_edge_semantics(
@@ -347,6 +366,8 @@ def _validate_system_contracts(
     applicability: tuple[SystemApplicabilityRule, ...],
     uncertainty: tuple[UncertaintyCompositionRule, ...],
     validations: tuple[ProvidedCompositionValidation, ...],
+    uncertainty_producers: tuple[ProvidedCompositionUncertainty, ...],
+    verifications: tuple[ProvidedCompositionVerification, ...],
 ) -> None:
     blueprint_ids = {item.blueprint_id for item in blueprints}
 
@@ -378,6 +399,30 @@ def _validate_system_contracts(
             "composition validation protocols reference unknown blueprints "
             f"{validation_unknown}"
         )
+    uq_unknown = sorted(
+        {
+            item.blueprint_id
+            for item in uncertainty_producers
+            if item.blueprint_id not in blueprint_ids
+        }
+    )
+    if uq_unknown:
+        raise InvalidCompositionPackProvider(
+            "composition uncertainty producers reference unknown blueprints "
+            f"{uq_unknown}"
+        )
+    verification_unknown = sorted(
+        {
+            item.blueprint_id
+            for item in verifications
+            if item.blueprint_id not in blueprint_ids
+        }
+    )
+    if verification_unknown:
+        raise InvalidCompositionPackProvider(
+            "composition verification protocols reference unknown blueprints "
+            f"{verification_unknown}"
+        )
 
     for blueprint_id in sorted(blueprint_ids):
         if not any(
@@ -402,12 +447,46 @@ def _validate_system_contracts(
                 "uncertainty composition rule so the planner never chooses "
                 "a propagation strategy from registration order"
             )
+        rule = uncertainty_for_blueprint[0]
+        producers = tuple(
+            item
+            for item in uncertainty_producers
+            if (
+                item.blueprint_id == blueprint_id
+                and item.rule_id == rule.rule_id
+            )
+        )
+        if rule.strategy is UncertaintyCompositionStrategy.UNKNOWN:
+            if producers:
+                raise InvalidCompositionPackProvider(
+                    f"blueprint {blueprint_id!r} declares UNKNOWN uncertainty "
+                    "composition but also registers an executable producer"
+                )
+        else:
+            if len(producers) != 1:
+                raise InvalidCompositionPackProvider(
+                    f"blueprint {blueprint_id!r} declares "
+                    f"{rule.strategy.value} uncertainty but resolves to "
+                    f"{len(producers)} exact producers"
+                )
+            if set(producers[0].channels) != set(rule.channels):
+                raise InvalidCompositionPackProvider(
+                    f"blueprint {blueprint_id!r} UQ producer channels disagree "
+                    "with its uncertainty rule"
+                )
         if not any(
             item.blueprint_id == blueprint_id for item in validations
         ):
             raise InvalidCompositionPackProvider(
                 f"blueprint {blueprint_id!r} has no system-level validation "
                 "protocol"
+            )
+        if not any(
+            item.blueprint_id == blueprint_id for item in verifications
+        ):
+            raise InvalidCompositionPackProvider(
+                f"blueprint {blueprint_id!r} has no independent system "
+                "verification protocol"
             )
 
 
@@ -457,6 +536,10 @@ class CompositionPackRegistry:
         applicability = _records(provider, "applicability_rules")
         uncertainty = _records(provider, "uncertainty_rules")
         validations = _records(provider, "validation_protocols")
+        uncertainty_producers = _records(
+            provider, "uncertainty_producers"
+        )
+        verifications = _records(provider, "verification_protocols")
 
         if any(
             not isinstance(item, CapabilityDeclaration)
@@ -534,6 +617,16 @@ class CompositionPackRegistry:
             (applicability, SystemApplicabilityRule, "applicability_rules"),
             (uncertainty, UncertaintyCompositionRule, "uncertainty_rules"),
             (validations, ProvidedCompositionValidation, "validation_protocols"),
+            (
+                uncertainty_producers,
+                ProvidedCompositionUncertainty,
+                "uncertainty_producers",
+            ),
+            (
+                verifications,
+                ProvidedCompositionVerification,
+                "verification_protocols",
+            ),
         ):
             if any(not isinstance(item, cls) for item in records):
                 raise InvalidCompositionPackProvider(
@@ -548,6 +641,8 @@ class CompositionPackRegistry:
             (external_inputs, "external input bindings"),
             (applicability, "applicability rules"),
             (uncertainty, "uncertainty rules"),
+            (uncertainty_producers, "uncertainty producers"),
+            (verifications, "verification protocols"),
         ):
             _unique(tuple(records), label)
 
@@ -594,6 +689,20 @@ class CompositionPackRegistry:
         if validation_refs != manifest.validation_protocols:
             raise InvalidCompositionPackProvider(
                 "manifest validation_protocols do not match provider"
+            )
+        uncertainty_refs = tuple(
+            sorted(item.ref for item in uncertainty_producers)
+        )
+        if uncertainty_refs != manifest.uncertainty_protocols:
+            raise InvalidCompositionPackProvider(
+                "manifest uncertainty_protocols do not match provider"
+            )
+        verification_refs = tuple(
+            sorted(item.ref for item in verifications)
+        )
+        if verification_refs != manifest.verification_protocols:
+            raise InvalidCompositionPackProvider(
+                "manifest verification_protocols do not match provider"
             )
 
         blueprint_by_id = {
@@ -644,6 +753,8 @@ class CompositionPackRegistry:
             applicability,
             uncertainty,
             validations,
+            uncertainty_producers,
+            verifications,
         )
 
         validation_fingerprints = []
@@ -654,6 +765,36 @@ class CompositionPackRegistry:
             validation_fingerprints.append(
                 ArtifactImplementationFingerprint(
                     "composition_validation",
+                    item.ref.artifact_id,
+                    item.ref.version,
+                    digest,
+                    basis,
+                )
+            )
+
+        uncertainty_fingerprints = []
+        for item in uncertainty_producers:
+            digest, basis = implementation_fingerprint(
+                item.implementation
+            )
+            uncertainty_fingerprints.append(
+                ArtifactImplementationFingerprint(
+                    "composition_uncertainty",
+                    item.ref.artifact_id,
+                    item.ref.version,
+                    digest,
+                    basis,
+                )
+            )
+
+        verification_fingerprints = []
+        for item in verifications:
+            digest, basis = implementation_fingerprint(
+                item.implementation
+            )
+            verification_fingerprints.append(
+                ArtifactImplementationFingerprint(
+                    "composition_verification",
                     item.ref.artifact_id,
                     item.ref.version,
                     digest,
@@ -687,8 +828,20 @@ class CompositionPackRegistry:
                     ),
                 )
             ),
+            uncertainty_producers=tuple(
+                sorted(uncertainty_producers, key=lambda item: item.key)
+            ),
+            verification_protocols=tuple(
+                sorted(verifications, key=lambda item: item.key)
+            ),
             validation_fingerprints=tuple(
                 sorted(validation_fingerprints)
+            ),
+            uncertainty_fingerprints=tuple(
+                sorted(uncertainty_fingerprints)
+            ),
+            verification_fingerprints=tuple(
+                sorted(verification_fingerprints)
             ),
             dependency_authority_digests=tuple(
                 sorted(

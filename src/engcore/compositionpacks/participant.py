@@ -11,12 +11,24 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.multiphysics import ParticipantSpec, PortDefinition
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.multiphysics import (
+    ParticipantModelRef,
+    ParticipantSpec,
+    PortDefinition,
+)
+from ..scientific.serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+)
 from ..scientific.units.quantity import Quantity
 
-PARTICIPANT_ROLE_SCHEMA = schema_string(
+PARTICIPANT_ROLE_SCHEMA_V1 = schema_string(
     "composition_participant_role"
+)
+PARTICIPANT_ROLE_SCHEMA = schema_string(
+    "composition_participant_role",
+    2,
 )
 PARTICIPANT_BINDING_SCHEMA = schema_string(
     "composition_participant_binding"
@@ -86,6 +98,7 @@ class ParticipantBlueprint:
     preferred_time_step: Quantity | None = None
     maximum_time_step: Quantity | None = None
     description: str = ""
+    models: tuple[ParticipantModelRef, ...] = ()
 
     def __post_init__(self) -> None:
         for label in (
@@ -101,6 +114,36 @@ class ParticipantBlueprint:
                     f"participant blueprint requires {label}"
                 )
             object.__setattr__(self, label, value)
+
+        models = tuple(self.models)
+        if not models:
+            models = (
+                ParticipantModelRef(
+                    self.model_id,
+                    self.model_version,
+                ),
+            )
+        if any(
+            not isinstance(item, ParticipantModelRef)
+            for item in models
+        ):
+            raise InvalidScientificProblem(
+                "participant blueprint models must be ParticipantModelRef records"
+            )
+        model_keys = [item.key for item in models]
+        if len(model_keys) != len(set(model_keys)):
+            raise InvalidScientificProblem(
+                "participant blueprint model assembly contains duplicate models"
+            )
+        if (self.model_id, self.model_version) not in set(model_keys):
+            raise InvalidScientificProblem(
+                "participant blueprint primary model must be in models assembly"
+            )
+        object.__setattr__(
+            self,
+            "models",
+            tuple(sorted(models, key=lambda item: item.key)),
+        )
 
         ports = tuple(self.ports)
         if not ports or any(
@@ -127,6 +170,10 @@ class ParticipantBlueprint:
             str(self.description).strip(),
         )
 
+    @property
+    def model_keys(self) -> tuple[tuple[str, str], ...]:
+        return tuple(item.key for item in self.models)
+
     def materialize(self, binding: Any) -> ParticipantSpec:
         if binding.participant_id != self.participant_id:
             raise InvalidScientificProblem(
@@ -151,6 +198,7 @@ class ParticipantBlueprint:
             preferred_time_step=self.preferred_time_step,
             maximum_time_step=self.maximum_time_step,
             description=self.description,
+            models=self.models,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -159,6 +207,7 @@ class ParticipantBlueprint:
             "participant_id": self.participant_id,
             "model_id": self.model_id,
             "model_version": self.model_version,
+            "models": [item.to_dict() for item in self.models],
             "adapter_id": self.adapter_id,
             "adapter_version": self.adapter_version,
             "ports": [port.to_dict() for port in self.ports],
@@ -184,7 +233,10 @@ class ParticipantBlueprint:
         cls,
         payload: Mapping[str, Any],
     ) -> "ParticipantBlueprint":
-        require_schema(payload, PARTICIPANT_ROLE_SCHEMA)
+        version = require_schema_any(
+            payload,
+            (PARTICIPANT_ROLE_SCHEMA_V1, PARTICIPANT_ROLE_SCHEMA),
+        )
         preferred = payload.get("preferred_time_step")
         maximum = payload.get("maximum_time_step")
         return cls(
@@ -215,12 +267,26 @@ class ParticipantBlueprint:
                 else Quantity.from_dict(maximum)
             ),
             description=payload.get("description", ""),
+            models=(
+                (
+                    ParticipantModelRef(
+                        payload["model_id"],
+                        payload["model_version"],
+                    ),
+                )
+                if version == PARTICIPANT_ROLE_SCHEMA_V1
+                else tuple(
+                    ParticipantModelRef.from_dict(item)
+                    for item in payload.get("models", ())
+                )
+            ),
         )
 
 
 __all__ = [
     "PARTICIPANT_BINDING_SCHEMA",
     "PARTICIPANT_ROLE_SCHEMA",
+    "PARTICIPANT_ROLE_SCHEMA_V1",
     "ParticipantBinding",
     "ParticipantBlueprint",
 ]

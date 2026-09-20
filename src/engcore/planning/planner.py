@@ -17,6 +17,10 @@ from .policy import PlannerPolicy
 from ..scientific.multiphysics import PortRef
 from ..scientific.multiphysics.value import validate_port_coupling_value
 from ..execution.multiphysics import ParticipantFactoryRegistry
+from ..compositionpacks.applicability import (
+    ApplicabilityState,
+    evaluate_applicability_predicate,
+)
 from .records import (
     ExecutionMode,
     FidelityDecision,
@@ -116,11 +120,37 @@ def _build_qoi_plan(
     policy: PlannerPolicy,
 ) -> tuple[QOIPlan, tuple[PlanningGap, ...]]:
     declaration = registries.capabilities.get(screen.capability_id)
-    model_choices, selection_gaps = execution_choices(
-        declaration,
-        registries,
-        policy,
+    composition_owned = bool(
+        not declaration.executable
+        and registries.composition_packs is not None
+        and registries.composition_packs.providing(
+            declaration.capability_id,
+            enabled_only=True,
+        )
     )
+    if composition_owned:
+        model_choices = tuple(
+            ModelExecutionChoice(
+                model_id=item.model_id,
+                model_version=item.version,
+                realization_candidates=(),
+                selected_realization=None,
+                solver_candidates=(),
+                selected_solver=None,
+                selection_basis=(
+                    "scientific model dependency; executable stack is "
+                    "selected from exact ExecutionPack authority",
+                ),
+            )
+            for item in declaration.models
+        )
+        selection_gaps = ()
+    else:
+        model_choices, selection_gaps = execution_choices(
+            declaration,
+            registries,
+            policy,
+        )
 
     execution_mode = (
         ExecutionMode.CAPABILITY_ROUTE
@@ -237,9 +267,80 @@ def _composition_graph_plan(
         )
         return None, tuple(gaps)
 
+    execution_registration = None
+    execution_registry = None
+    execution_fingerprint = ""
+    execution_pack_id = ""
+    execution_pack_version = ""
+    execution_pack_digest = ""
+
+    if registries.execution_packs is None:
+        gaps.append(
+            PlanningGap(
+                GapKind.EXECUTION_PACK_UNAVAILABLE,
+                blueprint.blueprint_id,
+                "no ExecutionPackRegistry was supplied for the selected "
+                "CompositionPack; exact executable authority is unavailable",
+                graph_required,
+            )
+        )
+        execution_registry = registries.participant_factories
+    else:
+        execution_matches = registries.execution_packs.for_composition(
+            registration.manifest.pack_id,
+            registration.manifest.pack_version,
+            registration.manifest.digest,
+            enabled_only=True,
+        )
+        composition_key = (
+            f"{registration.manifest.pack_id}@"
+            f"{registration.manifest.pack_version}"
+        )
+        preferred_execution = (
+            policy.execution_pack_by_composition.get(composition_key)
+            or policy.execution_pack_by_composition.get(
+                registration.manifest.pack_id
+            )
+        )
+        execution_registration, execution_reason = _select_versioned_record(
+            execution_matches,
+            preferred_execution,
+            identity_attr="pack_id",
+            version_attr="pack_version",
+        )
+        if execution_registration is None:
+            gaps.append(
+                PlanningGap(
+                    (
+                        GapKind.EXECUTION_PACK_UNAVAILABLE
+                        if not execution_matches
+                        else GapKind.EXECUTION_PACK_AMBIGUOUS
+                    ),
+                    blueprint.blueprint_id,
+                    execution_reason
+                    or "exact ExecutionPack selection failed",
+                    graph_required,
+                )
+            )
+        else:
+            execution_pack_id = execution_registration.manifest.pack_id
+            execution_pack_version = (
+                execution_registration.manifest.pack_version
+            )
+            execution_pack_digest = execution_registration.authority_digest
+            execution_registry = ParticipantFactoryRegistry(
+                execution_registration.participant_factories
+            )
+
+    execution_factories = (
+        ()
+        if execution_registry is None
+        else tuple(execution_registry)
+    )
     bindings, binding_reason = bindings_for_blueprint(
         blueprint,
         qoi_plans,
+        execution_factories=execution_factories,
     )
     if bindings is None:
         gaps.append(
@@ -307,6 +408,32 @@ def _composition_graph_plan(
         if item.blueprint_id == blueprint.blueprint_id
     )
     fact_paths = set(intent.fact_map)
+    for rule in applicability_rules:
+        for predicate in rule.predicates:
+            evaluation = evaluate_applicability_predicate(
+                predicate,
+                facts=intent.fact_map,
+                static_external_inputs=True,
+            )
+            if evaluation.state is ApplicabilityState.UNKNOWN:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.SYSTEM_APPLICABILITY_UNKNOWN,
+                        predicate.predicate_id,
+                        evaluation.reason,
+                        True,
+                    )
+                )
+            elif evaluation.state is ApplicabilityState.VIOLATED:
+                gaps.append(
+                    PlanningGap(
+                        GapKind.SYSTEM_APPLICABILITY_VIOLATED,
+                        predicate.predicate_id,
+                        evaluation.reason,
+                        True,
+                    )
+                )
+
     missing_system_evidence = sorted(
         {
             requirement.path
@@ -337,18 +464,15 @@ def _composition_graph_plan(
     if required_uncertainty:
         declared_channels = set(uncertainty_rule.channels)
         missing_channels = sorted(
-            (
-                item.value
-                for item in required_uncertainty - declared_channels
-            )
+            item.value
+            for item in required_uncertainty - declared_channels
         )
         if (
             uncertainty_rule.strategy.value == "unknown"
             or missing_channels
         ):
             detail = (
-                "system uncertainty composition strategy is explicitly "
-                "UNKNOWN"
+                "system uncertainty composition strategy is explicitly UNKNOWN"
                 if uncertainty_rule.strategy.value == "unknown"
                 else (
                     "system uncertainty composition does not cover "
@@ -410,6 +534,7 @@ def _composition_graph_plan(
                     f"planning.{capability_id}."
                     f"{selected_policy.template_id}"
                 ),
+                facts=intent.fact_map,
             )
             coupling_plan.validate_against(graph)
             estimate = resource_estimate(
@@ -431,68 +556,6 @@ def _composition_graph_plan(
                     )
                 )
 
-    execution_fingerprint = ""
-    execution_pack_id = ""
-    execution_pack_version = ""
-    execution_pack_digest = ""
-    execution_registry = None
-
-    if registries.execution_packs is None:
-        gaps.append(
-            PlanningGap(
-                GapKind.EXECUTION_PACK_UNAVAILABLE,
-                blueprint.blueprint_id,
-                "no ExecutionPackRegistry was supplied for the selected "
-                "CompositionPack; exact executable authority is unavailable",
-                graph_required,
-            )
-        )
-        execution_registry = registries.participant_factories
-    else:
-        execution_matches = registries.execution_packs.for_composition(
-            registration.manifest.pack_id,
-            registration.manifest.pack_version,
-            registration.manifest.digest,
-            enabled_only=True,
-        )
-        if len(execution_matches) == 1:
-            execution_registration = execution_matches[0]
-            execution_pack_id = execution_registration.manifest.pack_id
-            execution_pack_version = (
-                execution_registration.manifest.pack_version
-            )
-            execution_pack_digest = execution_registration.authority_digest
-            execution_registry = ParticipantFactoryRegistry(
-                execution_registration.participant_factories
-            )
-        elif not execution_matches:
-            gaps.append(
-                PlanningGap(
-                    GapKind.EXECUTION_PACK_UNAVAILABLE,
-                    blueprint.blueprint_id,
-                    (
-                        "no enabled ExecutionPack is bound to exact "
-                        f"CompositionPack {registration.manifest.pack_id}@"
-                        f"{registration.manifest.pack_version}#"
-                        f"{registration.manifest.digest}"
-                    ),
-                    graph_required,
-                )
-            )
-        else:
-            gaps.append(
-                PlanningGap(
-                    GapKind.EXECUTION_PACK_AMBIGUOUS,
-                    blueprint.blueprint_id,
-                    (
-                        f"{len(execution_matches)} enabled ExecutionPacks bind "
-                        "the exact same CompositionPack; product authority must "
-                        "enable exactly one"
-                    ),
-                    graph_required,
-                )
-            )
-
     if execution_registry is None:
         gaps.append(
             PlanningGap(
@@ -511,8 +574,9 @@ def _composition_graph_plan(
                 PlanningGap(
                     GapKind.EXECUTION_FACTORY_UNAVAILABLE,
                     blueprint.blueprint_id,
-                    "no exact Model/Realization/Solver/Adapter factory for "
-                    f"participants {[item.participant_id for item in missing]}",
+                    "no exact model-assembly/realization/solver/adapter "
+                    f"factory for participants "
+                    f"{[item.participant_id for item in missing]}",
                     graph_required,
                 )
             )

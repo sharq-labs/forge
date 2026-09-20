@@ -127,6 +127,9 @@ def build_thermal_participant(spec):
                     f"{lumped.LUMPED_CLOSED_FORM_REALIZATION.version}"
                 ),
                 "validation": validation.to_dict(),
+                "heat_input": request.inputs["heat_input"].to_dict(),
+                "initial_temperature": current.to_dict(),
+                "final_temperature": temperature.to_dict(),
             },
         )
 
@@ -212,6 +215,19 @@ def build_material_participant(spec):
                     f"{material.LINEAR_TCR_REALIZATION.version}"
                 ),
                 "validation": validation.to_dict(),
+                "operating_temperature": (
+                    request.inputs["temperature"].to_dict()
+                ),
+                "reference_resistance": (
+                    request.inputs["reference_resistance"].to_dict()
+                ),
+                "temperature_coefficient": (
+                    request.inputs["temperature_coefficient"].to_dict()
+                ),
+                "reference_temperature": (
+                    request.inputs["reference_temperature"].to_dict()
+                ),
+                "resistance": resistance.to_dict(),
             },
         )
 
