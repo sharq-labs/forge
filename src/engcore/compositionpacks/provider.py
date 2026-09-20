@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
+from ..claims.capabilities import CapabilityDeclaration
 from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
 from .contracts import (
     ProvidedCompositionValidation,
@@ -18,6 +19,10 @@ from .semantics import CouplingSemantic, PortSemanticBinding
 class CompositionPackProvider(Protocol):
     @property
     def manifest(self) -> CompositionPackManifest: ...
+
+    def claim_capabilities(
+        self,
+    ) -> tuple[CapabilityDeclaration, ...]: ...
 
     def blueprints(self) -> tuple[SystemGraphBlueprint, ...]: ...
 
