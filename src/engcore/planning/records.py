@@ -13,6 +13,9 @@ from ..scientific.models.registry import ModelRegistry
 from ..scientific.multiphysics import (
     CouplingPlan,
     GraphInterfaceManifest,
+    PortRef,
+    coupling_value_from_dict,
+    coupling_value_to_dict,
     PhysicsGraph,
     graph_interface_manifest,
 )
@@ -32,6 +35,7 @@ FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
 GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
+PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
 _TAG = "forge.scientific_planning_record/1"
 
 
@@ -399,6 +403,45 @@ class ResourceEstimate:
 
 
 @dataclass(frozen=True)
+class PlannedExternalInput:
+    port: PortRef
+    fact_path: str
+    value: Any
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.port, PortRef):
+            raise TypeError("planned external input requires PortRef")
+        path = str(self.fact_path).strip()
+        if not path:
+            raise ValueError("planned external input requires fact_path")
+        object.__setattr__(self, "fact_path", path)
+
+    @property
+    def key(self) -> str:
+        return self.port.key
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": PLANNED_EXTERNAL_INPUT_SCHEMA,
+            "port": self.port.to_dict(),
+            "fact_path": self.fact_path,
+            "value": coupling_value_to_dict(self.value),
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        payload: Mapping[str, Any],
+    ) -> "PlannedExternalInput":
+        require_schema(payload, PLANNED_EXTERNAL_INPUT_SCHEMA)
+        return cls(
+            port=PortRef.from_dict(payload["port"]),
+            fact_path=payload["fact_path"],
+            value=coupling_value_from_dict(payload["value"]),
+        )
+
+
+@dataclass(frozen=True)
 class GraphPlan:
     capability_id: str
     blueprint_id: str
@@ -412,6 +455,7 @@ class GraphPlan:
     coupling_policy_template_id: str = ""
     coupling_policy_template_version: str = ""
     execution_registry_fingerprint: str = ""
+    external_inputs: tuple[PlannedExternalInput, ...] = ()
 
     def __post_init__(self) -> None:
         for label in (
@@ -442,6 +486,19 @@ class GraphPlan:
                 "graph plan coupling plan and resource estimate are both "
                 "present or both absent"
             )
+        external = tuple(self.external_inputs)
+        if any(not isinstance(item, PlannedExternalInput) for item in external):
+            raise TypeError(
+                "graph plan external_inputs must contain PlannedExternalInput records"
+            )
+        keys = [item.key for item in external]
+        if len(keys) != len(set(keys)):
+            raise ValueError("graph plan external_inputs contain duplicate ports")
+        object.__setattr__(
+            self,
+            "external_inputs",
+            tuple(sorted(external, key=lambda item: item.key)),
+        )
         for label in (
             "authority_pack_id",
             "authority_pack_version",
@@ -491,6 +548,9 @@ class GraphPlan:
             "execution_registry_fingerprint": (
                 self.execution_registry_fingerprint
             ),
+            "external_inputs": [
+                item.to_dict() for item in self.external_inputs
+            ],
         }
 
     @classmethod
@@ -527,6 +587,10 @@ class GraphPlan:
             ),
             execution_registry_fingerprint=payload.get(
                 "execution_registry_fingerprint", ""
+            ),
+            external_inputs=tuple(
+                PlannedExternalInput.from_dict(item)
+                for item in payload.get("external_inputs", ())
             ),
         )
 
@@ -691,6 +755,7 @@ __all__ = [
     "GRAPH_PLAN_SCHEMA_V1",
     "ModelExecutionChoice",
     "PlanningGap",
+    "PlannedExternalInput",
     "PlanningRegistries",
     "PlanningStatus",
     "QOIPlan",
