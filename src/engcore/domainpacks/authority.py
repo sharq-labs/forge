@@ -20,6 +20,7 @@ from typing import Any, Mapping
 
 from ..sria.domain_pack import validate_domain_pack as validate_semantic_domain_pack
 from .errors import InvalidDomainPackProvider
+from .frozen import implementation_fingerprint
 from .manifest import DomainPackManifest
 
 
@@ -68,6 +69,7 @@ class SemanticAuthoritySnapshot:
     fidelity_ladder: tuple[Any, ...]
     semantic_terms: tuple[str, ...]
     critic_ids: tuple[str, ...]
+    implementation_fingerprints: tuple[tuple[str, str], ...]
     digest: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -86,6 +88,10 @@ class SemanticAuthoritySnapshot:
             ],
             "semantic_terms": list(self.semantic_terms),
             "critic_ids": list(self.critic_ids),
+            "implementation_fingerprints": [
+                {"authority": authority, "digest": digest}
+                for authority, digest in self.implementation_fingerprints
+            ],
             "digest": self.digest,
         }
 
@@ -101,6 +107,11 @@ def bind_semantic_authority(
     provider: Any,
     manifest: DomainPackManifest,
 ) -> SemanticAuthoritySnapshot | None:
+    if not isinstance(manifest, DomainPackManifest):
+        raise InvalidDomainPackProvider(
+            "semantic authority binding requires a valid DomainPackManifest"
+        )
+
     pack = _semantic_pack(provider)
     if pack is None:
         return None
@@ -152,6 +163,22 @@ def bind_semantic_authority(
             "semantic authority critics must expose non-empty critic_id"
         )
 
+    implementation_fingerprints: list[tuple[str, str]] = []
+    covariate_digest, _covariate_basis = implementation_fingerprint(
+        pack.extract_covariates
+    )
+    implementation_fingerprints.append(
+        ("extract_covariates", covariate_digest)
+    )
+    for critic in critics:
+        digest, _basis = implementation_fingerprint(critic.assess)
+        implementation_fingerprints.append(
+            (f"critic:{critic.critic_id}", digest)
+        )
+    implementation_fingerprints = sorted(
+        implementation_fingerprints
+    )
+
     qois = tuple(sorted(str(item) for item in pack.qois()))
     scope = pack.scope()
     assumptions = tuple(sorted(str(item) for item in pack.assumptions()))
@@ -168,6 +195,10 @@ def bind_semantic_authority(
         "fidelity_ladder": [_jsonable(item) for item in fidelity],
         "semantic_terms": list(semantic_terms),
         "critic_ids": list(critic_ids),
+        "implementation_fingerprints": [
+            {"authority": authority, "digest": digest}
+            for authority, digest in implementation_fingerprints
+        ],
     }
     digest = _digest(payload)
     return SemanticAuthoritySnapshot(
@@ -181,6 +212,9 @@ def bind_semantic_authority(
         fidelity_ladder=fidelity,
         semantic_terms=semantic_terms,
         critic_ids=critic_ids,
+        implementation_fingerprints=tuple(
+            implementation_fingerprints
+        ),
         digest=digest,
     )
 
