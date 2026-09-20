@@ -79,13 +79,25 @@ class MultiphysicsRuntime:
             raise TypeError(
                 "from_factory_registry requires ParticipantFactoryRegistry"
             )
-        return cls(
-            graph,
-            plan,
-            registry.build_graph(graph),
-            resolver=resolver,
-            store=store,
-        )
+
+        # Validate graph/policy before factories allocate solver/provider state.
+        plan.validate_against(graph)
+        participants = registry.build_graph(graph)
+        try:
+            return cls(
+                graph,
+                plan,
+                participants,
+                resolver=resolver,
+                store=store,
+            )
+        except Exception:
+            for participant_id in sorted(participants, reverse=True):
+                try:
+                    participants[participant_id].finalize()
+                except Exception:
+                    pass
+            raise
 
     @classmethod
     def from_record_with_factory_registry(
