@@ -26,6 +26,7 @@ from ..scientific.multiphysics import (
     TimePolicy,
 )
 from ..scientific.serialization import require_schema, schema_string
+from ..scientific.units.quantity import Quantity
 
 SYSTEM_GRAPH_BLUEPRINT_SCHEMA = schema_string(
     "composition_system_graph_blueprint"
@@ -217,6 +218,9 @@ class CouplingPolicyTemplate:
     blueprint_id: str
     scheme: CouplingScheme
     iteration_semantics: IterationSemantics
+    coupling_window: Quantity
+    align_events: bool = True
+    max_windows: int = 100000
     participant_order: tuple[str, ...] = ()
     criteria: tuple[ConvergenceCriterion, ...] = ()
     relaxation: RelaxationPolicy = RelaxationPolicy()
@@ -237,6 +241,32 @@ class CouplingPolicyTemplate:
             "iteration_semantics",
             IterationSemantics(self.iteration_semantics),
         )
+        if (
+            not isinstance(self.coupling_window, Quantity)
+            or self.coupling_window.dimensionality
+            != Quantity(1.0, "second").dimensionality
+            or self.coupling_window.magnitude_in("second") <= 0.0
+        ):
+            raise InvalidScientificProblem(
+                "coupling policy template requires positive coupling_window"
+            )
+        object.__setattr__(
+            self,
+            "coupling_window",
+            self.coupling_window.to("second"),
+        )
+        if not isinstance(self.align_events, bool):
+            raise InvalidScientificProblem(
+                "coupling policy align_events must be boolean"
+            )
+        if (
+            isinstance(self.max_windows, bool)
+            or not isinstance(self.max_windows, int)
+            or self.max_windows < 1
+        ):
+            raise InvalidScientificProblem(
+                "coupling policy max_windows must be positive int"
+            )
         order = tuple(str(item).strip() for item in self.participant_order)
         if any(not item for item in order) or len(order) != len(set(order)):
             raise InvalidScientificProblem(
@@ -279,14 +309,18 @@ class CouplingPolicyTemplate:
 
     def materialize(
         self,
-        time: TimePolicy,
         *,
+        start: Quantity,
+        end: Quantity,
         plan_id: str | None = None,
     ) -> CouplingPlan:
-        if not isinstance(time, TimePolicy):
-            raise TypeError(
-                "CouplingPolicyTemplate.materialize requires TimePolicy"
-            )
+        time = TimePolicy(
+            start=start,
+            end=end,
+            coupling_window=self.coupling_window,
+            align_events=self.align_events,
+            max_windows=self.max_windows,
+        )
         return CouplingPlan(
             plan_id=plan_id or f"{self.template_id}.{self.version}",
             scheme=self.scheme,
@@ -334,6 +368,9 @@ class CouplingPolicyTemplate:
             "blueprint_id": self.blueprint_id,
             "scheme": self.scheme.value,
             "iteration_semantics": self.iteration_semantics.value,
+            "coupling_window": self.coupling_window.to_dict(),
+            "align_events": self.align_events,
+            "max_windows": self.max_windows,
             "participant_order": list(self.participant_order),
             "criteria": [item.to_dict() for item in self.criteria],
             "relaxation": self.relaxation.to_dict(),
@@ -355,6 +392,11 @@ class CouplingPolicyTemplate:
             iteration_semantics=IterationSemantics(
                 payload["iteration_semantics"]
             ),
+            coupling_window=Quantity.from_dict(
+                payload["coupling_window"]
+            ),
+            align_events=payload.get("align_events", True),
+            max_windows=payload.get("max_windows", 100000),
             participant_order=tuple(
                 payload.get("participant_order", ())
             ),
