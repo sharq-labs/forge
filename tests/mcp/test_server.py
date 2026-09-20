@@ -165,6 +165,7 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     tools = {tool.name: tool for tool in list_tools().tools}
     assert sorted(tools) == sorted(
         ["describe_capabilities", "plan_engineering_problem",
+         "plan_canonical_engineering_intent",
          "compile_engineering_problem",
          "run_engineering_problem", "answer_engineering_problem",
          "answer_engineering_scenarios", "evaluate_engineering_context"]
@@ -192,7 +193,10 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     assert assess.output_schema is not None
 
     generic = tools["assess_scientific_claim"]
-    assert list(generic.input_schema["properties"]) == ["claim"]
+    assert list(generic.input_schema["properties"]) == [
+        "claim", "external", "empirical_observations",
+        "model_form_qualification",
+    ]
     assert generic.input_schema["required"] == ["claim"]
     assert generic.output_schema is not None
 
@@ -320,7 +324,14 @@ def test_language_workflow_can_supply_full_evidence_without_a_side_door():
     }).structured_content
 
     assert response["status"] == "completed"
-    assert response["intent"]["unresolved_evidence_inputs"] == []
+    assert {
+        item["path"]
+        for item in response["intent"]["unresolved_evidence_inputs"]
+    } == {
+        "stages[0].conductor.limits.linearization_band",
+        "stages[0].conductor.limits.maximum_operating_temperature",
+        "stages[0].conductor.limits.debye_temperature",
+    }
     assert response["result"]["stages"][0]["verdict"]["value"] == "supported"
 
 

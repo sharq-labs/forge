@@ -634,7 +634,14 @@ def validate_temperature_resistance_run(
             Quantity(1.0, "dimensionless")
             + alpha * (temperature - t_ref)
         )
-        error = abs(resistance - expected)
+        error = Quantity(
+            abs(
+                (resistance - expected).magnitude_in(
+                    material.RESISTANCE_UNIT
+                )
+            ),
+            material.RESISTANCE_UNIT,
+        )
         scale = max(
             1.0,
             abs(expected.magnitude_in(material.RESISTANCE_UNIT)),

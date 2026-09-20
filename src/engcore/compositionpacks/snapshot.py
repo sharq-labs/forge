@@ -8,6 +8,7 @@ import json
 from typing import Any, Mapping
 
 from ..scientific.serialization import require_schema_any
+from ..scientific.results.immutable import detach, freeze
 from .registry import RegisteredCompositionPack
 
 COMPOSITION_SNAPSHOT_SCHEMA_V1 = "forge.composition_pack_snapshot/1"
@@ -31,6 +32,38 @@ class CompositionPackSnapshot:
     uncertainty_implementations: tuple[dict[str, str], ...] = ()
     verification_implementations: tuple[dict[str, str], ...] = ()
     semantic_authority: dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "validation_implementations",
+            tuple(
+                freeze(dict(item))
+                for item in self.validation_implementations
+            ),
+        )
+        object.__setattr__(
+            self,
+            "uncertainty_implementations",
+            tuple(
+                freeze(dict(item))
+                for item in self.uncertainty_implementations
+            ),
+        )
+        object.__setattr__(
+            self,
+            "verification_implementations",
+            tuple(
+                freeze(dict(item))
+                for item in self.verification_implementations
+            ),
+        )
+        if self.semantic_authority is not None:
+            object.__setattr__(
+                self,
+                "semantic_authority",
+                freeze(dict(self.semantic_authority)),
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -72,16 +105,16 @@ class CompositionPackSnapshot:
                 for capability_id, version, digest
                 in self.claim_capability_digests
             ],
-            "validation_implementations": list(
+            "validation_implementations": detach(
                 self.validation_implementations
             ),
-            "uncertainty_implementations": list(
+            "uncertainty_implementations": detach(
                 self.uncertainty_implementations
             ),
-            "verification_implementations": list(
+            "verification_implementations": detach(
                 self.verification_implementations
             ),
-            "semantic_authority": self.semantic_authority,
+            "semantic_authority": detach(self.semantic_authority),
             "dependency_authority_digests": [
                 {
                     "pack_id": pack_id,

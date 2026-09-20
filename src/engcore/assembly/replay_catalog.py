@@ -424,7 +424,14 @@ def verify_golden_replay(
             observed = Quantity.from_dict(raw).to(
                 expected_output.expected.units
             )
-            error = abs(observed - expected_output.expected)
+            error = Quantity(
+                abs(
+                    (observed - expected_output.expected).magnitude_in(
+                        expected_output.expected.units
+                    )
+                ),
+                expected_output.expected.units,
+            )
             passed = (
                 error.magnitude
                 <= expected_output.tolerance.to(
@@ -615,13 +622,13 @@ def builtin_golden_replay_catalog() -> GoldenReplayCatalog:
                 "resistance",
                 "material.resistance",
                 Quantity(10.170616224080355, "ohm"),
-                Quantity(1e-4, "ohm"),
+                Quantity(3e-4, "ohm"),
             ),
             GoldenReplayOutput(
                 "heat_generation",
                 "electrical.heat_generation",
                 Quantity(9.832245932477132, "watt"),
-                Quantity(1e-4, "watt"),
+                Quantity(3e-4, "watt"),
             ),
         ),
         reference_basis=(

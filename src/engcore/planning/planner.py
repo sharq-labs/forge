@@ -354,10 +354,24 @@ def _composition_graph_plan(
         )
         return None, tuple(gaps)
 
-    graph = blueprint.materialize(
-        bindings,
-        graph_id=f"planning.{capability_id}",
-    )
+    try:
+        graph = blueprint.materialize(
+            bindings,
+            graph_id=f"planning.{capability_id}",
+        )
+    except Exception as exc:
+        gaps.append(
+            PlanningGap(
+                GapKind.GRAPH_BLUEPRINT_UNAVAILABLE,
+                blueprint.blueprint_id,
+                (
+                    "composition blueprint could not be materialized from "
+                    f"its pinned authority: {type(exc).__name__}: {exc}"
+                ),
+                True,
+            )
+        )
+        return None, tuple(gaps)
 
     planned_external_inputs: list[PlannedExternalInput] = []
     for binding in registration.external_input_bindings:

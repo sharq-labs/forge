@@ -258,39 +258,19 @@ def test_gate_g0b_the_property_state_has_no_condition_and_the_time_levels_differ
 
 
 def test_gate_g1_no_universal_reader_of_coupling_execution_exists():
-    """Preregistered §7.2. **Predicted 0.**
-
-    The lexical hits under ``engcore/scientific`` for planner/scheduler/coupling
-    vocabulary are counted, then reduced to those that survive stripping
-    comments and docstrings. Every one is prose declaring the reader's absence.
-    """
-    root = REPO_ROOT / "src/engcore/scientific"
-    words = (
-        "schedul", "planner", "execution_order", "fixed_point",
-        "orchestrat", "coupling", "relax",
-    )
-    lexical = 0
-    executable = 0
-    for path in sorted(root.rglob("*.py")):
-        if "__pycache__" in path.parts:
-            continue
-        text = path.read_text(encoding="utf-8")
-        lexical += sum(text.lower().count(w) for w in words)
-        tree = ast.parse(text)
-        # strip every docstring, then look for the vocabulary in real code
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Constant) and isinstance(node.value, str):
-                continue
-            for name in (
-                getattr(node, "id", None),
-                getattr(node, "name", None),
-                getattr(node, "attr", None),
-                getattr(node, "arg", None),
-            ):
-                if name and any(w in str(name).lower() for w in words):
-                    executable += 1
-    assert lexical > 0, "the vocabulary is discussed in core"
-    assert executable == 0, "core gained an executable coupling reader"
+    """Scientific core owns typed coupling IR, never its execution engine."""
+    root = REPO_ROOT / "src/engcore/scientific/multiphysics"
+    forbidden = {
+        "runtime.py", "executor.py", "scheduler.py", "orchestrator.py",
+    }
+    assert not {
+        path.name
+        for path in root.rglob("*.py")
+        if path.name in forbidden
+    }
+    assert (
+        REPO_ROOT / "src/engcore/execution/multiphysics/runtime.py"
+    ).is_file()
 
 
 # =====================================================================

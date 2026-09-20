@@ -1589,6 +1589,48 @@ def build_server() -> MCPServer:
         description=_PRODUCT_RUN_PROPOSED_DESCRIPTION,
     )
     server.add_tool(
+        plan_engineering_problem,
+        name="plan_engineering_problem",
+        title="Route an engineering problem",
+        description=_PLAN_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        compile_engineering_problem,
+        name="compile_engineering_problem",
+        title="Compile an engineering problem",
+        description=_COMPILE_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        run_engineering_problem,
+        name="run_engineering_problem",
+        title="Run an engineering problem",
+        description=_RUN_INTENT_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_problem,
+        name="answer_engineering_problem",
+        title="Answer an engineering problem",
+        description=_ANSWER_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_scenarios,
+        name="answer_engineering_scenarios",
+        title="Compare engineering scenarios",
+        description=_SCENARIO_DESCRIPTION,
+    )
+    server.add_tool(
+        evaluate_engineering_context,
+        name="evaluate_engineering_context",
+        title="Evaluate an engineering context",
+        description=_CONTEXT_DESCRIPTION,
+    )
+    server.add_tool(
+        answer_engineering_uncertainty,
+        name="answer_engineering_uncertainty",
+        title="Propagate declared engineering uncertainty",
+        description=_PROBABILISTIC_UQ_DESCRIPTION,
+    )
+    server.add_tool(
         plan_canonical_engineering_intent,
         name="plan_canonical_engineering_intent",
         title="Plan a canonical engineering intent",
