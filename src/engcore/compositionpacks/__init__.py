@@ -8,6 +8,7 @@ from .blueprint import *
 from .contracts import *
 from .errors import *
 from .manifest import *
+from .participant import *
 from .provider import *
 from .registry import *
 from .semantics import *
