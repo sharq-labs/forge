@@ -16,6 +16,11 @@ from .graph import (
     PhysicsGraph,
     ReductionOperator,
 )
+from .interface import (
+    GRAPH_INTERFACE_SCHEMA,
+    GraphInterfaceManifest,
+    graph_interface_manifest,
+)
 from .mapping import (
     FIELD_MAPPING_SCHEMA,
     MAPPING_DIAGNOSTICS_SCHEMA,
@@ -86,6 +91,7 @@ __all__ = [
     "FIELD_MAPPING_SCHEMA",
     "INITIAL_COUPLING_SCHEMA",
     "FRAME_TRANSFORM_SCHEMA",
+    "GRAPH_INTERFACE_SCHEMA",
     "ITERATION_SCHEMA",
     "MAPPING_DIAGNOSTICS_SCHEMA",
     "PARTICIPANT_SCHEMA",
@@ -115,6 +121,7 @@ __all__ = [
     "FieldMappingDefinition",
     "FieldMappingMethod",
     "FrameTransform",
+    "GraphInterfaceManifest",
     "IterationSemantics",
     "InitialCouplingRecord",
     "MappingDiagnostics",
@@ -135,6 +142,7 @@ __all__ = [
     "WindowOutcome",
     "coupling_value_from_dict",
     "coupling_value_to_dict",
+    "graph_interface_manifest",
     "validate_port_coupling_value",
     "validate_port_uncertainty",
 ]
