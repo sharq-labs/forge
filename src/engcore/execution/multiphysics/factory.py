@@ -111,6 +111,29 @@ class ParticipantFactoryCoverage:
     adapter_version: str
     available: bool
 
+    def __post_init__(self) -> None:
+        for label in (
+            "participant_id",
+            "model_id",
+            "model_version",
+            "realization_id",
+            "realization_version",
+            "solver_id",
+            "solver_version",
+            "adapter_id",
+            "adapter_version",
+        ):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise InvalidScientificProblem(
+                    f"participant factory coverage requires {label}"
+                )
+            object.__setattr__(self, label, value)
+        if not isinstance(self.available, bool):
+            raise InvalidScientificProblem(
+                "participant factory coverage available must be boolean"
+            )
+
     def to_dict(self) -> dict[str, object]:
         return {
             "participant_id": self.participant_id,
@@ -140,7 +163,7 @@ class ParticipantFactoryCoverage:
             solver_version=str(payload["solver_version"]),
             adapter_id=str(payload["adapter_id"]),
             adapter_version=str(payload["adapter_version"]),
-            available=bool(payload["available"]),
+            available=payload["available"],
         )
 
 
