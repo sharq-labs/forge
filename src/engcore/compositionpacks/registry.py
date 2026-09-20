@@ -355,6 +355,11 @@ class CompositionPackRegistry:
             raise InvalidCompositionPackProvider(
                 "claim_capabilities() must return CapabilityDeclaration records only"
             )
+        if any(item.executable for item in claims):
+            raise InvalidCompositionPackProvider(
+                "CompositionPack capability declarations may not embed direct "
+                "executors; execution belongs to an ExecutionPack"
+            )
         claim_ids = tuple(sorted(item.capability_id for item in claims))
         if claim_ids != manifest.capabilities:
             raise InvalidCompositionPackProvider(
