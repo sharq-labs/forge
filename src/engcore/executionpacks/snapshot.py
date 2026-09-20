@@ -21,6 +21,8 @@ class ExecutionPackSnapshot:
     composition_pack_version: str
     composition_manifest_digest: str
     participant_factories: tuple[dict[str, str], ...]
+    composition_authority_digest: str
+    authority_digest: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -34,6 +36,10 @@ class ExecutionPackSnapshot:
                 "manifest_digest": self.composition_manifest_digest,
             },
             "participant_factories": list(self.participant_factories),
+            "composition_authority_digest": (
+                self.composition_authority_digest
+            ),
+            "authority_digest": self.authority_digest,
         }
 
     @property
@@ -62,6 +68,10 @@ def snapshot_execution_pack(
             item.to_dict()
             for item in manifest.participant_factories
         ),
+        composition_authority_digest=(
+            registration.composition_authority_digest
+        ),
+        authority_digest=registration.authority_digest,
     )
 
 
