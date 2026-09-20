@@ -36,6 +36,7 @@ class DomainPackSnapshot:
     implementation_digest: str
     implementation_fingerprints: tuple[dict[str, str], ...]
     semantic_authority: dict[str, Any] | None
+    authority_digest: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -65,6 +66,7 @@ class DomainPackSnapshot:
                 self.implementation_fingerprints
             ),
             "semantic_authority": self.semantic_authority,
+            "authority_digest": self.authority_digest,
         }
 
     @property
@@ -107,4 +109,5 @@ def snapshot_domain_pack(registration: RegisteredDomainPack) -> DomainPackSnapsh
             if registration.semantic_authority is None
             else registration.semantic_authority.to_dict()
         ),
+        authority_digest=registration.authority_digest,
     )
