@@ -3,8 +3,8 @@
 This module is deliberately the place that knows which built-in domain packs
 are installed.  The generic planner never imports battery/thermal/electrical
 modules or branches on their names; product assembly supplies their registries.
-Enabled external Domain Packs can add capability declarations today and can add
-planning registries/blueprints through the same explicit dependencies later.
+Enabled Domain Packs can add capabilities plus validated models, realizations,
+solvers and PhysicsGraph blueprints through explicit production dependencies.
 """
 
 from __future__ import annotations
@@ -26,7 +26,9 @@ def _production_capabilities() -> CapabilityRegistry:
     return production_registry()
 
 
-def _models_from_capabilities(capabilities: CapabilityRegistry) -> ModelRegistry:
+def _production_models(
+    capabilities: CapabilityRegistry,
+) -> ModelRegistry:
     by_key = {}
     for declaration in capabilities:
         for use in declaration.models:
@@ -40,6 +42,22 @@ def _models_from_capabilities(capabilities: CapabilityRegistry) -> ModelRegistry
                     f"for model {definition.model_id}@{definition.version}"
                 )
             by_key[definition.key] = definition
+
+    from ..mcp.production_packs import (
+        configure_production_domain_packs_from_env,
+    )
+
+    packs = configure_production_domain_packs_from_env()
+    for registered in packs.list(enabled_only=True):
+        for definition in registered.provider.models():
+            existing = by_key.get(definition.key)
+            if existing is not None and existing != definition:
+                raise ValueError(
+                    "production domain packs declare conflicting model "
+                    f"{definition.model_id}@{definition.version}"
+                )
+            by_key[definition.key] = definition
+
     return ModelRegistry(by_key[key] for key in sorted(by_key))
 
 
@@ -134,7 +152,7 @@ def production_planning_registries() -> PlanningRegistries:
 
     return PlanningRegistries(
         capabilities=capabilities,
-        models=_models_from_capabilities(capabilities),
+        models=_production_models(capabilities),
         realizations=_production_realizations(),
         solvers=_production_solvers(),
         blueprints=BlueprintRegistry(production_pack_blueprints()),
