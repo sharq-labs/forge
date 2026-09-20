@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from ..assembly.multiphysics import AuthorizedMultiphysicsRun
 from ..executionpacks.manifest import (
     EXECUTION_PACK_SCHEMA,
     EXECUTION_PACK_SCHEMA_V1,
@@ -211,6 +210,8 @@ def migrate_composition_snapshot(
 def migrate_authorized_run(
     payload: Mapping[str, Any],
 ) -> MigrationResult:
+    from ..assembly.multiphysics import AuthorizedMultiphysicsRun
+
     source = _schema(payload)
     made = AuthorizedMultiphysicsRun.from_dict(payload)
     upgraded = made.to_dict()
