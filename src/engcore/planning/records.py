@@ -66,6 +66,8 @@ class GapKind(str, Enum):
     COUPLING_POLICY_AMBIGUOUS = "coupling_policy_ambiguous"
     SIMULATION_HORIZON_REQUIRED = "simulation_horizon_required"
     EXECUTION_FACTORY_UNAVAILABLE = "execution_factory_unavailable"
+    GRAPH_EXTERNAL_INPUT_MISSING = "graph_external_input_missing"
+    GRAPH_EXTERNAL_INPUT_INVALID = "graph_external_input_invalid"
     SYSTEM_APPLICABILITY_EVIDENCE_MISSING = (
         "system_applicability_evidence_missing"
     )
