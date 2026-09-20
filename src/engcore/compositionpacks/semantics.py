@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import re
 from typing import Any, Mapping
 
@@ -70,25 +71,45 @@ class PortSemanticBinding:
 
 
 @dataclass(frozen=True, order=True)
+class CouplingSignConvention(str, Enum):
+    SOURCE_TO_TARGET_POSITIVE = "source_to_target_positive"
+    TARGET_TO_SOURCE_POSITIVE = "target_to_source_positive"
+    BIDIRECTIONAL_SIGNED = "bidirectional_signed"
+
+
+@dataclass(frozen=True, order=True)
 class CouplingSemantic:
     blueprint_id: str
     edge_id: str
     source_quantity_id: str
     target_quantity_id: str
     transfer_law_id: str
-    sign_convention: str
+    sign_convention: CouplingSignConvention
     conserved_quantity_id: str = ""
     reference: str = ""
     description: str = ""
 
     def __post_init__(self) -> None:
-        for label in ("blueprint_id", "edge_id", "transfer_law_id", "sign_convention"):
+        for label in ("blueprint_id", "edge_id"):
             value = str(getattr(self, label)).strip()
             if not value:
                 raise InvalidCompositionPackProvider(
                     f"coupling semantic requires {label}"
                 )
             object.__setattr__(self, label, value)
+        object.__setattr__(
+            self,
+            "transfer_law_id",
+            canonical_quantity_id(
+                self.transfer_law_id,
+                "transfer_law_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "sign_convention",
+            CouplingSignConvention(self.sign_convention),
+        )
         object.__setattr__(
             self,
             "source_quantity_id",
@@ -120,7 +141,7 @@ class CouplingSemantic:
             "source_quantity_id": self.source_quantity_id,
             "target_quantity_id": self.target_quantity_id,
             "transfer_law_id": self.transfer_law_id,
-            "sign_convention": self.sign_convention,
+            "sign_convention": self.sign_convention.value,
             "conserved_quantity_id": self.conserved_quantity_id,
             "reference": self.reference,
             "description": self.description,
@@ -135,7 +156,9 @@ class CouplingSemantic:
             source_quantity_id=payload["source_quantity_id"],
             target_quantity_id=payload["target_quantity_id"],
             transfer_law_id=payload["transfer_law_id"],
-            sign_convention=payload["sign_convention"],
+            sign_convention=CouplingSignConvention(
+                payload["sign_convention"]
+            ),
             conserved_quantity_id=payload.get("conserved_quantity_id", ""),
             reference=payload.get("reference", ""),
             description=payload.get("description", ""),
@@ -146,6 +169,7 @@ __all__ = [
     "COUPLING_SEMANTIC_SCHEMA",
     "PORT_SEMANTIC_SCHEMA",
     "CouplingSemantic",
+    "CouplingSignConvention",
     "PortSemanticBinding",
     "canonical_quantity_id",
 ]
