@@ -4,6 +4,7 @@ import pytest
 
 from engcore.assembly.certification import certify_authorized_multiphysics_run
 from engcore.assembly.domainpacks import (
+    production_domain_packs,
     production_composition_packs,
     production_execution_packs,
 )
@@ -94,6 +95,20 @@ def test_production_fidelity_ladder_is_registered_and_selects_feedback():
     assert planning.fidelity is not None
     assert planning.fidelity.selected_rung == "feedback"
     assert planning.fidelity.available_rungs == ("feedback",)
+
+
+def test_battery_science_is_registered_as_an_atomic_production_domain_pack():
+    registrations = {
+        item.manifest.pack_id: item
+        for item in production_domain_packs().list(enabled_only=True)
+    }
+
+    battery = registrations["battery.cell"]
+    assert battery.manifest.domain == "battery"
+    assert battery.manifest.capabilities == ("battery:cell_terminal_state",)
+    assert len(battery.manifest.models) == 4
+    assert len(battery.manifest.realizations) == 4
+    assert len(battery.manifest.solvers) == 1
 
 
 def _plan(intent):
