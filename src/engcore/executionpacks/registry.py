@@ -41,6 +41,14 @@ class RegisteredExecutionPack:
         return self.manifest.key
 
     @property
+    def pack_id(self) -> str:
+        return self.manifest.pack_id
+
+    @property
+    def pack_version(self) -> str:
+        return self.manifest.pack_version
+
+    @property
     def authority_digest(self) -> str:
         payload = {
             "manifest_digest": self.manifest.digest,
