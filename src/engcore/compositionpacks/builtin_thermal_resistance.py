@@ -38,7 +38,12 @@ from .applicability import (
     ApplicabilityPredicate,
     ApplicabilityPredicateKind,
 )
-from .blueprint import CouplingPolicyTemplate, SystemGraphBlueprint
+from .blueprint import (
+    CouplingPolicyTemplate,
+    CouplingWindowRule,
+    CouplingWindowRuleKind,
+    SystemGraphBlueprint,
+)
 from .contracts import (
     ProvidedCompositionValidation,
     SystemApplicabilityRule,
@@ -371,7 +376,15 @@ COUPLING_POLICY = CouplingPolicyTemplate(
     blueprint_id=BLUEPRINT_ID,
     scheme=CouplingScheme.EXPLICIT,
     iteration_semantics=IterationSemantics.SERIAL,
-    coupling_window=Quantity(1.0, "second"),
+    window_rule=CouplingWindowRule(
+        kind=CouplingWindowRuleKind.HORIZON_DIVISIONS,
+        divisions=1,
+        justification=(
+            "Both domain realizations are closed-form over constant inputs; "
+            "one system window spans the requested horizon without temporal "
+            "discretization error in this one-way composition."
+        ),
+    ),
     align_events=False,
     participant_order=(THERMAL_PARTICIPANT, MATERIAL_PARTICIPANT),
     criteria=(),
