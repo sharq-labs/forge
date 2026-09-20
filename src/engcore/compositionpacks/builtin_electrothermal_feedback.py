@@ -40,9 +40,7 @@ from ..domainpacks.manifest import ArtifactRef
 from ..domains.electrical import material
 from ..domains.electrical.dc import models as dc_models
 from ..domains.electrical.dc.realizations import DC_NETWORK_STATE
-from ..domains.electrical.dc.solver import ElectricalDCSolver
 from ..domains.thermal_models import lumped
-from ..execution.multiphysics import MultiphysicsRuntime
 from ..scientific.multiphysics import (
     CouplingEdge,
     CouplingScheme,
@@ -814,73 +812,12 @@ def _digest(payload) -> str:
     ).hexdigest()
 
 
-def _model_digest(definition) -> str:
-    return _digest(definition.to_dict())
-
-
-_PRIMARY_RUNTIME_DIGEST = implementation_fingerprint(
-    MultiphysicsRuntime.run
-)[0]
 _REFERENCE_DIGEST = implementation_fingerprint(feedback_reference)[0]
 
-PRIMARY_VERIFICATION_ROUTE = VerificationRoute(
-    "electrothermal_feedback.generic_multiphysics",
-    VerificationRouteKind.DIFFERENT_IMPLEMENTATION,
-    _PRIMARY_RUNTIME_DIGEST,
-)
 REFERENCE_VERIFICATION_ROUTE = VerificationRoute(
     "electrothermal_feedback.independent_dop853",
     VerificationRouteKind.DIFFERENT_MODEL,
     _REFERENCE_DIGEST,
-)
-
-PRIMARY_DEPENDENCIES = RouteDependencyManifest(
-    PRIMARY_VERIFICATION_ROUTE.route_id,
-    (
-        DependencyComponent(
-            "model.thermal.lumped_capacity",
-            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "model.electrical.linear_tcr",
-            _model_digest(material.LINEAR_TCR_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "model.electrical.dc.resistor_ohm",
-            _model_digest(dc_models.RESISTOR_OHM_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "model.electrical.dc.kcl",
-            _model_digest(dc_models.KCL_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "solver.thermal.lumped",
-            implementation_fingerprint(lumped.LumpedThermalSolver)[0],
-            DependencyRole.SOLVER,
-        ),
-        DependencyComponent(
-            "solver.electrical.material",
-            implementation_fingerprint(
-                material.ResistancePropertySolver
-            )[0],
-            DependencyRole.SOLVER,
-        ),
-        DependencyComponent(
-            "solver.electrical.dc.mna",
-            implementation_fingerprint(ElectricalDCSolver)[0],
-            DependencyRole.SOLVER,
-        ),
-        DependencyComponent(
-            "runtime.multiphysics",
-            _PRIMARY_RUNTIME_DIGEST,
-            DependencyRole.RUNTIME,
-        ),
-    ),
-    "forge",
 )
 
 REFERENCE_DEPENDENCIES = RouteDependencyManifest(
@@ -938,7 +875,7 @@ def _verification_run(record, plan, quantity: str) -> VerificationRunRecord:
     return VerificationRunRecord(
         plan=plan,
         primary=VerificationObservation(
-            PRIMARY_VERIFICATION_ROUTE.route_id,
+            plan.primary_route.route_id,
             primary_value,
             _digest(record.to_dict()),
             True,
@@ -1020,8 +957,6 @@ VERIFICATION_PROTOCOLS = tuple(
         blueprint_id=BLUEPRINT_ID,
         ref=ref,
         quantity=quantity,
-        primary_route=PRIMARY_VERIFICATION_ROUTE,
-        primary_dependencies=PRIMARY_DEPENDENCIES,
         candidates=(
             VerificationCandidate(
                 REFERENCE_VERIFICATION_ROUTE,
