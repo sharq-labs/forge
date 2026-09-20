@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Iterator
 
 from ..compositionpacks.registry import CompositionPackRegistry
@@ -31,11 +33,28 @@ from .provider import ExecutionPackProvider
 class RegisteredExecutionPack:
     manifest: ExecutionPackManifest
     participant_factories: tuple[ParticipantFactoryDeclaration, ...]
+    composition_authority_digest: str
     source_provider_type: str
 
     @property
     def key(self) -> tuple[str, str]:
         return self.manifest.key
+
+    @property
+    def authority_digest(self) -> str:
+        payload = {
+            "manifest_digest": self.manifest.digest,
+            "composition_authority_digest": (
+                self.composition_authority_digest
+            ),
+        }
+        return hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 def _factory_ref(
@@ -266,6 +285,7 @@ class ExecutionPackRegistry:
             participant_factories=tuple(
                 sorted(declarations, key=lambda item: item.key)
             ),
+            composition_authority_digest=composition.authority_digest,
             source_provider_type=(
                 f"{type(provider).__module__}."
                 f"{type(provider).__qualname__}"
