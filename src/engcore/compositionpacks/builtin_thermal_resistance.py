@@ -253,11 +253,33 @@ def thermal_resistance_capability() -> CapabilityDeclaration:
         ),
         attainable_levels=(),
         uncertainty=UncertaintyCapability(
-            quantified={},
+            quantified={
+                material.RESISTANCE_METRIC: frozenset(
+                    {UncertaintyChannel.EPISTEMIC_PARAMETER}
+                )
+            },
             basis=(
-                "The composition records uncertainty propagation explicitly "
-                "as unknown until a system-level producer is qualified."
+                "Independent STANDARD/PARAMETER input uncertainties are "
+                "propagated through the closed-form thermal response and "
+                "linear-TCR relation with first-order sensitivities."
             ),
+        ),
+        perturbable=tuple(
+            PerturbableInput(
+                path,
+                "system-level parameter-UQ producer re-evaluates the "
+                "closed-form composition at declared parameter values",
+            )
+            for path in (
+                "thermal.heat_capacity",
+                "thermal.ambient_conductance",
+                "thermal.ambient_temperature",
+                "thermal.initial_temperature",
+                "thermal.heat_input",
+                "conductor.reference_resistance",
+                "conductor.temperature_coefficient",
+                "conductor.reference_temperature",
+            )
         ),
         routes=(
             RouteDeclaration(
@@ -537,11 +559,11 @@ UNCERTAINTY_RULES = (
     UncertaintyCompositionRule(
         blueprint_id=BLUEPRINT_ID,
         rule_id="thermal_resistance.uncertainty",
-        strategy=UncertaintyCompositionStrategy.UNKNOWN,
-        channels=(),
+        strategy=UncertaintyCompositionStrategy.INDEPENDENT,
+        channels=(UncertaintyChannel.EPISTEMIC_PARAMETER,),
         description=(
-            "No system-level uncertainty producer is qualified for this "
-            "composition yet; the unknown state is explicit."
+            "Independent STANDARD/PARAMETER input uncertainties are "
+            "propagated analytically; other channels remain unquantified."
         ),
     ),
 )
@@ -681,12 +703,202 @@ def validate_temperature_resistance_run(
     )
 
 
+def produce_thermal_resistance_uncertainty(record):
+    uncertainty = propagate_parameter_uncertainty(record)
+    if uncertainty is None:
+        return ()
+    return (
+        SystemUncertaintyResult(
+            quantity=material.RESISTANCE_METRIC,
+            channel=UncertaintyChannel.EPISTEMIC_PARAMETER,
+            uncertainty=uncertainty,
+            method_id=(
+                "thermal_resistance.first_order_independent_closed_form"
+            ),
+            evidence=(
+                "closed-form lumped thermal response",
+                "linear-TCR constitutive relation",
+                "independent STANDARD/PARAMETER inputs only",
+            ),
+        ),
+    )
+
+
+def _json_digest(payload) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _model_digest(definition) -> str:
+    return _json_digest(definition.to_dict())
+
+
+_PRIMARY_RUNTIME_DIGEST = implementation_fingerprint(
+    MultiphysicsRuntime.run
+)[0]
+_ANALYTIC_REFERENCE_DIGEST = implementation_fingerprint(
+    analytical_terminal_state
+)[0]
+
+PRIMARY_VERIFICATION_ROUTE = VerificationRoute(
+    route_id="thermal_resistance.generic_multiphysics",
+    kind=VerificationRouteKind.DIFFERENT_IMPLEMENTATION,
+    implementation_digest=_PRIMARY_RUNTIME_DIGEST,
+)
+ANALYTIC_VERIFICATION_ROUTE = VerificationRoute(
+    route_id="thermal_resistance.closed_form_reference",
+    kind=VerificationRouteKind.ANALYTICAL_REFERENCE,
+    implementation_digest=_ANALYTIC_REFERENCE_DIGEST,
+)
+PRIMARY_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
+    route_id=PRIMARY_VERIFICATION_ROUTE.route_id,
+    components=(
+        DependencyComponent(
+            "model.thermal.lumped_capacity",
+            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
+            DependencyRole.MODEL,
+        ),
+        DependencyComponent(
+            "model.electrical.linear_tcr",
+            _model_digest(material.LINEAR_TCR_MODEL),
+            DependencyRole.MODEL,
+        ),
+        DependencyComponent(
+            "solver.thermal.lumped",
+            implementation_fingerprint(lumped.LumpedThermalSolver)[0],
+            DependencyRole.SOLVER,
+        ),
+        DependencyComponent(
+            "solver.electrical.material",
+            implementation_fingerprint(
+                material.ResistancePropertySolver
+            )[0],
+            DependencyRole.SOLVER,
+        ),
+        DependencyComponent(
+            "runtime.multiphysics",
+            _PRIMARY_RUNTIME_DIGEST,
+            DependencyRole.RUNTIME,
+        ),
+    ),
+    authority_id="forge",
+)
+ANALYTIC_VERIFICATION_DEPENDENCIES = RouteDependencyManifest(
+    route_id=ANALYTIC_VERIFICATION_ROUTE.route_id,
+    components=(
+        DependencyComponent(
+            "model.thermal.lumped_capacity",
+            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
+            DependencyRole.MODEL,
+        ),
+        DependencyComponent(
+            "model.electrical.linear_tcr",
+            _model_digest(material.LINEAR_TCR_MODEL),
+            DependencyRole.MODEL,
+        ),
+        DependencyComponent(
+            "reference.thermal_resistance.closed_form",
+            _ANALYTIC_REFERENCE_DIGEST,
+            DependencyRole.SOLVER,
+        ),
+    ),
+    authority_id="forge.reference",
+)
+VERIFICATION_POLICY = VerificationPolicy(
+    minimum_level=VerificationLevel.V4,
+    minimum_independence=IndependenceLevel.PARTIAL,
+    minimum_routes=1,
+    require_external=False,
+)
+
+
+def verify_thermal_resistance_run(record, plan):
+    raw = record.final_outputs.get(
+        f"{MATERIAL_PARTICIPANT}.resistance"
+    )
+    if raw is None:
+        raise ValueError(
+            "verification requires terminal material.resistance"
+        )
+    primary_value = Quantity.from_dict(raw)
+    _temperature, reference_value = analytical_terminal_state(record)
+    scale = max(
+        1.0,
+        abs(reference_value.magnitude_in(material.RESISTANCE_UNIT)),
+    )
+    tolerance = Quantity(
+        scale * 1e-10,
+        material.RESISTANCE_UNIT,
+    )
+    primary_evidence = _json_digest(record.to_dict())
+    primary = VerificationObservation(
+        route_id=PRIMARY_VERIFICATION_ROUTE.route_id,
+        value=primary_value,
+        evidence_digest=primary_evidence,
+        converged=True,
+    )
+    reference = VerificationObservation(
+        route_id=ANALYTIC_VERIFICATION_ROUTE.route_id,
+        value=reference_value,
+        evidence_digest=reference_evidence_digest(record),
+        converged=True,
+    )
+    return VerificationRunRecord(
+        plan=plan,
+        primary=primary,
+        observations=(reference,),
+        tolerance=tolerance,
+    )
+
+
 VALIDATION_REF = ArtifactRef(VALIDATION_ID, VALIDATION_VERSION)
 VALIDATION_PROTOCOLS = (
     ProvidedCompositionValidation(
         blueprint_id=BLUEPRINT_ID,
         ref=VALIDATION_REF,
         implementation=validate_temperature_resistance_run,
+    ),
+)
+
+UNCERTAINTY_REF = ArtifactRef(
+    "system.thermal_resistance.parameter_uq",
+    "1",
+)
+UNCERTAINTY_PRODUCERS = (
+    ProvidedCompositionUncertainty(
+        blueprint_id=BLUEPRINT_ID,
+        ref=UNCERTAINTY_REF,
+        rule_id="thermal_resistance.uncertainty",
+        quantities=(material.RESISTANCE_METRIC,),
+        channels=(UncertaintyChannel.EPISTEMIC_PARAMETER,),
+        implementation=produce_thermal_resistance_uncertainty,
+    ),
+)
+
+VERIFICATION_REF = ArtifactRef(
+    "system.thermal_resistance.analytic_verification",
+    "1",
+)
+VERIFICATION_PROTOCOLS = (
+    ProvidedCompositionVerification(
+        blueprint_id=BLUEPRINT_ID,
+        ref=VERIFICATION_REF,
+        quantity=material.RESISTANCE_METRIC,
+        primary_route=PRIMARY_VERIFICATION_ROUTE,
+        primary_dependencies=PRIMARY_VERIFICATION_DEPENDENCIES,
+        candidates=(
+            VerificationCandidate(
+                ANALYTIC_VERIFICATION_ROUTE,
+                ANALYTIC_VERIFICATION_DEPENDENCIES,
+            ),
+        ),
+        policy=VERIFICATION_POLICY,
+        implementation=verify_thermal_resistance_run,
     ),
 )
 
@@ -721,6 +933,8 @@ MANIFEST = CompositionPackManifest(
     ),
     system_contract_digest=SYSTEM_CONTRACT_DIGEST,
     validation_protocols=(VALIDATION_REF,),
+    uncertainty_protocols=(UNCERTAINTY_REF,),
+    verification_protocols=(VERIFICATION_REF,),
 )
 
 
@@ -753,6 +967,12 @@ class ThermalResistanceCompositionPack:
 
     def validation_protocols(self):
         return VALIDATION_PROTOCOLS
+
+    def uncertainty_producers(self):
+        return UNCERTAINTY_PRODUCERS
+
+    def verification_protocols(self):
+        return VERIFICATION_PROTOCOLS
 
 
 BUILTIN_THERMAL_RESISTANCE_COMPOSITION = ThermalResistanceCompositionPack()
