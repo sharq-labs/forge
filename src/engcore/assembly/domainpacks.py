@@ -199,13 +199,40 @@ def _configure_builtin_packs() -> DomainPackRegistry:
     if _BUILTINS_CONFIGURED:
         return _PRODUCTION_DOMAIN_PACKS
 
+    from ..compositionpacks.builtin_thermal_resistance import (
+        BUILTIN_THERMAL_RESISTANCE_COMPOSITION,
+    )
     from ..domainpacks.builtin_cstr import BUILTIN_CSTR_PACK
+    from ..domainpacks.builtin_electrical_material import (
+        BUILTIN_ELECTRICAL_MATERIAL_PACK,
+    )
+    from ..domainpacks.builtin_thermal_lumped import (
+        BUILTIN_THERMAL_LUMPED_PACK,
+    )
+    from ..executionpacks.builtin_thermal_resistance import (
+        BUILTIN_THERMAL_RESISTANCE_EXECUTION,
+    )
 
-    register_production_domain_pack(
+    for provider in (
         BUILTIN_CSTR_PACK,
-        origin=PackOrigin.builtin(),
+        BUILTIN_THERMAL_LUMPED_PACK,
+        BUILTIN_ELECTRICAL_MATERIAL_PACK,
+    ):
+        register_production_domain_pack(
+            provider,
+            origin=PackOrigin.builtin(),
+            enable=True,
+        )
+
+    register_production_composition_pack(
+        BUILTIN_THERMAL_RESISTANCE_COMPOSITION,
         enable=True,
     )
+    register_production_execution_pack(
+        BUILTIN_THERMAL_RESISTANCE_EXECUTION,
+        enable=True,
+    )
+
     _BUILTINS_CONFIGURED = True
     return _PRODUCTION_DOMAIN_PACKS
 
