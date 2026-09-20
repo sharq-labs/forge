@@ -830,7 +830,7 @@ PRIMARY_VERIFICATION_ROUTE = VerificationRoute(
 )
 REFERENCE_VERIFICATION_ROUTE = VerificationRoute(
     "electrothermal_feedback.independent_dop853",
-    VerificationRouteKind.DIFFERENT_ALGORITHM,
+    VerificationRouteKind.DIFFERENT_MODEL,
     _REFERENCE_DIGEST,
 )
 
@@ -887,22 +887,12 @@ REFERENCE_DEPENDENCIES = RouteDependencyManifest(
     REFERENCE_VERIFICATION_ROUTE.route_id,
     (
         DependencyComponent(
-            "model.thermal.lumped_capacity",
-            _model_digest(lumped.LUMPED_CAPACITY_MODEL),
+            "reference_model.electrothermal_feedback.monolithic_ode",
+            _REFERENCE_DIGEST,
             DependencyRole.MODEL,
         ),
         DependencyComponent(
-            "model.electrical.linear_tcr",
-            _model_digest(material.LINEAR_TCR_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "model.electrical.dc.resistor_ohm",
-            _model_digest(dc_models.RESISTOR_OHM_MODEL),
-            DependencyRole.MODEL,
-        ),
-        DependencyComponent(
-            "reference.electrothermal_feedback.dop853",
+            "reference_solver.electrothermal_feedback.dop853",
             _REFERENCE_DIGEST,
             DependencyRole.SOLVER,
         ),
@@ -911,8 +901,8 @@ REFERENCE_DEPENDENCIES = RouteDependencyManifest(
 )
 
 VERIFICATION_POLICY = VerificationPolicy(
-    minimum_level=VerificationLevel.V1,
-    minimum_independence=IndependenceLevel.PARTIAL,
+    minimum_level=VerificationLevel.V3,
+    minimum_independence=IndependenceLevel.STRONG,
     minimum_routes=1,
     require_external=False,
 )
