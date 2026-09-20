@@ -14,7 +14,11 @@ import json
 from typing import Callable, Iterable, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.multiphysics import ParticipantSpec, PhysicsGraph
+from ...scientific.multiphysics import (
+    ParticipantModelRef,
+    ParticipantSpec,
+    PhysicsGraph,
+)
 from .participant import ExecutableParticipant
 
 ParticipantFactory = Callable[[ParticipantSpec], ExecutableParticipant]
@@ -32,6 +36,7 @@ class ParticipantFactoryDeclaration:
     adapter_version: str
     factory: ParticipantFactory
     description: str = ""
+    models: tuple[ParticipantModelRef, ...] = ()
 
     def __post_init__(self) -> None:
         for label in (
@@ -50,6 +55,35 @@ class ParticipantFactoryDeclaration:
                     f"participant factory declaration requires {label}"
                 )
             object.__setattr__(self, label, value)
+        models = tuple(self.models)
+        if not models:
+            models = (
+                ParticipantModelRef(
+                    self.model_id,
+                    self.model_version,
+                ),
+            )
+        if any(
+            not isinstance(item, ParticipantModelRef)
+            for item in models
+        ):
+            raise InvalidScientificProblem(
+                "participant factory models must be ParticipantModelRef records"
+            )
+        keys = [item.key for item in models]
+        if len(keys) != len(set(keys)):
+            raise InvalidScientificProblem(
+                "participant factory model assembly contains duplicates"
+            )
+        if (self.model_id, self.model_version) not in set(keys):
+            raise InvalidScientificProblem(
+                "participant factory primary model must be in model assembly"
+            )
+        object.__setattr__(
+            self,
+            "models",
+            tuple(sorted(models, key=lambda item: item.key)),
+        )
         if not callable(self.factory):
             raise InvalidScientificProblem(
                 "participant factory declaration requires callable factory"
@@ -61,10 +95,13 @@ class ParticipantFactoryDeclaration:
         )
 
     @property
-    def key(self) -> tuple[str, str, str, str, str, str, str, str]:
+    def model_keys(self) -> tuple[tuple[str, str], ...]:
+        return tuple(item.key for item in self.models)
+
+    @property
+    def key(self) -> tuple[object, ...]:
         return (
-            self.model_id,
-            self.model_version,
+            self.model_keys,
             self.realization_id,
             self.realization_version,
             self.solver_id,
@@ -77,6 +114,9 @@ class ParticipantFactoryDeclaration:
         return {
             "model_id": self.model_id,
             "model_version": self.model_version,
+            "models": [
+                item.to_dict() for item in self.models
+            ],
             "realization_id": self.realization_id,
             "realization_version": self.realization_version,
             "solver_id": self.solver_id,
@@ -87,8 +127,7 @@ class ParticipantFactoryDeclaration:
 
     def matches(self, spec: ParticipantSpec) -> bool:
         return self.key == (
-            spec.model_id,
-            spec.model_version,
+            spec.model_keys,
             spec.realization_id,
             spec.realization_version,
             spec.solver_id,
@@ -175,7 +214,7 @@ class ParticipantFactoryRegistry:
         declarations: Iterable[ParticipantFactoryDeclaration] = (),
     ) -> None:
         self._items: dict[
-            tuple[str, str, str, str, str, str, str, str],
+            tuple[object, ...],
             ParticipantFactoryDeclaration,
         ] = {}
         for declaration in declarations:
@@ -210,8 +249,7 @@ class ParticipantFactoryRegistry:
         if not isinstance(spec, ParticipantSpec):
             raise TypeError("declaration_for requires ParticipantSpec")
         key = (
-            spec.model_id,
-            spec.model_version,
+            spec.model_keys,
             spec.realization_id,
             spec.realization_version,
             spec.solver_id,
@@ -240,8 +278,7 @@ class ParticipantFactoryRegistry:
         result = []
         for spec in graph.participants:
             key = (
-                spec.model_id,
-                spec.model_version,
+                spec.model_keys,
                 spec.realization_id,
                 spec.realization_version,
                 spec.solver_id,
