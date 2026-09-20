@@ -527,34 +527,49 @@ def _composition_graph_plan(
                 )
             )
         else:
-            coupling_plan = selected_policy.materialize(
-                start=intent.simulation_horizon.start,
-                end=intent.simulation_horizon.end,
-                plan_id=(
-                    f"planning.{capability_id}."
-                    f"{selected_policy.template_id}"
-                ),
-                facts=intent.fact_map,
-            )
-            coupling_plan.validate_against(graph)
-            estimate = resource_estimate(
-                coupling_plan,
-                len(graph.participants),
-                intent,
-            )
-            if estimate.within_declared_budget is False:
+            try:
+                coupling_plan = selected_policy.materialize(
+                    start=intent.simulation_horizon.start,
+                    end=intent.simulation_horizon.end,
+                    plan_id=(
+                        f"planning.{capability_id}."
+                        f"{selected_policy.template_id}"
+                    ),
+                    facts=intent.fact_map,
+                )
+                coupling_plan.validate_against(graph)
+            except Exception as exc:
                 gaps.append(
                     PlanningGap(
-                        GapKind.BUDGET_EXCEEDED,
-                        capability_id,
+                        GapKind.COUPLING_POLICY_UNSATISFIED,
+                        selected_policy.template_id,
                         (
-                            "declared compute budget is below the "
-                            "deterministic upper bound for the selected "
-                            "coupling policy"
+                            "coupling policy could not be materialized from "
+                            f"canonical intent facts: {exc}"
                         ),
                         True,
                     )
                 )
+                coupling_plan = None
+            if coupling_plan is not None:
+                estimate = resource_estimate(
+                    coupling_plan,
+                    len(graph.participants),
+                    intent,
+                )
+                if estimate.within_declared_budget is False:
+                    gaps.append(
+                        PlanningGap(
+                            GapKind.BUDGET_EXCEEDED,
+                            capability_id,
+                            (
+                                "declared compute budget is below the "
+                                "deterministic upper bound for the selected "
+                                "coupling policy"
+                            ),
+                            True,
+                        )
+                    )
 
     if execution_registry is None:
         gaps.append(
