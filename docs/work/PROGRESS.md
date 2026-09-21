@@ -302,3 +302,97 @@ multiples of the nominal coupling window only, so it refused a change that does
 land on a boundary cut by a scheduled event. It now checks the boundaries the
 runtime actually produces. Private helper, not a frozen surface, and it still
 refuses a change that falls mid-window.
+
+## Sprint 3 recovery — battery voltage model and Gate A requalification
+
+Branch `claude/battery-voltage-s3-recovery`, base
+`claude/battery-thermal-flagship-sprint-3 @ 7aff1449`.
+
+**S3 RECOVERY / GATE A: NOT YET PASSED.** The voltage model improved by about a
+factor of two on independent validation evidence and the new locked holdout
+still fails. Both are in `benchmarks/battery_voltage_s3_recovery/`.
+
+### Test runs
+
+`python -m pytest -m "not expensive" -q -n 4`, on this branch:
+
+    109 failed, 8177 passed, 8 skipped, 126 errors in 219.39s
+
+The same command on the pristine Sprint 3 tree (`D:/forge-s3` @ 7aff1449):
+
+    108 failed, 8157 passed, 8 skipped, 126 errors in 225.75s
+
+Diffing the two failure sets by name leaves one difference,
+`tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`.
+Run alone, that file fails on BOTH trees at the same assertion
+(`test_core_freeze_v3_manifest.py:95`, in
+`test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`); which of its
+tests reports the failure shifts with parallel run order. So this round
+introduces no new failure. The +20 passed are the round's own regressions.
+
+    python -m pytest benchmarks/battery_voltage_s3_recovery/tests/ -q
+    18 passed
+
+    python -m pytest tests/test_core_guards.py benchmarks/ -q
+    3 failed, 633 passed, 3 skipped
+      - test_the_sria_dependency_table_in_the_docs_matches_the_tree (red on the
+        pristine Sprint 3 tree too, and about `sria/`, which this round does not
+        touch)
+      - the two `test_rebuilding_everything_reproduces_the_published_gates`
+        rebuild tests, which rewrite committed benchmark JSONs locally; restored
+        with `git checkout --` afterwards
+
+The capacity regression was mutation-checked: disabling the causal filter in
+`establish_capacity` turns
+`test_capacity_refuses_evidence_from_the_trajectory_it_is_asked_about` red, and
+restoring it turns it green again.
+
+### Two pinned counts moved, both deliberately
+
+`EXPECTED_MODELS` 18 -> 19 and `EXPECTED_CONDITION_NAMES` 97 -> 103 for
+`battery.cell.electrothermal_1rc@0.2.0`; `EXPECTED_SOLVER_CLASSES` 11 -> 12 for
+the solver that declares it. Each carries its reason in
+`tests/test_core_guards.py`.
+
+### Failed approaches, so a later session does not repeat them
+
+* **Selecting M10 on simplicity.** M10 and M11 are indistinguishable on the Gate
+  A statistics and carry the same number of fitted parameters, so simplicity
+  looked like the tie-break. It was the wrong one: M10 leaves the COLD parameter
+  unit -- the only unit that predicts the holdout -- with three unidentified
+  parameters at a normal-matrix condition number of 1.6e20 and a correlation of
+  -0.9999 between R0 and its own activation energy. R6 puts identifiability
+  first and it is right. Caught before the freeze, which is what R11's ordering
+  is for.
+* **Conditioning the open-circuit voltage authority on ambient.** Produces a
+  degenerate cold curve, because at 4 degC ambient the 4 A discharges self-heat
+  to 23-41 degC and are not cold measurements. The relation follows the cell,
+  not the chamber.
+* **Building the authority from a calibration cell's whole life.** Widens the
+  curve's spread even on the capacity-normalized axis: that axis removes the
+  capacity part of ageing and nothing else. Bounded to the cycle blocks the
+  corpus declares.
+* **Comparing a declared OCV curve against a LOADED measurement.** Measures the
+  IR drop, not a curve offset. Branch averaging is what separates them, and only
+  where the two branches overlap.
+* **Reading a signed bias off `ValidationComparison.residual`.** It is
+  `abs(observed - expected)` by construction, so averaging it reports the mean
+  absolute error under a second name. The sign has to come from the prediction
+  and the observation directly.
+* **Registering a new realization without a solver that declares its exact
+  model.** The domain pack validator refuses the whole pack, which takes the
+  production capability registry down with it and turns into ~440 collection
+  errors across the suite. The validator was right; the fix is a solver
+  subclass that overrides only the declarations naming a version.
+
+### Two defects found in Sprint 3 while reproducing it (R1), reported not fixed
+
+* The committed open-circuit voltage authority is not reproducible from the
+  committed selection: it rests on `B0038.d0001`, which a later amendment
+  rejected for starting 135 mV below the full-charge anchor, and `ocv.py` was
+  never re-run. Two knots move by 0.7 and 2.0 mV.
+* A composition pack's authority digest is a property of the process, not of the
+  code: `implementation_fingerprint` hashes `repr(code.co_consts)` and a nested
+  code object's `repr` carries its memory address. Three of the seven battery
+  implementations are affected. Within-run verification still holds; the
+  recorded digest cannot be re-derived later. Core defect, out of scope here.
