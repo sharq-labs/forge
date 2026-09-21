@@ -70,6 +70,16 @@ the same record the native solvers produce — so credibility, applicability,
 validation, uncertainty, claims and certification keep working without knowing
 a provider exists.
 
+The `HETERO-NGSPICE` milestone's R1 guard used to assert that
+`src/engcore/providers` does not exist. That was a stand-in for "no provider
+framework", written when one provider was the whole evidence. It now asserts
+what it stood for — the six forbidden shapes (`ProviderRegistry`,
+`ProviderDefinition`, `ExternalProvider`, `ProviderCapabilityGraph`,
+`ExecutionBackendHierarchy`, `RemoteExecution`) against **both** packages,
+plus that this contract names no provider — and a control test
+(`test_r1b_...`) checks that the ngspice adapter did not move under it. It did
+not: that file is byte-unchanged.
+
 ### The outcome vocabulary
 
 ```text
