@@ -1,0 +1,4807 @@
+{
+ "schema": "battery_thermal_flagship_s3_flagship/1",
+ "campaign_id": "battery.electrothermal.flagship.s3",
+ "campaign_version": "3",
+ "trajectory": {
+  "trajectory_id": "B0006.d0001",
+  "cell": "B0006",
+  "group": "FY08Q4",
+  "split": "validation",
+  "ambient_temperature_c": 24.0,
+  "load_current_a": 2.010939166720232
+ },
+ "run": {
+  "run_id": "battery.electrothermal.flagship.s3.flagship.uq",
+  "windows": 142,
+  "scenario_digest": "e1ff9b48474d2dba6925932f45617cb8206913af36f19e8424a4794033b204f1",
+  "blueprint_id": "system.battery_electrothermal.graph",
+  "composition_pack": "system.battery_electrothermal@1",
+  "composition_authority_digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999",
+  "execution_pack": "system.battery_electrothermal.execution@1",
+  "terminated": "state_of_charge <= 0.27943868339089956 dimensionless"
+ },
+ "numerical": {
+  "convergence": {
+   "windows": 142,
+   "window_outcomes": {
+    "explicit_completed": 142
+   },
+   "participant_steps_not_converged": [],
+   "satisfied": true
+  },
+  "refinement": {
+   "levels": [
+    1,
+    2,
+    4
+   ],
+   "shared_instants": 284,
+   "per_metric": {
+    "terminal_voltage": {
+     "coarse_to_half": 0.001298826383427265,
+     "half_to_quarter": 0.0006506755392909902,
+     "bound": 0.005000000000000001,
+     "satisfied": true,
+     "converging": true
+    },
+    "cell_temperature": {
+     "coarse_to_half": 0.0068331281688642775,
+     "half_to_quarter": 0.0034097221061983873,
+     "bound": 0.30000000000000004,
+     "satisfied": true,
+     "converging": true
+    }
+   },
+   "satisfied": true,
+   "basis": "the same scenario at the measured grid, at every interval halved, and at every interval quartered. The held current schedule is unchanged by the subdivision, so what moves is the coupling window and nothing else"
+  },
+  "conservation": {
+   "checks": [
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "cell_terminal_relation",
+     "passed": true,
+     "relative_error": 0.0
+    },
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "coupled_energy_balance",
+     "passed": true,
+     "relative_error": 1.5646946000583311e-16
+    },
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "power_transfer_conservation",
+     "passed": true,
+     "relative_error": 0.0
+    },
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "staggered_temperature_lag",
+     "passed": true,
+     "relative_error": 7.646211642391852e-05
+    },
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "terminal_voltage_self_consistency",
+     "passed": true,
+     "relative_error": 0.0
+    }
+   ],
+   "conservation_checks": [
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "coupled_energy_balance",
+     "passed": true,
+     "relative_error": 1.5646946000583311e-16
+    },
+    {
+     "protocol": "system.battery_electrothermal.validation",
+     "check_id": "power_transfer_conservation",
+     "passed": true,
+     "relative_error": 0.0
+    }
+   ],
+   "satisfied": true
+  },
+  "evidence": {
+   "schema": "corpus_numerical_evidence/1",
+   "producer_id": "battery_electrothermal.flagship",
+   "supported_checks": [
+    "conservation",
+    "convergence",
+    "refinement"
+   ],
+   "results": [
+    {
+     "schema": "corpus_numerical_check/1",
+     "check": "conservation",
+     "outcome": "satisfied",
+     "detail": "the heat the cell reported equals the heat the body consumed in every window, and the energy deposited over the run equals what the body stored plus what it rejected",
+     "measured": 1.5646946000583311e-16,
+     "threshold": 0.005
+    },
+    {
+     "schema": "corpus_numerical_check/1",
+     "check": "convergence",
+     "outcome": "satisfied",
+     "detail": "142 coupling windows, outcomes {'explicit_completed': 142}; every participant step reported internal convergence",
+     "measured": 0.0,
+     "threshold": 0.0
+    },
+    {
+     "schema": "corpus_numerical_check/1",
+     "check": "refinement",
+     "outcome": "satisfied",
+     "detail": "halving then quartering every measured interval moves the predicted voltage by at most 0.651 mV and the predicted temperature by at most 0.0034 K, against a tenth of each acceptance tolerance",
+     "measured": 0.130135107858198,
+     "threshold": 1.0
+    }
+   ],
+   "binding": {
+    "schema": "corpus_evidence_binding/1",
+    "binding_id": "run:battery.electrothermal.flagship.s3.flagship.uq",
+    "components": [
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "blueprint",
+      "identifier": "system.battery_electrothermal.graph",
+      "version": "1",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "composition_pack",
+      "identifier": "system.battery_electrothermal",
+      "version": "1",
+      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "coupling_plan",
+      "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
+      "version": "",
+      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "battery.electrothermal",
+      "version": "1",
+      "digest": "31e249e065c63e17371483aaa6b2bb01aefb3550c9707e66d3b6334686cbbbc5"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "thermal.lumped",
+      "version": "1",
+      "digest": "1a01dbcd0314fad2ebab7203d2ce72cd01efe6bdb2826e34c90724ba8150223d"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "execution_pack",
+      "identifier": "system.battery_electrothermal.execution",
+      "version": "1",
+      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "graph",
+      "identifier": "planning.system.battery_electrothermal",
+      "version": "",
+      "digest": "a53ed6b71ffb617c11cce770c6bce1de63c6c55bbc3c0669450c649d8e19ff23"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "battery.cell.electrothermal_1rc",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "thermal.lumped.first_order_capacity",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "battery.cell.electrothermal_1rc.exact_constant_current",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "thermal.lumped.first_order_capacity.closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "run",
+      "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
+      "version": "",
+      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "scenario",
+      "identifier": "battery.electrothermal.flagship.s3.flagship",
+      "version": "1",
+      "digest": "e1ff9b48474d2dba6925932f45617cb8206913af36f19e8424a4794033b204f1"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.battery.electrothermal_1rc_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.thermal.lumped_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     }
+    ]
+   }
+  },
+  "satisfied_checks": [
+   "conservation",
+   "convergence",
+   "refinement"
+  ],
+  "violated_checks": [],
+  "absent_checks": []
+ },
+ "uncertainty": {
+  "parameter_standard_errors_supplied": {
+   "ohmic_activation_energy": 33564.73295340756,
+   "ohmic_resistance_reference": 0.00668278921791531,
+   "polarization_activation_energy": 91001.4396564763,
+   "polarization_capacitance": 6370.775894518442,
+   "polarization_resistance_reference": 0.19219839789161736,
+   "thermal_capacitance": 3.752422265823846,
+   "thermal_conductance": 0.0027671676160169294
+  },
+  "parameters_without_a_standard_error": [],
+  "propagated": {
+   "cell_temperature/epistemic_parameter": {
+    "method": "battery_electrothermal.independent_ode_sensitivity",
+    "standard_uncertainty": {
+     "schema": "quantity/1",
+     "magnitude": 2.8963451139393506,
+     "units": "kelvin"
+    },
+    "notes": "Central finite-difference sensitivities at one supplied standard uncertainty; one-sided only where positivity would otherwise be violated. The numerical, measurement and model-form channels are not included and are reported separately."
+   },
+   "terminal_voltage/epistemic_parameter": {
+    "method": "battery_electrothermal.independent_ode_sensitivity",
+    "standard_uncertainty": {
+     "schema": "quantity/1",
+     "magnitude": 0.11668345966751152,
+     "units": "volt"
+    },
+    "notes": "Central finite-difference sensitivities at one supplied standard uncertainty; one-sided only where positivity would otherwise be violated. The numerical, measurement and model-form channels are not included and are reported separately."
+   }
+  },
+  "channel_matrix": {
+   "enforceable": true,
+   "complete": true,
+   "missing": []
+  },
+  "channels_not_quantified": {
+   "measurement": "no acceptance tolerance here is a source-reported spread, and no observation carries a SOURCE_REPORTED uncertainty. A campaign cannot invent one, so the measurement channel of the uncertainty budget stays UNKNOWN in the final report",
+   "numerical": "bounded rather than quantified: the refinement study measures how far the answer moves under subdivision and the bound is reported, but no distribution is produced",
+   "model_form": "UNKNOWN. The campaign's independent pass fraction exceeds its calibration one and Core's diagnosis is INSUFFICIENT_EVIDENCE, so no model-form inadequacy is demonstrated -- which is not the same as a quantified model-form uncertainty, and none is claimed"
+  }
+ },
+ "replay": {
+  "status": "replayed_match",
+  "compared": 5,
+  "verified": true,
+  "policy": "forge.multiphysics.replay",
+  "original_run_id": "battery.electrothermal.flagship.s3.flagship.uq",
+  "replay_run_id": "battery.electrothermal.flagship.s3.flagship.replay",
+  "refusal_reason": ""
+ },
+ "envelope": {
+  "terminal_voltage": {
+   "schema": "corpus_validation_envelope/1",
+   "envelope_id": "battery.electrothermal.flagship.s3.terminal_voltage",
+   "coverage": {
+    "schema": "corpus_validation_coverage/1",
+    "region": {
+     "schema": "corpus_validation_region/1",
+     "region_id": "battery.terminal_voltage",
+     "dimensions": [
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "c_rate",
+       "unit": "1 / hour",
+       "edges": [
+        0.0,
+        0.25,
+        1.25,
+        2.5
+       ]
+      },
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "depth_of_discharge",
+       "unit": "dimensionless",
+       "edges": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.8
+       ]
+      },
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "measured_cell_temperature",
+       "unit": "kelvin",
+       "edges": [
+        288.15,
+        303.15,
+        318.15,
+        333.15
+       ]
+      }
+     ],
+     "minimum_supporting_cases": 2
+    },
+    "metric": "terminal_voltage",
+    "cells": [
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       5,
+       0
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       5,
+       1
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       5,
+       2
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       5,
+       3
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       5,
+       4
+      ],
+      "label": "c_rate=[-inf, 0) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 7,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 3,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 11,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 35,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 2,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 66,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 20,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 10,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 31,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 4,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 64,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 37,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 84,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 22,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       5,
+       0
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 8,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       5,
+       1
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 78,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       5,
+       2
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 250,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       5,
+       3
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 55,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       5,
+       4
+      ],
+      "label": "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 250,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 454,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 36,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 51,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 252,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 312,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 149,
+      "failed": 8,
+      "unscored": 0,
+      "correct_refusals": 35,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 53,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 182,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 19,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 42,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 441,
+      "failed": 9,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 87,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 55,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 37,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 262,
+      "failed": 33,
+      "unscored": 0,
+      "correct_refusals": 157,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 88,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       5,
+       0
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 7,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       5,
+       1
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       5,
+       2
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 172,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       5,
+       3
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 33,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       5,
+       4
+      ],
+      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 23,
+      "failed": 23,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 26,
+      "failed": 26,
+      "unscored": 0,
+      "correct_refusals": 5,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 31,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 59,
+      "failed": 44,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 38,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 36,
+      "failed": 37,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 16,
+      "failed": 16,
+      "unscored": 0,
+      "correct_refusals": 38,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 5,
+      "failed": 7,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 30,
+      "failed": 18,
+      "unscored": 0,
+      "correct_refusals": 67,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       5,
+       0
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       5,
+       1
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       5,
+       2
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       5,
+       3
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 35,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       5,
+       4
+      ],
+      "label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 3,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       0,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       0,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       0,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       0,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       0,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       1,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       1,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       1,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       1,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       1,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       2,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       2,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       2,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       2,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       2,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       3,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       3,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       3,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       3,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       3,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       4,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       4,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       4,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       4,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       4,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       5,
+       0
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[-inf, 288.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       5,
+       1
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       5,
+       2
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       5,
+       3
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       4,
+       5,
+       4
+      ],
+      "label": "c_rate=[2.5, +inf) 1 / hour; depth_of_discharge=[0.8, +inf) dimensionless; measured_cell_temperature=[333.15, +inf) kelvin",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     }
+    ],
+    "unlocated_cases": []
+   },
+   "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34",
+   "target": {
+    "schema": "corpus_evidence_binding/1",
+    "binding_id": "run:battery.electrothermal.flagship.s3.flagship.uq",
+    "components": [
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "blueprint",
+      "identifier": "system.battery_electrothermal.graph",
+      "version": "1",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "composition_pack",
+      "identifier": "system.battery_electrothermal",
+      "version": "1",
+      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "coupling_plan",
+      "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
+      "version": "",
+      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "battery.electrothermal",
+      "version": "1",
+      "digest": "31e249e065c63e17371483aaa6b2bb01aefb3550c9707e66d3b6334686cbbbc5"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "thermal.lumped",
+      "version": "1",
+      "digest": "1a01dbcd0314fad2ebab7203d2ce72cd01efe6bdb2826e34c90724ba8150223d"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "execution_pack",
+      "identifier": "system.battery_electrothermal.execution",
+      "version": "1",
+      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "graph",
+      "identifier": "planning.system.battery_electrothermal",
+      "version": "",
+      "digest": "a53ed6b71ffb617c11cce770c6bce1de63c6c55bbc3c0669450c649d8e19ff23"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "battery.cell.electrothermal_1rc",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "thermal.lumped.first_order_capacity",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "battery.cell.electrothermal_1rc.exact_constant_current",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "thermal.lumped.first_order_capacity.closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "run",
+      "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
+      "version": "",
+      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "scenario",
+      "identifier": "battery.electrothermal.flagship.s3.flagship",
+      "version": "1",
+      "digest": "e1ff9b48474d2dba6925932f45617cb8206913af36f19e8424a4794033b204f1"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.battery.electrothermal_1rc_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.thermal.lumped_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     }
+    ]
+   }
+  },
+  "cell_temperature": {
+   "schema": "corpus_validation_envelope/1",
+   "envelope_id": "battery.electrothermal.flagship.s3.cell_temperature",
+   "coverage": {
+    "schema": "corpus_validation_coverage/1",
+    "region": {
+     "schema": "corpus_validation_region/1",
+     "region_id": "battery.cell_temperature",
+     "dimensions": [
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "ambient_temperature",
+       "unit": "kelvin",
+       "edges": [
+        288.15,
+        296.15,
+        300.15
+       ]
+      },
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "c_rate",
+       "unit": "1 / hour",
+       "edges": [
+        0.0,
+        0.25,
+        1.25,
+        2.5
+       ]
+      },
+      {
+       "schema": "corpus_coverage_dimension/1",
+       "name": "elapsed_time",
+       "unit": "second",
+       "edges": [
+        0.0,
+        600.0,
+        1800.0,
+        3600.0
+       ]
+      }
+     ],
+     "minimum_supporting_cases": 2
+    },
+    "metric": "cell_temperature",
+    "cells": [
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       0
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       1
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       2
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       3
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       0,
+       4
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       0
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       1
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 12,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       2
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       3
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 80,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       1,
+       4
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 82,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       0
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       1
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 158,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       2
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 330,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       3
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 244,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       2,
+       4
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 94,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       0
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       1
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       2
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       3
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       3,
+       4
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       0
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       1
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       2
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       3
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       0,
+       4,
+       4
+      ],
+      "label": "ambient_temperature=[-inf, 288.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       0
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       1
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       2
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       3
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       0,
+       4
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       0
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       1
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 12,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       2
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       3
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 26,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       1,
+       4
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       0
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       1
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 166,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       2
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 346,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       3
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 239,
+      "failed": 5,
+      "unscored": 0,
+      "correct_refusals": 100,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       2,
+       4
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       0
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       1
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       2
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       3
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       3,
+       4
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       0
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       1
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       2
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       3
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       1,
+       4,
+       4
+      ],
+      "label": "ambient_temperature=[288.15, 296.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       0
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       1
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       2
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       3
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       0,
+       4
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       0
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       1
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 30,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       2
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 16,
+      "failed": 2,
+      "unscored": 0,
+      "correct_refusals": 72,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       3
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 37,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 407,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       1,
+       4
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       0
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       1
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 207,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       2
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 429,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       3
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 295,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 228,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "supported"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       2,
+       4
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       0
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       1
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 154,
+      "failed": 10,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       2
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 171,
+      "failed": 31,
+      "unscored": 0,
+      "correct_refusals": 52,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "failed"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       3
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       3,
+       4
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       0
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       1
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       2
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       3
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       2,
+       4,
+       4
+      ],
+      "label": "ambient_temperature=[296.15, 300.15) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       0
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       1
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       2
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       3
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       0,
+       4
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[-inf, 0) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       0
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       1
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 7,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       2
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 1,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       3
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 2,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       1,
+       4
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0, 0.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 3,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       0
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       1
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 41,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       2
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 85,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       3
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 118,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       2,
+       4
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[0.25, 1.25) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 139,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       0
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       1
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 60,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       2
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 105,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       3
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       3,
+       4
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[1.25, 2.5) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       0
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[-inf, 0) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       1
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[0, 600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       2
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[600, 1800) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       3
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[1800, 3600) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     },
+     {
+      "schema": "corpus_coverage_cell/1",
+      "cell": [
+       3,
+       4,
+       4
+      ],
+      "label": "ambient_temperature=[300.15, +inf) kelvin; c_rate=[2.5, +inf) 1 / hour; elapsed_time=[3600, +inf) second",
+      "passed": 0,
+      "failed": 0,
+      "unscored": 0,
+      "correct_refusals": 0,
+      "unexpected_refusals": 0,
+      "undeclared": 0,
+      "status": "untested"
+     }
+    ],
+    "unlocated_cases": []
+   },
+   "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34",
+   "target": {
+    "schema": "corpus_evidence_binding/1",
+    "binding_id": "run:battery.electrothermal.flagship.s3.flagship.uq",
+    "components": [
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "blueprint",
+      "identifier": "system.battery_electrothermal.graph",
+      "version": "1",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "composition_pack",
+      "identifier": "system.battery_electrothermal",
+      "version": "1",
+      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "coupling_plan",
+      "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
+      "version": "",
+      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "battery.electrothermal",
+      "version": "1",
+      "digest": "31e249e065c63e17371483aaa6b2bb01aefb3550c9707e66d3b6334686cbbbc5"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "domain_pack",
+      "identifier": "thermal.lumped",
+      "version": "1",
+      "digest": "1a01dbcd0314fad2ebab7203d2ce72cd01efe6bdb2826e34c90724ba8150223d"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "execution_pack",
+      "identifier": "system.battery_electrothermal.execution",
+      "version": "1",
+      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "graph",
+      "identifier": "planning.system.battery_electrothermal",
+      "version": "",
+      "digest": "a53ed6b71ffb617c11cce770c6bce1de63c6c55bbc3c0669450c649d8e19ff23"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "battery.cell.electrothermal_1rc",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "model",
+      "identifier": "thermal.lumped.first_order_capacity",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "battery.cell.electrothermal_1rc.exact_constant_current",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "realization",
+      "identifier": "thermal.lumped.first_order_capacity.closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "run",
+      "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
+      "version": "",
+      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "scenario",
+      "identifier": "battery.electrothermal.flagship.s3.flagship",
+      "version": "1",
+      "digest": "e1ff9b48474d2dba6925932f45617cb8206913af36f19e8424a4794033b204f1"
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.battery.electrothermal_1rc_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     },
+     {
+      "schema": "corpus_authority_component/1",
+      "role": "solver",
+      "identifier": "engcore.thermal.lumped_closed_form",
+      "version": "0.1.0",
+      "digest": ""
+     }
+    ]
+   }
+  },
+  "query_point": {
+   "schema": "corpus_validation_query_point/1",
+   "qoi_id": "terminal_voltage",
+   "coordinates": {
+    "c_rate": {
+     "schema": "quantity/1",
+     "magnitude": 1.0,
+     "units": "1 / hour"
+    },
+    "depth_of_discharge": {
+     "schema": "quantity/1",
+     "magnitude": 0.1,
+     "units": "dimensionless"
+    },
+    "measured_cell_temperature": {
+     "schema": "quantity/1",
+     "magnitude": 298.15,
+     "units": "kelvin"
+    }
+   },
+   "declared": "inside",
+   "label": "10% discharged, 1C, cell at 25 degC"
+  },
+  "classification": {
+   "schema": "corpus_envelope_classification/1",
+   "verdict": "supported",
+   "declared": "inside",
+   "cell_label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "passed": 454,
+   "failed": 0,
+   "why": "454 passing cases and no failure in this cell, at or above the region minimum of 2"
+  },
+  "boundary_points": {
+   "hot_at_1c": {
+    "point": {
+     "schema": "corpus_validation_query_point/1",
+     "qoi_id": "terminal_voltage",
+     "coordinates": {
+      "c_rate": {
+       "schema": "quantity/1",
+       "magnitude": 1.0,
+       "units": "1 / hour"
+      },
+      "depth_of_discharge": {
+       "schema": "quantity/1",
+       "magnitude": 0.5,
+       "units": "dimensionless"
+      },
+      "measured_cell_temperature": {
+       "schema": "quantity/1",
+       "magnitude": 308.15,
+       "units": "kelvin"
+      }
+     },
+     "declared": "inside",
+     "label": "half discharged, 1C, cell at 35 degC"
+    },
+    "classification": {
+     "schema": "corpus_envelope_classification/1",
+     "verdict": "outside_validated_envelope",
+     "declared": "inside",
+     "cell_label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+     "passed": 441,
+     "failed": 9,
+     "why": "9 of 450 scored cases fail in this cell; the validated envelope does not cover it"
+    }
+   },
+   "two_c": {
+    "point": {
+     "schema": "corpus_validation_query_point/1",
+     "qoi_id": "terminal_voltage",
+     "coordinates": {
+      "c_rate": {
+       "schema": "quantity/1",
+       "magnitude": 2.0,
+       "units": "1 / hour"
+      },
+      "depth_of_discharge": {
+       "schema": "quantity/1",
+       "magnitude": 0.3,
+       "units": "dimensionless"
+      },
+      "measured_cell_temperature": {
+       "schema": "quantity/1",
+       "magnitude": 310.15,
+       "units": "kelvin"
+      }
+     },
+     "declared": "inside",
+     "label": "30% discharged, 2C, cell at 37 degC"
+    },
+    "classification": {
+     "schema": "corpus_envelope_classification/1",
+     "verdict": "outside_validated_envelope",
+     "declared": "inside",
+     "cell_label": "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+     "passed": 59,
+     "failed": 44,
+     "why": "44 of 103 scored cases fail in this cell; the validated envelope does not cover it"
+    }
+   }
+  },
+  "supported_cells": [
+   "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[-inf, 0) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[0, 0.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin"
+  ],
+  "failed_cells": [
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[288.15, 303.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0, 0.2) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.2, 0.4) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.4, 0.6) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
+   "c_rate=[1.25, 2.5) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[318.15, 333.15) kelvin"
+  ]
+ },
+ "validation_protocol_completeness": {
+  "enforceable": true,
+  "complete": true
+ },
+ "trust": {
+  "production_policy": {
+   "policy": "forge.multiphysics.production",
+   "satisfied": true,
+   "gates": {
+    "authority_chain_pinned": true,
+    "computational_replay_verified": true,
+    "independent_verification_passed": true,
+    "numerical_evidence_present": true,
+    "serialization_roundtrip_verified": true,
+    "system_validation_passed": true,
+    "uncertainty_authority_satisfied": true,
+    "uq_channel_completeness": true,
+    "validation_envelope_supported": true,
+    "validation_protocol_completeness": true,
+    "verification_protocol_completeness": true
+   },
+   "unmet_required": [],
+   "recorded_gaps": []
+  },
+  "full_trust_policy": {
+   "policy": "forge.multiphysics.full_trust",
+   "satisfied": true,
+   "unmet_required": []
+  }
+ },
+ "certification": {
+  "profile": "forge.multiphysics.production/2",
+  "verified": true,
+  "artifacts": [
+   "authorized_multiphysics_run",
+   "composition_authority_snapshot",
+   "execution_authority_snapshot",
+   "multiphysics_run_record",
+   "trust_assessment",
+   "trust_policy"
+  ]
+ },
+ "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34"
+}
