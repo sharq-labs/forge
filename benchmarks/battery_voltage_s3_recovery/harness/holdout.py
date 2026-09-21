@@ -508,11 +508,25 @@ def statistics(values: list[float]) -> dict[str, Any]:
     }
 
 
-def score(report, dataset, split: str) -> dict[str, Any]:
-    """Residual statistics per metric, per cell and aggregated."""
+def score(report, dataset, split: str, predictions=None) -> dict[str, Any]:
+    """Residual statistics per metric, per cell and aggregated.
+
+    ``ValidationComparison.residual`` is ``abs(observed - expected)`` by
+    construction -- Core reports a magnitude, because a verdict is about
+    whether agreement holds and not about which way it fails. So the SIGNED
+    bias cannot be read off it, and averaging it would report the mean absolute
+    error twice under two names. The bias below is computed from the prediction
+    and the observation directly, as ``predicted - observed``, and it is
+    reported and not gated.
+    """
     cases = {case.case_id: case for case in dataset.cases}
+    expected = {
+        (item.case_id, item.metric): item.expected for item in dataset.observations
+    }
+    predictions = predictions or {}
     out: dict[str, Any] = {}
     for metric in (ms.TERMINAL_VOLTAGE_METRIC, ms.CELL_TEMPERATURE_METRIC):
+        unit = "volt" if metric == ms.TERMINAL_VOLTAGE_METRIC else "kelvin"
         absolute: list[float] = []
         signed: list[float] = []
         by_cell: dict[str, list[float]] = collections.defaultdict(list)
@@ -527,19 +541,39 @@ def score(report, dataset, split: str) -> dict[str, Any]:
                 continue
             residual = float(item.residual)
             absolute.append(abs(residual))
-            signed.append(residual)
+            offered = predictions.get((item.case_id, item.metric))
+            observed = expected.get((item.case_id, item.metric))
+            if (
+                offered is not None
+                and observed is not None
+                and isinstance(offered, PredictedValue)
+            ):
+                signed.append(
+                    offered.value.magnitude_in(unit) - observed.magnitude_in(unit)
+                )
             cell = next(
                 (t.split(":", 1)[1] for t in case.tags if t.startswith("cell:")),
                 case.independence_group.split(":", 1)[-1],
             )
             by_cell[cell].append(abs(residual))
-            by_cell_signed[cell].append(residual)
+            if signed:
+                by_cell_signed[cell].append(signed[-1])
         aggregate = statistics(absolute)
         aggregate["bias"] = (sum(signed) / len(signed)) if signed else None
+        aggregate["bias_samples"] = len(signed)
+        aggregate["bias_note"] = (
+            "predicted minus observed, computed from the prediction and the "
+            "observation. Core's residual is a magnitude, so the sign is not "
+            "available from it"
+        )
         per_cell = {}
         for cell, values in sorted(by_cell.items()):
             entry = statistics(values)
-            entry["bias"] = sum(by_cell_signed[cell]) / len(by_cell_signed[cell])
+            entry["bias"] = (
+                sum(by_cell_signed[cell]) / len(by_cell_signed[cell])
+                if by_cell_signed[cell]
+                else None
+            )
             per_cell[cell] = entry
         out[metric] = {"aggregate": aggregate, "per_cell": per_cell}
     return out
@@ -640,14 +674,22 @@ def main() -> int:
     release = None
     if opening_split:
         release = HoldoutRelease(
-            dataset_id=dataset.dataset_id,
-            dataset_version=dataset.version,
-            normalized_digest=dataset.normalized_digest,
+            # The evaluation identity carries the campaign version, so a
+            # corrected model is a new evaluation and not a second opening of
+            # this one.
             evaluation_id=args.evaluation_id,
+            campaign_id=CAMPAIGN_ID,
+            campaign_version=CAMPAIGN_VERSION,
+            dataset_digest=dataset.normalized_digest,
+            registered_at_utc="2026-09-21T00:00:00+00:00",
             reason=(
-                "one scientific evaluation of the frozen recovery model against "
-                "B0041, the only cell in this archive that appears in no Sprint "
-                "3 split"
+                "one scientific evaluation of the frozen recovery model "
+                f"{model_v2.MODEL_ID}@{model_v2.MODEL_VERSION} against B0041, "
+                "the only cell in this archive that appears in no Sprint 3 "
+                "split. Registered after the model, its parameters, the "
+                "applicability contract and the Gate A policy were frozen and "
+                "committed, and bound to this dataset's normalized digest so it "
+                "cannot carry over to a corpus that changed"
             ),
         )
     campaign = ValidationCampaign(
@@ -669,7 +711,7 @@ def main() -> int:
     report = run_campaign(opened, predictions)
 
     scored = {
-        split: score(report, dataset, split)
+        split: score(report, dataset, split, predictions)
         for split in sorted(splits)
     }
     verdict = gate_a(prereg, scored["locked_holdout"]) if opening_split else None
@@ -700,7 +742,7 @@ def main() -> int:
         "evaluation_id": args.evaluation_id,
         "holdout_opened": opening_split,
         "holdout_opening_digest": (
-            opened.holdout_opening.digest if opening_split else None
+            opened.opening.digest if opening_split else None
         ),
         "dataset": {
             "dataset_id": dataset.dataset_id,

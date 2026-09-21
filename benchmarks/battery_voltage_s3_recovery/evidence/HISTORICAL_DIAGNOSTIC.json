@@ -1,0 +1,107 @@
+{
+ "schema": "battery_voltage_s3_recovery_historical_diagnostic/1",
+ "evidence_class": "historical_diagnostic",
+ "satisfies_gate_a": false,
+ "what_this_is": "the recovery model run on the cells Sprint 3 opened as its locked holdout. It says whether the mechanism that failed there was addressed",
+ "what_this_is_not": "independent validation, and it cannot satisfy any Gate A. These cells' residuals were read before this model existed and every decision in this recovery was taken by somebody who knew them. Sprint 3's own round report names B0044's capacity gap as the failure, so B0044 in particular shaped the direction of this work",
+ "why_outside_the_campaign_machinery": "DatasetSplit has three values and none means observed holdout. Placing these cells in a VALIDATION split would make Core call this result validation, which is the confusion R17 exists to prevent",
+ "model": {
+  "model_id": "battery.cell.electrothermal_1rc",
+  "version": "0.2.0",
+  "realization_version": "0.2.0",
+  "form": "unchanged from battery.cell.electrothermal_1rc@0.1.0: one RC branch, Arrhenius on both resistances, irreversible heat only. No parameter was added",
+  "what_changed": [
+   "the charge state is a fraction of a measured available charge rather than of the manufacturer's 2 Ah rating",
+   "the open-circuit voltage authority is re-derived on that axis and conditioned on a declared cell-temperature band",
+   "one parameter set per declared operating block rather than per experiment group",
+   "a model-free channel-consistency screen on the measurement"
+  ]
+ },
+ "cells": [
+  "B0007",
+  "B0044"
+ ],
+ "trajectories_scored": 10,
+ "refused": [
+  {
+   "trajectory_id": "B0007.d0001",
+   "why": "capacity UNKNOWN"
+  },
+  {
+   "trajectory_id": "B0036.d0002",
+   "why": "initial state UNKNOWN"
+  },
+  {
+   "trajectory_id": "B0036.d0008",
+   "why": "no parameter set for block 33_34_36|room_ambient|2A"
+  },
+  {
+   "trajectory_id": "B0036.d0016",
+   "why": "no parameter set for block 33_34_36|room_ambient|2A"
+  },
+  {
+   "trajectory_id": "B0036.d0024",
+   "why": "no parameter set for block 33_34_36|room_ambient|2A"
+  },
+  {
+   "trajectory_id": "B0036.d0032",
+   "why": "no parameter set for block 33_34_36|room_ambient|2A"
+  },
+  {
+   "trajectory_id": "B0036.d0040",
+   "why": "no parameter set for block 33_34_36|room_ambient|2A"
+  },
+  {
+   "trajectory_id": "B0044.d0001",
+   "why": "capacity UNKNOWN"
+  }
+ ],
+ "aggregate_voltage": {
+  "n": 2328,
+  "mae": 0.027888316061964007,
+  "rmse": 0.03652491856279641,
+  "p95": 0.06227710971276457,
+  "max": 0.11669284556175219,
+  "bias": 0.02209709064094851
+ },
+ "per_cell_voltage": {
+  "B0007": {
+   "n": 1146,
+   "mae": 0.006147872093254831,
+   "rmse": 0.0075318266394246896,
+   "p95": 0.013616383142264876,
+   "max": 0.02439472414987831,
+   "bias": -0.005616502060431094
+  },
+  "B0044": {
+   "n": 1182,
+   "mae": 0.048966614529088126,
+   "rmse": 0.050719889044479265,
+   "p95": 0.07313142938433081,
+   "max": 0.11669284556175219,
+   "bias": 0.048966614529088126
+  }
+ },
+ "aggregate_temperature": {
+  "n": 2328,
+  "mae": 1.1567914928498462,
+  "rmse": 1.422666645190062,
+  "p95": 2.5281792137393495,
+  "max": 3.9955577672745903
+ },
+ "sprint3_comparison": {
+  "B0007": {
+   "sprint3_rmse_v": 0.020469003246406797,
+   "recovery_rmse_v": 0.0075318266394246896,
+   "change_v": -0.012937176606982109,
+   "change_percent": -63.2
+  },
+  "B0044": {
+   "sprint3_rmse_v": 0.09973635308371517,
+   "recovery_rmse_v": 0.050719889044479265,
+   "change_v": -0.04901646403923591,
+   "change_percent": -49.1
+  }
+ },
+ "reading": "the comparison is per cell and against Sprint 3's own recorded per-cell numbers. It is a statement about a mechanism, not a verdict about a model"
+}

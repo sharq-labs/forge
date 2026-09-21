@@ -269,7 +269,7 @@ def main() -> int:
     add("")
     estimator = state["capacity_estimator"]
     add(
-        "The declared 2 Ah basis is not 8 % wrong, it is about **30 % above what "
+        "The declared 2 Ah basis is not 8 % wrong, it is **20-33 % above what "
         "these cells deliver**, and wrong by a different amount for each of "
         "them. The absolute part of that error cancels, because the Sprint 3 "
         "open-circuit voltage curve was built on the same wrong axis; what "

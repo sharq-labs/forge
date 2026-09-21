@@ -51,7 +51,7 @@ How this differs from :mod:`engcore.domains.battery.flagship_ocv`
 the manufacturer's rating. These curves are against ``z = 1 - q / Q_available``,
 with ``Q_available`` established per trajectory by
 :mod:`engcore.domains.battery.capacity` from cycles that completed before it.
-The rating is about 30 % above what these cells deliver and wrong by a different
+The rating is 20-33 % above what these cells deliver, depending on which of them: 22 % at the median over this corpus's own trajectories and 33 % over the whole retained archive and wrong by a different
 amount for each, so pairs at different true depths of discharge landed on the
 same knot of the old curve.
 

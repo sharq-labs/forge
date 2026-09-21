@@ -3,7 +3,7 @@
 What changed, and why it had to
 ------------------------------
 Sprint 3's pseudo-OCV put every calibration pair on one declared axis,
-``z = 1 - q / 2.0 Ah``. That axis is wrong by about 30 % for every cell in this
+``z = 1 - q / 2.0 Ah``. That axis is wrong by 20-33 % for every cell in this
 archive and wrong by a *different* amount for each, so pooling pairs on it
 smears cells that are at different true depths of discharge into the same knot.
 The curve's own interquartile spread across pairs was 45 mV at the median knot,

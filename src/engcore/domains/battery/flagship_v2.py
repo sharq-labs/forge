@@ -24,7 +24,7 @@ What is different, and why it is a new version
 **The charge-state identity.** ``@0.1.0`` declares that "the basis is a
 constant, not a fitted capacity", and lists "any dependence of the usable
 capacity on temperature or rate" among its exclusions. That constant is the
-manufacturer's 2 Ah rating, which is about 30 % above what these cells deliver
+manufacturer's 2 Ah rating, which is 20-33 % above what these cells deliver, depending on which of them: 22 % at the median over this corpus's own trajectories and 33 % over the whole retained archive
 and wrong by a different amount for each of them. This version's basis is a
 **measured available charge**, established per run by
 :mod:`engcore.domains.battery.capacity` from cycles that completed before the
@@ -328,12 +328,45 @@ def recovery_cell(
     )
 
 
+SOLVER_ID = f"{v1.SOLVER_ID}_v2"
+SOLVER_VERSION = "0.2.0"
+
+
+class RecoveryElectrothermalCellSolver(v1.ElectrothermalCellSolver):
+    """The Sprint 3 solver, declared for the recovery model version.
+
+    The kernel is not reimplemented and not wrapped: this class overrides the
+    two declarations that name a version -- the model it serves and the
+    realization it binds -- and inherits everything that does arithmetic. A
+    domain pack requires an in-pack solver covering each realization's exact
+    model, and that requirement is what this class exists to satisfy.
+
+    It carries its own solver identity because a solver id is an identity: two
+    solvers that serve different model versions are not interchangeable, and a
+    record naming one must not resolve to the other.
+    """
+
+    served_models = (ELECTROTHERMAL_1RC_V2_MODEL,)
+    realization = ELECTROTHERMAL_1RC_V2_REALIZATION
+
+    @property
+    def identity(self):
+        from ...scientific.solvers.protocol import SolverIdentity
+
+        return SolverIdentity(SOLVER_ID, SOLVER_VERSION, backend=v1.BACKEND)
+
+
 ELECTROTHERMAL_V2_MODELS = (ELECTROTHERMAL_1RC_V2_MODEL,)
 ELECTROTHERMAL_V2_REALIZATIONS = (ELECTROTHERMAL_1RC_V2_REALIZATION,)
+ELECTROTHERMAL_V2_SOLVERS = (RecoveryElectrothermalCellSolver,)
 
 
 __all__ = [
     "BAND_CODES",
+    "ELECTROTHERMAL_V2_SOLVERS",
+    "RecoveryElectrothermalCellSolver",
+    "SOLVER_ID",
+    "SOLVER_VERSION",
     "R0_SHAPE_MEASURED_INTERVALS",
     "R0_SHAPE_REFERENCE_Z",
     "ELECTROTHERMAL_1RC_V2_MODEL",

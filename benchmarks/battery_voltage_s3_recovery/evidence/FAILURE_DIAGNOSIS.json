@@ -1,0 +1,277 @@
+{
+ "schema": "battery_voltage_s3_recovery_failure_diagnosis/1",
+ "what_this_is": "the diagnosis R19 requires after a failed Gate A, and the reason no second holdout exists in this round",
+ "gate_a_result": {
+  "n": 348,
+  "mae_v": 0.12851352163692778,
+  "rmse_v": 0.1521717928764147,
+  "p95_v": 0.3204840102995772,
+  "max_abs_v": 0.4664930623303003,
+  "bias_v": 0.12818110980869324,
+  "passed": false
+ },
+ "the_shape_of_the_failure": "the voltage bias is within a third of a millivolt of the mean absolute error, so almost every scored residual has the same sign: the model is uniformly high on this cell. The same model's calibration bias is -0.38 mV and its validation bias -7.97 mV, so this is one cell at a different level rather than a model that drifted. Nothing that averages out can explain it",
+ "capacity_basis_check": {
+  "rows": [
+   {
+    "trajectory_id": "B0041.d0043",
+    "basis": "unknown",
+    "available_charge_ah": null,
+    "own_delivered_ah": 1.331001,
+    "relative_error": null,
+    "evidence_cycle": null
+   },
+   {
+    "trajectory_id": "B0041.d0048",
+    "basis": "prior_like_for_like_discharge",
+    "available_charge_ah": 1.150295,
+    "own_delivered_ah": 1.130779,
+    "relative_error": 0.017259,
+    "evidence_cycle": "B0041.s0113.discharge"
+   },
+   {
+    "trajectory_id": "B0041.d0053",
+    "basis": "prior_like_for_like_discharge",
+    "available_charge_ah": 1.057253,
+    "own_delivered_ah": 1.045426,
+    "relative_error": 0.011313,
+    "evidence_cycle": "B0041.s0125.discharge"
+   },
+   {
+    "trajectory_id": "B0041.d0057",
+    "basis": "prior_like_for_like_discharge",
+    "available_charge_ah": 1.014887,
+    "own_delivered_ah": 1.002975,
+    "relative_error": 0.011876,
+    "evidence_cycle": "B0041.s0135.discharge"
+   },
+   {
+    "trajectory_id": "B0041.d0062",
+    "basis": "prior_like_for_like_discharge",
+    "available_charge_ah": 0.995304,
+    "own_delivered_ah": 0.976446,
+    "relative_error": 0.019313,
+    "evidence_cycle": "B0041.s0147.discharge"
+   },
+   {
+    "trajectory_id": "B0041.d0067",
+    "basis": "prior_like_for_like_discharge",
+    "available_charge_ah": 0.968058,
+    "own_delivered_ah": 0.963596,
+    "relative_error": 0.00463,
+    "evidence_cycle": "B0041.s0159.discharge"
+   }
+  ],
+  "max_absolute_relative_error": 0.019313,
+  "calibration_p95": 0.03383688469173668,
+  "inside_the_declared_spread": true,
+  "reading": "the capacity authority did its job. Every holdout trajectory's available charge is within the spread the estimator declared on calibration cells, so the charge-state basis is not what the failure is made of. This is the hypothesis the Sprint 3 round report pointed at, and on this cell it is refuted"
+ },
+ "own_pseudo_ocv_against_the_declared_curve": {
+  "method": "charge/discharge branch averaging on B0041's own pairs, on the axis its own capacity authority established. Admissible here: the holdout is open, the model is frozen, and nothing downstream of this is fitted",
+  "rows": [
+   {
+    "charge_state": 0.9,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.8,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.7,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.6,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.5,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.4,
+    "pairs_inside_overlap": 0,
+    "pairs_above_overlap_not_used": 3,
+    "declared_minus_own_ocv_mv": null,
+    "min_mv": null,
+    "max_mv": null,
+    "separable_here": false
+   },
+   {
+    "charge_state": 0.3,
+    "pairs_inside_overlap": 1,
+    "pairs_above_overlap_not_used": 2,
+    "declared_minus_own_ocv_mv": 1.4,
+    "min_mv": 1.4,
+    "max_mv": 1.4,
+    "separable_here": true
+   },
+   {
+    "charge_state": 0.2,
+    "pairs_inside_overlap": 3,
+    "pairs_above_overlap_not_used": 0,
+    "declared_minus_own_ocv_mv": 32.84,
+    "min_mv": 9.19,
+    "max_mv": 34.07,
+    "separable_here": true
+   }
+  ],
+  "median_offset_mv": 17.12,
+  "per_trajectory": [
+   {
+    "trajectory_id": "B0041.d0048",
+    "cycle_index": 48,
+    "median_cell_temperature_c": 8.68,
+    "i_discharge_a": 1.0063,
+    "i_charge_a": 1.223,
+    "overlap_z": [
+     0.0193,
+     0.3052
+    ]
+   },
+   {
+    "trajectory_id": "B0041.d0053",
+    "cycle_index": 53,
+    "median_cell_temperature_c": 8.92,
+    "i_discharge_a": 1.0064,
+    "i_charge_a": 1.1971,
+    "overlap_z": [
+     0.0137,
+     0.219
+    ]
+   },
+   {
+    "trajectory_id": "B0041.d0057",
+    "cycle_index": 57,
+    "median_cell_temperature_c": 8.74,
+    "i_discharge_a": 1.0063,
+    "i_charge_a": 1.1667,
+    "overlap_z": [
+     0.0144,
+     0.2342
+    ]
+   }
+  ]
+ },
+ "offset_versus_resistance": {
+  "method": "charge/discharge branch averaging on B0041's own pairs. The weighted average cancels a linear resistance exactly, whatever its size -- but only where both branches exist. Above the overlap the pseudo-OCV is the discharge branch with a held ohmic correction, so it carries the resistance rather than separating from it",
+  "pairs": 3,
+  "overlap_reaches_charge_state": 0.3052,
+  "why_the_overlap_is_short": "at 4 degC the charger is cut off with 50-60 mA still flowing, so the constant-current charge branch covers less of the charge-state axis than it does at room temperature. The scored samples sit mostly above the overlap, which is exactly where the separation is not available",
+  "inside_the_overlap": {
+   "declared_minus_own_ocv_mv": 17.12,
+   "b0041_minus_calibration_resistance_ohm": 0.11735999999999999,
+   "resistance_share_at_holdout_current_mv": 118.53
+  },
+  "observed_prediction_bias_mv": 128.18,
+  "separable_over_the_scored_range": false,
+  "reading": "inside the overlap both terms are measured and they point opposite ways: B0041's own open-circuit voltage sits 17 mV ABOVE the declared curve, which alone would make the model predict low, while its resistance runs +0.117 ohm above the calibration cell's, worth +119 mV at 1 A, which makes it predict high. The observed bias is +128 mV, high, so the resistance term dominates over the range that was scored. How much of the remainder is a further resistance excess above the overlap and how much is an open-circuit voltage difference this archive cannot say, because B0041's two branches do not overlap there"
+ },
+ "temperature_cross_check": {
+  "voltage_bias_mv": {
+   "calibration": -0.38,
+   "validation": -7.97,
+   "locked_holdout": 128.18
+  },
+  "temperature_bias_k": {
+   "calibration": -0.069,
+   "validation": -0.244,
+   "locked_holdout": -0.885
+  },
+  "reading": "on the holdout the voltage is high and the temperature is low, while on calibration and validation both are near zero. One resistance sets the ohmic drop and the ohmic heat, so an under-estimated resistance produces exactly this pair of signs. An open-circuit voltage error would move the voltage and leave the temperature alone, so the temperature channel is what separates them -- and it points at the resistance"
+ },
+ "b0041_resistance_against_calibration": [
+  {
+   "charge_state": 0.3,
+   "pairs": 1,
+   "b0041_r_eff_ohm": 0.44932,
+   "calibration_r_eff_ohm": 0.36588,
+   "calibration_charge_state": 0.3,
+   "difference_ohm": 0.08344
+  },
+  {
+   "charge_state": 0.2,
+   "pairs": 3,
+   "b0041_r_eff_ohm": 0.55947,
+   "calibration_r_eff_ohm": 0.40819,
+   "calibration_charge_state": 0.2,
+   "difference_ohm": 0.15128
+  }
+ ],
+ "progressive_or_fixed": {
+  "rows": [
+   {
+    "trajectory_id": "B0041.d0048",
+    "cycle_index": 48,
+    "own_delivered_ah": 1.130779,
+    "median_offset_mv": -59.04
+   },
+   {
+    "trajectory_id": "B0041.d0053",
+    "cycle_index": 53,
+    "own_delivered_ah": 1.045426,
+    "median_offset_mv": -132.44
+   },
+   {
+    "trajectory_id": "B0041.d0057",
+    "cycle_index": 57,
+    "own_delivered_ah": 1.002975,
+    "median_offset_mv": -129.23
+   }
+  ],
+  "linear_trend": {
+   "slope_mv_per_cycle": -8.0809,
+   "intercept_mv": 318.69,
+   "span_cycles": [
+    48,
+    57
+   ],
+   "offset_at_first_cycle_mv": -69.19,
+   "offset_at_last_cycle_mv": -141.92
+  }
+ },
+ "attribution": {
+  "capacity_or_state_uncertainty": "REFUTED on this cell. Every holdout trajectory's available charge is inside the spread the estimator declared on calibration cells",
+  "ocv_inadequacy": "SUPPORTED but NOT the sign of the failure. Inside the range where B0041's branches overlap the declared cold curve sits +17 mV from the cell's own branch-averaged pseudo-OCV -- the cell is HIGHER than the curve, which on its own would make the model predict low. The model predicts high, so a curve error is present and is not what the failure is made of",
+  "resistance_structure": "SUPPORTED, and it is the leading attribution. B0041's own branch-difference resistance runs +0.117 ohm above the cold calibration cell's where the two can be compared, which is +119 mV at the holdout's 1 A -- the right sign and the right order for the observed bias. The model has no resistance-growth term: its own exclusion list says only the capacity part of ageing is carried, and this is the size of the part that is not",
+  "rc_model_form": "NOT IMPLICATED. A relaxation-mode error does not produce a single-signed bias across every scored sample, and the rest relaxation analysis already found no reproducible second timescale",
+  "cell_to_cell_variation": "SUPPORTED, and this is the same finding stated from the other side: the cold band has exactly one calibration cell, so the authority carries no cell-to-cell spread at all",
+  "ageing": "SUPPORTED as the mechanism behind the cell-to-cell difference. B0041 delivers 0.96-1.33 Ah where the cold calibration cell delivers 1.41-1.55 Ah at the same condition. Normalizing the charge state by usable capacity removes the capacity part of ageing and nothing else; the model's own exclusion list says so, and this holdout is what measures the size of what is left",
+  "dataset_inconsistency": "NOT IMPLICATED. The channel-consistency screen refused the samples where the two channels contradict each other, and the remaining residual is smooth and single-signed rather than spiky",
+  "measurement_quality": "NOT IMPLICATED for the same reason, and no instrument accuracy is stated by this source either way",
+  "applicability_definition": "IMPLICATED, and this is the actionable one. The contract declares a usable-capacity band of 0.9 to 2.0 Ah, which B0041 is inside, while the cold curve behind that band was derived from one cell at 1.41-1.55 Ah. The contract admits a cell the authority has no evidence for. A band that named the capacity range its own OCV evidence covers would have refused B0041 instead of answering wrongly -- and refusing correctly is what Forge is supposed to prefer"
+ },
+ "what_would_settle_the_remainder": [
+  "a second cold calibration cell, so the open-circuit voltage authority carries cell-to-cell spread instead of one cell's curve. This archive has none once B0041 is the holdout and B0044 has been read",
+  "a capacity-conditioned open-circuit voltage authority, which needs calibration cells at several states of health in the same band",
+  "an applicability band that names the usable-capacity range its own curve evidence covers, which would have refused B0041 rather than answering for it"
+ ],
+ "what_is_not_being_done": "no second holdout. R19 is explicit and it is right: a sequence of holdouts until one passes is not validation. The next governed evaluation needs new evidence or a narrower contract, not another draw from the same archive"
+}

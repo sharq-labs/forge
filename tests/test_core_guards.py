@@ -1186,7 +1186,17 @@ SOLVER_CLASSES = _every_solver()
 #
 # The second step is `engcore.domains.battery.flagship.ElectrothermalCellSolver`,
 # the Sprint 3 battery + thermal flagship's closed-form 1-RC evaluator.
-EXPECTED_SOLVER_CLASSES = 11
+#
+# 11 -> 12 in the Sprint 3 voltage recovery:
+# `engcore.domains.battery.flagship_v2.RecoveryElectrothermalCellSolver`. It is
+# a subclass of the Sprint 3 solver and reimplements no arithmetic; what it
+# overrides is the two declarations that name a version, the model it serves
+# and the realization it binds. It exists because a domain pack requires an
+# in-pack solver covering each realization's exact model, and the 0.2.0
+# realization has one now. It carries its own solver identity on purpose: two
+# solvers that serve different model versions are not interchangeable, and a
+# record naming one must not resolve to the other.
+EXPECTED_SOLVER_CLASSES = 12
 
 
 def test_the_solver_discovery_found_the_adapters():

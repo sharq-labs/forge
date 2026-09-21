@@ -590,6 +590,11 @@ class ElectrothermalCellSolver(DeclaredSupport):
 
     serves_capabilities = frozenset({ELECTROTHERMAL_CELL_STEP.name})
     served_models = (ELECTROTHERMAL_1RC_MODEL,)
+    #: The realization this solver binds and prepares. A class attribute rather
+    #: than a hardcoded default so a subclass serving a different model version
+    #: can name its own realization without reimplementing the kernel. Holds
+    #: exactly what the two call sites below used to name.
+    realization = ELECTROTHERMAL_1RC_REALIZATION
 
     def bind_step(
         self,
@@ -626,15 +631,16 @@ class ElectrothermalCellSolver(DeclaredSupport):
             current=current,
             duration=duration,
             temperature=temperature,
-            realization=ELECTROTHERMAL_1RC_REALIZATION,
+            realization=self.realization,
         )
 
     def prepare(
         self,
         problem: ScientificProblem,
         *,
-        realization: ModelRealizationDefinition = ELECTROTHERMAL_1RC_REALIZATION,
+        realization: ModelRealizationDefinition | None = None,
     ) -> PreparedSolve:
+        realization = realization or self.realization
         bound = self._bound.get(problem.problem_id)
         if bound is None:
             raise InvalidScientificProblem(

@@ -48,7 +48,10 @@ MANIFEST = DomainPackManifest(
             flagship_v2.ELECTROTHERMAL_1RC_V2_REALIZATION.version,
         ),
     ),
-    solvers=(ArtifactRef(flagship.SOLVER_ID, flagship.SOLVER_VERSION),),
+    solvers=(
+        ArtifactRef(flagship.SOLVER_ID, flagship.SOLVER_VERSION),
+        ArtifactRef(flagship_v2.SOLVER_ID, flagship_v2.SOLVER_VERSION),
+    ),
 )
 
 
@@ -67,7 +70,9 @@ class BatteryElectrothermalDomainPack:
         )
 
     def solver_factories(self):
-        return (flagship.ElectrothermalCellSolver,)
+        return (
+            flagship.ElectrothermalCellSolver,
+        ) + flagship_v2.ELECTROTHERMAL_V2_SOLVERS
 
     def calibration_protocols(self):
         # The flagship's parameters are fitted against measured trajectories by
