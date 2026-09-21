@@ -36,10 +36,11 @@ acting as both the fit and its own independent test.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 import hashlib
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping, Protocol, runtime_checkable
 
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
@@ -396,6 +397,20 @@ class HoldoutOpening:
     dataset_digest: str
     opened_at_utc: str
 
+    @property
+    def digest(self) -> str:
+        """The identity of this opening event, timestamp included.
+
+        Two openings of the same release are different events, so the time is
+        inside the digest. A report naming this digest names the opening that
+        actually happened rather than the permission that allowed it.
+        """
+        return hashlib.sha256(
+            json.dumps(
+                self.to_dict(), sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
+
     def __post_init__(self) -> None:
         for label in (
             "evaluation_id",
@@ -433,23 +448,56 @@ class HoldoutOpening:
         )
 
 
-class HoldoutLedger:
+@runtime_checkable
+class HoldoutLedger(Protocol):
     """The authority that makes "opened once" a fact rather than a wish.
 
     A :class:`HoldoutRelease` binds *which* evaluation may open a holdout. It
     cannot bind *how many times*, because a record has no memory -- and a
-    docstring promising one-time semantics that the code cannot enforce is
-    worse than no promise, since it is believed.
+    docstring promising one-time semantics the code cannot keep is worse than
+    no promise, because it is believed.
 
-    This is the memory. It is deliberately small and explicit: an in-process
-    authority a caller must choose to hold and thread through, not an ambient
-    global that would make the guarantee depend on import order. Where a
-    campaign is run without one, the dataset and evaluation bindings still
-    hold; what is not claimed is single use.
+    This is the interface for the memory, deliberately separate from any one
+    implementation so the guarantee can be stated precisely per implementation
+    rather than claimed in general. :meth:`open` records an opening and refuses
+    a release already opened.
     """
 
-    def __init__(self, openings: Iterable[HoldoutOpening] = ()) -> None:
+    def open(self, release: "HoldoutRelease") -> HoldoutOpening:
+        """Record one opening, or refuse a release that was already opened."""
+        ...
+
+    def was_opened(self, release: "HoldoutRelease") -> bool:
+        ...
+
+
+class InMemoryHoldoutLedger:
+    """A holdout ledger that remembers for as long as this process does.
+
+    THE GUARANTEE, STATED EXACTLY. This refuses a second opening of the same
+    release *through this object*. It is not a global one-time guarantee: a
+    second instance, a second process, or a restart knows nothing about what
+    this one recorded, and a caller holding two of these can open the same
+    release twice.
+
+    That is a real limit and it is named rather than papered over. Durable,
+    cross-process single opening needs a persistent ledger, which is why
+    :class:`HoldoutLedger` is an interface: the campaign path depends on the
+    protocol, so a persistent implementation drops in without touching the
+    execution path. Within one evaluation run -- which is where the accidental
+    second look actually happens -- this is sufficient and enforced.
+    """
+
+    def __init__(
+        self,
+        openings: Iterable[HoldoutOpening] = (),
+        *,
+        clock: "Callable[[], str] | None" = None,
+    ) -> None:
         self._openings: dict[str, HoldoutOpening] = {}
+        self._clock = clock or (
+            lambda: datetime.now(timezone.utc).isoformat()
+        )
         for item in openings:
             self._record(item)
 
@@ -469,7 +517,7 @@ class HoldoutLedger:
         self._openings[key] = opening
 
     def open(
-        self, release: "HoldoutRelease", *, opened_at_utc: str
+        self, release: "HoldoutRelease", *, opened_at_utc: str | None = None
     ) -> HoldoutOpening:
         """Record one opening. Refuses a release that has already been opened."""
         if not isinstance(release, HoldoutRelease):
@@ -480,7 +528,7 @@ class HoldoutLedger:
             campaign_id=release.campaign_id,
             campaign_version=release.campaign_version,
             dataset_digest=release.dataset_digest,
-            opened_at_utc=opened_at_utc,
+            opened_at_utc=opened_at_utc or self._clock(),
         )
         self._record(opening)
         return opening
@@ -681,6 +729,7 @@ __all__ = [
     "Applicability",
     "DatasetSplit",
     "HoldoutLedger",
+    "InMemoryHoldoutLedger",
     "HoldoutOpening",
     "HoldoutRelease",
     "ReferenceCase",

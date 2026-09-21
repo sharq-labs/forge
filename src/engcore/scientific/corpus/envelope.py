@@ -40,6 +40,7 @@ from .source import CorpusError, text
 
 ENVELOPE_SCHEMA = schema_string("corpus_validation_envelope")
 ENVELOPE_CLASSIFICATION_SCHEMA = schema_string("corpus_envelope_classification")
+QUERY_POINT_SCHEMA = schema_string("corpus_validation_query_point")
 
 
 class EnvelopeVerdict(str, Enum):
@@ -112,6 +113,70 @@ class EnvelopeClassification:
             payload.get("passed", 0),
             payload.get("failed", 0),
             payload["why"],
+        )
+
+
+@dataclass(frozen=True)
+class ValidationQueryPoint:
+    """The operating point a prediction is actually being made at.
+
+    An envelope holding support *somewhere* says nothing about a prediction
+    made *here*. A model validated between 300 and 320 K is not validated at
+    500 K, and certification asking only "does this envelope contain a
+    supported cell" would have certified the second on the strength of the
+    first.
+
+    Core cannot derive these coordinates. It does not know which of a run's
+    quantities constitute the operating point a domain validates against, so an
+    authorized caller supplies them; where none are supplied the answer is
+    UNKNOWN and the gate fails, rather than an absent question being read as a
+    satisfied one.
+    """
+
+    qoi_id: str
+    coordinates: Mapping[str, Quantity]
+    declared: Applicability = Applicability.UNDECLARED
+    label: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "qoi_id", text(self.qoi_id, label="qoi_id"))
+        coordinates = dict(self.coordinates)
+        if not coordinates:
+            raise CorpusError(
+                f"query point {self.qoi_id!r} states no coordinates, so there is "
+                f"nothing to locate in an envelope"
+            )
+        for name, value in coordinates.items():
+            if not isinstance(value, Quantity):
+                raise CorpusError(
+                    f"query coordinate {name!r} must be a unit-bearing Quantity"
+                )
+        object.__setattr__(self, "coordinates", coordinates)
+        object.__setattr__(self, "declared", Applicability(self.declared))
+        object.__setattr__(self, "label", str(self.label).strip())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": QUERY_POINT_SCHEMA,
+            "qoi_id": self.qoi_id,
+            "coordinates": {
+                name: value.to_dict() for name, value in sorted(self.coordinates.items())
+            },
+            "declared": self.declared.value,
+            "label": self.label,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationQueryPoint":
+        require_schema(payload, QUERY_POINT_SCHEMA)
+        return cls(
+            payload["qoi_id"],
+            {
+                name: Quantity.from_dict(value)
+                for name, value in payload.get("coordinates", {}).items()
+            },
+            Applicability(payload.get("declared", "undeclared")),
+            payload.get("label", ""),
         )
 
 
@@ -266,6 +331,14 @@ class ValidationEnvelope:
             )
         return self.target.mismatches(computation)
 
+    def classify_point(
+        self, point: ValidationQueryPoint
+    ) -> EnvelopeClassification:
+        """Classify one declared prediction point against this envelope."""
+        if not isinstance(point, ValidationQueryPoint):
+            raise CorpusError("an envelope query takes a ValidationQueryPoint")
+        return self.classify(point.coordinates, declared=point.declared)
+
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationEnvelope":
         require_schema(payload, ENVELOPE_SCHEMA)
@@ -284,7 +357,9 @@ class ValidationEnvelope:
 __all__ = [
     "ENVELOPE_CLASSIFICATION_SCHEMA",
     "ENVELOPE_SCHEMA",
+    "QUERY_POINT_SCHEMA",
     "EnvelopeClassification",
     "EnvelopeVerdict",
     "ValidationEnvelope",
+    "ValidationQueryPoint",
 ]

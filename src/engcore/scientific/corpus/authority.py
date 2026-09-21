@@ -52,6 +52,7 @@ from .source import CorpusError, text
 
 AUTHORITY_COMPONENT_SCHEMA = schema_string("corpus_authority_component")
 EVIDENCE_BINDING_SCHEMA = schema_string("corpus_evidence_binding")
+BINDING_PROFILE_SCHEMA = schema_string("corpus_binding_profile")
 
 
 class AuthorityRole(str, Enum):
@@ -248,6 +249,148 @@ class EvidenceBinding:
         return cls(binding_id, tuple(components))
 
 
+
+@dataclass(frozen=True)
+class BindingProfile:
+    """The roles a kind of evidence must name before it can be checked at all.
+
+    Containment alone is too weak for certification. A binding that names only
+    ``MODEL`` is satisfied by every computation using that model, whatever
+    realization, solver, parameters or pack authority it ran under -- so
+    evidence about one configuration silently certifies another. Matching every
+    role it *happens* to state is not the same as stating enough of them.
+
+    A profile is the floor: evidence claiming to be validation authority must
+    name the identities empirical validation actually depends on, and evidence
+    about a numerical execution must name the execution. Evidence that omits a
+    required role fails certification even when every role it did state matches
+    perfectly, because the omission is where the ambiguity lives.
+
+    ``conditional_roles`` are required *when the computation has them*. A
+    parameter set is not part of every computation's identity, but where one
+    exists, validation evidence that ignores it is evidence about a differently
+    calibrated model.
+    """
+
+    profile_id: str
+    required_roles: tuple[AuthorityRole, ...]
+    conditional_roles: tuple[AuthorityRole, ...] = ()
+    rationale: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "profile_id", text(self.profile_id, label="profile_id"))
+        for label in ("required_roles", "conditional_roles"):
+            roles = tuple(
+                sorted(
+                    {AuthorityRole(item) for item in getattr(self, label)},
+                    key=lambda item: item.value,
+                )
+            )
+            object.__setattr__(self, label, roles)
+        if not self.required_roles:
+            raise CorpusError(
+                "a binding profile that requires no role is not a floor at all"
+            )
+        overlap = set(self.required_roles) & set(self.conditional_roles)
+        if overlap:
+            raise CorpusError(
+                f"roles {sorted(i.value for i in overlap)} are both required and "
+                f"conditional; a role is one or the other"
+            )
+        object.__setattr__(self, "rationale", str(self.rationale).strip())
+
+    def unmet(
+        self, evidence: "EvidenceBinding", computation: "EvidenceBinding | None" = None
+    ) -> tuple[str, ...]:
+        """Roles this evidence must name and does not."""
+        if not isinstance(evidence, EvidenceBinding):
+            raise CorpusError("a binding profile is applied to an EvidenceBinding")
+        stated = {item.role for item in evidence.components}
+        problems = [
+            f"evidence does not name its {role.value} authority, which "
+            f"{self.profile_id!r} requires"
+            for role in self.required_roles
+            if role not in stated
+        ]
+        if computation is not None:
+            available = {item.role for item in computation.components}
+            problems.extend(
+                f"the computation names a {role.value} authority and this evidence "
+                f"does not, so the evidence cannot be shown to be about it"
+                for role in self.conditional_roles
+                if role in available and role not in stated
+            )
+        return tuple(problems)
+
+    def satisfied_by(
+        self, evidence: "EvidenceBinding", computation: "EvidenceBinding | None" = None
+    ) -> bool:
+        return not self.unmet(evidence, computation)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": BINDING_PROFILE_SCHEMA,
+            "profile_id": self.profile_id,
+            "required_roles": [item.value for item in self.required_roles],
+            "conditional_roles": [item.value for item in self.conditional_roles],
+            "rationale": self.rationale,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "BindingProfile":
+        require_schema(payload, BINDING_PROFILE_SCHEMA)
+        return cls(
+            payload["profile_id"],
+            tuple(AuthorityRole(i) for i in payload.get("required_roles", ())),
+            tuple(AuthorityRole(i) for i in payload.get("conditional_roles", ())),
+            payload.get("rationale", ""),
+        )
+
+
+#: What empirical validation evidence must name to be reusable.
+#:
+#: Deliberately NOT the run: a validation campaign is about a model and its
+#: realization, and forcing it to name one execution would make every campaign
+#: unusable by the next equivalent run, which is the opposite of what a
+#: validation corpus is for. What it must name is everything that changes the
+#: science -- the model, the realization it was computed by, the composition
+#: authority that assembled them, and the parameter set when the computation
+#: has one, because evidence about a differently calibrated model is evidence
+#: about a different model.
+VALIDATION_AUTHORITY_PROFILE = BindingProfile(
+    profile_id="corpus.validation_authority",
+    required_roles=(
+        AuthorityRole.MODEL,
+        AuthorityRole.REALIZATION,
+        AuthorityRole.COMPOSITION_PACK,
+    ),
+    conditional_roles=(AuthorityRole.PARAMETER_SET, AuthorityRole.DOMAIN_PACK),
+    rationale=(
+        "empirical validation transfers between runs of the same science, so it "
+        "names the science and not the run"
+    ),
+)
+
+#: What numerical evidence must name. The opposite choice, for the opposite
+#: reason: a convergence study is a fact about one execution and transfers
+#: nowhere, so it names the run, its graph, its plan, the execution authority
+#: and the solver that produced it.
+NUMERICAL_EXECUTION_PROFILE = BindingProfile(
+    profile_id="corpus.numerical_execution",
+    required_roles=(
+        AuthorityRole.RUN,
+        AuthorityRole.GRAPH,
+        AuthorityRole.COUPLING_PLAN,
+        AuthorityRole.EXECUTION_PACK,
+        AuthorityRole.SOLVER,
+    ),
+    rationale=(
+        "a numerical study is a fact about one execution and does not transfer "
+        "to another run that happens to share a solver"
+    ),
+)
+
+
 def require_binding(value: object, *, label: str) -> EvidenceBinding:
     if not isinstance(value, EvidenceBinding):
         raise CorpusError(f"{label} requires an EvidenceBinding")
@@ -256,9 +399,13 @@ def require_binding(value: object, *, label: str) -> EvidenceBinding:
 
 __all__ = [
     "AUTHORITY_COMPONENT_SCHEMA",
+    "BINDING_PROFILE_SCHEMA",
     "EVIDENCE_BINDING_SCHEMA",
+    "NUMERICAL_EXECUTION_PROFILE",
+    "VALIDATION_AUTHORITY_PROFILE",
     "AuthorityComponent",
     "AuthorityRole",
+    "BindingProfile",
     "EvidenceBinding",
     "require_binding",
 ]

@@ -29,9 +29,13 @@ from .adequacy import (
 )
 from .authority import (
     AUTHORITY_COMPONENT_SCHEMA,
+    BINDING_PROFILE_SCHEMA,
     EVIDENCE_BINDING_SCHEMA,
+    NUMERICAL_EXECUTION_PROFILE,
+    VALIDATION_AUTHORITY_PROFILE,
     AuthorityComponent,
     AuthorityRole,
+    BindingProfile,
     EvidenceBinding,
 )
 from .calibration import (
@@ -91,6 +95,7 @@ from .dataset import (
     DatasetSplit,
     HoldoutLedger,
     HoldoutOpening,
+    InMemoryHoldoutLedger,
     HoldoutRelease,
     ReferenceCase,
     ReferenceCondition,
@@ -100,9 +105,11 @@ from .dataset import (
 from .envelope import (
     ENVELOPE_CLASSIFICATION_SCHEMA,
     ENVELOPE_SCHEMA,
+    QUERY_POINT_SCHEMA,
     EnvelopeClassification,
     EnvelopeVerdict,
     ValidationEnvelope,
+    ValidationQueryPoint,
 )
 from .numerical import (
     NUMERICAL_CHECK_SCHEMA,
@@ -126,6 +133,10 @@ from .source import (
 )
 
 __all__ = [
+    "QUERY_POINT_SCHEMA",
+    "VALIDATION_AUTHORITY_PROFILE",
+    "NUMERICAL_EXECUTION_PROFILE",
+    "BINDING_PROFILE_SCHEMA",
     "DEFAULT_MEASUREMENT_INTERPRETATION",
     "HOLDOUT_OPENING_SCHEMA",
     "EVIDENCE_BINDING_SCHEMA",
@@ -165,6 +176,8 @@ __all__ = [
     "HoldoutLedger",
     "HoldoutOpening",
     "MeasurementInterpretation",
+    "BindingProfile",
+    "InMemoryHoldoutLedger",
     "Applicability",
     "CalibratedParameterSet",
     "CalibrationError",
@@ -209,6 +222,7 @@ __all__ = [
     "ValidationComparison",
     "ValidationCoverage",
     "ValidationEnvelope",
+    "ValidationQueryPoint",
     "ValidationRegion",
     "build_coverage",
     "cluster_failures",

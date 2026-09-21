@@ -69,13 +69,15 @@ from ..units.quantity import Quantity, base_unit
 from .dataset import (
     Applicability,
     DatasetSplit,
+    HoldoutLedger,
+    HoldoutOpening,
     HoldoutRelease,
     ReferenceCase,
     ReferenceDataset,
     ReferenceObservation,
 )
 from .authority import EvidenceBinding, require_binding
-from .source import CorpusError, require_quantity, text
+from .source import CorpusError, CorpusLeakageError, require_quantity, text
 
 PREDICTION_SCHEMA = schema_string("corpus_prediction")
 COMPARISON_SCHEMA = schema_string("corpus_validation_comparison")
@@ -534,8 +536,9 @@ class ValidationCampaignReport:
     #: report so coverage, an envelope and finally certification can all ask
     #: the same question: is this evidence about the computation in front of me.
     target: EvidenceBinding | None = None
-    #: Present exactly when the locked holdout was opened. The opening is part
-    #: of the record, not a fact about a release object that has gone away.
+    #: The digest of the actual :class:`HoldoutOpening` -- the event -- not of
+    #: the release that permitted it. A release digest says the holdout *could*
+    #: have been opened; this says it *was*, by whom and when.
     holdout_opening_digest: str = ""
 
     def __post_init__(self) -> None:
@@ -683,13 +686,32 @@ class ValidationCampaignReport:
 def run_campaign(
     campaign: ValidationCampaign,
     predictions: Mapping[tuple[str, str], Prediction],
+    *,
+    holdout_ledger: HoldoutLedger | None = None,
 ) -> ValidationCampaignReport:
     """Score one campaign. Core derives every verdict from the evidence.
 
     A prediction offered for a case the campaign was not permitted to see is
     refused rather than ignored: it is the signature of a path that read the
     locked holdout.
+
+    THE OPENING HAPPENS HERE, BEFORE THE LOCKED CASES ARE TOUCHED. A ledger
+    that only worked when a caller remembered to invoke it beside the campaign
+    enforced nothing about the campaign, so a locked-holdout campaign now
+    requires a :class:`HoldoutLedger` and opens through it on the authoritative
+    path. What the ledger guarantees is the ledger's business -- see
+    :class:`InMemoryHoldoutLedger` for the exact scope of the in-process one.
     """
+    opening: HoldoutOpening | None = None
+    if DatasetSplit.LOCKED_HOLDOUT in campaign.splits:
+        if holdout_ledger is None:
+            raise CorpusLeakageError(
+                "scoring a locked holdout requires a holdout-opening authority; "
+                "without one nothing records that the holdout was opened and "
+                "nothing can refuse a second opening"
+            )
+        # Opened BEFORE `campaign.cases()` exposes the locked cases below.
+        opening = holdout_ledger.open(campaign.holdout_release)
     cases = {case.case_id: case for case in campaign.cases()}
     observations = campaign.dataset.observations_for(cases.values())
     permitted = {item.key for item in observations}
@@ -715,12 +737,7 @@ def run_campaign(
         splits=campaign.splits,
         comparisons=comparisons,
         target=campaign.target,
-        holdout_opening_digest=(
-            campaign.holdout_release.digest
-            if campaign.holdout_release is not None
-            and DatasetSplit.LOCKED_HOLDOUT in campaign.splits
-            else ""
-        ),
+        holdout_opening_digest="" if opening is None else opening.digest,
     )
 
 

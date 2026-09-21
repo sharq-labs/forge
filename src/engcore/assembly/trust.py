@@ -41,6 +41,7 @@ from ..scientific.corpus.authority import (
     AuthorityRole,
     EvidenceBinding,
 )
+from ..scientific.corpus.numerical import NumericalCheck, NumericalEvidence
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.serialization import require_schema, schema_string
@@ -350,6 +351,9 @@ __all__ = [
     "AuthorityComponent",
     "AuthorityRole",
     "EvidenceBinding",
+    "NumericalCompleteness",
+    "NumericalRequirement",
+    "assess_numerical_completeness",
     "assess_protocol_completeness",
     "authorized_run_binding",
     "assess_uq_coverage",
@@ -369,7 +373,9 @@ def authorized_run_binding(authorized) -> EvidenceBinding:
     run = authorized.run
     plan = authorized.graph_plan
     components: list[AuthorityComponent] = [
-        AuthorityComponent(AuthorityRole.RUN, run.run_id),
+        # THE RUN CARRIES THE AUTHORIZED DIGEST. A run id alone is a name two
+        # different computations can share; the digest is the computation.
+        AuthorityComponent(AuthorityRole.RUN, run.run_id, digest=authorized.digest),
         AuthorityComponent(
             AuthorityRole.GRAPH, run.graph_id, digest=run.graph_fingerprint
         ),
@@ -399,6 +405,14 @@ def authorized_run_binding(authorized) -> EvidenceBinding:
                 plan.scenario.digest,
             )
         )
+    for pack_id, pack_version, digest in (
+        authorized.composition_snapshot.dependency_authority_digests
+    ):
+        components.append(
+            AuthorityComponent(
+                AuthorityRole.DOMAIN_PACK, pack_id, pack_version, digest
+            )
+        )
     for participant in run.graph.participants:
         components.append(
             AuthorityComponent(
@@ -421,3 +435,112 @@ def authorized_run_binding(authorized) -> EvidenceBinding:
     for item in components:
         unique.setdefault(item.key, item)
     return EvidenceBinding(f"run:{run.run_id}", tuple(unique.values()))
+
+
+@dataclass(frozen=True)
+class NumericalRequirement:
+    """Which numerical checks an authority requires. Stated, possibly empty.
+
+    The distinction that matters is the one :class:`ProtocolCompleteness`
+    already draws: "requires none" and "has not said" are different, and only
+    the first can be satisfied by producing nothing. A caller-supplied tuple
+    could not express the second at all, so an omitted argument silently meant
+    "everything required passed".
+    """
+
+    requirement_id: str
+    checks: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        requirement = str(self.requirement_id).strip()
+        if not requirement:
+            raise InvalidScientificProblem("numerical requirement needs an id")
+        object.__setattr__(self, "requirement_id", requirement)
+        object.__setattr__(
+            self,
+            "checks",
+            tuple(sorted({NumericalCheck(item).value for item in self.checks})),
+        )
+
+    @property
+    def required_checks(self) -> tuple[NumericalCheck, ...]:
+        return tuple(NumericalCheck(item) for item in self.checks)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"requirement_id": self.requirement_id, "checks": list(self.checks)}
+
+
+@dataclass(frozen=True)
+class NumericalCompleteness:
+    """What was required, what ran, and what did not. Never a bare boolean."""
+
+    requirement_id: str
+    required: tuple[str, ...]
+    performed: tuple[str, ...]
+    violated: tuple[str, ...]
+    not_performed: tuple[str, ...]
+    enforceable: bool
+
+    def __post_init__(self) -> None:
+        for label in ("required", "performed", "violated", "not_performed"):
+            object.__setattr__(
+                self, label, tuple(sorted(str(i) for i in getattr(self, label)))
+            )
+        if not isinstance(self.enforceable, bool):
+            raise InvalidScientificProblem("enforceable must be a boolean")
+
+    @property
+    def missing(self) -> tuple[str, ...]:
+        """Required checks that were not performed at all."""
+        return tuple(sorted(set(self.required) - set(self.performed)))
+
+    @property
+    def complete(self) -> bool:
+        """Every required check performed and none of them violated."""
+        return (
+            self.enforceable
+            and not self.missing
+            and not (set(self.required) & set(self.violated))
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "requirement_id": self.requirement_id,
+            "required": list(self.required),
+            "performed": list(self.performed),
+            "violated": list(self.violated),
+            "not_performed": list(self.not_performed),
+            "missing": list(self.missing),
+            "enforceable": self.enforceable,
+            "complete": self.complete,
+        }
+
+
+def assess_numerical_completeness(
+    requirement: NumericalRequirement | None,
+    evidence: NumericalEvidence | None,
+) -> NumericalCompleteness:
+    """Compare an authority's stated numerical requirement against the roster.
+
+    An unstated requirement is ``enforceable=False`` and can never be complete.
+    A stated-but-empty requirement is enforceable and is satisfied by an
+    evidence roster that violates nothing -- the same reading protocol
+    completeness uses for an empty required protocol set.
+    """
+    if requirement is None:
+        return NumericalCompleteness(
+            requirement_id="(undeclared)",
+            required=(),
+            performed=() if evidence is None else evidence.performed_checks,
+            violated=() if evidence is None else evidence.violated_checks,
+            not_performed=() if evidence is None else evidence.absent_checks,
+            enforceable=False,
+        )
+    return NumericalCompleteness(
+        requirement_id=requirement.requirement_id,
+        required=requirement.checks,
+        performed=() if evidence is None else evidence.performed_checks,
+        violated=() if evidence is None else evidence.violated_checks,
+        not_performed=() if evidence is None else evidence.absent_checks,
+        enforceable=True,
+    )

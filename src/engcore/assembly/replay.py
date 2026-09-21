@@ -149,6 +149,22 @@ DEFAULT_REPLAY_POLICY = ReplayPolicy(
 )
 
 
+def comparison_digest(
+    compared: int, differences: tuple["ReplayDifference", ...]
+) -> str:
+    """The identity of one comparison. Computed once, by producer and checker.
+
+    Both the real replay and the certification-time consistency check call
+    this, so there is no second definition to drift from the first.
+    """
+    return evidence_digest(
+        {
+            "compared": int(compared),
+            "differences": [item.to_dict() for item in differences],
+        }
+    )
+
+
 @dataclass(frozen=True)
 class ReplayEvidence:
     """What was replayed, against what, under which policy -- sealed together.
@@ -172,6 +188,9 @@ class ReplayEvidence:
     policy_digest: str
     comparison_digest: str
     compared: int
+    #: How many quantities disagreed. Sealed, so the outer outcome cannot claim
+    #: a match over a comparison that found differences.
+    difference_count: int = 0
     seal: str = ""
 
     def __post_init__(self) -> None:
@@ -204,13 +223,13 @@ class ReplayEvidence:
                 "replay evidence scenario_digest must be sha256 hex or empty"
             )
         object.__setattr__(self, "scenario_digest", scenario)
-        if isinstance(self.compared, bool) or int(self.compared) != self.compared:
-            raise InvalidScientificProblem("replay evidence compared must be an integer")
-        if int(self.compared) < 0:
-            raise InvalidScientificProblem(
-                "replay evidence compared must be non-negative"
-            )
-        object.__setattr__(self, "compared", int(self.compared))
+        for label in ("compared", "difference_count"):
+            value = getattr(self, label)
+            if isinstance(value, bool) or int(value) != value or int(value) < 0:
+                raise InvalidScientificProblem(
+                    f"replay evidence {label} must be a non-negative integer"
+                )
+            object.__setattr__(self, label, int(value))
         if self.original_run_digest == self.replayed_run_digest:
             raise InvalidScientificProblem(
                 "the replayed run carries the same digest as the original; a "
@@ -233,6 +252,7 @@ class ReplayEvidence:
             "policy_digest": self.policy_digest,
             "comparison_digest": self.comparison_digest,
             "compared": self.compared,
+            "difference_count": self.difference_count,
         }
 
     @property
@@ -279,6 +299,42 @@ class ReplayEvidence:
             )
         return tuple(problems)
 
+    def agrees_with(
+        self, compared: int, differences: tuple["ReplayDifference", ...]
+    ) -> tuple[str, ...]:
+        """Why this seal does not describe that comparison. Empty means it does.
+
+        THE HOLE THIS CLOSES. The evidence bound the run, the authorities and
+        the policy, and certification checked all three -- but it never checked
+        that the *outcome wrapped around it* was the outcome that produced it.
+        So a genuine ReplayEvidence from a run that MISMATCHED could be lifted
+        out and re-wrapped in a freshly built ``REPLAYED_MATCH`` outcome with
+        an empty difference list, and every binding check still passed.
+
+        The comparison digest is recomputed here from the outcome's own
+        ``compared`` and ``differences``, exactly as the real replay computed
+        it. A re-wrapped outcome produces a different digest, because the
+        differences it dropped were in the original.
+        """
+        problems: list[str] = []
+        if compared != self.compared:
+            problems.append(
+                f"the outcome compared {compared} quantities and its sealed "
+                f"evidence records {self.compared}"
+            )
+        if len(differences) != self.difference_count:
+            problems.append(
+                f"the outcome carries {len(differences)} difference(s) and its "
+                f"sealed evidence records {self.difference_count}"
+            )
+        recomputed = comparison_digest(compared, differences)
+        if recomputed != self.comparison_digest:
+            problems.append(
+                "the outcome's comparison does not produce the sealed comparison "
+                "digest; this evidence was produced by a different comparison"
+            )
+        return tuple(problems)
+
     def to_dict(self) -> dict[str, Any]:
         return {"schema": REPLAY_EVIDENCE_SCHEMA, "seal": self.seal, **self._identity()}
 
@@ -298,6 +354,7 @@ class ReplayEvidence:
             payload["policy_digest"],
             payload["comparison_digest"],
             payload["compared"],
+            payload.get("difference_count", 0),
         )
         if payload.get("seal") != made.seal:
             raise InvalidScientificProblem(
@@ -371,6 +428,15 @@ class ReplayOutcome:
             raise InvalidScientificProblem(
                 "a matching replay cannot also carry differences"
             )
+        if self.status is not ReplayStatus.REFUSED_UNREPRODUCIBLE:
+            # MATCH means zero differences and MISMATCH means more than zero.
+            # Stated here so the two can never drift apart in a record.
+            expected_match = not differences
+            if (self.status is ReplayStatus.REPLAYED_MATCH) is not expected_match:
+                raise InvalidScientificProblem(
+                    f"replay status {self.status.value!r} disagrees with its own "
+                    f"{len(differences)} difference(s)"
+                )
         object.__setattr__(self, "refusal_reason", str(self.refusal_reason).strip())
         if self.evidence is not None and not isinstance(self.evidence, ReplayEvidence):
             raise InvalidScientificProblem(
@@ -404,9 +470,29 @@ class ReplayOutcome:
             return (f"the replay status is {self.status.value}, not a match",)
         if self.evidence is None:
             return ("the replay outcome carries no sealed evidence",)
-        return self.evidence.mismatches(
-            authorized, policy, require_comparisons=require_comparisons
+        problems = list(
+            self.evidence.mismatches(
+                authorized, policy, require_comparisons=require_comparisons
+            )
         )
+        # The outcome must be the one that produced this evidence, not one
+        # wrapped around it afterwards.
+        problems.extend(self.evidence.agrees_with(self.compared, self.differences))
+        for label, mine, sealed in (
+            ("original_run_id", self.original_run_id, self.evidence.original_run_id),
+            ("replay_run_id", self.replay_run_id, self.evidence.replay_run_id),
+        ):
+            if mine != sealed:
+                problems.append(
+                    f"the outcome's {label} is {mine!r} and its sealed evidence "
+                    f"records {sealed!r}"
+                )
+        if (self.policy_id, self.policy_version) != (policy.policy_id, policy.version):
+            problems.append(
+                f"the outcome was produced under policy {self.policy_id}@"
+                f"{self.policy_version}, not {policy.policy_id}@{policy.version}"
+            )
+        return tuple(problems)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -611,13 +697,9 @@ def replay_authorized_graph_plan(
         composition_authority_digest=authorized.composition_snapshot.authority_digest,
         execution_authority_digest=authorized.execution_snapshot.authority_digest,
         policy_digest=policy.digest,
-        comparison_digest=evidence_digest(
-            {
-                "compared": compared,
-                "differences": [item.to_dict() for item in differences],
-            }
-        ),
+        comparison_digest=comparison_digest(compared, differences),
         compared=compared,
+        difference_count=len(differences),
     )
     return ReplayOutcome(
         status=(
@@ -647,5 +729,6 @@ __all__ = [
     "ReplayPolicy",
     "ReplayStatus",
     "compare_runs",
+    "comparison_digest",
     "replay_authorized_graph_plan",
 ]

@@ -39,8 +39,10 @@ from typing import Any, Mapping
 from .multiphysics import AuthorizedMultiphysicsRun
 from .replay import DEFAULT_REPLAY_POLICY, ReplayOutcome, ReplayPolicy
 from .trust import (
+    NumericalRequirement,
     ProtocolCompleteness,
     UQCoverage,
+    assess_numerical_completeness,
     assess_protocol_completeness,
     assess_uq_coverage,
     authorized_run_binding,
@@ -50,7 +52,15 @@ from ..scientific.certification_core.artifact import CertificationArtifact
 from ..scientific.certification_core.gate import CertificationGateResult
 from ..scientific.certification_core.profile import CertificationProfile
 from ..scientific.certification_core.record import CertificationRecord
-from ..scientific.corpus.envelope import ValidationEnvelope
+from ..scientific.corpus.authority import (
+    NUMERICAL_EXECUTION_PROFILE,
+    VALIDATION_AUTHORITY_PROFILE,
+)
+from ..scientific.corpus.envelope import (
+    EnvelopeVerdict,
+    ValidationEnvelope,
+    ValidationQueryPoint,
+)
 from ..scientific.corpus.numerical import NumericalCheck, NumericalEvidence
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.uncertainty import UncertaintySource
@@ -98,6 +108,14 @@ class TrustPolicy:
     version: str
     required_gates: tuple[str, ...]
     recorded_gates: tuple[str, ...] = ()
+    #: Which envelope verdicts count as entitlement to predict. A policy that
+    #: accepted SPARSE_SUPPORT or EXTRAPOLATING would be saying so out loud
+    #: rather than reaching that position by never asking about the point.
+    accepted_envelope_verdicts: tuple[str, ...] = (EnvelopeVerdict.SUPPORTED.value,)
+    #: What numerical credibility this policy requires. ``None`` means the
+    #: policy has NOT SAID, which is not the same as requiring nothing and
+    #: cannot be satisfied by producing nothing.
+    numerical_requirement: NumericalRequirement | None = None
 
     def __post_init__(self) -> None:
         for label in ("policy_id", "version"):
@@ -124,6 +142,20 @@ class TrustPolicy:
             )
         object.__setattr__(self, "required_gates", tuple(sorted(set(required))))
         object.__setattr__(self, "recorded_gates", tuple(sorted(set(recorded))))
+        accepted = tuple(
+            sorted({EnvelopeVerdict(item).value for item in self.accepted_envelope_verdicts})
+        )
+        if not accepted:
+            raise InvalidScientificProblem(
+                "a policy accepting no envelope verdict can never be satisfied"
+            )
+        object.__setattr__(self, "accepted_envelope_verdicts", accepted)
+        if self.numerical_requirement is not None and not isinstance(
+            self.numerical_requirement, NumericalRequirement
+        ):
+            raise InvalidScientificProblem(
+                "numerical_requirement must be a NumericalRequirement or None"
+            )
 
     @property
     def evaluated_gates(self) -> tuple[str, ...]:
@@ -142,6 +174,12 @@ class TrustPolicy:
             "version": self.version,
             "required_gates": list(self.required_gates),
             "recorded_gates": list(self.recorded_gates),
+            "accepted_envelope_verdicts": list(self.accepted_envelope_verdicts),
+            "numerical_requirement": (
+                None
+                if self.numerical_requirement is None
+                else self.numerical_requirement.to_dict()
+            ),
         }
 
     @property
@@ -172,6 +210,9 @@ MULTIPHYSICS_PRODUCTION_POLICY = TrustPolicy(
         NUMERICAL_EVIDENCE_PRESENT,
         VALIDATION_ENVELOPE_SUPPORTED,
     ),
+    numerical_requirement=NumericalRequirement(
+        "forge.multiphysics.production.numerical", (NumericalCheck.CONVERGENCE.value,)
+    ),
 )
 
 #: Every gate blocks. This is what a claim of full scientific trust costs, and
@@ -181,6 +222,12 @@ MULTIPHYSICS_FULL_TRUST_POLICY = TrustPolicy(
     policy_id="forge.multiphysics.full_trust",
     version="1",
     required_gates=ALL_GATES,
+    # Only demonstrated support entitles a prediction. Sparse evidence,
+    # extrapolation, a failing region and an unlocatable point all fail.
+    accepted_envelope_verdicts=(EnvelopeVerdict.SUPPORTED.value,),
+    numerical_requirement=NumericalRequirement(
+        "forge.multiphysics.full_trust.numerical", (NumericalCheck.CONVERGENCE.value,)
+    ),
 )
 
 #: Kept for readers of older certificates: the V1 profile this gate emitted
@@ -339,8 +386,8 @@ def assess_authorized_multiphysics_run(
     replay: ReplayOutcome | None = None,
     replay_policy: ReplayPolicy = DEFAULT_REPLAY_POLICY,
     numerical: NumericalEvidence | None = None,
-    required_numerical_checks: tuple[NumericalCheck, ...] = (),
     envelope: ValidationEnvelope | None = None,
+    envelope_queries: tuple[ValidationQueryPoint, ...] = (),
 ) -> TrustAssessment:
     """Evaluate every gate the policy names, and say which of them block.
 
@@ -501,63 +548,118 @@ def assess_authorized_multiphysics_run(
     findings[COMPUTATIONAL_REPLAY_VERIFIED] = (not replay_problems, replay_evidence)
 
     run_binding = authorized_run_binding(authorized)
+    numerical_completeness = assess_numerical_completeness(
+        policy.numerical_requirement, numerical
+    )
     numerical_evidence: dict[str, Any] = {
         "supplied": numerical is not None,
-        "required_checks": [item.value for item in required_numerical_checks],
         "computation": run_binding.digest,
+        "scope_profile": NUMERICAL_EXECUTION_PROFILE.profile_id,
+        "completeness": numerical_completeness.to_dict(),
     }
-    numerical_problems: tuple[str, ...] = ("no numerical evidence was supplied",)
-    if numerical is not None:
+    numerical_problems: list[str] = []
+    if numerical is None:
+        numerical_problems.append("no numerical evidence was supplied")
+    else:
         if not isinstance(numerical, NumericalEvidence):
             raise TypeError("numerical evidence must be a NumericalEvidence record")
-        # Evidence from another run stays evidence. It cannot satisfy this gate.
-        numerical_problems = numerical.belongs_to(run_binding)
-        if not numerical_problems and not numerical.satisfies(required_numerical_checks):
-            numerical_problems = (
-                f"required checks {[i.value for i in required_numerical_checks]} are "
-                f"not all performed and unviolated; absent="
-                f"{list(numerical.absent_checks)}, violated="
-                f"{list(numerical.violated_checks)}",
+        # SCOPE FIRST. Evidence naming only a shared solver would satisfy every
+        # run using that solver, so the profile floor is checked before the
+        # containment match.
+        if numerical.binding is None:
+            numerical_problems.append(
+                f"numerical evidence from {numerical.producer_id!r} names no "
+                f"execution binding"
             )
+        else:
+            numerical_problems.extend(
+                NUMERICAL_EXECUTION_PROFILE.unmet(numerical.binding, run_binding)
+            )
+        numerical_problems.extend(numerical.belongs_to(run_binding))
         numerical_evidence.update(
             {
                 "producer_id": numerical.producer_id,
-                "performed": list(numerical.performed_checks),
-                "absent": list(numerical.absent_checks),
-                "violated": list(numerical.violated_checks),
                 "digest": numerical.digest,
+                "binding": (
+                    None if numerical.binding is None else numerical.binding.to_dict()
+                ),
             }
+        )
+    # An UNSTATED requirement cannot be satisfied by an empty roster.
+    if not numerical_completeness.complete:
+        numerical_problems.append(
+            f"numerical requirement {numerical_completeness.requirement_id!r} is "
+            f"not met; enforceable={numerical_completeness.enforceable}, "
+            f"missing={list(numerical_completeness.missing)}, "
+            f"violated={list(numerical_completeness.violated)}"
         )
     numerical_evidence["problems"] = list(numerical_problems)
     findings[NUMERICAL_EVIDENCE_PRESENT] = (not numerical_problems, numerical_evidence)
 
+    query = tuple(envelope_queries or ())
     envelope_evidence: dict[str, Any] = {
         "supplied": envelope is not None,
         "computation": run_binding.digest,
+        "scope_profile": VALIDATION_AUTHORITY_PROFILE.profile_id,
+        "accepted_verdicts": list(policy.accepted_envelope_verdicts),
+        "query_points": [item.to_dict() for item in query],
     }
-    envelope_problems: tuple[str, ...] = ("no validation envelope was supplied",)
-    if envelope is not None:
+    envelope_problems: list[str] = []
+    if envelope is None:
+        envelope_problems.append("no validation envelope was supplied")
+    else:
         if not isinstance(envelope, ValidationEnvelope):
             raise TypeError("envelope evidence must be a ValidationEnvelope")
-        # AN ENVELOPE IS ABOUT SOME SCIENCE, NOT ABOUT WHATEVER IT IS HANDED.
-        # Supported cells belonging to another model certify nothing here.
-        envelope_problems = envelope.belongs_to(run_binding)
-        if not envelope_problems and not envelope.has_any_support:
-            envelope_problems = (
-                "the envelope holds no cell with passing evidence; a correct "
-                "refusal is not support",
+        if envelope.target is None:
+            envelope_problems.append("the envelope names no validation target")
+        else:
+            # SCOPE FIRST, for the same reason as the numerical gate: an
+            # envelope bound only to a MODEL is satisfied by every run using
+            # that model, whatever realization or authority it ran under.
+            envelope_problems.extend(
+                VALIDATION_AUTHORITY_PROFILE.unmet(envelope.target, run_binding)
             )
+        envelope_problems.extend(envelope.belongs_to(run_binding))
+
+        # THE PREDICTION, NOT THE ENVELOPE'S BEST CELL. A model validated in
+        # one operating region does not make every run using it validated.
+        if not query:
+            envelope_problems.append(
+                "no validation query point was supplied, so whether this "
+                "prediction lies inside empirical support is UNKNOWN; Core "
+                "cannot derive a domain's validation coordinates for it"
+            )
+        accepted = set(policy.accepted_envelope_verdicts)
+        classifications = []
+        for point in query:
+            found = envelope.classify_point(point)
+            classifications.append(
+                {
+                    "qoi_id": point.qoi_id,
+                    "label": point.label,
+                    "verdict": found.verdict.value,
+                    "declared": found.declared.value,
+                    "why": found.why,
+                }
+            )
+            if found.verdict.value not in accepted:
+                envelope_problems.append(
+                    f"prediction point {point.qoi_id!r}"
+                    + (f" ({point.label})" if point.label else "")
+                    + f" is {found.verdict.value}, which this policy does not "
+                    f"accept: {found.why}"
+                )
         envelope_evidence.update(
             {
                 "envelope_id": envelope.envelope_id,
                 "region_id": envelope.region.region_id,
                 "coverage": envelope.coverage.status_counts(),
-                # Recorded BESIDE the coverage map, never inside it. This gate
-                # asks whether the model has been shown to be right somewhere;
-                # a correct refusal answers a different question.
+                # Recorded BESIDE the coverage map, never inside it: a correct
+                # refusal answers a different question from this gate's.
                 "guardrail": envelope.guardrail_counts,
                 "campaign_report_digest": envelope.campaign_report_digest,
                 "target": None if envelope.target is None else envelope.target.to_dict(),
+                "classifications": classifications,
                 "digest": envelope.digest,
             }
         )
@@ -630,8 +732,8 @@ def certify_authorized_multiphysics_run(
     replay: ReplayOutcome | None = None,
     replay_policy: ReplayPolicy = DEFAULT_REPLAY_POLICY,
     numerical: NumericalEvidence | None = None,
-    required_numerical_checks: tuple[NumericalCheck, ...] = (),
     envelope: ValidationEnvelope | None = None,
+    envelope_queries: tuple[ValidationQueryPoint, ...] = (),
 ) -> CertificationRecord:
     """Assess one authorized run against a policy and certify what it earned."""
     assessment = assess_authorized_multiphysics_run(
@@ -640,8 +742,8 @@ def certify_authorized_multiphysics_run(
         replay=replay,
         replay_policy=replay_policy,
         numerical=numerical,
-        required_numerical_checks=required_numerical_checks,
         envelope=envelope,
+        envelope_queries=envelope_queries,
     )
     return certification_record_from_assessment(
         assessment, authorized, commit_sha=commit_sha
