@@ -62,7 +62,7 @@
     "bias": 0.0015571073871923978,
     "max": 0.7156997944076626
    },
-   "wall_seconds": 0.5033734999597073,
+   "wall_seconds": 0.46925449976697564,
    "refusal_reasons": []
   },
   "native|validation": {
@@ -82,7 +82,7 @@
     "bias": -0.006819381007971321,
     "max": 0.5919579371621455
    },
-   "wall_seconds": 0.36949680000543594,
+   "wall_seconds": 0.3345160996541381,
    "refusal_reasons": []
   },
   "pybamm_thevenin_1rc|calibration": {
@@ -102,7 +102,7 @@
     "bias": -0.00284426560127143,
     "max": 0.19644009080736646
    },
-   "wall_seconds": 0.44256649957969785,
+   "wall_seconds": 0.39407500019297004,
    "refusal_reasons": [
     "model_not_applicable"
    ]
@@ -124,7 +124,7 @@
     "bias": -0.00904464763147194,
     "max": 0.27461355435670765
    },
-   "wall_seconds": 0.36896320001687855,
+   "wall_seconds": 0.362647200236097,
    "refusal_reasons": []
   },
   "pybamm_spme|calibration": {
@@ -168,6 +168,99 @@
    "refusal_reasons": [
     "model_not_applicable"
    ]
+  }
+ },
+ "like_for_like": {
+  "calibration": {
+   "trajectories": 24,
+   "trajectory_ids": [
+    "B0005.d0008",
+    "B0005.d0016",
+    "B0005.d0024",
+    "B0005.d0032",
+    "B0005.d0040",
+    "B0018.d0008",
+    "B0018.d0016",
+    "B0018.d0024",
+    "B0018.d0032",
+    "B0018.d0040",
+    "B0033.d0008",
+    "B0033.d0024",
+    "B0033.d0032",
+    "B0033.d0040",
+    "B0042.d0008",
+    "B0042.d0016",
+    "B0042.d0024",
+    "B0042.d0032",
+    "B0042.d0040",
+    "B0042.d0093",
+    "B0042.d0098",
+    "B0042.d0102",
+    "B0042.d0107",
+    "B0042.d0112"
+   ],
+   "routes": {
+    "native": {
+     "n": 6199,
+     "mae": 0.016070722341155735,
+     "rmse": 0.03042715969061306,
+     "p95": 0.04510736048104125,
+     "bias": 0.0013088640488704685,
+     "max": 0.7156997944076626
+    },
+    "pybamm_thevenin_1rc": {
+     "n": 6223,
+     "mae": 0.027746349403034328,
+     "rmse": 0.041480474186230104,
+     "p95": 0.0783240121907447,
+     "bias": -0.00284426560127143,
+     "max": 0.19644009080736646
+    }
+   },
+   "what_this_is": "both routes over the trajectories BOTH offered. The per-route table scores each over its own population, which is correct for a refusal rate and misleading for a model comparison"
+  },
+  "validation": {
+   "trajectories": 19,
+   "trajectory_ids": [
+    "B0006.d0008",
+    "B0006.d0016",
+    "B0006.d0032",
+    "B0006.d0040",
+    "B0034.d0008",
+    "B0034.d0016",
+    "B0034.d0024",
+    "B0034.d0032",
+    "B0034.d0040",
+    "B0043.d0008",
+    "B0043.d0016",
+    "B0043.d0024",
+    "B0043.d0032",
+    "B0043.d0040",
+    "B0043.d0093",
+    "B0043.d0098",
+    "B0043.d0102",
+    "B0043.d0107",
+    "B0043.d0112"
+   ],
+   "routes": {
+    "native": {
+     "n": 4773,
+     "mae": 0.02470218960475649,
+     "rmse": 0.04463277548774485,
+     "p95": 0.09479551793456986,
+     "bias": -0.006819381007971321,
+     "max": 0.5919579371621455
+    },
+    "pybamm_thevenin_1rc": {
+     "n": 4792,
+     "mae": 0.030892632603914068,
+     "rmse": 0.041126921576538834,
+     "p95": 0.08361713518253389,
+     "bias": -0.00904464763147194,
+     "max": 0.27461355435670765
+    }
+   },
+   "what_this_is": "both routes over the trajectories BOTH offered. The per-route table scores each over its own population, which is correct for a refusal rate and misleading for a model comparison"
   }
  },
  "risk_applicability_screen": {
@@ -410,7 +503,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009534599957987666,
+     "wall_seconds": 0.009781699976883829,
      "declined_tail": null,
      "statistics": {
       "n": 161,
@@ -426,7 +519,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "167 samples",
-     "wall_seconds": 0.05618969991337508,
+     "wall_seconds": 0.041694800020195544,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -472,7 +565,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.018587399972602725,
+     "wall_seconds": 0.008881899993866682,
      "declined_tail": null,
      "statistics": {
       "n": 158,
@@ -488,7 +581,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "157 samples",
-     "wall_seconds": 0.01577149995137006,
+     "wall_seconds": 0.013640700024552643,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -534,7 +627,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.010703700012527406,
+     "wall_seconds": 0.009985700016841292,
      "declined_tail": null,
      "statistics": {
       "n": 160,
@@ -550,7 +643,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "147 samples",
-     "wall_seconds": 0.014557000016793609,
+     "wall_seconds": 0.030375300091691315,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -596,7 +689,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02154079999309033,
+     "wall_seconds": 0.031375099904835224,
      "declined_tail": null,
      "statistics": {
       "n": 320,
@@ -612,7 +705,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "197 samples",
-     "wall_seconds": 0.019377899938263,
+     "wall_seconds": 0.015221700072288513,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -658,7 +751,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.022011799970641732,
+     "wall_seconds": 0.02668349992018193,
      "declined_tail": null,
      "statistics": {
       "n": 307,
@@ -674,7 +767,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "177 samples",
-     "wall_seconds": 0.018076599924825132,
+     "wall_seconds": 0.015129500068724155,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -720,7 +813,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.010167300002649426,
+     "wall_seconds": 0.016840999945998192,
      "declined_tail": null,
      "statistics": {
       "n": 176,
@@ -736,7 +829,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "178 samples",
-     "wall_seconds": 0.021701799938455224,
+     "wall_seconds": 0.025056599988602102,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -782,7 +875,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.014602500014007092,
+     "wall_seconds": 0.012988799950107932,
      "declined_tail": null,
      "statistics": {
       "n": 167,
@@ -798,7 +891,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "185 samples",
-     "wall_seconds": 0.024587600026279688,
+     "wall_seconds": 0.02567760006058961,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -844,7 +937,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.037022899952717125,
+     "wall_seconds": 0.02142240002285689,
      "declined_tail": null,
      "statistics": {
       "n": 334,
@@ -860,7 +953,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "182 samples",
-     "wall_seconds": 0.019156599999405444,
+     "wall_seconds": 0.016192100010812283,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -906,7 +999,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02780379995238036,
+     "wall_seconds": 0.017861299915239215,
      "declined_tail": null,
      "statistics": {
       "n": 309,
@@ -922,7 +1015,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "149 samples",
-     "wall_seconds": 0.02151140000205487,
+     "wall_seconds": 0.014923100010491908,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -968,7 +1061,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.028224999899975955,
+     "wall_seconds": 0.018997800070792437,
      "declined_tail": null,
      "statistics": {
       "n": 302,
@@ -984,7 +1077,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "245 samples",
-     "wall_seconds": 0.016709799994714558,
+     "wall_seconds": 0.014758599922060966,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1030,7 +1123,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.019521199981682003,
+     "wall_seconds": 0.01668280002195388,
      "declined_tail": null,
      "statistics": {
       "n": 283,
@@ -1046,7 +1139,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "152 samples",
-     "wall_seconds": 0.015760799986310303,
+     "wall_seconds": 0.013731999904848635,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1092,7 +1185,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.01695720001589507,
+     "wall_seconds": 0.020432300050742924,
      "declined_tail": null,
      "statistics": {
       "n": 263,
@@ -1108,7 +1201,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "154 samples",
-     "wall_seconds": 0.013156299944967031,
+     "wall_seconds": 0.013150300015695393,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1154,7 +1247,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02087140001822263,
+     "wall_seconds": 0.013894699979573488,
      "declined_tail": null,
      "statistics": {
       "n": 250,
@@ -1170,7 +1263,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "137 samples",
-     "wall_seconds": 0.0158313000574708,
+     "wall_seconds": 0.012770599918439984,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1216,7 +1309,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.017870500101707876,
+     "wall_seconds": 0.013680299976840615,
      "declined_tail": null,
      "statistics": {
       "n": 234,
@@ -1232,7 +1325,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "150 samples",
-     "wall_seconds": 0.018418499967083335,
+     "wall_seconds": 0.014055400039069355,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1278,7 +1371,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.0037247000727802515,
+     "wall_seconds": 0.0035152999917045236,
      "declined_tail": null,
      "statistics": {
       "n": 62,
@@ -1329,7 +1422,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.00987479998730123,
+     "wall_seconds": 0.006697400007396936,
      "declined_tail": null,
      "statistics": {
       "n": 112,
@@ -1345,7 +1438,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "82 samples",
-     "wall_seconds": 0.01765029993839562,
+     "wall_seconds": 0.014335400075651705,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1391,7 +1484,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009828199981711805,
+     "wall_seconds": 0.009747999953106046,
      "declined_tail": null,
      "statistics": {
       "n": 135,
@@ -1407,7 +1500,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "79 samples",
-     "wall_seconds": 0.01554380008019507,
+     "wall_seconds": 0.013814100064337254,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1453,7 +1546,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.010414400021545589,
+     "wall_seconds": 0.007090300088748336,
      "declined_tail": null,
      "statistics": {
       "n": 126,
@@ -1469,7 +1562,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "98 samples",
-     "wall_seconds": 0.014636600040830672,
+     "wall_seconds": 0.013218299951404333,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1515,7 +1608,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007250199909321964,
+     "wall_seconds": 0.008619299973361194,
      "declined_tail": null,
      "statistics": {
       "n": 122,
@@ -1531,7 +1624,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "97 samples",
-     "wall_seconds": 0.015378599986433983,
+     "wall_seconds": 0.015487500000745058,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1577,7 +1670,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.012339200009591877,
+     "wall_seconds": 0.00920520001091063,
      "declined_tail": null,
      "statistics": {
       "n": 138,
@@ -1593,7 +1686,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "90 samples",
-     "wall_seconds": 0.015262599918060005,
+     "wall_seconds": 0.01271070004440844,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1639,7 +1732,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.010345199960283935,
+     "wall_seconds": 0.007109300000593066,
      "declined_tail": null,
      "statistics": {
       "n": 127,
@@ -1655,7 +1748,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "92 samples",
-     "wall_seconds": 0.015070499968715012,
+     "wall_seconds": 0.01423390000127256,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1701,7 +1794,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007767600007355213,
+     "wall_seconds": 0.009724799892865121,
      "declined_tail": null,
      "statistics": {
       "n": 127,
@@ -1717,7 +1810,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "80 samples",
-     "wall_seconds": 0.015726499957963824,
+     "wall_seconds": 0.012505399994552135,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1763,7 +1856,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007404200034216046,
+     "wall_seconds": 0.007503399974666536,
      "declined_tail": null,
      "statistics": {
       "n": 116,
@@ -1779,7 +1872,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "93 samples",
-     "wall_seconds": 0.016342800110578537,
+     "wall_seconds": 0.02093380002770573,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1825,7 +1918,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.006643900065682828,
+     "wall_seconds": 0.014667899929918349,
      "declined_tail": null,
      "statistics": {
       "n": 114,
@@ -1841,7 +1934,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "92 samples",
-     "wall_seconds": 0.013865499990060925,
+     "wall_seconds": 0.02634620002936572,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -1887,7 +1980,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007411600090563297,
+     "wall_seconds": 0.006550199934281409,
      "declined_tail": null,
      "statistics": {
       "n": 93,
@@ -1938,7 +2031,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.00642399990465492,
+     "wall_seconds": 0.006406300002709031,
      "declined_tail": null,
      "statistics": {
       "n": 98,
@@ -1989,7 +2082,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.006309899967163801,
+     "wall_seconds": 0.004968699999153614,
      "declined_tail": null,
      "statistics": {
       "n": 93,
@@ -2040,7 +2133,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.019524200004525483,
+     "wall_seconds": 0.01896309992298484,
      "declined_tail": null,
      "statistics": {
       "n": 286,
@@ -2056,7 +2149,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "111 samples",
-     "wall_seconds": 0.020081799943000078,
+     "wall_seconds": 0.013384600053541362,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2102,7 +2195,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.017962199985049665,
+     "wall_seconds": 0.016338600078597665,
      "declined_tail": null,
      "statistics": {
       "n": 268,
@@ -2118,7 +2211,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "133 samples",
-     "wall_seconds": 0.015680699958465993,
+     "wall_seconds": 0.01539680000860244,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2164,7 +2257,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.019121999968774617,
+     "wall_seconds": 0.016258199932053685,
      "declined_tail": null,
      "statistics": {
       "n": 257,
@@ -2180,7 +2273,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "133 samples",
-     "wall_seconds": 0.016939699999056756,
+     "wall_seconds": 0.013905300060287118,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2226,7 +2319,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.013384700054302812,
+     "wall_seconds": 0.01602939993608743,
      "declined_tail": null,
      "statistics": {
       "n": 243,
@@ -2242,7 +2335,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "130 samples",
-     "wall_seconds": 0.017671599984169006,
+     "wall_seconds": 0.013990600011311471,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2288,7 +2381,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02023440005723387,
+     "wall_seconds": 0.013821200001984835,
      "declined_tail": null,
      "statistics": {
       "n": 231,
@@ -2304,7 +2397,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "127 samples",
-     "wall_seconds": 0.018658099928870797,
+     "wall_seconds": 0.013866499997675419,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2350,7 +2443,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016848400002345443,
+     "wall_seconds": 0.015655800001695752,
      "declined_tail": null,
      "statistics": {
       "n": 280,
@@ -2366,7 +2459,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "131 samples",
-     "wall_seconds": 0.023321100044995546,
+     "wall_seconds": 0.014324299991130829,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2412,7 +2505,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.021645499975420535,
+     "wall_seconds": 0.017698300071060658,
      "declined_tail": null,
      "statistics": {
       "n": 260,
@@ -2428,7 +2521,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "144 samples",
-     "wall_seconds": 0.022918600006960332,
+     "wall_seconds": 0.014954800019040704,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2474,7 +2567,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.01572549995034933,
+     "wall_seconds": 0.014894100022502244,
      "declined_tail": null,
      "statistics": {
       "n": 247,
@@ -2490,7 +2583,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "110 samples",
-     "wall_seconds": 0.01677049999125302,
+     "wall_seconds": 0.013858700054697692,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2536,7 +2629,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016956200008280575,
+     "wall_seconds": 0.013088100007735193,
      "declined_tail": null,
      "statistics": {
       "n": 231,
@@ -2552,7 +2645,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "126 samples",
-     "wall_seconds": 0.016101600020192564,
+     "wall_seconds": 0.01521149999462068,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2598,7 +2691,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016227700049057603,
+     "wall_seconds": 0.014233299996703863,
      "declined_tail": null,
      "statistics": {
       "n": 218,
@@ -2614,7 +2707,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "122 samples",
-     "wall_seconds": 0.020408599986694753,
+     "wall_seconds": 0.01788910001050681,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2660,7 +2753,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.036245199968107045,
+     "wall_seconds": 0.02874149999115616,
      "declined_tail": null,
      "statistics": {
       "n": 425,
@@ -2676,7 +2769,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "187 samples",
-     "wall_seconds": 0.015564700006507337,
+     "wall_seconds": 0.017288299975916743,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2722,7 +2815,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.026610199944116175,
+     "wall_seconds": 0.027575899963267148,
      "declined_tail": null,
      "statistics": {
       "n": 410,
@@ -2738,7 +2831,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "234 samples",
-     "wall_seconds": 0.018519100034609437,
+     "wall_seconds": 0.015776699990965426,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2784,7 +2877,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.027955700061284006,
+     "wall_seconds": 0.02339610003400594,
      "declined_tail": null,
      "statistics": {
       "n": 397,
@@ -2800,7 +2893,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "212 samples",
-     "wall_seconds": 0.022709399927407503,
+     "wall_seconds": 0.016285500023514032,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2846,7 +2939,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.025155600043945014,
+     "wall_seconds": 0.024248300003819168,
      "declined_tail": null,
      "statistics": {
       "n": 382,
@@ -2862,7 +2955,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "203 samples",
-     "wall_seconds": 0.015292000025510788,
+     "wall_seconds": 0.016169499955140054,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2908,7 +3001,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.022421600064262748,
+     "wall_seconds": 0.023572999984025955,
      "declined_tail": null,
      "statistics": {
       "n": 367,
@@ -2924,7 +3017,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "162 samples",
-     "wall_seconds": 0.014390700031071901,
+     "wall_seconds": 0.016626999946311116,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -2970,7 +3063,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.004576099920086563,
+     "wall_seconds": 0.009547000052407384,
      "declined_tail": null,
      "statistics": {
       "n": 84,
@@ -3021,7 +3114,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.005031000007875264,
+     "wall_seconds": 0.008898200001567602,
      "declined_tail": null,
      "statistics": {
       "n": 79,
@@ -3072,7 +3165,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.00642999995034188,
+     "wall_seconds": 0.008129299967549741,
      "declined_tail": null,
      "statistics": {
       "n": 76,
@@ -3123,7 +3216,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.004560700035654008,
+     "wall_seconds": 0.0048417000798508525,
      "declined_tail": null,
      "statistics": {
       "n": 74,
@@ -3174,7 +3267,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.00709850003477186,
+     "wall_seconds": 0.0049016999546438456,
      "declined_tail": null,
      "statistics": {
       "n": 72,
@@ -3225,7 +3318,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.030362899997271597,
+     "wall_seconds": 0.027736700023524463,
      "declined_tail": null,
      "statistics": {
       "n": 425,
@@ -3241,7 +3334,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "210 samples",
-     "wall_seconds": 0.039492900017648935,
+     "wall_seconds": 0.015625500003807247,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -3287,7 +3380,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.040595100028440356,
+     "wall_seconds": 0.02867509995121509,
      "declined_tail": null,
      "statistics": {
       "n": 404,
@@ -3303,7 +3396,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "210 samples",
-     "wall_seconds": 0.016628600074909627,
+     "wall_seconds": 0.02528179995715618,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -3349,7 +3442,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.025720400037243962,
+     "wall_seconds": 0.033965000067837536,
      "declined_tail": null,
      "statistics": {
       "n": 386,
@@ -3365,7 +3458,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "209 samples",
-     "wall_seconds": 0.017865499947220087,
+     "wall_seconds": 0.029464400024153292,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -3411,7 +3504,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02318709995597601,
+     "wall_seconds": 0.03132229996845126,
      "declined_tail": null,
      "statistics": {
       "n": 367,
@@ -3427,7 +3520,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "174 samples",
-     "wall_seconds": 0.015068700071424246,
+     "wall_seconds": 0.02481710002757609,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -3473,7 +3566,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02813140000216663,
+     "wall_seconds": 0.019923299900256097,
      "declined_tail": null,
      "statistics": {
       "n": 347,
@@ -3489,7 +3582,7 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "183 samples",
-     "wall_seconds": 0.017161799944005907,
+     "wall_seconds": 0.02264059998560697,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
@@ -3526,5 +3619,5 @@
    }
   }
  ],
- "wall_seconds": 7.236435599974357
+ "wall_seconds": 6.795467899995856
 }

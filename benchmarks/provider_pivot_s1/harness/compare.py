@@ -343,6 +343,42 @@ def main() -> int:
                 ),
             }
 
+    # --- The like-for-like comparison ---------------------------------
+    #
+    # The per-route table above scores each route over the trajectories THAT
+    # ROUTE offered, which is the right population for a refusal rate and the
+    # wrong one for comparing two models. The native route offers all 33
+    # calibration trajectories and the equivalent-circuit route offers 24; the
+    # nine it declines are the aged cells where the native model is 77 to
+    # 183 mV out, so scoring the two over their own populations charges the
+    # native model for cases its competitor never attempted.
+    #
+    # The first version of this report did exactly that and read "the provider
+    # route has the lower calibration RMSE". Over the 24 both routes offered,
+    # the native model is better by 11 mV of RMSE and 12 mV of MAE. The two
+    # populations are stated here so that a reader cannot take the first table
+    # for a model comparison.
+    like_for_like: dict[str, Any] = {}
+    for split in ("calibration", "validation"):
+        subset = [r for r in rows if r["split"] == split]
+        both = [
+            r
+            for r in subset
+            if all(r["routes"][name]["outcome"] == "ok" for name in routes[:2])
+        ]
+        like_for_like[split] = {
+            "trajectories": len(both),
+            "trajectory_ids": [r["trajectory_id"] for r in both],
+            "routes": {
+                name: common_statistics(both, name) for name in routes[:2]
+            },
+            "what_this_is": (
+                "both routes over the trajectories BOTH offered. The per-route "
+                "table scores each over its own population, which is correct "
+                "for a refusal rate and misleading for a model comparison"
+            ),
+        }
+
     # --- Is the declared state margin doing any work? -----------------
     #
     # `common.ECM_STATE_MARGIN` maps the measured full-charge state into the
@@ -562,6 +598,7 @@ def main() -> int:
             ),
         },
         "routes": summary,
+        "like_for_like": like_for_like,
         "risk_applicability_screen": risk_screen,
         "risk_trust_path": risk_trust,
         "counterfactual_probe": {
@@ -613,6 +650,15 @@ def main() -> int:
             f"{s['wall_seconds']:7.2f}"
         )
     print()
+    print("LIKE FOR LIKE -- both routes over the trajectories BOTH offered")
+    for split, block in like_for_like.items():
+        for name, st in block["routes"].items():
+            print(
+                f"  {name:22} {split:11} traj={block['trajectories']:3} "
+                f"n={st['n']:6} MAE={_mv(st.get('mae'))} RMSE={_mv(st.get('rmse'))} "
+                f"P95={_mv(st.get('p95'))} bias={_mv(st.get('bias'))}"
+            )
+    print()
     for route in routes:
         screen = risk_screen[route]
         trust = risk_trust[route]
@@ -636,6 +682,18 @@ def main() -> int:
         )
     print(f"\nwrote {path} in {record['wall_seconds']:.1f}s")
     return 0
+
+
+def common_statistics(records, route: str) -> dict[str, Any]:
+    """One route's statistics pooled over a chosen set of trajectories."""
+    residuals = [
+        value for r in records for value in r["routes"][route]["residuals"]
+    ]
+    return common.statistics(residuals)
+
+
+def _mv(value):
+    return "      --" if value is None else f"{value * 1000:8.2f}"
 
 
 def _pct(value):

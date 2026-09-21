@@ -405,9 +405,19 @@ Base `claude/battery-voltage-s3-recovery @ 0b032c97`. Full account in
 
 **Verdict: PASS.** PyBaMM runs as an external provider while Forge keeps
 applicability, evidence, replay and the trust decision. The equivalent-circuit
-route delivers on 43 of 52 development trajectories at 41.5 / 41.1 mV RMSE
-(calibration / validation) against the native model's 50.0 / 44.6 mV, and SPMe
-under `Chen2020` is refused on 52 of 52 before PyBaMM is called.
+route delivers on 43 of 52 development trajectories; SPMe under `Chen2020` is
+refused on 52 of 52 before PyBaMM is called.
+
+**The model comparison must be read like for like, and the first draft of the
+report did not.** Each route scored over its own offered population made the
+provider route look better on calibration RMSE (41.5 against 50.0 mV), because
+the native route was additionally carrying the nine aged cells the provider
+declined. Over the 24 both offered, the native model is better on every
+calibration statistic (MAE 16.07 against 27.75, RMSE 30.43 against 41.48 mV).
+On validation, where both offer all 19, the result is genuinely mixed: native
+better on MAE (24.70 against 30.89), the equivalent circuit better on RMSE
+(41.13 against 44.63) and P95 (83.62 against 94.80). `COMPARISON.json` now
+carries a `like_for_like` block so the two populations cannot be confused again.
 
 ### New structure
 

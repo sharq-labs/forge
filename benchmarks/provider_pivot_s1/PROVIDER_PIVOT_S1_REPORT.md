@@ -81,13 +81,44 @@ that round scored its own case selection at its own stride, and this one scores
 every sample inside the OCV window. The three routes here are comparable to
 *each other*, which is what the table is for.
 
-### What each row says
+### THE TABLE ABOVE IS NOT A MODEL COMPARISON
 
-**The equivalent-circuit route through PyBaMM has lower RMSE and P95 and higher
-MAE than the native model.** Fewer large excursions, slightly worse typically.
-That is a real difference between a model whose resistance is fitted per
-operating block on 11 755 samples and one whose resistance carries an Arrhenius
-temperature dependence and a measured charge-state shape.
+Each route is scored over the trajectories **that route offered**, which is the
+right population for a refusal rate and the wrong one for comparing two models.
+The native route offers all 33 calibration trajectories; the equivalent-circuit
+route offers 24, and the nine it declines are the aged cells where the native
+model is 77 to 183 mV out. Reading the first table as a comparison charges the
+native model for cases its competitor never attempted — which is exactly what
+the first draft of this report did, concluding that "the provider route has the
+lower calibration RMSE". It does not.
+
+Over the trajectories **both** routes offered:
+
+| route | split | traj | samples | MAE | RMSE | P95 | bias |
+|---|---|---:|---:|---:|---:|---:|---:|
+| native | calibration | 24 | 6 199 | **16.07 mV** | **30.43 mV** | **45.11 mV** | +1.31 mV |
+| pybamm_thevenin_1rc | calibration | 24 | 6 223 | 27.75 mV | 41.48 mV | 78.32 mV | −2.84 mV |
+| native | validation | 19 | 4 773 | **24.70 mV** | 44.63 mV | 94.80 mV | −6.82 mV |
+| pybamm_thevenin_1rc | validation | 19 | 4 792 | 30.89 mV | **41.13 mV** | **83.62 mV** | −9.04 mV |
+
+**On calibration the native model is better on every statistic** — 12 mV of MAE
+and 11 mV of RMSE. It should be: it carries an Arrhenius temperature dependence
+on both resistances and a measured charge-state shape on the ohmic term, none of
+which the equivalent circuit has, and its parameters were fitted on those very
+trajectories.
+
+**On validation the result is mixed and genuinely so.** The native model is
+better typically (MAE 24.70 against 30.89 mV); the equivalent circuit has fewer
+large excursions (RMSE 41.13 against 44.63, P95 83.62 against 94.80). A model
+with a temperature-dependent resistance tracks the middle of the distribution
+better and its tail worse, which is what a temperature term does when the
+temperature it is keyed to is itself predicted.
+
+Neither of those is a reason to prefer either model, and this round does not:
+that is a decision for an independent Gate A, which §5 says requires new
+evidence.
+
+### SPMe
 
 **SPMe refuses everything, and PyBaMM is never called for it.** `Chen2020`
 describes a 5 A.h NMC811/graphite-SiOx LG M50; the archive holds ~1.6 A.h
@@ -266,7 +297,14 @@ Recorded so a later session does not repeat it.
    and `pybop_provider.py`'s saying why a fit is not a `ScientificResult`. Both
    are now AST walks, which is the distinction `tests/core_vocabulary.py`
    already drew for the Scientific Core.
-6. **Reaching a first-party module through an opaque `sys.path` insert.** The
+6. **Comparing two models over two different populations.** The per-route
+   table scores each route over the trajectories it offered, and read as a
+   model comparison it said the provider route had the lower calibration RMSE.
+   It does not: the native route was additionally carrying the nine aged cells
+   the provider declined. Over the 24 both offered the native model is better
+   by 12 mV of MAE and 11 mV of RMSE. `COMPARISON.json` now carries a
+   `like_for_like` block and §3 leads with the warning.
+7. **Reaching a first-party module through an opaque `sys.path` insert.** The
    harness inserted a pre-joined path variable, and `test_core_guards.py`'s
    dependency sweep — which resolves such a module by reading the *string
    segments* of the mutation — saw `corpus` and `predict` as two third-party

@@ -144,7 +144,15 @@ STATIC_GUARDS: dict[str, frozenset[str]] = {
             "test_m3_the_grain_limitation_is_visible_rather_than_hidden",
             "test_j2_the_invocation_is_configuration_and_reads_the_environment",
             "test_g6_supports_does_not_claim_what_prepare_refuses",
-            "test_r1_the_adapter_is_local_and_no_provider_framework_exists",
+            # R1 was renamed when its named trigger fired: a second external
+            # provider arrived, so the guard stopped asserting that
+            # `src/engcore/providers` does not exist and started asserting the
+            # six framework shapes it was standing in for. `test_r1b_` is its
+            # new control -- that the ngspice adapter did not move under the
+            # generic contract -- and is static for the same reason: it reads
+            # source and a class hierarchy, and launches nothing.
+            "test_r1_the_adapter_is_local_and_the_generalisation_stayed_narrow",
+            "test_r1b_the_ngspice_adapter_did_not_move_under_the_new_contract",
             "test_r2_no_parser_result_wrapper_survived",
             "test_r3_the_configuration_record_is_more_than_an_argv_tuple",
             "test_r4_no_execution_result_record_was_created",
