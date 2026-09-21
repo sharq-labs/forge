@@ -1,0 +1,617 @@
+"""Campaigns: Core derives the verdict, the caller supplies only the prediction.
+
+THE RULE THIS MODULE EXISTS FOR
+--------------------------------
+A caller hands in what its model produced. It does not hand in ``PASS``. The
+comparison -- units, residual, the reviewed tolerance, the applicability
+screen -- is made here, from the reference observation and the prediction,
+so "this validated" is a statement Core made rather than one it was told.
+
+A REFUSAL IS A SCIENTIFIC RESULT
+---------------------------------
+A model that declines to answer outside its declared domain is behaving
+correctly, and a campaign that scored that as failure would push the system
+toward answering anyway. So refusals split two ways:
+
+``CORRECT_REFUSAL``
+    the case is declared outside applicability and the model refused. This is
+    the trust engine working.
+``UNEXPECTED_REFUSAL``
+    the case is inside the declared envelope and the model refused anyway.
+    Something is wrong, and it is visible rather than averaged away.
+
+The mirror case is equally important. A model that *answers* a case declared
+outside its applicability has claimed something it does not support, so that
+result is ``OUTSIDE_APPLICABILITY`` -- recorded, never scored as a pass.
+
+A CORRECT REFUSAL IS NOT SCIENTIFIC SUPPORT
+--------------------------------------------
+This is the distinction most easily lost, so it is stated once here and
+enforced everywhere below. A correct refusal means *the system correctly
+recognized that it was not entitled to make the prediction*. It is evidence
+about the guardrail, not about the science. It says nothing about whether the
+model would have been right at that point, because the model never answered.
+
+So a correct refusal never raises a pass count, never enters
+``pass_fraction``, never turns an untested coverage cell into a supported one,
+and never widens a validated envelope. If it did, a model could earn territory
+by declining more often -- which is exactly backwards.
+
+The two live on separate axes and are reported separately:
+:attr:`ValidationCampaignReport.pass_fraction` for empirical support, and
+:attr:`ValidationCampaignReport.refusal_accuracy` for guardrail correctness.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import Enum
+import hashlib
+import json
+import math
+from typing import Any, Mapping
+
+from ..serialization import require_schema, schema_string
+from ..units.quantity import Quantity, base_unit
+from .dataset import (
+    Applicability,
+    DatasetSplit,
+    HoldoutRelease,
+    ReferenceCase,
+    ReferenceDataset,
+    ReferenceObservation,
+)
+from .source import CorpusError, require_quantity, text
+
+PREDICTION_SCHEMA = schema_string("corpus_prediction")
+COMPARISON_SCHEMA = schema_string("corpus_validation_comparison")
+CAMPAIGN_SCHEMA = schema_string("corpus_validation_campaign")
+CAMPAIGN_REPORT_SCHEMA = schema_string("corpus_validation_campaign_report")
+
+
+class CaseVerdict(str, Enum):
+    """What a campaign concluded about one reference observation."""
+
+    PASS = "pass"
+    FAIL = "fail"
+    #: A reference observation with no reviewed acceptance tolerance. Never a pass.
+    UNSCORED = "unscored"
+    #: No prediction was offered at all.
+    MISSING = "missing"
+    #: The comparison itself could not be made (incompatible units, non-finite).
+    ERROR = "error"
+    #: Declined, and the case was declared outside the model's applicability.
+    CORRECT_REFUSAL = "correct_refusal"
+    #: Declined inside the claimed envelope. A defect, made visible.
+    UNEXPECTED_REFUSAL = "unexpected_refusal"
+    #: Answered a case declared outside applicability. Recorded, never scored.
+    OUTSIDE_APPLICABILITY = "outside_applicability"
+
+    @property
+    def is_scored(self) -> bool:
+        """Whether this verdict contributes to a pass fraction."""
+        return self in (CaseVerdict.PASS, CaseVerdict.FAIL)
+
+    @property
+    def is_empirical_support(self) -> bool:
+        """Whether this verdict is evidence the model is RIGHT here.
+
+        ``PASS`` and nothing else. In particular **not** ``CORRECT_REFUSAL``:
+        a correct refusal means the system recognized it was not entitled to
+        predict at this point, which says nothing whatever about whether the
+        model would have been right. Counting it as support would let a model
+        expand its validated envelope by declining more often, which is
+        precisely backwards.
+        """
+        return self is CaseVerdict.PASS
+
+    @property
+    def is_guardrail_success(self) -> bool:
+        """Whether this verdict is evidence the *guardrail* behaved correctly.
+
+        A separate axis from empirical support, and deliberately never summed
+        with it. ``refusal_accuracy`` is built from this; ``pass_fraction`` is
+        built from :attr:`is_empirical_support`.
+        """
+        return self is CaseVerdict.CORRECT_REFUSAL
+
+    @property
+    def is_refusal(self) -> bool:
+        return self in (CaseVerdict.CORRECT_REFUSAL, CaseVerdict.UNEXPECTED_REFUSAL)
+
+
+class RefusalKind(str, Enum):
+    """Why a model declined. Declared by the producer, never inferred."""
+
+    APPLICABILITY = "applicability"
+    NUMERICAL = "numerical"
+    INSUFFICIENT_DATA = "insufficient_data"
+    UNSUPPORTED_REGIME = "unsupported_regime"
+    OTHER = "other"
+
+
+@dataclass(frozen=True)
+class PredictedValue:
+    """A model answered."""
+
+    value: Quantity
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "value", require_quantity(self.value, label="predicted value")
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": PREDICTION_SCHEMA,
+            "outcome": "value",
+            "value": self.value.to_dict(),
+        }
+
+
+@dataclass(frozen=True)
+class PredictionRefusal:
+    """A model declined, and said why."""
+
+    kind: RefusalKind
+    reason: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", RefusalKind(self.kind))
+        object.__setattr__(self, "reason", text(self.reason, label="refusal reason"))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": PREDICTION_SCHEMA,
+            "outcome": "refusal",
+            "kind": self.kind.value,
+            "reason": self.reason,
+        }
+
+
+Prediction = PredictedValue | PredictionRefusal
+
+
+def prediction_from_dict(payload: Mapping[str, Any]) -> Prediction:
+    require_schema(payload, PREDICTION_SCHEMA)
+    outcome = payload.get("outcome")
+    if outcome == "value":
+        return PredictedValue(Quantity.from_dict(payload["value"]))
+    if outcome == "refusal":
+        return PredictionRefusal(RefusalKind(payload["kind"]), payload["reason"])
+    raise CorpusError(f"unknown prediction outcome {outcome!r}")
+
+
+@dataclass(frozen=True, order=True)
+class ValidationComparison:
+    """One reference observation, one prediction, and the verdict Core derived.
+
+    ``residual`` and ``allowed`` are read as differences in the expected
+    value's base unit, which is what makes a tolerance stated in ``delta_degC``
+    comparable against a bound stated in kelvin without either of them being
+    silently converted as an absolute temperature.
+    """
+
+    case_id: str
+    metric: str
+    split: DatasetSplit
+    verdict: CaseVerdict
+    expected: Quantity | None = None
+    observed: Quantity | None = None
+    residual: float | None = None
+    allowed: float | None = None
+    normalized_residual: float | None = None
+    unit: str = ""
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "case_id", text(self.case_id, label="case_id"))
+        object.__setattr__(self, "metric", text(self.metric, label="metric"))
+        object.__setattr__(self, "split", DatasetSplit(self.split))
+        object.__setattr__(self, "verdict", CaseVerdict(self.verdict))
+        if self.verdict.is_scored and self.normalized_residual is None:
+            raise CorpusError(
+                f"{self.case_id}/{self.metric} is scored {self.verdict.value!r} but "
+                f"carries no normalized residual; a verdict and the number it came "
+                f"from are one result"
+            )
+        object.__setattr__(self, "unit", str(self.unit).strip())
+        object.__setattr__(self, "detail", str(self.detail).strip())
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return self.case_id, self.metric
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": COMPARISON_SCHEMA,
+            "case_id": self.case_id,
+            "metric": self.metric,
+            "split": self.split.value,
+            "verdict": self.verdict.value,
+            "expected": None if self.expected is None else self.expected.to_dict(),
+            "observed": None if self.observed is None else self.observed.to_dict(),
+            "residual": self.residual,
+            "allowed": self.allowed,
+            "normalized_residual": self.normalized_residual,
+            "unit": self.unit,
+            "detail": self.detail,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationComparison":
+        require_schema(payload, COMPARISON_SCHEMA)
+        expected = payload.get("expected")
+        observed = payload.get("observed")
+        return cls(
+            payload["case_id"],
+            payload["metric"],
+            DatasetSplit(payload["split"]),
+            CaseVerdict(payload["verdict"]),
+            None if expected is None else Quantity.from_dict(expected),
+            None if observed is None else Quantity.from_dict(observed),
+            payload.get("residual"),
+            payload.get("allowed"),
+            payload.get("normalized_residual"),
+            payload.get("unit", ""),
+            payload.get("detail", ""),
+        )
+
+
+def compare_observation(
+    case: ReferenceCase,
+    observation: ReferenceObservation,
+    prediction: Prediction | None,
+) -> ValidationComparison:
+    """Derive one verdict. The only place a corpus PASS is produced."""
+
+    common = {"case_id": observation.case_id, "metric": observation.metric, "split": case.split}
+
+    if prediction is None:
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.MISSING,
+            expected=observation.expected,
+            detail="no prediction was offered for this reference observation",
+        )
+
+    if isinstance(prediction, PredictionRefusal):
+        outside = case.applicability is Applicability.OUTSIDE
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.CORRECT_REFUSAL if outside else CaseVerdict.UNEXPECTED_REFUSAL,
+            expected=observation.expected,
+            detail=(
+                f"{prediction.kind.value}: {prediction.reason}"
+                if outside
+                else (
+                    f"refused inside the declared envelope "
+                    f"({prediction.kind.value}: {prediction.reason})"
+                )
+            ),
+        )
+
+    if not isinstance(prediction, PredictedValue):
+        raise CorpusError(
+            "a prediction must be PredictedValue, PredictionRefusal or None"
+        )
+
+    if case.applicability is Applicability.OUTSIDE:
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.OUTSIDE_APPLICABILITY,
+            expected=observation.expected,
+            observed=prediction.value,
+            detail=(
+                "the model produced a value at a case declared outside its "
+                "applicability; this is recorded, not scored"
+            ),
+        )
+
+    if observation.acceptance_tolerance is None:
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.UNSCORED,
+            expected=observation.expected,
+            observed=prediction.value,
+            detail=(
+                "the reference observation exists but no reviewed acceptance "
+                "tolerance is bound to it; missing policy is not agreement"
+            ),
+        )
+
+    try:
+        unit = base_unit(observation.expected.units)
+        expected_value = observation.expected.magnitude_in(unit)
+        observed_value = prediction.value.magnitude_in(unit)
+        allowed = observation.acceptance_tolerance.magnitude_in(unit)
+    except Exception as exc:  # noqa: BLE001 -- the campaign records, it does not abort
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.ERROR,
+            expected=observation.expected,
+            observed=prediction.value,
+            detail=f"{type(exc).__name__}: {exc}",
+        )
+
+    residual = abs(observed_value - expected_value)
+    if not math.isfinite(residual):
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.ERROR,
+            expected=observation.expected,
+            observed=prediction.value,
+            unit=unit,
+            detail="residual is not finite",
+        )
+    if allowed == 0.0:
+        normalized = 0.0 if residual == 0.0 else math.inf
+    else:
+        normalized = residual / allowed
+    return ValidationComparison(
+        **common,
+        verdict=CaseVerdict.PASS if normalized <= 1.0 else CaseVerdict.FAIL,
+        expected=observation.expected,
+        observed=prediction.value,
+        residual=residual,
+        allowed=allowed,
+        normalized_residual=normalized,
+        unit=unit,
+    )
+
+
+@dataclass(frozen=True)
+class ValidationCampaign:
+    """What is to be evaluated, over which splits, against which dataset.
+
+    A campaign that wants the locked holdout must carry the release; asking for
+    ``LOCKED_HOLDOUT`` without one is refused at construction rather than
+    quietly producing an empty holdout result that reads like a clean run.
+    """
+
+    campaign_id: str
+    version: str
+    dataset: ReferenceDataset
+    splits: tuple[DatasetSplit, ...]
+    holdout_release: HoldoutRelease | None = None
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "campaign_id", text(self.campaign_id, label="campaign_id"))
+        object.__setattr__(self, "version", text(self.version, label="version"))
+        if not isinstance(self.dataset, ReferenceDataset):
+            raise CorpusError("a campaign requires a ReferenceDataset")
+        splits = tuple(sorted({DatasetSplit(item) for item in self.splits}, key=lambda i: i.value))
+        if not splits:
+            raise CorpusError("a campaign must name at least one dataset split")
+        object.__setattr__(self, "splits", splits)
+        if DatasetSplit.LOCKED_HOLDOUT in splits and self.holdout_release is None:
+            raise CorpusError(
+                "a campaign over the locked holdout requires a registered "
+                "HoldoutRelease; there is no unrecorded evaluation of it"
+            )
+        if self.holdout_release is not None:
+            if not isinstance(self.holdout_release, HoldoutRelease):
+                raise CorpusError("holdout_release must be a HoldoutRelease")
+            # Validates the digest binding as a side effect, at construction.
+            self.dataset.released_holdout_cases(self.holdout_release)
+        object.__setattr__(self, "description", str(self.description).strip())
+
+    def cases(self) -> tuple[ReferenceCase, ...]:
+        """Exactly the cases this campaign is permitted to see."""
+        selected: list[ReferenceCase] = []
+        for split in self.splits:
+            if split is DatasetSplit.CALIBRATION:
+                selected.extend(self.dataset.calibration_cases())
+            elif split is DatasetSplit.VALIDATION:
+                selected.extend(self.dataset.validation_cases())
+            else:
+                selected.extend(self.dataset.released_holdout_cases(self.holdout_release))
+        return tuple(sorted(selected))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": CAMPAIGN_SCHEMA,
+            "campaign_id": self.campaign_id,
+            "version": self.version,
+            "dataset": self.dataset.to_dict(),
+            "splits": [item.value for item in self.splits],
+            "holdout_release": (
+                None if self.holdout_release is None else self.holdout_release.to_dict()
+            ),
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationCampaign":
+        require_schema(payload, CAMPAIGN_SCHEMA)
+        release = payload.get("holdout_release")
+        return cls(
+            payload["campaign_id"],
+            payload["version"],
+            ReferenceDataset.from_dict(payload["dataset"]),
+            tuple(DatasetSplit(item) for item in payload["splits"]),
+            None if release is None else HoldoutRelease.from_dict(release),
+            payload.get("description", ""),
+        )
+
+
+@dataclass(frozen=True)
+class ValidationCampaignReport:
+    """What one campaign found, bound to the exact dataset it was run against."""
+
+    campaign_id: str
+    campaign_version: str
+    dataset_id: str
+    dataset_version: str
+    source_snapshot_sha256: str
+    normalized_dataset_sha256: str
+    splits: tuple[DatasetSplit, ...]
+    comparisons: tuple[ValidationComparison, ...]
+
+    def __post_init__(self) -> None:
+        comparisons = tuple(sorted(self.comparisons))
+        if any(not isinstance(item, ValidationComparison) for item in comparisons):
+            raise CorpusError("campaign report requires ValidationComparison records")
+        keys = [item.key for item in comparisons]
+        if len(keys) != len(set(keys)):
+            raise CorpusError("campaign report repeats a case_id/metric pair")
+        object.__setattr__(self, "comparisons", comparisons)
+        object.__setattr__(
+            self,
+            "splits",
+            tuple(sorted({DatasetSplit(i) for i in self.splits}, key=lambda i: i.value)),
+        )
+
+    @property
+    def counts(self) -> dict[str, int]:
+        result = {verdict.value: 0 for verdict in CaseVerdict}
+        for item in self.comparisons:
+            result[item.verdict.value] += 1
+        return result
+
+    @property
+    def pass_fraction(self) -> float | None:
+        """Over scored cases only. ``None`` when nothing was scorable.
+
+        Deliberately not "passes divided by cases": an unscored observation and
+        a correct refusal are neither successes nor failures, and folding them
+        into a percentage would let a dataset with no reviewed tolerances
+        report a respectable number.
+        """
+        scored = [item for item in self.comparisons if item.verdict.is_scored]
+        if not scored:
+            return None
+        return sum(item.verdict.is_empirical_support for item in scored) / len(scored)
+
+    @property
+    def refusal_accuracy(self) -> float | None:
+        """How often a refusal was the right call. A guardrail metric, not support.
+
+        Over refusals only: correct refusals divided by all refusals. ``None``
+        when nothing was refused, because a model that never declined has no
+        guardrail record -- which is not the same as a perfect one.
+
+        Kept rigorously apart from :attr:`pass_fraction`. A system can have
+        excellent refusal accuracy and no validated envelope at all: it would
+        mean it reliably knows when to stay quiet, and has not yet been shown
+        to be right about anything.
+        """
+        refusals = [item for item in self.comparisons if item.verdict.is_refusal]
+        if not refusals:
+            return None
+        return sum(item.verdict.is_guardrail_success for item in refusals) / len(refusals)
+
+    @property
+    def guardrail_counts(self) -> dict[str, int]:
+        """Correct against unexpected refusals, and the answers that should not have been."""
+        return {
+            "correct_refusals": sum(
+                item.verdict is CaseVerdict.CORRECT_REFUSAL for item in self.comparisons
+            ),
+            "unexpected_refusals": sum(
+                item.verdict is CaseVerdict.UNEXPECTED_REFUSAL for item in self.comparisons
+            ),
+            "answered_outside_applicability": sum(
+                item.verdict is CaseVerdict.OUTSIDE_APPLICABILITY
+                for item in self.comparisons
+            ),
+        }
+
+    def for_split(self, split: DatasetSplit) -> tuple[ValidationComparison, ...]:
+        wanted = DatasetSplit(split)
+        return tuple(item for item in self.comparisons if item.split is wanted)
+
+    def failures(self) -> tuple[ValidationComparison, ...]:
+        return tuple(item for item in self.comparisons if item.verdict is CaseVerdict.FAIL)
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                self.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode("utf-8")
+        ).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": CAMPAIGN_REPORT_SCHEMA,
+            "campaign_id": self.campaign_id,
+            "campaign_version": self.campaign_version,
+            "dataset_id": self.dataset_id,
+            "dataset_version": self.dataset_version,
+            "source_snapshot_sha256": self.source_snapshot_sha256,
+            "normalized_dataset_sha256": self.normalized_dataset_sha256,
+            "splits": [item.value for item in self.splits],
+            "comparisons": [item.to_dict() for item in self.comparisons],
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationCampaignReport":
+        require_schema(payload, CAMPAIGN_REPORT_SCHEMA)
+        return cls(
+            payload["campaign_id"],
+            payload["campaign_version"],
+            payload["dataset_id"],
+            payload["dataset_version"],
+            payload["source_snapshot_sha256"],
+            payload["normalized_dataset_sha256"],
+            tuple(DatasetSplit(i) for i in payload["splits"]),
+            tuple(ValidationComparison.from_dict(i) for i in payload["comparisons"]),
+        )
+
+
+def run_campaign(
+    campaign: ValidationCampaign,
+    predictions: Mapping[tuple[str, str], Prediction],
+) -> ValidationCampaignReport:
+    """Score one campaign. Core derives every verdict from the evidence.
+
+    A prediction offered for a case the campaign was not permitted to see is
+    refused rather than ignored: it is the signature of a path that read the
+    locked holdout.
+    """
+    cases = {case.case_id: case for case in campaign.cases()}
+    observations = campaign.dataset.observations_for(cases.values())
+    permitted = {item.key for item in observations}
+    offered = set(predictions)
+    trespass = sorted(key for key in offered - permitted if key[0] not in cases)
+    if trespass:
+        raise CorpusError(
+            f"predictions were offered for observations outside this campaign's "
+            f"splits: {trespass}"
+        )
+    comparisons = tuple(
+        compare_observation(cases[item.case_id], item, predictions.get(item.key))
+        for item in observations
+    )
+    dataset = campaign.dataset
+    return ValidationCampaignReport(
+        campaign_id=campaign.campaign_id,
+        campaign_version=campaign.version,
+        dataset_id=dataset.dataset_id,
+        dataset_version=dataset.version,
+        source_snapshot_sha256=dataset.snapshot.snapshot_sha256,
+        normalized_dataset_sha256=dataset.normalized_digest,
+        splits=campaign.splits,
+        comparisons=comparisons,
+    )
+
+
+__all__ = [
+    "CAMPAIGN_REPORT_SCHEMA",
+    "CAMPAIGN_SCHEMA",
+    "COMPARISON_SCHEMA",
+    "PREDICTION_SCHEMA",
+    "CaseVerdict",
+    "Prediction",
+    "PredictedValue",
+    "PredictionRefusal",
+    "RefusalKind",
+    "ValidationCampaign",
+    "ValidationCampaignReport",
+    "ValidationComparison",
+    "compare_observation",
+    "prediction_from_dict",
+    "run_campaign",
+]

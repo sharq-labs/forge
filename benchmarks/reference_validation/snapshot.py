@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Mapping
 from urllib.parse import urlparse
 
+from engcore.scientific.corpus import SourceSnapshot as CoreSnapshot
+
 from .contracts import ReferenceSourceSpec
 
 DEFAULT_MAX_BYTES = 256 * 1024 * 1024
@@ -31,6 +33,25 @@ class SnapshotManifest:
     sha256: str
     byte_length: int
     content_type: str
+
+    def core_snapshot(self) -> "CoreSnapshot":
+        """The Core corpus record for these bytes.
+
+        Acquisition happens here because the Scientific Core does not reach the
+        network. Identity does not: the provenance chain a trust decision hangs
+        off is one chain, and it is the Core one. The *resolved* URL is carried,
+        not the requested one -- a redirect is where the bytes actually came
+        from.
+        """
+        return CoreSnapshot(
+            source_id=self.source_id,
+            source_version=self.source_version,
+            snapshot_sha256=self.sha256,
+            snapshot_url=self.resolved_url,
+            byte_length=self.byte_length,
+            retrieved_at_utc=self.retrieved_at_utc,
+            content_type=self.content_type,
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
