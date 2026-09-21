@@ -23,6 +23,7 @@ from ..scientific.realizations.registry import RealizationRegistry
 from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.solvers.registry import SolverRegistry
 from ..scientific.units.quantity import Quantity
+from ..scenarios import ScenarioSpecification
 from .blueprint import BlueprintRegistry
 from .clarification import ClarificationQuestion
 from .verification import VerificationPlanningRegistry
@@ -35,7 +36,8 @@ PLANNING_GAP_SCHEMA = schema_string("scientific_planning_gap")
 FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
+GRAPH_PLAN_SCHEMA_V2 = schema_string("scientific_graph_plan", 2)
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 3)
 PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
 _TAG_V1 = "forge.scientific_planning_record/1"
 _TAG = "forge.scientific_planning_record/2"
@@ -471,6 +473,7 @@ class GraphPlan:
     execution_pack_version: str = ""
     execution_pack_digest: str = ""
     external_inputs: tuple[PlannedExternalInput, ...] = ()
+    scenario: ScenarioSpecification | None = None
 
     def __post_init__(self) -> None:
         for label in (
@@ -514,6 +517,22 @@ class GraphPlan:
             "external_inputs",
             tuple(sorted(external, key=lambda item: item.key)),
         )
+        if self.scenario is not None:
+            if not isinstance(self.scenario, ScenarioSpecification):
+                raise TypeError("graph plan scenario must be ScenarioSpecification or None")
+            if self.coupling_plan is None:
+                raise ValueError("graph plan scenario requires an executable coupling plan")
+            if (
+                self.scenario.start != self.coupling_plan.time.start
+                or self.scenario.end != self.coupling_plan.time.end
+            ):
+                raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
+            if self.scenario.requires_stateful_execution:
+                raise ValueError(
+                    "graph plan refuses scenario state, inputs, conditions, events, "
+                    "termination, or QoIs until the multiphysics runtime consumes "
+                    "and receipts those fields"
+                )
         for label in (
             "authority_pack_id",
             "authority_pack_version",
@@ -615,13 +634,14 @@ class GraphPlan:
             "external_inputs": [
                 item.to_dict() for item in self.external_inputs
             ],
+            "scenario": None if self.scenario is None else self.scenario.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
-        require_schema_any(
+        schema = require_schema_any(
             payload,
-            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA),
+            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2, GRAPH_PLAN_SCHEMA),
         )
         raw_plan = payload.get("coupling_plan")
         raw_estimate = payload.get("resource_estimate")
@@ -662,6 +682,11 @@ class GraphPlan:
             external_inputs=tuple(
                 PlannedExternalInput.from_dict(item)
                 for item in payload.get("external_inputs", ())
+            ),
+            scenario=(
+                None
+                if schema != GRAPH_PLAN_SCHEMA or payload.get("scenario") is None
+                else ScenarioSpecification.from_dict(payload["scenario"])
             ),
         )
 

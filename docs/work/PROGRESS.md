@@ -11,6 +11,11 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Completed in this line of work
 
+- Added immutable, unit-bearing, digestible generic scenario contracts with
+  strict timeline, state, interpolation and wire-shape validation.
+- Added additive GraphPlan v3 scenario binding. Authorized execution currently
+  accepts timing-only scenarios and fail-closed refuses every material
+  scenario field until runtime consumption and receipts are implemented.
 - Removed battery/electrical/thermal realization and solver imports from
   `planning.production`; enabled validated Domain Packs are now the sole
   production source for these artifacts, with existing fail-closed identity
@@ -36,6 +41,12 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-21 10:54 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
+result: PASS
+summary: 14 passed; scenario contracts round-trip, timing-only scenarios bind through authorized execution, and unsupported material scenario fields are refused
+commit: bec4ac58 (working tree changes)
 
 2026-09-21 10:35 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/planning/production.py; py -3 -m pytest --import-mode=importlib -q tests/test_multidomain_science_hardening.py tests/mcp/test_planning.py tests/mcp/test_intent.py; git diff --check; git status --short`

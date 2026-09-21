@@ -1,6 +1,7 @@
 import copy
 import ast
 from pathlib import Path
+from dataclasses import replace
 
 import pytest
 
@@ -32,6 +33,13 @@ from engcore.planning.production import production_planning_registries
 from engcore.scientific.certification_core import verify_certification_record
 from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.units.quantity import Quantity
+from engcore.scenarios import (
+    ScenarioSegment,
+    ScenarioSpecification,
+    TimeSample,
+    TimeSeriesInput,
+    InterpolationKind,
+)
 
 
 def _intent(*, omit=(), overrides=None):
@@ -169,6 +177,56 @@ def _plan(intent):
             }
         ),
     )
+
+
+def test_scenario_is_bound_to_graph_plan_and_authorized_execution():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    scenario = ScenarioSpecification(
+        "electrothermal.transient",
+        "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+
+    store = InMemoryBulkStore()
+    authorized = execute_authorized_graph_plan(
+        graph_plan,
+        run_id="scenario-bound-run",
+        compositions=production_composition_packs(),
+        executions=production_execution_packs(),
+        resolver=BulkDataResolver(store),
+        store=store,
+    )
+
+    restored = AuthorizedMultiphysicsRun.from_dict(authorized.to_dict())
+    assert restored.graph_plan.scenario == scenario
+    assert restored.graph_plan.scenario.digest == scenario.digest
+
+
+def test_graph_plan_refuses_scenario_fields_the_runtime_does_not_consume():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    start = graph_plan.coupling_plan.time.start
+    end = graph_plan.coupling_plan.time.end
+    scenario = ScenarioSpecification(
+        "unsupported.transient.input",
+        "1",
+        start,
+        end,
+        segments=(ScenarioSegment(
+            "load",
+            start,
+            end,
+            inputs=(TimeSeriesInput(
+                "source.power",
+                (TimeSample(start, Quantity(1, "W")), TimeSample(end, Quantity(2, "W"))),
+                InterpolationKind.LINEAR,
+            ),),
+        ),),
+    )
+
+    with pytest.raises(ValueError, match="until the multiphysics runtime consumes"):
+        replace(graph_plan, scenario=scenario)
 
 
 def test_feedback_public_flow_roundtrips_certifies_and_rejects_tampering():
