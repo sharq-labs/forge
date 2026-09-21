@@ -1,7 +1,19 @@
-"""Contracts for frozen external-reference datasets.
+"""An authoring shape for frozen external-reference datasets.
 
-A source record, a source uncertainty and a Forge acceptance tolerance are
-different scientific statements.  This module keeps them separate so missing
+This package is deliberately outside ``engcore.scientific``: it reaches the
+network, and the Scientific Core does not. What it is NOT, any more, is a
+second implementation of validation.
+
+The normalized identity, the split authority, the comparison and every verdict
+now live once, in :mod:`engcore.scientific.corpus`. What remains here is a flat
+point table that is pleasant to write a catalog in, plus
+:meth:`ReferenceDataset.promote`, which turns it into the Core corpus records
+that actually carry authority. ``normalized_digest`` delegates to the promoted
+dataset for the same reason: two digests for one dataset would be two
+identities, and a trust decision pinned to the wrong one is not pinned.
+
+A source record, a source uncertainty and a Forge acceptance tolerance remain
+three different scientific statements, kept apart here and in Core, so missing
 policy can never be silently interpreted as a passing validation case.
 """
 
@@ -14,6 +26,18 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Mapping
 from urllib.parse import urlparse
 
+from engcore.scientific.corpus import (
+    Applicability,
+    DatasetSplit,
+    ReferenceCase,
+    ReferenceCondition as CorpusCondition,
+    ReferenceDataset as CorpusDataset,
+    ReferenceObservation,
+    ReferenceSource,
+    SourceSnapshot,
+    ToleranceBasis,
+    ToleranceSpec as CorpusTolerance,
+)
 from engcore.scientific.oracles import (
     OracleEvidenceSet,
     OracleKind,
@@ -71,6 +95,20 @@ class ReferenceSourceSpec:
         object.__setattr__(self, "allowed_hosts", hosts)
         object.__setattr__(self, "oracle_kind", OracleKind(self.oracle_kind))
 
+    @property
+    def core_source(self) -> ReferenceSource:
+        """The Core corpus record this spec authors. One source, one identity."""
+        return ReferenceSource(
+            source_id=self.source_id,
+            authority=self.authority,
+            domain=self.domain,
+            source_version=self.source_version,
+            landing_url=self.landing_url,
+            allowed_hosts=self.allowed_hosts,
+            license_note=self.license_note,
+            scale_note=self.scale_note,
+        )
+
 
 @dataclass(frozen=True)
 class ReferenceCondition:
@@ -116,6 +154,13 @@ class ReferencePoint:
     acceptance_tolerance: ToleranceSpec | None = None
     tags: tuple[str, ...] = ()
     note: str = ""
+    #: Which role this point is permitted to play. Defaulting to VALIDATION is
+    #: the conservative choice: a point nobody classified must not be able to
+    #: influence a fit by omission.
+    split: DatasetSplit = DatasetSplit.VALIDATION
+    #: Evidence that is not independent of other evidence shares a group. An
+    #: empty group means "this point alone", which is only correct when it is.
+    independence_group: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "case_id", _text(self.case_id, label="case_id"))
@@ -145,6 +190,12 @@ class ReferencePoint:
         ):
             raise TypeError("acceptance_tolerance must be ToleranceSpec or None")
         object.__setattr__(self, "note", str(self.note))
+        object.__setattr__(self, "split", DatasetSplit(self.split))
+        object.__setattr__(
+            self,
+            "independence_group",
+            str(self.independence_group).strip() or self.case_id,
+        )
 
     @property
     def key(self) -> tuple[str, str]:
@@ -228,57 +279,89 @@ class ReferenceDataset:
         object.__setattr__(self, "points", points)
         object.__setattr__(self, "metadata", dict(self.metadata))
 
+    def promote(
+        self,
+        *,
+        retrieved_at_utc: str = "1970-01-01T00:00:00+00:00",
+        byte_length: int = 1,
+        content_type: str = "",
+    ) -> CorpusDataset:
+        """Turn this authored table into the Core corpus records that carry authority.
+
+        Every point becomes a case and an observation. Conditions travel as
+        unit-bearing coordinates so coverage and envelope reasoning can index
+        them, and the split and independence group travel with the case so the
+        Core split authority -- not this module -- decides what may influence a
+        fit.
+
+        Snapshot metadata that the catalog does not record (retrieval time,
+        byte length) is supplied by the caller. It is outside the normalized
+        digest, so a catalog promoted twice has one identity.
+        """
+        source = self.source.core_source
+        snapshot = SourceSnapshot(
+            source_id=source.source_id,
+            source_version=source.source_version,
+            snapshot_sha256=self.source_snapshot_sha256,
+            snapshot_url=self.source_snapshot_url,
+            byte_length=byte_length,
+            retrieved_at_utc=retrieved_at_utc,
+            content_type=content_type,
+        )
+
+        def tolerance(spec: "ToleranceSpec | None", basis: ToleranceBasis):
+            if spec is None:
+                return None
+            return CorpusTolerance(spec.quantity(), basis, spec.rationale)
+
+        cases: dict[str, ReferenceCase] = {}
+        observations: list[ReferenceObservation] = []
+        for point in self.points:
+            conditions = tuple(
+                CorpusCondition(item.name, item.quantity()) for item in point.conditions
+            )
+            existing = cases.get(point.case_id)
+            candidate = ReferenceCase(
+                case_id=point.case_id,
+                split=point.split,
+                independence_group=point.independence_group,
+                conditions=conditions,
+                applicability=Applicability.UNDECLARED,
+                tags=point.tags,
+            )
+            if existing is not None and existing != candidate:
+                raise ValueError(
+                    f"case {point.case_id!r} is described two different ways by its "
+                    f"points; one operating point is one case"
+                )
+            cases[point.case_id] = candidate
+            observations.append(
+                ReferenceObservation(
+                    case_id=point.case_id,
+                    metric=point.metric,
+                    expected=Quantity(point.expected_value, point.expected_unit),
+                    source_uncertainty=tolerance(
+                        point.source_uncertainty, ToleranceBasis.SOURCE_REPORTED
+                    ),
+                    acceptance_tolerance=tolerance(
+                        point.acceptance_tolerance, ToleranceBasis.REVIEWED_ACCEPTANCE
+                    ),
+                    note=point.note,
+                )
+            )
+        return CorpusDataset(
+            dataset_id=self.dataset_id,
+            version=self.version,
+            source=source,
+            snapshot=snapshot,
+            cases=tuple(cases.values()),
+            observations=tuple(observations),
+        )
+
     @property
     def normalized_digest(self) -> str:
-        payload = {
-            "dataset_id": self.dataset_id,
-            "version": self.version,
-            "source_id": self.source.source_id,
-            "source_version": self.source.source_version,
-            "source_snapshot_sha256": self.source_snapshot_sha256,
-            "source_snapshot_url": self.source_snapshot_url,
-            "points": [
-                {
-                    "case_id": point.case_id,
-                    "metric": point.metric,
-                    "expected_value": point.expected_value,
-                    "expected_unit": point.expected_unit,
-                    "conditions": [
-                        {"name": c.name, "value": c.value, "unit": c.unit}
-                        for c in point.conditions
-                    ],
-                    "source_uncertainty": (
-                        None
-                        if point.source_uncertainty is None
-                        else {
-                            "value": point.source_uncertainty.value,
-                            "unit": point.source_uncertainty.unit,
-                            "rationale": point.source_uncertainty.rationale,
-                        }
-                    ),
-                    "acceptance_tolerance": (
-                        None
-                        if point.acceptance_tolerance is None
-                        else {
-                            "value": point.acceptance_tolerance.value,
-                            "unit": point.acceptance_tolerance.unit,
-                            "rationale": point.acceptance_tolerance.rationale,
-                        }
-                    ),
-                    "tags": list(point.tags),
-                    "note": point.note,
-                }
-                for point in sorted(self.points, key=lambda item: item.key)
-            ],
-        }
-        encoded = json.dumps(
-            payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        """The Core corpus identity for this dataset. There is only one."""
+        return self.promote().normalized_digest
 
     @property
     def is_scored(self) -> bool:
