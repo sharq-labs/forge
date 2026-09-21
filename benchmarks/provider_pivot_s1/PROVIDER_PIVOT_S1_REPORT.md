@@ -243,7 +243,8 @@ assembly is proved instead where a native solve does produce one:
 
 ## 6. Declared approximations, and what each cost
 
-**One**, and it is measured rather than argued.
+**One that moves a number**, measured rather than argued, and one that does not
+and is listed anyway.
 
 The native cell's charge state is closed at `z = 1`, which is where all 52
 trajectories start; PyBaMM's equivalent-circuit model carries its SoC bounds as
@@ -265,6 +266,16 @@ of the margin moves
 | bias | −5.542 mV | −4.877 mV | +664.9 µV |
 
 against a 50 mV gate.
+
+**A second modelling choice, stated because a reader of `ecm_factory` will see
+it.** The measured OCV curve is padded with its own end values out to charge
+states 0 and 1 before being handed to PyBaMM, because CasADi requires a total
+interpolant and the alternative — letting it extrapolate — would invent a
+voltage the cells never showed. It is **inert for every number in this report**:
+the applicability window stops at the band floor, which is where the measured
+knots begin, so no scored sample ever reads the padded region. It is a
+declared approximation with a measured cost of exactly zero, and it is listed
+so that removing the window later does not silently make it load-bearing.
 
 ---
 
