@@ -167,6 +167,19 @@ Never convert NOT RUN into PASS based on code inspection.
 2026-09-21 11:20 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
 result: PASS
+summary: compileall passed, 138 tests passed, and diff whitespace validation passed for typed scheduled/reached synchronization receipts
+commit: f61a40a8 (working tree changes)
+
+Scientific review milestone: the first scheduled-event review returned CHANGES
+REQUIRED because requested controls were stored under `final_outputs`, where
+they could be mistaken for calculated results. The corrected design uses
+dedicated typed requested/reached synchronization records, exact boundary
+indices and the authorized scenario digest; the read-only reviewer then
+returned PASS. Neither review executed tests or constitutes validation.
+
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
 summary: compileall passed, 133 tests passed, and diff whitespace validation passed for the first corrected initial-state implementation
 commit: 374c709f (working tree changes)
 

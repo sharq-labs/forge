@@ -24,12 +24,14 @@ from ...scientific.multiphysics import (
     PhysicsGraph,
     PortDirection,
     PortRef,
+    ReachedScheduledEvent,
+    ScheduledEventRecord,
     TransferMeasure,
     WindowOutcome,
 )
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
-from ...scenarios import InterpolationKind, TimeSeriesInput
+from ...scenarios import InterpolationKind, ScenarioEvent, TimeSeriesInput
 from .convergence import ResidualCalculator
 from .error import CouplingErrorBudget
 from .factory import ParticipantFactoryRegistry
@@ -135,7 +137,11 @@ class MultiphysicsRuntime:
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
         """Replay a recorded graph using exact registered execution factories."""
-        if record.final_outputs.get("_time_varying_external_inputs") or record.initial_state_receipts:
+        if (
+            record.final_outputs.get("_time_varying_external_inputs")
+            or record.scheduled_events
+            or record.initial_state_receipts
+        ):
             raise InvalidScientificProblem(
                 "scenario-driven replay requires its authorized scenario"
             )
@@ -196,7 +202,11 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
-        if record.final_outputs.get("_time_varying_external_inputs") or record.initial_state_receipts:
+        if (
+            record.final_outputs.get("_time_varying_external_inputs")
+            or record.scheduled_events
+            or record.initial_state_receipts
+        ):
             raise InvalidScientificProblem(
                 "scenario-driven replay requires its authorized scenario"
             )
@@ -1107,6 +1117,8 @@ class MultiphysicsRuntime:
         initial_coupling_uncertainty: Mapping[str, Uncertainty] = {},
         external_input_series: Mapping[PortRef, TimeSeriesInput] | None = None,
         initial_state: Mapping[str, Mapping[str, InitialStateValue]] | None = None,
+        scheduled_events: tuple[ScenarioEvent, ...] = (),
+        scenario_digest: str = "",
     ) -> MultiphysicsRunRecord:
         run_id = str(run_id).strip()
         if not run_id:
@@ -1120,6 +1132,24 @@ class MultiphysicsRuntime:
                 f"{sorted(unknown_state_owners)}"
             )
 
+        events = tuple(sorted(scheduled_events))
+        if any(not isinstance(item, ScenarioEvent) for item in events):
+            raise InvalidScientificProblem(
+                "scheduled events must contain ScenarioEvent records"
+            )
+        if len({item.event_id for item in events}) != len(events):
+            raise InvalidScientificProblem("scheduled event ids must be unique")
+        scenario_digest = str(scenario_digest).strip().lower()
+        if events and (
+            len(scenario_digest) != 64
+            or any(char not in "0123456789abcdef" for char in scenario_digest)
+        ):
+            raise InvalidScientificProblem(
+                "scheduled events require the authorized scenario sha256 digest"
+            )
+        if not events and scenario_digest:
+            raise InvalidScientificProblem("scenario digest requires scheduled events")
+
         series = {} if external_input_series is None else dict(external_input_series)
         if set(series) - set(external_inputs):
             raise InvalidScientificProblem(
@@ -1128,6 +1158,11 @@ class MultiphysicsRuntime:
         start_seconds = self._seconds(self.plan.time.start)
         end_seconds = self._seconds(self.plan.time.end)
         width_seconds = self._seconds(self.plan.time.coupling_window)
+        event_seconds = tuple(self._seconds(item.instant) for item in events)
+        if any(item < start_seconds or item > end_seconds for item in event_seconds):
+            raise InvalidScientificProblem(
+                "scheduled event lies outside the coupling-plan horizon"
+            )
         for ref, item in series.items():
             if not isinstance(item, TimeSeriesInput):
                 raise InvalidScientificProblem("external input series must contain TimeSeriesInput records")
@@ -1208,19 +1243,28 @@ class MultiphysicsRuntime:
                         f"{self.plan.time.max_windows}"
                     )
 
-                target = min(end_time, current_time + width)
+                next_events = tuple(
+                    item for item in event_seconds
+                    if item > current_time + 1e-15
+                )
+                target = min(
+                    end_time,
+                    current_time + width,
+                    *(next_events[:1]),
+                )
                 instant = Quantity(current_time, "second")
                 window_values = values_at(instant)
                 external, external_uq = self._external_by_participant(
                     window_values, external_uncertainty
                 )
-                scenario_input_receipt.append({
-                    "instant": instant.to_dict(),
-                    "values": {
-                        ref.key: window_values[ref].to_dict()
-                        for ref in sorted(series, key=lambda item: item.key)
-                    },
-                })
+                if series:
+                    scenario_input_receipt.append({
+                        "instant": instant.to_dict(),
+                        "values": {
+                            ref.key: window_values[ref].to_dict()
+                            for ref in sorted(series, key=lambda item: item.key)
+                        },
+                    })
                 (
                     window,
                     edge_values,
@@ -1281,6 +1325,25 @@ class MultiphysicsRuntime:
         final_outputs["_conservation"] = list(last_conservation)
         final_outputs["_coupling_error"] = error_budget.to_dict()
         final_outputs["_time_varying_external_inputs"] = scenario_input_receipt
+        scheduled_records = tuple(
+            ScheduledEventRecord(item.event_id, item.instant) for item in events
+        )
+        reached_records: list[ReachedScheduledEvent] = []
+        boundaries = ((0, start),) + tuple(
+            (window.index + 1, window.end) for window in windows
+        )
+        for item in scheduled_records:
+            match = next(
+                (
+                    boundary_index for boundary_index, instant in boundaries
+                    if abs(self._seconds(instant) - self._seconds(item.instant)) <= 1e-12
+                ),
+                None,
+            )
+            if match is not None:
+                reached_records.append(
+                    ReachedScheduledEvent(item.event_id, item.instant, match)
+                )
 
         return MultiphysicsRunRecord(
             run_id=run_id,
@@ -1294,4 +1357,7 @@ class MultiphysicsRuntime:
             final_outputs=final_outputs,
             coupling_error_bound=error_budget.relative_bound,
             initial_state_receipts=initial_state_receipts,
+            scheduled_events=scheduled_records,
+            reached_scheduled_events=tuple(reached_records),
+            scenario_digest=scenario_digest,
         )

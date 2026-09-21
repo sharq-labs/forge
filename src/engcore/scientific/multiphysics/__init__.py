@@ -86,8 +86,9 @@ from .report import (
 from .state import (
     CHECKPOINT_SCHEMA, INITIAL_STATE_DEFINITION_SCHEMA,
     INITIAL_STATE_RECEIPT_SCHEMA, INITIAL_STATE_VALUE_SCHEMA,
+    REACHED_EVENT_SCHEMA, SCHEDULED_EVENT_SCHEMA,
     CheckpointRecord, InitialStateDefinition, InitialStateReceipt,
-    InitialStateValue,
+    InitialStateValue, ReachedScheduledEvent, ScheduledEventRecord,
 )
 from .value import (
     CouplingValue,
@@ -113,6 +114,8 @@ __all__ = [
     "INITIAL_STATE_DEFINITION_SCHEMA",
     "INITIAL_STATE_RECEIPT_SCHEMA",
     "INITIAL_STATE_VALUE_SCHEMA",
+    "REACHED_EVENT_SCHEMA",
+    "SCHEDULED_EVENT_SCHEMA",
     "FRAME_TRANSFORM_SCHEMA",
     "GRAPH_INTERFACE_SCHEMA",
     "ITERATION_SCHEMA",
@@ -155,6 +158,8 @@ __all__ = [
     "InitialStateDefinition",
     "InitialStateReceipt",
     "InitialStateValue",
+    "ReachedScheduledEvent",
+    "ScheduledEventRecord",
     "MappingDiagnostics",
     "MultiphysicsRunRecord",
     "ParticipantModelRef",

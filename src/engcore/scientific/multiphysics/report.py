@@ -14,7 +14,7 @@ from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .graph import PhysicsGraph
 from .plan import CouplingPlan
-from .state import InitialStateReceipt
+from .state import InitialStateReceipt, ReachedScheduledEvent, ScheduledEventRecord
 from .ports import PortDirection, PortRef
 from .value import (
     CouplingValue,
@@ -507,6 +507,9 @@ class MultiphysicsRunRecord:
     final_outputs: Mapping[str, Any]
     coupling_error_bound: float | None = None
     initial_state_receipts: tuple[InitialStateReceipt, ...] = ()
+    scheduled_events: tuple[ScheduledEventRecord, ...] = ()
+    reached_scheduled_events: tuple[ReachedScheduledEvent, ...] = ()
+    scenario_digest: str = ""
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -649,6 +652,31 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem("initial state receipt participant/instant differs from run")
         object.__setattr__(self, "initial_state_receipts", tuple(sorted(receipts, key=lambda item: item.participant_id)))
 
+        scheduled = tuple(self.scheduled_events)
+        reached = tuple(self.reached_scheduled_events)
+        if any(not isinstance(item, ScheduledEventRecord) for item in scheduled):
+            raise InvalidScientificProblem("scheduled_events must contain ScheduledEventRecord records")
+        if any(not isinstance(item, ReachedScheduledEvent) for item in reached):
+            raise InvalidScientificProblem("reached_scheduled_events must contain ReachedScheduledEvent records")
+        scheduled_keys = {(item.event_id, item.instant) for item in scheduled}
+        reached_keys = {(item.event_id, item.instant) for item in reached}
+        if len(scheduled_keys) != len(scheduled) or len(reached_keys) != len(reached):
+            raise InvalidScientificProblem("scheduled event ids/instants must be unique")
+        if not reached_keys.issubset(scheduled_keys):
+            raise InvalidScientificProblem("reached scheduled events must come from the requested schedule")
+        boundaries = {0: started, **{window.index + 1: window.end for window in windows}}
+        if any(item.boundary_index not in boundaries or not _same_time(item.instant, boundaries[item.boundary_index]) for item in reached):
+            raise InvalidScientificProblem("reached scheduled event does not match its run boundary")
+        digest = str(self.scenario_digest).strip().lower()
+        if scheduled:
+            if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+                raise InvalidScientificProblem("scheduled events require the authorized scenario sha256 digest")
+        elif digest:
+            raise InvalidScientificProblem("scenario_digest requires scheduled events")
+        object.__setattr__(self, "scheduled_events", tuple(sorted(scheduled)))
+        object.__setattr__(self, "reached_scheduled_events", tuple(sorted(reached)))
+        object.__setattr__(self, "scenario_digest", digest)
+
         object.__setattr__(self, "run_id", run_id)
         object.__setattr__(self, "started_at", started)
         object.__setattr__(self, "ended_at", ended)
@@ -704,6 +732,9 @@ class MultiphysicsRunRecord:
             "final_outputs": dict(self.final_outputs),
             "coupling_error_bound": self.coupling_error_bound,
             "initial_state_receipts": [item.to_dict() for item in self.initial_state_receipts],
+            "scheduled_events": [item.to_dict() for item in self.scheduled_events],
+            "reached_scheduled_events": [item.to_dict() for item in self.reached_scheduled_events],
+            "scenario_digest": self.scenario_digest,
         }
 
     @classmethod
@@ -739,6 +770,19 @@ class MultiphysicsRunRecord:
                     for item in payload.get("initial_state_receipts", ())
                 )
             ),
+            scheduled_events=(
+                () if schema == RUN_SCHEMA_V1 else tuple(
+                    ScheduledEventRecord.from_dict(item)
+                    for item in payload.get("scheduled_events", ())
+                )
+            ),
+            reached_scheduled_events=(
+                () if schema == RUN_SCHEMA_V1 else tuple(
+                    ReachedScheduledEvent.from_dict(item)
+                    for item in payload.get("reached_scheduled_events", ())
+                )
+            ),
+            scenario_digest="" if schema == RUN_SCHEMA_V1 else payload.get("scenario_digest", ""),
         )
         derived = {
             "graph_id": made.graph_id,

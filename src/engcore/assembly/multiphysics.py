@@ -228,6 +228,24 @@ class AuthorizedMultiphysicsRun:
             raise TypeError(
                 "authorized run requires MultiphysicsRunRecord"
             )
+        scenario = self.graph_plan.scenario
+        expected_events = (
+            () if scenario is None else tuple(
+                (item.event_id, item.instant) for item in scenario.events
+            )
+        )
+        recorded_events = tuple(
+            (item.event_id, item.instant) for item in self.run.scheduled_events
+        )
+        if recorded_events != expected_events:
+            raise InvalidScientificProblem(
+                "authorized run scheduled events differ from its GraphPlan scenario"
+            )
+        expected_digest = "" if not expected_events else scenario.digest
+        if self.run.scenario_digest != expected_digest:
+            raise InvalidScientificProblem(
+                "authorized run event schedule is not bound to its scenario digest"
+            )
         validations = tuple(self.system_validation)
         if any(
             not isinstance(item, AuthorizedSystemValidation)
@@ -788,6 +806,14 @@ def execute_authorized_graph_plan(
                 }
                 for owner in sorted({item.owner_id for item in graph_plan.scenario.state_variables})
             }
+        ),
+        scheduled_events=(
+            () if graph_plan.scenario is None else graph_plan.scenario.events
+        ),
+        scenario_digest=(
+            ""
+            if graph_plan.scenario is None or not graph_plan.scenario.events
+            else graph_plan.scenario.digest
         ),
     )
 

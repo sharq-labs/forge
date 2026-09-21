@@ -244,6 +244,13 @@ class OperatingCondition(NamedQuantity):
 
 @dataclass(frozen=True, order=True)
 class ScenarioEvent:
+    """A deterministic synchronization instant in the scenario horizon.
+
+    It does not claim a physical trigger or prescribe an action. Execution
+    must place an exact window boundary at the instant and receipt the
+    schedule.
+    """
+
     event_id: str
     instant: Quantity
 

@@ -15,6 +15,62 @@ CHECKPOINT_SCHEMA = schema_string("multiphysics_checkpoint")
 INITIAL_STATE_DEFINITION_SCHEMA = schema_string("multiphysics_initial_state_definition")
 INITIAL_STATE_VALUE_SCHEMA = schema_string("multiphysics_initial_state_value")
 INITIAL_STATE_RECEIPT_SCHEMA = schema_string("multiphysics_initial_state_receipt")
+SCHEDULED_EVENT_SCHEMA = schema_string("multiphysics_scheduled_event")
+REACHED_EVENT_SCHEMA = schema_string("multiphysics_reached_scheduled_event")
+
+
+@dataclass(frozen=True, order=True)
+class ScheduledEventRecord:
+    """Requested synchronization metadata, never a physical observation."""
+
+    event_id: str
+    instant: Quantity
+
+    def __post_init__(self) -> None:
+        event_id = str(self.event_id).strip()
+        if not event_id:
+            raise InvalidScientificProblem("scheduled event requires event_id")
+        if not isinstance(self.instant, Quantity) or dimensionality(self.instant.units) != dimensionality("second"):
+            raise InvalidScientificProblem("scheduled event instant must be time")
+        object.__setattr__(self, "event_id", event_id)
+        object.__setattr__(self, "instant", self.instant.to("second"))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": SCHEDULED_EVENT_SCHEMA, "classification": "scheduled_synchronization_marker", "event_id": self.event_id, "instant": self.instant.to_dict()}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ScheduledEventRecord":
+        require_schema(payload, SCHEDULED_EVENT_SCHEMA)
+        if payload.get("classification") != "scheduled_synchronization_marker":
+            raise InvalidScientificProblem("scheduled event classification mismatch")
+        return cls(payload["event_id"], Quantity.from_dict(payload["instant"]))
+
+
+@dataclass(frozen=True, order=True)
+class ReachedScheduledEvent:
+    """Execution receipt for a synchronization boundary actually reached."""
+
+    event_id: str
+    instant: Quantity
+    boundary_index: int
+
+    def __post_init__(self) -> None:
+        scheduled = ScheduledEventRecord(self.event_id, self.instant)
+        if isinstance(self.boundary_index, bool) or int(self.boundary_index) != self.boundary_index or self.boundary_index < 0:
+            raise InvalidScientificProblem("reached scheduled event boundary_index must be a non-negative integer")
+        object.__setattr__(self, "event_id", scheduled.event_id)
+        object.__setattr__(self, "instant", scheduled.instant)
+        object.__setattr__(self, "boundary_index", int(self.boundary_index))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": REACHED_EVENT_SCHEMA, "classification": "reached_synchronization_boundary", "event_id": self.event_id, "instant": self.instant.to_dict(), "boundary_index": self.boundary_index}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ReachedScheduledEvent":
+        require_schema(payload, REACHED_EVENT_SCHEMA)
+        if payload.get("classification") != "reached_synchronization_boundary":
+            raise InvalidScientificProblem("reached event classification mismatch")
+        return cls(payload["event_id"], Quantity.from_dict(payload["instant"]), payload["boundary_index"])
 
 
 @dataclass(frozen=True, order=True)

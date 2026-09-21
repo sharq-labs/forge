@@ -39,6 +39,7 @@ from engcore.execution.multiphysics import (
 )
 from engcore.scenarios import (
     ScenarioSegment,
+    ScenarioEvent,
     ScenarioSpecification,
     TimeSample,
     TimeSeriesInput,
@@ -209,6 +210,34 @@ def test_scenario_is_bound_to_graph_plan_and_authorized_execution():
     restored = AuthorizedMultiphysicsRun.from_dict(authorized.to_dict())
     assert restored.graph_plan.scenario == scenario
     assert restored.graph_plan.scenario.digest == scenario.digest
+
+
+def test_authorized_scheduled_event_is_consumed_as_window_boundary():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    event = ScenarioEvent("half-window-marker", Quantity(0.5, "s"))
+    scenario = ScenarioSpecification(
+        "electrothermal.scheduled-event", "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+        events=(event,),
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+    store = InMemoryBulkStore()
+
+    authorized = execute_authorized_graph_plan(
+        graph_plan,
+        run_id="scheduled-event-run",
+        compositions=production_composition_packs(),
+        executions=production_execution_packs(),
+        resolver=BulkDataResolver(store),
+        store=store,
+    )
+
+    assert authorized.run.windows[0].end == Quantity(0.5, "s")
+    assert authorized.run.scheduled_events[0].event_id == event.event_id
+    assert authorized.run.reached_scheduled_events[0].boundary_index == 1
+    assert authorized.run.scenario_digest == scenario.digest
+    assert "_scheduled_events" not in authorized.run.final_outputs
 
 
 def test_graph_plan_refuses_scenario_fields_the_runtime_does_not_consume():

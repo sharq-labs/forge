@@ -530,7 +530,11 @@ class GraphPlan:
                 or self.scenario.end != self.coupling_plan.time.end
             ):
                 raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
-            unsupported = tuple(item for item in self.scenario.unsupported_runtime_features if item != "state")
+            supported = {"state", "events"}
+            unsupported = tuple(
+                item for item in self.scenario.unsupported_runtime_features
+                if item not in supported
+            )
             if unsupported:
                 raise ValueError(
                     "graph plan refuses unsupported scenario runtime features: "

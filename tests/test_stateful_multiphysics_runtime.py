@@ -16,6 +16,7 @@ from engcore.scientific.multiphysics import (
 )
 from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from engcore.scientific.units.quantity import Quantity
+from engcore.scenarios import ScenarioEvent
 
 
 def _runtime(*, acknowledge=310.0):
@@ -119,3 +120,28 @@ def test_initial_state_uncertainty_must_match_value_dimension():
     )
     with pytest.raises(UnitCompatibilityError, match="incompatible units"):
         InitialStateValue("temperature", Quantity(310, "K"), uncertainty)
+
+
+def test_scheduled_event_creates_exact_window_boundary_and_receipt():
+    event = ScenarioEvent("switch", Quantity(0.5, "s"))
+    run = _runtime().run(
+        "scheduled-event",
+        external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+        scheduled_events=(event,),
+        scenario_digest="a" * 64,
+    )
+
+    assert [window.end.magnitude_in("s") for window in run.windows] == [0.5, 1.0]
+    assert run.scheduled_events[0].event_id == event.event_id
+    assert run.reached_scheduled_events[0].boundary_index == 1
+    assert "_scheduled_events" not in run.final_outputs
+
+
+def test_scheduled_event_outside_runtime_horizon_is_refused():
+    with pytest.raises(InvalidScientificProblem, match="outside the coupling-plan horizon"):
+        _runtime().run(
+            "bad-scheduled-event",
+            external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+            scheduled_events=(ScenarioEvent("late", Quantity(2, "s")),),
+            scenario_digest="a" * 64,
+        )
