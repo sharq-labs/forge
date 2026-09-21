@@ -1,0 +1,331 @@
+{
+ "schema": "battery_thermal_flagship_s3_calibration/2",
+ "campaign_id": "battery.electrothermal.flagship.s3",
+ "campaign_version": "3",
+ "split": "calibration",
+ "parameter_unit": "one experiment group",
+ "applicability_charge_state_floor": 0.2737,
+ "objective": {
+  "objective_id": "battery_electrothermal.weighted_least_squares",
+  "version": "2",
+  "description": "sum of squared residuals on measured terminal voltage and measured cell temperature at every instant at or above the declared charge-state floor, each divided by the reviewed acceptance tolerance for its metric; an instant the march could not reach takes a penalty of 1.0 on the same scale",
+  "voltage_scale_v": 0.05,
+  "temperature_scale_k": 3.0
+ },
+ "groups": [
+  {
+   "group": "33_34_36",
+   "trajectories": [
+    "B0033.d0003",
+    "B0033.d0008",
+    "B0033.d0016",
+    "B0033.d0024",
+    "B0033.d0032",
+    "B0033.d0040"
+   ],
+   "cells": [
+    "B0033"
+   ],
+   "temperature_admitted_for": [
+    "B0033"
+   ],
+   "claimed_samples": 957,
+   "fitted": {
+    "ohmic_resistance_reference": 0.16397400222290814,
+    "ohmic_activation_energy": -988.0053053956007,
+    "polarization_resistance_reference": 0.028452266505582698,
+    "polarization_activation_energy": -5503.061114728253,
+    "polarization_capacitance": 2997.1137203892845,
+    "thermal_capacitance": 97.47379460082969,
+    "thermal_conductance": 0.09438029581397003
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.006146198733404135,
+    "ohmic_activation_energy": 1517.7975910018517,
+    "polarization_resistance_reference": 0.0059566530153295225,
+    "polarization_activation_energy": 8576.295440354153,
+    "polarization_capacitance": 1550.9020773933998,
+    "thermal_capacitance": 2.201705436998877,
+    "thermal_conductance": 0.0025732637779757703
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "unidentified",
+    "polarization_resistance_reference": "weak",
+    "polarization_activation_energy": "unidentified",
+    "polarization_capacitance": "unidentified",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "at_declared_bound": [],
+   "objective_value": 2536.4123421834015,
+   "residuals": 1914,
+   "reduced_objective": 1.330053666588045,
+   "optimizer": {
+    "method": "trf",
+    "status": 3,
+    "message": "`xtol` termination condition is satisfied.",
+    "function_evaluations": 41,
+    "wall_seconds": 0.8699781000614166,
+    "initial_point": {
+     "ohmic_resistance_reference": 0.08,
+     "ohmic_activation_energy": 20000.0,
+     "polarization_resistance_reference": 0.04,
+     "polarization_activation_energy": 25000.0,
+     "polarization_capacitance": 2000.0,
+     "thermal_capacitance": 40.0,
+     "thermal_conductance": 0.25
+    }
+   },
+   "normal_matrix_condition_number": 312177601982904.9,
+   "residual_variance": 2.66010733317609,
+   "produces_a_claim": true,
+   "why_no_claim": ""
+  },
+  {
+   "group": "38_39_40",
+   "trajectories": [
+    "B0038.d0002",
+    "B0038.d0008",
+    "B0038.d0012"
+   ],
+   "cells": [
+    "B0038"
+   ],
+   "temperature_admitted_for": [
+    "B0038"
+   ],
+   "claimed_samples": 434,
+   "fitted": {
+    "ohmic_resistance_reference": 0.18944605689140978,
+    "ohmic_activation_energy": -4773.482695716709,
+    "polarization_resistance_reference": 0.016311999338977246,
+    "polarization_activation_energy": -39999.99999999999,
+    "polarization_capacitance": 1745.75696087124,
+    "thermal_capacitance": 99.94726735096029,
+    "thermal_conductance": 0.1106742318816083
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.008015965493815816,
+    "ohmic_activation_energy": 1474.2549267021648,
+    "polarization_resistance_reference": 0.007863398691823514,
+    "polarization_activation_energy": 14195.5095313681,
+    "polarization_capacitance": 783.2074902486995,
+    "thermal_capacitance": 5.51696705235824,
+    "thermal_conductance": 0.006447322547152316
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "weak",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "at_declared_bound": [
+    "polarization_activation_energy"
+   ],
+   "objective_value": 1771.0592409937508,
+   "residuals": 868,
+   "reduced_objective": 2.056979373976482,
+   "optimizer": {
+    "method": "trf",
+    "status": 2,
+    "message": "`ftol` termination condition is satisfied.",
+    "function_evaluations": 31,
+    "wall_seconds": 0.17268409999087453,
+    "initial_point": {
+     "ohmic_resistance_reference": 0.08,
+     "ohmic_activation_energy": 20000.0,
+     "polarization_resistance_reference": 0.04,
+     "polarization_activation_energy": 25000.0,
+     "polarization_capacitance": 2000.0,
+     "thermal_capacitance": 40.0,
+     "thermal_conductance": 0.25
+    }
+   },
+   "normal_matrix_condition_number": 918906946116485.6,
+   "residual_variance": 4.113958747952964,
+   "produces_a_claim": false,
+   "why_no_claim": "this experiment group has no validation or locked-holdout cell, so its parameter set is never applied to independent evidence and supports no flagship claim"
+  },
+  {
+   "group": "41_42_43_44",
+   "trajectories": [
+    "B0042.d0001",
+    "B0042.d0008",
+    "B0042.d0016",
+    "B0042.d0024",
+    "B0042.d0032",
+    "B0042.d0040"
+   ],
+   "cells": [
+    "B0042"
+   ],
+   "temperature_admitted_for": [
+    "B0042"
+   ],
+   "claimed_samples": 1516,
+   "fitted": {
+    "ohmic_resistance_reference": 0.10866680734033375,
+    "ohmic_activation_energy": 12495.02142753754,
+    "polarization_resistance_reference": 0.05932858593899781,
+    "polarization_activation_energy": -31558.36110779673,
+    "polarization_capacitance": 722.7058771892729,
+    "thermal_capacitance": 69.37400548533252,
+    "thermal_conductance": 0.05889439878015797
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.005508924526178266,
+    "ohmic_activation_energy": 5806.268213277042,
+    "polarization_resistance_reference": 0.005500657504728733,
+    "polarization_activation_energy": 6006.214837146447,
+    "polarization_capacitance": 159.04045540839368,
+    "thermal_capacitance": 1.2282156903217447,
+    "thermal_conductance": 0.0007820475271945542
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "identified",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "at_declared_bound": [],
+   "objective_value": 204.72453376931855,
+   "residuals": 3032,
+   "reduced_objective": 0.06767753182456812,
+   "optimizer": {
+    "method": "trf",
+    "status": 2,
+    "message": "`ftol` termination condition is satisfied.",
+    "function_evaluations": 40,
+    "wall_seconds": 1.025630500051193,
+    "initial_point": {
+     "ohmic_resistance_reference": 0.08,
+     "ohmic_activation_energy": 20000.0,
+     "polarization_resistance_reference": 0.04,
+     "polarization_activation_energy": 25000.0,
+     "polarization_capacitance": 2000.0,
+     "thermal_capacitance": 40.0,
+     "thermal_conductance": 0.25
+    }
+   },
+   "normal_matrix_condition_number": 3494846364938157.0,
+   "residual_variance": 0.13535506364913624,
+   "produces_a_claim": true,
+   "why_no_claim": ""
+  },
+  {
+   "group": "FY08Q4",
+   "trajectories": [
+    "B0005.d0001",
+    "B0005.d0008",
+    "B0005.d0016",
+    "B0005.d0024",
+    "B0005.d0032",
+    "B0005.d0040",
+    "B0018.d0001",
+    "B0018.d0008",
+    "B0018.d0016",
+    "B0018.d0024",
+    "B0018.d0032",
+    "B0018.d0040"
+   ],
+   "cells": [
+    "B0005",
+    "B0018"
+   ],
+   "temperature_admitted_for": [
+    "B0005",
+    "B0018"
+   ],
+   "claimed_samples": 2645,
+   "fitted": {
+    "ohmic_resistance_reference": 0.11105305436302469,
+    "ohmic_activation_energy": 57200.764174054486,
+    "polarization_resistance_reference": 0.23784470197119287,
+    "polarization_activation_energy": 79999.99999999999,
+    "polarization_capacitance": 12944.686943699286,
+    "thermal_capacitance": 59.06874700792473,
+    "thermal_conductance": 0.05232767034404728
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.00668278921791531,
+    "ohmic_activation_energy": 33564.73295340756,
+    "polarization_resistance_reference": 0.19219839789161736,
+    "polarization_activation_energy": 91001.4396564763,
+    "polarization_capacitance": 6370.775894518442,
+    "thermal_capacitance": 3.752422265823846,
+    "thermal_conductance": 0.0027671676160169294
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "unidentified",
+    "polarization_resistance_reference": "unidentified",
+    "polarization_activation_energy": "unidentified",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "at_declared_bound": [
+    "polarization_activation_energy"
+   ],
+   "objective_value": 2098.823123280908,
+   "residuals": 5290,
+   "reduced_objective": 0.39727865290193226,
+   "optimizer": {
+    "method": "trf",
+    "status": 2,
+    "message": "`ftol` termination condition is satisfied.",
+    "function_evaluations": 33,
+    "wall_seconds": 0.5008402999956161,
+    "initial_point": {
+     "ohmic_resistance_reference": 0.08,
+     "ohmic_activation_energy": 20000.0,
+     "polarization_resistance_reference": 0.04,
+     "polarization_activation_energy": 25000.0,
+     "polarization_capacitance": 2000.0,
+     "thermal_capacitance": 40.0,
+     "thermal_conductance": 0.25
+    }
+   },
+   "normal_matrix_condition_number": 5452074207005716.0,
+   "residual_variance": 0.7945573058038645,
+   "produces_a_claim": true,
+   "why_no_claim": ""
+  }
+ ],
+ "identifiability_rule": "standard error under a tenth of the value is identified, under a half is weak, above is unidentified; no diagnostic at all is unknown",
+ "fixed": {
+  "coulombic_efficiency": {
+   "value": 1.0,
+   "unit": "dimensionless",
+   "why": "the flagship marches discharge and rest only; a charge efficiency below one is a claim about charge acceptance that this campaign produces no evidence for"
+  },
+  "reference_temperature": {
+   "value": 298.15,
+   "unit": "kelvin",
+   "why": "the temperature the Arrhenius reference values are defined at"
+  },
+  "initial_state_of_charge": {
+   "value": 1.0,
+   "unit": "dimensionless",
+   "why": "every selected trajectory begins after a CC-CV charge to 4.2 V with a 20 mA cutoff, which is the protocol's definition of full. This is a known initial condition, not a measurement of the discharge being predicted"
+  },
+  "initial_polarization_voltage": {
+   "value": 0.0,
+   "unit": "volt",
+   "why": "the cell rests between the charge and the discharge"
+  },
+  "charge_state_basis": {
+   "value": 2.0,
+   "unit": "ampere_hour",
+   "why": "the manufacturer's rating. The charge state is z = 1 - q / 2 Ah with q the measured charge removed, so no fitted quantity defines the axis the open-circuit voltage authority is a function of"
+  }
+ },
+ "what_this_is_not": "not a promotion. This record changes no production authority; the flagship run is given these values as external inputs and says so in its own provenance"
+}

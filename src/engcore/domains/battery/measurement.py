@@ -34,7 +34,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 import math
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from ...scientific.corpus.dataset import (
     Applicability,
@@ -368,12 +368,23 @@ def trajectory_cases(
     stride: int = 1,
     skip_initial: bool = True,
     metrics: Sequence[MetricPolicy] = (),
+    per_sample_applicability: (
+        Callable[[MeasuredTrajectory, int, Mapping[str, Quantity]], Applicability]
+        | None
+    ) = None,
 ) -> tuple[tuple[ReferenceCase, ...], tuple[ReferenceObservation, ...]]:
     """Normalize one trajectory into cases and observations.
 
     One case per retained sample instant, one observation per declared metric
     the trajectory actually measured. A metric policy for a channel the
     trajectory does not carry produces no observation and no silent zero.
+
+    ``per_sample_applicability`` lets the caller decide applicability instant by
+    instant rather than trajectory by trajectory -- a model whose declared
+    domain is bounded in a coordinate that moves along a trajectory, such as a
+    charge state, is inside its domain for part of one and outside for the rest.
+    It is a callable and not a rule because the rule is the model's, and an
+    adapter that carried one would be deciding what the model claims.
     """
 
     if not isinstance(trajectory, MeasuredTrajectory):
@@ -448,6 +459,14 @@ def trajectory_cases(
                 ReferenceCondition(MEASURED_CELL_TEMPERATURE, sample.cell_temperature)
             )
         case_id = case_id_for(trajectory.trajectory_id, index)
+        coordinates = {item.name: item.value for item in conditions}
+        applicability = (
+            placement.applicability
+            if per_sample_applicability is None
+            else Applicability(
+                per_sample_applicability(trajectory, index, coordinates)
+            )
+        )
         cases.append(
             ReferenceCase(
                 case_id=case_id,
@@ -455,7 +474,7 @@ def trajectory_cases(
                 independence_group=placement.independence_group,
                 conditions=tuple(conditions),
                 inputs=tuple(inputs),
-                applicability=placement.applicability,
+                applicability=applicability,
                 tags=tuple(sorted(set(trajectory.tags) | {f"cell:{trajectory.cell_id}"})),
                 note=(
                     f"{trajectory.provenance.member_path}"
@@ -501,6 +520,10 @@ def build_reference_dataset(
     metrics: Sequence[MetricPolicy],
     stride: int = 1,
     skip_initial: bool = True,
+    per_sample_applicability: (
+        Callable[[MeasuredTrajectory, int, Mapping[str, Quantity]], Applicability]
+        | None
+    ) = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> ReferenceDataset:
     """Normalize a set of trajectories into one immutable reference dataset.
@@ -533,6 +556,7 @@ def build_reference_dataset(
             stride=stride,
             skip_initial=skip_initial,
             metrics=metrics,
+            per_sample_applicability=per_sample_applicability,
         )
         cases.extend(case_block)
         observations.extend(observation_block)
@@ -552,6 +576,10 @@ def build_reference_dataset(
             "skip_initial_sample": bool(skip_initial),
             "current_convention": "positive current is discharge",
             "case_granularity": "one case per retained measured instant",
+            "applicability": (
+                "declared per trajectory, or per instant where the caller "
+                "supplied a rule; this adapter decides neither"
+            ),
             "state_of_charge": (
                 "not an observation: no independent state-of-charge reference "
                 "exists in this source, and comparing a coulomb counter against "

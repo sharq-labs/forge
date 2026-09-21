@@ -205,6 +205,13 @@ AMBIENT_UPPER = Quantity(303.15, bctx.TEMPERATURE_UNIT)
 #: model would not distinguish from rest anyway.
 CHARGE_CURRENT_FLOOR = Quantity(-0.05, bctx.CURRENT_UNIT)
 
+#: The same band, as a magnitude. A sampled current inside it is rest: the
+#: channel is scattering about its own zero and neither sign is a statement
+#: about direction. A caller building a load schedule from such a channel
+#: presents those samples as rest, which is what keeps a few milliamps of
+#: scatter from charging the declared charge state past full.
+REST_CURRENT_FLOOR = Quantity(0.05, bctx.CURRENT_UNIT)
+
 
 def battery_electrothermal_capability() -> CapabilityDeclaration:
     inputs = (
@@ -1157,6 +1164,7 @@ __all__ = [
     "AMBIENT_LOWER",
     "AMBIENT_UPPER",
     "CHARGE_CURRENT_FLOOR",
+    "REST_CURRENT_FLOOR",
     "BLUEPRINT",
     "BLUEPRINT_ID",
     "BUILTIN_BATTERY_ELECTROTHERMAL_COMPOSITION",

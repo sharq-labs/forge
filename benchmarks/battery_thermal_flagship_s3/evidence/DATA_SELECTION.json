@@ -1,7 +1,7 @@
 {
  "schema": "battery_thermal_flagship_s3_selection/1",
  "campaign_id": "battery.electrothermal.flagship.s3",
- "campaign_version": "2",
+ "campaign_version": "3",
  "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
  "thermal_replicate_screen": [
   {
@@ -33,7 +33,7 @@
    "median_rise_k_by_cell": {
     "B0033": 27.419,
     "B0034": 30.679,
-    "B0038": 24.569
+    "B0038": 24.538
    },
    "applied": true,
    "replicate_median_rise_k": 27.419,
@@ -100,6 +100,17 @@
    }
   }
  ],
+ "not_full_at_start": [
+  {
+   "trajectory_id": "B0038.d0001",
+   "cell": "B0038",
+   "start_voltage_v": 4.053116638334503,
+   "why": "first rest voltage is more than 50 mV from the authority's full-charge anchor"
+  }
+ ],
+ "groups_without_independent_cells": [
+  "38_39_40"
+ ],
  "guardrail_cells": {
   "B0029": "validation",
   "B0030": "locked_holdout",
@@ -144,7 +155,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0005.d0008",
@@ -156,7 +169,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0005.d0016",
@@ -168,7 +183,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0005.d0024",
@@ -180,7 +197,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0005.d0032",
@@ -192,7 +211,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0005.d0040",
@@ -204,7 +225,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0001",
@@ -216,7 +239,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0008",
@@ -228,7 +253,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0016",
@@ -240,7 +267,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0024",
@@ -252,7 +281,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0032",
@@ -264,7 +295,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0006.d0040",
@@ -276,7 +309,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0001",
@@ -288,7 +323,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0008",
@@ -300,7 +337,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0016",
@@ -312,7 +351,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0024",
@@ -324,7 +365,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0032",
@@ -336,7 +379,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0007.d0040",
@@ -348,7 +393,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0001",
@@ -360,7 +407,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0008",
@@ -372,7 +421,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0016",
@@ -384,7 +435,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0024",
@@ -396,7 +449,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0032",
@@ -408,7 +463,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0018.d0040",
@@ -420,7 +477,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0003",
@@ -432,7 +491,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0008",
@@ -444,7 +505,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0016",
@@ -456,7 +519,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0024",
@@ -468,7 +533,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0032",
@@ -480,7 +547,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0033.d0040",
@@ -492,7 +561,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0002",
@@ -504,7 +575,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0008",
@@ -516,7 +589,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0016",
@@ -528,7 +603,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0024",
@@ -540,7 +617,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0032",
@@ -552,7 +631,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0034.d0040",
@@ -564,7 +645,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0002",
@@ -576,7 +659,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0008",
@@ -588,7 +673,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0016",
@@ -600,7 +687,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0024",
@@ -612,7 +701,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0032",
@@ -624,7 +715,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0036.d0040",
@@ -636,19 +729,23 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": false,
-   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band"
+   "thermal_exclusion": "median temperature rise 2.16 K against a replicate median of 14.08 K over 8 cells at 2.0 A; outside the declared [0.4, 2.5] band",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
-   "trajectory_id": "B0038.d0001",
+   "trajectory_id": "B0038.d0002",
    "cell": "B0038",
    "group": "38_39_40",
-   "cycle_index": 1,
+   "cycle_index": 2,
    "ambient_temperature_c": 24.0,
-   "load_current_a": 4.0295432782166944,
+   "load_current_a": 4.029261935285735,
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": false,
+   "why_not_in_campaign": "the experiment group has no validation or locked-holdout cell, so no parameter set of its own is ever applied to independent evidence and no claim is made about it"
   },
   {
    "trajectory_id": "B0038.d0008",
@@ -660,7 +757,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": false,
+   "why_not_in_campaign": "the experiment group has no validation or locked-holdout cell, so no parameter set of its own is ever applied to independent evidence and no claim is made about it"
   },
   {
    "trajectory_id": "B0038.d0012",
@@ -672,7 +771,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": false,
+   "why_not_in_campaign": "the experiment group has no validation or locked-holdout cell, so no parameter set of its own is ever applied to independent evidence and no claim is made about it"
   },
   {
    "trajectory_id": "B0042.d0001",
@@ -684,7 +785,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0042.d0008",
@@ -696,7 +799,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0042.d0016",
@@ -708,7 +813,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0042.d0024",
@@ -720,7 +827,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0042.d0032",
@@ -732,7 +841,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0042.d0040",
@@ -744,7 +855,9 @@
    "split": "calibration",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0001",
@@ -756,7 +869,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0008",
@@ -768,7 +883,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0016",
@@ -780,7 +897,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0024",
@@ -792,7 +911,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0032",
@@ -804,7 +925,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0043.d0040",
@@ -816,7 +939,9 @@
    "split": "validation",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0001",
@@ -828,7 +953,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0008",
@@ -840,7 +967,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0016",
@@ -852,7 +981,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0024",
@@ -864,7 +995,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0032",
@@ -876,7 +1009,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0044.d0040",
@@ -888,7 +1023,9 @@
    "split": "locked_holdout",
    "applicability": "inside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0029.d0001",
@@ -900,7 +1037,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0029.d0008",
@@ -912,7 +1051,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0030.d0001",
@@ -924,7 +1065,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0030.d0008",
@@ -936,7 +1079,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0031.d0001",
@@ -948,7 +1093,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0031.d0008",
@@ -960,7 +1107,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0032.d0001",
@@ -972,7 +1121,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0032.d0008",
@@ -984,7 +1135,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0039.d0013",
@@ -996,7 +1149,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0039.d0016",
@@ -1008,7 +1163,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0039.d0040",
@@ -1020,7 +1177,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0040.d0013",
@@ -1032,7 +1191,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0040.d0016",
@@ -1044,7 +1205,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0040.d0040",
@@ -1056,7 +1219,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0045.d0001",
@@ -1068,7 +1233,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0045.d0008",
@@ -1080,7 +1247,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0046.d0001",
@@ -1092,7 +1261,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0046.d0008",
@@ -1104,7 +1275,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0047.d0001",
@@ -1116,7 +1289,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0047.d0008",
@@ -1128,7 +1303,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0048.d0001",
@@ -1140,7 +1317,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0048.d0008",
@@ -1152,7 +1331,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0049.d0002",
@@ -1164,7 +1345,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0049.d0008",
@@ -1176,7 +1359,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0050.d0002",
@@ -1188,7 +1373,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0050.d0008",
@@ -1200,7 +1387,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0051.d0002",
@@ -1212,7 +1401,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0051.d0008",
@@ -1224,7 +1415,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0052.d0002",
@@ -1236,7 +1429,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0052.d0004",
@@ -1248,7 +1443,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0053.d0001",
@@ -1260,7 +1457,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0053.d0008",
@@ -1272,7 +1471,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0054.d0002",
@@ -1284,7 +1485,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0054.d0008",
@@ -1296,7 +1499,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0055.d0002",
@@ -1308,7 +1513,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0055.d0008",
@@ -1320,7 +1527,9 @@
    "split": "validation",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0056.d0002",
@@ -1332,7 +1541,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   },
   {
    "trajectory_id": "B0056.d0008",
@@ -1344,7 +1555,9 @@
    "split": "locked_holdout",
    "applicability": "outside",
    "admit_cell_temperature": true,
-   "thermal_exclusion": ""
+   "thermal_exclusion": "",
+   "in_campaign": true,
+   "why_not_in_campaign": ""
   }
  ]
 }

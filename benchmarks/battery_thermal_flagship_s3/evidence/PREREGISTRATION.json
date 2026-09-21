@@ -1,7 +1,7 @@
 {
  "schema": "battery_thermal_flagship_s3_preregistration/1",
  "campaign_id": "battery.electrothermal.flagship.s3",
- "campaign_version": "2",
+ "campaign_version": "3",
  "amendments": [
   {
    "from_version": "1",
@@ -11,6 +11,20 @@
    "change": "capacity is no longer a fitted parameter. The charge state is defined on a declared constant basis, the manufacturer's 2 Ah rating, so z = 1 - q / 2 Ah with q the measured charge removed",
    "why": "the open-circuit voltage authority is a curve against charge state, and deriving it needed a charge-state axis. With capacity fitted, that axis would depend on a parameter the authority is an input to -- the curve would be derived from an axis set by a fit that has not happened yet. Declaring the basis removes the circularity, and it costs nothing that is scored: state of charge is not independently validated by this source either way",
    "consequence": "seven fitted parameters instead of eight. A cell that delivers less than its rating reaches its cutoff at a charge state above zero rather than at zero, and that difference now shows up as a voltage residual at a common charge state, which is the comparison that carries physical meaning"
+  },
+  {
+   "from_version": "2",
+   "to_version": "3",
+   "frozen_at_commit": "709eb084",
+   "made_before": "the locked holdout was opened. Everything behind this amendment is a calibration diagnostic or a model-independent comparison of measurements; no holdout case was read, scored or looked at",
+   "change": "three declarations: the applicability floor on charge state, the unit a parameter set is fitted over, and a full-charge admission screen",
+   "why": {
+    "charge_state_floor": "the open-circuit voltage authority's own interquartile scatter across calibration pairs rises from about 23 mV in the middle of the charge axis to 127-139 mV at its three lowest knots. Below the first knot whose scatter is inside the frozen 50 mV acceptance tolerance, the authority disagrees with itself by more than the campaign's own definition of agreement, so the model is not claimed there. A separate, model-free check agrees: the longest measured relaxations at the end of discharge sit as much as 370 mV away from the curve below z = 0.23, in both directions",
+    "parameter_unit": "the thermal conductance is a property of the cell's boundary -- its fixture, mounting and air path -- and not of its chemistry. Driving the lumped body with the dissipation the MEASURED voltage implies, so that no electrical parameter is involved at all, fits every calibration cell to under 1 K and returns hA = 0.039-0.050 W/K for the cells in one set of test campaigns and 0.103-0.121 W/K for those in another: a factor of 2.4 with no overlap. One value fits neither. The ohmic and polarization parameters are likewise properties of an individual aged cell, and a batch of sibling cells cycled together under one protocol is the smallest unit over which one set is defensible. A parameter set is therefore fitted per experiment group, on that group's calibration cells, and applied to that group's independent cells -- which is a real transfer test between different physical cells, not a per-cell refit",
+    "full_charge_screen": "the campaign declares the initial charge state to be full, on the authority of the CC-CV charge protocol. One calibration cell begins a discharge at rest at 4.053 V, which the open-circuit voltage authority places at a charge state of 0.88, not 1. Asserting a full-charge initial condition for a cell whose own open-circuit voltage says otherwise would charge the model for an error in the initial condition"
+   },
+   "consequence": "a narrower and more honest claim. The flagship is not claimed below the charge-state floor, cases below it are scored as outside declared applicability rather than as failures, a group with no independent cell contributes calibration only and produces no claim, and trajectories that did not start full are not admitted",
+   "what_was_not_changed": "no acceptance threshold, no Gate A criterion, no split assignment and no cell's split membership"
   }
  ],
  "dataset": {
@@ -50,7 +64,17 @@
    32,
    40
   ],
-  "sample_stride": 4
+  "sample_stride": 4,
+  "applicability_charge_state_floor": 0.2737,
+  "full_charge_band_v": 0.05,
+  "full_charge_anchor_v": 4.188513
+ },
+ "parameter_unit": {
+  "fitted_over": "one experiment group",
+  "definition": "a batch of sibling cells cycled together in one fixture under one protocol, as the source archive's own README grouping defines it",
+  "fitted_on": "that group's calibration cells only",
+  "applied_to": "that group's validation and locked-holdout cells",
+  "why_that_is_still_independent": "the cells a set is applied to are different physical cells from the ones it was fitted on, which is the transfer the campaign is testing"
  },
  "thermal_replicate_screen": {
   "minimum_cells": 3,

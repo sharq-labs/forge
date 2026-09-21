@@ -25,6 +25,7 @@ from engcore.assembly.domainpacks import (
 from engcore.assembly.multiphysics import execute_authorized_graph_plan
 from engcore.compositionpacks.builtin_battery_electrothermal import (
     CAPABILITY_ID,
+    REST_CURRENT_FLOOR,
     CELL_PARTICIPANT,
     F_C1,
     F_CTH,
@@ -254,6 +255,7 @@ def build_scenario(
     scenario_id: str,
     version: str = "1",
     refinement: int = 1,
+    charge_state_floor: float | None = None,
 ) -> ScenarioSpecification:
     """The measured current profile, as a held schedule cut at every sample.
 
@@ -270,8 +272,21 @@ def build_scenario(
         raise ValueError("a scenario needs at least two aligned samples")
     start = Quantity(float(times_s[0]), "s")
     end = Quantity(float(times_s[-1]), "s")
+    # A sample inside the pack's declared rest band is presented as rest. The
+    # source's current channel scatters by a few milliamps while no load is
+    # drawn, and the sign of that scatter is not a direction: left alone it
+    # charges the declared charge state a hundred-thousandth past full and the
+    # kernel refuses the step, correctly, for a reason that is instrument noise
+    # rather than physics. The band is the pack's own, two orders of magnitude
+    # below the smallest load this composition is calibrated over.
+    rest_band = REST_CURRENT_FLOOR.magnitude_in(bctx.CURRENT_UNIT)
     samples = tuple(
-        TimeSample(Quantity(float(t), "s"), Quantity(float(i), bctx.CURRENT_UNIT))
+        TimeSample(
+            Quantity(float(t), "s"),
+            Quantity(
+                0.0 if abs(float(i)) < rest_band else float(i), bctx.CURRENT_UNIT
+            ),
+        )
         for t, i in zip(times_s, currents_a)
     )
     series = TimeSeriesInput(F_CURRENT, samples, InterpolationKind.STEP)
@@ -301,6 +316,12 @@ def build_scenario(
     # profile's own largest current and longest interval. It costs the last
     # few thousandths of the charge axis and it is why the stop is a recorded
     # termination rather than a raised refusal that would lose the whole run.
+    floor = SOC_FLOOR if charge_state_floor is None else float(charge_state_floor)
+    if floor < SOC_FLOOR:
+        raise ValueError(
+            f"a stop below the open-circuit voltage authority's own lower bound "
+            f"({SOC_FLOOR}) would ask the curve for a value it refuses"
+        )
     peak_current = max(abs(float(i)) for i in currents_a)
     longest_step = max(
         float(b) - float(a) for a, b in zip(times_s, times_s[1:])
@@ -312,12 +333,12 @@ def build_scenario(
             name="charge_state_below_ocv_authority",
             metric="state_of_charge",
             operator=ConstraintOperator.LESS_EQUAL,
-            bound=Quantity(SOC_FLOOR + margin, bctx.DIMENSIONLESS),
+            bound=Quantity(floor + margin, bctx.DIMENSIONLESS),
             description=(
-                "The declared open-circuit voltage authority ends at "
-                f"{SOC_FLOOR:.6f}. Marching past it would need a value the curve "
-                "refuses to give, so the run stops one window's charge above it "
-                "and records why instead of asking."
+                f"The flagship is not claimed below a charge state of "
+                f"{floor:.6f}. The run stops one window's charge above it and "
+                f"records why, rather than producing a value in a region the "
+                f"model declares it does not cover."
             ),
         ),
     )
@@ -346,6 +367,7 @@ def run_trajectory(
     scenario_id: str,
     refinement: int = 1,
     initial_state_of_charge: float = 1.0,
+    charge_state_floor: float | None = None,
 ):
     """Plan, bind the scenario and execute. Returns the authorized run."""
     intent = build_intent(
@@ -363,6 +385,7 @@ def run_trajectory(
         currents_a=currents_a,
         scenario_id=scenario_id,
         refinement=refinement,
+        charge_state_floor=charge_state_floor,
     )
     graph_plan = replace(
         graph_plan, scenario=scenario, quantity_bindings=quantity_bindings()

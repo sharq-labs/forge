@@ -24,7 +24,7 @@ BENCH = os.path.dirname(HERE)
 EVIDENCE = os.path.join(BENCH, "evidence")
 
 CAMPAIGN_ID = "battery.electrothermal.flagship.s3"
-CAMPAIGN_VERSION = "2"
+CAMPAIGN_VERSION = "3"
 
 #: Amendments to this protocol, each recorded with the commit the previous
 #: version was frozen at, what changed, and why. An amendment is only honest
@@ -58,6 +58,74 @@ AMENDMENTS: tuple[dict[str, Any], ...] = (
             "comparison that carries physical meaning"
         ),
     },
+    {
+        "from_version": "2",
+        "to_version": "3",
+        "frozen_at_commit": "709eb084",
+        "made_before": (
+            "the locked holdout was opened. Everything behind this amendment is "
+            "a calibration diagnostic or a model-independent comparison of "
+            "measurements; no holdout case was read, scored or looked at"
+        ),
+        "change": (
+            "three declarations: the applicability floor on charge state, the "
+            "unit a parameter set is fitted over, and a full-charge admission "
+            "screen"
+        ),
+        "why": {
+            "charge_state_floor": (
+                "the open-circuit voltage authority's own interquartile scatter "
+                "across calibration pairs rises from about 23 mV in the middle "
+                "of the charge axis to 127-139 mV at its three lowest knots. "
+                "Below the first knot whose scatter is inside the frozen 50 mV "
+                "acceptance tolerance, the authority disagrees with itself by "
+                "more than the campaign's own definition of agreement, so the "
+                "model is not claimed there. A separate, model-free check "
+                "agrees: the longest measured relaxations at the end of "
+                "discharge sit as much as 370 mV away from the curve below "
+                "z = 0.23, in both directions"
+            ),
+            "parameter_unit": (
+                "the thermal conductance is a property of the cell's boundary "
+                "-- its fixture, mounting and air path -- and not of its "
+                "chemistry. Driving the lumped body with the dissipation the "
+                "MEASURED voltage implies, so that no electrical parameter is "
+                "involved at all, fits every calibration cell to under 1 K and "
+                "returns hA = 0.039-0.050 W/K for the cells in one set of test "
+                "campaigns and 0.103-0.121 W/K for those in another: a factor "
+                "of 2.4 with no overlap. One value fits neither. The ohmic and "
+                "polarization parameters are likewise properties of an "
+                "individual aged cell, and a batch of sibling cells cycled "
+                "together under one protocol is the smallest unit over which "
+                "one set is defensible. A parameter set is therefore fitted "
+                "per experiment group, on that group's calibration cells, and "
+                "applied to that group's independent cells -- which is a real "
+                "transfer test between different physical cells, not a "
+                "per-cell refit"
+            ),
+            "full_charge_screen": (
+                "the campaign declares the initial charge state to be full, on "
+                "the authority of the CC-CV charge protocol. One calibration "
+                "cell begins a discharge at rest at 4.053 V, which the "
+                "open-circuit voltage authority places at a charge state of "
+                "0.88, not 1. Asserting a full-charge initial condition for a "
+                "cell whose own open-circuit voltage says otherwise would "
+                "charge the model for an error in the initial condition"
+            ),
+        },
+        "consequence": (
+            "a narrower and more honest claim. The flagship is not claimed "
+            "below the charge-state floor, cases below it are scored as "
+            "outside declared applicability rather than as failures, a group "
+            "with no independent cell contributes calibration only and "
+            "produces no claim, and trajectories that did not start full are "
+            "not admitted"
+        ),
+        "what_was_not_changed": (
+            "no acceptance threshold, no Gate A criterion, no split assignment "
+            "and no cell's split membership"
+        ),
+    },
 )
 DATASET_ID = "nasa.pcoe.battery_aging"
 DATASET_VERSION = "2022-09-18"
@@ -86,6 +154,25 @@ INSIDE_CURRENT_A = (0.5, 4.5)
 #: a cycle index, which is known before a discharge runs -- not a delivered
 #: capacity, which is a measurement of the very discharge being predicted.
 INSIDE_MAX_CYCLE_INDEX = 40
+
+#: The charge state below which the flagship is not claimed. It is the lowest
+#: knot of the open-circuit voltage authority whose interquartile scatter across
+#: calibration pairs is inside the frozen acceptance tolerance for voltage.
+#: Derived from the authority's own record, never from a model's performance.
+APPLICABILITY_CHARGE_STATE_FLOOR = 0.2737
+
+#: How far a trajectory's first rest voltage may sit from the authority's
+#: measured full-charge anchor and still support the declared full-charge
+#: initial condition. One acceptance tolerance: if the cell's own open-circuit
+#: voltage disagrees with "full" by more than the campaign's definition of
+#: agreement, the initial condition is not supported.
+FULL_CHARGE_BAND_V = 0.050
+
+#: The authority's measured relaxed voltage at full charge, in volt. Carried
+#: here so the screen is reproducible from this file plus the inventory; the
+#: flagship module holds the same number as the curve's top knot and a test
+#: pins the two together.
+FULL_CHARGE_ANCHOR_V = 4.188513
 
 #: Declared-OUTSIDE bands, used to test that the guardrail refuses rather than
 #: to test the model. A case here that the model answers is recorded and never
@@ -437,6 +524,7 @@ def select(inventory: dict[str, Any]) -> dict[str, Any]:
     # -- condition classification -------------------------------------------
     inside: list[dict[str, Any]] = []
     outside: list[dict[str, Any]] = []
+    not_full: list[dict[str, Any]] = []
     for item in retained:
         if item["cycle_index"] > INSIDE_MAX_CYCLE_INDEX:
             continue
@@ -444,6 +532,25 @@ def select(inventory: dict[str, Any]) -> dict[str, Any]:
         if not INSIDE_CURRENT_A[0] <= current <= INSIDE_CURRENT_A[1]:
             continue
         if _inside_ambient(item["ambient_temperature_c"]):
+            # The declared full-charge initial condition has to be one the
+            # cell's own open-circuit voltage supports.
+            if (
+                abs(item["start_voltage_v"] - FULL_CHARGE_ANCHOR_V)
+                > FULL_CHARGE_BAND_V
+            ):
+                not_full.append(
+                    {
+                        "trajectory_id": item["trajectory_id"],
+                        "cell": item["cell"],
+                        "start_voltage_v": item["start_voltage_v"],
+                        "why": (
+                            "first rest voltage is more than "
+                            f"{FULL_CHARGE_BAND_V * 1000:.0f} mV from the "
+                            f"authority's full-charge anchor"
+                        ),
+                    }
+                )
+                continue
             inside.append(item)
         elif _outside_ambient(item["ambient_temperature_c"]):
             outside.append(item)
@@ -606,6 +713,29 @@ def select(inventory: dict[str, Any]) -> dict[str, Any]:
                 }
             )
 
+    # A group with no independent cell informs the fit and makes no claim, so
+    # its trajectories carry no campaign case: scoring them would credit or
+    # charge the model on evidence it was fitted to.
+    claimless = {
+        row["group"]
+        for row in group_record
+        if not {"validation", "locked_holdout"} & set(row["assignment"].values())
+    }
+    for item in selected:
+        item["in_campaign"] = item["group"] not in claimless
+        item["why_not_in_campaign"] = (
+            ""
+            if item["in_campaign"]
+            else (
+                "the experiment group has no validation or locked-holdout cell, "
+                "so no parameter set of its own is ever applied to independent "
+                "evidence and no claim is made about it"
+            )
+        )
+    for item in outside_selected:
+        item["in_campaign"] = True
+        item["why_not_in_campaign"] = ""
+
     counts: dict[str, int] = {}
     for item in selected + outside_selected:
         counts[item["split"]] = counts.get(item["split"], 0) + 1
@@ -617,6 +747,12 @@ def select(inventory: dict[str, Any]) -> dict[str, Any]:
         "thermal_replicate_screen": screen_record,
         "thermal_outliers": thermal_outliers,
         "groups": group_record,
+        "not_full_at_start": not_full,
+        "groups_without_independent_cells": sorted(
+            row["group"]
+            for row in group_record
+            if not {"validation", "locked_holdout"} & set(row["assignment"].values())
+        ),
         "guardrail_cells": guardrail_split,
         "guardrail_cells_dropped_for_inside_overlap": excluded_for_overlap,
         "counts": {
@@ -648,6 +784,24 @@ def preregistration() -> dict[str, Any]:
             "outside_ambient_c": [list(item) for item in OUTSIDE_AMBIENT_C],
             "cycle_positions": list(CYCLE_POSITIONS),
             "sample_stride": SAMPLE_STRIDE,
+            "applicability_charge_state_floor": APPLICABILITY_CHARGE_STATE_FLOOR,
+            "full_charge_band_v": FULL_CHARGE_BAND_V,
+            "full_charge_anchor_v": FULL_CHARGE_ANCHOR_V,
+        },
+        "parameter_unit": {
+            "fitted_over": "one experiment group",
+            "definition": (
+                "a batch of sibling cells cycled together in one fixture under "
+                "one protocol, as the source archive's own README grouping "
+                "defines it"
+            ),
+            "fitted_on": "that group's calibration cells only",
+            "applied_to": "that group's validation and locked-holdout cells",
+            "why_that_is_still_independent": (
+                "the cells a set is applied to are different physical cells "
+                "from the ones it was fitted on, which is the transfer the "
+                "campaign is testing"
+            ),
         },
         "thermal_replicate_screen": {
             "minimum_cells": THERMAL_OUTLIER_MIN_CELLS,
