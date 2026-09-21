@@ -84,8 +84,10 @@ capacity, and a load that is recognisably one level. The square-wave cells
 the profile cannot be reconstructed between samples, so a schedule built from it
 would be invented rather than measured.
 
-From those, the preregistered selection takes 63 in-band and 38 guardrail
-trajectories across 11 + 9 cells.
+From those, the preregistered selection takes 63 in-band trajectories across 11
+cells and 38 guardrail trajectories across 18 cells. Three in-band trajectories
+belong to an experiment group with no independent cell and carry no campaign
+case, so 98 of the 101 reach the corpus.
 
 Two further screens, both model-free:
 
@@ -127,8 +129,11 @@ instant only**; and the charge protocol's full-charge initial state.
 **Never given:** any measured terminal voltage at any instant; any measured cell
 temperature after the first; the cycle's own delivered capacity.
 
-The prediction is a coupled electrothermal march over the whole trajectory —
-up to 3 700 s and 350 coupling windows — from those inputs alone.
+The prediction is a coupled electrothermal march over the whole trajectory — up
+to 3 690 s and 336 coupling windows — from those inputs alone. Every executed
+run passed the composition's own cross-domain validation, and 58 of 60 stopped
+at the declared charge-state floor with a recorded termination rather than
+running to the horizon.
 
 ---
 
@@ -244,11 +249,20 @@ Validation — cells no fit ever saw — meets every Gate A criterion. The holdo
 does not, for the single-cell reason in §1.
 
 Core's own comparison over the holdout campaign: 5 428 pass, 597 fail, **8 465
-correct refusals and zero unexpected ones**, refusal accuracy 1.0. The
-independent pass fraction (0.959) exceeds the calibration one (0.923), so the
-diagnosis is `INSUFFICIENT_EVIDENCE` — Core declines to attribute a model-form
-inadequacy on this evidence, which is the correct verdict and not a claim of
-adequacy.
+correct refusals and zero unexpected ones**, refusal accuracy 1.0.
+
+Pass fractions: calibration 0.923, independent **0.958** when the independent
+evidence is the validation split alone, and **0.884** once the holdout is
+included. The drop is B0044 and nothing else.
+
+Core's diagnosis on both campaigns is `INSUFFICIENT_EVIDENCE` with confidence
+`none`. Its stated reason — "independent evidence agrees with the model within
+the reviewed tolerances" — is a per-case reading and is *not* the whole story
+here: the aggregate Gate A on the holdout fails, and it fails because one cell's
+residuals are large rather than because many cells are marginally off. So the
+correct reading of that verdict is narrow: **no model-form inadequacy is
+attributed on this evidence**, which is neither a claim of adequacy nor a
+substitute for the Gate A result above.
 
 ### Residual structure
 
@@ -315,7 +329,7 @@ predicate, not a harness opinion.
 |---|---|
 | parameter | **quantified.** Seven standard errors from the fit's Jacobian enter as STANDARD/PARAMETER external uncertainties; the composition propagates them through its own monolithic reference. The UQ channel matrix is enforceable and complete. |
 | measurement | **UNKNOWN.** This archive states no accuracy for any channel. No acceptance tolerance here is a source-reported spread and no observation carries a SOURCE_REPORTED uncertainty. |
-| numerical | **bounded, not distributed.** The refinement study measures how far the answer moves under subdivision (0.65 mV, 0.0034 K) and the bound is reported; no distribution is produced. |
+| numerical | **bounded, not distributed.** The refinement study measures how far the answer moves under subdivision (0.104 mV, 0.0017 K) and the bound is reported; no distribution is produced. |
 | model form | **UNKNOWN.** Core's diagnosis is `INSUFFICIENT_EVIDENCE`, which is not a quantified model-form uncertainty, and none is claimed. |
 
 ### Numerical credibility
@@ -323,7 +337,7 @@ predicate, not a harness opinion.
 | check | outcome | |
 |---|---|---|
 | convergence | **SATISFIED** | every coupling window converged; no participant step reported otherwise |
-| refinement | **SATISFIED** | halving then quartering each measured interval moves voltage by 0.65 mV and temperature by 0.0034 K, against a tenth of each acceptance tolerance; and each step is about half the previous one |
+| refinement | **SATISFIED** | halving then quartering each measured interval moves voltage by 0.104 mV and temperature by 0.0017 K, against a tenth of each acceptance tolerance (5 mV, 0.3 K); and each step is about half the previous one, as a first-order splitting should be |
 | conservation | **SATISFIED** | the heat the cell reports equals the heat the body consumes in every window, and the energy deposited over the run equals what the body stored plus what it rejected |
 
 ### Replay
