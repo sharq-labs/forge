@@ -165,6 +165,12 @@ Never convert NOT RUN into PASS based on code inspection.
 ## Failed approaches / dead ends
 
 2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 tools/forge_check.py --changed`
+result: FAIL
+summary: collection stopped on the 7 known duplicate test-module basename import mismatches (`test_verify`, `test_serialization`, `test_lineage`, `test_psd`); no changed-area test failure was produced
+commit: 531a104a
+
+2026-09-21 11:20 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
 result: PASS
 summary: compileall passed, 138 tests passed, and diff whitespace validation passed for typed scheduled/reached synchronization receipts
