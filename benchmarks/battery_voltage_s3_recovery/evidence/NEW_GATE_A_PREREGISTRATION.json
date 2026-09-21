@@ -1,0 +1,660 @@
+{
+ "schema": "battery_voltage_s3_recovery_prereg/1",
+ "what_this_is": "the frozen state of the recovery model before the new locked holdout is opened. Everything a later step could otherwise tune is here, and the commit that carries this file is the one whose SHA the Gate A result cites",
+ "model": {
+  "model_id": "battery.cell.electrothermal_1rc",
+  "version": "0.2.0",
+  "realization_version": "0.2.0",
+  "form": "unchanged from battery.cell.electrothermal_1rc@0.1.0: one RC branch, Arrhenius on both resistances, irreversible heat only. No parameter was added",
+  "what_changed": [
+   "the charge state is a fraction of a measured available charge rather than of the manufacturer's 2 Ah rating",
+   "the open-circuit voltage authority is re-derived on that axis and conditioned on a declared cell-temperature band",
+   "one parameter set per declared operating block rather than per experiment group",
+   "a model-free channel-consistency screen on the measurement"
+  ]
+ },
+ "selected_candidate": "M11",
+ "selection_rationale": "M10 and M11 are indistinguishable on the Gate A statistics -- M11 is 2.4 mV better on mean absolute error and 0.5 mV better on RMSE, M10 is 2.1 mV better on the 95th percentile -- and they carry the SAME number of fitted parameters, because M11's charge-state shape on the ohmic resistance is a measurement and not a parameter. So the residual statistics do not choose between them and R6 does: identifiability before complexity. M10 leaves 10 of its 42 parameters unidentified and M11 leaves 2, and the difference is concentrated exactly where it matters. In M10 the cold parameter unit -- the only unit that will predict the locked holdout -- leaves the ohmic reference resistance, the polarization reference resistance and the polarization activation energy all unidentified, with a normal-matrix condition number of 1.6e20 and a correlation of -0.9999 between R0 and its own activation energy. That is a fitter absorbing a real charge-state trend into a constant and its temperature slope. Giving it the measured trend instead leaves that unit fully identified at a condition number four orders of magnitude lower. A model whose parameters are not identified in the regime it is about to be tested in is not the simpler model, it is the less determined one.",
+ "selection_evidence": "validation split only; the locked holdout is not readable by the candidate harness",
+ "rejected_alternatives": {
+  "M0": "Sprint 3's model on this corpus: 116.4 mV validation RMSE. It is the baseline, not a candidate.",
+  "M1": "the two state authorities alone, with parameters per experiment group as Sprint 3 had them: 60.7 mV validation RMSE. It is half of M0's error and it is the step that matters scientifically -- the failure was a state-identification failure -- but a parameter set asked to serve two rates still compromises between them.",
+  "M1p": "one pooled open-circuit voltage curve. Its admissible charge-state interval collapses to [0.85, 1.0], so it answers 13 % of the split's admissible samples. Its residual statistics are the best in the table and they are a statement about a narrower claim.",
+  "M2": "both activation energies fixed at zero: 105.8 mV validation RMSE against M1's 60.7. The Arrhenius terms are real even though Sprint 3 reported them weakly identified.",
+  "M3": "M1 plus the measured charge-state shape on R0, without the parameter unit change: 61.3 mV against M1's 60.7. No improvement.",
+  "M4": "M3 plus a second RC branch: 61.4 mV. Two more parameters, nothing.",
+  "M5": "M1 plus a second RC branch: 62.6 mV. Worse than M1.",
+  "M6": "parameters per experiment group and cell-temperature band: 51.6 mV RMSE but 111.6 mV P95, and its cold unit leaves both reference resistances unidentified.",
+  "M7": "M6 with the activation energies fixed at zero: 93.2 mV. Same finding as M2.",
+  "M8": "M6 plus the measured shape: better identifiability than M6 and still 103.5 mV P95. Superseded by the block parameter unit.",
+  "M9": "M6 plus a second RC branch: 51.9 mV RMSE, 115.9 mV P95, and the second branch is unidentified in three of five units.",
+  "M10": "one parameter set per declared operating block, without the measured charge-state shape. It is the largest single step in the matrix -- 60.7 to 39.6 mV validation RMSE -- and it is not selected: its cold parameter unit, the one that predicts the holdout, leaves three of seven parameters unidentified at a condition number of 1.6e20. See the rationale for M11."
+ },
+ "parameter_strategy": {
+  "unit": "block",
+  "unit_definition": "one parameter set per (experiment group, ambient corner, nominal load). The thermal pair is a fixture property, which is why Sprint 3 made it per group; the electrical parameters are asked to serve one rate because this model's polarization is linear in current and the measured resistance is not",
+  "free_parameters_per_unit": 7,
+  "free_parameters_total": 42,
+  "parameter_names": [
+   "ohmic_resistance_reference",
+   "ohmic_activation_energy",
+   "polarization_resistance_reference",
+   "polarization_activation_energy",
+   "polarization_capacitance",
+   "thermal_capacitance",
+   "thermal_conductance"
+  ],
+  "bounds": {
+   "ohmic_resistance_reference": {
+    "lower": 0.005,
+    "upper": 0.5,
+    "initial": 0.08
+   },
+   "ohmic_activation_energy": {
+    "lower": -40000.0,
+    "upper": 80000.0,
+    "initial": 20000.0
+   },
+   "polarization_resistance_reference": {
+    "lower": 0.001,
+    "upper": 0.5,
+    "initial": 0.04
+   },
+   "polarization_activation_energy": {
+    "lower": -40000.0,
+    "upper": 80000.0,
+    "initial": 20000.0
+   },
+   "polarization_capacitance": {
+    "lower": 50.0,
+    "upper": 50000.0,
+    "initial": 1000.0
+   },
+   "second_polarization_resistance": {
+    "lower": 0.001,
+    "upper": 0.5,
+    "initial": 0.02
+   },
+   "second_polarization_capacitance": {
+    "lower": 500.0,
+    "upper": 500000.0,
+    "initial": 20000.0
+   },
+   "thermal_capacitance": {
+    "lower": 5.0,
+    "upper": 500.0,
+    "initial": 60.0
+   },
+   "thermal_conductance": {
+    "lower": 0.005,
+    "upper": 1.0,
+    "initial": 0.06
+   }
+  },
+  "objective": {
+   "voltage_scale_v": 0.05,
+   "temperature_scale_k": 3.0,
+   "unreached_penalty": 1.0,
+   "source": "the Sprint 3 reviewed acceptance tolerances, unchanged"
+  },
+  "fitted_on": "calibration trajectories only"
+ },
+ "frozen_parameters": {
+  "33_34_36|room_ambient|4A": {
+   "cells": [
+    "B0033"
+   ],
+   "trajectories": 5,
+   "fitted": {
+    "ohmic_resistance_reference": 0.18265974577186184,
+    "ohmic_activation_energy": 49406.42215957498,
+    "polarization_resistance_reference": 0.07929882001239563,
+    "polarization_activation_energy": -23979.028243017954,
+    "polarization_capacitance": 1240.1839557776584,
+    "thermal_capacitance": 80.10330341667532,
+    "thermal_conductance": 0.11507265599065615
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.0051252486982458,
+    "ohmic_activation_energy": 8659.667959886148,
+    "polarization_resistance_reference": 0.013131333888970101,
+    "polarization_activation_energy": 3446.9045667722403,
+    "polarization_capacitance": 174.84072317257198,
+    "thermal_capacitance": 2.5752550283666507,
+    "thermal_conductance": 0.0037225968591435613
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "weak",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_activation_energy|polarization_resistance_reference": 0.9771,
+    "polarization_resistance_reference|polarization_activation_energy": 0.9684
+   },
+   "normal_matrix_condition_number": 513567052592433.5,
+   "at_declared_bound": []
+  },
+  "38_39_40|room_ambient|4A": {
+   "cells": [
+    "B0038"
+   ],
+   "trajectories": 3,
+   "fitted": {
+    "ohmic_resistance_reference": 0.2071463279204799,
+    "ohmic_activation_energy": 79999.99999999104,
+    "polarization_resistance_reference": 0.11432010840878096,
+    "polarization_activation_energy": -19404.452953434673,
+    "polarization_capacitance": 420.44680622338683,
+    "thermal_capacitance": 103.76193137586168,
+    "thermal_conductance": 0.07360103276337142
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.007440563181655574,
+    "ohmic_activation_energy": 9078.034913362355,
+    "polarization_resistance_reference": 0.008392810442578372,
+    "polarization_activation_energy": 1722.2633099319507,
+    "polarization_capacitance": 43.768563416889,
+    "thermal_capacitance": 3.5307023867351663,
+    "thermal_conductance": 0.007285942932008871
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "identified",
+    "polarization_activation_energy": "identified",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_resistance_reference|polarization_capacitance": 0.9213,
+    "ohmic_activation_energy|polarization_resistance_reference": 0.9537,
+    "polarization_resistance_reference|polarization_activation_energy": 0.9608,
+    "thermal_capacitance|thermal_conductance": -0.9523
+   },
+   "normal_matrix_condition_number": 755461861872815.2,
+   "at_declared_bound": [
+    "ohmic_activation_energy"
+   ]
+  },
+  "41_42_43_44|low_ambient|1A": {
+   "cells": [
+    "B0042"
+   ],
+   "trajectories": 5,
+   "fitted": {
+    "ohmic_resistance_reference": 0.49197181617538094,
+    "ohmic_activation_energy": -29149.698214720735,
+    "polarization_resistance_reference": 0.00889334393036453,
+    "polarization_activation_energy": 79999.99999999502,
+    "polarization_capacitance": 1507.6836025256343,
+    "thermal_capacitance": 259.0205806620983,
+    "thermal_conductance": 0.028525471195790155
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.03587876113522005,
+    "ohmic_activation_energy": 3546.373350004764,
+    "polarization_resistance_reference": 0.003362556047975163,
+    "polarization_activation_energy": 13785.781334510875,
+    "polarization_capacitance": 284.195201236848,
+    "thermal_capacitance": 26.490305932034516,
+    "thermal_conductance": 0.006054753911922637
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "weak",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "weak",
+    "thermal_conductance": "weak"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_resistance_reference|ohmic_activation_energy": -0.9821,
+    "polarization_resistance_reference|polarization_activation_energy": -0.9789,
+    "thermal_capacitance|thermal_conductance": -0.9908
+   },
+   "normal_matrix_condition_number": 4.993070842049362e+16,
+   "at_declared_bound": [
+    "polarization_activation_energy"
+   ]
+  },
+  "41_42_43_44|low_ambient|4A": {
+   "cells": [
+    "B0042"
+   ],
+   "trajectories": 5,
+   "fitted": {
+    "ohmic_resistance_reference": 0.016041393854477008,
+    "ohmic_activation_energy": 79999.98758298313,
+    "polarization_resistance_reference": 0.3084820246672907,
+    "polarization_activation_energy": -3176.582613314173,
+    "polarization_capacitance": 121.98054659846196,
+    "thermal_capacitance": 107.5377060822966,
+    "thermal_conductance": 0.0664370026477384
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.01636467008552629,
+    "ohmic_activation_energy": 37048.980676489184,
+    "polarization_resistance_reference": 0.015257816749837652,
+    "polarization_activation_energy": 1853.1728454564045,
+    "polarization_capacitance": 23.140849866678472,
+    "thermal_capacitance": 6.9091304938847244,
+    "thermal_conductance": 0.01568429909093852
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "unidentified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "identified",
+    "polarization_activation_energy": "unidentified",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "weak"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_resistance_reference|ohmic_activation_energy": -0.9855,
+    "ohmic_resistance_reference|polarization_resistance_reference": -0.9956,
+    "ohmic_resistance_reference|polarization_activation_energy": -0.9564,
+    "ohmic_activation_energy|polarization_resistance_reference": 0.979,
+    "ohmic_activation_energy|polarization_activation_energy": 0.9122,
+    "polarization_resistance_reference|polarization_activation_energy": 0.9574,
+    "thermal_capacitance|thermal_conductance": -0.956
+   },
+   "normal_matrix_condition_number": 5764979092121419.0,
+   "at_declared_bound": []
+  },
+  "41_42_43_44|room_ambient|2A": {
+   "cells": [
+    "B0042"
+   ],
+   "trajectories": 5,
+   "fitted": {
+    "ohmic_resistance_reference": 0.13891829118119203,
+    "ohmic_activation_energy": -3997.4179122865226,
+    "polarization_resistance_reference": 0.04755671832391114,
+    "polarization_activation_energy": 79999.99999994208,
+    "polarization_capacitance": 1131.115635168643,
+    "thermal_capacitance": 73.79549957735689,
+    "thermal_conductance": 0.05313685676103574
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.0028797456422630175,
+    "ohmic_activation_energy": 932.2804978140564,
+    "polarization_resistance_reference": 0.0023732956612848763,
+    "polarization_activation_energy": 8561.06692261497,
+    "polarization_capacitance": 121.73809138498063,
+    "thermal_capacitance": 0.8098420467374657,
+    "thermal_conductance": 0.0005109504464966706
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "weak",
+    "polarization_resistance_reference": "identified",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_resistance_reference|polarization_resistance_reference": -0.9893,
+    "ohmic_resistance_reference|polarization_capacitance": 0.9381,
+    "polarization_resistance_reference|polarization_capacitance": -0.9142
+   },
+   "normal_matrix_condition_number": 4087840240533804.0,
+   "at_declared_bound": [
+    "polarization_activation_energy"
+   ]
+  },
+  "FY08Q4|room_ambient|2A": {
+   "cells": [
+    "B0005",
+    "B0018"
+   ],
+   "trajectories": 10,
+   "fitted": {
+    "ohmic_resistance_reference": 0.12076592478852606,
+    "ohmic_activation_energy": -8770.021208874168,
+    "polarization_resistance_reference": 0.02993465266652353,
+    "polarization_activation_energy": 79999.99999975688,
+    "polarization_capacitance": 1704.1956560979495,
+    "thermal_capacitance": 65.7629199542685,
+    "thermal_conductance": 0.04880740586201257
+   },
+   "standard_errors": {
+    "ohmic_resistance_reference": 0.002223980403627623,
+    "ohmic_activation_energy": 725.8982221811092,
+    "polarization_resistance_reference": 0.00172886226975459,
+    "polarization_activation_energy": 9628.52699795582,
+    "polarization_capacitance": 239.02997517865376,
+    "thermal_capacitance": 0.47054520984678416,
+    "thermal_conductance": 0.00032076049890771745
+   },
+   "identifiability": {
+    "ohmic_resistance_reference": "identified",
+    "ohmic_activation_energy": "identified",
+    "polarization_resistance_reference": "identified",
+    "polarization_activation_energy": "weak",
+    "polarization_capacitance": "weak",
+    "thermal_capacitance": "identified",
+    "thermal_conductance": "identified"
+   },
+   "correlated_pairs_above_0p9": {
+    "ohmic_resistance_reference|polarization_resistance_reference": -0.9795,
+    "ohmic_resistance_reference|polarization_capacitance": 0.9317
+   },
+   "normal_matrix_condition_number": 1.3694645368554742e+16,
+   "at_declared_bound": [
+    "polarization_activation_energy"
+   ]
+  }
+ },
+ "capacity_authority": {
+  "module": "engcore.domains.battery.capacity",
+  "basis": "prior_like_for_like_discharge",
+  "rule": "the delivered capacity of the most recent prior discharge of the same cell at the same load level and ambient. UNKNOWN when there is none, and UNKNOWN carries no capacity",
+  "never": "the delivered capacity of the trajectory being predicted. That would make every charge state right by construction",
+  "estimator_spread": {
+   "measured_on": "calibration cells only",
+   "cells": [
+    "B0005",
+    "B0018",
+    "B0033",
+    "B0038",
+    "B0042"
+   ],
+   "comparisons": 624,
+   "unknown": 9,
+   "median_relative_error": 0.0037458126204561884,
+   "mean_relative_error": -0.00144861161901596,
+   "p68_absolute_relative_error": 0.007403167492314735,
+   "p95_absolute_relative_error": 0.03383688469173668,
+   "max_absolute_relative_error": 0.667804950717457,
+   "adopted_relative_standard_uncertainty": 0.007403167492314735,
+   "why": "the spread of this estimator against the capacity it predicts, read off calibration cells. It is a measurement uncertainty on the capacity basis, not on any instrument: this source states no instrument accuracy and none is invented here"
+  },
+  "cycle_inventory_sha256": "3dd01353dc948488d2feb033ced274a9c36fe26f5e212cbd795239f32dba229b"
+ },
+ "initial_state_authority": {
+  "module": "engcore.domains.battery.initial_state",
+  "bases": [
+   "charge_termination_and_rest_voltage",
+   "reproducible_charge_termination",
+   "charge_termination_only"
+  ],
+  "rule": "two independent witnesses. Where the charger reached its declared taper the claim is an absolute full charge; where it was cut off early -- which is every low-ambient run in this archive -- the claim is only that the run starts from the same state as the cycle its capacity was measured on, and the record says so",
+  "full_charge_anchor_v": 4.188513,
+  "full_charge_band_v": 0.05,
+  "charge_termination_bands": {
+   "declared_termination_current_a": 0.02,
+   "by_corner": {
+    "low_ambient": {
+     "band_a": [
+      0.02,
+      0.08354
+     ],
+     "calibration_final_currents_a": [
+      0.00236,
+      0.00237,
+      0.04008,
+      0.04843,
+      0.04863,
+      0.05565,
+      0.06179,
+      0.06843,
+      0.06978,
+      0.07155,
+      0.07439,
+      0.08354
+     ],
+     "early_stops": 10
+    },
+    "room_ambient": {
+     "band_a": [
+      0.02,
+      0.03337
+     ],
+     "calibration_final_currents_a": [
+      1e-05,
+      0.00032,
+      0.0006,
+      0.00087,
+      0.00088,
+      0.00116,
+      0.00132,
+      0.00168,
+      0.0021,
+      0.00211,
+      0.00216,
+      0.00236,
+      0.00252,
+      0.00273,
+      0.00289,
+      0.00305,
+      0.00328,
+      0.00336,
+      0.00373,
+      0.00391,
+      0.00394,
+      0.00414,
+      0.00463,
+      0.00588,
+      0.00596,
+      0.01098,
+      0.03337
+     ],
+     "early_stops": 1
+    }
+   },
+   "why": "the ceiling is the highest early charge stop the calibration cells of that corner show; a trajectory whose charge stopped above it is refused rather than compared"
+  },
+  "unknown_is_a_refusal": true
+ },
+ "ocv_authority": {
+  "module": "engcore.domains.battery.flagship_ocv_v2",
+  "source_record": "benchmarks/battery_voltage_s3_recovery/evidence/OCV_AUTHORITY_V2.json",
+  "source_sha256": "9adcb29f8d69bc016f5f9de3032cf6c2aae6bf1423b7037ad31580c0db8bf779",
+  "derived_from_split": "calibration",
+  "calibration_cells": [
+   "B0005",
+   "B0018",
+   "B0033",
+   "B0038",
+   "B0042"
+  ],
+  "bands": {
+   "cold": {
+    "digest": "04ed55825bb36beb8432e17b7c6a6702919560e5fb5f34c8199a097ad6fd5452",
+    "interval": [
+     0.05,
+     1.0
+    ],
+    "knots": 20
+   },
+   "warm": {
+    "digest": "03574651b0226134b02b67b09dd17aa77c61b0a803aa6fa6f8c1ed6fba6d7aed",
+    "interval": [
+     0.1,
+     1.0
+    ],
+    "knots": 19
+   }
+  },
+  "band_rule": {
+   "cold_ambient_ceiling_c": 10.0,
+   "cold_current_ceiling_a": 2.0,
+   "why": "decided from the chamber ambient and the nominal load, both known before the run, so the curve a trajectory is predicted with never depends on the prediction"
+  }
+ },
+ "measurement_screen": {
+  "channel_disagreement_v": 0.05,
+  "rule": "a sample reporting rest whose voltage has moved more than the frozen acceptance tolerance since the previous resting sample is inadmissible: its two channels contradict each other",
+  "model_free": true,
+  "applied_to": "every split alike"
+ },
+ "applicability": {
+  "inside": {
+   "cell_temperature_bands_c": [
+    {
+     "band": "cold",
+     "low": -40.0,
+     "high": 20.0
+    },
+    {
+     "band": "warm",
+     "low": 20.0,
+     "high": 120.0
+    }
+   ],
+   "charge_state_floor_per_band": {
+    "cold": 0.05,
+    "warm": 0.1
+   },
+   "load_current_a": [
+    0.5,
+    2.5
+   ],
+   "direction": "discharge and rest only",
+   "usable_capacity_ah": [
+    0.9,
+    2.0
+   ],
+   "requires": [
+    "a capacity state with a basis other than UNKNOWN, from a prior like-for-like discharge of the same cell",
+    "an initial state with a basis other than UNKNOWN",
+    "a charge state inside the declared curve's own interval for the run's declared band"
+   ]
+  },
+  "outside": {
+   "load_current_a_above": 2.5,
+   "why_the_rate_ceiling_narrowed": "Sprint 3 declared 0.5-4.5 A while its own validation envelope classified every 2C cell FAILED. The measured branch resistance rises from 0.169 to 0.208 ohm between 2 A and 4 A and this model's polarization is linear in current, so a 4 A run is outside what the form can represent rather than merely poorly fitted. Narrowing the contract to match the envelope is the correction Sprint 3's own evidence asked for",
+   "cell_temperature_between_bands": "nothing is measured between 13 and 23 degC in this archive, so a run whose declared band is neither cold nor warm is refused rather than interpolated",
+   "charge_state_below_the_band_floor": "below its floor a band's curve disagrees with itself by more than the frozen acceptance tolerance, which is the same rule Sprint 3 used to place its floor",
+   "capacity_or_initial_state_unknown": "a cell whose usable capacity or starting state cannot be established from prior evidence has no charge-state basis, and a prediction without one is a prediction about the rating rather than the cell"
+  },
+  "undeclared": "any other cell chemistry, format or fixture, and any experiment group with no calibration cell -- the thermal conductance is a fixture property and the electrical parameters are fitted per operating block, so a group with no calibration cell has no parameter set and the model cannot be instantiated for it",
+  "open_circuit_voltage_authority": {
+   "cold": {
+    "charge_state_interval": [
+     0.05,
+     1.0
+    ],
+    "digest": "04ed55825bb36beb8432e17b7c6a6702919560e5fb5f34c8199a097ad6fd5452"
+   },
+   "warm": {
+    "charge_state_interval": [
+     0.1,
+     1.0
+    ],
+    "digest": "03574651b0226134b02b67b09dd17aa77c61b0a803aa6fa6f8c1ed6fba6d7aed"
+   }
+  },
+  "derived_from": {
+   "split": "validation",
+   "coverage": 0.7867,
+   "per_cell_voltage": {
+    "B0006": {
+     "n": 982,
+     "mae": 0.013916739670496614,
+     "rmse": 0.01766718945567034,
+     "p95": 0.033066685375394055,
+     "max": 0.05563801653419764
+    },
+    "B0034": {
+     "n": 617,
+     "mae": 0.02057389573933064,
+     "rmse": 0.03678004820683659,
+     "p95": 0.08627823060577286,
+     "max": 0.22502358189908467
+    },
+    "B0043": {
+     "n": 3155,
+     "mae": 0.02722311660748802,
+     "rmse": 0.04403380533136516,
+     "p95": 0.10361901594046073,
+     "max": 0.20627133027996658
+    }
+   },
+   "why_validation_and_not_the_holdout": "an applicability contract is a model-development decision and validation evidence is what model development is allowed to use. This contract is frozen in this commit, before the locked holdout is opened, so no holdout residual could have shaped it"
+  },
+  "known_limitation": "the cold band has exactly one calibration cell. Every in-band cell of the room-ambient corner was consumed by Sprint 3's three splits, and of the four cells that ran the low-ambient protocol one is the new holdout, one was Sprint 3's holdout and has been read, one is the validation cell and one is the calibration cell. A single calibration cell carries no cell-to-cell spread, and this recovery's own validation evidence puts that spread at 20 to 35 mV against a 50 mV acceptance tolerance"
+ },
+ "numerical_requirements": {
+  "scheme": "the closed-form update of the 1-RC cell over each measured interval at the temperature the previous interval left, which is exact for the declared equations within an interval",
+  "refinement": "the prediction is re-run with every measured interval halved and quartered; the movement in the reported metrics is recorded and must stay below a tenth of each acceptance tolerance, which is the requirement Sprint 3 froze",
+  "refinement_tolerance_voltage_v": 0.005,
+  "refinement_tolerance_temperature_k": 0.3,
+  "conservation": "the heat the cell reports over an interval must equal the heat the lumped body consumes in it"
+ },
+ "uncertainty_channels": {
+  "parameter": "QUANTIFIED. A standard error per fitted parameter from the fit's own Jacobian, with an identifiability verdict, in frozen_parameters above",
+  "capacity_basis": "QUANTIFIED, and new in this round. The like-for-like estimator's own spread against the capacity it predicts, measured on calibration cells: 0.0074 relative at one sigma",
+  "open_circuit_voltage": "QUANTIFIED as the authority's own interquartile spread across calibration pairs at each knot. It is the authority's scatter and not a measurement uncertainty",
+  "measurement": "UNKNOWN. This archive states no accuracy for any channel and none is invented. No acceptance threshold here is a source-reported spread",
+  "model_form": "PARTIALLY BOUNDED, and the bound is not a distribution. The disagreement between the admissible candidates M6, M8, M9, M10 and M11 on the validation split is reported as a spread across scientifically admissible model forms. It is not a claim that ensemble spread equals model-form uncertainty: every candidate in it shares one kernel, one heat term and one relaxation mode, so the spread cannot see an error common to all of them",
+  "numerical": "BOUNDED, not distributed. The refinement study measures how far the answer moves under subdivision and the bound is reported"
+ },
+ "gate_a_policy": {
+  "source": "benchmarks/battery_thermal_flagship_s3/evidence/PREREGISTRATION.json",
+  "source_sha256": "7908c3ee8a2a413ead6715aff3a9d3f209efc5ac7cf5f5e0a10b0885cc1db2bf",
+  "thresholds_frozen_at_commit": "1297648e",
+  "unchanged": "every threshold below is read from the Sprint 3 preregistration at run time. This recovery does not hold a second copy of them and cannot weaken one by editing a number here",
+  "gate_a": {
+   "terminal_voltage": {
+    "mae_v": 0.04,
+    "rmse_v": 0.05,
+    "p95_abs_v": 0.09,
+    "max_abs_v": null
+   },
+   "cell_temperature": {
+    "mae_k": 2.5,
+    "rmse_k": 3.0,
+    "p95_abs_k": 5.0,
+    "max_abs_k": null
+   },
+   "max_error_policy": "maximum absolute error is REPORTED and not gated. Over several thousand samples a single worst point is a statement about the worst instant, not about the model's fitness, and gating it would make the verdict depend on how many samples were retained",
+   "state_of_charge": "NOT INDEPENDENTLY VALIDATED. This source carries no state-of-charge reference that is independent of coulomb counting, and the archive's per-cycle Capacity is measured on the very discharge being predicted. No SOC gate exists and none is claimed",
+   "scope": "cases whose applicability is INSIDE. Cases declared OUTSIDE are evidence about the guardrail and are never summed into these metrics"
+  },
+  "acceptance": {
+   "terminal_voltage": {
+    "per_sample_tolerance_v": 0.05,
+    "basis": "reviewed_acceptance",
+    "rationale": "50 mV is 3.3% of this cell's 4.2-2.7 V usable window. On the plateau of this chemistry a 50 mV terminal-voltage error moves a voltage-based state-of-charge estimate by roughly 2-3%, which is the resolution a pack-level estimate is specified to. It is an engineering-relevance threshold and is not a claim about the instrument, whose accuracy this source does not state"
+   },
+   "cell_temperature": {
+    "per_sample_tolerance_k": 3.0,
+    "basis": "reviewed_acceptance",
+    "rationale": "3 K is about one fifth of the smallest self-heating rise in the selected envelope (about 14 K at 2 A) and is the scale at which a predicted cell temperature changes a derating or cooling decision. It is an engineering-relevance threshold, not an instrument spread"
+   }
+  }
+ },
+ "holdout": {
+  "trajectories": [
+   "B0041.d0043",
+   "B0041.d0048",
+   "B0041.d0053",
+   "B0041.d0057",
+   "B0041.d0062",
+   "B0041.d0067"
+  ],
+  "cells": [
+   "B0041"
+  ],
+  "selection_rule": "the cells this archive contains that appear in no Sprint 3 split. The rule has exactly one solution, B0041, so no outcome could have steered it",
+  "why_independent": "B0041 appears in no Sprint 3 calibration, validation or holdout split, in no guardrail list, and in no analysis in this recovery. Its measured channels are not vendored: the development corpus loader refuses a holdout trajectory and the candidate harness calls that refusal on the set it loads",
+  "what_was_read_before_the_freeze": "its identity, cycle indices, ambient, nominal load, sample counts, and the first sample's voltage and current -- the two channels the initial-state authority needs. No voltage after the first sample, and no residual",
+  "dataset_digest_source": "SELECTION.json",
+  "selection_sha256": "a42aa7009f572f37218962680318d350f07d590636d0db2d54799cebfcb88901",
+  "state_authority_sha256": "9c0f0a9e0f1dced34d8de2dbaab6856c8922e984c3de7894d08d468e50f4c8e2",
+  "candidates_sha256": "75412e4078ffb1d511caefcc15d4d013959af2c7625244096ffa68374329da14"
+ },
+ "what_this_round_does_not_produce": [
+  "a coupled multiphysics run through the authorized composition path. The composition pack's blueprint pins the participant's model version, so a new model version needs a parallel blueprint, composition pack and execution pack, which is a larger structural change than this recovery is scoped for. The consequence is stated rather than worked around: there is no replay of an authorized plan and no certification record for the recovery model, and the Gate A below is scored on the frozen model's own declared kernel through the Sprint 2 holdout authority",
+  "an independently validated state of charge. The archive's per-cycle capacity is measured on the very discharge being predicted, and comparing a coulomb counter with a coulomb counter tests nothing"
+ ]
+}

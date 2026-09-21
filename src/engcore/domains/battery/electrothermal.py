@@ -180,6 +180,17 @@ class ElectrothermalCell:
     polarization_resistance: ArrheniusResistance
     polarization_capacitance: Quantity
     open_circuit_voltage_curve: DeclaredCurve
+    #: Optional multiplicative shape for the ohmic resistance against charge
+    #: state. ``None`` means the ohmic resistance has no charge-state axis,
+    #: which is a statement and not an omission: it is what
+    #: ``battery.cell.electrothermal_1rc@0.1.0`` declares. A cell that carries
+    #: one is a different model version and says so in its own record.
+    #:
+    #: The shape multiplies the Arrhenius value, so it must be dimensionless and
+    #: normalized at the reference charge state its provenance names -- otherwise
+    #: the fitted reference resistance would no longer mean the resistance at
+    #: that state.
+    ohmic_charge_state_shape: DeclaredCurve | None = None
 
     def __post_init__(self) -> None:
         cell_id = str(self.cell_id).strip()
@@ -228,6 +239,23 @@ class ElectrothermalCell:
         curve_unit.require_compatible(
             Quantity(1.0, ctx.VOLTAGE_UNIT), context="open-circuit voltage authority"
         )
+        shape = self.ohmic_charge_state_shape
+        if shape is not None:
+            if not isinstance(shape, DeclaredCurve):
+                raise InvalidScientificProblem(
+                    "the ohmic charge-state shape must be a DeclaredCurve, so "
+                    "it refuses outside its own evidence instead of being "
+                    "extrapolated"
+                )
+            if shape.against != ctx.STATE_OF_CHARGE:
+                raise InvalidScientificProblem(
+                    f"the ohmic charge-state shape must vary with "
+                    f"{ctx.STATE_OF_CHARGE!r}, not {shape.against!r}"
+                )
+            Quantity(1.0, shape.unit).require_compatible(
+                Quantity(1.0, ctx.DIMENSIONLESS),
+                context="ohmic charge-state shape",
+            )
 
     def time_constant(self, temperature: Quantity) -> Quantity:
         return (
@@ -246,6 +274,18 @@ class ElectrothermalCell:
             OHMIC_RESISTANCE: self.ohmic_resistance.to_dict(),
             POLARIZATION_RESISTANCE: self.polarization_resistance.to_dict(),
             POLARIZATION_CAPACITANCE: self.polarization_capacitance.to_dict(),
+            "ohmic_charge_state_shape": (
+                None
+                if self.ohmic_charge_state_shape is None
+                else {
+                    "digest": self.ohmic_charge_state_shape.fingerprint,
+                    "interval": [
+                        self.ohmic_charge_state_shape.lower,
+                        self.ohmic_charge_state_shape.upper,
+                    ],
+                    "source": self.ohmic_charge_state_shape.source,
+                }
+            ),
             "open_circuit_voltage_authority": {
                 "digest": self.ocv_digest,
                 "quantity": self.open_circuit_voltage_curve.quantity,
@@ -386,6 +426,20 @@ def advance_electrothermal_step(
         )
 
     r0 = cell.ohmic_resistance.at(temperature)
+    if cell.ohmic_charge_state_shape is not None:
+        # Evaluated at the charge state the step ENDS at, which is the state the
+        # open-circuit voltage is read at below, so both halves of the terminal
+        # voltage are evaluated at one state rather than two. A charge state the
+        # shape has no evidence at is a refusal, not an extrapolated factor.
+        shaped = cell.ohmic_charge_state_shape.evaluate(
+            Quantity(final_soc, ctx.DIMENSIONLESS)
+        )
+        if shaped.status is not ValidityStatus.IN_DOMAIN or shaped.value is None:
+            raise ChargeStateExhausted(
+                f"the ohmic charge-state shape gives no value at z={final_soc:g}: "
+                f"{shaped.reason}"
+            )
+        r0 = r0 * shaped.value.magnitude_in(ctx.DIMENSIONLESS)
     r1 = cell.polarization_resistance.at(temperature)
     tau = (r1 * cell.polarization_capacitance).to(ctx.TIME_UNIT)
     tau_s = tau.magnitude

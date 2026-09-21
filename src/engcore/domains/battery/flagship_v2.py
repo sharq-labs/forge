@@ -11,14 +11,13 @@ same realization arithmetic. The Sprint 3 kernel
 executes both versions, and a regression pins the older version's outputs so
 this module's arrival could not have moved them.
 
-Adding parameters was tried and rejected. A second RC branch, and a
-charge-state axis on the ohmic resistance taken from the measured branch
-difference, were both fitted on calibration cells and judged on validation
-cells; neither earned its place. The measured rest relaxation is the reason the
-second branch was refused and not merely unhelpful: two exponentials fit every
-calibration tail better than one, but the slower time constant scatters wider
-than its own median across trajectories, so it is a free parameter absorbing
-residuals rather than a second physical process.
+Adding *parameters* was tried and rejected. A second RC branch was fitted on
+calibration cells and judged on validation cells and did not earn its place, and
+the measured rest relaxation is the reason it was refused rather than merely
+found unhelpful: two exponentials fit every calibration tail better than one, but
+the slower time constant scatters wider than its own median across trajectories,
+so it is a free parameter absorbing residuals rather than a second physical
+process.
 
 What is different, and why it is a new version
 -----------------------------------------------
@@ -32,6 +31,30 @@ and wrong by a different amount for each of them. This version's basis is a
 run, and its charge state is a fraction of that. The basis still arrives as an
 external input; what changed is what the model declares that input to mean, and
 a model whose state variable means something else is a different model.
+
+**A charge-state axis on the ohmic resistance, with no fitted parameter.** The
+measured charge/discharge branch difference falls from 0.201 to 0.133 ohm across
+charge state when warm and from 0.499 to 0.294 ohm when cold. That is carried as
+a declared multiplicative shape normalized to one at charge state 0.5, so the
+fitted reference resistance still means the resistance at that state. Every value
+in it is a median of calibration measurements and no parameter is fitted for it.
+
+What promoted it was **identifiability**, not fit. Without it the cold parameter
+unit -- the one that predicts the locked holdout -- leaves the ohmic reference
+resistance, the polarization reference resistance and the polarization activation
+energy all unidentified, at a normal-matrix condition number of 1.6e20 and a
+correlation of -0.9999 between R0 and its own activation energy: the fitter is
+absorbing a real charge-state trend into a constant and its temperature slope.
+With the shape that unit is fully identified and the condition number falls four
+orders of magnitude. On validation the shape is close to neutral -- 2.4 mV of
+mean absolute error gained, 2.1 mV of 95th percentile given back -- so fit alone
+would not have promoted it and identifiability did.
+
+The shape is a measurement only where the two branches overlap in charge state.
+Outside that interval it is HELD at its end value, which is a declared
+approximation: extrapolating the trend would invent a resistance the branches
+never saw, and refusing there would refuse most of every trajectory.
+``R0_SHAPE_MEASURED_INTERVALS`` says which part is measured.
 
 **The open-circuit voltage authority.** A curve on a different charge-state axis
 is a different relation, so it could not have been an amendment to the old
@@ -49,7 +72,8 @@ band is refused: nothing in the evidence lies between 13 and 23 degC.
 What this version does not fix
 ------------------------------
 It has no state that ages, no entropic heat, no hysteresis, no second time
-constant, and no charge-state axis on either resistance. Its parameters are
+constant, and no charge-state axis on the *polarization* resistance. Its
+parameters are
 still fitted per operating block rather than derived, and a block with one
 calibration cell carries no cell-to-cell spread -- which is the limitation the
 recovery's own validation evidence puts at 20 to 35 mV.
@@ -78,9 +102,19 @@ from . import electrothermal as et
 from . import flagship as v1
 from .flagship_ocv_v2 import (
     CELL_TEMPERATURE_BANDS,
+    COLD_R0_SHAPE_MEASURED_INTERVAL,
     OCV_V2_CURVES,
+    R0_SHAPE_REFERENCE_Z,
+    R0_V2_SHAPES,
+    WARM_R0_SHAPE_MEASURED_INTERVAL,
     band_for,
 )
+
+#: Where each band's ohmic shape is a measurement rather than a held edge.
+R0_SHAPE_MEASURED_INTERVALS = {
+    "cold": COLD_R0_SHAPE_MEASURED_INTERVAL,
+    "warm": WARM_R0_SHAPE_MEASURED_INTERVAL,
+}
 
 MODEL_ID = v1.MODEL_ID
 MODEL_VERSION = "0.2.0"
@@ -104,6 +138,10 @@ _ASSUMPTIONS = (
     "the open-circuit voltage is the declared curve of the declared "
     "cell-temperature band, over that curve's declared charge-state interval "
     "and nowhere else",
+    "the ohmic resistance carries the measured charge-state shape of its band "
+    "as a multiplicative factor normalized at charge state 0.5, held at its end "
+    "values outside the interval the branch difference measures. No parameter "
+    "is fitted for it",
     "the charge state is a fraction of a MEASURED available charge, supplied "
     "per run from cycles that completed before it. It is not the "
     "manufacturer's rating and it is not fitted to the run being predicted",
@@ -129,9 +167,13 @@ _EXCLUSIONS = (
     "measured rest relaxation better than one, but the slower constant is not "
     "reproducible across trajectories, so the branch is refused rather than "
     "fitted",
-    "any charge-state axis on either resistance. The measured branch "
-    "difference does have one; carrying it as a shape did not improve "
-    "independent validation and is not promoted",
+    "any charge-state axis on the polarization resistance. The branch "
+    "difference measures one resistance and cannot separate the ohmic and "
+    "polarization parts of it, so the shape is applied to the ohmic term alone "
+    "and the polarization term carries none",
+    "any measured charge-state dependence of the ohmic resistance outside the "
+    "interval where the two branches overlap. There the shape is held at its "
+    "end value and the record says so",
     "any interpolation of the open-circuit voltage between the declared bands. "
     "Nothing is measured between them and the model refuses there",
     "any dependence of the usable capacity on temperature or rate WITHIN a "
@@ -255,7 +297,8 @@ def recovery_cell(
     have a cell.
     """
     curve = OCV_V2_CURVES.get(band)
-    if curve is None:
+    shape = R0_V2_SHAPES.get(band)
+    if curve is None or shape is None:
         raise InvalidScientificProblem(
             f"no declared open-circuit voltage curve for band {band!r}; the "
             f"declared bands are {sorted(OCV_V2_CURVES)} and there is no curve "
@@ -281,6 +324,7 @@ def recovery_cell(
         ),
         polarization_capacitance=polarization_capacitance,
         open_circuit_voltage_curve=curve,
+        ohmic_charge_state_shape=shape,
     )
 
 
@@ -290,6 +334,8 @@ ELECTROTHERMAL_V2_REALIZATIONS = (ELECTROTHERMAL_1RC_V2_REALIZATION,)
 
 __all__ = [
     "BAND_CODES",
+    "R0_SHAPE_MEASURED_INTERVALS",
+    "R0_SHAPE_REFERENCE_Z",
     "ELECTROTHERMAL_1RC_V2_MODEL",
     "ELECTROTHERMAL_1RC_V2_REALIZATION",
     "ELECTROTHERMAL_V2_MODELS",

@@ -23,15 +23,21 @@ three knots, which is the evidence that they are two relations rather than one.
 There is nothing measured between 13 and 23 degC in this archive, so the gap
 between the bands carries no curve and the model refuses there.
 
-**No charge-state axis on the ohmic resistance.** The branch-difference
-resistance does fall from 0.201 to 0.133 ohm across charge state when warm and
-from 0.499 to 0.294 ohm when cold, and that measurement is published in the
-source record. A candidate carrying it as a multiplicative shape was fitted and
-judged on validation and was **not** selected: with one parameter set per
-declared calibration block it bought 2.4 mV of mean absolute error and gave back
-2.1 mV of 95th percentile, which is not an independent improvement. So the
-selected model has no charge-state axis on the ohmic resistance, and the
-measurement stays where an unpromoted measurement belongs.
+**A measured charge-state shape on the ohmic resistance.** The
+branch-difference resistance falls from 0.201 to 0.133 ohm across charge state
+when warm and from 0.499 to 0.294 ohm when cold. That is a measurement with no
+model in it, and it is carried as a multiplicative shape normalized to one at
+charge state 0.5 so the fitted reference resistance keeps its meaning.
+It adds no fitted parameter.
+
+What promoted it was identifiability, not fit. Without the shape the cold
+parameter unit leaves the ohmic reference resistance, the polarization reference
+resistance and the polarization activation energy all unidentified, at a
+normal-matrix condition number of 1.6e20 and a correlation of -0.9999 between R0
+and its own activation energy: the fitter is absorbing a real charge-state trend
+into a constant and its temperature slope. With the shape that unit is fully
+identified and the condition number falls four orders of magnitude. The cold
+unit is the one that predicts the locked holdout.
 
 What these are not
 ------------------
@@ -75,6 +81,9 @@ OCV_V2_CALIBRATION_CELLS = ('B0005', 'B0018', 'B0033', 'B0038', 'B0042')
 CELL_TEMPERATURE_BANDS = (('cold', -40.0, 20.0), ('warm', 20.0, 120.0))
 COLD_AMBIENT_CEILING_C = 10.0
 COLD_CURRENT_CEILING_A = 2.0
+
+#: Charge state the ohmic shape is normalized at.
+R0_SHAPE_REFERENCE_Z = 0.5
 
 
 def band_for(ambient_temperature_c: float, nominal_current_a: float) -> str:
@@ -153,6 +162,53 @@ COLD_OCV_CURVE = DeclaredCurve(
     ),
 )
 
+#: Multiplicative shape for the ohmic resistance against charge state, from the
+#: measured charge/discharge branch difference divided by the current sum,
+#: normalized to one at R0_SHAPE_REFERENCE_Z. It carries no fitted parameter:
+#: every measured value is a median of calibration measurements.
+#:
+#: The branch-difference method measures a resistance only where the two
+#: branches overlap in charge state, and that is the interval below. Outside it
+#: the shape is HELD at its end value -- visible here as a repeated value at the
+#: table's edge. Holding is a declared approximation; extrapolating the trend
+#: would invent a resistance the branches never saw, and refusing would refuse
+#: most of every trajectory.
+COLD_R0_SHAPE_MEASURED_INTERVAL = (0.05, 0.5)
+
+COLD_R0_SHAPE_KNOTS = (
+    (0.05, 1.699552),
+    (0.1, 1.542431),
+    (0.15, 1.452293),
+    (0.2, 1.390327),
+    (0.25, 1.308149),
+    (0.3, 1.246196),
+    (0.35, 1.180715),
+    (0.4, 1.118599),
+    (0.45, 1.066438),
+    (0.5, 1.0),
+    (1.0, 1.0),
+)
+
+COLD_R0_SHAPE = DeclaredCurve(
+    quantity="ohmic_resistance_charge_state_shape",
+    against=ctx.STATE_OF_CHARGE,
+    against_unit=ctx.DIMENSIONLESS,
+    unit=ctx.DIMENSIONLESS,
+    lower=0.05,
+    upper=1.0,
+    form=TabulatedForm(
+        samples=COLD_R0_SHAPE_KNOTS, interpolation=Interpolation.LINEAR
+    ),
+    source=(
+        "measured charge/discharge branch difference divided by the current "
+        "sum, on calibration cells only; a measurement, not a fitted parameter"
+    ),
+    description=(
+        "Ohmic resistance against charge state relative to its value at charge "
+        "state 0.5, in the cold cell-temperature band."
+    ),
+)
+
 
 # ---------------------------------------------------------------------------
 # warm band
@@ -214,11 +270,69 @@ WARM_OCV_CURVE = DeclaredCurve(
     ),
 )
 
+#: Multiplicative shape for the ohmic resistance against charge state, from the
+#: measured charge/discharge branch difference divided by the current sum,
+#: normalized to one at R0_SHAPE_REFERENCE_Z. It carries no fitted parameter:
+#: every measured value is a median of calibration measurements.
+#:
+#: The branch-difference method measures a resistance only where the two
+#: branches overlap in charge state, and that is the interval below. Outside it
+#: the shape is HELD at its end value -- visible here as a repeated value at the
+#: table's edge. Holding is a declared approximation; extrapolating the trend
+#: would invent a resistance the branches never saw, and refusing would refuse
+#: most of every trajectory.
+WARM_R0_SHAPE_MEASURED_INTERVAL = (0.05, 0.8)
 
-#: The curve per declared band, for a caller that has a band.
+WARM_R0_SHAPE_KNOTS = (
+    (0.05, 1.261313),
+    (0.1, 1.042953),
+    (0.15, 1.002342),
+    (0.2, 0.999849),
+    (0.25, 0.997921),
+    (0.3, 0.995303),
+    (0.35, 0.998298),
+    (0.4, 0.999962),
+    (0.45, 1.004107),
+    (0.5, 1.0),
+    (0.55, 1.004245),
+    (0.6, 1.010544),
+    (0.65, 0.997664),
+    (0.7, 0.970969),
+    (0.75, 0.904529),
+    (0.8, 0.831929),
+    (1.0, 0.831929),
+)
+
+WARM_R0_SHAPE = DeclaredCurve(
+    quantity="ohmic_resistance_charge_state_shape",
+    against=ctx.STATE_OF_CHARGE,
+    against_unit=ctx.DIMENSIONLESS,
+    unit=ctx.DIMENSIONLESS,
+    lower=0.05,
+    upper=1.0,
+    form=TabulatedForm(
+        samples=WARM_R0_SHAPE_KNOTS, interpolation=Interpolation.LINEAR
+    ),
+    source=(
+        "measured charge/discharge branch difference divided by the current "
+        "sum, on calibration cells only; a measurement, not a fitted parameter"
+    ),
+    description=(
+        "Ohmic resistance against charge state relative to its value at charge "
+        "state 0.5, in the warm cell-temperature band."
+    ),
+)
+
+
+#: Curve and ohmic shape per declared band, for a caller with a band.
 OCV_V2_CURVES = {
     "cold": COLD_OCV_CURVE,
     "warm": WARM_OCV_CURVE,
+}
+
+R0_V2_SHAPES = {
+    "cold": COLD_R0_SHAPE,
+    "warm": WARM_R0_SHAPE,
 }
 
 __all__ = [
@@ -229,6 +343,9 @@ __all__ = [
     "COLD_KNOT_SPREAD_V",
     "COLD_LOWER",
     "COLD_OCV_CURVE",
+    "COLD_R0_SHAPE",
+    "COLD_R0_SHAPE_KNOTS",
+    "COLD_R0_SHAPE_MEASURED_INTERVAL",
     "COLD_SUPPORT_PAIRS",
     "COLD_UPPER",
     "OCV_V2_ARCHIVE_SHA256",
@@ -236,10 +353,15 @@ __all__ = [
     "OCV_V2_CURVES",
     "OCV_V2_SOURCE_RECORD",
     "OCV_V2_SOURCE_SHA256",
+    "R0_SHAPE_REFERENCE_Z",
+    "R0_V2_SHAPES",
     "WARM_KNOTS",
     "WARM_KNOT_SPREAD_V",
     "WARM_LOWER",
     "WARM_OCV_CURVE",
+    "WARM_R0_SHAPE",
+    "WARM_R0_SHAPE_KNOTS",
+    "WARM_R0_SHAPE_MEASURED_INTERVAL",
     "WARM_SUPPORT_PAIRS",
     "WARM_UPPER",
     "band_for",
