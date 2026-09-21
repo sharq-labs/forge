@@ -33,6 +33,19 @@ SCENARIO_QOI_SCHEMA = schema_string("scenario_quantity_of_interest")
 SCENARIO_SEGMENT_SCHEMA = schema_string("scenario_segment")
 SCENARIO_SCHEMA = schema_string("scenario_specification")
 
+#: Segment ownership at a shared boundary, stated once and applied everywhere.
+#:
+#: Every segment owns ``[start, end)``.  The final segment of a scenario also
+#: owns its terminal endpoint, because the horizon has to end somewhere.  So
+#: for segments ``A=[0,10)``, ``B=[10,20)``, ``C=[20,30]`` the instant ``t=10``
+#: belongs to ``B`` and to nothing else -- not to ``A`` because ``A`` was
+#: iterated first.
+#:
+#: This rule is the same one in segment selection, schedule composition, event
+#: boundaries, runtime windows, receipts and replay.  Where it is applied, the
+#: code says so by calling :meth:`ScenarioSpecification.segment_at`.
+SEGMENT_OWNERSHIP = "[start, end), final segment inclusive of its endpoint"
+
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]*$")
 _TIME_DIMENSION = dimensionality("second")
 
@@ -270,6 +283,19 @@ class ScenarioEvent:
 
 @dataclass(frozen=True, order=True)
 class TerminationCondition:
+    """A declared reason for a scenario to stop before its horizon.
+
+    The constraint's ``metric`` names a :class:`QuantityOfInterest`'s
+    ``quantity_id`` -- the scenario's own declared observables and the only
+    values execution can read without inventing one.  That binding is enforced
+    by :class:`ScenarioSpecification`, so it is a stated contract rather than a
+    convention the runtime happens to follow.
+
+    Execution stops at the **first window boundary at which the constraint is
+    satisfied**.  A condition already satisfied at the scenario start is
+    refused rather than producing an empty trajectory.
+    """
+
     condition_id: str
     constraint: ConstraintDefinition
 
@@ -277,6 +303,12 @@ class TerminationCondition:
         object.__setattr__(self, "condition_id", _identifier(self.condition_id, "termination condition_id"))
         if not isinstance(self.constraint, ConstraintDefinition):
             raise InvalidScientificProblem("termination condition requires ConstraintDefinition")
+        if self.constraint.name != self.condition_id:
+            raise InvalidScientificProblem(
+                f"termination condition {self.condition_id!r} must carry a constraint "
+                f"of the same name, not {self.constraint.name!r}; the receipt that "
+                f"records a stop names one identity"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": TERMINATION_CONDITION_SCHEMA, "condition_id": self.condition_id, "constraint": self.constraint.to_dict()}
@@ -351,6 +383,281 @@ class ScenarioSegment:
         return cls(payload["segment_id"], Quantity.from_dict(payload["start"]), Quantity.from_dict(payload["end"]), tuple(TimeSeriesInput.from_dict(item) for item in payload["inputs"]), tuple(OperatingCondition.from_dict(item) for item in payload["operating_conditions"]))
 
 
+@dataclass(frozen=True, order=True)
+class SegmentContribution:
+    """Which scenario segment authored one stretch of a composed schedule."""
+
+    segment_id: str
+    start: Quantity
+    end: Quantity
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "segment_id", _identifier(self.segment_id, "segment_id"))
+        object.__setattr__(self, "start", _time(self.start, "contribution start"))
+        object.__setattr__(self, "end", _time(self.end, "contribution end"))
+
+    def owns(self, seconds: float, *, final: bool) -> bool:
+        start = self.start.magnitude_in("second")
+        end = self.end.magnitude_in("second")
+        if seconds < start:
+            return False
+        return seconds <= end if final else seconds < end
+
+
+@dataclass(frozen=True)
+class ComposedInputSchedule:
+    """One control quantity reused across consecutive segments, as one schedule.
+
+    A mission reuses the same input id in every phase it applies to.  The
+    composed schedule is the deterministic merge of those per-segment series
+    into the single runtime schedule execution consumes, with each sample's
+    authoring segment retained so a receipt can name it.
+
+    Nothing is invented by the merge: at a shared boundary the later segment
+    owns the instant (:data:`SEGMENT_OWNERSHIP`), which is exactly how a STEP
+    change between phases is expressed, and no value is interpolated across a
+    boundary that neither segment declared.
+    """
+
+    input_id: str
+    series: TimeSeriesInput
+    contributions: tuple[SegmentContribution, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "input_id", _identifier(self.input_id, "input_id"))
+        if not isinstance(self.series, TimeSeriesInput) or self.series.input_id != self.input_id:
+            raise InvalidScientificProblem(
+                "composed schedule requires the TimeSeriesInput it composes"
+            )
+        contributions = tuple(self.contributions)
+        if not contributions or any(
+            not isinstance(item, SegmentContribution) for item in contributions
+        ):
+            raise InvalidScientificProblem(
+                "composed schedule requires its segment contributions"
+            )
+        object.__setattr__(self, "contributions", contributions)
+
+    @property
+    def interpolation(self) -> InterpolationKind:
+        return self.series.interpolation
+
+    @property
+    def unit(self) -> str:
+        return self.series.unit
+
+    def value_at(self, instant: Quantity) -> Quantity:
+        return self.series.value_at(instant)
+
+    def segment_at(self, instant: Quantity) -> str:
+        """The segment that owns this instant, under :data:`SEGMENT_OWNERSHIP`."""
+        seconds = _time(instant, "composed schedule query instant").magnitude_in("second")
+        last = len(self.contributions) - 1
+        for index, item in enumerate(self.contributions):
+            if item.owns(seconds, final=index == last):
+                return item.segment_id
+        raise InvalidScientificProblem(
+            f"composed input {self.input_id!r} has no segment owning "
+            f"{seconds} second"
+        )
+
+
+@dataclass(frozen=True)
+class ComposedOperatingCondition:
+    """One declared operating condition across the segments that declare it.
+
+    Same composition rules as a control input: one identity, compatible units,
+    no hole in the middle, and the later segment owns a shared boundary.  An
+    operating condition an authorized consumer declares must have a value at
+    every window, so partial coverage is refused rather than filled in.
+    """
+
+    condition_id: str
+    values: tuple[tuple[SegmentContribution, OperatingCondition], ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "condition_id", _identifier(self.condition_id, "condition_id")
+        )
+        values = tuple(self.values)
+        if not values:
+            raise InvalidScientificProblem(
+                "composed operating condition requires at least one segment value"
+            )
+        object.__setattr__(self, "values", values)
+
+    @property
+    def unit(self) -> str:
+        return self.values[0][1].value.units
+
+    def _owner(self, instant: Quantity) -> tuple[SegmentContribution, OperatingCondition]:
+        seconds = _time(instant, "operating condition query instant").magnitude_in("second")
+        last = len(self.values) - 1
+        for index, item in enumerate(self.values):
+            if item[0].owns(seconds, final=index == last):
+                return item
+        raise InvalidScientificProblem(
+            f"operating condition {self.condition_id!r} has no segment owning "
+            f"{seconds} second"
+        )
+
+    def value_at(self, instant: Quantity) -> OperatingCondition:
+        return self._owner(instant)[1]
+
+    def segment_at(self, instant: Quantity) -> str:
+        return self._owner(instant)[0].segment_id
+
+
+def compose_operating_conditions(
+    segments: tuple["ScenarioSegment", ...],
+    *,
+    start: Quantity,
+    end: Quantity,
+) -> tuple[ComposedOperatingCondition, ...]:
+    ordered = tuple(sorted(segments, key=lambda item: item.start.magnitude_in("second")))
+    grouped: dict[str, list[tuple[ScenarioSegment, OperatingCondition]]] = {}
+    for segment in ordered:
+        for condition in segment.operating_conditions:
+            grouped.setdefault(condition.quantity_id, []).append((segment, condition))
+
+    horizon_start = start.magnitude_in("second")
+    horizon_end = end.magnitude_in("second")
+    composed: list[ComposedOperatingCondition] = []
+    for condition_id in sorted(grouped):
+        parts = grouped[condition_id]
+        unit = parts[0][1].value.units
+        for segment, condition in parts[1:]:
+            condition.value.require_compatible(
+                unit,
+                context=(
+                    f"operating condition {condition_id!r} in segment "
+                    f"{segment.segment_id!r}"
+                ),
+            )
+        indices = [ordered.index(segment) for segment, _ in parts]
+        if indices != list(range(indices[0], indices[0] + len(indices))):
+            raise InvalidScientificProblem(
+                f"operating condition {condition_id!r} skips a segment; a declared "
+                f"consumer has no value there"
+            )
+        span_start = parts[0][0].start.magnitude_in("second")
+        span_end = parts[-1][0].end.magnitude_in("second")
+        if span_start != horizon_start or span_end != horizon_end:
+            raise InvalidScientificProblem(
+                f"operating condition {condition_id!r} covers "
+                f"[{span_start}, {span_end}] second but the horizon is "
+                f"[{horizon_start}, {horizon_end}] second"
+            )
+        composed.append(
+            ComposedOperatingCondition(
+                condition_id,
+                tuple(
+                    (
+                        SegmentContribution(segment.segment_id, segment.start, segment.end),
+                        condition,
+                    )
+                    for segment, condition in parts
+                ),
+            )
+        )
+    return tuple(composed)
+
+
+def compose_input_schedules(
+    segments: tuple["ScenarioSegment", ...],
+    *,
+    start: Quantity,
+    end: Quantity,
+) -> tuple[ComposedInputSchedule, ...]:
+    """Merge per-segment time-series inputs into deterministic runtime schedules.
+
+    Refused, rather than reconciled:
+
+    * the same input id declared with incompatible units in two segments;
+    * the same input id declared with different interpolation semantics;
+    * an input that skips a segment in the middle of its own span, or does not
+      cover the whole horizon -- a port that is externally imposed needs a
+      value at every window, and filling the hole would be an invented one;
+    * a LINEAR input whose value jumps at a shared segment boundary, where the
+      limit from the left and the value at the instant disagree.
+
+    Ambiguous overlap is not in that list because it cannot be built: scenario
+    segments are validated contiguous and non-overlapping, so exactly one
+    segment owns any instant.
+    """
+    ordered = tuple(sorted(segments, key=lambda item: item.start.magnitude_in("second")))
+    grouped: dict[str, list[tuple[ScenarioSegment, TimeSeriesInput]]] = {}
+    for segment in ordered:
+        for series in segment.inputs:
+            grouped.setdefault(series.input_id, []).append((segment, series))
+
+    horizon_start = start.magnitude_in("second")
+    horizon_end = end.magnitude_in("second")
+    schedules: list[ComposedInputSchedule] = []
+    for input_id in sorted(grouped):
+        parts = grouped[input_id]
+        first_series = parts[0][1]
+        unit = first_series.unit
+        interpolation = first_series.interpolation
+        for segment, series in parts[1:]:
+            if series.interpolation is not interpolation:
+                raise InvalidScientificProblem(
+                    f"scenario input {input_id!r} changes interpolation semantics in "
+                    f"segment {segment.segment_id!r}: {interpolation.value} then "
+                    f"{series.interpolation.value}"
+                )
+            series.samples[0].value.require_compatible(
+                unit, context=f"scenario input {input_id!r} in segment {segment.segment_id!r}"
+            )
+
+        indices = [ordered.index(segment) for segment, _ in parts]
+        if indices != list(range(indices[0], indices[0] + len(indices))):
+            raise InvalidScientificProblem(
+                f"scenario input {input_id!r} skips a segment; an externally imposed "
+                f"port has no value there and one would have to be invented"
+            )
+        span_start = parts[0][0].start.magnitude_in("second")
+        span_end = parts[-1][0].end.magnitude_in("second")
+        if span_start != horizon_start or span_end != horizon_end:
+            raise InvalidScientificProblem(
+                f"scenario input {input_id!r} covers [{span_start}, {span_end}] second "
+                f"but the horizon is [{horizon_start}, {horizon_end}] second; an "
+                f"externally imposed port needs a declared value at every window"
+            )
+
+        samples: list[TimeSample] = []
+        contributions: list[SegmentContribution] = []
+        for position, (segment, series) in enumerate(parts):
+            final = position == len(parts) - 1
+            boundary = segment.end.magnitude_in("second")
+            if not final and interpolation is InterpolationKind.LINEAR:
+                following = parts[position + 1][1]
+                left = series.samples[-1].value.magnitude_in(unit)
+                right = following.samples[0].value.magnitude_in(unit)
+                if left != right:
+                    raise InvalidScientificProblem(
+                        f"LINEAR scenario input {input_id!r} jumps from {left} to "
+                        f"{right} {unit} at the {segment.segment_id!r} boundary; the "
+                        f"limit from the left and the value at the instant disagree"
+                    )
+            for sample in series.samples:
+                if not final and sample.instant.magnitude_in("second") == boundary:
+                    # The next segment owns the shared instant.
+                    continue
+                samples.append(sample)
+            contributions.append(
+                SegmentContribution(segment.segment_id, segment.start, segment.end)
+            )
+        schedules.append(
+            ComposedInputSchedule(
+                input_id,
+                TimeSeriesInput(input_id, tuple(samples), interpolation),
+                tuple(contributions),
+            )
+        )
+    return tuple(schedules)
+
+
 @dataclass(frozen=True)
 class ScenarioSpecification:
     scenario_id: str
@@ -417,52 +724,80 @@ class ScenarioSpecification:
         for event in self.events:
             if not start.magnitude <= event.instant.magnitude <= end.magnitude:
                 raise InvalidScientificProblem("scenario event lies outside the horizon")
+        qoi_ids = {item.quantity_id for item in self.quantities_of_interest}
+        for condition in self.termination_conditions:
+            if condition.constraint.metric not in qoi_ids:
+                raise InvalidScientificProblem(
+                    f"termination condition {condition.condition_id!r} watches "
+                    f"{condition.constraint.metric!r}, which is not a declared "
+                    f"quantity of interest; execution would have to invent the value "
+                    f"it stops on"
+                )
+        # Composition is validated at construction so an unmergeable schedule is
+        # refused where it was authored rather than at the runtime boundary.
+        compose_input_schedules(self.segments, start=start, end=end)
+        compose_operating_conditions(self.segments, start=start, end=end)
+
+    def segment_at(self, instant: Quantity) -> ScenarioSegment:
+        """The one segment that owns this instant, under :data:`SEGMENT_OWNERSHIP`.
+
+        Ownership never depends on iteration order: at a shared boundary the
+        later segment owns the instant, and only the final segment owns the
+        scenario's terminal endpoint.
+        """
+        seconds = _time(instant, "scenario query instant").magnitude_in("second")
+        if seconds < self.start.magnitude_in("second") or seconds > self.end.magnitude_in("second"):
+            raise InvalidScientificProblem("scenario query lies outside the horizon")
+        last = len(self.segments) - 1
+        for index, item in enumerate(self.segments):
+            lower = item.start.magnitude_in("second")
+            upper = item.end.magnitude_in("second")
+            if lower <= seconds and (seconds <= upper if index == last else seconds < upper):
+                return item
+        raise InvalidScientificProblem(
+            f"no scenario segment owns {seconds} second"
+        )
+
+    def composed_input_schedules(self) -> tuple[ComposedInputSchedule, ...]:
+        """The deterministic runtime schedules this scenario's segments compose to."""
+        return compose_input_schedules(self.segments, start=self.start, end=self.end)
+
+    def composed_operating_conditions(self) -> tuple[ComposedOperatingCondition, ...]:
+        """The operating conditions this scenario's segments compose to."""
+        return compose_operating_conditions(
+            self.segments, start=self.start, end=self.end
+        )
 
     def inputs_at(self, instant: Quantity) -> Mapping[str, Quantity]:
-        seconds = _time(instant, "scenario query instant").magnitude_in("second")
-        start = self.start.magnitude_in("second")
-        end = self.end.magnitude_in("second")
-        if seconds < start or seconds > end:
-            raise InvalidScientificProblem("scenario query lies outside the horizon")
-        segment = next(
-            item for item in self.segments
-            if item.start.magnitude_in("second") <= seconds <= item.end.magnitude_in("second")
-        )
-        return {item.input_id: item.value_at(instant) for item in segment.inputs}
+        self.segment_at(instant)
+        return {
+            item.input_id: item.value_at(instant)
+            for item in self.composed_input_schedules()
+        }
 
-    @property
-    def requires_stateful_execution(self) -> bool:
-        """Whether executing this scenario requires runtime semantics beyond time.
+    def operating_conditions_at(self, instant: Quantity) -> tuple[OperatingCondition, ...]:
+        """The operating conditions in force at this instant, by segment ownership."""
+        return self.segment_at(instant).operating_conditions
 
-        This is intentionally conservative.  A bound-but-ignored field would
-        make authorization claim that a computation consumed science it did
-        not consume.
-        """
-        return bool(
-            self.state_variables
-            or self.initial_state is not None
-            or self.events
-            or self.termination_conditions
-            or self.quantities_of_interest
-            or any(
-                segment.inputs or segment.operating_conditions
-                for segment in self.segments
-            )
-        )
+    # `requires_stateful_execution` used to live here: a predicate asking
+    # whether a scenario materially participates in execution, so that
+    # authorization could decide whether to bind the scenario's identity to the
+    # run. It is gone on purpose. Binding was made unconditional -- a GraphPlan
+    # carrying a scenario executes in that scenario's world -- and leaving a
+    # "does this one count?" predicate lying about would invite the conditional
+    # binding back.
 
     @property
     def unsupported_runtime_features(self) -> tuple[str, ...]:
+        """Declared scenario features no runtime in this Core can execute yet.
+
+        State, scheduled events, operating conditions, quantities of interest
+        and termination all became executable in the World Runtime round, so
+        this list is now what genuinely remains: LINEAR interpolation, which
+        the coupling runtime refuses because a value between window boundaries
+        is not a value any participant was handed.
+        """
         features: list[str] = []
-        if self.state_variables or self.initial_state is not None:
-            features.append("state")
-        if self.events:
-            features.append("events")
-        if self.termination_conditions:
-            features.append("termination")
-        if self.quantities_of_interest:
-            features.append("quantities_of_interest")
-        if any(segment.operating_conditions for segment in self.segments):
-            features.append("operating_conditions")
         if any(
             item.interpolation is InterpolationKind.LINEAR
             for segment in self.segments for item in segment.inputs

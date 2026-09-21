@@ -24,6 +24,7 @@ from ..data.resolver import BulkDataResolver
 from ..data.store import BulkDataStore
 from ..execution.multiphysics import (
     MultiphysicsRuntime,
+    ParameterValue,
     ParticipantFactoryRegistry,
 )
 from ..executionpacks.registry import ExecutionPackRegistry
@@ -32,6 +33,7 @@ from ..executionpacks.snapshot import (
     snapshot_execution_pack,
 )
 from ..planning.records import GraphPlan
+from ..scenarios import ScenarioSpecification
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.multiphysics import (
     InitialStateValue,
@@ -228,24 +230,7 @@ class AuthorizedMultiphysicsRun:
             raise TypeError(
                 "authorized run requires MultiphysicsRunRecord"
             )
-        scenario = self.graph_plan.scenario
-        expected_events = (
-            () if scenario is None else tuple(
-                (item.event_id, item.instant) for item in scenario.events
-            )
-        )
-        recorded_events = tuple(
-            (item.event_id, item.instant) for item in self.run.scheduled_events
-        )
-        if recorded_events != expected_events:
-            raise InvalidScientificProblem(
-                "authorized run scheduled events differ from its GraphPlan scenario"
-            )
-        expected_digest = "" if not expected_events else scenario.digest
-        if self.run.scenario_digest != expected_digest:
-            raise InvalidScientificProblem(
-                "authorized run event schedule is not bound to its scenario digest"
-            )
+        self._bind_scenario()
         validations = tuple(self.system_validation)
         if any(
             not isinstance(item, AuthorizedSystemValidation)
@@ -396,6 +381,95 @@ class AuthorizedMultiphysicsRun:
         ):
             raise InvalidScientificProblem(
                 "system verification result is not bound to a pinned implementation"
+            )
+
+    def _bind_scenario(self) -> None:
+        """Bind the run to the exact scenario, whether or not it declares events.
+
+        THE RULE THIS REPLACES. The digest was required when, and only when,
+        the scenario declared scheduled events -- so a mission whose phases
+        differ by their time-varying inputs, their operating conditions, their
+        initial state or their stop condition, and which declares no event at
+        all, was authorized with `scenario_digest == ""`. Nothing in the run
+        then said which scenario produced it, and two different scenarios over
+        the same graph and plan produced indistinguishable records.
+
+        Scenario identity does not depend on whether events happen to exist.
+        A GraphPlan carrying a scenario executed in that scenario's world, so
+        the run carries that scenario's digest; a GraphPlan carrying none
+        carries no digest, and a run that claims one is refused.
+        """
+        scenario = self.graph_plan.scenario
+        run = self.run
+
+        expected_events = (
+            () if scenario is None else tuple(
+                (item.event_id, item.instant) for item in scenario.events
+            )
+        )
+        recorded_events = tuple(
+            (item.event_id, item.instant) for item in run.scheduled_events
+        )
+        if recorded_events != expected_events:
+            raise InvalidScientificProblem(
+                "authorized run scheduled events differ from its GraphPlan scenario"
+            )
+
+        expected_digest = "" if scenario is None else scenario.digest
+        if run.scenario_digest != expected_digest:
+            raise InvalidScientificProblem(
+                "authorized run is not bound to its GraphPlan scenario digest: "
+                f"expected {expected_digest[:12] or '(none)'}..., recorded "
+                f"{run.scenario_digest[:12] or '(none)'}..."
+            )
+        if scenario is None:
+            if (
+                run.scenario_input_receipts
+                or run.operating_condition_receipts
+                or run.quantities_of_interest
+                or run.termination is not None
+            ):
+                raise InvalidScientificProblem(
+                    "authorized run carries scenario evidence but its GraphPlan "
+                    "declares no scenario"
+                )
+            return
+
+        declared_inputs = {
+            item.input_id for item in scenario.composed_input_schedules()
+        }
+        recorded_inputs = {item.input_id for item in run.scenario_input_receipts}
+        if not recorded_inputs <= declared_inputs:
+            raise InvalidScientificProblem(
+                "authorized run consumed inputs its GraphPlan scenario does not "
+                f"declare: {sorted(recorded_inputs - declared_inputs)}"
+            )
+        declared_conditions = {
+            item.condition_id for item in scenario.composed_operating_conditions()
+        }
+        recorded_conditions = {
+            item.condition_id for item in run.operating_condition_receipts
+        }
+        if not recorded_conditions <= declared_conditions:
+            raise InvalidScientificProblem(
+                "authorized run delivered operating conditions its GraphPlan "
+                f"scenario does not declare: "
+                f"{sorted(recorded_conditions - declared_conditions)}"
+            )
+        requested = {item.qoi_id for item in scenario.quantities_of_interest}
+        produced = {item.qoi_id for item in run.quantities_of_interest}
+        if produced != requested:
+            raise InvalidScientificProblem(
+                "authorized run quantities of interest do not answer the scenario "
+                f"request exactly; missing={sorted(requested - produced)}, "
+                f"unrequested={sorted(produced - requested)}"
+            )
+        if run.termination is not None and run.termination.condition_id not in {
+            item.condition_id for item in scenario.termination_conditions
+        }:
+            raise InvalidScientificProblem(
+                "authorized run stopped on a condition its GraphPlan scenario "
+                "does not declare"
             )
 
     def _content_dict(self) -> dict[str, Any]:
@@ -646,6 +720,27 @@ def _authorized_execution_verification_authority(
     return route, dependencies
 
 
+def _initial_state_by_owner(
+    scenario: ScenarioSpecification,
+    state_owners: Mapping[str, str],
+) -> dict[str, dict[str, InitialStateValue]]:
+    """Group a scenario's initial state by the participant that owns each variable.
+
+    A topology StateBinding, when one exists, is the owning authority; otherwise
+    the scenario's own ``owner_id`` is. GraphPlan has already refused the case
+    where the two disagree, so this cannot silently pick a side.
+    """
+    values = {item.quantity_id: item for item in scenario.initial_state.values}
+    grouped: dict[str, dict[str, InitialStateValue]] = {}
+    for variable in scenario.state_variables:
+        owner = state_owners.get(variable.variable_id, variable.owner_id)
+        declared = values[variable.variable_id]
+        grouped.setdefault(owner, {})[variable.variable_id] = InitialStateValue(
+            variable.variable_id, declared.value, declared.uncertainty
+        )
+    return grouped
+
+
 def execute_authorized_graph_plan(
     graph_plan: GraphPlan,
     *,
@@ -712,19 +807,24 @@ def execute_authorized_graph_plan(
             graph_plan.graph, topology_twins
         )
 
-    scenario_series = {
-        series.input_id: series
-        for segment in (() if graph_plan.scenario is None else graph_plan.scenario.segments)
-        for series in segment.inputs
+    scenario = graph_plan.scenario
+    scenario_schedules = {
+        item.input_id: item
+        for item in (
+            () if scenario is None else scenario.composed_input_schedules()
+        )
     }
+    scenario_conditions = (
+        () if scenario is None else scenario.composed_operating_conditions()
+    )
     base_facts = {
         item.fact_path: item.value for item in graph_plan.external_inputs
     }
-    if graph_plan.scenario is not None and graph_plan.scenario.initial_state is not None:
-        base_facts.update({item.quantity_id: item.value for item in graph_plan.scenario.initial_state.values})
+    if scenario is not None and scenario.initial_state is not None:
+        base_facts.update({item.quantity_id: item.value for item in scenario.initial_state.values})
     applicability_fact_sets = [base_facts]
-    for input_id, series in sorted(scenario_series.items()):
-        for sample in series.samples:
+    for input_id, schedule in sorted(scenario_schedules.items()):
+        for sample in schedule.series.samples:
             applicability_fact_sets.append({**base_facts, input_id: sample.value})
     for rule in composition.applicability_rules:
         if rule.blueprint_id != graph_plan.blueprint_id:
@@ -734,7 +834,7 @@ def execute_authorized_graph_plan(
                 evaluation = evaluate_applicability_predicate(
                     predicate,
                     facts=facts,
-                    static_external_inputs=not bool(scenario_series),
+                    static_external_inputs=not bool(scenario_schedules),
                 )
                 if evaluation.state is not ApplicabilityState.SATISFIED:
                     raise InvalidScientificProblem(
@@ -780,6 +880,21 @@ def execute_authorized_graph_plan(
             "external uncertainty names ports outside GraphPlan inputs: "
             f"{unknown_uq_ports}"
         )
+    topology = graph_plan.system_definition
+    parameter_bindings = (
+        {}
+        if topology is None or not topology.parameter_bindings
+        else {
+            participant_id: {
+                target_path: ParameterValue(target_path, value)
+                for target_path, value in sorted(targets.items())
+            }
+            for participant_id, targets in sorted(
+                topology.parameter_values(topology_twins or {}).items()
+            )
+        }
+    )
+    state_owners = {} if topology is None else topology.state_variable_owners()
     run = runtime.run(
         run_id,
         external_inputs={
@@ -787,34 +902,30 @@ def execute_authorized_graph_plan(
             for item in graph_plan.external_inputs
         },
         external_uncertainty=external_uncertainty,
-        external_input_series={
-            item.port: series
+        external_input_schedules={
+            item.port: scenario_schedules[item.fact_path]
             for item in graph_plan.external_inputs
-            for series in scenario_series.values()
-            if series.input_id == item.fact_path
+            if item.fact_path in scenario_schedules
         },
+        operating_conditions=scenario_conditions,
         initial_state=(
-            {} if graph_plan.scenario is None or graph_plan.scenario.initial_state is None
-            else {
-                owner: {
-                    variable.variable_id: InitialStateValue(
-                        variable.variable_id,
-                        next(item.value for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
-                        next(item.uncertainty for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
-                    )
-                    for variable in graph_plan.scenario.state_variables if variable.owner_id == owner
-                }
-                for owner in sorted({item.owner_id for item in graph_plan.scenario.state_variables})
-            }
+            {}
+            if scenario is None or scenario.initial_state is None
+            else _initial_state_by_owner(scenario, state_owners)
         ),
-        scheduled_events=(
-            () if graph_plan.scenario is None else graph_plan.scenario.events
+        parameter_bindings=parameter_bindings,
+        scheduled_events=(() if scenario is None else scenario.events),
+        termination_conditions=(
+            () if scenario is None else scenario.termination_conditions
         ),
-        scenario_digest=(
-            ""
-            if graph_plan.scenario is None or not graph_plan.scenario.events
-            else graph_plan.scenario.digest
+        quantity_bindings={
+            item.quantity_id: item.port for item in graph_plan.quantity_bindings
+        },
+        quantities_of_interest=(
+            () if scenario is None else scenario.quantities_of_interest
         ),
+        # SCENARIO IDENTITY IS NOT CONDITIONAL ON EVENTS (Sprint 1 P0).
+        scenario_digest="" if scenario is None else scenario.digest,
     )
 
     validation: list[AuthorizedSystemValidation] = []

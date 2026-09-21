@@ -17,6 +17,7 @@ from ..scientific.multiphysics import PhysicsGraph, PortDefinition, PortRef
 from ..scientific.ir.constraints import ConstraintDefinition
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.twins import ScientificTwin, TwinDatumRole, TwinReference
+from ..scientific.units.quantity import Quantity
 
 COMPONENT_DEFINITION_SCHEMA = schema_string("system_component_definition")
 COMPONENT_INSTANCE_SCHEMA = schema_string("system_component_instance")
@@ -280,14 +281,95 @@ class SystemDefinition:
 
     @property
     def unsupported_execution_bindings(self) -> tuple[str, ...]:
+        """Declared topology bindings no runtime consumes or enforces.
+
+        Parameter and state bindings left this list in the World Runtime round:
+        a parameter binding is delivered to a participant that declares the
+        target parameter, and a state binding resolves to the scenario state
+        variable a participant declares it initializes from.  Both refuse
+        rather than assume when the participant does not declare support.
+
+        Constraint bindings stay, and this is a statement about enforcement
+        rather than about the records.  There is no authorized consumer that
+        enforces an arbitrary system constraint during coupling, and a binding
+        that looked supported would assert an enforcement nothing performs.
+        """
         unsupported: list[str] = []
-        if self.parameter_bindings:
-            unsupported.append("parameter_bindings")
-        if self.state_bindings:
-            unsupported.append("state_bindings")
         if self.constraint_bindings or self.constraints:
             unsupported.append("constraint_enforcement")
         return tuple(unsupported)
+
+    def parameter_values(
+        self, twins: Mapping[tuple[str, str], ScientificTwin]
+    ) -> dict[str, dict[str, Quantity]]:
+        """Resolved parameter bindings, grouped by PhysicsGraph participant.
+
+        One authority per target: two bindings naming the same participant
+        parameter are refused rather than resolved by order.  An instance that
+        maps to no participant cannot deliver a parameter to execution, which
+        is also a refusal.
+        """
+        resolved: dict[str, dict[str, Quantity]] = {}
+        instances = {item.instance_id: item for item in self.instances}
+        for binding in self.parameter_bindings:
+            instance = instances[binding.instance_id]
+            if not instance.participant_id:
+                raise InvalidScientificProblem(
+                    f"parameter binding {binding.binding_id!r} targets instance "
+                    f"{instance.instance_id!r}, which maps to no executable "
+                    f"participant"
+                )
+            twin = twins.get(instance.twin.key)
+            if twin is None or twin.reference != instance.twin:
+                raise InvalidScientificProblem(
+                    f"parameter binding {binding.binding_id!r} has no exact "
+                    f"ScientificTwin authority"
+                )
+            datum = twin.declaration(binding.twin_datum)
+            if datum.role is not TwinDatumRole.PARAMETER:
+                raise InvalidScientificProblem(
+                    f"parameter binding {binding.binding_id!r} requires a twin "
+                    f"datum declared as a parameter"
+                )
+            if not isinstance(datum.value, Quantity):
+                raise InvalidScientificProblem(
+                    f"parameter binding {binding.binding_id!r} reads twin datum "
+                    f"{binding.twin_datum!r}, which carries no unit-bearing value"
+                )
+            targets = resolved.setdefault(instance.participant_id, {})
+            if binding.target_path in targets:
+                raise InvalidScientificProblem(
+                    f"participant {instance.participant_id!r} parameter "
+                    f"{binding.target_path!r} is bound by more than one authority"
+                )
+            targets[binding.target_path] = datum.value
+        return resolved
+
+    def state_variable_owners(self) -> dict[str, str]:
+        """Which PhysicsGraph participant each bound state variable belongs to.
+
+        A state binding never infers participant support: it says which
+        participant a scenario state variable is initialized on, and the
+        participant's own declared state schema decides whether it accepts it.
+        """
+        owners: dict[str, str] = {}
+        instances = {item.instance_id: item for item in self.instances}
+        for binding in self.state_bindings:
+            instance = instances[binding.instance_id]
+            if not instance.participant_id:
+                raise InvalidScientificProblem(
+                    f"state binding {binding.binding_id!r} targets instance "
+                    f"{instance.instance_id!r}, which maps to no executable "
+                    f"participant"
+                )
+            existing = owners.get(binding.state_variable_id)
+            if existing is not None and existing != instance.participant_id:
+                raise InvalidScientificProblem(
+                    f"state variable {binding.state_variable_id!r} is bound to "
+                    f"both {existing!r} and {instance.participant_id!r}"
+                )
+            owners[binding.state_variable_id] = instance.participant_id
+        return owners
 
     def validate_against(self, graph: PhysicsGraph, twins: Mapping[tuple[str, str], ScientificTwin]) -> None:
         self.validate_graph(graph)

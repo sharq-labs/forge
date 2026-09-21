@@ -13,6 +13,7 @@ from ..scientific.models.registry import ModelRegistry
 from ..scientific.multiphysics import (
     CouplingPlan,
     GraphInterfaceManifest,
+    PortDirection,
     PortRef,
     coupling_value_from_dict,
     coupling_value_to_dict,
@@ -39,7 +40,13 @@ RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
 GRAPH_PLAN_SCHEMA_V2 = schema_string("scientific_graph_plan", 2)
 GRAPH_PLAN_SCHEMA_V3 = schema_string("scientific_graph_plan", 3)
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 4)
+GRAPH_PLAN_SCHEMA_V4 = schema_string("scientific_graph_plan", 4)
+#: V5 carries the quantity bindings that make a scenario's requested
+#: quantities of interest and its termination conditions executable: each
+#: names a produced participant output rather than a quantity the plan hopes
+#: somebody computes.
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 5)
+PLANNED_QUANTITY_BINDING_SCHEMA = schema_string("planned_quantity_binding")
 PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
 _TAG_V1 = "forge.scientific_planning_record/1"
 _TAG = "forge.scientific_planning_record/2"
@@ -457,6 +464,40 @@ class PlannedExternalInput:
         )
 
 
+@dataclass(frozen=True, order=True)
+class PlannedQuantityBinding:
+    """A scenario quantity id bound to the authorized output that produces it.
+
+    The mirror of :class:`PlannedExternalInput`: that record says where a
+    declared fact enters the graph, this one says which produced output answers
+    a declared observable.  Without it a requested quantity of interest is
+    decorative metadata and a termination condition has nothing to watch.
+    """
+
+    quantity_id: str
+    port: PortRef
+
+    def __post_init__(self) -> None:
+        quantity_id = str(self.quantity_id).strip()
+        if not quantity_id:
+            raise ValueError("planned quantity binding requires quantity_id")
+        if not isinstance(self.port, PortRef):
+            raise TypeError("planned quantity binding requires PortRef")
+        object.__setattr__(self, "quantity_id", quantity_id)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": PLANNED_QUANTITY_BINDING_SCHEMA,
+            "quantity_id": self.quantity_id,
+            "port": self.port.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PlannedQuantityBinding":
+        require_schema(payload, PLANNED_QUANTITY_BINDING_SCHEMA)
+        return cls(payload["quantity_id"], PortRef.from_dict(payload["port"]))
+
+
 @dataclass(frozen=True)
 class GraphPlan:
     capability_id: str
@@ -475,6 +516,7 @@ class GraphPlan:
     execution_pack_version: str = ""
     execution_pack_digest: str = ""
     external_inputs: tuple[PlannedExternalInput, ...] = ()
+    quantity_bindings: tuple[PlannedQuantityBinding, ...] = ()
     scenario: ScenarioSpecification | None = None
     system_definition: SystemDefinition | None = None
 
@@ -520,6 +562,24 @@ class GraphPlan:
             "external_inputs",
             tuple(sorted(external, key=lambda item: item.key)),
         )
+        quantity_bindings = tuple(self.quantity_bindings)
+        if any(
+            not isinstance(item, PlannedQuantityBinding) for item in quantity_bindings
+        ):
+            raise TypeError(
+                "graph plan quantity_bindings must contain PlannedQuantityBinding "
+                "records"
+            )
+        quantity_ids = [item.quantity_id for item in quantity_bindings]
+        if len(quantity_ids) != len(set(quantity_ids)):
+            raise ValueError(
+                "a quantity id has one producing authority; graph plan "
+                "quantity_bindings declare more than one"
+            )
+        for item in quantity_bindings:
+            # The exact target has to exist before anything can be bound to it.
+            self.graph.participant(item.port.participant_id).port(item.port.port_id)
+        object.__setattr__(self, "quantity_bindings", tuple(sorted(quantity_bindings)))
         if self.scenario is not None:
             if not isinstance(self.scenario, ScenarioSpecification):
                 raise TypeError("graph plan scenario must be ScenarioSpecification or None")
@@ -530,11 +590,7 @@ class GraphPlan:
                 or self.scenario.end != self.coupling_plan.time.end
             ):
                 raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
-            supported = {"state", "events"}
-            unsupported = tuple(
-                item for item in self.scenario.unsupported_runtime_features
-                if item not in supported
-            )
+            unsupported = self.scenario.unsupported_runtime_features
             if unsupported:
                 raise ValueError(
                     "graph plan refuses unsupported scenario runtime features: "
@@ -556,16 +612,49 @@ class GraphPlan:
                     "scenario inputs have no exact GraphPlan external-input binding: "
                     f"{unknown}"
                 )
-            all_scenario_inputs = [
-                item.input_id
-                for segment in self.scenario.segments
-                for item in segment.inputs
-            ]
-            if len(all_scenario_inputs) != len(set(all_scenario_inputs)):
-                raise ValueError(
-                    "scenario input ids may currently appear in one segment only; "
-                    "cross-segment schedule merging is not implemented"
+            # A control quantity reused across mission phases composes into one
+            # deterministic runtime schedule. ScenarioSpecification already
+            # refused an unmergeable one; this is where the merged schedule has
+            # to line up with the graph's external ports.
+            for schedule in self.scenario.composed_input_schedules():
+                planned = next(
+                    item for item in self.external_inputs
+                    if item.fact_path == schedule.input_id
                 )
+                port = self.graph.participant(planned.port.participant_id).port(
+                    planned.port.port_id
+                )
+                schedule.series.samples[0].value.require_compatible(
+                    port.unit,
+                    context=f"scenario input {schedule.input_id!r}",
+                )
+            bound = {item.quantity_id: item.port for item in self.quantity_bindings}
+            for qoi in self.scenario.quantities_of_interest:
+                port_ref = bound.get(qoi.quantity_id)
+                if port_ref is None:
+                    raise ValueError(
+                        f"requested quantity of interest {qoi.qoi_id!r} names "
+                        f"{qoi.quantity_id!r}, which no GraphPlan quantity binding "
+                        f"attaches to a produced output"
+                    )
+                port = self.graph.participant(port_ref.participant_id).port(
+                    port_ref.port_id
+                )
+                if port.direction is not PortDirection.OUTPUT:
+                    raise ValueError(
+                        f"quantity of interest {qoi.qoi_id!r} is bound to "
+                        f"{port_ref.key}, which is not a produced output"
+                    )
+                Quantity(1.0, port.unit).require_compatible(
+                    qoi.unit, context=f"quantity of interest {qoi.qoi_id!r}"
+                )
+            for condition in self.scenario.termination_conditions:
+                if condition.constraint.metric not in bound:
+                    raise ValueError(
+                        f"termination condition {condition.condition_id!r} watches "
+                        f"{condition.constraint.metric!r}, which no GraphPlan "
+                        f"quantity binding attaches to a produced output"
+                    )
         if self.system_definition is not None:
             if not isinstance(self.system_definition, SystemDefinition):
                 raise TypeError("graph plan system_definition must be SystemDefinition or None")
@@ -576,6 +665,29 @@ class GraphPlan:
                     "enforced by runtime: "
                     f"{list(self.system_definition.unsupported_execution_bindings)}"
                 )
+            owners = self.system_definition.state_variable_owners()
+            if owners:
+                if self.scenario is None:
+                    raise ValueError(
+                        "topology state bindings name scenario state variables, "
+                        "but this graph plan carries no scenario"
+                    )
+                declared = {
+                    item.variable_id: item.owner_id
+                    for item in self.scenario.state_variables
+                }
+                for variable_id, participant_id in sorted(owners.items()):
+                    if variable_id not in declared:
+                        raise ValueError(
+                            f"state binding names {variable_id!r}, which the "
+                            f"scenario does not declare as a state variable"
+                        )
+                    if declared[variable_id] != participant_id:
+                        raise ValueError(
+                            f"state variable {variable_id!r} is owned by "
+                            f"{declared[variable_id]!r} in the scenario and by "
+                            f"{participant_id!r} in the topology"
+                        )
         for label in (
             "authority_pack_id",
             "authority_pack_version",
@@ -677,6 +789,9 @@ class GraphPlan:
             "external_inputs": [
                 item.to_dict() for item in self.external_inputs
             ],
+            "quantity_bindings": [
+                item.to_dict() for item in self.quantity_bindings
+            ],
             "scenario": None if self.scenario is None else self.scenario.to_dict(),
             "system_definition": None if self.system_definition is None else self.system_definition.to_dict(),
         }
@@ -685,7 +800,13 @@ class GraphPlan:
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
         schema = require_schema_any(
             payload,
-            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2, GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA),
+            (
+                GRAPH_PLAN_SCHEMA_V1,
+                GRAPH_PLAN_SCHEMA_V2,
+                GRAPH_PLAN_SCHEMA_V3,
+                GRAPH_PLAN_SCHEMA_V4,
+                GRAPH_PLAN_SCHEMA,
+            ),
         )
         raw_plan = payload.get("coupling_plan")
         raw_estimate = payload.get("resource_estimate")
@@ -727,14 +848,26 @@ class GraphPlan:
                 PlannedExternalInput.from_dict(item)
                 for item in payload.get("external_inputs", ())
             ),
+            quantity_bindings=tuple(
+                PlannedQuantityBinding.from_dict(item)
+                for item in payload.get("quantity_bindings", ())
+            ),
             scenario=(
                 None
-                if schema not in (GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA) or payload.get("scenario") is None
+                if schema
+                in (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2)
+                or payload.get("scenario") is None
                 else ScenarioSpecification.from_dict(payload["scenario"])
             ),
             system_definition=(
                 None
-                if schema != GRAPH_PLAN_SCHEMA or payload.get("system_definition") is None
+                if schema
+                in (
+                    GRAPH_PLAN_SCHEMA_V1,
+                    GRAPH_PLAN_SCHEMA_V2,
+                    GRAPH_PLAN_SCHEMA_V3,
+                )
+                or payload.get("system_definition") is None
                 else SystemDefinition.from_dict(payload["system_definition"])
             ),
         )
@@ -918,6 +1051,8 @@ __all__ = [
     "GraphPlan",
     "GRAPH_PLAN_SCHEMA",
     "GRAPH_PLAN_SCHEMA_V1",
+    "PLANNED_QUANTITY_BINDING_SCHEMA",
+    "PlannedQuantityBinding",
     "ModelExecutionChoice",
     "PlanningGap",
     "PlannedExternalInput",

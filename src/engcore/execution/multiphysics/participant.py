@@ -8,15 +8,16 @@ from typing import Any, Callable, Mapping, Protocol, runtime_checkable
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.multiphysics import (
     CheckpointRecord, InitialStateDefinition, InitialStateReceipt,
-    InitialStateValue, ParticipantSpec,
+    InitialStateValue, ParticipantSpec, StateVariableValue,
 )
+from ...scientific.multiphysics.receipts import require_digest
 from ...scientific.multiphysics.value import (
     CouplingValue,
     validate_port_coupling_value,
     validate_port_uncertainty,
 )
 from ...scientific.results.uncertainty import Uncertainty
-from ...scientific.units.quantity import Quantity, dimensionality
+from ...scientific.units.quantity import Quantity, dimensionality, normalize_unit
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,84 @@ class AdvanceResult:
             raise InvalidScientificProblem("events must be ParticipantEvent records")
 
 
+@dataclass(frozen=True, order=True)
+class OperatingConditionDefinition:
+    """An operating condition a participant declares that it consumes.
+
+    Core transports declared, unit-bearing operating conditions; it never
+    decides what one means.  A participant that does not declare a condition
+    does not receive it, and a scenario condition nobody declares is refused
+    rather than quietly dropped.
+    """
+
+    condition_id: str
+    unit: str
+
+    def __post_init__(self) -> None:
+        condition_id = str(self.condition_id).strip()
+        if not condition_id:
+            raise InvalidScientificProblem(
+                "operating condition definition requires condition_id"
+            )
+        object.__setattr__(self, "condition_id", condition_id)
+        object.__setattr__(self, "unit", normalize_unit(self.unit))
+
+
+@dataclass(frozen=True, order=True)
+class OperatingConditionValue:
+    condition_id: str
+    value: Quantity
+    uncertainty: Uncertainty
+
+    def __post_init__(self) -> None:
+        condition_id = str(self.condition_id).strip()
+        if not condition_id or not isinstance(self.value, Quantity):
+            raise InvalidScientificProblem(
+                "operating condition value requires condition_id and a Quantity"
+            )
+        if not isinstance(self.uncertainty, Uncertainty):
+            raise InvalidScientificProblem(
+                "operating condition value requires an Uncertainty record"
+            )
+        for label in ("standard_uncertainty", "lower", "upper"):
+            bound = getattr(self.uncertainty, label)
+            if bound is not None:
+                bound.require_compatible(
+                    self.value.units,
+                    context=f"operating condition {condition_id!r} {label}",
+                )
+        object.__setattr__(self, "condition_id", condition_id)
+
+
+@dataclass(frozen=True, order=True)
+class ParameterDefinition:
+    """A participant parameter a topology ParameterBinding may bind to."""
+
+    target_path: str
+    unit: str
+
+    def __post_init__(self) -> None:
+        target = str(self.target_path).strip()
+        if not target:
+            raise InvalidScientificProblem("parameter definition requires target_path")
+        object.__setattr__(self, "target_path", target)
+        object.__setattr__(self, "unit", normalize_unit(self.unit))
+
+
+@dataclass(frozen=True, order=True)
+class ParameterValue:
+    target_path: str
+    value: Quantity
+
+    def __post_init__(self) -> None:
+        target = str(self.target_path).strip()
+        if not target or not isinstance(self.value, Quantity):
+            raise InvalidScientificProblem(
+                "parameter value requires target_path and a Quantity"
+            )
+        object.__setattr__(self, "target_path", target)
+
+
 @dataclass(frozen=True)
 class RuntimeCheckpoint:
     record: CheckpointRecord
@@ -126,6 +205,157 @@ class ExecutableParticipant(Protocol):
     def restore(self, checkpoint: RuntimeCheckpoint) -> None: ...
 
     def finalize(self) -> None: ...
+
+
+# =====================================================================
+# Declared optional capabilities.
+#
+# Support is DECLARED, never inferred. Each helper below asks a participant
+# what it accepts and refuses to route anything it did not declare; a
+# participant that declares nothing simply receives nothing, which is a
+# different statement from "the runtime assumed it could cope".
+# =====================================================================
+
+def operating_condition_definitions(
+    participant: "ExecutableParticipant",
+) -> tuple[OperatingConditionDefinition, ...]:
+    declared = tuple(getattr(participant, "operating_condition_definitions", ()) or ())
+    if any(not isinstance(item, OperatingConditionDefinition) for item in declared):
+        raise InvalidScientificProblem(
+            f"participant {participant.spec.participant_id!r} declares operating "
+            f"conditions that are not OperatingConditionDefinition records"
+        )
+    return tuple(sorted(declared))
+
+
+def apply_operating_conditions(
+    participant: "ExecutableParticipant",
+    instant: Quantity,
+    values: Mapping[str, OperatingConditionValue],
+) -> tuple[OperatingConditionValue, ...]:
+    """Deliver declared operating conditions and take the acknowledgement back."""
+    declared = {item.condition_id: item for item in operating_condition_definitions(participant)}
+    participant_id = participant.spec.participant_id
+    if not declared and not values:
+        return ()
+    if set(values) != set(declared):
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} operating conditions do not exactly "
+            f"cover its declaration; missing={sorted(set(declared) - set(values))}, "
+            f"unknown={sorted(set(values) - set(declared))}"
+        )
+    for key, item in values.items():
+        if not isinstance(item, OperatingConditionValue):
+            raise InvalidScientificProblem(
+                "operating conditions must be OperatingConditionValue records"
+            )
+        item.value.require_compatible(
+            declared[key].unit,
+            context=f"operating condition {key!r} for {participant_id!r}",
+        )
+    apply = getattr(participant, "apply_operating_conditions", None)
+    if apply is None:
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} declares operating conditions but "
+            f"exposes no way to consume them"
+        )
+    acknowledged = tuple(apply(instant, dict(values)))
+    if acknowledged != tuple(sorted(values.values())):
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} did not acknowledge the exact "
+            f"operating conditions and uncertainty it was given"
+        )
+    return acknowledged
+
+
+def parameter_definitions(
+    participant: "ExecutableParticipant",
+) -> tuple[ParameterDefinition, ...]:
+    declared = tuple(getattr(participant, "parameter_definitions", ()) or ())
+    if any(not isinstance(item, ParameterDefinition) for item in declared):
+        raise InvalidScientificProblem(
+            f"participant {participant.spec.participant_id!r} declares parameters "
+            f"that are not ParameterDefinition records"
+        )
+    return tuple(sorted(declared))
+
+
+def apply_parameters(
+    participant: "ExecutableParticipant",
+    values: Mapping[str, ParameterValue],
+) -> tuple[ParameterValue, ...]:
+    """Bind topology-declared parameters onto a participant that accepts them."""
+    declared = {item.target_path: item for item in parameter_definitions(participant)}
+    participant_id = participant.spec.participant_id
+    if not values:
+        return ()
+    unknown = sorted(set(values) - set(declared))
+    if unknown:
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} does not accept parameter bindings "
+            f"for {unknown}"
+        )
+    for key, item in values.items():
+        if not isinstance(item, ParameterValue):
+            raise InvalidScientificProblem(
+                "parameter bindings must be ParameterValue records"
+            )
+        item.value.require_compatible(
+            declared[key].unit,
+            context=f"parameter {key!r} for {participant_id!r}",
+        )
+    apply = getattr(participant, "apply_parameters", None)
+    if apply is None:
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} declares parameters but exposes no "
+            f"way to bind them"
+        )
+    acknowledged = tuple(apply(dict(values)))
+    if acknowledged != tuple(sorted(values.values())):
+        raise InvalidScientificProblem(
+            f"participant {participant_id!r} did not acknowledge the exact "
+            f"parameter values it was bound to"
+        )
+    return acknowledged
+
+
+def state_identity(
+    participant: "ExecutableParticipant", instant: Quantity
+) -> str | None:
+    """The participant's own digest of its state, or ``None`` if it exposes none.
+
+    Two ways a participant can answer, and no third: an explicit
+    ``state_identity`` callback, or the ``state_digest`` of the checkpoint it
+    already declares itself able to take.  A participant that does neither gets
+    no state-transition receipt, because the alternative is inventing one.
+    """
+    explicit = getattr(participant, "state_identity", None)
+    if explicit is not None:
+        declared = explicit(instant)
+        if declared is not None:
+            return require_digest(
+                declared,
+                f"participant {participant.spec.participant_id!r} state identity",
+            )
+    if participant.spec.checkpointable:
+        return participant.checkpoint(instant).record.state_digest
+    return None
+
+
+def public_state(
+    participant: "ExecutableParticipant", instant: Quantity
+) -> tuple[StateVariableValue, ...]:
+    """State values a participant publishes. Private solver internals stay private."""
+    expose = getattr(participant, "public_state", None)
+    if expose is None:
+        return ()
+    values = tuple(expose(instant))
+    if any(not isinstance(item, StateVariableValue) for item in values):
+        raise InvalidScientificProblem(
+            f"participant {participant.spec.participant_id!r} public state must be "
+            f"StateVariableValue records"
+        )
+    return tuple(sorted(values))
 
 
 def validate_port_value(
@@ -221,12 +451,52 @@ class CallbackParticipant:
             InitializationResult,
         ] | None = None,
         advance: Callable[[AdvanceRequest], AdvanceResult],
+        operating_condition_definitions: tuple[OperatingConditionDefinition, ...] = (),
+        apply_operating_conditions: Callable[
+            [Quantity, Mapping[str, OperatingConditionValue]],
+            tuple[OperatingConditionValue, ...],
+        ] | None = None,
+        parameter_definitions: tuple[ParameterDefinition, ...] = (),
+        apply_parameters: Callable[
+            [Mapping[str, ParameterValue]], tuple[ParameterValue, ...]
+        ] | None = None,
+        state_identity: Callable[[Quantity], str] | None = None,
+        public_state: Callable[[Quantity], tuple[StateVariableValue, ...]] | None = None,
         checkpoint: Callable[[Quantity], RuntimeCheckpoint] | None = None,
         restore: Callable[[RuntimeCheckpoint], None] | None = None,
         finalize: Callable[[], None] | None = None,
     ) -> None:
         self._spec = spec
         self._initialize = initialize
+        conditions = tuple(operating_condition_definitions)
+        if any(
+            not isinstance(item, OperatingConditionDefinition) for item in conditions
+        ) or len({item.condition_id for item in conditions}) != len(conditions):
+            raise InvalidScientificProblem(
+                "operating condition definitions must be unique typed records"
+            )
+        if bool(conditions) != (apply_operating_conditions is not None):
+            raise InvalidScientificProblem(
+                "operating condition definitions and their consumer must be "
+                "declared together"
+            )
+        self._operating_condition_definitions = tuple(sorted(conditions))
+        self._apply_operating_conditions = apply_operating_conditions
+        parameters = tuple(parameter_definitions)
+        if any(
+            not isinstance(item, ParameterDefinition) for item in parameters
+        ) or len({item.target_path for item in parameters}) != len(parameters):
+            raise InvalidScientificProblem(
+                "parameter definitions must be unique typed records"
+            )
+        if bool(parameters) != (apply_parameters is not None):
+            raise InvalidScientificProblem(
+                "parameter definitions and their binder must be declared together"
+            )
+        self._parameter_definitions = tuple(sorted(parameters))
+        self._apply_parameters = apply_parameters
+        self._state_identity = state_identity
+        self._public_state = public_state
         definitions = tuple(initial_state_definitions)
         if any(not isinstance(item, InitialStateDefinition) for item in definitions) or len({item.variable_id for item in definitions}) != len(definitions):
             raise InvalidScientificProblem("initial state definitions must be unique typed records")
@@ -274,6 +544,47 @@ class CallbackParticipant:
     @property
     def initial_state_definitions(self) -> tuple[InitialStateDefinition, ...]:
         return self._initial_state_definitions
+
+    @property
+    def operating_condition_definitions(
+        self,
+    ) -> tuple[OperatingConditionDefinition, ...]:
+        return self._operating_condition_definitions
+
+    @property
+    def parameter_definitions(self) -> tuple[ParameterDefinition, ...]:
+        return self._parameter_definitions
+
+    def apply_operating_conditions(
+        self, instant: Quantity, values: Mapping[str, OperatingConditionValue]
+    ) -> tuple[OperatingConditionValue, ...]:
+        if self._apply_operating_conditions is None:
+            raise InvalidScientificProblem(
+                f"participant {self.spec.participant_id!r} does not consume "
+                f"operating conditions"
+            )
+        return tuple(self._apply_operating_conditions(instant, dict(values)))
+
+    def apply_parameters(
+        self, values: Mapping[str, ParameterValue]
+    ) -> tuple[ParameterValue, ...]:
+        if self._apply_parameters is None:
+            raise InvalidScientificProblem(
+                f"participant {self.spec.participant_id!r} does not accept "
+                f"parameter bindings"
+            )
+        return tuple(self._apply_parameters(dict(values)))
+
+    def state_identity(self, instant: Quantity) -> str | None:
+        """This adapter's declared state digest, or ``None`` if it declares none."""
+        if self._state_identity is None:
+            return None
+        return self._state_identity(instant)
+
+    def public_state(self, instant: Quantity) -> tuple[StateVariableValue, ...]:
+        if self._public_state is None:
+            return ()
+        return tuple(self._public_state(instant))
 
     def initialize_state(
         self, instant: Quantity, state: Mapping[str, InitialStateValue],

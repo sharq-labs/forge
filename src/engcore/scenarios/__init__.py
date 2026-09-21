@@ -1,6 +1,9 @@
 """Generic scenario and transient-study contracts."""
 
 from .contracts import (
+    SEGMENT_OWNERSHIP,
+    ComposedInputSchedule,
+    ComposedOperatingCondition,
     InterpolationKind,
     NamedQuantity,
     OperatingCondition,
@@ -8,16 +11,21 @@ from .contracts import (
     ScenarioEvent,
     ScenarioSegment,
     ScenarioSpecification,
+    SegmentContribution,
     StateSnapshot,
     StateVariable,
     TerminationCondition,
     TimeSample,
     TimeSeriesInput,
+    compose_input_schedules,
+    compose_operating_conditions,
 )
 
 __all__ = [
-    "InterpolationKind", "NamedQuantity", "OperatingCondition",
+    "SEGMENT_OWNERSHIP", "ComposedInputSchedule", "ComposedOperatingCondition", "InterpolationKind",
+    "NamedQuantity", "OperatingCondition",
     "QuantityOfInterest", "ScenarioEvent", "ScenarioSegment",
-    "ScenarioSpecification", "StateSnapshot", "StateVariable",
-    "TerminationCondition", "TimeSample", "TimeSeriesInput",
+    "ScenarioSpecification", "SegmentContribution", "StateSnapshot",
+    "StateVariable", "TerminationCondition", "TimeSample", "TimeSeriesInput",
+    "compose_input_schedules", "compose_operating_conditions",
 ]
