@@ -69,6 +69,7 @@
      293.15,
      393.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -80,11 +81,11 @@
      "R0 [Ohm]": 0.12573518414053753,
      "R1 [Ohm]": 0.056566953408852975
     },
-    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
     "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '33_34_36|room_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "1a3f27940e7cb6c2848c809dd65d9ff56d39fe275eaa6065ef5de667040227ad",
-   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+   "authority_digest": "de9b7cbd6a9e3fe05b621d68b3c8b77d68167db2ca1d626cebd8f5cb5f310158",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210"
   },
   "38_39_40|room_ambient|4A": {
    "band": "warm",
@@ -120,6 +121,7 @@
      293.15,
      393.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -131,11 +133,11 @@
      "R0 [Ohm]": 0.17827653365135632,
      "R1 [Ohm]": 0.033760666752287886
     },
-    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
     "notes": "median of 3 per-trajectory PyBOP fits on the calibration split, operating block '38_39_40|room_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "90a5c7b076b13b04e6cc20adbb86b4d114b73c17b679709b2655bb3dff275da5",
-   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+   "authority_digest": "97a1bcf9997abcce94e9e8383d5910c59315a1aa8637cee30b0ba74219356b3f",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210"
   },
   "41_42_43_44|low_ambient|1A": {
    "band": "cold",
@@ -171,6 +173,7 @@
      233.14999999999998,
      293.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -182,11 +185,11 @@
      "R0 [Ohm]": 0.14156202320386127,
      "R1 [Ohm]": 0.20820272403236412
     },
-    "parent_authority_digest": "ea26317c5852408101d93404563366c19cf94358b8ee11fbd1092ce746182d5d",
+    "parent_authority_digest": "4079b264e7218e74bdaed3efcc9aebfa5dc25f9e1554425444b7cc0349811613",
     "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|low_ambient|1A' (band 'cold'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "bf0c51506b7e2c7e43dad16e6323ed2a7145bc388fe28bca8a4d4a96e2303573",
-   "parent_authority_digest": "ea26317c5852408101d93404563366c19cf94358b8ee11fbd1092ce746182d5d"
+   "authority_digest": "59b997b6ae450fed1245c1ca7a1a85b29aa02ec52ee95ef5f5d39bc746364ec0",
+   "parent_authority_digest": "4079b264e7218e74bdaed3efcc9aebfa5dc25f9e1554425444b7cc0349811613"
   },
   "41_42_43_44|low_ambient|4A": {
    "band": "warm",
@@ -222,6 +225,7 @@
      293.15,
      393.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -233,11 +237,11 @@
      "R0 [Ohm]": 0.26485883398150045,
      "R1 [Ohm]": 0.06102702479646041
     },
-    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
     "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|low_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "d67f660de1c99868730cd5fe142c757be557cc53410f1066b15395b0d2b5788b",
-   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+   "authority_digest": "1267c892a76eaeb29f8b8d0467c56f35bba4b77c8cc9938644e84033432728df",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210"
   },
   "41_42_43_44|room_ambient|2A": {
    "band": "warm",
@@ -273,6 +277,7 @@
      293.15,
      393.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -284,11 +289,11 @@
      "R0 [Ohm]": 0.11237228633685047,
      "R1 [Ohm]": 0.05557047876256012
     },
-    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
     "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|room_ambient|2A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "b3d4a66527c3143729b04122c0d4947d40aa586d999d3d0e97d4d7db7c4ed794",
-   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+   "authority_digest": "7993cf57c3c19507e1a17c650768918ef8aea7ac8bbea74e023ecf8878501da1",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210"
   },
   "FY08Q4|room_ambient|2A": {
    "band": "warm",
@@ -324,6 +329,7 @@
      293.15,
      393.15
     ],
+    "temperature_basis": "cell",
     "units": {
      "capacitance": "farad",
      "capacity": "ampere_hour",
@@ -335,11 +341,11 @@
      "R0 [Ohm]": 0.08194078379128172,
      "R1 [Ohm]": 0.06281578724659737
     },
-    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
     "notes": "median of 10 per-trajectory PyBOP fits on the calibration split, operating block 'FY08Q4|room_ambient|2A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
    },
-   "authority_digest": "d7e6da40b7eb6218a13a72f516f2879be2e3c75010f319f39ddb9bd3b5e3f0f6",
-   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+   "authority_digest": "99be40267ab5beb2d3da75776c616beec9b707e8d3d8ea23e500a62d63067293",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210"
   }
  },
  "per_trajectory": [
@@ -350,7 +356,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 162 samples",
-   "wall_seconds": 0.35769480001181364,
+   "wall_seconds": 0.38326200004667044,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0005.d0008",
@@ -385,7 +391,7 @@
      "iterations": 9,
      "evaluations": 29,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.35769480001181364,
+     "wall_seconds": 0.38326200004667044,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -408,7 +414,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 159 samples",
-   "wall_seconds": 0.26958049996756017,
+   "wall_seconds": 0.3010269000660628,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0005.d0016",
@@ -443,7 +449,7 @@
      "iterations": 9,
      "evaluations": 23,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.26958049996756017,
+     "wall_seconds": 0.3010269000660628,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -466,7 +472,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 161 samples",
-   "wall_seconds": 0.25944529997650534,
+   "wall_seconds": 0.27881529997102916,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0005.d0024",
@@ -501,7 +507,7 @@
      "iterations": 8,
      "evaluations": 24,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.25944529997650534,
+     "wall_seconds": 0.27881529997102916,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -524,7 +530,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 321 samples",
-   "wall_seconds": 0.3979020999977365,
+   "wall_seconds": 0.46113149996381253,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0005.d0032",
@@ -559,7 +565,7 @@
      "iterations": 8,
      "evaluations": 27,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.3979020999977365,
+     "wall_seconds": 0.46113149996381253,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -582,7 +588,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 308 samples",
-   "wall_seconds": 0.39209049998316914,
+   "wall_seconds": 0.40915880003012717,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0005.d0040",
@@ -617,7 +623,7 @@
      "iterations": 8,
      "evaluations": 28,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.39209049998316914,
+     "wall_seconds": 0.40915880003012717,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -640,7 +646,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 303 samples",
-   "wall_seconds": 0.31689719995483756,
+   "wall_seconds": 0.293424200033769,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0018.d0008",
@@ -675,7 +681,7 @@
      "iterations": 8,
      "evaluations": 18,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.31689719995483756,
+     "wall_seconds": 0.293424200033769,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -698,7 +704,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 284 samples",
-   "wall_seconds": 0.6944229999789968,
+   "wall_seconds": 0.7183718999149278,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0018.d0016",
@@ -733,7 +739,7 @@
      "iterations": 11,
      "evaluations": 57,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.6944229999789968,
+     "wall_seconds": 0.7183718999149278,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -756,7 +762,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 264 samples",
-   "wall_seconds": 0.7194057999877259,
+   "wall_seconds": 0.7433931999839842,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0018.d0024",
@@ -791,7 +797,7 @@
      "iterations": 12,
      "evaluations": 72,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.7194057999877259,
+     "wall_seconds": 0.7433931999839842,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -814,7 +820,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 251 samples",
-   "wall_seconds": 0.2888610999798402,
+   "wall_seconds": 0.34666489996016026,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0018.d0032",
@@ -849,7 +855,7 @@
      "iterations": 13,
      "evaluations": 26,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.2888610999798402,
+     "wall_seconds": 0.34666489996016026,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -872,7 +878,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 235 samples",
-   "wall_seconds": 0.29929329990409315,
+   "wall_seconds": 0.3147072000429034,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0018.d0040",
@@ -907,7 +913,7 @@
      "iterations": 11,
      "evaluations": 28,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.29929329990409315,
+     "wall_seconds": 0.3147072000429034,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -930,7 +936,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 63 samples",
-   "wall_seconds": 0.18827759998384863,
+   "wall_seconds": 0.22381570003926754,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0033.d0003",
@@ -965,7 +971,7 @@
      "iterations": 11,
      "evaluations": 34,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.18827759998384863,
+     "wall_seconds": 0.22381570003926754,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -988,7 +994,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 113 samples",
-   "wall_seconds": 0.16188709996640682,
+   "wall_seconds": 0.17346770002041012,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0033.d0008",
@@ -1023,7 +1029,7 @@
      "iterations": 11,
      "evaluations": 25,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.16188709996640682,
+     "wall_seconds": 0.17346770002041012,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1046,7 +1052,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 136 samples",
-   "wall_seconds": 0.14013070007786155,
+   "wall_seconds": 0.12144290003925562,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0033.d0024",
@@ -1081,7 +1087,7 @@
      "iterations": 8,
      "evaluations": 16,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.14013070007786155,
+     "wall_seconds": 0.12144290003925562,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1104,7 +1110,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 127 samples",
-   "wall_seconds": 0.16568580002058297,
+   "wall_seconds": 0.1515693999826908,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0033.d0032",
@@ -1139,7 +1145,7 @@
      "iterations": 8,
      "evaluations": 25,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.16568580002058297,
+     "wall_seconds": 0.1515693999826908,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1162,7 +1168,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 123 samples",
-   "wall_seconds": 0.18134190002456307,
+   "wall_seconds": 0.15556330000981688,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0033.d0040",
@@ -1197,7 +1203,7 @@
      "iterations": 9,
      "evaluations": 26,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.18134190002456307,
+     "wall_seconds": 0.15556330000981688,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1220,7 +1226,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 94 samples",
-   "wall_seconds": 0.2181897999253124,
+   "wall_seconds": 0.19438100000843406,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0038.d0002",
@@ -1255,7 +1261,7 @@
      "iterations": 10,
      "evaluations": 38,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.2181897999253124,
+     "wall_seconds": 0.19438100000843406,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1278,7 +1284,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 99 samples",
-   "wall_seconds": 0.07642789999954402,
+   "wall_seconds": 0.07719089998863637,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0038.d0008",
@@ -1313,7 +1319,7 @@
      "iterations": 10,
      "evaluations": 14,
      "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
-     "wall_seconds": 0.07642789999954402,
+     "wall_seconds": 0.07719089998863637,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1336,7 +1342,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 94 samples",
-   "wall_seconds": 0.09458139992784709,
+   "wall_seconds": 0.10620749997906387,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0038.d0012",
@@ -1371,7 +1377,7 @@
      "iterations": 8,
      "evaluations": 18,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.09458139992784709,
+     "wall_seconds": 0.10620749997906387,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1394,7 +1400,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 287 samples",
-   "wall_seconds": 0.37942620005924255,
+   "wall_seconds": 0.333937699906528,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0008",
@@ -1429,7 +1435,7 @@
      "iterations": 11,
      "evaluations": 32,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.37942620005924255,
+     "wall_seconds": 0.333937699906528,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1452,7 +1458,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 269 samples",
-   "wall_seconds": 0.5230901999166235,
+   "wall_seconds": 0.5523914000950754,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0016",
@@ -1487,7 +1493,7 @@
      "iterations": 10,
      "evaluations": 47,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.5230901999166235,
+     "wall_seconds": 0.5523914000950754,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1510,7 +1516,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 258 samples",
-   "wall_seconds": 0.6092905999394134,
+   "wall_seconds": 0.555882400018163,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0024",
@@ -1545,7 +1551,7 @@
      "iterations": 13,
      "evaluations": 61,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.6092905999394134,
+     "wall_seconds": 0.555882400018163,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1568,7 +1574,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 244 samples",
-   "wall_seconds": 0.4415671000024304,
+   "wall_seconds": 0.4668926999438554,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0032",
@@ -1603,7 +1609,7 @@
      "iterations": 7,
      "evaluations": 51,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.4415671000024304,
+     "wall_seconds": 0.4668926999438554,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1626,7 +1632,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 232 samples",
-   "wall_seconds": 0.25306919997092336,
+   "wall_seconds": 0.23959020001348108,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0040",
@@ -1661,7 +1667,7 @@
      "iterations": 12,
      "evaluations": 25,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.25306919997092336,
+     "wall_seconds": 0.23959020001348108,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1684,7 +1690,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 426 samples",
-   "wall_seconds": 0.6830789999803528,
+   "wall_seconds": 0.6462150999577716,
    "held_capacitance_f": 814.8320745620481,
    "evidence": {
     "dataset_id": "B0042.d0093",
@@ -1719,7 +1725,7 @@
      "iterations": 12,
      "evaluations": 43,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.6830789999803528,
+     "wall_seconds": 0.6462150999577716,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1742,7 +1748,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 411 samples",
-   "wall_seconds": 0.6400269999867305,
+   "wall_seconds": 0.6266747999470681,
    "held_capacitance_f": 814.8320745620481,
    "evidence": {
     "dataset_id": "B0042.d0098",
@@ -1777,7 +1783,7 @@
      "iterations": 9,
      "evaluations": 41,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.6400269999867305,
+     "wall_seconds": 0.6266747999470681,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1800,7 +1806,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 398 samples",
-   "wall_seconds": 1.160403300076723,
+   "wall_seconds": 1.1865405000280589,
    "held_capacitance_f": 814.8320745620481,
    "evidence": {
     "dataset_id": "B0042.d0102",
@@ -1835,7 +1841,7 @@
      "iterations": 16,
      "evaluations": 89,
      "message": "ABNORMAL: ",
-     "wall_seconds": 1.160403300076723,
+     "wall_seconds": 1.1865405000280589,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1858,7 +1864,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 383 samples",
-   "wall_seconds": 0.5695338000077754,
+   "wall_seconds": 0.5467346999794245,
    "held_capacitance_f": 814.8320745620481,
    "evidence": {
     "dataset_id": "B0042.d0107",
@@ -1893,7 +1899,7 @@
      "iterations": 11,
      "evaluations": 43,
      "message": "ABNORMAL: ",
-     "wall_seconds": 0.5695338000077754,
+     "wall_seconds": 0.5467346999794245,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1916,7 +1922,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 368 samples",
-   "wall_seconds": 0.354581999941729,
+   "wall_seconds": 0.3660200999584049,
    "held_capacitance_f": 814.8320745620481,
    "evidence": {
     "dataset_id": "B0042.d0112",
@@ -1951,7 +1957,7 @@
      "iterations": 9,
      "evaluations": 26,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.354581999941729,
+     "wall_seconds": 0.3660200999584049,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -1974,7 +1980,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 85 samples",
-   "wall_seconds": 0.09603769995737821,
+   "wall_seconds": 0.10435059992596507,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0048",
@@ -2009,7 +2015,7 @@
      "iterations": 9,
      "evaluations": 16,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.09603769995737821,
+     "wall_seconds": 0.10435059992596507,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -2032,7 +2038,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 80 samples",
-   "wall_seconds": 0.14621230005286634,
+   "wall_seconds": 0.12642530002631247,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0056",
@@ -2067,7 +2073,7 @@
      "iterations": 7,
      "evaluations": 32,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.14621230005286634,
+     "wall_seconds": 0.12642530002631247,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -2090,7 +2096,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 77 samples",
-   "wall_seconds": 0.24599089997354895,
+   "wall_seconds": 0.17463820008561015,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0062",
@@ -2125,7 +2131,7 @@
      "iterations": 10,
      "evaluations": 42,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.24599089997354895,
+     "wall_seconds": 0.17463820008561015,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -2148,7 +2154,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 75 samples",
-   "wall_seconds": 0.1683969999430701,
+   "wall_seconds": 0.11818520002998412,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0073",
@@ -2183,7 +2189,7 @@
      "iterations": 10,
      "evaluations": 25,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.1683969999430701,
+     "wall_seconds": 0.11818520002998412,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -2206,7 +2212,7 @@
    "split": "calibration",
    "outcome": "ok",
    "detail": "fitted 2 parameters on 73 samples",
-   "wall_seconds": 0.1410917000612244,
+   "wall_seconds": 0.10355310002341866,
    "held_capacitance_f": 1185.6497954731508,
    "evidence": {
     "dataset_id": "B0042.d0079",
@@ -2241,7 +2247,7 @@
      "iterations": 12,
      "evaluations": 21,
      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-     "wall_seconds": 0.1410917000612244,
+     "wall_seconds": 0.10355310002341866,
      "parameters_at_bound": []
     },
     "is_validation_evidence": false
@@ -2258,5 +2264,5 @@
    }
   }
  ],
- "wall_seconds": 17.866123100044206
+ "wall_seconds": 17.63488160003908
 }

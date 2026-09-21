@@ -1,0 +1,173 @@
+{
+ "schema": "provider_pivot_s1_freeze/1",
+ "frozen_at": "2026-09-21T20:42:23Z",
+ "commit_evidence_was_produced_at": "e4626cb2ee2e179202aded36fd05e14f0ce773b3",
+ "what_this_is": "the state this round's evidence was produced from, pinned by digest. It is NOT a Gate A, NOT a certification and NOT a validation record; this round produced none of those and says so in its report",
+ "what_this_does_not_freeze": [
+  "the frozen Core API digest, which did not move -- nothing under src/engcore/providers/ is exported from a canonical module",
+  "the ngspice adapter, which is byte-unchanged from the base commit",
+  "the native battery models, which this round did not touch",
+  "any holdout, which this round never opened"
+ ],
+ "core_api": {
+  "frozen_digest_observed": "af8dfbc0068fcae3c9236fc31ca8bbaf61fe9d32b32d41a769b57ff94da1f960",
+  "frozen_symbols_observed": 195,
+  "frozen_digest_this_interpreter_produces_on_the_base_commit": "af8dfbc0068fcae3c9236fc31ca8bbaf61fe9d32b32d41a769b57ff94da1f960",
+  "claim": "UNCHANGED BY THIS ROUND: the observed digest and symbol count are byte-identical to what the base commit produces on the same interpreter, which was measured rather than assumed",
+  "why_it_differs_from_the_policy": "docs/CORE_FREEZE_POLICY.md records 194 symbols at f18aa806d594016c04b3f9ace6b0817969e8042febd22324f6eb8a95aef6f487. This interpreter (CPython 3.14) produces 195 at af8dfbc0..., on the base commit as well as on this one. That gap is PRE-EXISTING certification drift on Python 3.14 and is not this round's doing; it is recorded here so that a later session reading this freeze does not attribute it to the provider package"
+ },
+ "provider_environment": {
+  "python_version": "3.13.15",
+  "platform_tag": "win32-AMD64",
+  "distributions": {
+   "casadi": "3.7.2",
+   "numpy": "2.3.5",
+   "pybamm": "26.8.0.0",
+   "pybop": "26.3",
+   "salib": "1.6.0",
+   "scipy": "1.18.1"
+  },
+  "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa"
+ },
+ "sources": {
+  "src/engcore/providers/__init__.py": "bc640cb7a4cd602d364a66178faca3d0f0846f5e81a61ad36c8a0be2d3f0d766",
+  "src/engcore/providers/contract.py": "2a3b466123b704e4953a0343b28462ea6d22494d8fb4d593f14c908159f4ba19",
+  "src/engcore/providers/environment.py": "b332027025dd2fddd1a7fa80d063f77101ba4a2a49c17eac23ab7079770c7de4",
+  "src/engcore/providers/licenses.py": "798604990a5189af0fda911ba0eca8e78ebaeb20299cd8dc686f33538a129afe",
+  "src/engcore/providers/pybamm_provider.py": "10569a7249bd4c70fed0b023508651c12f0ffccf41c97fa789fe1c98b7499db1",
+  "src/engcore/providers/pybop_provider.py": "0f81bb96b0bc950e04e7175ab94e0193a2062d2b6d7d5909ca5108b16faf4d61",
+  "src/engcore/providers/salib_provider.py": "21ff2bfcdd9224ae7245a1cfcf718689b7e65c94001a847c3aeb09107d5ce780",
+  "src/engcore/credibility/risk_coverage.py": "8598062ba6314abccf0239fbf232f8bcfd49c0d7da7b32e93f65268b33ba0e39",
+  "benchmarks/provider_pivot_s1/harness/common.py": "2048c5672d9ec3ca75526e171fc6d85dc666aa675c2f8bad479a88d6951c2a06",
+  "benchmarks/provider_pivot_s1/harness/sensitivity.py": "01a2d8313afce180dede89d8313aaf0622b49241185ef1923808bdeaf5838141",
+  "benchmarks/provider_pivot_s1/harness/fit.py": "fcf35e4813835251798d09759c5e883e213f0bb971b99fbaf7d04dd2005abe3a",
+  "benchmarks/provider_pivot_s1/harness/compare.py": "4336af2573cd562838f1d89bacb997704132561b9e42b112579ebfde78b4350e"
+ },
+ "evidence": {
+  "SENSITIVITY.json": "5490d474c8f591af430f5bc4cdc90d26e103699392b1f6b2a079973ac8d2e0f0",
+  "FIT.json": "3ffeaa15bd378c52e1bdff2145cce6b2cce3114f70a0bc3d565c4898099c1121",
+  "COMPARISON.json": "b21df975decfe7d9c798c08206924061c34e3cc498c765d2b87070abe6dc246c"
+ },
+ "parameter_authorities": {
+  "33_34_36|room_ambient|4A": {
+   "authority_digest": "de9b7cbd6a9e3fe05b621d68b3c8b77d68167db2ca1d626cebd8f5cb5f310158",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
+   "source": "forge_derived",
+   "fits": 5
+  },
+  "38_39_40|room_ambient|4A": {
+   "authority_digest": "97a1bcf9997abcce94e9e8383d5910c59315a1aa8637cee30b0ba74219356b3f",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
+   "source": "forge_derived",
+   "fits": 3
+  },
+  "41_42_43_44|low_ambient|1A": {
+   "authority_digest": "59b997b6ae450fed1245c1ca7a1a85b29aa02ec52ee95ef5f5d39bc746364ec0",
+   "parent_authority_digest": "4079b264e7218e74bdaed3efcc9aebfa5dc25f9e1554425444b7cc0349811613",
+   "source": "forge_derived",
+   "fits": 5
+  },
+  "41_42_43_44|low_ambient|4A": {
+   "authority_digest": "1267c892a76eaeb29f8b8d0467c56f35bba4b77c8cc9938644e84033432728df",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
+   "source": "forge_derived",
+   "fits": 5
+  },
+  "41_42_43_44|room_ambient|2A": {
+   "authority_digest": "7993cf57c3c19507e1a17c650768918ef8aea7ac8bbea74e023ecf8878501da1",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
+   "source": "forge_derived",
+   "fits": 5
+  },
+  "FY08Q4|room_ambient|2A": {
+   "authority_digest": "99be40267ab5beb2d3da75776c616beec9b707e8d3d8ea23e500a62d63067293",
+   "parent_authority_digest": "b7f037721f7d7c917f516673d6efb377f4aa4bdfb8114e77400f64ff1f8dc210",
+   "source": "forge_derived",
+   "fits": 10
+  }
+ },
+ "headline": {
+  "corpus": "NASA PCoE Li-ion battery aging archive",
+  "splits_scored": [
+   "calibration",
+   "validation"
+  ],
+  "splits_never_opened": [
+   "observed_holdout",
+   "locked_holdout"
+  ],
+  "trajectories": 52,
+  "like_for_like": {
+   "calibration": {
+    "native": {
+     "mae_v": 0.016070722341155735,
+     "rmse_v": 0.03042715969061306
+    },
+    "pybamm_thevenin_1rc": {
+     "mae_v": 0.027746349403034328,
+     "rmse_v": 0.041480474186230104
+    }
+   },
+   "validation": {
+    "native": {
+     "mae_v": 0.02470218960475649,
+     "rmse_v": 0.04463277548774485
+    },
+    "pybamm_thevenin_1rc": {
+     "mae_v": 0.030892632603914068,
+     "rmse_v": 0.041126921576538834
+    }
+   }
+  },
+  "risk_applicability_screen": {
+   "native": {
+    "coverage": 1.0,
+    "false_trust_rate": 0.38461538461538464,
+    "over_refusal_rate": null
+   },
+   "pybamm_thevenin_1rc": {
+    "coverage": 0.8269230769230769,
+    "false_trust_rate": 0.2558139534883721,
+    "over_refusal_rate": 0.2222222222222222
+   },
+   "pybamm_spme": {
+    "coverage": 0.0,
+    "false_trust_rate": null,
+    "over_refusal_rate": null
+   }
+  },
+  "trust_path_coverage": {
+   "native": null,
+   "pybamm_thevenin_1rc": 0.0,
+   "pybamm_spme": 0.0
+  },
+  "sensitivity_ranking": [
+   "R0 [Ohm]",
+   "R1 [Ohm]",
+   "initial_state_of_charge",
+   "C1 [F]",
+   "capacity_scale"
+  ],
+  "replay": [
+   {
+    "executed": true,
+    "identity_matched": true,
+    "reproduced": true,
+    "max_absolute_difference": 0.0
+   },
+   {
+    "executed": true,
+    "identity_matched": true,
+    "reproduced": true,
+    "max_absolute_difference": 0.0
+   },
+   {
+    "executed": true,
+    "identity_matched": true,
+    "reproduced": true,
+    "max_absolute_difference": 0.0
+   }
+  ]
+ },
+ "independent_gate_a": "requires new evidence. Every cell in this archive has had its residuals read -- B0041 by the Sprint 3 recovery and B0007/B0036/B0044 by Sprint 3 itself -- so no pristine holdout remains here and this round did not manufacture one"
+}

@@ -524,3 +524,43 @@ carries a `like_for_like` block so the two populations cannot be confused again.
   inserts. The guard resolves such a module by reading the STRING SEGMENTS of
   the mutation, and an insert of a pre-joined variable carries none. Fixed in
   the harness and the test rather than in the guard.
+
+### The last defect, found by the freeze test written to close the round
+
+`FIT.json` was produced before `ParameterAuthority` gained
+`temperature_basis`. `compare.py` reconstructs those authorities from that
+payload, so every fitted authority in the comparison silently took the
+`"ambient"` DEFAULT and the cell-temperature repair never reached the run that
+reported it.
+
+It was invisible in every headline number -- those trajectories were refused on
+capacity as well -- and surfaced only as five counterfactual probes that could
+not be observed. `test_f4` now recomputes every stored authority digest from
+its own payload, which is the check that fails the moment a record and the type
+that produced it disagree.
+
+Corrected: the equivalent-circuit screen's over-refusal rate is **22.2 %**, not
+50 %, and **7 of its 9 refusals are correct** rather than 2 of 4. Coverage,
+false trust and every MAE/RMSE/P95/bias are unchanged.
+
+**The general lesson, for the next round.** A serialized record and the type
+that reads it back drift the moment the type gains a field with a default.
+Defaults are what make the drift silent. Every record this repository stores and
+reconstructs wants a digest that is recomputed from the payload, not merely
+carried beside it.
+
+### The freeze
+
+`benchmarks/provider_pivot_s1/harness/freeze.py` writes `FREEZE.json`: the
+12 source files and 3 evidence files by SHA-256, the 6 fitted authorities by
+digest and parent, the provider environment and its digest, and the headline
+numbers. It pins no Gate A and no certification because this round produced
+neither.
+
+It records the observed Core API digest (`af8dfbc0...`, 195 symbols) beside the
+one the policy states (`f18aa806...`, 194) and says which is which: that gap is
+PRE-EXISTING Python 3.14 certification drift, measured as identical on the base
+commit, and is not the provider package's doing.
+
+`benchmarks/provider_pivot_s1/tests/test_provider_pivot_s1.py` -- seven
+regressions -- makes the freeze load-bearing.

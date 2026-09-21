@@ -62,7 +62,7 @@
     "bias": 0.0015571073871923978,
     "max": 0.7156997944076626
    },
-   "wall_seconds": 0.46925449976697564,
+   "wall_seconds": 0.47576600033789873,
    "refusal_reasons": []
   },
   "native|validation": {
@@ -82,7 +82,7 @@
     "bias": -0.006819381007971321,
     "max": 0.5919579371621455
    },
-   "wall_seconds": 0.3345160996541381,
+   "wall_seconds": 0.331303299870342,
    "refusal_reasons": []
   },
   "pybamm_thevenin_1rc|calibration": {
@@ -102,7 +102,7 @@
     "bias": -0.00284426560127143,
     "max": 0.19644009080736646
    },
-   "wall_seconds": 0.39407500019297004,
+   "wall_seconds": 0.40807989973109215,
    "refusal_reasons": [
     "model_not_applicable"
    ]
@@ -124,7 +124,7 @@
     "bias": -0.00904464763147194,
     "max": 0.27461355435670765
    },
-   "wall_seconds": 0.362647200236097,
+   "wall_seconds": 0.3333666999824345,
    "refusal_reasons": []
   },
   "pybamm_spme|calibration": {
@@ -286,12 +286,12 @@
    "refused": 9,
    "correct_support": 32,
    "false_trust": 11,
-   "correct_refusal": 2,
+   "correct_refusal": 7,
    "over_refusal": 2,
-   "truth_unknown": 5,
+   "truth_unknown": 0,
    "coverage": 0.8269230769230769,
    "false_trust_rate": 0.2558139534883721,
-   "over_refusal_rate": 0.5,
+   "over_refusal_rate": 0.2222222222222222,
    "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
   },
   "pybamm_spme": {
@@ -323,12 +323,12 @@
    "refused": 52,
    "correct_support": 0,
    "false_trust": 0,
-   "correct_refusal": 13,
+   "correct_refusal": 18,
    "over_refusal": 34,
-   "truth_unknown": 5,
+   "truth_unknown": 0,
    "coverage": 0.0,
    "false_trust_rate": null,
-   "over_refusal_rate": 0.723404255319149,
+   "over_refusal_rate": 0.6538461538461539,
    "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
   },
   "pybamm_spme": {
@@ -358,7 +358,7 @@
     "counterfactual_outcome": "ok",
     "counterfactual_rmse_v": 0.07195272412958208,
     "native_rmse_v": 0.11346110493971787,
-    "counterfactual_authority_digest": "031f642ba241990e6664e00136dacb58cb018f915b5aa3cbe2107d126b72971b"
+    "counterfactual_authority_digest": "f30d6523b60f43df37a911970480851e26611b076802408189a04109174c9115"
    },
    {
     "trajectory_id": "B0038.d0002",
@@ -368,7 +368,7 @@
     "counterfactual_outcome": "ok",
     "counterfactual_rmse_v": 0.06287442462874071,
     "native_rmse_v": 0.08285458121189247,
-    "counterfactual_authority_digest": "a91ed4dacd3130d06a81f6d4fd32c5e7f2c754d0e958ca71418f2eb237f3e7c6"
+    "counterfactual_authority_digest": "62aca97164d92f666e8aebf4040ba98951537dcd5925de1fe108d2620f34341c"
    },
    {
     "trajectory_id": "B0038.d0008",
@@ -378,7 +378,7 @@
     "counterfactual_outcome": "ok",
     "counterfactual_rmse_v": 0.04245368461480796,
     "native_rmse_v": 0.07679128626488564,
-    "counterfactual_authority_digest": "3bfbf221a1814fcef8794756f2bdbf7d2ea03817234ec28595b9f8eae2821a15"
+    "counterfactual_authority_digest": "19d312940520a5909135b27857f8b6a1693f899be5fd9657253698335ed1cddb"
    },
    {
     "trajectory_id": "B0038.d0012",
@@ -388,64 +388,64 @@
     "counterfactual_outcome": "ok",
     "counterfactual_rmse_v": 0.040898199755726644,
     "native_rmse_v": 0.08139372228064296,
-    "counterfactual_authority_digest": "274cdb3ca509e029d0f6dd5d44e88e40836215f462ef61eb92d8377e2df4bca7"
+    "counterfactual_authority_digest": "5ead70a038d29fcf10ef00dc2062169c6a9339134164864ed88043f733e38853"
    },
    {
     "trajectory_id": "B0042.d0048",
     "measured_capacity_ah": 1.177489,
     "declared_capacity_ah": 1.604954,
-    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
-    "counterfactual_outcome": "model_not_applicable",
-    "counterfactual_rmse_v": null,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.19011555447405498,
     "native_rmse_v": 0.1826230860153052,
-    "counterfactual_authority_digest": "78da831f7e8e34015acb519f89e9d4c35c53332da141ef094442c93b937901b3"
+    "counterfactual_authority_digest": "956c27838d2632e8ddd4f14b095491216632a26192c12e66c71609194ec7ef42"
    },
    {
     "trajectory_id": "B0042.d0056",
     "measured_capacity_ah": 1.130474,
     "declared_capacity_ah": 1.604954,
-    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
-    "counterfactual_outcome": "model_not_applicable",
-    "counterfactual_rmse_v": null,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.14578944136380373,
     "native_rmse_v": 0.1238234193502763,
-    "counterfactual_authority_digest": "0a12340ec73f049eb5aacbf2172af64288b32a9a3a11f3ff73e0e9046e79546d"
+    "counterfactual_authority_digest": "46b3abdcc3ac6af26c5fb8d9c220bb64dbf633685998e6dc3aa444816342afe1"
    },
    {
     "trajectory_id": "B0042.d0062",
     "measured_capacity_ah": 1.097925,
     "declared_capacity_ah": 1.604954,
-    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
-    "counterfactual_outcome": "model_not_applicable",
-    "counterfactual_rmse_v": null,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.13911710981550998,
     "native_rmse_v": 0.12039162092025624,
-    "counterfactual_authority_digest": "7173de8023ca35c83ae1accbb63802bdae74612112dedeba9ffd2970ee908002"
+    "counterfactual_authority_digest": "00ba48de7ee0ffe7517e7bc8e864a4525adc7e12be6ce2878d960fb77a84ee92"
    },
    {
     "trajectory_id": "B0042.d0073",
     "measured_capacity_ah": 1.106009,
     "declared_capacity_ah": 1.604954,
-    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
-    "counterfactual_outcome": "model_not_applicable",
-    "counterfactual_rmse_v": null,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.18609231420731284,
     "native_rmse_v": 0.15894462808014428,
-    "counterfactual_authority_digest": "ac22bb20562dec00f3f4684f8229d849fc1b840348f79cb76a6959a9b1e740d4"
+    "counterfactual_authority_digest": "745ae0d92fbc166291ac15cf1517dbb38d2fa5603e3259e556b4359af7cbf538"
    },
    {
     "trajectory_id": "B0042.d0079",
     "measured_capacity_ah": 1.09429,
     "declared_capacity_ah": 1.604954,
-    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
-    "counterfactual_outcome": "model_not_applicable",
-    "counterfactual_rmse_v": null,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.1898763055159286,
     "native_rmse_v": 0.16496056850743623,
-    "counterfactual_authority_digest": "285f83afd6dfdd495c7b1630ac0d2e1ec8cc1479342025b2dc6fa14572140078"
+    "counterfactual_authority_digest": "f2411d7d51871ce5914a1465de6b03d50a4e2cf1276f2b28e250ec16aa04520f"
    }
   ]
  },
  "replay": [
   {
    "schema": "provider_replay_report/1",
-   "request_digest": "7f5a777972bc22f63a20fa6f8fbd1092811e2816faf2bd6a63527e97e8fc3351",
+   "request_digest": "bdcb0a6221c17daecaeb2a493bfbc13dd640ac67000bc7ab7351b5af8b91a606",
    "executed": true,
    "identity_matched": true,
    "reproduced": true,
@@ -461,7 +461,7 @@
   },
   {
    "schema": "provider_replay_report/1",
-   "request_digest": "b575dc807d1c27ccf800dea767cd6f9a0848500ab92c5f9279c10ef0744e8c85",
+   "request_digest": "d4c023e4cbcf4920be7a2d15a0dd8714c618ac713ff37d2ac34ca684035da717",
    "executed": true,
    "identity_matched": true,
    "reproduced": true,
@@ -477,7 +477,7 @@
   },
   {
    "schema": "provider_replay_report/1",
-   "request_digest": "ff93785425deff6770d6962e2cf6223434ddddbaf33ff52f4bd0a18ebe79eef0",
+   "request_digest": "750a54e54015216e53acf9e57813af59123b1426826cf52890d7b932bd76e16a",
    "executed": true,
    "identity_matched": true,
    "reproduced": true,
@@ -503,7 +503,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009781699976883829,
+     "wall_seconds": 0.009526000008918345,
      "declined_tail": null,
      "statistics": {
       "n": 161,
@@ -519,14 +519,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "167 samples",
-     "wall_seconds": 0.041694800020195544,
+     "wall_seconds": 0.047118900110945106,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "793275a229b497649b6d3d3bac767d99c930f84fbe460af0b3234127b4c420f6",
+      "configuration_digest": "1747ff062638f7900476e7bd94c14ec674468a0a52c06d9d843772aaf43dbbb0",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -565,7 +565,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.008881899993866682,
+     "wall_seconds": 0.011769499978981912,
      "declined_tail": null,
      "statistics": {
       "n": 158,
@@ -581,14 +581,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "157 samples",
-     "wall_seconds": 0.013640700024552643,
+     "wall_seconds": 0.02020599995739758,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "3181699aff987d0d4b2b181366e2b36dfcf28fab13c1ca7a73ff288c0368aed4",
+      "configuration_digest": "d8afa1300acb41bcd41e05f0077c38d5f4aebdb5bd3405e0624410d36c950b50",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -627,7 +627,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009985700016841292,
+     "wall_seconds": 0.010388200054876506,
      "declined_tail": null,
      "statistics": {
       "n": 160,
@@ -643,14 +643,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "147 samples",
-     "wall_seconds": 0.030375300091691315,
+     "wall_seconds": 0.013583899941295385,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "5ed025080a88a62fecd0a81cc017f4be6d1ca4851b2ec355dce97bb5d12e9077",
+      "configuration_digest": "39775c524e86d0ff6a8c65a2af44ccaa53c088a94223d0cecf56ca6703b61833",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -689,7 +689,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.031375099904835224,
+     "wall_seconds": 0.02291770000010729,
      "declined_tail": null,
      "statistics": {
       "n": 320,
@@ -705,14 +705,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "197 samples",
-     "wall_seconds": 0.015221700072288513,
+     "wall_seconds": 0.01579959993250668,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "c1a91bd749a4be7246158def1b032c2f1d78799db16070bac027f3abbb5678ad",
+      "configuration_digest": "88d206d1376817eb487a3ac6ebc4c7d1231c6ea137ecc9262d5031d7c72c8b58",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -751,7 +751,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02668349992018193,
+     "wall_seconds": 0.019601100008003414,
      "declined_tail": null,
      "statistics": {
       "n": 307,
@@ -767,14 +767,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "177 samples",
-     "wall_seconds": 0.015129500068724155,
+     "wall_seconds": 0.015234099933877587,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "ae3b963c94138665984e1e8fb76e9bfd647128ea81d383519e3f436a07151381",
+      "configuration_digest": "a91cad8540e921671df1a89db74bb51da13bd45855a932028f30986ac3dc22cd",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -813,7 +813,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016840999945998192,
+     "wall_seconds": 0.013881499995477498,
      "declined_tail": null,
      "statistics": {
       "n": 176,
@@ -829,14 +829,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "178 samples",
-     "wall_seconds": 0.025056599988602102,
+     "wall_seconds": 0.01534629997331649,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "c596c3954a18f6bf8b17acc7199533ac03f14db620eb5b3d30e8c33d1a9e3a15",
+      "configuration_digest": "efca2079ee27df3031bf4cec8cba227f5e5639a9954415df1eec411adfbc4951",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -875,7 +875,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.012988799950107932,
+     "wall_seconds": 0.01291659998241812,
      "declined_tail": null,
      "statistics": {
       "n": 167,
@@ -891,14 +891,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "185 samples",
-     "wall_seconds": 0.02567760006058961,
+     "wall_seconds": 0.017746999976225197,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "f5c9fce11d1660b1cb9766c02343e5412de6487a696829d1c4bcdba8759e3bce",
+      "configuration_digest": "d44adb782b39ea37c94cb04686b0602db2bb693782cc2312d1cbb13d197771e0",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -937,7 +937,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02142240002285689,
+     "wall_seconds": 0.019373100018128753,
      "declined_tail": null,
      "statistics": {
       "n": 334,
@@ -953,14 +953,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "182 samples",
-     "wall_seconds": 0.016192100010812283,
+     "wall_seconds": 0.015303699998185039,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "bf48f4d2daf2bf977f7b73d892ac33263898de29f9ef9fc7823b2f18cf5c7a83",
+      "configuration_digest": "fe28de3898ccd1287de7de432d7e3f9f1b0663796691727935ff2a4966d41a78",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -999,7 +999,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.017861299915239215,
+     "wall_seconds": 0.033627600059844553,
      "declined_tail": null,
      "statistics": {
       "n": 309,
@@ -1015,14 +1015,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "149 samples",
-     "wall_seconds": 0.014923100010491908,
+     "wall_seconds": 0.02356220001820475,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "a3e90e7bb7afef86f9c295e3508ecda8e678288e9e7a250654e515b81dbb70dc",
+      "configuration_digest": "0c41b782ddd8555a9bfda9009491100355f1f4dcc37747c89699a06ac0ef77b4",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1061,7 +1061,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.018997800070792437,
+     "wall_seconds": 0.021297600003890693,
      "declined_tail": null,
      "statistics": {
       "n": 302,
@@ -1077,14 +1077,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "245 samples",
-     "wall_seconds": 0.014758599922060966,
+     "wall_seconds": 0.01642540004104376,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "6d0f23d5eed2ad07dc41e6833648c2451ee721ba7f7a19639451dc04883b3513",
+      "configuration_digest": "4b0b5848eab5885c85447d849c4c15ce28f01b0cc89aebf14c23545573e0eac1",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1123,7 +1123,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.01668280002195388,
+     "wall_seconds": 0.01795839995611459,
      "declined_tail": null,
      "statistics": {
       "n": 283,
@@ -1139,14 +1139,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "152 samples",
-     "wall_seconds": 0.013731999904848635,
+     "wall_seconds": 0.015094899921678007,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "046d6e0b7cbd40e4c8c477702c2774f46e5a00eaf703e16120b91fc01dd11d49",
+      "configuration_digest": "38979dd97c83bc4ca311a83febc1a779cc3795e98c097f4522bf77044f37980f",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1185,7 +1185,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.020432300050742924,
+     "wall_seconds": 0.01486640004441142,
      "declined_tail": null,
      "statistics": {
       "n": 263,
@@ -1201,14 +1201,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "154 samples",
-     "wall_seconds": 0.013150300015695393,
+     "wall_seconds": 0.014105599955655634,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "c80451f0c9d14559526fb46c4d3c57dc1da06b25baaf298b3326da1d7b3e75de",
+      "configuration_digest": "ccd3f40f79336133d9ea92c9efef7b0b227bb64c0f222f3efd9d9e9e5b1acac7",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1247,7 +1247,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.013894699979573488,
+     "wall_seconds": 0.015143100055865943,
      "declined_tail": null,
      "statistics": {
       "n": 250,
@@ -1263,14 +1263,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "137 samples",
-     "wall_seconds": 0.012770599918439984,
+     "wall_seconds": 0.012795499991625547,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "e82ab838da05ec7b8c50296149bf77f7f920e793f98a07fc8abcfed1c5ab5e71",
+      "configuration_digest": "487bfa0a09465c9d2e5137503e8cff9d21ea033b1ae59d8c443ba3a83924f0ca",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1309,7 +1309,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.013680299976840615,
+     "wall_seconds": 0.014059499953873456,
      "declined_tail": null,
      "statistics": {
       "n": 234,
@@ -1325,14 +1325,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "150 samples",
-     "wall_seconds": 0.014055400039069355,
+     "wall_seconds": 0.014116500038653612,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "e1a49ea8646faeede7fdd671f9245f9eba324637c7973762306efdd27988b3c3",
+      "configuration_digest": "55ed184f291f848faf6442763ca7d2f16b958005b8cb0979cf27a48161b6f446",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1371,7 +1371,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.0035152999917045236,
+     "wall_seconds": 0.003884500009007752,
      "declined_tail": null,
      "statistics": {
       "n": 62,
@@ -1422,7 +1422,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.006697400007396936,
+     "wall_seconds": 0.0062682999996468425,
      "declined_tail": null,
      "statistics": {
       "n": 112,
@@ -1438,14 +1438,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "82 samples",
-     "wall_seconds": 0.014335400075651705,
+     "wall_seconds": 0.012916799983941019,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "1c915fb156aae7373bb7842ab579fc51197271d6162af1127a75b7d0ca324b82",
+      "configuration_digest": "819760671e579f7cea52fe9b6ee1a447837751d2f826e86bcd40d113e5fa4750",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1484,7 +1484,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009747999953106046,
+     "wall_seconds": 0.008087900001555681,
      "declined_tail": null,
      "statistics": {
       "n": 135,
@@ -1500,14 +1500,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "79 samples",
-     "wall_seconds": 0.013814100064337254,
+     "wall_seconds": 0.014453399926424026,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "e5b94251dcd62332160da9fc47167df7fbb25983090fef5091e74dfd777b8358",
+      "configuration_digest": "f9a8a1104256300209873b6244bd52247cfae4cf1ed8b3e01b9351e994a5afff",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1546,7 +1546,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007090300088748336,
+     "wall_seconds": 0.007547999965026975,
      "declined_tail": null,
      "statistics": {
       "n": 126,
@@ -1562,14 +1562,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "98 samples",
-     "wall_seconds": 0.013218299951404333,
+     "wall_seconds": 0.013213900034315884,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "ecf3b794e04966e51735ddb74391881a231c0f9645b003f95765705958c2fe88",
+      "configuration_digest": "d02fd9f3d63d77dade8885741b2a521ad29a89daea097cd64165a1cac39091bd",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1608,7 +1608,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.008619299973361194,
+     "wall_seconds": 0.00762579997535795,
      "declined_tail": null,
      "statistics": {
       "n": 122,
@@ -1624,14 +1624,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "97 samples",
-     "wall_seconds": 0.015487500000745058,
+     "wall_seconds": 0.014761500060558319,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "7ad7f9f60b5bcf69a75452df3e7d253a0be9f9e2f9e7a415d4c7d580c4114277",
+      "configuration_digest": "d387501b8765b5876810d43be53a1af4d2c89c33f00d2dff352c402e22f6218b",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1670,7 +1670,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.00920520001091063,
+     "wall_seconds": 0.008038199972361326,
      "declined_tail": null,
      "statistics": {
       "n": 138,
@@ -1686,14 +1686,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "90 samples",
-     "wall_seconds": 0.01271070004440844,
+     "wall_seconds": 0.013797400053590536,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "5a853e19b3d2978437b4e4d2d43ff7f0e7a3c6af9b7d8c647fe7aa47ff809fa1",
+      "configuration_digest": "c69a0a856d2538ca227f6cb3f988dece0c5fccf405d22447ec20e274ab542671",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1732,7 +1732,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007109300000593066,
+     "wall_seconds": 0.007676800014451146,
      "declined_tail": null,
      "statistics": {
       "n": 127,
@@ -1748,14 +1748,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "92 samples",
-     "wall_seconds": 0.01423390000127256,
+     "wall_seconds": 0.014625599957071245,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "ebbbc24f3126c2e1c9e6ef1ca68f78df4c0a03f50fa4bf7e9dcc7e64ce412716",
+      "configuration_digest": "776d6bff19fe3395490a03750603936e1e8f6c580bf9b1bca0689c304d166b5c",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1794,7 +1794,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009724799892865121,
+     "wall_seconds": 0.007417599903419614,
      "declined_tail": null,
      "statistics": {
       "n": 127,
@@ -1810,14 +1810,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "80 samples",
-     "wall_seconds": 0.012505399994552135,
+     "wall_seconds": 0.014753499999642372,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "10ed4fd42cebf9ba874b45056aa2fea99af8fe75809a4314033bd91621155d63",
+      "configuration_digest": "3457758f21de5213aaea314ea17e881ead5403f8a28f9aabfd40d6a757cb7cef",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1856,7 +1856,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.007503399974666536,
+     "wall_seconds": 0.009494400001130998,
      "declined_tail": null,
      "statistics": {
       "n": 116,
@@ -1872,14 +1872,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "93 samples",
-     "wall_seconds": 0.02093380002770573,
+     "wall_seconds": 0.025290500023402274,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "a7df9120b01a75b07cd52e68e37e8d68506ec0b87d7f9bbe52b0c010445dc824",
+      "configuration_digest": "0f1af63f4327677b8600a1e7be4b33277c00e691de9d674c164cc907201a03a0",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1918,7 +1918,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.014667899929918349,
+     "wall_seconds": 0.0065116999903693795,
      "declined_tail": null,
      "statistics": {
       "n": 114,
@@ -1934,14 +1934,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "92 samples",
-     "wall_seconds": 0.02634620002936572,
+     "wall_seconds": 0.014728600042872131,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "70a8b4cada32b3c2261b16e9d16bc1f647a76882637e0b6e2fcebcadb6f46ca2",
+      "configuration_digest": "d000e87fa849a4cb5b4e2c7377d7508543db47bb485567e9a0463f820876019f",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -1980,7 +1980,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.006550199934281409,
+     "wall_seconds": 0.00637840002309531,
      "declined_tail": null,
      "statistics": {
       "n": 93,
@@ -2031,7 +2031,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.006406300002709031,
+     "wall_seconds": 0.00954300002194941,
      "declined_tail": null,
      "statistics": {
       "n": 98,
@@ -2082,7 +2082,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.004968699999153614,
+     "wall_seconds": 0.0056733000092208385,
      "declined_tail": null,
      "statistics": {
       "n": 93,
@@ -2133,7 +2133,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.01896309992298484,
+     "wall_seconds": 0.01962679997086525,
      "declined_tail": null,
      "statistics": {
       "n": 286,
@@ -2149,14 +2149,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "111 samples",
-     "wall_seconds": 0.013384600053541362,
+     "wall_seconds": 0.016157799982465804,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "d8279b3c2f6ac593306f574749a6483cdf4ef0799f6ac2f5986ecba1018898fa",
+      "configuration_digest": "f761e49efc5d399e4cec6c5a43ea8fe0860abc88312a3d51e893fad4628adcc5",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2195,7 +2195,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016338600078597665,
+     "wall_seconds": 0.02122380002401769,
      "declined_tail": null,
      "statistics": {
       "n": 268,
@@ -2211,14 +2211,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "133 samples",
-     "wall_seconds": 0.01539680000860244,
+     "wall_seconds": 0.020633399952203035,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "eee0778c60058c2e61d5e7207bbbe04763834b4e9b675a993a2cfe0efe756ebe",
+      "configuration_digest": "b0d6b89e044eff5541d5dc5ac201726e01e4ca4b4b263dfaf8b735eaad7e0cac",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2257,7 +2257,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.016258199932053685,
+     "wall_seconds": 0.017982700024731457,
      "declined_tail": null,
      "statistics": {
       "n": 257,
@@ -2273,14 +2273,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "133 samples",
-     "wall_seconds": 0.013905300060287118,
+     "wall_seconds": 0.014661699999123812,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "cb6540ed93472ef2a09413115d5195660d70cba77b3e42a6c6c8bb37c068c98d",
+      "configuration_digest": "b749f0799a382f87897a9326f83b6989568b13d5d9bc56967b3655f14dc5a8f0",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2319,7 +2319,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.01602939993608743,
+     "wall_seconds": 0.020515300100669265,
      "declined_tail": null,
      "statistics": {
       "n": 243,
@@ -2335,14 +2335,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "130 samples",
-     "wall_seconds": 0.013990600011311471,
+     "wall_seconds": 0.016056199907325208,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "27b655b5fb26327b2445de5115871aa42ae8cf8b6e5b06b1a16b94138df70c06",
+      "configuration_digest": "24b6f667738c3e789ba4151f68aaa8678191a3cfb80d30cda5af870d34db4714",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2381,7 +2381,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.013821200001984835,
+     "wall_seconds": 0.018472200026735663,
      "declined_tail": null,
      "statistics": {
       "n": 231,
@@ -2397,14 +2397,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "127 samples",
-     "wall_seconds": 0.013866499997675419,
+     "wall_seconds": 0.015002400032244623,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "666b34343ede2255af54aef8d219358b3e3c6e7df9e91aeb6cb059c85b85b5da",
+      "configuration_digest": "c4fba7398cb6d5cd78a35c8d2705ff84108164ea45d8734f8b52bc1a4a519d32",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2443,7 +2443,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.015655800001695752,
+     "wall_seconds": 0.01561930007301271,
      "declined_tail": null,
      "statistics": {
       "n": 280,
@@ -2459,14 +2459,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "131 samples",
-     "wall_seconds": 0.014324299991130829,
+     "wall_seconds": 0.01489009999204427,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "d28210d7c77c6da9f276d4ed3b39a612a778a6bfe87aaaded41dfd33fd54dcc3",
+      "configuration_digest": "0a8c464c4779ca18f46efc0b2565a8172d6dc101776b9fba8df5113a33914433",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2505,7 +2505,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.017698300071060658,
+     "wall_seconds": 0.022586600040085614,
      "declined_tail": null,
      "statistics": {
       "n": 260,
@@ -2521,14 +2521,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "144 samples",
-     "wall_seconds": 0.014954800019040704,
+     "wall_seconds": 0.015031399903818965,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "8150329eac296c39a36d72942879c7c403bf061318579bc38819819542d271dc",
+      "configuration_digest": "46fc76cd526ebaeda663c13e7bb5012e07b4a74e5006bbae21bd501eb902c70e",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2567,7 +2567,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.014894100022502244,
+     "wall_seconds": 0.014221100020222366,
      "declined_tail": null,
      "statistics": {
       "n": 247,
@@ -2583,14 +2583,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "110 samples",
-     "wall_seconds": 0.013858700054697692,
+     "wall_seconds": 0.01758200000040233,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "3e6026651a25ecf96ea178e9185663bb4d340cc7375f81aca8042151865ef340",
+      "configuration_digest": "6e394e5c89a869b6c4c82f1bbe45369f4800a6d075e9b7835196347525aaa759",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2629,7 +2629,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.013088100007735193,
+     "wall_seconds": 0.014844899997115135,
      "declined_tail": null,
      "statistics": {
       "n": 231,
@@ -2645,14 +2645,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "126 samples",
-     "wall_seconds": 0.01521149999462068,
+     "wall_seconds": 0.015247699921019375,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "baf008af4f6d0845e38e6ece194093ebdf4fac56e43f9080e2eba5cff8b1639b",
+      "configuration_digest": "54c619c11d5c3d4b7f3d040ea10f5bca10825d3ae32770273a57c51f8957840c",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2691,7 +2691,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.014233299996703863,
+     "wall_seconds": 0.013209400000050664,
      "declined_tail": null,
      "statistics": {
       "n": 218,
@@ -2707,14 +2707,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "122 samples",
-     "wall_seconds": 0.01788910001050681,
+     "wall_seconds": 0.015398800023831427,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "f357a6a45e54946fa1ab4b5c9961c4454bc46f36aabaa74b5fa7a6fa93c3717d",
+      "configuration_digest": "f0c616a1d2e5c398af4d2e7a89bfc1f6351ed69f1cd1cff8b188959c01e41bcf",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2753,7 +2753,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02874149999115616,
+     "wall_seconds": 0.025987000088207424,
      "declined_tail": null,
      "statistics": {
       "n": 425,
@@ -2769,14 +2769,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "187 samples",
-     "wall_seconds": 0.017288299975916743,
+     "wall_seconds": 0.016742800013162196,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "18279879d1ec4b30bfb9799da791e071cddaa174eda7fbf6508db447f9cdf316",
+      "configuration_digest": "929bd87bd07c652e18d4ac1ef0cae0047f29e021b90f8d031cbd46f492294a52",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2815,7 +2815,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.027575899963267148,
+     "wall_seconds": 0.03570079989731312,
      "declined_tail": null,
      "statistics": {
       "n": 410,
@@ -2831,14 +2831,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "234 samples",
-     "wall_seconds": 0.015776699990965426,
+     "wall_seconds": 0.016876599984243512,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "4e51663e9ba3642e7d2d166c2a48bf644e591f2cd8c2514b819b396e44c9584e",
+      "configuration_digest": "0c1116ddebc7306382f722de44b451167138b8497981a1c0608e86c6406a8af5",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2877,7 +2877,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02339610003400594,
+     "wall_seconds": 0.02739360008854419,
      "declined_tail": null,
      "statistics": {
       "n": 397,
@@ -2893,14 +2893,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "212 samples",
-     "wall_seconds": 0.016285500023514032,
+     "wall_seconds": 0.017547599971294403,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "5da87bde59ac1bbe50e7053277f9be6929d0b658cc689ea8fa23e971c409d428",
+      "configuration_digest": "2d7ff7a0ecb6997de26bb70a91b36d89361177487b13ac589986614d4fc90074",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -2939,7 +2939,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.024248300003819168,
+     "wall_seconds": 0.027456100098788738,
      "declined_tail": null,
      "statistics": {
       "n": 382,
@@ -2955,14 +2955,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "203 samples",
-     "wall_seconds": 0.016169499955140054,
+     "wall_seconds": 0.01790530001744628,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "8937efff4c1027b03e162715b1c7e7ceaa08a6e87835ecc1259de2191ff8f637",
+      "configuration_digest": "4c0c39dbaa9fe10a1c4491723d5d73ffb7ad016e8ad970f58a455ee7c1c3b54b",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3001,7 +3001,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.023572999984025955,
+     "wall_seconds": 0.022132599959149957,
      "declined_tail": null,
      "statistics": {
       "n": 367,
@@ -3017,14 +3017,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "162 samples",
-     "wall_seconds": 0.016626999946311116,
+     "wall_seconds": 0.016670100041665137,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "792112fe72b9963fe37c46dedd4b1c4d77c8d2381fb387faf39629bd27677a42",
+      "configuration_digest": "77649e6e0476bebd866a6a7c5a2c13c5e70e4d8fed8913fd90071b57dbc8cb50",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3063,7 +3063,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.009547000052407384,
+     "wall_seconds": 0.005263900035060942,
      "declined_tail": null,
      "statistics": {
       "n": 84,
@@ -3078,7 +3078,7 @@
     },
     "pybamm_thevenin_1rc": {
      "outcome": "model_not_applicable",
-     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%)",
      "wall_seconds": null,
      "statistics": {
       "n": 0,
@@ -3114,7 +3114,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.008898200001567602,
+     "wall_seconds": 0.00674280000384897,
      "declined_tail": null,
      "statistics": {
       "n": 79,
@@ -3129,7 +3129,7 @@
     },
     "pybamm_thevenin_1rc": {
      "outcome": "model_not_applicable",
-     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%)",
      "wall_seconds": null,
      "statistics": {
       "n": 0,
@@ -3165,7 +3165,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.008129299967549741,
+     "wall_seconds": 0.00551599997561425,
      "declined_tail": null,
      "statistics": {
       "n": 76,
@@ -3180,7 +3180,7 @@
     },
     "pybamm_thevenin_1rc": {
      "outcome": "model_not_applicable",
-     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%)",
      "wall_seconds": null,
      "statistics": {
       "n": 0,
@@ -3216,7 +3216,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.0048417000798508525,
+     "wall_seconds": 0.004655700060538948,
      "declined_tail": null,
      "statistics": {
       "n": 74,
@@ -3231,7 +3231,7 @@
     },
     "pybamm_thevenin_1rc": {
      "outcome": "model_not_applicable",
-     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%)",
      "wall_seconds": null,
      "statistics": {
       "n": 0,
@@ -3267,7 +3267,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.0049016999546438456,
+     "wall_seconds": 0.004559999913908541,
      "declined_tail": null,
      "statistics": {
       "n": 72,
@@ -3282,7 +3282,7 @@
     },
     "pybamm_thevenin_1rc": {
      "outcome": "model_not_applicable",
-     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%)",
      "wall_seconds": null,
      "statistics": {
       "n": 0,
@@ -3318,7 +3318,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.027736700023524463,
+     "wall_seconds": 0.0277042998932302,
      "declined_tail": null,
      "statistics": {
       "n": 425,
@@ -3334,14 +3334,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "210 samples",
-     "wall_seconds": 0.015625500003807247,
+     "wall_seconds": 0.021378699922934175,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "aed2d93b046754eaca7420251915d2076ccd01cdc72f3357e608df9547075836",
+      "configuration_digest": "d75a09b7cd5d9bf65bdafb019e2463d8aed87a283d37f185837f4ad99b75b065",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3380,7 +3380,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.02867509995121509,
+     "wall_seconds": 0.027449099929071963,
      "declined_tail": null,
      "statistics": {
       "n": 404,
@@ -3396,14 +3396,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "210 samples",
-     "wall_seconds": 0.02528179995715618,
+     "wall_seconds": 0.01563690009061247,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "86d6d1f86b04fe422d62e9023313f06e6cfe26e5d8bd814caa89e70ddee1cb53",
+      "configuration_digest": "7a745c6e9b8413e246d38b7a0d3acc9e166005e519a8c17c8e111e3018db1710",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3442,7 +3442,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.033965000067837536,
+     "wall_seconds": 0.025345099973492324,
      "declined_tail": null,
      "statistics": {
       "n": 386,
@@ -3458,14 +3458,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "209 samples",
-     "wall_seconds": 0.029464400024153292,
+     "wall_seconds": 0.018727000104263425,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "da3c99a39e1a9ed5544e9b30a87db29cef38e9f7b90b3c3f6590ecb34c4cdb59",
+      "configuration_digest": "f634aae8d9e92da4577857674104699f73d53d0e57878477bae6863a750cedf5",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3504,7 +3504,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.03132229996845126,
+     "wall_seconds": 0.028175099985674024,
      "declined_tail": null,
      "statistics": {
       "n": 367,
@@ -3520,14 +3520,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "174 samples",
-     "wall_seconds": 0.02481710002757609,
+     "wall_seconds": 0.02152950002346188,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "9ea59f6d2a608f7b4ca0b10270d36398cc7908526df0128158a93171b6724ff4",
+      "configuration_digest": "85200d43e30b5080608f7423669429131e0c457b1ccc73c002f7c89f51ea674b",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3566,7 +3566,7 @@
    "routes": {
     "native": {
      "outcome": "ok",
-     "wall_seconds": 0.019923299900256097,
+     "wall_seconds": 0.02321090002078563,
      "declined_tail": null,
      "statistics": {
       "n": 347,
@@ -3582,14 +3582,14 @@
     "pybamm_thevenin_1rc": {
      "outcome": "ok",
      "detail": "183 samples",
-     "wall_seconds": 0.02264059998560697,
+     "wall_seconds": 0.02278979995753616,
      "identity": {
       "schema": "provider_identity/1",
       "provider_name": "pybamm",
       "provider_version": "26.8.0.0",
       "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
       "solver_identity": "IDAKLUSolver",
-      "configuration_digest": "ef4e9566a72a27013e31c4eb6972c57377217506f005d15607560c4010d53c99",
+      "configuration_digest": "b10f3ee12e7707c80725f6d20bd561ca604b8b1a72d5baf34256ff7845af4223",
       "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
       "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
      },
@@ -3619,5 +3619,5 @@
    }
   }
  ],
- "wall_seconds": 6.795467899995856
+ "wall_seconds": 7.076308900024742
 }

@@ -8,9 +8,10 @@ been pushed to `origin`, and its tip was verified before this branch was cut).
 python benchmarks/provider_pivot_s1/harness/sensitivity.py
 python benchmarks/provider_pivot_s1/harness/fit.py
 python benchmarks/provider_pivot_s1/harness/compare.py
+python benchmarks/provider_pivot_s1/harness/freeze.py
 ```
 
-Those three need `forge[battery-pybamm]`, `forge[battery-fit]` and
+The first three need `forge[battery-pybamm]`, `forge[battery-fit]` and
 `forge[sensitivity]`. PyBOP 26.3 declares `requires-python = ">=3.10,<3.14"`, so
 they were run on a dedicated **CPython 3.13.15** environment. The rest of the
 repository suite still runs on 3.14, where those extras are uninstallable and
@@ -159,7 +160,7 @@ naming which engine produced them.
 | route | coverage | false trust | correct refusals | over-refusals | over-refusal rate |
 |---|---:|---:|---:|---:|---:|
 | native | 100 % | 38.5 % (20/52) | 0 | 0 | *unmeasured* |
-| pybamm_thevenin_1rc | 82.7 % | 25.6 % (11/43) | 2 | 2 | 50 % |
+| pybamm_thevenin_1rc | 82.7 % | 25.6 % (11/43) | 7 | 2 | 22.2 % |
 | pybamm_spme | 0 % | *unmeasured* | 0 | 0 | *unmeasured* |
 
 **The screen buys a 13-point reduction in false trust at a cost of 17 points of
@@ -168,32 +169,51 @@ the product's whole proposition and this is the first time it has been measured
 on real data here.
 
 **The denominators are small and the numbers should be read as such.** 52
-trajectories, 9 refusals, 4 observable counterfactuals. Nothing here supports a
-claim about the *size* of the trade — only that it exists, in the expected
-direction, and is now measurable by a procedure that will take a larger corpus
-without modification.
+trajectories, 9 refusals. Nothing here supports a claim about the *size* of the
+trade — only that it exists, in the expected direction, and is now measurable by
+a procedure that will take a larger corpus without modification.
 
 **The over-refusal rate is measured, not assumed.** A refusal hides what the
 model would have said, so each of the 9 refused trajectories was re-run under a
 *counterfactual* authority declaring that cell's own measured capacity — a
 measuring instrument with its own digest, never offered as a supported
-prediction. Four of the nine could be observed (the other five fail a second
-screen condition too). Of those four, **two refusals were correct** (72.0 and
-62.9 mV, outside the gate) and **two were over-refusals** (40.9 and 42.5 mV,
-inside it).
+prediction. All nine were observable:
 
-So the 25 % capacity band is a useful screen and a crude one. It is not
-tightened here: choosing a tolerance to improve a number measured on the same
-data is how a screen stops being a screen.
+| trajectory | measured capacity | counterfactual RMSE | verdict | native RMSE |
+|---|---:|---:|---|---:|
+| B0033.d0003 | 0.717 A·h | 72.0 mV | correct refusal | 113.5 mV |
+| B0038.d0002 | 1.084 A·h | 62.9 mV | correct refusal | 82.9 mV |
+| B0042.d0079 | 1.094 A·h | 189.9 mV | correct refusal | 165.0 mV |
+| B0042.d0062 | 1.098 A·h | 139.1 mV | correct refusal | 120.4 mV |
+| B0042.d0073 | 1.106 A·h | 186.1 mV | correct refusal | 158.9 mV |
+| B0042.d0056 | 1.130 A·h | 145.8 mV | correct refusal | 123.8 mV |
+| B0038.d0012 | 1.146 A·h | 40.9 mV | **over-refusal** | 81.4 mV |
+| B0042.d0048 | 1.177 A·h | 190.1 mV | correct refusal | 182.6 mV |
+| B0038.d0008 | 1.197 A·h | 42.5 mV | **over-refusal** | 76.8 mV |
+
+**Seven of nine refusals were correct**; two declined trajectories the model
+would have got inside the gate.
+
+**The two mistakes are not at a capacity threshold — they are in one cell
+group.** Both over-refusals are B0038 (1.146 and 1.197 A·h, counterfactual 40.9
+and 42.5 mV, just inside the gate), while B0042.d0048 at 1.177 A·h sits between
+them and was correctly refused at 190.1 mV. The whole B0042 low-ambient 4 A
+block is 139 to 190 mV out under *any* capacity declaration, so what the screen
+is catching there is not a capacity mismatch at all — it is a block the
+equivalent circuit cannot represent, refused for the right outcome by an
+imperfect proxy.
+
+That is a reason to be cautious about the 25 % tolerance rather than confident
+in it, and it is not tightened here: choosing a tolerance to improve a number
+measured on the same data is how a screen stops being a screen.
 
 **A corroboration, and it is not the same claim.** The native model — which has
 no capacity screen — is outside the 50 mV gate on **all nine** of those aged
-cells, at 76.8 to 182.6 mV. That is the same failure the recovery round
-diagnosed when it opened B0041: a model with no impedance-growth term, asked
-about a cell that has grown impedance. The screen catches those cases
-prospectively rather than by opening a holdout. It does not follow that all nine
-refusals were correct *for the equivalent-circuit model*, and the paragraph above
-says what was actually measured.
+cells, at 76.8 to 182.6 mV, including the two the equivalent circuit would have
+got right. That is the same failure the recovery round diagnosed when it opened
+B0041: a model with no impedance-growth term, asked about a cell that has grown
+impedance. The screen catches those cases prospectively rather than by opening a
+holdout.
 
 ### The trust path
 
@@ -322,7 +342,20 @@ Recorded so a later session does not repeat it.
    the provider declined. Over the 24 both offered the native model is better
    by 12 mV of MAE and 11 mV of RMSE. `COMPARISON.json` now carries a
    `like_for_like` block and §3 leads with the warning.
-7. **Reaching a first-party module through an opaque `sys.path` insert.** The
+7. **Evidence written before a field existed, read back after it did.** The
+   worst one, and it was caught last — by the freeze test written to close the
+   round. `FIT.json` was produced before `ParameterAuthority` gained
+   `temperature_basis`; `compare.py` reconstructs those authorities from that
+   payload, so every fitted authority in the comparison silently took the
+   `"ambient"` **default** and the cell-temperature fix never reached the run
+   that reported it. The symptom was invisible in every headline number —
+   those trajectories were refused on capacity as well — and showed up only as
+   five counterfactual probes that could not be observed. `test_f4` now
+   recomputes every stored authority digest from its own payload, which is the
+   check that fails the moment a record and the type that made it disagree.
+   Corrected numbers: over-refusal rate 50 % → **22.2 %**, 7 of 9 refusals
+   correct rather than 2 of 4.
+8. **Reaching a first-party module through an opaque `sys.path` insert.** The
    harness inserted a pre-joined path variable, and `test_core_guards.py`'s
    dependency sweep — which resolves such a module by reading the *string
    segments* of the mutation — saw `corpus` and `predict` as two third-party
@@ -368,10 +401,11 @@ control test.
 | — `engcore/credibility/risk_coverage.py` | 152 |
 | new schemas | **4** (`provider_identity`, `provider_request`, `provider_execution_receipt`, `provider_replay_report`) |
 | new public abstractions | 31 classes, 1 new non-Core package |
-| new test files / code lines | 5 / 1 118 |
-| new benchmark harness files / code lines | 4 / 1 242 |
+| new test files / code lines | 6 / 1 250 |
+| new benchmark harness files / code lines | 5 / 1 446 |
 | repository guards updated | 4, each recorded in §7 |
-| frozen Core digest | **unmoved** — nothing is exported from a canonical module |
+| frozen Core digest | **unmoved** — measured identical to the base commit on the same interpreter; nothing is exported from a canonical module |
+| freeze record | `evidence/FREEZE.json` — 12 sources, 3 evidence files, 6 authorities, the environment, all by digest |
 | native models deleted | **0** |
 
 ### Forge contracts reused rather than reinvented
@@ -430,8 +464,8 @@ And six pieces of evidence, each of which a wrapper would fail:
    reported as *not* reproduced, with the moved field named.
 6. **It measures its own guardrail.** 25.6 % false trust at 82.7 % coverage
    against 38.5 % at 100 %, with the over-refusal rate obtained by running the
-   counterfactual rather than by assuming the refusals were right — and the
-   answer came back 2 right, 2 wrong.
+   counterfactual rather than by assuming the refusals were right — 7 of 9
+   correct, 2 over-refusals, 22.2 %.
 
 ### DID THE SAME TRUST ENGINE WORK FOR BOTH NATIVE AND EXTERNAL SOLVERS? **YES.**
 
@@ -480,8 +514,8 @@ Trust path                  WORKING and returning 0 % coverage, correctly.
                             credibility, claims or sria.
 False-trust metrics         WORKING and provider-independent by type.
                             native 38.5 % at 100 % coverage;
-                            PyBaMM ECM 25.6 % at 82.7 %, over-refusal 50 %
-                            measured on 4 observable counterfactuals.
+                            PyBaMM ECM 25.6 % at 82.7 %, over-refusal 22.2 %,
+                            measured on all 9 refusals by counterfactual.
 New production code         2 246 lines (2 094 providers + 152 risk_coverage)
 New abstractions            31 public classes, 4 schemas, 1 non-Core package
 Known gaps                  no independent Gate A; no validation level bound
