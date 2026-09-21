@@ -164,6 +164,25 @@ Never convert NOT RUN into PASS based on code inspection.
 
 ## Failed approaches / dead ends
 
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
+summary: compileall passed, 133 tests passed, and diff whitespace validation passed for the first corrected initial-state implementation
+commit: 374c709f (working tree changes)
+
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
+summary: 135 tests passed after adding fail-closed rejection for unknown state owners and dimensionally incompatible state uncertainty; diff whitespace validation passed
+commit: 374c709f (working tree changes)
+
+Scientific review milestone: the read-only `forge-scientific-review` reviewer
+returned PASS for the corrected initial-state slice. The review did not execute
+tests and is not a validation result. The accepted design requires a declared
+participant state schema, exact values with existing uncertainty records, a
+participant-produced receipt, dedicated run-record provenance, applicability
+evaluation and fail-closed replay.
+
 - Rejected an optional `initialize_state` callback that inferred state support
   from callback presence and let the runtime synthesize its own receipt. A
   no-op callback could acknowledge a requested state without installing it.

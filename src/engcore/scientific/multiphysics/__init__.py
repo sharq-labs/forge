@@ -72,7 +72,7 @@ from .report import (
     INITIAL_COUPLING_SCHEMA,
     ITERATION_SCHEMA,
     PARTICIPANT_STEP_SCHEMA,
-    RUN_SCHEMA,
+    RUN_SCHEMA, RUN_SCHEMA_V1,
     WINDOW_SCHEMA,
     CouplingIterationRecord,
     CouplingWindowRecord,
@@ -83,7 +83,12 @@ from .report import (
     ParticipantStepRecord,
     WindowOutcome,
 )
-from .state import CHECKPOINT_SCHEMA, CheckpointRecord
+from .state import (
+    CHECKPOINT_SCHEMA, INITIAL_STATE_DEFINITION_SCHEMA,
+    INITIAL_STATE_RECEIPT_SCHEMA, INITIAL_STATE_VALUE_SCHEMA,
+    CheckpointRecord, InitialStateDefinition, InitialStateReceipt,
+    InitialStateValue,
+)
 from .value import (
     CouplingValue,
     coupling_value_from_dict,
@@ -105,6 +110,9 @@ __all__ = [
     "EXTERNAL_INPUT_SCHEMA",
     "FIELD_MAPPING_SCHEMA",
     "INITIAL_COUPLING_SCHEMA",
+    "INITIAL_STATE_DEFINITION_SCHEMA",
+    "INITIAL_STATE_RECEIPT_SCHEMA",
+    "INITIAL_STATE_VALUE_SCHEMA",
     "FRAME_TRANSFORM_SCHEMA",
     "GRAPH_INTERFACE_SCHEMA",
     "ITERATION_SCHEMA",
@@ -118,6 +126,7 @@ __all__ = [
     "PORT_SCHEMA",
     "RELAXATION_POLICY_SCHEMA",
     "RUN_SCHEMA",
+    "RUN_SCHEMA_V1",
     "TIME_POLICY_SCHEMA",
     "WINDOW_SCHEMA",
     "BalanceSide",
@@ -143,6 +152,9 @@ __all__ = [
     "GraphInterfaceManifest",
     "IterationSemantics",
     "InitialCouplingRecord",
+    "InitialStateDefinition",
+    "InitialStateReceipt",
+    "InitialStateValue",
     "MappingDiagnostics",
     "MultiphysicsRunRecord",
     "ParticipantModelRef",

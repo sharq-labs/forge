@@ -43,6 +43,9 @@ from engcore.scenarios import (
     TimeSample,
     TimeSeriesInput,
     InterpolationKind,
+    NamedQuantity,
+    StateSnapshot,
+    StateVariable,
 )
 
 
@@ -313,6 +316,29 @@ def test_runtime_consumes_window_aligned_step_inputs_when_authority_allows_it():
     assert receipt[0]["values"][voltage.port.key]["magnitude"] == 12
     assert receipt[5]["values"][voltage.port.key]["magnitude"] == 6
     assert run.final_outputs["electrical.heat_generation"]["magnitude"] < 5.0
+
+
+def test_authorized_execution_refuses_state_for_incapable_participant():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    scenario = ScenarioSpecification(
+        "explicit.initial.state", "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+        state_variables=(StateVariable("temperature", "K", "thermal"),),
+        initial_state=StateSnapshot(
+            graph_plan.coupling_plan.time.start,
+            (NamedQuantity("temperature", Quantity(310, "K")),),
+        ),
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+    store = InMemoryBulkStore()
+    with pytest.raises(InvalidScientificProblem, match="does not accept explicit initial state"):
+        execute_authorized_graph_plan(
+            graph_plan, run_id="unsupported-state",
+            compositions=production_composition_packs(),
+            executions=production_execution_packs(),
+            resolver=BulkDataResolver(store), store=store,
+        )
 
 
 def test_feedback_public_flow_roundtrips_certifies_and_rejects_tampering():

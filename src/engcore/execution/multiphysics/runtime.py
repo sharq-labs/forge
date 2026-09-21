@@ -17,6 +17,8 @@ from ...scientific.multiphysics import (
     CouplingWindowRecord,
     ExternalInputRecord,
     InitialCouplingRecord,
+    InitialStateReceipt,
+    InitialStateValue,
     MultiphysicsRunRecord,
     ParticipantStepRecord,
     PhysicsGraph,
@@ -133,9 +135,9 @@ class MultiphysicsRuntime:
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
         """Replay a recorded graph using exact registered execution factories."""
-        if record.final_outputs.get("_time_varying_external_inputs"):
+        if record.final_outputs.get("_time_varying_external_inputs") or record.initial_state_receipts:
             raise InvalidScientificProblem(
-                "time-varying run replay requires its authorized scenario schedule"
+                "scenario-driven replay requires its authorized scenario"
             )
         runtime = cls.from_record_with_factory_registry(
             record,
@@ -194,9 +196,9 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
-        if record.final_outputs.get("_time_varying_external_inputs"):
+        if record.final_outputs.get("_time_varying_external_inputs") or record.initial_state_receipts:
             raise InvalidScientificProblem(
-                "time-varying run replay requires its authorized scenario schedule"
+                "scenario-driven replay requires its authorized scenario"
             )
         runtime = cls.from_record(
             record,
@@ -327,19 +329,25 @@ class MultiphysicsRuntime:
         start: Quantity,
         external: Mapping[str, Mapping[str, CouplingValue]],
         external_uncertainty: Mapping[str, Mapping[str, Uncertainty]],
+        initial_state: Mapping[str, Mapping[str, InitialStateValue]],
     ) -> tuple[
         dict[str, dict[str, CouplingValue]],
         dict[str, dict[str, Uncertainty]],
+        tuple[InitialStateReceipt, ...],
     ]:
         outputs: dict[str, dict[str, CouplingValue]] = {}
         uncertainty: dict[str, dict[str, Uncertainty]] = {}
+        receipts: list[InitialStateReceipt] = []
         for participant_id in self.plan.resolved_order(self.graph):
             participant = self.participants[participant_id]
-            made = participant.initialize(
-                start,
-                external[participant_id],
-                external_uncertainty[participant_id],
-            )
+            state = initial_state.get(participant_id, {})
+            if state:
+                made = participant.initialize_state(
+                    start, state, external[participant_id], external_uncertainty[participant_id]
+                )
+                receipts.append(made.initial_state_receipt)
+            else:
+                made = participant.initialize(start, external[participant_id], external_uncertainty[participant_id])
             validate_outputs(
                 participant.spec,
                 made.outputs,
@@ -347,7 +355,7 @@ class MultiphysicsRuntime:
             )
             outputs[participant_id] = dict(made.outputs)
             uncertainty[participant_id] = dict(made.uncertainty)
-        return outputs, uncertainty
+        return outputs, uncertainty, tuple(receipts)
 
     def _initial_transfers(
         self,
@@ -1098,10 +1106,19 @@ class MultiphysicsRuntime:
         initial_coupling_values: Mapping[str, CouplingValue] = {},
         initial_coupling_uncertainty: Mapping[str, Uncertainty] = {},
         external_input_series: Mapping[PortRef, TimeSeriesInput] | None = None,
+        initial_state: Mapping[str, Mapping[str, InitialStateValue]] | None = None,
     ) -> MultiphysicsRunRecord:
         run_id = str(run_id).strip()
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
+
+        requested_state = {} if initial_state is None else dict(initial_state)
+        unknown_state_owners = set(requested_state) - set(self.participants)
+        if unknown_state_owners:
+            raise InvalidScientificProblem(
+                "initial state names participants outside the execution graph: "
+                f"{sorted(unknown_state_owners)}"
+            )
 
         series = {} if external_input_series is None else dict(external_input_series)
         if set(series) - set(external_inputs):
@@ -1137,10 +1154,11 @@ class MultiphysicsRuntime:
             external_uncertainty,
         )
         start = self.plan.time.start
-        outputs, output_uq = self._initialize(
+        outputs, output_uq, initial_state_receipts = self._initialize(
             start,
             external,
             external_uq,
+            requested_state,
         )
         (
             edge_values,
@@ -1275,4 +1293,5 @@ class MultiphysicsRuntime:
             windows=tuple(windows),
             final_outputs=final_outputs,
             coupling_error_bound=error_budget.relative_bound,
+            initial_state_receipts=initial_state_receipts,
         )

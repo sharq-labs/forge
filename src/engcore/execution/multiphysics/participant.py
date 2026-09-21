@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol, runtime_checkable
 
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.multiphysics import CheckpointRecord, ParticipantSpec
+from ...scientific.multiphysics import (
+    CheckpointRecord, InitialStateDefinition, InitialStateReceipt,
+    InitialStateValue, ParticipantSpec,
+)
 from ...scientific.multiphysics.value import (
     CouplingValue,
     validate_port_coupling_value,
@@ -46,6 +49,7 @@ class InitializationResult:
     outputs: Mapping[str, CouplingValue]
     uncertainty: Mapping[str, Uncertainty]
     diagnostics: Mapping[str, Any] | None = None
+    initial_state_receipt: InitialStateReceipt | None = None
 
 
 @dataclass(frozen=True)
@@ -211,6 +215,11 @@ class CallbackParticipant:
             [Quantity, Mapping[str, CouplingValue], Mapping[str, Uncertainty]],
             InitializationResult,
         ],
+        initial_state_definitions: tuple[InitialStateDefinition, ...] = (),
+        initialize_state: Callable[
+            [Quantity, Mapping[str, InitialStateValue], Mapping[str, CouplingValue], Mapping[str, Uncertainty]],
+            InitializationResult,
+        ] | None = None,
         advance: Callable[[AdvanceRequest], AdvanceResult],
         checkpoint: Callable[[Quantity], RuntimeCheckpoint] | None = None,
         restore: Callable[[RuntimeCheckpoint], None] | None = None,
@@ -218,6 +227,13 @@ class CallbackParticipant:
     ) -> None:
         self._spec = spec
         self._initialize = initialize
+        definitions = tuple(initial_state_definitions)
+        if any(not isinstance(item, InitialStateDefinition) for item in definitions) or len({item.variable_id for item in definitions}) != len(definitions):
+            raise InvalidScientificProblem("initial state definitions must be unique typed records")
+        if bool(definitions) != (initialize_state is not None):
+            raise InvalidScientificProblem("state definitions and state initializer must be declared together")
+        self._initial_state_definitions = tuple(sorted(definitions))
+        self._initialize_state = initialize_state
         self._advance = advance
         self._checkpoint = checkpoint
         self._restore = restore
@@ -248,6 +264,41 @@ class CallbackParticipant:
                 f"participant {self.spec.participant_id!r} initialize returned "
                 f"{type(result).__name__}, expected InitializationResult"
             )
+        if result.initial_state_receipt is not None:
+            raise InvalidScientificProblem(
+                "ordinary initialization must not return an initial-state receipt"
+            )
+        validate_outputs(self.spec, result.outputs, result.uncertainty)
+        return result
+
+    @property
+    def initial_state_definitions(self) -> tuple[InitialStateDefinition, ...]:
+        return self._initial_state_definitions
+
+    def initialize_state(
+        self, instant: Quantity, state: Mapping[str, InitialStateValue],
+        external_inputs: Mapping[str, CouplingValue],
+        external_uncertainty: Mapping[str, Uncertainty],
+    ) -> InitializationResult:
+        if self._initialize_state is None:
+            raise InvalidScientificProblem(f"participant {self.spec.participant_id!r} does not accept explicit initial state")
+        expected = {item.variable_id: item for item in self._initial_state_definitions}
+        if set(state) != set(expected):
+            raise InvalidScientificProblem("initial state does not exactly cover participant state schema")
+        for key, item in state.items():
+            if not isinstance(item, InitialStateValue):
+                raise InvalidScientificProblem("initial state must contain InitialStateValue records")
+            item.value.require_compatible(expected[key].unit, context=f"initial state {key!r}")
+        validate_inputs(self.spec, external_inputs, external_uncertainty)
+        result = self._initialize_state(instant, state, external_inputs, external_uncertainty)
+        if not isinstance(result, InitializationResult) or not isinstance(result.initial_state_receipt, InitialStateReceipt):
+            raise InvalidScientificProblem("state initializer must return InitializationResult with InitialStateReceipt")
+        receipt = result.initial_state_receipt
+        if receipt.participant_id != self.spec.participant_id or receipt.instant != instant.to("second"):
+            raise InvalidScientificProblem("initial state receipt participant or instant mismatch")
+        requested = tuple(sorted(state.values()))
+        if receipt.values != requested:
+            raise InvalidScientificProblem("initial state receipt does not acknowledge exact requested values and uncertainty")
         validate_outputs(self.spec, result.outputs, result.uncertainty)
         return result
 

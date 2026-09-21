@@ -530,11 +530,16 @@ class GraphPlan:
                 or self.scenario.end != self.coupling_plan.time.end
             ):
                 raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
-            if self.scenario.unsupported_runtime_features:
+            unsupported = tuple(item for item in self.scenario.unsupported_runtime_features if item != "state")
+            if unsupported:
                 raise ValueError(
                     "graph plan refuses unsupported scenario runtime features: "
-                    f"{list(self.scenario.unsupported_runtime_features)}"
+                    f"{list(unsupported)}"
                 )
+            owners = {item.participant_id for item in self.graph.participants}
+            unknown_owners = sorted(item.owner_id for item in self.scenario.state_variables if item.owner_id not in owners)
+            if unknown_owners:
+                raise ValueError(f"scenario state owners are not graph participants: {unknown_owners}")
             scenario_inputs = {
                 item.input_id
                 for segment in self.scenario.segments

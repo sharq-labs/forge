@@ -34,6 +34,7 @@ from ..executionpacks.snapshot import (
 from ..planning.records import GraphPlan
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.multiphysics import (
+    InitialStateValue,
     MultiphysicsRunRecord,
     PortRef,
 )
@@ -701,6 +702,8 @@ def execute_authorized_graph_plan(
     base_facts = {
         item.fact_path: item.value for item in graph_plan.external_inputs
     }
+    if graph_plan.scenario is not None and graph_plan.scenario.initial_state is not None:
+        base_facts.update({item.quantity_id: item.value for item in graph_plan.scenario.initial_state.values})
     applicability_fact_sets = [base_facts]
     for input_id, series in sorted(scenario_series.items()):
         for sample in series.samples:
@@ -772,6 +775,20 @@ def execute_authorized_graph_plan(
             for series in scenario_series.values()
             if series.input_id == item.fact_path
         },
+        initial_state=(
+            {} if graph_plan.scenario is None or graph_plan.scenario.initial_state is None
+            else {
+                owner: {
+                    variable.variable_id: InitialStateValue(
+                        variable.variable_id,
+                        next(item.value for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
+                        next(item.uncertainty for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
+                    )
+                    for variable in graph_plan.scenario.state_variables if variable.owner_id == owner
+                }
+                for owner in sorted({item.owner_id for item in graph_plan.scenario.state_variables})
+            }
+        ),
     )
 
     validation: list[AuthorizedSystemValidation] = []

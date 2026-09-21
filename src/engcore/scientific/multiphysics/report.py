@@ -10,10 +10,11 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem
 from ..fields import FieldRecord
 from ..results.uncertainty import Uncertainty
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .graph import PhysicsGraph
 from .plan import CouplingPlan
+from .state import InitialStateReceipt
 from .ports import PortDirection, PortRef
 from .value import (
     CouplingValue,
@@ -29,7 +30,8 @@ ITERATION_SCHEMA = schema_string("multiphysics_iteration")
 WINDOW_SCHEMA = schema_string("multiphysics_window")
 EXTERNAL_INPUT_SCHEMA = schema_string("multiphysics_external_input")
 INITIAL_COUPLING_SCHEMA = schema_string("multiphysics_initial_coupling")
-RUN_SCHEMA = schema_string("multiphysics_run")
+RUN_SCHEMA_V1 = schema_string("multiphysics_run")
+RUN_SCHEMA = schema_string("multiphysics_run", 2)
 
 _TIME_DIMENSION = dimensionality("second")
 
@@ -504,6 +506,7 @@ class MultiphysicsRunRecord:
     windows: tuple[CouplingWindowRecord, ...]
     final_outputs: Mapping[str, Any]
     coupling_error_bound: float | None = None
+    initial_state_receipts: tuple[InitialStateReceipt, ...] = ()
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -636,6 +639,15 @@ class MultiphysicsRunRecord:
                     "coupling_error_bound must be finite and non-negative"
                 )
             object.__setattr__(self, "coupling_error_bound", value)
+        receipts = tuple(self.initial_state_receipts)
+        if any(not isinstance(item, InitialStateReceipt) for item in receipts):
+            raise InvalidScientificProblem("initial_state_receipts must contain InitialStateReceipt records")
+        if len({item.participant_id for item in receipts}) != len(receipts):
+            raise InvalidScientificProblem("one initial state receipt is allowed per participant")
+        participant_ids = {item.participant_id for item in self.graph.participants}
+        if any(item.participant_id not in participant_ids or not _same_time(item.instant, started) for item in receipts):
+            raise InvalidScientificProblem("initial state receipt participant/instant differs from run")
+        object.__setattr__(self, "initial_state_receipts", tuple(sorted(receipts, key=lambda item: item.participant_id)))
 
         object.__setattr__(self, "run_id", run_id)
         object.__setattr__(self, "started_at", started)
@@ -691,13 +703,14 @@ class MultiphysicsRunRecord:
             ],
             "final_outputs": dict(self.final_outputs),
             "coupling_error_bound": self.coupling_error_bound,
+            "initial_state_receipts": [item.to_dict() for item in self.initial_state_receipts],
         }
 
     @classmethod
     def from_dict(
         cls, payload: Mapping[str, Any]
     ) -> "MultiphysicsRunRecord":
-        require_schema(payload, RUN_SCHEMA)
+        schema = require_schema_any(payload, (RUN_SCHEMA_V1, RUN_SCHEMA))
         graph = PhysicsGraph.from_dict(payload["graph"])
         plan = CouplingPlan.from_dict(payload["plan"])
         made = cls(
@@ -720,6 +733,12 @@ class MultiphysicsRunRecord:
             ),
             final_outputs=dict(payload["final_outputs"]),
             coupling_error_bound=payload.get("coupling_error_bound"),
+            initial_state_receipts=(
+                () if schema == RUN_SCHEMA_V1 else tuple(
+                    InitialStateReceipt.from_dict(item)
+                    for item in payload.get("initial_state_receipts", ())
+                )
+            ),
         )
         derived = {
             "graph_id": made.graph_id,

@@ -16,10 +16,12 @@ from typing import Any, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.ir.constraints import ConstraintDefinition
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, require_schema_any, schema_string
+from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.units.quantity import Quantity, dimensionality, normalize_unit
 
-SCENARIO_VALUE_SCHEMA = schema_string("scenario_named_quantity")
+SCENARIO_VALUE_SCHEMA_V1 = schema_string("scenario_named_quantity")
+SCENARIO_VALUE_SCHEMA = schema_string("scenario_named_quantity", 2)
 STATE_VARIABLE_SCHEMA = schema_string("scenario_state_variable")
 STATE_SNAPSHOT_SCHEMA = schema_string("scenario_state_snapshot")
 TIME_SAMPLE_SCHEMA = schema_string("scenario_time_sample")
@@ -62,20 +64,37 @@ def _strict_keys(payload: Mapping[str, Any], expected: set[str], label: str) -> 
 class NamedQuantity:
     quantity_id: str
     value: Quantity
+    uncertainty: Uncertainty | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "quantity_id", _identifier(self.quantity_id, "quantity_id"))
         if not isinstance(self.value, Quantity):
             raise InvalidScientificProblem("scenario values must be Quantity records")
+        uncertainty = self.uncertainty
+        if uncertainty is None:
+            uncertainty = Uncertainty.unknown(
+                f"no uncertainty was supplied for scenario quantity {self.quantity_id}"
+            )
+        if not isinstance(uncertainty, Uncertainty):
+            raise InvalidScientificProblem("scenario uncertainty must be Uncertainty")
+        for label in ("standard_uncertainty", "lower", "upper"):
+            bound = getattr(uncertainty, label)
+            if bound is not None:
+                bound.require_compatible(
+                    self.value.units,
+                    context=f"scenario quantity {self.quantity_id!r} {label}",
+                )
+        object.__setattr__(self, "uncertainty", uncertainty)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": SCENARIO_VALUE_SCHEMA, "quantity_id": self.quantity_id, "value": self.value.to_dict()}
+        return {"schema": SCENARIO_VALUE_SCHEMA, "quantity_id": self.quantity_id, "value": self.value.to_dict(), "uncertainty": self.uncertainty.to_dict()}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "NamedQuantity":
-        require_schema(payload, SCENARIO_VALUE_SCHEMA)
-        _strict_keys(payload, {"schema", "quantity_id", "value"}, "scenario value")
-        return cls(payload["quantity_id"], Quantity.from_dict(payload["value"]))
+        schema = require_schema_any(payload, (SCENARIO_VALUE_SCHEMA_V1, SCENARIO_VALUE_SCHEMA))
+        expected = {"schema", "quantity_id", "value"} if schema == SCENARIO_VALUE_SCHEMA_V1 else {"schema", "quantity_id", "value", "uncertainty"}
+        _strict_keys(payload, expected, "scenario value")
+        return cls(payload["quantity_id"], Quantity.from_dict(payload["value"]), None if schema == SCENARIO_VALUE_SCHEMA_V1 else Uncertainty.from_dict(payload["uncertainty"]))
 
 
 @dataclass(frozen=True, order=True)
@@ -209,6 +228,7 @@ class OperatingCondition(NamedQuantity):
             "schema": OPERATING_CONDITION_SCHEMA,
             "quantity_id": self.quantity_id,
             "value": self.value.to_dict(),
+            "uncertainty": self.uncertainty.to_dict(),
         }
 
     @classmethod
@@ -216,10 +236,10 @@ class OperatingCondition(NamedQuantity):
         require_schema(payload, OPERATING_CONDITION_SCHEMA)
         _strict_keys(
             payload,
-            {"schema", "quantity_id", "value"},
+            {"schema", "quantity_id", "value", "uncertainty"},
             "operating condition",
         )
-        return cls(payload["quantity_id"], Quantity.from_dict(payload["value"]))
+        return cls(payload["quantity_id"], Quantity.from_dict(payload["value"]), Uncertainty.from_dict(payload["uncertainty"]))
 
 
 @dataclass(frozen=True, order=True)
