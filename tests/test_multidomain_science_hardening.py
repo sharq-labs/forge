@@ -1,4 +1,6 @@
 import copy
+import ast
+from pathlib import Path
 
 import pytest
 
@@ -109,6 +111,52 @@ def test_battery_science_is_registered_as_an_atomic_production_domain_pack():
     assert len(battery.manifest.models) == 4
     assert len(battery.manifest.realizations) == 4
     assert len(battery.manifest.solvers) == 1
+
+
+def test_production_planning_has_no_domain_implementation_imports():
+    """Domain Packs are the sole realization/solver authority in planning."""
+
+    source_path = (
+        Path(__file__).parents[1]
+        / "src"
+        / "engcore"
+        / "planning"
+        / "production.py"
+    )
+    tree = ast.parse(source_path.read_text(encoding="utf-8"))
+    imported = {
+        (node.level, node.module or "")
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom)
+    }
+
+    assert not any(
+        module == "engcore.domains"
+        or module.startswith("engcore.domains.")
+        or (level > 0 and (
+            module == "domains" or module.startswith("domains.")
+        ))
+        for level, module in imported
+    )
+
+
+def test_production_realizations_and_solvers_come_from_enabled_domain_packs():
+    registries = production_planning_registries()
+    enabled = production_domain_packs().list(enabled_only=True)
+
+    expected_realizations = {
+        realization.key
+        for registration in enabled
+        for realization in registration.provider.realizations()
+    }
+    expected_solvers = {
+        factory().identity.key
+        for registration in enabled
+        for factory in registration.provider.solver_factories()
+    }
+
+    assert {item.key for item in registries.realizations} == expected_realizations
+    assert {item.identity.key for item in registries.solvers.list()} == expected_solvers
 
 
 def _plan(intent):

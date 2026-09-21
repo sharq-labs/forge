@@ -11,6 +11,11 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Completed in this line of work
 
+- Removed battery/electrical/thermal realization and solver imports from
+  `planning.production`; enabled validated Domain Packs are now the sole
+  production source for these artifacts, with existing fail-closed identity
+  collision checks retained.
+
 - Extracted credibility/V&V implementation from MCP transport into
   `engcore.credibility`.
 - Removed the `claims -> mcp` implementation dependency.
@@ -31,6 +36,24 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-21 10:35 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/planning/production.py; py -3 -m pytest --import-mode=importlib -q tests/test_multidomain_science_hardening.py tests/mcp/test_planning.py tests/mcp/test_intent.py; git diff --check; git status --short`
+result: PASS
+summary: compileall passed, 22 tests passed in importlib mode, and diff whitespace validation passed; status showed only this slice plus pre-existing untracked agent metadata
+commit: 72ac242c (working tree changes)
+
+2026-09-21 10:34 +03:00
+command: `$env:PYTHONPATH='src'; py -3 tools/forge_check.py --changed`
+result: FAIL
+summary: collection stopped on 7 pre-existing duplicate test-module basename import mismatches (`test_verify`, `test_serialization`, `test_lineage`, `test_psd`)
+commit: 72ac242c (working tree changes)
+
+2026-09-21 10:33 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_multidomain_science_hardening.py tests/mcp/test_planning.py tests/mcp/test_intent.py`
+result: PASS
+summary: 22 passed; production realization/solver assembly is Domain-Pack-owned and the authorized multiphysics planning path remains operational
+commit: 72ac242c (working tree changes)
 
 2026-09-20 21:51 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_numerical_reliability.py tests/test_multidomain_science_hardening.py tests/domainpacks tests/domains/battery/test_battery_solver.py`
