@@ -22,6 +22,9 @@ from __future__ import annotations
 import math
 from typing import Sequence
 
+from engcore.compositionpacks.builtin_battery_electrothermal import (
+    REST_CURRENT_FLOOR,
+)
 from engcore.domains.battery import electrothermal as et
 from engcore.domains.battery.flagship_ocv import (
     CHARGE_STATE_BASIS_AH,
@@ -29,6 +32,13 @@ from engcore.domains.battery.flagship_ocv import (
     OCV_LOWER,
     OCV_UPPER,
 )
+
+#: The composition's own rest band, read from the pack rather than restated.
+#: The authorized path presents a sample inside it as rest when it builds the
+#: load schedule, and a march that did not would be fitting parameters to a
+#: profile the flagship never executes -- which is the divergence the
+#: march-equivalence test exists to catch.
+_REST_BAND = REST_CURRENT_FLOOR.magnitude_in("ampere")
 
 _KNOT_Z = [z for z, _ in FLAGSHIP_OCV_CURVE.form.samples]
 _KNOT_V = [v for _, v in FLAGSHIP_OCV_CURVE.form.samples]
@@ -114,7 +124,11 @@ def march(
     for index in range(1, len(times_s)):
         left = float(times_s[index - 1])
         right = float(times_s[index])
-        current = float(currents_a[index - 1])
+        # The held value for this interval, with a sample inside the declared
+        # rest band presented as rest -- exactly as the authorized path builds
+        # its schedule, so the two march the same profile.
+        raw = float(currents_a[index - 1])
+        current = 0.0 if abs(raw) < _REST_BAND else raw
         sub = max(int(refinement), 1)
         try:
             for piece in range(sub):

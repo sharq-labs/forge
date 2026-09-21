@@ -305,3 +305,31 @@ is not in the counts because it lives in `mcp/problem.py`, outside this audit's
 `domains/**` scope, and is noted here so the next pass over that boundary finds
 it already reasoned about.
 
+## Fourth pass — the Sprint 3 battery + thermal flagship
+
+The flagship added one model record, `battery.cell.electrothermal_1rc`, with
+its own solver and three checks. Two of them are new names and get rows here;
+the third, `metric_dimensions`, reuses a name this audit has already ruled on,
+deliberately and for the reason the third pass gives: it is the same claim
+about the same kind of evidence, and a second name would split a settled
+verdict in two.
+
+This pass also gives a row to `independent_solver_agreement`, which predates
+Sprint 3. It was reachable from `domains/kinetics/cstr/validation.py` and had
+no row, so the guard over this document was red and could not have caught the
+two additions below. It is ruled on here rather than left uncounted.
+
+| Check | Can it earn a level? | Why |
+|---|---|---|
+| `electrothermal_terminal_residual` | **earnable later** | The same route, and the same cost, as `rint_terminal_residual`. It evaluates `\|V - (OCV(z) - I R0 - v_p)\|` on the expression that computed `V`, so it vanishes by algebra and is self-consistency. The 1-RC cell *is* a circuit, and `electrical/dc` solves circuits by MNA assembly sharing no arithmetic with it; agreement would be `CROSS_SOLVER_VALIDATED` by this repository's own definition. What it costs is still not the code: it would be a domain-to-domain import inside `domains/`, and the topology transcription is still the thing the comparison cannot check. The check does real work against a flipped sign or a dropped polarization term. It is not evidence yet. |
+| `electrothermal_energy_residual` | **never earnable by this check** | It compares the reported dissipation against `I^2 R0 + I <v_p>` and the reported energy against its own power-time product — both recomputations of the expressions that produced them, vanishing to rounding by construction. There is no version of *this* check that is independent. The independent evidence about the same quantity exists and is not here: `compositionpacks/references/battery_electrothermal.py` integrates the coupled system monolithically with an adaptive high-order scheme, and the composition's verification protocols compare the flagship run against it. That is where a level for the heat can be earned, and it is earned at the system level rather than inside this solver's `validate()`. |
+| `independent_solver_agreement` | **never earnable by this check, as this audit can see it** | It is built at two sites in `kinetics/cstr/validation.py`. One passes `establishes=None` outright and emits `NOT_RUN` when no independent solver ran; the other delegates to `independent_solver_consensus.to_check`, and a level awarded there is the consensus declaration's, not this check's. A source walk over `domains/**` sees only the first, so what this document can rule on is a check that establishes nothing. The row is given here because the check was reachable and uncounted before Sprint 3, which left the guard over this document red and unable to catch the two rows above it. |
+
+`electrothermal_step_evaluated` is emitted only on the unsuccessful path, like
+`cell_step_evaluated` before it, so it never passes and is not one of the
+counted checks.
+
+Checks that pass today while establishing nothing: 24. That is 21 after Sprint
+2.5, plus `electrothermal_terminal_residual` and `electrothermal_energy_residual`
+from the flagship, plus `independent_solver_agreement`, which was reachable and
+uncounted before this pass.

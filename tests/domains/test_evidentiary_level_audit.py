@@ -93,6 +93,17 @@ ESTABLISHES_NOTHING = {
     # this model emits reuse `field_finite` and `boundary_conditions_held`
     # above, whose verdicts apply to them unchanged.
     "field_linear_system_residual": "never",
+    # battery/flagship.py — the fourth pass, the Sprint 3 flagship. Its third
+    # check reuses `metric_dimensions`, whose verdict applies unchanged.
+    "electrothermal_terminal_residual": "earnable later",
+    "electrothermal_energy_residual": "never",
+    # kinetics/cstr/validation.py, and it predates Sprint 3: reachable from
+    # domains/** and named by no set, which left this guard red and unable to
+    # catch an addition. At the two sites this walk can see, one passes
+    # establishes=None and the other delegates to `to_check`, which the walk
+    # does not follow -- so from where the audit stands it establishes nothing,
+    # and the level, if any, is the consensus declaration's.
+    "independent_solver_agreement": "delegated",
 }
 
 #: Emitted only on an unsuccessful path, so it never passes and is not one of
@@ -101,6 +112,7 @@ ESTABLISHES_NOTHING = {
 #: `NOT_RUN` outcome exists to record.
 NEVER_PASSES = {
     "cell_step_evaluated",
+    "electrothermal_step_evaluated",
     "linear_system_solved",
     "time_march_finite",
 }
@@ -264,6 +276,8 @@ def test_the_document_carries_a_row_for_every_audited_check():
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
     # 21 after Sprint 2.5 added three local NAFEMS execution checks that
-    # deliberately establish no level.
-    assert "Checks that pass today while establishing nothing: 21" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "21"
+    # deliberately establish no level; 24 after the Sprint 3 flagship added two
+    # and the fourth pass gave `independent_solver_agreement` the row it had
+    # been missing since before this sprint.
+    assert "Checks that pass today while establishing nothing: 24" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "24"

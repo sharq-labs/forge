@@ -222,3 +222,83 @@ works.
 - Continue reducing the remaining flat claim modules only after PR #65 is
   verified.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
+
+## Sprint 3 — battery + thermal flagship (branch `claude/battery-thermal-flagship-sprint-3`)
+
+Real NASA PCoE Li-ion discharge data driven through the authorized multiphysics
+path. Full record in `benchmarks/battery_thermal_flagship_s3/ROUND_REPORT.md`
+and `RESULT.json`.
+
+**Result: Gate A NOT PASSED.** Temperature passes on the locked holdout (MAE
+1.29 K, RMSE 1.65 K, P95 3.27 K against 2.5 / 3.0 / 5.0). Voltage does not:
+MAE 38.4 mV passes its 40 mV limit, RMSE 62.4 mV and P95 108.1 mV fail their
+50 and 90 mV limits. Two of the three holdout cells predict at about 20 mV
+RMSE; the third, B0044, gives 99.7 mV and delivers 8.4% less charge than the
+calibration cell its parameter set was fitted on. The model's charge-state
+basis is a declared constant, which that gap breaks — an exclusion the model
+record already states.
+
+### Test runs
+
+```
+python -m pytest benchmarks/battery_thermal_flagship_s3/tests -q -p no:randomly
+33 passed
+```
+
+```
+python -m pytest -m "not expensive" -q -n 4 -p no:randomly
+173 failed, 8188 passed, 8 skipped, 63 errors
+```
+
+That failure count is compared against a pristine worktree of the base commit
+`d28c150e` run with the identical command, which gives **175** failing. The
+difference is two pre-existing failures now fixed and **no new ones**:
+
+- `tests/domains/test_evidentiary_level_audit.py::test_every_check_in_the_domains_is_accounted_for_by_the_audit`
+  was red at the base because `independent_solver_agreement` was reachable and
+  had no row. It now has one, alongside the flagship's two new checks.
+- `tests/test_core_guards.py::test_the_solver_discovery_found_the_adapters`
+  was red at the base at 10 solvers against an expected 9. The count is now 11
+  with both increments named; the 9 -> 10 step is not this sprint's and is not
+  claimed to be investigated.
+
+Two exact counts in `test_core_guards.py` moved because the sprint adds one
+model: `EXPECTED_MODELS` 17 -> 18 and `EXPECTED_CONDITION_NAMES` 92 -> 97, each
+with its reason recorded beside it.
+
+### Failed approaches, recorded so they are not repeated
+
+- **A single parameter set across all experiment groups does not fit.** Driving
+  the lumped thermal model with the dissipation the *measured* voltage implies
+  — no electrical parameter involved — fits every calibration cell to under 1 K
+  but returns hA = 0.039-0.050 W/K for one set of test campaigns and
+  0.103-0.121 W/K for another. One value fits neither, and a joint fit that
+  tried produced 92 mV voltage MAE on calibration alone. The thermal boundary
+  is a fixture property; a parameter set is now fitted per experiment group.
+- **Fitting capacity alongside the ECM parameters is circular here.** The OCV
+  authority is a curve against charge state, and the charge-state axis would
+  then depend on a parameter the authority is an input to. The basis is now a
+  declared constant, and the cell-to-cell capacity spread it cannot absorb is
+  exactly what Gate A failed on — visible rather than hidden in a fit.
+- **The calibration march and the authorized path diverged at rest.** The
+  authorized path presents a current inside the composition's declared rest
+  band as rest when it builds the load schedule; the fitting march did not, so
+  on nine of twenty-seven calibration trajectories it reached a charge state
+  above full on channel noise and contributed only a penalty. Found by the
+  march-equivalence test, which requires the two to agree to 1e-12, and not by
+  any holdout result. The corrected fit got a newly governed holdout evaluation
+  rather than a second opening of the first; both results are reported and they
+  agree.
+- **A strict non-negative current predicate fires on instrument noise.** The
+  rest channel scatters by a few milliamps about its own zero, so a pure
+  discharge contains samples of both signs. The guardrail now uses a declared
+  50 mA rest band — two orders of magnitude below the smallest calibrated load
+  — in the predicate and in the schedule, so the two cannot disagree.
+
+### One runtime correction
+
+`MultiphysicsRuntime._scenario_schedules` tested STEP sample instants against
+multiples of the nominal coupling window only, so it refused a change that does
+land on a boundary cut by a scheduled event. It now checks the boundaries the
+runtime actually produces. Private helper, not a frozen surface, and it still
+refuses a change that falls mid-window.

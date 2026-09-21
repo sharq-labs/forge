@@ -1,7 +1,7 @@
 {
  "schema": "battery_thermal_flagship_s3_flagship/1",
  "campaign_id": "battery.electrothermal.flagship.s3",
- "campaign_version": "3",
+ "campaign_version": "4",
  "trajectory": {
   "trajectory_id": "B0006.d0001",
   "cell": "B0006",
@@ -16,7 +16,7 @@
   "scenario_digest": "e1ff9b48474d2dba6925932f45617cb8206913af36f19e8424a4794033b204f1",
   "blueprint_id": "system.battery_electrothermal.graph",
   "composition_pack": "system.battery_electrothermal@1",
-  "composition_authority_digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999",
+  "composition_authority_digest": "5d9a5452456e9490c82d611c8399be59cd29971c99a06774bbcd705a0728d639",
   "execution_pack": "system.battery_electrothermal.execution@1",
   "terminated": "state_of_charge <= 0.27943868339089956 dimensionless"
  },
@@ -38,15 +38,15 @@
    "shared_instants": 284,
    "per_metric": {
     "terminal_voltage": {
-     "coarse_to_half": 0.001298826383427265,
-     "half_to_quarter": 0.0006506755392909902,
+     "coarse_to_half": 0.00022114842783960142,
+     "half_to_quarter": 0.00010448758901215882,
      "bound": 0.005000000000000001,
      "satisfied": true,
      "converging": true
     },
     "cell_temperature": {
-     "coarse_to_half": 0.0068331281688642775,
-     "half_to_quarter": 0.0034097221061983873,
+     "coarse_to_half": 0.003453060490755888,
+     "half_to_quarter": 0.0017156103185129723,
      "bound": 0.30000000000000004,
      "satisfied": true,
      "converging": true
@@ -67,7 +67,7 @@
      "protocol": "system.battery_electrothermal.validation",
      "check_id": "coupled_energy_balance",
      "passed": true,
-     "relative_error": 1.5646946000583311e-16
+     "relative_error": 1.5443288386418392e-16
     },
     {
      "protocol": "system.battery_electrothermal.validation",
@@ -79,7 +79,7 @@
      "protocol": "system.battery_electrothermal.validation",
      "check_id": "staggered_temperature_lag",
      "passed": true,
-     "relative_error": 7.646211642391852e-05
+     "relative_error": 7.075637872807627e-05
     },
     {
      "protocol": "system.battery_electrothermal.validation",
@@ -93,7 +93,7 @@
      "protocol": "system.battery_electrothermal.validation",
      "check_id": "coupled_energy_balance",
      "passed": true,
-     "relative_error": 1.5646946000583311e-16
+     "relative_error": 1.5443288386418392e-16
     },
     {
      "protocol": "system.battery_electrothermal.validation",
@@ -118,7 +118,7 @@
      "check": "conservation",
      "outcome": "satisfied",
      "detail": "the heat the cell reported equals the heat the body consumed in every window, and the energy deposited over the run equals what the body stored plus what it rejected",
-     "measured": 1.5646946000583311e-16,
+     "measured": 1.5443288386418392e-16,
      "threshold": 0.005
     },
     {
@@ -133,8 +133,8 @@
      "schema": "corpus_numerical_check/1",
      "check": "refinement",
      "outcome": "satisfied",
-     "detail": "halving then quartering every measured interval moves the predicted voltage by at most 0.651 mV and the predicted temperature by at most 0.0034 K, against a tenth of each acceptance tolerance",
-     "measured": 0.130135107858198,
+     "detail": "halving then quartering every measured interval moves the predicted voltage by at most 0.104 mV and the predicted temperature by at most 0.0017 K, against a tenth of each acceptance tolerance",
+     "measured": 0.02089751780243176,
      "threshold": 1.0
     }
    ],
@@ -154,14 +154,14 @@
       "role": "composition_pack",
       "identifier": "system.battery_electrothermal",
       "version": "1",
-      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+      "digest": "5d9a5452456e9490c82d611c8399be59cd29971c99a06774bbcd705a0728d639"
      },
      {
       "schema": "corpus_authority_component/1",
       "role": "coupling_plan",
       "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
       "version": "",
-      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+      "digest": "3953548936ea631339694d48ca60c6cacaef36532b1beedb00cdf068dee13d65"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -182,7 +182,7 @@
       "role": "execution_pack",
       "identifier": "system.battery_electrothermal.execution",
       "version": "1",
-      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+      "digest": "a8d5600423f26dbcab245532ce7b9e77a787ced2f5a2a7a9b648583ae0468fff"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -224,7 +224,7 @@
       "role": "run",
       "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
       "version": "",
-      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+      "digest": "f2688cbff7ec06cc8135b82d3751d9bdd3acde5b5fddff1e8b02e2f10689f06b"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -260,13 +260,13 @@
  },
  "uncertainty": {
   "parameter_standard_errors_supplied": {
-   "ohmic_activation_energy": 33564.73295340756,
-   "ohmic_resistance_reference": 0.00668278921791531,
-   "polarization_activation_energy": 91001.4396564763,
-   "polarization_capacitance": 6370.775894518442,
-   "polarization_resistance_reference": 0.19219839789161736,
-   "thermal_capacitance": 3.752422265823846,
-   "thermal_conductance": 0.0027671676160169294
+   "ohmic_activation_energy": 5205.617951466256,
+   "ohmic_resistance_reference": 0.006584940364906747,
+   "polarization_activation_energy": 8439.285468726737,
+   "polarization_capacitance": 289.17163593110763,
+   "polarization_resistance_reference": 0.006489134905184508,
+   "thermal_capacitance": 0.7298961726427718,
+   "thermal_conductance": 0.0005203289854461779
   },
   "parameters_without_a_standard_error": [],
   "propagated": {
@@ -274,7 +274,7 @@
     "method": "battery_electrothermal.independent_ode_sensitivity",
     "standard_uncertainty": {
      "schema": "quantity/1",
-     "magnitude": 2.8963451139393506,
+     "magnitude": 1.0316301167978497,
      "units": "kelvin"
     },
     "notes": "Central finite-difference sensitivities at one supplied standard uncertainty; one-sided only where positivity would otherwise be violated. The numerical, measurement and model-form channels are not included and are reported separately."
@@ -283,7 +283,7 @@
     "method": "battery_electrothermal.independent_ode_sensitivity",
     "standard_uncertainty": {
      "schema": "quantity/1",
-     "magnitude": 0.11668345966751152,
+     "magnitude": 0.035925224221606405,
      "units": "volt"
     },
     "notes": "Central finite-difference sensitivities at one supplied standard uncertainty; one-sided only where positivity would otherwise be violated. The numerical, measurement and model-form channels are not included and are reported separately."
@@ -1678,8 +1678,8 @@
        2
       ],
       "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
-      "passed": 262,
-      "failed": 33,
+      "passed": 261,
+      "failed": 34,
       "unscored": 0,
       "correct_refusals": 157,
       "unexpected_refusals": 0,
@@ -2761,7 +2761,7 @@
     ],
     "unlocated_cases": []
    },
-   "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34",
+   "campaign_report_digest": "01372ef8454a051282df61c9aa17c6c19b7c92e441e99bb3d27d83ee209637f6",
    "target": {
     "schema": "corpus_evidence_binding/1",
     "binding_id": "run:battery.electrothermal.flagship.s3.flagship.uq",
@@ -2778,14 +2778,14 @@
       "role": "composition_pack",
       "identifier": "system.battery_electrothermal",
       "version": "1",
-      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+      "digest": "5d9a5452456e9490c82d611c8399be59cd29971c99a06774bbcd705a0728d639"
      },
      {
       "schema": "corpus_authority_component/1",
       "role": "coupling_plan",
       "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
       "version": "",
-      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+      "digest": "3953548936ea631339694d48ca60c6cacaef36532b1beedb00cdf068dee13d65"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -2806,7 +2806,7 @@
       "role": "execution_pack",
       "identifier": "system.battery_electrothermal.execution",
       "version": "1",
-      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+      "digest": "a8d5600423f26dbcab245532ce7b9e77a787ced2f5a2a7a9b648583ae0468fff"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -2848,7 +2848,7 @@
       "role": "run",
       "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
       "version": "",
-      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+      "digest": "f2688cbff7ec06cc8135b82d3751d9bdd3acde5b5fddff1e8b02e2f10689f06b"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -4523,7 +4523,7 @@
     ],
     "unlocated_cases": []
    },
-   "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34",
+   "campaign_report_digest": "01372ef8454a051282df61c9aa17c6c19b7c92e441e99bb3d27d83ee209637f6",
    "target": {
     "schema": "corpus_evidence_binding/1",
     "binding_id": "run:battery.electrothermal.flagship.s3.flagship.uq",
@@ -4540,14 +4540,14 @@
       "role": "composition_pack",
       "identifier": "system.battery_electrothermal",
       "version": "1",
-      "digest": "ef8b2ebb1f9fb6d98c4c8c146fec714e99eb113e8fb7adbe37a64805cbf97999"
+      "digest": "5d9a5452456e9490c82d611c8399be59cd29971c99a06774bbcd705a0728d639"
      },
      {
       "schema": "corpus_authority_component/1",
       "role": "coupling_plan",
       "identifier": "planning.system.battery_electrothermal.system.battery_electrothermal.staggered",
       "version": "",
-      "digest": "92d271e7e25f070eb3657f9fc811710b558de7b981bc4d60681d295b4d04a424"
+      "digest": "3953548936ea631339694d48ca60c6cacaef36532b1beedb00cdf068dee13d65"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -4568,7 +4568,7 @@
       "role": "execution_pack",
       "identifier": "system.battery_electrothermal.execution",
       "version": "1",
-      "digest": "4d4821e8760a27677440be515d31baaeda5d913134842a2f08b3465964b3a420"
+      "digest": "a8d5600423f26dbcab245532ce7b9e77a787ced2f5a2a7a9b648583ae0468fff"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -4610,7 +4610,7 @@
       "role": "run",
       "identifier": "battery.electrothermal.flagship.s3.flagship.uq",
       "version": "",
-      "digest": "d3eed01fd96f928d9ef73e323bdd26d647056e56c9ee67e4deed7a7f14c730d7"
+      "digest": "f2688cbff7ec06cc8135b82d3751d9bdd3acde5b5fddff1e8b02e2f10689f06b"
      },
      {
       "schema": "corpus_authority_component/1",
@@ -4803,5 +4803,5 @@
    "trust_policy"
   ]
  },
- "campaign_report_digest": "f7f2344f6e7018c80de7a839506e8abaff710bb33c1d1acedafb9d87c1908a34"
+ "campaign_report_digest": "01372ef8454a051282df61c9aa17c6c19b7c92e441e99bb3d27d83ee209637f6"
 }

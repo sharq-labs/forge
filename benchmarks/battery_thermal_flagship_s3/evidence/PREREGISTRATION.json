@@ -1,7 +1,7 @@
 {
  "schema": "battery_thermal_flagship_s3_preregistration/1",
  "campaign_id": "battery.electrothermal.flagship.s3",
- "campaign_version": "3",
+ "campaign_version": "4",
  "amendments": [
   {
    "from_version": "1",

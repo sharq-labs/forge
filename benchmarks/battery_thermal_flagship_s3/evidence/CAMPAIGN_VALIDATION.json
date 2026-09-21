@@ -1,7 +1,7 @@
 {
  "schema": "battery_thermal_flagship_s3_campaign/1",
  "campaign_id": "battery.electrothermal.flagship.s3",
- "campaign_version": "3",
+ "campaign_version": "4",
  "splits": [
   "calibration",
   "validation"
@@ -22,10 +22,10 @@
   "cases": 7479,
   "observations": 14498
  },
- "report_digest": "6e3796828283e1c24725f813fda8323a00a8fecedcbc3bb2e4b30d064fb53144",
+ "report_digest": "b1b55c08418bd687d9f9383dc3df7b2343867e0e57b2373f5dbb1787bd0b9206",
  "counts": {
-  "pass": 4031,
-  "fail": 269,
+  "pass": 4030,
+  "fail": 270,
   "unscored": 0,
   "missing": 0,
   "error": 0,
@@ -34,7 +34,7 @@
   "outside_applicability": 0,
   "applicability_undeclared": 0
  },
- "pass_fraction": 0.9374418604651162,
+ "pass_fraction": 0.9372093023255814,
  "refusal_accuracy": 1.0,
  "guardrail_counts": {
   "correct_refusals": 4898,
@@ -46,33 +46,33 @@
   "terminal_voltage": {
    "calibration": {
     "n": 1287,
-    "mae": 0.023500719919280662,
-    "rmse": 0.04173850352743926,
-    "p95": 0.07809035070338455,
-    "max": 0.7380534771904239
+    "mae": 0.024378729690611826,
+    "rmse": 0.042212645500719556,
+    "p95": 0.07817323228921857,
+    "max": 0.7380851489499838
    },
    "validation": {
     "n": 863,
-    "mae": 0.024194736530831217,
-    "rmse": 0.03993854405087695,
-    "p95": 0.05835970432845938,
-    "max": 0.42991191959721986
+    "mae": 0.02453374046929974,
+    "rmse": 0.04026449173341397,
+    "p95": 0.05835617638624502,
+    "max": 0.4299079568174635
    }
   },
   "cell_temperature": {
    "calibration": {
     "n": 1287,
-    "mae": 0.7208851568831207,
-    "rmse": 1.0880645430824853,
-    "p95": 2.5891840041610408,
-    "max": 6.571887378999179
+    "mae": 0.6827937232372605,
+    "rmse": 1.058741840405016,
+    "p95": 2.5892929926164356,
+    "max": 6.571929875989099
    },
    "validation": {
     "n": 863,
-    "mae": 0.6833314025659726,
-    "rmse": 0.9136746920906602,
-    "p95": 1.7902647384086094,
-    "max": 4.0808742105528495
+    "mae": 0.6607033506830137,
+    "rmse": 0.8983827696719329,
+    "p95": 1.7904366421999498,
+    "max": 4.080866693466248
    }
   }
  },
@@ -1442,8 +1442,8 @@
       2
      ],
      "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
-     "passed": 262,
-     "failed": 33,
+     "passed": 261,
+     "failed": 34,
      "unscored": 0,
      "correct_refusals": 157,
      "unexpected_refusals": 0,
@@ -4188,10 +4188,11 @@
    "schema": "corpus_failure_cluster/1",
    "dimension": "c_rate",
    "bin_label": "[0.25, 1.25) 1 / hour",
-   "failed": 55,
+   "failed": 56,
    "scored": 3374,
    "case_ids": [
-    "B0018.d0040#00229",
+    "B0006.d0001#00141",
+    "B0006.d0008#00141",
     "B0042.d0032#00237",
     "B0042.d0040#00217",
     "B0042.d0040#00221",
@@ -4696,10 +4697,11 @@
    "schema": "corpus_failure_cluster/1",
    "dimension": "depth_of_discharge",
    "bin_label": "[0.6, 0.8) dimensionless",
-   "failed": 73,
+   "failed": 74,
    "scored": 710,
    "case_ids": [
-    "B0018.d0040#00229",
+    "B0006.d0001#00141",
+    "B0006.d0008#00141",
     "B0033.d0008#00113",
     "B0033.d0008#00113",
     "B0033.d0008#00117",
@@ -4810,10 +4812,11 @@
    "schema": "corpus_failure_cluster/1",
    "dimension": "measured_cell_temperature",
    "bin_label": "[303.15, 318.15) kelvin",
-   "failed": 188,
+   "failed": 189,
    "scored": 2346,
    "case_ids": [
-    "B0018.d0040#00229",
+    "B0006.d0001#00141",
+    "B0006.d0008#00141",
     "B0033.d0003#00017",
     "B0033.d0003#00021",
     "B0033.d0003#00025",
@@ -5076,8 +5079,8 @@
   "kind": "insufficient_evidence",
   "why": "independent evidence agrees with the model within the reviewed tolerances; there is no inadequacy here to attribute",
   "confidence": "none",
-  "calibration_pass_fraction": 0.9226884226884227,
-  "independent_pass_fraction": 0.9594438006952491,
+  "calibration_pass_fraction": 0.9230769230769231,
+  "independent_pass_fraction": 0.9582850521436849,
   "clusters": [
    {
     "schema": "corpus_failure_cluster/1",
@@ -5094,10 +5097,11 @@
     "schema": "corpus_failure_cluster/1",
     "dimension": "c_rate",
     "bin_label": "[0.25, 1.25) 1 / hour",
-    "failed": 55,
+    "failed": 56,
     "scored": 3374,
     "case_ids": [
-     "B0018.d0040#00229",
+     "B0006.d0001#00141",
+     "B0006.d0008#00141",
      "B0042.d0032#00237",
      "B0042.d0040#00217",
      "B0042.d0040#00221",
@@ -5602,10 +5606,11 @@
     "schema": "corpus_failure_cluster/1",
     "dimension": "depth_of_discharge",
     "bin_label": "[0.6, 0.8) dimensionless",
-    "failed": 73,
+    "failed": 74,
     "scored": 710,
     "case_ids": [
-     "B0018.d0040#00229",
+     "B0006.d0001#00141",
+     "B0006.d0008#00141",
      "B0033.d0008#00113",
      "B0033.d0008#00113",
      "B0033.d0008#00117",
@@ -5716,10 +5721,11 @@
     "schema": "corpus_failure_cluster/1",
     "dimension": "measured_cell_temperature",
     "bin_label": "[303.15, 318.15) kelvin",
-    "failed": 188,
+    "failed": 189,
     "scored": 2346,
     "case_ids": [
-     "B0018.d0040#00229",
+     "B0006.d0001#00141",
+     "B0006.d0008#00141",
      "B0033.d0003#00017",
      "B0033.d0003#00021",
      "B0033.d0003#00025",
@@ -5982,7 +5988,7 @@
   "evidence": [
    "calibration scored cases: 2574",
    "independent scored cases: 1726",
-   "verdict counts: {'pass': 4031, 'fail': 269, 'unscored': 0, 'missing': 0, 'error': 0, 'correct_refusal': 4898, 'unexpected_refusal': 0, 'outside_applicability': 0, 'applicability_undeclared': 0}",
+   "verdict counts: {'pass': 4030, 'fail': 270, 'unscored': 0, 'missing': 0, 'error': 0, 'correct_refusal': 4898, 'unexpected_refusal': 0, 'outside_applicability': 0, 'applicability_undeclared': 0}",
    "guardrail counts: {'correct_refusals': 4898, 'unexpected_refusals': 0, 'answered_outside_applicability': 0, 'applicability_undeclared': 0}"
   ]
  },
@@ -7355,8 +7361,8 @@
        2
       ],
       "label": "c_rate=[0.25, 1.25) 1 / hour; depth_of_discharge=[0.6, 0.8) dimensionless; measured_cell_temperature=[303.15, 318.15) kelvin",
-      "passed": 262,
-      "failed": 33,
+      "passed": 261,
+      "failed": 34,
       "unscored": 0,
       "correct_refusals": 157,
       "unexpected_refusals": 0,
@@ -8438,7 +8444,7 @@
     ],
     "unlocated_cases": []
    },
-   "campaign_report_digest": "6e3796828283e1c24725f813fda8323a00a8fecedcbc3bb2e4b30d064fb53144",
+   "campaign_report_digest": "b1b55c08418bd687d9f9383dc3df7b2343867e0e57b2373f5dbb1787bd0b9206",
    "target": null
   },
   "cell_temperature": {
@@ -10090,7 +10096,7 @@
     ],
     "unlocated_cases": []
    },
-   "campaign_report_digest": "6e3796828283e1c24725f813fda8323a00a8fecedcbc3bb2e4b30d064fb53144",
+   "campaign_report_digest": "b1b55c08418bd687d9f9383dc3df7b2343867e0e57b2373f5dbb1787bd0b9206",
    "target": null
   }
  },
@@ -10114,7 +10120,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.867541000014171
+   "seconds": 2.3464992000954226
   },
   {
    "trajectory_id": "B0005.d0008",
@@ -10135,7 +10141,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.6618700000690296
+   "seconds": 2.18144359998405
   },
   {
    "trajectory_id": "B0005.d0016",
@@ -10156,7 +10162,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3772926999954507
+   "seconds": 2.122014799970202
   },
   {
    "trajectory_id": "B0005.d0024",
@@ -10177,7 +10183,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.310305600054562
+   "seconds": 2.036125999991782
   },
   {
    "trajectory_id": "B0005.d0032",
@@ -10198,7 +10204,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.572872700053267
+   "seconds": 4.04185540007893
   },
   {
    "trajectory_id": "B0005.d0040",
@@ -10219,7 +10225,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.542282299953513
+   "seconds": 4.260743300081231
   },
   {
    "trajectory_id": "B0006.d0001",
@@ -10240,7 +10246,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3056498999940231
+   "seconds": 2.140380600001663
   },
   {
    "trajectory_id": "B0006.d0008",
@@ -10261,7 +10267,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3052810999797657
+   "seconds": 2.130322500015609
   },
   {
    "trajectory_id": "B0006.d0016",
@@ -10282,7 +10288,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3553439000388607
+   "seconds": 2.1973482999019325
   },
   {
    "trajectory_id": "B0006.d0024",
@@ -10303,7 +10309,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.2962362000253052
+   "seconds": 2.0619823000160977
   },
   {
    "trajectory_id": "B0006.d0032",
@@ -10324,7 +10330,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.49152070004493
+   "seconds": 4.1083487999858335
   },
   {
    "trajectory_id": "B0006.d0040",
@@ -10345,7 +10351,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.4712164000375196
+   "seconds": 3.961744699976407
   },
   {
    "trajectory_id": "B0018.d0001",
@@ -10366,7 +10372,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.4722281000576913
+   "seconds": 4.06261539994739
   },
   {
    "trajectory_id": "B0018.d0008",
@@ -10387,7 +10393,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.4291878000367433
+   "seconds": 3.7363396000582725
   },
   {
    "trajectory_id": "B0018.d0016",
@@ -10408,7 +10414,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.25158060004469
+   "seconds": 3.579104199889116
   },
   {
    "trajectory_id": "B0018.d0024",
@@ -10429,7 +10435,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.2108568999683484
+   "seconds": 3.46288399992045
   },
   {
    "trajectory_id": "B0018.d0032",
@@ -10450,7 +10456,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.1059066000161693
+   "seconds": 3.3041795999743044
   },
   {
    "trajectory_id": "B0018.d0040",
@@ -10471,7 +10477,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.0166002000914887
+   "seconds": 3.243562300107442
   },
   {
    "trajectory_id": "B0029.d0001",
@@ -10480,7 +10486,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.010247000027447939
+   "seconds": 0.01680270000360906
   },
   {
    "trajectory_id": "B0029.d0008",
@@ -10489,7 +10495,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.00952970003709197
+   "seconds": 0.011278799967840314
   },
   {
    "trajectory_id": "B0031.d0001",
@@ -10498,7 +10504,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.009927899925969541
+   "seconds": 0.015152600011788309
   },
   {
    "trajectory_id": "B0031.d0008",
@@ -10507,7 +10513,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.009991499944590032
+   "seconds": 0.018285500002093613
   },
   {
    "trajectory_id": "B0033.d0003",
@@ -10524,7 +10530,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.5175657999934629
+   "seconds": 1.8904781000455841
   },
   {
    "trajectory_id": "B0033.d0008",
@@ -10545,7 +10551,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.338846700033173
+   "seconds": 1.6837325000669807
   },
   {
    "trajectory_id": "B0033.d0016",
@@ -10566,7 +10572,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.2795601999387145
+   "seconds": 1.576823899988085
   },
   {
    "trajectory_id": "B0033.d0024",
@@ -10587,7 +10593,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.211292800027877
+   "seconds": 1.4841282999841496
   },
   {
    "trajectory_id": "B0033.d0032",
@@ -10608,7 +10614,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.1700632000574842
+   "seconds": 1.3642766999546438
   },
   {
    "trajectory_id": "B0033.d0040",
@@ -10629,7 +10635,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.138810099917464
+   "seconds": 1.314241599990055
   },
   {
    "trajectory_id": "B0034.d0002",
@@ -10650,7 +10656,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3796441999729723
+   "seconds": 1.6785463999258354
   },
   {
    "trajectory_id": "B0034.d0008",
@@ -10671,7 +10677,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3669770999113098
+   "seconds": 1.6098737999564037
   },
   {
    "trajectory_id": "B0034.d0016",
@@ -10692,7 +10698,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.3576641000108793
+   "seconds": 1.7380257999757305
   },
   {
    "trajectory_id": "B0034.d0024",
@@ -10713,7 +10719,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.194459700025618
+   "seconds": 1.5230473999399692
   },
   {
    "trajectory_id": "B0034.d0032",
@@ -10734,7 +10740,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.1753595999907702
+   "seconds": 1.4774166999850422
   },
   {
    "trajectory_id": "B0034.d0040",
@@ -10755,7 +10761,7 @@
      "valid": true
     }
    ],
-   "seconds": 1.12476679997053
+   "seconds": 1.2806065001059324
   },
   {
    "trajectory_id": "B0039.d0013",
@@ -10764,7 +10770,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.014247999992221594
+   "seconds": 0.0151422000490129
   },
   {
    "trajectory_id": "B0039.d0016",
@@ -10773,7 +10779,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.013979399926029146
+   "seconds": 0.021362900035455823
   },
   {
    "trajectory_id": "B0039.d0040",
@@ -10782,7 +10788,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_below_declared_ceiling' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.01116550003644079
+   "seconds": 0.012568000005558133
   },
   {
    "trajectory_id": "B0042.d0001",
@@ -10803,7 +10809,7 @@
      "valid": true
     }
    ],
-   "seconds": 3.0400167000479996
+   "seconds": 3.8174778000684455
   },
   {
    "trajectory_id": "B0042.d0008",
@@ -10824,7 +10830,7 @@
      "valid": true
     }
    ],
-   "seconds": 3.052199100027792
+   "seconds": 3.59449039993342
   },
   {
    "trajectory_id": "B0042.d0016",
@@ -10845,7 +10851,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.886038600001484
+   "seconds": 3.5784696999471635
   },
   {
    "trajectory_id": "B0042.d0024",
@@ -10866,7 +10872,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.781771600013599
+   "seconds": 3.4300484000705183
   },
   {
    "trajectory_id": "B0042.d0032",
@@ -10887,7 +10893,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.6204990999540314
+   "seconds": 3.439860700047575
   },
   {
    "trajectory_id": "B0042.d0040",
@@ -10908,7 +10914,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.5297527000075206
+   "seconds": 3.111503200023435
   },
   {
    "trajectory_id": "B0043.d0001",
@@ -10929,7 +10935,7 @@
      "valid": true
     }
    ],
-   "seconds": 3.141642599948682
+   "seconds": 4.011477699968964
   },
   {
    "trajectory_id": "B0043.d0008",
@@ -10950,7 +10956,7 @@
      "valid": true
     }
    ],
-   "seconds": 3.032680799951777
+   "seconds": 3.5353161999955773
   },
   {
    "trajectory_id": "B0043.d0016",
@@ -10971,7 +10977,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.902822699979879
+   "seconds": 3.506795599940233
   },
   {
    "trajectory_id": "B0043.d0024",
@@ -10992,7 +10998,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.6665610000491142
+   "seconds": 3.4666720000095665
   },
   {
    "trajectory_id": "B0043.d0032",
@@ -11013,7 +11019,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.645659799920395
+   "seconds": 3.2445105999941006
   },
   {
    "trajectory_id": "B0043.d0040",
@@ -11034,7 +11040,7 @@
      "valid": true
     }
    ],
-   "seconds": 2.5408085000235587
+   "seconds": 3.232306400081143
   },
   {
    "trajectory_id": "B0045.d0001",
@@ -11043,7 +11049,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.017553100013174117
+   "seconds": 0.012359500047750771
   },
   {
    "trajectory_id": "B0045.d0008",
@@ -11052,7 +11058,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.016147100017406046
+   "seconds": 0.010873100021854043
   },
   {
    "trajectory_id": "B0047.d0001",
@@ -11061,7 +11067,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.01464290008880198
+   "seconds": 0.014591600047424436
   },
   {
    "trajectory_id": "B0047.d0008",
@@ -11070,7 +11076,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.010485499980859458
+   "seconds": 0.011545800021849573
   },
   {
    "trajectory_id": "B0049.d0002",
@@ -11079,7 +11085,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.012985900044441223
+   "seconds": 0.012763599981553853
   },
   {
    "trajectory_id": "B0049.d0008",
@@ -11088,7 +11094,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.013404399971477687
+   "seconds": 0.009615099988877773
   },
   {
    "trajectory_id": "B0051.d0002",
@@ -11097,7 +11103,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.012456599972210824
+   "seconds": 0.012102100066840649
   },
   {
    "trajectory_id": "B0051.d0008",
@@ -11106,7 +11112,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.010704799904488027
+   "seconds": 0.013864199980162084
   },
   {
    "trajectory_id": "B0053.d0001",
@@ -11115,7 +11121,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.010637800092808902
+   "seconds": 0.013407499995082617
   },
   {
    "trajectory_id": "B0053.d0008",
@@ -11124,7 +11130,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.014929599943570793
+   "seconds": 0.012329600052908063
   },
   {
    "trajectory_id": "B0055.d0002",
@@ -11133,7 +11139,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.010907900054007769
+   "seconds": 0.015041799983009696
   },
   {
    "trajectory_id": "B0055.d0008",
@@ -11142,7 +11148,7 @@
    "reason": "scenario applicability preflight refused execution: predicate 'battery_electrothermal.ambient_at_or_above_declared_floor' violated",
    "parameters_borrowed_from": "33_34_36",
    "applicability": "outside",
-   "seconds": 0.009843099978752434
+   "seconds": 0.009706499986350536
   }
  ],
  "state_of_charge": "NOT INDEPENDENTLY VALIDATED. This source carries no state-of-charge reference that is independent of coulomb counting, and the archive's per-cycle Capacity is measured on the very discharge being predicted. No SOC gate exists and none is claimed"

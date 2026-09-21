@@ -24,7 +24,7 @@ BENCH = os.path.dirname(HERE)
 EVIDENCE = os.path.join(BENCH, "evidence")
 
 CAMPAIGN_ID = "battery.electrothermal.flagship.s3"
-CAMPAIGN_VERSION = "3"
+CAMPAIGN_VERSION = "4"
 
 #: Amendments to this protocol, each recorded with the commit the previous
 #: version was frozen at, what changed, and why. An amendment is only honest

@@ -503,15 +503,21 @@ def holdout_release(dataset) -> HoldoutRelease:
     a corpus that changed, and to one evaluation id, so it cannot open another.
     """
     return HoldoutRelease(
-        evaluation_id=f"{prereg.CAMPAIGN_ID}.holdout",
+        # The campaign version is part of the evaluation identity. A corrected
+        # model is a new evaluation, not a second opening of the old one, and
+        # the id says so without anybody having to remember.
+        evaluation_id=f"{prereg.CAMPAIGN_ID}.holdout.v{prereg.CAMPAIGN_VERSION}",
         campaign_id=prereg.CAMPAIGN_ID,
         campaign_version=prereg.CAMPAIGN_VERSION,
         dataset_digest=dataset.normalized_digest,
         registered_at_utc="2026-09-21T00:00:00+00:00",
         reason=(
-            "the single registered locked-holdout evaluation of the Sprint 3 "
-            "battery electrothermal flagship, opened after the parameter sets, "
-            "the applicability declaration and the acceptance policy were frozen"
+            f"registered locked-holdout evaluation v{prereg.CAMPAIGN_VERSION} of "
+            "the Sprint 3 battery electrothermal flagship, opened after the "
+            "parameter sets, the applicability declaration and the acceptance "
+            "policy were frozen. Earlier evaluations, if any, are recorded in "
+            "the preregistration's amendments with the reason a new one was "
+            "governed rather than the old one reopened"
         ),
     )
 
