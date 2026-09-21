@@ -78,8 +78,7 @@ model, so the window is the screen both are held to.
 
 These are **not** the recovery's Gate A numbers and are not comparable to them:
 that round scored its own case selection at its own stride, and this one scores
-every sample inside the OCV window. The three routes here are comparable to
-*each other*, which is what the table is for.
+every sample inside the OCV window.
 
 ### THE TABLE ABOVE IS NOT A MODEL COMPARISON
 
@@ -333,6 +332,11 @@ an exemption.
 `test_the_policy_names_every_non_core_package` and `NON_CORE_PACKAGES`: the
 first was **already red on the base branch** (`domainpacks` classified and never
 named in the policy); both are repaired in the same edit that adds `providers`.
+
+`test_every_static_guard_exists` caught the R1 rename — `conftest.py`'s
+`STATIC_GUARDS` still named the old function, and a renamed guard would have
+dropped out of the FAST tier silently. Updated with the new name and its new
+control test.
 
 ---
 
