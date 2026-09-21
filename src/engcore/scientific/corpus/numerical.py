@@ -15,6 +15,18 @@ studied here".
 A check nothing produced cannot be added: :func:`require_supported` refuses a
 result for a check the solver never declared it can perform, so a wrapper
 cannot fabricate a convergence study on a solver's behalf.
+
+AND IT BELONGS TO ONE COMPUTATION
+----------------------------------
+``producer_id`` said which solver; it did not say which run. A convergence
+study from yesterday's execution is real evidence about yesterday's execution
+and says nothing about this one, but a certification gate comparing only a
+producer name would accept it. So numerical evidence carries an
+:class:`~engcore.scientific.corpus.authority.EvidenceBinding`, and a gate that
+requires numerical evidence checks the binding before the results.
+
+Evidence from another run stays evidence. It simply cannot satisfy this run's
+gate.
 """
 
 from __future__ import annotations
@@ -27,6 +39,7 @@ import math
 from typing import Any, Mapping
 
 from ..serialization import require_schema, schema_string
+from .authority import EvidenceBinding, require_binding
 from .source import CorpusError, text
 
 NUMERICAL_CHECK_SCHEMA = schema_string("corpus_numerical_check")
@@ -139,9 +152,15 @@ class NumericalEvidence:
     producer_id: str
     supported_checks: tuple[NumericalCheck, ...]
     results: tuple[NumericalCheckResult, ...]
+    #: Which computation these numbers came out of. Optional on the record so a
+    #: solver can emit its roster before it knows the run identity, and
+    #: REQUIRED by certification -- unbound evidence cannot satisfy a gate.
+    binding: EvidenceBinding | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "producer_id", text(self.producer_id, label="producer_id"))
+        if self.binding is not None:
+            require_binding(self.binding, label="numerical evidence binding")
         supported = tuple(
             sorted({NumericalCheck(item) for item in self.supported_checks}, key=lambda i: i.value)
         )
@@ -183,6 +202,15 @@ class NumericalEvidence:
             item.check.value for item in self.results if item.outcome.was_performed
         )
 
+    def belongs_to(self, computation: EvidenceBinding) -> tuple[str, ...]:
+        """Why these numbers are not about that computation. Empty means they are."""
+        if self.binding is None:
+            return (
+                f"numerical evidence from {self.producer_id!r} names no execution "
+                f"binding, so it cannot be shown to be about this computation",
+            )
+        return self.binding.mismatches(computation)
+
     def satisfies(self, required: tuple[NumericalCheck, ...]) -> bool:
         """Whether every required check was performed and none was violated."""
         wanted = {NumericalCheck(item) for item in required}
@@ -209,6 +237,7 @@ class NumericalEvidence:
             "producer_id": self.producer_id,
             "supported_checks": [item.value for item in self.supported_checks],
             "results": [item.to_dict() for item in self.results],
+            "binding": None if self.binding is None else self.binding.to_dict(),
         }
 
     @classmethod
@@ -218,6 +247,11 @@ class NumericalEvidence:
             payload["producer_id"],
             tuple(NumericalCheck(i) for i in payload.get("supported_checks", ())),
             tuple(NumericalCheckResult.from_dict(i) for i in payload.get("results", ())),
+            (
+                None
+                if payload.get("binding") is None
+                else EvidenceBinding.from_dict(payload["binding"])
+            ),
         )
 
 

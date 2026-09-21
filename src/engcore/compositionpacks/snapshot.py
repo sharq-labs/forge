@@ -41,6 +41,13 @@ class CompositionPackSnapshot:
     semantic_authority: dict[str, Any] | None = None
     protocol_requirements: tuple[dict[str, str], ...] = ()
     uncertainty_requirements: tuple[dict[str, str], ...] = ()
+    #: WHETHER the required sets are stated, which is not the same question
+    #: as whether they are non-empty. A V4 pack that genuinely requires no
+    #: protocol for a blueprint has declared an empty requirement, and its
+    #: completeness is enforceable and exactly satisfied by executing
+    #: nothing. A pre-V4 snapshot has declared nothing at all and cannot be
+    #: enforced. Reading emptiness as 'old' conflated the two.
+    requirements_declared: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -91,10 +98,8 @@ class CompositionPackSnapshot:
     def required_protocols(self, blueprint_id: str, kind: str) -> frozenset[tuple[str, str]]:
         """Which (artifact_id, version) protocols this blueprint requires.
 
-        An empty set from a pre-V4 snapshot and an empty set from a pack that
-        genuinely requires nothing are indistinguishable here, so the caller
-        asks :attr:`declares_requirements` before reading a completeness verdict
-        out of it.
+        Empty may mean "requires none" or "cannot say"; the two are
+        distinguished by :attr:`declares_requirements`, not by this set.
         """
         return frozenset(
             (str(item["artifact_id"]), str(item["version"]))
@@ -115,8 +120,15 @@ class CompositionPackSnapshot:
 
     @property
     def declares_requirements(self) -> bool:
-        """Whether this snapshot is new enough to state its required sets."""
-        return bool(self.protocol_requirements)
+        """Whether this snapshot states its required sets at all.
+
+        An explicit flag rather than ``bool(self.protocol_requirements)``. The
+        tuple being empty answers a different question -- "is the required set
+        empty" -- and using it as a version probe made "declares zero required
+        protocols" indistinguishable from "predates requirements", so a pack
+        that correctly requires nothing was reported unenforceable.
+        """
+        return bool(self.requirements_declared)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -168,6 +180,7 @@ class CompositionPackSnapshot:
                 self.verification_implementations
             ),
             "semantic_authority": detach(self.semantic_authority),
+            "requirements_declared": self.requirements_declared,
             "protocol_requirements": detach(self.protocol_requirements),
             "uncertainty_requirements": detach(
                 self.uncertainty_requirements
@@ -287,6 +300,19 @@ class CompositionPackSnapshot:
                 )
                 else dict(payload["semantic_authority"])
             ),
+            # A pre-V4 snapshot declared nothing, whatever its tuples look
+            # like. A V4 payload says so explicitly, and defaults to True for a
+            # V4 writer that predates the flag itself.
+            requirements_declared=(
+                False
+                if schema
+                in (
+                    COMPOSITION_SNAPSHOT_SCHEMA_V1,
+                    COMPOSITION_SNAPSHOT_SCHEMA_V2,
+                    COMPOSITION_SNAPSHOT_SCHEMA_V3,
+                )
+                else bool(payload.get("requirements_declared", True))
+            ),
             protocol_requirements=tuple(
                 dict(item) for item in payload.get("protocol_requirements", ())
             ),
@@ -349,6 +375,9 @@ def snapshot_composition_pack(
             for item in registration.verification_fingerprints
         ),
         semantic_authority=registration.semantic_authority.to_dict(),
+        # A live registration always knows its requirements, including when
+        # they are empty.
+        requirements_declared=True,
         # THE REQUIRED SETS, scoped to the blueprint that requires them. Without
         # these a completeness gate can only ask whether something ran.
         protocol_requirements=tuple(

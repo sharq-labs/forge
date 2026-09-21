@@ -20,6 +20,14 @@ cell reports what the evidence there actually is:
 ``UNTESTED``
     no scored case landed here at all.
 
+NEITHER A REFUSAL NOR AN UNSCREENED CASE CHANGES A CELL'S STATUS
+------------------------------------------------------------------
+``_cell_status`` takes passes and failures and nothing else. A cell where the
+model declined every case, or where every case had undeclared applicability, is
+``UNTESTED`` -- not ``SUPPORTED``. In the first the model produced no answer; in
+the second nobody established that the answers were about a region the model
+claims. Both are counted, separately and visibly, and neither is evidence.
+
 A REFUSAL NEVER CHANGES A CELL'S STATUS
 ----------------------------------------
 Refusals are tallied per cell and are deliberately excluded from
@@ -203,10 +211,21 @@ class CoverageCell:
     unscored: int
     correct_refusals: int
     unexpected_refusals: int
+    #: Cases here whose applicability was never established. Counted so the
+    #: cell can say "there were results, and none of them were evidence about a
+    #: claimed region" -- which is different from no results at all.
+    undeclared: int
     status: CoverageStatus
 
     def __post_init__(self) -> None:
-        for label in ("passed", "failed", "unscored", "correct_refusals", "unexpected_refusals"):
+        for label in (
+            "passed",
+            "failed",
+            "unscored",
+            "correct_refusals",
+            "unexpected_refusals",
+            "undeclared",
+        ):
             value = getattr(self, label)
             if isinstance(value, bool) or int(value) != value or int(value) < 0:
                 raise CorpusError(f"coverage cell {label} must be a non-negative integer")
@@ -233,6 +252,7 @@ class CoverageCell:
             "unscored": self.unscored,
             "correct_refusals": self.correct_refusals,
             "unexpected_refusals": self.unexpected_refusals,
+            "undeclared": self.undeclared,
             "status": self.status.value,
         }
 
@@ -247,6 +267,7 @@ class CoverageCell:
             payload["unscored"],
             payload["correct_refusals"],
             payload["unexpected_refusals"],
+            payload["undeclared"],
             CoverageStatus(payload["status"]),
         )
 
@@ -397,6 +418,7 @@ _EMPTY_CELL = {
     "unscored": 0,
     "correct_refusals": 0,
     "unexpected_refusals": 0,
+    "undeclared": 0,
 }
 
 
@@ -440,6 +462,10 @@ def build_coverage(
             bucket["correct_refusals"] += 1
         elif verdict is CaseVerdict.UNEXPECTED_REFUSAL:
             bucket["unexpected_refusals"] += 1
+        elif verdict is CaseVerdict.APPLICABILITY_UNDECLARED:
+            # Not passed, not failed, not a judged refusal. It cannot make this
+            # cell supported and it cannot make it failed.
+            bucket["undeclared"] += 1
         else:
             bucket["unscored"] += 1
 
@@ -455,6 +481,7 @@ def build_coverage(
                 unscored=bucket["unscored"],
                 correct_refusals=bucket["correct_refusals"],
                 unexpected_refusals=bucket["unexpected_refusals"],
+                undeclared=bucket["undeclared"],
                 # Refusals are not passed in. A declined cell stays untested.
                 status=_cell_status(
                     bucket["passed"], bucket["failed"], region.minimum_supporting_cases

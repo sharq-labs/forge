@@ -60,6 +60,7 @@ REFERENCE_CASE_SCHEMA = schema_string("corpus_reference_case")
 REFERENCE_OBSERVATION_SCHEMA = schema_string("corpus_reference_observation")
 REFERENCE_DATASET_SCHEMA = schema_string("corpus_reference_dataset")
 HOLDOUT_RELEASE_SCHEMA = schema_string("corpus_holdout_release")
+HOLDOUT_OPENING_SCHEMA = schema_string("corpus_holdout_opening")
 
 
 class DatasetSplit(str, Enum):
@@ -296,25 +297,63 @@ class ReferenceObservation:
 
 @dataclass(frozen=True)
 class HoldoutRelease:
-    """Registered permission to read one dataset's locked holdout, once.
+    """Registered permission to open one dataset's locked holdout, for one evaluation.
 
-    It names the evaluation it was registered for and carries the dataset's
-    normalized digest, so a release cannot be reused against a dataset that has
-    since changed -- which is the case where the holdout would silently stop
-    being held out.
+    It carries two bindings, and both are enforced rather than described.
+
+    The **dataset** binding is the normalized digest, so a release cannot be
+    reused against a dataset that has since changed -- the case where the
+    holdout would silently stop being held out.
+
+    The **evaluation** binding is the campaign this release was registered for,
+    by id and version. Without it ``evaluation_id`` was a label: a release
+    granted to evaluate campaign A could open the holdout for campaign B as
+    long as the dataset matched, which is exactly the reuse a locked holdout
+    exists to stop. :meth:`require_for` is called by
+    :class:`~engcore.scientific.corpus.campaign.ValidationCampaign` at the only
+    point a campaign can reach the holdout.
+
+    On "once": a release object cannot enforce single use on its own, because
+    nothing stops a caller from holding two campaigns with the same id. Strict
+    one-time opening is enforced by :class:`HoldoutLedger`, which is an
+    explicit authority with state, and this docstring does not claim what the
+    record alone can deliver.
     """
 
     evaluation_id: str
+    campaign_id: str
+    campaign_version: str
     dataset_digest: str
     registered_at_utc: str
     reason: str
 
     def __post_init__(self) -> None:
-        for label in ("evaluation_id", "registered_at_utc", "reason"):
+        for label in (
+            "evaluation_id",
+            "campaign_id",
+            "campaign_version",
+            "registered_at_utc",
+            "reason",
+        ):
             object.__setattr__(self, label, text(getattr(self, label), label=label))
         object.__setattr__(
             self, "dataset_digest", sha256_hex(self.dataset_digest, label="dataset_digest")
         )
+
+    @property
+    def evaluation_key(self) -> tuple[str, str, str]:
+        return self.evaluation_id, self.campaign_id, self.campaign_version
+
+    def require_for(self, campaign_id: str, campaign_version: str) -> None:
+        """Refuse a release registered for a different evaluation."""
+        wanted = (str(campaign_id).strip(), str(campaign_version).strip())
+        if (self.campaign_id, self.campaign_version) != wanted:
+            raise CorpusLeakageError(
+                f"holdout release {self.evaluation_id!r} was registered for "
+                f"campaign {self.campaign_id}@{self.campaign_version}, not "
+                f"{wanted[0]}@{wanted[1]}; a release does not carry over to "
+                f"another evaluation even over the same dataset"
+            )
 
     @property
     def digest(self) -> str:
@@ -326,6 +365,8 @@ class HoldoutRelease:
         return {
             "schema": HOLDOUT_RELEASE_SCHEMA,
             "evaluation_id": self.evaluation_id,
+            "campaign_id": self.campaign_id,
+            "campaign_version": self.campaign_version,
             "dataset_digest": self.dataset_digest,
             "registered_at_utc": self.registered_at_utc,
             "reason": self.reason,
@@ -336,9 +377,121 @@ class HoldoutRelease:
         require_schema(payload, HOLDOUT_RELEASE_SCHEMA)
         return cls(
             payload["evaluation_id"],
+            payload["campaign_id"],
+            payload["campaign_version"],
             payload["dataset_digest"],
             payload["registered_at_utc"],
             payload["reason"],
+        )
+
+
+@dataclass(frozen=True)
+class HoldoutOpening:
+    """The record that a locked holdout was opened, and by whom for what."""
+
+    release_digest: str
+    evaluation_id: str
+    campaign_id: str
+    campaign_version: str
+    dataset_digest: str
+    opened_at_utc: str
+
+    def __post_init__(self) -> None:
+        for label in (
+            "evaluation_id",
+            "campaign_id",
+            "campaign_version",
+            "opened_at_utc",
+        ):
+            object.__setattr__(self, label, text(getattr(self, label), label=label))
+        for label in ("release_digest", "dataset_digest"):
+            object.__setattr__(
+                self, label, sha256_hex(getattr(self, label), label=label)
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": HOLDOUT_OPENING_SCHEMA,
+            "release_digest": self.release_digest,
+            "evaluation_id": self.evaluation_id,
+            "campaign_id": self.campaign_id,
+            "campaign_version": self.campaign_version,
+            "dataset_digest": self.dataset_digest,
+            "opened_at_utc": self.opened_at_utc,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "HoldoutOpening":
+        require_schema(payload, HOLDOUT_OPENING_SCHEMA)
+        return cls(
+            payload["release_digest"],
+            payload["evaluation_id"],
+            payload["campaign_id"],
+            payload["campaign_version"],
+            payload["dataset_digest"],
+            payload["opened_at_utc"],
+        )
+
+
+class HoldoutLedger:
+    """The authority that makes "opened once" a fact rather than a wish.
+
+    A :class:`HoldoutRelease` binds *which* evaluation may open a holdout. It
+    cannot bind *how many times*, because a record has no memory -- and a
+    docstring promising one-time semantics that the code cannot enforce is
+    worse than no promise, since it is believed.
+
+    This is the memory. It is deliberately small and explicit: an in-process
+    authority a caller must choose to hold and thread through, not an ambient
+    global that would make the guarantee depend on import order. Where a
+    campaign is run without one, the dataset and evaluation bindings still
+    hold; what is not claimed is single use.
+    """
+
+    def __init__(self, openings: Iterable[HoldoutOpening] = ()) -> None:
+        self._openings: dict[str, HoldoutOpening] = {}
+        for item in openings:
+            self._record(item)
+
+    def _record(self, opening: HoldoutOpening) -> None:
+        if not isinstance(opening, HoldoutOpening):
+            raise CorpusError("a holdout ledger holds HoldoutOpening records")
+        key = opening.release_digest
+        existing = self._openings.get(key)
+        if existing is not None:
+            raise CorpusLeakageError(
+                f"holdout release {opening.evaluation_id!r} was already opened at "
+                f"{existing.opened_at_utc} for campaign "
+                f"{existing.campaign_id}@{existing.campaign_version}; a locked "
+                f"holdout is opened once and a second opening is not an audit "
+                f"trail, it is a second look"
+            )
+        self._openings[key] = opening
+
+    def open(
+        self, release: "HoldoutRelease", *, opened_at_utc: str
+    ) -> HoldoutOpening:
+        """Record one opening. Refuses a release that has already been opened."""
+        if not isinstance(release, HoldoutRelease):
+            raise CorpusLeakageError("opening a holdout requires a HoldoutRelease")
+        opening = HoldoutOpening(
+            release_digest=release.digest,
+            evaluation_id=release.evaluation_id,
+            campaign_id=release.campaign_id,
+            campaign_version=release.campaign_version,
+            dataset_digest=release.dataset_digest,
+            opened_at_utc=opened_at_utc,
+        )
+        self._record(opening)
+        return opening
+
+    def was_opened(self, release: "HoldoutRelease") -> bool:
+        return release.digest in self._openings
+
+    @property
+    def openings(self) -> tuple[HoldoutOpening, ...]:
+        return tuple(
+            sorted(self._openings.values(), key=lambda item: item.release_digest)
         )
 
 
@@ -518,6 +671,7 @@ class ReferenceDataset:
 
 
 __all__ = [
+    "HOLDOUT_OPENING_SCHEMA",
     "HOLDOUT_RELEASE_SCHEMA",
     "LOCKED_SPLITS",
     "REFERENCE_CASE_SCHEMA",
@@ -526,6 +680,8 @@ __all__ = [
     "REFERENCE_OBSERVATION_SCHEMA",
     "Applicability",
     "DatasetSplit",
+    "HoldoutLedger",
+    "HoldoutOpening",
     "HoldoutRelease",
     "ReferenceCase",
     "ReferenceCondition",

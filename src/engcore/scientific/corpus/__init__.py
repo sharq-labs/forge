@@ -17,13 +17,22 @@ digests and arithmetic, and never learns what ``temperature`` means.
 
 from .adequacy import (
     CAUSE_CHECK_SCHEMA,
+    DEFAULT_MEASUREMENT_INTERPRETATION,
     DIAGNOSIS_SCHEMA,
+    MeasurementInterpretation,
     AlternativeCause,
     CauseCheck,
     CauseState,
     InadequacyKind,
     ModelFormDiagnosis,
     diagnose_campaign,
+)
+from .authority import (
+    AUTHORITY_COMPONENT_SCHEMA,
+    EVIDENCE_BINDING_SCHEMA,
+    AuthorityComponent,
+    AuthorityRole,
+    EvidenceBinding,
 )
 from .calibration import (
     CALIBRATION_OBJECTIVE_SCHEMA,
@@ -71,6 +80,7 @@ from .coverage import (
     cluster_failures,
 )
 from .dataset import (
+    HOLDOUT_OPENING_SCHEMA,
     HOLDOUT_RELEASE_SCHEMA,
     LOCKED_SPLITS,
     REFERENCE_CASE_SCHEMA,
@@ -79,6 +89,8 @@ from .dataset import (
     REFERENCE_OBSERVATION_SCHEMA,
     Applicability,
     DatasetSplit,
+    HoldoutLedger,
+    HoldoutOpening,
     HoldoutRelease,
     ReferenceCase,
     ReferenceCondition,
@@ -114,6 +126,10 @@ from .source import (
 )
 
 __all__ = [
+    "DEFAULT_MEASUREMENT_INTERPRETATION",
+    "HOLDOUT_OPENING_SCHEMA",
+    "EVIDENCE_BINDING_SCHEMA",
+    "AUTHORITY_COMPONENT_SCHEMA",
     "CALIBRATION_OBJECTIVE_SCHEMA",
     "CAUSE_CHECK_SCHEMA",
     "CAMPAIGN_REPORT_SCHEMA",
@@ -143,6 +159,12 @@ __all__ = [
     "VALIDATION_COVERAGE_SCHEMA",
     "VALIDATION_REGION_SCHEMA",
     "AlternativeCause",
+    "AuthorityComponent",
+    "AuthorityRole",
+    "EvidenceBinding",
+    "HoldoutLedger",
+    "HoldoutOpening",
+    "MeasurementInterpretation",
     "Applicability",
     "CalibratedParameterSet",
     "CalibrationError",

@@ -17,8 +17,10 @@ other explanations, every one of which this system can sometimes see:
   applicability -- a regime shift, not a form problem;
 * the numerics failed, or the numerical study that would have shown they did
   not was never run;
-* the disagreement is inside what the source says about its own numbers, so
-  there may be no disagreement at all;
+* the disagreement is inside what the source says about its own numbers --
+  judged against the source's stated uncertainty under a declared coverage
+  policy, never against Forge's acceptance tolerance, which is a policy choice
+  and would make the diagnosis depend on how strict somebody was feeling;
 * a parameter was never identifiable, so "the fitted value" was never
   constrained by the data and cannot be expected to transfer;
 * the parameter set was fitted against a different dataset than the one being
@@ -97,6 +99,38 @@ class CauseState(str, Enum):
     RULED_OUT = "ruled_out"
     INDICATED = "indicated"
     NOT_CHECKABLE = "not_checkable"
+
+
+@dataclass(frozen=True)
+class MeasurementInterpretation:
+    """How a stated source uncertainty is read as an interval. Declared, not assumed.
+
+    A source reporting ``u`` has not said what fraction of outcomes lie within
+    ``u``; that depends on what kind of uncertainty it is. So the coverage
+    factor is an explicit, recorded policy rather than a constant buried in a
+    comparison, and the default states its own assumption.
+    """
+
+    policy_id: str = "corpus.measurement.k2"
+    coverage_factor: float = 2.0
+    rationale: str = (
+        "a coverage factor of 2 read as approximately 95% for a normal "
+        "distribution; stated here because the source did not state one"
+    )
+
+    def __post_init__(self) -> None:
+        factor = float(self.coverage_factor)
+        if not (factor > 0.0) or factor != factor or factor in (float("inf"),):
+            raise CorpusError("measurement coverage factor must be finite and positive")
+        object.__setattr__(self, "coverage_factor", factor)
+        object.__setattr__(self, "policy_id", text(self.policy_id, label="policy_id"))
+        object.__setattr__(self, "rationale", text(self.rationale, label="rationale"))
+
+    def describe(self) -> str:
+        return f"{self.coverage_factor:g}x ({self.policy_id})"
+
+
+DEFAULT_MEASUREMENT_INTERPRETATION = MeasurementInterpretation()
 
 
 @dataclass(frozen=True, order=True)
@@ -308,38 +342,61 @@ def _check_numerical(numerical: NumericalEvidence | None) -> CauseCheck:
     )
 
 
-def _check_measurement(report: ValidationCampaignReport) -> CauseCheck:
-    """Is the disagreement bigger than the reviewed tolerance but not by much?
+def _check_measurement(
+    report: ValidationCampaignReport, interpretation: "MeasurementInterpretation"
+) -> CauseCheck:
+    """Is the disagreement inside what the SOURCE says about its own numbers?
 
-    A failure whose residual is only marginally outside the acceptance
-    tolerance is a candidate for data quality rather than model form. Residuals
-    an order of magnitude past the tolerance are not.
+    Derived from ``source_uncertainty`` and never from the acceptance
+    tolerance. An earlier version compared the residual against twice the
+    reviewed tolerance, which is a Forge policy choice: it would have called a
+    disagreement "measurement spread" purely because somebody set a tight
+    tolerance, and called the same physical disagreement a model problem under
+    a loose one. The corpus separates those two numbers deliberately, and a
+    diagnosis that collapses them throws the separation away.
+
+    Where the source stated no uncertainty, the honest answer is
+    ``NOT_CHECKABLE``. There is nothing to compare against, and silence is not
+    exoneration.
     """
-    failures = [
-        item
-        for item in report.failures()
-        if item.normalized_residual is not None
-    ]
+    failures = [item for item in report.failures() if item.residual is not None]
     if not failures:
         return CauseCheck(
             AlternativeCause.MEASUREMENT_UNCERTAINTY,
             CauseState.RULED_OUT,
             "there are no failing scored cases to attribute",
         )
-    marginal = [item for item in failures if item.normalized_residual <= 2.0]
-    if len(marginal) == len(failures):
+    unquantified = [item for item in failures if item.source_uncertainty is None]
+    if unquantified:
+        return CauseCheck(
+            AlternativeCause.MEASUREMENT_UNCERTAINTY,
+            CauseState.NOT_CHECKABLE,
+            f"{len(unquantified)} of {len(failures)} failing case(s) carry no "
+            f"source uncertainty, so it cannot be established whether the "
+            f"disagreement lies inside what the source says about its own "
+            f"numbers; Forge's acceptance tolerance is a policy choice and is "
+            f"not a substitute for it",
+        )
+    factor = interpretation.coverage_factor
+    inside = [
+        item
+        for item in failures
+        if item.residual <= factor * item.source_uncertainty
+    ]
+    if len(inside) == len(failures):
         return CauseCheck(
             AlternativeCause.MEASUREMENT_UNCERTAINTY,
             CauseState.INDICATED,
-            "every failure is within twice its reviewed tolerance; data quality "
-            "or a tolerance too tight for the source is as good an explanation "
-            "as the model's form",
+            f"every failure lies within {interpretation.describe()} of the "
+            f"source's own stated uncertainty, so the reference and the model "
+            f"may not actually disagree",
         )
     return CauseCheck(
         AlternativeCause.MEASUREMENT_UNCERTAINTY,
         CauseState.RULED_OUT,
-        f"{len(failures) - len(marginal)} failure(s) exceed twice the reviewed "
-        f"tolerance, which measurement spread does not account for",
+        f"{len(failures) - len(inside)} failure(s) exceed "
+        f"{interpretation.describe()} of the source's own stated uncertainty, "
+        f"which measurement spread does not account for",
     )
 
 
@@ -399,6 +456,7 @@ def diagnose_campaign(
     *,
     numerical: NumericalEvidence | None = None,
     parameters: CalibratedParameterSet | None = None,
+    measurement: MeasurementInterpretation = DEFAULT_MEASUREMENT_INTERPRETATION,
     minimum_independent_cases: int = 4,
     calibration_fit_threshold: float = 0.8,
     independent_failure_threshold: float = 0.5,
@@ -470,7 +528,7 @@ def diagnose_campaign(
     checks = (
         _check_applicability(report),
         _check_numerical(numerical),
-        _check_measurement(report),
+        _check_measurement(report, measurement),
         _check_identifiability(parameters),
         _check_context(report, parameters),
     )
@@ -526,7 +584,9 @@ def diagnose_campaign(
 
 __all__ = [
     "CAUSE_CHECK_SCHEMA",
+    "DEFAULT_MEASUREMENT_INTERPRETATION",
     "DIAGNOSIS_SCHEMA",
+    "MeasurementInterpretation",
     "AlternativeCause",
     "CauseCheck",
     "CauseState",

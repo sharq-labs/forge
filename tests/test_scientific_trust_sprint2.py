@@ -15,8 +15,10 @@ from engcore.assembly.certification import (
     COMPUTATIONAL_REPLAY_VERIFIED,
     MULTIPHYSICS_FULL_TRUST_POLICY,
     MULTIPHYSICS_PRODUCTION_POLICY,
+    NUMERICAL_EVIDENCE_PRESENT,
     SERIALIZATION_ROUNDTRIP_VERIFIED,
     UQ_CHANNEL_COMPLETENESS,
+    VALIDATION_ENVELOPE_SUPPORTED,
     VALIDATION_PROTOCOL_COMPLETENESS,
     TrustPolicy,
     assess_authorized_multiphysics_run,
@@ -29,6 +31,7 @@ from engcore.assembly.domainpacks import (
 from engcore.assembly.multiphysics import execute_authorized_graph_plan
 from engcore.assembly.replay import (
     DEFAULT_REPLAY_POLICY,
+    ReplayPolicy,
     ReplayStatus,
     replay_authorized_graph_plan,
 )
@@ -53,6 +56,9 @@ from engcore.planning.production import production_planning_registries
 from engcore.scientific.certification_core.verifier import verify_certification_record
 from engcore.scientific.corpus import (
     Applicability,
+    EvidenceBinding,
+    AuthorityRole,
+    AuthorityComponent,
     CalibratedParameterSet,
     CalibrationError,
     CalibrationObjective,
@@ -94,6 +100,7 @@ from engcore.scientific.corpus import (
     run_campaign,
 )
 from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.replay_core.tolerance import ReplayTolerance
 from engcore.scientific.units.quantity import Quantity
 
 # =====================================================================
@@ -143,6 +150,13 @@ def _tolerance(value: float, basis: ToleranceBasis = ToleranceBasis.REVIEWED_ACC
 
 
 def _case(temperature: float, split: DatasetSplit, **kwargs) -> ReferenceCase:
+    """A screened case. Applicability is stated, because scoring requires it.
+
+    ``INSIDE`` is explicit rather than defaulted: a case whose applicability
+    was never established cannot produce empirical support, so a fixture that
+    means to test PASS/FAIL has to say the screening was done.
+    """
+    kwargs.setdefault("applicability", Applicability.INSIDE)
     return ReferenceCase(
         case_id=f"T{int(temperature)}",
         split=split,
@@ -221,7 +235,8 @@ def test_locked_holdout_is_unreachable_without_a_registered_release():
 def test_a_release_does_not_carry_over_to_a_changed_dataset():
     dataset = _dataset()
     release = HoldoutRelease(
-        "eval-1", dataset.normalized_digest, "2026-02-01T00:00:00+00:00", "registered"
+        "eval-1", "c", "1", dataset.normalized_digest,
+        "2026-02-01T00:00:00+00:00", "registered",
     )
     assert len(dataset.released_holdout_cases(release)) == 2
 
@@ -437,7 +452,8 @@ def test_an_envelope_survives_a_roundtrip():
 def test_a_good_fit_with_bad_holdout_is_a_suspicion_not_a_conclusion():
     dataset = _dataset()
     release = HoldoutRelease(
-        "eval-1", dataset.normalized_digest, "2026-02-01T00:00:00+00:00", "registered"
+        "eval-1", "c", "1", dataset.normalized_digest,
+        "2026-02-01T00:00:00+00:00", "registered",
     )
     campaign = ValidationCampaign(
         "c", "1", dataset,
@@ -617,14 +633,20 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     assert dataset.snapshot.snapshot_sha256 == "1" * 64
     assert dataset.split_counts == {"calibration": 4, "validation": 4, "locked_holdout": 2}
     release = HoldoutRelease(
-        "sprint2.e2e", dataset.normalized_digest, "2026-02-01T00:00:00+00:00",
+        "sprint2.e2e", "sprint2.e2e", "1", dataset.normalized_digest,
+        "2026-02-01T00:00:00+00:00",
         "registered holdout evaluation for the Sprint 2 trust campaign",
     )
+
+    # --- the run whose science this campaign is about
+    authorized = _authorized("sprint2-e2e")
+    target = _run_binding(authorized)
 
     # --- execution and Core-derived comparison over every split
     campaign = ValidationCampaign(
         "sprint2.e2e", "1", dataset,
         (DatasetSplit.CALIBRATION, DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
+        target=target,
         holdout_release=release,
         description="generic trust engine campaign over a declared fixture corpus",
     )
@@ -636,7 +658,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     region = _region()
     coverage = build_coverage(report, dataset, region)
     clusters = cluster_failures(report, dataset, region)
-    envelope = ValidationEnvelope("sprint2.e2e", coverage, report.digest)
+    envelope = ValidationEnvelope("sprint2.e2e", coverage, report.digest, target=target)
     assert coverage.status_counts()["supported"] >= 1
     assert coverage.status_counts()["failed"] >= 1
     assert clusters and clusters[0].dimension == "temperature"
@@ -646,8 +668,11 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     diagnosis = diagnose_campaign(report, clusters)
     assert diagnosis.kind is InadequacyKind.MODEL_FORM_SUSPECTED
 
-    # --- the runtime half: an authorized run, its completeness and its UQ matrix
-    authorized = _authorized("sprint2-e2e")
+    # --- the opening is part of the record, not a fact about a vanished object
+    assert report.holdout_opening_digest == release.digest
+    assert report.target == target
+
+    # --- the runtime half: completeness and the UQ matrix
     blueprint = authorized.graph_plan.blueprint_id
     snapshot = authorized.composition_snapshot
 
@@ -699,6 +724,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
                 "no window-refinement study was run for this configuration",
             ),
         ),
+        binding=target,
     )
     assessment = assess_authorized_multiphysics_run(
         authorized,
@@ -709,8 +735,11 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
         envelope=envelope,
     )
     assert assessment.satisfied
+    # Every piece of evidence is bound to THIS computation, and the gates say so.
     assert assessment.gate(COMPUTATIONAL_REPLAY_VERIFIED).passed
     assert assessment.gate(SERIALIZATION_ROUNDTRIP_VERIFIED).passed
+    assert assessment.gate(NUMERICAL_EVIDENCE_PRESENT).passed
+    assert assessment.gate(VALIDATION_ENVELOPE_SUPPORTED).passed
     # The UQ gap is recorded as debt rather than quietly dropped.
     assert UQ_CHANNEL_COMPLETENESS in assessment.recorded_gaps
 
@@ -1028,3 +1057,400 @@ def test_a_supported_model_form_suspicion_cannot_leave_alternatives_open():
                 ),
             ),
         )
+
+
+# =====================================================================
+# TRUST BINDING: evidence cannot be borrowed from another computation
+# =====================================================================
+
+def _run_binding(authorized):
+    from engcore.assembly.trust import authorized_run_binding
+
+    return authorized_run_binding(authorized)
+
+
+def _envelope_for(authorized, *, target=None):
+    """A supported envelope over the fixture corpus, bound to some authority."""
+    dataset = _dataset()
+    campaign = ValidationCampaign(
+        "bound", "1", dataset, (DatasetSplit.VALIDATION,),
+        target=target if target is not None else _run_binding(authorized),
+    )
+    report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
+    coverage = build_coverage(report, dataset, _region())
+    return ValidationEnvelope("bound", coverage, report.digest, target=campaign.target)
+
+
+def _numerical_for(authorized, *, binding=None):
+    from engcore.scientific.corpus import NumericalEvidence
+
+    return NumericalEvidence(
+        "electrothermal.coupling",
+        (NumericalCheck.CONVERGENCE,),
+        (
+            NumericalCheckResult(
+                NumericalCheck.CONVERGENCE, CheckOutcome.SATISFIED,
+                "every coupling window converged", 1e-10, 1e-8,
+            ),
+        ),
+        binding=binding if binding is not None else _run_binding(authorized),
+    )
+
+
+def test_an_envelope_from_another_authority_cannot_certify_this_run():
+    """Finding 2: supported cells are about some science, not about any run."""
+    run_a = _authorized("authority-a")
+    run_b = _authorized("authority-b")
+
+    own = _envelope_for(run_a)
+    foreign = _envelope_for(run_a, target=EvidenceBinding(
+        "other-model",
+        (
+            AuthorityComponent(AuthorityRole.MODEL, "some.other.model", "1"),
+            AuthorityComponent(AuthorityRole.REALIZATION, "some.other.realization", "1"),
+        ),
+    ))
+    unbound = ValidationEnvelope(
+        own.envelope_id, own.coverage, own.campaign_report_digest, target=None
+    )
+
+    # Its own envelope satisfies the gate.
+    assert own.belongs_to(_run_binding(run_a)) == ()
+    assessment = assess_authorized_multiphysics_run(
+        run_a, policy=MULTIPHYSICS_FULL_TRUST_POLICY, envelope=own
+    )
+    assert assessment.gate(VALIDATION_ENVELOPE_SUPPORTED).passed
+
+    # An envelope about another model does not, however supported its cells.
+    assert foreign.has_any_support
+    assert foreign.belongs_to(_run_binding(run_a))
+    refused = assess_authorized_multiphysics_run(
+        run_a, policy=MULTIPHYSICS_FULL_TRUST_POLICY, envelope=foreign
+    )
+    assert not refused.gate(VALIDATION_ENVELOPE_SUPPORTED).passed
+    assert refused.gate(VALIDATION_ENVELOPE_SUPPORTED).evidence["problems"]
+
+    # Nor does an envelope that names no target at all. Fail closed.
+    assert unbound.has_any_support
+    assert not assess_authorized_multiphysics_run(
+        run_a, policy=MULTIPHYSICS_FULL_TRUST_POLICY, envelope=unbound
+    ).gate(VALIDATION_ENVELOPE_SUPPORTED).passed
+
+    # Run B differs from run A only by run id, so an envelope naming run A's
+    # RUN component is refused for B -- the narrowest cross-run case there is.
+    assert own.belongs_to(_run_binding(run_b))
+
+
+def test_a_fabricated_or_foreign_replay_outcome_cannot_pass_the_replay_gate():
+    """Finding 3: the gate reads sealed evidence, not a status field."""
+    from engcore.assembly.replay import ReplayEvidence, ReplayOutcome, ReplayStatus
+
+    run_a = _authorized("replay-bound-a")
+    run_b = _authorized("replay-bound-b")
+    store = InMemoryBulkStore()
+    genuine = replay_authorized_graph_plan(
+        run_a, replay_run_id="replay-bound-a-again",
+        compositions=production_composition_packs(),
+        executions=production_execution_packs(),
+        resolver=BulkDataResolver(store), store=store,
+    )
+    assert genuine.verified and genuine.evidence is not None
+    assert genuine.certifies(run_a, DEFAULT_REPLAY_POLICY) == ()
+
+    # 1. A hand-built outcome that merely SAYS match, with the right run id and
+    #    no evidence at all, is refused rather than believed.
+    with pytest.raises(InvalidScientificProblem, match="must carry the evidence"):
+        ReplayOutcome(
+            status=ReplayStatus.REPLAYED_MATCH,
+            policy_id=DEFAULT_REPLAY_POLICY.policy_id,
+            policy_version=DEFAULT_REPLAY_POLICY.version,
+            original_run_id=run_a.run.run_id,
+            replay_run_id="fabricated",
+            compared=7,
+        )
+
+    # 2. Genuine evidence, but produced for a different run. Its status is
+    #    REPLAYED_MATCH and it is real -- and it cannot speak for run B.
+    assert genuine.certifies(run_b, DEFAULT_REPLAY_POLICY)
+    assert not assess_authorized_multiphysics_run(
+        run_b, policy=MULTIPHYSICS_FULL_TRUST_POLICY, replay=genuine
+    ).gate(COMPUTATIONAL_REPLAY_VERIFIED).passed
+
+    # 3. Evidence re-sealed against another policy does not satisfy this one.
+    other_policy = ReplayPolicy(
+        "forge.multiphysics.replay", "2", ReplayTolerance(absolute=1.0)
+    )
+    assert genuine.certifies(run_a, other_policy)
+
+    # 4. A match over zero comparisons is not a reproduction.
+    hollow = ReplayEvidence(
+        original_run_digest=run_a.digest,
+        replayed_run_digest=run_b.digest,
+        original_run_id=run_a.run.run_id,
+        replay_run_id="hollow",
+        graph_fingerprint=run_a.run.graph_fingerprint,
+        plan_fingerprint=run_a.run.plan_fingerprint,
+        scenario_digest=run_a.run.scenario_digest,
+        composition_authority_digest=run_a.composition_snapshot.authority_digest,
+        execution_authority_digest=run_a.execution_snapshot.authority_digest,
+        policy_digest=DEFAULT_REPLAY_POLICY.digest,
+        comparison_digest="0" * 64,
+        compared=0,
+    )
+    assert "compared no quantities" in " ".join(
+        hollow.mismatches(run_a, DEFAULT_REPLAY_POLICY)
+    )
+
+    # 5. A record whose replayed digest equals the original was not re-executed.
+    with pytest.raises(InvalidScientificProblem, match="was not\\s+re-executed"):
+        ReplayEvidence(
+            original_run_digest=run_a.digest,
+            replayed_run_digest=run_a.digest,
+            original_run_id=run_a.run.run_id,
+            replay_run_id="self",
+            graph_fingerprint=run_a.run.graph_fingerprint,
+            plan_fingerprint=run_a.run.plan_fingerprint,
+            scenario_digest=run_a.run.scenario_digest,
+            composition_authority_digest=run_a.composition_snapshot.authority_digest,
+            execution_authority_digest=run_a.execution_snapshot.authority_digest,
+            policy_digest=DEFAULT_REPLAY_POLICY.digest,
+            comparison_digest="0" * 64,
+            compared=3,
+        )
+
+    # 6. A tampered seal does not survive a roundtrip.
+    payload = genuine.evidence.to_dict()
+    payload["seal"] = "f" * 64
+    with pytest.raises(InvalidScientificProblem, match="seal its own fields"):
+        ReplayEvidence.from_dict(payload)
+
+
+def test_a_holdout_release_for_one_evaluation_cannot_open_another():
+    """Finding 4: evaluation_id was a label; now it binds."""
+    from engcore.scientific.corpus import HoldoutLedger
+
+    dataset = _dataset()
+    release = HoldoutRelease(
+        "eval-A", "campaign-A", "1", dataset.normalized_digest,
+        "2026-02-01T00:00:00+00:00", "registered for campaign A",
+    )
+
+    permitted = ValidationCampaign(
+        "campaign-A", "1", dataset,
+        (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
+        holdout_release=release,
+    )
+    assert len(permitted.cases()) == 6
+
+    # Same dataset, same release, different evaluation. Refused.
+    with pytest.raises(CorpusLeakageError, match="registered for campaign"):
+        ValidationCampaign(
+            "campaign-B", "1", dataset,
+            (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
+            holdout_release=release,
+        )
+    # A version bump is a different evaluation too.
+    with pytest.raises(CorpusLeakageError, match="registered for campaign"):
+        ValidationCampaign(
+            "campaign-A", "2", dataset,
+            (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
+            holdout_release=release,
+        )
+
+    # The report retains which release opened the holdout.
+    report = run_campaign(permitted, _predictions(dataset, permitted.cases()))
+    assert report.holdout_opening_digest == release.digest
+
+    # "Once" is enforced by an authority with memory, not by a docstring.
+    ledger = HoldoutLedger()
+    opening = ledger.open(release, opened_at_utc="2026-02-02T00:00:00+00:00")
+    assert opening.campaign_id == "campaign-A"
+    assert ledger.was_opened(release)
+    with pytest.raises(CorpusLeakageError, match="already opened"):
+        ledger.open(release, opened_at_utc="2026-02-03T00:00:00+00:00")
+
+
+def test_numerical_evidence_from_another_run_cannot_satisfy_this_one():
+    """Finding 5: producer_id said which solver, not which execution."""
+    run_a = _authorized("numerical-a")
+    run_b = _authorized("numerical-b")
+
+    own = _numerical_for(run_a)
+    assert own.belongs_to(_run_binding(run_a)) == ()
+    assert assess_authorized_multiphysics_run(
+        run_a, policy=MULTIPHYSICS_FULL_TRUST_POLICY,
+        numerical=own, required_numerical_checks=(NumericalCheck.CONVERGENCE,),
+    ).gate(NUMERICAL_EVIDENCE_PRESENT).passed
+
+    # Real evidence, real producer, wrong execution.
+    assert own.belongs_to(_run_binding(run_b))
+    assert not assess_authorized_multiphysics_run(
+        run_b, policy=MULTIPHYSICS_FULL_TRUST_POLICY,
+        numerical=own, required_numerical_checks=(NumericalCheck.CONVERGENCE,),
+    ).gate(NUMERICAL_EVIDENCE_PRESENT).passed
+
+    # Unbound evidence fails closed rather than being assumed local.
+    unbound = _numerical_for(run_a, binding=None)
+    unbound = type(unbound)(
+        unbound.producer_id, unbound.supported_checks, unbound.results, None
+    )
+    assert unbound.belongs_to(_run_binding(run_a))
+    assert not assess_authorized_multiphysics_run(
+        run_a, policy=MULTIPHYSICS_FULL_TRUST_POLICY,
+        numerical=unbound, required_numerical_checks=(NumericalCheck.CONVERGENCE,),
+    ).gate(NUMERICAL_EVIDENCE_PRESENT).passed
+
+
+def test_undeclared_applicability_creates_no_support_and_no_envelope():
+    """Finding 1: UNDECLARED is not INSIDE, and an unscreened case scores nothing."""
+    cases = tuple(
+        _case(t, DatasetSplit.VALIDATION, applicability=Applicability.UNDECLARED)
+        for t in (315.0, 318.0)
+    )
+    dataset = _dataset(cases=cases, observations=(_observation(315.0), _observation(318.0)))
+    campaign = ValidationCampaign("undeclared", "1", dataset, (DatasetSplit.VALIDATION,))
+    report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
+
+    # These predictions would have PASSED had the cases been screened.
+    assert {item.verdict for item in report.comparisons} == {
+        CaseVerdict.APPLICABILITY_UNDECLARED
+    }
+    assert report.counts["pass"] == 0
+    assert report.counts["fail"] == 0
+    assert report.pass_fraction is None
+    assert report.guardrail_counts["applicability_undeclared"] == 2
+
+    # It cannot expand coverage or the envelope.
+    coverage = build_coverage(report, dataset, _region())
+    assert coverage.status_counts()["supported"] == 0
+    assert all(cell.passed == 0 and cell.failed == 0 for cell in coverage.cells)
+    assert sum(cell.undeclared for cell in coverage.cells) == 2
+    envelope = ValidationEnvelope("undeclared", coverage, report.digest)
+    assert not envelope.has_any_support
+
+    # A disagreeing prediction is not a FAIL either: the model was never held
+    # to a region nothing established it claims.
+    wrong = run_campaign(
+        campaign,
+        {
+            (case.case_id, "response"): PredictedValue(Quantity(999.0, "V"))
+            for case in campaign.cases()
+        },
+    )
+    assert wrong.counts["fail"] == 0
+    assert wrong.counts["applicability_undeclared"] == 2
+
+    # And a refusal here is neither correct nor unexpected.
+    declined = run_campaign(
+        campaign,
+        {
+            (case.case_id, "response"): PredictionRefusal(
+                RefusalKind.UNSUPPORTED_REGIME, "no declared domain for this point"
+            )
+            for case in campaign.cases()
+        },
+    )
+    assert declined.counts["unexpected_refusal"] == 0
+    assert declined.counts["correct_refusal"] == 0
+    assert declined.counts["applicability_undeclared"] == 2
+    assert declined.refusal_accuracy is None
+    # The state stays visible rather than being promoted to OUTSIDE.
+    assert "never established" in declined.comparisons[0].detail
+
+
+def test_measurement_uncertainty_is_not_inferred_from_acceptance_tolerance():
+    """Finding 6: a Forge policy choice is not a statement about the source."""
+    from engcore.scientific.corpus import AlternativeCause, CauseState
+
+    def cause_of(diagnosis):
+        return {item.cause: item for item in diagnosis.cause_checks}[
+            AlternativeCause.MEASUREMENT_UNCERTAINTY
+        ]
+
+    # A corpus with NO source uncertainty. The residuals are marginal against
+    # the acceptance tolerance, which the old rule would have read as
+    # measurement spread -- purely because somebody set a tight tolerance.
+    silent = _dataset(
+        observations=tuple(
+            ReferenceObservation(
+                case_id=f"T{int(t)}",
+                metric="response",
+                expected=Quantity(_truth(t), "V"),
+                source_uncertainty=None,
+                acceptance_tolerance=_tolerance(0.5),
+            )
+            for t in (*CALIBRATION_TEMPERATURES, *VALIDATION_TEMPERATURES, *HOLDOUT_TEMPERATURES)
+        )
+    )
+    campaign = ValidationCampaign(
+        "c", "1", silent, (DatasetSplit.CALIBRATION, DatasetSplit.VALIDATION)
+    )
+    report = run_campaign(campaign, _predictions(silent, campaign.cases()))
+    assert report.failures()
+    assert all(item.source_uncertainty is None for item in report.failures())
+
+    check = cause_of(diagnose_campaign(report))
+    assert check.state is CauseState.NOT_CHECKABLE
+    assert "acceptance tolerance is a policy choice" in check.why
+
+    # With a generous stated source uncertainty the cause IS indicated -- and
+    # the acceptance tolerance is unchanged, so only the source's own statement
+    # moved the answer.
+    stated = _dataset(
+        observations=tuple(
+            ReferenceObservation(
+                case_id=f"T{int(t)}",
+                metric="response",
+                expected=Quantity(_truth(t), "V"),
+                source_uncertainty=_tolerance(20.0, ToleranceBasis.SOURCE_REPORTED),
+                acceptance_tolerance=_tolerance(0.5),
+            )
+            for t in (*CALIBRATION_TEMPERATURES, *VALIDATION_TEMPERATURES, *HOLDOUT_TEMPERATURES)
+        )
+    )
+    generous = run_campaign(
+        ValidationCampaign(
+            "c", "1", stated, (DatasetSplit.CALIBRATION, DatasetSplit.VALIDATION)
+        ),
+        _predictions(stated, campaign.cases()),
+    )
+    indicated = diagnose_campaign(generous)
+    assert cause_of(indicated).state is CauseState.INDICATED
+    assert indicated.kind is InadequacyKind.MEASUREMENT_UNCERTAINTY
+
+
+def test_a_declared_but_empty_requirement_set_is_enforceable():
+    """Finding 7: emptiness is not a version probe."""
+    from engcore.assembly.trust import assess_protocol_completeness, assess_uq_coverage
+    from engcore.compositionpacks.snapshot import CompositionPackSnapshot
+
+    authorized = _authorized("requirements")
+    snapshot = authorized.composition_snapshot
+    assert snapshot.declares_requirements
+
+    # A V4 pack that requires nothing for a blueprint, and executed nothing,
+    # is COMPLETE -- not unenforceable.
+    empty = replace_snapshot(snapshot, protocol_requirements=(), uncertainty_requirements=())
+    assert empty.declares_requirements
+    completeness = assess_protocol_completeness(empty, "any.blueprint", "validation", ())
+    assert completeness.enforceable
+    assert completeness.complete
+    assert assess_uq_coverage(empty, "any.blueprint", {}).complete
+
+    # A pre-V4 payload declared nothing at all and stays unenforceable.
+    payload = dict(snapshot.to_dict())
+    payload["schema"] = "forge.composition_pack_snapshot/3"
+    payload.pop("requirements_declared", None)
+    legacy = CompositionPackSnapshot.from_dict(payload)
+    assert not legacy.declares_requirements
+    legacy_completeness = assess_protocol_completeness(
+        legacy, authorized.graph_plan.blueprint_id, "validation", ()
+    )
+    assert not legacy_completeness.enforceable
+    assert not legacy_completeness.complete
+
+
+def replace_snapshot(snapshot, **changes):
+    from dataclasses import replace
+
+    return replace(snapshot, **changes)

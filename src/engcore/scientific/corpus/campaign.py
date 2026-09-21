@@ -24,6 +24,19 @@ The mirror case is equally important. A model that *answers* a case declared
 outside its applicability has claimed something it does not support, so that
 result is ``OUTSIDE_APPLICABILITY`` -- recorded, never scored as a pass.
 
+APPLICABILITY IS THREE-VALUED AND SCORING NEEDS THE FIRST VALUE
+----------------------------------------------------------------
+Only ``INSIDE`` is scorable. ``UNDECLARED`` means nobody screened the case
+against the model's declared domain, and an unscreened point cannot produce
+empirical support: a PASS there would say the model is validated in a region
+nothing established it claims, and a FAIL would hold it to a region it never
+claimed. Both are ``APPLICABILITY_UNDECLARED``, which is recorded, is not
+scored, does not enter coverage as evidence and does not widen an envelope.
+
+It is also not silently promoted to ``OUTSIDE``. "Not established" and
+"established to be outside" are different facts, and the second is a decision
+somebody made.
+
 A CORRECT REFUSAL IS NOT SCIENTIFIC SUPPORT
 --------------------------------------------
 This is the distinction most easily lost, so it is stated once here and
@@ -61,6 +74,7 @@ from .dataset import (
     ReferenceDataset,
     ReferenceObservation,
 )
+from .authority import EvidenceBinding, require_binding
 from .source import CorpusError, require_quantity, text
 
 PREDICTION_SCHEMA = schema_string("corpus_prediction")
@@ -86,6 +100,12 @@ class CaseVerdict(str, Enum):
     UNEXPECTED_REFUSAL = "unexpected_refusal"
     #: Answered a case declared outside applicability. Recorded, never scored.
     OUTSIDE_APPLICABILITY = "outside_applicability"
+    #: The case's applicability was never established. UNDECLARED is not
+    #: INSIDE: nobody screened this point against the model's declared domain,
+    #: so neither agreement nor disagreement here is a statement about a region
+    #: the model claims. Recorded, never scored, and never converted to
+    #: OUTSIDE -- "not established" is its own state.
+    APPLICABILITY_UNDECLARED = "applicability_undeclared"
 
     @property
     def is_scored(self) -> bool:
@@ -117,6 +137,13 @@ class CaseVerdict(str, Enum):
 
     @property
     def is_refusal(self) -> bool:
+        """A refusal this corpus can judge as right or wrong.
+
+        A refusal at an UNDECLARED case is deliberately NOT one. There is no
+        declared envelope to place it inside or outside, so calling it correct
+        or unexpected would be inventing the judgement. It is recorded as
+        APPLICABILITY_UNDECLARED and kept out of refusal accuracy.
+        """
         return self in (CaseVerdict.CORRECT_REFUSAL, CaseVerdict.UNEXPECTED_REFUSAL)
 
 
@@ -201,6 +228,11 @@ class ValidationComparison:
     residual: float | None = None
     allowed: float | None = None
     normalized_residual: float | None = None
+    #: What the SOURCE says about its own number, read as a difference in
+    #: ``unit``. Carried separately from ``allowed`` -- which is Forge's
+    #: acceptance policy -- because a diagnosis that confuses the two attributes
+    #: disagreement to measurement spread on the strength of a policy choice.
+    source_uncertainty: float | None = None
     unit: str = ""
     detail: str = ""
 
@@ -234,6 +266,7 @@ class ValidationComparison:
             "residual": self.residual,
             "allowed": self.allowed,
             "normalized_residual": self.normalized_residual,
+            "source_uncertainty": self.source_uncertainty,
             "unit": self.unit,
             "detail": self.detail,
         }
@@ -253,6 +286,7 @@ class ValidationComparison:
             payload.get("residual"),
             payload.get("allowed"),
             payload.get("normalized_residual"),
+            payload.get("source_uncertainty"),
             payload.get("unit", ""),
             payload.get("detail", ""),
         )
@@ -276,6 +310,20 @@ def compare_observation(
         )
 
     if isinstance(prediction, PredictionRefusal):
+        if case.applicability is Applicability.UNDECLARED:
+            # No declared envelope to be inside or outside of, so this refusal
+            # is neither a guardrail success nor a defect. Saying either would
+            # be inventing the judgement.
+            return ValidationComparison(
+                **common,
+                verdict=CaseVerdict.APPLICABILITY_UNDECLARED,
+                expected=observation.expected,
+                detail=(
+                    f"declined at a case whose applicability was never "
+                    f"established ({prediction.kind.value}: {prediction.reason}); "
+                    f"this is neither a correct nor an unexpected refusal"
+                ),
+            )
         outside = case.applicability is Applicability.OUTSIDE
         return ValidationComparison(
             **common,
@@ -308,6 +356,21 @@ def compare_observation(
             ),
         )
 
+    if case.applicability is not Applicability.INSIDE:
+        # UNDECLARED. Scoring would manufacture support for, or hold the model
+        # to, a region nobody established it claims.
+        return ValidationComparison(
+            **common,
+            verdict=CaseVerdict.APPLICABILITY_UNDECLARED,
+            expected=observation.expected,
+            observed=prediction.value,
+            detail=(
+                "this case was never screened against the model's declared "
+                "applicability, so its agreement or disagreement is not "
+                "empirical evidence about a claimed region"
+            ),
+        )
+
     if observation.acceptance_tolerance is None:
         return ValidationComparison(
             **common,
@@ -325,6 +388,11 @@ def compare_observation(
         expected_value = observation.expected.magnitude_in(unit)
         observed_value = prediction.value.magnitude_in(unit)
         allowed = observation.acceptance_tolerance.magnitude_in(unit)
+        reported = (
+            None
+            if observation.source_uncertainty is None
+            else observation.source_uncertainty.magnitude_in(unit)
+        )
     except Exception as exc:  # noqa: BLE001 -- the campaign records, it does not abort
         return ValidationComparison(
             **common,
@@ -356,6 +424,7 @@ def compare_observation(
         residual=residual,
         allowed=allowed,
         normalized_residual=normalized,
+        source_uncertainty=reported,
         unit=unit,
     )
 
@@ -373,6 +442,10 @@ class ValidationCampaign:
     version: str
     dataset: ReferenceDataset
     splits: tuple[DatasetSplit, ...]
+    #: WHICH SCIENCE this campaign validates. Without it a campaign report is a
+    #: set of numbers that any computation could claim, which is how a validated
+    #: envelope ends up certifying a model it was never about.
+    target: EvidenceBinding | None = None
     holdout_release: HoldoutRelease | None = None
     description: str = ""
 
@@ -385,6 +458,8 @@ class ValidationCampaign:
         if not splits:
             raise CorpusError("a campaign must name at least one dataset split")
         object.__setattr__(self, "splits", splits)
+        if self.target is not None:
+            require_binding(self.target, label="campaign target")
         if DatasetSplit.LOCKED_HOLDOUT in splits and self.holdout_release is None:
             raise CorpusError(
                 "a campaign over the locked holdout requires a registered "
@@ -393,7 +468,11 @@ class ValidationCampaign:
         if self.holdout_release is not None:
             if not isinstance(self.holdout_release, HoldoutRelease):
                 raise CorpusError("holdout_release must be a HoldoutRelease")
-            # Validates the digest binding as a side effect, at construction.
+            # A RELEASE IS REGISTERED FOR ONE EVALUATION. Checked here, at the
+            # only place a campaign can reach the holdout, so a release granted
+            # for one evaluation cannot silently open the holdout for another.
+            self.holdout_release.require_for(self.campaign_id, self.version)
+            # Validates the dataset digest binding as a side effect.
             self.dataset.released_holdout_cases(self.holdout_release)
         object.__setattr__(self, "description", str(self.description).strip())
 
@@ -416,6 +495,7 @@ class ValidationCampaign:
             "version": self.version,
             "dataset": self.dataset.to_dict(),
             "splits": [item.value for item in self.splits],
+            "target": None if self.target is None else self.target.to_dict(),
             "holdout_release": (
                 None if self.holdout_release is None else self.holdout_release.to_dict()
             ),
@@ -426,11 +506,13 @@ class ValidationCampaign:
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationCampaign":
         require_schema(payload, CAMPAIGN_SCHEMA)
         release = payload.get("holdout_release")
+        target = payload.get("target")
         return cls(
             payload["campaign_id"],
             payload["version"],
             ReferenceDataset.from_dict(payload["dataset"]),
             tuple(DatasetSplit(item) for item in payload["splits"]),
+            None if target is None else EvidenceBinding.from_dict(target),
             None if release is None else HoldoutRelease.from_dict(release),
             payload.get("description", ""),
         )
@@ -448,6 +530,13 @@ class ValidationCampaignReport:
     normalized_dataset_sha256: str
     splits: tuple[DatasetSplit, ...]
     comparisons: tuple[ValidationComparison, ...]
+    #: The scientific authority this campaign validated. Travels with the
+    #: report so coverage, an envelope and finally certification can all ask
+    #: the same question: is this evidence about the computation in front of me.
+    target: EvidenceBinding | None = None
+    #: Present exactly when the locked holdout was opened. The opening is part
+    #: of the record, not a fact about a release object that has gone away.
+    holdout_opening_digest: str = ""
 
     def __post_init__(self) -> None:
         comparisons = tuple(sorted(self.comparisons))
@@ -462,6 +551,24 @@ class ValidationCampaignReport:
             "splits",
             tuple(sorted({DatasetSplit(i) for i in self.splits}, key=lambda i: i.value)),
         )
+        if self.target is not None:
+            require_binding(self.target, label="campaign report target")
+        opening = str(self.holdout_opening_digest).strip().lower()
+        if opening and (
+            len(opening) != 64 or any(ch not in "0123456789abcdef" for ch in opening)
+        ):
+            raise CorpusError("holdout_opening_digest must be sha256 hex")
+        if DatasetSplit.LOCKED_HOLDOUT in self.splits and not opening:
+            raise CorpusError(
+                "a report covering the locked holdout must name the release that "
+                "opened it; an unrecorded opening is the thing the lock exists "
+                "to prevent"
+            )
+        if opening and DatasetSplit.LOCKED_HOLDOUT not in self.splits:
+            raise CorpusError(
+                "a holdout opening is recorded but no holdout split was scored"
+            )
+        object.__setattr__(self, "holdout_opening_digest", opening)
 
     @property
     def counts(self) -> dict[str, int]:
@@ -516,6 +623,10 @@ class ValidationCampaignReport:
                 item.verdict is CaseVerdict.OUTSIDE_APPLICABILITY
                 for item in self.comparisons
             ),
+            "applicability_undeclared": sum(
+                item.verdict is CaseVerdict.APPLICABILITY_UNDECLARED
+                for item in self.comparisons
+            ),
         }
 
     def for_split(self, split: DatasetSplit) -> tuple[ValidationComparison, ...]:
@@ -544,6 +655,8 @@ class ValidationCampaignReport:
             "normalized_dataset_sha256": self.normalized_dataset_sha256,
             "splits": [item.value for item in self.splits],
             "comparisons": [item.to_dict() for item in self.comparisons],
+            "target": None if self.target is None else self.target.to_dict(),
+            "holdout_opening_digest": self.holdout_opening_digest,
         }
 
     @classmethod
@@ -558,6 +671,12 @@ class ValidationCampaignReport:
             payload["normalized_dataset_sha256"],
             tuple(DatasetSplit(i) for i in payload["splits"]),
             tuple(ValidationComparison.from_dict(i) for i in payload["comparisons"]),
+            (
+                None
+                if payload.get("target") is None
+                else EvidenceBinding.from_dict(payload["target"])
+            ),
+            payload.get("holdout_opening_digest", ""),
         )
 
 
@@ -595,6 +714,13 @@ def run_campaign(
         normalized_dataset_sha256=dataset.normalized_digest,
         splits=campaign.splits,
         comparisons=comparisons,
+        target=campaign.target,
+        holdout_opening_digest=(
+            campaign.holdout_release.digest
+            if campaign.holdout_release is not None
+            and DatasetSplit.LOCKED_HOLDOUT in campaign.splits
+            else ""
+        ),
     )
 
 

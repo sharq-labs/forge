@@ -33,6 +33,7 @@ from typing import Any, Mapping
 
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
+from .authority import EvidenceBinding, require_binding
 from .coverage import CoverageStatus, ValidationCoverage, ValidationRegion
 from .dataset import Applicability
 from .source import CorpusError, text
@@ -121,11 +122,17 @@ class ValidationEnvelope:
     envelope_id: str
     coverage: ValidationCoverage
     campaign_report_digest: str
+    #: WHICH SCIENCE this envelope is about. An envelope full of supported
+    #: cells is not a statement about whatever computation happens to be handed
+    #: it; without this it could certify a model it was never about.
+    target: EvidenceBinding | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "envelope_id", text(self.envelope_id, label="envelope_id"))
         if not isinstance(self.coverage, ValidationCoverage):
             raise CorpusError("a validation envelope requires ValidationCoverage")
+        if self.target is not None:
+            require_binding(self.target, label="envelope target")
         digest = str(self.campaign_report_digest).strip().lower()
         if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
             raise CorpusError("envelope campaign_report_digest must be sha256 hex")
@@ -242,7 +249,22 @@ class ValidationEnvelope:
             "envelope_id": self.envelope_id,
             "coverage": self.coverage.to_dict(),
             "campaign_report_digest": self.campaign_report_digest,
+            "target": None if self.target is None else self.target.to_dict(),
         }
+
+    def belongs_to(self, computation: EvidenceBinding) -> tuple[str, ...]:
+        """Why this envelope is not about that computation. Empty means it is.
+
+        An envelope with no target is refused rather than accepted: evidence
+        that cannot say what science it is about cannot be checked against any,
+        and certification is not the place to assume.
+        """
+        if self.target is None:
+            return (
+                "the envelope names no validation target, so it cannot be shown "
+                "to be about this computation",
+            )
+        return self.target.mismatches(computation)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidationEnvelope":
@@ -251,6 +273,11 @@ class ValidationEnvelope:
             payload["envelope_id"],
             ValidationCoverage.from_dict(payload["coverage"]),
             payload["campaign_report_digest"],
+            (
+                None
+                if payload.get("target") is None
+                else EvidenceBinding.from_dict(payload["target"])
+            ),
         )
 
 

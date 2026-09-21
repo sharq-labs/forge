@@ -19,6 +19,26 @@ GraphPlan again, and compares the numbers that came back against the numbers
 the original run recorded. The serialization roundtrip remains its own gate
 under its own name.
 
+AND THE RESULT IS BOUND TO WHAT IT REPLAYED
+--------------------------------------------
+A ``ReplayOutcome`` used to say ``REPLAYED_MATCH`` and carry a run id, and
+certification checked that the id matched. That is a label, not evidence: a
+record naming the right run satisfied the gate whether or not anything had
+been executed, and an outcome with zero comparisons satisfied it too.
+
+So the real replay function emits a :class:`ReplayEvidence` carrying the
+digests of both authorized runs, the policy, the comparison and the pack
+authorities, sealed together. Certification recomputes the expected identity
+from the run it is actually certifying and the policy it was actually told
+to require, so evidence produced for another run, under another policy, or
+against other authority cannot be borrowed by this one.
+
+This is BINDING, not authentication. A caller can construct any record it
+likes and hashing does not change that -- the trust boundary is which code
+calls certification, not which code can build a dataclass. What binding buys
+is the failure actually being made here: evidence from one computation
+silently satisfying another computation's gate.
+
 FAIL CLOSED ON UNREPRODUCIBLE, NOT "PROBABLY FINE"
 ---------------------------------------------------
 Replay refuses rather than degrades. If the Composition or Execution Pack
@@ -52,6 +72,7 @@ from .trust import evidence_digest
 REPLAY_POLICY_SCHEMA = schema_string("forge_replay_policy")
 REPLAY_OUTCOME_SCHEMA = schema_string("forge_replay_outcome")
 REPLAY_DIFFERENCE_SCHEMA = schema_string("forge_replay_difference")
+REPLAY_EVIDENCE_SCHEMA = schema_string("forge_replay_evidence")
 
 
 class ReplayStatus(str, Enum):
@@ -128,6 +149,164 @@ DEFAULT_REPLAY_POLICY = ReplayPolicy(
 )
 
 
+@dataclass(frozen=True)
+class ReplayEvidence:
+    """What was replayed, against what, under which policy -- sealed together.
+
+    The seal is a digest over every identity field. It does not prove who
+    produced the record; it proves the record's fields are the ones the seal
+    was computed from, and it lets certification demand a seal recomputed from
+    the run it is actually certifying. Evidence built for another run, another
+    policy or other pack authority will not match.
+    """
+
+    original_run_digest: str
+    replayed_run_digest: str
+    original_run_id: str
+    replay_run_id: str
+    graph_fingerprint: str
+    plan_fingerprint: str
+    scenario_digest: str
+    composition_authority_digest: str
+    execution_authority_digest: str
+    policy_digest: str
+    comparison_digest: str
+    compared: int
+    seal: str = ""
+
+    def __post_init__(self) -> None:
+        for label in ("original_run_id", "replay_run_id"):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise InvalidScientificProblem(f"replay evidence requires {label}")
+            object.__setattr__(self, label, value)
+        for label in (
+            "original_run_digest",
+            "replayed_run_digest",
+            "graph_fingerprint",
+            "plan_fingerprint",
+            "composition_authority_digest",
+            "execution_authority_digest",
+            "policy_digest",
+            "comparison_digest",
+        ):
+            digest = str(getattr(self, label)).strip().lower()
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+                raise InvalidScientificProblem(
+                    f"replay evidence {label} must be a sha256 hex digest"
+                )
+            object.__setattr__(self, label, digest)
+        scenario = str(self.scenario_digest).strip().lower()
+        if scenario and (
+            len(scenario) != 64 or any(ch not in "0123456789abcdef" for ch in scenario)
+        ):
+            raise InvalidScientificProblem(
+                "replay evidence scenario_digest must be sha256 hex or empty"
+            )
+        object.__setattr__(self, "scenario_digest", scenario)
+        if isinstance(self.compared, bool) or int(self.compared) != self.compared:
+            raise InvalidScientificProblem("replay evidence compared must be an integer")
+        if int(self.compared) < 0:
+            raise InvalidScientificProblem(
+                "replay evidence compared must be non-negative"
+            )
+        object.__setattr__(self, "compared", int(self.compared))
+        if self.original_run_digest == self.replayed_run_digest:
+            raise InvalidScientificProblem(
+                "the replayed run carries the same digest as the original; a "
+                "record identical to what it claims to reproduce was not "
+                "re-executed"
+            )
+        object.__setattr__(self, "seal", self.expected_seal)
+
+    def _identity(self) -> dict[str, Any]:
+        return {
+            "original_run_digest": self.original_run_digest,
+            "replayed_run_digest": self.replayed_run_digest,
+            "original_run_id": self.original_run_id,
+            "replay_run_id": self.replay_run_id,
+            "graph_fingerprint": self.graph_fingerprint,
+            "plan_fingerprint": self.plan_fingerprint,
+            "scenario_digest": self.scenario_digest,
+            "composition_authority_digest": self.composition_authority_digest,
+            "execution_authority_digest": self.execution_authority_digest,
+            "policy_digest": self.policy_digest,
+            "comparison_digest": self.comparison_digest,
+            "compared": self.compared,
+        }
+
+    @property
+    def expected_seal(self) -> str:
+        """The seal these fields imply. Recomputed on construction and on check."""
+        return evidence_digest(self._identity())
+
+    def mismatches(
+        self,
+        authorized: "AuthorizedMultiphysicsRun",
+        policy: "ReplayPolicy",
+        *,
+        require_comparisons: bool = True,
+    ) -> tuple[str, ...]:
+        """Why this evidence is not about that run under that policy."""
+        problems: list[str] = []
+        if self.seal != self.expected_seal:
+            problems.append("the replay seal does not match its own fields")
+        expected = {
+            "original_run_digest": authorized.digest,
+            "original_run_id": authorized.run.run_id,
+            "graph_fingerprint": authorized.run.graph_fingerprint,
+            "plan_fingerprint": authorized.run.plan_fingerprint,
+            "scenario_digest": authorized.run.scenario_digest,
+            "composition_authority_digest": (
+                authorized.composition_snapshot.authority_digest
+            ),
+            "execution_authority_digest": (
+                authorized.execution_snapshot.authority_digest
+            ),
+            "policy_digest": policy.digest,
+        }
+        for label, wanted in expected.items():
+            found = getattr(self, label)
+            if found != wanted:
+                problems.append(
+                    f"replay evidence {label} is {str(found)[:12] or '(none)'}... "
+                    f"but this computation's is {str(wanted)[:12] or '(none)'}..."
+                )
+        if require_comparisons and self.compared <= 0:
+            problems.append(
+                "the replay compared no quantities at all; a match over nothing "
+                "is not a reproduction"
+            )
+        return tuple(problems)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": REPLAY_EVIDENCE_SCHEMA, "seal": self.seal, **self._identity()}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ReplayEvidence":
+        require_schema(payload, REPLAY_EVIDENCE_SCHEMA)
+        made = cls(
+            payload["original_run_digest"],
+            payload["replayed_run_digest"],
+            payload["original_run_id"],
+            payload["replay_run_id"],
+            payload["graph_fingerprint"],
+            payload["plan_fingerprint"],
+            payload.get("scenario_digest", ""),
+            payload["composition_authority_digest"],
+            payload["execution_authority_digest"],
+            payload["policy_digest"],
+            payload["comparison_digest"],
+            payload["compared"],
+        )
+        if payload.get("seal") != made.seal:
+            raise InvalidScientificProblem(
+                "serialized replay evidence carries a seal its own fields do not "
+                "produce"
+            )
+        return made
+
+
 @dataclass(frozen=True, order=True)
 class ReplayDifference:
     """One quantity that did not come back the same."""
@@ -166,6 +345,11 @@ class ReplayOutcome:
     compared: int = 0
     differences: tuple[ReplayDifference, ...] = ()
     refusal_reason: str = ""
+    #: Present exactly when a real re-execution happened. Certification reads
+    #: THIS, not the status field: a status is a label anyone can write, while
+    #: the evidence is bound to the run, the policy and the authority it came
+    #: from. An outcome without it cannot satisfy the replay gate.
+    evidence: ReplayEvidence | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "status", ReplayStatus(self.status))
@@ -188,11 +372,41 @@ class ReplayOutcome:
                 "a matching replay cannot also carry differences"
             )
         object.__setattr__(self, "refusal_reason", str(self.refusal_reason).strip())
+        if self.evidence is not None and not isinstance(self.evidence, ReplayEvidence):
+            raise InvalidScientificProblem(
+                "replay evidence must be a ReplayEvidence record"
+            )
+        if self.status is not ReplayStatus.REFUSED_UNREPRODUCIBLE and self.evidence is None:
+            raise InvalidScientificProblem(
+                "a replay that ran must carry the evidence it produced; a status "
+                "with nothing behind it is a label"
+            )
 
     @property
     def verified(self) -> bool:
-        """True only for an actual re-execution that agreed."""
-        return self.status is ReplayStatus.REPLAYED_MATCH
+        """Re-executed and agreed. Says nothing about WHICH run -- see :meth:`certifies`."""
+        return self.status is ReplayStatus.REPLAYED_MATCH and self.evidence is not None
+
+    def certifies(
+        self,
+        authorized: AuthorizedMultiphysicsRun,
+        policy: "ReplayPolicy",
+        *,
+        require_comparisons: bool = True,
+    ) -> tuple[str, ...]:
+        """Why this outcome cannot certify that run. Empty means it can.
+
+        The question certification actually needs answered, and it is not
+        "does the status say match". A verified replay of a DIFFERENT run is a
+        perfectly good replay and still cannot speak for this one.
+        """
+        if self.status is not ReplayStatus.REPLAYED_MATCH:
+            return (f"the replay status is {self.status.value}, not a match",)
+        if self.evidence is None:
+            return ("the replay outcome carries no sealed evidence",)
+        return self.evidence.mismatches(
+            authorized, policy, require_comparisons=require_comparisons
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -205,6 +419,7 @@ class ReplayOutcome:
             "compared": self.compared,
             "differences": [item.to_dict() for item in self.differences],
             "refusal_reason": self.refusal_reason,
+            "evidence": None if self.evidence is None else self.evidence.to_dict(),
         }
 
     @classmethod
@@ -219,6 +434,11 @@ class ReplayOutcome:
             payload.get("compared", 0),
             tuple(ReplayDifference.from_dict(i) for i in payload.get("differences", ())),
             payload.get("refusal_reason", ""),
+            (
+                None
+                if payload.get("evidence") is None
+                else ReplayEvidence.from_dict(payload["evidence"])
+            ),
         )
 
 
@@ -380,6 +600,25 @@ def replay_authorized_graph_plan(
         )
 
     compared, differences = compare_runs(authorized.run, replayed.run, policy)
+    evidence = ReplayEvidence(
+        original_run_digest=authorized.digest,
+        replayed_run_digest=replayed.digest,
+        original_run_id=authorized.run.run_id,
+        replay_run_id=replay_run_id,
+        graph_fingerprint=authorized.run.graph_fingerprint,
+        plan_fingerprint=authorized.run.plan_fingerprint,
+        scenario_digest=authorized.run.scenario_digest,
+        composition_authority_digest=authorized.composition_snapshot.authority_digest,
+        execution_authority_digest=authorized.execution_snapshot.authority_digest,
+        policy_digest=policy.digest,
+        comparison_digest=evidence_digest(
+            {
+                "compared": compared,
+                "differences": [item.to_dict() for item in differences],
+            }
+        ),
+        compared=compared,
+    )
     return ReplayOutcome(
         status=(
             ReplayStatus.REPLAYED_MATCH
@@ -392,15 +631,18 @@ def replay_authorized_graph_plan(
         replay_run_id=replay_run_id,
         compared=compared,
         differences=differences,
+        evidence=evidence,
     )
 
 
 __all__ = [
     "DEFAULT_REPLAY_POLICY",
     "REPLAY_DIFFERENCE_SCHEMA",
+    "REPLAY_EVIDENCE_SCHEMA",
     "REPLAY_OUTCOME_SCHEMA",
     "REPLAY_POLICY_SCHEMA",
     "ReplayDifference",
+    "ReplayEvidence",
     "ReplayOutcome",
     "ReplayPolicy",
     "ReplayStatus",

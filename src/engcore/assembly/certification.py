@@ -37,12 +37,13 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .multiphysics import AuthorizedMultiphysicsRun
-from .replay import ReplayOutcome
+from .replay import DEFAULT_REPLAY_POLICY, ReplayOutcome, ReplayPolicy
 from .trust import (
     ProtocolCompleteness,
     UQCoverage,
     assess_protocol_completeness,
     assess_uq_coverage,
+    authorized_run_binding,
     evidence_digest,
 )
 from ..scientific.certification_core.artifact import CertificationArtifact
@@ -336,6 +337,7 @@ def assess_authorized_multiphysics_run(
     *,
     policy: TrustPolicy = MULTIPHYSICS_PRODUCTION_POLICY,
     replay: ReplayOutcome | None = None,
+    replay_policy: ReplayPolicy = DEFAULT_REPLAY_POLICY,
     numerical: NumericalEvidence | None = None,
     required_numerical_checks: tuple[NumericalCheck, ...] = (),
     envelope: ValidationEnvelope | None = None,
@@ -474,30 +476,49 @@ def assess_authorized_multiphysics_run(
         },
     )
 
+    # THE REPLAY GATE ASKS THE EVIDENCE, NOT THE STATUS.
+    #
+    # It used to accept `status is REPLAYED_MATCH and original_run_id matches`,
+    # which any record could satisfy without anything having been executed.
+    # `certifies` recomputes the expected identity from THIS run and THIS
+    # policy and enumerates every way the evidence fails to be about them.
     replay_evidence: dict[str, Any] = {
         "supplied": replay is not None,
-        "note": "an absent replay outcome is not a verified replay",
+        "policy_id": replay_policy.policy_id,
+        "policy_digest": replay_policy.digest,
+        "note": (
+            "an absent, unsealed or foreign replay outcome is not a verified "
+            "replay, whatever its status field says"
+        ),
     }
+    replay_problems: tuple[str, ...] = ("no replay outcome was supplied",)
     if replay is not None:
         if not isinstance(replay, ReplayOutcome):
             raise TypeError("replay evidence must be a ReplayOutcome")
+        replay_problems = replay.certifies(authorized, replay_policy)
         replay_evidence.update(replay.to_dict())
-        if replay.original_run_id != authorized.run.run_id:
-            replay_evidence["bound_to_this_run"] = False
-    findings[COMPUTATIONAL_REPLAY_VERIFIED] = (
-        replay is not None
-        and replay.verified
-        and replay.original_run_id == authorized.run.run_id,
-        replay_evidence,
-    )
+    replay_evidence["problems"] = list(replay_problems)
+    findings[COMPUTATIONAL_REPLAY_VERIFIED] = (not replay_problems, replay_evidence)
 
+    run_binding = authorized_run_binding(authorized)
     numerical_evidence: dict[str, Any] = {
         "supplied": numerical is not None,
         "required_checks": [item.value for item in required_numerical_checks],
+        "computation": run_binding.digest,
     }
+    numerical_problems: tuple[str, ...] = ("no numerical evidence was supplied",)
     if numerical is not None:
         if not isinstance(numerical, NumericalEvidence):
             raise TypeError("numerical evidence must be a NumericalEvidence record")
+        # Evidence from another run stays evidence. It cannot satisfy this gate.
+        numerical_problems = numerical.belongs_to(run_binding)
+        if not numerical_problems and not numerical.satisfies(required_numerical_checks):
+            numerical_problems = (
+                f"required checks {[i.value for i in required_numerical_checks]} are "
+                f"not all performed and unviolated; absent="
+                f"{list(numerical.absent_checks)}, violated="
+                f"{list(numerical.violated_checks)}",
+            )
         numerical_evidence.update(
             {
                 "producer_id": numerical.producer_id,
@@ -507,15 +528,25 @@ def assess_authorized_multiphysics_run(
                 "digest": numerical.digest,
             }
         )
-    findings[NUMERICAL_EVIDENCE_PRESENT] = (
-        numerical is not None and numerical.satisfies(required_numerical_checks),
-        numerical_evidence,
-    )
+    numerical_evidence["problems"] = list(numerical_problems)
+    findings[NUMERICAL_EVIDENCE_PRESENT] = (not numerical_problems, numerical_evidence)
 
-    envelope_evidence: dict[str, Any] = {"supplied": envelope is not None}
+    envelope_evidence: dict[str, Any] = {
+        "supplied": envelope is not None,
+        "computation": run_binding.digest,
+    }
+    envelope_problems: tuple[str, ...] = ("no validation envelope was supplied",)
     if envelope is not None:
         if not isinstance(envelope, ValidationEnvelope):
             raise TypeError("envelope evidence must be a ValidationEnvelope")
+        # AN ENVELOPE IS ABOUT SOME SCIENCE, NOT ABOUT WHATEVER IT IS HANDED.
+        # Supported cells belonging to another model certify nothing here.
+        envelope_problems = envelope.belongs_to(run_binding)
+        if not envelope_problems and not envelope.has_any_support:
+            envelope_problems = (
+                "the envelope holds no cell with passing evidence; a correct "
+                "refusal is not support",
+            )
         envelope_evidence.update(
             {
                 "envelope_id": envelope.envelope_id,
@@ -523,17 +554,15 @@ def assess_authorized_multiphysics_run(
                 "coverage": envelope.coverage.status_counts(),
                 # Recorded BESIDE the coverage map, never inside it. This gate
                 # asks whether the model has been shown to be right somewhere;
-                # a correct refusal is the guardrail working and answers a
-                # different question, so it cannot pass this gate.
+                # a correct refusal answers a different question.
                 "guardrail": envelope.guardrail_counts,
                 "campaign_report_digest": envelope.campaign_report_digest,
+                "target": None if envelope.target is None else envelope.target.to_dict(),
                 "digest": envelope.digest,
             }
         )
-    findings[VALIDATION_ENVELOPE_SUPPORTED] = (
-        envelope is not None and envelope.has_any_support,
-        envelope_evidence,
-    )
+    envelope_evidence["problems"] = list(envelope_problems)
+    findings[VALIDATION_ENVELOPE_SUPPORTED] = (not envelope_problems, envelope_evidence)
 
     required = set(policy.required_gates)
     evaluations = tuple(
@@ -599,6 +628,7 @@ def certify_authorized_multiphysics_run(
     commit_sha: str,
     policy: TrustPolicy = MULTIPHYSICS_PRODUCTION_POLICY,
     replay: ReplayOutcome | None = None,
+    replay_policy: ReplayPolicy = DEFAULT_REPLAY_POLICY,
     numerical: NumericalEvidence | None = None,
     required_numerical_checks: tuple[NumericalCheck, ...] = (),
     envelope: ValidationEnvelope | None = None,
@@ -608,6 +638,7 @@ def certify_authorized_multiphysics_run(
         authorized,
         policy=policy,
         replay=replay,
+        replay_policy=replay_policy,
         numerical=numerical,
         required_numerical_checks=required_numerical_checks,
         envelope=envelope,

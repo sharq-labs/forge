@@ -36,6 +36,11 @@ import json
 from typing import Any, Mapping
 
 from ..compositionpacks.snapshot import CompositionPackSnapshot
+from ..scientific.corpus.authority import (
+    AuthorityComponent,
+    AuthorityRole,
+    EvidenceBinding,
+)
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.serialization import require_schema, schema_string
@@ -214,14 +219,18 @@ class UQCoverage:
 
     @property
     def complete(self) -> bool:
-        """Every required cell quantified. UNKNOWN is not coverage."""
+        """Every required cell quantified. UNKNOWN is not coverage.
+
+        A pack that declares no uncertainty requirement for a blueprint has an
+        empty required set, and executing nothing satisfies it exactly -- the
+        same reading protocol completeness uses. What is refused is a snapshot
+        that cannot state its requirements at all.
+        """
         required = [
             item for item in self.cells if item.state is not UQCellState.NOT_APPLICABLE
         ]
-        return (
-            self.enforceable
-            and bool(required)
-            and all(item.state is UQCellState.QUANTIFIED for item in required)
+        return self.enforceable and all(
+            item.state is UQCellState.QUANTIFIED for item in required
         )
 
     def counts(self) -> dict[str, int]:
@@ -265,6 +274,9 @@ def assess_protocol_completeness(
         blueprint_id=blueprint_id,
         required=tuple(required),
         executed=tuple(executed),
+        # Whether the requirement is STATED, not whether it is non-empty.
+        # A pack that requires nothing here and executed nothing is
+        # complete; a snapshot that cannot say is not.
         enforceable=snapshot.declares_requirements,
     )
 
@@ -315,7 +327,7 @@ def assess_uq_coverage(
     return UQCoverage(
         blueprint_id=blueprint_id,
         cells=tuple(cells),
-        enforceable=bool(snapshot.uncertainty_requirements),
+        enforceable=snapshot.declares_requirements,
     )
 
 
@@ -335,7 +347,77 @@ __all__ = [
     "UQCellState",
     "UQCoverage",
     "UQCoverageCell",
+    "AuthorityComponent",
+    "AuthorityRole",
+    "EvidenceBinding",
     "assess_protocol_completeness",
+    "authorized_run_binding",
     "assess_uq_coverage",
     "evidence_digest",
 ]
+
+
+def authorized_run_binding(authorized) -> EvidenceBinding:
+    """The authority identity of one authorized run, as evidence must name it.
+
+    This is the single place a computation's binding is derived, so validation
+    evidence, numerical evidence and anything added later are all checked
+    against the same statement of what the run actually was. Every participant
+    contributes its model, realization and solver, because evidence about a
+    model is about a model whether or not the run used ten others beside it.
+    """
+    run = authorized.run
+    plan = authorized.graph_plan
+    components: list[AuthorityComponent] = [
+        AuthorityComponent(AuthorityRole.RUN, run.run_id),
+        AuthorityComponent(
+            AuthorityRole.GRAPH, run.graph_id, digest=run.graph_fingerprint
+        ),
+        AuthorityComponent(
+            AuthorityRole.COUPLING_PLAN, run.plan_id, digest=run.plan_fingerprint
+        ),
+        AuthorityComponent(AuthorityRole.BLUEPRINT, plan.blueprint_id, plan.blueprint_version),
+        AuthorityComponent(
+            AuthorityRole.COMPOSITION_PACK,
+            authorized.composition_snapshot.pack_id,
+            authorized.composition_snapshot.pack_version,
+            authorized.composition_snapshot.authority_digest,
+        ),
+        AuthorityComponent(
+            AuthorityRole.EXECUTION_PACK,
+            authorized.execution_snapshot.pack_id,
+            authorized.execution_snapshot.pack_version,
+            authorized.execution_snapshot.authority_digest,
+        ),
+    ]
+    if plan.scenario is not None:
+        components.append(
+            AuthorityComponent(
+                AuthorityRole.SCENARIO,
+                plan.scenario.scenario_id,
+                plan.scenario.version,
+                plan.scenario.digest,
+            )
+        )
+    for participant in run.graph.participants:
+        components.append(
+            AuthorityComponent(
+                AuthorityRole.MODEL, participant.model_id, participant.model_version
+            )
+        )
+        components.append(
+            AuthorityComponent(
+                AuthorityRole.REALIZATION,
+                participant.realization_id,
+                participant.realization_version,
+            )
+        )
+        components.append(
+            AuthorityComponent(
+                AuthorityRole.SOLVER, participant.solver_id, participant.solver_version
+            )
+        )
+    unique: dict[tuple[str, str, str], AuthorityComponent] = {}
+    for item in components:
+        unique.setdefault(item.key, item)
+    return EvidenceBinding(f"run:{run.run_id}", tuple(unique.values()))
