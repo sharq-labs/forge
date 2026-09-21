@@ -81,3 +81,35 @@ Adding a dataset here does not make it trusted. After:
 a separate repository change may add that exact identity to the Scientific Core's trusted oracle declarations. Until then the comparison can run and be reported, but it must not award a validation level.
 
 This is intentional: the party importing data must not be able to grant itself scientific authority in the same step.
+
+
+## NASA battery holdout runner
+
+`battery_holdout.py` turns a NASA-style discharge CSV into an explicit
+calibration/holdout campaign for the existing affine Rint battery domain.
+
+The default protocol fits only on the first half of one discharge cycle and
+keeps the rest unseen.  A second cycle is a transfer set.  If unconstrained
+voltage fitting produces a non-physical cell, such as negative internal
+resistance, the runner records the calibration failure and **does not construct
+or execute** a Forge `CellSpecification`.
+
+For a scientifically stronger run, supply internal resistance from an
+independent EIS observation:
+
+```bash
+python -m benchmarks.reference_validation.battery_holdout discharge.csv \
+  --calibration-cycle 0 \
+  --transfer-cycle 1 \
+  --internal-resistance-ohm 0.0500
+```
+
+The resistance value above is only an invocation example.  A trusted campaign
+must bind the actual EIS record for the same cell/operating history from the
+reviewed NASA snapshot; a value copied from a processed mirror must remain
+comparison-only evidence.
+
+The runner reports training, same-cycle holdout and cross-cycle transfer
+residuals separately.  No voltage-error threshold is interpreted as
+experimental validation until a reviewed measurement uncertainty / acceptance
+policy is attached.
