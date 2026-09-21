@@ -38,7 +38,7 @@ number.
 | Area | Before | After | Provider | Forge value added | Evidence | Status |
 |---|---|---|---|---|---|---|
 | External solver execution | one adapter, ngspice, subprocess only | a generic contract plus an in-process adapter | PyBaMM 26.8.0.0 | request/identity/outcome/replay generalised; execution deliberately not | `src/engcore/providers/contract.py`, `COMPARISON.json` | **done** |
-| Battery physics | native 1-RC Thevenin only | native plus ECM / SPM / SPMe / DFN through PyBaMM | PyBaMM | model allowlist with declared inclusions, exclusions, cost and applicability | `MODEL_CATALOGUE` | **done** |
+| Battery physics | native 1-RC Thevenin only | ECM / SPM / SPMe / DFN allowlisted through PyBaMM; two of the four executed this round | PyBaMM | model allowlist with declared inclusions, exclusions, cost and applicability | `MODEL_CATALOGUE` | **allowlist done; SPM and DFN never run — see §5** |
 | Model fidelity | implicit | explicit axis, and explicitly not an order | — | `fidelity_class` is a label; a guard fails if it is ever compared | `test_fidelity_is_a_label_and_not_an_order` | **done** |
 | Parameter authority | per-round JSON records | one frozen record, digested, with lineage | — | a named PyBaMM set cannot be mutated in place; overrides mint a new authority citing its parent | `FIT.json` → `blocks.*.authority` | **done** |
 | Parameter inference | Forge's own fitters | PyBOP | PyBOP 26.3 | calibration-only enforced by a type, before PyBOP is imported | `FIT.json`, `test_pybop_cannot_fit_anything_but_calibration_data` | **done** |
@@ -307,8 +307,9 @@ named in the policy); both are repaired in the same edit that adds `providers`.
 | — `engcore/credibility/risk_coverage.py` | 152 |
 | new schemas | **4** (`provider_identity`, `provider_request`, `provider_execution_receipt`, `provider_replay_report`) |
 | new public abstractions | 31 classes, 1 new non-Core package |
-| new test files / lines | 5 / 1 601 |
-| new benchmark harness lines | 4 / 1 759 |
+| new test files / code lines | 5 / 1 118 |
+| new benchmark harness files / code lines | 4 / 1 242 |
+| repository guards updated | 4, each recorded in §7 |
 | frozen Core digest | **unmoved** — nothing is exported from a canonical module |
 | native models deleted | **0** |
 
