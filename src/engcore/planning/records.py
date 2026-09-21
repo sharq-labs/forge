@@ -24,6 +24,7 @@ from ..scientific.serialization import require_schema, require_schema_any, schem
 from ..scientific.solvers.registry import SolverRegistry
 from ..scientific.units.quantity import Quantity
 from ..scenarios import ScenarioSpecification
+from ..systems import SystemDefinition
 from .blueprint import BlueprintRegistry
 from .clarification import ClarificationQuestion
 from .verification import VerificationPlanningRegistry
@@ -37,7 +38,8 @@ FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
 GRAPH_PLAN_SCHEMA_V2 = schema_string("scientific_graph_plan", 2)
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 3)
+GRAPH_PLAN_SCHEMA_V3 = schema_string("scientific_graph_plan", 3)
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 4)
 PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
 _TAG_V1 = "forge.scientific_planning_record/1"
 _TAG = "forge.scientific_planning_record/2"
@@ -474,6 +476,7 @@ class GraphPlan:
     execution_pack_digest: str = ""
     external_inputs: tuple[PlannedExternalInput, ...] = ()
     scenario: ScenarioSpecification | None = None
+    system_definition: SystemDefinition | None = None
 
     def __post_init__(self) -> None:
         for label in (
@@ -553,6 +556,16 @@ class GraphPlan:
                 raise ValueError(
                     "scenario input ids may currently appear in one segment only; "
                     "cross-segment schedule merging is not implemented"
+                )
+        if self.system_definition is not None:
+            if not isinstance(self.system_definition, SystemDefinition):
+                raise TypeError("graph plan system_definition must be SystemDefinition or None")
+            self.system_definition.validate_graph(self.graph)
+            if self.system_definition.unsupported_execution_bindings:
+                raise ValueError(
+                    "graph plan refuses topology bindings not yet consumed or "
+                    "enforced by runtime: "
+                    f"{list(self.system_definition.unsupported_execution_bindings)}"
                 )
         for label in (
             "authority_pack_id",
@@ -656,13 +669,14 @@ class GraphPlan:
                 item.to_dict() for item in self.external_inputs
             ],
             "scenario": None if self.scenario is None else self.scenario.to_dict(),
+            "system_definition": None if self.system_definition is None else self.system_definition.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
         schema = require_schema_any(
             payload,
-            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2, GRAPH_PLAN_SCHEMA),
+            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2, GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA),
         )
         raw_plan = payload.get("coupling_plan")
         raw_estimate = payload.get("resource_estimate")
@@ -706,8 +720,13 @@ class GraphPlan:
             ),
             scenario=(
                 None
-                if schema != GRAPH_PLAN_SCHEMA or payload.get("scenario") is None
+                if schema not in (GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA) or payload.get("scenario") is None
                 else ScenarioSpecification.from_dict(payload["scenario"])
+            ),
+            system_definition=(
+                None
+                if schema != GRAPH_PLAN_SCHEMA or payload.get("system_definition") is None
+                else SystemDefinition.from_dict(payload["system_definition"])
             ),
         )
 

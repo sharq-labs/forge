@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 from typing import Any, Mapping
+from ..scientific.twins import ScientificTwin
 
 from ..compositionpacks.contracts import SystemValidationResult
 from ..compositionpacks.applicability import (
@@ -635,6 +636,7 @@ def execute_authorized_graph_plan(
     resolver: BulkDataResolver,
     store: BulkDataStore,
     external_uncertainty: Mapping[PortRef, Uncertainty] | None = None,
+    topology_twins: Mapping[tuple[str, str], ScientificTwin] | None = None,
 ) -> AuthorizedMultiphysicsRun:
     """Execute one ready GraphPlan without re-selecting scientific authority."""
 
@@ -682,6 +684,14 @@ def execute_authorized_graph_plan(
         )
 
     _verify_graph_authority(composition, graph_plan)
+    if graph_plan.system_definition is not None:
+        if topology_twins is None:
+            raise InvalidScientificProblem(
+                "GraphPlan topology requires exact ScientificTwin authorities"
+            )
+        graph_plan.system_definition.validate_against(
+            graph_plan.graph, topology_twins
+        )
 
     scenario_series = {
         series.input_id: series

@@ -11,6 +11,10 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Completed in this line of work
 
+- Added deterministic hierarchical system/component topology bound to existing
+  `ScientificTwin`, `PortDefinition`, `PhysicsGraph` and `CouplingEdge`
+  authorities. Structural topology is bound through authorized execution;
+  unconsumed parameter/state/constraint bindings fail closed.
 - Routed window-aligned STEP scenario inputs through the live multiphysics
   runtime without reinitializing participant state; consumed values are
   receipted per window. Unsupported interpolation/features and schedule-less
@@ -45,6 +49,12 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-21 11:07 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_system_topology.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
+result: PASS
+summary: 21 passed; topology hierarchy/identity/graph bijection and authorized roundtrip pass, while unsupported bindings and impossible constraints refuse; independent scientific review verdict PASS
+commit: f1e32ac1 (working tree changes)
 
 2026-09-21 11:00 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/execution; git diff --check`
