@@ -396,3 +396,97 @@ the solver that declares it. Each carries its reason in
   code object's `repr` carries its memory address. Three of the seven battery
   implementations are affected. Within-run verification still holds; the
   recorded digest cannot be re-derived later. Core defect, out of scope here.
+
+## Provider pivot Sprint 1 — PyBaMM / PyBOP / SALib as external providers (branch `claude/provider-architecture-pybamm-pybop`)
+
+Base `claude/battery-voltage-s3-recovery @ 0b032c97`. Full account in
+`benchmarks/provider_pivot_s1/PROVIDER_PIVOT_S1_REPORT.md`; architecture in
+`docs/providers/README.md`.
+
+**Verdict: PASS.** PyBaMM runs as an external provider while Forge keeps
+applicability, evidence, replay and the trust decision. The equivalent-circuit
+route delivers on 43 of 52 development trajectories at 41.5 / 41.1 mV RMSE
+(calibration / validation) against the native model's 50.0 / 44.6 mV, and SPMe
+under `Chen2020` is refused on 52 of 52 before PyBaMM is called.
+
+### New structure
+
+* `engcore.providers` — a new **non-Core** package (classified in
+  `tests/test_core_api_layering.py::NON_CORE_PACKAGES` and named in
+  `docs/CORE_FREEZE_POLICY.md` §2). Nothing is exported from a canonical
+  module, so the frozen digest does not move.
+* `engcore.credibility.risk_coverage` — the false-trust / over-refusal /
+  coverage metric. Its record type has no field that could name an engine,
+  which is how P14's provider-independence is enforced rather than promised.
+* Three optional extras: `forge[battery-pybamm]`, `forge[battery-fit]`,
+  `forge[sensitivity]`.
+
+### Two defects fixed while here
+
+* `test_the_policy_names_every_non_core_package` was **already failing on the
+  base branch**: `domainpacks` is in `NON_CORE_PACKAGES` and was not named in
+  the freeze policy. Repaired in the same edit that adds `providers`.
+* A temperature validity band was screened against the wrong quantity — see
+  below.
+
+### Failed approaches / dead ends (this round)
+
+* **Screening an ambient temperature against a cell-temperature band.** The
+  recovery's OCV authority conditions its bands on *median measured cell
+  temperature* and says "Ambient is not the condition"; the first version of
+  `ParameterAuthority.screen` compared the ambient and refused five low-ambient
+  4 A trajectories on a quantity the band was never about. Found by the
+  comparison benchmark's counterfactual probe, not by review. Fixed with
+  `ParameterAuthority.temperature_basis` and `CellUnderTest.cell_temperature_k`;
+  a cell that cannot supply the authority's basis is refused rather than given
+  the other temperature as a substitute.
+* **Fitting outside the interval the parameter authority was measured over.**
+  The first PyBOP run fitted whole trajectories. Nine of thirty-three fits
+  failed outright (the ECM terminates at its own SoC floor before the measured
+  trajectory ends, and PyBOP's cost cannot take a length mismatch) and six
+  survivors drove `R0` onto its lower bound, compensating for a held OCV tail
+  with a resistance the cell does not have. One defect, two symptoms. Fixed by
+  the charge-state window, which is applied to every route identically.
+* **One ECM parameter set per temperature band.** Reproduced the recovery's own
+  rate-dependence finding from the other direction: `R0`'s interquartile spread
+  was 81 % across the warm band, which pools 1 A, 2 A and 4 A discharges. Per
+  operating block (`group|corner|rate`, the recovery's own unit) the spreads are
+  0.3 % to 34.8 %.
+* **A Morris design spending a sixth of its points on a model boundary.**
+  `initial_state_of_charge ∈ [0.90, 1.00]` put 12 of 72 points at exactly 1.0,
+  where PyBaMM's ECM `Maximum SoC` event is non-positive at the initial
+  condition. SALib correctly reported `MISSING_EVIDENCE` rather than
+  substituting a value. The range now stops at 0.999 and the boundary is
+  declared as applicability (`PyBaMMModelSpec.state_of_charge_interval`).
+* **Substring searches for a forbidden word.** Two guards were written as text
+  searches and both fired on prose *explaining* the rule they enforce. Both are
+  now AST walks over identifiers, attributes and non-docstring literals, which
+  is the distinction `tests/core_vocabulary.py` already drew.
+* **Reading the native model's error as the counterfactual for a provider
+  refusal.** A first reading of the screen's discrimination used the native
+  model's RMSE on the refused trajectories and concluded 9 correct refusals out
+  of 9. That is a different model's error. Re-running the refused cases under a
+  counterfactual authority gives 2 correct refusals and 2 over-refusals out of
+  the 4 that could be observed at all.
+
+### What this round does NOT establish
+
+* **No independent Gate A, for any route.** Every cell in this archive has had
+  its residuals read — B0041 by the recovery round, B0007/B0036/B0044 by
+  Sprint 3. No pristine holdout remains here; none was manufactured. Independent
+  Gate A requires new evidence.
+* **Coverage through the full credibility verdict is 0 %** for both provider
+  routes, correctly: a PyBaMM run attains no `ValidationLevel`, so the report is
+  `INSUFFICIENT_EVIDENCE`. That will stay 0 % until validation evidence is bound
+  to a provider run.
+* **No parameter uncertainty from the fit.** PyBOP's Bayesian samplers were not
+  run; `FitEvidence.parameter_uncertainty` is `None`, and the per-trajectory
+  spread is a dispersion of point estimates, not a calibrated uncertainty.
+* **SPM and DFN were never executed.** Neither has a parameter authority for
+  these cells and there is no electrode-level characterisation to build one
+  from.
+* The native march produces no `ScientificResult`, so the trust-path risk report
+  has no native row. A result was not fabricated to fill it; the claim that both
+  engines enter the same assembly is proved in
+  `tests/providers/test_provider_trust_path.py` instead, where a native battery
+  solve does produce one.

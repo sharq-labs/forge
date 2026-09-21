@@ -73,11 +73,22 @@ digest rather than merely labelled, so that editing the flagship study cannot
 look like a compatibility event. The day nobody believes that alarm is the day
 a real one goes unnoticed.
 
-**Non-Core packages** (`7`): `domains`, `systems`, `sria`, `design`, `credibility`, `mcp`,
-`claims`.
+**Non-Core packages** (`9`): `domainpacks`, `domains`, `systems`, `sria`, `design`,
+`credibility`, `mcp`, `claims`, `providers`.
 They live under `engcore` and are not part of the Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
 neither frozen nor experimental nor excluded is an accidental public surface.
+
+Two of those nine arrived after this paragraph was last written, and one of them
+had gone unnamed: `domainpacks` was classified in the layering test and missing
+from this list, which `test_the_policy_names_every_non_core_package` had been
+failing on. `providers` is the 2026-09-21 addition — adapters for external
+scientific solvers (PyBaMM, PyBOP, SALib) that Forge executes and does not own.
+It is deliberately non-Core and deliberately not a Core layer: its third-party
+dependencies are optional extras, and a Core package that could reach one would
+be a Core whose importability depended on an optional wheel. Nothing under
+`src/engcore/providers/` is exported from a canonical module, so the frozen
+digest above does not move.
 
 **Anything not exported from a canonical module.** A name reachable only by
 importing a submodule directly is internal, regardless of whether it starts

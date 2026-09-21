@@ -92,6 +92,40 @@ benchmarks = [
   "psutil>=5.9",
 ]
 
+# The external scientific provider boundary. `src/engcore/providers/` adapts
+# solvers Forge executes and does not own; each group is the dependency of one
+# adapter, and every import of them in that package is inside the function that
+# needs it, so `import engcore.providers` succeeds on a bare install and a
+# request to an absent provider returns PROVIDER_UNAVAILABLE.
+#
+# Optional for the reason `[mcp]`, `[oracles]` and `[benchmarks]` are: the
+# runtime does not need them and the suite stays green without them.
+# `tests/providers/test_provider_contract.py::test_forge_imports_without_the_provider_extras`
+# is that rule as a check.
+#
+# VERSION FLOOR, NOT A PIN, with one deliberate exception. Lower bounds keep the
+# platform from pinning its scientific stack to one machine's resolved
+# versions -- the rule `[pint]` states in the required list. The exact versions
+# a run used are recorded in execution evidence by
+# `engcore.providers.environment.EnvironmentIdentity`, which is where a version
+# belongs: read at run time, never asserted here.
+#
+# THE PYTHON CEILING IS REAL AND IS NOT OURS. PyBOP 26.3 declares
+# `requires-python = ">=3.10,<3.14"`. This project supports `>=3.11`, so on a
+# 3.14 interpreter `forge[battery-fit]` is uninstallable and its provider
+# reports PROVIDER_UNAVAILABLE. That is recorded rather than worked around: a
+# dependency's own supported range is not something this file may overrule.
+battery-pybamm = [
+  "pybamm>=26.3,<27",
+]
+battery-fit = [
+  "pybamm>=26.3,<27",
+  "pybop>=26.3,<27",
+]
+sensitivity = [
+  "salib>=1.5",
+]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

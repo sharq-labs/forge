@@ -1,0 +1,2262 @@
+{
+ "schema": "provider_pivot_s1_fit/1",
+ "split_fitted": "calibration",
+ "what_was_not_seen": [
+  "validation",
+  "observed_holdout",
+  "locked_holdout"
+ ],
+ "fitted_parameters": [
+  "R0 [Ohm]",
+  "R1 [Ohm]"
+ ],
+ "held_parameters": {
+  "C1 [F]": "the Sprint 3 recovery's fitted polarization capacitance for the band; held because the Morris screen ranks it an order of magnitude below R0 and R1"
+ },
+ "sensitivity_evidence": "SENSITIVITY.json",
+ "sensitivity_is_validation_evidence": false,
+ "bounds": {
+  "R0 [Ohm]": [
+   0.01,
+   1.0
+  ],
+  "R1 [Ohm]": [
+   0.005,
+   0.5
+  ]
+ },
+ "initial_values": {
+  "R0 [Ohm]": 0.15,
+  "R1 [Ohm]": 0.06
+ },
+ "priors": null,
+ "priors_note": "no prior was declared, so none was used. A uniform prior over the bounds would be a choice this round did not make",
+ "parameter_uncertainty": null,
+ "parameter_uncertainty_note": "the per-trajectory spread below is a DISPERSION of point estimates, not a calibrated parameter uncertainty. Promoting it to one would invent a probability model nothing here supports",
+ "parameter_unit": "group|corner|nominal_rate -- the Sprint 3 recovery's own operating block",
+ "blocks": {
+  "33_34_36|room_ambient|4A": {
+   "band": "warm",
+   "fits": 5,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.12573518414053753,
+     "minimum": 0.12198460923841961,
+     "maximum": 0.17541526439403118,
+     "interquartile_spread": 0.04378767301225431,
+     "relative_interquartile_spread": 0.3482531425993831,
+     "n": 5
+    },
+    "R1 [Ohm]": {
+     "median": 0.056566953408852975,
+     "minimum": 0.007103582848020867,
+     "maximum": 0.05903307425971448,
+     "interquartile_spread": 0.017995047309116843,
+     "relative_interquartile_spread": 0.31811943590196146,
+     "n": 5
+    }
+   },
+   "held_capacitance_f": 1185.6497954731508,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/33_34_36|room_ambient|4A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     293.15,
+     393.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 1185.6497954731508,
+     "R0 [Ohm]": 0.12573518414053753,
+     "R1 [Ohm]": 0.056566953408852975
+    },
+    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '33_34_36|room_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "1a3f27940e7cb6c2848c809dd65d9ff56d39fe275eaa6065ef5de667040227ad",
+   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+  },
+  "38_39_40|room_ambient|4A": {
+   "band": "warm",
+   "fits": 3,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.17827653365135632,
+     "minimum": 0.17467244401272064,
+     "maximum": 0.17839781568004115,
+     "interquartile_spread": 0.003604089638635677,
+     "relative_interquartile_spread": 0.020216287386897243,
+     "n": 3
+    },
+    "R1 [Ohm]": {
+     "median": 0.033760666752287886,
+     "minimum": 0.023711255152766782,
+     "maximum": 0.04115015837356755,
+     "interquartile_spread": 0.010049411599521104,
+     "relative_interquartile_spread": 0.29766626569482896,
+     "n": 3
+    }
+   },
+   "held_capacitance_f": 1185.6497954731508,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/38_39_40|room_ambient|4A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     293.15,
+     393.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 1185.6497954731508,
+     "R0 [Ohm]": 0.17827653365135632,
+     "R1 [Ohm]": 0.033760666752287886
+    },
+    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "notes": "median of 3 per-trajectory PyBOP fits on the calibration split, operating block '38_39_40|room_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "90a5c7b076b13b04e6cc20adbb86b4d114b73c17b679709b2655bb3dff275da5",
+   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+  },
+  "41_42_43_44|low_ambient|1A": {
+   "band": "cold",
+   "fits": 5,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.14156202320386127,
+     "minimum": 0.13827730956629736,
+     "maximum": 0.1586657778297333,
+     "interquartile_spread": 0.0003954067145926221,
+     "relative_interquartile_spread": 0.0027931694224460402,
+     "n": 5
+    },
+    "R1 [Ohm]": {
+     "median": 0.20820272403236412,
+     "minimum": 0.16850476245887436,
+     "maximum": 0.21916847266125258,
+     "interquartile_spread": 0.029580864847181865,
+     "relative_interquartile_spread": 0.14207722297900224,
+     "n": 5
+    }
+   },
+   "held_capacitance_f": 814.8320745620481,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/41_42_43_44|low_ambient|1A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     233.14999999999998,
+     293.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 814.8320745620481,
+     "R0 [Ohm]": 0.14156202320386127,
+     "R1 [Ohm]": 0.20820272403236412
+    },
+    "parent_authority_digest": "ea26317c5852408101d93404563366c19cf94358b8ee11fbd1092ce746182d5d",
+    "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|low_ambient|1A' (band 'cold'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "bf0c51506b7e2c7e43dad16e6323ed2a7145bc388fe28bca8a4d4a96e2303573",
+   "parent_authority_digest": "ea26317c5852408101d93404563366c19cf94358b8ee11fbd1092ce746182d5d"
+  },
+  "41_42_43_44|low_ambient|4A": {
+   "band": "warm",
+   "fits": 5,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.26485883398150045,
+     "minimum": 0.2462510116695162,
+     "maximum": 0.28513288217060206,
+     "interquartile_spread": 0.023150498725006297,
+     "relative_interquartile_spread": 0.08740693439216486,
+     "n": 5
+    },
+    "R1 [Ohm]": {
+     "median": 0.06102702479646041,
+     "minimum": 0.051327078917268586,
+     "maximum": 0.06578239543432776,
+     "interquartile_spread": 0.002642999752003654,
+     "relative_interquartile_spread": 0.043308677767246305,
+     "n": 5
+    }
+   },
+   "held_capacitance_f": 1185.6497954731508,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/41_42_43_44|low_ambient|4A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     293.15,
+     393.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 1185.6497954731508,
+     "R0 [Ohm]": 0.26485883398150045,
+     "R1 [Ohm]": 0.06102702479646041
+    },
+    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|low_ambient|4A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "d67f660de1c99868730cd5fe142c757be557cc53410f1066b15395b0d2b5788b",
+   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+  },
+  "41_42_43_44|room_ambient|2A": {
+   "band": "warm",
+   "fits": 5,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.11237228633685047,
+     "minimum": 0.10889094417064415,
+     "maximum": 0.11507030578772909,
+     "interquartile_spread": 0.003506269737785228,
+     "relative_interquartile_spread": 0.03120226393965796,
+     "n": 5
+    },
+    "R1 [Ohm]": {
+     "median": 0.05557047876256012,
+     "minimum": 0.048207584714142174,
+     "maximum": 0.06414567761453456,
+     "interquartile_spread": 0.007898745418689887,
+     "relative_interquartile_spread": 0.14213923641794432,
+     "n": 5
+    }
+   },
+   "held_capacitance_f": 1185.6497954731508,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/41_42_43_44|room_ambient|2A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     293.15,
+     393.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 1185.6497954731508,
+     "R0 [Ohm]": 0.11237228633685047,
+     "R1 [Ohm]": 0.05557047876256012
+    },
+    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "notes": "median of 5 per-trajectory PyBOP fits on the calibration split, operating block '41_42_43_44|room_ambient|2A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "b3d4a66527c3143729b04122c0d4947d40aa586d999d3d0e97d4d7db7c4ed794",
+   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+  },
+  "FY08Q4|room_ambient|2A": {
+   "band": "warm",
+   "fits": 10,
+   "parameters": {
+    "R0 [Ohm]": {
+     "median": 0.08194078379128172,
+     "minimum": 0.07012732991556254,
+     "maximum": 0.0837121454711827,
+     "interquartile_spread": 0.004467392038190382,
+     "relative_interquartile_spread": 0.054519762095144864,
+     "n": 10
+    },
+    "R1 [Ohm]": {
+     "median": 0.06281578724659737,
+     "minimum": 0.05160823475846117,
+     "maximum": 0.07038037324960714,
+     "interquartile_spread": 0.012174055269260436,
+     "relative_interquartile_spread": 0.19380566260307255,
+     "n": 10
+    }
+   },
+   "held_capacitance_f": 1185.6497954731508,
+   "parameters_at_bound": [],
+   "authority": {
+    "authority_id": "forge.nasa_li_ion_18650.ecm/FY08Q4|room_ambient|2A/fitted",
+    "source": "forge_derived",
+    "parameter_set_name": "ECM_Example",
+    "defining_provider_version": "pybamm",
+    "chemistry": "LiCoO2/graphite",
+    "nominal_capacity_ah": 1.604954,
+    "temperature_validity_k": [
+     293.15,
+     393.15
+    ],
+    "units": {
+     "capacitance": "farad",
+     "capacity": "ampere_hour",
+     "resistance": "ohm",
+     "temperature": "kelvin"
+    },
+    "overrides": {
+     "C1 [F]": 1185.6497954731508,
+     "R0 [Ohm]": 0.08194078379128172,
+     "R1 [Ohm]": 0.06281578724659737
+    },
+    "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642",
+    "notes": "median of 10 per-trajectory PyBOP fits on the calibration split, operating block 'FY08Q4|room_ambient|2A' (band 'warm'). C1 held at the Sprint 3 recovery's own fitted polarization capacitance because the Morris screen puts its influence an order of magnitude below R0 and R1"
+   },
+   "authority_digest": "d7e6da40b7eb6218a13a72f516f2879be2e3c75010f319f39ddb9bd3b5e3f0f6",
+   "parent_authority_digest": "e2e6d7ba63074edbca2ac70c442abd87d84d366e2e761decd623b04edd511642"
+  }
+ },
+ "per_trajectory": [
+  {
+   "trajectory_id": "B0005.d0008",
+   "cell": "B0005",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 162 samples",
+   "wall_seconds": 0.35769480001181364,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0005.d0008",
+    "dataset_digest": "a166dd887cd933c8f8dc372e744e42ee6b53871f33b435556a04f2cb0e8f4ff8",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.08328189837597544,
+     "R1 [Ohm]": 0.05281646236886246
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 162,
+     "iterations": 9,
+     "evaluations": 29,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.35769480001181364,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0005.d0008",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "5c9202fb31c75f9bd30cdc5181f5181c2562a888a790a56bb6e89ca38cdb2824",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0016",
+   "cell": "B0005",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 159 samples",
+   "wall_seconds": 0.26958049996756017,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0005.d0016",
+    "dataset_digest": "a4696af3444d6904ccedcd0645e6febf07d48ed100509a5b4240f41d2070dc44",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.08217270784118288,
+     "R1 [Ohm]": 0.052977417204990385
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 159,
+     "iterations": 9,
+     "evaluations": 23,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.26958049996756017,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0005.d0016",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "e1a25f3db4c9b78c4016bf48493fd3bd77c4fae55446a2b6b34b62e3196f1d29",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0024",
+   "cell": "B0005",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 161 samples",
+   "wall_seconds": 0.25944529997650534,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0005.d0024",
+    "dataset_digest": "ebea9adfd0c43d8bf7f7db7601d879b18e04a8043fa56468faa62f52a13fcf79",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.0837121454711827,
+     "R1 [Ohm]": 0.05160823475846117
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 161,
+     "iterations": 8,
+     "evaluations": 24,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.25944529997650534,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0005.d0024",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "eea9134296c67d8e708edaa0edfb093b1d8e677733c73676d020d81cf6ddaa03",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0032",
+   "cell": "B0005",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 321 samples",
+   "wall_seconds": 0.3979020999977365,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0005.d0032",
+    "dataset_digest": "e730d20277e7aa02bc6d7f03aad6f8290e7741502a10cc110124b56c5674c219",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.07012732991556254,
+     "R1 [Ohm]": 0.06546682873075022
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 321,
+     "iterations": 8,
+     "evaluations": 27,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.3979020999977365,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0005.d0032",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "f4fb820ca1a9fcc5474a73bdff04cbff93994f768c979111c8b8fba62c698145",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0040",
+   "cell": "B0005",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 308 samples",
+   "wall_seconds": 0.39209049998316914,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0005.d0040",
+    "dataset_digest": "b5dd34c801c67bc333f381a62d83bcd3d2a2649a4d26c57c5cae6db9240b350a",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.07235144532879242,
+     "R1 [Ohm]": 0.06602795056168113
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 308,
+     "iterations": 8,
+     "evaluations": 28,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.39209049998316914,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0005.d0040",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "1479f5eb06b2e86154116787cd5fd3a5bb734182c55f1e9c8139283d80aab4dc",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0008",
+   "cell": "B0018",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 303 samples",
+   "wall_seconds": 0.31689719995483756,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0018.d0008",
+    "dataset_digest": "b04c4e6d6adbbd8fbf409123b5408f52668f7c5aca0d6fbd7da25b804815bcac",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.08210996396432005,
+     "R1 [Ohm]": 0.05918751148927951
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 303,
+     "iterations": 8,
+     "evaluations": 18,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.31689719995483756,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0018.d0008",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "36c3d984c7fe5a4a2a31a1dc8725ec57a417a16f248590cdc85efcfbf7a70e20",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0016",
+   "cell": "B0018",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 284 samples",
+   "wall_seconds": 0.6944229999789968,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0018.d0016",
+    "dataset_digest": "520540a19c2dda0051de7a2d46a1b1d420339552e880832184450971b5eaff1a",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.07928415236667917,
+     "R1 [Ohm]": 0.062130202892144624
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 284,
+     "iterations": 11,
+     "evaluations": 57,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.6944229999789968,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0018.d0016",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "235a707cb4f97ea708cc2312eb26a44f9d2effd37a645f522e38d4c670b12d06",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0024",
+   "cell": "B0018",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 264 samples",
+   "wall_seconds": 0.7194057999877259,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0018.d0024",
+    "dataset_digest": "2952ff9fc87f9b22504b83b280669d9b6c3eef53d892ff6888ae12ca13b193df",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.0828351961818977,
+     "R1 [Ohm]": 0.06515147247425082
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 264,
+     "iterations": 12,
+     "evaluations": 72,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.7194057999877259,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0018.d0024",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "4ae8d36a456683ecb5cb5ea98e59efa0914c1132b225b7e22a255e1807e97e7b",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0032",
+   "cell": "B0018",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 251 samples",
+   "wall_seconds": 0.2888610999798402,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0018.d0032",
+    "dataset_digest": "60285d33962f630cbe8e04f8bbb993375eff97ebcbda19527ffbedda1b0e7069",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.0777053158029925,
+     "R1 [Ohm]": 0.07038037324960714
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 251,
+     "iterations": 13,
+     "evaluations": 26,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.2888610999798402,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0018.d0032",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "3bf4ae99f74e51704ab4e27081774dacd02ce956c8a54741d5d7301a51e7589e",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0040",
+   "cell": "B0018",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 235 samples",
+   "wall_seconds": 0.29929329990409315,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0018.d0040",
+    "dataset_digest": "54c7b6c60126e37bfa3b1cc267d8696548f47564666e6fe6bbe967046dfb9d33",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.08177160361824339,
+     "R1 [Ohm]": 0.0635013716010501
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 235,
+     "iterations": 11,
+     "evaluations": 28,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.29929329990409315,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0018.d0040",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "26da98d897e90c28f190f74d49c933e13b57c0ba7e3da432cb229425e67f0e5e",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0003",
+   "cell": "B0033",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 63 samples",
+   "wall_seconds": 0.18827759998384863,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0033.d0003",
+    "dataset_digest": "3c922f8a6fce06e94cd5675ef829649ac86b866c8021501f03173a0c90b87ccd",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.169227269960407,
+     "R1 [Ohm]": 0.007103582848020867
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 63,
+     "iterations": 11,
+     "evaluations": 34,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.18827759998384863,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0033.d0003",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "a615ec2d0d78e25f8bdbe663eb9e2865b0085e4e44eba08c5d2027009e4bfeb1",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0008",
+   "cell": "B0033",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 113 samples",
+   "wall_seconds": 0.16188709996640682,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0033.d0008",
+    "dataset_digest": "93940412eafd12495b247b1ac0ce5b779d063a0dd818b486c2d5be01b8c4ba2b",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.17541526439403118,
+     "R1 [Ohm]": 0.03975547813368873
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 113,
+     "iterations": 11,
+     "evaluations": 25,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.16188709996640682,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0033.d0008",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "22140eb5abf418f6dbcaa88911d2ad09d3e5a3e18a9e23e526ae99ed84a9f5a6",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0024",
+   "cell": "B0033",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 136 samples",
+   "wall_seconds": 0.14013070007786155,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0033.d0024",
+    "dataset_digest": "3a9aa88fcf66dea3c9ebe5fb1ca244c9cb834fbf245028df058efc287e9c8022",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.12573518414053753,
+     "R1 [Ohm]": 0.056566953408852975
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 136,
+     "iterations": 8,
+     "evaluations": 16,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.14013070007786155,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0033.d0024",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "3d665ed635e1bdb40900ddbd6e0d4f39325070e6a9544872f2615b4caaa68f07",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0032",
+   "cell": "B0033",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 127 samples",
+   "wall_seconds": 0.16568580002058297,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0033.d0032",
+    "dataset_digest": "93e405b62a18ce972875f673f15b4965b6754e361f70ae3ecdfe31e52de513f1",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.12543959694815268,
+     "R1 [Ohm]": 0.057750525442805574
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 127,
+     "iterations": 8,
+     "evaluations": 25,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.16568580002058297,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0033.d0032",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "5563c24067310171dc7d3212b23c2240bc561337323c4542e1ab8ed6a22f37fb",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0040",
+   "cell": "B0033",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 123 samples",
+   "wall_seconds": 0.18134190002456307,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0033.d0040",
+    "dataset_digest": "81b838a57bc2eae8753cd63baf5bc8bec0f828feb4460fcb0e06ffa7f434a6fc",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.12198460923841961,
+     "R1 [Ohm]": 0.05903307425971448
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 123,
+     "iterations": 9,
+     "evaluations": 26,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.18134190002456307,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0033.d0040",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "cd53ab703ccd024f971cd37fe474a54b8236049e202a0fb79c102214fdb9fe5d",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0002",
+   "cell": "B0038",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 94 samples",
+   "wall_seconds": 0.2181897999253124,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0038.d0002",
+    "dataset_digest": "bb63871f9306f8fc8b6c447264a9c19f5e5f172cb04fc9df0b51e16dc82a497c",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.17827653365135632,
+     "R1 [Ohm]": 0.023711255152766782
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 94,
+     "iterations": 10,
+     "evaluations": 38,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.2181897999253124,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0038.d0002",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "84c68afdfe3e3a37c4e7e60cb149655025ee7bc0c63a60e99e9e423c261701be",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0008",
+   "cell": "B0038",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 99 samples",
+   "wall_seconds": 0.07642789999954402,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0038.d0008",
+    "dataset_digest": "9c48728fb80d126e173a8752bea54ec61ed5a2afa18772b80c7daf5b27d1881b",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.17839781568004115,
+     "R1 [Ohm]": 0.033760666752287886
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 99,
+     "iterations": 10,
+     "evaluations": 14,
+     "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+     "wall_seconds": 0.07642789999954402,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0038.d0008",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "b0dca5e41a04d60a2e73e1753f5736f0dc170a3ed96c1d0200efd9705bb1adcd",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0012",
+   "cell": "B0038",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 94 samples",
+   "wall_seconds": 0.09458139992784709,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0038.d0012",
+    "dataset_digest": "fb8b4945f774d22adb81c32aeafe5b49c555f779c103996732b55996ef5c2517",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.17467244401272064,
+     "R1 [Ohm]": 0.04115015837356755
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 94,
+     "iterations": 8,
+     "evaluations": 18,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.09458139992784709,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0038.d0012",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "101c8c58459bd5b74e65f9b9ad55ec5796764d2c7c455209ca4bd31290b60bd2",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0008",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 287 samples",
+   "wall_seconds": 0.37942620005924255,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0008",
+    "dataset_digest": "961b13fd59e78dded34b1d7b0be47202e67c562c7ab9daf0fa0d11302a8a1770",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.11374803465441449,
+     "R1 [Ohm]": 0.048207584714142174
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 287,
+     "iterations": 11,
+     "evaluations": 32,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.37942620005924255,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0008",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "cfbea0053b895a819de5d458116f1f037056693e2966e1b9bff630c31a2a25f6",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0016",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 269 samples",
+   "wall_seconds": 0.5230901999166235,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0016",
+    "dataset_digest": "65f9878f9cd0537bac7dc35dacd62524750446f29777744e00ca0f3aa76dbc9e",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.11507030578772909,
+     "R1 [Ohm]": 0.04958704117736648
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 269,
+     "iterations": 10,
+     "evaluations": 47,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.5230901999166235,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0016",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "60a900334ec5cf08d682ae92146951c9789cfd0e15cf0ece598872e51eb49842",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0024",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 258 samples",
+   "wall_seconds": 0.6092905999394134,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0024",
+    "dataset_digest": "93f52878aaa77c234c117ea7075cbd08c6ec5333bcc0d4cab5e2e9045e6ab26e",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.10889094417064415,
+     "R1 [Ohm]": 0.05557047876256012
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 258,
+     "iterations": 13,
+     "evaluations": 61,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.6092905999394134,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0024",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "36209e2ed4a9b80a9e00df0eddc9ec87c372b0ddd35855f6fedca7ef48f6f88e",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0032",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 244 samples",
+   "wall_seconds": 0.4415671000024304,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0032",
+    "dataset_digest": "f8db53ff11fd019e81af53c49e30711bc826634ca9fd5e32d7f4da40ad73cfab",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.11237228633685047,
+     "R1 [Ohm]": 0.05748578659605637
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 244,
+     "iterations": 7,
+     "evaluations": 51,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.4415671000024304,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0032",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "ee0f34d2fbf5ca149736c1b09ef0a06c199bc2b4b0560b3f15d197a2c6ff38dd",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0040",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 232 samples",
+   "wall_seconds": 0.25306919997092336,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0040",
+    "dataset_digest": "03e5b64802aa2f871273f5b1f4ed29ad44c4e80e7ffb106519f328fce4986e71",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.11024176491662926,
+     "R1 [Ohm]": 0.06414567761453456
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 232,
+     "iterations": 12,
+     "evaluations": 25,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.25306919997092336,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0040",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "396012049f03d870135803d19c1d988d90107979934b26a3a74badd60349efe3",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0093",
+   "cell": "B0042",
+   "band": "cold",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 426 samples",
+   "wall_seconds": 0.6830789999803528,
+   "held_capacitance_f": 814.8320745620481,
+   "evidence": {
+    "dataset_id": "B0042.d0093",
+    "dataset_digest": "98f619ea47df9166a54b0a8a0dae41a5d4b62bc78c7fea7207c4d24e7fef531c",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.14194791812680593,
+     "R1 [Ohm]": 0.16850476245887436
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 426,
+     "iterations": 12,
+     "evaluations": 43,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.6830789999803528,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0093",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "a4236ed0a165560f6746d15a81329bd63e04bb5143fc99819a3644c06362457e",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0098",
+   "cell": "B0042",
+   "band": "cold",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 411 samples",
+   "wall_seconds": 0.6400269999867305,
+   "held_capacitance_f": 814.8320745620481,
+   "evidence": {
+    "dataset_id": "B0042.d0098",
+    "dataset_digest": "7ebe5607222b0808d4f236a01f565dad29a2db0f48e8eabcc02859fc0f6beb33",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.1415525114122133,
+     "R1 [Ohm]": 0.18930632773254308
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 411,
+     "iterations": 9,
+     "evaluations": 41,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.6400269999867305,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0098",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "38b558a273d9a039316f45dee02bb5b7e68e716c8882d1bf8f0e753bc5301ada",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0102",
+   "cell": "B0042",
+   "band": "cold",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 398 samples",
+   "wall_seconds": 1.160403300076723,
+   "held_capacitance_f": 814.8320745620481,
+   "evidence": {
+    "dataset_id": "B0042.d0102",
+    "dataset_digest": "c119ab915328eaf0affd509fa7d6708078c89e1ccd1ffc2d8d78cceccb78292a",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.13827730956629736,
+     "R1 [Ohm]": 0.20820272403236412
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 398,
+     "iterations": 16,
+     "evaluations": 89,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 1.160403300076723,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0102",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "42408453efa857e83ea9539cd054bf6ffb625ca6773f16b352f73f1ac9d869e1",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0107",
+   "cell": "B0042",
+   "band": "cold",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 383 samples",
+   "wall_seconds": 0.5695338000077754,
+   "held_capacitance_f": 814.8320745620481,
+   "evidence": {
+    "dataset_id": "B0042.d0107",
+    "dataset_digest": "4bae6394d8b86e5668beadb45688dcfe5beac7f31eadfe921eaf045f84f0fb40",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.14156202320386127,
+     "R1 [Ohm]": 0.21916847266125258
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 383,
+     "iterations": 11,
+     "evaluations": 43,
+     "message": "ABNORMAL: ",
+     "wall_seconds": 0.5695338000077754,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0107",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "bb87fcc3a274d3354659320e27e2f924d9ea41366ec2ffc6bd5d7b30fe16dda1",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0112",
+   "cell": "B0042",
+   "band": "cold",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 368 samples",
+   "wall_seconds": 0.354581999941729,
+   "held_capacitance_f": 814.8320745620481,
+   "evidence": {
+    "dataset_id": "B0042.d0112",
+    "dataset_digest": "03b970325567c7c84967cb424d3b98a81a402c6bd9302ba266dd5f640cea15ea",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.1586657778297333,
+     "R1 [Ohm]": 0.21888719257972494
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 368,
+     "iterations": 9,
+     "evaluations": 26,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.354581999941729,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0112",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "34515d3390914b83ac07ce219665a133195ce205b953b2b7615bcb85b183cfe4",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0048",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 85 samples",
+   "wall_seconds": 0.09603769995737821,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0048",
+    "dataset_digest": "1d7f9392fab7503abc4ac3a2b19ffcf5a28c55b9c31dd94cf534591a10a03569",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.2462510116695162,
+     "R1 [Ohm]": 0.05981380810487777
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 85,
+     "iterations": 9,
+     "evaluations": 16,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.09603769995737821,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0048",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "711eaa737ff2618d3af1da28df5db2d4ecf439fd041c1085f83cf322a4acf711",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0056",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 80 samples",
+   "wall_seconds": 0.14621230005286634,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0056",
+    "dataset_digest": "92156e4678c9d2f894de33cf9c26e211831a08410e8be5e61c75aa2663988fc6",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.2577726282298605,
+     "R1 [Ohm]": 0.06245680785688142
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 80,
+     "iterations": 7,
+     "evaluations": 32,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.14621230005286634,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0056",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "cfbc4e30c5ef00696dff70c8106ed9418e75ed428680eb98a3425b32df1012f9",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0062",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 77 samples",
+   "wall_seconds": 0.24599089997354895,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0062",
+    "dataset_digest": "f30fafda6913aea6bfe9c1c66177206848c1310e0cd86abfe43562e9c5621f9d",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.26485883398150045,
+     "R1 [Ohm]": 0.06578239543432776
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 77,
+     "iterations": 10,
+     "evaluations": 42,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.24599089997354895,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0062",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "93bc0c470b8d0a31a05ea0b9157f14117c8f6bbd123f011772ced875b0bc11a4",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0073",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 75 samples",
+   "wall_seconds": 0.1683969999430701,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0073",
+    "dataset_digest": "f3a985925d48508b9bc336ce5f95f055ec8b806ccac7810a3be2eac7969e03f1",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.2809231269548668,
+     "R1 [Ohm]": 0.051327078917268586
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 75,
+     "iterations": 10,
+     "evaluations": 25,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.1683969999430701,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0073",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "d128b1d3df5acb8a81b46a99b69d40ea8bd656b764b50f53f236d7439c5ece9d",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0079",
+   "cell": "B0042",
+   "band": "warm",
+   "split": "calibration",
+   "outcome": "ok",
+   "detail": "fitted 2 parameters on 73 samples",
+   "wall_seconds": 0.1410917000612244,
+   "held_capacitance_f": 1185.6497954731508,
+   "evidence": {
+    "dataset_id": "B0042.d0079",
+    "dataset_digest": "eab735d98e9e92e60f2a0161bf0e3af55134d5c00d48e3cc1ec1e27798f5074c",
+    "dataset_role": "calibration",
+    "parameters": [
+     {
+      "name": "R0 [Ohm]",
+      "lower": 0.01,
+      "upper": 1.0,
+      "initial": 0.15,
+      "prior": null
+     },
+     {
+      "name": "R1 [Ohm]",
+      "lower": 0.005,
+      "upper": 0.5,
+      "initial": 0.06,
+      "prior": null
+     }
+    ],
+    "optimiser": "SciPyMinimize",
+    "objective": "RootMeanSquaredError",
+    "best_values": {
+     "R0 [Ohm]": 0.28513288217060206,
+     "R1 [Ohm]": 0.06102702479646041
+    },
+    "final_cost": null,
+    "parameter_uncertainty": null,
+    "diagnostics": {
+     "sample_count": 73,
+     "iterations": 12,
+     "evaluations": 21,
+     "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+     "wall_seconds": 0.1410917000612244,
+     "parameters_at_bound": []
+    },
+    "is_validation_evidence": false
+   },
+   "identity": {
+    "schema": "provider_identity/1",
+    "provider_name": "pybop",
+    "provider_version": "26.3",
+    "model_identity": "fit:B0042.d0079",
+    "solver_identity": "SciPyMinimize",
+    "configuration_digest": "8abf75010ad7f9bcaa06a17fdf07c08888dd72f4d10c688ba01a102b0fba103d",
+    "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+    "adapter_version": "engcore.providers.pybop_provider/0.1.0"
+   }
+  }
+ ],
+ "wall_seconds": 17.866123100044206
+}

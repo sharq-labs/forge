@@ -268,6 +268,14 @@ NON_CORE_PACKAGES = {
         "above the Core and independent of the MCP transport adapter"
     ),
     "mcp": "the tool-server adapter -- an outer consumer, not scientific authority",
+    "providers": (
+        "adapters for external scientific solvers Forge executes but does not "
+        "own (PyBaMM, PyBOP, SALib). An outer boundary in the same sense `mcp` "
+        "is: it imports the Core and the domains, nothing below it imports it, "
+        "and its third-party dependencies are optional extras. A Core that "
+        "could reach a provider would be a Core whose availability depended on "
+        "an optional wheel"
+    ),
     "claims": (
         "the scientific intelligence layer -- claim contract, capability registry, "
         "routing, planning and assessment. EXPERIMENTAL, above credibility/SRIA, "

@@ -124,6 +124,9 @@ EXPENSIVE_MODULES: dict[str, str] = {
     "tests/systems/aerospace/test_multirotor_mvr0.py": "runs multirotor reference design studies",
     "tests/systems/aerospace/test_multirotor_mvr1.py": "runs target-driven multirotor design studies",
     "tests/test_benchmark_records.py": "re-scores the committed benchmark records through the real scorer",
+    "tests/providers/test_provider_trust_path.py": "solves a real PyBaMM model and a native battery solve, then assembles both",
+    "tests/providers/test_provider_replay.py": "re-executes a real PyBaMM solve to check replay",
+    "tests/providers/test_provider_evidence_boundaries.py": "runs a real SALib Morris design",
 }
 
 #: Tests inside an expensive module that stay in FAST. Each only reads files,

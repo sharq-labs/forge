@@ -1,0 +1,3530 @@
+{
+ "schema": "provider_pivot_s1_comparison/1",
+ "what_this_is": "development and validation evidence for three routes over one corpus. It is NOT a Gate A and no holdout was opened or scored",
+ "independent_gate_a": "requires new evidence. Every cell in this archive has had its residuals read -- B0041 by the Sprint 3 recovery and B0007/B0036/B0044 by Sprint 3 itself -- so no pristine holdout remains here and this round did not manufacture one",
+ "gate_limits_volts": {
+  "mae_v": 0.04,
+  "rmse_v": 0.05,
+  "p95_v": 0.09
+ },
+ "applicability_window": {
+  "rule": "charge state at or above the band's OCV authority floor",
+  "floors": {
+   "warm": 0.1,
+   "cold": 0.05
+  },
+  "samples_inside": 11755,
+  "applies_to": "every route identically"
+ },
+ "state_margin_sensitivity": {
+  "declared_margin": 0.001,
+  "tenth_margin": 0.0001,
+  "statistics_at_declared_margin": {
+   "n": 11015,
+   "mae": 0.029115118272631756,
+   "rmse": 0.041327035255485596,
+   "p95": 0.08240184060549671,
+   "bias": -0.00554169916357019,
+   "max": 0.27461355435670765
+  },
+  "statistics_at_tenth_margin": {
+   "n": 11015,
+   "mae": 0.029016579307298757,
+   "rmse": 0.041317469651048426,
+   "p95": 0.08232516412208524,
+   "bias": -0.004876800005129916,
+   "max": 0.27541853266897665
+  },
+  "delta_mae_volts": -9.853896533299975e-05,
+  "delta_rmse_volts": -9.565604437170028e-06,
+  "delta_p95_volts": -7.667648341147526e-05,
+  "delta_bias_volts": 0.000664899158440274
+ },
+ "declared_approximations": {
+  "ecm_state_margin": 0.001,
+  "why": "the native model's charge state is closed at 1 and PyBaMM's ECM interval is open there; the measured full-charge state is mapped to the largest state the ECM can represent"
+ },
+ "routes": {
+  "native|calibration": {
+   "route": "native",
+   "split": "calibration",
+   "trajectories": 33,
+   "offered": 33,
+   "refused": 0,
+   "refusal_rate": 0.0,
+   "coverage": 1.0,
+   "scored_samples": 6930,
+   "statistics_volts": {
+    "n": 6930,
+    "mae": 0.022929185028014946,
+    "rmse": 0.04998234449224288,
+    "p95": 0.09151925965798435,
+    "bias": 0.0015571073871923978,
+    "max": 0.7156997944076626
+   },
+   "wall_seconds": 0.5118715999415144,
+   "refusal_reasons": []
+  },
+  "native|validation": {
+   "route": "native",
+   "split": "validation",
+   "trajectories": 19,
+   "offered": 19,
+   "refused": 0,
+   "refusal_rate": 0.0,
+   "coverage": 1.0,
+   "scored_samples": 4773,
+   "statistics_volts": {
+    "n": 4773,
+    "mae": 0.02470218960475649,
+    "rmse": 0.04463277548774485,
+    "p95": 0.09479551793456986,
+    "bias": -0.006819381007971321,
+    "max": 0.5919579371621455
+   },
+   "wall_seconds": 0.3732882998883724,
+   "refusal_reasons": []
+  },
+  "pybamm_thevenin_1rc|calibration": {
+   "route": "pybamm_thevenin_1rc",
+   "split": "calibration",
+   "trajectories": 33,
+   "offered": 24,
+   "refused": 9,
+   "refusal_rate": 0.2727272727272727,
+   "coverage": 0.7272727272727273,
+   "scored_samples": 6223,
+   "statistics_volts": {
+    "n": 6223,
+    "mae": 0.027746349403034328,
+    "rmse": 0.041480474186230104,
+    "p95": 0.0783240121907447,
+    "bias": -0.00284426560127143,
+    "max": 0.19644009080736646
+   },
+   "wall_seconds": 0.4467272001784295,
+   "refusal_reasons": [
+    "model_not_applicable"
+   ]
+  },
+  "pybamm_thevenin_1rc|validation": {
+   "route": "pybamm_thevenin_1rc",
+   "split": "validation",
+   "trajectories": 19,
+   "offered": 19,
+   "refused": 0,
+   "refusal_rate": 0.0,
+   "coverage": 1.0,
+   "scored_samples": 4792,
+   "statistics_volts": {
+    "n": 4792,
+    "mae": 0.030892632603914068,
+    "rmse": 0.041126921576538834,
+    "p95": 0.08361713518253389,
+    "bias": -0.00904464763147194,
+    "max": 0.27461355435670765
+   },
+   "wall_seconds": 0.36283129977528006,
+   "refusal_reasons": []
+  },
+  "pybamm_spme|calibration": {
+   "route": "pybamm_spme",
+   "split": "calibration",
+   "trajectories": 33,
+   "offered": 0,
+   "refused": 33,
+   "refusal_rate": 1.0,
+   "coverage": 0.0,
+   "scored_samples": 0,
+   "statistics_volts": {
+    "n": 0,
+    "mae": null,
+    "rmse": null,
+    "p95": null,
+    "bias": null
+   },
+   "wall_seconds": 0.0,
+   "refusal_reasons": [
+    "model_not_applicable"
+   ]
+  },
+  "pybamm_spme|validation": {
+   "route": "pybamm_spme",
+   "split": "validation",
+   "trajectories": 19,
+   "offered": 0,
+   "refused": 19,
+   "refusal_rate": 1.0,
+   "coverage": 0.0,
+   "scored_samples": 0,
+   "statistics_volts": {
+    "n": 0,
+    "mae": null,
+    "rmse": null,
+    "p95": null,
+    "bias": null
+   },
+   "wall_seconds": 0.0,
+   "refusal_reasons": [
+    "model_not_applicable"
+   ]
+  }
+ },
+ "risk_applicability_screen": {
+  "native": {
+   "total": 52,
+   "supported": 52,
+   "not_supported": 0,
+   "refused": 0,
+   "correct_support": 32,
+   "false_trust": 20,
+   "correct_refusal": 0,
+   "over_refusal": 0,
+   "truth_unknown": 0,
+   "coverage": 1.0,
+   "false_trust_rate": 0.38461538461538464,
+   "over_refusal_rate": null,
+   "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
+  },
+  "pybamm_thevenin_1rc": {
+   "total": 52,
+   "supported": 43,
+   "not_supported": 0,
+   "refused": 9,
+   "correct_support": 32,
+   "false_trust": 11,
+   "correct_refusal": 2,
+   "over_refusal": 2,
+   "truth_unknown": 5,
+   "coverage": 0.8269230769230769,
+   "false_trust_rate": 0.2558139534883721,
+   "over_refusal_rate": 0.5,
+   "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
+  },
+  "pybamm_spme": {
+   "total": 52,
+   "supported": 0,
+   "not_supported": 0,
+   "refused": 52,
+   "correct_support": 0,
+   "false_trust": 0,
+   "correct_refusal": 0,
+   "over_refusal": 0,
+   "truth_unknown": 52,
+   "coverage": 0.0,
+   "false_trust_rate": null,
+   "over_refusal_rate": null,
+   "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
+  }
+ },
+ "risk_trust_path": {
+  "native": {
+   "not_computed": "this route produces no ScientificResult, so there is nothing for the credibility path to assemble. The Sprint 3 recovery's own freeze record states the same limit for this march: it produces no replay of an authorized plan and no certification record. A result was NOT fabricated here in order to fill this cell",
+   "cases_with_a_result": 0,
+   "cases_total": 52
+  },
+  "pybamm_thevenin_1rc": {
+   "total": 52,
+   "supported": 0,
+   "not_supported": 0,
+   "refused": 52,
+   "correct_support": 0,
+   "false_trust": 0,
+   "correct_refusal": 13,
+   "over_refusal": 34,
+   "truth_unknown": 5,
+   "coverage": 0.0,
+   "false_trust_rate": null,
+   "over_refusal_rate": 0.723404255319149,
+   "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
+  },
+  "pybamm_spme": {
+   "total": 52,
+   "supported": 0,
+   "not_supported": 0,
+   "refused": 52,
+   "correct_support": 0,
+   "false_trust": 0,
+   "correct_refusal": 0,
+   "over_refusal": 0,
+   "truth_unknown": 52,
+   "coverage": 0.0,
+   "false_trust_rate": null,
+   "over_refusal_rate": null,
+   "rate_note": "a null rate means the denominator was empty -- nothing was measured -- and is not zero"
+  }
+ },
+ "counterfactual_probe": {
+  "what_it_is": "every trajectory the equivalent-circuit route refused, re-run under an authority that declares this cell's own measured capacity, so that the screen's over-refusal rate is measured rather than left unmeasurable. No prediction here is offered as supported and no decision may cite these authorities",
+  "cases": [
+   {
+    "trajectory_id": "B0033.d0003",
+    "measured_capacity_ah": 0.717109,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 0.717109 A.h (124% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.07195272412958208,
+    "native_rmse_v": 0.11346110493971787,
+    "counterfactual_authority_digest": "031f642ba241990e6664e00136dacb58cb018f915b5aa3cbe2107d126b72971b"
+   },
+   {
+    "trajectory_id": "B0038.d0002",
+    "measured_capacity_ah": 1.08408,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.08408 A.h (48% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.06287442462874071,
+    "native_rmse_v": 0.08285458121189247,
+    "counterfactual_authority_digest": "a91ed4dacd3130d06a81f6d4fd32c5e7f2c754d0e958ca71418f2eb237f3e7c6"
+   },
+   {
+    "trajectory_id": "B0038.d0008",
+    "measured_capacity_ah": 1.196865,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.19687 A.h (34% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.04245368461480796,
+    "native_rmse_v": 0.07679128626488564,
+    "counterfactual_authority_digest": "3bfbf221a1814fcef8794756f2bdbf7d2ea03817234ec28595b9f8eae2821a15"
+   },
+   {
+    "trajectory_id": "B0038.d0012",
+    "measured_capacity_ah": 1.145592,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.14559 A.h (40% apart, limit 25%)",
+    "counterfactual_outcome": "ok",
+    "counterfactual_rmse_v": 0.040898199755726644,
+    "native_rmse_v": 0.08139372228064296,
+    "counterfactual_authority_digest": "274cdb3ca509e029d0f6dd5d44e88e40836215f462ef61eb92d8377e2df4bca7"
+   },
+   {
+    "trajectory_id": "B0042.d0048",
+    "measured_capacity_ah": 1.177489,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+    "counterfactual_outcome": "model_not_applicable",
+    "counterfactual_rmse_v": null,
+    "native_rmse_v": 0.1826230860153052,
+    "counterfactual_authority_digest": "78da831f7e8e34015acb519f89e9d4c35c53332da141ef094442c93b937901b3"
+   },
+   {
+    "trajectory_id": "B0042.d0056",
+    "measured_capacity_ah": 1.130474,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+    "counterfactual_outcome": "model_not_applicable",
+    "counterfactual_rmse_v": null,
+    "native_rmse_v": 0.1238234193502763,
+    "counterfactual_authority_digest": "0a12340ec73f049eb5aacbf2172af64288b32a9a3a11f3ff73e0e9046e79546d"
+   },
+   {
+    "trajectory_id": "B0042.d0062",
+    "measured_capacity_ah": 1.097925,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+    "counterfactual_outcome": "model_not_applicable",
+    "counterfactual_rmse_v": null,
+    "native_rmse_v": 0.12039162092025624,
+    "counterfactual_authority_digest": "7173de8023ca35c83ae1accbb63802bdae74612112dedeba9ffd2970ee908002"
+   },
+   {
+    "trajectory_id": "B0042.d0073",
+    "measured_capacity_ah": 1.106009,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+    "counterfactual_outcome": "model_not_applicable",
+    "counterfactual_rmse_v": null,
+    "native_rmse_v": 0.15894462808014428,
+    "counterfactual_authority_digest": "ac22bb20562dec00f3f4684f8229d849fc1b840348f79cb76a6959a9b1e740d4"
+   },
+   {
+    "trajectory_id": "B0042.d0079",
+    "measured_capacity_ah": 1.09429,
+    "declared_capacity_ah": 1.604954,
+    "refusal_reason": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+    "counterfactual_outcome": "model_not_applicable",
+    "counterfactual_rmse_v": null,
+    "native_rmse_v": 0.16496056850743623,
+    "counterfactual_authority_digest": "285f83afd6dfdd495c7b1630ac0d2e1ec8cc1479342025b2dc6fa14572140078"
+   }
+  ]
+ },
+ "replay": [
+  {
+   "schema": "provider_replay_report/1",
+   "request_digest": "7f5a777972bc22f63a20fa6f8fbd1092811e2816faf2bd6a63527e97e8fc3351",
+   "executed": true,
+   "identity_matched": true,
+   "reproduced": true,
+   "compared_qois": [
+    "terminal_voltage",
+    "time"
+   ],
+   "max_absolute_difference": 0.0,
+   "tolerance": 0.0,
+   "drift": [],
+   "detail": "",
+   "trajectory_id": "B0005.d0008"
+  },
+  {
+   "schema": "provider_replay_report/1",
+   "request_digest": "b575dc807d1c27ccf800dea767cd6f9a0848500ab92c5f9279c10ef0744e8c85",
+   "executed": true,
+   "identity_matched": true,
+   "reproduced": true,
+   "compared_qois": [
+    "terminal_voltage",
+    "time"
+   ],
+   "max_absolute_difference": 0.0,
+   "tolerance": 0.0,
+   "drift": [],
+   "detail": "",
+   "trajectory_id": "B0005.d0016"
+  },
+  {
+   "schema": "provider_replay_report/1",
+   "request_digest": "ff93785425deff6770d6962e2cf6223434ddddbaf33ff52f4bd0a18ebe79eef0",
+   "executed": true,
+   "identity_matched": true,
+   "reproduced": true,
+   "compared_qois": [
+    "terminal_voltage",
+    "time"
+   ],
+   "max_absolute_difference": 0.0,
+   "tolerance": 0.0,
+   "drift": [],
+   "detail": "",
+   "trajectory_id": "B0005.d0024"
+  }
+ ],
+ "per_trajectory": [
+  {
+   "trajectory_id": "B0005.d0008",
+   "cell": "B0005",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 162,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.018235199968330562,
+     "declined_tail": null,
+     "statistics": {
+      "n": 161,
+      "mae": 0.009069637248681652,
+      "rmse": 0.018320621850733194,
+      "p95": 0.01424029917396119,
+      "bias": -0.006066622738672681,
+      "max": 0.20164700734461594
+     },
+     "margin": 0.6335875629853361,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "167 samples",
+     "wall_seconds": 0.05828029999975115,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "793275a229b497649b6d3d3bac767d99c930f84fbe460af0b3234127b4c420f6",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 162,
+      "mae": 0.01677220731786849,
+      "rmse": 0.020552770660493273,
+      "p95": 0.04002515562539388,
+      "bias": -0.016305931432083365,
+      "max": 0.04077739609669706
+     },
+     "margin": 0.5889445867901346
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.84083 A.h (172% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0016",
+   "cell": "B0005",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 159,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.012404600041918457,
+     "declined_tail": null,
+     "statistics": {
+      "n": 158,
+      "mae": 0.010650236748175598,
+      "rmse": 0.01908213592595954,
+      "p95": 0.01734723751889966,
+      "bias": -0.008095154789634367,
+      "max": 0.19999795954405863
+     },
+     "margin": 0.6183572814808093,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "157 samples",
+     "wall_seconds": 0.01685610006097704,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "3181699aff987d0d4b2b181366e2b36dfcf28fab13c1ca7a73ff288c0368aed4",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 159,
+      "mae": 0.01855888360573037,
+      "rmse": 0.02242672706464508,
+      "p95": 0.04351057328688146,
+      "bias": -0.018175467403236556,
+      "max": 0.04400431249324788
+     },
+     "margin": 0.5514654587070984
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.80821 A.h (177% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0024",
+   "cell": "B0005",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 161,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.012236599926836789,
+     "declined_tail": null,
+     "statistics": {
+      "n": 160,
+      "mae": 0.01043820676212591,
+      "rmse": 0.019310406372272503,
+      "p95": 0.01860468468595311,
+      "bias": -0.0078049434309405115,
+      "max": 0.20185731299719967
+     },
+     "margin": 0.6137918725545499,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "147 samples",
+     "wall_seconds": 0.015680500073358417,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "5ed025080a88a62fecd0a81cc017f4be6d1ca4851b2ec355dce97bb5d12e9077",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 161,
+      "mae": 0.018119352925006958,
+      "rmse": 0.021867847453693214,
+      "p95": 0.04160880141929857,
+      "bias": -0.017672462062398874,
+      "max": 0.04252183101119611
+     },
+     "margin": 0.5626430509261358
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.83147 A.h (173% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0032",
+   "cell": "B0005",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 321,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.02303569996729493,
+     "declined_tail": null,
+     "statistics": {
+      "n": 320,
+      "mae": 0.011350949410094976,
+      "rmse": 0.015247617152462362,
+      "p95": 0.017181312581709296,
+      "bias": -0.010241858299496639,
+      "max": 0.17745457769573392
+     },
+     "margin": 0.6950476569507528,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "197 samples",
+     "wall_seconds": 0.01853929995559156,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "c1a91bd749a4be7246158def1b032c2f1d78799db16070bac027f3abbb5678ad",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 321,
+      "mae": 0.018725018316843253,
+      "rmse": 0.024670396943019555,
+      "p95": 0.0506721804031347,
+      "bias": -0.018694398221733032,
+      "max": 0.0525944619680474
+     },
+     "margin": 0.5065920611396089
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.85454 A.h (170% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0005.d0040",
+   "cell": "B0005",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 308,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.02279620000626892,
+     "declined_tail": null,
+     "statistics": {
+      "n": 307,
+      "mae": 0.006734994345488547,
+      "rmse": 0.012643659465371996,
+      "p95": 0.012788633083926637,
+      "bias": -0.005287580111948842,
+      "max": 0.18082093270425492
+     },
+     "margin": 0.7471268106925602,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "177 samples",
+     "wall_seconds": 0.013420499977655709,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "ae3b963c94138665984e1e8fb76e9bfd647128ea81d383519e3f436a07151381",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 308,
+      "mae": 0.013859050821042326,
+      "rmse": 0.020693097152768944,
+      "p95": 0.04548735922576652,
+      "bias": -0.013083785458278279,
+      "max": 0.04786741712285858
+     },
+     "margin": 0.5861380569446212
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.77577 A.h (182% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0006.d0008",
+   "cell": "B0006",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 177,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.011629199958406389,
+     "declined_tail": null,
+     "statistics": {
+      "n": 176,
+      "mae": 0.007202454092665872,
+      "rmse": 0.017743820052397007,
+      "p95": 0.01499581927024396,
+      "bias": 0.006322391689343023,
+      "max": 0.21350627569854064
+     },
+     "margin": 0.6451235989520598,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "178 samples",
+     "wall_seconds": 0.016943400027230382,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "c596c3954a18f6bf8b17acc7199533ac03f14db620eb5b3d30e8c33d1a9e3a15",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 177,
+      "mae": 0.010331257626292903,
+      "rmse": 0.014449942449529402,
+      "p95": 0.029532420821865024,
+      "bias": -0.0040183343319202935,
+      "max": 0.03423751756677529
+     },
+     "margin": 0.711001151009412
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 2.02448 A.h (147% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0006.d0016",
+   "cell": "B0006",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 168,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.009496500017121434,
+     "declined_tail": null,
+     "statistics": {
+      "n": 167,
+      "mae": 0.007826481405183647,
+      "rmse": 0.018471427909275966,
+      "p95": 0.014692494938904677,
+      "bias": 0.007813621048682823,
+      "max": 0.21634178853826924
+     },
+     "margin": 0.6305714418144807,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "185 samples",
+     "wall_seconds": 0.031067200005054474,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "f5c9fce11d1660b1cb9766c02343e5412de6487a696829d1c4bcdba8759e3bce",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 168,
+      "mae": 0.010319173964730557,
+      "rmse": 0.014165891292775852,
+      "p95": 0.029506214493769445,
+      "bias": -0.002336667304556976,
+      "max": 0.033712839622124235
+     },
+     "margin": 0.716682174144483
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.9123 A.h (161% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0006.d0032",
+   "cell": "B0006",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 335,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.03530360001605004,
+     "declined_tail": null,
+     "statistics": {
+      "n": 334,
+      "mae": 0.010664497298690123,
+      "rmse": 0.01566867173162889,
+      "p95": 0.01735810942268312,
+      "bias": 0.010531500195818944,
+      "max": 0.1951282338811433
+     },
+     "margin": 0.6866265653674222,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "182 samples",
+     "wall_seconds": 0.0160799000877887,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "bf48f4d2daf2bf977f7b73d892ac33263898de29f9ef9fc7823b2f18cf5c7a83",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 335,
+      "mae": 0.01679411567115655,
+      "rmse": 0.019054950411058383,
+      "p95": 0.03506961597717062,
+      "bias": 0.0020182271068817778,
+      "max": 0.04690066347076449
+     },
+     "margin": 0.6189009917788324
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.93027 A.h (159% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0006.d0040",
+   "cell": "B0006",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 310,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.020962699898518622,
+     "declined_tail": null,
+     "statistics": {
+      "n": 309,
+      "mae": 0.02705029607914945,
+      "rmse": 0.03032555316074164,
+      "p95": 0.04357369345279327,
+      "bias": 0.02705029607914945,
+      "max": 0.20392324664891426
+     },
+     "margin": 0.3934889367851672,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "149 samples",
+     "wall_seconds": 0.018501500017009676,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "a3e90e7bb7afef86f9c295e3508ecda8e678288e9e7a250654e515b81dbb70dc",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 310,
+      "mae": 0.026328952288756955,
+      "rmse": 0.02882109513779831,
+      "p95": 0.04532380559062821,
+      "bias": 0.019179526191723993,
+      "max": 0.06961201531160022
+     },
+     "margin": 0.42357809724403384
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.78446 A.h (180% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0008",
+   "cell": "B0018",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 303,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.028542199986986816,
+     "declined_tail": null,
+     "statistics": {
+      "n": 302,
+      "mae": 0.0032225979625010235,
+      "rmse": 0.011634430161960207,
+      "p95": 0.006325578586200642,
+      "bias": 0.0017138978123741075,
+      "max": 0.19420732442765587
+     },
+     "margin": 0.7673113967607958,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "245 samples",
+     "wall_seconds": 0.018215899937786162,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "6d0f23d5eed2ad07dc41e6833648c2451ee721ba7f7a19639451dc04883b3513",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 303,
+      "mae": 0.009737661108186633,
+      "rmse": 0.01558075619436195,
+      "p95": 0.03461408269286048,
+      "bias": -0.006582722577803875,
+      "max": 0.035379378644363246
+     },
+     "margin": 0.688384876112761
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.82959 A.h (173% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0016",
+   "cell": "B0018",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 284,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.020066600060090423,
+     "declined_tail": null,
+     "statistics": {
+      "n": 283,
+      "mae": 0.0032591469459244426,
+      "rmse": 0.01182425496242829,
+      "p95": 0.0059972292844032715,
+      "bias": 0.0017857713490991133,
+      "max": 0.19194946029751137
+     },
+     "margin": 0.7635149007514342,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "152 samples",
+     "wall_seconds": 0.015410399995744228,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "046d6e0b7cbd40e4c8c477702c2774f46e5a00eaf703e16120b91fc01dd11d49",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 284,
+      "mae": 0.011003846755320987,
+      "rmse": 0.01686957261957339,
+      "p95": 0.0371022639147327,
+      "bias": -0.006609873450226861,
+      "max": 0.038477992242429426
+     },
+     "margin": 0.6626085476085322
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.79541 A.h (178% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0024",
+   "cell": "B0018",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 264,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.015650899964384735,
+     "declined_tail": null,
+     "statistics": {
+      "n": 263,
+      "mae": 0.013528403270600715,
+      "rmse": 0.01843990480878865,
+      "p95": 0.02022227846503144,
+      "bias": 0.013523974252697015,
+      "max": 0.19913563454985317
+     },
+     "margin": 0.6312019038242269,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "154 samples",
+     "wall_seconds": 0.016380899935029447,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "c80451f0c9d14559526fb46c4d3c57dc1da06b25baaf298b3326da1d7b3e75de",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 264,
+      "mae": 0.016720537189129674,
+      "rmse": 0.017869088571702236,
+      "p95": 0.02684688897583376,
+      "bias": 0.0061631516267266415,
+      "max": 0.03634813536844428
+     },
+     "margin": 0.6426182285659554
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.72052 A.h (191% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0032",
+   "cell": "B0018",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 251,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.014493800001218915,
+     "declined_tail": null,
+     "statistics": {
+      "n": 250,
+      "mae": 0.014077846939406528,
+      "rmse": 0.019374898388714583,
+      "p95": 0.024104563666072387,
+      "bias": 0.014049752533310296,
+      "max": 0.19477744366359007
+     },
+     "margin": 0.6125020322257083,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "137 samples",
+     "wall_seconds": 0.014668300049379468,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "e82ab838da05ec7b8c50296149bf77f7f920e793f98a07fc8abcfed1c5ab5e71",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 251,
+      "mae": 0.0185165972097291,
+      "rmse": 0.01996911126588396,
+      "p95": 0.03133451243719865,
+      "bias": 0.005732141743653719,
+      "max": 0.041342373533932
+     },
+     "margin": 0.6006177746823208
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.69134 A.h (196% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0018.d0040",
+   "cell": "B0018",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "FY08Q4|room_ambient|2A",
+   "scored_samples": 235,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.016101200017146766,
+     "declined_tail": null,
+     "statistics": {
+      "n": 234,
+      "mae": 0.009067369629566122,
+      "rmse": 0.015957005557615225,
+      "p95": 0.013863470993245919,
+      "bias": 0.008691846799230626,
+      "max": 0.19659469022015408
+     },
+     "margin": 0.6808598888476954,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "150 samples",
+     "wall_seconds": 0.018946200027130544,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "e1a49ea8646faeede7fdd671f9245f9eba324637c7973762306efdd27988b3c3",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 235,
+      "mae": 0.014637616391267998,
+      "rmse": 0.01680609297830151,
+      "p95": 0.032809436973562534,
+      "bias": 0.00098388609679293,
+      "max": 0.03437282751910198
+     },
+     "margin": 0.6638781404339698
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.63005 A.h (207% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0003",
+   "cell": "B0033",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 63,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.004460499971173704,
+     "declined_tail": null,
+     "statistics": {
+      "n": 62,
+      "mae": 0.07853525673765549,
+      "rmse": 0.11346110493971787,
+      "p95": 0.10768078066201658,
+      "bias": -0.02729212414568234,
+      "max": 0.6886239361750861
+     },
+     "margin": -1.2692220987943572,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 0.717109 A.h (124% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 0.717109 A.h (597% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0008",
+   "cell": "B0033",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 113,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.008149800007231534,
+     "declined_tail": null,
+     "statistics": {
+      "n": 112,
+      "mae": 0.11428933339508593,
+      "rmse": 0.12951547178454156,
+      "p95": 0.1291889338215535,
+      "bias": 0.11406488297638737,
+      "max": 0.7156997944076626
+     },
+     "margin": -1.5903094356908312,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "82 samples",
+     "wall_seconds": 0.015349199995398521,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "1c915fb156aae7373bb7842ab579fc51197271d6162af1127a75b7d0ca324b82",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 113,
+      "mae": 0.13713381895177307,
+      "rmse": 0.13978351593661562,
+      "p95": 0.18736243781838402,
+      "bias": 0.13662611424684898,
+      "max": 0.19254070663923262
+     },
+     "margin": -1.7956703187323122
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.34489 A.h (272% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0024",
+   "cell": "B0033",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 136,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.007790499948896468,
+     "declined_tail": null,
+     "statistics": {
+      "n": 135,
+      "mae": 0.03429194082305861,
+      "rmse": 0.05864095628704162,
+      "p95": 0.06984825288979923,
+      "bias": -0.022640462631496886,
+      "max": 0.5471520737927258
+     },
+     "margin": -0.17281912574083236,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "79 samples",
+     "wall_seconds": 0.01631649991031736,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "e5b94251dcd62332160da9fc47167df7fbb25983090fef5091e74dfd777b8358",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 136,
+      "mae": 0.017594253451911634,
+      "rmse": 0.024749130571861313,
+      "p95": 0.05813338118157585,
+      "bias": -0.0008613227868227419,
+      "max": 0.10165965638182728
+     },
+     "margin": 0.5050173885627738
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.77953 A.h (181% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0032",
+   "cell": "B0033",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 127,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.010384300025179982,
+     "declined_tail": null,
+     "statistics": {
+      "n": 126,
+      "mae": 0.033623843785251045,
+      "rmse": 0.060064778232634265,
+      "p95": 0.07423196423218448,
+      "bias": -0.020512568930685347,
+      "max": 0.5487199955432485
+     },
+     "margin": -0.20129556465268525,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "98 samples",
+     "wall_seconds": 0.01858090003952384,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "ecf3b794e04966e51735ddb74391881a231c0f9645b003f95765705958c2fe88",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 127,
+      "mae": 0.018087794335375783,
+      "rmse": 0.026009124382428903,
+      "p95": 0.06287426479600189,
+      "bias": 0.0028262083411202442,
+      "max": 0.09906039999838123
+     },
+     "margin": 0.479817512351422
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.70296 A.h (194% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0033.d0040",
+   "cell": "B0033",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 123,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.01340730010997504,
+     "declined_tail": null,
+     "statistics": {
+      "n": 122,
+      "mae": 0.03024643215476702,
+      "rmse": 0.056243716133054095,
+      "p95": 0.040420850805825026,
+      "bias": -0.020105741360413047,
+      "max": 0.5418690582292576
+     },
+     "margin": -0.12487432266108184,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "97 samples",
+     "wall_seconds": 0.02417260000947863,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "7ad7f9f60b5bcf69a75452df3e7d253a0be9f9e2f9e7a415d4c7d580c4114277",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 123,
+      "mae": 0.019516627655470523,
+      "rmse": 0.02527606172904542,
+      "p95": 0.0464234055705921,
+      "bias": -0.006311535611706381,
+      "max": 0.07501942410494378
+     },
+     "margin": 0.49447876541909164
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.7044 A.h (193% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0034.d0008",
+   "cell": "B0034",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 139,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.012603400042280555,
+     "declined_tail": null,
+     "statistics": {
+      "n": 138,
+      "mae": 0.031022663447717713,
+      "rmse": 0.07009037876577603,
+      "p95": 0.1411124811016986,
+      "bias": 0.0243286604142729,
+      "max": 0.5919579371621455
+     },
+     "margin": -0.40180757531552064,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "90 samples",
+     "wall_seconds": 0.023579100030474365,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "5a853e19b3d2978437b4e4d2d43ff7f0e7a3c6af9b7d8c647fe7aa47ff809fa1",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 139,
+      "mae": 0.047712680182561876,
+      "rmse": 0.06758735705753881,
+      "p95": 0.16637392253645222,
+      "bias": 0.04755748458048488,
+      "max": 0.27461355435670765
+     },
+     "margin": -0.3517471411507761
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.66018 A.h (201% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0034.d0016",
+   "cell": "B0034",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 128,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.008953100070357323,
+     "declined_tail": null,
+     "statistics": {
+      "n": 127,
+      "mae": 0.021979385086499895,
+      "rmse": 0.06111620576515243,
+      "p95": 0.08598317531884359,
+      "bias": 0.009588083482565046,
+      "max": 0.5857292737549882
+     },
+     "margin": -0.2223241153030485,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "92 samples",
+     "wall_seconds": 0.0171432999195531,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "ebbbc24f3126c2e1c9e6ef1ca68f78df4c0a03f50fa4bf7e9dcc7e64ce412716",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 128,
+      "mae": 0.030885037114624637,
+      "rmse": 0.04753148521884509,
+      "p95": 0.11476623259751229,
+      "bias": 0.030838006412332714,
+      "max": 0.19580456169256166
+     },
+     "margin": 0.04937029562309819
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.59048 A.h (214% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0034.d0024",
+   "cell": "B0034",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 128,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.008901799912564456,
+     "declined_tail": null,
+     "statistics": {
+      "n": 127,
+      "mae": 0.025702029536516572,
+      "rmse": 0.06247865275675936,
+      "p95": 0.09327520989082272,
+      "bias": 0.016118367268195318,
+      "max": 0.5821828950333825
+     },
+     "margin": -0.24957305513518713,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "80 samples",
+     "wall_seconds": 0.01645589992403984,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "10ed4fd42cebf9ba874b45056aa2fea99af8fe75809a4314033bd91621155d63",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 128,
+      "mae": 0.03800480628137701,
+      "rmse": 0.052639589974083405,
+      "p95": 0.12705586578390005,
+      "bias": 0.03793357099404959,
+      "max": 0.1940641690133491
+     },
+     "margin": -0.05279179948166804
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.67186 A.h (199% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0034.d0032",
+   "cell": "B0034",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 117,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.006328599993139505,
+     "declined_tail": null,
+     "statistics": {
+      "n": 116,
+      "mae": 0.027337122451585122,
+      "rmse": 0.06605504183005265,
+      "p95": 0.10095349460758785,
+      "bias": 0.016884352947576828,
+      "max": 0.5846584333568843
+     },
+     "margin": -0.3211008366010529,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "93 samples",
+     "wall_seconds": 0.013090899912640452,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "a7df9120b01a75b07cd52e68e37e8d68506ec0b87d7f9bbe52b0c010445dc824",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 117,
+      "mae": 0.03989038589425446,
+      "rmse": 0.05402795760762551,
+      "p95": 0.13145400137553942,
+      "bias": 0.039841448304300066,
+      "max": 0.19414493013551493
+     },
+     "margin": -0.08055915215251008
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.56619 A.h (219% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0034.d0040",
+   "cell": "B0034",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "33_34_36|room_ambient|4A",
+   "scored_samples": 115,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.006795799941755831,
+     "declined_tail": null,
+     "statistics": {
+      "n": 114,
+      "mae": 0.01852090412444308,
+      "rmse": 0.05861898991555202,
+      "p95": 0.06276502831945585,
+      "bias": 0.0175711264427014,
+      "max": 0.5805342770041158
+     },
+     "margin": -0.17237979831104033,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "92 samples",
+     "wall_seconds": 0.01304099999833852,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "70a8b4cada32b3c2261b16e9d16bc1f647a76882637e0b6e2fcebcadb6f46ca2",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 115,
+      "mae": 0.03101807339943409,
+      "rmse": 0.041844777055948384,
+      "p95": 0.09843909502480219,
+      "bias": 0.030107542375781175,
+      "max": 0.13722522197635456
+     },
+     "margin": 0.16310445888103237
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.58953 A.h (215% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0002",
+   "cell": "B0038",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "38_39_40|room_ambient|4A",
+   "scored_samples": 94,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.006444700062274933,
+     "declined_tail": null,
+     "statistics": {
+      "n": 93,
+      "mae": 0.04569126407190406,
+      "rmse": 0.08285458121189247,
+      "p95": 0.06439077505720281,
+      "bias": -0.020337419786162148,
+      "max": 0.6836729060439035
+     },
+     "margin": -0.6570916242378494,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.08408 A.h (48% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.08408 A.h (361% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0008",
+   "cell": "B0038",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "38_39_40|room_ambient|4A",
+   "scored_samples": 99,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.010171899921260774,
+     "declined_tail": null,
+     "statistics": {
+      "n": 98,
+      "mae": 0.027831065829590357,
+      "rmse": 0.07679128626488564,
+      "p95": 0.08462117987169648,
+      "bias": 0.011296393713152946,
+      "max": 0.6922109050152727
+     },
+     "margin": -0.5358257252977128,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.19687 A.h (34% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.19687 A.h (318% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0038.d0012",
+   "cell": "B0038",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "38_39_40|room_ambient|4A",
+   "scored_samples": 94,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.005438100080937147,
+     "declined_tail": null,
+     "statistics": {
+      "n": 93,
+      "mae": 0.03278194806633142,
+      "rmse": 0.08139372228064296,
+      "p95": 0.1071397959302165,
+      "bias": 0.029744715740415997,
+      "max": 0.6909219102162569
+     },
+     "margin": -0.627874445612859,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.14559 A.h (40% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.14559 A.h (336% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0008",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 287,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.018531300011090934,
+     "declined_tail": null,
+     "statistics": {
+      "n": 286,
+      "mae": 0.009884628481770071,
+      "rmse": 0.017310273405214117,
+      "p95": 0.016005470682536327,
+      "bias": -0.007847020504738159,
+      "max": 0.23352172636026047
+     },
+     "margin": 0.6537945318957178,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "111 samples",
+     "wall_seconds": 0.0198134999955073,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "d8279b3c2f6ac593306f574749a6483cdf4ef0799f6ac2f5986ecba1018898fa",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 287,
+      "mae": 0.012138925528111733,
+      "rmse": 0.014140761797620202,
+      "p95": 0.020179474482175053,
+      "bias": -0.011297675695387553,
+      "max": 0.02042253477497402
+     },
+     "margin": 0.717184764047596
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.7339 A.h (188% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0016",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 269,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.02189660002477467,
+     "declined_tail": null,
+     "statistics": {
+      "n": 268,
+      "mae": 0.006959402686711565,
+      "rmse": 0.016035832359017406,
+      "p95": 0.011402735281205167,
+      "bias": -0.004735477191565022,
+      "max": 0.23623705593737876
+     },
+     "margin": 0.6792833528196519,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "133 samples",
+     "wall_seconds": 0.013412600033916533,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "eee0778c60058c2e61d5e7207bbbe04763834b4e9b675a993a2cfe0efe756ebe",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 269,
+      "mae": 0.00922345494776365,
+      "rmse": 0.010207341749694617,
+      "p95": 0.014210234576683245,
+      "bias": -0.005998155039720775,
+      "max": 0.015081743646854218
+     },
+     "margin": 0.7958531650061076
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.68997 A.h (196% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0024",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 258,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.018612899933941662,
+     "declined_tail": null,
+     "statistics": {
+      "n": 257,
+      "mae": 0.005787229100301873,
+      "rmse": 0.01552327732540122,
+      "p95": 0.00974004850685617,
+      "bias": -0.0026379824028552007,
+      "max": 0.23015632390342233
+     },
+     "margin": 0.6895344534919756,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "133 samples",
+     "wall_seconds": 0.01805510011035949,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "cb6540ed93472ef2a09413115d5195660d70cba77b3e42a6c6c8bb37c068c98d",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 258,
+      "mae": 0.01003359267354439,
+      "rmse": 0.011542213331831997,
+      "p95": 0.020384475889209774,
+      "bias": -0.0069408680327135265,
+      "max": 0.02488985524559606
+     },
+     "margin": 0.7691557333633601
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.68565 A.h (197% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0032",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 244,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.018514800001867115,
+     "declined_tail": null,
+     "statistics": {
+      "n": 243,
+      "mae": 0.007127125069021597,
+      "rmse": 0.01740710285547858,
+      "p95": 0.019199129967047757,
+      "bias": 0.006842456563958951,
+      "max": 0.23554634304712474
+     },
+     "margin": 0.6518579428904283,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "130 samples",
+     "wall_seconds": 0.01744730002246797,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "27b655b5fb26327b2445de5115871aa42ae8cf8b6e5b06b1a16b94138df70c06",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 244,
+      "mae": 0.007836208386266898,
+      "rmse": 0.010523881218970556,
+      "p95": 0.01895932284733748,
+      "bias": 0.0036584613444734424,
+      "max": 0.04405520087012471
+     },
+     "margin": 0.7895223756205889
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.64389 A.h (204% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0040",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 232,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.012312700040638447,
+     "declined_tail": null,
+     "statistics": {
+      "n": 231,
+      "mae": 0.016142986405273747,
+      "rmse": 0.024256173060478132,
+      "p95": 0.04187718979238397,
+      "bias": 0.016142986405273747,
+      "max": 0.23522076965086303
+     },
+     "margin": 0.5148765387904374,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "127 samples",
+     "wall_seconds": 0.020535700023174286,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "666b34343ede2255af54aef8d219358b3e3c6e7df9e91aeb6cb059c85b85b5da",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 232,
+      "mae": 0.013907132310054329,
+      "rmse": 0.018177609289430276,
+      "p95": 0.035539623889582206,
+      "bias": 0.011951366981402124,
+      "max": 0.07289904088490973
+     },
+     "margin": 0.6364478142113945
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.61404 A.h (210% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0008",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 281,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.01834270008839667,
+     "declined_tail": null,
+     "statistics": {
+      "n": 280,
+      "mae": 0.007538794159013973,
+      "rmse": 0.014858346683321373,
+      "p95": 0.013589052827856829,
+      "bias": -0.0053889435579055,
+      "max": 0.21011037993791204
+     },
+     "margin": 0.7028330663335726,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "131 samples",
+     "wall_seconds": 0.01813029998447746,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "d28210d7c77c6da9f276d4ed3b39a612a778a6bfe87aaaded41dfd33fd54dcc3",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 281,
+      "mae": 0.010245009802293358,
+      "rmse": 0.011893322688592037,
+      "p95": 0.021005076946467582,
+      "bias": -0.008357644013190528,
+      "max": 0.02405215451521281
+     },
+     "margin": 0.7621335462281593
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.6749 A.h (199% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0016",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 261,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.016910500009544194,
+     "declined_tail": null,
+     "statistics": {
+      "n": 260,
+      "mae": 0.00653104902078562,
+      "rmse": 0.015431498312412523,
+      "p95": 0.016292015903890178,
+      "bias": 0.00026415517227257237,
+      "max": 0.21553473094997333
+     },
+     "margin": 0.6913700337517495,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "144 samples",
+     "wall_seconds": 0.015924599952995777,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "8150329eac296c39a36d72942879c7c403bf061318579bc38819819542d271dc",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 261,
+      "mae": 0.007980503756293377,
+      "rmse": 0.009923596151914954,
+      "p95": 0.015139856243146177,
+      "bias": 0.00017754723724435647,
+      "max": 0.038347425758392006
+     },
+     "margin": 0.8015280769617009
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.6203 A.h (209% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0024",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 248,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.021660699974745512,
+     "declined_tail": null,
+     "statistics": {
+      "n": 247,
+      "mae": 0.008266330852816623,
+      "rmse": 0.01682975831829214,
+      "p95": 0.02158568757277468,
+      "bias": 1.0947522390446032e-05,
+      "max": 0.20705124609677705
+     },
+     "margin": 0.6634048336341571,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "110 samples",
+     "wall_seconds": 0.026814000098966062,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "3e6026651a25ecf96ea178e9185663bb4d340cc7375f81aca8042151865ef340",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 248,
+      "mae": 0.011351547333456273,
+      "rmse": 0.01451503807993213,
+      "p95": 0.025969105097136236,
+      "bias": -0.003256802809526279,
+      "max": 0.04951325271818652
+     },
+     "margin": 0.7096992384013574
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.59587 A.h (213% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0032",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 232,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.01849649997893721,
+     "declined_tail": null,
+     "statistics": {
+      "n": 231,
+      "mae": 0.013665100479472888,
+      "rmse": 0.022980674020051408,
+      "p95": 0.04569353742819304,
+      "bias": 0.011488420258450314,
+      "max": 0.21376820396413354
+     },
+     "margin": 0.5403865195989719,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "126 samples",
+     "wall_seconds": 0.018170400056988,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "baf008af4f6d0845e38e6ece194093ebdf4fac56e43f9080e2eba5cff8b1639b",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 232,
+      "mae": 0.015921624860900638,
+      "rmse": 0.019595033774100417,
+      "p95": 0.0401994478414025,
+      "bias": 0.009851493296876802,
+      "max": 0.07101414389901484
+     },
+     "margin": 0.6080993245179916
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.54652 A.h (223% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0040",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "warm",
+   "operating_block": "41_42_43_44|room_ambient|2A",
+   "scored_samples": 219,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.016898700036108494,
+     "declined_tail": null,
+     "statistics": {
+      "n": 218,
+      "mae": 0.021446747918288194,
+      "rmse": 0.03157072797946387,
+      "p95": 0.06724434214873787,
+      "bias": 0.020625041621983056,
+      "max": 0.21305148576398691
+     },
+     "margin": 0.3685854404107226,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "122 samples",
+     "wall_seconds": 0.016096699982881546,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "f357a6a45e54946fa1ab4b5c9961c4454bc46f36aabaa74b5fa7a6fa93c3717d",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 219,
+      "mae": 0.02269410797947155,
+      "rmse": 0.028822869891987558,
+      "p95": 0.06240742878794192,
+      "bias": 0.018159174394034815,
+      "max": 0.09996443457711113
+     },
+     "margin": 0.42354260216024886
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.50134 A.h (233% apart, limit 25%)",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0093",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 426,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.025142299942672253,
+     "declined_tail": null,
+     "statistics": {
+      "n": 425,
+      "mae": 0.032589194406702736,
+      "rmse": 0.03713411358550903,
+      "p95": 0.06238806198150648,
+      "bias": -0.03177777274258845,
+      "max": 0.17242710362428504
+     },
+     "margin": 0.25731772828981936,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "187 samples",
+     "wall_seconds": 0.014556000009179115,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "18279879d1ec4b30bfb9799da791e071cddaa174eda7fbf6508db447f9cdf316",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 426,
+      "mae": 0.050020910760407114,
+      "rmse": 0.05442425924210433,
+      "p95": 0.07397937840365953,
+      "bias": -0.037255547269875275,
+      "max": 0.07626746729817757
+     },
+     "margin": -0.08848518484208659
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.5577 A.h (221% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0098",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 411,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.02643749990966171,
+     "declined_tail": null,
+     "statistics": {
+      "n": 410,
+      "mae": 0.013960222358601705,
+      "rmse": 0.018534374006088112,
+      "p95": 0.029941517257637607,
+      "bias": -0.012913735584063831,
+      "max": 0.1758849954135968
+     },
+     "margin": 0.6293125198782379,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "234 samples",
+     "wall_seconds": 0.014341400004923344,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "4e51663e9ba3642e7d2d166c2a48bf644e591f2cd8c2514b819b396e44c9584e",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 411,
+      "mae": 0.04750532811230124,
+      "rmse": 0.053372014472842004,
+      "p95": 0.08111433095684184,
+      "bias": -0.017714991092815807,
+      "max": 0.12568809015289384
+     },
+     "margin": -0.06744028945684002
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.52406 A.h (228% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0102",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 398,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.029218200012110174,
+     "declined_tail": null,
+     "statistics": {
+      "n": 397,
+      "mae": 0.007627746304658395,
+      "rmse": 0.012940195391621617,
+      "p95": 0.01811491252216957,
+      "bias": 0.002818336561374684,
+      "max": 0.18136395712050435
+     },
+     "margin": 0.7411960921675677,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "212 samples",
+     "wall_seconds": 0.016968399984762073,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "5da87bde59ac1bbe50e7053277f9be6929d0b658cc689ea8fa23e971c409d428",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 398,
+      "mae": 0.04837901936453171,
+      "rmse": 0.05621063567998836,
+      "p95": 0.1276581610358729,
+      "bias": -0.0032655830957952444,
+      "max": 0.17823217005675396
+     },
+     "margin": -0.12421271359976713
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.49137 A.h (235% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0107",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 383,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.03131849993951619,
+     "declined_tail": null,
+     "statistics": {
+      "n": 382,
+      "mae": 0.017026781701517255,
+      "rmse": 0.022196597033434604,
+      "p95": 0.036459475704777145,
+      "bias": 0.016737499485333433,
+      "max": 0.18690838743802463
+     },
+     "margin": 0.556068059331308,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "203 samples",
+     "wall_seconds": 0.016070200013928115,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "8937efff4c1027b03e162715b1c7e7ceaa08a6e87835ecc1259de2191ff8f637",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 383,
+      "mae": 0.049896571739847066,
+      "rmse": 0.06152099094563842,
+      "p95": 0.14592620524368627,
+      "bias": 0.010138808281976025,
+      "max": 0.1903256000445115
+     },
+     "margin": -0.23041981891276833
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.45262 A.h (244% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0112",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 368,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.032589799957349896,
+     "declined_tail": null,
+     "statistics": {
+      "n": 367,
+      "mae": 0.03245570927424052,
+      "rmse": 0.038000899146205414,
+      "p95": 0.07298303090017377,
+      "bias": 0.03214879132523169,
+      "max": 0.18794942573534978
+     },
+     "margin": 0.23998201707589178,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "162 samples",
+     "wall_seconds": 0.01470940001308918,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "792112fe72b9963fe37c46dedd4b1c4d77c8d2381fb387faf39629bd27677a42",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 368,
+      "mae": 0.05365787898021229,
+      "rmse": 0.0724337762405885,
+      "p95": 0.1697170613443797,
+      "bias": 0.026977247111662515,
+      "max": 0.19644009080736646
+     },
+     "margin": -0.4486755248117699
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.41665 A.h (253% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0048",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|low_ambient|4A",
+   "scored_samples": 85,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.005005599930882454,
+     "declined_tail": null,
+     "statistics": {
+      "n": 84,
+      "mae": 0.14885080345208324,
+      "rmse": 0.1826230860153052,
+      "p95": 0.2786657541837507,
+      "bias": -0.07737999959188475,
+      "max": 0.6310077345770497
+     },
+     "margin": -2.652461720306104,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.17749 A.h (36% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.17749 A.h (325% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0056",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|low_ambient|4A",
+   "scored_samples": 80,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.004429600085131824,
+     "declined_tail": null,
+     "statistics": {
+      "n": 79,
+      "mae": 0.09237320373657056,
+      "rmse": 0.1238234193502763,
+      "p95": 0.1687064422428377,
+      "bias": -0.01860247585275918,
+      "max": 0.6320789181245745
+     },
+     "margin": -1.4764683870055257,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.13047 A.h (42% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.13047 A.h (342% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0062",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|low_ambient|4A",
+   "scored_samples": 77,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.005078500020317733,
+     "declined_tail": null,
+     "statistics": {
+      "n": 76,
+      "mae": 0.08698638612841106,
+      "rmse": 0.12039162092025624,
+      "p95": 0.17026164652347742,
+      "bias": 0.020511680566137783,
+      "max": 0.6602427136421571
+     },
+     "margin": -1.4078324184051245,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09793 A.h (46% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.09793 A.h (355% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0073",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|low_ambient|4A",
+   "scored_samples": 75,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.00602119998075068,
+     "declined_tail": null,
+     "statistics": {
+      "n": 74,
+      "mae": 0.1179267111151966,
+      "rmse": 0.15894462808014428,
+      "p95": 0.34222443623724086,
+      "bias": 0.03607667427272964,
+      "max": 0.6656774775181997
+     },
+     "margin": -2.1788925616028854,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.10601 A.h (45% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.10601 A.h (352% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0042.d0079",
+   "cell": "B0042",
+   "split": "calibration",
+   "band": "warm",
+   "operating_block": "41_42_43_44|low_ambient|4A",
+   "scored_samples": 73,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.006952000083401799,
+     "declined_tail": null,
+     "statistics": {
+      "n": 72,
+      "mae": 0.12838489999973524,
+      "rmse": 0.16496056850743623,
+      "p95": 0.3532018273161208,
+      "bias": 0.0851145344801503,
+      "max": 0.6591603430004307
+     },
+     "margin": -2.2992113701487247,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "model_not_applicable",
+     "detail": "capacity mismatch: the parameter authority describes a 1.60495 A.h cell and the cell under test is 1.09429 A.h (47% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [293.15, 393.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.09429 A.h (357% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0093",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 426,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.045158499968238175,
+     "declined_tail": null,
+     "statistics": {
+      "n": 425,
+      "mae": 0.07061870672849739,
+      "rmse": 0.08612696039532627,
+      "p95": 0.17332121832907532,
+      "bias": -0.06988169735786486,
+      "max": 0.20627133027996658
+     },
+     "margin": -0.7225392079065254,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "210 samples",
+     "wall_seconds": 0.021744599915109575,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "aed2d93b046754eaca7420251915d2076ccd01cdc72f3357e608df9547075836",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 426,
+      "mae": 0.07580635002725673,
+      "rmse": 0.07757845927508025,
+      "p95": 0.08948921436991863,
+      "bias": -0.07567562732249135,
+      "max": 0.09123846799129565
+     },
+     "margin": -0.5515691855016049
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.53816 A.h (225% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0098",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 405,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.0298677000682801,
+     "declined_tail": null,
+     "statistics": {
+      "n": 404,
+      "mae": 0.046150877285783654,
+      "rmse": 0.05943485759526549,
+      "p95": 0.1264103381660706,
+      "bias": -0.0453467948801492,
+      "max": 0.16242464593815953
+     },
+     "margin": -0.18869715190530975,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "210 samples",
+     "wall_seconds": 0.017390399938449264,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "86d6d1f86b04fe422d62e9023313f06e6cfe26e5d8bd814caa89e70ddee1cb53",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 405,
+      "mae": 0.05136056333202166,
+      "rmse": 0.0553295846733009,
+      "p95": 0.07542172664496594,
+      "bias": -0.05092831523039057,
+      "max": 0.07753479407843233
+     },
+     "margin": -0.10659169346601799
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.48332 A.h (237% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0102",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 387,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.02898009994532913,
+     "declined_tail": null,
+     "statistics": {
+      "n": 386,
+      "mae": 0.030504534326954713,
+      "rmse": 0.0457692798796713,
+      "p95": 0.10358175704593675,
+      "bias": -0.029480157771970147,
+      "max": 0.16894675365345435
+     },
+     "margin": 0.08461440240657411,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "209 samples",
+     "wall_seconds": 0.016215499956160784,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "da3c99a39e1a9ed5544e9b30a87db29cef38e9f7b90b3c3f6590ecb34c4cdb59",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 387,
+      "mae": 0.03971461247282336,
+      "rmse": 0.04407830790839109,
+      "p95": 0.06626000342801008,
+      "bias": -0.036427685703286236,
+      "max": 0.07115550736274567
+     },
+     "margin": 0.11843384183217828
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.43195 A.h (249% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0107",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 368,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.03290640003979206,
+     "declined_tail": null,
+     "statistics": {
+      "n": 367,
+      "mae": 0.018186483096978238,
+      "rmse": 0.029529017095934404,
+      "p95": 0.06685098565717995,
+      "bias": -0.011313480013292958,
+      "max": 0.17561930112803914
+     },
+     "margin": 0.409419658081312,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "174 samples",
+     "wall_seconds": 0.028414499945938587,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "9ea59f6d2a608f7b4ca0b10270d36398cc7908526df0128158a93171b6724ff4",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 368,
+      "mae": 0.03127375842770767,
+      "rmse": 0.03622481032919677,
+      "p95": 0.05678527679647871,
+      "bias": -0.018786280858891228,
+      "max": 0.09436317023916407
+     },
+     "margin": 0.2755037934160646
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.37854 A.h (263% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  },
+  {
+   "trajectory_id": "B0043.d0112",
+   "cell": "B0043",
+   "split": "validation",
+   "band": "cold",
+   "operating_block": "41_42_43_44|low_ambient|1A",
+   "scored_samples": 348,
+   "routes": {
+    "native": {
+     "outcome": "ok",
+     "wall_seconds": 0.023091799928806722,
+     "declined_tail": null,
+     "statistics": {
+      "n": 347,
+      "mae": 0.020171222413392514,
+      "rmse": 0.026431656867794702,
+      "p95": 0.05262427786878199,
+      "bias": 0.0011881807993210799,
+      "max": 0.1772024595130932
+     },
+     "margin": 0.471366862644106,
+     "route_produces_results": false
+    },
+    "pybamm_thevenin_1rc": {
+     "outcome": "ok",
+     "detail": "183 samples",
+     "wall_seconds": 0.01802810002118349,
+     "identity": {
+      "schema": "provider_identity/1",
+      "provider_name": "pybamm",
+      "provider_version": "26.8.0.0",
+      "model_identity": "pybamm.equivalent_circuit.Thevenin@thevenin_1rc",
+      "solver_identity": "IDAKLUSolver",
+      "configuration_digest": "ef4e9566a72a27013e31c4eb6972c57377217506f005d15607560c4010d53c99",
+      "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+      "adapter_version": "engcore.providers.pybamm_provider/0.1.0"
+     },
+     "statistics": {
+      "n": 348,
+      "mae": 0.030429369493741244,
+      "rmse": 0.03418024845926693,
+      "p95": 0.06790571242738075,
+      "bias": -0.004812885708470429,
+      "max": 0.08504265327642413
+     },
+     "margin": 0.31639503081466136
+    },
+    "pybamm_spme": {
+     "outcome": "model_not_applicable",
+     "detail": "chemistry mismatch: the parameter authority describes 'NMC811/graphite-SiOx' and the cell under test is 'LiCoO2/graphite'. Electrode open-circuit potentials and kinetic parameters are chemistry-specific; capacity mismatch: the parameter authority describes a 5 A.h cell and the cell under test is 1.31978 A.h (279% apart, limit 25%); ambient temperature outside the authority's declared band: 277.15 K is not within [288.15, 308.15] K",
+     "wall_seconds": null,
+     "statistics": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "p95": null,
+      "bias": null
+     },
+     "margin": null
+    }
+   }
+  }
+ ],
+ "wall_seconds": 6.945569799980149
+}

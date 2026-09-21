@@ -1,0 +1,108 @@
+{
+ "schema": "provider_pivot_s1_sensitivity/1",
+ "outcome": "ok",
+ "scenario": {
+  "trajectory_id": "B0005.d0008",
+  "cell": "B0005",
+  "split": "calibration",
+  "band": "warm",
+  "samples": 191,
+  "duration_s": 3572.453,
+  "ambient_k": 297.15
+ },
+ "provider_identity": {
+  "schema": "provider_identity/1",
+  "provider_name": "salib",
+  "provider_version": "1.6.0",
+  "model_identity": "morris:terminal_voltage_rmse",
+  "solver_identity": "SALib.analyze.morris",
+  "configuration_digest": "fb8bacf1b13c5b6820ee0411bbf4ec401523c353b63fa8f577818e0629de1118",
+  "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
+  "adapter_version": "engcore.providers.salib_provider/0.1.0"
+ },
+ "wall_seconds": 48.72366320004221,
+ "evidence": {
+  "method": "morris",
+  "qoi": "terminal_voltage_rmse",
+  "scenario_id": "B0005.d0008:warm",
+  "provider": "salib",
+  "provider_version": "1.6.0",
+  "parameters": [
+   {
+    "name": "R0 [Ohm]",
+    "lower": 0.05,
+    "upper": 0.5
+   },
+   {
+    "name": "R1 [Ohm]",
+    "lower": 0.01,
+    "upper": 0.25
+   },
+   {
+    "name": "C1 [F]",
+    "lower": 200.0,
+    "upper": 5000.0
+   },
+   {
+    "name": "initial_state_of_charge",
+    "lower": 0.9,
+    "upper": 0.999
+   },
+   {
+    "name": "capacity_scale",
+    "lower": 0.95,
+    "upper": 1.05
+   }
+  ],
+  "indices": {
+   "R0 [Ohm]": {
+    "mu": 0.8298557866547914,
+    "mu_star": 0.8298557866547914,
+    "sigma": 0.11851139204277845,
+    "mu_star_conf": 0.06270303679781243
+   },
+   "R1 [Ohm]": {
+    "mu": 0.32829543644051423,
+    "mu_star": 0.34176237840901486,
+    "sigma": 0.16878161868905917,
+    "mu_star_conf": 0.07575022532006363
+   },
+   "C1 [F]": {
+    "mu": -0.05036741186866553,
+    "mu_star": 0.050367945458624615,
+    "sigma": 0.056890351668959775,
+    "mu_star_conf": 0.03005157235720926
+   },
+   "initial_state_of_charge": {
+    "mu": -0.05755714297552852,
+    "mu_star": 0.05916376398029035,
+    "sigma": 0.028128985753682754,
+    "mu_star_conf": 0.014081861204743522
+   },
+   "capacity_scale": {
+    "mu": -0.028223674933018996,
+    "mu_star": 0.04445028079712874,
+    "sigma": 0.046157276153897114,
+    "mu_star_conf": 0.0158252755757292
+   }
+  },
+  "ranking": [
+   "R0 [Ohm]",
+   "R1 [Ohm]",
+   "initial_state_of_charge",
+   "C1 [F]",
+   "capacity_scale"
+  ],
+  "primary_index": "mu_star",
+  "primary_index_meaning": "mean absolute elementary effect",
+  "sample_count": 72,
+  "failed_evaluations": 0,
+  "diagnostics": {
+   "seed": 20260921,
+   "wall_seconds": 48.72366320004221
+  },
+  "is_validation_evidence": false,
+  "what_this_is_not": "a sensitivity index states that the output moves when the input moves. It states nothing about agreement with a measurement, and it can never contribute to a validation level"
+ },
+ "what_this_decides": "which parameters are worth fitting. It decides nothing about whether the model agrees with the world"
+}

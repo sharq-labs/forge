@@ -12,8 +12,8 @@ Frozen Scientific Core
                                    execution -> studies
             |
             +-> domains -> systems
-                    |
-                    v
+                    |         \
+                    v          +-> providers
               credibility
                     |
           +---------+---------+
@@ -35,6 +35,7 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
 - `sria/` owns evidence admission, assurance, campaign and decision authority.
 - `claims/` owns scientific-intelligence orchestration: claim contracts, routing, planning, evidence requirements, assessment and analysis.
 - `mcp/` is the external tool/transport boundary. Old credibility import paths remain compatibility shims.
+- `providers/` is the external **solver** boundary: adapters for scientific solvers Forge executes and does not own (PyBaMM, PyBOP, SALib). Like `mcp` it is an outer consumer, not scientific authority — it imports the Core and the domains, nothing below it imports it, and its third-party dependencies are optional extras so that Core importability never depends on one. A provider that produces an answer produces the same `ScientificResult` a native solver does, which is what lets the credibility and claim path stay unaware that providers exist. See `docs/providers/README.md`.
 
 ## Claims organization
 
