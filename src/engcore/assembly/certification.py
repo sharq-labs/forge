@@ -56,6 +56,7 @@ from ..scientific.corpus.authority import (
     NUMERICAL_EXECUTION_PROFILE,
     VALIDATION_AUTHORITY_PROFILE,
 )
+from ..scientific.corpus.dataset import Applicability
 from ..scientific.corpus.envelope import (
     EnvelopeVerdict,
     ValidationEnvelope,
@@ -112,6 +113,12 @@ class TrustPolicy:
     #: accepted SPARSE_SUPPORT or EXTRAPOLATING would be saying so out loud
     #: rather than reaching that position by never asking about the point.
     accepted_envelope_verdicts: tuple[str, ...] = (EnvelopeVerdict.SUPPORTED.value,)
+    #: Which DECLARED applicability states count. The second axis, checked
+    #: separately and never merged with the first: an envelope classification
+    #: carries both an empirical verdict and the model's own declaration, and
+    #: SUPPORTED at a point the model says is outside its domain is empirical
+    #: evidence about a regime nobody claims. Both must pass.
+    accepted_applicability: tuple[str, ...] = (Applicability.INSIDE.value,)
     #: What numerical credibility this policy requires. ``None`` means the
     #: policy has NOT SAID, which is not the same as requiring nothing and
     #: cannot be satisfied by producing nothing.
@@ -150,6 +157,14 @@ class TrustPolicy:
                 "a policy accepting no envelope verdict can never be satisfied"
             )
         object.__setattr__(self, "accepted_envelope_verdicts", accepted)
+        applicability = tuple(
+            sorted({Applicability(item).value for item in self.accepted_applicability})
+        )
+        if not applicability:
+            raise InvalidScientificProblem(
+                "a policy accepting no applicability state can never be satisfied"
+            )
+        object.__setattr__(self, "accepted_applicability", applicability)
         if self.numerical_requirement is not None and not isinstance(
             self.numerical_requirement, NumericalRequirement
         ):
@@ -175,6 +190,7 @@ class TrustPolicy:
             "required_gates": list(self.required_gates),
             "recorded_gates": list(self.recorded_gates),
             "accepted_envelope_verdicts": list(self.accepted_envelope_verdicts),
+            "accepted_applicability": list(self.accepted_applicability),
             "numerical_requirement": (
                 None
                 if self.numerical_requirement is None
@@ -223,8 +239,10 @@ MULTIPHYSICS_FULL_TRUST_POLICY = TrustPolicy(
     version="1",
     required_gates=ALL_GATES,
     # Only demonstrated support entitles a prediction. Sparse evidence,
-    # extrapolation, a failing region and an unlocatable point all fail.
+    # extrapolation, a failing region and an unlocatable point all fail -- and
+    # so does support at a point the model does not claim.
     accepted_envelope_verdicts=(EnvelopeVerdict.SUPPORTED.value,),
+    accepted_applicability=(Applicability.INSIDE.value,),
     numerical_requirement=NumericalRequirement(
         "forge.multiphysics.full_trust.numerical", (NumericalCheck.CONVERGENCE.value,)
     ),
@@ -602,6 +620,7 @@ def assess_authorized_multiphysics_run(
         "computation": run_binding.digest,
         "scope_profile": VALIDATION_AUTHORITY_PROFILE.profile_id,
         "accepted_verdicts": list(policy.accepted_envelope_verdicts),
+        "accepted_applicability": list(policy.accepted_applicability),
         "query_points": [item.to_dict() for item in query],
     }
     envelope_problems: list[str] = []
@@ -630,6 +649,7 @@ def assess_authorized_multiphysics_run(
                 "cannot derive a domain's validation coordinates for it"
             )
         accepted = set(policy.accepted_envelope_verdicts)
+        allowed_applicability = set(policy.accepted_applicability)
         classifications = []
         for point in query:
             found = envelope.classify_point(point)
@@ -642,12 +662,24 @@ def assess_authorized_multiphysics_run(
                     "why": found.why,
                 }
             )
+            where = (
+                f"prediction point {point.qoi_id!r}"
+                + (f" ({point.label})" if point.label else "")
+            )
             if found.verdict.value not in accepted:
                 envelope_problems.append(
-                    f"prediction point {point.qoi_id!r}"
-                    + (f" ({point.label})" if point.label else "")
-                    + f" is {found.verdict.value}, which this policy does not "
-                    f"accept: {found.why}"
+                    f"{where} is {found.verdict.value}, which this policy does "
+                    f"not accept: {found.why}"
+                )
+            # THE SECOND AXIS. Checked separately, because empirical support at
+            # a point the model declares outside its domain -- or has never
+            # screened -- is evidence about a regime nobody claims.
+            if found.declared.value not in allowed_applicability:
+                envelope_problems.append(
+                    f"{where} has declared applicability "
+                    f"{found.declared.value!r}, which this policy does not "
+                    f"accept; empirical support does not establish that the "
+                    f"model claims this regime"
                 )
         envelope_evidence.update(
             {

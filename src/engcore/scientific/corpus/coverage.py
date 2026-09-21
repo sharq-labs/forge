@@ -38,8 +38,22 @@ counted separately rather than merged, because one is a guardrail working and
 the other is a defect, and a single ``refused`` number would hide the
 difference.
 
-Core never learns what an axis means. ``temperature``, ``state_of_charge`` and
-``load`` are strings with units, and the binning is arithmetic.
+AND COVERAGE IS ABOUT ONE METRIC
+---------------------------------
+A cell used to tally every comparison that landed in it, whatever quantity was
+being compared. So a model whose temperature agrees everywhere and whose
+voltage fails everywhere produced cells that were half right about both, and a
+query about voltage could be answered ``SUPPORTED`` by evidence about
+temperature. Two quantities validated over the same operating region are two
+pieces of evidence, not one.
+
+Every :class:`ValidationCoverage` therefore names its ``metric`` and indexes
+only that metric's comparisons. :func:`build_coverage_by_metric` produces the
+set when a campaign scored several.
+
+Core never learns what an axis or a metric means. ``temperature``,
+``state_of_charge`` and ``load`` are strings with units, and the binning is
+arithmetic.
 """
 
 from __future__ import annotations
@@ -319,15 +333,19 @@ class FailureCluster:
 
 @dataclass(frozen=True)
 class ValidationCoverage:
-    """The evidence map for one campaign over one region."""
+    """The evidence map for one campaign, one metric, over one region."""
 
     region: ValidationRegion
     cells: tuple[CoverageCell, ...]
+    #: WHICH QUANTITY this map is about. Evidence for one metric is not
+    #: evidence for another, however well they share an operating region.
+    metric: str = ""
     unlocated_cases: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.region, ValidationRegion):
             raise CorpusError("coverage requires a ValidationRegion")
+        object.__setattr__(self, "metric", text(self.metric, label="coverage metric"))
         cells = tuple(sorted(self.cells))
         if any(not isinstance(item, CoverageCell) for item in cells):
             raise CorpusError("coverage requires CoverageCell records")
@@ -383,6 +401,7 @@ class ValidationCoverage:
         return {
             "schema": VALIDATION_COVERAGE_SCHEMA,
             "region": self.region.to_dict(),
+            "metric": self.metric,
             "cells": [item.to_dict() for item in self.cells],
             "unlocated_cases": list(self.unlocated_cases),
         }
@@ -393,6 +412,7 @@ class ValidationCoverage:
         return cls(
             ValidationRegion.from_dict(payload["region"]),
             tuple(CoverageCell.from_dict(i) for i in payload["cells"]),
+            payload["metric"],
             tuple(payload.get("unlocated_cases", ())),
         )
 
@@ -426,13 +446,19 @@ def build_coverage(
     report: ValidationCampaignReport,
     dataset: ReferenceDataset,
     region: ValidationRegion,
+    *,
+    metric: str,
 ) -> ValidationCoverage:
-    """Index one campaign's comparisons over a declared operating region.
+    """Index one metric's comparisons over a declared operating region.
 
     Every cell of the region appears, including the empty ones. A coverage map
     that only lists the cells that happened to be tested cannot answer the
     question it exists for -- where is there *no* evidence.
+
+    ``metric`` is required rather than defaulted. A default would have to be
+    "all of them", which is the mixing this argument exists to prevent.
     """
+    metric = text(metric, label="coverage metric")
     if report.normalized_dataset_sha256 != dataset.normalized_digest:
         raise CorpusError(
             "coverage was asked to index a campaign report against a different "
@@ -443,6 +469,8 @@ def build_coverage(
     unlocated: set[str] = set()
 
     for comparison in report.comparisons:
+        if comparison.metric != metric:
+            continue
         case = cases.get(comparison.case_id)
         if case is None:
             raise CorpusError(
@@ -488,7 +516,20 @@ def build_coverage(
                 ),
             )
         )
-    return ValidationCoverage(region, tuple(cells), tuple(sorted(unlocated)))
+    return ValidationCoverage(region, tuple(cells), metric, tuple(sorted(unlocated)))
+
+
+def build_coverage_by_metric(
+    report: ValidationCampaignReport,
+    dataset: ReferenceDataset,
+    region: ValidationRegion,
+) -> dict[str, ValidationCoverage]:
+    """One coverage map per metric the campaign scored. Never one map for all."""
+    metrics = sorted({item.metric for item in report.comparisons})
+    return {
+        metric: build_coverage(report, dataset, region, metric=metric)
+        for metric in metrics
+    }
 
 
 def _all_cells(region: ValidationRegion) -> list[tuple[int, ...]]:
@@ -507,6 +548,7 @@ def cluster_failures(
     dataset: ReferenceDataset,
     region: ValidationRegion,
     *,
+    metric: str | None = None,
     minimum_failures: int = 2,
 ) -> tuple[FailureCluster, ...]:
     """Group failures by one coordinate at a time, along each declared axis.
@@ -523,6 +565,8 @@ def cluster_failures(
         failed: dict[int, list[str]] = {}
         scored: dict[int, int] = {}
         for comparison in report.comparisons:
+            if metric is not None and comparison.metric != metric:
+                continue
             if not comparison.verdict.is_scored:
                 continue
             case = cases.get(comparison.case_id)
@@ -563,5 +607,6 @@ __all__ = [
     "ValidationCoverage",
     "ValidationRegion",
     "build_coverage",
+    "build_coverage_by_metric",
     "cluster_failures",
 ]

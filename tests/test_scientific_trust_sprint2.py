@@ -98,6 +98,7 @@ from engcore.scientific.corpus import (
     ValidationQueryPoint,
     ValidationRegion,
     build_coverage,
+    build_coverage_by_metric,
     cluster_failures,
     diagnose_campaign,
     run_campaign,
@@ -245,8 +246,9 @@ def test_locked_holdout_is_unreachable_without_a_registered_release():
         case.split is not DatasetSplit.LOCKED_HOLDOUT
         for case in dataset.cases_for_fitting()
     )
-    with pytest.raises(CorpusLeakageError, match="registered HoldoutRelease"):
-        dataset.released_holdout_cases(None)
+    # A release is permission, not proof: the cases come from an OPENING.
+    with pytest.raises(CorpusLeakageError, match="recorded HoldoutOpening"):
+        dataset.opened_holdout_cases(None)
 
 
 def test_a_release_does_not_carry_over_to_a_changed_dataset():
@@ -255,7 +257,8 @@ def test_a_release_does_not_carry_over_to_a_changed_dataset():
         "eval-1", "c", "1", dataset.normalized_digest,
         "2026-02-01T00:00:00+00:00", "registered",
     )
-    assert len(dataset.released_holdout_cases(release)) == 2
+    dataset.require_release(release)
+    assert len(dataset.opened_holdout_cases(_ledger().open(release))) == 2
 
     # One tolerance reviewed differently is a different dataset.
     changed = _dataset(
@@ -266,7 +269,7 @@ def test_a_release_does_not_carry_over_to_a_changed_dataset():
     )
     assert changed.normalized_digest != dataset.normalized_digest
     with pytest.raises(CorpusLeakageError, match="does not carry over"):
-        changed.released_holdout_cases(release)
+        changed.require_release(release)
 
 
 def test_one_independence_group_may_not_straddle_the_calibration_boundary():
@@ -414,7 +417,7 @@ def test_coverage_reports_untested_cells_rather_than_omitting_them():
     dataset = _dataset()
     campaign = ValidationCampaign("c", "1", dataset, (DatasetSplit.VALIDATION,))
     report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
-    coverage = build_coverage(report, dataset, _region())
+    coverage = build_coverage(report, dataset, _region(), metric="response")
 
     # Four bins, every one present even though only three were exercised.
     assert len(coverage.cells) == 4
@@ -425,26 +428,20 @@ def test_the_envelope_separates_empirical_support_from_declared_applicability():
     dataset = _dataset()
     campaign = ValidationCampaign("c", "1", dataset, (DatasetSplit.VALIDATION,))
     report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
-    coverage = build_coverage(report, dataset, _region())
+    coverage = build_coverage(report, dataset, _region(), metric="response")
     envelope = ValidationEnvelope("e1", coverage, report.digest)
 
     # 318 K sits with T315, which passes -- one case, below the minimum of two.
-    near = envelope.classify(
-        {"temperature": Quantity(318.0, "K")}, declared=Applicability.INSIDE
-    )
+    near = envelope.classify({"temperature": Quantity(318.0, "K")}, declared=Applicability.INSIDE)
     assert near.verdict is EnvelopeVerdict.SPARSE_SUPPORT
 
     # 360 K sits with failing cases.
-    far = envelope.classify(
-        {"temperature": Quantity(360.0, "K")}, declared=Applicability.INSIDE
-    )
+    far = envelope.classify({"temperature": Quantity(360.0, "K")}, declared=Applicability.INSIDE)
     assert far.verdict is EnvelopeVerdict.OUTSIDE_VALIDATED_ENVELOPE
 
     # 500 K is in the top bin, which nothing has tested. Declared applicable
     # and empirically unsupported are BOTH visible; neither overrides the other.
-    beyond = envelope.classify(
-        {"temperature": Quantity(500.0, "K")}, declared=Applicability.INSIDE
-    )
+    beyond = envelope.classify({"temperature": Quantity(500.0, "K")}, declared=Applicability.INSIDE)
     assert beyond.verdict is EnvelopeVerdict.EXTRAPOLATING
     assert beyond.declared is Applicability.INSIDE
     assert beyond.applicable_but_unsupported
@@ -457,7 +454,7 @@ def test_an_envelope_survives_a_roundtrip():
     dataset = _dataset()
     campaign = ValidationCampaign("c", "1", dataset, (DatasetSplit.VALIDATION,))
     report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
-    envelope = ValidationEnvelope("e1", build_coverage(report, dataset, _region()), report.digest)
+    envelope = ValidationEnvelope("e1", build_coverage(report, dataset, _region(), metric="response"), report.digest)
     assert ValidationEnvelope.from_dict(envelope.to_dict()) == envelope
     assert ValidationCampaignReport.from_dict(report.to_dict()) == report
 
@@ -477,9 +474,8 @@ def test_a_good_fit_with_bad_holdout_is_a_suspicion_not_a_conclusion():
         (DatasetSplit.CALIBRATION, DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
         holdout_release=release,
     )
-    report = run_campaign(
-        campaign, _predictions(dataset, campaign.cases()), holdout_ledger=_ledger()
-    )
+    opened = campaign.open_holdout(_ledger())
+    report = run_campaign(opened, _predictions(dataset, opened.cases()))
     clusters = cluster_failures(report, dataset, _region())
     diagnosis = diagnose_campaign(report, clusters)
 
@@ -670,9 +666,8 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
         description="generic trust engine campaign over a declared fixture corpus",
     )
     ledger = _ledger()
-    report = run_campaign(
-        campaign, _predictions(dataset, campaign.cases()), holdout_ledger=ledger
-    )
+    opened = campaign.open_holdout(ledger)
+    report = run_campaign(opened, _predictions(dataset, opened.cases()))
     assert report.normalized_dataset_sha256 == dataset.normalized_digest
     # The opening happened on the authoritative path, and the report names the
     # OPENING rather than the permission that allowed it.
@@ -682,7 +677,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
 
     # --- coverage, clustering and the validated envelope
     region = _region()
-    coverage = build_coverage(report, dataset, region)
+    coverage = build_coverage(report, dataset, region, metric="response")
     clusters = cluster_failures(report, dataset, region)
     envelope = ValidationEnvelope("sprint2.e2e", coverage, report.digest, target=target)
     assert coverage.status_counts()["supported"] >= 1
@@ -754,7 +749,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     # so it is declared -- and the gate is about THIS point, not the envelope's
     # best cell anywhere.
     supported_point = ValidationQueryPoint(
-        "mission.response",
+        "response",
         {"temperature": Quantity(305.0, "K")},
         declared=Applicability.INSIDE,
         label="inside the validated region",
@@ -932,8 +927,8 @@ def test_a_correct_refusal_buys_no_empirical_support_and_no_envelope():
     assert refused_report.pass_fraction is None
 
     region = _region()
-    answered_coverage = build_coverage(answered_report, answered, region)
-    refused_coverage = build_coverage(refused_report, refused, region)
+    answered_coverage = build_coverage(answered_report, answered, region, metric="response")
+    refused_coverage = build_coverage(refused_report, refused, region, metric="response")
 
     # The shared cell is SUPPORTED where the model answered and UNTESTED where
     # it declined: a refusal does not convert an unvalidated cell.
@@ -1110,7 +1105,7 @@ def _envelope_for(authorized, *, target=None):
         target=target if target is not None else _full_binding(authorized),
     )
     report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
-    coverage = build_coverage(report, dataset, _region())
+    coverage = build_coverage(report, dataset, _region(), metric="response")
     return ValidationEnvelope("bound", coverage, report.digest, target=campaign.target)
 
 
@@ -1278,7 +1273,6 @@ def test_a_holdout_release_for_one_evaluation_cannot_open_another():
         (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
         holdout_release=release,
     )
-    assert len(permitted.cases()) == 6
 
     # Same dataset, same release, different evaluation. Refused.
     with pytest.raises(CorpusLeakageError, match="registered for campaign"):
@@ -1298,9 +1292,9 @@ def test_a_holdout_release_for_one_evaluation_cannot_open_another():
     # Scoring the locked holdout goes through the opening authority, and the
     # report names the opening that actually happened.
     ledger = _ledger()
-    report = run_campaign(
-        permitted, _predictions(dataset, permitted.cases()), holdout_ledger=ledger
-    )
+    opened = permitted.open_holdout(ledger)
+    assert len(opened.cases()) == 6
+    report = run_campaign(opened, _predictions(dataset, opened.cases()))
     assert ledger.openings[0].campaign_id == "campaign-A"
     assert report.holdout_opening_digest == ledger.openings[0].digest
 
@@ -1353,7 +1347,7 @@ def test_undeclared_applicability_creates_no_support_and_no_envelope():
     assert report.guardrail_counts["applicability_undeclared"] == 2
 
     # It cannot expand coverage or the envelope.
-    coverage = build_coverage(report, dataset, _region())
+    coverage = build_coverage(report, dataset, _region(), metric="response")
     assert coverage.status_counts()["supported"] == 0
     assert all(cell.passed == 0 and cell.failed == 0 for cell in coverage.cells)
     assert sum(cell.undeclared for cell in coverage.cells) == 2
@@ -1601,18 +1595,21 @@ def test_a_locked_holdout_campaign_opens_once_through_the_execution_path():
         (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
         holdout_release=release,
     )
-    predictions = _predictions(dataset, campaign.cases())
-
-    # A locked-holdout campaign with no opening authority fails closed.
-    with pytest.raises(CorpusLeakageError, match="requires a holdout-opening authority"):
-        run_campaign(campaign, predictions)
+    # THE LOCKED CASES ARE NOT VISIBLE YET. Predictions cannot even be built
+    # for them without going through the opening authority first.
+    with pytest.raises(CorpusLeakageError, match="not visible until it is opened"):
+        campaign.cases()
 
     ledger = _ledger()
-    report = run_campaign(campaign, predictions, holdout_ledger=ledger)
+    opened = campaign.open_holdout(ledger)
+    predictions = _predictions(dataset, opened.cases())
+    report = run_campaign(opened, predictions)
     assert report.counts["pass"] or report.counts["fail"]
     assert report.holdout_opening_digest == ledger.openings[0].digest
 
     # The same release through the same authority is refused on the second run.
+    with pytest.raises(CorpusLeakageError, match="already opened"):
+        campaign.open_holdout(ledger)
     with pytest.raises(CorpusLeakageError, match="already opened"):
         run_campaign(campaign, predictions, holdout_ledger=ledger)
 
@@ -1780,3 +1777,223 @@ def test_full_trust_numerical_gate_cannot_pass_on_an_undeclared_requirement():
     )
     assert declared_none.enforceable
     assert declared_none.complete
+
+
+# =====================================================================
+# FINAL SEMANTIC HOLES
+# =====================================================================
+
+def test_locked_cases_are_invisible_until_the_holdout_is_opened():
+    """Hole 1: a release permitted an opening; it was treated as the opening.
+
+    The previous regression built its predictions from ``campaign.cases()``
+    before any ledger was involved -- which means it inspected the locked
+    holdout and then decided whether to record having looked. That sequence no
+    longer has an expression.
+    """
+    dataset = _dataset()
+    release = HoldoutRelease(
+        "eval-invisible", "invisible", "1", dataset.normalized_digest,
+        "2026-02-01T00:00:00+00:00", "registered",
+    )
+    campaign = ValidationCampaign(
+        "invisible", "1", dataset,
+        (DatasetSplit.VALIDATION, DatasetSplit.LOCKED_HOLDOUT),
+        holdout_release=release,
+    )
+
+    # 1. The campaign itself will not hand them over.
+    with pytest.raises(CorpusLeakageError, match="not visible until it is opened"):
+        campaign.cases()
+
+    # 2. Nor will the dataset, against the release alone.
+    with pytest.raises(CorpusLeakageError, match="recorded HoldoutOpening"):
+        dataset.opened_holdout_cases(release)
+    with pytest.raises(CorpusLeakageError, match="recorded HoldoutOpening"):
+        dataset.opened_holdout_cases(None)
+
+    # 3. Only an opening does, and only through an authority.
+    ledger = _ledger()
+    opened = campaign.open_holdout(ledger)
+    locked = [
+        case for case in opened.cases() if case.split is DatasetSplit.LOCKED_HOLDOUT
+    ]
+    assert {case.case_id for case in locked} == {"T420", "T450"}
+    assert ledger.was_opened(release)
+
+    # 4. And an opening from another release does not unlock this dataset's.
+    other = _dataset(
+        observations=tuple(
+            _observation(t, tolerance=0.9 if t == 420.0 else 0.5)
+            for t in (*CALIBRATION_TEMPERATURES, *VALIDATION_TEMPERATURES, *HOLDOUT_TEMPERATURES)
+        )
+    )
+    foreign_release = HoldoutRelease(
+        "eval-other", "other", "1", other.normalized_digest,
+        "2026-02-01T00:00:00+00:00", "registered elsewhere",
+    )
+    foreign_opening = _ledger().open(foreign_release)
+    with pytest.raises(CorpusLeakageError, match="names dataset digest"):
+        dataset.opened_holdout_cases(foreign_opening)
+
+
+def test_evidence_for_one_metric_cannot_support_a_query_about_another():
+    """Hole 2: cells mixed metrics, so voltage evidence answered a temperature query."""
+    # Two metrics over the SAME operating points, with opposite outcomes:
+    # "response" agrees everywhere, "secondary" disagrees everywhere.
+    cases = tuple(
+        _case(t, DatasetSplit.VALIDATION) for t in (315.0, 318.0)
+    )
+    observations = (
+        _observation(315.0),
+        _observation(318.0),
+        ReferenceObservation(
+            case_id="T315", metric="secondary",
+            expected=Quantity(1.0, "V"), acceptance_tolerance=_tolerance(0.01),
+        ),
+        ReferenceObservation(
+            case_id="T318", metric="secondary",
+            expected=Quantity(1.0, "V"), acceptance_tolerance=_tolerance(0.01),
+        ),
+    )
+    dataset = _dataset(cases=cases, observations=observations)
+    campaign = ValidationCampaign("metrics", "1", dataset, (DatasetSplit.VALIDATION,))
+    predictions = dict(_predictions(dataset, campaign.cases()))
+    predictions.update(
+        {
+            ("T315", "secondary"): PredictedValue(Quantity(99.0, "V")),
+            ("T318", "secondary"): PredictedValue(Quantity(99.0, "V")),
+        }
+    )
+    report = run_campaign(campaign, predictions)
+    assert report.counts["pass"] == 2 and report.counts["fail"] == 2
+
+    region = _region()
+    by_metric = build_coverage_by_metric(report, dataset, region)
+    assert set(by_metric) == {"response", "secondary"}
+
+    # The same cell is SUPPORTED for one metric and FAILED for the other.
+    good = by_metric["response"]
+    bad = by_metric["secondary"]
+    assert good.status_counts()["supported"] == 1
+    assert good.status_counts()["failed"] == 0
+    assert bad.status_counts()["supported"] == 0
+    assert bad.status_counts()["failed"] == 1
+
+    envelope = ValidationEnvelope("metrics", good, report.digest)
+    assert envelope.metric == "response"
+
+    inside = {"temperature": Quantity(316.0, "K")}
+    own = envelope.classify_point(
+        ValidationQueryPoint("response", inside, declared=Applicability.INSIDE)
+    )
+    assert own.verdict is EnvelopeVerdict.SUPPORTED
+
+    # The query that must not be answered by this envelope.
+    foreign = envelope.classify_point(
+        ValidationQueryPoint("secondary", inside, declared=Applicability.INSIDE)
+    )
+    assert foreign.verdict is EnvelopeVerdict.UNKNOWN
+    assert "is not evidence for another" in foreign.why
+
+    # And through certification, the same query fails the gate.
+    authorized = _authorized("metric-scope")
+    bound = ValidationEnvelope(
+        "metrics", good, report.digest, target=_full_binding(authorized)
+    )
+    gate = assess_authorized_multiphysics_run(
+        authorized, policy=MULTIPHYSICS_FULL_TRUST_POLICY, envelope=bound,
+        envelope_queries=(
+            ValidationQueryPoint("secondary", inside, declared=Applicability.INSIDE),
+        ),
+    ).gate(VALIDATION_ENVELOPE_SUPPORTED)
+    assert not gate.passed
+
+
+def test_full_trust_requires_declared_applicability_inside():
+    """Hole 3: the two axes were separate and only one was checked."""
+    authorized = _authorized("applicability-axis")
+    envelope = _envelope_for(authorized)
+    inside_coordinates = {"temperature": Quantity(305.0, "K")}
+
+    def gate_for(declared):
+        return assess_authorized_multiphysics_run(
+            authorized, policy=MULTIPHYSICS_FULL_TRUST_POLICY, envelope=envelope,
+            envelope_queries=(
+                ValidationQueryPoint("response", inside_coordinates, declared=declared),
+            ),
+        ).gate(VALIDATION_ENVELOPE_SUPPORTED)
+
+    # All three are empirically SUPPORTED at this point. Only one is entitled.
+    for declared in (Applicability.INSIDE, Applicability.OUTSIDE, Applicability.UNDECLARED):
+        classification = envelope.classify(inside_coordinates, declared=declared)
+        assert classification.verdict is EnvelopeVerdict.SUPPORTED
+
+    assert gate_for(Applicability.INSIDE).passed
+
+    outside = gate_for(Applicability.OUTSIDE)
+    assert not outside.passed
+    assert any("declared applicability" in item for item in outside.evidence["problems"])
+
+    undeclared = gate_for(Applicability.UNDECLARED)
+    assert not undeclared.passed
+    assert any(
+        "declared applicability" in item for item in undeclared.evidence["problems"]
+    )
+
+    # A policy may say otherwise, but it has to say so out loud.
+    permissive = replace(
+        MULTIPHYSICS_FULL_TRUST_POLICY,
+        accepted_applicability=(
+            Applicability.INSIDE.value,
+            Applicability.UNDECLARED.value,
+        ),
+    )
+    assert assess_authorized_multiphysics_run(
+        authorized, policy=permissive, envelope=envelope,
+        envelope_queries=(
+            ValidationQueryPoint(
+                "response", inside_coordinates, declared=Applicability.UNDECLARED
+            ),
+        ),
+    ).gate(VALIDATION_ENVELOPE_SUPPORTED).passed
+
+
+def test_an_inconclusive_numerical_check_does_not_cover_a_requirement():
+    """Hole 4: 'performed and not violated' counted a study that settled nothing."""
+    from engcore.scientific.corpus import NumericalEvidence
+
+    authorized = _authorized("inconclusive")
+    binding = _full_binding(authorized)
+
+    inconclusive = NumericalEvidence(
+        "electrothermal.coupling",
+        (NumericalCheck.CONVERGENCE,),
+        (
+            NumericalCheckResult(
+                NumericalCheck.CONVERGENCE, CheckOutcome.INCONCLUSIVE,
+                "the residual history neither converged nor diverged in the "
+                "window budget", 1e-5,
+            ),
+        ),
+        binding=binding,
+    )
+    # It ran, and it is not violated -- the two conditions the old rule used.
+    assert inconclusive.performed_checks == ("convergence",)
+    assert inconclusive.violated_checks == ()
+    # And it settled nothing, so it covers nothing.
+    assert inconclusive.satisfied_checks == ()
+    assert inconclusive.inconclusive_checks == ("convergence",)
+    assert not inconclusive.satisfies((NumericalCheck.CONVERGENCE,))
+
+    gate = assess_authorized_multiphysics_run(
+        authorized, policy=MULTIPHYSICS_FULL_TRUST_POLICY, numerical=inconclusive
+    ).gate(NUMERICAL_EVIDENCE_PRESENT)
+    assert not gate.passed
+    completeness = gate.evidence["completeness"]
+    # The four states stay visible and separate.
+    assert completeness["unresolved"] == ["convergence"]
+    assert completeness["missing"] == []
+    assert completeness["failed"] == []
+    assert completeness["satisfied"] == []
+    assert completeness["complete"] is False

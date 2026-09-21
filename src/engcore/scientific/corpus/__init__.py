@@ -61,6 +61,7 @@ from .campaign import (
     PredictedValue,
     PredictionRefusal,
     RefusalKind,
+    OpenedValidationCampaign,
     ValidationCampaign,
     ValidationCampaignReport,
     ValidationComparison,
@@ -81,6 +82,7 @@ from .coverage import (
     ValidationCoverage,
     ValidationRegion,
     build_coverage,
+    build_coverage_by_metric,
     cluster_failures,
 )
 from .dataset import (
@@ -204,6 +206,7 @@ __all__ = [
     "NumericalCheck",
     "NumericalCheckResult",
     "NumericalEvidence",
+    "OpenedValidationCampaign",
     "Prediction",
     "PredictedValue",
     "PredictionRefusal",
@@ -225,6 +228,7 @@ __all__ = [
     "ValidationQueryPoint",
     "ValidationRegion",
     "build_coverage",
+    "build_coverage_by_metric",
     "cluster_failures",
     "compare_observation",
     "diagnose_campaign",

@@ -474,21 +474,61 @@ class ValidationCampaign:
             # only place a campaign can reach the holdout, so a release granted
             # for one evaluation cannot silently open the holdout for another.
             self.holdout_release.require_for(self.campaign_id, self.version)
-            # Validates the dataset digest binding as a side effect.
-            self.dataset.released_holdout_cases(self.holdout_release)
+            # Validates the dataset digest binding WITHOUT exposing cases:
+            # checking permission is not the same act as using it.
+            self.dataset.require_release(self.holdout_release)
         object.__setattr__(self, "description", str(self.description).strip())
 
     def cases(self) -> tuple[ReferenceCase, ...]:
-        """Exactly the cases this campaign is permitted to see."""
+        """The cases this campaign may see BEFORE the holdout is opened.
+
+        A campaign covering the locked holdout refuses here. That is the whole
+        point: predictions are built from the cases a caller can reach, so a
+        ``cases()`` that handed over the locked ones let anybody inspect them
+        without going near the ledger -- and the earlier version of this
+        module's own regression did exactly that. Open it first::
+
+            opened = campaign.open_holdout(ledger)
+            predictions = {...for case in opened.cases()...}
+            run_campaign(opened, predictions)
+        """
+        if DatasetSplit.LOCKED_HOLDOUT in self.splits:
+            raise CorpusLeakageError(
+                f"campaign {self.campaign_id!r} covers the locked holdout, whose "
+                f"cases are not visible until it is opened; call "
+                f"open_holdout(ledger) and take the cases from the opened campaign"
+            )
+        return self._cases_for(self.splits)
+
+    def _cases_for(self, splits: tuple[DatasetSplit, ...], opening=None):
         selected: list[ReferenceCase] = []
-        for split in self.splits:
+        for split in splits:
             if split is DatasetSplit.CALIBRATION:
                 selected.extend(self.dataset.calibration_cases())
             elif split is DatasetSplit.VALIDATION:
                 selected.extend(self.dataset.validation_cases())
             else:
-                selected.extend(self.dataset.released_holdout_cases(self.holdout_release))
+                selected.extend(self.dataset.opened_holdout_cases(opening))
         return tuple(sorted(selected))
+
+    def open_holdout(self, ledger: HoldoutLedger) -> "OpenedValidationCampaign":
+        """Open the locked holdout through an authority, once, and return a view.
+
+        The returned view is the only object that can produce the locked cases.
+        A campaign that does not cover the holdout has nothing to open and says
+        so rather than quietly handing back a view that means nothing.
+        """
+        if DatasetSplit.LOCKED_HOLDOUT not in self.splits:
+            raise CorpusError(
+                f"campaign {self.campaign_id!r} covers no locked holdout, so "
+                f"there is nothing to open"
+            )
+        if ledger is None:
+            raise CorpusLeakageError(
+                "opening a locked holdout requires a holdout-opening authority"
+            )
+        opening = ledger.open(self.holdout_release)
+        return OpenedValidationCampaign(self, opening)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -518,6 +558,57 @@ class ValidationCampaign:
             None if release is None else HoldoutRelease.from_dict(release),
             payload.get("description", ""),
         )
+
+
+@dataclass(frozen=True)
+class OpenedValidationCampaign:
+    """A campaign whose locked holdout has been opened, and the record of it.
+
+    Only this view can produce locked cases, and it can only be built by
+    :meth:`ValidationCampaign.open_holdout`, which goes through the ledger. So
+    the sequence "inspect the holdout, then decide whether to record having
+    looked" has no expression: the looking requires the record.
+    """
+
+    campaign: "ValidationCampaign"
+    opening: HoldoutOpening
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.campaign, ValidationCampaign):
+            raise CorpusError("an opened campaign wraps a ValidationCampaign")
+        if not isinstance(self.opening, HoldoutOpening):
+            raise CorpusLeakageError(
+                "an opened campaign requires the HoldoutOpening that opened it"
+            )
+        release = self.campaign.holdout_release
+        if release is None or self.opening.release_digest != release.digest:
+            raise CorpusLeakageError(
+                "the opening does not correspond to this campaign's holdout release"
+            )
+
+    @property
+    def campaign_id(self) -> str:
+        return self.campaign.campaign_id
+
+    @property
+    def version(self) -> str:
+        return self.campaign.version
+
+    @property
+    def dataset(self) -> ReferenceDataset:
+        return self.campaign.dataset
+
+    @property
+    def splits(self) -> tuple[DatasetSplit, ...]:
+        return self.campaign.splits
+
+    @property
+    def target(self) -> EvidenceBinding | None:
+        return self.campaign.target
+
+    def cases(self) -> tuple[ReferenceCase, ...]:
+        """Every case this campaign covers, locked ones included."""
+        return self.campaign._cases_for(self.splits, self.opening)
 
 
 @dataclass(frozen=True)
@@ -684,7 +775,7 @@ class ValidationCampaignReport:
 
 
 def run_campaign(
-    campaign: ValidationCampaign,
+    campaign: "ValidationCampaign | OpenedValidationCampaign",
     predictions: Mapping[tuple[str, str], Prediction],
     *,
     holdout_ledger: HoldoutLedger | None = None,
@@ -703,15 +794,23 @@ def run_campaign(
     :class:`InMemoryHoldoutLedger` for the exact scope of the in-process one.
     """
     opening: HoldoutOpening | None = None
-    if DatasetSplit.LOCKED_HOLDOUT in campaign.splits:
+    if isinstance(campaign, OpenedValidationCampaign):
+        if holdout_ledger is not None:
+            raise CorpusLeakageError(
+                "this campaign is already open; opening it again through a "
+                "ledger would be a second look"
+            )
+        opening = campaign.opening
+    elif DatasetSplit.LOCKED_HOLDOUT in campaign.splits:
         if holdout_ledger is None:
             raise CorpusLeakageError(
                 "scoring a locked holdout requires a holdout-opening authority; "
                 "without one nothing records that the holdout was opened and "
                 "nothing can refuse a second opening"
             )
-        # Opened BEFORE `campaign.cases()` exposes the locked cases below.
-        opening = holdout_ledger.open(campaign.holdout_release)
+        # The single-call form: open here, then score the opened view.
+        campaign = campaign.open_holdout(holdout_ledger)
+        opening = campaign.opening
     cases = {case.case_id: case for case in campaign.cases()}
     observations = campaign.dataset.observations_for(cases.values())
     permitted = {item.key for item in observations}
@@ -751,6 +850,7 @@ __all__ = [
     "PredictedValue",
     "PredictionRefusal",
     "RefusalKind",
+    "OpenedValidationCampaign",
     "ValidationCampaign",
     "ValidationCampaignReport",
     "ValidationComparison",

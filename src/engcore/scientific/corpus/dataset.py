@@ -16,9 +16,14 @@ So the split is enforced by what a caller can obtain:
 * :meth:`ReferenceDataset.validation_cases` returns validation cases and
   nothing else;
 * locked-holdout cases are reachable only through
-  :meth:`ReferenceDataset.released_holdout_cases`, which demands a
-  :class:`HoldoutRelease` naming a registered evaluation and carrying this
-  exact dataset's normalized digest.
+  :meth:`ReferenceDataset.opened_holdout_cases`, which demands a
+  :class:`HoldoutOpening` -- the record that an opening *happened*, produced by
+  a :class:`HoldoutLedger`.
+
+That last distinction is load-bearing and was got wrong once. A
+:class:`HoldoutRelease` is *permission* to open; it is not evidence that the
+opening occurred, and accepting one as proof let a caller read the locked cases
+without ever touching the ledger that would have refused a second look.
 
 A fitting routine that only ever receives the result of the first method
 cannot consume the holdout by accident, and one that wants to must construct
@@ -636,12 +641,16 @@ class ReferenceDataset:
         """Independent cases. Never an input to fitting."""
         return tuple(c for c in self.cases if c.split is DatasetSplit.VALIDATION)
 
-    def released_holdout_cases(self, release: HoldoutRelease) -> tuple[ReferenceCase, ...]:
-        """Locked-holdout cases, and only against a matching registered release."""
+    def require_release(self, release: HoldoutRelease) -> None:
+        """Check a release against this dataset WITHOUT exposing anything.
+
+        Used where a campaign validates its release at construction. Validating
+        permission is not the same act as using it, and only the second is
+        allowed to return cases.
+        """
         if not isinstance(release, HoldoutRelease):
             raise CorpusLeakageError(
-                "locked holdout cases require a registered HoldoutRelease; there "
-                "is no unrecorded way to read them"
+                "a locked holdout needs a registered HoldoutRelease"
             )
         if release.dataset_digest != self.normalized_digest:
             raise CorpusLeakageError(
@@ -649,6 +658,28 @@ class ReferenceDataset:
                 f"{release.dataset_digest[:12]}..., but this dataset is "
                 f"{self.normalized_digest[:12]}...; a release does not carry over "
                 f"to a dataset that has changed"
+            )
+
+    def opened_holdout_cases(self, opening: HoldoutOpening) -> tuple[ReferenceCase, ...]:
+        """Locked-holdout cases, and only against a recorded opening.
+
+        The argument is a :class:`HoldoutOpening`, not a
+        :class:`HoldoutRelease`: permission is not proof. A release can be held
+        indefinitely and read from without any authority noticing, which is
+        precisely the second look a locked holdout exists to prevent. An
+        opening exists only because a ledger produced it and did not refuse.
+        """
+        if not isinstance(opening, HoldoutOpening):
+            raise CorpusLeakageError(
+                "locked holdout cases require a recorded HoldoutOpening; a "
+                "release is permission to open, not evidence that opening "
+                "happened"
+            )
+        if opening.dataset_digest != self.normalized_digest:
+            raise CorpusLeakageError(
+                f"holdout opening names dataset digest "
+                f"{opening.dataset_digest[:12]}..., but this dataset is "
+                f"{self.normalized_digest[:12]}..."
             )
         return tuple(c for c in self.cases if c.split is DatasetSplit.LOCKED_HOLDOUT)
 

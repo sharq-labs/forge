@@ -18,9 +18,18 @@ a reviewer needs. So :class:`EnvelopeClassification` carries both, always, and
 the empirical verdict never overrides the declaration or vice versa.
 
 ``UNKNOWN`` is a real answer here. A point that cannot even be located in the
-region -- because the caller did not supply one of its coordinates -- is not
-``EXTRAPOLATING`` and is certainly not ``SUPPORTED``. It is unknown, and saying
-so is the whole discipline.
+region -- because the caller did not supply one of its coordinates, or because
+it asks about a quantity this envelope is not about -- is not ``EXTRAPOLATING``
+and is certainly not ``SUPPORTED``. It is unknown, and saying so is the whole
+discipline.
+
+AN ENVELOPE IS ABOUT ONE QUANTITY
+----------------------------------
+It inherits its ``metric`` from its coverage, and
+:meth:`ValidationEnvelope.classify_point` refuses a query about a different
+one. A model can be thoroughly validated for temperature and wrong about
+voltage everywhere; answering the voltage question with the temperature
+evidence is the same error as answering it with another model's evidence.
 """
 
 from __future__ import annotations
@@ -133,6 +142,8 @@ class ValidationQueryPoint:
     satisfied one.
     """
 
+    #: The quantity being predicted. Matched against the envelope's metric,
+    #: because evidence about another quantity is not evidence about this one.
     qoi_id: str
     coordinates: Mapping[str, Quantity]
     declared: Applicability = Applicability.UNDECLARED
@@ -206,6 +217,11 @@ class ValidationEnvelope:
     @property
     def region(self) -> ValidationRegion:
         return self.coverage.region
+
+    @property
+    def metric(self) -> str:
+        """The one quantity this envelope carries evidence about."""
+        return self.coverage.metric
 
     @property
     def has_any_support(self) -> bool:
@@ -334,9 +350,24 @@ class ValidationEnvelope:
     def classify_point(
         self, point: ValidationQueryPoint
     ) -> EnvelopeClassification:
-        """Classify one declared prediction point against this envelope."""
+        """Classify one declared prediction point against this envelope.
+
+        A query about a quantity this envelope is not about is ``UNKNOWN``, not
+        an error and certainly not ``SUPPORTED``: the envelope has nothing to
+        say, which is a different answer from having nothing good to say.
+        """
         if not isinstance(point, ValidationQueryPoint):
             raise CorpusError("an envelope query takes a ValidationQueryPoint")
+        if point.qoi_id != self.metric:
+            return EnvelopeClassification(
+                EnvelopeVerdict.UNKNOWN,
+                point.declared,
+                why=(
+                    f"this envelope carries evidence about {self.metric!r} and the "
+                    f"prediction asks about {point.qoi_id!r}; evidence for one "
+                    f"quantity is not evidence for another"
+                ),
+            )
         return self.classify(point.coordinates, declared=point.declared)
 
     @classmethod

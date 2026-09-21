@@ -477,12 +477,24 @@ class NumericalCompleteness:
     requirement_id: str
     required: tuple[str, ...]
     performed: tuple[str, ...]
+    #: Ran and came out satisfied. The only state that covers a requirement.
+    satisfied: tuple[str, ...]
     violated: tuple[str, ...]
+    #: Ran and decided nothing. Kept separate from both success and failure,
+    #: because it is neither and collapsing it into either loses the finding.
+    inconclusive: tuple[str, ...]
     not_performed: tuple[str, ...]
     enforceable: bool
 
     def __post_init__(self) -> None:
-        for label in ("required", "performed", "violated", "not_performed"):
+        for label in (
+            "required",
+            "performed",
+            "satisfied",
+            "violated",
+            "inconclusive",
+            "not_performed",
+        ):
             object.__setattr__(
                 self, label, tuple(sorted(str(i) for i in getattr(self, label)))
             )
@@ -495,22 +507,38 @@ class NumericalCompleteness:
         return tuple(sorted(set(self.required) - set(self.performed)))
 
     @property
+    def unresolved(self) -> tuple[str, ...]:
+        """Required checks that ran and settled nothing."""
+        return tuple(sorted(set(self.required) & set(self.inconclusive)))
+
+    @property
+    def failed(self) -> tuple[str, ...]:
+        """Required checks that ran and came out violated."""
+        return tuple(sorted(set(self.required) & set(self.violated)))
+
+    @property
     def complete(self) -> bool:
-        """Every required check performed and none of them violated."""
-        return (
-            self.enforceable
-            and not self.missing
-            and not (set(self.required) & set(self.violated))
-        )
+        """Every required check explicitly SATISFIED.
+
+        Deliberately not "performed and not violated". A required check that
+        ran inconclusively has not been covered -- the question it exists to
+        answer is still open -- so it shows up in :attr:`unresolved` and this
+        stays False.
+        """
+        return self.enforceable and set(self.required) <= set(self.satisfied)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "requirement_id": self.requirement_id,
             "required": list(self.required),
             "performed": list(self.performed),
+            "satisfied": list(self.satisfied),
             "violated": list(self.violated),
+            "inconclusive": list(self.inconclusive),
             "not_performed": list(self.not_performed),
             "missing": list(self.missing),
+            "unresolved": list(self.unresolved),
+            "failed": list(self.failed),
             "enforceable": self.enforceable,
             "complete": self.complete,
         }
@@ -527,20 +555,20 @@ def assess_numerical_completeness(
     evidence roster that violates nothing -- the same reading protocol
     completeness uses for an empty required protocol set.
     """
+    observed = dict(
+        performed=() if evidence is None else evidence.performed_checks,
+        satisfied=() if evidence is None else evidence.satisfied_checks,
+        violated=() if evidence is None else evidence.violated_checks,
+        inconclusive=() if evidence is None else evidence.inconclusive_checks,
+        not_performed=() if evidence is None else evidence.absent_checks,
+    )
     if requirement is None:
         return NumericalCompleteness(
-            requirement_id="(undeclared)",
-            required=(),
-            performed=() if evidence is None else evidence.performed_checks,
-            violated=() if evidence is None else evidence.violated_checks,
-            not_performed=() if evidence is None else evidence.absent_checks,
-            enforceable=False,
+            requirement_id="(undeclared)", required=(), enforceable=False, **observed
         )
     return NumericalCompleteness(
         requirement_id=requirement.requirement_id,
         required=requirement.checks,
-        performed=() if evidence is None else evidence.performed_checks,
-        violated=() if evidence is None else evidence.violated_checks,
-        not_performed=() if evidence is None else evidence.absent_checks,
         enforceable=True,
+        **observed,
     )

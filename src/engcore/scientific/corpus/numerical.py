@@ -202,6 +202,30 @@ class NumericalEvidence:
             item.check.value for item in self.results if item.outcome.was_performed
         )
 
+    @property
+    def satisfied_checks(self) -> tuple[str, ...]:
+        """Checks that RAN AND CAME OUT SATISFIED.
+
+        Kept apart from :attr:`performed_checks`, which includes the ones that
+        ran and decided nothing. "Performed and not violated" quietly counted
+        an inconclusive study as coverage, which is the one reading a numerical
+        check is least entitled to.
+        """
+        return tuple(
+            item.check.value
+            for item in self.results
+            if item.outcome is CheckOutcome.SATISFIED
+        )
+
+    @property
+    def inconclusive_checks(self) -> tuple[str, ...]:
+        """Ran, and did not decide. Neither success nor failure."""
+        return tuple(
+            item.check.value
+            for item in self.results
+            if item.outcome is CheckOutcome.INCONCLUSIVE
+        )
+
     def belongs_to(self, computation: EvidenceBinding) -> tuple[str, ...]:
         """Why these numbers are not about that computation. Empty means they are."""
         if self.binding is None:
@@ -212,16 +236,19 @@ class NumericalEvidence:
         return self.binding.mismatches(computation)
 
     def satisfies(self, required: tuple[NumericalCheck, ...]) -> bool:
-        """Whether every required check was performed and none was violated."""
+        """Whether every required check came out explicitly SATISFIED.
+
+        Not "performed and not violated": an inconclusive check ran and
+        resolved nothing, and treating it as coverage would let a study that
+        failed to settle the question stand in for one that settled it.
+        """
         wanted = {NumericalCheck(item) for item in required}
         by_check = {item.check: item for item in self.results}
-        for check in wanted:
-            result = by_check.get(check)
-            if result is None or not result.outcome.was_performed:
-                return False
-            if result.outcome is CheckOutcome.VIOLATED:
-                return False
-        return True
+        return all(
+            by_check.get(check) is not None
+            and by_check[check].outcome is CheckOutcome.SATISFIED
+            for check in wanted
+        )
 
     @property
     def digest(self) -> str:
