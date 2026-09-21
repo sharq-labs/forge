@@ -164,7 +164,13 @@ Never convert NOT RUN into PASS based on code inspection.
 
 ## Failed approaches / dead ends
 
-- None recorded for the current agent-workflow slice.
+- Rejected an optional `initialize_state` callback that inferred state support
+  from callback presence and let the runtime synthesize its own receipt. A
+  no-op callback could acknowledge a requested state without installing it.
+  The uncommitted implementation was removed. The next design must include a
+  participant-declared state schema, state uncertainty, a typed participant
+  acknowledgement/resulting-state identity, applicability evaluation, and a
+  dedicated run-record receipt before initial state may enter authorization.
 
 Record failed experiments here with the reason they failed before trying a new
 approach. Do not delete old failed approaches merely because a later approach
