@@ -3,11 +3,11 @@
 What is fitted, and why only two things
 ----------------------------------------
 ``R0`` and ``R1``. The Morris screen in ``sensitivity.py`` puts their mean
-absolute elementary effects at 0.83 and 0.34 against 0.059, 0.050 and 0.044 for
-the initial charge state, the RC capacitance and the capacity scale -- an order
-of magnitude apart. On a constant-current discharge the RC branch reaches its
-steady value in a few time constants and ``C1`` stops moving the voltage, so a
-fit asked to identify it would be handed a parameter the data does not carry.
+absolute elementary effects at 0.861 and 0.350 against 0.054, 0.051 and 0.019
+for the initial charge state, the RC capacitance and the capacity scale -- an
+order of magnitude apart. On a constant-current discharge the RC branch reaches
+its steady value in a few time constants and ``C1`` stops moving the voltage, so
+a fit asked to identify it would be handed a parameter the data does not carry.
 
 That is the Sprint 3 recovery's own rule applied to a new fitter: it rejected a
 second RC branch whose slower time constant scattered wider than its own median,
@@ -16,10 +16,16 @@ held at the recovery's own fitted polarization capacitance for the band.
 
 How the fit is arranged, and what the spread is
 -----------------------------------------------
-One fit per calibration trajectory, then the **median** per band. That is more
-work than one pooled fit and it buys the thing a pooled fit cannot give: the
-spread of the per-trajectory estimates, which says whether the parameter is a
-property of the cell or a property of the run.
+One fit per calibration trajectory, then the **median** per operating block --
+``group|corner|nominal_rate``, the recovery's own parameter unit. Per *band* was
+tried first and reproduced that round's rate-dependence finding from the other
+direction: ``R0``'s interquartile spread was 81 % across the warm band, which
+pools 1 A, 2 A and 4 A discharges while a one-RC model's polarization is linear
+in current.
+
+Per-trajectory rather than pooled, because it buys the thing a pooled fit
+cannot give: the spread of the per-trajectory estimates, which says whether the
+parameter is a property of the cell or a property of the run.
 
 The spread is reported as a dispersion and is **not** promoted to a parameter
 uncertainty. It is not one: it has no probability model behind it, and

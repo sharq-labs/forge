@@ -23,6 +23,7 @@ the response of a model that is wrong about everything.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 import os
 import sys
 from typing import Any
@@ -70,15 +71,22 @@ SCENARIO_SPLIT = "calibration"
 
 
 def pick_scenario():
-    """The longest warm calibration trajectory, which is the most informative.
+    """The longest warm calibration trajectory, cut to the applicable window.
 
     Chosen by a declared rule rather than by eye, and from calibration only.
+
+    The window matters here as much as it does in the fit. Every discharge in
+    this archive runs past the floor of its band's open-circuit-voltage
+    authority, and below that floor the curve is held. Screening across the
+    held tail measures which parameter best compensates for a voltage the
+    authority never supported, which is not the question.
     """
     candidates = [
-        t
+        common.windowed(t)
         for t in common.development_trajectories((SCENARIO_SPLIT,))
-        if t.band == "warm" and t.sample_count >= 100
+        if t.band == "warm"
     ]
+    candidates = [t for t in candidates if t.sample_count >= 100]
     if not candidates:
         raise SystemExit("no warm calibration trajectory long enough to screen on")
     return max(candidates, key=lambda t: t.duration_s)
@@ -109,11 +117,12 @@ def rmse_evaluator(trajectory):
             times_s=tuple(trajectory.time_s),
             currents_a=tuple(trajectory.current_a),
         )
-        cell = pp.CellUnderTest(
-            cell_id=trajectory.cell,
-            chemistry=common.CELL_CHEMISTRY,
-            nominal_capacity_ah=capacity,
-            ambient_temperature_k=trajectory.ambient_k,
+        # Built by replacing one field of the corpus's own cell record, not by
+        # re-declaring it: the authority's validity band is stated against the
+        # CELL temperature, and a cell that omits it is refused. Writing the
+        # fields out by hand here omitted it, and the screen said so.
+        cell = replace(
+            common.cell_under_test(trajectory), nominal_capacity_ah=capacity
         )
         provider = pp.PyBaMMProvider(
             authority=authority,

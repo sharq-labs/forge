@@ -96,6 +96,28 @@ PyBaMM would have solved every one of those 52 in about a quarter of a second
 each and returned a beautifully converged voltage curve for a cell that is not
 this cell. That is the single clearest thing in this report.
 
+### Sensitivity, and what it was allowed to decide
+
+Morris elementary effects over the five parameters an equivalent-circuit
+voltage prediction can depend on, on the longest warm calibration discharge
+(`B0005.d0032`, 321 samples inside the window), 72 design points, SALib 1.6.0.
+
+| parameter | mu* (mean absolute elementary effect) |
+|---|---:|
+| `R0 [Ohm]` | 0.861 |
+| `R1 [Ohm]` | 0.350 |
+| `initial_state_of_charge` | 0.054 |
+| `C1 [F]` | 0.051 |
+| `capacity_scale` | 0.019 |
+
+An order of magnitude between the second and the third. That is what decided
+the fit: `R0` and `R1` are fitted, `C1` is **held** at the recovery's own
+polarization capacitance rather than handed to an optimiser that would move it
+against a response that barely carries it.
+
+It decided nothing else. `SensitivityEvidence.is_validation_evidence` is
+`False` and the record says why in its own payload.
+
 ---
 
 ## 4. Risk and coverage

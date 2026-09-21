@@ -2,12 +2,12 @@
  "schema": "provider_pivot_s1_sensitivity/1",
  "outcome": "ok",
  "scenario": {
-  "trajectory_id": "B0005.d0008",
+  "trajectory_id": "B0005.d0032",
   "cell": "B0005",
   "split": "calibration",
   "band": "warm",
-  "samples": 191,
-  "duration_s": 3572.453,
+  "samples": 321,
+  "duration_s": 2998.625,
   "ambient_k": 297.15
  },
  "provider_identity": {
@@ -16,15 +16,15 @@
   "provider_version": "1.6.0",
   "model_identity": "morris:terminal_voltage_rmse",
   "solver_identity": "SALib.analyze.morris",
-  "configuration_digest": "fb8bacf1b13c5b6820ee0411bbf4ec401523c353b63fa8f577818e0629de1118",
+  "configuration_digest": "dd4a5bc0f980086a8ab6a6c80b823d0f7f65dee7a17da616508b7a8a0c3a43e4",
   "environment_identity": "ffb81b1f8e2f25594ec0ae55cecdf9d517d27f56128a2db7d3987012f2c8c4fa",
   "adapter_version": "engcore.providers.salib_provider/0.1.0"
  },
- "wall_seconds": 48.72366320004221,
+ "wall_seconds": 50.516443499946035,
  "evidence": {
   "method": "morris",
   "qoi": "terminal_voltage_rmse",
-  "scenario_id": "B0005.d0008:warm",
+  "scenario_id": "B0005.d0032:warm",
   "provider": "salib",
   "provider_version": "1.6.0",
   "parameters": [
@@ -56,34 +56,34 @@
   ],
   "indices": {
    "R0 [Ohm]": {
-    "mu": 0.8298557866547914,
-    "mu_star": 0.8298557866547914,
-    "sigma": 0.11851139204277845,
-    "mu_star_conf": 0.06270303679781243
+    "mu": 0.8607691997243951,
+    "mu_star": 0.8607691997243951,
+    "sigma": 0.1009777937225225,
+    "mu_star_conf": 0.054589250106572326
    },
    "R1 [Ohm]": {
-    "mu": 0.32829543644051423,
-    "mu_star": 0.34176237840901486,
-    "sigma": 0.16878161868905917,
-    "mu_star_conf": 0.07575022532006363
+    "mu": 0.34953071261197394,
+    "mu_star": 0.34953071261197394,
+    "sigma": 0.1446204968223821,
+    "mu_star_conf": 0.07850099005215237
    },
    "C1 [F]": {
-    "mu": -0.05036741186866553,
-    "mu_star": 0.050367945458624615,
-    "sigma": 0.056890351668959775,
-    "mu_star_conf": 0.03005157235720926
+    "mu": -0.05108814105865909,
+    "mu_star": 0.05108814105865909,
+    "sigma": 0.05806779217875379,
+    "mu_star_conf": 0.03070605630125353
    },
    "initial_state_of_charge": {
-    "mu": -0.05755714297552852,
-    "mu_star": 0.05916376398029035,
-    "sigma": 0.028128985753682754,
-    "mu_star_conf": 0.014081861204743522
+    "mu": -0.05390717563518393,
+    "mu_star": 0.05390717563518393,
+    "sigma": 0.005656996050810798,
+    "mu_star_conf": 0.0031578399793227717
    },
    "capacity_scale": {
-    "mu": -0.028223674933018996,
-    "mu_star": 0.04445028079712874,
-    "sigma": 0.046157276153897114,
-    "mu_star_conf": 0.0158252755757292
+    "mu": -0.018783581874797353,
+    "mu_star": 0.019125082662342665,
+    "sigma": 0.006703082354587892,
+    "mu_star_conf": 0.0029715094908880383
    }
   },
   "ranking": [
@@ -99,7 +99,7 @@
   "failed_evaluations": 0,
   "diagnostics": {
    "seed": 20260921,
-   "wall_seconds": 48.72366320004221
+   "wall_seconds": 50.516443499946035
   },
   "is_validation_evidence": false,
   "what_this_is_not": "a sensitivity index states that the output moves when the input moves. It states nothing about agreement with a measurement, and it can never contribute to a validation level"
