@@ -200,7 +200,20 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 # resistances and a declared open-circuit voltage curve. It is a separate
 # record from `battery.cell.rint_ocv` because the two answer differently at the
 # same operating point and carry different validity domains.
-EXPECTED_MODELS = 18
+# 18 -> 19 in the Sprint 3 voltage recovery, which added
+# `battery.cell.electrothermal_1rc@0.2.0` beside 0.1.0 rather than in place of
+# it. The equations are identical and the same kernel executes both; what
+# differs is what the charge state is a fraction of. 0.1.0's basis is the
+# manufacturer's 2 Ah rating, declared constant, and it is about 30 % above
+# what these cells deliver and wrong by a different amount for each. 0.2.0's
+# basis is a measured available charge established per run from cycles that
+# completed before it, and its open-circuit voltage authority is conditioned on
+# a declared cell-temperature band. A state variable that means something else
+# is a different model, and 0.1.0 stays because the Sprint 3 flagship's
+# evidence is about 0.1.0. The walk keys on (model_id, version), so both count.
+# It does not reserve a derived quantity, so EXPECTED_RESERVING_MODELS does not
+# move.
+EXPECTED_MODELS = 19
 EXPECTED_RESERVING_MODELS = 15
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the
@@ -232,7 +245,16 @@ EXPECTED_RESERVING_MODELS = 15
 # directly -- the two reference resistances, the RC capacitance, the charge
 # state basis and the charge state itself. None is derived from a group this
 # domain computes, so EXPECTED_RESERVED_NAMES does not move.
-EXPECTED_CONDITION_NAMES = 97
+# 97 -> 103 in the Sprint 3 voltage recovery. `electrothermal_1rc@0.2.0` carries
+# the same five conditions 0.1.0 does -- the two reference resistances, the RC
+# capacitance, the charge-state basis and the charge state -- plus one its
+# predecessor had no need for: open_circuit_voltage_band. The open-circuit
+# voltage authority is two curves, one per declared cell-temperature band, and
+# nothing in the evidence lies between the bands, so a run in neither is refused
+# rather than interpolated and the band is a condition rather than a convenience.
+# All six bound a quantity the caller declares directly, none is derived from a
+# group this domain computes, so EXPECTED_RESERVED_NAMES does not move.
+EXPECTED_CONDITION_NAMES = 103
 EXPECTED_RESERVED_NAMES = 59
 
 

@@ -1,0 +1,503 @@
+{
+ "schema": "battery_voltage_s3_recovery_relaxation/1",
+ "what_this_is": "a model-free reading of the rest relaxation in calibration trajectories: one exponential against two, on the measurement itself. No cell model, no fitted parameter set and no validation or holdout trajectory takes part",
+ "screens": {
+  "rest_band_a": 0.2,
+  "min_rest_samples": 12,
+  "min_rest_seconds": 120.0,
+  "separation_ratio": 3.0
+ },
+ "segments": 18,
+ "cells": [
+  "B0005",
+  "B0018",
+  "B0033",
+  "B0038",
+  "B0042"
+ ],
+ "one_mode_tau_spread_s": {
+  "n": 18,
+  "median": 89.52,
+  "p25": 66.92,
+  "p75": 102.95,
+  "min": 48.64,
+  "max": 175.67,
+  "relative_iqr": 0.403
+ },
+ "two_mode_fast_tau_spread_s": {
+  "n": 18,
+  "median": 21.4,
+  "p25": 12.9,
+  "p75": 27.91,
+  "min": 7.78,
+  "max": 126.2,
+  "relative_iqr": 0.702
+ },
+ "two_mode_slow_tau_spread_s": {
+  "n": 18,
+  "median": 160.47,
+  "p25": 117.48,
+  "p75": 305.75,
+  "min": 79.5,
+  "max": 620.49,
+  "relative_iqr": 1.173
+ },
+ "segments_with_separated_modes": 18,
+ "segments_where_aic_prefers_two": 18,
+ "median_rmse_improvement_v": 0.00656,
+ "second_mode_reproducible": false,
+ "reading": "a second mode is admissible only if it is separated from the first and its time constant is reproducible across trajectories. A better fit on its own is not evidence of a second process: two exponentials will always fit a relaxation at least as well as one",
+ "verdict": "no second reproducible relaxation timescale is established",
+ "rows": [
+  {
+   "trajectory_id": "B0005.d0001",
+   "cell": "B0005",
+   "corner": "room_ambient",
+   "samples": 17,
+   "span_s": 323.5,
+   "one_mode": {
+    "tau_s": 85.81,
+    "amplitude_v": 0.26732,
+    "rmse_v": 0.005411,
+    "aic": -171.46
+   },
+   "two_mode": {
+    "tau_fast_s": 31.92,
+    "tau_slow_s": 162.38,
+    "amplitude_fast_v": 0.10445,
+    "amplitude_slow_v": 0.20174,
+    "rmse_v": 0.00021,
+    "aic": -277.88,
+    "separated": true,
+    "separation_ratio": 5.09
+   },
+   "rmse_improvement_v": 0.005201,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0005.d0008",
+   "cell": "B0005",
+   "corner": "room_ambient",
+   "samples": 14,
+   "span_s": 261.1,
+   "one_mode": {
+    "tau_s": 81.39,
+    "amplitude_v": 0.2862,
+    "rmse_v": 0.005619,
+    "aic": -139.08
+   },
+   "two_mode": {
+    "tau_fast_s": 27.97,
+    "tau_slow_s": 160.69,
+    "amplitude_fast_v": 0.10085,
+    "amplitude_slow_v": 0.23753,
+    "rmse_v": 0.000101,
+    "aic": -247.73,
+    "separated": true,
+    "separation_ratio": 5.75
+   },
+   "rmse_improvement_v": 0.005519,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0005.d0040",
+   "cell": "B0005",
+   "corner": "room_ambient",
+   "samples": 14,
+   "span_s": 125.7,
+   "one_mode": {
+    "tau_s": 52.16,
+    "amplitude_v": 0.37143,
+    "rmse_v": 0.004464,
+    "aic": -145.53
+   },
+   "two_mode": {
+    "tau_fast_s": 19.8,
+    "tau_slow_s": 107.24,
+    "amplitude_fast_v": 0.11716,
+    "amplitude_slow_v": 0.34096,
+    "rmse_v": 0.000245,
+    "aic": -222.84,
+    "separated": true,
+    "separation_ratio": 5.42
+   },
+   "rmse_improvement_v": 0.004219,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0018.d0016",
+   "cell": "B0018",
+   "corner": "room_ambient",
+   "samples": 14,
+   "span_s": 137.6,
+   "one_mode": {
+    "tau_s": 58.4,
+    "amplitude_v": 0.4085,
+    "rmse_v": 0.006406,
+    "aic": -135.41
+   },
+   "two_mode": {
+    "tau_fast_s": 7.78,
+    "tau_slow_s": 79.5,
+    "amplitude_fast_v": 0.05657,
+    "amplitude_slow_v": 0.40419,
+    "rmse_v": 0.000413,
+    "aic": -208.17,
+    "separated": true,
+    "separation_ratio": 10.21
+   },
+   "rmse_improvement_v": 0.005993,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0018.d0024",
+   "cell": "B0018",
+   "corner": "room_ambient",
+   "samples": 18,
+   "span_s": 185.9,
+   "one_mode": {
+    "tau_s": 66.15,
+    "amplitude_v": 0.45284,
+    "rmse_v": 0.006808,
+    "aic": -173.63
+   },
+   "two_mode": {
+    "tau_fast_s": 19.52,
+    "tau_slow_s": 107.39,
+    "amplitude_fast_v": 0.11639,
+    "amplitude_slow_v": 0.40442,
+    "rmse_v": 0.001027,
+    "aic": -237.73,
+    "separated": true,
+    "separation_ratio": 5.5
+   },
+   "rmse_improvement_v": 0.005781,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0018.d0032",
+   "cell": "B0018",
+   "corner": "room_ambient",
+   "samples": 21,
+   "span_s": 225.8,
+   "one_mode": {
+    "tau_s": 73.95,
+    "amplitude_v": 0.49317,
+    "rmse_v": 0.008776,
+    "aic": -192.9
+   },
+   "two_mode": {
+    "tau_fast_s": 23.0,
+    "tau_slow_s": 131.26,
+    "amplitude_fast_v": 0.15408,
+    "amplitude_slow_v": 0.42409,
+    "rmse_v": 0.001164,
+    "aic": -273.74,
+    "separated": true,
+    "separation_ratio": 5.71
+   },
+   "rmse_improvement_v": 0.007612,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0018.d0040",
+   "cell": "B0018",
+   "corner": "room_ambient",
+   "samples": 18,
+   "span_s": 197.4,
+   "one_mode": {
+    "tau_s": 69.21,
+    "amplitude_v": 0.50223,
+    "rmse_v": 0.008764,
+    "aic": -164.54
+   },
+   "two_mode": {
+    "tau_fast_s": 13.2,
+    "tau_slow_s": 98.13,
+    "amplitude_fast_v": 0.09711,
+    "amplitude_slow_v": 0.4688,
+    "rmse_v": 0.001639,
+    "aic": -220.9,
+    "separated": true,
+    "separation_ratio": 7.43
+   },
+   "rmse_improvement_v": 0.007126,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0003",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 222,
+   "span_s": 2174.7,
+   "one_mode": {
+    "tau_s": 175.67,
+    "amplitude_v": 0.12274,
+    "rmse_v": 0.002077,
+    "aic": -2736.57
+   },
+   "two_mode": {
+    "tau_fast_s": 126.2,
+    "tau_slow_s": 620.49,
+    "amplitude_fast_v": 0.10771,
+    "amplitude_slow_v": 0.02486,
+    "rmse_v": 0.000485,
+    "aic": -3378.73,
+    "separated": true,
+    "separation_ratio": 4.92
+   },
+   "rmse_improvement_v": 0.001592,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0008",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 155,
+   "span_s": 1567.9,
+   "one_mode": {
+    "tau_s": 165.61,
+    "amplitude_v": 0.4431,
+    "rmse_v": 0.020441,
+    "aic": -1199.96
+   },
+   "two_mode": {
+    "tau_fast_s": 38.25,
+    "tau_slow_s": 357.71,
+    "amplitude_fast_v": 0.33607,
+    "amplitude_slow_v": 0.25274,
+    "rmse_v": 0.003739,
+    "aic": -1722.53,
+    "separated": true,
+    "separation_ratio": 9.35
+   },
+   "rmse_improvement_v": 0.016702,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0016",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 156,
+   "span_s": 1643.2,
+   "one_mode": {
+    "tau_s": 134.49,
+    "amplitude_v": 0.36785,
+    "rmse_v": 0.019364,
+    "aic": -1224.64
+   },
+   "two_mode": {
+    "tau_fast_s": 27.41,
+    "tau_slow_s": 326.03,
+    "amplitude_fast_v": 0.31915,
+    "amplitude_slow_v": 0.19412,
+    "rmse_v": 0.003555,
+    "aic": -1749.49,
+    "separated": true,
+    "separation_ratio": 11.9
+   },
+   "rmse_improvement_v": 0.015809,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0024",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 151,
+   "span_s": 1649.9,
+   "one_mode": {
+    "tau_s": 126.57,
+    "amplitude_v": 0.42129,
+    "rmse_v": 0.02217,
+    "aic": -1144.32
+   },
+   "two_mode": {
+    "tau_fast_s": 28.21,
+    "tau_slow_s": 335.74,
+    "amplitude_fast_v": 0.37203,
+    "amplitude_slow_v": 0.20911,
+    "rmse_v": 0.004186,
+    "aic": -1643.73,
+    "separated": true,
+    "separation_ratio": 11.9
+   },
+   "rmse_improvement_v": 0.017984,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0032",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 146,
+   "span_s": 1642.2,
+   "one_mode": {
+    "tau_s": 103.54,
+    "amplitude_v": 0.45232,
+    "rmse_v": 0.022371,
+    "aic": -1103.6
+   },
+   "two_mode": {
+    "tau_fast_s": 26.9,
+    "tau_slow_s": 310.27,
+    "amplitude_fast_v": 0.40242,
+    "amplitude_slow_v": 0.19987,
+    "rmse_v": 0.003958,
+    "aic": -1605.33,
+    "separated": true,
+    "separation_ratio": 11.53
+   },
+   "rmse_improvement_v": 0.018412,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0033.d0040",
+   "cell": "B0033",
+   "corner": "room_ambient",
+   "samples": 142,
+   "span_s": 1643.2,
+   "one_mode": {
+    "tau_s": 98.13,
+    "amplitude_v": 0.48738,
+    "rmse_v": 0.022377,
+    "aic": -1073.12
+   },
+   "two_mode": {
+    "tau_fast_s": 27.75,
+    "tau_slow_s": 292.2,
+    "amplitude_fast_v": 0.42258,
+    "amplitude_slow_v": 0.20884,
+    "rmse_v": 0.003882,
+    "aic": -1566.58,
+    "separated": true,
+    "separation_ratio": 10.53
+   },
+   "rmse_improvement_v": 0.018495,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0038.d0002",
+   "cell": "B0038",
+   "corner": "room_ambient",
+   "samples": 38,
+   "span_s": 363.9,
+   "one_mode": {
+    "tau_s": 93.23,
+    "amplitude_v": 0.11553,
+    "rmse_v": 0.005779,
+    "aic": -385.67
+   },
+   "two_mode": {
+    "tau_fast_s": 10.78,
+    "tau_slow_s": 172.72,
+    "amplitude_fast_v": 0.05486,
+    "amplitude_slow_v": 0.09985,
+    "rmse_v": 0.00028,
+    "aic": -611.74,
+    "separated": true,
+    "separation_ratio": 16.03
+   },
+   "rmse_improvement_v": 0.005499,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0038.d0008",
+   "cell": "B0038",
+   "corner": "room_ambient",
+   "samples": 36,
+   "span_s": 359.7,
+   "one_mode": {
+    "tau_s": 101.17,
+    "amplitude_v": 0.12167,
+    "rmse_v": 0.005249,
+    "aic": -371.98
+   },
+   "two_mode": {
+    "tau_fast_s": 9.16,
+    "tau_slow_s": 160.24,
+    "amplitude_fast_v": 0.04667,
+    "amplitude_slow_v": 0.10969,
+    "rmse_v": 0.000367,
+    "aic": -559.49,
+    "separated": true,
+    "separation_ratio": 17.5
+   },
+   "rmse_improvement_v": 0.004882,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0038.d0012",
+   "cell": "B0038",
+   "corner": "room_ambient",
+   "samples": 33,
+   "span_s": 332.2,
+   "one_mode": {
+    "tau_s": 97.3,
+    "amplitude_v": 0.1237,
+    "rmse_v": 0.004925,
+    "aic": -344.68
+   },
+   "two_mode": {
+    "tau_fast_s": 8.7,
+    "tau_slow_s": 150.43,
+    "amplitude_fast_v": 0.04285,
+    "amplitude_slow_v": 0.1131,
+    "rmse_v": 0.000265,
+    "aic": -533.54,
+    "separated": true,
+    "separation_ratio": 17.3
+   },
+   "rmse_improvement_v": 0.00466,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0042.d0001",
+   "cell": "B0042",
+   "corner": "room_ambient",
+   "samples": 19,
+   "span_s": 176.3,
+   "one_mode": {
+    "tau_s": 48.64,
+    "amplitude_v": 0.3253,
+    "rmse_v": 0.010734,
+    "aic": -166.3
+   },
+   "two_mode": {
+    "tau_fast_s": 12.8,
+    "tau_slow_s": 112.89,
+    "amplitude_fast_v": 0.13573,
+    "amplitude_slow_v": 0.27614,
+    "rmse_v": 0.000774,
+    "aic": -262.24,
+    "separated": true,
+    "separation_ratio": 8.82
+   },
+   "rmse_improvement_v": 0.00996,
+   "aic_prefers": "two_mode"
+  },
+  {
+   "trajectory_id": "B0042.d0088",
+   "cell": "B0042",
+   "corner": "low_ambient",
+   "samples": 19,
+   "span_s": 228.4,
+   "one_mode": {
+    "tau_s": 54.76,
+    "amplitude_v": 0.36204,
+    "rmse_v": 0.015091,
+    "aic": -153.36
+   },
+   "two_mode": {
+    "tau_fast_s": 13.27,
+    "tau_slow_s": 135.97,
+    "amplitude_fast_v": 0.16949,
+    "amplitude_slow_v": 0.29245,
+    "rmse_v": 0.000974,
+    "aic": -253.5,
+    "separated": true,
+    "separation_ratio": 10.25
+   },
+   "rmse_improvement_v": 0.014117,
+   "aic_prefers": "two_mode"
+  }
+ ]
+}

@@ -1,0 +1,5560 @@
+{
+ "schema": "battery_voltage_s3_recovery_candidates/1",
+ "what_this_is": "a controlled comparison of admissible model candidates, every one fitted on calibration trajectories and judged on validation trajectories. The locked holdout is not readable by this script",
+ "selection_rule": "among candidates of comparable validation COVERAGE, the simplest one whose validation voltage statistics are not beaten by a more complex one by more than the validation split's own resolution, and whose added parameters are identified. Coverage comes first: a candidate that answers fewer of the split's admissible samples is making a narrower claim, and its residual statistics are not comparable with a candidate that answers all of them",
+ "measurement_screen": {
+  "channel_disagreement_v": 0.05,
+  "rule": "a sample reporting rest whose voltage has moved more than the frozen acceptance tolerance since the previous resting sample is inadmissible: its two channels contradict each other",
+  "model_free": true,
+  "applied_to": "every split alike"
+ },
+ "weights": {
+  "voltage_scale_v": 0.05,
+  "temperature_scale_k": 3.0,
+  "unreached_penalty": 1.0,
+  "source": "the Sprint 3 reviewed acceptance tolerances, unchanged"
+ },
+ "band_rule": {
+  "cold_ambient_ceiling_c": 10.0,
+  "cold_current_ceiling_a": 2.0,
+  "why": "decided from the chamber ambient and the nominal load, both known before the run, so the curve a trajectory is predicted with never depends on the prediction"
+ },
+ "parameter_specs": {
+  "ohmic_resistance_reference": {
+   "lower": 0.005,
+   "upper": 0.5,
+   "initial": 0.08
+  },
+  "ohmic_activation_energy": {
+   "lower": -40000.0,
+   "upper": 80000.0,
+   "initial": 20000.0
+  },
+  "polarization_resistance_reference": {
+   "lower": 0.001,
+   "upper": 0.5,
+   "initial": 0.04
+  },
+  "polarization_activation_energy": {
+   "lower": -40000.0,
+   "upper": 80000.0,
+   "initial": 20000.0
+  },
+  "polarization_capacitance": {
+   "lower": 50.0,
+   "upper": 50000.0,
+   "initial": 1000.0
+  },
+  "second_polarization_resistance": {
+   "lower": 0.001,
+   "upper": 0.5,
+   "initial": 0.02
+  },
+  "second_polarization_capacitance": {
+   "lower": 500.0,
+   "upper": 500000.0,
+   "initial": 20000.0
+  },
+  "thermal_capacitance": {
+   "lower": 5.0,
+   "upper": 500.0,
+   "initial": 60.0
+  },
+  "thermal_conductance": {
+   "lower": 0.005,
+   "upper": 1.0,
+   "initial": 0.06
+  }
+ },
+ "candidates": [
+  {
+   "key": "M0",
+   "label": "baseline 1RC, declared 2 Ah basis, Sprint 3 curve",
+   "note": "the Sprint 3 model, re-marched on the recovery corpus",
+   "configuration": {
+    "charge_state_basis": "declared",
+    "ocv_authority": "s3",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 28,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.16617845388634184,
+      "ohmic_activation_energy": 4570.536268697312,
+      "polarization_resistance_reference": 0.022514052004385485,
+      "polarization_activation_energy": -39999.99954876997,
+      "polarization_capacitance": 603.248430391487,
+      "thermal_capacitance": 90.26824126005314,
+      "thermal_conductance": 0.10366626741900134
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.008360104690621527,
+      "ohmic_activation_energy": 2165.0394914224066,
+      "polarization_resistance_reference": 0.008333770527154036,
+      "polarization_activation_energy": 7168.890596678428,
+      "polarization_capacitance": 234.3294167565892,
+      "thermal_capacitance": 1.7326645114739494,
+      "thermal_conductance": 0.0013549826465804006
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9632,
+      "ohmic_resistance_reference|polarization_activation_energy": -0.9429,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9201
+     },
+     "normal_matrix_condition_number": 825135491860456.1,
+     "objective_value": 4082.8922673150732,
+     "residuals": 2704,
+     "at_declared_bound": [],
+     "wall_seconds": 2.291496100020595,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.18955654709784384,
+      "ohmic_activation_energy": -4788.663364652215,
+      "polarization_resistance_reference": 0.016259441107673293,
+      "polarization_activation_energy": -39999.99999999999,
+      "polarization_capacitance": 1804.8970738732878,
+      "thermal_capacitance": 99.94066723219412,
+      "thermal_conductance": 0.1106728886443396
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007262553879522618,
+      "ohmic_activation_energy": 1337.4262015171705,
+      "polarization_resistance_reference": 0.007155231556239759,
+      "polarization_activation_energy": 13027.19975347345,
+      "polarization_capacitance": 735.1511133737025,
+      "thermal_capacitance": 5.0713725878998055,
+      "thermal_conductance": 0.0059265538596562145
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9193,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9195
+     },
+     "normal_matrix_condition_number": 911083744925353.6,
+     "objective_value": 1486.4697817560152,
+     "residuals": 862,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.379996299976483,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1594682641284371,
+      "ohmic_activation_energy": 26964.109990896268,
+      "polarization_resistance_reference": 0.09926030523923801,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 8729.045491460889,
+      "thermal_capacitance": 334.7353995810884,
+      "thermal_conductance": 0.08736087168012915
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0037449440613920157,
+      "ohmic_activation_energy": 901.6054295544968,
+      "polarization_resistance_reference": 0.006025236502304695,
+      "polarization_activation_energy": 5227.6824904628465,
+      "polarization_capacitance": 424.8545609435026,
+      "thermal_capacitance": 14.536851977989018,
+      "thermal_conductance": 0.009884196997543566
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {},
+     "normal_matrix_condition_number": 35434118854577.234,
+     "objective_value": 29152.93693379077,
+     "residuals": 7800,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 6.808054500026628,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.11932766933097194,
+      "ohmic_activation_energy": 54082.35663724486,
+      "polarization_resistance_reference": 0.49999999999296985,
+      "polarization_activation_energy": -39999.9999999905,
+      "polarization_capacitance": 22318.917532313757,
+      "thermal_capacitance": 75.15162847113086,
+      "thermal_conductance": 0.040501450182349796
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0019265460184375624,
+      "ohmic_activation_energy": 4135.812794116012,
+      "polarization_resistance_reference": 1.3879427378079932,
+      "polarization_activation_energy": 157972.34388293306,
+      "polarization_capacitance": 3379.194660548337,
+      "thermal_capacitance": 2.281925907869266,
+      "thermal_conductance": 0.0014509282172479468
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "unidentified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "polarization_resistance_reference|polarization_activation_energy": 0.9479
+     },
+     "normal_matrix_condition_number": 6.058630460523152e+16,
+     "objective_value": 2768.021009818609,
+     "residuals": 5534,
+     "at_declared_bound": [
+      "polarization_activation_energy",
+      "polarization_resistance_reference"
+     ],
+     "wall_seconds": 2.9590316000394523,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 8450,
+    "coverage": 0.9758,
+    "penalized_rmse_v": 0.13341443747574958,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 8450,
+     "mae": 0.08812606353904204,
+     "rmse": 0.13483187384108758,
+     "p95": 0.2536876176681061,
+     "max": 1.6364396049030965
+    },
+    "voltage_bias_v": -0.018889529371993643,
+    "temperature": {
+     "n": 8450,
+     "mae": 2.034499770974802,
+     "rmse": 3.7966239658678873,
+     "p95": 6.956451548107984,
+     "max": 22.969370393402073
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1228,
+      "mae": 0.03383864223282561,
+      "rmse": 0.05289762171541679,
+      "p95": 0.11284148949884103,
+      "max": 0.45717724211536925
+     },
+     "B0018": {
+      "n": 1539,
+      "mae": 0.036023273867326046,
+      "rmse": 0.08062511669520604,
+      "p95": 0.10522124189485428,
+      "max": 0.8963183862092112
+     },
+     "B0033": {
+      "n": 1352,
+      "mae": 0.0867515855298224,
+      "rmse": 0.11899362462571346,
+      "p95": 0.1806828118107242,
+      "max": 1.6364396049030965
+     },
+     "B0038": {
+      "n": 431,
+      "mae": 0.07387005543798121,
+      "rmse": 0.13001410278608183,
+      "p95": 0.22810617028888447,
+      "max": 0.9345753604547928
+     },
+     "B0042": {
+      "n": 3900,
+      "mae": 0.12783216108489506,
+      "rmse": 0.1707814162540631,
+      "p95": 0.33894356470424236,
+      "max": 1.143721964671848
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 7582,
+      "mae": 0.09063243284794262,
+      "rmse": 0.13905425897721468,
+      "p95": 0.27592734528943336,
+      "max": 1.6364396049030965
+     },
+     "rest": {
+      "n": 868,
+      "mae": 0.06623286987535065,
+      "rmse": 0.08987765521188469,
+      "p95": 0.18328661946777897,
+      "max": 0.377883523083153
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 47,
+    "residual_autocorrelation_lag1": 0.8832
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 6005,
+    "coverage": 0.9937,
+    "penalized_rmse_v": 0.1161154847808343,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6005,
+     "mae": 0.08355377083020199,
+     "rmse": 0.11641437050230306,
+     "p95": 0.21015323757961513,
+     "max": 0.7915078154353639
+    },
+    "voltage_bias_v": -0.04266867035516118,
+    "temperature": {
+     "n": 6005,
+     "mae": 1.753307096390744,
+     "rmse": 2.759656313688004,
+     "p95": 6.309095794057817,
+     "max": 10.218433696532998
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 1049,
+      "mae": 0.039981293649203664,
+      "rmse": 0.07245363067836688,
+      "p95": 0.1628220933889857,
+      "max": 0.6805312015863794
+     },
+     "B0034": {
+      "n": 1487,
+      "mae": 0.053994276877521404,
+      "rmse": 0.09110711139273422,
+      "p95": 0.1049668165474015,
+      "max": 0.6573990480249154
+     },
+     "B0043": {
+      "n": 3469,
+      "mae": 0.10940055551469413,
+      "rmse": 0.13532999708845095,
+      "p95": 0.22026885664254472,
+      "max": 0.7915078154353639
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 5066,
+      "mae": 0.08873957078713596,
+      "rmse": 0.1226364445818295,
+      "p95": 0.21480844096935825,
+      "max": 0.7915078154353639
+     },
+     "rest": {
+      "n": 939,
+      "mae": 0.055575855407595486,
+      "rmse": 0.07434834217404508,
+      "p95": 0.1159539618369237,
+      "max": 0.4348085037328815
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9053
+   },
+   "information_criteria": {
+    "aic": 73195.71,
+    "bic": 73412.29,
+    "residuals": 16900,
+    "parameters": 28,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 8450,
+    "validation": 6005
+   }
+  },
+  {
+   "key": "M1",
+   "label": "+ measured available-charge basis and banded curve",
+   "note": "the capacity and initial-state authorities, nothing else",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 28,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1616204581279367,
+      "ohmic_activation_energy": 41844.75982234932,
+      "polarization_resistance_reference": 0.10299349766703056,
+      "polarization_activation_energy": -13246.309546618826,
+      "polarization_capacitance": 2103.830130841632,
+      "thermal_capacitance": 81.59491353253395,
+      "thermal_conductance": 0.11395955803521103
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0043708894946134945,
+      "ohmic_activation_energy": 13337.233136586457,
+      "polarization_resistance_reference": 0.020383282782749604,
+      "polarization_activation_energy": 3791.7142915948725,
+      "polarization_capacitance": 541.5110555808445,
+      "thermal_capacitance": 2.7012123280543494,
+      "thermal_conductance": 0.003875106360423895
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9292,
+      "ohmic_activation_energy|polarization_capacitance": -0.9186
+     },
+     "normal_matrix_condition_number": 468575588487709.75,
+     "objective_value": 543.830118384027,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.8733178999973461,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1459099216218465,
+      "ohmic_activation_energy": -11251.031073857946,
+      "polarization_resistance_reference": 0.11219497880463682,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 556.378385891407,
+      "thermal_capacitance": 95.03282869368184,
+      "thermal_conductance": 0.09333595458588906
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005271571993031407,
+      "ohmic_activation_energy": 943.0921318797475,
+      "polarization_resistance_reference": 0.005454639965289287,
+      "polarization_activation_energy": 8922.137669557864,
+      "polarization_capacitance": 82.18116028769971,
+      "thermal_capacitance": 3.144153171509527,
+      "thermal_conductance": 0.0062679645727707995
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9263,
+      "thermal_capacitance|thermal_conductance": -0.9416
+     },
+     "normal_matrix_condition_number": 764534045833108.0,
+     "objective_value": 87.77415242269515,
+     "residuals": 562,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.2909116999944672,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.032791348801835984,
+      "ohmic_activation_energy": 22720.253502833308,
+      "polarization_resistance_reference": 0.17734140643330795,
+      "polarization_activation_energy": 22274.0761933548,
+      "polarization_capacitance": 107.8379164039979,
+      "thermal_capacitance": 260.43374089311635,
+      "thermal_conductance": 0.036229739679676194
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.017528952685358434,
+      "ohmic_activation_energy": 16670.406903409417,
+      "polarization_resistance_reference": 0.01762313660926076,
+      "polarization_activation_energy": 3076.448315775641,
+      "polarization_capacitance": 11.049276683861029,
+      "thermal_capacitance": 5.516919635209983,
+      "thermal_conductance": 0.0033637680346825572
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9973,
+      "ohmic_activation_energy|polarization_activation_energy": -0.993
+     },
+     "normal_matrix_condition_number": 1295091041076941.8,
+     "objective_value": 10975.878948114161,
+     "residuals": 7272,
+     "at_declared_bound": [],
+     "wall_seconds": 8.19476940005552,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.09517217275045596,
+      "ohmic_activation_energy": -11753.765919761005,
+      "polarization_resistance_reference": 0.033635694083368396,
+      "polarization_activation_energy": -12269.835003608927,
+      "polarization_capacitance": 1058.9548794350696,
+      "thermal_capacitance": 63.55014286032142,
+      "thermal_conductance": 0.049933830983360204
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.00421803480672337,
+      "ohmic_activation_energy": 14001.289763823903,
+      "polarization_resistance_reference": 0.0044893572566303075,
+      "polarization_activation_energy": 38540.59570276326,
+      "polarization_capacitance": 225.03468106569304,
+      "thermal_capacitance": 0.5272935271022118,
+      "thermal_conductance": 0.00035436924723814884
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9938,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9997
+     },
+     "normal_matrix_condition_number": 4.1224550743669395e+17,
+     "objective_value": 145.05976343741597,
+     "residuals": 4856,
+     "at_declared_bound": [],
+     "wall_seconds": 2.5023540999973193,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.0727332729195616,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.05129803993771023,
+     "rmse": 0.07748120581991717,
+     "p95": 0.1283267675746111,
+     "max": 0.5010084669972241
+    },
+    "voltage_bias_v": -0.010845099695306688,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.6102619704224528,
+     "rmse": 3.010004879650179,
+     "p95": 4.798898891169153,
+     "max": 18.689877485874433
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.011811263202383971,
+      "rmse": 0.013907312931689586,
+      "p95": 0.023267872226667485,
+      "max": 0.028562232916594876
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.011532884507277382,
+      "rmse": 0.014010974031782718,
+      "p95": 0.02676175047054326,
+      "max": 0.03551338666511761
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.05078344619426648,
+      "rmse": 0.06193162515445071,
+      "p95": 0.11818592288788209,
+      "max": 0.13574335538634985
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.0261150508854855,
+      "rmse": 0.03827082843441599,
+      "p95": 0.06603674176033136,
+      "max": 0.16626380904190485
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.07979192830730175,
+      "rmse": 0.10277073258000653,
+      "p95": 0.19181482040769027,
+      "max": 0.5010084669972241
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.051519098889826406,
+      "rmse": 0.0776652566368798,
+      "p95": 0.12847123336681154,
+      "max": 0.5010084669972241
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9815
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.05858560548266952,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.04827039533261228,
+     "rmse": 0.060704611054745915,
+     "p95": 0.11416698459899816,
+     "max": 0.23819796621198375
+    },
+    "voltage_bias_v": -0.034913215659794515,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.4110482380849643,
+     "rmse": 2.0534203357271346,
+     "p95": 4.4370597846602,
+     "max": 6.26381897793766
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015003998544245714,
+      "rmse": 0.019214946265840485,
+      "p95": 0.04006782634051242,
+      "max": 0.06067320792615094
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.022233652812477047,
+      "rmse": 0.039219077834644324,
+      "p95": 0.0930066083135662,
+      "max": 0.23819796621198375
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.06371644027115408,
+      "rmse": 0.07167263247756146,
+      "p95": 0.11761271058941862,
+      "max": 0.15165603151821827
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.048421496196299145,
+      "rmse": 0.06082075208527244,
+      "p95": 0.11418662942016718,
+      "max": 0.23819796621198375
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9855
+   },
+   "information_criteria": {
+    "aic": 46553.65,
+    "bic": 46764.54,
+    "residuals": 13794,
+    "parameters": 28,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M1p",
+   "label": "+ available-charge basis, one pooled curve",
+   "note": "does conditioning the curve on cell temperature earn its place?",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "pooled",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 28,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1506413630340464,
+      "ohmic_activation_energy": 32324.646507073438,
+      "polarization_resistance_reference": 0.0930788896142816,
+      "polarization_activation_energy": 79999.99999998079,
+      "polarization_capacitance": 1390.9484317375402,
+      "thermal_capacitance": 78.96241850033334,
+      "thermal_conductance": 0.1269599752077103
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.006532097524979278,
+      "ohmic_activation_energy": 15352.562780524171,
+      "polarization_resistance_reference": 0.046270614997105566,
+      "polarization_activation_energy": 90723.67785565212,
+      "polarization_capacitance": 506.97842987538064,
+      "thermal_capacitance": 16.01696299741704,
+      "thermal_conductance": 0.14366880926546838
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.919
+     },
+     "normal_matrix_condition_number": 3483406648148167.5,
+     "objective_value": 84.67332541293881,
+     "residuals": 190,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.052302900003269315,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.16804972167361173,
+      "ohmic_activation_energy": 6146.687905897073,
+      "polarization_resistance_reference": 0.11954990246720974,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 924.9242623802608,
+      "thermal_capacitance": 62.27215272279661,
+      "thermal_conductance": 0.2852574483505791
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0017959703575677517,
+      "ohmic_activation_energy": 7552.917230563262,
+      "polarization_resistance_reference": 0.02586188674607791,
+      "polarization_activation_energy": 38830.084648835604,
+      "polarization_capacitance": 115.69471198601677,
+      "thermal_capacitance": 11.035951578485447,
+      "thermal_conductance": 0.08646092433948356
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "thermal_capacitance|thermal_conductance": -0.9846
+     },
+     "normal_matrix_condition_number": 1.44019095606242e+16,
+     "objective_value": 1.266001904511383,
+     "residuals": 98,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.04317229997832328,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.029084404567783093,
+      "ohmic_activation_energy": 20670.451257797315,
+      "polarization_resistance_reference": 0.11886134013789389,
+      "polarization_activation_energy": 37198.73029684354,
+      "polarization_capacitance": 94.09167339474628,
+      "thermal_capacitance": 499.99999999999847,
+      "thermal_conductance": 0.005000000000000001
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.01341147115577302,
+      "ohmic_activation_energy": 15709.81705745068,
+      "polarization_resistance_reference": 0.013282478289131188,
+      "polarization_activation_energy": 3838.0827153672294,
+      "polarization_capacitance": 7.326847861218818,
+      "thermal_capacitance": 115.34662115207523,
+      "thermal_conductance": 0.07022498084938764
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "weak",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9898,
+      "ohmic_resistance_reference|polarization_activation_energy": 0.9486,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9603,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9568
+     },
+     "normal_matrix_condition_number": 1051669219487335.5,
+     "objective_value": 621.3122458893804,
+     "residuals": 1194,
+     "at_declared_bound": [
+      "thermal_capacitance",
+      "thermal_conductance"
+     ],
+     "wall_seconds": 0.720686300075613,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.09166546502700464,
+      "ohmic_activation_energy": 22750.07184574115,
+      "polarization_resistance_reference": 0.041072379786671095,
+      "polarization_activation_energy": 25019.132096953814,
+      "polarization_capacitance": 1618.8441345232816,
+      "thermal_capacitance": 53.73753894688956,
+      "thermal_conductance": 0.005000000000888251
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0012384702491896583,
+      "ohmic_activation_energy": 4265.905020223503,
+      "polarization_resistance_reference": 0.00138736358441664,
+      "polarization_activation_energy": 10224.384630908244,
+      "polarization_capacitance": 94.93771910437803,
+      "thermal_capacitance": 0.6645282328112506,
+      "thermal_conductance": 0.0037853324868051237
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9457,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9244
+     },
+     "normal_matrix_condition_number": 9843190970747190.0,
+     "objective_value": 4.409936016498733,
+     "residuals": 824,
+     "at_declared_bound": [
+      "thermal_conductance"
+     ],
+     "wall_seconds": 0.26962210005149245,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 1153,
+    "coverage": 0.1331,
+    "penalized_rmse_v": 0.05020919346345509,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 1153,
+     "mae": 0.03033971629617448,
+     "rmse": 0.051550466330401015,
+     "p95": 0.10168400113001039,
+     "max": 0.320818118635843
+    },
+    "voltage_bias_v": -0.011059902710728035,
+    "temperature": {
+     "n": 1153,
+     "mae": 0.734034884056037,
+     "rmse": 1.2422740608746705,
+     "p95": 3.0605071316107777,
+     "max": 6.706500113865388
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 188,
+      "mae": 0.0075630818725834275,
+      "rmse": 0.008712676101791838,
+      "p95": 0.013097941699733152,
+      "max": 0.01409975410353237
+     },
+     "B0018": {
+      "n": 224,
+      "mae": 0.004091707243569228,
+      "rmse": 0.004720237756434168,
+      "p95": 0.008129042740443371,
+      "max": 0.010521306086596738
+     },
+     "B0033": {
+      "n": 95,
+      "mae": 0.05608875621862652,
+      "rmse": 0.06524749177744649,
+      "p95": 0.10787904515839201,
+      "max": 0.12194821306809311
+     },
+     "B0038": {
+      "n": 49,
+      "mae": 0.007353394868138053,
+      "rmse": 0.009283478594535512,
+      "p95": 0.019062876681894356,
+      "max": 0.021174790794044718
+     },
+     "B0042": {
+      "n": 597,
+      "mae": 0.04514998808304137,
+      "rmse": 0.06645004330833383,
+      "p95": 0.1140019779500238,
+      "max": 0.320818118635843
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 1120,
+      "mae": 0.031034583786322616,
+      "rmse": 0.052281042397273506,
+      "p95": 0.10309839085882837,
+      "max": 0.320818118635843
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.006756334812358974,
+      "rmse": 0.009105835637613262,
+      "p95": 0.016216781765157853,
+      "max": 0.024876518937326786
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 784,
+    "coverage": 0.1297,
+    "penalized_rmse_v": 0.04966692647779134,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 784,
+     "mae": 0.03513234716070002,
+     "rmse": 0.04737219741170801,
+     "p95": 0.098407424686256,
+     "max": 0.12828386800498404
+    },
+    "voltage_bias_v": -0.027109982166862997,
+    "temperature": {
+     "n": 784,
+     "mae": 0.7589968074428572,
+     "rmse": 1.1798245843722002,
+     "p95": 2.9642173703693047,
+     "max": 3.7031159398666773
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 167,
+      "mae": 0.013196809316351144,
+      "rmse": 0.014101500745723274,
+      "p95": 0.02007542343201387,
+      "max": 0.02385837107861377
+     },
+     "B0034": {
+      "n": 104,
+      "mae": 0.02259325223440898,
+      "rmse": 0.027828738554400892,
+      "p95": 0.04801819080449538,
+      "max": 0.056027566927923544
+     },
+     "B0043": {
+      "n": 513,
+      "mae": 0.04481519451419034,
+      "rmse": 0.05663817837372175,
+      "p95": 0.10506985756710616,
+      "max": 0.12828386800498404
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 765,
+      "mae": 0.0358116277806882,
+      "rmse": 0.047931816396049556,
+      "p95": 0.09863019613905982,
+      "max": 0.12828386800498404
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.007782364303281403,
+      "rmse": 0.00983526435955369,
+      "p95": 0.01644756857962779,
+      "max": 0.017452589909407124
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9621
+   },
+   "information_criteria": {
+    "aic": 5487.45,
+    "bic": 5648.26,
+    "residuals": 2306,
+    "parameters": 28,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 1153,
+    "validation": 784
+   }
+  },
+  {
+   "key": "M2",
+   "label": "M1 with both activation energies fixed at zero",
+   "note": "two fewer parameters; Sprint 3 called them unidentified",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": false,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "polarization_resistance_reference",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 5,
+   "free_parameters_total": 20,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1614705764446174,
+      "polarization_resistance_reference": 0.02716674876710464,
+      "polarization_capacitance": 2737.7155512214326,
+      "thermal_capacitance": 80.55997927682819,
+      "thermal_conductance": 0.11626168081678291
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.004947469651611841,
+      "polarization_resistance_reference": 0.004881771630649416,
+      "polarization_capacitance": 1108.251273149717,
+      "thermal_capacitance": 2.6521561624343297,
+      "thermal_conductance": 0.003791781870238966
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9919,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9165
+     },
+     "normal_matrix_condition_number": 8406321424247.004,
+     "objective_value": 568.5005983336569,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 1.8237756000598893,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1502399398319824,
+      "polarization_resistance_reference": 0.060647186364377284,
+      "polarization_capacitance": 309.63071816070743,
+      "thermal_capacitance": 82.23107605052199,
+      "thermal_conductance": 0.11805770519441577
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.013439094633969823,
+      "polarization_resistance_reference": 0.013386631858961771,
+      "polarization_capacitance": 137.6275699297521,
+      "thermal_capacitance": 3.4701699606627656,
+      "thermal_conductance": 0.006606945263670111
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9992,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9617,
+      "polarization_resistance_reference|polarization_capacitance": -0.9593,
+      "thermal_capacitance|thermal_conductance": -0.9241
+     },
+     "normal_matrix_condition_number": 142658854559.54102,
+     "objective_value": 139.50600034415265,
+     "residuals": 562,
+     "at_declared_bound": [],
+     "wall_seconds": 0.160311899962835,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.039676192951216174,
+      "polarization_resistance_reference": 0.2273795001344496,
+      "polarization_capacitance": 67.74278031878907,
+      "thermal_capacitance": 80.78142143795009,
+      "thermal_conductance": 0.08457247290103209
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.04962049570413642,
+      "polarization_resistance_reference": 0.049533110530320425,
+      "polarization_capacitance": 28.08382636316031,
+      "thermal_capacitance": 2.750324559208416,
+      "thermal_conductance": 0.0030170726034630096
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9998,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9768,
+      "polarization_resistance_reference|polarization_capacitance": -0.9761
+     },
+     "normal_matrix_condition_number": 1563270783.5533843,
+     "objective_value": 20810.734715246323,
+     "residuals": 7272,
+     "at_declared_bound": [],
+     "wall_seconds": 2.536233099992387,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.11810935735322409,
+      "polarization_resistance_reference": 0.030483426585756895,
+      "polarization_capacitance": 26231.762302991792,
+      "thermal_capacitance": 65.39424175925353,
+      "thermal_conductance": 0.04888119730275985
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0005211537238244986,
+      "polarization_resistance_reference": 0.00047952893380938833,
+      "polarization_capacitance": 1255.220071228271,
+      "thermal_capacitance": 0.5298429705375634,
+      "thermal_conductance": 0.0003599383497993907
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {},
+     "normal_matrix_condition_number": 167390363472605.2,
+     "objective_value": 139.34807615010175,
+     "residuals": 4856,
+     "at_declared_bound": [],
+     "wall_seconds": 1.500167699996382,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.11223544256504611,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.08161436123002547,
+     "rmse": 0.12319789319178051,
+     "p95": 0.2185562333983177,
+     "max": 0.6941282451588942
+    },
+    "voltage_bias_v": -0.002668516271688169,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.017993411416248,
+     "rmse": 1.3726412711361557,
+     "p95": 2.7925441405653486,
+     "max": 5.018531737252772
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.010937289246922634,
+      "rmse": 0.013072697976191972,
+      "p95": 0.02196114450573816,
+      "max": 0.04897021925433043
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.010916027439883496,
+      "rmse": 0.01319234457343455,
+      "p95": 0.024058580388064237,
+      "max": 0.037664926905102813
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.052913610324031524,
+      "rmse": 0.06361848072709657,
+      "p95": 0.12058028059400647,
+      "max": 0.1322503101440411
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.03955891138454102,
+      "rmse": 0.04902046771183501,
+      "p95": 0.08056393775391335,
+      "max": 0.1652883524690032
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.13642529112540622,
+      "rmse": 0.1669570706268628,
+      "p95": 0.261195657492608,
+      "max": 0.6941282451588942
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.08198117172681625,
+      "rmse": 0.12349244241519715,
+      "p95": 0.21857822375785346,
+      "max": 0.6941282451588942
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9922
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.09662550808439771,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.07264381273423133,
+     "rmse": 0.10578343453466431,
+     "p95": 0.20838269900597947,
+     "max": 0.2529029980754509
+    },
+    "voltage_bias_v": -0.029953919965186808,
+    "temperature": {
+     "n": 4754,
+     "mae": 0.9052056136591621,
+     "rmse": 1.215730501416904,
+     "p95": 2.539361770439516,
+     "max": 6.379483707630527
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015202618219027703,
+      "rmse": 0.01921790978382088,
+      "p95": 0.037743094738650305,
+      "max": 0.06324268134087774
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.023750606820150285,
+      "rmse": 0.04217085704733139,
+      "p95": 0.10285102657217775,
+      "max": 0.2529029980754509
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.10008418074149536,
+      "rmse": 0.1280574857941843,
+      "p95": 0.21059075928790283,
+      "max": 0.24591286123119271
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.07289271611758678,
+      "rmse": 0.10599228530950268,
+      "p95": 0.20839855438224095,
+      "max": 0.2529029980754509
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9949
+   },
+   "information_criteria": {
+    "aic": 54970.05,
+    "bic": 55120.69,
+    "residuals": 13794,
+    "parameters": 20,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M3",
+   "label": "M1 + measured charge-state shape on R0",
+   "note": "no free parameter added: the shape is the branch-difference measurement, normalized at the reference charge state",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": true,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 28,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.18265974577186184,
+      "ohmic_activation_energy": 49406.42215957498,
+      "polarization_resistance_reference": 0.07929882001239563,
+      "polarization_activation_energy": -23979.028243017954,
+      "polarization_capacitance": 1240.1839557776584,
+      "thermal_capacitance": 80.10330341667532,
+      "thermal_conductance": 0.11507265599065615
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0051252486982458,
+      "ohmic_activation_energy": 8659.667959886148,
+      "polarization_resistance_reference": 0.013131333888970101,
+      "polarization_activation_energy": 3446.9045667722403,
+      "polarization_capacitance": 174.84072317257198,
+      "thermal_capacitance": 2.5752550283666507,
+      "thermal_conductance": 0.0037225968591435613
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9771,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9684
+     },
+     "normal_matrix_condition_number": 513567052592433.5,
+     "objective_value": 531.4280654955228,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.7090806000633165,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.2071463279204799,
+      "ohmic_activation_energy": 79999.99999999104,
+      "polarization_resistance_reference": 0.11432010840878096,
+      "polarization_activation_energy": -19404.452953434673,
+      "polarization_capacitance": 420.44680622338683,
+      "thermal_capacitance": 103.76193137586168,
+      "thermal_conductance": 0.07360103276337142
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007440563181655574,
+      "ohmic_activation_energy": 9078.034913362355,
+      "polarization_resistance_reference": 0.008392810442578372,
+      "polarization_activation_energy": 1722.2633099319507,
+      "polarization_capacitance": 43.768563416889,
+      "thermal_capacitance": 3.5307023867351663,
+      "thermal_conductance": 0.007285942932008871
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9213,
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9537,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9608,
+      "thermal_capacitance|thermal_conductance": -0.9523
+     },
+     "normal_matrix_condition_number": 755461861872815.2,
+     "objective_value": 91.04294636753423,
+     "residuals": 562,
+     "at_declared_bound": [
+      "ohmic_activation_energy"
+     ],
+     "wall_seconds": 0.8030120999319479,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1055302679143391,
+      "ohmic_activation_energy": 17384.983369197784,
+      "polarization_resistance_reference": 0.10922590829420653,
+      "polarization_activation_energy": 24982.35782561886,
+      "polarization_capacitance": 169.77484021661,
+      "thermal_capacitance": 264.04454130206136,
+      "thermal_conductance": 0.01738449754054364
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.01053529755397924,
+      "ohmic_activation_energy": 4079.6044416578734,
+      "polarization_resistance_reference": 0.010345743229158967,
+      "polarization_activation_energy": 3824.267907736961,
+      "polarization_capacitance": 12.164346157350401,
+      "thermal_capacitance": 5.349606431354218,
+      "thermal_conductance": 0.0030680475529686864
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9026,
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9928,
+      "ohmic_resistance_reference|polarization_activation_energy": 0.9228,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9862,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9292
+     },
+     "normal_matrix_condition_number": 144109066325539.72,
+     "objective_value": 10160.006080448245,
+     "residuals": 7272,
+     "at_declared_bound": [],
+     "wall_seconds": 6.256198000046425,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.12076592478852606,
+      "ohmic_activation_energy": -8770.021208874168,
+      "polarization_resistance_reference": 0.02993465266652353,
+      "polarization_activation_energy": 79999.99999975688,
+      "polarization_capacitance": 1704.1956560979495,
+      "thermal_capacitance": 65.7629199542685,
+      "thermal_conductance": 0.04880740586201257
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.002223980403627623,
+      "ohmic_activation_energy": 725.8982221811092,
+      "polarization_resistance_reference": 0.00172886226975459,
+      "polarization_activation_energy": 9628.52699795582,
+      "polarization_capacitance": 239.02997517865376,
+      "thermal_capacitance": 0.47054520984678416,
+      "thermal_conductance": 0.00032076049890771745
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9795,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9317
+     },
+     "normal_matrix_condition_number": 1.3694645368554742e+16,
+     "objective_value": 108.90250640078744,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 2.7734937999630347,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.06937559886906314,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.0466721472349553,
+     "rmse": 0.07351334793386484,
+     "p95": 0.11698989545965457,
+     "max": 0.4920663332510471
+    },
+    "voltage_bias_v": -0.014108268584519794,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.6636997380086438,
+     "rmse": 2.994910479827419,
+     "p95": 4.371565874501594,
+     "max": 18.400467296718034
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.008675051199090962,
+      "rmse": 0.009955157328274036,
+      "p95": 0.016145729675079323,
+      "max": 0.02388300998518833
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.007624788926564624,
+      "rmse": 0.00999242590651568,
+      "p95": 0.019108156530976573,
+      "max": 0.03029012789358365
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.04924566567168914,
+      "rmse": 0.0616954152103432,
+      "p95": 0.12174157286567833,
+      "max": 0.13334561997241146
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.028322588821638156,
+      "rmse": 0.0381284550945853,
+      "p95": 0.0675235394384659,
+      "max": 0.1549184844336402
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.07345605563643662,
+      "rmse": 0.09743920793786892,
+      "p95": 0.19962535170766826,
+      "max": 0.4920663332510471
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.04687096631830822,
+      "rmse": 0.07368776526186724,
+      "p95": 0.1170776115695862,
+      "max": 0.4920663332510471
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9829
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.05909701475655262,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.05014463058530652,
+     "rmse": 0.061331493357760905,
+     "p95": 0.10788335695101146,
+     "max": 0.22502358189908467
+    },
+    "voltage_bias_v": -0.03981021164401542,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.526049232956329,
+     "rmse": 2.0555838005325353,
+     "p95": 4.071596951592627,
+     "max": 6.241193625415292
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.013916739670496614,
+      "rmse": 0.01766718945567034,
+      "p95": 0.033066685375394055,
+      "max": 0.05563801653419764
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02057389573933064,
+      "rmse": 0.03678004820683659,
+      "p95": 0.08627823060577286,
+      "max": 0.22502358189908467
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.06720356316163312,
+      "rmse": 0.07284407295794092,
+      "p95": 0.11340321104813156,
+      "max": 0.14282918796571975
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.0503032521395533,
+      "rmse": 0.06144894740274889,
+      "p95": 0.10796407747333481,
+      "max": 0.22502358189908467
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9894
+   },
+   "information_criteria": {
+    "aic": 45503.95,
+    "bic": 45714.84,
+    "residuals": 13794,
+    "parameters": 28,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M4",
+   "label": "M3 + a second RC branch",
+   "note": "two free parameters more than M3; the rest-phase residual structure is what asks for it",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": true,
+    "rc_branches": 2
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "second_polarization_resistance",
+    "second_polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 9,
+   "free_parameters_total": 36,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1776831697499055,
+      "ohmic_activation_energy": 36570.8551443925,
+      "polarization_resistance_reference": 0.055361522281514884,
+      "polarization_activation_energy": 45957.54596437868,
+      "polarization_capacitance": 1333.980018298425,
+      "second_polarization_resistance": 0.4830119368206639,
+      "second_polarization_capacitance": 7333.787272335446,
+      "thermal_capacitance": 82.04906278817106,
+      "thermal_conductance": 0.11283082715448926
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007009118617305184,
+      "ohmic_activation_energy": 9331.342876521394,
+      "polarization_resistance_reference": 0.005693642198565028,
+      "polarization_activation_energy": 25751.506881406363,
+      "polarization_capacitance": 418.6630110770285,
+      "second_polarization_resistance": 0.31634576988952096,
+      "second_polarization_capacitance": 1323.5500377503388,
+      "thermal_capacitance": 2.6197815186761537,
+      "thermal_conductance": 0.003807760669957216
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9044,
+      "ohmic_activation_energy|second_polarization_capacitance": -0.9334,
+      "polarization_activation_energy|second_polarization_resistance": 0.9925
+     },
+     "normal_matrix_condition_number": 766302417061287.1,
+     "objective_value": 514.919254386566,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 1.1030255999648944,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.2027592416117907,
+      "ohmic_activation_energy": 79999.9991043157,
+      "polarization_resistance_reference": 0.1407897343024689,
+      "polarization_activation_energy": 21708.157543314952,
+      "polarization_capacitance": 499.5279452372215,
+      "second_polarization_resistance": 0.4999999995439413,
+      "second_polarization_capacitance": 7120.018720032352,
+      "thermal_capacitance": 81.66256708618533,
+      "thermal_conductance": 0.1184770509351583
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.006004538385857198,
+      "ohmic_activation_energy": 23621.484878888325,
+      "polarization_resistance_reference": 0.015519215322342956,
+      "polarization_activation_energy": 21424.0478714527,
+      "polarization_capacitance": 98.2488664438162,
+      "second_polarization_resistance": 0.22306901576151056,
+      "second_polarization_capacitance": 3709.709703892399,
+      "thermal_capacitance": 2.4607837687424685,
+      "thermal_conductance": 0.004618955893710115
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "weak",
+      "second_polarization_capacitance": "unidentified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9573,
+      "polarization_activation_energy|polarization_capacitance": 0.9481,
+      "polarization_activation_energy|second_polarization_capacitance": -0.9698,
+      "thermal_capacitance|thermal_conductance": -0.9173
+     },
+     "normal_matrix_condition_number": 1726190009305332.8,
+     "objective_value": 74.64145778615922,
+     "residuals": 562,
+     "at_declared_bound": [
+      "second_polarization_resistance"
+     ],
+     "wall_seconds": 1.5468543000752106,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.10553000786594495,
+      "ohmic_activation_energy": 17384.620818938034,
+      "polarization_resistance_reference": 0.10803669759348912,
+      "polarization_activation_energy": 24981.956054379923,
+      "polarization_capacitance": 171.6453808716282,
+      "second_polarization_resistance": 0.0011912701520039057,
+      "second_polarization_capacitance": 15576.152572242076,
+      "thermal_capacitance": 264.03341750814377,
+      "thermal_conductance": 0.01738880319667394
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.010590096431910228,
+      "ohmic_activation_energy": 4522.90346289828,
+      "polarization_resistance_reference": 15.347661877998545,
+      "polarization_activation_energy": 4206.135007486131,
+      "polarization_capacitance": 9177.782109708663,
+      "second_polarization_resistance": 15.347299999871652,
+      "second_polarization_capacitance": 75568918.38072132,
+      "thermal_capacitance": 5.46477556654926,
+      "thermal_conductance": 0.0031844452725082904
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "weak",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "unidentified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "unidentified",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "unidentified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_activation_energy": -0.9885,
+      "polarization_resistance_reference|second_polarization_resistance": -1.0,
+      "polarization_capacitance|second_polarization_capacitance": -1.0
+     },
+     "normal_matrix_condition_number": 4.088806045519186e+22,
+     "objective_value": 10160.006088728065,
+     "residuals": 7272,
+     "at_declared_bound": [],
+     "wall_seconds": 10.128767100046389,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.11322082051670998,
+      "ohmic_activation_energy": 1727.5925912140772,
+      "polarization_resistance_reference": 0.032192834094058626,
+      "polarization_activation_energy": 79999.99999997322,
+      "polarization_capacitance": 1310.1166450302205,
+      "second_polarization_resistance": 0.06352385932183903,
+      "second_polarization_capacitance": 62731.4020877192,
+      "thermal_capacitance": 66.20447623854778,
+      "thermal_conductance": 0.048515915838621734
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0025168708386770493,
+      "ohmic_activation_energy": 3122.8834242499097,
+      "polarization_resistance_reference": 0.001877091347361546,
+      "polarization_activation_energy": 10213.856902267262,
+      "polarization_capacitance": 185.13398164305437,
+      "second_polarization_resistance": 0.014058432280614605,
+      "second_polarization_capacitance": 10743.672986796031,
+      "thermal_capacitance": 0.47065643244097344,
+      "thermal_conductance": 0.0003224595219171243
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "weak",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9386,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9157
+     },
+     "normal_matrix_condition_number": 1.2717426190412826e+16,
+     "objective_value": 107.57686270823949,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 3.8539524000370875,
+     "optimizer_status": 3
+    }
+   ],
+   "second_branch_time_constants": {
+    "33_34_36": {
+     "tau1_s": 73.851,
+     "tau2_s": 3542.307,
+     "ratio": 47.965,
+     "separated": true
+    },
+    "38_39_40": {
+     "tau1_s": 70.328,
+     "tau2_s": 3560.009,
+     "ratio": 50.62,
+     "separated": true
+    },
+    "41_42_43_44": {
+     "tau1_s": 18.544,
+     "tau2_s": 18.555,
+     "ratio": 1.001,
+     "separated": false
+    },
+    "FY08Q4": {
+     "tau1_s": 42.176,
+     "tau2_s": 3984.941,
+     "ratio": 94.483,
+     "separated": true
+    }
+   },
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.06923992093044459,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.046371421817923364,
+     "rmse": 0.07335255840198619,
+     "p95": 0.1149663730294441,
+     "max": 0.4920727725091645
+    },
+    "voltage_bias_v": -0.014105565337435472,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.6602826716587793,
+     "rmse": 2.9941862000372033,
+     "p95": 4.371470630918838,
+     "max": 18.40005905755646
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.008392184102314652,
+      "rmse": 0.009538668068218903,
+      "p95": 0.015434000300436512,
+      "max": 0.02121028323653551
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.007176955310376907,
+      "rmse": 0.009537908515611948,
+      "p95": 0.018452393192660878,
+      "max": 0.032949011203829315
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.048751005926670324,
+      "rmse": 0.06043021962069592,
+      "p95": 0.11761997586157377,
+      "max": 0.1294820537633461
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.025123788649688412,
+      "rmse": 0.035329392581041785,
+      "p95": 0.06775985106826532,
+      "max": 0.15418451118042098
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.07345702475319427,
+      "rmse": 0.09744050312660298,
+      "p95": 0.1996274449400991,
+      "max": 0.4920727725091645
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.04656879510600209,
+      "rmse": 0.07352658510843404,
+      "p95": 0.1151119633833376,
+      "max": 0.4920727725091645
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9829
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.0591466567930244,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.050403006910646996,
+     "rmse": 0.0613922917606565,
+     "p95": 0.10796758099455245,
+     "max": 0.22825365631397299
+    },
+    "voltage_bias_v": -0.03988808548356934,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.5266447653806023,
+     "rmse": 2.054664991675298,
+     "p95": 4.067924254157019,
+     "max": 6.256294673517971
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.014177425335543293,
+      "rmse": 0.017816223127774894,
+      "p95": 0.03292039473074079,
+      "max": 0.0585942777779902
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02214437301168362,
+      "rmse": 0.037431367544602724,
+      "p95": 0.08748578547778936,
+      "max": 0.22825365631397299
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.06720462282900268,
+      "rmse": 0.07284506416988142,
+      "p95": 0.1134040351324089,
+      "max": 0.14282841687388004
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.050562665244235146,
+      "rmse": 0.06150987308738976,
+      "p95": 0.10799054513231834,
+      "max": 0.22825365631397299
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9898
+   },
+   "information_criteria": {
+    "aic": 45476.52,
+    "bic": 45747.67,
+    "residuals": 13794,
+    "parameters": 36,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M5",
+   "label": "M1 + a second RC branch",
+   "note": "the second branch without the charge-state shape, so the two additions are separable",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 2
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "second_polarization_resistance",
+    "second_polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 9,
+   "free_parameters_total": 36,
+   "groups": [
+    {
+     "group": "33_34_36",
+     "parameter_unit": "group",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.14877655716984833,
+      "ohmic_activation_energy": 34716.51981537245,
+      "polarization_resistance_reference": 0.04330338386644223,
+      "polarization_activation_energy": 26669.141012229487,
+      "polarization_capacitance": 1419.4006661928017,
+      "second_polarization_resistance": 0.2530167566057468,
+      "second_polarization_capacitance": 5627.38308394428,
+      "thermal_capacitance": 81.59544614927164,
+      "thermal_conductance": 0.11420124210003091
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.006837667562845276,
+      "ohmic_activation_energy": 14289.463521892354,
+      "polarization_resistance_reference": 0.008519713387592028,
+      "polarization_activation_energy": 23052.930914292447,
+      "polarization_capacitance": 564.9270846386302,
+      "second_polarization_resistance": 0.15384990888565936,
+      "second_polarization_capacitance": 1369.6553566671673,
+      "thermal_capacitance": 2.6725962294669956,
+      "thermal_conductance": 0.0038384267003797514
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9062,
+      "ohmic_activation_energy|second_polarization_capacitance": -0.9676,
+      "polarization_activation_energy|second_polarization_resistance": 0.9817
+     },
+     "normal_matrix_condition_number": 1027020854877075.1,
+     "objective_value": 531.5845517020279,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.9512576000997797,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40",
+     "parameter_unit": "group",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.17384877208074148,
+      "ohmic_activation_energy": 79999.9438597374,
+      "polarization_resistance_reference": 0.14202007759373625,
+      "polarization_activation_energy": 18056.189982128035,
+      "polarization_capacitance": 565.4948472811602,
+      "second_polarization_resistance": 0.49999999999999994,
+      "second_polarization_capacitance": 7522.460205151365,
+      "thermal_capacitance": 84.75955335421654,
+      "thermal_conductance": 0.11263764692338105
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005556006340501186,
+      "ohmic_activation_energy": 27670.407296852016,
+      "polarization_resistance_reference": 0.025335253807160823,
+      "polarization_activation_energy": 13985.04948724391,
+      "polarization_capacitance": 96.08301617856368,
+      "second_polarization_resistance": 0.2609332649121088,
+      "second_polarization_capacitance": 3659.4604034498793,
+      "thermal_capacitance": 2.569006729436327,
+      "thermal_conductance": 0.004877790523394951
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9823,
+      "polarization_activation_energy|second_polarization_capacitance": -0.9767,
+      "thermal_capacitance|thermal_conductance": -0.9252
+     },
+     "normal_matrix_condition_number": 1689986569919718.8,
+     "objective_value": 73.31478915165624,
+     "residuals": 562,
+     "at_declared_bound": [
+      "second_polarization_resistance"
+     ],
+     "wall_seconds": 5.46399780001957,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44",
+     "parameter_unit": "group",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 15,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.022629105067528518,
+      "ohmic_activation_energy": 22104.767989844247,
+      "polarization_resistance_reference": 0.15693809800618957,
+      "polarization_activation_energy": 24213.78390054706,
+      "polarization_capacitance": 89.00210405426911,
+      "second_polarization_resistance": 0.03074329019654604,
+      "second_polarization_capacitance": 6168.15032142425,
+      "thermal_capacitance": 263.38488977838523,
+      "thermal_conductance": 0.030421814991580205
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.019591487532472435,
+      "ohmic_activation_energy": 25643.383716572105,
+      "polarization_resistance_reference": 0.0174261937281021,
+      "polarization_activation_energy": 3235.284824420896,
+      "polarization_capacitance": 13.732180672314302,
+      "second_polarization_resistance": 0.004666515608224596,
+      "second_polarization_capacitance": 1961.418235427109,
+      "thermal_capacitance": 5.981481706071678,
+      "thermal_conductance": 0.0034810219092772437
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "weak",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9728,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9917
+     },
+     "normal_matrix_condition_number": 3805773617523588.5,
+     "objective_value": 10805.123788824132,
+     "residuals": 7272,
+     "at_declared_bound": [],
+     "wall_seconds": 26.230412399978377,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4",
+     "parameter_unit": "group",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.0865042576949871,
+      "ohmic_activation_energy": 25041.303584238514,
+      "polarization_resistance_reference": 0.02902532615646236,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 913.2590750280847,
+      "second_polarization_resistance": 0.185684615401243,
+      "second_polarization_capacitance": 17120.45616979126,
+      "thermal_capacitance": 65.82034717962189,
+      "thermal_conductance": 0.04867502153846681
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.003284640786723996,
+      "ohmic_activation_energy": 6324.3737940168485,
+      "polarization_resistance_reference": 0.0029931984807047814,
+      "polarization_activation_energy": 9148.697679211218,
+      "polarization_capacitance": 202.96458331222365,
+      "second_polarization_resistance": 0.014458712465002544,
+      "second_polarization_capacitance": 1194.7927574733073,
+      "thermal_capacitance": 0.5020958337788485,
+      "thermal_conductance": 0.000344113073726987
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "identified",
+      "second_polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9658,
+      "ohmic_resistance_reference|polarization_capacitance": 0.905,
+      "ohmic_activation_energy|second_polarization_capacitance": -0.9459,
+      "polarization_resistance_reference|polarization_capacitance": -0.9225
+     },
+     "normal_matrix_condition_number": 6765086441785053.0,
+     "objective_value": 123.16584981510616,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 3.8099674000404775,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {
+    "33_34_36": {
+     "tau1_s": 61.465,
+     "tau2_s": 1423.822,
+     "ratio": 23.165,
+     "separated": true
+    },
+    "38_39_40": {
+     "tau1_s": 80.312,
+     "tau2_s": 3761.23,
+     "ratio": 46.833,
+     "separated": true
+    },
+    "41_42_43_44": {
+     "tau1_s": 13.968,
+     "tau2_s": 189.629,
+     "ratio": 13.576,
+     "separated": true
+    },
+    "FY08Q4": {
+     "tau1_s": 26.508,
+     "tau2_s": 3179.005,
+     "ratio": 119.928,
+     "separated": true
+    }
+   },
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.0715160540986193,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.05053948873097629,
+     "rmse": 0.07604519720389656,
+     "p95": 0.12133475673903477,
+     "max": 0.4776092429135166
+    },
+    "voltage_bias_v": -0.012432277332197622,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.6490798199749885,
+     "rmse": 3.04652712020277,
+     "p95": 4.736882373696992,
+     "max": 18.729721059273572
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.009523438778419336,
+      "rmse": 0.011089969670619447,
+      "p95": 0.01855807256592934,
+      "max": 0.021057269042857207
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.008880566233363911,
+      "rmse": 0.011057317256902078,
+      "p95": 0.021388027884857455,
+      "max": 0.042019248460656744
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.050304946120589424,
+      "rmse": 0.06105857960007343,
+      "p95": 0.11727242278247714,
+      "max": 0.1248421751642863
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.02463268674785113,
+      "rmse": 0.03514657228950062,
+      "p95": 0.06703896524479891,
+      "max": 0.1534307288507719
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.08020102339277183,
+      "rmse": 0.10112372128676932,
+      "p95": 0.18792013453044565,
+      "max": 0.4776092429135166
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.050756900802290845,
+      "rmse": 0.07622576284903268,
+      "p95": 0.12219658212764188,
+      "max": 0.4776092429135166
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9809
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.06011700474303358,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.05025876052557359,
+     "rmse": 0.06257890246914874,
+     "p95": 0.1100987399312739,
+     "max": 0.24262486129922234
+    },
+    "voltage_bias_v": -0.03722923909094622,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.4599605603757435,
+     "rmse": 2.0768450353305794,
+     "p95": 4.386018855564366,
+     "max": 6.322817725313882
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015112994366592207,
+      "rmse": 0.01923394547610221,
+      "p95": 0.03665601538064256,
+      "max": 0.06922615849404101
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02389691389205276,
+      "rmse": 0.039594669299683125,
+      "p95": 0.09085993316099993,
+      "max": 0.24262486129922234
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.06635334110909248,
+      "rmse": 0.07402113457708732,
+      "p95": 0.11313605245803098,
+      "max": 0.12563371998763095
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.05041784004578975,
+      "rmse": 0.06269896586142996,
+      "p95": 0.11010353400254998,
+      "max": 0.24262486129922234
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9871
+   },
+   "information_criteria": {
+    "aic": 46309.76,
+    "bic": 46580.91,
+    "residuals": 13794,
+    "parameters": 36,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M6",
+   "label": "M1 with one parameter set per group and cell-temperature band",
+   "note": "a single Arrhenius pair spanning 6-55 degC compromises between the two ends; this asks whether the compromise is what the residual is made of",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group_band",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 35,
+   "groups": [
+    {
+     "group": "33_34_36|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1616204581279367,
+      "ohmic_activation_energy": 41844.75982234932,
+      "polarization_resistance_reference": 0.10299349766703056,
+      "polarization_activation_energy": -13246.309546618826,
+      "polarization_capacitance": 2103.830130841632,
+      "thermal_capacitance": 81.59491353253395,
+      "thermal_conductance": 0.11395955803521103
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0043708894946134945,
+      "ohmic_activation_energy": 13337.233136586457,
+      "polarization_resistance_reference": 0.020383282782749604,
+      "polarization_activation_energy": 3791.7142915948725,
+      "polarization_capacitance": 541.5110555808445,
+      "thermal_capacitance": 2.7012123280543494,
+      "thermal_conductance": 0.003875106360423895
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9292,
+      "ohmic_activation_energy|polarization_capacitance": -0.9186
+     },
+     "normal_matrix_condition_number": 468575588487709.75,
+     "objective_value": 543.830118384027,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.888827700051479,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1459099216218465,
+      "ohmic_activation_energy": -11251.031073857946,
+      "polarization_resistance_reference": 0.11219497880463682,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 556.378385891407,
+      "thermal_capacitance": 95.03282869368184,
+      "thermal_conductance": 0.09333595458588906
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005271571993031407,
+      "ohmic_activation_energy": 943.0921318797475,
+      "polarization_resistance_reference": 0.005454639965289287,
+      "polarization_activation_energy": 8922.137669557864,
+      "polarization_capacitance": 82.18116028769971,
+      "thermal_capacitance": 3.144153171509527,
+      "thermal_conductance": 0.0062679645727707995
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9263,
+      "thermal_capacitance|thermal_conductance": -0.9416
+     },
+     "normal_matrix_condition_number": 764534045833108.0,
+     "objective_value": 87.77415242269515,
+     "residuals": 562,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.29525319999083877,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|cold",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.029911655005538603,
+      "ohmic_activation_energy": 79999.99832059199,
+      "polarization_resistance_reference": 0.4999999999998911,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 18315.41475968843,
+      "thermal_capacitance": 96.75115301742831,
+      "thermal_conductance": 0.06295432967297751
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.025543769833073337,
+      "ohmic_activation_energy": 31142.11588100421,
+      "polarization_resistance_reference": 14.907373824896714,
+      "polarization_activation_energy": 1448019.6250845324,
+      "polarization_capacitance": 5199.943641886694,
+      "thermal_capacitance": 11.35456404880593,
+      "thermal_conductance": 0.0022666768931686554
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "unidentified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9999,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9613,
+      "ohmic_activation_energy|polarization_capacitance": -0.959,
+      "polarization_resistance_reference|polarization_activation_energy": -0.999,
+      "thermal_capacitance|thermal_conductance": -0.9345
+     },
+     "normal_matrix_condition_number": 1.5702078020703656e+20,
+     "objective_value": 658.2393643147501,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "polarization_activation_energy",
+      "polarization_resistance_reference"
+     ],
+     "wall_seconds": 9.212315900018439,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.08043486170921052,
+      "ohmic_activation_energy": 49734.543439327,
+      "polarization_resistance_reference": 0.1488574967808843,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 2112.448332307425,
+      "thermal_capacitance": 226.52006501625684,
+      "thermal_conductance": 0.005000000000000001
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005920494391425656,
+      "ohmic_activation_energy": 2717.401740824462,
+      "polarization_resistance_reference": 0.0066275017797639705,
+      "polarization_activation_energy": 5837.203714344085,
+      "polarization_capacitance": 116.70848014330174,
+      "thermal_capacitance": 7.231559583777899,
+      "thermal_conductance": 0.008812951527686477
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.984
+     },
+     "normal_matrix_condition_number": 77806523961128.98,
+     "objective_value": 6013.311257215001,
+     "residuals": 3320,
+     "at_declared_bound": [
+      "polarization_activation_energy",
+      "thermal_conductance"
+     ],
+     "wall_seconds": 2.016389500000514,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.09517217275045596,
+      "ohmic_activation_energy": -11753.765919761005,
+      "polarization_resistance_reference": 0.033635694083368396,
+      "polarization_activation_energy": -12269.835003608927,
+      "polarization_capacitance": 1058.9548794350696,
+      "thermal_capacitance": 63.55014286032142,
+      "thermal_conductance": 0.049933830983360204
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.00421803480672337,
+      "ohmic_activation_energy": 14001.289763823903,
+      "polarization_resistance_reference": 0.0044893572566303075,
+      "polarization_activation_energy": 38540.59570276326,
+      "polarization_capacitance": 225.03468106569304,
+      "thermal_capacitance": 0.5272935271022118,
+      "thermal_conductance": 0.00035436924723814884
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9938,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9997
+     },
+     "normal_matrix_condition_number": 4.1224550743669395e+17,
+     "objective_value": 145.05976343741597,
+     "residuals": 4856,
+     "at_declared_bound": [],
+     "wall_seconds": 2.318160600028932,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.05956448845617339,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.0367149105138346,
+     "rmse": 0.06177214599364695,
+     "p95": 0.11696060052553844,
+     "max": 0.6161783068940139
+    },
+    "voltage_bias_v": -0.002801047406956697,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.3594134699909757,
+     "rmse": 2.3878240868422296,
+     "p95": 3.9736632130400267,
+     "max": 13.938217705202248
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.011811263202383971,
+      "rmse": 0.013907312931689586,
+      "p95": 0.023267872226667485,
+      "max": 0.028562232916594876
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.011532884507277382,
+      "rmse": 0.014010974031782718,
+      "p95": 0.02676175047054326,
+      "max": 0.03551338666511761
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.05078344619426648,
+      "rmse": 0.06193162515445071,
+      "p95": 0.11818592288788209,
+      "max": 0.13574335538634985
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.0261150508854855,
+      "rmse": 0.03827082843441599,
+      "p95": 0.06603674176033136,
+      "max": 0.16626380904190485
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.0521297050849502,
+      "rmse": 0.08007719744448416,
+      "p95": 0.14612776917491832,
+      "max": 0.6161783068940139
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.03686585826679753,
+      "rmse": 0.06191797669718606,
+      "p95": 0.11699336909718383,
+      "max": 0.6161783068940139
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.942
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.05122243303590128,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.03736254681750071,
+     "rmse": 0.051548888280330836,
+     "p95": 0.11157518697521684,
+     "max": 0.23819796621198375
+    },
+    "voltage_bias_v": -0.017189872338216193,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.2234507730371378,
+     "rmse": 1.704365729879374,
+     "p95": 3.366298455100318,
+     "max": 6.238441577481353
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015003998544245714,
+      "rmse": 0.019214946265840485,
+      "p95": 0.04006782634051242,
+      "max": 0.06067320792615094
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.022233652812477047,
+      "rmse": 0.039219077834644324,
+      "p95": 0.0930066083135662,
+      "max": 0.23819796621198375
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.0472803350918069,
+      "rmse": 0.05990258425017057,
+      "p95": 0.12168032691184351,
+      "max": 0.15757379821887962
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.03746987806729378,
+      "rmse": 0.05164569578178258,
+      "p95": 0.11173888099542305,
+      "max": 0.23819796621198375
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9842
+   },
+   "information_criteria": {
+    "aic": 40276.27,
+    "bic": 40539.89,
+    "residuals": 13794,
+    "parameters": 35,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M7",
+   "label": "M6 with both activation energies fixed at zero",
+   "note": "within one temperature band an Arrhenius slope has little range to be identified from, so this removes it",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group_band",
+    "arrhenius_activation_energies": false,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "polarization_resistance_reference",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 5,
+   "free_parameters_total": 25,
+   "groups": [
+    {
+     "group": "33_34_36|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1614705764446174,
+      "polarization_resistance_reference": 0.02716674876710464,
+      "polarization_capacitance": 2737.7155512214326,
+      "thermal_capacitance": 80.55997927682819,
+      "thermal_conductance": 0.11626168081678291
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.004947469651611841,
+      "polarization_resistance_reference": 0.004881771630649416,
+      "polarization_capacitance": 1108.251273149717,
+      "thermal_capacitance": 2.6521561624343297,
+      "thermal_conductance": 0.003791781870238966
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9919,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9165
+     },
+     "normal_matrix_condition_number": 8406321424247.004,
+     "objective_value": 568.5005983336569,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 1.8163459000643343,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1502399398319824,
+      "polarization_resistance_reference": 0.060647186364377284,
+      "polarization_capacitance": 309.63071816070743,
+      "thermal_capacitance": 82.23107605052199,
+      "thermal_conductance": 0.11805770519441577
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.013439094633969823,
+      "polarization_resistance_reference": 0.013386631858961771,
+      "polarization_capacitance": 137.6275699297521,
+      "thermal_capacitance": 3.4701699606627656,
+      "thermal_conductance": 0.006606945263670111
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9992,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9617,
+      "polarization_resistance_reference|polarization_capacitance": -0.9593,
+      "thermal_capacitance|thermal_conductance": -0.9241
+     },
+     "normal_matrix_condition_number": 142658854559.54102,
+     "objective_value": 139.50600034415265,
+     "residuals": 562,
+     "at_declared_bound": [],
+     "wall_seconds": 0.16145799995865673,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|cold",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.2526697479538729,
+      "polarization_resistance_reference": 0.49999999999999994,
+      "polarization_capacitance": 25405.963445836176,
+      "thermal_capacitance": 337.01384925362817,
+      "thermal_conductance": 0.011506984776432609
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0021364292053755803,
+      "polarization_resistance_reference": 0.11313821345736726,
+      "polarization_capacitance": 1387.6268195257064,
+      "thermal_capacitance": 61.346054098788194,
+      "thermal_conductance": 0.014520963280382219
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "polarization_resistance_reference|polarization_capacitance": 0.9462,
+      "thermal_capacitance|thermal_conductance": -0.9951
+     },
+     "normal_matrix_condition_number": 4260668621323.239,
+     "objective_value": 731.3066575185773,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "polarization_resistance_reference"
+     ],
+     "wall_seconds": 1.3177393999649212,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.026793276754428767,
+      "polarization_resistance_reference": 0.22677215807188214,
+      "polarization_capacitance": 57.82227379935477,
+      "thermal_capacitance": 65.52131781886278,
+      "thermal_conductance": 0.09891578010774427
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.08611748971341375,
+      "polarization_resistance_reference": 0.08598359200087012,
+      "polarization_capacitance": 40.5125158136717,
+      "thermal_capacitance": 3.57782610573064,
+      "thermal_conductance": 0.004644148112006477
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_capacitance": "unidentified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9998,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9827,
+      "polarization_resistance_reference|polarization_capacitance": -0.9822
+     },
+     "normal_matrix_condition_number": 1639260589.9466922,
+     "objective_value": 16263.686121081446,
+     "residuals": 3320,
+     "at_declared_bound": [],
+     "wall_seconds": 1.2835152000188828,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.11810935735322409,
+      "polarization_resistance_reference": 0.030483426585756895,
+      "polarization_capacitance": 26231.762302991792,
+      "thermal_capacitance": 65.39424175925353,
+      "thermal_conductance": 0.04888119730275985
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0005211537238244986,
+      "polarization_resistance_reference": 0.00047952893380938833,
+      "polarization_capacitance": 1255.220071228271,
+      "thermal_capacitance": 0.5298429705375634,
+      "thermal_conductance": 0.0003599383497993907
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {},
+     "normal_matrix_condition_number": 167390363472605.2,
+     "objective_value": 139.34807615010175,
+     "residuals": 4856,
+     "at_declared_bound": [],
+     "wall_seconds": 1.4566941999364644,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.10290164095686263,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.06731178060114851,
+     "rmse": 0.11250057927296708,
+     "p95": 0.19103181930090712,
+     "max": 0.747976881159552
+    },
+    "voltage_bias_v": -0.016071614722182364,
+    "temperature": {
+     "n": 6897,
+     "mae": 0.751474153119405,
+     "rmse": 1.0012646421547788,
+     "p95": 2.0198041330425323,
+     "max": 5.018531737252772
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.010937289246922634,
+      "rmse": 0.013072697976191972,
+      "p95": 0.02196114450573816,
+      "max": 0.04897021925433043
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.010916027439883496,
+      "rmse": 0.01319234457343455,
+      "p95": 0.024058580388064237,
+      "max": 0.037664926905102813
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.052913610324031524,
+      "rmse": 0.06361848072709657,
+      "p95": 0.12058028059400647,
+      "max": 0.1322503101440411
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.03955891138454102,
+      "rmse": 0.04902046771183501,
+      "p95": 0.08056393775391335,
+      "max": 0.1652883524690032
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.10929523100511897,
+      "rmse": 0.15196059219475577,
+      "p95": 0.2977627267351376,
+      "max": 0.747976881159552
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.06760982869106966,
+      "rmse": 0.11276932629914303,
+      "p95": 0.1910491152223219,
+      "max": 0.747976881159552
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.991
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.08583737214966942,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.0657313478274365,
+     "rmse": 0.09320932997152188,
+     "p95": 0.18157093675944969,
+     "max": 0.2529029980754509
+    },
+    "voltage_bias_v": -0.05192623249065374,
+    "temperature": {
+     "n": 4754,
+     "mae": 0.7077903937330092,
+     "rmse": 0.9813289379367235,
+     "p95": 1.8740085515422655,
+     "max": 6.379483707630527
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015202618219027703,
+      "rmse": 0.01921790978382088,
+      "p95": 0.037743094738650305,
+      "max": 0.06324268134087774
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.023750606820150285,
+      "rmse": 0.04217085704733139,
+      "p95": 0.10285102657217775,
+      "max": 0.2529029980754509
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.08966837783597946,
+      "rmse": 0.11237630882205672,
+      "p95": 0.18390317844282492,
+      "max": 0.2255549534972907
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.06595251375921242,
+      "rmse": 0.09339254995611031,
+      "p95": 0.18158468750306983,
+      "max": 0.2529029980754509
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9935
+   },
+   "information_criteria": {
+    "aic": 52306.71,
+    "bic": 52495.01,
+    "residuals": 13794,
+    "parameters": 25,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M8",
+   "label": "M6 + measured charge-state shape on R0",
+   "note": "the charge-state shape again, now on top of the banded parameter unit, with still no free parameter added",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group_band",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": true,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 35,
+   "groups": [
+    {
+     "group": "33_34_36|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.18265974577186184,
+      "ohmic_activation_energy": 49406.42215957498,
+      "polarization_resistance_reference": 0.07929882001239563,
+      "polarization_activation_energy": -23979.028243017954,
+      "polarization_capacitance": 1240.1839557776584,
+      "thermal_capacitance": 80.10330341667532,
+      "thermal_conductance": 0.11507265599065615
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0051252486982458,
+      "ohmic_activation_energy": 8659.667959886148,
+      "polarization_resistance_reference": 0.013131333888970101,
+      "polarization_activation_energy": 3446.9045667722403,
+      "polarization_capacitance": 174.84072317257198,
+      "thermal_capacitance": 2.5752550283666507,
+      "thermal_conductance": 0.0037225968591435613
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9771,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9684
+     },
+     "normal_matrix_condition_number": 513567052592433.5,
+     "objective_value": 531.4280654955228,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.6965764999622479,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.2071463279204799,
+      "ohmic_activation_energy": 79999.99999999104,
+      "polarization_resistance_reference": 0.11432010840878096,
+      "polarization_activation_energy": -19404.452953434673,
+      "polarization_capacitance": 420.44680622338683,
+      "thermal_capacitance": 103.76193137586168,
+      "thermal_conductance": 0.07360103276337142
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007440563181655574,
+      "ohmic_activation_energy": 9078.034913362355,
+      "polarization_resistance_reference": 0.008392810442578372,
+      "polarization_activation_energy": 1722.2633099319507,
+      "polarization_capacitance": 43.768563416889,
+      "thermal_capacitance": 3.5307023867351663,
+      "thermal_conductance": 0.007285942932008871
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9213,
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9537,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9608,
+      "thermal_capacitance|thermal_conductance": -0.9523
+     },
+     "normal_matrix_condition_number": 755461861872815.2,
+     "objective_value": 91.04294636753423,
+     "residuals": 562,
+     "at_declared_bound": [
+      "ohmic_activation_energy"
+     ],
+     "wall_seconds": 0.7143546999432147,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|cold",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.49197181617538094,
+      "ohmic_activation_energy": -29149.698214720735,
+      "polarization_resistance_reference": 0.00889334393036453,
+      "polarization_activation_energy": 79999.99999999502,
+      "polarization_capacitance": 1507.6836025256343,
+      "thermal_capacitance": 259.0205806620983,
+      "thermal_conductance": 0.028525471195790155
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.03587876113522005,
+      "ohmic_activation_energy": 3546.373350004764,
+      "polarization_resistance_reference": 0.003362556047975163,
+      "polarization_activation_energy": 13785.781334510875,
+      "polarization_capacitance": 284.195201236848,
+      "thermal_capacitance": 26.490305932034516,
+      "thermal_conductance": 0.006054753911922637
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9821,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9789,
+      "thermal_capacitance|thermal_conductance": -0.9908
+     },
+     "normal_matrix_condition_number": 4.993070842049362e+16,
+     "objective_value": 329.80789662271667,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 5.724500700016506,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.10371455001503233,
+      "ohmic_activation_energy": 20703.620917811386,
+      "polarization_resistance_reference": 0.11266632667084628,
+      "polarization_activation_energy": 30313.004501587468,
+      "polarization_capacitance": 181.23500681405343,
+      "thermal_capacitance": 254.28296530927298,
+      "thermal_conductance": 0.005000000001198094
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.015504608044406216,
+      "ohmic_activation_energy": 5180.880144338423,
+      "polarization_resistance_reference": 0.015096979779439017,
+      "polarization_activation_energy": 4767.419639036375,
+      "polarization_capacitance": 21.69148448366324,
+      "thermal_capacitance": 9.439723917762985,
+      "thermal_conductance": 0.011831309210635231
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "weak",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9935,
+      "ohmic_resistance_reference|polarization_activation_energy": 0.9077,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9554,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9195
+     },
+     "normal_matrix_condition_number": 85728061832572.97,
+     "objective_value": 7904.203706237943,
+     "residuals": 3320,
+     "at_declared_bound": [
+      "thermal_conductance"
+     ],
+     "wall_seconds": 2.2717633999418467,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.12076592478852606,
+      "ohmic_activation_energy": -8770.021208874168,
+      "polarization_resistance_reference": 0.02993465266652353,
+      "polarization_activation_energy": 79999.99999975688,
+      "polarization_capacitance": 1704.1956560979495,
+      "thermal_capacitance": 65.7629199542685,
+      "thermal_conductance": 0.04880740586201257
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.002223980403627623,
+      "ohmic_activation_energy": 725.8982221811092,
+      "polarization_resistance_reference": 0.00172886226975459,
+      "polarization_activation_energy": 9628.52699795582,
+      "polarization_capacitance": 239.02997517865376,
+      "thermal_capacitance": 0.47054520984678416,
+      "thermal_conductance": 0.00032076049890771745
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9795,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9317
+     },
+     "normal_matrix_condition_number": 1.3694645368554742e+16,
+     "objective_value": 108.90250640078744,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 2.8649522999767214,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.06419787778120682,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.036524116662457966,
+     "rmse": 0.06734848815009878,
+     "p95": 0.11634459503619263,
+     "max": 0.487373055301485
+    },
+    "voltage_bias_v": -0.00671410849326164,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.4554972129908168,
+     "rmse": 2.658794163795289,
+     "p95": 3.973193626001316,
+     "max": 16.693555917643096
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.008675051199090962,
+      "rmse": 0.009955157328274036,
+      "p95": 0.016145729675079323,
+      "max": 0.02388300998518833
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.007624788926564624,
+      "rmse": 0.00999242590651568,
+      "p95": 0.019108156530976573,
+      "max": 0.03029012789358365
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.04924566567168914,
+      "rmse": 0.0616954152103432,
+      "p95": 0.12174157286567833,
+      "max": 0.13334561997241146
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.028322588821638156,
+      "rmse": 0.0381284550945853,
+      "p95": 0.0675235394384659,
+      "max": 0.1549184844336402
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.05420661480626222,
+      "rmse": 0.08858427817339988,
+      "p95": 0.18125659336474242,
+      "max": 0.487373055301485
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.03667414713728926,
+      "rmse": 0.06750791296099132,
+      "p95": 0.11644969399912694,
+      "max": 0.487373055301485
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9795
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.0512763686771245,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.03698298367932682,
+     "rmse": 0.051617004715222965,
+     "p95": 0.10351502141099289,
+     "max": 0.22502358189908467
+    },
+    "voltage_bias_v": -0.024511409984687954,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.2671564226583918,
+     "rmse": 1.7845690874384585,
+     "p95": 3.6333780955442987,
+     "max": 6.241193625415292
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.013916739670496614,
+      "rmse": 0.01766718945567034,
+      "p95": 0.033066685375394055,
+      "max": 0.05563801653419764
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02057389573933064,
+      "rmse": 0.03678004820683659,
+      "p95": 0.08627823060577286,
+      "max": 0.22502358189908467
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.04737140170647385,
+      "rmse": 0.06043944410597047,
+      "p95": 0.11548477534397297,
+      "max": 0.20627133027996658
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.03708879186689701,
+      "rmse": 0.051713957340703436,
+      "p95": 0.10355040629146829,
+      "max": 0.22502358189908467
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9871
+   },
+   "information_criteria": {
+    "aic": 42833.63,
+    "bic": 43097.25,
+    "residuals": 13794,
+    "parameters": 35,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M9",
+   "label": "M6 + a second RC branch",
+   "note": "the second branch on top of the banded parameter unit",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "group_band",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 2
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "second_polarization_resistance",
+    "second_polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 9,
+   "free_parameters_total": 45,
+   "groups": [
+    {
+     "group": "33_34_36|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.14877655716984833,
+      "ohmic_activation_energy": 34716.51981537245,
+      "polarization_resistance_reference": 0.04330338386644223,
+      "polarization_activation_energy": 26669.141012229487,
+      "polarization_capacitance": 1419.4006661928017,
+      "second_polarization_resistance": 0.2530167566057468,
+      "second_polarization_capacitance": 5627.38308394428,
+      "thermal_capacitance": 81.59544614927164,
+      "thermal_conductance": 0.11420124210003091
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.006837667562845276,
+      "ohmic_activation_energy": 14289.463521892354,
+      "polarization_resistance_reference": 0.008519713387592028,
+      "polarization_activation_energy": 23052.930914292447,
+      "polarization_capacitance": 564.9270846386302,
+      "second_polarization_resistance": 0.15384990888565936,
+      "second_polarization_capacitance": 1369.6553566671673,
+      "thermal_capacitance": 2.6725962294669956,
+      "thermal_conductance": 0.0038384267003797514
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9062,
+      "ohmic_activation_energy|second_polarization_capacitance": -0.9676,
+      "polarization_activation_energy|second_polarization_resistance": 0.9817
+     },
+     "normal_matrix_condition_number": 1027020854877075.1,
+     "objective_value": 531.5845517020279,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.947263800073415,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.17384877208074148,
+      "ohmic_activation_energy": 79999.9438597374,
+      "polarization_resistance_reference": 0.14202007759373625,
+      "polarization_activation_energy": 18056.189982128035,
+      "polarization_capacitance": 565.4948472811602,
+      "second_polarization_resistance": 0.49999999999999994,
+      "second_polarization_capacitance": 7522.460205151365,
+      "thermal_capacitance": 84.75955335421654,
+      "thermal_conductance": 0.11263764692338105
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005556006340501186,
+      "ohmic_activation_energy": 27670.407296852016,
+      "polarization_resistance_reference": 0.025335253807160823,
+      "polarization_activation_energy": 13985.04948724391,
+      "polarization_capacitance": 96.08301617856368,
+      "second_polarization_resistance": 0.2609332649121088,
+      "second_polarization_capacitance": 3659.4604034498793,
+      "thermal_capacitance": 2.569006729436327,
+      "thermal_conductance": 0.004877790523394951
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9823,
+      "polarization_activation_energy|second_polarization_capacitance": -0.9767,
+      "thermal_capacitance|thermal_conductance": -0.9252
+     },
+     "normal_matrix_condition_number": 1689986569919718.8,
+     "objective_value": 73.31478915165624,
+     "residuals": 562,
+     "at_declared_bound": [
+      "second_polarization_resistance"
+     ],
+     "wall_seconds": 5.398545700008981,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|cold",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.00500000011151746,
+      "ohmic_activation_energy": -39874.713274528905,
+      "polarization_resistance_reference": 0.030110585088770857,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 66.26212928842902,
+      "second_polarization_resistance": 0.49999999857290595,
+      "second_polarization_capacitance": 18648.53547434593,
+      "thermal_capacitance": 88.68403279866277,
+      "thermal_conductance": 0.06423804914679711
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 1.2669041912347718,
+      "ohmic_activation_energy": 9197590.790418461,
+      "polarization_resistance_reference": 0.05060585508418304,
+      "polarization_activation_energy": 58345.62776879029,
+      "polarization_capacitance": 24.468519359157355,
+      "second_polarization_resistance": 1.7319645128126668,
+      "second_polarization_capacitance": 4423.345236062845,
+      "thermal_capacitance": 10.254403419001244,
+      "thermal_conductance": 0.002042488044679425
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "unidentified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "unidentified",
+      "second_polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9924,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9945,
+      "polarization_resistance_reference|second_polarization_resistance": 0.936,
+      "polarization_activation_energy|second_polarization_resistance": -0.9572,
+      "thermal_capacitance|thermal_conductance": -0.9233
+     },
+     "normal_matrix_condition_number": 2.91921953684968e+18,
+     "objective_value": 645.6317498188297,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "ohmic_resistance_reference",
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 9.600645500002429,
+     "optimizer_status": 3
+    },
+    {
+     "group": "41_42_43_44|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "low_ambient",
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.03257002606288251,
+      "ohmic_activation_energy": -39999.99999999999,
+      "polarization_resistance_reference": 0.04195852995591811,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 90.29801860140506,
+      "second_polarization_resistance": 0.1584073360293611,
+      "second_polarization_capacitance": 1944.8071387266273,
+      "thermal_capacitance": 214.06183330483194,
+      "thermal_conductance": 0.005000000000000001
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.00727184150770088,
+      "ohmic_activation_energy": 15717.967083486663,
+      "polarization_resistance_reference": 0.0037055300164330306,
+      "polarization_activation_energy": 3402.3999296719753,
+      "polarization_capacitance": 4.857346829970513,
+      "second_polarization_resistance": 0.006347127904368156,
+      "second_polarization_capacitance": 70.42185617471516,
+      "thermal_capacitance": 5.466496834315215,
+      "thermal_conductance": 0.007603408918954849
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "weak",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "identified",
+      "second_polarization_resistance": "identified",
+      "second_polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "unidentified"
+     },
+     "correlated_pairs_above_0p9": {
+      "polarization_resistance_reference|polarization_activation_energy": -0.976
+     },
+     "normal_matrix_condition_number": 1679708466927361.0,
+     "objective_value": 4649.883750308523,
+     "residuals": 3320,
+     "at_declared_bound": [
+      "ohmic_activation_energy",
+      "polarization_activation_energy",
+      "thermal_conductance"
+     ],
+     "wall_seconds": 3.5507013000315055,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4|warm",
+     "parameter_unit": "group_band",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.0865042576949871,
+      "ohmic_activation_energy": 25041.303584238514,
+      "polarization_resistance_reference": 0.02902532615646236,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 913.2590750280847,
+      "second_polarization_resistance": 0.185684615401243,
+      "second_polarization_capacitance": 17120.45616979126,
+      "thermal_capacitance": 65.82034717962189,
+      "thermal_conductance": 0.04867502153846681
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.003284640786723996,
+      "ohmic_activation_energy": 6324.3737940168485,
+      "polarization_resistance_reference": 0.0029931984807047814,
+      "polarization_activation_energy": 9148.697679211218,
+      "polarization_capacitance": 202.96458331222365,
+      "second_polarization_resistance": 0.014458712465002544,
+      "second_polarization_capacitance": 1194.7927574733073,
+      "thermal_capacitance": 0.5020958337788485,
+      "thermal_conductance": 0.000344113073726987
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "second_polarization_resistance": "identified",
+      "second_polarization_capacitance": "identified",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9658,
+      "ohmic_resistance_reference|polarization_capacitance": 0.905,
+      "ohmic_activation_energy|second_polarization_capacitance": -0.9459,
+      "polarization_resistance_reference|polarization_capacitance": -0.9225
+     },
+     "normal_matrix_condition_number": 6765086441785053.0,
+     "objective_value": 123.16584981510616,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 3.8922396999550983,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {
+    "33_34_36|warm": {
+     "tau1_s": 61.465,
+     "tau2_s": 1423.822,
+     "ratio": 23.165,
+     "separated": true
+    },
+    "38_39_40|warm": {
+     "tau1_s": 80.312,
+     "tau2_s": 3761.23,
+     "ratio": 46.833,
+     "separated": true
+    },
+    "41_42_43_44|cold": {
+     "tau1_s": 1.995,
+     "tau2_s": 9324.268,
+     "ratio": 4673.37,
+     "separated": true
+    },
+    "41_42_43_44|warm": {
+     "tau1_s": 3.789,
+     "tau2_s": 308.072,
+     "ratio": 81.312,
+     "separated": true
+    },
+    "FY08Q4|warm": {
+     "tau1_s": 26.508,
+     "tau2_s": 3179.005,
+     "ratio": 119.928,
+     "separated": true
+    }
+   },
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.053839528641444895,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.03416203977555808,
+     "rmse": 0.054777810986488255,
+     "p95": 0.11631982731476788,
+     "max": 0.3400620437706512
+    },
+    "voltage_bias_v": -0.004025586393727314,
+    "temperature": {
+     "n": 6897,
+     "mae": 1.2917532808716319,
+     "rmse": 2.2177314746460612,
+     "p95": 3.9027695991616573,
+     "max": 12.992165309644577
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.009523438778419336,
+      "rmse": 0.011089969670619447,
+      "p95": 0.01855807256592934,
+      "max": 0.021057269042857207
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.008880566233363911,
+      "rmse": 0.011057317256902078,
+      "p95": 0.021388027884857455,
+      "max": 0.042019248460656744
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.050304946120589424,
+      "rmse": 0.06105857960007343,
+      "p95": 0.11727242278247714,
+      "max": 0.1248421751642863
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.02463268674785113,
+      "rmse": 0.03514657228950062,
+      "p95": 0.06703896524479891,
+      "max": 0.1534307288507719
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.04913521881479619,
+      "rmse": 0.07034507613624542,
+      "p95": 0.136914076751935,
+      "max": 0.3400620437706512
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.034300714111510054,
+      "rmse": 0.05490653161568428,
+      "p95": 0.11647030678532487,
+      "max": 0.3400620437706512
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9666
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.05152122968181219,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.03772015450261142,
+     "rmse": 0.05192601659729764,
+     "p95": 0.11585943033683184,
+     "max": 0.24262486129922234
+    },
+    "voltage_bias_v": -0.01898825786680685,
+    "temperature": {
+     "n": 4754,
+     "mae": 1.1580512944965005,
+     "rmse": 1.5840708060015343,
+     "p95": 3.153312723177757,
+     "max": 6.322817725313882
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015112994366592207,
+      "rmse": 0.01923394547610221,
+      "p95": 0.03665601538064256,
+      "max": 0.06922615849404101
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02389691389205276,
+      "rmse": 0.039594669299683125,
+      "p95": 0.09085993316099993,
+      "max": 0.24262486129922234
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.04745998674041984,
+      "rmse": 0.060341562244415205,
+      "p95": 0.12400255174818638,
+      "max": 0.15667685148136457
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.0378289207146045,
+      "rmse": 0.05202362729821692,
+      "p95": 0.11606370145655219,
+      "max": 0.24262486129922234
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9845
+   },
+   "information_criteria": {
+    "aic": 37367.9,
+    "bic": 37706.84,
+    "residuals": 13794,
+    "parameters": 45,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M10",
+   "label": "M1 with one parameter set per declared calibration block",
+   "note": "a parameter set is valid for the rate it was fitted at, because this model's polarization is linear in current and the measured resistance is not",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "block",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": false,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 42,
+   "groups": [
+    {
+     "group": "33_34_36|room_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1616204581279367,
+      "ohmic_activation_energy": 41844.75982234932,
+      "polarization_resistance_reference": 0.10299349766703056,
+      "polarization_activation_energy": -13246.309546618826,
+      "polarization_capacitance": 2103.830130841632,
+      "thermal_capacitance": 81.59491353253395,
+      "thermal_conductance": 0.11395955803521103
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0043708894946134945,
+      "ohmic_activation_energy": 13337.233136586457,
+      "polarization_resistance_reference": 0.020383282782749604,
+      "polarization_activation_energy": 3791.7142915948725,
+      "polarization_capacitance": 541.5110555808445,
+      "thermal_capacitance": 2.7012123280543494,
+      "thermal_conductance": 0.003875106360423895
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9292,
+      "ohmic_activation_energy|polarization_capacitance": -0.9186
+     },
+     "normal_matrix_condition_number": 468575588487709.75,
+     "objective_value": 543.830118384027,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.8665219000540674,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|room_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.1459099216218465,
+      "ohmic_activation_energy": -11251.031073857946,
+      "polarization_resistance_reference": 0.11219497880463682,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 556.378385891407,
+      "thermal_capacitance": 95.03282869368184,
+      "thermal_conductance": 0.09333595458588906
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.005271571993031407,
+      "ohmic_activation_energy": 943.0921318797475,
+      "polarization_resistance_reference": 0.005454639965289287,
+      "polarization_activation_energy": 8922.137669557864,
+      "polarization_capacitance": 82.18116028769971,
+      "thermal_capacitance": 3.144153171509527,
+      "thermal_conductance": 0.0062679645727707995
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9263,
+      "thermal_capacitance|thermal_conductance": -0.9416
+     },
+     "normal_matrix_condition_number": 764534045833108.0,
+     "objective_value": 87.77415242269515,
+     "residuals": 562,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 0.2691789000527933,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|low_ambient|1A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.029911655005538603,
+      "ohmic_activation_energy": 79999.99832059199,
+      "polarization_resistance_reference": 0.4999999999998911,
+      "polarization_activation_energy": 79999.99999999999,
+      "polarization_capacitance": 18315.41475968843,
+      "thermal_capacitance": 96.75115301742831,
+      "thermal_conductance": 0.06295432967297751
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.025543769833073337,
+      "ohmic_activation_energy": 31142.11588100421,
+      "polarization_resistance_reference": 14.907373824896714,
+      "polarization_activation_energy": 1448019.6250845324,
+      "polarization_capacitance": 5199.943641886694,
+      "thermal_capacitance": 11.35456404880593,
+      "thermal_conductance": 0.0022666768931686554
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "unidentified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9999,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9613,
+      "ohmic_activation_energy|polarization_capacitance": -0.959,
+      "polarization_resistance_reference|polarization_activation_energy": -0.999,
+      "thermal_capacitance|thermal_conductance": -0.9345
+     },
+     "normal_matrix_condition_number": 1.5702078020703656e+20,
+     "objective_value": 658.2393643147501,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "polarization_activation_energy",
+      "polarization_resistance_reference"
+     ],
+     "wall_seconds": 8.995991799980402,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|low_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.014679028837964734,
+      "ohmic_activation_energy": 79999.99985737221,
+      "polarization_resistance_reference": 0.3084605110025377,
+      "polarization_activation_energy": -3793.8794157667476,
+      "polarization_capacitance": 131.74541181333228,
+      "thermal_capacitance": 114.47611786014,
+      "thermal_conductance": 0.05173788316896135
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.027356874965494632,
+      "ohmic_activation_energy": 69459.94370369946,
+      "polarization_resistance_reference": 0.02650838159790719,
+      "polarization_activation_energy": 3502.5602676086583,
+      "polarization_capacitance": 26.52292675018783,
+      "thermal_capacitance": 7.155101902224944,
+      "thermal_conductance": 0.01661623445717626
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9971,
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9986,
+      "ohmic_resistance_reference|polarization_activation_energy": -0.9898,
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9956,
+      "ohmic_activation_energy|polarization_activation_energy": 0.981,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9892,
+      "thermal_capacitance|thermal_conductance": -0.96
+     },
+     "normal_matrix_condition_number": 2.9893517757203224e+16,
+     "objective_value": 1339.4760275014685,
+     "residuals": 760,
+     "at_declared_bound": [],
+     "wall_seconds": 2.026526300003752,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|room_ambient|2A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.11390893009389302,
+      "ohmic_activation_energy": -2354.5443515767597,
+      "polarization_resistance_reference": 0.051394220772030014,
+      "polarization_activation_energy": -1290.095216810742,
+      "polarization_capacitance": 857.5311407472051,
+      "thermal_capacitance": 74.00525027590643,
+      "thermal_conductance": 0.052751790513640776
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007130435221230939,
+      "ohmic_activation_energy": 15983.783798008517,
+      "polarization_resistance_reference": 0.00769421844153984,
+      "polarization_activation_energy": 34944.00113297953,
+      "polarization_capacitance": 129.5077523298646,
+      "thermal_capacitance": 0.8706006736143296,
+      "thermal_conductance": 0.0005499567563961051
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9978,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9996
+     },
+     "normal_matrix_condition_number": 1.3788698781096157e+17,
+     "objective_value": 71.89854985664189,
+     "residuals": 2560,
+     "at_declared_bound": [],
+     "wall_seconds": 0.70146459992975,
+     "optimizer_status": 2
+    },
+    {
+     "group": "FY08Q4|room_ambient|2A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.09517217275045596,
+      "ohmic_activation_energy": -11753.765919761005,
+      "polarization_resistance_reference": 0.033635694083368396,
+      "polarization_activation_energy": -12269.835003608927,
+      "polarization_capacitance": 1058.9548794350696,
+      "thermal_capacitance": 63.55014286032142,
+      "thermal_conductance": 0.049933830983360204
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.00421803480672337,
+      "ohmic_activation_energy": 14001.289763823903,
+      "polarization_resistance_reference": 0.0044893572566303075,
+      "polarization_activation_energy": 38540.59570276326,
+      "polarization_capacitance": 225.03468106569304,
+      "thermal_capacitance": 0.5272935271022118,
+      "thermal_conductance": 0.00035436924723814884
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "unidentified",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9938,
+      "ohmic_activation_energy|polarization_activation_energy": -0.9997
+     },
+     "normal_matrix_condition_number": 4.1224550743669395e+17,
+     "objective_value": 145.05976343741597,
+     "residuals": 4856,
+     "at_declared_bound": [],
+     "wall_seconds": 2.2045673000393435,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.044320204702187345,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.02551156545323915,
+     "rmse": 0.04274740697408616,
+     "p95": 0.09541945247508558,
+     "max": 0.3599194678641986
+    },
+    "voltage_bias_v": -0.0002197990383482512,
+    "temperature": {
+     "n": 6897,
+     "mae": 0.6681359241991207,
+     "rmse": 0.9218870791154358,
+     "p95": 1.963496087495571,
+     "max": 4.883295955348558
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.011811263202383971,
+      "rmse": 0.013907312931689586,
+      "p95": 0.023267872226667485,
+      "max": 0.028562232916594876
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.011532884507277382,
+      "rmse": 0.014010974031782718,
+      "p95": 0.02676175047054326,
+      "max": 0.03551338666511761
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.05078344619426648,
+      "rmse": 0.06193162515445071,
+      "p95": 0.11818592288788209,
+      "max": 0.13574335538634985
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.0261150508854855,
+      "rmse": 0.03827082843441599,
+      "p95": 0.06603674176033136,
+      "max": 0.16626380904190485
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.03087847546918374,
+      "rmse": 0.051386022164053385,
+      "p95": 0.1113524334792082,
+      "max": 0.3599194678641986
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.02560865097033382,
+      "rmse": 0.04284645528105577,
+      "p95": 0.09565773703480579,
+      "max": 0.3599194678641986
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9733
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.04204009308733888,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.026026496929497954,
+     "rmse": 0.03960711937726483,
+     "p95": 0.09020680078887924,
+     "max": 0.23819796621198375
+    },
+    "voltage_bias_v": -0.008798316472948323,
+    "temperature": {
+     "n": 4754,
+     "mae": 0.6793808286220506,
+     "rmse": 0.944205349119187,
+     "p95": 1.8414951420642933,
+     "max": 6.238441577481353
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.015003998544245714,
+      "rmse": 0.019214946265840485,
+      "p95": 0.04006782634051242,
+      "max": 0.06067320792615094
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.022233652812477047,
+      "rmse": 0.039219077834644324,
+      "p95": 0.0930066083135662,
+      "max": 0.23819796621198375
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.030199009840597663,
+      "rmse": 0.044136782020717205,
+      "p95": 0.09451918477902117,
+      "max": 0.15757379821887962
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.02608834033391149,
+      "rmse": 0.03967802748952749,
+      "p95": 0.09027834530264305,
+      "max": 0.23819796621198375
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.98
+   },
+   "information_criteria": {
+    "aic": 27020.96,
+    "bic": 27337.3,
+    "residuals": 13794,
+    "parameters": 42,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  },
+  {
+   "key": "M11",
+   "label": "M10 + measured charge-state shape on R0",
+   "note": "the block parameter unit and the measured shape together, still with no free parameter added by the shape",
+   "configuration": {
+    "charge_state_basis": "available",
+    "ocv_authority": "banded",
+    "parameter_unit": "block",
+    "arrhenius_activation_energies": true,
+    "r0_charge_state_shape": true,
+    "rc_branches": 1
+   },
+   "parameter_names": [
+    "ohmic_resistance_reference",
+    "ohmic_activation_energy",
+    "polarization_resistance_reference",
+    "polarization_activation_energy",
+    "polarization_capacitance",
+    "thermal_capacitance",
+    "thermal_conductance"
+   ],
+   "free_parameters_per_group": 7,
+   "free_parameters_total": 42,
+   "groups": [
+    {
+     "group": "33_34_36|room_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0033"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.18265974577186184,
+      "ohmic_activation_energy": 49406.42215957498,
+      "polarization_resistance_reference": 0.07929882001239563,
+      "polarization_activation_energy": -23979.028243017954,
+      "polarization_capacitance": 1240.1839557776584,
+      "thermal_capacitance": 80.10330341667532,
+      "thermal_conductance": 0.11507265599065615
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0051252486982458,
+      "ohmic_activation_energy": 8659.667959886148,
+      "polarization_resistance_reference": 0.013131333888970101,
+      "polarization_activation_energy": 3446.9045667722403,
+      "polarization_capacitance": 174.84072317257198,
+      "thermal_capacitance": 2.5752550283666507,
+      "thermal_conductance": 0.0037225968591435613
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9771,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9684
+     },
+     "normal_matrix_condition_number": 513567052592433.5,
+     "objective_value": 531.4280654955228,
+     "residuals": 1104,
+     "at_declared_bound": [],
+     "wall_seconds": 0.7120004999451339,
+     "optimizer_status": 2
+    },
+    {
+     "group": "38_39_40|room_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0038"
+     ],
+     "trajectories": 3,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.2071463279204799,
+      "ohmic_activation_energy": 79999.99999999104,
+      "polarization_resistance_reference": 0.11432010840878096,
+      "polarization_activation_energy": -19404.452953434673,
+      "polarization_capacitance": 420.44680622338683,
+      "thermal_capacitance": 103.76193137586168,
+      "thermal_conductance": 0.07360103276337142
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.007440563181655574,
+      "ohmic_activation_energy": 9078.034913362355,
+      "polarization_resistance_reference": 0.008392810442578372,
+      "polarization_activation_energy": 1722.2633099319507,
+      "polarization_capacitance": 43.768563416889,
+      "thermal_capacitance": 3.5307023867351663,
+      "thermal_conductance": 0.007285942932008871
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "identified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_capacitance": 0.9213,
+      "ohmic_activation_energy|polarization_resistance_reference": 0.9537,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9608,
+      "thermal_capacitance|thermal_conductance": -0.9523
+     },
+     "normal_matrix_condition_number": 755461861872815.2,
+     "objective_value": 91.04294636753423,
+     "residuals": 562,
+     "at_declared_bound": [
+      "ohmic_activation_energy"
+     ],
+     "wall_seconds": 0.6953090000897646,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|low_ambient|1A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.49197181617538094,
+      "ohmic_activation_energy": -29149.698214720735,
+      "polarization_resistance_reference": 0.00889334393036453,
+      "polarization_activation_energy": 79999.99999999502,
+      "polarization_capacitance": 1507.6836025256343,
+      "thermal_capacitance": 259.0205806620983,
+      "thermal_conductance": 0.028525471195790155
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.03587876113522005,
+      "ohmic_activation_energy": 3546.373350004764,
+      "polarization_resistance_reference": 0.003362556047975163,
+      "polarization_activation_energy": 13785.781334510875,
+      "polarization_capacitance": 284.195201236848,
+      "thermal_capacitance": 26.490305932034516,
+      "thermal_conductance": 0.006054753911922637
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "weak",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "weak",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9821,
+      "polarization_resistance_reference|polarization_activation_energy": -0.9789,
+      "thermal_capacitance|thermal_conductance": -0.9908
+     },
+     "normal_matrix_condition_number": 4.993070842049362e+16,
+     "objective_value": 329.80789662271667,
+     "residuals": 3952,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 5.5265608000336215,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|low_ambient|4A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "low_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.016041393854477008,
+      "ohmic_activation_energy": 79999.98758298313,
+      "polarization_resistance_reference": 0.3084820246672907,
+      "polarization_activation_energy": -3176.582613314173,
+      "polarization_capacitance": 121.98054659846196,
+      "thermal_capacitance": 107.5377060822966,
+      "thermal_conductance": 0.0664370026477384
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.01636467008552629,
+      "ohmic_activation_energy": 37048.980676489184,
+      "polarization_resistance_reference": 0.015257816749837652,
+      "polarization_activation_energy": 1853.1728454564045,
+      "polarization_capacitance": 23.140849866678472,
+      "thermal_capacitance": 6.9091304938847244,
+      "thermal_conductance": 0.01568429909093852
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "unidentified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "unidentified",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "weak"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|ohmic_activation_energy": -0.9855,
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9956,
+      "ohmic_resistance_reference|polarization_activation_energy": -0.9564,
+      "ohmic_activation_energy|polarization_resistance_reference": 0.979,
+      "ohmic_activation_energy|polarization_activation_energy": 0.9122,
+      "polarization_resistance_reference|polarization_activation_energy": 0.9574,
+      "thermal_capacitance|thermal_conductance": -0.956
+     },
+     "normal_matrix_condition_number": 5764979092121419.0,
+     "objective_value": 1407.7953848880613,
+     "residuals": 760,
+     "at_declared_bound": [],
+     "wall_seconds": 1.1446621000068262,
+     "optimizer_status": 2
+    },
+    {
+     "group": "41_42_43_44|room_ambient|2A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0042"
+     ],
+     "trajectories": 5,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.13891829118119203,
+      "ohmic_activation_energy": -3997.4179122865226,
+      "polarization_resistance_reference": 0.04755671832391114,
+      "polarization_activation_energy": 79999.99999994208,
+      "polarization_capacitance": 1131.115635168643,
+      "thermal_capacitance": 73.79549957735689,
+      "thermal_conductance": 0.05313685676103574
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.0028797456422630175,
+      "ohmic_activation_energy": 932.2804978140564,
+      "polarization_resistance_reference": 0.0023732956612848763,
+      "polarization_activation_energy": 8561.06692261497,
+      "polarization_capacitance": 121.73809138498063,
+      "thermal_capacitance": 0.8098420467374657,
+      "thermal_conductance": 0.0005109504464966706
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "weak",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9893,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9381,
+      "polarization_resistance_reference|polarization_capacitance": -0.9142
+     },
+     "normal_matrix_condition_number": 4087840240533804.0,
+     "objective_value": 63.28803160371804,
+     "residuals": 2560,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 1.770154400030151,
+     "optimizer_status": 3
+    },
+    {
+     "group": "FY08Q4|room_ambient|2A",
+     "parameter_unit": "block",
+     "cells": [
+      "B0005",
+      "B0018"
+     ],
+     "trajectories": 10,
+     "corners": [
+      "room_ambient"
+     ],
+     "fitted": {
+      "ohmic_resistance_reference": 0.12076592478852606,
+      "ohmic_activation_energy": -8770.021208874168,
+      "polarization_resistance_reference": 0.02993465266652353,
+      "polarization_activation_energy": 79999.99999975688,
+      "polarization_capacitance": 1704.1956560979495,
+      "thermal_capacitance": 65.7629199542685,
+      "thermal_conductance": 0.04880740586201257
+     },
+     "standard_errors": {
+      "ohmic_resistance_reference": 0.002223980403627623,
+      "ohmic_activation_energy": 725.8982221811092,
+      "polarization_resistance_reference": 0.00172886226975459,
+      "polarization_activation_energy": 9628.52699795582,
+      "polarization_capacitance": 239.02997517865376,
+      "thermal_capacitance": 0.47054520984678416,
+      "thermal_conductance": 0.00032076049890771745
+     },
+     "identifiability": {
+      "ohmic_resistance_reference": "identified",
+      "ohmic_activation_energy": "identified",
+      "polarization_resistance_reference": "identified",
+      "polarization_activation_energy": "weak",
+      "polarization_capacitance": "weak",
+      "thermal_capacitance": "identified",
+      "thermal_conductance": "identified"
+     },
+     "correlated_pairs_above_0p9": {
+      "ohmic_resistance_reference|polarization_resistance_reference": -0.9795,
+      "ohmic_resistance_reference|polarization_capacitance": 0.9317
+     },
+     "normal_matrix_condition_number": 1.3694645368554742e+16,
+     "objective_value": 108.90250640078744,
+     "residuals": 4856,
+     "at_declared_bound": [
+      "polarization_activation_energy"
+     ],
+     "wall_seconds": 2.7940804000245407,
+     "optimizer_status": 2
+    }
+   ],
+   "second_branch_time_constants": {},
+   "calibration": {
+    "split": "calibration",
+    "admissible_samples": 8660,
+    "scored_samples": 6897,
+    "coverage": 0.7964,
+    "penalized_rmse_v": 0.04229315313198781,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 6897,
+     "mae": 0.021245259684816924,
+     "rmse": 0.040086059994521174,
+     "p95": 0.0836793452306235,
+     "max": 0.3686100860988515
+    },
+    "voltage_bias_v": -0.00022907670069855675,
+    "temperature": {
+     "n": 6897,
+     "mae": 0.6767904582141466,
+     "rmse": 0.9077277664075643,
+     "p95": 1.7488220961897236,
+     "max": 4.8798990133288385
+    },
+    "per_cell_voltage": {
+     "B0005": {
+      "n": 1101,
+      "mae": 0.008675051199090962,
+      "rmse": 0.009955157328274036,
+      "p95": 0.016145729675079323,
+      "max": 0.02388300998518833
+     },
+     "B0018": {
+      "n": 1327,
+      "mae": 0.007624788926564624,
+      "rmse": 0.00999242590651568,
+      "p95": 0.019108156530976573,
+      "max": 0.03029012789358365
+     },
+     "B0033": {
+      "n": 552,
+      "mae": 0.04924566567168914,
+      "rmse": 0.0616954152103432,
+      "p95": 0.12174157286567833,
+      "max": 0.13334561997241146
+     },
+     "B0038": {
+      "n": 281,
+      "mae": 0.028322588821638156,
+      "rmse": 0.0381284550945853,
+      "p95": 0.0675235394384659,
+      "max": 0.1549184844336402
+     },
+     "B0042": {
+      "n": 3636,
+      "mae": 0.02522469055576985,
+      "rmse": 0.04786853671717717,
+      "p95": 0.09990990531664812,
+      "max": 0.3686100860988515
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 6864,
+      "mae": 0.02132183411648649,
+      "rmse": 0.04017848035955414,
+      "p95": 0.08381865290253909,
+      "max": 0.3686100860988515
+     },
+     "rest": {
+      "n": 33,
+      "mae": 0.005317777897547545,
+      "rmse": 0.00799574619338722,
+      "p95": 0.015463470456998776,
+      "max": 0.025205518937326588
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 33,
+    "residual_autocorrelation_lag1": 0.9739
+   },
+   "validation": {
+    "split": "validation",
+    "admissible_samples": 6043,
+    "scored_samples": 4754,
+    "coverage": 0.7867,
+    "penalized_rmse_v": 0.04164644944635618,
+    "penalty_note": "a sample the candidate cannot reach is charged one acceptance tolerance (0.05 V), the same scale the fit objective charges an unreached sample; coverage and this statistic together stop a narrow claim from looking like a good model",
+    "voltage": {
+     "n": 4754,
+     "mae": 0.023611540791800462,
+     "rmse": 0.03907491714680583,
+     "p95": 0.09232059716241017,
+     "max": 0.22502358189908467
+    },
+    "voltage_bias_v": -0.008036010014793949,
+    "temperature": {
+     "n": 4754,
+     "mae": 0.6795884169748077,
+     "rmse": 0.9353262412030006,
+     "p95": 1.748122280884454,
+     "max": 6.241193625415292
+    },
+    "per_cell_voltage": {
+     "B0006": {
+      "n": 982,
+      "mae": 0.013916739670496614,
+      "rmse": 0.01766718945567034,
+      "p95": 0.033066685375394055,
+      "max": 0.05563801653419764
+     },
+     "B0034": {
+      "n": 617,
+      "mae": 0.02057389573933064,
+      "rmse": 0.03678004820683659,
+      "p95": 0.08627823060577286,
+      "max": 0.22502358189908467
+     },
+     "B0043": {
+      "n": 3155,
+      "mae": 0.02722311660748802,
+      "rmse": 0.04403380533136516,
+      "p95": 0.10361901594046073,
+      "max": 0.20627133027996658
+     }
+    },
+    "per_phase_voltage": {
+     "loaded": {
+      "n": 4735,
+      "mae": 0.023663693770318277,
+      "rmse": 0.0391446430624073,
+      "p95": 0.09241008798926993,
+      "max": 0.22502358189908467
+     },
+     "rest": {
+      "n": 19,
+      "mae": 0.010614469566439223,
+      "rmse": 0.01294883281285915,
+      "p95": 0.019269376390817335,
+      "max": 0.02172072504778111
+     }
+    },
+    "trajectories_refused": 0,
+    "samples_inadmissible_on_their_own_channels": 19,
+    "residual_autocorrelation_lag1": 0.9822
+   },
+   "information_criteria": {
+    "aic": 25408.47,
+    "bic": 25724.81,
+    "residuals": 13794,
+    "parameters": 42,
+    "caveat": "computed on the weighted objective under an independence assumption these residuals do not satisfy; an ordering aid, not the decision"
+   },
+   "trajectories_scored": {
+    "calibration": 6897,
+    "validation": 4754
+   }
+  }
+ ]
+}

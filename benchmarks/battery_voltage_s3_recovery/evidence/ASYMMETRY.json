@@ -1,0 +1,199 @@
+{
+ "schema": "battery_voltage_s3_recovery_asymmetry/1",
+ "what_this_is": "the measured charge/discharge branch gap, divided by the current sum, compared across rate at a common charge state and a common cell-temperature band. Calibration cells only, no model",
+ "prediction_path": {
+  "scored_current_directions": [
+   "discharge",
+   "rest"
+  ],
+  "charge_cases_scored": 0,
+  "consequence": "no scored case reverses the current, so a hysteresis state would change no prediction in this corpus and nothing here could falsify one. It is not added"
+ },
+ "probe_charge_states": [
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7
+ ],
+ "r_eff_by_band_charge_state_and_rate": [
+  {
+   "band": "cold",
+   "charge_state": 0.3,
+   "discharge_current_a": 1,
+   "pairs": 22,
+   "median_r_eff_ohm": 0.365877,
+   "p25_ohm": 0.349852,
+   "p75_ohm": 0.383131
+  },
+  {
+   "band": "cold",
+   "charge_state": 0.4,
+   "discharge_current_a": 1,
+   "pairs": 22,
+   "median_r_eff_ohm": 0.328415,
+   "p25_ohm": 0.31882,
+   "p75_ohm": 0.339089
+  },
+  {
+   "band": "cold",
+   "charge_state": 0.5,
+   "discharge_current_a": 1,
+   "pairs": 14,
+   "median_r_eff_ohm": 0.293595,
+   "p25_ohm": 0.290451,
+   "p75_ohm": 0.297846
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.3,
+   "discharge_current_a": 2,
+   "pairs": 116,
+   "median_r_eff_ohm": 0.149187,
+   "p25_ohm": 0.140911,
+   "p75_ohm": 0.158456
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.3,
+   "discharge_current_a": 4,
+   "pairs": 58,
+   "median_r_eff_ohm": 0.221874,
+   "p25_ohm": 0.187777,
+   "p75_ohm": 0.309237
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.4,
+   "discharge_current_a": 2,
+   "pairs": 116,
+   "median_r_eff_ohm": 0.150088,
+   "p25_ohm": 0.142014,
+   "p75_ohm": 0.159467
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.4,
+   "discharge_current_a": 4,
+   "pairs": 55,
+   "median_r_eff_ohm": 0.217252,
+   "p25_ohm": 0.184909,
+   "p75_ohm": 0.320056
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.5,
+   "discharge_current_a": 2,
+   "pairs": 116,
+   "median_r_eff_ohm": 0.151721,
+   "p25_ohm": 0.1423,
+   "p75_ohm": 0.161373
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.5,
+   "discharge_current_a": 4,
+   "pairs": 39,
+   "median_r_eff_ohm": 0.188437,
+   "p25_ohm": 0.185266,
+   "p75_ohm": 0.212316
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.6,
+   "discharge_current_a": 2,
+   "pairs": 116,
+   "median_r_eff_ohm": 0.154309,
+   "p25_ohm": 0.143306,
+   "p75_ohm": 0.164108
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.6,
+   "discharge_current_a": 4,
+   "pairs": 33,
+   "median_r_eff_ohm": 0.189517,
+   "p25_ohm": 0.188181,
+   "p75_ohm": 0.205481
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.7,
+   "discharge_current_a": 2,
+   "pairs": 116,
+   "median_r_eff_ohm": 0.153045,
+   "p25_ohm": 0.144476,
+   "p75_ohm": 0.164606
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.7,
+   "discharge_current_a": 4,
+   "pairs": 20,
+   "median_r_eff_ohm": 0.179137,
+   "p25_ohm": 0.17822,
+   "p75_ohm": 0.179429
+  }
+ ],
+ "rate_comparisons": [
+  {
+   "band": "warm",
+   "charge_state": 0.3,
+   "low_rate_a": 2,
+   "high_rate_a": 4,
+   "r_eff_low_rate_ohm": 0.149187,
+   "r_eff_high_rate_ohm": 0.221874,
+   "ratio": 0.6724,
+   "implied_fixed_offset_mv": -699.61
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.4,
+   "low_rate_a": 2,
+   "high_rate_a": 4,
+   "r_eff_low_rate_ohm": 0.150088,
+   "r_eff_high_rate_ohm": 0.217252,
+   "ratio": 0.6908,
+   "implied_fixed_offset_mv": -646.45
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.5,
+   "low_rate_a": 2,
+   "high_rate_a": 4,
+   "r_eff_low_rate_ohm": 0.151721,
+   "r_eff_high_rate_ohm": 0.188437,
+   "ratio": 0.8052,
+   "implied_fixed_offset_mv": -353.39
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.6,
+   "low_rate_a": 2,
+   "high_rate_a": 4,
+   "r_eff_low_rate_ohm": 0.154309,
+   "r_eff_high_rate_ohm": 0.189517,
+   "ratio": 0.8142,
+   "implied_fixed_offset_mv": -338.88
+  },
+  {
+   "band": "warm",
+   "charge_state": 0.7,
+   "low_rate_a": 2,
+   "high_rate_a": 4,
+   "r_eff_low_rate_ohm": 0.153045,
+   "r_eff_high_rate_ohm": 0.179137,
+   "ratio": 0.8543,
+   "implied_fixed_offset_mv": -251.14
+  }
+ ],
+ "implied_fixed_offset_mv": {
+  "n": 5,
+  "median": -353.39,
+  "min": -699.61,
+  "max": -251.14
+ },
+ "reading": "a rate-independent offset would appear as a LARGER R_eff at the lower rate. What the archive shows is the opposite: R_eff is higher at 4 A than at 2 A at every probed charge state, so the implied offset comes out negative and the hysteresis hypothesis is refuted rather than merely unsupported. The positive finding is a rate dependence of the effective resistance, which is nonlinear polarization that a linear RC branch cannot represent",
+ "confound": "the 2 A and 4 A calibration blocks are different cells, so part of this rate difference could be cell-to-cell variation. That weakens the positive finding about rate dependence; it does not weaken the negative one, because a hysteresis offset would have to push R_eff the other way and no cell-to-cell spread in this archive is large enough to hide a sign reversal of this size",
+ "verdict": "no charge/discharge asymmetry term is admitted. Two independent reasons: the campaign scores one current direction, so a hysteresis state would change no prediction here and nothing could falsify it; and the branch gap's rate dependence has the wrong sign for a rate-independent offset"
+}

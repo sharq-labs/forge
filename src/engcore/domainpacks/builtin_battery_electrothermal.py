@@ -13,7 +13,7 @@ them would give one manifest to two validity domains, which is the failure
 
 from __future__ import annotations
 
-from ..domains.battery import flagship
+from ..domains.battery import flagship, flagship_v2
 from .manifest import ArtifactRef, DOMAIN_PACK_API, DomainPackManifest
 
 PACK_ID = "battery.electrothermal"
@@ -30,11 +30,22 @@ MANIFEST = DomainPackManifest(
             flagship.ELECTROTHERMAL_1RC_MODEL.model_id,
             flagship.ELECTROTHERMAL_1RC_MODEL.version,
         ),
+        # 0.2.0 joins 0.1.0 rather than replacing it. The older version is what
+        # the Sprint 3 flagship's evidence is about, and a record whose model
+        # has been silently re-pointed is a record about nothing.
+        ArtifactRef(
+            flagship_v2.ELECTROTHERMAL_1RC_V2_MODEL.model_id,
+            flagship_v2.ELECTROTHERMAL_1RC_V2_MODEL.version,
+        ),
     ),
     realizations=(
         ArtifactRef(
             flagship.ELECTROTHERMAL_1RC_REALIZATION.realization_id,
             flagship.ELECTROTHERMAL_1RC_REALIZATION.version,
+        ),
+        ArtifactRef(
+            flagship_v2.ELECTROTHERMAL_1RC_V2_REALIZATION.realization_id,
+            flagship_v2.ELECTROTHERMAL_1RC_V2_REALIZATION.version,
         ),
     ),
     solvers=(ArtifactRef(flagship.SOLVER_ID, flagship.SOLVER_VERSION),),
@@ -47,10 +58,13 @@ class BatteryElectrothermalDomainPack:
     manifest = MANIFEST
 
     def models(self):
-        return flagship.ELECTROTHERMAL_MODELS
+        return flagship.ELECTROTHERMAL_MODELS + flagship_v2.ELECTROTHERMAL_V2_MODELS
 
     def realizations(self):
-        return flagship.ELECTROTHERMAL_REALIZATIONS
+        return (
+            flagship.ELECTROTHERMAL_REALIZATIONS
+            + flagship_v2.ELECTROTHERMAL_V2_REALIZATIONS
+        )
 
     def solver_factories(self):
         return (flagship.ElectrothermalCellSolver,)
