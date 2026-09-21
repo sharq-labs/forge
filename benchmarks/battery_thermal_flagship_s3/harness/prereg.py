@@ -24,7 +24,41 @@ BENCH = os.path.dirname(HERE)
 EVIDENCE = os.path.join(BENCH, "evidence")
 
 CAMPAIGN_ID = "battery.electrothermal.flagship.s3"
-CAMPAIGN_VERSION = "1"
+CAMPAIGN_VERSION = "2"
+
+#: Amendments to this protocol, each recorded with the commit the previous
+#: version was frozen at, what changed, and why. An amendment is only honest
+#: while nothing has been fitted or scored, which is the state each one below
+#: was made in.
+AMENDMENTS: tuple[dict[str, Any], ...] = (
+    {
+        "from_version": "1",
+        "to_version": "2",
+        "frozen_at_commit": "1297648e",
+        "made_before": "any parameter was fitted and any model scored anything",
+        "change": (
+            "capacity is no longer a fitted parameter. The charge state is "
+            "defined on a declared constant basis, the manufacturer's 2 Ah "
+            "rating, so z = 1 - q / 2 Ah with q the measured charge removed"
+        ),
+        "why": (
+            "the open-circuit voltage authority is a curve against charge state, "
+            "and deriving it needed a charge-state axis. With capacity fitted, "
+            "that axis would depend on a parameter the authority is an input to "
+            "-- the curve would be derived from an axis set by a fit that has "
+            "not happened yet. Declaring the basis removes the circularity, and "
+            "it costs nothing that is scored: state of charge is not "
+            "independently validated by this source either way"
+        ),
+        "consequence": (
+            "seven fitted parameters instead of eight. A cell that delivers "
+            "less than its rating reaches its cutoff at a charge state above "
+            "zero rather than at zero, and that difference now shows up as a "
+            "voltage residual at a common charge state, which is the "
+            "comparison that carries physical meaning"
+        ),
+    },
+)
 DATASET_ID = "nasa.pcoe.battery_aging"
 DATASET_VERSION = "2022-09-18"
 
@@ -101,21 +135,13 @@ SPLIT_CYCLE = ("calibration", "validation", "locked_holdout", "calibration")
 MODEL_ID = "battery.cell.electrothermal_1rc"
 MODEL_VERSION = "0.1.0"
 
-#: Eight free parameters, each identified by a distinct feature of the data.
+#: Seven free parameters, each identified by a distinct feature of the data.
 #: Nothing else is fitted. Coulombic efficiency is fixed at 1 because the
 #: flagship marches discharge and rest only; the reference temperature is fixed
-#: at 298.15 K because it is a definition, not a degree of freedom.
+#: at 298.15 K because it is a definition, not a degree of freedom; and the
+#: charge-state basis is fixed at the cell's rating for the reason recorded in
+#: :data:`AMENDMENTS`.
 FITTED_PARAMETERS: tuple[dict[str, Any], ...] = (
-    {
-        "parameter_id": "capacity",
-        "unit": "ampere_hour",
-        "lower": 1.0,
-        "upper": 3.0,
-        "initial": 1.9,
-        "identified_by": "the charge the cell delivers before its voltage collapses",
-        "prior_source": "manufacturer",
-        "prior_note": "2.0 Ah rated, from the archive README",
-    },
     {
         "parameter_id": "ohmic_resistance_reference",
         "unit": "ohm",
@@ -221,6 +247,15 @@ FIXED_PARAMETERS = {
         "value": 0.0,
         "unit": "volt",
         "why": "the cell rests between the charge and the discharge",
+    },
+    "charge_state_basis": {
+        "value": 2.0,
+        "unit": "ampere_hour",
+        "why": (
+            "the manufacturer's rating. The charge state is z = 1 - q / 2 Ah "
+            "with q the measured charge removed, so no fitted quantity defines "
+            "the axis the open-circuit voltage authority is a function of"
+        ),
     },
 }
 
@@ -599,6 +634,7 @@ def preregistration() -> dict[str, Any]:
         "schema": "battery_thermal_flagship_s3_preregistration/1",
         "campaign_id": CAMPAIGN_ID,
         "campaign_version": CAMPAIGN_VERSION,
+        "amendments": list(AMENDMENTS),
         "dataset": {
             "dataset_id": DATASET_ID,
             "version": DATASET_VERSION,
@@ -632,6 +668,7 @@ def preregistration() -> dict[str, Any]:
         "fitted_parameters": list(FITTED_PARAMETERS),
         "fixed_parameters": FIXED_PARAMETERS,
         "ocv_authority": OCV_AUTHORITY,
+        "ocv_authority_record": "evidence/OCV_AUTHORITY.json",
         "source_measurement_uncertainty": SOURCE_MEASUREMENT_UNCERTAINTY,
         "acceptance": ACCEPTANCE,
         "gate_a": GATE_A,

@@ -1,0 +1,792 @@
+{
+ "schema": "battery_thermal_flagship_s3_ocv_authority/1",
+ "method": "pseudo-OCV by charge/discharge branch averaging within one cell, with an IR-corrected discharge branch above the charge phase's reach",
+ "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+ "charge_state_basis_ah": 2.0,
+ "charge_state_basis_note": "the manufacturer's 2 Ah rating, a declared constant. No fitted quantity enters this curve",
+ "derived_from_split": "calibration",
+ "calibration_cells": [
+  "B0005",
+  "B0018",
+  "B0033",
+  "B0038",
+  "B0042"
+ ],
+ "pairs": [
+  {
+   "cell": "B0005",
+   "discharge_cycle": 1,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0126,
+   "charge_current_a": 1.5105,
+   "overlap_z": [
+    0.0718,
+    0.8312
+   ],
+   "extended_points": 33,
+   "r_eff_ohm": [
+    0.13357,
+    0.25019
+   ],
+   "discharge_temperature_c": [
+    29.56,
+    38.9
+   ],
+   "charge_temperature_c": [
+    26.4,
+    29.3
+   ]
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 8,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.013,
+   "charge_current_a": 1.5104,
+   "overlap_z": [
+    0.0871,
+    0.8379
+   ],
+   "extended_points": 32,
+   "r_eff_ohm": [
+    0.12784,
+    0.2487
+   ],
+   "discharge_temperature_c": [
+    29.49,
+    38.48
+   ],
+   "charge_temperature_c": [
+    26.5,
+    29.61
+   ]
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 16,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0124,
+   "charge_current_a": 1.5106,
+   "overlap_z": [
+    0.099,
+    0.8384
+   ],
+   "extended_points": 32,
+   "r_eff_ohm": [
+    0.12741,
+    0.26005
+   ],
+   "discharge_temperature_c": [
+    29.11,
+    38.14
+   ],
+   "charge_temperature_c": [
+    26.32,
+    29.85
+   ]
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 24,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0124,
+   "charge_current_a": 1.5111,
+   "overlap_z": [
+    0.0875,
+    0.8394
+   ],
+   "extended_points": 32,
+   "r_eff_ohm": [
+    0.12692,
+    0.27407
+   ],
+   "discharge_temperature_c": [
+    28.98,
+    38.11
+   ],
+   "charge_temperature_c": [
+    24.43,
+    28.69
+   ]
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 32,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0126,
+   "charge_current_a": 1.5107,
+   "overlap_z": [
+    0.0846,
+    0.8233
+   ],
+   "extended_points": 67,
+   "r_eff_ohm": [
+    0.12795,
+    0.27077
+   ],
+   "discharge_temperature_c": [
+    29.61,
+    38.41
+   ],
+   "charge_temperature_c": [
+    24.91,
+    29.08
+   ]
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 40,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0127,
+   "charge_current_a": 1.5107,
+   "overlap_z": [
+    0.1135,
+    0.8178
+   ],
+   "extended_points": 70,
+   "r_eff_ohm": [
+    0.13276,
+    0.30515
+   ],
+   "discharge_temperature_c": [
+    29.05,
+    38.15
+   ],
+   "charge_temperature_c": [
+    24.59,
+    28.77
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 1,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.009,
+   "charge_current_a": 1.5152,
+   "overlap_z": [
+    0.0672,
+    0.8104
+   ],
+   "extended_points": 72,
+   "r_eff_ohm": [
+    0.13715,
+    0.29449
+   ],
+   "discharge_temperature_c": [
+    29.2,
+    38.07
+   ],
+   "charge_temperature_c": [
+    23.9,
+    28.62
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 8,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0088,
+   "charge_current_a": 1.5156,
+   "overlap_z": [
+    0.0896,
+    0.8172
+   ],
+   "extended_points": 67,
+   "r_eff_ohm": [
+    0.13124,
+    0.26358
+   ],
+   "discharge_temperature_c": [
+    28.8,
+    37.32
+   ],
+   "charge_temperature_c": [
+    26.88,
+    35.12
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 16,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0088,
+   "charge_current_a": 1.5155,
+   "overlap_z": [
+    0.1086,
+    0.8189
+   ],
+   "extended_points": 63,
+   "r_eff_ohm": [
+    0.1314,
+    0.29863
+   ],
+   "discharge_temperature_c": [
+    28.85,
+    37.58
+   ],
+   "charge_temperature_c": [
+    27.3,
+    35.01
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 24,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.008,
+   "charge_current_a": 1.5151,
+   "overlap_z": [
+    0.1432,
+    0.8065
+   ],
+   "extended_points": 65,
+   "r_eff_ohm": [
+    0.13943,
+    0.37264
+   ],
+   "discharge_temperature_c": [
+    27.56,
+    36.28
+   ],
+   "charge_temperature_c": [
+    21.96,
+    26.46
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 32,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0089,
+   "charge_current_a": 1.5153,
+   "overlap_z": [
+    0.1584,
+    0.809
+   ],
+   "extended_points": 62,
+   "r_eff_ohm": [
+    0.13882,
+    0.31799
+   ],
+   "discharge_temperature_c": [
+    28.71,
+    37.6
+   ],
+   "charge_temperature_c": [
+    27.3,
+    33.96
+   ]
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 40,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 2.0088,
+   "charge_current_a": 1.5154,
+   "overlap_z": [
+    0.1556,
+    0.8072
+   ],
+   "extended_points": 61,
+   "r_eff_ohm": [
+    0.14038,
+    0.337
+   ],
+   "discharge_temperature_c": [
+    28.04,
+    37.27
+   ],
+   "charge_temperature_c": [
+    26.76,
+    33.92
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 3,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0253,
+   "charge_current_a": 1.5084,
+   "overlap_z": [
+    0.4088,
+    0.7463
+   ],
+   "extended_points": 48,
+   "r_eff_ohm": [
+    0.20322,
+    0.33062
+   ],
+   "discharge_temperature_c": [
+    38.82,
+    51.57
+   ],
+   "charge_temperature_c": [
+    27.44,
+    28.34
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 8,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0257,
+   "charge_current_a": 1.5087,
+   "overlap_z": [
+    0.0817,
+    0.7369
+   ],
+   "extended_points": 48,
+   "r_eff_ohm": [
+    0.21037,
+    0.34344
+   ],
+   "discharge_temperature_c": [
+    39.12,
+    54.0
+   ],
+   "charge_temperature_c": [
+    26.33,
+    27.83
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 16,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0259,
+   "charge_current_a": 1.5087,
+   "overlap_z": [
+    0.1349,
+    0.7688
+   ],
+   "extended_points": 41,
+   "r_eff_ohm": [
+    0.17584,
+    0.35795
+   ],
+   "discharge_temperature_c": [
+    33.86,
+    51.11
+   ],
+   "charge_temperature_c": [
+    25.43,
+    27.94
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 24,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0264,
+   "charge_current_a": 1.5083,
+   "overlap_z": [
+    0.1224,
+    0.7792
+   ],
+   "extended_points": 37,
+   "r_eff_ohm": [
+    0.17281,
+    0.35848
+   ],
+   "discharge_temperature_c": [
+    33.32,
+    51.17
+   ],
+   "charge_temperature_c": [
+    25.8,
+    27.81
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 32,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0264,
+   "charge_current_a": 1.5083,
+   "overlap_z": [
+    0.1501,
+    0.7783
+   ],
+   "extended_points": 36,
+   "r_eff_ohm": [
+    0.17459,
+    0.36434
+   ],
+   "discharge_temperature_c": [
+    33.08,
+    50.93
+   ],
+   "charge_temperature_c": [
+    24.53,
+    27.69
+   ]
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 40,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0268,
+   "charge_current_a": 1.5084,
+   "overlap_z": [
+    0.1564,
+    0.7784
+   ],
+   "extended_points": 35,
+   "r_eff_ohm": [
+    0.17269,
+    0.35644
+   ],
+   "discharge_temperature_c": [
+    35.0,
+    51.91
+   ],
+   "charge_temperature_c": [
+    27.12,
+    28.86
+   ]
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 1,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0295,
+   "charge_current_a": 1.5132,
+   "overlap_z": [
+    0.4582,
+    0.9364
+   ],
+   "extended_points": 12,
+   "r_eff_ohm": [
+    0.21641,
+    0.31693
+   ],
+   "discharge_temperature_c": [
+    29.23,
+    51.66
+   ],
+   "charge_temperature_c": [
+    25.88,
+    28.88
+   ]
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 8,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0297,
+   "charge_current_a": 1.5143,
+   "overlap_z": [
+    0.4115,
+    0.7875
+   ],
+   "extended_points": 39,
+   "r_eff_ohm": [
+    0.20387,
+    0.33148
+   ],
+   "discharge_temperature_c": [
+    37.35,
+    49.75
+   ],
+   "charge_temperature_c": [
+    28.36,
+    36.32
+   ]
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 12,
+   "ambient_temperature_c": 24.0,
+   "discharge_current_a": 4.0295,
+   "charge_current_a": 1.5084,
+   "overlap_z": [
+    0.427,
+    0.7799
+   ],
+   "extended_points": 39,
+   "r_eff_ohm": [
+    0.20861,
+    0.33719
+   ],
+   "discharge_temperature_c": [
+    37.28,
+    51.31
+   ],
+   "charge_temperature_c": [
+    26.04,
+    28.64
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 1,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.0119,
+   "charge_current_a": 1.5145,
+   "overlap_z": [
+    0.1169,
+    0.8204
+   ],
+   "extended_points": 68,
+   "r_eff_ohm": [
+    0.15552,
+    0.33592
+   ],
+   "discharge_temperature_c": [
+    28.36,
+    36.58
+   ],
+   "charge_temperature_c": [
+    26.19,
+    33.99
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 8,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.0124,
+   "charge_current_a": 1.5146,
+   "overlap_z": [
+    0.1371,
+    0.8247
+   ],
+   "extended_points": 64,
+   "r_eff_ohm": [
+    0.14946,
+    0.32155
+   ],
+   "discharge_temperature_c": [
+    27.66,
+    35.73
+   ],
+   "charge_temperature_c": [
+    25.99,
+    35.85
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 16,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.0124,
+   "charge_current_a": 1.5145,
+   "overlap_z": [
+    0.1534,
+    0.8194
+   ],
+   "extended_points": 63,
+   "r_eff_ohm": [
+    0.15278,
+    0.32665
+   ],
+   "discharge_temperature_c": [
+    26.97,
+    35.6
+   ],
+   "charge_temperature_c": [
+    25.59,
+    35.4
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 24,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.0126,
+   "charge_current_a": 1.5146,
+   "overlap_z": [
+    0.1626,
+    0.8202
+   ],
+   "extended_points": 61,
+   "r_eff_ohm": [
+    0.15173,
+    0.33471
+   ],
+   "discharge_temperature_c": [
+    28.03,
+    36.67
+   ],
+   "charge_temperature_c": [
+    26.92,
+    36.57
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 32,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.0126,
+   "charge_current_a": 1.5147,
+   "overlap_z": [
+    0.1779,
+    0.8127
+   ],
+   "extended_points": 61,
+   "r_eff_ohm": [
+    0.15704,
+    0.36466
+   ],
+   "discharge_temperature_c": [
+    27.8,
+    37.1
+   ],
+   "charge_temperature_c": [
+    26.95,
+    37.16
+   ]
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 40,
+   "ambient_temperature_c": 22.0,
+   "discharge_current_a": 2.013,
+   "charge_current_a": 1.5145,
+   "overlap_z": [
+    0.1973,
+    0.8085
+   ],
+   "extended_points": 61,
+   "r_eff_ohm": [
+    0.16073,
+    0.37163
+   ],
+   "discharge_temperature_c": [
+    28.35,
+    37.64
+   ],
+   "charge_temperature_c": [
+    27.33,
+    37.82
+   ]
+  }
+ ],
+ "knots": [
+  0.092169,
+  0.137561,
+  0.182952,
+  0.228344,
+  0.273736,
+  0.319127,
+  0.364519,
+  0.40991,
+  0.455302,
+  0.500693,
+  0.546085,
+  0.591476,
+  0.636868,
+  0.682259,
+  0.727651,
+  0.773042,
+  0.818434,
+  0.863825,
+  0.909217,
+  0.954608,
+  1.0
+ ],
+ "values_v": [
+  3.322819,
+  3.550152,
+  3.601401,
+  3.671574,
+  3.709501,
+  3.736364,
+  3.757603,
+  3.77609,
+  3.792327,
+  3.811906,
+  3.836547,
+  3.864281,
+  3.894139,
+  3.924321,
+  3.934381,
+  3.954324,
+  3.984922,
+  4.028428,
+  4.082983,
+  4.14309,
+  4.188513
+ ],
+ "median_before_monotonic_pass_v": [
+  3.322819,
+  3.550152,
+  3.601401,
+  3.671574,
+  3.709501,
+  3.736364,
+  3.757603,
+  3.77609,
+  3.792327,
+  3.811906,
+  3.836547,
+  3.864281,
+  3.894139,
+  3.924321,
+  3.934381,
+  3.954324,
+  3.984922,
+  4.028428,
+  4.082983,
+  4.14309,
+  4.188513
+ ],
+ "monotonic_adjustments": 0,
+ "interquartile_spread_v": [
+  0.138456,
+  0.130566,
+  0.126786,
+  0.068424,
+  0.042138,
+  0.029976,
+  0.026801,
+  0.024056,
+  0.022271,
+  0.022861,
+  0.023549,
+  0.027092,
+  0.031324,
+  0.032455,
+  0.034747,
+  0.040474,
+  0.035541,
+  0.034921,
+  0.032643,
+  0.033648,
+  0.012611
+ ],
+ "support_pairs_per_knot": [
+  7,
+  14,
+  22,
+  23,
+  23,
+  23,
+  23,
+  24,
+  26,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27,
+  27
+ ],
+ "relaxed_anchor_used": true,
+ "relaxed_anchor_v": 4.188513,
+ "interval": [
+  0.092169,
+  1.0
+ ],
+ "interpolation": "linear",
+ "extrapolation_policy": "refused. Outside [0.0922, 1.0000] the declared curve returns OUTSIDE_VALIDATED_DOMAIN and the kernel propagates the refusal",
+ "temperature_condition": "cells at 22-24 degC ambient; the cell itself reaches about 55 degC during the 4 A branches. The curve carries no temperature axis and does not claim one",
+ "what_it_is_not": "not an equilibrium open-circuit voltage. Branch averaging cancels the ohmic and polarization drop to first order but not the hysteresis between the two directions, and the two branches are not at identical temperature",
+ "uncertainty": "the interquartile spread across calibration pairs at each knot is the authority's own scatter and is carried into the uncertainty budget as an open-circuit-voltage contribution"
+}

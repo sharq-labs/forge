@@ -89,6 +89,16 @@ class _IterationOutcome:
     event: Mapping[str, Any] | None = None
 
 
+def _same_instant(left: float, right: float) -> bool:
+    """Two recorded instants that name the same boundary.
+
+    Relative, because a trajectory horizon of thousands of seconds carries more
+    absolute float noise than one of a few, and an absolute epsilon would be
+    either too tight at the top or too loose at the bottom.
+    """
+    return abs(left - right) <= 1e-9 * max(1.0, abs(left), abs(right))
+
+
 class MultiphysicsRuntime:
     @classmethod
     def from_factory_registry(
@@ -1157,10 +1167,18 @@ class MultiphysicsRuntime:
     def _scenario_schedules(
         self,
         schedules: Mapping[PortRef, ComposedInputSchedule],
+        events: tuple[ScenarioEvent, ...] = (),
     ) -> dict[PortRef, ComposedInputSchedule]:
         start_seconds = self._seconds(self.plan.time.start)
         end_seconds = self._seconds(self.plan.time.end)
         width_seconds = self._seconds(self.plan.time.coupling_window)
+        # A window ends at the earlier of the next multiple of the nominal width
+        # and the next scheduled event, so an event instant is a window boundary
+        # exactly as a width multiple is. Checking only the multiples describes a
+        # runtime without events and refuses a STEP change that does land on a
+        # boundary -- which is what a non-uniformly sampled measured profile,
+        # declared with one event per sample, is made of.
+        event_seconds = sorted(self._seconds(item.instant) for item in events)
         for ref, item in schedules.items():
             if not isinstance(ref, PortRef):
                 raise InvalidScientificProblem(
@@ -1183,14 +1201,20 @@ class MultiphysicsRuntime:
                     "external input series must cover the coupling-plan horizon"
                 )
             for sample in series.samples:
-                offset = self._seconds(sample.instant) - start_seconds
+                instant = self._seconds(sample.instant)
+                offset = instant - start_seconds
                 aligned = (
                     abs(offset / width_seconds - round(offset / width_seconds)) <= 1e-12
                 )
-                if not aligned and self._seconds(sample.instant) != end_seconds:
+                if not aligned:
+                    aligned = any(
+                        _same_instant(instant, boundary) for boundary in event_seconds
+                    )
+                if not aligned and instant != end_seconds:
                     raise InvalidScientificProblem(
-                        f"STEP input {item.input_id!r} changes away from a "
-                        f"coupling-window boundary"
+                        f"STEP input {item.input_id!r} changes at {instant} second, "
+                        f"which is neither a multiple of the coupling window nor a "
+                        f"scheduled event, so no window boundary falls there"
                     )
         return dict(schedules)
 
@@ -1403,7 +1427,8 @@ class MultiphysicsRuntime:
             raise InvalidScientificProblem("scheduled event ids must be unique")
 
         schedules = self._scenario_schedules(
-            {} if external_input_schedules is None else dict(external_input_schedules)
+            {} if external_input_schedules is None else dict(external_input_schedules),
+            events,
         )
         conditions = tuple(operating_conditions)
         if any(
