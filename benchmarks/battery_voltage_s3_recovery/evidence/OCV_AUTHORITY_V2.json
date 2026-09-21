@@ -1,0 +1,4268 @@
+{
+ "schema": "battery_voltage_s3_recovery_ocv_authority/1",
+ "version": "2",
+ "supersedes": "battery_thermal_flagship_s3_ocv_authority/1",
+ "why_a_new_authority": "the charge-state axis is part of the relation. Sprint 3's axis was the manufacturer's 2 Ah rating; this one is each pair's own measured available charge, read from cycles prior to it. A curve on a different axis is a different open-circuit voltage relation and therefore a different model, not a correction to the old one",
+ "method": "pseudo-OCV by charge/discharge branch averaging within one cell, weighted by the two currents; measured relaxed anchor at the top; linear interpolation; extrapolation refused",
+ "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+ "charge_state_basis": "z = 1 - q / Q_available, with Q_available established per trajectory by engcore.domains.battery.capacity from prior cycles",
+ "derived_from_split": "calibration",
+ "calibration_cells": [
+  "B0005",
+  "B0018",
+  "B0033",
+  "B0038",
+  "B0042"
+ ],
+ "cell_temperature_bands_c": [
+  {
+   "band": "cold",
+   "low": -40.0,
+   "high": 20.0
+  },
+  {
+   "band": "warm",
+   "low": 20.0,
+   "high": 120.0
+  }
+ ],
+ "conditioned_on": "median measured cell temperature over the loaded discharge branch. Ambient is not the conditioning variable: at 4 degC ambient the 4 A discharges self-heat to 23-41 degC and are not cold measurements",
+ "acceptance_tolerance_v": 0.05,
+ "min_support_pairs": 7,
+ "floor_rule": "the lowest knot of the contiguous admitted block, where a knot is admitted only with at least 7 pairs behind it and an interquartile spread across those pairs inside the frozen acceptance tolerance",
+ "pairs_used": [
+  {
+   "cell": "B0005",
+   "discharge_cycle": 2,
+   "corner": "room_ambient",
+   "basis_ah": 1.862203,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5105,
+   "overlap_z": [
+    0.0085,
+    0.8212
+   ],
+   "temperature_discharge_c": [
+    29.73,
+    38.93
+   ],
+   "median_cell_temperature_c": 32.63,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 3,
+   "corner": "room_ambient",
+   "basis_ah": 1.852078,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.009,
+    0.8235
+   ],
+   "temperature_discharge_c": [
+    29.63,
+    38.74
+   ],
+   "median_cell_temperature_c": 32.55,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 4,
+   "corner": "room_ambient",
+   "basis_ah": 1.841049,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5103,
+   "overlap_z": [
+    0.0031,
+    0.8222
+   ],
+   "temperature_discharge_c": [
+    29.54,
+    38.67
+   ],
+   "median_cell_temperature_c": 32.42,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 5,
+   "corner": "room_ambient",
+   "basis_ah": 1.840912,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5101,
+   "overlap_z": [
+    0.0034,
+    0.8226
+   ],
+   "temperature_discharge_c": [
+    29.39,
+    38.56
+   ],
+   "median_cell_temperature_c": 32.28,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 6,
+   "corner": "room_ambient",
+   "basis_ah": 1.84036,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5105,
+   "overlap_z": [
+    0.0026,
+    0.8229
+   ],
+   "temperature_discharge_c": [
+    29.41,
+    38.65
+   ],
+   "median_cell_temperature_c": 32.3,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 7,
+   "corner": "room_ambient",
+   "basis_ah": 1.841327,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5104,
+   "overlap_z": [
+    0.0034,
+    0.8234
+   ],
+   "temperature_discharge_c": [
+    29.44,
+    38.71
+   ],
+   "median_cell_temperature_c": 32.34,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 8,
+   "corner": "room_ambient",
+   "basis_ah": 1.840831,
+   "i_discharge": 2.013,
+   "i_charge": 1.5104,
+   "overlap_z": [
+    0.0082,
+    0.8238
+   ],
+   "temperature_discharge_c": [
+    29.49,
+    38.48
+   ],
+   "median_cell_temperature_c": 32.32,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 9,
+   "corner": "room_ambient",
+   "basis_ah": 1.831439,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5108,
+   "overlap_z": [
+    0.0036,
+    0.823
+   ],
+   "temperature_discharge_c": [
+    29.44,
+    38.46
+   ],
+   "median_cell_temperature_c": 32.25,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 10,
+   "corner": "room_ambient",
+   "basis_ah": 1.830476,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5105,
+   "overlap_z": [
+    0.0032,
+    0.8223
+   ],
+   "temperature_discharge_c": [
+    29.37,
+    38.44
+   ],
+   "median_cell_temperature_c": 32.18,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 11,
+   "corner": "room_ambient",
+   "basis_ah": 1.830273,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5106,
+   "overlap_z": [
+    0.0031,
+    0.8234
+   ],
+   "temperature_discharge_c": [
+    29.21,
+    38.42
+   ],
+   "median_cell_temperature_c": 32.06,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 12,
+   "corner": "room_ambient",
+   "basis_ah": 1.830246,
+   "i_discharge": 2.0129,
+   "i_charge": 1.5106,
+   "overlap_z": [
+    0.0088,
+    0.8222
+   ],
+   "temperature_discharge_c": [
+    29.52,
+    38.47
+   ],
+   "median_cell_temperature_c": 32.29,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 13,
+   "corner": "room_ambient",
+   "basis_ah": 1.819846,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5108,
+   "overlap_z": [
+    0.0034,
+    0.8216
+   ],
+   "temperature_discharge_c": [
+    29.49,
+    38.51
+   ],
+   "median_cell_temperature_c": 32.25,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 14,
+   "corner": "room_ambient",
+   "basis_ah": 1.819343,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.0032,
+    0.8217
+   ],
+   "temperature_discharge_c": [
+    29.27,
+    38.44
+   ],
+   "median_cell_temperature_c": 32.1,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 15,
+   "corner": "room_ambient",
+   "basis_ah": 1.819053,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.009,
+    0.8217
+   ],
+   "temperature_discharge_c": [
+    29.23,
+    38.17
+   ],
+   "median_cell_temperature_c": 31.98,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 16,
+   "corner": "room_ambient",
+   "basis_ah": 1.808205,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5106,
+   "overlap_z": [
+    0.0034,
+    0.8212
+   ],
+   "temperature_discharge_c": [
+    29.11,
+    38.14
+   ],
+   "median_cell_temperature_c": 31.89,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 17,
+   "corner": "room_ambient",
+   "basis_ah": 1.807714,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5106,
+   "overlap_z": [
+    0.0028,
+    0.8192
+   ],
+   "temperature_discharge_c": [
+    29.16,
+    38.24
+   ],
+   "median_cell_temperature_c": 31.93,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 18,
+   "corner": "room_ambient",
+   "basis_ah": 1.808222,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5105,
+   "overlap_z": [
+    0.0029,
+    0.8205
+   ],
+   "temperature_discharge_c": [
+    29.17,
+    38.37
+   ],
+   "median_cell_temperature_c": 31.95,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 19,
+   "corner": "room_ambient",
+   "basis_ah": 1.808641,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.0032,
+    0.8158
+   ],
+   "temperature_discharge_c": [
+    29.24,
+    38.42
+   ],
+   "median_cell_temperature_c": 31.94,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 20,
+   "corner": "room_ambient",
+   "basis_ah": 1.808383,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5098,
+   "overlap_z": [
+    -0.0214,
+    0.826
+   ],
+   "temperature_discharge_c": [
+    29.37,
+    38.4
+   ],
+   "median_cell_temperature_c": 32.34,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 21,
+   "corner": "room_ambient",
+   "basis_ah": 1.852681,
+   "i_discharge": 2.0124,
+   "i_charge": 1.511,
+   "overlap_z": [
+    0.0028,
+    0.8279
+   ],
+   "temperature_discharge_c": [
+    29.73,
+    38.9
+   ],
+   "median_cell_temperature_c": 32.62,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 22,
+   "corner": "room_ambient",
+   "basis_ah": 1.853025,
+   "i_discharge": 2.012,
+   "i_charge": 1.511,
+   "overlap_z": [
+    0.0091,
+    0.8285
+   ],
+   "temperature_discharge_c": [
+    29.38,
+    38.45
+   ],
+   "median_cell_temperature_c": 32.25,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 23,
+   "corner": "room_ambient",
+   "basis_ah": 1.841832,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5108,
+   "overlap_z": [
+    0.0087,
+    0.8269
+   ],
+   "temperature_discharge_c": [
+    29.09,
+    38.14
+   ],
+   "median_cell_temperature_c": 31.96,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 24,
+   "corner": "room_ambient",
+   "basis_ah": 1.83147,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5111,
+   "overlap_z": [
+    0.0035,
+    0.8246
+   ],
+   "temperature_discharge_c": [
+    28.98,
+    38.11
+   ],
+   "median_cell_temperature_c": 31.83,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 25,
+   "corner": "room_ambient",
+   "basis_ah": 1.830761,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5112,
+   "overlap_z": [
+    0.0028,
+    0.8246
+   ],
+   "temperature_discharge_c": [
+    28.94,
+    38.18
+   ],
+   "median_cell_temperature_c": 31.76,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 26,
+   "corner": "room_ambient",
+   "basis_ah": 1.831172,
+   "i_discharge": 2.0125,
+   "i_charge": 1.511,
+   "overlap_z": [
+    0.0094,
+    0.8247
+   ],
+   "temperature_discharge_c": [
+    28.87,
+    37.95
+   ],
+   "median_cell_temperature_c": 31.67,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 27,
+   "corner": "room_ambient",
+   "basis_ah": 1.819634,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5112,
+   "overlap_z": [
+    0.0027,
+    0.8214
+   ],
+   "temperature_discharge_c": [
+    28.8,
+    38.02
+   ],
+   "median_cell_temperature_c": 31.59,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 28,
+   "corner": "room_ambient",
+   "basis_ah": 1.820408,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5111,
+   "overlap_z": [
+    0.0035,
+    0.8218
+   ],
+   "temperature_discharge_c": [
+    28.76,
+    38.08
+   ],
+   "median_cell_temperature_c": 31.55,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 29,
+   "corner": "room_ambient",
+   "basis_ah": 1.819558,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5111,
+   "overlap_z": [
+    0.0092,
+    0.8219
+   ],
+   "temperature_discharge_c": [
+    28.79,
+    37.93
+   ],
+   "median_cell_temperature_c": 31.57,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 30,
+   "corner": "room_ambient",
+   "basis_ah": 1.808359,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5108,
+   "overlap_z": [
+    0.0024,
+    0.8203
+   ],
+   "temperature_discharge_c": [
+    28.81,
+    38.09
+   ],
+   "median_cell_temperature_c": 31.58,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 31,
+   "corner": "room_ambient",
+   "basis_ah": 1.809674,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5105,
+   "overlap_z": [
+    -0.0233,
+    0.8008
+   ],
+   "temperature_discharge_c": [
+    29.37,
+    38.43
+   ],
+   "median_cell_temperature_c": 31.8,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 32,
+   "corner": "room_ambient",
+   "basis_ah": 1.85454,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.0129,
+    0.8094
+   ],
+   "temperature_discharge_c": [
+    29.61,
+    38.41
+   ],
+   "median_cell_temperature_c": 32.04,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 33,
+   "corner": "room_ambient",
+   "basis_ah": 1.833413,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5109,
+   "overlap_z": [
+    0.0074,
+    0.8063
+   ],
+   "temperature_discharge_c": [
+    29.42,
+    38.24
+   ],
+   "median_cell_temperature_c": 31.8,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 34,
+   "corner": "room_ambient",
+   "basis_ah": 1.822632,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5109,
+   "overlap_z": [
+    0.0073,
+    0.8045
+   ],
+   "temperature_discharge_c": [
+    29.0,
+    37.86
+   ],
+   "median_cell_temperature_c": 31.4,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 35,
+   "corner": "room_ambient",
+   "basis_ah": 1.812015,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.0041,
+    0.8034
+   ],
+   "temperature_discharge_c": [
+    29.03,
+    37.85
+   ],
+   "median_cell_temperature_c": 31.28,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 36,
+   "corner": "room_ambient",
+   "basis_ah": 1.807346,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5109,
+   "overlap_z": [
+    0.0044,
+    0.803
+   ],
+   "temperature_discharge_c": [
+    29.47,
+    38.22
+   ],
+   "median_cell_temperature_c": 31.83,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 37,
+   "corner": "room_ambient",
+   "basis_ah": 1.802104,
+   "i_discharge": 2.0123,
+   "i_charge": 1.511,
+   "overlap_z": [
+    0.0076,
+    0.8006
+   ],
+   "temperature_discharge_c": [
+    29.22,
+    37.98
+   ],
+   "median_cell_temperature_c": 31.56,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 38,
+   "corner": "room_ambient",
+   "basis_ah": 1.791182,
+   "i_discharge": 2.0121,
+   "i_charge": 1.5111,
+   "overlap_z": [
+    0.0046,
+    0.798
+   ],
+   "temperature_discharge_c": [
+    29.06,
+    38.01
+   ],
+   "median_cell_temperature_c": 31.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 39,
+   "corner": "room_ambient",
+   "basis_ah": 1.785653,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5109,
+   "overlap_z": [
+    0.0071,
+    0.7973
+   ],
+   "temperature_discharge_c": [
+    28.85,
+    37.78
+   ],
+   "median_cell_temperature_c": 31.22,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0005",
+   "discharge_cycle": 40,
+   "corner": "room_ambient",
+   "basis_ah": 1.775768,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5107,
+   "overlap_z": [
+    0.0015,
+    0.7948
+   ],
+   "temperature_discharge_c": [
+    29.05,
+    38.15
+   ],
+   "median_cell_temperature_c": 31.5,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 2,
+   "corner": "room_ambient",
+   "basis_ah": 1.868373,
+   "i_discharge": 2.0085,
+   "i_charge": 1.5156,
+   "overlap_z": [
+    0.0078,
+    0.8034
+   ],
+   "temperature_discharge_c": [
+    29.38,
+    38.09
+   ],
+   "median_cell_temperature_c": 32.02,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 3,
+   "corner": "room_ambient",
+   "basis_ah": 1.856643,
+   "i_discharge": 2.0082,
+   "i_charge": 1.5157,
+   "overlap_z": [
+    0.0034,
+    0.8002
+   ],
+   "temperature_discharge_c": [
+    28.83,
+    37.48
+   ],
+   "median_cell_temperature_c": 31.43,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 4,
+   "corner": "room_ambient",
+   "basis_ah": 1.853167,
+   "i_discharge": 2.0084,
+   "i_charge": 1.5151,
+   "overlap_z": [
+    0.0062,
+    0.7984
+   ],
+   "temperature_discharge_c": [
+    28.32,
+    36.98
+   ],
+   "median_cell_temperature_c": 30.92,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 5,
+   "corner": "room_ambient",
+   "basis_ah": 1.844377,
+   "i_discharge": 2.0095,
+   "i_charge": 1.5154,
+   "overlap_z": [
+    0.0004,
+    0.8031
+   ],
+   "temperature_discharge_c": [
+    29.36,
+    38.15
+   ],
+   "median_cell_temperature_c": 32.0,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 6,
+   "corner": "room_ambient",
+   "basis_ah": 1.846512,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5156,
+   "overlap_z": [
+    0.0037,
+    0.8008
+   ],
+   "temperature_discharge_c": [
+    29.55,
+    38.11
+   ],
+   "median_cell_temperature_c": 32.05,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 7,
+   "corner": "room_ambient",
+   "basis_ah": 1.84242,
+   "i_discharge": 2.0086,
+   "i_charge": 1.5157,
+   "overlap_z": [
+    0.0085,
+    0.8041
+   ],
+   "temperature_discharge_c": [
+    29.16,
+    37.58
+   ],
+   "median_cell_temperature_c": 31.67,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 8,
+   "corner": "room_ambient",
+   "basis_ah": 1.829585,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5156,
+   "overlap_z": [
+    0.0048,
+    0.8002
+   ],
+   "temperature_discharge_c": [
+    28.8,
+    37.32
+   ],
+   "median_cell_temperature_c": 31.3,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 9,
+   "corner": "room_ambient",
+   "basis_ah": 1.823638,
+   "i_discharge": 2.0089,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.0045,
+    0.7907
+   ],
+   "temperature_discharge_c": [
+    28.68,
+    37.2
+   ],
+   "median_cell_temperature_c": 31.15,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 10,
+   "corner": "room_ambient",
+   "basis_ah": 1.818356,
+   "i_discharge": 2.0092,
+   "i_charge": 1.5156,
+   "overlap_z": [
+    -0.0088,
+    0.7978
+   ],
+   "temperature_discharge_c": [
+    28.53,
+    37.43
+   ],
+   "median_cell_temperature_c": 31.17,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 11,
+   "corner": "room_ambient",
+   "basis_ah": 1.837252,
+   "i_discharge": 2.0087,
+   "i_charge": 1.5157,
+   "overlap_z": [
+    0.0075,
+    0.8019
+   ],
+   "temperature_discharge_c": [
+    28.97,
+    37.64
+   ],
+   "median_cell_temperature_c": 31.54,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 12,
+   "corner": "room_ambient",
+   "basis_ah": 1.826331,
+   "i_discharge": 2.0086,
+   "i_charge": 1.5157,
+   "overlap_z": [
+    0.0087,
+    0.8018
+   ],
+   "temperature_discharge_c": [
+    28.82,
+    37.34
+   ],
+   "median_cell_temperature_c": 31.31,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 13,
+   "corner": "room_ambient",
+   "basis_ah": 1.813357,
+   "i_discharge": 2.0082,
+   "i_charge": 1.5158,
+   "overlap_z": [
+    0.0093,
+    0.7994
+   ],
+   "temperature_discharge_c": [
+    28.4,
+    36.87
+   ],
+   "median_cell_temperature_c": 30.88,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 14,
+   "corner": "room_ambient",
+   "basis_ah": 1.799488,
+   "i_discharge": 2.0085,
+   "i_charge": 1.5154,
+   "overlap_z": [
+    0.0057,
+    0.7909
+   ],
+   "temperature_discharge_c": [
+    28.06,
+    36.6
+   ],
+   "median_cell_temperature_c": 30.53,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 16,
+   "corner": "room_ambient",
+   "basis_ah": 1.795409,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5155,
+   "overlap_z": [
+    0.007,
+    0.7982
+   ],
+   "temperature_discharge_c": [
+    28.85,
+    37.58
+   ],
+   "median_cell_temperature_c": 31.4,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 17,
+   "corner": "room_ambient",
+   "basis_ah": 1.785782,
+   "i_discharge": 2.0083,
+   "i_charge": 1.5157,
+   "overlap_z": [
+    0.0063,
+    0.7942
+   ],
+   "temperature_discharge_c": [
+    29.04,
+    37.54
+   ],
+   "median_cell_temperature_c": 31.48,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 18,
+   "corner": "room_ambient",
+   "basis_ah": 1.777512,
+   "i_discharge": 2.0079,
+   "i_charge": 1.5159,
+   "overlap_z": [
+    0.0101,
+    0.7937
+   ],
+   "temperature_discharge_c": [
+    28.6,
+    37.07
+   ],
+   "median_cell_temperature_c": 31.06,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 19,
+   "corner": "room_ambient",
+   "basis_ah": 1.762527,
+   "i_discharge": 2.0078,
+   "i_charge": 1.5159,
+   "overlap_z": [
+    0.0059,
+    0.7871
+   ],
+   "temperature_discharge_c": [
+    28.06,
+    36.68
+   ],
+   "median_cell_temperature_c": 30.51,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 20,
+   "corner": "room_ambient",
+   "basis_ah": 1.755165,
+   "i_discharge": 2.0079,
+   "i_charge": 1.5158,
+   "overlap_z": [
+    0.0032,
+    0.7854
+   ],
+   "temperature_discharge_c": [
+    27.72,
+    36.42
+   ],
+   "median_cell_temperature_c": 30.16,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 21,
+   "corner": "room_ambient",
+   "basis_ah": 1.752543,
+   "i_discharge": 2.0084,
+   "i_charge": 1.5155,
+   "overlap_z": [
+    0.0086,
+    0.7863
+   ],
+   "temperature_discharge_c": [
+    27.53,
+    36.27
+   ],
+   "median_cell_temperature_c": 30.02,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 22,
+   "corner": "room_ambient",
+   "basis_ah": 1.740542,
+   "i_discharge": 2.0083,
+   "i_charge": 1.5155,
+   "overlap_z": [
+    0.0115,
+    0.7904
+   ],
+   "temperature_discharge_c": [
+    27.57,
+    36.42
+   ],
+   "median_cell_temperature_c": 30.11,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 23,
+   "corner": "room_ambient",
+   "basis_ah": 1.72359,
+   "i_discharge": 2.0084,
+   "i_charge": 1.5156,
+   "overlap_z": [
+    0.0036,
+    0.7834
+   ],
+   "temperature_discharge_c": [
+    27.59,
+    36.37
+   ],
+   "median_cell_temperature_c": 30.08,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 24,
+   "corner": "room_ambient",
+   "basis_ah": 1.720515,
+   "i_discharge": 2.008,
+   "i_charge": 1.5151,
+   "overlap_z": [
+    0.0041,
+    0.7751
+   ],
+   "temperature_discharge_c": [
+    27.56,
+    36.28
+   ],
+   "median_cell_temperature_c": 30.0,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 25,
+   "corner": "room_ambient",
+   "basis_ah": 1.71663,
+   "i_discharge": 2.0089,
+   "i_charge": 1.515,
+   "overlap_z": [
+    -0.0225,
+    0.7799
+   ],
+   "temperature_discharge_c": [
+    27.63,
+    36.51
+   ],
+   "median_cell_temperature_c": 30.12,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 26,
+   "corner": "room_ambient",
+   "basis_ah": 1.758364,
+   "i_discharge": 2.0092,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.0077,
+    0.7871
+   ],
+   "temperature_discharge_c": [
+    28.35,
+    37.27
+   ],
+   "median_cell_temperature_c": 30.85,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 27,
+   "corner": "room_ambient",
+   "basis_ah": 1.747983,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5153,
+   "overlap_z": [
+    0.0113,
+    0.7875
+   ],
+   "temperature_discharge_c": [
+    28.81,
+    37.48
+   ],
+   "median_cell_temperature_c": 31.28,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 28,
+   "corner": "room_ambient",
+   "basis_ah": 1.731443,
+   "i_discharge": 2.0087,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.0078,
+    0.7824
+   ],
+   "temperature_discharge_c": [
+    28.8,
+    37.45
+   ],
+   "median_cell_temperature_c": 31.23,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 29,
+   "corner": "room_ambient",
+   "basis_ah": 1.721116,
+   "i_discharge": 2.0085,
+   "i_charge": 1.5153,
+   "overlap_z": [
+    0.0056,
+    0.7804
+   ],
+   "temperature_discharge_c": [
+    28.54,
+    37.38
+   ],
+   "median_cell_temperature_c": 31.0,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 30,
+   "corner": "room_ambient",
+   "basis_ah": 1.714715,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.0085,
+    0.7792
+   ],
+   "temperature_discharge_c": [
+    28.39,
+    37.11
+   ],
+   "median_cell_temperature_c": 30.82,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 31,
+   "corner": "room_ambient",
+   "basis_ah": 1.703378,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.009,
+    0.7761
+   ],
+   "temperature_discharge_c": [
+    28.41,
+    37.22
+   ],
+   "median_cell_temperature_c": 30.86,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 32,
+   "corner": "room_ambient",
+   "basis_ah": 1.691338,
+   "i_discharge": 2.0089,
+   "i_charge": 1.5153,
+   "overlap_z": [
+    0.0048,
+    0.7742
+   ],
+   "temperature_discharge_c": [
+    28.71,
+    37.6
+   ],
+   "median_cell_temperature_c": 31.16,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 33,
+   "corner": "room_ambient",
+   "basis_ah": 1.68642,
+   "i_discharge": 2.0085,
+   "i_charge": 1.5154,
+   "overlap_z": [
+    0.0087,
+    0.7761
+   ],
+   "temperature_discharge_c": [
+    28.88,
+    37.73
+   ],
+   "median_cell_temperature_c": 31.34,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 34,
+   "corner": "room_ambient",
+   "basis_ah": 1.674982,
+   "i_discharge": 2.0084,
+   "i_charge": 1.5155,
+   "overlap_z": [
+    0.0069,
+    0.7712
+   ],
+   "temperature_discharge_c": [
+    28.63,
+    37.53
+   ],
+   "median_cell_temperature_c": 31.08,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 35,
+   "corner": "room_ambient",
+   "basis_ah": 1.666727,
+   "i_discharge": 2.0085,
+   "i_charge": 1.5154,
+   "overlap_z": [
+    0.0035,
+    0.766
+   ],
+   "temperature_discharge_c": [
+    28.44,
+    37.38
+   ],
+   "median_cell_temperature_c": 30.84,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 36,
+   "corner": "room_ambient",
+   "basis_ah": 1.664107,
+   "i_discharge": 2.0087,
+   "i_charge": 1.5153,
+   "overlap_z": [
+    0.0074,
+    0.7633
+   ],
+   "temperature_discharge_c": [
+    28.3,
+    37.4
+   ],
+   "median_cell_temperature_c": 30.7,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 37,
+   "corner": "room_ambient",
+   "basis_ah": 1.655143,
+   "i_discharge": 2.0087,
+   "i_charge": 1.5152,
+   "overlap_z": [
+    0.0128,
+    0.7658
+   ],
+   "temperature_discharge_c": [
+    28.24,
+    37.22
+   ],
+   "median_cell_temperature_c": 30.67,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 38,
+   "corner": "room_ambient",
+   "basis_ah": 1.637332,
+   "i_discharge": 2.0091,
+   "i_charge": 1.5151,
+   "overlap_z": [
+    0.0015,
+    0.7603
+   ],
+   "temperature_discharge_c": [
+    28.52,
+    37.73
+   ],
+   "median_cell_temperature_c": 30.96,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 39,
+   "corner": "room_ambient",
+   "basis_ah": 1.638199,
+   "i_discharge": 2.0086,
+   "i_charge": 1.515,
+   "overlap_z": [
+    0.007,
+    0.7576
+   ],
+   "temperature_discharge_c": [
+    28.66,
+    37.84
+   ],
+   "median_cell_temperature_c": 31.07,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0018",
+   "discharge_cycle": 40,
+   "corner": "room_ambient",
+   "basis_ah": 1.630051,
+   "i_discharge": 2.0088,
+   "i_charge": 1.5154,
+   "overlap_z": [
+    -0.036,
+    0.7634
+   ],
+   "temperature_discharge_c": [
+    28.04,
+    37.27
+   ],
+   "median_cell_temperature_c": 30.54,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 3,
+   "corner": "room_ambient",
+   "basis_ah": 0.717109,
+   "i_discharge": 4.0252,
+   "i_charge": 1.5084,
+   "overlap_z": [
+    -0.6608,
+    0.2925
+   ],
+   "temperature_discharge_c": [
+    38.82,
+    52.6
+   ],
+   "median_cell_temperature_c": 40.5,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 4,
+   "corner": "room_ambient",
+   "basis_ah": 1.195673,
+   "i_discharge": 4.0251,
+   "i_charge": 1.5088,
+   "overlap_z": [
+    -0.0834,
+    0.5638
+   ],
+   "temperature_discharge_c": [
+    39.0,
+    53.07
+   ],
+   "median_cell_temperature_c": 41.41,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 5,
+   "corner": "room_ambient",
+   "basis_ah": 1.301683,
+   "i_discharge": 4.0253,
+   "i_charge": 1.5087,
+   "overlap_z": [
+    -0.0338,
+    0.5929
+   ],
+   "temperature_discharge_c": [
+    39.0,
+    53.35
+   ],
+   "median_cell_temperature_c": 41.64,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 6,
+   "corner": "room_ambient",
+   "basis_ah": 1.351982,
+   "i_discharge": 4.0254,
+   "i_charge": 1.5086,
+   "overlap_z": [
+    -0.0173,
+    0.6012
+   ],
+   "temperature_discharge_c": [
+    39.01,
+    53.1
+   ],
+   "median_cell_temperature_c": 41.74,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 8,
+   "corner": "room_ambient",
+   "basis_ah": 1.344893,
+   "i_discharge": 4.0257,
+   "i_charge": 1.5087,
+   "overlap_z": [
+    -0.3656,
+    0.6088
+   ],
+   "temperature_discharge_c": [
+    39.12,
+    54.0
+   ],
+   "median_cell_temperature_c": 46.12,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 21,
+   "corner": "room_ambient",
+   "basis_ah": 1.713059,
+   "i_discharge": 4.0262,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0067,
+    0.7265
+   ],
+   "temperature_discharge_c": [
+    33.35,
+    50.05
+   ],
+   "median_cell_temperature_c": 38.54,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 22,
+   "corner": "room_ambient",
+   "basis_ah": 1.708999,
+   "i_discharge": 4.0265,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    -0.039,
+    0.7612
+   ],
+   "temperature_discharge_c": [
+    34.53,
+    52.33
+   ],
+   "median_cell_temperature_c": 41.06,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 23,
+   "corner": "room_ambient",
+   "basis_ah": 1.78303,
+   "i_discharge": 4.0265,
+   "i_charge": 1.5085,
+   "overlap_z": [
+    0.0061,
+    0.7534
+   ],
+   "temperature_discharge_c": [
+    34.04,
+    51.57
+   ],
+   "median_cell_temperature_c": 40.16,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 24,
+   "corner": "room_ambient",
+   "basis_ah": 1.779528,
+   "i_discharge": 4.0264,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0137,
+    0.7519
+   ],
+   "temperature_discharge_c": [
+    33.32,
+    51.17
+   ],
+   "median_cell_temperature_c": 39.37,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 25,
+   "corner": "room_ambient",
+   "basis_ah": 1.762248,
+   "i_discharge": 4.0266,
+   "i_charge": 1.5085,
+   "overlap_z": [
+    0.0131,
+    0.7492
+   ],
+   "temperature_discharge_c": [
+    33.16,
+    51.02
+   ],
+   "median_cell_temperature_c": 39.21,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 26,
+   "corner": "room_ambient",
+   "basis_ah": 1.746746,
+   "i_discharge": 4.0266,
+   "i_charge": 1.5082,
+   "overlap_z": [
+    0.0132,
+    0.7479
+   ],
+   "temperature_discharge_c": [
+    33.14,
+    50.87
+   ],
+   "median_cell_temperature_c": 39.17,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 27,
+   "corner": "room_ambient",
+   "basis_ah": 1.731226,
+   "i_discharge": 4.0266,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0018,
+    0.7442
+   ],
+   "temperature_discharge_c": [
+    33.39,
+    51.28
+   ],
+   "median_cell_temperature_c": 39.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 28,
+   "corner": "room_ambient",
+   "basis_ah": 1.735388,
+   "i_discharge": 4.0267,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.006,
+    0.7483
+   ],
+   "temperature_discharge_c": [
+    33.72,
+    51.33
+   ],
+   "median_cell_temperature_c": 39.75,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 29,
+   "corner": "room_ambient",
+   "basis_ah": 1.7324,
+   "i_discharge": 4.0266,
+   "i_charge": 1.5082,
+   "overlap_z": [
+    0.0077,
+    0.7447
+   ],
+   "temperature_discharge_c": [
+    33.64,
+    51.15
+   ],
+   "median_cell_temperature_c": 39.49,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 30,
+   "corner": "room_ambient",
+   "basis_ah": 1.726406,
+   "i_discharge": 4.0265,
+   "i_charge": 1.5085,
+   "overlap_z": [
+    0.008,
+    0.7424
+   ],
+   "temperature_discharge_c": [
+    33.21,
+    51.04
+   ],
+   "median_cell_temperature_c": 39.08,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 31,
+   "corner": "room_ambient",
+   "basis_ah": 1.71983,
+   "i_discharge": 4.0263,
+   "i_charge": 1.5084,
+   "overlap_z": [
+    0.0142,
+    0.7408
+   ],
+   "temperature_discharge_c": [
+    32.99,
+    50.59
+   ],
+   "median_cell_temperature_c": 38.76,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 32,
+   "corner": "room_ambient",
+   "basis_ah": 1.702958,
+   "i_discharge": 4.0264,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0019,
+    0.7396
+   ],
+   "temperature_discharge_c": [
+    33.08,
+    50.93
+   ],
+   "median_cell_temperature_c": 38.94,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 33,
+   "corner": "room_ambient",
+   "basis_ah": 1.707024,
+   "i_discharge": 4.0266,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0058,
+    0.7418
+   ],
+   "temperature_discharge_c": [
+    33.5,
+    51.03
+   ],
+   "median_cell_temperature_c": 39.35,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 34,
+   "corner": "room_ambient",
+   "basis_ah": 1.704754,
+   "i_discharge": 4.0265,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0086,
+    0.7403
+   ],
+   "temperature_discharge_c": [
+    33.43,
+    50.86
+   ],
+   "median_cell_temperature_c": 39.18,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 35,
+   "corner": "room_ambient",
+   "basis_ah": 1.697699,
+   "i_discharge": 4.0262,
+   "i_charge": 1.5084,
+   "overlap_z": [
+    0.008,
+    0.7372
+   ],
+   "temperature_discharge_c": [
+    33.09,
+    50.81
+   ],
+   "median_cell_temperature_c": 38.8,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 36,
+   "corner": "room_ambient",
+   "basis_ah": 1.691527,
+   "i_discharge": 4.0264,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0089,
+    0.7363
+   ],
+   "temperature_discharge_c": [
+    33.05,
+    50.73
+   ],
+   "median_cell_temperature_c": 38.75,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 37,
+   "corner": "room_ambient",
+   "basis_ah": 1.684068,
+   "i_discharge": 4.0265,
+   "i_charge": 1.5082,
+   "overlap_z": [
+    0.0082,
+    0.7349
+   ],
+   "temperature_discharge_c": [
+    33.12,
+    50.73
+   ],
+   "median_cell_temperature_c": 38.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 38,
+   "corner": "room_ambient",
+   "basis_ah": 1.677858,
+   "i_discharge": 4.0264,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    -0.0069,
+    0.7404
+   ],
+   "temperature_discharge_c": [
+    34.42,
+    51.74
+   ],
+   "median_cell_temperature_c": 40.25,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 39,
+   "corner": "room_ambient",
+   "basis_ah": 1.697182,
+   "i_discharge": 4.0268,
+   "i_charge": 1.5083,
+   "overlap_z": [
+    0.0003,
+    0.7442
+   ],
+   "temperature_discharge_c": [
+    35.11,
+    52.29
+   ],
+   "median_cell_temperature_c": 40.97,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0033",
+   "discharge_cycle": 40,
+   "corner": "room_ambient",
+   "basis_ah": 1.704404,
+   "i_discharge": 4.0268,
+   "i_charge": 1.5084,
+   "overlap_z": [
+    0.0101,
+    0.74
+   ],
+   "temperature_discharge_c": [
+    35.0,
+    51.91
+   ],
+   "median_cell_temperature_c": 40.56,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 2,
+   "corner": "room_ambient",
+   "basis_ah": 1.08408,
+   "i_discharge": 4.0292,
+   "i_charge": 1.5144,
+   "overlap_z": [
+    -0.1376,
+    0.6008
+   ],
+   "temperature_discharge_c": [
+    36.71,
+    50.92
+   ],
+   "median_cell_temperature_c": 39.9,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 3,
+   "corner": "room_ambient",
+   "basis_ah": 1.239145,
+   "i_discharge": 4.0295,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0247,
+    0.649
+   ],
+   "temperature_discharge_c": [
+    37.58,
+    51.09
+   ],
+   "median_cell_temperature_c": 40.43,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 4,
+   "corner": "room_ambient",
+   "basis_ah": 1.214646,
+   "i_discharge": 4.0293,
+   "i_charge": 1.5142,
+   "overlap_z": [
+    0.0362,
+    0.6446
+   ],
+   "temperature_discharge_c": [
+    37.65,
+    49.16
+   ],
+   "median_cell_temperature_c": 40.24,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 5,
+   "corner": "room_ambient",
+   "basis_ah": 1.176842,
+   "i_discharge": 4.0294,
+   "i_charge": 1.5138,
+   "overlap_z": [
+    0.0176,
+    0.6412
+   ],
+   "temperature_discharge_c": [
+    37.46,
+    49.64
+   ],
+   "median_cell_temperature_c": 40.18,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 6,
+   "corner": "room_ambient",
+   "basis_ah": 1.162302,
+   "i_discharge": 4.03,
+   "i_charge": 1.4871,
+   "overlap_z": [
+    0.0104,
+    0.6285
+   ],
+   "temperature_discharge_c": [
+    37.78,
+    50.19
+   ],
+   "median_cell_temperature_c": 39.45,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 7,
+   "corner": "room_ambient",
+   "basis_ah": 1.156367,
+   "i_discharge": 4.0293,
+   "i_charge": 1.4896,
+   "overlap_z": [
+    -0.0299,
+    0.6254
+   ],
+   "temperature_discharge_c": [
+    37.45,
+    49.72
+   ],
+   "median_cell_temperature_c": 40.06,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 8,
+   "corner": "room_ambient",
+   "basis_ah": 1.196865,
+   "i_discharge": 4.0297,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0165,
+    0.6449
+   ],
+   "temperature_discharge_c": [
+    37.35,
+    49.75
+   ],
+   "median_cell_temperature_c": 40.21,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 9,
+   "corner": "room_ambient",
+   "basis_ah": 1.183338,
+   "i_discharge": 4.0298,
+   "i_charge": 1.5141,
+   "overlap_z": [
+    0.0285,
+    0.6409
+   ],
+   "temperature_discharge_c": [
+    37.45,
+    49.67
+   ],
+   "median_cell_temperature_c": 40.03,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 10,
+   "corner": "room_ambient",
+   "basis_ah": 1.15581,
+   "i_discharge": 4.0297,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0002,
+    0.6216
+   ],
+   "temperature_discharge_c": [
+    37.37,
+    51.04
+   ],
+   "median_cell_temperature_c": 39.87,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 11,
+   "corner": "room_ambient",
+   "basis_ah": 1.161702,
+   "i_discharge": 4.0294,
+   "i_charge": 1.5139,
+   "overlap_z": [
+    0.0193,
+    0.6322
+   ],
+   "temperature_discharge_c": [
+    37.61,
+    50.26
+   ],
+   "median_cell_temperature_c": 40.26,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0038",
+   "discharge_cycle": 12,
+   "corner": "room_ambient",
+   "basis_ah": 1.145592,
+   "i_discharge": 4.0295,
+   "i_charge": 1.5084,
+   "overlap_z": [
+    -0.0003,
+    0.6157
+   ],
+   "temperature_discharge_c": [
+    37.28,
+    51.31
+   ],
+   "median_cell_temperature_c": 39.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 2,
+   "corner": "room_ambient",
+   "basis_ah": 1.769041,
+   "i_discharge": 2.0121,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.009,
+    0.8001
+   ],
+   "temperature_discharge_c": [
+    27.82,
+    35.45
+   ],
+   "median_cell_temperature_c": 29.92,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 3,
+   "corner": "room_ambient",
+   "basis_ah": 1.756018,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5144,
+   "overlap_z": [
+    0.0034,
+    0.798
+   ],
+   "temperature_discharge_c": [
+    27.5,
+    35.33
+   ],
+   "median_cell_temperature_c": 29.68,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 4,
+   "corner": "room_ambient",
+   "basis_ah": 1.752888,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.006,
+    0.7955
+   ],
+   "temperature_discharge_c": [
+    27.4,
+    35.55
+   ],
+   "median_cell_temperature_c": 29.68,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 5,
+   "corner": "room_ambient",
+   "basis_ah": 1.745195,
+   "i_discharge": 2.0122,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.0037,
+    0.7918
+   ],
+   "temperature_discharge_c": [
+    27.67,
+    35.86
+   ],
+   "median_cell_temperature_c": 29.85,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 6,
+   "corner": "room_ambient",
+   "basis_ah": 1.741643,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.1556,
+    0.808
+   ],
+   "temperature_discharge_c": [
+    28.07,
+    33.43
+   ],
+   "median_cell_temperature_c": 29.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 7,
+   "corner": "room_ambient",
+   "basis_ah": 1.471214,
+   "i_discharge": 2.0121,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    -0.1766,
+    0.7602
+   ],
+   "temperature_discharge_c": [
+    28.11,
+    36.22
+   ],
+   "median_cell_temperature_c": 30.25,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 8,
+   "corner": "room_ambient",
+   "basis_ah": 1.733899,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0046,
+    0.7978
+   ],
+   "temperature_discharge_c": [
+    27.66,
+    35.73
+   ],
+   "median_cell_temperature_c": 29.92,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 9,
+   "corner": "room_ambient",
+   "basis_ah": 1.726397,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0047,
+    0.7966
+   ],
+   "temperature_discharge_c": [
+    27.35,
+    35.64
+   ],
+   "median_cell_temperature_c": 29.61,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 10,
+   "corner": "room_ambient",
+   "basis_ah": 1.71881,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0041,
+    0.7904
+   ],
+   "temperature_discharge_c": [
+    27.27,
+    35.45
+   ],
+   "median_cell_temperature_c": 29.48,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 11,
+   "corner": "room_ambient",
+   "basis_ah": 1.712222,
+   "i_discharge": 2.0123,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0012,
+    0.7952
+   ],
+   "temperature_discharge_c": [
+    27.04,
+    35.56
+   ],
+   "median_cell_temperature_c": 29.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 12,
+   "corner": "room_ambient",
+   "basis_ah": 1.710649,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0045,
+    0.7931
+   ],
+   "temperature_discharge_c": [
+    27.12,
+    35.37
+   ],
+   "median_cell_temperature_c": 29.42,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 13,
+   "corner": "room_ambient",
+   "basis_ah": 1.703523,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0014,
+    0.7919
+   ],
+   "temperature_discharge_c": [
+    27.06,
+    35.47
+   ],
+   "median_cell_temperature_c": 29.38,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 14,
+   "corner": "room_ambient",
+   "basis_ah": 1.701651,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0062,
+    0.7931
+   ],
+   "temperature_discharge_c": [
+    27.0,
+    35.42
+   ],
+   "median_cell_temperature_c": 29.32,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 15,
+   "corner": "room_ambient",
+   "basis_ah": 1.691582,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0013,
+    0.7835
+   ],
+   "temperature_discharge_c": [
+    27.03,
+    35.52
+   ],
+   "median_cell_temperature_c": 29.3,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 16,
+   "corner": "room_ambient",
+   "basis_ah": 1.689969,
+   "i_discharge": 2.0124,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    -0.002,
+    0.7862
+   ],
+   "temperature_discharge_c": [
+    26.97,
+    35.6
+   ],
+   "median_cell_temperature_c": 29.35,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 17,
+   "corner": "room_ambient",
+   "basis_ah": 1.693812,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0051,
+    0.7897
+   ],
+   "temperature_discharge_c": [
+    26.95,
+    35.58
+   ],
+   "median_cell_temperature_c": 29.29,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 18,
+   "corner": "room_ambient",
+   "basis_ah": 1.685689,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5144,
+   "overlap_z": [
+    0.0045,
+    0.7865
+   ],
+   "temperature_discharge_c": [
+    26.94,
+    35.42
+   ],
+   "median_cell_temperature_c": 29.34,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 19,
+   "corner": "room_ambient",
+   "basis_ah": 1.678677,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5144,
+   "overlap_z": [
+    0.0012,
+    0.7848
+   ],
+   "temperature_discharge_c": [
+    26.98,
+    35.6
+   ],
+   "median_cell_temperature_c": 29.26,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 20,
+   "corner": "room_ambient",
+   "basis_ah": 1.677179,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0055,
+    0.7797
+   ],
+   "temperature_discharge_c": [
+    27.01,
+    35.59
+   ],
+   "median_cell_temperature_c": 29.31,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 21,
+   "corner": "room_ambient",
+   "basis_ah": 1.668491,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    -0.0183,
+    0.781
+   ],
+   "temperature_discharge_c": [
+    27.13,
+    35.77
+   ],
+   "median_cell_temperature_c": 29.51,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 22,
+   "corner": "room_ambient",
+   "basis_ah": 1.699468,
+   "i_discharge": 2.0125,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.0068,
+    0.7908
+   ],
+   "temperature_discharge_c": [
+    27.89,
+    36.28
+   ],
+   "median_cell_temperature_c": 30.22,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 23,
+   "corner": "room_ambient",
+   "basis_ah": 1.688402,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.0019,
+    0.7858
+   ],
+   "temperature_discharge_c": [
+    28.17,
+    36.75
+   ],
+   "median_cell_temperature_c": 30.49,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 24,
+   "corner": "room_ambient",
+   "basis_ah": 1.68565,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0064,
+    0.7866
+   ],
+   "temperature_discharge_c": [
+    28.03,
+    36.67
+   ],
+   "median_cell_temperature_c": 30.37,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 25,
+   "corner": "room_ambient",
+   "basis_ah": 1.675389,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0074,
+    0.7848
+   ],
+   "temperature_discharge_c": [
+    27.82,
+    36.46
+   ],
+   "median_cell_temperature_c": 30.19,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 26,
+   "corner": "room_ambient",
+   "basis_ah": 1.663508,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0037,
+    0.7783
+   ],
+   "temperature_discharge_c": [
+    27.73,
+    36.52
+   ],
+   "median_cell_temperature_c": 30.18,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 27,
+   "corner": "room_ambient",
+   "basis_ah": 1.657869,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5148,
+   "overlap_z": [
+    -0.0046,
+    0.781
+   ],
+   "temperature_discharge_c": [
+    28.06,
+    36.89
+   ],
+   "median_cell_temperature_c": 30.49,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 28,
+   "corner": "room_ambient",
+   "basis_ah": 1.665961,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.0027,
+    0.7819
+   ],
+   "temperature_discharge_c": [
+    28.48,
+    37.18
+   ],
+   "median_cell_temperature_c": 30.83,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 29,
+   "corner": "room_ambient",
+   "basis_ah": 1.662052,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0046,
+    0.7784
+   ],
+   "temperature_discharge_c": [
+    28.46,
+    37.29
+   ],
+   "median_cell_temperature_c": 30.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 30,
+   "corner": "room_ambient",
+   "basis_ah": 1.654914,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0077,
+    0.7779
+   ],
+   "temperature_discharge_c": [
+    28.18,
+    36.9
+   ],
+   "median_cell_temperature_c": 30.57,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 31,
+   "corner": "room_ambient",
+   "basis_ah": 1.642752,
+   "i_discharge": 2.0127,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    -0.0004,
+    0.7684
+   ],
+   "temperature_discharge_c": [
+    28.02,
+    37.03
+   ],
+   "median_cell_temperature_c": 30.4,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 32,
+   "corner": "room_ambient",
+   "basis_ah": 1.643893,
+   "i_discharge": 2.0126,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    -0.0002,
+    0.7721
+   ],
+   "temperature_discharge_c": [
+    27.8,
+    37.1
+   ],
+   "median_cell_temperature_c": 30.3,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 33,
+   "corner": "room_ambient",
+   "basis_ah": 1.644707,
+   "i_discharge": 2.013,
+   "i_charge": 1.5148,
+   "overlap_z": [
+    0.0032,
+    0.7736
+   ],
+   "temperature_discharge_c": [
+    28.27,
+    37.19
+   ],
+   "median_cell_temperature_c": 30.72,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 34,
+   "corner": "room_ambient",
+   "basis_ah": 1.640038,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5147,
+   "overlap_z": [
+    0.0047,
+    0.7703
+   ],
+   "temperature_discharge_c": [
+    28.31,
+    37.35
+   ],
+   "median_cell_temperature_c": 30.73,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 35,
+   "corner": "room_ambient",
+   "basis_ah": 1.632807,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0078,
+    0.7708
+   ],
+   "temperature_discharge_c": [
+    27.95,
+    36.94
+   ],
+   "median_cell_temperature_c": 30.38,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 36,
+   "corner": "room_ambient",
+   "basis_ah": 1.620619,
+   "i_discharge": 2.013,
+   "i_charge": 1.5143,
+   "overlap_z": [
+    0.0048,
+    0.7596
+   ],
+   "temperature_discharge_c": [
+    27.73,
+    36.8
+   ],
+   "median_cell_temperature_c": 30.15,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 37,
+   "corner": "room_ambient",
+   "basis_ah": 1.613362,
+   "i_discharge": 2.0128,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    -0.0042,
+    0.7637
+   ],
+   "temperature_discharge_c": [
+    27.57,
+    36.95
+   ],
+   "median_cell_temperature_c": 30.0,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 38,
+   "corner": "room_ambient",
+   "basis_ah": 1.6207,
+   "i_discharge": 2.013,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0043,
+    0.7662
+   ],
+   "temperature_discharge_c": [
+    27.95,
+    37.2
+   ],
+   "median_cell_temperature_c": 30.49,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 39,
+   "corner": "room_ambient",
+   "basis_ah": 1.614204,
+   "i_discharge": 2.0131,
+   "i_charge": 1.5146,
+   "overlap_z": [
+    0.0004,
+    0.7642
+   ],
+   "temperature_discharge_c": [
+    28.25,
+    37.45
+   ],
+   "median_cell_temperature_c": 30.75,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 40,
+   "corner": "room_ambient",
+   "basis_ah": 1.61404,
+   "i_discharge": 2.013,
+   "i_charge": 1.5145,
+   "overlap_z": [
+    0.0053,
+    0.7627
+   ],
+   "temperature_discharge_c": [
+    28.35,
+    37.64
+   ],
+   "median_cell_temperature_c": 30.8,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 44,
+   "corner": "low_ambient",
+   "basis_ah": 1.115172,
+   "i_discharge": 4.0274,
+   "i_charge": 1.5135,
+   "overlap_z": [
+    0.0216,
+    0.5056
+   ],
+   "temperature_discharge_c": [
+    25.28,
+    38.33
+   ],
+   "median_cell_temperature_c": 25.19,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 48,
+   "corner": "low_ambient",
+   "basis_ah": 1.177489,
+   "i_discharge": 4.0278,
+   "i_charge": 1.5136,
+   "overlap_z": [
+    0.0185,
+    0.5279
+   ],
+   "temperature_discharge_c": [
+    23.46,
+    38.71
+   ],
+   "median_cell_temperature_c": 23.87,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 49,
+   "corner": "low_ambient",
+   "basis_ah": 1.15626,
+   "i_discharge": 4.0274,
+   "i_charge": 1.5136,
+   "overlap_z": [
+    0.0089,
+    0.5153
+   ],
+   "temperature_discharge_c": [
+    25.87,
+    38.82
+   ],
+   "median_cell_temperature_c": 26.12,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 51,
+   "corner": "low_ambient",
+   "basis_ah": 0.751983,
+   "i_discharge": 4.0272,
+   "i_charge": 1.4463,
+   "overlap_z": [
+    -0.535,
+    0.1348
+   ],
+   "temperature_discharge_c": [
+    28.36,
+    39.81
+   ],
+   "median_cell_temperature_c": 26.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 53,
+   "corner": "low_ambient",
+   "basis_ah": 1.144605,
+   "i_discharge": 4.0273,
+   "i_charge": 1.5132,
+   "overlap_z": [
+    0.008,
+    0.5007
+   ],
+   "temperature_discharge_c": [
+    25.81,
+    39.33
+   ],
+   "median_cell_temperature_c": 25.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 54,
+   "corner": "low_ambient",
+   "basis_ah": 1.135989,
+   "i_discharge": 4.0279,
+   "i_charge": 1.5139,
+   "overlap_z": [
+    0.0201,
+    0.4933
+   ],
+   "temperature_discharge_c": [
+    26.58,
+    37.81
+   ],
+   "median_cell_temperature_c": 26.17,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 55,
+   "corner": "low_ambient",
+   "basis_ah": 1.113702,
+   "i_discharge": 4.0277,
+   "i_charge": 1.5135,
+   "overlap_z": [
+    -0.0146,
+    0.4854
+   ],
+   "temperature_discharge_c": [
+    26.44,
+    39.86
+   ],
+   "median_cell_temperature_c": 26.32,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 56,
+   "corner": "low_ambient",
+   "basis_ah": 1.130474,
+   "i_discharge": 4.0276,
+   "i_charge": 1.396,
+   "overlap_z": [
+    0.0094,
+    0.4224
+   ],
+   "temperature_discharge_c": [
+    28.43,
+    39.5
+   ],
+   "median_cell_temperature_c": 25.86,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 57,
+   "corner": "low_ambient",
+   "basis_ah": 1.120439,
+   "i_discharge": 4.0275,
+   "i_charge": 1.5136,
+   "overlap_z": [
+    -0.0035,
+    0.4685
+   ],
+   "temperature_discharge_c": [
+    26.98,
+    38.6
+   ],
+   "median_cell_temperature_c": 26.27,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 58,
+   "corner": "low_ambient",
+   "basis_ah": 1.124859,
+   "i_discharge": 4.0272,
+   "i_charge": 1.5134,
+   "overlap_z": [
+    0.0107,
+    0.4807
+   ],
+   "temperature_discharge_c": [
+    26.22,
+    39.58
+   ],
+   "median_cell_temperature_c": 25.61,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 59,
+   "corner": "low_ambient",
+   "basis_ah": 1.113301,
+   "i_discharge": 4.0275,
+   "i_charge": 1.5137,
+   "overlap_z": [
+    0.0077,
+    0.4649
+   ],
+   "temperature_discharge_c": [
+    27.47,
+    38.79
+   ],
+   "median_cell_temperature_c": 26.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 60,
+   "corner": "low_ambient",
+   "basis_ah": 1.105289,
+   "i_discharge": 4.0274,
+   "i_charge": 1.5135,
+   "overlap_z": [
+    -0.0023,
+    0.4669
+   ],
+   "temperature_discharge_c": [
+    26.81,
+    39.65
+   ],
+   "median_cell_temperature_c": 26.02,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 61,
+   "corner": "low_ambient",
+   "basis_ah": 1.10837,
+   "i_discharge": 4.0277,
+   "i_charge": 1.3422,
+   "overlap_z": [
+    0.0099,
+    0.3902
+   ],
+   "temperature_discharge_c": [
+    29.63,
+    38.93
+   ],
+   "median_cell_temperature_c": 26.39,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 62,
+   "corner": "low_ambient",
+   "basis_ah": 1.097925,
+   "i_discharge": 4.0272,
+   "i_charge": 1.5136,
+   "overlap_z": [
+    -0.0021,
+    0.4578
+   ],
+   "temperature_discharge_c": [
+    26.62,
+    39.19
+   ],
+   "median_cell_temperature_c": 25.53,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 63,
+   "corner": "low_ambient",
+   "basis_ah": 1.100791,
+   "i_discharge": 4.0273,
+   "i_charge": 1.5135,
+   "overlap_z": [
+    0.0099,
+    0.4678
+   ],
+   "temperature_discharge_c": [
+    27.1,
+    39.95
+   ],
+   "median_cell_temperature_c": 26.3,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 67,
+   "corner": "low_ambient",
+   "basis_ah": 0.62691,
+   "i_discharge": 4.0277,
+   "i_charge": 1.4282,
+   "overlap_z": [
+    -0.8459,
+    -0.1074
+   ],
+   "temperature_discharge_c": [
+    29.26,
+    39.56
+   ],
+   "median_cell_temperature_c": 26.61,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 69,
+   "corner": "low_ambient",
+   "basis_ah": 1.147007,
+   "i_discharge": 4.0271,
+   "i_charge": 1.5135,
+   "overlap_z": [
+    0.0217,
+    0.4732
+   ],
+   "temperature_discharge_c": [
+    27.14,
+    39.72
+   ],
+   "median_cell_temperature_c": 25.92,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 71,
+   "corner": "low_ambient",
+   "basis_ah": 0.674908,
+   "i_discharge": 4.0273,
+   "i_charge": 1.5133,
+   "overlap_z": [
+    -0.6964,
+    0.0666
+   ],
+   "temperature_discharge_c": [
+    28.89,
+    40.63
+   ],
+   "median_cell_temperature_c": 27.44,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 72,
+   "corner": "low_ambient",
+   "basis_ah": 1.145443,
+   "i_discharge": 4.0272,
+   "i_charge": 1.3938,
+   "overlap_z": [
+    0.0349,
+    0.387
+   ],
+   "temperature_discharge_c": [
+    31.24,
+    40.39
+   ],
+   "median_cell_temperature_c": 26.69,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 73,
+   "corner": "low_ambient",
+   "basis_ah": 1.106009,
+   "i_discharge": 4.0276,
+   "i_charge": 1.5134,
+   "overlap_z": [
+    -0.001,
+    0.4596
+   ],
+   "temperature_discharge_c": [
+    28.24,
+    40.9
+   ],
+   "median_cell_temperature_c": 27.11,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 74,
+   "corner": "low_ambient",
+   "basis_ah": 1.107663,
+   "i_discharge": 4.0275,
+   "i_charge": 1.5138,
+   "overlap_z": [
+    0.0105,
+    0.4591
+   ],
+   "temperature_discharge_c": [
+    28.24,
+    41.18
+   ],
+   "median_cell_temperature_c": 26.91,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 75,
+   "corner": "low_ambient",
+   "basis_ah": 1.096544,
+   "i_discharge": 4.0272,
+   "i_charge": 1.5137,
+   "overlap_z": [
+    -0.0026,
+    0.4519
+   ],
+   "temperature_discharge_c": [
+    28.79,
+    41.33
+   ],
+   "median_cell_temperature_c": 27.46,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 76,
+   "corner": "low_ambient",
+   "basis_ah": 1.099911,
+   "i_discharge": 4.0276,
+   "i_charge": 1.5134,
+   "overlap_z": [
+    0.0103,
+    0.4573
+   ],
+   "temperature_discharge_c": [
+    28.57,
+    41.46
+   ],
+   "median_cell_temperature_c": 27.29,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 77,
+   "corner": "low_ambient",
+   "basis_ah": 1.089054,
+   "i_discharge": 4.0271,
+   "i_charge": 1.3438,
+   "overlap_z": [
+    0.0108,
+    0.3655
+   ],
+   "temperature_discharge_c": [
+    31.87,
+    41.26
+   ],
+   "median_cell_temperature_c": 27.27,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 78,
+   "corner": "low_ambient",
+   "basis_ah": 1.077824,
+   "i_discharge": 4.027,
+   "i_charge": 1.5134,
+   "overlap_z": [
+    -0.0148,
+    0.4429
+   ],
+   "temperature_discharge_c": [
+    28.87,
+    41.66
+   ],
+   "median_cell_temperature_c": 27.45,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 79,
+   "corner": "low_ambient",
+   "basis_ah": 1.09429,
+   "i_discharge": 4.0276,
+   "i_charge": 1.5137,
+   "overlap_z": [
+    0.0233,
+    0.4541
+   ],
+   "temperature_discharge_c": [
+    28.66,
+    41.18
+   ],
+   "median_cell_temperature_c": 26.77,
+   "temperature_band": "warm"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 90,
+   "corner": "low_ambient",
+   "basis_ah": 1.579135,
+   "i_discharge": 1.0072,
+   "i_charge": 1.5043,
+   "overlap_z": [
+    0.0029,
+    0.5626
+   ],
+   "temperature_discharge_c": [
+    6.65,
+    12.36
+   ],
+   "median_cell_temperature_c": 7.89,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 91,
+   "corner": "low_ambient",
+   "basis_ah": 1.576284,
+   "i_discharge": 1.0073,
+   "i_charge": 1.5125,
+   "overlap_z": [
+    0.0049,
+    0.5669
+   ],
+   "temperature_discharge_c": [
+    6.39,
+    12.69
+   ],
+   "median_cell_temperature_c": 7.91,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 92,
+   "corner": "low_ambient",
+   "basis_ah": 1.570329,
+   "i_discharge": 1.0073,
+   "i_charge": 1.5046,
+   "overlap_z": [
+    0.0084,
+    0.5564
+   ],
+   "temperature_discharge_c": [
+    6.05,
+    11.79
+   ],
+   "median_cell_temperature_c": 7.93,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 93,
+   "corner": "low_ambient",
+   "basis_ah": 1.557705,
+   "i_discharge": 1.0073,
+   "i_charge": 1.464,
+   "overlap_z": [
+    0.003,
+    0.5383
+   ],
+   "temperature_discharge_c": [
+    6.51,
+    12.77
+   ],
+   "median_cell_temperature_c": 7.95,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 94,
+   "corner": "low_ambient",
+   "basis_ah": 1.553552,
+   "i_discharge": 1.0073,
+   "i_charge": 1.4964,
+   "overlap_z": [
+    0.0074,
+    0.5661
+   ],
+   "temperature_discharge_c": [
+    6.29,
+    11.7
+   ],
+   "median_cell_temperature_c": 7.97,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 95,
+   "corner": "low_ambient",
+   "basis_ah": 1.542648,
+   "i_discharge": 1.0074,
+   "i_charge": 1.5078,
+   "overlap_z": [
+    0.0031,
+    0.5474
+   ],
+   "temperature_discharge_c": [
+    6.03,
+    11.59
+   ],
+   "median_cell_temperature_c": 7.94,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 96,
+   "corner": "low_ambient",
+   "basis_ah": 1.538395,
+   "i_discharge": 1.0072,
+   "i_charge": 1.5126,
+   "overlap_z": [
+    0.0053,
+    0.5383
+   ],
+   "temperature_discharge_c": [
+    6.17,
+    12.23
+   ],
+   "median_cell_temperature_c": 7.93,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 97,
+   "corner": "low_ambient",
+   "basis_ah": 1.53073,
+   "i_discharge": 1.0074,
+   "i_charge": 1.5085,
+   "overlap_z": [
+    0.0047,
+    0.5202
+   ],
+   "temperature_discharge_c": [
+    6.57,
+    12.98
+   ],
+   "median_cell_temperature_c": 8.0,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 98,
+   "corner": "low_ambient",
+   "basis_ah": 1.524064,
+   "i_discharge": 1.0073,
+   "i_charge": 1.4616,
+   "overlap_z": [
+    0.0048,
+    0.4985
+   ],
+   "temperature_discharge_c": [
+    6.64,
+    12.99
+   ],
+   "median_cell_temperature_c": 8.01,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 99,
+   "corner": "low_ambient",
+   "basis_ah": 1.51732,
+   "i_discharge": 1.0073,
+   "i_charge": 1.5035,
+   "overlap_z": [
+    0.0068,
+    0.5099
+   ],
+   "temperature_discharge_c": [
+    6.23,
+    12.99
+   ],
+   "median_cell_temperature_c": 7.99,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 100,
+   "corner": "low_ambient",
+   "basis_ah": 1.507516,
+   "i_discharge": 1.0072,
+   "i_charge": 1.4964,
+   "overlap_z": [
+    0.0039,
+    0.5013
+   ],
+   "temperature_discharge_c": [
+    6.75,
+    12.79
+   ],
+   "median_cell_temperature_c": 7.99,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 101,
+   "corner": "low_ambient",
+   "basis_ah": 1.502233,
+   "i_discharge": 1.0074,
+   "i_charge": 1.4897,
+   "overlap_z": [
+    0.0076,
+    0.5048
+   ],
+   "temperature_discharge_c": [
+    6.86,
+    12.73
+   ],
+   "median_cell_temperature_c": 8.0,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 102,
+   "corner": "low_ambient",
+   "basis_ah": 1.491373,
+   "i_discharge": 1.0074,
+   "i_charge": 1.4177,
+   "overlap_z": [
+    0.0078,
+    0.5166
+   ],
+   "temperature_discharge_c": [
+    6.69,
+    12.45
+   ],
+   "median_cell_temperature_c": 7.98,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 103,
+   "corner": "low_ambient",
+   "basis_ah": 1.480265,
+   "i_discharge": 1.0074,
+   "i_charge": 1.43,
+   "overlap_z": [
+    0.0042,
+    0.468
+   ],
+   "temperature_discharge_c": [
+    7.44,
+    12.16
+   ],
+   "median_cell_temperature_c": 8.1,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 104,
+   "corner": "low_ambient",
+   "basis_ah": 1.47452,
+   "i_discharge": 1.0074,
+   "i_charge": 1.413,
+   "overlap_z": [
+    0.0037,
+    0.5094
+   ],
+   "temperature_discharge_c": [
+    6.76,
+    12.71
+   ],
+   "median_cell_temperature_c": 8.09,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 105,
+   "corner": "low_ambient",
+   "basis_ah": 1.469634,
+   "i_discharge": 1.0071,
+   "i_charge": 1.4546,
+   "overlap_z": [
+    0.0077,
+    0.5002
+   ],
+   "temperature_discharge_c": [
+    7.37,
+    12.11
+   ],
+   "median_cell_temperature_c": 8.06,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 106,
+   "corner": "low_ambient",
+   "basis_ah": 1.458869,
+   "i_discharge": 1.0072,
+   "i_charge": 1.4945,
+   "overlap_z": [
+    0.0047,
+    0.4841
+   ],
+   "temperature_discharge_c": [
+    7.47,
+    12.11
+   ],
+   "median_cell_temperature_c": 8.06,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 107,
+   "corner": "low_ambient",
+   "basis_ah": 1.452619,
+   "i_discharge": 1.0072,
+   "i_charge": 1.4215,
+   "overlap_z": [
+    0.0057,
+    0.4809
+   ],
+   "temperature_discharge_c": [
+    6.76,
+    12.95
+   ],
+   "median_cell_temperature_c": 8.1,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 108,
+   "corner": "low_ambient",
+   "basis_ah": 1.44484,
+   "i_discharge": 1.0072,
+   "i_charge": 1.3835,
+   "overlap_z": [
+    0.0072,
+    0.4487
+   ],
+   "temperature_discharge_c": [
+    7.61,
+    12.43
+   ],
+   "median_cell_temperature_c": 8.16,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 109,
+   "corner": "low_ambient",
+   "basis_ah": 1.434993,
+   "i_discharge": 1.0073,
+   "i_charge": 1.456,
+   "overlap_z": [
+    0.0006,
+    0.4595
+   ],
+   "temperature_discharge_c": [
+    6.65,
+    13.2
+   ],
+   "median_cell_temperature_c": 8.18,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 110,
+   "corner": "low_ambient",
+   "basis_ah": 1.434641,
+   "i_discharge": 1.0072,
+   "i_charge": 1.4113,
+   "overlap_z": [
+    0.007,
+    0.4713
+   ],
+   "temperature_discharge_c": [
+    7.06,
+    13.03
+   ],
+   "median_cell_temperature_c": 8.19,
+   "temperature_band": "cold"
+  },
+  {
+   "cell": "B0042",
+   "discharge_cycle": 111,
+   "corner": "low_ambient",
+   "basis_ah": 1.425181,
+   "i_discharge": 1.0072,
+   "i_charge": 1.4123,
+   "overlap_z": [
+    0.0064,
+    0.4616
+   ],
+   "temperature_discharge_c": [
+    6.86,
+    13.06
+   ],
+   "median_cell_temperature_c": 8.13,
+   "temperature_band": "cold"
+  }
+ ],
+ "curves": {
+  "pooled": {
+   "curve_id": "pooled",
+   "pairs": 200,
+   "knots": [
+    0.85,
+    0.9,
+    0.95,
+    1.0
+   ],
+   "values_v": [
+    4.029586,
+    4.080229,
+    4.144889,
+    4.187391
+   ],
+   "interquartile_spread_v": [
+    0.048678,
+    0.040221,
+    0.028742,
+    0.005695
+   ],
+   "support_pairs_per_knot": [
+    200,
+    200,
+    200,
+    200
+   ],
+   "interval": [
+    0.85,
+    1.0
+   ],
+   "median_interquartile_spread_v": 0.034481,
+   "max_interquartile_spread_v": 0.048678,
+   "opening_rest_knot_used": true,
+   "opening_rest_v": 4.187391,
+   "opening_rest_pairs": 200,
+   "charge_relaxed_anchor_v": 4.188752,
+   "why_not_the_charge_relaxed_anchor": "on a capacity-normalized axis the charge cycle's relaxed tail is not the state z = 1 names, and at low ambient the charger stops before reaching that tail at all",
+   "monotonic_adjustments": 0,
+   "charge_state_floor": 0.85,
+   "discharge_temperature_c": [
+    6.03,
+    54.0
+   ],
+   "currents_a": {
+    "discharge": [
+     1.01,
+     2.01,
+     4.03
+    ],
+    "charge": [
+     1.34,
+     1.38,
+     1.39,
+     1.4,
+     1.41,
+     1.42,
+     1.43,
+     1.45,
+     1.46,
+     1.49,
+     1.5,
+     1.51,
+     1.52
+    ]
+   }
+  },
+  "cold": {
+   "curve_id": "cold",
+   "pairs": 22,
+   "knots": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0
+   ],
+   "values_v": [
+    3.212006,
+    3.383302,
+    3.487991,
+    3.562823,
+    3.613714,
+    3.659823,
+    3.69045,
+    3.718311,
+    3.741529,
+    3.760397,
+    3.78389,
+    3.80798,
+    3.837703,
+    3.874048,
+    3.908219,
+    3.947686,
+    3.991123,
+    4.05098,
+    4.132828,
+    4.176629
+   ],
+   "interquartile_spread_v": [
+    0.026107,
+    0.034048,
+    0.019731,
+    0.008864,
+    0.01348,
+    0.02016,
+    0.021017,
+    0.011949,
+    0.007843,
+    0.005067,
+    0.007545,
+    0.007637,
+    0.013343,
+    0.012055,
+    0.013108,
+    0.009488,
+    0.010234,
+    0.014837,
+    0.01756,
+    0.003307
+   ],
+   "support_pairs_per_knot": [
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22,
+    22
+   ],
+   "interval": [
+    0.05,
+    1.0
+   ],
+   "median_interquartile_spread_v": 0.012581,
+   "max_interquartile_spread_v": 0.034048,
+   "opening_rest_knot_used": true,
+   "opening_rest_v": 4.176629,
+   "opening_rest_pairs": 22,
+   "charge_relaxed_anchor_v": null,
+   "why_not_the_charge_relaxed_anchor": "on a capacity-normalized axis the charge cycle's relaxed tail is not the state z = 1 names, and at low ambient the charger stops before reaching that tail at all",
+   "monotonic_adjustments": 0,
+   "charge_state_floor": 0.05,
+   "discharge_temperature_c": [
+    6.03,
+    13.2
+   ],
+   "currents_a": {
+    "discharge": [
+     1.01
+    ],
+    "charge": [
+     1.38,
+     1.41,
+     1.42,
+     1.43,
+     1.45,
+     1.46,
+     1.49,
+     1.5,
+     1.51
+    ]
+   }
+  },
+  "warm": {
+   "curve_id": "warm",
+   "pairs": 178,
+   "knots": [
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0
+   ],
+   "values_v": [
+    3.646438,
+    3.691172,
+    3.720488,
+    3.74081,
+    3.759516,
+    3.777179,
+    3.795728,
+    3.816189,
+    3.840946,
+    3.86968,
+    3.897041,
+    3.927175,
+    3.94972,
+    3.962136,
+    3.994644,
+    4.036589,
+    4.085687,
+    4.146164,
+    4.18772
+   ],
+   "interquartile_spread_v": [
+    0.036969,
+    0.025297,
+    0.017965,
+    0.017952,
+    0.015122,
+    0.012582,
+    0.01203,
+    0.01782,
+    0.022929,
+    0.023546,
+    0.021799,
+    0.017675,
+    0.02588,
+    0.032549,
+    0.033015,
+    0.028754,
+    0.030127,
+    0.028631,
+    0.004996
+   ],
+   "support_pairs_per_knot": [
+    177,
+    177,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178,
+    178
+   ],
+   "interval": [
+    0.1,
+    1.0
+   ],
+   "median_interquartile_spread_v": 0.022929,
+   "max_interquartile_spread_v": 0.036969,
+   "opening_rest_knot_used": true,
+   "opening_rest_v": 4.18772,
+   "opening_rest_pairs": 178,
+   "charge_relaxed_anchor_v": 4.188752,
+   "why_not_the_charge_relaxed_anchor": "on a capacity-normalized axis the charge cycle's relaxed tail is not the state z = 1 names, and at low ambient the charger stops before reaching that tail at all",
+   "monotonic_adjustments": 0,
+   "charge_state_floor": 0.1,
+   "discharge_temperature_c": [
+    23.46,
+    54.0
+   ],
+   "currents_a": {
+    "discharge": [
+     2.01,
+     4.03
+    ],
+    "charge": [
+     1.34,
+     1.39,
+     1.4,
+     1.43,
+     1.45,
+     1.49,
+     1.51,
+     1.52
+    ]
+   }
+  }
+ },
+ "resistance_profiles": {
+  "pooled": {
+   "curve_id": "pooled",
+   "knots": [
+    {
+     "charge_state": 0.05,
+     "pairs": 198,
+     "median_ohm": 0.210815,
+     "p25_ohm": 0.181186,
+     "p75_ohm": 0.290384
+    },
+    {
+     "charge_state": 0.1,
+     "pairs": 197,
+     "median_ohm": 0.172732,
+     "p25_ohm": 0.152166,
+     "p75_ohm": 0.263131
+    },
+    {
+     "charge_state": 0.15,
+     "pairs": 196,
+     "median_ohm": 0.164896,
+     "p25_ohm": 0.148455,
+     "p75_ohm": 0.23814
+    },
+    {
+     "charge_state": 0.2,
+     "pairs": 197,
+     "median_ohm": 0.161719,
+     "p25_ohm": 0.146306,
+     "p75_ohm": 0.230633
+    },
+    {
+     "charge_state": 0.25,
+     "pairs": 197,
+     "median_ohm": 0.161381,
+     "p25_ohm": 0.144757,
+     "p75_ohm": 0.226053
+    },
+    {
+     "charge_state": 0.3,
+     "pairs": 196,
+     "median_ohm": 0.161371,
+     "p25_ohm": 0.145027,
+     "p75_ohm": 0.224893
+    },
+    {
+     "charge_state": 0.35,
+     "pairs": 196,
+     "median_ohm": 0.162073,
+     "p25_ohm": 0.145674,
+     "p75_ohm": 0.223266
+    },
+    {
+     "charge_state": 0.4,
+     "pairs": 193,
+     "median_ohm": 0.162067,
+     "p25_ohm": 0.145375,
+     "p75_ohm": 0.218215
+    },
+    {
+     "charge_state": 0.45,
+     "pairs": 190,
+     "median_ohm": 0.162626,
+     "p25_ohm": 0.145986,
+     "p75_ohm": 0.214301
+    },
+    {
+     "charge_state": 0.5,
+     "pairs": 169,
+     "median_ohm": 0.161192,
+     "p25_ohm": 0.145445,
+     "p75_ohm": 0.185304
+    },
+    {
+     "charge_state": 0.55,
+     "pairs": 155,
+     "median_ohm": 0.160494,
+     "p25_ohm": 0.145647,
+     "p75_ohm": 0.180347
+    },
+    {
+     "charge_state": 0.6,
+     "pairs": 149,
+     "median_ohm": 0.160921,
+     "p25_ohm": 0.146656,
+     "p75_ohm": 0.175373
+    },
+    {
+     "charge_state": 0.65,
+     "pairs": 136,
+     "median_ohm": 0.15887,
+     "p25_ohm": 0.146041,
+     "p75_ohm": 0.168255
+    },
+    {
+     "charge_state": 0.7,
+     "pairs": 136,
+     "median_ohm": 0.154619,
+     "p25_ohm": 0.145944,
+     "p75_ohm": 0.167719
+    },
+    {
+     "charge_state": 0.75,
+     "pairs": 119,
+     "median_ohm": 0.144039,
+     "p25_ohm": 0.142038,
+     "p75_ohm": 0.159036
+    },
+    {
+     "charge_state": 0.8,
+     "pairs": 46,
+     "median_ohm": 0.132478,
+     "p25_ohm": 0.131344,
+     "p75_ohm": 0.133266
+    }
+   ],
+   "low_over_high_ratio": 1.5913,
+   "what_it_is": "(V_charge - V_discharge) / (i_charge + i_discharge) at a common charge state: the resistance the two branches imply, measured with no model and no fit"
+  },
+  "cold": {
+   "curve_id": "cold",
+   "knots": [
+    {
+     "charge_state": 0.05,
+     "pairs": 22,
+     "median_ohm": 0.49898,
+     "p25_ohm": 0.461971,
+     "p75_ohm": 0.520566
+    },
+    {
+     "charge_state": 0.1,
+     "pairs": 22,
+     "median_ohm": 0.45285,
+     "p25_ohm": 0.427046,
+     "p75_ohm": 0.479459
+    },
+    {
+     "charge_state": 0.15,
+     "pairs": 22,
+     "median_ohm": 0.426386,
+     "p25_ohm": 0.406048,
+     "p75_ohm": 0.443893
+    },
+    {
+     "charge_state": 0.2,
+     "pairs": 22,
+     "median_ohm": 0.408193,
+     "p25_ohm": 0.385796,
+     "p75_ohm": 0.427745
+    },
+    {
+     "charge_state": 0.25,
+     "pairs": 22,
+     "median_ohm": 0.384066,
+     "p25_ohm": 0.364993,
+     "p75_ohm": 0.409036
+    },
+    {
+     "charge_state": 0.3,
+     "pairs": 22,
+     "median_ohm": 0.365877,
+     "p25_ohm": 0.349852,
+     "p75_ohm": 0.383131
+    },
+    {
+     "charge_state": 0.35,
+     "pairs": 22,
+     "median_ohm": 0.346652,
+     "p25_ohm": 0.332591,
+     "p75_ohm": 0.363964
+    },
+    {
+     "charge_state": 0.4,
+     "pairs": 22,
+     "median_ohm": 0.328415,
+     "p25_ohm": 0.31882,
+     "p75_ohm": 0.339089
+    },
+    {
+     "charge_state": 0.45,
+     "pairs": 21,
+     "median_ohm": 0.313101,
+     "p25_ohm": 0.303225,
+     "p75_ohm": 0.323252
+    },
+    {
+     "charge_state": 0.5,
+     "pairs": 14,
+     "median_ohm": 0.293595,
+     "p25_ohm": 0.290451,
+     "p75_ohm": 0.297846
+    }
+   ],
+   "low_over_high_ratio": 1.6996,
+   "what_it_is": "(V_charge - V_discharge) / (i_charge + i_discharge) at a common charge state: the resistance the two branches imply, measured with no model and no fit"
+  },
+  "warm": {
+   "curve_id": "warm",
+   "knots": [
+    {
+     "charge_state": 0.05,
+     "pairs": 176,
+     "median_ohm": 0.200854,
+     "p25_ohm": 0.178715,
+     "p75_ohm": 0.23709
+    },
+    {
+     "charge_state": 0.1,
+     "pairs": 175,
+     "median_ohm": 0.166082,
+     "p25_ohm": 0.149118,
+     "p75_ohm": 0.212803
+    },
+    {
+     "charge_state": 0.15,
+     "pairs": 174,
+     "median_ohm": 0.159615,
+     "p25_ohm": 0.145271,
+     "p75_ohm": 0.201828
+    },
+    {
+     "charge_state": 0.2,
+     "pairs": 175,
+     "median_ohm": 0.159218,
+     "p25_ohm": 0.143478,
+     "p75_ohm": 0.195017
+    },
+    {
+     "charge_state": 0.25,
+     "pairs": 175,
+     "median_ohm": 0.158911,
+     "p25_ohm": 0.142911,
+     "p75_ohm": 0.190852
+    },
+    {
+     "charge_state": 0.3,
+     "pairs": 174,
+     "median_ohm": 0.158494,
+     "p25_ohm": 0.143459,
+     "p75_ohm": 0.187491
+    },
+    {
+     "charge_state": 0.35,
+     "pairs": 174,
+     "median_ohm": 0.158971,
+     "p25_ohm": 0.144068,
+     "p75_ohm": 0.185684
+    },
+    {
+     "charge_state": 0.4,
+     "pairs": 171,
+     "median_ohm": 0.159236,
+     "p25_ohm": 0.144306,
+     "p75_ohm": 0.184379
+    },
+    {
+     "charge_state": 0.45,
+     "pairs": 169,
+     "median_ohm": 0.159896,
+     "p25_ohm": 0.14462,
+     "p75_ohm": 0.184167
+    },
+    {
+     "charge_state": 0.5,
+     "pairs": 155,
+     "median_ohm": 0.159242,
+     "p25_ohm": 0.144761,
+     "p75_ohm": 0.178794
+    },
+    {
+     "charge_state": 0.55,
+     "pairs": 151,
+     "median_ohm": 0.159918,
+     "p25_ohm": 0.145532,
+     "p75_ohm": 0.174045
+    },
+    {
+     "charge_state": 0.6,
+     "pairs": 149,
+     "median_ohm": 0.160921,
+     "p25_ohm": 0.146656,
+     "p75_ohm": 0.175373
+    },
+    {
+     "charge_state": 0.65,
+     "pairs": 136,
+     "median_ohm": 0.15887,
+     "p25_ohm": 0.146041,
+     "p75_ohm": 0.168255
+    },
+    {
+     "charge_state": 0.7,
+     "pairs": 136,
+     "median_ohm": 0.154619,
+     "p25_ohm": 0.145944,
+     "p75_ohm": 0.167719
+    },
+    {
+     "charge_state": 0.75,
+     "pairs": 119,
+     "median_ohm": 0.144039,
+     "p25_ohm": 0.142038,
+     "p75_ohm": 0.159036
+    },
+    {
+     "charge_state": 0.8,
+     "pairs": 46,
+     "median_ohm": 0.132478,
+     "p25_ohm": 0.131344,
+     "p75_ohm": 0.133266
+    }
+   ],
+   "low_over_high_ratio": 1.5161,
+   "what_it_is": "(V_charge - V_discharge) / (i_charge + i_discharge) at a common charge state: the resistance the two branches imply, measured with no model and no fit"
+  }
+ },
+ "what_it_is_not": "not an equilibrium open-circuit voltage. Branch averaging does not cancel the hysteresis between the two directions and the branches are not at identical temperature within a band. The pooled curve is emitted as evidence that the bands differ, not as a curve to use; the banded curves do not interpolate between bands and refuse outside their own charge-state interval"
+}
