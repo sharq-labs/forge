@@ -57,7 +57,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import common  # noqa: E402
-from predict import march  # noqa: E402
+from common import march  # noqa: E402
 
 from engcore.credibility.evidence import (  # noqa: E402
     CredibilityEvidenceReport,

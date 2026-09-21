@@ -1192,21 +1192,73 @@ def test_n_substituting_the_provider_does_not_inflate_the_record(standalone):
 # Reduction attacks — preregistration §16
 # =====================================================================
 
-def test_r1_the_adapter_is_local_and_no_provider_framework_exists():
-    """R1. One adapter for one provider; the generalisation has a named trigger."""
-    assert not (REPO_ROOT / "src/engcore/providers").exists()
-    exported = set(ng.__all__)
-    for forbidden in (
-        "ProviderRegistry", "ProviderDefinition", "ExternalProvider",
-        "ProviderCapabilityGraph", "ExecutionBackendHierarchy", "RemoteExecution",
-    ):
-        assert forbidden not in exported
+#: The six shapes R1 has forbidden since it was written. A provider framework
+#: is not "a module called providers"; it is these.
+FORBIDDEN_FRAMEWORK_NAMES = (
+    "ProviderRegistry", "ProviderDefinition", "ExternalProvider",
+    "ProviderCapabilityGraph", "ExecutionBackendHierarchy", "RemoteExecution",
+)
+
+
+def test_r1_the_adapter_is_local_and_the_generalisation_stayed_narrow():
+    """R1, after its named trigger fired. What it forbids is unchanged.
+
+    This assertion used to read ``not (REPO_ROOT / "src/engcore/providers")
+    .exists()``, because when it was written one provider was the entire
+    evidence and this adapter's own docstring named the condition for
+    generalising: "a second external provider whose process-execution needs
+    actually overlap".
+
+    PyBaMM arrived. Its needs do **not** overlap -- ngspice is a subprocess fed
+    a netlist on stdin, PyBaMM is an in-process Python library -- and
+    `engcore.providers` reflects that: it generalises identity, the request,
+    the outcome vocabulary and replay, and generalises **no execution at all**.
+    This adapter is byte-unchanged and still builds its own netlist, runs its
+    own subprocess and parses its own output.
+
+    So the file-absence assertion has been replaced by the thing it was
+    standing in for. The six forbidden names are the real content of R1 and
+    they now apply to both packages: a registry, a capability graph or a
+    backend hierarchy would be the framework this rule exists to prevent,
+    wherever it lived.
+    """
+    from engcore import providers as prov
+
+    for module, exported in ((ng, set(ng.__all__)), (prov, set(prov.__all__))):
+        for forbidden in FORBIDDEN_FRAMEWORK_NAMES:
+            assert forbidden not in exported, f"{module.__name__} exports {forbidden}"
+
+    # And the generic contract is generic: it may not name a provider, because
+    # a shared abstraction that knows one member's name is not shared.
+    contract = (REPO_ROOT / "src/engcore/providers/contract.py").read_text(
+        encoding="utf-8"
+    )
+    for node in ast.walk(ast.parse(contract)):
+        if isinstance(node, ast.Name):
+            assert node.id.lower() not in ("pybamm", "pybop", "salib", "ngspice")
+
     # the adapter is reachable only from the electrical domain, and imports no
     # other domain
     source = pathlib.Path(inspect.getfile(ng)).read_text(encoding="utf-8")
     for other in ("thermal", "kinetics", "fluids", "aerospace"):
         assert f"domains.{other}" not in source
         assert f"import {other}" not in source
+
+
+def test_r1b_the_ngspice_adapter_did_not_move_under_the_new_contract():
+    """The control for the claim above: this adapter still owns its execution.
+
+    A generalisation that quietly absorbed the subprocess would make the
+    comparison this milestone measures depend on shared code, which is exactly
+    what `HETERO-NGSPICE` arranged not to happen.
+    """
+    from engcore.providers import contract as provider_contract
+
+    source = pathlib.Path(inspect.getfile(ng)).read_text(encoding="utf-8")
+    assert "engcore.providers" not in source
+    assert "from ...providers" not in source and "from ..providers" not in source
+    assert ng.NgspiceInvocation is not None
+    assert not issubclass(ng.NgspiceProviderError, provider_contract.ProviderError)
 
 
 def test_r2_no_parser_result_wrapper_survived():

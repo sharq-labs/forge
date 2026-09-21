@@ -36,6 +36,7 @@ from engcore.credibility.evidence import (
     ModelValidityRecord,
 )
 from engcore.domains.battery import cell as bcell
+from engcore.domains.battery import context as bctx
 from engcore.domains.battery import models as bmodels
 from engcore.domains.battery import solver as bsolver
 from engcore.providers import ExecutionOutcome
@@ -43,6 +44,7 @@ from engcore.providers import pybamm_provider as pp
 from engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
 from engcore.scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.units.quantity import Quantity
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -117,14 +119,68 @@ def _request(model_key="thevenin_1rc", authority=FORGE_AUTHORITY):
     )
 
 
+def _native_cell_and_load():
+    """A declared cell and load at a benign operating point.
+
+    Written out here rather than imported from `tests/domains/battery/
+    battery_cases.py`. That module is reachable only by appending its directory
+    to `sys.path`, and after such an append `import battery_cases` looks to
+    `tests/test_core_guards.py`'s dependency sweep exactly like a third-party
+    package it cannot resolve -- which is what it reported when this helper did
+    that. The values below are that module's own defaults.
+    """
+    limits = bctx.CellLimits(
+        **{
+            bctx.CONTINUOUS_DISCHARGE_C_RATE: Quantity(2.0, "1/hour"),
+            bctx.PULSE_DISCHARGE_C_RATE: Quantity(10.0, "1/hour"),
+            bctx.RATED_PULSE_DURATION: Quantity(10.0, "second"),
+            bctx.USABLE_SOC_MINIMUM: Quantity(0.10, "dimensionless"),
+            bctx.USABLE_SOC_MAXIMUM: Quantity(0.95, "dimensionless"),
+            bctx.MINIMUM_DISCHARGE_TEMPERATURE: Quantity(253.15, "kelvin"),
+            bctx.MAXIMUM_DISCHARGE_TEMPERATURE: Quantity(333.15, "kelvin"),
+            bctx.RESISTANCE_REFERENCE_TEMPERATURE: Quantity(298.15, "kelvin"),
+            bctx.RESISTANCE_TEMPERATURE_SPAN: Quantity(50.0, "kelvin"),
+            bctx.CELL_THERMAL_CONDUCTANCE: Quantity(0.15, "watt/kelvin"),
+            bctx.SELF_HEATING_RISE_BOUND: Quantity(15.0, "kelvin"),
+            bctx.POLARIZATION_TIME_CONSTANT: Quantity(30.0, "second"),
+            bctx.SOC_STEP_RESOLUTION: Quantity(0.10, "dimensionless"),
+            bctx.CAPACITY_REFERENCE_TEMPERATURE: Quantity(293.15, "kelvin"),
+            bctx.CAPACITY_TEMPERATURE_SPAN: Quantity(20.0, "kelvin"),
+            bctx.PEUKERT_EXPONENT: Quantity(1.05, "dimensionless"),
+            bctx.PEUKERT_REFERENCE_CURRENT: Quantity(0.5, "ampere"),
+            bctx.PEUKERT_FIT_DECADES: Quantity(1.0, "dimensionless"),
+        }
+    )
+    cell = bcell.CellSpecification(
+        cell_id="CELL-1",
+        limits=limits,
+        **{
+            bctx.NOMINAL_CAPACITY: Quantity(2.5, "ampere_hour"),
+            bctx.INTERNAL_RESISTANCE: Quantity(0.030, "ohm"),
+            bctx.OCV_AT_FULL: Quantity(4.2, "volt"),
+            bctx.OCV_AT_EMPTY: Quantity(3.0, "volt"),
+            bctx.COULOMBIC_EFFICIENCY: Quantity(0.99, "dimensionless"),
+        },
+    )
+    load = bcell.DischargeLoad(
+        load_id="LOAD-1",
+        current=Quantity(2.5, "ampere"),
+        initial_state_of_charge=Quantity(0.90, "dimensionless"),
+        **{
+            bctx.CELL_TEMPERATURE: Quantity(298.15, "kelvin"),
+            bctx.DURATION: Quantity(120.0, "second"),
+            bctx.PULSE_CURRENT: Quantity(5.0, "ampere"),
+            bctx.PULSE_DURATION: Quantity(1.0, "second"),
+            bctx.CUTOFF_VOLTAGE: Quantity(3.0, "volt"),
+            bctx.CUTOFF_STATE_OF_CHARGE: Quantity(0.15, "dimensionless"),
+        },
+    )
+    return cell, load
+
+
 def _native_result() -> tuple[ScientificResult, str, str]:
     """A real native battery solve, wrapped as the ScientificResult it produces."""
-    import sys
-
-    sys.path.insert(0, str(REPO_ROOT / "tests" / "domains" / "battery"))
-    from battery_cases import build_cell, build_load  # noqa: E402
-
-    cell, load = build_cell(), build_load()
+    cell, load = _native_cell_and_load()
     problem = bcell.build_battery_problem(cell, load)
     solver = bsolver.BatteryCellSolver()
     solver.bind_cell(cell, load, problem.problem_id)

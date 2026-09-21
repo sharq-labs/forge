@@ -44,12 +44,26 @@ RECOVERY = os.path.join(REPO, "benchmarks", "battery_voltage_s3_recovery")
 RECOVERY_HARNESS = os.path.join(RECOVERY, "harness")
 RECOVERY_EVIDENCE = os.path.join(RECOVERY, "evidence")
 
-sys.path.insert(0, RECOVERY_HARNESS)
+# Written with the path SEGMENTS spelled out rather than through the
+# constants above, and deliberately. `tests/test_core_guards.py`'s dependency
+# sweep resolves a first-party module reached through a `sys.path` mutation by
+# reading the string segments of that mutation; an insert of a pre-joined
+# variable carries no segments, so `corpus` and `predict` became two phantom
+# third-party dependencies the guard could not resolve, and said so.
+sys.path.insert(
+    0, os.path.join(REPO, "benchmarks", "battery_voltage_s3_recovery", "harness")
+)
 sys.path.insert(0, os.path.join(REPO, "src"))
 
 import corpus as recovery_corpus  # noqa: E402
-from engcore.domains.battery import flagship_ocv_v2 as recovery_ocv  # noqa: E402
 import predict as recovery_predict  # noqa: E402
+
+from engcore.domains.battery import flagship_ocv_v2 as recovery_ocv  # noqa: E402
+
+#: The recovery's prediction march, re-exported so that callers in this round
+#: reach it through this module rather than each repeating the `sys.path`
+#: mutation that makes it importable.
+march = recovery_predict.march
 
 from engcore.providers import pybamm_provider as pp  # noqa: E402
 

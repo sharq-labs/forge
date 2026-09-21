@@ -266,6 +266,35 @@ Recorded so a later session does not repeat it.
    and `pybop_provider.py`'s saying why a fit is not a `ScientificResult`. Both
    are now AST walks, which is the distinction `tests/core_vocabulary.py`
    already drew for the Scientific Core.
+6. **Reaching a first-party module through an opaque `sys.path` insert.** The
+   harness inserted a pre-joined path variable, and `test_core_guards.py`'s
+   dependency sweep — which resolves such a module by reading the *string
+   segments* of the mutation — saw `corpus` and `predict` as two third-party
+   packages it could not resolve. Fixed by spelling the segments out and
+   re-exporting `march` through `common`. The same sweep caught
+   `battery_cases`, which a test reached the same way; that fixture is now
+   written out locally.
+
+### Four repository guards this work moved, each deliberately
+
+`tests/test_heterogeneous_ngspice.py::test_r1_...` asserted
+`not (REPO_ROOT / "src/engcore/providers").exists()`. Its named trigger has
+fired, so the file-absence stand-in is replaced by what it stood for: the six
+forbidden framework names — registry, definition, capability graph, backend
+hierarchy — now checked against **both** packages, plus a new assertion that
+the generic contract names no provider and a new control test that the ngspice
+adapter did not move under it.
+
+`test_the_bare_install_..._must_be_green` pinned the exact set of modules under
+`src/` that reach an optional dependency at `{mcp/server.py}`. It is now that
+module plus the two provider adapters, with `salib_provider.py` named in the
+comment: the guard derives `salib` from `pyproject.toml` while the package
+imports as `SALib`, so it is blind to that module by a spelling rather than by
+an exemption.
+
+`test_the_policy_names_every_non_core_package` and `NON_CORE_PACKAGES`: the
+first was **already red on the base branch** (`domainpacks` classified and never
+named in the policy); both are repaired in the same edit that adds `providers`.
 
 ---
 

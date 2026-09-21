@@ -490,3 +490,27 @@ under `Chen2020` is refused on 52 of 52 before PyBaMM is called.
   engines enter the same assembly is proved in
   `tests/providers/test_provider_trust_path.py` instead, where a native battery
   solve does produce one.
+
+### Repository guards this round moved
+
+* `tests/test_heterogeneous_ngspice.py::test_r1_...` asserted
+  `not (REPO_ROOT / "src/engcore/providers").exists()`. Its named trigger --
+  a second external provider -- has fired, so the file-absence stand-in is
+  replaced by what it stood for: the six forbidden framework names checked
+  against BOTH packages, plus a new assertion that the generic contract names
+  no provider and a new control test (`test_r1b_...`) that the ngspice
+  adapter did not move under it. PyBaMM's process-execution needs do not
+  overlap ngspice's, so no execution was generalised and that adapter is
+  byte-unchanged.
+* `test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green`
+  pinned the exact set of modules under `src/` reaching an optional
+  dependency at `{mcp/server.py}`. Now that module plus the two provider
+  adapters. `salib_provider.py` is named in the comment rather than the set:
+  the guard derives `salib` from `pyproject.toml` while the package imports
+  as `SALib`, so it is blind to that module by a spelling, not an exemption.
+* `test_every_dependency_the_tree_reaches_for_is_declared` reported
+  `battery_cases`, `corpus` and `predict` as phantom third-party packages.
+  All three were first-party modules reached through opaque `sys.path`
+  inserts. The guard resolves such a module by reading the STRING SEGMENTS of
+  the mutation, and an insert of a pre-joined variable carries none. Fixed in
+  the harness and the test rather than in the guard.
