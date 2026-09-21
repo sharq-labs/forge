@@ -527,11 +527,32 @@ class GraphPlan:
                 or self.scenario.end != self.coupling_plan.time.end
             ):
                 raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
-            if self.scenario.requires_stateful_execution:
+            if self.scenario.unsupported_runtime_features:
                 raise ValueError(
-                    "graph plan refuses scenario state, inputs, conditions, events, "
-                    "termination, or QoIs until the multiphysics runtime consumes "
-                    "and receipts those fields"
+                    "graph plan refuses unsupported scenario runtime features: "
+                    f"{list(self.scenario.unsupported_runtime_features)}"
+                )
+            scenario_inputs = {
+                item.input_id
+                for segment in self.scenario.segments
+                for item in segment.inputs
+            }
+            planned_paths = {item.fact_path for item in self.external_inputs}
+            unknown = sorted(scenario_inputs - planned_paths)
+            if unknown:
+                raise ValueError(
+                    "scenario inputs have no exact GraphPlan external-input binding: "
+                    f"{unknown}"
+                )
+            all_scenario_inputs = [
+                item.input_id
+                for segment in self.scenario.segments
+                for item in segment.inputs
+            ]
+            if len(all_scenario_inputs) != len(set(all_scenario_inputs)):
+                raise ValueError(
+                    "scenario input ids may currently appear in one segment only; "
+                    "cross-segment schedule merging is not implemented"
                 )
         for label in (
             "authority_pack_id",

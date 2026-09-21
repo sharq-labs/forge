@@ -8,6 +8,10 @@ import json
 from typing import Any, Mapping
 
 from ..compositionpacks.contracts import SystemValidationResult
+from ..compositionpacks.applicability import (
+    ApplicabilityState,
+    evaluate_applicability_predicate,
+)
 from ..compositionpacks.uncertainty import SystemUncertaintyResult
 from ..compositionpacks.participant import ParticipantBinding
 from ..compositionpacks.registry import CompositionPackRegistry
@@ -679,6 +683,34 @@ def execute_authorized_graph_plan(
 
     _verify_graph_authority(composition, graph_plan)
 
+    scenario_series = {
+        series.input_id: series
+        for segment in (() if graph_plan.scenario is None else graph_plan.scenario.segments)
+        for series in segment.inputs
+    }
+    base_facts = {
+        item.fact_path: item.value for item in graph_plan.external_inputs
+    }
+    applicability_fact_sets = [base_facts]
+    for input_id, series in sorted(scenario_series.items()):
+        for sample in series.samples:
+            applicability_fact_sets.append({**base_facts, input_id: sample.value})
+    for rule in composition.applicability_rules:
+        if rule.blueprint_id != graph_plan.blueprint_id:
+            continue
+        for predicate in rule.predicates:
+            for facts in applicability_fact_sets:
+                evaluation = evaluate_applicability_predicate(
+                    predicate,
+                    facts=facts,
+                    static_external_inputs=not bool(scenario_series),
+                )
+                if evaluation.state is not ApplicabilityState.SATISFIED:
+                    raise InvalidScientificProblem(
+                        "scenario applicability preflight refused execution: "
+                        f"{evaluation.reason}"
+                    )
+
     factories = ParticipantFactoryRegistry(
         execution.participant_factories
     )
@@ -724,6 +756,12 @@ def execute_authorized_graph_plan(
             for item in graph_plan.external_inputs
         },
         external_uncertainty=external_uncertainty,
+        external_input_series={
+            item.port: series
+            for item in graph_plan.external_inputs
+            for series in scenario_series.values()
+            if series.input_id == item.fact_path
+        },
     )
 
     validation: list[AuthorizedSystemValidation] = []

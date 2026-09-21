@@ -423,6 +423,26 @@ class ScenarioSpecification:
             )
         )
 
+    @property
+    def unsupported_runtime_features(self) -> tuple[str, ...]:
+        features: list[str] = []
+        if self.state_variables or self.initial_state is not None:
+            features.append("state")
+        if self.events:
+            features.append("events")
+        if self.termination_conditions:
+            features.append("termination")
+        if self.quantities_of_interest:
+            features.append("quantities_of_interest")
+        if any(segment.operating_conditions for segment in self.segments):
+            features.append("operating_conditions")
+        if any(
+            item.interpolation is InterpolationKind.LINEAR
+            for segment in self.segments for item in segment.inputs
+        ):
+            features.append("linear_interpolation")
+        return tuple(features)
+
     def to_dict(self) -> dict[str, Any]:
         return {"schema": SCENARIO_SCHEMA, "scenario_id": self.scenario_id, "version": self.version, "start": self.start.to_dict(), "end": self.end.to_dict(), "state_variables": [item.to_dict() for item in self.state_variables], "initial_state": None if self.initial_state is None else self.initial_state.to_dict(), "segments": [item.to_dict() for item in self.segments], "events": [item.to_dict() for item in self.events], "termination_conditions": [item.to_dict() for item in self.termination_conditions], "quantities_of_interest": [item.to_dict() for item in self.quantities_of_interest]}
 

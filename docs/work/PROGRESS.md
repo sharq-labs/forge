@@ -11,6 +11,10 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Completed in this line of work
 
+- Routed window-aligned STEP scenario inputs through the live multiphysics
+  runtime without reinitializing participant state; consumed values are
+  receipted per window. Unsupported interpolation/features and schedule-less
+  replay fail closed.
 - Added immutable, unit-bearing, digestible generic scenario contracts with
   strict timeline, state, interpolation and wire-shape validation.
 - Added additive GraphPlan v3 scenario binding. Authorized execution currently
@@ -41,6 +45,18 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-21 11:00 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/execution; git diff --check`
+result: PASS
+summary: 26 passed; runtime consumes and receipts window-aligned STEP inputs, while authorized electrothermal execution refuses them under its static-input applicability rule; independent scientific review verdict PASS
+commit: 440a8165 (working tree changes)
+
+2026-09-21 10:56 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scenarios src/engcore/planning/records.py src/engcore/execution/multiphysics/runtime.py src/engcore/assembly/multiphysics.py; py -3 -m pytest --import-mode=importlib -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/execution tests/scientific/replay_core/test_run_replay_v2.py; git diff --check`
+result: PASS
+summary: compileall passed, 31 tests passed, and diff whitespace validation passed; STEP scenario values are consumed and unsupported replay/features refuse
+commit: 440a8165 (working tree changes)
 
 2026-09-21 10:54 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`

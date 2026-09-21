@@ -27,6 +27,7 @@ from ...scientific.multiphysics import (
 )
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
+from ...scenarios import InterpolationKind, TimeSeriesInput
 from .convergence import ResidualCalculator
 from .error import CouplingErrorBudget
 from .factory import ParticipantFactoryRegistry
@@ -132,6 +133,10 @@ class MultiphysicsRuntime:
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
         """Replay a recorded graph using exact registered execution factories."""
+        if record.final_outputs.get("_time_varying_external_inputs"):
+            raise InvalidScientificProblem(
+                "time-varying run replay requires its authorized scenario schedule"
+            )
         runtime = cls.from_record_with_factory_registry(
             record,
             registry,
@@ -189,6 +194,10 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
     ) -> MultiphysicsRunRecord:
+        if record.final_outputs.get("_time_varying_external_inputs"):
+            raise InvalidScientificProblem(
+                "time-varying run replay requires its authorized scenario schedule"
+            )
         runtime = cls.from_record(
             record,
             participants,
@@ -1088,13 +1097,43 @@ class MultiphysicsRuntime:
         external_uncertainty: Mapping[PortRef, Uncertainty] = {},
         initial_coupling_values: Mapping[str, CouplingValue] = {},
         initial_coupling_uncertainty: Mapping[str, Uncertainty] = {},
+        external_input_series: Mapping[PortRef, TimeSeriesInput] | None = None,
     ) -> MultiphysicsRunRecord:
         run_id = str(run_id).strip()
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
 
+        series = {} if external_input_series is None else dict(external_input_series)
+        if set(series) - set(external_inputs):
+            raise InvalidScientificProblem(
+                "time-varying external inputs must override declared external ports"
+            )
+        start_seconds = self._seconds(self.plan.time.start)
+        end_seconds = self._seconds(self.plan.time.end)
+        width_seconds = self._seconds(self.plan.time.coupling_window)
+        for ref, item in series.items():
+            if not isinstance(item, TimeSeriesInput):
+                raise InvalidScientificProblem("external input series must contain TimeSeriesInput records")
+            if item.interpolation is not InterpolationKind.STEP:
+                raise InvalidScientificProblem("runtime currently supports STEP external input series only")
+            if item.samples[0].instant != self.plan.time.start or item.samples[-1].instant != self.plan.time.end:
+                raise InvalidScientificProblem("external input series must cover the coupling-plan horizon")
+            for sample in item.samples:
+                offset = self._seconds(sample.instant) - start_seconds
+                aligned = abs(offset / width_seconds - round(offset / width_seconds)) <= 1e-12
+                if not aligned and self._seconds(sample.instant) != end_seconds:
+                    raise InvalidScientificProblem(
+                        f"STEP input {item.input_id!r} changes away from a coupling-window boundary"
+                    )
+
+        def values_at(instant: Quantity):
+            values = dict(external_inputs)
+            for ref, item in series.items():
+                values[ref] = item.value_at(instant)
+            return values
+
         external, external_uq = self._external_by_participant(
-            external_inputs,
+            values_at(self.plan.time.start),
             external_uncertainty,
         )
         start = self.plan.time.start
@@ -1141,6 +1180,7 @@ class MultiphysicsRuntime:
         width = self._seconds(self.plan.time.coupling_window)
         index = 0
         last_conservation: tuple[dict[str, Any], ...] = ()
+        scenario_input_receipt: list[dict[str, Any]] = []
 
         try:
             while current_time < end_time - 1e-15:
@@ -1151,6 +1191,18 @@ class MultiphysicsRuntime:
                     )
 
                 target = min(end_time, current_time + width)
+                instant = Quantity(current_time, "second")
+                window_values = values_at(instant)
+                external, external_uq = self._external_by_participant(
+                    window_values, external_uncertainty
+                )
+                scenario_input_receipt.append({
+                    "instant": instant.to_dict(),
+                    "values": {
+                        ref.key: window_values[ref].to_dict()
+                        for ref in sorted(series, key=lambda item: item.key)
+                    },
+                })
                 (
                     window,
                     edge_values,
@@ -1210,6 +1262,7 @@ class MultiphysicsRuntime:
         }
         final_outputs["_conservation"] = list(last_conservation)
         final_outputs["_coupling_error"] = error_budget.to_dict()
+        final_outputs["_time_varying_external_inputs"] = scenario_input_receipt
 
         return MultiphysicsRunRecord(
             run_id=run_id,
