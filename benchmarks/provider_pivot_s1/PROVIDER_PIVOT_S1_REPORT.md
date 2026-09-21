@@ -162,8 +162,16 @@ naming which engine produced them.
 | pybamm_thevenin_1rc | 82.7 % | 25.6 % (11/43) | 2 | 2 | 50 % |
 | pybamm_spme | 0 % | *unmeasured* | 0 | 0 | *unmeasured* |
 
-**The screen buys 13 points of false trust for 17 points of coverage.** That is
-the product's whole proposition, measured on real data for the first time.
+**The screen buys a 13-point reduction in false trust at a cost of 17 points of
+coverage** (38.5 % → 25.6 % false trust; 100 % → 82.7 % coverage). That trade is
+the product's whole proposition and this is the first time it has been measured
+on real data here.
+
+**The denominators are small and the numbers should be read as such.** 52
+trajectories, 9 refusals, 4 observable counterfactuals. Nothing here supports a
+claim about the *size* of the trade — only that it exists, in the expected
+direction, and is now measurable by a procedure that will take a larger corpus
+without modification.
 
 **The over-refusal rate is measured, not assumed.** A refusal hides what the
 model would have said, so each of the 9 refused trajectories was re-run under a
