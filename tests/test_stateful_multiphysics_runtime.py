@@ -78,10 +78,13 @@ def test_typed_initial_state_changes_output_and_roundtrips_receipt():
         "stateful-run",
         external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
         initial_state={"body": {"temperature": state}},
+        scenario_digest="b" * 64,
     )
 
     assert run.final_outputs["body.temperature"]["magnitude"] == 310
     assert run.initial_state_receipts[0].values == (state,)
+    # Scenario identity is bound although this scenario declares no event.
+    assert run.scenario_digest == "b" * 64
     restored = MultiphysicsRunRecord.from_dict(run.to_dict())
     assert restored.initial_state_receipts == run.initial_state_receipts
     assert restored.final_outputs == run.final_outputs
@@ -97,6 +100,7 @@ def test_mismatched_initial_state_acknowledgement_is_refused():
             "bad-state-receipt",
             external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
             initial_state={"body": {"temperature": state}},
+            scenario_digest="b" * 64,
         )
 
 

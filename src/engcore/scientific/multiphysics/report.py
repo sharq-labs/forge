@@ -14,6 +14,13 @@ from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .graph import PhysicsGraph
 from .plan import CouplingPlan
+from .receipts import (
+    OperatingConditionReceipt,
+    QuantityOfInterestRecord,
+    ScenarioInputReceipt,
+    StateTransitionReceipt,
+    TerminationReceipt,
+)
 from .state import InitialStateReceipt, ReachedScheduledEvent, ScheduledEventRecord
 from .ports import PortDirection, PortRef
 from .value import (
@@ -31,7 +38,22 @@ WINDOW_SCHEMA = schema_string("multiphysics_window")
 EXTERNAL_INPUT_SCHEMA = schema_string("multiphysics_external_input")
 INITIAL_COUPLING_SCHEMA = schema_string("multiphysics_initial_coupling")
 RUN_SCHEMA_V1 = schema_string("multiphysics_run")
-RUN_SCHEMA = schema_string("multiphysics_run", 2)
+RUN_SCHEMA_V2 = schema_string("multiphysics_run", 2)
+#: V3 adds the typed scenario evidence the World Runtime round made executable:
+#: consumed scenario inputs, delivered operating conditions, participant state
+#: transitions, the condition that stopped a run and the requested quantities of
+#: interest.  V2 records read back with those tuples empty, which is what they
+#: meant: that runtime produced none of them.  What V3 does NOT do is admit a V2
+#: record that stored consumed inputs in `final_outputs` -- see
+#: `_LEGACY_INPUT_KEY` below.
+RUN_SCHEMA = schema_string("multiphysics_run", 3)
+
+#: Consumed time-varying inputs once lived here, in the map of scientific
+#: outputs.  They are execution evidence, so they moved to
+#: `scenario_input_receipts`.  A payload still carrying the key is ambiguous --
+#: it is either a pre-V3 writer or a tampered record asserting outputs it did
+#: not compute -- and is refused rather than migrated.
+_LEGACY_INPUT_KEY = "_time_varying_external_inputs"
 
 _TIME_DIMENSION = dimensionality("second")
 
@@ -510,6 +532,11 @@ class MultiphysicsRunRecord:
     scheduled_events: tuple[ScheduledEventRecord, ...] = ()
     reached_scheduled_events: tuple[ReachedScheduledEvent, ...] = ()
     scenario_digest: str = ""
+    scenario_input_receipts: tuple[ScenarioInputReceipt, ...] = ()
+    operating_condition_receipts: tuple[OperatingConditionReceipt, ...] = ()
+    state_transitions: tuple[StateTransitionReceipt, ...] = ()
+    termination: TerminationReceipt | None = None
+    quantities_of_interest: tuple[QuantityOfInterestRecord, ...] = ()
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -533,10 +560,23 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem(
                 "run started_at disagrees with coupling plan"
             )
-        if not _same_time(ended, self.plan.time.end):
+        if not isinstance(self.termination, (TerminationReceipt, type(None))):
             raise InvalidScientificProblem(
-                "successful multiphysics run must end at coupling plan end"
+                "multiphysics run termination must be a TerminationReceipt or None"
             )
+        if not _same_time(ended, self.plan.time.end):
+            # An early end is allowed exactly once: when an authoritative
+            # termination receipt says why, at the instant the run stopped.
+            # Everything else is silent clipping.
+            if self.termination is None:
+                raise InvalidScientificProblem(
+                    "a multiphysics run that ends before its coupling plan must "
+                    "carry the termination receipt that stopped it"
+                )
+            if not _same_time(self.termination.instant, ended):
+                raise InvalidScientificProblem(
+                    "run termination receipt instant disagrees with run ended_at"
+                )
 
         external_inputs = tuple(self.external_inputs)
         if any(
@@ -635,6 +675,12 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem(
                 "multiphysics run final_outputs must be a mapping"
             )
+        if _LEGACY_INPUT_KEY in self.final_outputs:
+            raise InvalidScientificProblem(
+                f"final_outputs carries {_LEGACY_INPUT_KEY!r}: consumed scenario "
+                f"inputs are execution evidence and belong in "
+                f"scenario_input_receipts, not in the map of computed outputs"
+            )
         if self.coupling_error_bound is not None:
             value = float(self.coupling_error_bound)
             if not math.isfinite(value) or value < 0.0:
@@ -667,16 +713,25 @@ class MultiphysicsRunRecord:
         boundaries = {0: started, **{window.index + 1: window.end for window in windows}}
         if any(item.boundary_index not in boundaries or not _same_time(item.instant, boundaries[item.boundary_index]) for item in reached):
             raise InvalidScientificProblem("reached scheduled event does not match its run boundary")
-        digest = str(self.scenario_digest).strip().lower()
-        if scheduled:
-            if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
-                raise InvalidScientificProblem("scheduled events require the authorized scenario sha256 digest")
-        elif digest:
-            raise InvalidScientificProblem("scenario_digest requires scheduled events")
         object.__setattr__(self, "scheduled_events", tuple(sorted(scheduled)))
         object.__setattr__(self, "reached_scheduled_events", tuple(sorted(reached)))
-        object.__setattr__(self, "scenario_digest", digest)
 
+        # SCENARIO IDENTITY IS NOT CONDITIONAL ON EVENTS.
+        #
+        # This record used to require the scenario digest when, and only when,
+        # the run carried scheduled events -- and to REFUSE one otherwise. A
+        # scenario changes execution through its initial state, its
+        # time-varying inputs, its operating conditions and its termination
+        # conditions just as materially as through an event it may well not
+        # declare, so a run driven by any of those was recorded with no way to
+        # say which scenario produced it. Every piece of scenario-sourced
+        # evidence below now demands the digest, and the digest alone is
+        # allowed: a scenario that only fixed the horizon still identifies the
+        # world the run executed in.
+        #
+        # Validated at the END of this constructor, once started_at, ended_at
+        # and windows are normalized, because every check below compares an
+        # instant against a run boundary.
         object.__setattr__(self, "run_id", run_id)
         object.__setattr__(self, "started_at", started)
         object.__setattr__(self, "ended_at", ended)
@@ -691,6 +746,180 @@ class MultiphysicsRunRecord:
             tuple(sorted(initial, key=lambda item: item.edge_id)),
         )
         object.__setattr__(self, "windows", windows)
+        self._validate_scenario_evidence()
+
+    def _validate_scenario_evidence(self) -> None:
+        digest = str(self.scenario_digest).strip().lower()
+        if digest and (
+            len(digest) != 64
+            or any(char not in "0123456789abcdef" for char in digest)
+        ):
+            raise InvalidScientificProblem(
+                "run scenario_digest must be a sha256 hex digest"
+            )
+        object.__setattr__(self, "scenario_digest", digest)
+
+        participant_ids = {item.participant_id for item in self.graph.participants}
+        boundaries = {0: self.started_at}
+        boundaries.update({window.index + 1: window.end for window in self.windows})
+
+        inputs = tuple(self.scenario_input_receipts)
+        conditions = tuple(self.operating_condition_receipts)
+        transitions = tuple(self.state_transitions)
+        qois = tuple(self.quantities_of_interest)
+        for label, values, expected in (
+            ("scenario_input_receipts", inputs, ScenarioInputReceipt),
+            ("operating_condition_receipts", conditions, OperatingConditionReceipt),
+            ("state_transitions", transitions, StateTransitionReceipt),
+            ("quantities_of_interest", qois, QuantityOfInterestRecord),
+        ):
+            if any(not isinstance(item, expected) for item in values):
+                raise InvalidScientificProblem(
+                    f"{label} must contain {expected.__name__} records"
+                )
+
+        for item in inputs:
+            if item.port.participant_id not in participant_ids:
+                raise InvalidScientificProblem(
+                    f"scenario input receipt names participant "
+                    f"{item.port.participant_id!r} outside the run graph"
+                )
+            port = self.graph.participant(item.port.participant_id).port(
+                item.port.port_id
+            )
+            if port.direction is not PortDirection.INPUT:
+                raise InvalidScientificProblem(
+                    f"scenario input receipt {item.input_id!r} names output port "
+                    f"{item.port.key}"
+                )
+            self._require_boundary(boundaries, item.boundary_index, item.instant,
+                                   "scenario input receipt")
+        if len({item.key for item in inputs}) != len(inputs):
+            raise InvalidScientificProblem(
+                "scenario input receipts are not unique per boundary, input and port"
+            )
+
+        for item in conditions:
+            if item.participant_id not in participant_ids:
+                raise InvalidScientificProblem(
+                    f"operating condition receipt names participant "
+                    f"{item.participant_id!r} outside the run graph"
+                )
+            self._require_boundary(boundaries, item.boundary_index, item.instant,
+                                   "operating condition receipt")
+        if len({item.key for item in conditions}) != len(conditions):
+            raise InvalidScientificProblem(
+                "operating condition receipts are not unique per boundary, "
+                "participant and condition"
+            )
+
+        for item in transitions:
+            if item.participant_id not in participant_ids:
+                raise InvalidScientificProblem(
+                    f"state transition names participant {item.participant_id!r} "
+                    f"outside the run graph"
+                )
+            window = next(
+                (w for w in self.windows if w.index == item.window_index), None
+            )
+            if (
+                window is None
+                or not _same_time(window.start, item.start)
+                or not _same_time(window.end, item.end)
+            ):
+                raise InvalidScientificProblem(
+                    f"state transition {item.window_index} does not span a "
+                    f"coupling window of this run"
+                )
+        if len({item.key for item in transitions}) != len(transitions):
+            raise InvalidScientificProblem(
+                "state transitions are not unique per window and participant"
+            )
+
+        for item in qois:
+            if item.port.participant_id not in participant_ids:
+                raise InvalidScientificProblem(
+                    f"quantity of interest names participant "
+                    f"{item.port.participant_id!r} outside the run graph"
+                )
+            port = self.graph.participant(item.port.participant_id).port(
+                item.port.port_id
+            )
+            if port.direction is not PortDirection.OUTPUT:
+                raise InvalidScientificProblem(
+                    f"quantity of interest {item.qoi_id!r} is bound to "
+                    f"{item.port.key}, which is not a produced output"
+                )
+            if not _same_time(item.instant, self.ended_at):
+                raise InvalidScientificProblem(
+                    f"quantity of interest {item.qoi_id!r} is not reported at the "
+                    f"instant the run ended"
+                )
+        if len({item.qoi_id for item in qois}) != len(qois):
+            raise InvalidScientificProblem("quantity of interest ids must be unique")
+
+        termination = self.termination
+        if termination is not None:
+            self._require_boundary(
+                boundaries, termination.boundary_index, termination.instant,
+                "termination receipt",
+            )
+
+        scenario_bound = (
+            bool(self.scheduled_events)
+            or bool(self.initial_state_receipts)
+            or bool(inputs)
+            or bool(conditions)
+            or bool(qois)
+            or termination is not None
+        )
+        if scenario_bound and not digest:
+            raise InvalidScientificProblem(
+                "a run carrying scenario evidence must be bound to the sha256 "
+                "digest of the exact scenario that produced it"
+            )
+        for item in (*inputs, *conditions, *qois):
+            if item.scenario_digest != digest:
+                raise InvalidScientificProblem(
+                    "scenario evidence is bound to a different scenario than the run"
+                )
+        if termination is not None and termination.scenario_digest != digest:
+            raise InvalidScientificProblem(
+                "termination receipt is bound to a different scenario than the run"
+            )
+        for item in transitions:
+            if item.scenario_digest != digest:
+                raise InvalidScientificProblem(
+                    "state transition is bound to a different scenario than the run"
+                )
+
+        object.__setattr__(
+            self, "scenario_input_receipts", tuple(sorted(inputs, key=lambda i: i.key))
+        )
+        object.__setattr__(
+            self,
+            "operating_condition_receipts",
+            tuple(sorted(conditions, key=lambda i: i.key)),
+        )
+        object.__setattr__(
+            self, "state_transitions", tuple(sorted(transitions, key=lambda i: i.key))
+        )
+        object.__setattr__(
+            self, "quantities_of_interest", tuple(sorted(qois, key=lambda i: i.qoi_id))
+        )
+
+    @staticmethod
+    def _require_boundary(
+        boundaries: Mapping[int, Quantity],
+        index: int,
+        instant: Quantity,
+        label: str,
+    ) -> None:
+        found = boundaries.get(index)
+        if found is None or not _same_time(found, instant):
+            raise InvalidScientificProblem(
+                f"{label} does not sit on boundary {index} of this run"
+            )
 
     @property
     def graph_id(self) -> str:
@@ -735,13 +964,28 @@ class MultiphysicsRunRecord:
             "scheduled_events": [item.to_dict() for item in self.scheduled_events],
             "reached_scheduled_events": [item.to_dict() for item in self.reached_scheduled_events],
             "scenario_digest": self.scenario_digest,
+            "scenario_input_receipts": [
+                item.to_dict() for item in self.scenario_input_receipts
+            ],
+            "operating_condition_receipts": [
+                item.to_dict() for item in self.operating_condition_receipts
+            ],
+            "state_transitions": [item.to_dict() for item in self.state_transitions],
+            "termination": (
+                None if self.termination is None else self.termination.to_dict()
+            ),
+            "quantities_of_interest": [
+                item.to_dict() for item in self.quantities_of_interest
+            ],
         }
 
     @classmethod
     def from_dict(
         cls, payload: Mapping[str, Any]
     ) -> "MultiphysicsRunRecord":
-        schema = require_schema_any(payload, (RUN_SCHEMA_V1, RUN_SCHEMA))
+        schema = require_schema_any(
+            payload, (RUN_SCHEMA_V1, RUN_SCHEMA_V2, RUN_SCHEMA)
+        )
         graph = PhysicsGraph.from_dict(payload["graph"])
         plan = CouplingPlan.from_dict(payload["plan"])
         made = cls(
@@ -783,6 +1027,27 @@ class MultiphysicsRunRecord:
                 )
             ),
             scenario_digest="" if schema == RUN_SCHEMA_V1 else payload.get("scenario_digest", ""),
+            scenario_input_receipts=tuple(
+                ScenarioInputReceipt.from_dict(item)
+                for item in payload.get("scenario_input_receipts", ())
+            ),
+            operating_condition_receipts=tuple(
+                OperatingConditionReceipt.from_dict(item)
+                for item in payload.get("operating_condition_receipts", ())
+            ),
+            state_transitions=tuple(
+                StateTransitionReceipt.from_dict(item)
+                for item in payload.get("state_transitions", ())
+            ),
+            termination=(
+                None
+                if payload.get("termination") is None
+                else TerminationReceipt.from_dict(payload["termination"])
+            ),
+            quantities_of_interest=tuple(
+                QuantityOfInterestRecord.from_dict(item)
+                for item in payload.get("quantities_of_interest", ())
+            ),
         )
         derived = {
             "graph_id": made.graph_id,

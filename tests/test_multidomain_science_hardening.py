@@ -38,6 +38,8 @@ from engcore.execution.multiphysics import (
     ParticipantFactoryRegistry,
 )
 from engcore.scenarios import (
+    ComposedInputSchedule,
+    SegmentContribution,
     ScenarioSegment,
     ScenarioEvent,
     ScenarioSpecification,
@@ -325,25 +327,38 @@ def test_runtime_consumes_window_aligned_step_inputs_when_authority_allows_it():
         item for item in graph_plan.external_inputs
         if item.fact_path == "electrical.source_voltage"
     )
-    series = TimeSeriesInput(
+    schedule = ComposedInputSchedule(
         voltage.fact_path,
-        (
-            TimeSample(Quantity(0, "s"), Quantity(12, "V")),
-            TimeSample(Quantity(5, "s"), Quantity(6, "V")),
-            TimeSample(Quantity(10, "s"), Quantity(6, "V")),
+        TimeSeriesInput(
+            voltage.fact_path,
+            (
+                TimeSample(Quantity(0, "s"), Quantity(12, "V")),
+                TimeSample(Quantity(5, "s"), Quantity(6, "V")),
+                TimeSample(Quantity(10, "s"), Quantity(6, "V")),
+            ),
+            InterpolationKind.STEP,
         ),
-        InterpolationKind.STEP,
+        (SegmentContribution("drive", Quantity(0, "s"), Quantity(10, "s")),),
     )
 
     run = runtime.run(
         "direct-step-runtime",
         external_inputs=planned,
-        external_input_series={voltage.port: series},
+        external_input_schedules={voltage.port: schedule},
+        scenario_digest="c" * 64,
     )
 
-    receipt = run.final_outputs["_time_varying_external_inputs"]
-    assert receipt[0]["values"][voltage.port.key]["magnitude"] == 12
-    assert receipt[5]["values"][voltage.port.key]["magnitude"] == 6
+    # Consumed control inputs are typed execution evidence, not outputs.
+    assert "_time_varying_external_inputs" not in run.final_outputs
+    receipts = [
+        item for item in run.scenario_input_receipts
+        if item.port == voltage.port
+    ]
+    assert receipts[0].value.magnitude_in("V") == 12
+    assert receipts[0].boundary_index == 0
+    assert receipts[0].segment_id == "drive"
+    assert receipts[5].value.magnitude_in("V") == 6
+    assert all(item.scenario_digest == "c" * 64 for item in receipts)
     assert run.final_outputs["electrical.heat_generation"]["magnitude"] < 5.0
 
 

@@ -19,7 +19,9 @@ from engcore.domainpacks import (
     snapshot_domain_pack,
     validate_domain_pack,
 )
-from engcore.domains.battery.pack import BatteryDomainPack
+from engcore.domainpacks.builtin_battery import (
+    BatteryCellDomainPack as BatteryDomainPack,
+)
 
 
 def test_battery_pack_manifest_matches_runtime_artifacts() -> None:
@@ -54,12 +56,12 @@ def test_registering_a_pack_does_not_enable_it() -> None:
     assert registry.providing("battery:cell_terminal_state") == ()
 
     with pytest.raises(DomainPackNotEnabled):
-        registry.get("battery", "1.0.0", require_enabled=True)
+        registry.get("battery.cell", "1", require_enabled=True)
 
-    registry.enable("battery", "1.0.0")
+    registry.enable("battery.cell", "1")
 
-    assert registry.is_enabled("battery", "1.0.0")
-    assert registry.get("battery", "1.0.0", require_enabled=True).provider.manifest.pack_id == "battery"
+    assert registry.is_enabled("battery.cell", "1")
+    assert registry.get("battery.cell", "1", require_enabled=True).provider.manifest.pack_id == "battery.cell"
     assert len(registry.providing("battery:cell_terminal_state")) == 1
 
 
@@ -68,10 +70,10 @@ def test_registry_never_guesses_a_pack_version() -> None:
     registry.register(BatteryDomainPack())
 
     with pytest.raises(DomainPackNotFound):
-        registry.get("battery", "latest")
+        registry.get("battery.cell", "latest")
 
     with pytest.raises(DomainPackNotFound):
-        registry.enable("battery", "9.9.9")
+        registry.enable("battery.cell", "9.9.9")
 
 
 class _ManifestDriftProvider(BatteryDomainPack):
@@ -114,7 +116,7 @@ def test_snapshot_binds_pack_manifest_and_origin() -> None:
 
     snapshot = snapshot_domain_pack(registration)
 
-    assert snapshot.pack_id == "battery"
+    assert snapshot.pack_id == "battery.cell"
     assert snapshot.manifest_digest == registration.provider.manifest.digest
     assert snapshot.distribution_name == "forge-domain-battery"
     assert snapshot.distribution_version == "1.2.3"
