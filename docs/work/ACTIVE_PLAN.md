@@ -14,7 +14,7 @@ Scientific Core or creating a parallel authority path.
 
 - [ ] Add a unit-bearing, immutable, digestible scenario/transient contract and
   trace it through authorized execution.
-- [ ] Add generic hierarchical component/system topology without duplicating
+- [x] Add generic hierarchical component/system topology without duplicating
   `ScientificTwin` instance authority.
 - [x] Source production realizations and solvers exclusively from enabled,
   validated Domain Packs; reject identity collisions.

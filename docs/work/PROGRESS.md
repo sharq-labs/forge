@@ -11,6 +11,19 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Completed in this line of work
 
+- Added deterministic hierarchical system/component topology bound to existing
+  `ScientificTwin`, `PortDefinition`, `PhysicsGraph` and `CouplingEdge`
+  authorities. Structural topology is bound through authorized execution;
+  unconsumed parameter/state/constraint bindings fail closed.
+- Routed window-aligned STEP scenario inputs through the live multiphysics
+  runtime without reinitializing participant state; consumed values are
+  receipted per window. Unsupported interpolation/features and schedule-less
+  replay fail closed.
+- Added immutable, unit-bearing, digestible generic scenario contracts with
+  strict timeline, state, interpolation and wire-shape validation.
+- Added additive GraphPlan v3 scenario binding. Authorized execution currently
+  accepts timing-only scenarios and fail-closed refuses every material
+  scenario field until runtime consumption and receipts are implemented.
 - Removed battery/electrical/thermal realization and solver imports from
   `planning.production`; enabled validated Domain Packs are now the sole
   production source for these artifacts, with existing fail-closed identity
@@ -36,6 +49,30 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-21 11:07 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_system_topology.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
+result: PASS
+summary: 21 passed; topology hierarchy/identity/graph bijection and authorized roundtrip pass, while unsupported bindings and impossible constraints refuse; independent scientific review verdict PASS
+commit: f1e32ac1 (working tree changes)
+
+2026-09-21 11:00 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/execution; git diff --check`
+result: PASS
+summary: 26 passed; runtime consumes and receipts window-aligned STEP inputs, while authorized electrothermal execution refuses them under its static-input applicability rule; independent scientific review verdict PASS
+commit: 440a8165 (working tree changes)
+
+2026-09-21 10:56 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scenarios src/engcore/planning/records.py src/engcore/execution/multiphysics/runtime.py src/engcore/assembly/multiphysics.py; py -3 -m pytest --import-mode=importlib -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/execution tests/scientific/replay_core/test_run_replay_v2.py; git diff --check`
+result: PASS
+summary: compileall passed, 31 tests passed, and diff whitespace validation passed; STEP scenario values are consumed and unsupported replay/features refuse
+commit: 440a8165 (working tree changes)
+
+2026-09-21 10:54 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
+result: PASS
+summary: 14 passed; scenario contracts round-trip, timing-only scenarios bind through authorized execution, and unsupported material scenario fields are refused
+commit: bec4ac58 (working tree changes)
 
 2026-09-21 10:35 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/planning/production.py; py -3 -m pytest --import-mode=importlib -q tests/test_multidomain_science_hardening.py tests/mcp/test_planning.py tests/mcp/test_intent.py; git diff --check; git status --short`
@@ -127,7 +164,51 @@ Never convert NOT RUN into PASS based on code inspection.
 
 ## Failed approaches / dead ends
 
-- None recorded for the current agent-workflow slice.
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 tools/forge_check.py --changed`
+result: FAIL
+summary: collection stopped on the 7 known duplicate test-module basename import mismatches (`test_verify`, `test_serialization`, `test_lineage`, `test_psd`); no changed-area test failure was produced
+commit: 531a104a
+
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
+summary: compileall passed, 138 tests passed, and diff whitespace validation passed for typed scheduled/reached synchronization receipts
+commit: f61a40a8 (working tree changes)
+
+Scientific review milestone: the first scheduled-event review returned CHANGES
+REQUIRED because requested controls were stored under `final_outputs`, where
+they could be mistaken for calculated results. The corrected design uses
+dedicated typed requested/reached synchronization records, exact boundary
+indices and the authorized scenario digest; the read-only reviewer then
+returned PASS. Neither review executed tests or constitutes validation.
+
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m compileall -q src/engcore/scientific/multiphysics src/engcore/execution/multiphysics src/engcore/scenarios src/engcore/planning src/engcore/assembly; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
+summary: compileall passed, 133 tests passed, and diff whitespace validation passed for the first corrected initial-state implementation
+commit: 374c709f (working tree changes)
+
+2026-09-21 11:20 +03:00
+command: `$env:PYTHONPATH='src'; py -3 -m pytest --import-mode=importlib -q tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py; git diff --check`
+result: PASS
+summary: 135 tests passed after adding fail-closed rejection for unknown state owners and dimensionally incompatible state uncertainty; diff whitespace validation passed
+commit: 374c709f (working tree changes)
+
+Scientific review milestone: the read-only `forge-scientific-review` reviewer
+returned PASS for the corrected initial-state slice. The review did not execute
+tests and is not a validation result. The accepted design requires a declared
+participant state schema, exact values with existing uncertainty records, a
+participant-produced receipt, dedicated run-record provenance, applicability
+evaluation and fail-closed replay.
+
+- Rejected an optional `initialize_state` callback that inferred state support
+  from callback presence and let the runtime synthesize its own receipt. A
+  no-op callback could acknowledge a requested state without installing it.
+  The uncommitted implementation was removed. The next design must include a
+  participant-declared state schema, state uncertainty, a typed participant
+  acknowledgement/resulting-state identity, applicability evaluation, and a
+  dedicated run-record receipt before initial state may enter authorization.
 
 Record failed experiments here with the reason they failed before trying a new
 approach. Do not delete old failed approaches merely because a later approach

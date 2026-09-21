@@ -23,6 +23,8 @@ from ..scientific.realizations.registry import RealizationRegistry
 from ..scientific.serialization import require_schema, require_schema_any, schema_string
 from ..scientific.solvers.registry import SolverRegistry
 from ..scientific.units.quantity import Quantity
+from ..scenarios import ScenarioSpecification
+from ..systems import SystemDefinition
 from .blueprint import BlueprintRegistry
 from .clarification import ClarificationQuestion
 from .verification import VerificationPlanningRegistry
@@ -35,7 +37,9 @@ PLANNING_GAP_SCHEMA = schema_string("scientific_planning_gap")
 FIDELITY_DECISION_SCHEMA = schema_string("scientific_fidelity_decision")
 RESOURCE_ESTIMATE_SCHEMA = schema_string("scientific_resource_estimate")
 GRAPH_PLAN_SCHEMA_V1 = schema_string("scientific_graph_plan")
-GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 2)
+GRAPH_PLAN_SCHEMA_V2 = schema_string("scientific_graph_plan", 2)
+GRAPH_PLAN_SCHEMA_V3 = schema_string("scientific_graph_plan", 3)
+GRAPH_PLAN_SCHEMA = schema_string("scientific_graph_plan", 4)
 PLANNED_EXTERNAL_INPUT_SCHEMA = schema_string("planned_external_input")
 _TAG_V1 = "forge.scientific_planning_record/1"
 _TAG = "forge.scientific_planning_record/2"
@@ -471,6 +475,8 @@ class GraphPlan:
     execution_pack_version: str = ""
     execution_pack_digest: str = ""
     external_inputs: tuple[PlannedExternalInput, ...] = ()
+    scenario: ScenarioSpecification | None = None
+    system_definition: SystemDefinition | None = None
 
     def __post_init__(self) -> None:
         for label in (
@@ -514,6 +520,62 @@ class GraphPlan:
             "external_inputs",
             tuple(sorted(external, key=lambda item: item.key)),
         )
+        if self.scenario is not None:
+            if not isinstance(self.scenario, ScenarioSpecification):
+                raise TypeError("graph plan scenario must be ScenarioSpecification or None")
+            if self.coupling_plan is None:
+                raise ValueError("graph plan scenario requires an executable coupling plan")
+            if (
+                self.scenario.start != self.coupling_plan.time.start
+                or self.scenario.end != self.coupling_plan.time.end
+            ):
+                raise ValueError("graph plan scenario horizon must equal coupling-plan horizon")
+            supported = {"state", "events"}
+            unsupported = tuple(
+                item for item in self.scenario.unsupported_runtime_features
+                if item not in supported
+            )
+            if unsupported:
+                raise ValueError(
+                    "graph plan refuses unsupported scenario runtime features: "
+                    f"{list(unsupported)}"
+                )
+            owners = {item.participant_id for item in self.graph.participants}
+            unknown_owners = sorted(item.owner_id for item in self.scenario.state_variables if item.owner_id not in owners)
+            if unknown_owners:
+                raise ValueError(f"scenario state owners are not graph participants: {unknown_owners}")
+            scenario_inputs = {
+                item.input_id
+                for segment in self.scenario.segments
+                for item in segment.inputs
+            }
+            planned_paths = {item.fact_path for item in self.external_inputs}
+            unknown = sorted(scenario_inputs - planned_paths)
+            if unknown:
+                raise ValueError(
+                    "scenario inputs have no exact GraphPlan external-input binding: "
+                    f"{unknown}"
+                )
+            all_scenario_inputs = [
+                item.input_id
+                for segment in self.scenario.segments
+                for item in segment.inputs
+            ]
+            if len(all_scenario_inputs) != len(set(all_scenario_inputs)):
+                raise ValueError(
+                    "scenario input ids may currently appear in one segment only; "
+                    "cross-segment schedule merging is not implemented"
+                )
+        if self.system_definition is not None:
+            if not isinstance(self.system_definition, SystemDefinition):
+                raise TypeError("graph plan system_definition must be SystemDefinition or None")
+            self.system_definition.validate_graph(self.graph)
+            if self.system_definition.unsupported_execution_bindings:
+                raise ValueError(
+                    "graph plan refuses topology bindings not yet consumed or "
+                    "enforced by runtime: "
+                    f"{list(self.system_definition.unsupported_execution_bindings)}"
+                )
         for label in (
             "authority_pack_id",
             "authority_pack_version",
@@ -615,13 +677,15 @@ class GraphPlan:
             "external_inputs": [
                 item.to_dict() for item in self.external_inputs
             ],
+            "scenario": None if self.scenario is None else self.scenario.to_dict(),
+            "system_definition": None if self.system_definition is None else self.system_definition.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "GraphPlan":
-        require_schema_any(
+        schema = require_schema_any(
             payload,
-            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA),
+            (GRAPH_PLAN_SCHEMA_V1, GRAPH_PLAN_SCHEMA_V2, GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA),
         )
         raw_plan = payload.get("coupling_plan")
         raw_estimate = payload.get("resource_estimate")
@@ -662,6 +726,16 @@ class GraphPlan:
             external_inputs=tuple(
                 PlannedExternalInput.from_dict(item)
                 for item in payload.get("external_inputs", ())
+            ),
+            scenario=(
+                None
+                if schema not in (GRAPH_PLAN_SCHEMA_V3, GRAPH_PLAN_SCHEMA) or payload.get("scenario") is None
+                else ScenarioSpecification.from_dict(payload["scenario"])
+            ),
+            system_definition=(
+                None
+                if schema != GRAPH_PLAN_SCHEMA or payload.get("system_definition") is None
+                else SystemDefinition.from_dict(payload["system_definition"])
             ),
         )
 

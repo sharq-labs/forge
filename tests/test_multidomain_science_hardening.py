@@ -1,6 +1,7 @@
 import copy
 import ast
 from pathlib import Path
+from dataclasses import replace
 
 import pytest
 
@@ -32,6 +33,21 @@ from engcore.planning.production import production_planning_registries
 from engcore.scientific.certification_core import verify_certification_record
 from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.units.quantity import Quantity
+from engcore.execution.multiphysics import (
+    MultiphysicsRuntime,
+    ParticipantFactoryRegistry,
+)
+from engcore.scenarios import (
+    ScenarioSegment,
+    ScenarioEvent,
+    ScenarioSpecification,
+    TimeSample,
+    TimeSeriesInput,
+    InterpolationKind,
+    NamedQuantity,
+    StateSnapshot,
+    StateVariable,
+)
 
 
 def _intent(*, omit=(), overrides=None):
@@ -169,6 +185,189 @@ def _plan(intent):
             }
         ),
     )
+
+
+def test_scenario_is_bound_to_graph_plan_and_authorized_execution():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    scenario = ScenarioSpecification(
+        "electrothermal.transient",
+        "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+
+    store = InMemoryBulkStore()
+    authorized = execute_authorized_graph_plan(
+        graph_plan,
+        run_id="scenario-bound-run",
+        compositions=production_composition_packs(),
+        executions=production_execution_packs(),
+        resolver=BulkDataResolver(store),
+        store=store,
+    )
+
+    restored = AuthorizedMultiphysicsRun.from_dict(authorized.to_dict())
+    assert restored.graph_plan.scenario == scenario
+    assert restored.graph_plan.scenario.digest == scenario.digest
+
+
+def test_authorized_scheduled_event_is_consumed_as_window_boundary():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    event = ScenarioEvent("half-window-marker", Quantity(0.5, "s"))
+    scenario = ScenarioSpecification(
+        "electrothermal.scheduled-event", "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+        events=(event,),
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+    store = InMemoryBulkStore()
+
+    authorized = execute_authorized_graph_plan(
+        graph_plan,
+        run_id="scheduled-event-run",
+        compositions=production_composition_packs(),
+        executions=production_execution_packs(),
+        resolver=BulkDataResolver(store),
+        store=store,
+    )
+
+    assert authorized.run.windows[0].end == Quantity(0.5, "s")
+    assert authorized.run.scheduled_events[0].event_id == event.event_id
+    assert authorized.run.reached_scheduled_events[0].boundary_index == 1
+    assert authorized.run.scenario_digest == scenario.digest
+    assert "_scheduled_events" not in authorized.run.final_outputs
+
+
+def test_graph_plan_refuses_scenario_fields_the_runtime_does_not_consume():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    start = graph_plan.coupling_plan.time.start
+    end = graph_plan.coupling_plan.time.end
+    scenario = ScenarioSpecification(
+        "unsupported.transient.input",
+        "1",
+        start,
+        end,
+        segments=(ScenarioSegment(
+            "load",
+            start,
+            end,
+            inputs=(TimeSeriesInput(
+                "source.power",
+                (TimeSample(start, Quantity(1, "W")), TimeSample(end, Quantity(2, "W"))),
+                InterpolationKind.LINEAR,
+            ),),
+        ),),
+    )
+
+    with pytest.raises(ValueError, match="linear_interpolation"):
+        replace(graph_plan, scenario=scenario)
+
+
+def test_step_scenario_is_refused_when_pack_requires_static_inputs():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    start = graph_plan.coupling_plan.time.start
+    end = graph_plan.coupling_plan.time.end
+    scenario = ScenarioSpecification(
+        "electrothermal.step_voltage",
+        "1",
+        start,
+        end,
+        segments=(ScenarioSegment(
+            "drive",
+            start,
+            end,
+            inputs=(TimeSeriesInput(
+                "electrical.source_voltage",
+                (
+                    TimeSample(start, Quantity(12, "V")),
+                    TimeSample(Quantity(5, "s"), Quantity(6, "V")),
+                    TimeSample(end, Quantity(6, "V")),
+                ),
+                InterpolationKind.STEP,
+            ),),
+        ),),
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+    store = InMemoryBulkStore()
+    with pytest.raises(
+        InvalidScientificProblem,
+        match="execution contract permits time-varying external inputs",
+    ):
+        execute_authorized_graph_plan(
+            graph_plan,
+            run_id="step-scenario-run",
+            compositions=production_composition_packs(),
+            executions=production_execution_packs(),
+            resolver=BulkDataResolver(store),
+            store=store,
+        )
+
+
+def test_runtime_consumes_window_aligned_step_inputs_when_authority_allows_it():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    execution = production_execution_packs().get(
+        graph_plan.execution_pack_id,
+        graph_plan.execution_pack_version,
+        require_enabled=True,
+    )
+    store = InMemoryBulkStore()
+    runtime = MultiphysicsRuntime.from_factory_registry(
+        graph_plan.graph,
+        graph_plan.coupling_plan,
+        ParticipantFactoryRegistry(execution.participant_factories),
+        resolver=BulkDataResolver(store),
+        store=store,
+    )
+    planned = {item.port: item.value for item in graph_plan.external_inputs}
+    voltage = next(
+        item for item in graph_plan.external_inputs
+        if item.fact_path == "electrical.source_voltage"
+    )
+    series = TimeSeriesInput(
+        voltage.fact_path,
+        (
+            TimeSample(Quantity(0, "s"), Quantity(12, "V")),
+            TimeSample(Quantity(5, "s"), Quantity(6, "V")),
+            TimeSample(Quantity(10, "s"), Quantity(6, "V")),
+        ),
+        InterpolationKind.STEP,
+    )
+
+    run = runtime.run(
+        "direct-step-runtime",
+        external_inputs=planned,
+        external_input_series={voltage.port: series},
+    )
+
+    receipt = run.final_outputs["_time_varying_external_inputs"]
+    assert receipt[0]["values"][voltage.port.key]["magnitude"] == 12
+    assert receipt[5]["values"][voltage.port.key]["magnitude"] == 6
+    assert run.final_outputs["electrical.heat_generation"]["magnitude"] < 5.0
+
+
+def test_authorized_execution_refuses_state_for_incapable_participant():
+    graph_plan = _plan(_intent()).graph_plans[0]
+    scenario = ScenarioSpecification(
+        "explicit.initial.state", "1",
+        graph_plan.coupling_plan.time.start,
+        graph_plan.coupling_plan.time.end,
+        state_variables=(StateVariable("temperature", "K", "thermal"),),
+        initial_state=StateSnapshot(
+            graph_plan.coupling_plan.time.start,
+            (NamedQuantity("temperature", Quantity(310, "K")),),
+        ),
+    )
+    graph_plan = replace(graph_plan, scenario=scenario)
+    store = InMemoryBulkStore()
+    with pytest.raises(InvalidScientificProblem, match="does not accept explicit initial state"):
+        execute_authorized_graph_plan(
+            graph_plan, run_id="unsupported-state",
+            compositions=production_composition_packs(),
+            executions=production_execution_packs(),
+            resolver=BulkDataResolver(store), store=store,
+        )
 
 
 def test_feedback_public_flow_roundtrips_certifies_and_rejects_tampering():

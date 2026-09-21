@@ -6,8 +6,13 @@ from dataclasses import dataclass
 import hashlib
 import json
 from typing import Any, Mapping
+from ..scientific.twins import ScientificTwin
 
 from ..compositionpacks.contracts import SystemValidationResult
+from ..compositionpacks.applicability import (
+    ApplicabilityState,
+    evaluate_applicability_predicate,
+)
 from ..compositionpacks.uncertainty import SystemUncertaintyResult
 from ..compositionpacks.participant import ParticipantBinding
 from ..compositionpacks.registry import CompositionPackRegistry
@@ -29,6 +34,7 @@ from ..executionpacks.snapshot import (
 from ..planning.records import GraphPlan
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.multiphysics import (
+    InitialStateValue,
     MultiphysicsRunRecord,
     PortRef,
 )
@@ -221,6 +227,24 @@ class AuthorizedMultiphysicsRun:
         if not isinstance(self.run, MultiphysicsRunRecord):
             raise TypeError(
                 "authorized run requires MultiphysicsRunRecord"
+            )
+        scenario = self.graph_plan.scenario
+        expected_events = (
+            () if scenario is None else tuple(
+                (item.event_id, item.instant) for item in scenario.events
+            )
+        )
+        recorded_events = tuple(
+            (item.event_id, item.instant) for item in self.run.scheduled_events
+        )
+        if recorded_events != expected_events:
+            raise InvalidScientificProblem(
+                "authorized run scheduled events differ from its GraphPlan scenario"
+            )
+        expected_digest = "" if not expected_events else scenario.digest
+        if self.run.scenario_digest != expected_digest:
+            raise InvalidScientificProblem(
+                "authorized run event schedule is not bound to its scenario digest"
             )
         validations = tuple(self.system_validation)
         if any(
@@ -631,6 +655,7 @@ def execute_authorized_graph_plan(
     resolver: BulkDataResolver,
     store: BulkDataStore,
     external_uncertainty: Mapping[PortRef, Uncertainty] | None = None,
+    topology_twins: Mapping[tuple[str, str], ScientificTwin] | None = None,
 ) -> AuthorizedMultiphysicsRun:
     """Execute one ready GraphPlan without re-selecting scientific authority."""
 
@@ -678,6 +703,44 @@ def execute_authorized_graph_plan(
         )
 
     _verify_graph_authority(composition, graph_plan)
+    if graph_plan.system_definition is not None:
+        if topology_twins is None:
+            raise InvalidScientificProblem(
+                "GraphPlan topology requires exact ScientificTwin authorities"
+            )
+        graph_plan.system_definition.validate_against(
+            graph_plan.graph, topology_twins
+        )
+
+    scenario_series = {
+        series.input_id: series
+        for segment in (() if graph_plan.scenario is None else graph_plan.scenario.segments)
+        for series in segment.inputs
+    }
+    base_facts = {
+        item.fact_path: item.value for item in graph_plan.external_inputs
+    }
+    if graph_plan.scenario is not None and graph_plan.scenario.initial_state is not None:
+        base_facts.update({item.quantity_id: item.value for item in graph_plan.scenario.initial_state.values})
+    applicability_fact_sets = [base_facts]
+    for input_id, series in sorted(scenario_series.items()):
+        for sample in series.samples:
+            applicability_fact_sets.append({**base_facts, input_id: sample.value})
+    for rule in composition.applicability_rules:
+        if rule.blueprint_id != graph_plan.blueprint_id:
+            continue
+        for predicate in rule.predicates:
+            for facts in applicability_fact_sets:
+                evaluation = evaluate_applicability_predicate(
+                    predicate,
+                    facts=facts,
+                    static_external_inputs=not bool(scenario_series),
+                )
+                if evaluation.state is not ApplicabilityState.SATISFIED:
+                    raise InvalidScientificProblem(
+                        "scenario applicability preflight refused execution: "
+                        f"{evaluation.reason}"
+                    )
 
     factories = ParticipantFactoryRegistry(
         execution.participant_factories
@@ -724,6 +787,34 @@ def execute_authorized_graph_plan(
             for item in graph_plan.external_inputs
         },
         external_uncertainty=external_uncertainty,
+        external_input_series={
+            item.port: series
+            for item in graph_plan.external_inputs
+            for series in scenario_series.values()
+            if series.input_id == item.fact_path
+        },
+        initial_state=(
+            {} if graph_plan.scenario is None or graph_plan.scenario.initial_state is None
+            else {
+                owner: {
+                    variable.variable_id: InitialStateValue(
+                        variable.variable_id,
+                        next(item.value for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
+                        next(item.uncertainty for item in graph_plan.scenario.initial_state.values if item.quantity_id == variable.variable_id),
+                    )
+                    for variable in graph_plan.scenario.state_variables if variable.owner_id == owner
+                }
+                for owner in sorted({item.owner_id for item in graph_plan.scenario.state_variables})
+            }
+        ),
+        scheduled_events=(
+            () if graph_plan.scenario is None else graph_plan.scenario.events
+        ),
+        scenario_digest=(
+            ""
+            if graph_plan.scenario is None or not graph_plan.scenario.events
+            else graph_plan.scenario.digest
+        ),
     )
 
     validation: list[AuthorizedSystemValidation] = []
