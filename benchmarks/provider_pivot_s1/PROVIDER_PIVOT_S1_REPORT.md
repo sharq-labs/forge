@@ -303,7 +303,24 @@ no capability graph, no provider registry.
 
 ### DID FORGE BECOME A WRAPPER? **NO.**
 
-Six pieces of evidence, each of which a wrapper would fail:
+P15 names seven things the answer has to be built from. Item by item:
+
+| required | present | where |
+|---|---|---|
+| same solver output | **yes** — PyBaMM's numbers, unaltered; the adapter renames and does not recompute | `COMPARISON.json` → `per_trajectory[*].routes.pybamm_thevenin_1rc` |
+| Forge applicability | **yes** — 52/52 SPMe refusals and 9/52 ECM refusals, all before PyBaMM is called | `ParameterAuthority.screen`, `PyBaMMModelSpec.state_of_charge_interval` |
+| Forge validation evidence | **no, and declared** — the comparison is development and validation evidence; none of it is bound to a provider run as an attained `ValidationLevel`, and the trust path reports 0 % coverage because of it | §5 |
+| Forge UQ requirements | **yes** — every provider value carries an explicit `Uncertainty.unknown` with a reason; PyBaMM quantifies none and the adapter invents none | `_to_scientific_result` |
+| Forge refusal behaviour | **yes** — six outcomes in two halves, provider failure distinguished from scientific refusal | `ExecutionOutcome` |
+| Forge replay | **yes** — re-execution, 3 of 3 sampled runs bit-identical at tolerance 0 with identity matched | `COMPARISON.json` → `replay` |
+| Forge trust verdict | **yes** — `INSUFFICIENT_EVIDENCE`, through the unchanged credibility path | §4 |
+
+Six of seven. The seventh is the sprint's declared gap and not an oversight:
+binding validation evidence to a provider run means issuing an attained level,
+and this corpus has no pristine holdout left to issue one from. Manufacturing
+one would have been the failure this round exists to avoid.
+
+And six pieces of evidence, each of which a wrapper would fail:
 
 1. **It refuses runs the provider would have completed.** SPMe + `Chen2020` is
    declined on 52 of 52 trajectories and PyBaMM is never called. The refusal

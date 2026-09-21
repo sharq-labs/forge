@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 from ..data.store import BulkDataStore, store_values

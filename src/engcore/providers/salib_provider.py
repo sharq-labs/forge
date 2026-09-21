@@ -191,6 +191,9 @@ class SALibProvider:
 
     def available(self) -> bool:
         try:
+            # Both, deliberately. The top package importing proves nothing
+            # about whether a sampler is reachable, and a study that failed
+            # at `sample()` would have passed an availability probe.
             import SALib  # noqa: F401
             from SALib.sample import morris  # noqa: F401
         except Exception:
