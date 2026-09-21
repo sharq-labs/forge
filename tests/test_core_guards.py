@@ -195,7 +195,12 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: directions and has to be updated deliberately, which is the moment somebody
 #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
 #: the pattern: derive the population, then assert its size.
-EXPECTED_MODELS = 17
+# 17 -> 18 in the Sprint 3 battery + thermal flagship, which added
+# `battery.cell.electrothermal_1rc`: a 1-RC Thevenin cell with Arrhenius
+# resistances and a declared open-circuit voltage curve. It is a separate
+# record from `battery.cell.rint_ocv` because the two answer differently at the
+# same operating point and carry different validity domains.
+EXPECTED_MODELS = 18
 EXPECTED_RESERVING_MODELS = 15
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the
@@ -222,7 +227,12 @@ EXPECTED_RESERVING_MODELS = 15
 # executable vertical is intentionally valid at exactly one reviewed operating
 # point. Its fifteen declared benchmark inputs each carry an exact validity
 # condition. None is derived, so EXPECTED_RESERVED_NAMES remains unchanged.
-EXPECTED_CONDITION_NAMES = 92
+# 92 -> 97 in the Sprint 3 battery + thermal flagship. The new 1-RC record
+# carries five conditions, and all five bound a quantity the caller declares
+# directly -- the two reference resistances, the RC capacitance, the charge
+# state basis and the charge state itself. None is derived from a group this
+# domain computes, so EXPECTED_RESERVED_NAMES does not move.
+EXPECTED_CONDITION_NAMES = 97
 EXPECTED_RESERVED_NAMES = 59
 
 
