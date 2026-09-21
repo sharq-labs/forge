@@ -392,7 +392,46 @@ literals, the same reach `tests/core_vocabulary.py` uses for domain leakage.
 
 ---
 
-## 10. Provider versions and licences
+## 10. Status summary
+
+```text
+PyBaMM models integrated    4 allowlisted: thevenin_1rc, spm, spme, dfn
+                            2 executed this round (thevenin_1rc; spme, refused
+                            before execution on every case, which is a result)
+PyBaMM exact version        26.8.0.0
+PyBOP exact version         26.3
+SALib exact version         1.6.0
+Parameter authority         WORKING. Named sets immutable; overrides mint a
+                            derived authority with its own digest and the
+                            parent's recorded. 6 fitted block authorities.
+Sensitivity                 WORKING. Morris, 72 design points, R0 0.861 >
+                            R1 0.350 >> the rest. Decided what to fit and
+                            nothing else; is_validation_evidence is False.
+Canonical QoIs              terminal_voltage, current, time, state_of_charge,
+                            cell_temperature, open_circuit_voltage. Forge
+                            names, not PyBaMM's. A QoI a model cannot produce
+                            is refused, never defaulted.
+Replay                      WORKING, by re-execution. 3/3 sampled: executed,
+                            identity matched, bit-identical at tolerance 0.
+Trust path                  WORKING and returning 0 % coverage, correctly.
+                            Same CredibilityEvidenceReport.from_result for
+                            native and provider; no branch on provider in
+                            credibility, claims or sria.
+False-trust metrics         WORKING and provider-independent by type.
+                            native 38.5 % at 100 % coverage;
+                            PyBaMM ECM 25.6 % at 82.7 %, over-refusal 50 %
+                            measured on 4 observable counterfactuals.
+New production code         2 246 lines (2 094 providers + 152 risk_coverage)
+New abstractions            31 public classes, 4 schemas, 1 non-Core package
+Known gaps                  no independent Gate A; no validation level bound
+                            to any provider run; no parameter uncertainty;
+                            SPM and DFN never executed; sensitivity screened
+                            on one scenario. All in section 5.
+```
+
+---
+
+## 11. Provider versions and licences
 
 | provider | version | licence | integration | distribution |
 |---|---|---|---|---|
