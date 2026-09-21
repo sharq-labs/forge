@@ -64,25 +64,7 @@ def _production_models(
 
 
 def _production_realizations() -> RealizationRegistry:
-    from ..domains.battery.models import battery_realizations
-    from ..domains.electrical.material import resistance_realizations
-    from ..domains.thermal_models.lumped import lumped_realizations
-
     by_key = {}
-    for registry in (
-        battery_realizations(),
-        resistance_realizations(),
-        lumped_realizations(),
-    ):
-        for realization in registry:
-            existing = by_key.get(realization.key)
-            if existing is not None and existing != realization:
-                raise ValueError(
-                    "built-in domains declare conflicting realization "
-                    f"{realization.realization_id}@{realization.version}"
-                )
-            by_key[realization.key] = realization
-
     for registration in _enabled_domain_packs():
         for realization in registration.provider.realizations():
             existing = by_key.get(realization.key)
@@ -97,17 +79,7 @@ def _production_realizations() -> RealizationRegistry:
 
 
 def _production_solvers() -> SolverRegistry:
-    from ..domains.battery.solver import BatteryCellSolver
-    from ..domains.electrical.dc.solver import ElectricalDCSolver
-    from ..domains.electrical.material import ResistancePropertySolver
-    from ..domains.thermal_models.lumped import LumpedThermalSolver
-
-    factories = [
-        BatteryCellSolver,
-        ElectricalDCSolver,
-        ResistancePropertySolver,
-        LumpedThermalSolver,
-    ]
+    factories = []
     for registration in _enabled_domain_packs():
         factories.extend(registration.provider.solver_factories())
 
