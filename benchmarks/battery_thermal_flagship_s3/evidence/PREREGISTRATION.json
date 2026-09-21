@@ -1,0 +1,246 @@
+{
+ "schema": "battery_thermal_flagship_s3_preregistration/1",
+ "campaign_id": "battery.electrothermal.flagship.s3",
+ "campaign_version": "1",
+ "dataset": {
+  "dataset_id": "nasa.pcoe.battery_aging",
+  "version": "2022-09-18",
+  "title": "NASA Ames Prognostics Center of Excellence Li-ion Battery Aging Data Set"
+ },
+ "selection": {
+  "inside_ambient_c": [
+   20.0,
+   30.0
+  ],
+  "inside_cell_temperature_c": [
+   20.0,
+   60.0
+  ],
+  "inside_current_a": [
+   0.5,
+   4.5
+  ],
+  "inside_max_cycle_index": 40,
+  "outside_ambient_c": [
+   [
+    -40.0,
+    15.0
+   ],
+   [
+    35.0,
+    120.0
+   ]
+  ],
+  "cycle_positions": [
+   1,
+   8,
+   16,
+   24,
+   32,
+   40
+  ],
+  "sample_stride": 4
+ },
+ "thermal_replicate_screen": {
+  "minimum_cells": 3,
+  "band": [
+   0.4,
+   2.5
+  ],
+  "basis": "a cell is compared only with other cells measured at the same nominal load in the same ambient band. No model is involved, and only the cell temperature channel is withheld"
+ },
+ "split_rule": {
+  "independence_unit": "one physical cell",
+  "assignment": [
+   "calibration",
+   "validation",
+   "locked_holdout",
+   "calibration"
+  ],
+  "ordering": "cells sorted by identifier within each experiment group",
+  "outcome_blind": true
+ },
+ "model": {
+  "model_id": "battery.cell.electrothermal_1rc",
+  "version": "0.1.0"
+ },
+ "fitted_parameters": [
+  {
+   "parameter_id": "capacity",
+   "unit": "ampere_hour",
+   "lower": 1.0,
+   "upper": 3.0,
+   "initial": 1.9,
+   "identified_by": "the charge the cell delivers before its voltage collapses",
+   "prior_source": "manufacturer",
+   "prior_note": "2.0 Ah rated, from the archive README"
+  },
+  {
+   "parameter_id": "ohmic_resistance_reference",
+   "unit": "ohm",
+   "lower": 0.005,
+   "upper": 0.5,
+   "initial": 0.08,
+   "identified_by": "the instantaneous voltage step when the load is applied or removed",
+   "prior_source": "none",
+   "prior_note": ""
+  },
+  {
+   "parameter_id": "ohmic_activation_energy",
+   "unit": "joule/mole",
+   "lower": -40000.0,
+   "upper": 80000.0,
+   "initial": 20000.0,
+   "identified_by": "the drift of the ohmic step as the cell self-heats through a run",
+   "prior_source": "none",
+   "prior_note": ""
+  },
+  {
+   "parameter_id": "polarization_resistance_reference",
+   "unit": "ohm",
+   "lower": 0.001,
+   "upper": 0.5,
+   "initial": 0.04,
+   "initial_note": "",
+   "identified_by": "the amplitude of the relaxation after the load is removed",
+   "prior_source": "none",
+   "prior_note": ""
+  },
+  {
+   "parameter_id": "polarization_activation_energy",
+   "unit": "joule/mole",
+   "lower": -40000.0,
+   "upper": 80000.0,
+   "initial": 25000.0,
+   "identified_by": "the drift of that amplitude with cell temperature",
+   "prior_source": "none",
+   "prior_note": ""
+  },
+  {
+   "parameter_id": "polarization_capacitance",
+   "unit": "farad",
+   "lower": 100.0,
+   "upper": 200000.0,
+   "initial": 2000.0,
+   "identified_by": "the shape, not the amplitude, of the relaxation tail",
+   "prior_source": "none",
+   "prior_note": ""
+  },
+  {
+   "parameter_id": "thermal_capacitance",
+   "unit": "joule/kelvin",
+   "lower": 5.0,
+   "upper": 200.0,
+   "initial": 40.0,
+   "identified_by": "the initial slope of the temperature rise",
+   "prior_source": "literature",
+   "prior_note": "an 18650 cell of about 45 g at about 1 kJ/(kg K) is of order 45 J/K"
+  },
+  {
+   "parameter_id": "thermal_conductance",
+   "unit": "watt/kelvin",
+   "lower": 0.01,
+   "upper": 5.0,
+   "initial": 0.25,
+   "identified_by": "where the temperature levels off, and the cooling tail during rest",
+   "prior_source": "none",
+   "prior_note": ""
+  }
+ ],
+ "fixed_parameters": {
+  "coulombic_efficiency": {
+   "value": 1.0,
+   "unit": "dimensionless",
+   "why": "the flagship marches discharge and rest only; a charge efficiency below one is a claim about charge acceptance that this campaign produces no evidence for"
+  },
+  "reference_temperature": {
+   "value": 298.15,
+   "unit": "kelvin",
+   "why": "the temperature the Arrhenius reference values are defined at"
+  },
+  "initial_state_of_charge": {
+   "value": 1.0,
+   "unit": "dimensionless",
+   "why": "every selected trajectory begins after a CC-CV charge to 4.2 V with a 20 mA cutoff, which is the protocol's definition of full. This is a known initial condition, not a measurement of the discharge being predicted"
+  },
+  "initial_polarization_voltage": {
+   "value": 0.0,
+   "unit": "volt",
+   "why": "the cell rests between the charge and the discharge"
+  }
+ },
+ "ocv_authority": {
+  "method": "pseudo-OCV by zero-current extrapolation across measured rates",
+  "derived_from": "CALIBRATION cells only",
+  "form": "tabulated, linear interpolation between declared knots",
+  "knots": 21,
+  "soc_interval": [
+   0.0,
+   1.0
+  ],
+  "temperature_condition": "cells in the 20-30 degC ambient band; the authority carries no temperature axis and is not claimed to have one",
+  "extrapolation_policy": "refused. Outside the declared state-of-charge interval the curve returns OUTSIDE_VALIDATED_DOMAIN and the kernel propagates the refusal",
+  "what_it_is_not": "not an equilibrium open-circuit voltage. It is a rate-extrapolated pseudo-OCV from loaded discharge curves, and it carries the hysteresis of the discharge direction it was measured on"
+ },
+ "source_measurement_uncertainty": {
+  "voltage": "UNKNOWN: the archive README declares no voltage accuracy",
+  "current": "UNKNOWN: the archive README declares no current accuracy",
+  "temperature": "UNKNOWN: the archive README declares no temperature accuracy",
+  "consequence": "no acceptance tolerance here is a source-reported spread, and no observation carries a SOURCE_REPORTED uncertainty. A campaign cannot invent one, so the measurement channel of the uncertainty budget stays UNKNOWN in the final report"
+ },
+ "acceptance": {
+  "terminal_voltage": {
+   "per_sample_tolerance_v": 0.05,
+   "basis": "reviewed_acceptance",
+   "rationale": "50 mV is 3.3% of this cell's 4.2-2.7 V usable window. On the plateau of this chemistry a 50 mV terminal-voltage error moves a voltage-based state-of-charge estimate by roughly 2-3%, which is the resolution a pack-level estimate is specified to. It is an engineering-relevance threshold and is not a claim about the instrument, whose accuracy this source does not state"
+  },
+  "cell_temperature": {
+   "per_sample_tolerance_k": 3.0,
+   "basis": "reviewed_acceptance",
+   "rationale": "3 K is about one fifth of the smallest self-heating rise in the selected envelope (about 14 K at 2 A) and is the scale at which a predicted cell temperature changes a derating or cooling decision. It is an engineering-relevance threshold, not an instrument spread"
+  }
+ },
+ "gate_a": {
+  "terminal_voltage": {
+   "mae_v": 0.04,
+   "rmse_v": 0.05,
+   "p95_abs_v": 0.09,
+   "max_abs_v": null
+  },
+  "cell_temperature": {
+   "mae_k": 2.5,
+   "rmse_k": 3.0,
+   "p95_abs_k": 5.0,
+   "max_abs_k": null
+  },
+  "max_error_policy": "maximum absolute error is REPORTED and not gated. Over several thousand samples a single worst point is a statement about the worst instant, not about the model's fitness, and gating it would make the verdict depend on how many samples were retained",
+  "state_of_charge": "NOT INDEPENDENTLY VALIDATED. This source carries no state-of-charge reference that is independent of coulomb counting, and the archive's per-cycle Capacity is measured on the very discharge being predicted. No SOC gate exists and none is claimed",
+  "scope": "cases whose applicability is INSIDE. Cases declared OUTSIDE are evidence about the guardrail and are never summed into these metrics"
+ },
+ "numerical_policy": {
+  "required": [
+   "convergence",
+   "refinement",
+   "conservation"
+  ],
+  "convergence": "every coupling window of the flagship run reports its own state; a window that did not converge fails the check",
+  "refinement": "the same scenario is re-run with every measurement interval halved and then quartered, and the predicted voltage and temperature at the original instants are compared. The check is SATISFIED when the change from halving to quartering is below one tenth of the acceptance tolerance for each metric",
+  "conservation": "the heat the electrical participant reports as generated equals the heat the thermal participant consumes in the same window, and the energy the thermal state gained plus the energy it rejected to ambient equals the heat deposited",
+  "outcomes": [
+   "satisfied",
+   "violated",
+   "inconclusive",
+   "not_performed"
+  ]
+ },
+ "trust_policy": {
+  "policy": "forge.multiphysics.production",
+  "why": "the production policy requires replay, numerical evidence, a supported validation envelope at the declared query point and serialization identity, and records an unmet uncertainty-channel gap as debt rather than hiding it. Full Trust additionally requires complete UQ channel coverage, which this campaign does not have and does not claim",
+  "holdout_governance": "the locked holdout is opened once, through the Sprint 2 opening authority, after the parameter set, the applicability declaration and this acceptance policy are frozen. A later model version requires a new registered evaluation; refitting and rerunning this holdout would not be an independent result and will not be reported as one"
+ },
+ "forbidden": [
+  "no measured voltage or temperature at any instant is an input to the prediction at that instant or any later one",
+  "no locked-holdout case influences the fit, the model choice, the applicability declaration or any threshold above",
+  "no threshold above is revised after the holdout is opened"
+ ]
+}
