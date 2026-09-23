@@ -38,7 +38,10 @@ SCOPED_ELITE_ARCHIVE_SCHEMA = schema_string("scoped_elite_archive")
 #: it cannot become a Pareto/elite recommendation merely because objective
 #: numbers exist.  This is a trust boundary: applicability is not a cosmetic
 #: annotation on a decision-grade ranking.
-_RANKABLE = (SelectionEligibility.ELIGIBLE,)
+_RANKABLE = (
+    SelectionEligibility.ELIGIBLE,
+    SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
+)
 
 
 def _require_eligible(evaluation: DesignEvaluation) -> None:
