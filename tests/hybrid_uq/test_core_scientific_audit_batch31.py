@@ -186,6 +186,23 @@ def test_r11_a_cumulant_far_below_the_round_off_floor_is_refused_and_not_clamped
         _clamp_leverage_cumulant(-0.5, scale=1.0, terms=3, name="c3")
 
 
+def test_r11_the_round_off_floor_scales_with_the_computation():
+    """A cancellation floor is relative to the arithmetic that produced it.
+
+    With a large sum of large-magnitude terms, a small negative residue can be
+    many machine epsilons in absolute units and still lie well inside the
+    first-order round-off bound. Replacing the derived floor with bare eps
+    therefore turns valid cancellation into a routing error.
+    """
+    from engcore.hybrid_uq.local_gaussian import _clamp_leverage_cumulant
+
+    eps=float(np.finfo(float).eps)
+    residue=-10.0*eps
+    assert _clamp_leverage_cumulant(
+        residue,scale=1.0e3,terms=10,name="c3"
+    ) == 0.0
+
+
 def test_r11_an_equal_weight_null_still_reduces_to_the_pooled_test_exactly():
     """The control, and it is the identity the cumulants' own docstring says makes the null checkable.
 
