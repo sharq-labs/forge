@@ -771,6 +771,11 @@ def production_registry() -> CapabilityRegistry:
     """
     from ..assembly.domainpacks import production_pack_capabilities
 
+    pack_capabilities = tuple(
+        declaration
+        for declaration in production_pack_capabilities()
+        if declaration.executable
+    )
     return CapabilityRegistry(
-        (*_builtin_production_capabilities(), *production_pack_capabilities())
+        (*_builtin_production_capabilities(), *pack_capabilities)
     )
