@@ -115,7 +115,22 @@ engcore = ["py.typed"]
 # spelling is an alias for the canonical `engcore` modules (`src/__init__.py`),
 # never a second copy of them. The only supported import namespace is `engcore`,
 # and `tests/test_trust_boundary_package_identity.py` holds both halves of that.
-pythonpath = ["src", "."]
+# Use importlib collection so duplicate test basenames in different scientific
+# packages never alias each other. A small set of historical test helpers are
+# imported as top-level modules, so their directories remain explicit search
+# roots until those helpers are migrated to package-qualified imports.
+addopts = "--import-mode=importlib"
+pythonpath = [
+  "src",
+  ".",
+  "tests",
+  "tests/claims",
+  "tests/domains/battery",
+  "tests/domains/thermal",
+  "tests/hybrid_uq",
+  "tests/oracles",
+  "tests/scientific/knowledge",
+]
 
 # Execution tiers. Assigned centrally in tests/conftest.py rather than with
 # decorators, because two test modules are SHA-256 pinned by frozen experiments
