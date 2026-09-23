@@ -3,9 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime,timezone
 from enum import Enum
-from types import MappingProxyType
 from typing import Mapping, Any
 import hashlib, json
+
+from ..results.immutable import freeze
 
 from .source import KnowledgeSource,KnowledgeSourceClass
 
@@ -30,7 +31,7 @@ class FreshnessPolicy:
             normalized[cls]=None if value is None else int(value)
         if not isinstance(self.require_timestamp, bool):
             raise ValueError("require_timestamp must be bool")
-        object.__setattr__(self,"max_age_days",MappingProxyType(normalized))
+        object.__setattr__(self,"max_age_days",freeze(normalized))
 
     def to_dict(self) -> dict[str, Any]:
         return {
