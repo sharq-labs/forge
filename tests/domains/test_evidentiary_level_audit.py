@@ -51,6 +51,9 @@ LEVELLED = {
     # The consensus decides its own level; the check carries whatever the
     # declaration earned, which is CROSS_SOLVER_VALIDATED or nothing.
     "cross_method_agreement": None,
+    # Emitted through CrossSolverConsensus.to_check(); the consensus decides
+    # whether route independence is sufficient to award CROSS_SOLVER_VALIDATED.
+    "independent_solver_agreement": None,
 }
 
 #: The seventeen. Every check that passes today and establishes nothing, with the
@@ -145,9 +148,27 @@ def _inventory() -> dict[str, set[str]]:
             name = func.attr if isinstance(func, ast.Attribute) else getattr(
                 func, "id", ""
             )
+            kw = {k.arg: k.value for k in node.keywords}
+
+            # CrossSolverConsensus.to_check() is also a ValidationCheck emitter.
+            # It carries the consensus's dynamically derived establishes value,
+            # so an AST inventory that sees only literal ValidationCheck(...)
+            # constructors would silently classify the NOT_RUN fallback while
+            # missing the successful level-bearing path.
+            if (
+                name == "to_check"
+                and isinstance(func, ast.Attribute)
+                and "consensus" in ast.unparse(func.value)
+            ):
+                label = kw.get("name")
+                if isinstance(label, ast.Constant) and isinstance(label.value, str):
+                    found.setdefault(label.value, set()).add(
+                        "consensus.establishes"
+                    )
+                continue
+
             if name != "ValidationCheck":
                 continue
-            kw = {k.arg: k.value for k in node.keywords}
             label = kw.get("name")
             if isinstance(label, ast.Constant):
                 key = label.value
