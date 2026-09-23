@@ -114,7 +114,7 @@ def test_non_executable_composition_metadata_stays_out_of_the_claim_router(regis
     }
     feedback = composition["system.electrothermal_feedback"]
     assert feedback.executable is False
-    assert registry.get("system.electrothermal_feedback") is None
+    assert "system.electrothermal_feedback" not in registry
 
 
 # ---------------------------------------------------------------------------
