@@ -2717,7 +2717,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B25h',
-        'src/engcore/mcp/problem.py',
+        'src/engcore/product/problem.py',
         '    decision = TrustedConsensusGate().assess(\n        consensus, (), name=CROSS_SOLVER_CHECK_NAME,\n    )\n    return (_withhold_level(decision.check),)\n',
         '    return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)\n',
         'tests/test_core_scientific_audit_batch25.py::test_r21_the_production_cross_solver_check_is_built_by_the_gate',
@@ -5185,8 +5185,8 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B48j',
-        'src/engcore/uq/cross_domain.py::propagate_transfer_uncertainty',
-        '        if width is not None:\n',
+        'src/engcore/scientific/results/uncertainty_mapping.py::propagate_declared_mapping_uncertainty',
+        '        if efficiency_width is not None:\n',
         '        if False:\n',
         'tests/test_core_scientific_audit_batch48.py::test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature',
         'KILLED',
