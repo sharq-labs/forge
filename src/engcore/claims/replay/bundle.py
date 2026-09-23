@@ -444,6 +444,8 @@ def _compare_replay_nodes(
     *,
     path: str = "",
     differences: list[str] | None = None,
+    tolerated_numeric_drift: list[str] | None = None,
+    derived_identity_drift: list[str] | None = None,
 ) -> int:
     """Compare the complete public assessment record.
 
@@ -454,6 +456,12 @@ def _compare_replay_nodes(
     threshold, input, model, solver, capability or trust decision.
     """
     differences = [] if differences is None else differences
+    tolerated_numeric_drift = (
+        [] if tolerated_numeric_drift is None else tolerated_numeric_drift
+    )
+    derived_identity_drift = (
+        [] if derived_identity_drift is None else derived_identity_drift
+    )
     if isinstance(before, Mapping) and isinstance(after, Mapping):
         before_keys, after_keys = set(before), set(after)
         missing = sorted(before_keys - after_keys)
@@ -470,6 +478,8 @@ def _compare_replay_nodes(
                 tolerance,
                 path=f"{path}/{key}",
                 differences=differences,
+                tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_identity_drift=derived_identity_drift,
             )
         return compared
     if isinstance(before, list) and isinstance(after, list):
@@ -485,6 +495,8 @@ def _compare_replay_nodes(
                 tolerance,
                 path=f"{path}/{index}",
                 differences=differences,
+                tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_identity_drift=derived_identity_drift,
             )
         return compared
     if isinstance(before, bool) or isinstance(after, bool):
@@ -495,12 +507,17 @@ def _compare_replay_nodes(
         if _tolerates_numeric(path):
             if not tolerance.same(float(before), float(after)):
                 differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+            elif float(before) != float(after):
+                tolerated_numeric_drift.append(path or "/")
         elif type(before) is not type(after) or before != after:
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 1
     if type(before) is not type(after) or before != after:
-        if not _tolerance_derived_identity(path, before, after, tolerance):
-            differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        change = f"{path or '/'}: {before!r} -> {after!r}"
+        if _tolerance_derived_identity(path, before, after, tolerance):
+            derived_identity_drift.append(change)
+        else:
+            differences.append(change)
     return 0
 
 
@@ -580,12 +597,22 @@ def replay_bundle(
         trust=trust,
     ).to_dict()
     differences: list[str] = []
+    tolerated_numeric_drift: list[str] = []
+    derived_identity_drift: list[str] = []
     compared = _compare_replay_nodes(
         record,
         replayed,
         tolerance,
         differences=differences,
+        tolerated_numeric_drift=tolerated_numeric_drift,
+        derived_identity_drift=derived_identity_drift,
     )
+    # Content-addressed identities may move only as a consequence of an
+    # actually observed numeric drift that the caller's tolerance accepted.
+    # A non-zero tolerance by itself is not permission to ignore identity
+    # changes in an otherwise byte-identical scientific result.
+    if derived_identity_drift and not tolerated_numeric_drift:
+        differences.extend(derived_identity_drift)
     return ReplayResult(
         BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE,
         tuple(differences),
