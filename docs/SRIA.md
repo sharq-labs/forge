@@ -181,7 +181,7 @@ import references:
 
 | SRIA imports | import statements |
 |---|---|
-| `scientific/` | 53 |
+| `scientific/` | 54 |
 | everything else under `engcore/` | **0** |
 
 `scientific.serialization` alone accounts for 39 of the 53 — schema strings for
