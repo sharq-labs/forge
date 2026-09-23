@@ -23,7 +23,7 @@ import sys
 import pytest
 
 import engcore
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
