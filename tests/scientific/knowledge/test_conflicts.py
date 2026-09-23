@@ -39,8 +39,12 @@ def test_nonoverlapping_explicit_intervals_are_recorded_as_disagreement():
 
 def test_different_values_without_comparable_uncertainty_are_incomparable_not_auto_conflict():
     left=claim(value=0.60)
-    payload=claim(value=0.70).to_dict()
+    # Build from a valid fixture, then change value and remove uncertainty in
+    # one wire payload. Constructing claim(value=0.70) first is correctly
+    # refused because the helper's default interval only covers 0.55..0.65.
+    payload=claim(value=0.60).to_dict()
     payload["claim_id"]="claim-2"
+    payload["numeric_value"]["magnitude"]=0.70
     payload["uncertainty"]=None
     right=type(left).from_dict(payload)
     assert compare_claims(left,right).status is KnowledgeConflictStatus.INCOMPARABLE
