@@ -47,6 +47,10 @@ class BalanceTerm:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "evidence", str(self.evidence).strip())
 
+    def to_check(self, *, name: str | None = None) -> ValidationCheck:
+        """Backward-compatible alias for :meth:`to_validation_check`."""
+        return self.to_validation_check(name=name)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": BALANCE_TERM_SCHEMA,
@@ -167,8 +171,8 @@ class ConservationBalance:
     def closed(self) -> bool:
         return self.absolute_residual <= self.tolerance_magnitude
 
-    def to_check(self, *, name: str | None = None) -> ValidationCheck:
-        """Return a non-level-awarding check for this balance."""
+    def to_validation_check(self, *, name: str | None = None) -> ValidationCheck:
+        """Return a non-level-awarding validation check for this balance."""
         ratio = self.normalized_residual
         finite_ratio = ratio if ratio != float("inf") else 2.0
         evidence_items = [
