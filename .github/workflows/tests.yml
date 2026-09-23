@@ -1,12 +1,14 @@
 name: Tests
 
-# Manual-only normal/full test suite.
-#
-# In GitHub Actions choose "Tests", select the branch from the "Use workflow
-# from" dropdown, then click "Run workflow". Pushes and pull requests do not
-# start this workflow automatically.
+# Every pull request is classified by the repository's single assurance
+# ownership policy. Ordinary changes run the normal suite here; certified or
+# trust-sensitive changes are delegated to the recertification workflow.
+# Pushes to main run the full ordinary suite again against the merged bytes.
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
