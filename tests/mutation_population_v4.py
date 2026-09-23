@@ -4665,7 +4665,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     (
         'B43h',
         'src/engcore/design/archives.py',
-        '_RANKABLE = (SelectionEligibility.ELIGIBLE, SelectionEligibility.RANKED_WITHOUT_ASSESSMENT)\n',
+        '_RANKABLE = (\n    SelectionEligibility.ELIGIBLE,\n    SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,\n)\n',
         '_RANKABLE = (SelectionEligibility.ELIGIBLE,)\n',
         'tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_records_the_members_it_ranked_without_assessment',
         'KILLED',
@@ -5087,8 +5087,12 @@ POPULATION_V4: tuple[tuple, ...] = (
         '    if False:\n',
         'tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_that_does_not_contain_the_value_is_refused',
         'KILLED',
-        "finding 71 claim (a) restored: an INTERVAL of [10, 11] K propagates for a crossing of 350 K and round-trips, which is another quantity's interval wearing this crossing's record",
-        (),
+        "finding 71 claim (a) restored: an INTERVAL of [10, 11] K must be refused for a crossing of 350 K; after the generic mapping refactor both the transfer-specific attribution guard and the provider-neutral mapping guard protect containment, so the mutation removes both together",
+        ((
+            'src/engcore/scientific/results/uncertainty_mapping.py::_require_interval_contains_value',
+            '    if not (\n        low <= magnitude <= high\n        or _agree_relatively(magnitude, low)\n        or _agree_relatively(magnitude, high)\n    ):\n',
+            '    if False:\n',
+        ),),
         'batch48_mutations',
     ),
     (
