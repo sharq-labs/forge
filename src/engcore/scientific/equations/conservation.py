@@ -5,6 +5,7 @@ from typing import Mapping
 
 from ..conservation import BalanceTerm, ConservationBalance
 from ..errors import InvalidScientificProblem
+from ..results.immutable import freeze
 from ..units.quantity import Quantity
 from .ast import Expression
 from .dimensions import DimensionVector, infer_dimension
@@ -70,7 +71,7 @@ class SymbolicConservationBalance:
         object.__setattr__(self, "balance_id", balance_id)
         object.__setattr__(self, "left", left)
         object.__setattr__(self, "right", right)
-        object.__setattr__(self, "symbol_units", units)
+        object.__setattr__(self, "symbol_units", freeze(units))
 
     def evaluate(
         self,
