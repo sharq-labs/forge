@@ -18,6 +18,7 @@ from engcore.claims import (
     RouteKind,
     build_case,
 )
+from engcore.assembly.domainpacks import production_composition_claim_capabilities
 from engcore.mcp import describe_electrothermal_case, example_electrothermal_payload, run_electrothermal_case
 from engcore.mcp.battery import describe_battery_case, example_battery_payload, run_battery_case
 from engcore.mcp.capabilities import (
@@ -104,6 +105,16 @@ def test_every_production_declaration_is_executable_and_decides_both_claim_shape
     for declaration in registry:
         assert declaration.executable
         assert declaration.claim_shapes == frozenset(ClaimKind)
+
+
+def test_non_executable_composition_metadata_stays_out_of_the_claim_router(registry) -> None:
+    composition = {
+        item.capability_id: item
+        for item in production_composition_claim_capabilities()
+    }
+    feedback = composition["system.electrothermal_feedback"]
+    assert feedback.executable is False
+    assert registry.get("system.electrothermal_feedback") is None
 
 
 # ---------------------------------------------------------------------------
