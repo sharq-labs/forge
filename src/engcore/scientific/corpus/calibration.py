@@ -29,6 +29,7 @@ import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, normalize_unit
 from ..units.validation import require_same_dimension
@@ -324,7 +325,9 @@ class CalibratedParameterSet:
                 raise CalibrationError("objective_value must be finite")
             object.__setattr__(self, "objective_value", value)
         object.__setattr__(
-            self, "diagnostics", None if self.diagnostics is None else dict(self.diagnostics)
+            self,
+            "diagnostics",
+            None if self.diagnostics is None else freeze(dict(self.diagnostics)),
         )
         object.__setattr__(
             self,
