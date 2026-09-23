@@ -46,14 +46,14 @@ def test_the_steady_state_arm_establishes_no_cross_solver_level(gate):
         c for c in gate.to_report().checks if c.name == "independent_steady_state_agreement"
     )
     assert check.establishes is None
-    # CROSS_SOLVER_VALIDATED may now be earned by the separately translated
-    # LSODA route. This audit continues to pin the original IND-04 rule:
-    # the algebraic steady-state arm itself has no authority to award it.
+    # The separately translated LSODA route is still evidence-only in
+    # production because no artifact-backed RouteIndependenceEvidence is
+    # supplied to the trusted consensus gate yet.
     independent = next(
         c for c in gate.to_report().checks if c.name == "independent_solver_agreement"
     )
-    if ValidationLevel.CROSS_SOLVER_VALIDATED in gate.to_report().attained_levels:
-        assert independent.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert independent.establishes is None
+    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in gate.to_report().attained_levels
 
 
 def test_the_steady_state_detail_no_longer_claims_it_shares_no_arithmetic(gate):
@@ -63,12 +63,13 @@ def test_the_steady_state_detail_no_longer_claims_it_shares_no_arithmetic(gate):
     assert "shares no arithmetic with the integrator" not in source
 
 
-def test_only_verified_independent_arm_may_award_cross_solver_validated_in_source():
+def test_independent_solver_level_is_withheld_until_artifact_independence_exists():
     source = inspect.getsource(cstr_validation.CSTRVerificationReport)
-    assert "independent_solver_consensus.establishes" in source
-    assert "steady_state_verified" in source
-    # The legacy steady-state arm remains evidence-only; the level comes from
-    # the Core-verified consensus record, never directly from that comparison.
+    assert "TrustedConsensusGate().assess" in source
+    assert "self.independent_solver_consensus" in source
+    # Production deliberately supplies no independence evidence yet.
+    assert "self.independent_solver_consensus,\n            ()," in source
+    # The legacy steady-state arm remains evidence-only too.
     assert "steady_state_verified else ValidationLevel.CROSS_SOLVER_VALIDATED" not in source
 
 
