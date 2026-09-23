@@ -306,6 +306,10 @@ _NESTED_WITHOUT_SCHEMA = frozenset({
     "SolverSettings", "CheckpointStore", "CalibrationState",
     "AuthorizedSystemValidation", "AuthorizedSystemUncertainty",
     "AuthorizedSystemVerification",
+    "ReplicateObservation", "PairedObservation", "DatasetObservation",
+    "DomainPackDependency", "BlueprintRef", "PolicyTemplateRef", "ArtifactRef",
+    "ParticipantFactoryCoverage", "CompositionDependency",
+    "ParticipantFactoryRef", "ProducerQualification",
 })
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
