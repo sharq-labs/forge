@@ -28,7 +28,7 @@ import json
 
 import pytest
 
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
 from engcore.mcp.evidence import (
     STORED_ATTRIBUTION_CHECK,
