@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..fields import FieldRecord
+from ..results.immutable import freeze
 from ..results.uncertainty import Uncertainty
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
@@ -186,6 +187,11 @@ class ParticipantStepRecord:
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "end", end)
         object.__setattr__(self, "events", events)
+        object.__setattr__(
+            self,
+            "diagnostics",
+            freeze(None if self.diagnostics is None else dict(self.diagnostics)),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -283,7 +289,7 @@ class CouplingIterationRecord:
             )
         object.__setattr__(self, "participant_steps", steps)
         object.__setattr__(self, "residuals", residuals)
-        object.__setattr__(self, "relaxation_factors", factors)
+        object.__setattr__(self, "relaxation_factors", freeze(factors))
         object.__setattr__(
             self, "mapping_diagnostics", mapping_diagnostics
         )
