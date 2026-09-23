@@ -195,7 +195,10 @@ def test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untr
     payload["provenance"].pop("trust_status")
     payload["provenance"]["pin_document_digest"]="0"*64
     tampered=EvidenceGraph((EvidenceNode.from_dict(payload),))
-    with pytest.raises(InvalidScientificProblem,match="not pinned/trusted"):
+    with pytest.raises(
+        InvalidScientificProblem,
+        match="authoritative trust/freshness policy",
+    ):
         build(knowledge=snap,evidence=tampered)
 
 
