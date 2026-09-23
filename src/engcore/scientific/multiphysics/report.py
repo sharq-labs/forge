@@ -411,6 +411,11 @@ class CouplingWindowRecord:
         object.__setattr__(self, "end", end)
         object.__setattr__(self, "iterations", iterations)
         object.__setattr__(self, "outcome", outcome)
+        object.__setattr__(
+            self,
+            "event",
+            freeze(None if event is None else dict(event)),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -752,6 +757,11 @@ class MultiphysicsRunRecord:
             tuple(sorted(initial, key=lambda item: item.edge_id)),
         )
         object.__setattr__(self, "windows", windows)
+        object.__setattr__(
+            self,
+            "final_outputs",
+            freeze(dict(self.final_outputs)),
+        )
         self._validate_scenario_evidence()
 
     def _validate_scenario_evidence(self) -> None:
