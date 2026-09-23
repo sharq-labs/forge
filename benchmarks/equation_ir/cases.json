@@ -12111,7 +12111,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "kelvin ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12226,7 +12226,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "kilogram ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12341,7 +12341,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "meter ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12456,7 +12456,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "mole ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12571,7 +12571,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "ampere ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12686,7 +12686,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "second ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12801,7 +12801,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "candela ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -12916,7 +12916,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "kelvin ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -13031,7 +13031,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "kilogram ** 0"
+      "unit": "dimensionless"
     }
   },
   {
@@ -13146,7 +13146,7 @@
     },
     "expected": {
       "status": "valid",
-      "unit": "meter ** 0"
+      "unit": "dimensionless"
     }
   },
   {
