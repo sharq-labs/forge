@@ -380,15 +380,29 @@ def _tolerates_numeric(path: str) -> bool:
             }
             for part in parts[2:]
         )
-    if (
+    return False
+
+
+def _tolerance_derived_numeric(path: str, before: Any, after: Any) -> bool:
+    """Whether a numeric leaf is algebraically downstream of the replayed result.
+
+    These values do not get an independent relative tolerance: for a residual
+    near zero, a tiny accepted change in the simulated value can be a large
+    relative change in the residual itself. Their categorical outcome remains
+    exact and will still fail replay if the accepted primary drift crosses a
+    decision boundary.
+    """
+    parts = tuple(part for part in path.split("/") if part)
+    return (
         parts[:1] == ("external_evidence_assessments",)
         and len(parts) >= 4
         and parts[2] == "comparison"
         and parts[-1] in {"difference", "allowed"}
-    ):
-        return True
-    return False
-
+        and isinstance(before, (int, float))
+        and not isinstance(before, bool)
+        and isinstance(after, (int, float))
+        and not isinstance(after, bool)
+    )
 
 def _tolerance_derived_identity(
     path: str,
@@ -452,6 +466,7 @@ def _compare_replay_nodes(
     path: str = "",
     differences: list[str] | None = None,
     tolerated_numeric_drift: list[str] | None = None,
+    derived_numeric_drift: list[str] | None = None,
     derived_identity_drift: list[str] | None = None,
 ) -> int:
     """Compare the complete public assessment record.
@@ -465,6 +480,9 @@ def _compare_replay_nodes(
     differences = [] if differences is None else differences
     tolerated_numeric_drift = (
         [] if tolerated_numeric_drift is None else tolerated_numeric_drift
+    )
+    derived_numeric_drift = (
+        [] if derived_numeric_drift is None else derived_numeric_drift
     )
     derived_identity_drift = (
         [] if derived_identity_drift is None else derived_identity_drift
@@ -509,6 +527,7 @@ def _compare_replay_nodes(
                 path=child_path,
                 differences=differences,
                 tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_numeric_drift=derived_numeric_drift,
                 derived_identity_drift=derived_identity_drift,
             )
         return compared
@@ -526,6 +545,7 @@ def _compare_replay_nodes(
                 path=f"{path}/{index}",
                 differences=differences,
                 tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_numeric_drift=derived_numeric_drift,
                 derived_identity_drift=derived_identity_drift,
             )
         return compared
@@ -534,7 +554,12 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 0
     if isinstance(before, (int, float)) and isinstance(after, (int, float)):
-        if _tolerates_numeric(path):
+        if _tolerance_derived_numeric(path, before, after):
+            if float(before) != float(after):
+                derived_numeric_drift.append(
+                    f"{path or '/'}: {before!r} -> {after!r}"
+                )
+        elif _tolerates_numeric(path):
             if not tolerance.same(float(before), float(after)):
                 differences.append(f"{path or '/'}: {before!r} -> {after!r}")
             elif float(before) != float(after):
@@ -628,6 +653,7 @@ def replay_bundle(
     ).to_dict()
     differences: list[str] = []
     tolerated_numeric_drift: list[str] = []
+    derived_numeric_drift: list[str] = []
     derived_identity_drift: list[str] = []
     compared = _compare_replay_nodes(
         record,
@@ -635,14 +661,16 @@ def replay_bundle(
         tolerance,
         differences=differences,
         tolerated_numeric_drift=tolerated_numeric_drift,
+        derived_numeric_drift=derived_numeric_drift,
         derived_identity_drift=derived_identity_drift,
     )
     # Content-addressed identities may move only as a consequence of an
     # actually observed numeric drift that the caller's tolerance accepted.
     # A non-zero tolerance by itself is not permission to ignore identity
     # changes in an otherwise byte-identical scientific result.
-    if derived_identity_drift and not tolerated_numeric_drift:
-        differences.extend(derived_identity_drift)
+    derived_drift = derived_numeric_drift + derived_identity_drift
+    if derived_drift and not tolerated_numeric_drift:
+        differences.extend(derived_drift)
     return ReplayResult(
         BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE,
         tuple(differences),
