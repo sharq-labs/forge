@@ -229,7 +229,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pytest -m "campaign" -q \
+          python -m pytest --import-mode=importlib -m "campaign" -q \
             --junitxml "${RUNNER_TEMP}/junit-campaign-3.12.xml"
       - name: Record campaign runtime environment
         shell: bash
@@ -267,6 +267,8 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: False-confidence scientific regression gate
+        env:
+          PYTEST_ADDOPTS: --import-mode=importlib
         shell: bash
         run: |
           set -euo pipefail
