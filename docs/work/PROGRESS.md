@@ -66,6 +66,13 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Verification log
 
+2026-09-23 19:05 +03:00
+command: GitHub Actions PR #102 — Tests run 323 / Recertify Hardened Core run 205
+result: FAIL
+summary: normal Tests workflow passed; hardened recertification reached the heavy gates, but campaign312 and regression312 failed during pytest collection because duplicate test basenames were imported with legacy import semantics. Updated the recertification workflow so campaign uses --import-mode=importlib and regression sets PYTEST_ADDOPTS=--import-mode=importlib. New head: ddd358c72f9cd5d95cd41835de54dbc03ee17db9.
+commit: ddd358c72f9cd5d95cd41835de54dbc03ee17db9
+
+
 2026-09-21 11:07 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_system_topology.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
 result: PASS
