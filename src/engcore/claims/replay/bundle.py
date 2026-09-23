@@ -380,6 +380,13 @@ def _tolerates_numeric(path: str) -> bool:
             }
             for part in parts[2:]
         )
+    if (
+        parts[:1] == ("external_evidence_assessments",)
+        and len(parts) >= 4
+        and parts[2] == "comparison"
+        and parts[-1] in {"difference", "allowed"}
+    ):
+        return True
     return False
 
 
@@ -472,11 +479,34 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: unexpected fields {extra}")
         compared = 0
         for key in sorted(before_keys & after_keys):
+            child_path = f"{path}/{key}"
+            # The SIMULATION SourceOutcome carries the record hash of the
+            # replayed SRIA evidence. That hash is content-addressed from the
+            # same scientific payload whose numeric leaves are compared below;
+            # hashes carried by BENCHMARK/MEASUREMENT/LITERATURE outcomes stay
+            # exact because they identify external evidence.
+            if (
+                key == "evidence_record_hash"
+                and tuple(part for part in path.split("/") if part)[:1]
+                    == ("evidence_sources",)
+                and before.get("source_class") == "simulation"
+                and after.get("source_class") == "simulation"
+                and before[key] != after[key]
+                and tolerance.relative + tolerance.absolute > 0.0
+                and isinstance(before[key], str)
+                and isinstance(after[key], str)
+                and re.fullmatch(r"[0-9a-f]{64}", before[key]) is not None
+                and re.fullmatch(r"[0-9a-f]{64}", after[key]) is not None
+            ):
+                derived_identity_drift.append(
+                    f"{child_path}: {before[key]!r} -> {after[key]!r}"
+                )
+                continue
             compared += _compare_replay_nodes(
                 before[key],
                 after[key],
                 tolerance,
-                path=f"{path}/{key}",
+                path=child_path,
                 differences=differences,
                 tolerated_numeric_drift=tolerated_numeric_drift,
                 derived_identity_drift=derived_identity_drift,
