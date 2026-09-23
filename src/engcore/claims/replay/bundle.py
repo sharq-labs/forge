@@ -383,6 +383,60 @@ def _tolerates_numeric(path: str) -> bool:
     return False
 
 
+def _tolerance_derived_identity(
+    path: str,
+    before: Any,
+    after: Any,
+    tolerance: ReplayTolerance,
+) -> bool:
+    """Whether an identity is deterministically downstream of tolerated numerics.
+
+    Replay tolerance applies to scientific result/estimate leaves, never to
+    authority, configuration, input, model, solver, capability or trust
+    identities. Some public fields are content-addresses of those tolerated
+    leaves, though. Requiring those hashes to stay byte-identical would make
+    a non-zero numeric tolerance impossible to use.
+
+    The whitelist is intentionally structural and value-aware. It recognizes
+    only SRIA evidence content/record hashes, refinement-run report digests,
+    and refinement-study source labels emitted by numerical UQ.
+    """
+    if tolerance.relative == 0.0 and tolerance.absolute == 0.0:
+        return False
+
+    parts = tuple(part for part in path.split("/") if part)
+    if parts in {
+        ("evidence", "content_hash"),
+        ("evidence", "record_hash"),
+    }:
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and re.fullmatch(r"[0-9a-f]{64}", before) is not None
+            and re.fullmatch(r"[0-9a-f]{64}", after) is not None
+        )
+
+    if (
+        parts[:1] == ("uncertainty_studies",)
+        and parts[-1:] == ("report_digest",)
+    ):
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and re.fullmatch(r"[0-9a-f]{64}", before) is not None
+            and re.fullmatch(r"[0-9a-f]{64}", after) is not None
+        )
+
+    if parts[-1:] == ("source",):
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and before.startswith("refinement_study:")
+            and after.startswith("refinement_study:")
+        )
+
+    return False
+
 def _compare_replay_nodes(
     before: Any,
     after: Any,
@@ -393,9 +447,11 @@ def _compare_replay_nodes(
 ) -> int:
     """Compare the complete public assessment record.
 
-    Configuration, inputs, identities, evidence, trust, checks and policy are
-    exact.  The declared tolerance is used only for scientific result/estimate
-    leaves; it can never blur a changed threshold, input or trust decision.
+    Configuration, inputs, authoritative identities, trust, checks and policy
+    are exact. The declared tolerance is used only for scientific
+    result/estimate leaves plus the narrowly recognized content-addressed
+    identities derived from those leaves; it can never blur a changed
+    threshold, input, model, solver, capability or trust decision.
     """
     differences = [] if differences is None else differences
     if isinstance(before, Mapping) and isinstance(after, Mapping):
@@ -443,7 +499,8 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 1
     if type(before) is not type(after) or before != after:
-        differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        if not _tolerance_derived_identity(path, before, after, tolerance):
+            differences.append(f"{path or '/'}: {before!r} -> {after!r}")
     return 0
 
 
