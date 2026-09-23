@@ -56,7 +56,7 @@ LEVELLED = {
     "independent_solver_agreement": None,
 }
 
-#: The seventeen. Every check that passes today and establishes nothing, with the
+#: Every check that passes today and establishes nothing, with the
 #: audit's category for it. Changing this set means the document's counts are
 #: wrong, which is the point of asserting it here.
 ESTABLISHES_NOTHING = {
@@ -80,6 +80,10 @@ ESTABLISHES_NOTHING = {
     # Levelled (CROSS_SOLVER_VALIDATED) until IND-04: its reference reads the
     # solver's own derived parameters, so it is not independent evidence.
     "independent_steady_state_agreement": "earnable later",
+    # A separately translated LSODA route exists, but production currently
+    # supplies no artifact-backed RouteIndependenceEvidence to the trusted
+    # consensus gate, so agreement remains useful evidence without a level.
+    "independent_solver_agreement": "earnable later",
     # thermal_models/conduction1d_schemes.py
     "field_finite": "never",
     "amplitude_decay": "never",
@@ -284,7 +288,7 @@ def test_the_document_carries_a_row_for_every_audited_check():
     text = AUDIT.read_text(encoding="utf-8")
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
-    # 21 after Sprint 2.5 added three local NAFEMS execution checks that
-    # deliberately establish no level.
-    assert "Checks that pass today while establishing nothing: 21" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "21"
+    # 22 after the trusted-consensus hardening withheld the CSTR independent
+    # solver level until route independence is backed by verified artifacts.
+    assert "Checks that pass today while establishing nothing: 22" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "22"
