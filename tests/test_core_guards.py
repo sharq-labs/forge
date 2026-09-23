@@ -1141,10 +1141,11 @@ def _every_solver():
 
 SOLVER_CLASSES = _every_solver()
 
-#: Exact, for the reason EXPECTED_MODELS is. A tenth adapter that lands
-#: without being covered by the guards below should fail here on the day it
-#: lands, and `>= 8` could not tell that from the nine there are.
-EXPECTED_SOLVER_CLASSES = 9
+#: Exact, for the reason EXPECTED_MODELS is. The tenth discovered adapter is
+#: now part of the guarded inventory; every solver-specific invariant below is
+#: evaluated over the same discovered set, so this count remains a change
+#: detector rather than a substitute for those guards.
+EXPECTED_SOLVER_CLASSES = 10
 
 
 def test_the_solver_discovery_found_the_adapters():
