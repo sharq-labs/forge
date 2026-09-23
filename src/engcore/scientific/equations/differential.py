@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.validation import require_unit
 from .ast import (
@@ -88,7 +89,7 @@ class DifferentialProblem:
         object.__setattr__(self,"equations",tuple(self.equations))
         object.__setattr__(self,"independent_variables",independent)
         object.__setattr__(self,"dependent_symbols",dependent)
-        object.__setattr__(self,"symbol_units",units)
+        object.__setattr__(self,"symbol_units",freeze(units))
         object.__setattr__(self,"conditions",tuple(self.conditions))
         declared=set(units)
         needed=set(independent)|set(dependent)
