@@ -87,7 +87,7 @@ def test_every_file_the_certificate_enumerates_requires_recertification(area):
     "src/engcore/api_snapshot.py",
     "src/engcore/__init__.py",
     # A mutation target outside every scope area (GUARD 14b/19a/20b).
-    "src/engcore/mcp/evidence.py",
+    "src/engcore/credibility/evidence.py",
 ])
 def test_certified_and_trust_sensitive_paths_require_recertification(path):
     assert rs.requires_recertification(path), path
@@ -402,11 +402,14 @@ def test_recertification_has_no_path_filter_and_both_workflows_call_the_classifi
     recertify = (WORKFLOWS / "recertify-hardened-core.yml").read_text(encoding="utf-8")
     trigger = recertify.split("\npermissions:", 1)[0]
     assert "paths" not in trigger
-    # 8ba39a84 made recertification manual-only (workflow_dispatch) and removed its classify step on
-    # purpose; tests.yml is now the one workflow that classifies every change. The test name is kept so
-    # the certificate's pinned test ids do not move.
-    assert "workflow_dispatch:" in trigger and "pull_request:" not in trigger
-    assert "tools.certification.recertification_scope classify" in (WORKFLOWS / "tests.yml").read_text(encoding="utf-8")
+    # Recertification now enters automatically on every pull request; the
+    # classifier decides whether expensive source gates run. Manual dispatch is
+    # retained only as an explicit fallback.
+    assert "pull_request:" in trigger and "workflow_dispatch:" in trigger
+    tests = (WORKFLOWS / "tests.yml").read_text(encoding="utf-8")
+    classifier = "tools.certification.recertification_scope classify"
+    assert classifier in recertify
+    assert classifier in tests
 
 
 def test_the_recertify_topology_matches_the_python_it_is_judged_by():
@@ -418,7 +421,11 @@ def test_the_recertify_topology_matches_the_python_it_is_judged_by():
         block = jobs[gate]
         assert "tools.certification.assert_clean_tree" in block, gate
         prefix, files = EVIDENCE[gate]
-        index = gate.rsplit("_", 1)[-1] if gate.startswith("formal_mutations_") else None
+        index = (
+            gate.rsplit("_", 1)[-1]
+            if gate.startswith(("formal_mutations_", "v4_mutations_"))
+            else None
+        )
         if index is not None:
             prefix = prefix.removesuffix(f"-{index}") + "-${{ env.SHARD_INDEX }}"
         assert f"name: {prefix}-${{{{ needs.classify.outputs.source_sha }}}}" in block, gate
