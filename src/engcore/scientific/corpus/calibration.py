@@ -327,7 +327,7 @@ class CalibratedParameterSet:
         object.__setattr__(
             self,
             "diagnostics",
-            None if self.diagnostics is None else freeze(dict(self.diagnostics)),
+            freeze(None if self.diagnostics is None else dict(self.diagnostics)),
         )
         object.__setattr__(
             self,
