@@ -194,18 +194,18 @@ def test_r21_the_production_cross_solver_check_is_built_by_the_gate():
     """The gate stops being a rule with no caller: it is what the MCP electrothermal route now uses."""
     import inspect
 
-    from engcore.mcp import problem as module
+    from engcore.product import problem as module
 
     source = inspect.getsource(module)
     assert "TrustedConsensusGate" in source, (
-        "engcore.mcp.problem builds its cross-solver check through the gate")
+        "engcore.product.problem builds its cross-solver check through the gate")
     assert "_withhold_level(consensus.to_check(" not in source, (
         "the production path no longer mints the check from the consensus alone")
 
 
 def test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence():
     """Two rules withhold the level for two different reasons, and neither may say it twice."""
-    from engcore.mcp.problem import WITHHELD_LEVEL_EVIDENCE_PREFIX, _withhold_level
+    from engcore.product.problem import WITHHELD_LEVEL_EVIDENCE_PREFIX, _withhold_level
 
     consensus, _evidence, _bytes = _independent_pair()
     once = _withhold_level(consensus.to_check())
