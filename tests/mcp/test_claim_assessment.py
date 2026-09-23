@@ -98,6 +98,11 @@ def test_missing_requested_level_fails_closed_as_inconclusive() -> None:
 
 def test_attained_level_cannot_hide_an_insufficient_credibility_report() -> None:
     case = example_battery_payload()
+    # Keep the case executable but deliberately remove one optional validity
+    # declaration. Battery boundary tests independently prove that omitting
+    # this field leaves its dependent conditions UNKNOWN rather than inventing
+    # applicability.
+    case["cell"]["limits"].pop("continuous_discharge_c_rate")
     direct = run_battery_case(copy.deepcopy(case)).report
     assert direct.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert direct.attained_levels
