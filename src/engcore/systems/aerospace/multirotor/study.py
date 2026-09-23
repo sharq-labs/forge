@@ -674,7 +674,7 @@ def _study_bound_result(
     provenance = ProvenanceRecord(
         run_id=_study_bound_run_id(candidate_id, binding.study_identity),
         software_version="mvr1-v0.1",
-        git_commit=str(source_revision).strip() or base.provenance.git_commit,
+        git_commit=base.provenance.git_commit,
         models=base.provenance.models,
         solvers=base.provenance.solvers,
         # Carried like models and solvers. This record is a re-binding of the
