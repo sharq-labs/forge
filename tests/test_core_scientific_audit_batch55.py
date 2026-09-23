@@ -72,7 +72,7 @@ def test_r67_the_rounds_guard_mutations_are_declared_inside_the_pinned_harness_a
     population = _module("mutation_population_v4")
     entries = _attribute(population, "POPULATION_V4")
     assert len(entries) == 589, (
-        f"the population declares {len(entries)} of the round's 589 batch mutations")
+        f"the population declares {len(entries)} of the round's declared V4 mutation population")
     certificate = _module("tools.certification.core_certificate")
     harness = next(area for area in certificate.SCOPE if area.name == "harness")
     pinned = set(certificate.enumerate_area(REPO, harness))
@@ -251,7 +251,7 @@ def test_r66_the_v4_population_digests_are_re_derived_from_the_definitions():
     """Finding 91: a copied population sha passed every assurance check."""
     module = _module("tools.certification.mutation_population")
     population = _attribute(module, "v4_population")(REPO)
-    assert population.count == 589, population.count
+    assert population.count == module.EXPECTED_V4_POPULATION, population.count
     assert population.sha256 == module.sha256_lines(population.ids)
     assert population.definitions_sha256, "the population's bodies are not hashed, so the same ids with a different mutation are the same population"
     other = type(population)(ids=population.ids, definitions_sha256="")
