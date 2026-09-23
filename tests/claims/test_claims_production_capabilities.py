@@ -128,6 +128,15 @@ def test_inputs_are_derived_field_for_field_from_the_case_description(registry, 
         else set()
     )
     assert {i.path for i in declaration.inputs} == set(fields) | system_level
+    required_overrides = (
+        {
+            "stages[].conductor.element.element_to_body_thermal_resistance",
+            "stages[].conductor.element.permissible_element_temperature",
+            "stages[].conductor.element.resistance_variation_budget",
+        }
+        if capability_id == ELECTROTHERMAL_CAPABILITY_ID
+        else {"cell.limits.cell_thermal_conductance"}
+    )
     for path, field in fields.items():
         item = declaration.input(path)
         assert item is not None
@@ -136,7 +145,10 @@ def test_inputs_are_derived_field_for_field_from_the_case_description(registry, 
         assert item.unlocks_conditions == tuple(sorted(set(field.unlocks)))
         if field.kind == "quantity":
             assert item.dimension == field.dimension == dimensionality(field.unit_exemplar)
-        if item.path != "cell.limits.cell_thermal_conductance":
+        if item.path in required_overrides:
+            assert item.required is True
+            assert "REQUIRED by the run" in item.description
+        else:
             assert item.required == field.required
     for path in system_level:
         item = declaration.input(path)
