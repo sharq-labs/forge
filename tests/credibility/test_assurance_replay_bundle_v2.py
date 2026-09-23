@@ -47,6 +47,22 @@ def test_production_assurance_bundle_round_trips_all_payloads_and_manifest():
     assert restored.to_dict()==bundle.to_dict()
 
 
+def test_production_assurance_bundle_refuses_a_manifest_from_another_profile():
+    bundle=build_production_assurance_bundle(**kwargs())
+    wrong_profile=replace(
+        PRODUCTION_ASSURANCE_PROFILE,
+        profile_id="not-production-assurance",
+    )
+    wrong_manifest=replace(bundle.manifest,profile=wrong_profile)
+    with pytest.raises(InvalidScientificProblem,match="wrong profile"):
+        ProductionAssuranceBundle(
+            wrong_manifest,bundle.law,bundle.knowledge,bundle.evidence,
+            bundle.validation,bundle.combined_uq,bundle.verification,
+            bundle.certification,bundle.provenance,bundle.knowledge_trust,
+            bundle.knowledge_freshness,bundle.measurement_observations,
+        )
+
+
 def test_evidence_graph_payload_round_trip_is_typed():
     bundle=build_production_assurance_bundle(**kwargs())
     restored=type(bundle.evidence).from_dict(bundle.evidence.to_dict())
