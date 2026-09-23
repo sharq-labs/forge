@@ -472,6 +472,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/execution/orchestration/*.py",
             "tests/execution/test_verification_runner*.py",
             "tests/scientific/knowledge/*.py",
+            "tests/scientific/equations/*.py",
             "tests/credibility/evidence_graph/test_knowledge_bridge.py",
             "tests/credibility/test_knowledge_replay_binding.py",
             "tests/credibility/test_assurance_manifest_v2.py",
