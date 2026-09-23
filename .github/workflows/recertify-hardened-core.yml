@@ -21,7 +21,7 @@ jobs:
   classify:
     runs-on: ubuntu-latest
     outputs:
-      mode: ${{ steps.classify.outputs.mode }}
+      mode: ${{ steps.classify.outputs.recertification }}
       source_sha: ${{ steps.classify.outputs.source_sha }}
       certificate_sha: ${{ steps.classify.outputs.certificate_sha }}
     steps:
@@ -47,7 +47,8 @@ jobs:
               --event pull_request --base "$BASE_SHA" --head "$HEAD_SHA" \
               --github-output "$GITHUB_OUTPUT"
           else
-            echo "mode=source" >> "$GITHUB_OUTPUT"
+            echo "mode=recertify_source" >> "$GITHUB_OUTPUT"
+            echo "recertification=source" >> "$GITHUB_OUTPUT"
             echo "source_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             echo "certificate_sha=" >> "$GITHUB_OUTPUT"
           fi
