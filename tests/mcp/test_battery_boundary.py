@@ -86,22 +86,19 @@ def test_the_example_case_runs_and_every_battery_model_is_in_domain() -> None:
     assert outcome.report.violated_conditions == ()
 
 
-def test_the_thermal_model_is_reported_and_is_honestly_unknown() -> None:
-    """The finding this boundary cannot fix, reported rather than hidden.
+def test_the_thermal_model_is_reported_and_assessed_from_the_declared_applicability() -> None:
+    """The battery boundary now carries the lumped model's applicability.
 
-    ``run_self_heating_discharge`` takes no applicability declaration, so the
-    body it marches has an empty one and the lumped model can never be better
-    than UNKNOWN here. Leaving it out of the report would be a report claiming
-    nothing about a model that produced half its numbers, so it is in, and it
-    says what it is.
+    The example payload declares the geometry, material and convection inputs
+    the lumped thermal validity domain requires. The coupled march therefore
+    assesses the actual thermal model it uses instead of forcing it to UNKNOWN
+    through an empty declaration.
     """
     outcome = run_battery_case(example_battery_payload())
     assert (
         statuses(outcome.report)[lump.LUMPED_CAPACITY_MODEL.model_id]
-        is ValidityStatus.UNKNOWN
+        is ValidityStatus.IN_DOMAIN
     )
-    # And that alone is what keeps a well-formed nominal case off SUPPORTED.
-    assert outcome.report.verdict.value == "insufficient_evidence"
     assert outcome.report.violated_conditions == ()
 
 
