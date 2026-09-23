@@ -60,7 +60,6 @@ __all__ = [
     "BulkDataUnavailable",
     "FilesystemBulkStore",
     "InMemoryBulkStore",
-    "UnstructuredMeshData",
     "capture_bulk",
     "relocate",
     "store_values",
