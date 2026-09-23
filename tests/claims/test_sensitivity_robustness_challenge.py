@@ -175,8 +175,16 @@ def test_nothing_weak_or_undeclared_can_weaken_a_claim(registry, et_supported) -
     assert not any(c.weakened for c in report.challenges)
     (solver,) = [c for c in report.challenges if c.kind is ChallengeKind.INDEPENDENT_SOLVER]
     assert solver.result is ChallengeResult.NOT_ATTEMPTED and not solver.attempted
-    (alt,) = [c for c in report.challenges if c.kind is ChallengeKind.ALTERNATIVE_MODEL]
-    assert alt.target == "system.battery" and alt.result is ChallengeResult.INCONCLUSIVE and not alt.weakened
+    alternatives = [
+        c for c in report.challenges
+        if c.kind is ChallengeKind.ALTERNATIVE_MODEL
+    ]
+    assert alternatives
+    battery = next(c for c in alternatives if c.target == "system.battery")
+    assert battery.result is ChallengeResult.INCONCLUSIVE and not battery.weakened
+    # Registry growth should increase challenge coverage, not make this test
+    # demand that one historical alternative remain the only candidate.
+    assert not any(c.weakened for c in alternatives)
 
 
 def _measure(value, lo, hi):
