@@ -836,7 +836,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14c',
-        'src/engcore/mcp/evidence.py::ModelValidityRecord.__post_init__',
+        'src/engcore/credibility/evidence.py::ModelValidityRecord.__post_init__',
         '            evaluated=dict(getattr(self.assessment, "evaluated", {}) or {}),\n',
         '            evaluated={},\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_keeps_the_operating_point',
@@ -847,7 +847,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14d',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.__post_init__',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.__post_init__',
         '        self._require_assessments_at_this_operating_point()\n',
         '',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point',
@@ -858,7 +858,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14e',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport._require_assessments_at_this_operating_point',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport._require_assessments_at_this_operating_point',
         '                if name in inputs and not _same_operating_point(value, inputs[name]):\n',
         '                if name in inputs and False:\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point',
@@ -869,7 +869,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.unbound_assessment_values',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.unbound_assessment_values',
         '            if name not in inputs\n',
         '            if False\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_records_the_names_its_provenance_cannot_bind',
@@ -1188,7 +1188,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B15t',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + requirement_checks(\n                problem,\n                validation=result.validation,\n                uncertainty=dict(result.uncertainty),\n            )\n',
         '',
         'tests/test_core_scientific_audit_batch15.py::test_r72_the_credibility_boundary_carries_the_unmet_declaration_when_it_is_given_the_problem',
@@ -2629,7 +2629,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B24e',
-        'src/engcore/mcp/evidence.py::evidence_basis_of',
+        'src/engcore/credibility/evidence.py::evidence_basis_of',
         '    if set(attained) & set(VALIDATION_LEVELS):\n',
         '    if set(attained) & {ValidationLevel.CROSS_SOLVER_VALIDATED} | set(VALIDATION_LEVELS):\n',
         'tests/test_core_scientific_audit_batch24.py::test_r39_the_mcp_side_derives_the_same_word_from_the_same_rule',
@@ -2728,7 +2728,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B25i',
-        'src/engcore/mcp/problem.py::_withhold_level',
+        'src/engcore/product/problem.py::_withhold_level',
         '    if withheld is None and already:\n        return check\n',
         '    if False:\n        return check\n',
         'tests/test_core_scientific_audit_batch25.py::test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence',
@@ -2849,7 +2849,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B26j',
-        'src/engcore/mcp/problem.py::_read_quantity',
+        'src/engcore/product/problem.py::_read_quantity',
         '    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):\n',
         '    if False:\n',
         'tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required',
@@ -2860,7 +2860,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B26k',
-        'src/engcore/mcp/problem.py::_read_quantity',
+        'src/engcore/product/problem.py::_read_quantity',
         '    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):\n',
         '    if is_delta_unit(exemplar) and not is_delta_unit(quantity.units):\n',
         'tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required',
@@ -4191,7 +4191,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B3c',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.to_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.to_dict',
         '                "evidence_basis": ValidationReport(checks=tuple(self.validation)).evidence_basis,\n',
         '                "evidence_basis": "VALIDATED",\n',
         'tests/mcp/test_evidence.py::test_core008_a_verdict_resting_on_verification_alone_says_so_in_every_report',
@@ -6171,7 +6171,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7a',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if state not in _CONVERGENCE_STATES_THAT_FINISHED:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         '        if False:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_derive_verdict_reads_convergence_on_its_own',
@@ -6182,7 +6182,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7b',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + _convergence_checks(result)\n',
         '            + ()\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_downgrade_survives_a_payload_with_the_new_field_deleted',
@@ -6193,18 +6193,18 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7c',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if state not in _CONVERGENCE_STATES_THAT_FINISHED:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         '        if False:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_a_result_whose_solver_did_not_finish_is_never_supported',
         'KILLED',
         'R-10: BOTH halves removed -- the verdict rule and the check -- which is the audited behaviour exactly, so a DIVERGED result reports SUPPORTED again',
-        (('src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result', '            + _convergence_checks(result)\n', '            + ()\n'),),
+        (('src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result', '            + _convergence_checks(result)\n', '            + ()\n'),),
         'batch7_mutations',
     ),
     (
         'B7d',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            convergence=result.convergence,\n',
         '            convergence=None,\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_convergence_state_is_in_the_report_and_its_json',
@@ -6215,7 +6215,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7e',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.to_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.to_dict',
         '            **({} if self.convergence is None else {"convergence": self.convergence.value}),\n',
         '            **({} if True else {"convergence": self.convergence.value}),\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_convergence_state_is_in_the_report_and_its_json',
@@ -6226,7 +6226,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + tuple(result.models)\n            + tuple(_declared_model_keys(result, result.validity_not_assessed)),\n',
         '            ,\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r40_a_provenance_override_cannot_drop_a_declared_model',
@@ -6270,12 +6270,12 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7j',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            convergence=result.convergence,\n            uncertainty=dict(result.uncertainty),\n',
         '            convergence=result.convergence,\n            uncertainty={},\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r43_the_report_carries_per_value_uncertainty_and_its_source',
         'KILLED',
-        "R-43: from_result drops result.uncertainty again [REPOINTED 2026-09-18: I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the re-derived requirement checks. The preceding line is carried so the mutation still names the report field the target test reads, and not the checks; was src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result '            uncertainty=dict(result.uncertainty),\\n' -> '            uncertainty={},\\n']",
+        "R-43: from_result drops result.uncertainty again [REPOINTED 2026-09-18: I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the re-derived requirement checks. The preceding line is carried so the mutation still names the report field the target test reads, and not the checks; was src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result '            uncertainty=dict(result.uncertainty),\\n' -> '            uncertainty={},\\n']",
         (),
         'batch7_mutations',
     ),
@@ -6303,7 +6303,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8a',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        if not level_is_earned(level, outcome, residual, tolerance, evidence):\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_a_pass_with_a_level_and_nothing_compared_establishes_nothing',
@@ -6314,7 +6314,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8b',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        gap = _issuer_gap(level, outcome, residual, tolerance, evidence)\n',
         '        gap = None\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_derive_verdict_refuses_a_duck_typed_check',
@@ -6325,7 +6325,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8c',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        except (AttributeError, TypeError, ValueError) as exc:\n',
         '        except (TypeError, ValueError) as exc:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_derive_verdict_refuses_an_object_missing_the_fields_the_rule_reads',
@@ -6336,7 +6336,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8d',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        if outcome is ValidationOutcome.PASS:\n            attained.add(level)\n',
         '        if True:\n            attained.add(level)\n',
         'tests/mcp/test_evidence.py::test_a_level_established_by_a_check_that_did_not_pass_does_not_count',
@@ -6347,7 +6347,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8e',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if EVIDENCE_BASIS_ORDER[evidence_basis_of(attained)] < EVIDENCE_BASIS_ORDER[demanded]:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_derive_verdict_reads_a_required_basis_on_its_own',
@@ -6358,7 +6358,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.missing_evidence_basis',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.missing_evidence_basis',
         '        if EVIDENCE_BASIS_ORDER[self.evidence_basis] < EVIDENCE_BASIS_ORDER[demanded]:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_caller_can_demand_a_basis_it_did_not_get',
@@ -6369,7 +6369,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8g',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_dict',
         '        if "verdict_qualifiers" not in payload:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_payload_with_the_evidence_basis_removed_is_refused',
@@ -6380,7 +6380,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8h',
-        'src/engcore/mcp/evidence.py::_require_qualifiers_as_derived',
+        'src/engcore/credibility/evidence.py::_require_qualifiers_as_derived',
         '    missing = sorted(set(derived) - set(stated))\n',
         '    missing = []\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_payload_with_the_evidence_basis_removed_is_refused',
@@ -6446,7 +6446,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8n',
-        'src/engcore/mcp/problem.py::_withhold_level',
+        'src/engcore/product/problem.py::_withhold_level',
         '            else (*check.evidence, f"{WITHHELD_LEVEL_EVIDENCE_PREFIX}{withheld.value}")\n',
         '            else check.evidence\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_withheld_level_is_recorded_where_a_reader_finds_it',
