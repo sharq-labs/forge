@@ -73,11 +73,15 @@ digest rather than merely labelled, so that editing the flagship study cannot
 look like a compatibility event. The day nobody believes that alarm is the day
 a real one goes unnoticed.
 
-**Non-Core packages** (`7`): `domains`, `systems`, `sria`, `design`, `credibility`, `mcp`,
-`claims`.
-They live under `engcore` and are not part of the Core API. Recorded in
+**Non-Core packages** (`14`): `domainpacks`, `domains`, `systems`, `sria`,
+`design`, `credibility`, `mcp`, `claims`, `assembly`, `compositionpacks`,
+`executionpacks`, `planning`, `product`, and `scenarios`.
+They live under `engcore` and are not part of the frozen Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
-neither frozen nor experimental nor excluded is an accidental public surface.
+neither frozen nor experimental nor explicitly excluded is an accidental public
+surface. Plugin packs, planning/product orchestration, assembly and scenario
+contracts remain outside the frozen surface until an explicit freeze/version
+decision promotes them.
 
 **Anything not exported from a canonical module.** A name reachable only by
 importing a submodule directly is internal, regardless of whether it starts
