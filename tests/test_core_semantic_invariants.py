@@ -304,6 +304,8 @@ def test_the_constructor_and_the_reader_refuse_the_same_declaration(value):
 _NESTED_WITHOUT_SCHEMA = frozenset({
     "EntryClassification", "RouteComparison", "ExperimentBudget",
     "SolverSettings", "CheckpointStore", "CalibrationState",
+    "AuthorizedSystemValidation", "AuthorizedSystemUncertainty",
+    "AuthorizedSystemVerification",
 })
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
