@@ -51,9 +51,6 @@ LEVELLED = {
     # The consensus decides its own level; the check carries whatever the
     # declaration earned, which is CROSS_SOLVER_VALIDATED or nothing.
     "cross_method_agreement": None,
-    # Emitted through CrossSolverConsensus.to_check(); the consensus decides
-    # whether route independence is sufficient to award CROSS_SOLVER_VALIDATED.
-    "independent_solver_agreement": None,
 }
 
 #: Every check that passes today and establishes nothing, with the
