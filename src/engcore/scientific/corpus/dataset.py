@@ -603,7 +603,7 @@ class ReferenceDataset:
         object.__setattr__(
             self,
             "metadata",
-            None if self.metadata is None else freeze(dict(self.metadata)),
+            freeze(None if self.metadata is None else dict(self.metadata)),
         )
 
         self._require_independent_splits()
