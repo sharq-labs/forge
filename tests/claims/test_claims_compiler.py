@@ -177,17 +177,20 @@ def test_a_candidate_outside_its_validated_domain_is_unsupported_not_contradicte
     assert move.source.startswith("model:thermal.nafems_t3.transient_heat_1d@1.0.0")
 
 
-def test_the_battery_capability_is_refused_because_its_lumped_body_can_never_be_assessed(registry) -> None:
+def test_the_battery_capability_is_ready_when_thermal_applicability_is_declared(registry) -> None:
     compiled = compile_claim(
-        claim(qoi=QuantityOfInterest("terminal_voltage", "volt"), target=ClaimTarget(value=Quantity(3.0, "volt")),
-              operator=ConstraintOperator.GREATER_EQUAL, operating_context={}, known_inputs=battery_inputs()),
+        claim(
+            qoi=QuantityOfInterest("terminal_voltage", "volt"),
+            target=ClaimTarget(value=Quantity(3.0, "volt")),
+            operator=ConstraintOperator.GREATER_EQUAL,
+            operating_context={},
+            known_inputs=battery_inputs(),
+        ),
         registry,
     )
-    assert compiled.status is CompilationStatus.UNSUPPORTED_CAPABILITY
-    (candidate,) = [c for c in compiled.selection.candidates if c.capability_id == "system.battery"]
-    assert {r for r, _ in candidate.rejections} == {RejectionReason.VALIDITY_UNASSESSABLE}
-    extend = [r for r in compiled.repairs if r.kind is RepairKind.EXTEND_CAPABILITY]
-    assert len(extend) == 10 and all("thermal.lumped.first_order_capacity" in r.target for r in extend)
+    assert compiled.status is CompilationStatus.READY, compiled.reasons
+    assert compiled.capability.capability_id == "system.battery"
+    assert compiled.missing_inputs == ()
 
 
 def test_a_stray_input_is_never_silently_dropped(registry) -> None:
