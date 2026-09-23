@@ -50,7 +50,12 @@ CONTROL_REASONS = (
 
 SCOPE = (
     ScopeArea("core", "CORE_CERTIFIED", ("src/engcore/scientific/**/*.py",), "core"),
-    ScopeArea("harness", "HARNESS", ("tests/mutation_guards.py",), "harness"),
+    ScopeArea(
+        "harness",
+        "HARNESS",
+        ("tests/mutation_guards.py", "tests/mutation_population_v4.py"),
+        "harness",
+    ),
     ScopeArea(
         "certification_control", "CERTIFICATION_CONTROL",
         (".github/workflows/recertify-hardened-core.yml", "tools/certification/*.py"),
