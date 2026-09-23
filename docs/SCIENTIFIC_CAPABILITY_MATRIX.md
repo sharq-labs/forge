@@ -22,3 +22,4 @@ Stages: FOUNDATION -> FUNCTIONAL -> EVIDENCE_BACKED -> PRODUCTION_READY.
 The active epic is finished only when its computed stage reaches PRODUCTION_READY.
 Until then, horizontal expansion into new capability foundations is paused unless an explicit exception is recorded.
 Every MISSING gate must carry a concrete next action. NOT_APPLICABLE requires a rationale.
+
