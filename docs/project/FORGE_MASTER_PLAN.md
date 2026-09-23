@@ -338,30 +338,32 @@ Until funding or a specific commercial need:
 
 ## 9. Roadmap
 
-The roadmap is ordered by dependency, not marketing value.
+The roadmap is ordered by dependency and the project's current strategic priority.
+**Time, environment and lifecycle are early Core concerns, not late product features.**
+Mathematics/data/material capabilities are strengthened alongside these phases whenever
+the active slice requires them.
 
 | Phase | Objective | Exit criterion |
 |---|---|---|
 | **P0** | Core/CI/assurance stabilization | automatic gates; one coherent assurance path; current evidence is SHA-bound |
-| **P1** | Mathematical provider foundation | symbolic/numerical contracts are provider-backed without new authority paths |
-| **P2** | Scientific Data Layer | open dataset can be normalized with provenance/license/uncertainty/validity |
-| **P3** | Material System | one material identity is consumable across multiple domains with state-dependent properties |
-| **P4** | Time Engine | canonical clocks, windows, events, histories and state transitions |
-| **P5** | Environment Engine | reusable environment timeline with solar/weather/exposure/body-force inputs |
-| **P6** | Lifecycle/Degradation Engine | generic damage/degradation state updates future model state |
-| **P7** | Field + Mesh Core | provider-neutral scalar/vector/tensor field and mesh contracts |
-| **P8** | FEM/PDE provider stack | verified spatial thermal + structural cases through external providers |
-| **P9** | Generic Coupling | arbitrary two-provider coupled simulation with evidence and convergence |
-| **P10** | CFD provider | validated flow + heat-transfer cases |
-| **P11** | Structural mechanics breadth | static/modal/thermo-structural/fatigue foundations |
-| **P12** | Battery electrochemistry | PyBaMM-class electrochemical + thermal + degradation workflow |
-| **P13** | HVAC / thermodynamic systems | refrigerant/property/system/CFD coupling |
-| **P14** | Chemistry | detailed kinetics/thermo/transport provider |
-| **P15** | Multi-timescale Runtime | fast/medium/slow physics evolve one lifecycle state without brute force |
-| **P16** | Graph-level UQ/V&V | uncertainty, validation and numerical evidence compose across coupling |
-| **P17** | Flagship systems | HVAC, battery pack, drone, vehicle subsystem demonstrate full architecture |
-| **P18** | HPC/scale | distributed/remote execution with documented scale and replay |
-| **P19** | Commercial data/funding expansion | paid data/providers only where technically justified |
+| **P1** | Time Engine | canonical clocks, windows, events, usage/exposure/cycle histories and state transitions |
+| **P2** | Environment Engine | reusable environment timeline with solar/weather/exposure/body-force inputs |
+| **P3** | Lifecycle/Degradation Engine | generic degradation state changes future model/material/system state |
+| **P4** | Scientific Data + Materials | open datasets are normalized with provenance/license/uncertainty and materials are state-dependent across domains |
+| **P5** | Mathematical provider foundation | symbolic/numerical/statistical capabilities are provider-backed without creating new authority paths |
+| **P6** | Field + Mesh Core | provider-neutral scalar/vector/tensor field, region, boundary and mesh contracts |
+| **P7** | FEM/PDE provider stack | verified spatial thermal + structural cases through external providers |
+| **P8** | Generic Multiphysics Coupling | arbitrary two-provider coupled simulation with evidence, mapping and convergence |
+| **P9** | CFD provider | validated flow + heat-transfer cases |
+| **P10** | Structural mechanics breadth | static/modal/thermo-structural/fatigue foundations |
+| **P11** | Battery electrochemistry | PyBaMM-class electrochemical + thermal + degradation workflow |
+| **P12** | HVAC / thermodynamic systems | refrigerant/property/system/CFD coupling |
+| **P13** | Chemistry | detailed kinetics/thermo/transport provider |
+| **P14** | Multi-timescale Runtime | fast/medium/slow physics evolve one lifecycle state without brute force |
+| **P15** | Graph-level UQ/V&V | uncertainty, validation and numerical evidence compose across coupling |
+| **P16** | Flagship systems | HVAC, battery pack, drone and vehicle subsystem demonstrate the architecture |
+| **P17** | HPC/scale | distributed/remote execution with documented scale and replay |
+| **P18** | Commercial data/funding expansion | paid data/providers only where technically justified |
 
 Do not skip prerequisite phases merely to increase the number of domains.
 
