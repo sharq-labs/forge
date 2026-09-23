@@ -963,7 +963,7 @@ class MultiphysicsRuntime:
                 definition.description,
                 reference=f"physics_graph:{self.graph.graph_id}",
             )
-            checks.append(balance.to_check().to_dict())
+            checks.append(balance.to_validation_check().to_dict())
 
         return tuple(checks)
 
