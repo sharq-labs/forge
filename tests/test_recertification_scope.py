@@ -432,7 +432,7 @@ def test_the_recertify_topology_matches_the_python_it_is_judged_by():
         for filename in files.values():
             expected = (
                 re.sub(
-                    rf"(?<=[-_]){re.escape(index)}(?=\\.)",
+                    rf"(?<=[-_]){re.escape(index)}(?=\.)",
                     "${{ env.SHARD_INDEX }}",
                     filename,
                 )
