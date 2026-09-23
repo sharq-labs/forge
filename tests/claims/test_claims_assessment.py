@@ -124,7 +124,7 @@ def test_a_model_outside_its_domain_never_contradicts_the_claim(registry) -> Non
     assert any(r["kind"] == "move_inside_validity" for r in record["repair_actions"])
 
 
-def test_a_complete_battery_claim_is_supported_when_thermal_applicability_is_declared(registry) -> None:
+def test_a_complete_battery_claim_executes_but_remains_under_evidenced(registry) -> None:
     record = assess_claim(
         claim(
             qoi=QuantityOfInterest("terminal_voltage", "volt"),
@@ -135,9 +135,13 @@ def test_a_complete_battery_claim_is_supported_when_thermal_applicability_is_dec
         ),
         registry,
     ).to_dict()
-    assert record["verdict"] == "supported"
-    assert record["status"] == "executed"
+    # Thermal applicability is now fully declared, so selection/execution is
+    # no longer blocked by an unassessable lumped body. That does not promote
+    # the scientific evidence beyond what the executed report actually earns.
+    assert record["status"] == "assessed"
+    assert record["verdict"] == "insufficient_evidence"
     assert "selection.validity_unassessable" not in _codes(record)
+    assert "credibility.insufficient_evidence" in _codes(record)
 
 
 def test_a_demanded_uncertainty_channel_that_is_unknown_leaves_the_claim_undecided(registry) -> None:
