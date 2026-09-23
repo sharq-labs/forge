@@ -209,7 +209,10 @@ def test_declarations_with_studies_round_trip_and_capabilities_without_keep_thei
         back = CapabilityDeclaration.from_dict(json.loads(json.dumps(d.to_dict())))
         assert back.digest == d.digest
     battery = registry.get("system.battery").to_dict()
-    assert "refinement" not in battery and "perturbable" not in battery
+    assert "refinement" not in battery
+    assert battery["perturbable"]
+    cstr = registry.get("kinetics.cstr.production").to_dict()
+    assert "refinement" not in cstr and "perturbable" not in cstr
 
 
 # ---------------------------------------------------------------------------
