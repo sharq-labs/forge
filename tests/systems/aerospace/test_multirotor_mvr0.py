@@ -133,6 +133,15 @@ def test_reference_study_is_deterministic_for_same_declared_inputs() -> None:
         for archive in second.scoped_archives
     ]
 
+    assert all(
+        item.result.provenance.git_commit is None
+        for item in first.evaluations
+    )
+    assert all(
+        item.result.provenance.metadata["source_revision"] == "same"
+        for item in first.evaluations
+    )
+
 
 def test_1000_candidate_vertical_slice_runs_end_to_end() -> None:
     run = run_reference_study(
