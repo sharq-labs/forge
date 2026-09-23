@@ -473,7 +473,9 @@ def test_a_coupled_run_and_a_standalone_assessment_agree_at_the_same_point():
     # The claim the old assertion made, stated over what the two records must share: the same
     # verdict, the same conditions, and no value recorded that the instants disagreed on.
     combined = dict(step.validity)
-    assert set(combined) == set(standalone)
+    thermal_model_id = lump.LUMPED_CAPACITY_MODEL.model_id
+    assert set(combined) == set(standalone) | {thermal_model_id}
+    assert thermal_model_id not in step.validity_at[cp.STEP_START]
     for model_id, at_start in standalone.items():
         over_the_step = combined[model_id]
         assert over_the_step.status is at_start.status
