@@ -326,17 +326,6 @@ def cstr_capability() -> CapabilityDeclaration:
                 ),
                 quantities=_CSTR_VERIFICATION_QOIS,
             ),
-            AttainableLevel(
-                ValidationLevel.CROSS_SOLVER_VALIDATED,
-                check_name="independent_solver_agreement",
-                route_id="kinetics.cstr.independent:LSODA",
-                condition=(
-                    "the tolerance-independent production solve agrees with the "
-                    "pinned separately translated ODEPACK/LSODA implementation "
-                    "on every declared verification quantity"
-                ),
-                quantities=_CSTR_VERIFICATION_QOIS,
-            ),
         ),
         uncertainty=UncertaintyCapability(
             quantified={},
