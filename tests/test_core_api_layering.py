@@ -273,6 +273,15 @@ NON_CORE_PACKAGES = {
         "routing, planning and assessment. EXPERIMENTAL, above credibility/SRIA, "
         "and forbidden from depending on MCP transport"
     ),
+    "assembly": "system/multiphysics assembly above the frozen Scientific Core",
+    "compositionpacks": "composition plugin manifests and registry infrastructure above Core",
+    "executionpacks": "execution-provider pack manifests and registry infrastructure above Core",
+    "planning": "production planning and provider selection above the frozen Scientific Core",
+    "product": "product-facing scientific gateway/orchestration above Core",
+    "scenarios": (
+        "transient/scenario contracts currently outside the frozen Core surface; "
+        "promotion requires an explicit version/freeze decision"
+    ),
 }
 
 
