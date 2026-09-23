@@ -34,10 +34,10 @@ WORKDIR /crafty
 # the layer that downloads scipy.
 COPY pyproject.toml requirements.txt README.md ./
 COPY src ./src
-# `.[dev,mcp]`: the image must install everything the suite needs, which is
-# the whole point of it. `mcp` and `anyio` were undeclared until the round
-# that added the `[mcp]` group, and this image is what found that.
-RUN pip install --no-cache-dir -e ".[dev,mcp]"
+# Install every declared test/benchmark extra the reproducibility image can
+# reach. A bare image must not accidentally rely on packages present on the
+# author's host.
+RUN pip install --no-cache-dir -e ".[dev,mcp,oracles,benchmarks]"
 
 COPY . .
 
