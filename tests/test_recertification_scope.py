@@ -430,7 +430,15 @@ def test_the_recertify_topology_matches_the_python_it_is_judged_by():
             prefix = prefix.removesuffix(f"-{index}") + "-${{ env.SHARD_INDEX }}"
         assert f"name: {prefix}-${{{{ needs.classify.outputs.source_sha }}}}" in block, gate
         for filename in files.values():
-            expected = filename.replace(index, "${{ env.SHARD_INDEX }}") if index else filename
+            expected = (
+                re.sub(
+                    rf"(?<=[-_]){re.escape(index)}(?=\\.)",
+                    "${{ env.SHARD_INDEX }}",
+                    filename,
+                )
+                if index
+                else filename
+            )
             assert expected in block, (gate, filename)
         assert "if-no-files-found: error" in block, gate
         if index is not None:
