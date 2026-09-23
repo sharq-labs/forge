@@ -246,11 +246,7 @@ def verify_bundle(
         environment_problem = _environment_problem(bundle.get("environment"))
         if environment_problem is not None:
             return BundleCheck(BundleStatus.TAMPERED, (environment_problem,))
-        # Imported lazily to keep the replay module a view over the assessment
-    # runtime rather than creating an import cycle at module import time.
-    from ..assessment import assess_claim
-
-    record = bundle["record"]
+        record = bundle["record"]
         carried_trust = _trust_of(bundle)
         if record.get("external_trust_registry") != carried_trust.digest:
             return BundleCheck(BundleStatus.TAMPERED, ("the carried trust pins are not the registry the record was judged under",))
@@ -478,6 +474,10 @@ def replay_bundle(
     silently disappearing during replay.
     """
     trust = PRODUCTION_EXTERNAL_REGISTRY if trust is None else trust
+    # Imported lazily so the replay view can call the assessment runtime
+    # without creating a module-import cycle.
+    from ..assessment import assess_claim
+
     check = verify_bundle(bundle, registry, trust=trust)
     if check.status is not BundleStatus.VERIFIED:
         return ReplayResult(check.status, check.problems, 0)
