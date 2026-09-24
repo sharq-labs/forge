@@ -458,6 +458,15 @@ def linearized_predictive_uq(
     specs = tuple(specs)
     if not specs or not all(isinstance(s, PredictiveObservableSpec) for s in specs):
         raise HybridUQError("linearized_predictive_uq takes one or more PredictiveObservableSpec")
+    missing_noise = [
+        spec.observation_key for spec in specs
+        if spec.observation_sigma is None
+    ]
+    if missing_noise:
+        raise HybridUQError(
+            "total predictive uncertainty cannot treat undeclared observation "
+            f"noise as zero for {missing_noise}"
+        )
     level = float(confidence_level)
     if not 0.0 < level < 1.0:
         raise HybridUQError("confidence_level must lie strictly between 0 and 1")
