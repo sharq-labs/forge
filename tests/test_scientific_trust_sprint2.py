@@ -136,7 +136,7 @@ SNAPSHOT = SourceSnapshot(
 )
 
 CALIBRATION_TEMPERATURES = (295.0, 300.0, 305.0, 310.0)
-VALIDATION_TEMPERATURES = (315.0, 340.0, 365.0, 390.0)
+VALIDATION_TEMPERATURES = (315.0, 318.0, 340.0, 365.0, 390.0)
 HOLDOUT_TEMPERATURES = (420.0, 450.0)
 
 
@@ -646,7 +646,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     # --- the corpus half: source -> snapshot -> normalized dataset -> splits
     dataset = _dataset()
     assert dataset.snapshot.snapshot_sha256 == "1" * 64
-    assert dataset.split_counts == {"calibration": 4, "validation": 4, "locked_holdout": 2}
+    assert dataset.split_counts == {"calibration": 4, "validation": 5, "locked_holdout": 2}
     release = HoldoutRelease(
         "sprint2.e2e", "sprint2.e2e", "1", dataset.normalized_digest,
         "2026-02-01T00:00:00+00:00",
