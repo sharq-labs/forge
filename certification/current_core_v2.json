@@ -4,7 +4,7 @@
       "area": "certification_control",
       "digest": "2bef8a76d8ede410566da40e2d4acce274fe412a39afdacab8bca63cc3e84129",
       "executed_certified_bytes_match_source": true,
-      "executed_merge_preview_commit": "c5259a5cbc85dfb7bd5cc7058e03b0124af30609",
+      "executed_merge_preview_commit": "7fdb67f9149ac3dea1cefd51649efef55c1686a4",
       "file_count": 27
     },
     "environment": {
@@ -16,27 +16,27 @@
       "execution_model": "parallel_github_actions_jobs",
       "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
       "ngspice": "ngspice-42 : Circuit level simulation program",
-      "pip_freeze_3_11_sha256": "bb3d9007ad5277c0b1ae56ee8828e8694c0e1ead03e637ad9b90fa31bed5feda",
-      "pip_freeze_3_12_sha256": "3958ce349cf3b1f7f61553dda89337cf40bc1094ec1f06d884192f38981ab4a0",
+      "pip_freeze_3_11_sha256": "7458310157cfae1d0bd2aeff0e966a0e8a245ed2e7a228920dcfbaf5d3d6ce3c",
+      "pip_freeze_3_12_sha256": "7463446f816fdb768399eecc1fe7fc4f9e2f99c452b762a5b933d3615ad025f1",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "python_3_12_source_gates": {
         "campaign312": {
-          "pip_freeze_sha256": "3958ce349cf3b1f7f61553dda89337cf40bc1094ec1f06d884192f38981ab4a0",
+          "pip_freeze_sha256": "7463446f816fdb768399eecc1fe7fc4f9e2f99c452b762a5b933d3615ad025f1",
           "python": "Python 3.12.14"
         },
         "regression312": {
-          "pip_freeze_sha256": "3958ce349cf3b1f7f61553dda89337cf40bc1094ec1f06d884192f38981ab4a0",
+          "pip_freeze_sha256": "7463446f816fdb768399eecc1fe7fc4f9e2f99c452b762a5b933d3615ad025f1",
           "python": "Python 3.12.14"
         },
         "scientific312": {
-          "pip_freeze_sha256": "3958ce349cf3b1f7f61553dda89337cf40bc1094ec1f06d884192f38981ab4a0",
+          "pip_freeze_sha256": "7463446f816fdb768399eecc1fe7fc4f9e2f99c452b762a5b933d3615ad025f1",
           "python": "Python 3.12.14"
         }
       },
       "runner_os": "Linux",
       "schema": "forge.certification_environment/4",
-      "source_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+      "source_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
@@ -345,7 +345,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "f7c89573f7bbbda38cd08b3d0f56b9a6433480e52be70e396769c15993d91493",
+          "execution_log_sha256": "c53bbdfbe1cb64e5e1202fa99c5921526716e9abf65448003d4a801582056bb0",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -425,7 +425,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "3b2f52abb96ca7e25d478e4218eec4f25146995f101127a6d298ec5ef9f119c0",
+          "execution_log_sha256": "5112dcb740194cb3e1010023d92a375b8fbe38a74cbd7d41fe9e837990393d28",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -505,7 +505,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "c1f7e947ae7f3cbd3403a898d5b4485069cdd9edf86309eeba49d4f291ec966e",
+          "execution_log_sha256": "d76c4c7cd5ee4d39248e90fb4151839960b05eccb9c3b68aed425c59ca2d04bf",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -585,7 +585,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "679919f47d9ee719f6e5d0768ead350ae2d08c118612d988624936ee30388877",
+          "execution_log_sha256": "9d4088f6526b41b0530555e3ba6ded2265f8769a59041335dfea1a5a8863a133",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -669,14 +669,14 @@
       "campaign_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "campaign312",
-        "gate_record_sha256": "f8aa982541dd9d94eac17acceccc9a58b2e1da4c8d5b0d67e7a36578bbb52a50",
-        "head_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+        "gate_record_sha256": "5bb4c71062ee482f29bd12b1a97d5bb8cdac1c378ff7afee1a5ec715965e3c55",
+        "head_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
         "result": "success",
         "suites": {
           "campaign": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "75a96ad3c476a7c97c7664f24930ee3e4ae0349c77426cdad211f80b28e39015",
+            "junit_sha256": "7a2dc6487f139702a68f879d1d82e4e531db255bc83fa71ef4d5b9b6ec1027f7",
             "skipped": 0,
             "tests": 4
           }
@@ -709,14 +709,14 @@
       "false_confidence_regression_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "regression312",
-        "gate_record_sha256": "83dc993578873626d0b1d0ac215393b69d1d06c50e1c82ac4405870532a4d31d",
-        "head_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+        "gate_record_sha256": "53a06e35defca50fa7397bd856c3838605e8220217b1b9d89d1c197ddc5c25b7",
+        "head_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
         "result": "success",
         "suites": {
           "regression": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "81c368064f47cdf381e8f4acc21527560e21ab23605b7afaa51bb21c67b5ca9b",
+            "junit_sha256": "47b747730fcb0d4b3c4c9d06394664e1ec739aad15374a5913b480ba1aa56296",
             "skipped": 0,
             "tests": 225
           }
@@ -725,46 +725,46 @@
       "fast_python_3_11": {
         "clean_tree_after_gate": true,
         "gate": "fast311",
-        "gate_record_sha256": "fb429939f2f6fc6696880609d032fa83f089b9d2d27f6512736d7be4f4de50dd",
-        "head_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+        "gate_record_sha256": "63e34897c45d5dfd2415bf4059f77b91d79b6d76a4c5652c20155a10a11d6d5e",
+        "head_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "9182789482a7b009b3cf3395c13cc50e54f75c857f25ba09e7082b066c1c1c72",
+            "junit_sha256": "18e832c648085f6e24ab44d953dd6c4a7e48504b721c29be1ea103d43cfa2826",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "f4183e9849ac6cddc9c7cb340367f1601d73c4c1afae0984428fb10a8e1f7691",
+            "junit_sha256": "76f859a2faa88460d55bd241bae9da6daf0a801a404fd5224321fad8c105c382",
             "skipped": 19,
-            "tests": 8352
+            "tests": 8368
           }
         }
       },
       "fast_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "fast312",
-        "gate_record_sha256": "3a7568ce188b3ad0fe83adb0febdc8752eb99e9819e717f75fa4e0367b328740",
-        "head_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+        "gate_record_sha256": "b2742193b70926c36ed0e956a798bd03802215dae456a824c8449f4f9bd6084c",
+        "head_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "01d935d3b39cd8d6ebbd00d66c68dc7a47d92643cfd80de3dfd493d59f32aaf3",
+            "junit_sha256": "737b5e7e8b16b8c84b5cc1cbc3fc38667af90f7f21ccf50765e8c7ffeb7f0dbe",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "2ddfd1c9fd9ea0a76c1f7ad1c8544babcb2fdfd9b8dbbe8036a82431fc8f30e2",
+            "junit_sha256": "fc1c731356d0c50b08e4b47920a3c880808871c18eec4b5f9d0f2bf71f374f00",
             "skipped": 19,
-            "tests": 8352
+            "tests": 8368
           }
         }
       },
@@ -772,29 +772,29 @@
       "scientific_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "scientific312",
-        "gate_record_sha256": "c21ddf54c53cb49cf41c5e7e78a584ebd7b7d0d9b8061b100f215bf9c3f53f41",
-        "head_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+        "gate_record_sha256": "1c9f4785b72af67a3672b46afa2fe71b4288783f53870fbab51f15fa4a8f1acd",
+        "head_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
         "result": "success",
         "suites": {
           "scientific": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "46d131691c8b7c2b2c609cbee595c5056fae1ec03a9fdf019aade8b9d4d89873",
+            "junit_sha256": "b83a0bec8b933fe973a9a90ff27e678fa162017151e70f0226a1d30c60d9aecd",
             "skipped": 5,
-            "tests": 8903
+            "tests": 8919
           }
         }
       }
     },
     "lineage": {
-      "certificate_artifact": "hardened-core-assurance-f4ba55e10714c2c1a495425256e64ab280a92d7f",
-      "certificate_parent": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+      "certificate_artifact": "hardened-core-assurance-44885bf01aa4ceafddaaf317ba2569ef1d04a904",
+      "certificate_parent": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
       "certify_job": "certify",
       "event": "pull_request",
-      "pull_request": 102,
+      "pull_request": 104,
       "repository": "sharq-labs/forge",
       "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
-      "source_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+      "source_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
       "source_gates": [
         "fast311",
         "fast312",
@@ -817,12 +817,12 @@
       ],
       "workflow": ".github/workflows/recertify-hardened-core.yml",
       "workflow_run_attempt": 1,
-      "workflow_run_id": 35977326196
+      "workflow_run_id": 36038874182
     },
     "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
     "schema": "forge.core_hardening_assurance/5",
-    "source_commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
-    "source_tree": "038a3a867dc745aff277f50ef68009cab52be4a0",
+    "source_commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
+    "source_tree": "707f9eeccf9908e6d33547a8cb90824265200084",
     "trust_hardening_mutations": {
       "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
       "expected_population": 20,
@@ -853,7 +853,7 @@
       "population": 20,
       "population_sha256": "2f2a4d233851ae7ca0ac36b58d400da3c692f6cf44a3626fb553b062a91d0bad",
       "result_schema": "forge.trust_mutation_assurance/1",
-      "result_sha256": "1dd60654c42786bb821c25066e2f846fed819715efea4d86715e69859ed6ec74",
+      "result_sha256": "e977dd600d3f1772b9e787a7cac251f6de443cb00a63b7583639bfceae8425cb",
       "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     },
@@ -1557,7 +1557,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "226e33378bd9bf91cc1dc0eb3db12ef9d18e4ff8d9835b049459a64888692c7c",
+          "execution_log_sha256": "cc633184ffa9b98d97c081e994cac641bb151fe513bf714fc1c1359fd37015bc",
           "selected_count": 85,
           "selected_ids": [
             "B10a",
@@ -1651,7 +1651,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "7a237b23cb8c21c351cd0e3bcb10781e9d2ab17b140393ddea8d0ea5f89498db",
+          "execution_log_sha256": "97a88d189fc8d93b8ce19e5b778163d034204ce5e954bd76bb141a161b936c1d",
           "selected_count": 85,
           "selected_ids": [
             "B10b",
@@ -1745,7 +1745,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "f77d17aa339f81331dfebcb0c350e519e4ba71e416c6d96db041a7ef6890f4f8",
+          "execution_log_sha256": "6a01cc8fb5c24c3f3bf1a28027d304bf83135e42f0ba043397452ef74669854e",
           "selected_count": 85,
           "selected_ids": [
             "B10c",
@@ -1839,7 +1839,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "8e589d7f4b6d5e6858f487394218c961e9036b5647f0862522ac31bfc10b065f",
+          "execution_log_sha256": "0ce833411f9df88d498e84ab7644a88e8964d58d23681b456fc0b56c58525d6b",
           "selected_count": 85,
           "selected_ids": [
             "B10d",
@@ -1933,7 +1933,7 @@
         },
         "4": {
           "control": "GREEN",
-          "execution_log_sha256": "c7f80b97b8869e049ac757050609077408567545097d0f5d1491663675ec8d25",
+          "execution_log_sha256": "4a5c373309f889c72f5ca36ed511b6461733b13643cf3679f3dfe342f970a389",
           "selected_count": 85,
           "selected_ids": [
             "B10e",
@@ -2027,7 +2027,7 @@
         },
         "5": {
           "control": "GREEN",
-          "execution_log_sha256": "0057725cb6368cc26888df6cddceb04b22cfe168b32fe561af37ac31c6d7ee74",
+          "execution_log_sha256": "ec69a07ac3796aae020cedc0e36618899d813fa339f1d7c6403de3d448c7ec2e",
           "selected_count": 85,
           "selected_ids": [
             "B10f",
@@ -2121,7 +2121,7 @@
         },
         "6": {
           "control": "GREEN",
-          "execution_log_sha256": "c08bce29e5fc8fadd636d96acec3c28a4fff081ef99478a4de1fd1a47e284aab",
+          "execution_log_sha256": "d8da9f72d1f7e556f4f75211d8309f4bff631f3dd2025a88ae809f17d4453949",
           "selected_count": 85,
           "selected_ids": [
             "B10g",
@@ -2215,7 +2215,7 @@
         },
         "7": {
           "control": "GREEN",
-          "execution_log_sha256": "881d760abc2acd63e9473d616c59916f4c1b6760177e60cfe432e7287d2fea7c",
+          "execution_log_sha256": "b104c3b075a3d1301f7465dc496b046246a02564284922ee51d40aa28e89765f",
           "selected_count": 85,
           "selected_ids": [
             "B10h",
@@ -2343,7 +2343,7 @@
     "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "9e18c14dfc932595e7967ffbdf26415e6578340cd189565907c3d2856eee5c26",
+    "aggregate_digest": "0085222f8047b85ad45ad1b99a95965029c718e2447321fa2353e2ae7a7c6a05",
     "areas": {
       "assurance_admission": {
         "classification": "CORE_CERTIFIED",
@@ -2455,7 +2455,7 @@
       },
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "e3ad572cadaf97f15289633458900156cfd8bb9170e96a9f990f96b155116183",
+        "digest": "f19f82451a7e772b5e261b44d241305fa82c492ca3ebb4691ab70f9e58d7a2a0",
         "file_count": 196,
         "files": {
           "src/engcore/scientific/__init__.py": "f79cc0ab53915788875d632fcbc6a75a2f2822d5e3b01269e1a78e7b24367b1e",
@@ -2482,15 +2482,15 @@
           "src/engcore/scientific/corpus/adequacy.py": "097b2b4c4bc1c92763994ba0bbb99a0bc11ac627c7b2f80b4681ed1b7e609838",
           "src/engcore/scientific/corpus/authority.py": "10fd30f2d30308d9239c6ee84f1064d779bfbb3362f8abe6da4afc1d40bff39c",
           "src/engcore/scientific/corpus/calibration.py": "b40188a12578d72fd1d11db9116076eca00cb66c5e7e10fba9984c773b52757e",
-          "src/engcore/scientific/corpus/campaign.py": "8884d3e8cf74aa88d1bf691c78589547fa550798ad87b23cb1005a25dad05adf",
-          "src/engcore/scientific/corpus/coverage.py": "034527f000bc06d68498c28f526031c1ff360906d0097d6d57b3d3ee852b9311",
+          "src/engcore/scientific/corpus/campaign.py": "ac6ca83d915c2871900999bb547fde7b782c6109f49bc24d79bfc496df5d6abe",
+          "src/engcore/scientific/corpus/coverage.py": "c1166d4141eb8096ac5524819289a73856d4a93fd339f20e80a4c4deab5db90d",
           "src/engcore/scientific/corpus/dataset.py": "281da1dddd716474161ae6e83ac293b64dd1f8f9faa6f4e2d33cc5e0a535a398",
           "src/engcore/scientific/corpus/envelope.py": "5a9d6d757a211cce8afbd0677d4d16e00d88cce84c3f75eabd383888c570ae98",
           "src/engcore/scientific/corpus/numerical.py": "5da5d3215b389c5d4f5d13ef2e0e431a7d4baa6fb8d5843eb3bb65beccfec48f",
           "src/engcore/scientific/corpus/source.py": "b371cc8ea10d56a38329c7be5b48a6241b799b2ee7374468f30dd134c14ec341",
           "src/engcore/scientific/discovery/__init__.py": "877ed85caf1d5f3ac623a4bea334ba4a604f27c5a29c271d0e798b3ff31f51d1",
           "src/engcore/scientific/discovery/anomaly.py": "91e0dd1eac09ff3bef3da1985df3b8a1a6ab463ab793a5b69c51bd06e45d8075",
-          "src/engcore/scientific/discovery/campaign.py": "da09ae7500779558c0e140ffceece2293d088b3f18364c2060cdcf206189f350",
+          "src/engcore/scientific/discovery/campaign.py": "0a37b37298f48c11178449985a2574bf14aad123a2d7d06c338debe50447a5c4",
           "src/engcore/scientific/discovery/candidate.py": "23be65c54e7c6e3dbd59a18802e54027b6d778ad7906528947c2715c055b65d8",
           "src/engcore/scientific/discovery/closed_loop.py": "fb715145b2ef394ec6862403d67548fa6bf71f62153029744ce261272e8479c5",
           "src/engcore/scientific/discovery/dataset.py": "c83baf3f7d875319757bd5744d138c809b0fbf3376362ead82389422073ee226",
@@ -2524,7 +2524,7 @@
           "src/engcore/scientific/fields/conditions.py": "a821671785e96f4788d95d4934e4327cad5c93997b9f83ccfd5228ae1a81e665",
           "src/engcore/scientific/fields/definition.py": "06e90404291cb369b9864fbac4bac9b7b13be664100627c630586039ecb6546d",
           "src/engcore/scientific/fields/mesh.py": "d80bb9f2f1cc29a7b97c0f7a3bd0d257c84af58185c6d7fdc07d55dfc12bc7da",
-          "src/engcore/scientific/fields/profiles.py": "31f749b88255e47e947586988a94ad28753688c61309a1e9284e74b2498db04f",
+          "src/engcore/scientific/fields/profiles.py": "ef0a7f9f441d577deab0e972c6a37c7456a901740c37ff2e7391023a3c867333",
           "src/engcore/scientific/fields/regions.py": "c7f88f9f552a839b4cab76608b47c2cad3e38edae5b2bc642f270a5418fd1af5",
           "src/engcore/scientific/fields/result.py": "d0355979cca164ea72b4c985ab0c5c700a9fd0971f50e6c0dba661bc11f47ecf",
           "src/engcore/scientific/fields/support.py": "370caf655b50ec948ab5710756bd7be1cbce770d0f6715c48538b1b3600bd841",
@@ -2576,7 +2576,7 @@
           "src/engcore/scientific/multiphysics/plan.py": "7c82ee779c33752a159a485433c824dde69d766e388bb2381efe9e319914f45d",
           "src/engcore/scientific/multiphysics/ports.py": "57551307d4871af1e6c4b151bdd34a590bb27ae3c4548d85d97d6e14d5875716",
           "src/engcore/scientific/multiphysics/receipts.py": "a585b93e9cf8e1995e56f9c22e44ab86d3a3560b455b941a8468c8cf92112bee",
-          "src/engcore/scientific/multiphysics/report.py": "f50a9aab24526a81d64400436cb896548d0b32a06d2274d49eec5ad2aab407fa",
+          "src/engcore/scientific/multiphysics/report.py": "816ef2edeeead78c94d0989cfb138dc13d7d1b81038139f14d6121c4c95edcb2",
           "src/engcore/scientific/multiphysics/state.py": "e49a63c5f639d47e048e81c62d8f14f13a1f9a16db9faa51dcec50285aeeb4de",
           "src/engcore/scientific/multiphysics/value.py": "09c28b0f466ec16680f72086f98faa5bbe631613b54c9ee2724898d099d04e9a",
           "src/engcore/scientific/numerics/__init__.py": "4bddc97fed3c92c967221c3ee20d7b07c1800c2a46ce9a60d342c1ff809d86a9",
@@ -2627,7 +2627,7 @@
           "src/engcore/scientific/twins/__init__.py": "00d2812b6c27c3bce1a168d57d14436f1b1e1a563baacc283675330279eba79a",
           "src/engcore/scientific/twins/definition.py": "1a27bcf000aa6efb5b7fcf0fdccb35f55943786d0049bbce67660d13fe429fcf",
           "src/engcore/scientific/units/__init__.py": "bdbd7c000d9e9ceee92dfee8f0fe3e2bc94e71af755edce49d7355fa3639937f",
-          "src/engcore/scientific/units/quantity.py": "cc021bfefaba58e0a655955bd3e635123311101d5702f97918362fd70e4367a2",
+          "src/engcore/scientific/units/quantity.py": "5042c4d4a167338c837514329fe33f753db9a9440afaddfbe95d59b8f2c9bd4d",
           "src/engcore/scientific/units/validation.py": "e44babc94cde2665430d37d0b9d409855732ce83460f9247d5656c241eb066c1",
           "src/engcore/scientific/validation_core/__init__.py": "270495eb16ff742ddf59d54d299cc24a5d73ee7c83028f3b3b873c4acfdf757d",
           "src/engcore/scientific/validation_core/fingerprint.py": "b517dd2e20c1213e2bcf1af0498d0cc9ea0e71c56dd5b824c39902a96b29d0eb",
@@ -2652,7 +2652,7 @@
           "src/engcore/scientific/verification/quantity_comparison.py": "3c04e3e62b50ec87decbb776710aec53e423ddf7094b71dd0d39b629289f6eef",
           "src/engcore/scientific/verification/report.py": "0200dadfd9ce5dec45b30f2aa23867da1a9219c36c80f67aa6fc2f9941dbf617",
           "src/engcore/scientific/verification/route.py": "8f1dab695d8adef9a376a2518ba49110c2f5ab8182fc18c269b64f94c27e2ad7",
-          "src/engcore/scientific/verification/run_record.py": "a1a595d4b2b2d860896e34929bdc83bf255eca824cae095c63fe0a7730702d65",
+          "src/engcore/scientific/verification/run_record.py": "2a06f9908fe39b73147d8338061d09228f12d7fd3dce89ef53674c33387ab67f",
           "src/engcore/scientific/verification/serialization.py": "c024e02446d2c7d53a3f8a8ee6a0120c3a20b35d3ee315fcb0a95413bc8b71a2"
         },
         "patterns": [
@@ -2695,11 +2695,11 @@
       },
       "evidence_identity": {
         "classification": "CORE_CERTIFIED",
-        "digest": "e37bb9ea3ff963ce742db769be550b6de6e573545820221dd0d1146345424aa5",
+        "digest": "34c3da46cbd1715526f8c37e6a7bea8f876ca08530cdf0bf5d5f2a385ff29a97",
         "file_count": 2,
         "files": {
           "src/engcore/adequacy/__init__.py": "bef11616bb21da2135e4620b820dba71b15603a79a53e3ef59cf2448303b478f",
-          "src/engcore/adequacy/predictive.py": "178889e7329a0e3ae461a065939e09124639ac6ea491119d49a790a3adcb78a5"
+          "src/engcore/adequacy/predictive.py": "3de12d1af7ba5a0347a6067078dd177992bbea1de1c8cd470868b3f5e4c8fd31"
         },
         "patterns": [
           "src/engcore/adequacy/**/*.py"
@@ -2754,7 +2754,7 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "7cf7ddfac67e37e4d131970488bd88e6cc52a428d84df87c42c139345ce39924",
+        "digest": "62a80e8ad01c6827c3b6d714d1765aa9f4a4b35c9699f8e48e73d005d4a37e58",
         "file_count": 221,
         "files": {
           "tests/credibility/evidence_graph/test_conflict.py": "841aa86e6a04028b3a36d9ad8432297203d3c754b95f3c120d94c9bf5be97ec0",
@@ -2784,8 +2784,8 @@
           "tests/execution/test_verification_runner_identity_v2.py": "bb49fbb4519c3ad626679c1c212990f6ec8abbf542a3a1c433a01e3a3cae663b",
           "tests/execution/test_verification_runner_v2.py": "578830bb50642c4aa67bfaecf6d8b2dd5aa5e700c6dbb6ed192b028ba0cb4f68",
           "tests/hybrid_uq/false_confidence_cases.py": "611256e1b86601321f945940281db7b04bfe00fc410bea017670cec01bf91e79",
-          "tests/hybrid_uq/hybrid_synthetic.py": "8e39cd33bd3a83e37e154a8775ae2d85a52d443eb94a72a0f4d58399f7862c11",
-          "tests/hybrid_uq/test_audit_hybrid_grid_route.py": "f46b00aa281470871922c59e8c1dd8ee356e7c09104752fd36214a653d21f45f",
+          "tests/hybrid_uq/hybrid_synthetic.py": "b889a92e7c8fe1378e3c4e323fe4e12bf47a452100b837860015203fb7bfa3f4",
+          "tests/hybrid_uq/test_audit_hybrid_grid_route.py": "70b92747c0005f737f22ba4cd794efe0bdf18dddb283a00004d9dad48e293c88",
           "tests/hybrid_uq/test_audit_hybrid_identifiability.py": "544d42f91ceeba210c3bf7f7ef32ae0b1913fef723f5f92ec882d49802371b46",
           "tests/hybrid_uq/test_audit_hybrid_local_route.py": "9d1b73deb835a47ad076eff559e202733cea4821576db17c2908fdbfc801b89f",
           "tests/hybrid_uq/test_audit_hybrid_predictive.py": "377ab5d1aea458f26866bae8a6924458f3022692e77d7d5f9e9a84f1021df571",
@@ -2807,22 +2807,22 @@
           "tests/hybrid_uq/test_core_scientific_audit_batch36.py": "c9da1986a672a23de2b754303ac60691ff092bd8777502aff6b62e294342c266",
           "tests/hybrid_uq/test_core_scientific_audit_batch37.py": "e3dd5a2ea80fcbbae3328b5d4443e14c965438638d57c1cfad6a378e7d874d93",
           "tests/hybrid_uq/test_core_scientific_audit_batch38.py": "6df455d638d93311bd43ebbb8bda8ceaa4ad10a64c49120ff6b227e36029ea16",
-          "tests/hybrid_uq/test_core_scientific_audit_batch4.py": "0ca7995fa44ad73d68f9fa609b7f2204858887345e0ce90f33fb72353c984159",
+          "tests/hybrid_uq/test_core_scientific_audit_batch4.py": "f7204bf168065e8335725d427822617aa666caeee56bb71647c32e0612906b4a",
           "tests/hybrid_uq/test_core_scientific_audit_batch41_identifiability.py": "38925434410bb3e9637bbd0b3b5a83fd4ab2838b2c80c309e8d4b3004646b855",
           "tests/hybrid_uq/test_core_scientific_audit_batch6.py": "883606d48a5e95e883768e4304e2d80765bcaebc8c203b0f103b54ea25579baf",
           "tests/hybrid_uq/test_core_v4_false_confidence_conformance.py": "52bb1f412eb8139ee76e60a424608ff1cbc979b59ea446aeba11d6dc9b9cf3bc",
-          "tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py": "40ce6848255fb74a3dabfc2665393b56a2ee50657804da74e9d97e48888fa036",
+          "tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py": "001a99fb96dcf430eb5e0618e1317dd0f32ed54df43774dc56383e6061ab6a3a",
           "tests/hybrid_uq/test_hybrid_uq_local_route.py": "21f4206607950f88268bc6329d996caaeb7d0064656ea1dac6c50e07a374407c",
           "tests/hybrid_uq/test_hybrid_uq_records.py": "d5ca4000805339edc6e98be744d1e836771af4c3e66143aff70dda409a62838a",
           "tests/hybrid_uq/test_hybrid_uq_router.py": "4f98591b2f1d8d7d047b914db9c620380b06c4f1a906b811ea7d168b48761099",
           "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py": "00e95cc3e7b596a17a9c11d827f1d40d26fd572cef1cf2857658714d878d7380",
-          "tests/inference/test_audit_inference_grid_resolution.py": "ef21859663db4b0415f9c42c574ff76a43d8a923b8822944523d67234dee712f",
+          "tests/inference/test_audit_inference_grid_resolution.py": "178f81c8a97fec9a06a636685c04f5735d5635900730f4ca7ba1daa20602b8a1",
           "tests/inference/test_audit_inference_heldout_study.py": "796c832016b48f25f7579ab715bf09c6713b8a2e7aae856ac50ff81cb5acfe3b",
           "tests/inference/test_audit_inference_identifiability.py": "6285e6e6f5de2fe7a9e6ddb788126ace48a20947f5036c57468777662c2a18da",
           "tests/inference/test_audit_inference_posterior_binding.py": "92d65f92e10b3e6dc6ad61d02e1edbbc8cc537316dcb65e96f49c8331efca5b1",
-          "tests/inference/test_audit_inference_split_guards.py": "87622b479612ed11ba67b1fa23d6a093393c7165a1b0ddb81fdba6d3d3dfb916",
+          "tests/inference/test_audit_inference_split_guards.py": "a934988b1a4798d678d87beff1845d159e0921ad5d7e09b382df2e51aaa70d30",
           "tests/inference/test_field_observation_spike.py": "f70583615111c66f36f4dc9ce5f85e35a2dcf204b3c28c7ae469fccac2cefbb6",
-          "tests/inference/test_grid_resolution_repair.py": "15fc0a7ec4f4f9d05ab47d84c3b63ddeabc67877e1202ac36319f7e95a8d540b",
+          "tests/inference/test_grid_resolution_repair.py": "a89c1a0e6d5a66d04d1d14962295a637d9b2bc9c305cc22695195e7b63a08b89",
           "tests/inference/test_reproducibility_and_evidence.py": "c54c23155e580ff50c6df45a9e3c27e3ec67e5673e8ad3ec6a361baa90deff47",
           "tests/inference/test_tcr_heldout_uq.py": "b66ad6f4f752d3ba9fd781ed8eaa62e4e4078e85fc0d2d139358de38a2ead44f",
           "tests/issued_levels.py": "77f302dce7dc85468c32eabf72034333415d0d14d6a608fa9b71afe0e846e8cd",
@@ -2831,7 +2831,7 @@
           "tests/mcp/test_audit_results_declarations.py": "575d6477a81d5a6b12228e12ef907cd55abb075fe847f754cfa5c048dc01acdf",
           "tests/mcp/test_audit_results_validity_binding.py": "a9306c54d000e7300a3de1f368f2bfe1e3e637b72795f741de61325cc97a8a4b",
           "tests/mcp/test_core_scientific_audit_batch26.py": "40c70b9423129e5885174f3b622cb19c8c19c4cd8415f96553a870b9704e546e",
-          "tests/mcp/test_core_scientific_audit_batch7.py": "1f9d81e60066e4cb7daecab2eff0807eea142a2ca69009c9d776976d5310d759",
+          "tests/mcp/test_core_scientific_audit_batch7.py": "f95825b7d1485fcc1c0409b4703ef7d2eddad7aa2fa8defa8e364fee999d2abd",
           "tests/mcp/test_core_scientific_audit_batch8.py": "e6dcf00a6825288fcfe64abb743bf6696c9b4f18ea04759d7dfc70034e04eaff",
           "tests/mcp/test_evidence.py": "53d648f130c280c19fbf1def183027d2d4604f8c4a3a67a40e260e10c062f634",
           "tests/mutation_guards.py": "84da7d11c72a9ab8d7f93e34bf1f1a953057ea1250ff116f1f1864fb0df64219",
@@ -2913,7 +2913,7 @@
           "tests/test_audit_sria_trust_root.py": "24910408cf2ab194ef2ad8e3388ac0f4b242081ed4a3ddeb73362dc5977a0244",
           "tests/test_core_guards.py": "4a539e15cf1a862c0f969ab79f00dd5e3bf693641fa90ec0bed44a516ba07231",
           "tests/test_core_runtime_caches.py": "a21d49cf21547de92d7533c6c040feed1f39efed15ccbb9a92d7ee8ecb7bb95f",
-          "tests/test_core_scientific_audit_batch13.py": "313a1ea3d19c8a12a71f097da3155db3a6f328d1439a646bead2016e2bcc8a05",
+          "tests/test_core_scientific_audit_batch13.py": "2f267dc76c98c2bcf1c8a1a16f64d89d2034198ec8c5ef9773155e7dd54b54bf",
           "tests/test_core_scientific_audit_batch14.py": "8d3c492bac3a8cc0b48c457c926963f23b3a9d2a959fd5747eee74bb69e432fc",
           "tests/test_core_scientific_audit_batch15.py": "eaf188904a3b4d274060d9f8fc3c53e417951ba837b237c4aa740e24f3c9ae6c",
           "tests/test_core_scientific_audit_batch16.py": "554ca1896582714a98708049148d5826a38537fa314626c2a6cc6795f9bef425",
@@ -3071,14 +3071,14 @@
       },
       "inference_admission": {
         "classification": "CORE_CERTIFIED",
-        "digest": "832bee8b4f7766c405d35576c82255344d32a4d340940402ce1851bd374a5646",
+        "digest": "8c4cce818b237456c435381aea65b6cf76ac02d269390e68203d9d54293e53df",
         "file_count": 7,
         "files": {
           "src/engcore/inference/__init__.py": "60453cf9178dc9b0bbe661aad77441b4254ffb67680b69b8fd2c35318ef805e3",
           "src/engcore/inference/admissibility.py": "b5a4f5a50ba45375378ae4fa9c9814344ce2f19c7bf1189ff495d29fc8413330",
           "src/engcore/inference/calibration.py": "4292a76e37ee3d73fe9be274684130224587dc0ee910a5c4227c18621c258900",
           "src/engcore/inference/field_observation.py": "2bbebcdf58bf6d6e861a28a23b4c9a5ab8e37d58f9503d922e617c59d6780a32",
-          "src/engcore/inference/grid.py": "5cc685da1844c5b7c15fa3337df37b215eb3be6ac7f3ab29876fed6000bccd2b",
+          "src/engcore/inference/grid.py": "eaa543e0d394ab748a5ea3ae2e3efe86a97298a8caaa6d3731fab60fe0d7c1ab",
           "src/engcore/inference/parameters.py": "354d839146a0c3c41fcd12d255320531a573d01e3c283e17885719d325db4f35",
           "src/engcore/inference/split.py": "c2473d561ac5162447080e3577dcbdd6ac13f97397db522abdc59c91faa02bce"
         },
@@ -3089,7 +3089,7 @@
       },
       "predictive_representation": {
         "classification": "CORE_CERTIFIED",
-        "digest": "8661aa0fb33f4ade22045bfa15c0455dbe58eb92b900c3790f205bca29f66ffc",
+        "digest": "a6c521be2d9bb89a234ec64bffbab356f19b249765d35f8d0645a411ec4cbf34",
         "file_count": 34,
         "files": {
           "src/engcore/uq/__init__.py": "45619667553fd9dae94c94c2c513e6415490c9fd34b9e99ba19ee147e2e29974",
@@ -3125,7 +3125,7 @@
           "src/engcore/uq/model_form/scope.py": "dd23bbfe2e22fbbf58cd3a4cbfdef84d56bc3cc69abc75bd63ea6edf4111bf79",
           "src/engcore/uq/model_form/serialization.py": "c3850c7d8012660294e06f7ba442734a9a99b1b08d074866cc2709495c58622e",
           "src/engcore/uq/model_form/study.py": "ba2a65e9df26f1a79c3457dac76ee0859f328abd162655da4335fd320c4eafa0",
-          "src/engcore/uq/predictive.py": "322d2768047bd2029841c2153401093c3909696a3479f5426f7ce34dc1f4ab32"
+          "src/engcore/uq/predictive.py": "0ab5f6aeae4c6f3fdb7b631e02a66bd7b760261ba2a6022dde53d597bb077608"
         },
         "patterns": [
           "src/engcore/uq/**/*.py"
@@ -3201,7 +3201,7 @@
   "repository": {
     "branch": "HEAD",
     "clean": true,
-    "commit": "f4ba55e10714c2c1a495425256e64ab280a92d7f",
+    "commit": "44885bf01aa4ceafddaaf317ba2569ef1d04a904",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -3497,7 +3497,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "28fced7256563127e7ce0ade184edc51eace34e22e68dfcb77e47f0f552b05f0",
+    "v1_compatible_core_digest_now": "e101b38419a0fc0fc495fab24ab845ee20f27f65f05a05b9acb9727ceeadc11a",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
