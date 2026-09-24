@@ -65,7 +65,8 @@ def _synthetic_posterior(label, predict, y, sigma, axes):
     table = AdmittedForwardTable(
         parameter_names=tuple(f"t{i + 1}" for i in range(len(axes))), observation_keys=obs.keys, points=mesh,
         values=np.asarray(predict(mesh), dtype=float), admissible_mask=np.ones(len(mesh), dtype=bool),
-        admission_refs=tuple(tuple(f"analytic|{label}|ver|bind" for _ in obs.keys) for _ in mesh), rejection_reasons=tuple("" for _ in mesh))
+        admission_refs=tuple(tuple(f"analytic|{label}|ver|bind" for _ in obs.keys) for _ in mesh), rejection_reasons=tuple("" for _ in mesh),
+        observation_units=tuple(o.value.units for o in obs.observations))
     return gaussian_grid_posterior(table, obs)
 
 
@@ -120,7 +121,8 @@ def _epistemic_sd(posterior, values):
     table = AdmittedForwardTable(parameter_names=posterior.parameter_names, observation_keys=(obs_key,), points=posterior.points,
                                  values=np.asarray(values, float)[:, None], admissible_mask=posterior.admissible_mask,
                                  admission_refs=tuple((("analytic|fixture|ver|bind",) if ok else ()) for ok in posterior.admissible_mask),
-                                 rejection_reasons=tuple("" if ok else "inadmissible" for ok in posterior.admissible_mask))
+                                 rejection_reasons=tuple("" if ok else "inadmissible" for ok in posterior.admissible_mask),
+                                 observation_units=("dimensionless",))
     uq = posterior_predictive_uq(posterior, table, PredictiveObservableSpec(obs_key, "dimensionless", None), twin=TWIN, model=MODEL,
                                  source_ref="prediction")
     return uq.epistemic_standard_uncertainty.magnitude
