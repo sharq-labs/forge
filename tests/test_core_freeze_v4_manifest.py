@@ -32,6 +32,10 @@ CERTIFICATE_CHILD_ONLY = {
     "v1.freeze_verifies",
     "certificate.verifies",
     "certificate.covers_required_areas",
+    # The source commit still carries the previous run's assurance record.
+    # Mutation population identity/count/shards are re-derived only after the
+    # new source gates finish and the certificate child writes fresh assurance.
+    "assurance.v4_mutations_re_derived",
 }
 
 
