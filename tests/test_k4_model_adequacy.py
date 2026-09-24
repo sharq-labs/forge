@@ -42,6 +42,7 @@ def _table(mask=(True, True, True)) -> AdmittedForwardTable:
         admissible_mask=np.asarray(mask, dtype=bool),
         admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) if ok else () for i, ok in enumerate(mask)),
         rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
+        observation_units=("kelvin",),
     )
 
 
@@ -98,6 +99,36 @@ def test_unit_conversion_is_applied_before_scoring() -> None:
     assert a.predictive_cdf == pytest.approx(b.predictive_cdf, abs=1e-15)
     assert a.log_predictive_density == pytest.approx(b.log_predictive_density, abs=1e-15)
 
+
+def test_forward_table_unit_conversion_is_applied_before_scoring() -> None:
+    twin, model = _refs()
+    table = AdmittedForwardTable(
+        parameter_names=("p",),
+        observation_keys=("H:y",),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
+        values=np.asarray([[10.0], [14.0], [14.0]], dtype=np.float64),
+        admissible_mask=np.asarray([True, True, True]),
+        admission_refs=(
+            ("numerical|p-0|v-0|b-0",),
+            ("numerical|p-1|v-1|b-1",),
+            ("numerical|p-2|v-2|b-2",),
+        ),
+        rejection_reasons=("", "", ""),
+        observation_units=("volt",),
+    )
+    result = assess_predictive_observation(
+        _posterior(),
+        table,
+        PredictiveObservableSpec("H:y", "millivolt", Quantity(2000.0, "millivolt")),
+        Quantity(12000.0, "millivolt"),
+        twin=twin,
+        model=model,
+        source_ref="heldout:unit-conversion",
+        heldout_dataset_id="HOLD",
+    )
+    from scipy.special import ndtr
+    expected = 0.25 * float(ndtr(1.0)) + 0.75 * float(ndtr(-1.0))
+    assert result.predictive_cdf == pytest.approx(expected, abs=1e-15)
 
 def test_missing_observation_noise_fails_closed() -> None:
     twin, model = _refs()
