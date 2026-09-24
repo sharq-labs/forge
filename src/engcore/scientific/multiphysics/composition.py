@@ -118,11 +118,8 @@ class CompositionAnalysis:
     ambiguous_targets: tuple[PortRef, ...]
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "candidates",
-            tuple(sorted(self.candidates, key=lambda item: item.key)),
-        )
+        candidates = tuple(sorted(self.candidates, key=lambda item: item.key))
+        object.__setattr__(self, "candidates", candidates)
         for label in (
             "external_inputs",
             "unique_targets",
@@ -139,6 +136,26 @@ class CompositionAnalysis:
                 ),
             )
 
+        counts: dict[PortRef, int] = {}
+        for candidate in candidates:
+            counts[candidate.target] = counts.get(candidate.target, 0) + 1
+        derived_unique = {target for target, count in counts.items() if count == 1}
+        derived_ambiguous = {target for target, count in counts.items() if count > 1}
+        if set(self.unique_targets) != derived_unique:
+            raise InvalidScientificProblem(
+                "composition unique_targets disagree with the candidate graph"
+            )
+        if set(self.ambiguous_targets) != derived_ambiguous:
+            raise InvalidScientificProblem(
+                "composition ambiguous_targets disagree with the candidate graph"
+            )
+        candidate_targets = set(counts)
+        if candidate_targets & set(self.external_inputs):
+            raise InvalidScientificProblem(
+                "composition cannot mark a target both externally supplied and "
+                "internally connectable"
+            )
+
     def candidates_for(
         self,
         target: PortRef,
@@ -151,7 +168,7 @@ class CompositionAnalysis:
     def has_ambiguity(self) -> bool:
         return bool(self.ambiguous_targets)
 
-    def to_dict(self) -> dict[str, Any]:
+    def _content_dict(self) -> dict[str, Any]:
         return {
             "schema": COMPOSITION_ANALYSIS_SCHEMA,
             "candidates": [item.to_dict() for item in self.candidates],
@@ -165,19 +182,18 @@ class CompositionAnalysis:
                 item.to_dict() for item in self.ambiguous_targets
             ],
             "has_ambiguity": self.has_ambiguity,
-            "record_fingerprint": self.fingerprint,
         }
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self._content_dict()
+        payload["record_fingerprint"] = self.fingerprint
+        return payload
 
     @property
     def fingerprint(self) -> str:
-        payload = {
-            key: value
-            for key, value in self.to_dict().items()
-            if key != "record_fingerprint"
-        }
         return hashlib.sha256(
             json.dumps(
-                payload,
+                self._content_dict(),
                 sort_keys=True,
                 separators=(",", ":"),
             ).encode("utf-8")

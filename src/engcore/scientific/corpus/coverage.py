@@ -354,7 +354,14 @@ class ValidationCoverage:
         # the region, so this is the authoritative boundary that recomputes it.
         for item in cells:
             derived = _cell_status(
-                item.passed, item.failed, self.region.minimum_supporting_cases
+                item.passed,
+                item.failed,
+                self.region.minimum_supporting_cases,
+                blockers=(
+                    item.unscored
+                    + item.unexpected_refusals
+                    + item.undeclared
+                ),
             )
             if item.status is not derived:
                 raise CorpusError(
@@ -432,17 +439,22 @@ class ValidationCoverage:
 
 
 def _cell_status(
-    passed: int, failed: int, minimum: int
+    passed: int, failed: int, minimum: int, *, blockers: int = 0
 ) -> CoverageStatus:
-    """Support is decided by answers only.
+    """Derive support from the complete evidentiary state of the cell.
 
-    Refusals are not arguments to this function, and that is the point: a cell
-    cannot become SUPPORTED because the model declined there.
+    Correct refusals stay on the guardrail axis and never count as model
+    support.  Every unresolved or adverse in-domain outcome (missing/error,
+    unexpected refusal, or undeclared applicability) blocks SUPPORTED.  This
+    prevents a failed case from being laundered into support merely by
+    replacing its answer with no answer.
     """
     if failed:
         return CoverageStatus.FAILED
     if passed == 0:
         return CoverageStatus.UNTESTED
+    if blockers:
+        return CoverageStatus.SPARSE
     return CoverageStatus.SUPPORTED if passed >= minimum else CoverageStatus.SPARSE
 
 
@@ -538,7 +550,14 @@ def build_coverage(
                 undeclared=bucket["undeclared"],
                 # Refusals are not passed in. A declined cell stays untested.
                 status=_cell_status(
-                    bucket["passed"], bucket["failed"], region.minimum_supporting_cases
+                    bucket["passed"],
+                    bucket["failed"],
+                    region.minimum_supporting_cases,
+                    blockers=(
+                        bucket["unscored"]
+                        + bucket["unexpected_refusals"]
+                        + bucket["undeclared"]
+                    ),
                 ),
             )
         )

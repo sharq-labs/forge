@@ -586,19 +586,27 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem(
                 "multiphysics run termination must be a TerminationReceipt or None"
             )
+        planned_end = self.plan.time.end.magnitude_in("second")
+        actual_end = ended.magnitude_in("second")
+        if actual_end > planned_end and not _same_time(ended, self.plan.time.end):
+            raise InvalidScientificProblem(
+                "multiphysics run ended after the coupling plan horizon"
+            )
         if not _same_time(ended, self.plan.time.end):
             # An early end is allowed exactly once: when an authoritative
             # termination receipt says why, at the instant the run stopped.
-            # Everything else is silent clipping.
             if self.termination is None:
                 raise InvalidScientificProblem(
                     "a multiphysics run that ends before its coupling plan must "
                     "carry the termination receipt that stopped it"
                 )
-            if not _same_time(self.termination.instant, ended):
-                raise InvalidScientificProblem(
-                    "run termination receipt instant disagrees with run ended_at"
-                )
+        if self.termination is not None and not _same_time(
+            self.termination.instant, ended
+        ):
+            raise InvalidScientificProblem(
+                "run termination receipt instant disagrees with run ended_at; "
+                "execution cannot continue after the condition that stopped it"
+            )
 
         external_inputs = tuple(self.external_inputs)
         if any(
@@ -693,6 +701,34 @@ class MultiphysicsRunRecord:
                     "are not temporally contiguous"
                 )
 
+        graph_participants = {
+            participant.participant_id for participant in self.graph.participants
+        }
+        for window in windows:
+            for iteration in window.iterations:
+                stepped = {step.participant_id for step in iteration.participant_steps}
+                unknown = sorted(stepped - graph_participants)
+                if unknown:
+                    raise InvalidScientificProblem(
+                        f"coupling window {window.index} records unknown "
+                        f"participant step(s) {unknown}"
+                    )
+                if stepped != graph_participants:
+                    raise InvalidScientificProblem(
+                        f"coupling window {window.index} iteration "
+                        f"{iteration.iteration} does not record exactly one step "
+                        "for every graph participant"
+                    )
+                for step in iteration.participant_steps:
+                    if (
+                        not _same_time(step.start, window.start)
+                        or not _same_time(step.end, window.end)
+                    ):
+                        raise InvalidScientificProblem(
+                            f"participant step {step.participant_id!r} does not "
+                            f"span coupling window {window.index}"
+                        )
+
         if not isinstance(self.final_outputs, Mapping):
             raise InvalidScientificProblem(
                 "multiphysics run final_outputs must be a mapping"
@@ -732,6 +768,22 @@ class MultiphysicsRunRecord:
             raise InvalidScientificProblem("scheduled event ids/instants must be unique")
         if not reached_keys.issubset(scheduled_keys):
             raise InvalidScientificProblem("reached scheduled events must come from the requested schedule")
+        for event in scheduled:
+            instant = event.instant.magnitude_in("second")
+            if (
+                instant < started.magnitude_in("second")
+                or instant > self.plan.time.end.magnitude_in("second")
+            ):
+                raise InvalidScientificProblem(
+                    f"scheduled event {event.event_id!r} lies outside the run plan"
+                )
+            if instant <= ended.magnitude_in("second") and (
+                event.event_id, event.instant
+            ) not in reached_keys:
+                raise InvalidScientificProblem(
+                    f"scheduled event {event.event_id!r} was inside the executed "
+                    "horizon but has no reached-event receipt"
+                )
         boundaries = {0: started, **{window.index + 1: window.end for window in windows}}
         if any(item.boundary_index not in boundaries or not _same_time(item.instant, boundaries[item.boundary_index]) for item in reached):
             raise InvalidScientificProblem("reached scheduled event does not match its run boundary")
@@ -819,6 +871,8 @@ class MultiphysicsRunRecord:
                     f"scenario input receipt {item.input_id!r} names output port "
                     f"{item.port.key}"
                 )
+            validate_port_coupling_value(port, item.value)
+            validate_port_uncertainty(port, item.uncertainty)
             self._require_boundary(boundaries, item.boundary_index, item.instant,
                                    "scenario input receipt")
         if len({item.key for item in inputs}) != len(inputs):
@@ -863,6 +917,35 @@ class MultiphysicsRunRecord:
                 "state transitions are not unique per window and participant"
             )
 
+        by_participant: dict[str, list[StateTransitionReceipt]] = {}
+        for item in transitions:
+            by_participant.setdefault(item.participant_id, []).append(item)
+        initial_by_participant = {
+            item.participant_id: item for item in self.initial_state_receipts
+        }
+        for participant_id, records in by_participant.items():
+            records.sort(key=lambda item: item.window_index)
+            initial_receipt = initial_by_participant.get(participant_id)
+            if (
+                initial_receipt is not None
+                and records
+                and records[0].window_index == 0
+                and records[0].start_state_digest != initial_receipt.state_digest
+            ):
+                raise InvalidScientificProblem(
+                    f"participant {participant_id!r} first transition does not "
+                    "start from its recorded initial state"
+                )
+            for previous, current in zip(records, records[1:]):
+                if current.window_index != previous.window_index + 1:
+                    continue
+                if current.start_state_digest != previous.end_state_digest:
+                    raise InvalidScientificProblem(
+                        f"participant {participant_id!r} state chain breaks "
+                        f"between windows {previous.window_index} and "
+                        f"{current.window_index}"
+                    )
+
         for item in qois:
             if item.port.participant_id not in participant_ids:
                 raise InvalidScientificProblem(
@@ -877,6 +960,8 @@ class MultiphysicsRunRecord:
                     f"quantity of interest {item.qoi_id!r} is bound to "
                     f"{item.port.key}, which is not a produced output"
                 )
+            validate_port_coupling_value(port, item.value)
+            validate_port_uncertainty(port, item.uncertainty)
             if not _same_time(item.instant, self.ended_at):
                 raise InvalidScientificProblem(
                     f"quantity of interest {item.qoi_id!r} is not reported at the "

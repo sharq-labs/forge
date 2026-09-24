@@ -514,6 +514,16 @@ def diagnose_campaign(
             "none",
         )
 
+    if calibration_fraction is None:
+        return finding(
+            InadequacyKind.INSUFFICIENT_EVIDENCE,
+            "independent failures exist, but this campaign contains no scored "
+            "calibration cases. Without evidence that the fitted model first "
+            "reproduces the data it was calibrated on, Forge cannot distinguish "
+            "a model-form problem from a fit/calibration problem",
+            "none",
+        )
+
     if calibration_fraction is not None and calibration_fraction < calibration_fit_threshold:
         return finding(
             InadequacyKind.CALIBRATION_PARAMETER,
