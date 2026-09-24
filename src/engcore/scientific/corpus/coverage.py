@@ -491,7 +491,9 @@ def build_coverage(
             "dataset than the one it was run on"
         )
     cases = {case.case_id: case for case in dataset.cases}
-    tallies: dict[tuple[int, ...], dict[str, int]] = {}
+    grouped: dict[
+        tuple[int, ...], dict[str, list[CaseVerdict]]
+    ] = {}
     unlocated: set[str] = set()
 
     for comparison in report.comparisons:
@@ -518,26 +520,40 @@ def build_coverage(
         if located is None:
             unlocated.add(case.case_id)
             continue
-        bucket = tallies.setdefault(located, dict(_EMPTY_CELL))
-        verdict = comparison.verdict
-        if verdict is CaseVerdict.PASS:
-            bucket["passed"] += 1
-        elif verdict is CaseVerdict.FAIL:
-            bucket["failed"] += 1
-        elif verdict is CaseVerdict.CORRECT_REFUSAL:
-            bucket["correct_refusals"] += 1
-        elif verdict is CaseVerdict.UNEXPECTED_REFUSAL:
-            bucket["unexpected_refusals"] += 1
-        elif verdict is CaseVerdict.APPLICABILITY_UNDECLARED:
-            # Not passed, not failed, not a judged refusal. It cannot make this
-            # cell supported and it cannot make it failed.
-            bucket["undeclared"] += 1
-        else:
-            bucket["unscored"] += 1
+        by_group = grouped.setdefault(located, {})
+        by_group.setdefault(case.independence_group, []).append(
+            comparison.verdict
+        )
 
     cells: list[CoverageCell] = []
     for coordinate in _all_cells(region):
-        bucket = tallies.get(coordinate, _EMPTY_CELL)
+        bucket = dict(_EMPTY_CELL)
+        # One independence group is one piece of evidence in a cell, however
+        # many correlated cases it contributed.  Within that group the
+        # conservative outcome wins: a failure or unresolved/adverse outcome
+        # cannot be out-voted by copies of a passing case.
+        for verdicts in grouped.get(coordinate, {}).values():
+            verdict_set = set(verdicts)
+            if CaseVerdict.FAIL in verdict_set:
+                bucket["failed"] += 1
+            elif CaseVerdict.UNEXPECTED_REFUSAL in verdict_set:
+                bucket["unexpected_refusals"] += 1
+            elif CaseVerdict.APPLICABILITY_UNDECLARED in verdict_set:
+                bucket["undeclared"] += 1
+            elif any(
+                item in verdict_set
+                for item in (
+                    CaseVerdict.UNSCORED,
+                    CaseVerdict.MISSING,
+                    CaseVerdict.ERROR,
+                    CaseVerdict.OUTSIDE_APPLICABILITY,
+                )
+            ):
+                bucket["unscored"] += 1
+            elif CaseVerdict.PASS in verdict_set:
+                bucket["passed"] += 1
+            elif CaseVerdict.CORRECT_REFUSAL in verdict_set:
+                bucket["correct_refusals"] += 1
         cells.append(
             CoverageCell(
                 cell=coordinate,
