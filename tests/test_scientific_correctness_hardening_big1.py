@@ -24,7 +24,16 @@ from engcore.scientific.corpus.dataset import (
     ReferenceObservation,
 )
 from engcore.scientific.corpus.source import CorpusError, ReferenceSource, SourceSnapshot
+from engcore.scientific.discovery.candidate import (
+    DiscoveredEquationCandidate,
+    DiscoveryCandidateStatus,
+)
+from engcore.scientific.discovery.campaign import (
+    DiscoveryDecision,
+    review_discovery_candidate,
+)
 from engcore.scientific.errors import InvalidScientificProblem, UnitCompatibilityError
+from engcore.scientific.verification import VerificationDecision
 from engcore.scientific.fields.profiles import ConstantProfile, SeparableProfile2D
 from engcore.scientific.multiphysics.report import (
     CouplingIterationRecord,
@@ -42,6 +51,19 @@ def _region(minimum=1):
         (CoverageDimension("temperature", "kelvin", ()),),
         minimum,
     )
+
+
+def test_scored_campaign_verdict_is_derived_from_normalized_residual():
+    with pytest.raises(CorpusError, match="derives 'pass'"):
+        ValidationComparison(
+            "case", "temperature", DatasetSplit.VALIDATION,
+            CaseVerdict.FAIL, normalized_residual=0.25,
+        )
+    with pytest.raises(CorpusError, match="derives 'fail'"):
+        ValidationComparison(
+            "case", "temperature", DatasetSplit.VALIDATION,
+            CaseVerdict.PASS, normalized_residual=2.0,
+        )
 
 
 def test_coverage_refuses_a_caller_asserted_status_that_counts_do_not_derive():
@@ -229,3 +251,38 @@ def test_ratio_and_delta_scales_remain_multiplicative():
     assert (
         Quantity(10.0, "delta_degC") * 2.0
     ).magnitude_as_spread_in("kelvin") == pytest.approx(20.0)
+
+
+def test_discovery_does_not_promote_an_unrelated_verified_subject():
+    candidate = DiscoveredEquationCandidate(
+        candidate_id="candidate-a",
+        feature_names=("x",),
+        coefficients=(1.0,),
+        intercept=0.0,
+        calibration_rmse=0.1,
+        holdout_rmse=0.1,
+        complexity=1,
+        context_digest="a" * 64,
+        evidence_digests=("b" * 64,),
+        status=DiscoveryCandidateStatus.SURVIVED_HOLDOUT,
+    )
+
+    class _Verification:
+        subject_digest = "c" * 64
+
+        class _Result:
+            complete = True
+
+            class verification:
+                decision = VerificationDecision.VERIFIED
+
+        result = _Result()
+
+        def to_dict(self):
+            return {"subject_digest": self.subject_digest}
+
+    review = review_discovery_candidate(candidate, verification=_Verification())
+    assert review.decision is DiscoveryDecision.HOLDOUT_SURVIVOR
+    assert "not bound to this candidate" in review.reasons[0]
+
+

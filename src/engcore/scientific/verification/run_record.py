@@ -23,6 +23,7 @@ class VerificationRunRecord:
     observations:tuple[VerificationObservation,...]
     tolerance:Quantity
     execution_problems:tuple[str,...]=()
+    subject_digest:str=""
 
     def __post_init__(self)->None:
         object.__setattr__(self,"observations",tuple(self.observations))
@@ -31,6 +32,10 @@ class VerificationRunRecord:
             raise InvalidScientificProblem("verification run requires plan and primary observation")
         if not isinstance(self.tolerance,Quantity):
             raise InvalidScientificProblem("verification run tolerance must be Quantity")
+        digest=str(self.subject_digest).strip().lower()
+        if digest and (len(digest)!=64 or any(ch not in "0123456789abcdef" for ch in digest)):
+            raise InvalidScientificProblem("verification subject_digest must be SHA-256")
+        object.__setattr__(self,"subject_digest",digest)
 
     @property
     def result(self)->VerificationExecutionReport:
@@ -38,20 +43,24 @@ class VerificationRunRecord:
 
     def to_dict(self)->dict[str,Any]:
         result=self.result
-        return {"schema":VERIFICATION_RUN_SCHEMA,"plan":plan_to_dict(self.plan),
+        payload={"schema":VERIFICATION_RUN_SCHEMA,"plan":plan_to_dict(self.plan),
                 "primary":self.primary.to_dict(),"observations":[x.to_dict() for x in self.observations],
                 "tolerance":self.tolerance.to_dict(),"execution_problems":list(self.execution_problems),
                 "result":{"verification":verification_to_dict(result.verification),
                           "missing_routes":list(result.missing_routes),
                           "execution_problems":list(result.execution_problems),
                           "complete":result.complete}}
+        if self.subject_digest:
+            payload["subject_digest"]=self.subject_digest
+        return payload
 
     @classmethod
     def from_dict(cls,payload:Mapping[str,Any])->"VerificationRunRecord":
         require_schema(payload,VERIFICATION_RUN_SCHEMA)
         record=cls(plan_from_dict(payload["plan"]),VerificationObservation.from_dict(payload["primary"]),
             tuple(VerificationObservation.from_dict(x) for x in payload.get("observations",())),
-            Quantity.from_dict(payload["tolerance"]),tuple(payload.get("execution_problems",())))
+            Quantity.from_dict(payload["tolerance"]),tuple(payload.get("execution_problems",())),
+            payload.get("subject_digest",""))
         derived=record.to_dict()["result"]
         if payload.get("result")!=derived:
             raise InvalidScientificProblem("serialized verification run result is forged or stale")

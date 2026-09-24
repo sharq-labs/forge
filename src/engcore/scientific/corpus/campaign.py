@@ -243,12 +243,30 @@ class ValidationComparison:
         object.__setattr__(self, "metric", text(self.metric, label="metric"))
         object.__setattr__(self, "split", DatasetSplit(self.split))
         object.__setattr__(self, "verdict", CaseVerdict(self.verdict))
-        if self.verdict.is_scored and self.normalized_residual is None:
-            raise CorpusError(
-                f"{self.case_id}/{self.metric} is scored {self.verdict.value!r} but "
-                f"carries no normalized residual; a verdict and the number it came "
-                f"from are one result"
+        if self.verdict.is_scored:
+            if self.normalized_residual is None:
+                raise CorpusError(
+                    f"{self.case_id}/{self.metric} is scored {self.verdict.value!r} but "
+                    f"carries no normalized residual; a verdict and the number it came "
+                    f"from are one result"
+                )
+            normalized = float(self.normalized_residual)
+            if math.isnan(normalized) or normalized < 0.0:
+                raise CorpusError(
+                    f"{self.case_id}/{self.metric} normalized residual must be "
+                    f"non-negative and not NaN"
+                )
+            derived = (
+                CaseVerdict.PASS if normalized <= 1.0 else CaseVerdict.FAIL
             )
+            if self.verdict is not derived:
+                raise CorpusError(
+                    f"{self.case_id}/{self.metric} declares verdict "
+                    f"{self.verdict.value!r}, but normalized residual "
+                    f"{normalized!r} derives {derived.value!r}; a stored verdict "
+                    f"may report the comparison, not override it"
+                )
+            object.__setattr__(self, "normalized_residual", normalized)
         object.__setattr__(self, "unit", str(self.unit).strip())
         object.__setattr__(self, "detail", str(self.detail).strip())
 
@@ -645,6 +663,17 @@ class ValidationCampaignReport:
             "splits",
             tuple(sorted({DatasetSplit(i) for i in self.splits}, key=lambda i: i.value)),
         )
+        declared_splits = set(self.splits)
+        stray_splits = sorted({
+            item.split.value
+            for item in comparisons
+            if item.split not in declared_splits
+        })
+        if stray_splits:
+            raise CorpusError(
+                f"campaign report carries comparison split(s) {stray_splits} "
+                f"outside its declared splits {[item.value for item in self.splits]}"
+            )
         if self.target is not None:
             require_binding(self.target, label="campaign report target")
         opening = str(self.holdout_opening_digest).strip().lower()
