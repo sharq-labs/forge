@@ -477,7 +477,7 @@ class AdmittedForwardTable:
                 )
         return self.values[:, columns], columns
 
-    def values_in_unit(self, observation_key: str, unit: str) -> np.ndarray:
+    def _values_in_unit(self, observation_key: str, unit: str) -> np.ndarray:
         """Return one observation column in the requested physical unit.
 
         Numeric forward-table values are meaningful only with the unit recorded

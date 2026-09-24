@@ -601,7 +601,7 @@ def assess_predictive_observation(
     if not np.any(positive):
         raise ModelAdequacyError("posterior has no positive predictive mass")
     try:
-        means = predictive_table.values_in_unit(
+        means = predictive_table._values_in_unit(
             spec.observation_key, spec.unit
         )[positive]
     except Exception as exc:

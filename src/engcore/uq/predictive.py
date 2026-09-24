@@ -333,7 +333,7 @@ def posterior_predictive_uq(
         ) from exc
 
     try:
-        values = predictive_table.values_in_unit(
+        values = predictive_table._values_in_unit(
             spec.observation_key, spec.unit
         )
     except Exception as exc:
