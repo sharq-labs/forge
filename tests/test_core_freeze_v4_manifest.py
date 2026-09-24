@@ -32,10 +32,6 @@ CERTIFICATE_CHILD_ONLY = {
     "v1.freeze_verifies",
     "certificate.verifies",
     "certificate.covers_required_areas",
-    # The source commit still carries the previous run's assurance record.
-    # Mutation population identity/count/shards are re-derived only after the
-    # new source gates finish and the certificate child writes fresh assurance.
-    "assurance.v4_mutations_re_derived",
 }
 
 
@@ -60,6 +56,21 @@ def test_once_assured_the_full_verification_holds(manifest):
     if not (REPO / core_freeze_v4.ASSURANCE_PATH).exists():
         pytest.skip("candidate: the assurance record is written from the formal round's own transcripts")
     _assert_contract_holds_pending_certificate(core_freeze_v4.verify(REPO))
+
+
+def test_v4_assurance_is_historical_evidence_not_a_live_population_pin(manifest):
+    """A descendant may grow the mutation population without rewriting V4's historical round."""
+    assurance_path = REPO / core_freeze_v4.ASSURANCE_PATH
+    if not assurance_path.exists():
+        pytest.skip("candidate: V4 assurance has not been committed yet")
+    assurance = json.loads(assurance_path.read_bytes())
+    assert core_freeze_v4._historical_assurance_problems(REPO, assurance) == []
+
+    result = core_freeze_v4.verify(REPO, require_assurance=False)
+    checks = {check.name: check for check in result.checks}
+    assert checks["assurance.history_unchanged"].binding
+    assert checks["assurance.history_unchanged"].ok
+    assert not checks["assurance.v4_mutations_re_derived"].binding
 
 
 def test_v4_descends_from_v3_and_rewrites_no_history(manifest):
