@@ -69,7 +69,7 @@ from typing import Any, Mapping, Sequence
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, normalize_unit
 from .campaign import CaseVerdict, ValidationCampaignReport, ValidationComparison
-from .dataset import ReferenceCase, ReferenceDataset
+from .dataset import DatasetSplit, ReferenceCase, ReferenceDataset
 from .source import CorpusError, text
 
 COVERAGE_DIMENSION_SCHEMA = schema_string("corpus_coverage_dimension")
@@ -349,6 +349,20 @@ class ValidationCoverage:
         cells = tuple(sorted(self.cells))
         if any(not isinstance(item, CoverageCell) for item in cells):
             raise CorpusError("coverage requires CoverageCell records")
+        # A status is a derived scientific conclusion, not caller-owned data.
+        # CoverageCell cannot derive it alone because the minimum belongs to
+        # the region, so this is the authoritative boundary that recomputes it.
+        for item in cells:
+            derived = _cell_status(
+                item.passed, item.failed, self.region.minimum_supporting_cases
+            )
+            if item.status is not derived:
+                raise CorpusError(
+                    f"coverage cell {item.cell} declares status "
+                    f"{item.status.value!r}, but its counts derive "
+                    f"{derived.value!r} under region minimum "
+                    f"{self.region.minimum_supporting_cases}"
+                )
         object.__setattr__(self, "cells", cells)
         object.__setattr__(self, "unlocated_cases", tuple(sorted(self.unlocated_cases)))
 
@@ -476,6 +490,18 @@ def build_coverage(
             raise CorpusError(
                 f"comparison names case {comparison.case_id!r}, absent from the dataset"
             )
+        if comparison.split is not case.split:
+            raise CorpusError(
+                f"comparison {comparison.case_id!r}/{comparison.metric!r} says it "
+                f"belongs to {comparison.split.value!r}, but the dataset places "
+                f"that case in {case.split.value!r}; split identity is evidence, "
+                f"not a label a report may rewrite"
+            )
+        # Calibration evidence is allowed to fit a model. It is not independent
+        # evidence that the fitted model validates, so it never enters a
+        # ValidationCoverage map.
+        if case.split is DatasetSplit.CALIBRATION:
+            continue
         located = region.locate(case.coordinates)
         if located is None:
             unlocated.add(case.case_id)
@@ -525,7 +551,11 @@ def build_coverage_by_metric(
     region: ValidationRegion,
 ) -> dict[str, ValidationCoverage]:
     """One coverage map per metric the campaign scored. Never one map for all."""
-    metrics = sorted({item.metric for item in report.comparisons})
+    metrics = sorted({
+        item.metric
+        for item in report.comparisons
+        if item.split is not DatasetSplit.CALIBRATION
+    })
     return {
         metric: build_coverage(report, dataset, region, metric=metric)
         for metric in metrics
@@ -566,6 +596,10 @@ def cluster_failures(
         scored: dict[int, int] = {}
         for comparison in report.comparisons:
             if metric is not None and comparison.metric != metric:
+                continue
+            # Failure clusters describe independent validation evidence, never
+            # fit residuals from the calibration split.
+            if comparison.split is DatasetSplit.CALIBRATION:
                 continue
             if not comparison.verdict.is_scored:
                 continue

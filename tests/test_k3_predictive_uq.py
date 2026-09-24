@@ -32,7 +32,9 @@ def _posterior(*, weights=(0.25, 0.375, 0.375), dataset_id="posterior-a") -> Pos
     )
 
 
-def _table(*, values=(10.0, 14.0, 14.0), mask=(True, True, True)) -> AdmittedForwardTable:
+def _table(
+    *, values=(10.0, 14.0, 14.0), mask=(True, True, True), unit="kelvin"
+) -> AdmittedForwardTable:
     return AdmittedForwardTable(
         parameter_names=("p",),
         observation_keys=("H1:y",),
@@ -41,6 +43,7 @@ def _table(*, values=(10.0, 14.0, 14.0), mask=(True, True, True)) -> AdmittedFor
         admissible_mask=np.asarray(mask, dtype=bool),
         admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) if ok else () for i, ok in enumerate(mask)),
         rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
+        observation_units=(unit,),
     )
 
 
@@ -76,6 +79,60 @@ def test_weighted_moments_and_variance_decomposition_are_exact() -> None:
     assert result.total_standard_uncertainty.magnitude_in("K") == pytest.approx(
         math.sqrt(7.0), abs=1e-14
     )
+
+
+def test_predictive_values_are_converted_from_table_units() -> None:
+    result = posterior_predictive_uq(
+        _posterior(),
+        _table(values=(1.0, 2.0, 2.0), unit="volt"),
+        PredictiveObservableSpec("H1:y", "millivolt"),
+        twin=TwinReference("system-a", "1"),
+        model=ModelReference("model-a", "1"),
+        source_ref="evidence:unit-binding",
+    )
+    assert result.mean.magnitude_in("millivolt") == pytest.approx(1750.0)
+
+
+def test_predictive_uq_refuses_an_unbound_numeric_table() -> None:
+    table = AdmittedForwardTable(
+        parameter_names=("p",),
+        observation_keys=("H1:y",),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
+        values=np.asarray([[10.0], [14.0], [14.0]], dtype=np.float64),
+        admissible_mask=np.asarray([True, True, True], dtype=bool),
+        admission_refs=(
+            ("numerical|p-0|v-0|b-0",),
+            ("numerical|p-1|v-1|b-1",),
+            ("numerical|p-2|v-2|b-2",),
+        ),
+        rejection_reasons=("", "", ""),
+    )
+    with pytest.raises(UQProblemError, match="declares no observation units"):
+        posterior_predictive_uq(
+            _posterior(),
+            table,
+            PredictiveObservableSpec("H1:y", "kelvin"),
+            twin=TwinReference("system-a", "1"),
+            model=ModelReference("model-a", "1"),
+            source_ref="evidence:unit-binding",
+        )
+
+
+def test_offset_scale_predictive_noise_is_kept_as_a_spread() -> None:
+    result = posterior_predictive_uq(
+        _posterior(),
+        _table(values=(20.0, 22.0, 22.0), unit="degC"),
+        PredictiveObservableSpec(
+            "H1:y", "degC", observation_sigma=Quantity(1.0, "kelvin")
+        ),
+        twin=TwinReference("system-a", "1"),
+        model=ModelReference("model-a", "1"),
+        source_ref="evidence:offset-noise",
+    )
+    assert result.mean.magnitude_in("degC") == pytest.approx(21.5)
+    assert result.epistemic_standard_uncertainty.units == "kelvin"
+    assert result.total_standard_uncertainty.units == "kelvin"
+    assert result.total_variance > result.epistemic_variance
 
 
 def test_total_interval_uses_noise_and_is_wider_than_latent_interval() -> None:

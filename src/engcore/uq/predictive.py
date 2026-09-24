@@ -170,12 +170,16 @@ class QuantifiedPredictiveResult:
 
     @property
     def epistemic_variance(self) -> float:
-        value = self.epistemic_standard_uncertainty.magnitude_in(self.mean.units)
+        value = self.epistemic_standard_uncertainty.magnitude_as_spread_in(
+            self.mean.units
+        )
         return value * value
 
     @property
     def total_variance(self) -> float:
-        value = self.total_standard_uncertainty.magnitude_in(self.mean.units)
+        value = self.total_standard_uncertainty.magnitude_as_spread_in(
+            self.mean.units
+        )
         return value * value
 
     def to_dict(self) -> dict[str, Any]:
@@ -328,7 +332,30 @@ def posterior_predictive_uq(
             f"predictive table has no observable {spec.observation_key!r}"
         ) from exc
 
-    values = np.asarray(predictive_table.values[:, column], dtype=np.float64)
+    if not predictive_table.observation_units:
+        raise UQProblemError(
+            "predictive table declares no observation units; numeric values "
+            "without a unit binding cannot support quantified predictive UQ"
+        )
+    table_unit = predictive_table.observation_units[column]
+    try:
+        Quantity(1.0, table_unit).require_compatible(
+            spec.unit, context=f"predictive observable {spec.observation_key}"
+        )
+    except UnitCompatibilityError as exc:
+        raise UQProblemError(str(exc)) from exc
+
+    raw_values = np.asarray(predictive_table.values[:, column], dtype=np.float64)
+    if normalize_unit(table_unit) == spec.unit:
+        values = raw_values
+    else:
+        values = np.asarray(
+            [
+                Quantity(float(value), table_unit).magnitude_in(spec.unit)
+                for value in raw_values
+            ],
+            dtype=np.float64,
+        )
     weights = np.asarray(posterior.weights, dtype=np.float64)
     positive = weights > 0.0
     values = values[positive]
@@ -356,7 +383,10 @@ def posterior_predictive_uq(
         total_lower, total_upper = epistemic_lower, epistemic_upper
         total_method = "weighted_posterior_predictive_discrete"
     else:
-        sigma = spec.observation_sigma.magnitude_in(spec.unit)
+        # Sigma is a spread. On an affine observable scale (degC/degF), an
+        # absolute conversion would add the offset and turn a 1 K sigma into a
+        # hundreds-of-degrees number. Read only the linear part of the map.
+        sigma = spec.observation_sigma.magnitude_as_spread_in(spec.unit)
         total_variance = epistemic_variance + sigma * sigma
         total_std = math.sqrt(total_variance)
         tail = (1.0 - credible_mass) / 2.0
@@ -394,12 +424,22 @@ def posterior_predictive_uq(
         source_kind=UncertaintySource.COMBINED,
     )
 
+    spread_unit = spec.unit if is_ratio_scale(spec.unit) else base_unit(spec.unit)
+    epistemic_std_quantity = Quantity(
+        Quantity(epistemic_std, spec.unit).magnitude_as_spread_in(spread_unit),
+        spread_unit,
+    )
+    total_std_quantity = Quantity(
+        Quantity(total_std, spec.unit).magnitude_as_spread_in(spread_unit),
+        spread_unit,
+    )
+
     return QuantifiedPredictiveResult(
         observation_key=spec.observation_key,
         mean=Quantity(mean, spec.unit),
-        epistemic_standard_uncertainty=Quantity(epistemic_std, spec.unit),
+        epistemic_standard_uncertainty=epistemic_std_quantity,
         epistemic_interval=epistemic_interval,
-        total_standard_uncertainty=Quantity(total_std, spec.unit),
+        total_standard_uncertainty=total_std_quantity,
         total_interval=total_interval,
         confidence_level=confidence,
         posterior_dataset_id=posterior.dataset_id,

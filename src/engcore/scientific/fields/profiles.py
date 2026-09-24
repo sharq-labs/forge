@@ -575,11 +575,16 @@ class SeparableProfile2D(SpatialProfile):
         )
 
     def evaluate(self, *, x: float, y: float) -> float:
-        return float(
-            self.amplitude.magnitude
-            * self.x_factor.evaluate(x=x, y=y)
-            * self.y_factor.evaluate(x=x, y=y)
-        )
+        # "Dimensionless" is a dimension, not necessarily a unit with scale 1.
+        # 50 percent is dimensionless but its canonical magnitude is 0.5. Raw
+        # profile magnitudes therefore cannot be multiplied directly.
+        x_factor = Quantity(
+            self.x_factor.evaluate(x=x, y=y), self.x_factor.unit
+        ).magnitude_in("dimensionless")
+        y_factor = Quantity(
+            self.y_factor.evaluate(x=x, y=y), self.y_factor.unit
+        ).magnitude_in("dimensionless")
+        return float(self.amplitude.magnitude * x_factor * y_factor)
 
     def require_covers(self, lower: float, upper: float, *, context: str) -> None:
         # Deliberately not forwarded: the span asked for is along one axis and
