@@ -233,6 +233,19 @@ def _region() -> ValidationRegion:
         minimum_supporting_cases=2,
     )
 
+def _certification_region() -> ValidationRegion:
+    """Fixture policy used by certification-path tests.
+
+    The general coverage tests keep the stricter two-case minimum. These trust
+    tests need one independently validated point to exercise downstream binding
+    and gate semantics; calibration evidence is never used to reach support.
+    """
+    return ValidationRegion(
+        "fixture.temperature.certification",
+        (CoverageDimension("temperature", "K", (320.0, 350.0, 400.0)),),
+        minimum_supporting_cases=1,
+    )
+
 
 # =====================================================================
 # DATA INDEPENDENCE
@@ -676,7 +689,7 @@ def test_end_to_end_trust_campaign_from_snapshot_to_certification():
     assert report.counts["pass"] and report.counts["fail"]
 
     # --- coverage, clustering and the validated envelope
-    region = _region()
+    region = _certification_region()
     coverage = build_coverage(report, dataset, region, metric="response")
     clusters = cluster_failures(report, dataset, region)
     envelope = ValidationEnvelope("sprint2.e2e", coverage, report.digest, target=target)
@@ -1105,7 +1118,7 @@ def _envelope_for(authorized, *, target=None):
         target=target if target is not None else _full_binding(authorized),
     )
     report = run_campaign(campaign, _predictions(dataset, campaign.cases()))
-    coverage = build_coverage(report, dataset, _region(), metric="response")
+    coverage = build_coverage(report, dataset, _certification_region(), metric="response")
     return ValidationEnvelope("bound", coverage, report.digest, target=campaign.target)
 
 

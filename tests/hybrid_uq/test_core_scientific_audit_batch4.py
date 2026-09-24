@@ -111,7 +111,7 @@ def _table(keys, fn):
     return AdmittedForwardTable(parameter_names=("theta",), observation_keys=tuple(keys), points=points, values=values,
                                 admissible_mask=np.ones(len(points), bool),
                                 admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in points),
-                                rejection_reasons=("",) * len(points))
+                                rejection_reasons=("",) * len(points), observation_units=("kelvin",) * len(keys))
 
 
 def _split():

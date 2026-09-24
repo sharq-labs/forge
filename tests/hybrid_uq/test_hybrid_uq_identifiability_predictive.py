@@ -220,7 +220,8 @@ def _table(problem, grid, xs):
     keys = tuple(f"y@{x}" for x in xs)
     return AdmittedForwardTable(parameter_names=grid.parameter_names, observation_keys=keys, points=grid.points, values=values,
                                 admissible_mask=np.ones(len(grid.points), bool), admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in grid.points),
-                                rejection_reasons=tuple("" for _ in grid.points)), keys
+                                rejection_reasons=tuple("" for _ in grid.points),
+                                observation_units=(UNIT,) * len(keys)), keys
 
 
 def test_grid_predictive_wraps_the_frozen_result_and_its_refusal():

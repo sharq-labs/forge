@@ -74,6 +74,16 @@ def review_discovery_candidate(
                 "verification/reproduction",
             ),
         )
+    if verification.subject_digest != candidate.fingerprint:
+        return DiscoveryReview(
+            candidate,
+            DiscoveryDecision.HOLDOUT_SURVIVOR,
+            (
+                "independent verification is not bound to this candidate's "
+                "fingerprint; a successful verification of another subject "
+                "cannot reproduce this one",
+            ),
+        )
     result = verification.result
     if (
         not result.complete

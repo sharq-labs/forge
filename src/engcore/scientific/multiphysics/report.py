@@ -407,6 +407,17 @@ class CouplingWindowRecord:
             raise InvalidScientificProblem(
                 "EVENT_ALIGNED window must carry the event that shortened it"
             )
+        final_converged = iterations[-1].converged
+        if outcome is WindowOutcome.CONVERGED and not final_converged:
+            raise InvalidScientificProblem(
+                "coupling window declares CONVERGED but its final iteration "
+                "does not satisfy every recorded residual"
+            )
+        if outcome is WindowOutcome.ITERATION_LIMIT and final_converged:
+            raise InvalidScientificProblem(
+                "coupling window declares ITERATION_LIMIT but its final "
+                "iteration already satisfies every recorded residual"
+            )
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "end", end)
         object.__setattr__(self, "iterations", iterations)

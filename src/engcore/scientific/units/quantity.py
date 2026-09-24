@@ -1283,8 +1283,20 @@ class Quantity:
     def __sub__(self, other: "Quantity") -> "Quantity":
         return self._combine(other, _operator.sub, context="subtraction")
 
+    def _require_multiplicative_scale(self, *, context: str) -> None:
+        if not is_ratio_scale(self.units):
+            raise UnitCompatibilityError(
+                f"cannot perform {context} on absolute affine unit "
+                f"{self.units!r}: its zero is conventional, so multiplying or "
+                f"dividing its coordinate is not a physical scaling. Convert "
+                f"the absolute value to a ratio scale (for temperature, kelvin) "
+                f"or use an explicit delta unit for a difference"
+            )
+
     def __mul__(self, other: "Quantity | float") -> "Quantity":
+        self._require_multiplicative_scale(context="multiplication")
         if isinstance(other, Quantity):
+            other._require_multiplicative_scale(context="multiplication")
             product = (
                 registry().Quantity(self.magnitude, self.units)
                 * registry().Quantity(other.magnitude, other.units)
@@ -1293,7 +1305,9 @@ class Quantity:
         return Quantity(self.magnitude * float(other), self.units)
 
     def __truediv__(self, other: "Quantity | float") -> "Quantity":
+        self._require_multiplicative_scale(context="division")
         if isinstance(other, Quantity):
+            other._require_multiplicative_scale(context="division")
             ratio = (
                 registry().Quantity(self.magnitude, self.units)
                 / registry().Quantity(other.magnitude, other.units)

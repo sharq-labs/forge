@@ -50,6 +50,7 @@ def _table(points: np.ndarray, values: np.ndarray, key: str = "H:y") -> Admitted
         admissible_mask=np.ones(n, dtype=bool),
         admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) for i in range(n)),
         rejection_reasons=tuple("" for _ in range(n)),
+        observation_units=("kelvin",),
     )
 
 

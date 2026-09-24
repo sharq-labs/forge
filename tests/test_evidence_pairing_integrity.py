@@ -69,6 +69,7 @@ def _table() -> AdmittedForwardTable:
         admissible_mask=np.asarray([True, True, True]),
         admission_refs=(("numerical|a-H1|v|b", "numerical|a-H2|v|b"), ("numerical|b-H1|v|b", "numerical|b-H2|v|b"), ("numerical|c-H1|v|b", "numerical|c-H2|v|b")),
         rejection_reasons=("", "", ""),
+        observation_units=("kelvin",) * len(KEYS),
     )
 
 
