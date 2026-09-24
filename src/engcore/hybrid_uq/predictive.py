@@ -471,7 +471,12 @@ def linearized_predictive_uq(
     def g(z):
         return evaluate(predict, to_natural(z, transforms), keys, units, references)
 
-    measurement = [None if s.observation_sigma is None else float(s.observation_sigma.magnitude_in(s.unit)) for s in specs]
+    measurement = [
+        None
+        if s.observation_sigma is None
+        else float(s.observation_sigma.magnitude_as_spread_in(s.unit))
+        for s in specs
+    ]
     try:
         g0, G, _steps, _one_sided, _count = central_difference(
             g, z0, lower, upper, DEFAULT_RELATIVE_STEP, weights=[math.nan if m is None else m for m in measurement])
@@ -688,12 +693,16 @@ def _grid_record(posterior, predictive_table, spec, claim, reasons, *, twin, mod
     result = posterior_predictive_uq(posterior, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
                                      credible_mass=confidence_level)
     unit = result.mean.units
-    measurement = None if spec.observation_sigma is None else float(spec.observation_sigma.magnitude_in(unit))
+    measurement = (
+        None
+        if spec.observation_sigma is None
+        else float(spec.observation_sigma.magnitude_as_spread_in(unit))
+    )
     return RoutedPredictiveUncertainty(
         observation_key=result.observation_key, unit=unit, approximation_class=ApproximationClass.POSTERIOR_GRID,
-        mean=float(result.mean.magnitude), parameter_standard_uncertainty=float(result.epistemic_standard_uncertainty.magnitude_in(unit)),
+        mean=float(result.mean.magnitude), parameter_standard_uncertainty=float(result.epistemic_standard_uncertainty.magnitude_as_spread_in(unit)),
         measurement_standard_uncertainty=measurement,
-        total_standard_uncertainty=float(result.total_standard_uncertainty.magnitude_in(unit)),
+        total_standard_uncertainty=float(result.total_standard_uncertainty.magnitude_as_spread_in(unit)),
         parameter_interval=(float(result.epistemic_interval.lower.magnitude_in(unit)), float(result.epistemic_interval.upper.magnitude_in(unit))),
         total_interval=(float(result.total_interval.lower.magnitude_in(unit)), float(result.total_interval.upper.magnitude_in(unit))),
         confidence_level=result.confidence_level, sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED,
