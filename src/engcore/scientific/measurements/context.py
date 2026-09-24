@@ -4,10 +4,10 @@ from dataclasses import dataclass
 import hashlib
 import json
 import re
-from types import MappingProxyType
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 
@@ -47,7 +47,7 @@ class ExperimentContext:
         object.__setattr__(
             self,
             "conditions",
-            MappingProxyType(dict(sorted(conditions.items()))),
+            freeze(dict(sorted(conditions.items()))),
         )
 
     def to_dict(self) -> dict[str, Any]:

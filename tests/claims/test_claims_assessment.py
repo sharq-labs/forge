@@ -124,14 +124,29 @@ def test_a_model_outside_its_domain_never_contradicts_the_claim(registry) -> Non
     assert any(r["kind"] == "move_inside_validity" for r in record["repair_actions"])
 
 
-def test_a_battery_claim_is_insufficient_and_says_the_lumped_body_cannot_be_assessed(registry) -> None:
+def test_a_complete_battery_claim_is_supported_on_verification_only(registry) -> None:
     record = assess_claim(
-        claim(qoi=QuantityOfInterest("terminal_voltage", "volt"), target=ClaimTarget(value=Quantity(3.0, "volt")),
-              operator=ConstraintOperator.GREATER_EQUAL, operating_context={}, known_inputs=battery_inputs()),
+        claim(
+            qoi=QuantityOfInterest("terminal_voltage", "volt"),
+            target=ClaimTarget(value=Quantity(3.0, "volt")),
+            operator=ConstraintOperator.GREATER_EQUAL,
+            operating_context={},
+            known_inputs=battery_inputs(),
+            evidence=EvidenceRequirement((ValidationLevel.DIMENSIONALLY_VALID,)),
+        ),
         registry,
     ).to_dict()
-    assert record["verdict"] == "insufficient_evidence"
-    assert "selection.validity_unassessable" in _codes(record)
+    # Thermal applicability is fully declared and the battery-cell metrics
+    # earn DIMENSIONALLY_VALID, so the generic report has real verification
+    # evidence and may be SUPPORTED when the claim asks for no stronger level.
+    # This is deliberately not validation against the physical world.
+    assert record["status"] == "assessed"
+    assert record["verdict"] == "supported"
+    assert record["validation"]["evidence_basis"] == "VERIFICATION_ONLY"
+    assert record["validation"]["attained"] == []
+    assert "selection.validity_unassessable" not in _codes(record)
+    assert "credibility.supported" in _codes(record)
+    assert "validation.verification_only" in _codes(record)
 
 
 def test_a_demanded_uncertainty_channel_that_is_unknown_leaves_the_claim_undecided(registry) -> None:

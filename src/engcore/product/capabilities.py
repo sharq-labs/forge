@@ -103,7 +103,10 @@ _ET_PERTURBABLE = (
     ("source_voltage", "the ideal source's voltage, a boundary condition of the circuit"),
     ("stages[].body.ambient_temperature", "the ambient each body exchanges heat with"),
     ("stages[].body.ambient_conductance", "the body's lumped heat-transfer conductance to ambient"),
-    ("stages[].body.heat_capacity", "the body's lumped heat capacity"),
+    # heat_capacity is intentionally absent: the decision-grade payload binds
+    # it to rho*c_p*V + extra_heat_capacity. Varying only the total would break
+    # the caller's own capacity evidence. A future linked-perturbation contract
+    # may expose a coherent material/geometry variation instead.
     ("stages[].conductor.reference_resistance", "the conductor's resistance at its reference temperature"),
     ("stages[].conductor.temperature_coefficient", "the conductor's linear temperature coefficient of resistance"),
 )
@@ -771,6 +774,11 @@ def production_registry() -> CapabilityRegistry:
     """
     from ..assembly.domainpacks import production_pack_capabilities
 
+    pack_capabilities = tuple(
+        declaration
+        for declaration in production_pack_capabilities()
+        if declaration.executable
+    )
     return CapabilityRegistry(
-        (*_builtin_production_capabilities(), *production_pack_capabilities())
+        (*_builtin_production_capabilities(), *pack_capabilities)
     )

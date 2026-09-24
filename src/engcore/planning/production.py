@@ -18,9 +18,25 @@ from .verification import VerificationPlanningRegistry
 
 
 def _production_capabilities() -> CapabilityRegistry:
+    """Capabilities visible to scientific planning.
+
+    Product claim routing admits only directly executable declarations. Planning
+    also needs enabled Composition-Pack declarations because they describe the
+    system capabilities that a GraphPlan can realize through a separate
+    Execution Pack. Keep those planning-only declarations out of the claim
+    router while making them available to fidelity selection and graph
+    construction.
+    """
+    from ..assembly.domainpacks import production_composition_claim_capabilities
     from ..product.capabilities import production_registry
 
-    return production_registry()
+    executable = production_registry()
+    return CapabilityRegistry(
+        (
+            *executable.declarations,
+            *production_composition_claim_capabilities(),
+        )
+    )
 
 
 def _enabled_domain_packs():

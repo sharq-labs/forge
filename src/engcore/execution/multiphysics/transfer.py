@@ -32,7 +32,9 @@ from ...scientific.results.uncertainty import (
     UncertaintySource,
 )
 from ...scientific.units.quantity import Quantity
-from ...uq.cross_domain import propagate_declared_mapping_uncertainty
+from ...scientific.results.uncertainty_mapping import (
+    propagate_declared_mapping_uncertainty,
+)
 from .mapping import FieldMapper
 from .participant import CouplingValue
 

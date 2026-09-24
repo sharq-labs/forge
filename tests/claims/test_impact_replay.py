@@ -293,8 +293,8 @@ def test_a_bundle_with_external_evidence_carries_its_trust_and_replays(registry)
     trust = TrustedExternalRegistry((TrustedPin(m.digest, SourceClass.MEASUREMENT, "c", "r"),))
     assessment = assess_claim(t3_claim(), registry, external=(m,), trust=trust)
     bundle = make_bundle(assessment, registry, trust=trust)
-    assert verify_bundle(bundle, registry).status is BundleStatus.VERIFIED
-    assert replay_bundle(bundle, registry).status is BundleStatus.VERIFIED
+    assert verify_bundle(bundle, registry, trust=trust).status is BundleStatus.VERIFIED
+    assert replay_bundle(bundle, registry, trust=trust).status is BundleStatus.VERIFIED
     with pytest.raises(Exception):
         make_bundle(assessment, registry)  # the production registry is not the one it was judged under
 

@@ -114,7 +114,7 @@ def test_every_gap_points_at_the_record_field_that_caused_it(records, name) -> N
     [
         ("missing_input", GapClass.MISSING_INPUT),
         ("unknown_input", GapClass.MISSING_INPUT),
-        ("battery_unsupported", GapClass.CAPABILITY_MISSING),
+        ("battery_unsupported", GapClass.SOURCE_CLOSURE_INCOMPLETE),
         ("t3_tight_band", GapClass.UNCERTAINTY_BAND_STRADDLES),
         ("t3_model_form", GapClass.MODEL_FORM_UNCERTAINTY_UNKNOWN),
         ("t3_discrepancy", GapClass.MODEL_FORM_UNCERTAINTY_UNKNOWN),

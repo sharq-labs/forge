@@ -836,7 +836,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14c',
-        'src/engcore/mcp/evidence.py::ModelValidityRecord.__post_init__',
+        'src/engcore/credibility/evidence.py::ModelValidityRecord.__post_init__',
         '            evaluated=dict(getattr(self.assessment, "evaluated", {}) or {}),\n',
         '            evaluated={},\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_keeps_the_operating_point',
@@ -847,7 +847,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14d',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.__post_init__',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.__post_init__',
         '        self._require_assessments_at_this_operating_point()\n',
         '',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point',
@@ -858,7 +858,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14e',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport._require_assessments_at_this_operating_point',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport._require_assessments_at_this_operating_point',
         '                if name in inputs and not _same_operating_point(value, inputs[name]):\n',
         '                if name in inputs and False:\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point',
@@ -869,7 +869,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B14f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.unbound_assessment_values',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.unbound_assessment_values',
         '            if name not in inputs\n',
         '            if False\n',
         'tests/test_core_scientific_audit_batch14.py::test_r09_the_report_records_the_names_its_provenance_cannot_bind',
@@ -1188,7 +1188,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B15t',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + requirement_checks(\n                problem,\n                validation=result.validation,\n                uncertainty=dict(result.uncertainty),\n            )\n',
         '',
         'tests/test_core_scientific_audit_batch15.py::test_r72_the_credibility_boundary_carries_the_unmet_declaration_when_it_is_given_the_problem',
@@ -2629,7 +2629,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B24e',
-        'src/engcore/mcp/evidence.py::evidence_basis_of',
+        'src/engcore/credibility/evidence.py::evidence_basis_of',
         '    if set(attained) & set(VALIDATION_LEVELS):\n',
         '    if set(attained) & {ValidationLevel.CROSS_SOLVER_VALIDATED} | set(VALIDATION_LEVELS):\n',
         'tests/test_core_scientific_audit_batch24.py::test_r39_the_mcp_side_derives_the_same_word_from_the_same_rule',
@@ -2717,7 +2717,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B25h',
-        'src/engcore/mcp/problem.py',
+        'src/engcore/product/problem.py',
         '    decision = TrustedConsensusGate().assess(\n        consensus, (), name=CROSS_SOLVER_CHECK_NAME,\n    )\n    return (_withhold_level(decision.check),)\n',
         '    return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)\n',
         'tests/test_core_scientific_audit_batch25.py::test_r21_the_production_cross_solver_check_is_built_by_the_gate',
@@ -2728,7 +2728,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B25i',
-        'src/engcore/mcp/problem.py::_withhold_level',
+        'src/engcore/product/problem.py::_withhold_level',
         '    if withheld is None and already:\n        return check\n',
         '    if False:\n        return check\n',
         'tests/test_core_scientific_audit_batch25.py::test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence',
@@ -2849,7 +2849,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B26j',
-        'src/engcore/mcp/problem.py::_read_quantity',
+        'src/engcore/product/problem.py::_read_quantity',
         '    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):\n',
         '    if False:\n',
         'tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required',
@@ -2860,7 +2860,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B26k',
-        'src/engcore/mcp/problem.py::_read_quantity',
+        'src/engcore/product/problem.py::_read_quantity',
         '    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):\n',
         '    if is_delta_unit(exemplar) and not is_delta_unit(quantity.units):\n',
         'tests/mcp/test_core_scientific_audit_batch26.py::test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required',
@@ -3435,9 +3435,9 @@ POPULATION_V4: tuple[tuple, ...] = (
         'src/engcore/hybrid_uq/local_gaussian.py::_clamp_leverage_cumulant',
         '    floor = float(terms) * float(np.finfo(float).eps) * abs(float(scale))\n',
         '    floor = float(np.finfo(float).eps)\n',
-        'tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_fixture_is_routable_at_all',
-        'SURVIVED',
-        'the floor stops scaling with the computation, so it is eps absolute rather than eps relative to the magnitudes summed. For a null whose terms are of order 1e-7 that happens to still work and for one of order 1e3 it does not, which is the failure mode of every absolute tolerance on a relative quantity',
+        'tests/hybrid_uq/test_core_scientific_audit_batch31.py::test_r11_the_round_off_floor_scales_with_the_computation',
+        'KILLED',
+        'the floor stops scaling with the computation, so it becomes bare machine epsilon; the dedicated guard uses a residue above eps but inside terms * eps * scale and therefore distinguishes absolute from computation-relative cancellation',
         (),
         'batch31_mutations',
     ),
@@ -4191,7 +4191,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B3c',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.to_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.to_dict',
         '                "evidence_basis": ValidationReport(checks=tuple(self.validation)).evidence_basis,\n',
         '                "evidence_basis": "VALIDATED",\n',
         'tests/mcp/test_evidence.py::test_core008_a_verdict_resting_on_verification_alone_says_so_in_every_report',
@@ -4665,7 +4665,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     (
         'B43h',
         'src/engcore/design/archives.py',
-        '_RANKABLE = (SelectionEligibility.ELIGIBLE, SelectionEligibility.RANKED_WITHOUT_ASSESSMENT)\n',
+        '_RANKABLE = (\n    SelectionEligibility.ELIGIBLE,\n    SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,\n)\n',
         '_RANKABLE = (SelectionEligibility.ELIGIBLE,)\n',
         'tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_records_the_members_it_ranked_without_assessment',
         'KILLED',
@@ -5087,8 +5087,12 @@ POPULATION_V4: tuple[tuple, ...] = (
         '    if False:\n',
         'tests/test_core_scientific_audit_batch48.py::test_r58_an_interval_that_does_not_contain_the_value_is_refused',
         'KILLED',
-        "finding 71 claim (a) restored: an INTERVAL of [10, 11] K propagates for a crossing of 350 K and round-trips, which is another quantity's interval wearing this crossing's record",
-        (),
+        "finding 71 claim (a) restored: an INTERVAL of [10, 11] K must be refused for a crossing of 350 K; after the generic mapping refactor both the transfer-specific attribution guard and the provider-neutral mapping guard protect containment, so the mutation removes both together",
+        ((
+            'src/engcore/scientific/results/uncertainty_mapping.py::_require_interval_contains_value',
+            '    if not (\n        low <= magnitude <= high\n        or _agree_relatively(magnitude, low)\n        or _agree_relatively(magnitude, high)\n    ):\n',
+            '    if False:\n',
+        ),),
         'batch48_mutations',
     ),
     (
@@ -5181,8 +5185,8 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B48j',
-        'src/engcore/uq/cross_domain.py::propagate_transfer_uncertainty',
-        '        if width is not None:\n',
+        'src/engcore/scientific/results/uncertainty_mapping.py::propagate_declared_mapping_uncertainty',
+        '        if efficiency_width is not None:\n',
         '        if False:\n',
         'tests/test_core_scientific_audit_batch48.py::test_r58_a_declared_efficiency_uncertainty_is_propagated_in_quadrature',
         'KILLED',
@@ -6171,7 +6175,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7a',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if state not in _CONVERGENCE_STATES_THAT_FINISHED:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         '        if False:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_derive_verdict_reads_convergence_on_its_own',
@@ -6182,7 +6186,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7b',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + _convergence_checks(result)\n',
         '            + ()\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_downgrade_survives_a_payload_with_the_new_field_deleted',
@@ -6193,18 +6197,18 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7c',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if state not in _CONVERGENCE_STATES_THAT_FINISHED:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         '        if False:\n            return CredibilityVerdict.INSUFFICIENT_EVIDENCE\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_a_result_whose_solver_did_not_finish_is_never_supported',
         'KILLED',
         'R-10: BOTH halves removed -- the verdict rule and the check -- which is the audited behaviour exactly, so a DIVERGED result reports SUPPORTED again',
-        (('src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result', '            + _convergence_checks(result)\n', '            + ()\n'),),
+        (('src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result', '            + _convergence_checks(result)\n', '            + ()\n'),),
         'batch7_mutations',
     ),
     (
         'B7d',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            convergence=result.convergence,\n',
         '            convergence=None,\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_convergence_state_is_in_the_report_and_its_json',
@@ -6215,7 +6219,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7e',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.to_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.to_dict',
         '            **({} if self.convergence is None else {"convergence": self.convergence.value}),\n',
         '            **({} if True else {"convergence": self.convergence.value}),\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r10_the_convergence_state_is_in_the_report_and_its_json',
@@ -6226,7 +6230,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            + tuple(result.models)\n            + tuple(_declared_model_keys(result, result.validity_not_assessed)),\n',
         '            ,\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r40_a_provenance_override_cannot_drop_a_declared_model',
@@ -6270,12 +6274,12 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B7j',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result',
         '            convergence=result.convergence,\n            uncertainty=dict(result.uncertainty),\n',
         '            convergence=result.convergence,\n            uncertainty={},\n',
         'tests/mcp/test_core_scientific_audit_batch7.py::test_r43_the_report_carries_per_value_uncertainty_and_its_source',
         'KILLED',
-        "R-43: from_result drops result.uncertainty again [REPOINTED 2026-09-18: I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the re-derived requirement checks. The preceding line is carried so the mutation still names the report field the target test reads, and not the checks; was src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_result '            uncertainty=dict(result.uncertainty),\\n' -> '            uncertainty={},\\n']",
+        "R-43: from_result drops result.uncertainty again [REPOINTED 2026-09-18: I-19 added a SECOND `uncertainty=dict(result.uncertainty)` in this method, for the re-derived requirement checks. The preceding line is carried so the mutation still names the report field the target test reads, and not the checks; was src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_result '            uncertainty=dict(result.uncertainty),\\n' -> '            uncertainty={},\\n']",
         (),
         'batch7_mutations',
     ),
@@ -6303,7 +6307,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8a',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        if not level_is_earned(level, outcome, residual, tolerance, evidence):\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_a_pass_with_a_level_and_nothing_compared_establishes_nothing',
@@ -6314,7 +6318,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8b',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        gap = _issuer_gap(level, outcome, residual, tolerance, evidence)\n',
         '        gap = None\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_derive_verdict_refuses_a_duck_typed_check',
@@ -6325,7 +6329,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8c',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        except (AttributeError, TypeError, ValueError) as exc:\n',
         '        except (TypeError, ValueError) as exc:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r47_derive_verdict_refuses_an_object_missing_the_fields_the_rule_reads',
@@ -6336,7 +6340,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8d',
-        'src/engcore/mcp/evidence.py::attained_levels_of',
+        'src/engcore/credibility/evidence.py::attained_levels_of',
         '        if outcome is ValidationOutcome.PASS:\n            attained.add(level)\n',
         '        if True:\n            attained.add(level)\n',
         'tests/mcp/test_evidence.py::test_a_level_established_by_a_check_that_did_not_pass_does_not_count',
@@ -6347,7 +6351,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8e',
-        'src/engcore/mcp/evidence.py::derive_verdict',
+        'src/engcore/credibility/evidence.py::derive_verdict',
         '        if EVIDENCE_BASIS_ORDER[evidence_basis_of(attained)] < EVIDENCE_BASIS_ORDER[demanded]:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_derive_verdict_reads_a_required_basis_on_its_own',
@@ -6358,7 +6362,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8f',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.missing_evidence_basis',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.missing_evidence_basis',
         '        if EVIDENCE_BASIS_ORDER[self.evidence_basis] < EVIDENCE_BASIS_ORDER[demanded]:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_caller_can_demand_a_basis_it_did_not_get',
@@ -6369,7 +6373,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8g',
-        'src/engcore/mcp/evidence.py::CredibilityEvidenceReport.from_dict',
+        'src/engcore/credibility/evidence.py::CredibilityEvidenceReport.from_dict',
         '        if "verdict_qualifiers" not in payload:\n',
         '        if False:\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_payload_with_the_evidence_basis_removed_is_refused',
@@ -6380,7 +6384,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8h',
-        'src/engcore/mcp/evidence.py::_require_qualifiers_as_derived',
+        'src/engcore/credibility/evidence.py::_require_qualifiers_as_derived',
         '    missing = sorted(set(derived) - set(stated))\n',
         '    missing = []\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_payload_with_the_evidence_basis_removed_is_refused',
@@ -6446,7 +6450,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     ),
     (
         'B8n',
-        'src/engcore/mcp/problem.py::_withhold_level',
+        'src/engcore/product/problem.py::_withhold_level',
         '            else (*check.evidence, f"{WITHHELD_LEVEL_EVIDENCE_PREFIX}{withheld.value}")\n',
         '            else check.evidence\n',
         'tests/mcp/test_core_scientific_audit_batch8.py::test_r04_a_withheld_level_is_recorded_where_a_reader_finds_it',
@@ -7071,31 +7075,31 @@ POPULATION_V4: tuple[tuple, ...] = (
         "scientific lineage binds parent run id to exact parent manifest digest", (), 'unified_replay_round62',
     ),
     (
-        "N62o", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if derived_validation.decision is not validation.decision:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag", 'KILLED',
+        "N62o", "src/engcore/credibility/assurance_manifest.py::validate_production_assurance_components", "    if derived_validation.decision is not validation.decision:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"validation report decision does not match the production validation gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag", 'KILLED',
         "production assurance re-derives validation decision", (), 'unified_replay_round62',
     ),
     (
-        "N62p", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if (\n        not verification_result.complete\n        or verification_result.verification.decision is not VerificationDecision.VERIFIED\n    ):\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
+        "N62p", "src/engcore/credibility/assurance_manifest.py::validate_production_assurance_components", "    if (\n        not verification_result.complete\n        or verification_result.verification.decision is not VerificationDecision.VERIFIED\n    ):\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance requires complete independently verified evidence\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification", 'KILLED',
         "production assurance requires complete independently verified evidence", (), 'unified_replay_round62',
     ),
     (
-        "N62q", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if not certification.profile.required_gates:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"production assurance certification profile must require at least one gate\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate", 'KILLED',
-        "production assurance certification profile cannot certify nothing", (), 'unified_replay_round62',
+        "N62q", "src/engcore/scientific/certification_core/profile.py::CertificationProfile.__post_init__", "        if not pid or not gates or any(not x for x in gates):\n            raise ValueError(\"certification profile requires id and required gates\")\n", "        if False:\n            raise ValueError(\"certification profile requires id and required gates\")\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate", 'KILLED',
+        "the typed certification profile refuses a profile that certifies no gate before production assurance can consume it", (), 'unified_replay_round62',
     ),
     (
-        "N62r", "src/engcore/credibility/assurance_manifest.py::build_production_assurance_manifest", "    if provenance.git_commit and provenance.git_commit != certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
+        "N62r", "src/engcore/credibility/assurance_manifest.py::validate_production_assurance_components", "    if provenance.git_commit != certification.commit_sha:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "    if False:\n        raise InvalidScientificProblem(\n            \"provenance git commit differs from certification commit\"\n        )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit", 'KILLED',
         "provenance commit is bound to the certified commit", (), 'unified_replay_round62',
     ),
     (
-        "N62s", "src/engcore/credibility/assurance_manifest.py::_validate_knowledge_evidence", "        if not node.provenance.trusted:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted", 'KILLED',
-        "production assurance refuses untrusted knowledge provenance", (), 'unified_replay_round62',
+        "N62s", "src/engcore/credibility/assurance_manifest.py::_validate_knowledge_evidence", "        if expected.to_dict() != node.to_dict():\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} provenance does not re-derive from the authoritative trust/freshness policy\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"knowledge evidence {node.evidence_id!r} provenance does not re-derive from the authoritative trust/freshness policy\"\n            )\n", "tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted", 'KILLED',
+        "production assurance refuses untrusted knowledge provenance even when both independent trust checks are removed together", (("src/engcore/credibility/assurance_manifest.py::_validate_evidence_witnesses", "        if not node.provenance.trusted:\n            raise InvalidScientificProblem(\n                f\"external evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                f\"external evidence {node.evidence_id!r} is not pinned/trusted\"\n            )\n"),), 'unified_replay_round62',
     ),
     (
-        "N63a", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.profile != PRODUCTION_ASSURANCE_PROFILE:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest", 'KILLED',
+        "N63a", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        if self.manifest.profile != PRODUCTION_ASSURANCE_PROFILE:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "        if False:\n            raise InvalidScientificProblem(\n                \"production assurance bundle manifest uses the wrong profile\"\n            )\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_refuses_a_manifest_from_another_profile", 'KILLED',
         "production assurance bundle is bound to its exact manifest profile", (), 'assurance_bundle_round63',
     ),
     (
-        "N63b", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        validate_production_assurance_components(\n            run_id=self.manifest.run_id,\n            law=self.law,\n            knowledge=self.knowledge,\n            evidence=self.evidence,\n            validation=self.validation,\n            combined_uq=self.combined_uq,\n            verification=self.verification,\n            certification=self.certification,\n            provenance=self.provenance,\n        )\n", "        _ = self.manifest.run_id\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation", 'KILLED',
+        "N63b", "src/engcore/credibility/assurance_replay_bundle.py::ProductionAssuranceBundle.__post_init__", "        validate_production_assurance_components(\n            run_id=self.manifest.run_id,\n            law=self.law,\n            knowledge=self.knowledge,\n            evidence=self.evidence,\n            validation=self.validation,\n            combined_uq=self.combined_uq,\n            verification=self.verification,\n            certification=self.certification,\n            provenance=self.provenance,\n            knowledge_trust=self.knowledge_trust,\n            knowledge_freshness=self.knowledge_freshness,\n            measurement_observations=self.measurement_observations,\n        )\n", "        _ = self.manifest.run_id\n", "tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation", 'KILLED',
         "rehashing forged payloads does not bypass scientific semantic revalidation", (), 'assurance_bundle_round63',
     ),
     (

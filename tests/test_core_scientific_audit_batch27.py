@@ -16,7 +16,7 @@ from engcore.scientific.results.provenance import ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult
 from engcore.scientific.units.quantity import Quantity
 
-from route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
     PINS,
     route,
     route_declarations_for_tests,

@@ -164,7 +164,7 @@ def test_certification_refuses_skipped_campaign_or_regression_evidence(source, g
         b'</testsuite></testsuites>'
     )
     _file(evidence, head, gate, suite).write_bytes(skipped)
-    _refused(root, head, evidence, "exceeds ceiling 0")
+    _refused(root, head, evidence, "above the declared ceiling of 0")
 
 
 def test_a_source_gate_with_different_resolved_dependencies_is_refused(source):

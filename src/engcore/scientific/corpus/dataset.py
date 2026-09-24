@@ -47,6 +47,7 @@ import hashlib
 import json
 from typing import Any, Callable, Iterable, Mapping, Protocol, runtime_checkable
 
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from .source import (
@@ -600,7 +601,9 @@ class ReferenceDataset:
             )
         object.__setattr__(self, "observations", observations)
         object.__setattr__(
-            self, "metadata", None if self.metadata is None else dict(self.metadata)
+            self,
+            "metadata",
+            freeze(None if self.metadata is None else dict(self.metadata)),
         )
 
         self._require_independent_splits()

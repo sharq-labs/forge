@@ -967,7 +967,13 @@ interval: the real resistance moves from R(T_0) to R(T_final) and that \
 transient is approximated, not resolved. Declaring \
 stages[].conductor.element.resistance_variation_budget lets the element record \
 check how far R moved against what you accept. A stage that omits this element \
-evidence now carries a NOT_RUN validation check and cannot be SUPPORTED. The \
+evidence now carries a NOT_RUN validation check and cannot be SUPPORTED. \
+KNOWN LIMITATION: if stages[].conductor.element is omitted entirely, the \
+self-heated-resistor applicability record is not attached, so this run has no \
+resistance-variation screen for the resistance held constant over the interval \
+and the other models may still support the stage. That is different from \
+declaring element data but omitting its resistance_variation_budget, which \
+fails closed as described above. The \
 body also accepts capacity_evidence (bulk_density, bulk_specific_heat and an \
 explicit extra_heat_capacity) and verifies heat_capacity = rho*c_p*V + C_extra; \
 omitting the basis likewise fails closed as INSUFFICIENT_EVIDENCE. Each report carries: the values with units, each model's validity (status plus \

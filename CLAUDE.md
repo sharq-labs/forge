@@ -6,11 +6,12 @@ identity as part of ordinary work.
 
 ## Read before changing code
 
-1. `docs/architecture/README.md` — current repository/layer map.
-2. `docs/scientific-core/README.md` — Scientific Core ownership and limits.
-3. `docs/CORE_FREEZE_POLICY.md` — frozen API / certification rules.
-4. `docs/scientific-core/scientific-intelligence-layer.md` — claim runtime.
-5. `docs/work/ACTIVE_PLAN.md` and `docs/work/PROGRESS.md` — current work state.
+1. `docs/project/FORGE_MASTER_PLAN.md` — long-term technical direction and resume protocol.
+2. `docs/architecture/README.md` — current repository/layer map.
+3. `docs/scientific-core/README.md` — Scientific Core ownership and limits.
+4. `docs/CORE_FREEZE_POLICY.md` — frozen API / certification rules.
+5. `docs/scientific-core/scientific-intelligence-layer.md` — claim runtime.
+6. `docs/work/ACTIVE_PLAN.md` and `docs/work/PROGRESS.md` — current bounded work state.
 
 Historical audits are evidence about a past tree, not current architecture truth.
 
@@ -109,8 +110,12 @@ review finding; either fix it or record why it is not applicable.
 
 ## Long-running sessions
 
-Use `docs/work/ACTIVE_PLAN.md` as the bounded task tree. Update
+Treat `docs/project/FORGE_MASTER_PLAN.md` as the persistent strategic contract.
+Use `docs/work/ACTIVE_PLAN.md` as the bounded executable task tree and update
 `docs/work/PROGRESS.md` after meaningful milestones, failures or test runs.
+
+If a chat/session is lost, recover from those files and the actual repository
+HEAD/branch/PR. Do not require the previous chat transcript to continue.
 
 Do not stop merely because one subtask or PR is complete if the active plan
 contains the next executable task and no scientific/architectural blocker
@@ -118,6 +123,14 @@ exists.
 
 ## CI policy
 
-GitHub test and recertification workflows are manual-only by project policy.
-Do not add push/PR triggers and do not dispatch a workflow unless the user
-explicitly asks for it.
+GitHub test and hardened-core recertification workflows are part of the
+repository's scientific control plane.
+
+- Pull requests must be classified automatically.
+- Ordinary changes run the normal Tests gate.
+- Certified/trust-sensitive changes run hardened-core recertification.
+- Pushes to `main` rerun the normal merged-tree checks.
+- Branch/ruleset policy is checked after updates to `main`.
+- Manual dispatch may remain as an explicit fallback, not as the only path.
+
+Do not weaken or bypass these gates merely to make a change mergeable.

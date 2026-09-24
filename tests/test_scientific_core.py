@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.scientific import (
     AmbiguousSolverError,
     BindingIssueKind,

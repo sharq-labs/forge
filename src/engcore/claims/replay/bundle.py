@@ -383,6 +383,81 @@ def _tolerates_numeric(path: str) -> bool:
     return False
 
 
+def _tolerance_derived_numeric(path: str, before: Any, after: Any) -> bool:
+    """Whether a numeric leaf is algebraically downstream of the replayed result.
+
+    These values do not get an independent relative tolerance: for a residual
+    near zero, a tiny accepted change in the simulated value can be a large
+    relative change in the residual itself. Their categorical outcome remains
+    exact and will still fail replay if the accepted primary drift crosses a
+    decision boundary.
+    """
+    parts = tuple(part for part in path.split("/") if part)
+    return (
+        parts[:1] == ("external_evidence_assessments",)
+        and len(parts) >= 4
+        and parts[2] == "comparison"
+        and parts[-1] in {"difference", "allowed"}
+        and isinstance(before, (int, float))
+        and not isinstance(before, bool)
+        and isinstance(after, (int, float))
+        and not isinstance(after, bool)
+    )
+
+def _tolerance_derived_identity(
+    path: str,
+    before: Any,
+    after: Any,
+    tolerance: ReplayTolerance,
+) -> bool:
+    """Whether an identity is deterministically downstream of tolerated numerics.
+
+    Replay tolerance applies to scientific result/estimate leaves, never to
+    authority, configuration, input, model, solver, capability or trust
+    identities. Some public fields are content-addresses of those tolerated
+    leaves, though. Requiring those hashes to stay byte-identical would make
+    a non-zero numeric tolerance impossible to use.
+
+    The whitelist is intentionally structural and value-aware. It recognizes
+    only SRIA evidence content/record hashes, refinement-run report digests,
+    and refinement-study source labels emitted by numerical UQ.
+    """
+    if tolerance.relative == 0.0 and tolerance.absolute == 0.0:
+        return False
+
+    parts = tuple(part for part in path.split("/") if part)
+    if parts in {
+        ("evidence", "content_hash"),
+        ("evidence", "record_hash"),
+    }:
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and re.fullmatch(r"[0-9a-f]{64}", before) is not None
+            and re.fullmatch(r"[0-9a-f]{64}", after) is not None
+        )
+
+    if (
+        parts[:1] == ("uncertainty_studies",)
+        and parts[-1:] == ("report_digest",)
+    ):
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and re.fullmatch(r"[0-9a-f]{64}", before) is not None
+            and re.fullmatch(r"[0-9a-f]{64}", after) is not None
+        )
+
+    if parts[-1:] == ("source",):
+        return (
+            isinstance(before, str)
+            and isinstance(after, str)
+            and before.startswith("refinement_study:")
+            and after.startswith("refinement_study:")
+        )
+
+    return False
+
 def _compare_replay_nodes(
     before: Any,
     after: Any,
@@ -390,14 +465,28 @@ def _compare_replay_nodes(
     *,
     path: str = "",
     differences: list[str] | None = None,
+    tolerated_numeric_drift: list[str] | None = None,
+    derived_numeric_drift: list[str] | None = None,
+    derived_identity_drift: list[str] | None = None,
 ) -> int:
     """Compare the complete public assessment record.
 
-    Configuration, inputs, identities, evidence, trust, checks and policy are
-    exact.  The declared tolerance is used only for scientific result/estimate
-    leaves; it can never blur a changed threshold, input or trust decision.
+    Configuration, inputs, authoritative identities, trust, checks and policy
+    are exact. The declared tolerance is used only for scientific
+    result/estimate leaves plus the narrowly recognized content-addressed
+    identities derived from those leaves; it can never blur a changed
+    threshold, input, model, solver, capability or trust decision.
     """
     differences = [] if differences is None else differences
+    tolerated_numeric_drift = (
+        [] if tolerated_numeric_drift is None else tolerated_numeric_drift
+    )
+    derived_numeric_drift = (
+        [] if derived_numeric_drift is None else derived_numeric_drift
+    )
+    derived_identity_drift = (
+        [] if derived_identity_drift is None else derived_identity_drift
+    )
     if isinstance(before, Mapping) and isinstance(after, Mapping):
         before_keys, after_keys = set(before), set(after)
         missing = sorted(before_keys - after_keys)
@@ -408,12 +497,38 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: unexpected fields {extra}")
         compared = 0
         for key in sorted(before_keys & after_keys):
+            child_path = f"{path}/{key}"
+            # The SIMULATION SourceOutcome carries the record hash of the
+            # replayed SRIA evidence. That hash is content-addressed from the
+            # same scientific payload whose numeric leaves are compared below;
+            # hashes carried by BENCHMARK/MEASUREMENT/LITERATURE outcomes stay
+            # exact because they identify external evidence.
+            if (
+                key == "evidence_record_hash"
+                and tuple(part for part in path.split("/") if part)[:1]
+                    == ("evidence_sources",)
+                and before.get("source_class") == "simulation"
+                and after.get("source_class") == "simulation"
+                and before[key] != after[key]
+                and tolerance.relative + tolerance.absolute > 0.0
+                and isinstance(before[key], str)
+                and isinstance(after[key], str)
+                and re.fullmatch(r"[0-9a-f]{64}", before[key]) is not None
+                and re.fullmatch(r"[0-9a-f]{64}", after[key]) is not None
+            ):
+                derived_identity_drift.append(
+                    f"{child_path}: {before[key]!r} -> {after[key]!r}"
+                )
+                continue
             compared += _compare_replay_nodes(
                 before[key],
                 after[key],
                 tolerance,
-                path=f"{path}/{key}",
+                path=child_path,
                 differences=differences,
+                tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_numeric_drift=derived_numeric_drift,
+                derived_identity_drift=derived_identity_drift,
             )
         return compared
     if isinstance(before, list) and isinstance(after, list):
@@ -429,6 +544,9 @@ def _compare_replay_nodes(
                 tolerance,
                 path=f"{path}/{index}",
                 differences=differences,
+                tolerated_numeric_drift=tolerated_numeric_drift,
+                derived_numeric_drift=derived_numeric_drift,
+                derived_identity_drift=derived_identity_drift,
             )
         return compared
     if isinstance(before, bool) or isinstance(after, bool):
@@ -436,14 +554,25 @@ def _compare_replay_nodes(
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 0
     if isinstance(before, (int, float)) and isinstance(after, (int, float)):
-        if _tolerates_numeric(path):
+        if _tolerance_derived_numeric(path, before, after):
+            if float(before) != float(after):
+                derived_numeric_drift.append(
+                    f"{path or '/'}: {before!r} -> {after!r}"
+                )
+        elif _tolerates_numeric(path):
             if not tolerance.same(float(before), float(after)):
                 differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+            elif float(before) != float(after):
+                tolerated_numeric_drift.append(path or "/")
         elif type(before) is not type(after) or before != after:
             differences.append(f"{path or '/'}: {before!r} -> {after!r}")
         return 1
     if type(before) is not type(after) or before != after:
-        differences.append(f"{path or '/'}: {before!r} -> {after!r}")
+        change = f"{path or '/'}: {before!r} -> {after!r}"
+        if _tolerance_derived_identity(path, before, after, tolerance):
+            derived_identity_drift.append(change)
+        else:
+            differences.append(change)
     return 0
 
 
@@ -474,6 +603,10 @@ def replay_bundle(
     silently disappearing during replay.
     """
     trust = PRODUCTION_EXTERNAL_REGISTRY if trust is None else trust
+    # Imported lazily so the replay view can call the assessment runtime
+    # without creating a module-import cycle.
+    from ..assessment import assess_claim
+
     check = verify_bundle(bundle, registry, trust=trust)
     if check.status is not BundleStatus.VERIFIED:
         return ReplayResult(check.status, check.problems, 0)
@@ -519,12 +652,25 @@ def replay_bundle(
         trust=trust,
     ).to_dict()
     differences: list[str] = []
+    tolerated_numeric_drift: list[str] = []
+    derived_numeric_drift: list[str] = []
+    derived_identity_drift: list[str] = []
     compared = _compare_replay_nodes(
         record,
         replayed,
         tolerance,
         differences=differences,
+        tolerated_numeric_drift=tolerated_numeric_drift,
+        derived_numeric_drift=derived_numeric_drift,
+        derived_identity_drift=derived_identity_drift,
     )
+    # Content-addressed identities may move only as a consequence of an
+    # actually observed numeric drift that the caller's tolerance accepted.
+    # A non-zero tolerance by itself is not permission to ignore identity
+    # changes in an otherwise byte-identical scientific result.
+    derived_drift = derived_numeric_drift + derived_identity_drift
+    if derived_drift and not tolerated_numeric_drift:
+        differences.extend(derived_drift)
     return ReplayResult(
         BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE,
         tuple(differences),

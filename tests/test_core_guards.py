@@ -23,7 +23,7 @@ import sys
 import pytest
 
 import engcore
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
@@ -1141,10 +1141,11 @@ def _every_solver():
 
 SOLVER_CLASSES = _every_solver()
 
-#: Exact, for the reason EXPECTED_MODELS is. A tenth adapter that lands
-#: without being covered by the guards below should fail here on the day it
-#: lands, and `>= 8` could not tell that from the nine there are.
-EXPECTED_SOLVER_CLASSES = 9
+#: Exact, for the reason EXPECTED_MODELS is. The tenth discovered adapter is
+#: now part of the guarded inventory; every solver-specific invariant below is
+#: evaluated over the same discovered set, so this count remains a change
+#: detector rather than a substitute for those guards.
+EXPECTED_SOLVER_CLASSES = 10
 
 
 def test_the_solver_discovery_found_the_adapters():
@@ -4339,10 +4340,10 @@ def test_the_sria_dependency_table_in_the_docs_matches_the_tree():
     A published number with nothing checking it goes stale silently, which is
     why the corrected table is checked here rather than only corrected.
     """
-    assert _sria_outbound_counts() == {"scientific": 53}
+    assert _sria_outbound_counts() == {"scientific": 54}
 
     doc = (REPO_ROOT / "docs" / "SRIA.md").read_text(encoding="utf-8")
-    assert "| `scientific/` | 53 |" in doc
+    assert "| `scientific/` | 54 |" in doc
     for stale in ("| `data/` | 15 |", "| `inference/` | 3 |",
                   "| `domains/` | 2 |", "| `scientific/` | 55 |"):
         assert stale not in doc, f"docs/SRIA.md still claims {stale}"

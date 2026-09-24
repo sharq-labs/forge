@@ -104,7 +104,10 @@ def build_cases() -> list[dict[str, Any]]:
                 "numerator": exponent,
                 "denominator": 1,
             },
-            {"status": "valid", "unit": f"{unit} ** {exponent}"},
+            {
+                "status": "valid",
+                "unit": "dimensionless" if exponent == 0 else f"{unit} ** {exponent}",
+            },
         ))
 
     for index in range(25):

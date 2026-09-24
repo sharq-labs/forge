@@ -16,7 +16,7 @@ from engcore.scientific.results.result import ScientificResult
 from engcore.scientific.results.validation import ValidationCheck, ValidationLevel, ValidationOutcome, ValidationReport
 from engcore.scientific.units.quantity import Quantity
 
-from test_scientific_core import build_algebraic_problem
+from tests.test_scientific_core import build_algebraic_problem
 
 CONVERGED = ValidationCheck("mesh_convergence", ValidationOutcome.PASS, establishes=ValidationLevel.NUMERICALLY_CONVERGED,
                             residual=1e-4, tolerance=1e-3)

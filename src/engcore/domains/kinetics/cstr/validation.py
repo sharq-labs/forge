@@ -93,6 +93,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 
+from ....execution.consensus import TrustedConsensusGate
 from ....scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
@@ -811,16 +812,35 @@ class CSTRVerificationReport:
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 earned=self.invariant_verified,
             ),
-            (
-                self.independent_solver_consensus.establishes
-                if self.independent_solver_consensus is not None
-                else None
-            ),
+            self.independent_solver_check.establishes,
             # The algebraic steady state shares the
             # solver's derived parameters, so its agreement is reported by the
             # check and establishes nothing. See the module docstring.
         )
         return tuple(level for level in earned if level is not None)
+
+    @property
+    def independent_solver_check(self) -> ValidationCheck:
+        """Independent-solver comparison after the artifact-independence gate.
+
+        The LSODA route is separately translated, but a declaration of
+        independence is not byte-backed independence.  Until this production
+        path supplies RouteIndependenceEvidence and artifact bytes, the
+        comparison remains useful PASS/FAIL evidence while
+        CROSS_SOLVER_VALIDATED is structurally withheld.
+        """
+        if self.independent_solver_consensus is None:
+            return ValidationCheck(
+                name="independent_solver_agreement",
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=self.independent_solver_detail,
+                establishes=None,
+            )
+        return TrustedConsensusGate().assess(
+            self.independent_solver_consensus,
+            (),
+            name="independent_solver_agreement",
+        ).check
 
     @property
     def claim(self) -> str:
@@ -845,8 +865,7 @@ class CSTRVerificationReport:
                 "parameters (reported; establishes no level)"
             )
         if (
-            self.independent_solver_consensus is not None
-            and self.independent_solver_consensus.establishes
+            self.independent_solver_check.establishes
             is ValidationLevel.CROSS_SOLVER_VALIDATED
         ):
             parts.append(
@@ -954,18 +973,7 @@ class CSTRVerificationReport:
                     else ()
                 ),
             ),
-            (
-                self.independent_solver_consensus.to_check(
-                    name="independent_solver_agreement"
-                )
-                if self.independent_solver_consensus is not None
-                else ValidationCheck(
-                    name="independent_solver_agreement",
-                    outcome=ValidationOutcome.NOT_RUN,
-                    detail=self.independent_solver_detail,
-                    establishes=None,
-                )
-            ),
+            self.independent_solver_check,
         ]
         return ValidationReport(checks=tuple(checks), notes=self.claim)
 

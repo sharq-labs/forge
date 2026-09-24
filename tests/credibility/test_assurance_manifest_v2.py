@@ -16,7 +16,9 @@ from engcore.scientific.replay_core import (
     OutputExpectation, OutputObservation, RunReplayRecord, RuntimeEnvironment,
     verify_run_manifest,
 )
-from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.provenance import ExecutionBinding, ProvenanceRecord
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.solvers.protocol import SolverIdentity
 from engcore.scientific.results.uncertainty import (
     Uncertainty, UncertaintyKind, UncertaintySource,
 )
@@ -116,6 +118,19 @@ def evidence_graph():
     return snap,EvidenceGraph((node,))
 
 
+def provenance(run_id="run", *, git_commit="a"*40):
+    return ProvenanceRecord(
+        run_id,
+        git_commit=git_commit,
+        bindings=(
+            ExecutionBinding(
+                ModelReference("fixture.model", "1"),
+                SolverIdentity("fixture.solver", "1"),
+            ),
+        ),
+    )
+
+
 def build(run_id="run", **overrides):
     snap,graph=evidence_graph()
     return build_production_assurance_manifest(
@@ -129,8 +144,10 @@ def build(run_id="run", **overrides):
         verification=overrides.pop("verification",verification()),
         certification=overrides.pop("certification",certification()),
         provenance=overrides.pop(
-            "provenance",ProvenanceRecord(run_id,git_commit="a"*40)
+            "provenance",provenance(run_id)
         ),
+        knowledge_trust=overrides.pop("knowledge_trust",registry()),
+        knowledge_freshness=overrides.pop("knowledge_freshness",freshness()),
         random_seed=overrides.pop("random_seed",17),
         parent=overrides.pop("parent",None),
         replay_of=overrides.pop("replay_of",None),
@@ -143,7 +160,9 @@ def test_production_manifest_contains_exactly_the_eight_required_assurance_artif
     assert {a.kind for a in manifest.contract_artifacts}==set(
         PRODUCTION_ASSURANCE_PROFILE.required_artifact_kinds
     )
-    assert len(manifest.contract_artifacts)==8
+    assert len(manifest.contract_artifacts)==len(
+        PRODUCTION_ASSURANCE_PROFILE.required_artifact_kinds
+    )
 
 
 def test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag():
@@ -158,13 +177,16 @@ def test_production_manifest_requires_complete_independent_verification():
 
 
 def test_production_manifest_refuses_certification_profile_with_no_required_gate():
-    with pytest.raises(InvalidScientificProblem,match="at least one gate"):
-        build(certification=certification(required=()))
+    # CertificationProfile itself is now the first fail-closed boundary: an
+    # empty required-gate set cannot be constructed and therefore cannot reach
+    # production assurance as a typed record.
+    with pytest.raises(ValueError,match="required gates"):
+        certification(required=())
 
 
 def test_production_manifest_binds_provenance_commit_to_certification_commit():
     with pytest.raises(InvalidScientificProblem,match="git commit"):
-        build(provenance=ProvenanceRecord("run",git_commit="b"*40))
+        build(provenance=provenance("run",git_commit="b"*40))
 
 
 def test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untrusted():
@@ -173,7 +195,10 @@ def test_production_manifest_refuses_knowledge_evidence_whose_pin_rederives_untr
     payload["provenance"].pop("trust_status")
     payload["provenance"]["pin_document_digest"]="0"*64
     tampered=EvidenceGraph((EvidenceNode.from_dict(payload),))
-    with pytest.raises(InvalidScientificProblem,match="not pinned/trusted"):
+    with pytest.raises(
+        InvalidScientificProblem,
+        match="authoritative trust/freshness policy",
+    ):
         build(knowledge=snap,evidence=tampered)
 
 
@@ -181,7 +206,7 @@ def test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_ty
     expected=build("run")
     actual=build(
         "replay-run",
-        provenance=ProvenanceRecord("replay-run",git_commit="a"*40),
+        provenance=provenance("replay-run"),
         replay_of=expected,
     )
     assert verify_run_manifest(expected,actual).verified

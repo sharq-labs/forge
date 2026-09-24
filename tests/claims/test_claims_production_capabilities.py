@@ -18,6 +18,7 @@ from engcore.claims import (
     RouteKind,
     build_case,
 )
+from engcore.assembly.domainpacks import production_composition_claim_capabilities
 from engcore.mcp import describe_electrothermal_case, example_electrothermal_payload, run_electrothermal_case
 from engcore.mcp.battery import describe_battery_case, example_battery_payload, run_battery_case
 from engcore.mcp.capabilities import (
@@ -31,6 +32,7 @@ from engcore.mcp.capabilities import (
 )
 from engcore.mcp.errors import MissingFieldError
 from engcore.mcp.evidence import CredibilityVerdict
+from engcore.product.cstr import CSTR_CAPABILITY_ID
 from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.units.quantity import Quantity, dimensionality
 
@@ -80,9 +82,20 @@ def _paths(node, prefix=""):
 
 
 def test_the_production_registry_is_built_once_and_is_deterministic(registry) -> None:
-    assert production_registry() is registry
-    assert [d.capability_id for d in registry] == [NAFEMS_T3_CAPABILITY_ID, BATTERY_CAPABILITY_ID, ELECTROTHERMAL_CAPABILITY_ID]
-    # A second, independent build declares the same facts.
+    # Built-in declarations are cached, while the registry container is rebuilt
+    # so newly enabled Domain Packs cannot be hidden behind an earlier singleton.
+    again = production_registry()
+    assert again is not registry
+    assert [d.capability_id for d in again] == [d.capability_id for d in registry]
+    assert {d.capability_id: d.digest for d in again} == {
+        d.capability_id: d.digest for d in registry
+    }
+    assert {
+        NAFEMS_T3_CAPABILITY_ID,
+        CSTR_CAPABILITY_ID,
+        BATTERY_CAPABILITY_ID,
+        ELECTROTHERMAL_CAPABILITY_ID,
+    } <= {d.capability_id for d in registry}
     assert electrothermal_capability().digest == registry.get(ELECTROTHERMAL_CAPABILITY_ID).digest
     assert battery_capability().digest == registry.get(BATTERY_CAPABILITY_ID).digest
     assert nafems_t3_capability().digest == registry.get(NAFEMS_T3_CAPABILITY_ID).digest
@@ -92,6 +105,16 @@ def test_every_production_declaration_is_executable_and_decides_both_claim_shape
     for declaration in registry:
         assert declaration.executable
         assert declaration.claim_shapes == frozenset(ClaimKind)
+
+
+def test_non_executable_composition_metadata_stays_out_of_the_claim_router(registry) -> None:
+    composition = {
+        item.capability_id: item
+        for item in production_composition_claim_capabilities()
+    }
+    feedback = composition["system.electrothermal_feedback"]
+    assert feedback.executable is False
+    assert "system.electrothermal_feedback" not in registry
 
 
 # ---------------------------------------------------------------------------
@@ -106,16 +129,43 @@ def test_every_production_declaration_is_executable_and_decides_both_claim_shape
 def test_inputs_are_derived_field_for_field_from_the_case_description(registry, capability_id, describe) -> None:
     declaration = registry.get(capability_id)
     fields = {f.path: f for f in describe().fields}
-    assert {i.path for i in declaration.inputs} == set(fields)
-    for item in declaration.inputs:
-        field = fields[item.path]
+    system_level = (
+        {
+            "stages[].body.capacity_evidence.bulk_density",
+            "stages[].body.capacity_evidence.bulk_specific_heat",
+            "stages[].body.capacity_evidence.extra_heat_capacity",
+        }
+        if capability_id == ELECTROTHERMAL_CAPABILITY_ID
+        else set()
+    )
+    assert {i.path for i in declaration.inputs} == set(fields) | system_level
+    required_overrides = (
+        {
+            "stages[].conductor.element.element_to_body_thermal_resistance",
+            "stages[].conductor.element.permissible_element_temperature",
+            "stages[].conductor.element.resistance_variation_budget",
+        }
+        if capability_id == ELECTROTHERMAL_CAPABILITY_ID
+        else {"cell.limits.cell_thermal_conductance"}
+    )
+    for path, field in fields.items():
+        item = declaration.input(path)
+        assert item is not None
         assert item.kind.value == field.kind
         assert item.model_id == field.model_id and item.model_input == field.model_input
         assert item.unlocks_conditions == tuple(sorted(set(field.unlocks)))
         if field.kind == "quantity":
             assert item.dimension == field.dimension == dimensionality(field.unit_exemplar)
-        if item.path != "cell.limits.cell_thermal_conductance":
+        if item.path in required_overrides:
+            assert item.required is True
+            assert "REQUIRED by the run" in item.description
+        else:
             assert item.required == field.required
+    for path in system_level:
+        item = declaration.input(path)
+        assert item is not None and item.required
+        assert item.role is InputRole.APPLICABILITY
+        assert item.model_id is None and item.model_input is None
 
 
 def test_the_one_requiredness_correction_is_what_the_battery_run_enforces(registry) -> None:
@@ -206,8 +256,10 @@ def test_declared_unassessable_conditions_are_exactly_what_a_run_leaves_unknown(
         for name in record.assessment.unknown
     }
     declared = {(u.model_id, u.condition) for u in battery.unassessable_conditions}
-    assert declared == observed
-    assert len(declared) == 10
+    assert declared == observed == set()
+    # The battery boundary now assembles every applicability input needed by
+    # its active cell and lumped-thermal models; UNKNOWN is no longer a
+    # declared limitation of the example case.
     # The electro-thermal boundary assembles the body's applicability, so it
     # declares nothing unassessable, and its example leaves nothing unknown.
     assert registry.get(ELECTROTHERMAL_CAPABILITY_ID).unassessable_conditions == ()
@@ -241,7 +293,17 @@ def test_production_capabilities_claim_only_the_channels_a_declared_study_backs(
     from engcore.sria.uncertainty import UncertaintyChannel as C
 
     declared = {d.capability_id: {q: set(c) for q, c in d.uncertainty.quantified.items()} for d in registry}
-    assert declared[BATTERY_CAPABILITY_ID] == {}
+    assert declared[BATTERY_CAPABILITY_ID] and all(
+        v == {C.EPISTEMIC_PARAMETER}
+        for v in declared[BATTERY_CAPABILITY_ID].values()
+    )
+    assert set(declared[BATTERY_CAPABILITY_ID]) == {
+        "terminal_voltage",
+        "open_circuit_voltage",
+        "heat_generation",
+        "final_state_of_charge",
+        "final_temperature",
+    }
     assert declared[NAFEMS_T3_CAPABILITY_ID] == {"temperature_at_probe": {C.NUMERICAL}}
     assert declared[ELECTROTHERMAL_CAPABILITY_ID] and all(
         v == {C.EPISTEMIC_PARAMETER} for v in declared[ELECTROTHERMAL_CAPABILITY_ID].values()
@@ -349,7 +411,11 @@ def _matched(registry, quantity, dimension, required=()):
 
 
 def test_a_shared_quantity_matches_every_system_that_produces_it(registry) -> None:
-    assert _matched(registry, "final_temperature", "[temperature]") == [BATTERY_CAPABILITY_ID, ELECTROTHERMAL_CAPABILITY_ID]
+    assert _matched(registry, "final_temperature", "[temperature]") == [
+        CSTR_CAPABILITY_ID,
+        BATTERY_CAPABILITY_ID,
+        ELECTROTHERMAL_CAPABILITY_ID,
+    ]
 
 
 def test_declared_scientific_capabilities_narrow_the_match(registry) -> None:

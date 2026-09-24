@@ -40,6 +40,7 @@ import hashlib
 import json
 from typing import Any, Mapping
 
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from .authority import EvidenceBinding, require_binding
@@ -162,7 +163,7 @@ class ValidationQueryPoint:
                 raise CorpusError(
                     f"query coordinate {name!r} must be a unit-bearing Quantity"
                 )
-        object.__setattr__(self, "coordinates", coordinates)
+        object.__setattr__(self, "coordinates", freeze(coordinates))
         object.__setattr__(self, "declared", Applicability(self.declared))
         object.__setattr__(self, "label", str(self.label).strip())
 

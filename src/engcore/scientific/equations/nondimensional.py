@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from types import MappingProxyType
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import freeze
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
@@ -66,7 +66,7 @@ class NondimensionalizationResult:
         left=infer_dimension(self.equation.left,units)
         if not left.is_dimensionless:
             raise InvalidScientificProblem("nondimensionalized equation must be dimensionless")
-        object.__setattr__(self,"symbol_units",MappingProxyType(units))
+        object.__setattr__(self,"symbol_units",freeze(units))
         object.__setattr__(self,"scales",scales)
 
     def to_dict(self)->dict[str,Any]:

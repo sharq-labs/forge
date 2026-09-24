@@ -273,6 +273,15 @@ NON_CORE_PACKAGES = {
         "routing, planning and assessment. EXPERIMENTAL, above credibility/SRIA, "
         "and forbidden from depending on MCP transport"
     ),
+    "assembly": "system/multiphysics assembly above the frozen Scientific Core",
+    "compositionpacks": "composition plugin manifests and registry infrastructure above Core",
+    "executionpacks": "execution-provider pack manifests and registry infrastructure above Core",
+    "planning": "production planning and provider selection above the frozen Scientific Core",
+    "product": "product-facing scientific gateway/orchestration above Core",
+    "scenarios": (
+        "transient/scenario contracts currently outside the frozen Core surface; "
+        "promotion requires an explicit version/freeze decision"
+    ),
 }
 
 
@@ -313,18 +322,19 @@ def test_no_non_core_package_is_in_the_frozen_api():
         )
 
 
-#: The ONE permitted Core -> non-Core edge, and what it is for.
+#: The only deliberate Core -> non-Core contract edges.
 #:
-#: `studies` is the top layer and composing a domain is its entire job: the
-#: flagship calibration study fits a real temperature-coefficient-of-resistance
-#: model, which lives in `domains.electrical`. Forbidding this would not make
-#: the architecture cleaner, it would make `studies` unable to study anything.
+#: `studies -> domains`: orchestration composes domain implementations.
+#: `execution -> scenarios`: the transient runtime consumes declarative,
+#: domain-independent scenario value objects (schedules, events, stop
+#: conditions, QOIs). Scenarios carry no model/solver selection or scientific
+#: authority, and remain outside the frozen Core API for now.
 #:
-#: The first version of this rule DID forbid it, and `studies/tcr.py` failed --
-#: the rule was wrong, not the import. Recorded because the allowance is narrow
-#: and deliberate: `studies` may reach `domains` and nothing else, and no
-#: package below `studies` may reach any non-Core package at all.
-STUDIES_MAY_IMPORT = {"domains"}
+#: These are exact package-level allowances, not a general escape hatch.
+CORE_NON_CORE_ALLOWANCES = {
+    "studies": {"domains"},
+    "execution": {"scenarios"},
+}
 
 
 def test_no_core_package_imports_a_non_core_one():
@@ -335,8 +345,8 @@ def test_no_core_package_imports_a_non_core_one():
     """
     offenders = []
     for package, path in core_modules():
-        checked = set(NON_CORE_PACKAGES) - (
-            STUDIES_MAY_IMPORT if package == 'studies' else set()
+        checked = set(NON_CORE_PACKAGES) - CORE_NON_CORE_ALLOWANCES.get(
+            package, set()
         )
         for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
             reached = None
@@ -361,21 +371,42 @@ def test_no_core_package_imports_a_non_core_one():
     assert not offenders, offenders
 
 
-def test_only_studies_holds_the_one_permitted_non_core_edge():
-    """The allowance above, proved to be as narrow as it claims.
-
-    Written as its own test because an allowance that silently widens is worse
-    than no rule: `STUDIES_MAY_IMPORT` growing to include `sria` would pass the
-    test above while inverting the architecture.
-    """
-    assert STUDIES_MAY_IMPORT == {"domains"}
-    reached = set()
+def test_core_to_non_core_allowances_are_exact_and_narrow():
+    """The two deliberate contract edges may not silently widen."""
+    assert CORE_NON_CORE_ALLOWANCES == {
+        "studies": {"domains"},
+        "execution": {"scenarios"},
+    }
+    reached: dict[str, set[str]] = {
+        package: set() for package in CORE_NON_CORE_ALLOWANCES
+    }
     for package, path in core_modules():
-        if package != "studies":
+        if package not in reached:
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.ImportFrom) and node.level >= 1:
-                head = (node.module or "").split(".")[0]
-                if head in NON_CORE_PACKAGES:
-                    reached.add(head)
-    assert reached <= STUDIES_MAY_IMPORT, reached
+            head = None
+            if isinstance(node, ast.ImportFrom) and node.level == 0:
+                parts = (node.module or "").split(".")
+                if len(parts) >= 2 and parts[0] == "engcore":
+                    head = parts[1]
+            elif isinstance(node, ast.ImportFrom) and node.level >= 1:
+                depth = len(
+                    path.relative_to(SRC / "engcore" / package).parts
+                ) - 1
+                if node.level - 1 > depth:
+                    head = (node.module or "").split(".")[0]
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    parts = alias.name.split(".")
+                    if len(parts) >= 2 and parts[0] == "engcore":
+                        candidate = parts[1]
+                        if candidate in NON_CORE_PACKAGES:
+                            reached[package].add(candidate)
+            if head in NON_CORE_PACKAGES:
+                reached[package].add(head)
+
+    for package, allowed in CORE_NON_CORE_ALLOWANCES.items():
+        assert reached[package] <= allowed, (
+            f"{package} reaches undeclared non-Core package(s): "
+            f"{sorted(reached[package] - allowed)}"
+        )

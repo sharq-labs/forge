@@ -432,18 +432,37 @@ def test_no_runtime_module_reads_a_bundle_back():
     """
     importers = []
     for path in (REPO_ROOT / "src/engcore").rglob("*.py"):
-        if "__pycache__" in path.parts or path.name == "bundle.py":
+        if "__pycache__" in path.parts or path == REPO_ROOT / "src/engcore/mcp/bundle.py":
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and "bundle" in (
-                node.module or ""
-            ):
-                importers.append(str(path))
             if isinstance(node, ast.Import):
-                for alias in node.names:
-                    if "bundle" in alias.name:
-                        importers.append(str(path))
+                if any(
+                    alias.name == "engcore.mcp.bundle"
+                    or alias.name.startswith("engcore.mcp.bundle.")
+                    for alias in node.names
+                ):
+                    importers.append(str(path))
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                absolute_bundle = (
+                    node.level == 0
+                    and (
+                        module == "engcore.mcp.bundle"
+                        or module.startswith("engcore.mcp.bundle.")
+                        or (
+                            module == "engcore.mcp"
+                            and any(alias.name == "bundle" for alias in node.names)
+                        )
+                    )
+                )
+                relative_bundle = (
+                    node.level > 0
+                    and path.parent == REPO_ROOT / "src/engcore/mcp"
+                    and module == "bundle"
+                )
+                if absolute_bundle or relative_bundle:
+                    importers.append(str(path))
     assert importers == []
 
 

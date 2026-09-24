@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_root_claude_contract_names_the_scientific_guardrails_and_manual_ci():
+def test_root_claude_contract_names_the_scientific_guardrails_and_automatic_ci():
     text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     for required in (
         "UNKNOWN never improves an answer",
@@ -12,7 +12,9 @@ def test_root_claude_contract_names_the_scientific_guardrails_and_manual_ci():
         "mcp",
         "python tools/forge_check.py --changed",
         "PROGRESS.md",
-        "manual-only",
+        "FORGE_MASTER_PLAN.md",
+        "Pull requests must be classified automatically",
+        "Manual dispatch may remain as an explicit fallback",
     ):
         assert required in text
 
@@ -28,5 +30,5 @@ def test_scientific_reviewer_and_persistent_work_memory_exist():
         assert (ROOT / relative).is_file(), relative
 
     progress = (ROOT / "docs/work/PROGRESS.md").read_text(encoding="utf-8")
-    assert "Status: **NOT RUN**" in progress
+    assert "Never convert NOT RUN into PASS" in progress
     assert "Failed approaches / dead ends" in progress

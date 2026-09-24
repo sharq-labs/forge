@@ -9,6 +9,7 @@ validation claim.
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
@@ -66,6 +67,22 @@ MOTOR_ESC_MASS_KG_PER_ROTOR = 0.085
 ROTOR_PROP_MASS_KG_PER_ROTOR = 0.025
 PROP_GUARD_MASS_KG_PER_ROTOR = 0.035
 PROP_GUARD_EFFICIENCY_MULTIPLIER = 0.94
+
+def _git_commit_from_source_revision(source_revision: str) -> str | None:
+    """Return a real Git object id from an opaque source revision when possible.
+
+    source_revision is broader than git_commit: studies use stable labels to
+    bind reproducibility inputs. Those labels are provenance metadata, not
+    Git object ids. A real 40/64-hex revision is normalized and may populate
+    the typed git_commit field; every other non-empty revision stays metadata.
+    """
+    revision = str(source_revision).strip()
+    if not revision:
+        return None
+    normalized = revision.lower()
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", normalized):
+        return normalized
+    return None
 
 MVR0_ASSUMPTIONS = (
     "steady hover only",
@@ -403,10 +420,11 @@ def evaluate_reference_candidate(
         twin=twin.reference,
         design_space=design_space.reference,
     )
+    revision = str(source_revision).strip()
     provenance = ProvenanceRecord(
         run_id=f"mvr0:{candidate.candidate_id}",
         software_version="mvr0-v0.1",
-        git_commit=str(source_revision).strip() or None,
+        git_commit=_git_commit_from_source_revision(revision),
         models=MODEL_IDENTITIES,
         inputs={
             "payload_mass": target.payload_mass,
@@ -423,6 +441,7 @@ def evaluate_reference_candidate(
         metadata={
             RESULT_BINDING_METADATA_KEY: binding.to_dict(),
             "system_pack": "multirotor_mvr0_reference",
+            **({} if not revision else {"source_revision": revision}),
         },
     )
     result = ScientificResult(

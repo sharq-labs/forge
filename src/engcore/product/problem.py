@@ -1180,26 +1180,20 @@ def _capacity_evidence_check(
 
     This is a boundary check because the lumped model legitimately accepts a
     total heat capacity; only the assembled electro-thermal product knows that
-    the caller also claims a geometric body.  Missing evidence is NOT_RUN,
-    never an assumed density/cp and never a zero extra capacity.
+    the caller also claims a geometric body.
+
+    Complete absence means the caller made no capacity-basis claim, so there is
+    no check to run. Decision-grade claim execution requires this evidence at
+    the capability boundary. Once the caller starts declaring capacity evidence,
+    however, it must be complete and checkable: partial/malformed declarations
+    remain fail-closed and a missing volume remains NOT_RUN.
     """
     root = _require_mapping(payload, where="payload")
     raw_stage = _require_mapping((root.get("stages") or ())[index], where=f"stages[{index}]")
     body = _require_mapping(raw_stage.get("body"), where=f"stages[{index}].body")
     raw = body.get("capacity_evidence")
     if raw is None:
-        return (
-            ValidationCheck(
-                name=HEAT_CAPACITY_BASIS_CHECK,
-                outcome=ValidationOutcome.NOT_RUN,
-                detail=(
-                    f"stages[{index}].body.capacity_evidence is absent, so the "
-                    "declared heat_capacity cannot be checked against rho*c_p*V. "
-                    "Declare bulk_density, bulk_specific_heat and extra_heat_capacity "
-                    "(explicitly 0 J/K when there is no extra body)."
-                ),
-            ),
-        )
+        return ()
     evidence = _require_mapping(raw, where=f"stages[{index}].body.capacity_evidence")
     expected_keys = {"bulk_density", "bulk_specific_heat", "extra_heat_capacity"}
     unknown = sorted(set(evidence) - expected_keys)
@@ -1266,24 +1260,20 @@ def _capacity_evidence_check(
 def _element_characterization_check(
     payload: Mapping[str, Any], index: int
 ) -> tuple[ValidationCheck, ...]:
-    """Require the quasi-static R(T) approximation to be characterized."""
+    """Check quasi-static R(T) evidence only when the caller invokes that claim.
+
+    An absent element block activates no self-heated-element claim and therefore
+    creates no missing-evidence check. The decision-grade capability requires
+    the block separately. A present-but-incomplete block is different: it
+    activates the claim and still returns NOT_RUN until the variation budget is
+    declared.
+    """
     root = _require_mapping(payload, where="payload")
     raw_stage = _require_mapping((root.get("stages") or ())[index], where=f"stages[{index}]")
     conductor = _require_mapping(raw_stage.get("conductor"), where=f"stages[{index}].conductor")
     element = conductor.get("element")
     if element is None:
-        return (
-            ValidationCheck(
-                name=RESISTANCE_TRANSIENT_EVIDENCE_CHECK,
-                outcome=ValidationOutcome.NOT_RUN,
-                detail=(
-                    f"stages[{index}].conductor.element is absent. The coupled solver "
-                    "holds R(T_final) constant across the thermal interval, so a "
-                    "resistance_variation_budget must be declared and assessed before "
-                    "this stage can be decision-grade."
-                ),
-            ),
-        )
+        return ()
     raw = _require_mapping(element, where=f"stages[{index}].conductor.element")
     if dc_app.RESISTANCE_VARIATION_BUDGET not in raw:
         return (

@@ -5,11 +5,27 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `refactor/repository-architecture-cleanup`
-- PR: #65 — repository architecture and layer boundaries
+- Branch: `feat/multiphysics-lifecycle-foundation`
+- PR: #102 — P0: restore automatic assurance gates
 - Base: `main`
+- Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 
 ## Completed in this line of work
+
+- Added the persistent Forge Master Plan as the long-term project operating
+  contract, including session recovery, roadmap precedence, solver/provider
+  strategy, data policy, Time/Environment/Lifecycle pillars and flagship systems.
+- Updated `CLAUDE.md` so every new agent/session reads the Master Plan before
+  selecting work, and removed the obsolete manual-only CI policy.
+- Reframed `ACTIVE_PLAN.md` around P0 assurance stabilization followed by
+  Time, Environment and Lifecycle foundations.
+- Restored automatic Tests and hardened-core recertification workflows on pull
+  requests, retained manual fallback, made V4 mutation shards explicit
+  certification prerequisites, fixed the assurance-builder CLI invocation and
+  completed the declared Docker test/benchmark dependency set.
+- Automatic workflow runs were triggered on PR #102 after these changes.
+  Their final scientific/test result must be read from GitHub Actions before
+  any PASS/green claim is made.
 
 - Added deterministic hierarchical system/component topology bound to existing
   `ScientificTwin`, `PortDefinition`, `PhysicsGraph` and `CouplingEdge`
@@ -49,6 +65,13 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-23 19:05 +03:00
+command: GitHub Actions PR #102 — Tests run 323 / Recertify Hardened Core run 205
+result: FAIL
+summary: normal Tests workflow passed; hardened recertification reached the heavy gates, but campaign312 and regression312 failed during pytest collection because duplicate test basenames were imported with legacy import semantics. Updated the recertification workflow so campaign uses --import-mode=importlib and regression sets PYTEST_ADDOPTS=--import-mode=importlib. New head: ddd358c72f9cd5d95cd41835de54dbc03ee17db9.
+commit: ddd358c72f9cd5d95cd41835de54dbc03ee17db9
+
 
 2026-09-21 11:07 +03:00
 command: `$env:PYTHONPATH='src'; py -3 -m pytest -q tests/test_system_topology.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py; git diff --check`
