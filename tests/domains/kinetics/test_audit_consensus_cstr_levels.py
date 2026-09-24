@@ -53,6 +53,9 @@ def test_the_steady_state_arm_establishes_no_cross_solver_level(gate):
         c for c in gate.to_report().checks if c.name == "independent_solver_agreement"
     )
     assert independent.establishes is None
+    # The gate's own authority must withhold the level too; checking only the
+    # serialized report leaves a mutation in levels_earned invisible.
+    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in gate.levels_earned
     assert ValidationLevel.CROSS_SOLVER_VALIDATED not in gate.to_report().attained_levels
 
 
