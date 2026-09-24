@@ -20,7 +20,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from ..scientific.results.immutable import freeze
-from ..scientific.units.quantity import Quantity, UnitCompatibilityError, require_spread_unit
+from ..scientific.units.quantity import Quantity, UnitCompatibilityError, normalize_unit, require_spread_unit
 from .admissibility import (
     AdmissibleAnalyticPrediction,
     AdmissibleNumericalPrediction,
@@ -386,13 +386,19 @@ class AdmittedForwardTable:
         object.__setattr__(self, "admissible_mask", mask)
         object.__setattr__(self, "admission_refs", tuple(tuple(v) for v in self.admission_refs))
         object.__setattr__(self, "rejection_reasons", tuple(str(v) for v in self.rejection_reasons))
-        units = tuple(str(v).strip() for v in self.observation_units)
-        if units and len(units) != len(keys):
+        raw_units = tuple(str(v).strip() for v in self.observation_units)
+        if raw_units and len(raw_units) != len(keys):
             raise InferenceProblemError(
-                f"a forward table declares one observation unit per key: {len(units)} for {len(keys)}"
+                f"a forward table declares one observation unit per key: {len(raw_units)} for {len(keys)}"
             )
-        if any(not unit for unit in units):
+        if any(not unit for unit in raw_units):
             raise InferenceProblemError("a declared observation unit cannot be blank")
+        try:
+            units = tuple(normalize_unit(unit) for unit in raw_units)
+        except UnitCompatibilityError as exc:
+            raise InferenceProblemError(
+                f"forward-table observation unit is invalid: {exc}"
+            ) from exc
         object.__setattr__(self, "observation_units", units)
 
     @property
@@ -470,6 +476,43 @@ class AdmittedForwardTable:
                     f"comparable. Rebuild the table against this observation set"
                 )
         return self.values[:, columns], columns
+
+    def values_in_unit(self, observation_key: str, unit: str) -> np.ndarray:
+        """Return one observation column in the requested physical unit.
+
+        Numeric forward-table values are meaningful only with the unit recorded
+        beside that column. An older/unbound table is refused here because the
+        numbers alone cannot reveal whether 1.5 meant V, mV, K, or another unit.
+        """
+        key = str(observation_key).strip()
+        try:
+            column = self.observation_keys.index(key)
+        except ValueError as exc:
+            raise InferenceProblemError(
+                f"forward table does not contain observation {key!r}"
+            ) from exc
+        if not self.observation_units:
+            raise InferenceProblemError(
+                "predictive table declares no observation units; numeric values "
+                "without a unit binding cannot support quantified prediction"
+            )
+        source = self.observation_units[column]
+        target = normalize_unit(unit)
+        raw = np.asarray(self.values[:, column], dtype=np.float64)
+        if source == target:
+            return raw
+        try:
+            converted = np.asarray(
+                [Quantity(float(value), source).magnitude_in(target) for value in raw],
+                dtype=np.float64,
+            )
+        except UnitCompatibilityError as exc:
+            raise InferenceProblemError(
+                f"forward-table observable {key!r} is stored in {source!r} and "
+                f"cannot be read in {target!r}: {exc}"
+            ) from exc
+        converted.setflags(write=False)
+        return converted
 
 
 #: Largest total-variation distance, ``sum |w - softmax(log_likelihood)|``, at

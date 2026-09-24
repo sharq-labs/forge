@@ -600,11 +600,16 @@ def assess_predictive_observation(
     positive = weights > 0.0
     if not np.any(positive):
         raise ModelAdequacyError("posterior has no positive predictive mass")
-    means = np.asarray(predictive_table.values[:, column], dtype=np.float64)[positive]
+    try:
+        means = predictive_table.values_in_unit(
+            spec.observation_key, spec.unit
+        )[positive]
+    except Exception as exc:
+        raise ModelAdequacyError(str(exc)) from exc
     weights = weights[positive]
     weights = weights / float(np.sum(weights, dtype=np.float64))
 
-    sigma = float(spec.observation_sigma.magnitude_in(spec.unit))
+    sigma = float(spec.observation_sigma.magnitude_as_spread_in(spec.unit))
     y = float(observed.magnitude_in(spec.unit))
     if not math.isfinite(sigma) or sigma <= 0.0:
         raise ModelAdequacyError("observation sigma must be finite and positive")
@@ -625,7 +630,7 @@ def assess_predictive_observation(
     log_density = float(logsumexp(log_components))
 
     unit = predictive.mean.units
-    total_std = predictive.total_standard_uncertainty.magnitude_in(unit)
+    total_std = predictive.total_standard_uncertainty.magnitude_as_spread_in(unit)
     if total_std <= 0.0:
         raise ModelAdequacyError("total predictive standard uncertainty must be positive")
     standardized = (

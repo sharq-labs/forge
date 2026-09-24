@@ -139,7 +139,7 @@ class QuantifiedPredictiveResult:
             if not isinstance(value, Quantity):
                 raise UQProblemError(f"{label} must be a Quantity")
             self.mean.require_compatible(value, context=label)
-            if value.magnitude_in(self.mean.units) < 0.0:
+            if value.magnitude_as_spread_in(self.mean.units) < 0.0:
                 raise UQProblemError(f"{label} must be non-negative")
         for label in ("epistemic_interval", "total_interval"):
             value = getattr(self, label)
@@ -332,30 +332,12 @@ def posterior_predictive_uq(
             f"predictive table has no observable {spec.observation_key!r}"
         ) from exc
 
-    if not predictive_table.observation_units:
-        raise UQProblemError(
-            "predictive table declares no observation units; numeric values "
-            "without a unit binding cannot support quantified predictive UQ"
-        )
-    table_unit = predictive_table.observation_units[column]
     try:
-        Quantity(1.0, table_unit).require_compatible(
-            spec.unit, context=f"predictive observable {spec.observation_key}"
+        values = predictive_table.values_in_unit(
+            spec.observation_key, spec.unit
         )
-    except UnitCompatibilityError as exc:
+    except Exception as exc:
         raise UQProblemError(str(exc)) from exc
-
-    raw_values = np.asarray(predictive_table.values[:, column], dtype=np.float64)
-    if normalize_unit(table_unit) == spec.unit:
-        values = raw_values
-    else:
-        values = np.asarray(
-            [
-                Quantity(float(value), table_unit).magnitude_in(spec.unit)
-                for value in raw_values
-            ],
-            dtype=np.float64,
-        )
     weights = np.asarray(posterior.weights, dtype=np.float64)
     positive = weights > 0.0
     values = values[positive]
