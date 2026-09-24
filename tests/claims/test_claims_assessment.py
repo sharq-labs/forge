@@ -132,6 +132,7 @@ def test_a_complete_battery_claim_is_supported_on_verification_only(registry) ->
             operator=ConstraintOperator.GREATER_EQUAL,
             operating_context={},
             known_inputs=battery_inputs(),
+            evidence=EvidenceRequirement(()),
         ),
         registry,
     ).to_dict()
