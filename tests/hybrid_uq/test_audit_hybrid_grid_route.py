@@ -155,7 +155,7 @@ def _other_model(honest, observed, factor=4.0, rows=None):
         values[selected] = observed[None, :] + factor * (values[selected] - observed[None, :])
         return AdmittedForwardTable(parameter_names=t.parameter_names, observation_keys=t.observation_keys, points=t.points,
                                     values=values, admissible_mask=t.admissible_mask, admission_refs=t.admission_refs,
-                                    rejection_reasons=t.rejection_reasons)
+                                    rejection_reasons=t.rejection_reasons, observation_units=t.observation_units)
     return build
 
 
