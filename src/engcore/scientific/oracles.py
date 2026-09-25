@@ -477,7 +477,15 @@ class OracleEvidenceSet:
                 "the prediction does not name the record it was computed from, so the operating point is "
                 "an assertion about a mapping of numbers"
             ), None
-        values = dict(getattr(predicted_from, "values", {}) or {})
+        from .results.result import ScientificResult
+
+        if not isinstance(predicted_from, ScientificResult):
+            return None, (
+                "the object offered as prediction evidence is not a "
+                "ScientificResult; matching attribute names are not execution "
+                "or provenance evidence"
+            )
+        values = dict(predicted_from.values)
         record_id = getattr(predicted_from, "result_id", None)
         for metric, value in predicted.items():
             stated_value = values.get(metric)

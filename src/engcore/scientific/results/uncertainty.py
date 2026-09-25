@@ -14,7 +14,7 @@ from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
 from ..serialization import require_schema, require_schema_any, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, require_spread_unit
 from ..units.validation import require_same_dimension
 
 UNCERTAINTY_SCHEMA = schema_string("uncertainty")
@@ -88,6 +88,16 @@ class Uncertainty:
                 raise ScientificCoreError(
                     "STANDARD uncertainty requires standard_uncertainty"
                 )
+            try:
+                require_spread_unit(
+                    self.standard_uncertainty.units,
+                    context="standard_uncertainty",
+                )
+            except Exception as exc:
+                raise ScientificCoreError(
+                    f"standard_uncertainty must be expressed on a spread/ratio "
+                    f"scale, not an absolute affine coordinate: {exc}"
+                ) from exc
             if self.standard_uncertainty.magnitude < 0.0:
                 raise ScientificCoreError(
                     "standard_uncertainty must be non-negative"

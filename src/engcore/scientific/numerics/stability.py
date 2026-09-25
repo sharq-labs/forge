@@ -92,10 +92,18 @@ def assess_numerical_stability(
             reasons.append(
                 "condition number exceeds declared stability policy"
             )
+    normalized_residual: float | None = residual_ratio
     if residual_ratio is None:
         reasons.append("normalized numerical residual was not assessed")
-    elif residual_ratio > policy.maximum_residual_ratio:
-        reasons.append("normalized numerical residual exceeds policy")
+    else:
+        normalized_residual = float(residual_ratio)
+        if not math.isfinite(normalized_residual) or normalized_residual < 0.0:
+            reasons.append(
+                "normalized numerical residual is non-finite or negative"
+            )
+            normalized_residual = None
+        elif normalized_residual > policy.maximum_residual_ratio:
+            reasons.append("normalized numerical residual exceeds policy")
     if reasons:
         unresolved = any(
             text in {
@@ -114,7 +122,7 @@ def assess_numerical_stability(
             decision,
             health,
             conditioning,
-            residual_ratio,
+            normalized_residual,
             tuple(reasons),
         )
     if (
@@ -125,7 +133,7 @@ def assess_numerical_stability(
             NumericalStabilityDecision.REFUSED,
             health,
             conditioning,
-            residual_ratio,
+            normalized_residual,
             ("numeric health is degraded and policy refuses degraded values",),
         )
     if health.status is NumericHealthStatus.DEGRADED:
@@ -133,13 +141,13 @@ def assess_numerical_stability(
             NumericalStabilityDecision.DEGRADED,
             health,
             conditioning,
-            residual_ratio,
+            normalized_residual,
             ("numeric health is degraded but remains inside policy",),
         )
     return NumericalStabilityAssessment(
         NumericalStabilityDecision.ACCEPTABLE,
         health,
         conditioning,
-        residual_ratio,
+        normalized_residual,
         (),
     )

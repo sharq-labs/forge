@@ -73,6 +73,10 @@ class RunReplayRecord:
         observations={x.output_id:x for x in self.observations}
         expected_ids={x.output_id for x in self.expectations}
         problems=list(manifest.problems);comparisons=[]
+        if not self.expectations:
+            problems.append(
+                "replay declares no expected outputs; output agreement was not tested"
+            )
         missing=sorted(expected_ids-set(observations))
         extra=sorted(set(observations)-expected_ids)
         if missing: problems.append(f"missing replay outputs {missing}")

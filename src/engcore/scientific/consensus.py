@@ -930,10 +930,10 @@ def _compare(
     # other numbers as an independent confirmation would credit a run that
     # failed with corroborating one that did not.
     offenders = sorted(
-        f"{route_id}.{name}={value!r}"
+        f"{route_id}.{name}={produced[name]!r}"
         for route_id, produced in values.items()
-        for name, value in produced.items()
-        if not math.isfinite(float(value))
+        for name in shared
+        if name in produced and not math.isfinite(float(produced[name]))
     )
     if offenders:
         return RouteComparison(
@@ -1864,11 +1864,14 @@ class CrossSolverConsensus:
         # A NaN or an infinity cannot, and the comparison below already records
         # that a route returned one and compares nothing -- which establishes
         # nothing whether the numbers travel or not.
-        finite = all(
-            math.isfinite(float(value))
-            for produced in values.values()
-            for value in produced.values()
-        )
+        finite_values = {
+            route_id: {
+                name: float(value)
+                for name, value in produced.items()
+                if math.isfinite(float(value))
+            }
+            for route_id, produced in values.items()
+        }
         return cls(
             consensus_id=consensus_id,
             routes=routes,
@@ -1886,12 +1889,14 @@ class CrossSolverConsensus:
             # which is what lets `missing_outputs` charge it for the whole
             # required set instead of overlooking it.
             reported_outputs={
-                route.route_id: tuple(sorted(values.get(route.route_id, {})))
+                route.route_id: tuple(
+                    sorted(finite_values.get(route.route_id, {}))
+                )
                 for route in routes
             },
             notes=notes,
             tolerance_key=tolerance_key,
-            reported_values=values if finite else {},
+            reported_values=finite_values,
         )
 
     @classmethod

@@ -62,6 +62,7 @@ class DiscoveredEquationCandidate:
             raise InvalidScientificProblem(
                 "calibration RMSE must be non-negative"
             )
+        status = DiscoveryCandidateStatus(self.status)
         if self.holdout_rmse is not None:
             holdout = float(self.holdout_rmse)
             if not math.isfinite(holdout) or holdout < 0:
@@ -69,6 +70,15 @@ class DiscoveredEquationCandidate:
                     "holdout RMSE must be finite and non-negative"
                 )
             object.__setattr__(self, "holdout_rmse", holdout)
+        if status in (
+            DiscoveryCandidateStatus.SURVIVED_HOLDOUT,
+            DiscoveryCandidateStatus.FAILED_HOLDOUT,
+            DiscoveryCandidateStatus.INDEPENDENTLY_VERIFIED,
+        ) and self.holdout_rmse is None:
+            raise InvalidScientificProblem(
+                f"candidate status {status.value!r} asserts a holdout outcome "
+                "but carries no holdout RMSE"
+            )
         if int(self.complexity) < 1:
             raise InvalidScientificProblem(
                 "discovered equation complexity must be positive"
@@ -86,18 +96,21 @@ class DiscoveredEquationCandidate:
         object.__setattr__(self, "coefficients", coefficients)
         object.__setattr__(self, "context_digest", context)
         object.__setattr__(self, "evidence_digests", evidence)
-        object.__setattr__(
-            self, "status", DiscoveryCandidateStatus(self.status)
-        )
+        object.__setattr__(self, "status", status)
 
     @property
     def fingerprint(self) -> str:
         payload = {
+            "candidate_id": self.candidate_id,
             "feature_names": list(self.feature_names),
             "coefficients": list(self.coefficients),
             "intercept": self.intercept,
+            "calibration_rmse": self.calibration_rmse,
+            "holdout_rmse": self.holdout_rmse,
+            "complexity": self.complexity,
             "context_digest": self.context_digest,
             "evidence_digests": list(self.evidence_digests),
+            "status": self.status.value,
         }
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()

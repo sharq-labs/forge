@@ -159,6 +159,23 @@ def _transfer_reference_candidates(
     return tuple(sorted(candidate for candidate in candidates if str(candidate).strip()))
 
 
+def _attribution_references(attribution: str) -> set[str]:
+    """Exact identities named by one provenance string; never substrings."""
+    text = str(attribution).strip()
+    references = {text} if text else set()
+    for clause in text.split("|"):
+        clause = clause.strip()
+        if not clause:
+            continue
+        references.add(clause)
+        if ":" in clause:
+            _label, value = clause.split(":", 1)
+            value = value.strip()
+            if value:
+                references.add(value)
+    return references
+
+
 def _require_the_uncertainty_names_the_source(
     transfer: QuantityTransfer,
     source_uncertainty: Uncertainty,
@@ -173,7 +190,8 @@ def _require_the_uncertainty_names_the_source(
     """
     attribution = str(source_uncertainty.source or "").strip()
     candidates = _transfer_reference_candidates(transfer, upstream)
-    if not attribution or not any(candidate in attribution for candidate in candidates):
+    references = _attribution_references(attribution)
+    if not references or not any(candidate in references for candidate in candidates):
         raise InvalidScientificProblem(
             f"the source uncertainty is attributed to {source_uncertainty.source!r}, which names nothing "
             f"this crossing names ({', '.join(candidates)}). An uncertainty bound to nothing is the "

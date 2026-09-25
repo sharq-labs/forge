@@ -5,13 +5,13 @@ with `docs/project/FORGE_MASTER_PLAN.md`.
 
 ## Current objective
 
-Complete **P0 — Core/CI/assurance stabilization** on PR #102, then begin the
-first bounded **Time Engine** slice without weakening the Scientific Core.
+Complete **P0.1 — Scientific Correctness Hardening**, verify the full BIG 1
+batch, and only then begin the first bounded **Time Engine** slice.
 
 ## Current branch / PR
 
-- Branch: `feat/multiphysics-lifecycle-foundation`
-- PR: #102 — P0: restore automatic assurance gates
+- Branch: `feat/scientific-correctness-hardening`
+- PR: no open PR currently recorded; verify GitHub before making a current PR claim.
 - Base: `main`
 
 ## Task tree
@@ -35,9 +35,29 @@ first bounded **Time Engine** slice without weakening the Scientific Core.
 - [ ] Resolve any remaining P0 workflow/test failures before adding scientific
       feature code.
 
+### P0.1 — Scientific Correctness Hardening
+
+Implementation exists for BIG 1, but verification is pending.
+
+- [ ] Add/adjust focused regressions for every changed scientific invariant.
+- [ ] Verify removing/replacing evidence cannot increase coverage support.
+- [ ] Verify independent-group counting and split isolation.
+- [ ] Verify missing observation noise never becomes zero uncertainty.
+- [ ] Verify affine-temperature spreads use delta/ratio semantics.
+- [ ] Verify oracle levels require typed execution/provenance binding.
+- [ ] Verify consensus preserves comparable disagreements.
+- [ ] Verify multiphysics windows, participants, events, termination and state chains.
+- [ ] Verify replay cannot pass with zero expected outputs.
+- [ ] Verify discovery identity binds holdout/result-changing content.
+- [ ] Run changed-area compile/tests and `git diff --check`.
+- [ ] Run `python tools/forge_check.py --changed` and required scientific tiers.
+- [ ] Run the read-only scientific reviewer after tests stabilize.
+- [ ] Obtain green CI on the final source head.
+- [ ] Verify GitHub rules require `recertification-gate` and `tests-gate`.
+
 ### P1 — Time Engine foundation
 
-Start only after P0 has a trustworthy integration path.
+Start only after P0/P0.1 have a trustworthy integration path.
 
 - [ ] Define canonical immutable `TimePoint`, `TimeWindow` and timeline identity.
 - [ ] Define typed event, usage, exposure and cycle-history contracts.

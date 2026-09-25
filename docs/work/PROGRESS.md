@@ -5,10 +5,108 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `feat/multiphysics-lifecycle-foundation`
-- PR: #102 — P0: restore automatic assurance gates
+- Branch: `feat/scientific-correctness-hardening`
+- PR: no open PR currently recorded for this branch; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
+- Current execution authority: `docs/work/ACTIVE_PLAN.md`
+
+## 2026-09-25 scientific-correctness hardening handoff
+
+This is the current AI/session handoff. Read it before older progress entries.
+The work below is **implemented but NOT RUN/verified** unless a later
+verification entry explicitly says otherwise.
+
+### Why this slice exists
+
+After P0 assurance stabilization, the scientific audit exposed false-confidence
+and evidence-integrity paths that must be hardened before P1 Time Engine work.
+Reproduce each finding against current code, prefer minimal fail-closed changes,
+and never weaken UNKNOWN/evidence semantics merely to make tests green.
+
+### Source lineage
+
+The branch received an automatic recertification child at
+`26c8b9b01b9d88b78ce526b4b6e50735e26f8b41`, parent
+`44885bf01aa4ceafddaaf317ba2569ef1d04a904`.
+
+Scientific hardening was developed as a detached chain from the same source
+parent so CI would not restart after every micro-fix:
+
+- `7efa13d792caf6e9d47a0e976437bbb16f83fb77` — evidence monotonicity and run integrity
+- `706756c7d4f7b4216859e4e776b2917e171f0c07` — uncertainty/stability false-confidence paths
+- `655f20fe69ef8aae22a657b5ed5af56bede7f226` — independent evidence and oracle provenance
+- `ab59ec47d5cd0e53f7b84df398431fb930f9dda0` — missing-noise refusal and exact UQ provenance
+
+The current branch merges that detached chain with the certification child
+instead of replacing either history. The old certificate child is historical
+evidence only; after source changes it does not certify the new head.
+
+### Implemented in BIG 1 — verification pending
+
+1. **Coverage / evidence monotonicity**
+   - unresolved/adverse in-domain outcomes block `SUPPORTED`;
+   - coverage counts independent evidence groups rather than correlated case copies;
+   - one independence group may not cross calibration/validation/holdout roles.
+
+2. **Campaign adequacy / comparison integrity**
+   - independent failure without scored calibration evidence becomes
+     `INSUFFICIENT_EVIDENCE`, not automatic model-form failure;
+   - exact-zero tolerance keeps FAIL semantics without non-finite JSON.
+
+3. **Consensus**
+   - unrelated non-finite diagnostics no longer erase a real shared disagreement;
+   - shared non-finite values remain unusable evidence.
+
+4. **Multiphysics**
+   - composition fingerprint recursion removed and candidate-derived ambiguity enforced;
+   - frame transforms must be proper rotations, not reflections;
+   - run end cannot exceed plan horizon;
+   - termination instant must equal actual end;
+   - every iteration must record exactly one step per graph participant;
+   - participant steps must span their coupling window;
+   - scenario inputs and QoIs are checked against port value/uncertainty contracts;
+   - scheduled events inside the executed horizon require reached receipts;
+   - state-transition digest chains must remain contiguous.
+
+5. **Replay**
+   - zero expected outputs cannot count as verified replay output agreement.
+
+6. **Uncertainty / UQ**
+   - STANDARD uncertainty requires a spread/ratio-scale unit;
+   - identifiability classification is fixed at 95%;
+   - affine-temperature sigma/std conversions use spread semantics;
+   - undeclared observation noise cannot silently become zero total uncertainty;
+   - non-finite/negative numerical residual evidence follows an explicit refusal path;
+   - model-form residual units must be spread units;
+   - cross-domain uncertainty attribution uses exact identities, not substring matches.
+
+7. **Oracle / discovery**
+   - oracle binding requires a real `ScientificResult`, not duck typing;
+   - discovery fingerprints bind candidate id, calibration/holdout RMSE,
+     complexity and status;
+   - holdout-result statuses require a holdout RMSE.
+
+### Verification status
+
+**NOT RUN for this BIG 1 batch.** Do not claim PASS, green, verified, validated
+or certified from static inspection.
+
+### Next executable work
+
+1. Inspect current branch HEAD/diff; do not trust stale chat state.
+2. Add/adjust focused regressions for each changed scientific invariant.
+3. Run changed-area compile/tests and `git diff --check`.
+4. Run `python tools/forge_check.py --changed`, then the required scientific tiers.
+5. Diagnose failures without weakening scientifically valid guards to satisfy old tests.
+6. Run the read-only scientific reviewer after tests stabilize.
+7. Obtain green CI on the final source head.
+8. Verify `main` rules require `recertification-gate` and `tests-gate`.
+9. Only then start P1 Time Engine.
+
+### Short recovery prompt
+
+`Read CLAUDE.md, docs/project/FORGE_MASTER_PLAN.md, docs/work/ACTIVE_PLAN.md and docs/work/PROGRESS.md. Inspect the current feat/scientific-correctness-hardening HEAD and continue from the first unfinished scientific-correctness task. Treat NOT RUN as unverified; do not weaken scientific guards or change direction without repository evidence.`
 
 ## Completed in this line of work
 
