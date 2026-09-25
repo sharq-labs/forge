@@ -1,0 +1,6 @@
+[Unit]
+Description=Forge runner host housekeeping
+
+[Service]
+Type=oneshot
+ExecStart=/opt/forge-runner/bin/maintenance.sh

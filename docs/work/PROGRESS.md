@@ -5,13 +5,137 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`, PR #105 merged)
-- PR: none recorded yet; verify GitHub before making a current PR claim.
+- Branch: `ci/self-hosted-heavy-runner` (from `origin/main` @ `2b76017f`, PR #106 merged)
+- PR: #107 (open; read from the GitHub API on 2026-09-25).
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 P0.1 failure triage (read this first)
+## 2026-09-25 self-hosted runner: isolation check false positive on the PC
+
+Observed on the PC (owner report): `New-ForgeRunnerDistro.ps1` imported `forge-runner` to `D:\WSL\forge-runner`,
+then threw `isolation check failed: Windows drives are mounted`.
+
+- Cause (from the script, not observed inside the distro): the check was `test ! -d /mnt/c`. The script starts the
+  distro once to write `wsl.conf`, before automount is off, so WSL creates `/mnt/c`; the empty directory survives the
+  restart. Directory existence does not show a mount. Second defect found while inspecting: the interop check was
+  `command -v powershell.exe`, which is always negative with `appendWindowsPath=false`, even with interop ON (a
+  false negative, i.e. weaker than documented). `install-host.sh` and the smoke workflow had the same two checks.
+- Fix: one fail-closed script, `tools/ci/self-hosted/check-isolation.sh`, used by all three callers. Drives from
+  `/proc/self/mountinfo` (drvfs / 9p-or-virtiofs of a drive / anything on `/mnt/<letter>`) plus `mountpoint -q`;
+  interop from enabled `binfmt_misc` handlers (`WSLInterop*`, magic `4d5a`, interpreter `/init`) plus PATH; systemd
+  as PID 1; the required `wsl.conf` keys (missing = WSL default = fail). Callers require exit 0 and the final line
+  `FORGE-ISOLATION: PASS`. The `.ps1` now sends scripts into the distro as base64 (no stdin/CRLF/quoting changes),
+  waits for `--terminate` to take effect, and has `-UseExisting` to validate an existing distro without re-import.
+- Own mistake caught before commit: a first draft used `test -s /proc/self/mountinfo`; procfs reports size 0, so it
+  would have failed every real machine. Emptiness is now judged by what awk read.
+- Requirements unchanged: a real mount on `/mnt/c` fails; interop must be off; systemd must be on; the check is now
+  stricter (live interop handlers, `mountFsTab`, `appendWindowsPath` are required, not assumed).
+
+2026-09-25 (cloud session, Linux, Python 3.11, dash as sh, PowerShell 7.4.6)
+command: `python3 -m pytest tests/test_ci_self_hosted_scripts.py tests/test_ci_runner_selection.py tests/test_recertification_scope.py tests/test_certification_control_plane.py -q`
+result: PASS
+summary: 273 passed, incl. 36 new isolation-check tests (run for real under sh on fixture trees) and 8 end-to-end runs of the `.ps1` under pwsh against a fake `wsl.exe`
+commit: working tree on b5d95ed9
+
+2026-09-25 (cloud session)
+command: 8 mutants (check ignores drive mounts; drops the `/mnt/<letter>` rule; ignores binfmt handlers; accepts an empty mount table; re-adds a directory-existence failure; `.ps1` trusts the exit code without the PASS verdict; `.ps1` skips the restart; drops `mountFsTab`), each applied alone against `tests/test_ci_self_hosted_scripts.py`, file restored after each
+result: PASS
+summary: control green first; 8/8 killed
+commit: working tree on b5d95ed9
+
+2026-09-25 (cloud session)
+command: `shellcheck -s sh check-isolation.sh`, `shellcheck install-host.sh`, `bash -n` on every self-hosted script, PyYAML `safe_load` of every workflow, PowerShell `Parser::ParseFile` on the `.ps1`
+result: PASS
+commit: working tree on b5d95ed9
+
+NOT RUN: the corrected verification on the PC's real `forge-runner` distro (Windows native-argument quoting, real
+`/proc/self/mountinfo` and `binfmt_misc` under WSL), `install-host.sh`, runner registration (`forge-pc-1..3`), the
+smoke workflow. `FORGE_HEAVY_RUNNER` stays unset.
+
+## 2026-09-25 self-hosted heavy CI runner (design + tooling; NOT RUN on the PC)
+
+Goal: run the expensive CI jobs on the owner's PC without weakening any gate.
+Full design, threat model, setup and operating procedure: `docs/assurance/SELF_HOSTED_RUNNER.md`.
+
+- Heavy jobs (`fast`, `mutations`, `scientific`, `reproduce`, `benchmark`; recertify `fast311/312`,
+  `scientific312`, `campaign312`, `regression312`, `formal_mutations_0-3`, `v4_mutations_0-7`,
+  `trust_mutations`; `trust-mutations`) use `runs-on: fromJSON(<classifier>.outputs.heavy_runs_on)`.
+  Everything that mints or pushes trust (`certify`, certificate verification, both gates,
+  `branch-policy`, classifiers) stays GitHub-hosted. Job names, `needs:` and evidence names are unchanged.
+- `tools/ci/select_heavy_runner.py`: default `github-hosted`; `FORGE_HEAVY_RUNNER=self-hosted` opts in;
+  untrusted events (forks, non-collaborators, odd event types) stay on GitHub-hosted; an unknown value
+  fails the run. An offline PC waits in the queue (never re-routed); optional `RUNNER_STATUS_TOKEN`
+  fails fast instead.
+- **The workflow-side routing is not the security boundary** (a fork's PR runs its own copy of the workflow).
+  The boundary is `tools/ci/runner_guard.py` run by a root-owned job-started hook on the PC, the repository's
+  fork-approval setting, and a dedicated WSL2 distro with no Windows drives/interop and no sudo.
+- Each heavy job now: read-only token, `persist-credentials: false`, asserts HEAD == the commit under test and
+  a clean tree before any gate, installs into a job-scoped venv on self-hosted, records
+  `runner-identity-<job>-<sha>`. The scientific gates require ngspice on the PC.
+- Read-only finding: `fork-pr-contributor-approval` is `first_time_contributors` (too weak for this design);
+  no runners or variables existed. **No repository setting was changed.**
+- Failed/abandoned approaches: an uncertified composite action for the shared steps (rejected: `.github/**`
+  outside the two workflows is outside the certificate, so weakening it would not move the control-plane digest);
+  ephemeral runners (rejected: they need an Administration-scoped token stored on the PC); wiping `_temp` or the
+  workspace in the job-started hook (rejected: the runner has already prepared them; cleanup runs after each job and
+  before every service start instead).
+- P0.1 status is unchanged by this slice: PR #106's Recertify run was still executing when #106 merged, so its
+  certificate child can never reach `main` and `certification/current_core_v2.json` stays stale. This PR edits the
+  certified workflows, so it is classified source-mode and its own recertification produces the certificate child.
+
+2026-09-25 (local, Windows host, Python 3.14; not on a runner)
+command: `python -m pytest -q tests/test_ci_runner_selection.py`
+result: PASS
+summary: 72 passed (routing, availability, machine-side guard). 16 targeted mutations of `tools/ci/` were each killed by a test.
+commit: working tree on 2b76017f
+
+2026-09-25 (local)
+command: `python -m pytest -q -n 4 tests/test_recertification_scope.py tests/test_certification_control_plane.py tests/test_certificate_lineage.py tests/test_hardening_assurance.py tests/test_ci_runner_selection.py tests/test_core_guards.py tests/test_pin_portability.py`
+result: PASS
+summary: 537 passed against the modified workflows (topology, gate names, no `git clean`/reset text, control-plane pins)
+commit: working tree on 2b76017f
+
+2026-09-25 (local)
+command: `python -m pytest -m "not expensive" -q -n 4` (Python 3.14, commit db0e97c3)
+result: FAIL (known baseline only)
+summary: 8488 passed, 8 failed: the 6 Python-3.14 freeze/API-surface tests (identical on a pristine origin/main worktree) and the 2 `test_core_certificate` tests (stale `current_core_v2.json`, fixed only by the CI certify child). Nothing new.
+commit: db0e97c3
+
+Scientific-review dispositions (read-only reviewer, verdict CHANGES REQUIRED; the builder does not overrule findings):
+- B1 root-owned guard is not tamper-proof against an admitted job (docker group is root-equivalent; runner binaries are writable): **ACCEPTED, claims corrected**. Docs and script comments now say the guard stops forks and unexpected events, not a hostile collaborator; the fork-approval setting is a precondition and is enforced by the selector when `RUNNER_STATUS_TOKEN` is present; rebuild-the-distro is the mitigation. Per-instance OS users rejected as moot while Docker is root-equivalent.
+- B2 persistent state: **PARTLY FIXED**. Per-instance `HOME`/`TMPDIR`, toolcache wiped by default, stray files wiped, path check hardened and run under real bash in tests. NOT fixable without ephemeral runners: shared pip cache (documented residual), runner binaries, daemons that leave the workspace.
+- M1 hook interpreter not hermetic: **FIXED** (`python3 -I -S`, fixed PATH, scrubbed PYTHON*/LD_*).
+- M2 hook-not-wired fails open and is undetected: **MITIGATED**: the smoke workflow reads the job's `Runner.Worker` environment and fails if the hooks are not wired or the guard files are not root-owned/unwritable. Not verified on a real runner.
+- M3 certificate does not record where gates ran: **NOT CHANGED, follow-up**. Binding `runner-identity` into `hardening_assurance` changes the certified assurance schema; recorded in `docs/assurance/SELF_HOSTED_RUNNER.md` section 1.
+- M4 no workflow-invariant tests: **FIXED** (`tests/test_ci_self_hosted_scripts.py`; 13 workflow mutants killed).
+- M5 `reproduce` reused layers: **FIXED** (`--no-cache`); Docker layer caching is therefore not used for that job.
+- Minor: `benchmark` shared `/tmp` fixed; reset path check fixed; token exposure documented; longer pip-freeze drift window documented; local checks now recorded below.
+
+2026-09-25 (local, Windows host, Python 3.14, Git Bash)
+command: `python -m pytest -q tests/test_ci_runner_selection.py tests/test_ci_self_hosted_scripts.py`
+result: PASS
+summary: 111 passed (routing, availability, fork-approval enforcement, guard, reset script run for real under bash, workflow invariants)
+commit: working tree on db0e97c3
+
+2026-09-25 (local)
+command: mutation checks: 16 mutants of `tools/ci/{select_heavy_runner,runner_guard}.py` and 13 mutants of the workflows, each applied alone against `tests/test_ci_runner_selection.py` / `tests/test_ci_self_hosted_scripts.py`, file restored after each
+result: PASS
+summary: control GREEN first; 29/29 killed. An earlier run had a RED control (missing TMPDIR redirect / garbled PYTHONPATH) and its "kills" were discarded; one real survivor (reproduce `--no-cache` satisfied by a comment) was found and the test tightened.
+commit: working tree on db0e97c3
+
+2026-09-25 (local)
+command: PyYAML `safe_load` of every `.github/workflows/*.yml`; `bash -n` on every `tools/ci/self-hosted/**/*.sh`; PowerShell `Parser::ParseFile` on `New-ForgeRunnerDistro.ps1`
+result: PASS
+summary: all parse; heavy jobs use `fromJSON(...heavy_runs_on)`, every trust-bearing job is `ubuntu-latest`
+commit: db0e97c3
+
+NOT RUN: `actionlint`; installing/registering the runner; the hooks on a real runner (whether the runner exports the guard's
+variables to hooks, and whether the runner's `.env` could override the drop-in, are unobserved); the smoke workflow; the heavy
+jobs on the PC; `actions/setup-python` on WSL; numerical agreement of pinned-digest tests on the PC's CPU; the
+`RUNNER_STATUS_TOKEN` API checks.
+
+## 2026-09-25 P0.1 failure triage
 
 `main` @ `deabe5cb` was RED. Read from GitHub Actions (run 36117761308, Tests):
 FAST 3.12, FAST 3.11 and SCIENTIFIC each failed the same **54** tests; the

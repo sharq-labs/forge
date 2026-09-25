@@ -8,16 +8,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  trust-mutations:
+  select-runner:
     runs-on: ubuntu-latest
+    outputs:
+      heavy_runs_on: ${{ steps.runner.outputs.heavy_runs_on }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Select where the heavy job runs
+        id: runner
+        env:
+          FORGE_HEAVY_RUNNER: ${{ vars.FORGE_HEAVY_RUNNER }}
+          RUNNER_STATUS_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+        run: python3 -m tools.ci.select_heavy_runner --check-online
+
+  trust-mutations:
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Job-scoped virtualenv (self-hosted runners keep their Python between jobs)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
       - run: pip install -e ".[dev,mcp,oracles]"
       - name: Run trust-boundary mutations
         run: >

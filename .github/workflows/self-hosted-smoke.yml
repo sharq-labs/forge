@@ -1,0 +1,111 @@
+name: Self-hosted runner smoke test
+
+# Run this by hand, once, after installing the personal runner and again after any
+# change to the machine (docs/assurance/SELF_HOSTED_RUNNER.md). It targets the
+# personal runner directly and never falls back to a GitHub-hosted one: a smoke
+# test that passed somewhere else would prove nothing about the PC. It only fails
+# closed -- if the runner is offline the run waits in the queue.
+#
+# It also proves the assumptions the isolation design rests on, on the real
+# machine: an unprivileged user, no Windows drives, no interop, systemd, Docker and ngspice
+# present, writable local caches, and both Python versions installable.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, linux, x64, forge-pc]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+          echo "event=${GITHUB_EVENT_NAME} workflow_ref=${GITHUB_WORKFLOW_REF}"
+          echo "kernel=$(uname -srm)"
+          . /etc/os-release && echo "os_release=${PRETTY_NAME}"
+          echo "cpus=$(nproc)"
+          free -m | sed -n 2p
+          test "${RUNNER_ENVIRONMENT}" = "self-hosted"
+          test -r "${GITHUB_EVENT_PATH}"
+      - name: The admission hooks are wired into THIS job's runner, and are root-owned
+        shell: bash
+        run: |
+          set -euo pipefail
+          # walk up from this step to the runner's Worker process and read the environment it was started with
+          pid=$$
+          worker=""
+          while [ "$pid" -gt 1 ]; do
+            if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q 'Runner.Worker'; then worker="$pid"; break; fi
+            pid="$(awk '{print $4}' "/proc/$pid/stat" 2>/dev/null || echo 1)"
+          done
+          test -n "$worker" || { echo "::error::could not find this job's Runner.Worker process"; exit 1; }
+          env_of_worker="$(tr '\0' '\n' < "/proc/$worker/environ")"
+          echo "$env_of_worker" | grep -qx 'ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/forge-runner/hooks/job-started.sh' \
+            || { echo "::error::ACTIONS_RUNNER_HOOK_JOB_STARTED is not wired to the guard hook: jobs are being ADMITTED UNCHECKED"; exit 1; }
+          echo "$env_of_worker" | grep -qx 'ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/forge-runner/hooks/job-completed.sh' \
+            || { echo "::error::ACTIONS_RUNNER_HOOK_JOB_COMPLETED is not wired"; exit 1; }
+          for f in /opt/forge-runner/hooks/job-started.sh /opt/forge-runner/bin/runner_guard.py /opt/forge-runner/guard.conf; do
+            test "$(stat -c %U "$f")" = root || { echo "::error::$f is not owned by root"; exit 1; }
+            test ! -w "$f" || { echo "::error::$f is writable by the runner user"; exit 1; }
+          done
+          echo "hooks wired; guard files root-owned and not directly writable"
+      - name: The runner user is unprivileged and cannot reach Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(id -u)" != "0" || { echo "::error::the runner runs as root"; exit 1; }
+          if sudo -n true 2>/dev/null; then
+            echo "::error::the runner user has passwordless sudo"; exit 1
+          fi
+          # Windows drives from the mount table (not directory existence), interop from the binfmt_misc
+          # handler table, systemd as PID 1, and wsl.conf; fail-closed, same script as the setup uses.
+          unset FORGE_ISOLATION_FIXTURE_ROOT
+          out="$(sh tools/ci/self-hosted/check-isolation.sh)" && rc=0 || rc=$?
+          printf '%s\n' "$out"
+          if [ "$rc" -ne 0 ] || [ "$(printf '%s\n' "$out" | tail -n 1)" != "FORGE-ISOLATION: PASS" ]; then
+            printf '%s\n' "$out" | grep '^FAIL:' | sed 's/^FAIL: /::error::/' || true
+            echo "::error::isolation check did not pass (exit $rc)"; exit 1
+          fi
+          echo "isolation checks passed"
+      - name: Providers and caches
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version --format 'docker server {{.Server.Version}}'
+          ngspice --version | sed -n 2p
+          git --version
+          test -n "${PIP_CACHE_DIR:-}" || { echo "::error::PIP_CACHE_DIR is not set in the runner's .env"; exit 1; }
+          mkdir -p "${PIP_CACHE_DIR}" && touch "${PIP_CACHE_DIR}/.write-test" && rm "${PIP_CACHE_DIR}/.write-test"
+          echo "PIP_CACHE_DIR=${PIP_CACHE_DIR}"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Both interpreters, and the job-scoped virtualenv the heavy jobs use
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3.11 --version
+          python --version
+          python -m venv "${RUNNER_TEMP}/job-venv"
+          "${RUNNER_TEMP}/job-venv/bin/python" -m pip install --upgrade pip >/dev/null
+          "${RUNNER_TEMP}/job-venv/bin/python" -m pip --version
+      - name: The workspace is the commit under test and nothing is left over
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          echo "workspace=${GITHUB_WORKSPACE}"
+          ls -A "${GITHUB_WORKSPACE}" | head -5

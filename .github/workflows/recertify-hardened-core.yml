@@ -24,6 +24,8 @@ jobs:
       mode: ${{ steps.classify.outputs.recertification }}
       source_sha: ${{ steps.classify.outputs.source_sha }}
       certificate_sha: ${{ steps.classify.outputs.certificate_sha }}
+      heavy_runs_on: ${{ steps.runner.outputs.heavy_runs_on }}
+      heavy_runner_mode: ${{ steps.runner.outputs.heavy_runner_mode }}
     steps:
       - name: Checkout exact event head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -52,19 +54,66 @@ jobs:
             echo "source_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             echo "certificate_sha=" >> "$GITHUB_OUTPUT"
           fi
+      - name: Select where the heavy jobs run
+        id: runner
+        env:
+          FORGE_HEAVY_RUNNER: ${{ vars.FORGE_HEAVY_RUNNER }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          RUNNER_STATUS_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+        run: python -m tools.ci.select_heavy_runner --check-online
 
   fast311:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Dependency reachability guard — Python 3.11 (serial)
         run: >-
@@ -103,19 +152,66 @@ jobs:
             ${{ runner.temp }}/gate-fast311.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   fast312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Dependency reachability guard — Python 3.12 (serial)
         run: >-
@@ -154,22 +250,75 @@ jobs:
             ${{ runner.temp }}/gate-fast312.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   scientific312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
-      - run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ngspice
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
+      - name: Provider and Python dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_ENVIRONMENT" = "github-hosted" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ngspice
+          fi
+          command -v ngspice >/dev/null || { echo "::error::ngspice is not installed on this runner"; exit 1; }
           python -m pip install -e ".[dev,mcp,oracles]"
       - name: Scientific functional gate — Python 3.12
         env:
@@ -211,19 +360,66 @@ jobs:
             ${{ runner.temp }}/gate-scientific312.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   campaign312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Full scientific campaign gate — Python 3.12
         shell: bash
@@ -252,19 +448,66 @@ jobs:
             ${{ runner.temp }}/gate-campaign312.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   regression312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: False-confidence scientific regression gate
         env:
@@ -299,10 +542,22 @@ jobs:
   # The four formal shards are identical except for SHARD_INDEX. Membership is
   # not trusted from here: each shard's record is re-derived from its transcript
   # and the certify job proves the four cover the canonical population exactly.
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
+
   formal_mutations_0:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "0"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -311,9 +566,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select formal mutation shard from the canonical population
         run: >-
@@ -351,11 +642,22 @@ jobs:
             ${{ runner.temp }}/gate-formal_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   formal_mutations_1:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "1"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -364,9 +666,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select formal mutation shard from the canonical population
         run: >-
@@ -404,11 +742,22 @@ jobs:
             ${{ runner.temp }}/gate-formal_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   formal_mutations_2:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "2"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -417,9 +766,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select formal mutation shard from the canonical population
         run: >-
@@ -457,11 +842,22 @@ jobs:
             ${{ runner.temp }}/gate-formal_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   formal_mutations_3:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "3"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -470,9 +866,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select formal mutation shard from the canonical population
         run: >-
@@ -510,11 +942,22 @@ jobs:
             ${{ runner.temp }}/gate-formal_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   v4_mutations_0:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "0"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -523,9 +966,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -560,13 +1039,24 @@ jobs:
             ${{ runner.temp }}/v4-mutations-${{ env.SHARD_INDEX }}.json
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
+          retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
           retention-days: 90
 
 
   v4_mutations_1:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "1"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -575,9 +1065,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -613,12 +1139,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_2:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "2"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -627,9 +1164,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -665,12 +1238,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_3:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "3"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -679,9 +1263,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -717,12 +1337,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_4:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "4"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -731,9 +1362,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -769,12 +1436,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_5:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "5"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -783,9 +1461,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -821,12 +1535,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_6:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "6"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -835,9 +1560,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -873,12 +1634,23 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
 
   v4_mutations_7:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     env:
       SHARD_INDEX: "7"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -887,9 +1659,45 @@ jobs:
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Select V4 mutation shard from the pinned population
         run: >-
@@ -925,19 +1733,66 @@ jobs:
             ${{ runner.temp }}/gate-v4_mutations_${{ env.SHARD_INDEX }}.json
           if-no-files-found: error
           retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
 
   trust_mutations:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.classify.outputs.heavy_runs_on) }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.classify.outputs.source_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
+      - name: Pin the environment and record the runner
+        env:
+          EXPECTED_SHA: ${{ needs.classify.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "::error::the checkout is $(git rev-parse HEAD), not the commit under test $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "::error::the checkout is not clean before any gate ran"
+            exit 1
+          fi
+          # A self-hosted runner keeps its Python across jobs, so every job installs into its own
+          # virtualenv: nothing a previous job installed can satisfy this job's imports.
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+            python -m venv "${RUNNER_TEMP}/job-venv"
+            echo "${RUNNER_TEMP}/job-venv/bin" >> "$GITHUB_PATH"
+            echo "VIRTUAL_ENV=${RUNNER_TEMP}/job-venv" >> "$GITHUB_ENV"
+          fi
+          {
+            echo "commit=$EXPECTED_SHA"
+            echo "workflow=${GITHUB_WORKFLOW} job=${GITHUB_JOB} run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=${RUNNER_NAME} environment=${RUNNER_ENVIRONMENT} os=${RUNNER_OS} arch=${RUNNER_ARCH}"
+            echo "kernel=$(uname -srm)"
+            echo "os_release=$(. /etc/os-release && echo "$PRETTY_NAME")"
+            echo "cpus=$(nproc)"
+            echo "memory=$(free -m | awk '/^Mem:/ {print $2 " MB"}')"
+            echo "python=$(python --version 2>&1)"
+            echo "git=$(git --version)"
+            echo "docker=$(docker --version 2>/dev/null || echo absent)"
+            echo "ngspice=$(ngspice --version 2>&1 | sed -n 2p || true)"
+          } > "${RUNNER_TEMP}/runner-identity.txt"
+          cat "${RUNNER_TEMP}/runner-identity.txt"
       - run: python -m pip install -e ".[dev,mcp,oracles]"
       - name: Trust-boundary mutation population
         run: >-
@@ -955,6 +1810,15 @@ jobs:
             ${{ runner.temp }}/trust-mutations.json
             ${{ runner.temp }}/gate-trust_mutations.json
           if-no-files-found: error
+          retention-days: 90
+      - name: Upload runner identity
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-identity-${{ github.job }}-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/runner-identity.txt
+          if-no-files-found: warn
+          overwrite: true
           retention-days: 90
 
   certify:
