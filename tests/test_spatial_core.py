@@ -282,3 +282,11 @@ def test_core_bridge_and_p1_refuse_what_they_cannot_represent(plate):
                       plate, t.values, Derivation.PRESCRIBED)
     with pytest.raises(SpatialRefusal, match="not a continuous P1"):
         interpolate_p1_to_mesh(p2, fixture_plate(nx=5, ny=3))
+
+
+def test_core_support_writes_into_an_empty_caller_store():
+    from engcore.data import InMemoryBulkStore
+    mesh = fixture_plate()
+    store = InMemoryBulkStore()
+    support = mesh.core_support(store)
+    assert store.has(support.coordinates) and store.has(support.connectivity)

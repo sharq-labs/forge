@@ -226,7 +226,9 @@ class SpatialMesh:
 
     def core_support(self, store=None) -> UnstructuredMesh:
         """The Core support record (for FieldDefinition / FieldValue / FieldRecord)."""
-        return self._data.store(store or InMemoryBulkStore())
+        # `is None`, never `or`: an EMPTY store is falsy (len 0) and must still
+        # receive the bytes -- otherwise they silently land in a throwaway store.
+        return self._data.store(InMemoryBulkStore() if store is None else store)
 
     # ---- arrays -------------------------------------------------------------
     @property

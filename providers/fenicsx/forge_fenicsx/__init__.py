@@ -26,7 +26,7 @@ import numpy as np
 
 from engcore.numerical.core import ProviderUnavailable
 from engcore.scientific.solvers.protocol import ConvergenceState, SolverIdentity
-from engcore.scientific.units.quantity import normalize_unit
+from engcore.scientific.units.quantity import Quantity, normalize_unit
 from engcore.spatial import Rank
 from engcore.pde.contracts import (
     BCKind, PDEDiagnostics, PDEExecutionRecord, PDEProblem, PDERefusal, computed_field,
@@ -239,6 +239,34 @@ class FenicsxProvider:
             if L_e is not None:
                 L = L + L_e
             uh, reason, its, rel = self._linear_solve(a, L, bcs, problem, "forge_elastic_")
+            if not accept(reason, its, rel):
+                return fail(ConvergenceState.NOT_CONVERGED if reason > 0 else ConvergenceState.FAILED, f"KSP reason {reason}, true relative residual {rel}")
+            values = self._node_values(problem, dm, V, geom_to_forge, uh, 2)
+            field = computed_field(problem, self._from_unknown_unit(problem, values), exec_id)
+            return PDEExecutionRecord(problem.digest, self.identity, ConvergenceState.CONVERGED, self._diag(diag, V, warnings, 1), ((0.0, field),))
+
+        if op.template_id == "linear_thermoelasticity_plane_stress":
+            E, nu, t = coeff["youngs_modulus"], coeff["poisson_ratio"], coeff["thickness"]
+            alpha, tref = coeff["thermal_expansion"], coeff["reference_temperature"]
+            Vt = dolfinx.fem.functionspace(dm, ("Lagrange", 1))
+            temp = dolfinx.fem.Function(Vt)
+            tvals = problem.field_inputs["temperature"].values * Quantity(1.0, problem.field_inputs["temperature"].definition.unit).magnitude_in("K")
+            gdof = dm.geometry.dofmap
+            for c in range(gdof.shape[0]):
+                cd = Vt.dofmap.cell_dofs(c)
+                for k in range(3):
+                    temp.x.array[cd[k]] = tvals[geom_to_forge[gdof[c][k]]]
+            eps = lambda w: ufl.sym(ufl.grad(w))  # noqa: E731
+            lam_ps = E * nu / (1 - nu**2)
+            mu = E / (2 * (1 + nu))
+            sig = lambda e: lam_ps * ufl.tr(e) * ufl.Identity(2) + 2 * mu * e  # noqa: E731
+            eps_th = alpha * (temp - tref) * ufl.Identity(2)
+            bcs, _, L_e = bc_forms()
+            a = t * ufl.inner(sig(eps(u)), eps(v)) * dx
+            L = t * ufl.inner(sig(eps_th), eps(v)) * dx
+            if L_e is not None:
+                L = L + L_e
+            uh, reason, its, rel = self._linear_solve(a, L, bcs, problem, "forge_thermoelastic_")
             if not accept(reason, its, rel):
                 return fail(ConvergenceState.NOT_CONVERGED if reason > 0 else ConvergenceState.FAILED, f"KSP reason {reason}, true relative residual {rel}")
             values = self._node_values(problem, dm, V, geom_to_forge, uh, 2)

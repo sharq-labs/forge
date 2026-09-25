@@ -294,6 +294,10 @@ NON_CORE_PACKAGES = {
         "provider-neutral PDE/FEM contracts and the FEniCSx provider; the solver "
         "computes, Forge keeps identity/applicability/provenance authority"
     ),
+    "coupling": (
+        "adapters that turn PDE/numerical providers and BIG 7 fields into participants "
+        "of the existing multiphysics runtime; no new coupling authority"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"

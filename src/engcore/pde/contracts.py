@@ -96,6 +96,9 @@ class OperatorTemplate:
     neumann_unit: str       # unit of the natural (flux/traction) boundary datum
     robin_supported: bool
     weak_form_text: str     # the form as written; auditable, not proof of physics
+    #: Node-field inputs (name -> required unit dimension), e.g. a temperature
+    #: field produced by another participant.  Bound by field digest.
+    field_slots: tuple[tuple[str, str], ...] = ()
 
     def slot(self, name: str) -> CoefficientSlot:
         for s in self.slots:
@@ -106,7 +109,8 @@ class OperatorTemplate:
     def to_dict(self) -> dict[str, Any]:
         return {"template_id": self.template_id, "version": self.version, "rank": self.rank.value, "unknown_unit": self.unknown_unit,
                 "slots": [[s.name, normalize_unit(s.reference_unit), s.required, list(s.admissible)] for s in self.slots], "transient": self.transient,
-                "neumann_unit": normalize_unit(self.neumann_unit), "robin_supported": self.robin_supported, "weak_form_text": self.weak_form_text}
+                "neumann_unit": normalize_unit(self.neumann_unit), "robin_supported": self.robin_supported, "weak_form_text": self.weak_form_text,
+                "field_slots": [[n, normalize_unit(u)] for n, u in self.field_slots]}
 
     @property
     def digest(self) -> str:
@@ -133,7 +137,18 @@ PLANE_STRESS_ELASTICITY = OperatorTemplate(
     False, "Pa", False,
     "find u: int t sigma(u):eps(v) dx = int_N t g.v ds, sigma = E/(1-nu^2)[(1-nu) eps + nu tr(eps) I] (plane stress)",
 )
-TEMPLATES = {t.template_id: t for t in (STEADY_DIFFUSION, TRANSIENT_DIFFUSION, PLANE_STRESS_ELASTICITY)}
+THERMOELASTIC_PLANE_STRESS = OperatorTemplate(
+    "linear_thermoelasticity_plane_stress", "1", Rank.VECTOR, "meter",
+    (CoefficientSlot("youngs_modulus", "Pa", admissible=(0.0, None, False, True)),
+     CoefficientSlot("poisson_ratio", "dimensionless", admissible=(0.0, 0.5, True, False)),
+     CoefficientSlot("thickness", "m", admissible=(0.0, None, False, True)),
+     CoefficientSlot("thermal_expansion", "1/K", admissible=(0.0, None, True, True)),
+     CoefficientSlot("reference_temperature", "K", admissible=(0.0, None, False, True))),
+    False, "Pa", False,
+    "find u: int t C:(eps(u) - alpha (T - T_ref) I):eps(v) dx = int_N t g.v ds (plane stress, one-way thermal load)",
+    field_slots=(("temperature", "K"),),
+)
+TEMPLATES = {t.template_id: t for t in (STEADY_DIFFUSION, TRANSIENT_DIFFUSION, PLANE_STRESS_ELASTICITY, THERMOELASTIC_PLANE_STRESS)}
 
 
 @dataclass(frozen=True)
@@ -175,13 +190,13 @@ class SourcedQuantity:
     """A value plus the record it came from.  Anonymous constants are refused."""
 
     value: Quantity
-    origin: str            # "material_resolution" | "environment" | "prescribed" | "assumed"
+    origin: str            # "material_resolution" | "environment" | "prescribed" | "assumed" | "coupling"
     source_record: Mapping[str, Any]
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, Quantity):
             raise PDERefusal("a sourced quantity needs a Quantity")
-        if self.origin not in ("material_resolution", "environment", "prescribed", "assumed"):
+        if self.origin not in ("material_resolution", "environment", "prescribed", "assumed", "coupling"):
             raise PDERefusal(f"unsupported origin {self.origin!r}")
         if not self.source_record:
             raise PDERefusal("a value with no source record is an anonymous constant; refused")
@@ -323,9 +338,22 @@ class PDEProblem:
     solver: SolverSettings
     transient: TransientSpec | None = None
     boundary_schedule: Mapping[str, tuple[tuple[float, SourcedQuantity], ...]] = field(default_factory=dict)
+    field_inputs: Mapping[str, SpatialField] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         m, op = self.mesh, self.operator
+        slots = dict(op.field_slots)
+        if set(dict(self.field_inputs)) != set(slots):
+            raise PDERefusal(f"operator {op.template_id} needs field inputs {sorted(slots)}; got {sorted(dict(self.field_inputs))}")
+        for name, f in dict(self.field_inputs).items():
+            if not isinstance(f, SpatialField) or f.mesh.digest != m.digest:
+                raise PDERefusal(f"field input {name!r} must be a SpatialField on this exact mesh (map it first)")
+            if f.definition.location is not Location.NODE or f.definition.rank is not Rank.SCALAR:
+                raise PDERefusal(f"field input {name!r} must be a scalar node field")
+            if dimensionality(f.definition.unit) != dimensionality(slots[name]) or not is_ratio_scale(f.definition.unit):
+                raise PDERefusal(f"field input {name!r} is {f.definition.unit}; slot requires a ratio-scale unit of {slots[name]}")
+            if not f.provenance:
+                raise PDERefusal(f"field input {name!r} carries no provenance; an anonymous field is refused")
         if m.cell_type.value != "triangle":
             raise PDERefusal("BIG 8 supports 2D triangle meshes only; other cell types are refused, not approximated")
         if op.template_id not in TEMPLATES or TEMPLATES[op.template_id] != op:
@@ -451,6 +479,8 @@ class PDEProblem:
             "discretization": self.discretization.to_dict(), "solver": self.solver.to_dict(),
             "transient": None if self.transient is None else self.transient.to_dict(),
             "boundary_schedule": {k: [[t, sq.to_dict()] for t, sq in v] for k, v in sorted(dict(self.boundary_schedule).items())},
+            "field_inputs": {k: {"digest": f.digest, "derivation": f.derivation.value, "provenance": list(f.provenance)}
+                             for k, f in sorted(dict(self.field_inputs).items())},
         }
 
     @property
