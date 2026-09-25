@@ -5,11 +5,63 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `feat/scientific-correctness-hardening`
-- PR: no open PR currently recorded for this branch; verify GitHub before making a current PR claim.
+- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`, PR #105 merged)
+- PR: none recorded yet; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
+
+## 2026-09-25 P0.1 failure triage (read this first)
+
+`main` @ `deabe5cb` was RED. Read from GitHub Actions (run 36117761308, Tests):
+FAST 3.12, FAST 3.11 and SCIENTIFIC each failed the same **54** tests; the
+`mutations` job's CONTROL was RED (round void) because of 3 of them; `reproduce`
+(Docker) failed 165; `Branch Policy` failed with `POLICY NOT ENFORCED`.
+
+Root causes (all local, none needed a guard weakened):
+
+| Cluster | Tests | Cause | Fix |
+| --- | --- | --- | --- |
+| predictive/hybrid UQ fixtures | 24 | fixtures declared no observation noise; production correctly refuses it | fixtures declare a noise sigma |
+| `float(P.sigma)` | 3 | `P.sigma` is a per-observation vector; current numpy rejects `float()` | `P.sigma[5]` |
+| consensus non-finite | 20 | **production regression**: `over()` compared raw values but stored only finite ones, so the record-recompute check raised at construction | see "Consensus decision" below |
+| standard uncertainty to an affine target | 1 | **production defect**: propagated spread was stamped in `degree_Celsius`, which the spread rule refuses | carried on the dimension's base unit (kelvin), slope-only conversion |
+| exact-identity attribution | 2 | tests attributed by prose/`@` substring, the spoofing path BIG 1 closed | tests name exact identities; new test that prose is refused |
+| multiphysics expectations | 3 | one test forged an empty iteration (refused earlier, by the record) and two expected `UnitCompatibilityError` where the port-contract check raises `InvalidScientificProblem` | two-participant fixture; exception class |
+| independence-group message | 1 | message reworded to cover calibration/validation/holdout | match updated |
+| stability reasons | 3 | `in tuple` where a substring was meant | `any(... in reason)` |
+| stale mutation `B48c` | 2 | target line changed to `references` | repointed; same killing test |
+| certificate | 2 | `certification/current_core_v2.json` describes an older tree | **not edited**: regenerated only by the CI certify child on 3.12 |
+
+### Consensus decision (recorded so it is not re-litigated)
+
+BIG 1 made a non-finite reading on an *unshared* diagnostic stop erasing a real
+finite disagreement, but did it inconsistently. The rule now, for shared and
+unshared readings alike: a non-finite reading **never helps routes agree**
+(agreement with any non-finite reading present is a "nothing compared" refusal),
+**never hides** a disagreement the finite shared readings show (kept, with the
+offenders named), is **not a reported output**, and numbers travel with the record
+only when **every** reading is finite, so such a record can never be `earned`.
+A finite disagreement kept beside a non-finite reading is a FAIL built from a
+route the module calls unfinished. That is fail-closed (it can only withhold), and
+was chosen over NOT_RUN so a route cannot avoid a FAIL by emitting a NaN. The
+scientific reviewer (read-only) required the single-rule fix; it is applied.
+Not changed, pre-existing, noted by the reviewer: `to_check` can report PASS for a
+comparison with no recomputable numbers (level still withheld); finite extremes
+(1e308 vs -1e308) raise instead of recording; `_delta_magnitude_in` re-implements
+`Quantity.magnitude_as_spread_in` with ~1e-13 cancellation error.
+
+### Repository-level findings (not code)
+
+- The `Protect main` ruleset (id 23351506, active, no bypass actors) contains
+  `deletion`, `non_fast_forward` and `pull_request` (0 approvals) but **no
+  `required_status_checks` rule**. `main` therefore does NOT require
+  `tests-gate` or `recertification-gate`. Restoring it is a repository-settings
+  change and needs the owner's explicit go-ahead; do it only once the gates are green,
+  or the fix PR itself cannot merge.
+- The Docker `reproduce` job has failed on every `main` push since 2026-09-14
+  (`.dockerignore` excludes `.git`, so certification tests find no repository).
+  It is outside `tests-gate`; not fixed by this slice.
 
 ## 2026-09-25 scientific-correctness hardening handoff
 
@@ -89,8 +141,9 @@ evidence only; after source changes it does not certify the new head.
 
 ### Verification status
 
-**NOT RUN for this BIG 1 batch.** Do not claim PASS, green, verified, validated
-or certified from static inspection.
+Superseded by the verification log below and the P0.1 triage above. The BIG 1
+gates are **not** closed until the CI run on the final source head is green.
+Do not claim PASS, green, verified, validated or certified from static inspection.
 
 ### Next executable work
 
@@ -163,6 +216,30 @@ or certified from static inspection.
 - Strengthened replay source identity with tracked-diff and untracked-content digests.
 
 ## Verification log
+
+2026-09-25 13:00 EDT
+command: `python -m pytest -m "not expensive" -q -n 4` (Python 3.14, worktree D:/forge-p01, HEAD 46cf014b)
+result: FAIL (expected baseline + 1 mine)
+summary: 11 failed, 8407 passed, 8 skipped. Failures: 2 certificate tests (stale `current_core_v2.json`, CI certify child owns it); 6 freeze/API-surface tests (`test_r69...`, `test_a_descendant_that_keeps_the_contract_still_verifies`, `test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`, 3 in `test_core_freeze_v4_manifest.py`) which fail IDENTICALLY on a pristine `origin/main` worktree under 3.14 (baseline artifact; CI 3.12 passes them); 2 fresh-process digest tests (pass with `PYTHONPATH='D:\\forge-p01\\src;D:\\forge-p01'`); `test_consensus_completeness_grows_linearly_with_required_outputs` (mine: an O(n^2) list membership, fixed in 63b94a3c).
+commit: 46cf014b
+
+2026-09-25 13:10 EDT
+command: `python -m pytest -q tests/test_consensus_integrity.py tests/test_core_invariants_adversarial.py tests/test_core_numerical_integrity.py tests/test_trust_boundary_consensus.py tests/test_cross_solver_consensus.py tests/test_core_performance_guards.py tests/test_trusted_consensus_gate.py tests/test_audit_consensus*.py -n 4`
+result: PASS
+summary: 269 passed (before the 3 new regression tests); then tests/test_consensus_integrity.py 26 passed and tests/test_cross_domain_uq.py 13 passed after adding regressions
+commit: 63b94a3c (+ working tree tests)
+
+2026-09-25 12:50 EDT
+command: `python -m pytest -q -n 4 <the 54 test ids that failed on main>` (Python 3.14)
+result: PASS except the 2 certificate tests
+summary: 52 of the 54 pass after the batch; the 2 remaining are `test_core_certificate.py::test_the_certificate_describes_this_tree` and `::test_the_certificate_records_the_v1_relationship_truthfully`, which need the CI certify child
+commit: 46cf014b
+
+2026-09-25 (GitHub Actions, read, not executed here)
+command: Tests run 36117761308 on `main` @ deabe5cb; Recertify run 36114967466 on PR #105 head 5026b40b
+result: FAIL
+summary: Tests: 54 failed in FAST 3.12 / FAST 3.11 / SCIENTIFIC, mutations CONTROL RED, reproduce 165 failed, Branch Policy `POLICY NOT ENFORCED`. Recertify @ 5026b40b: regression312 and campaign312 SUCCESS; fast311/fast312/scientific312, formal_mutations_0..3, v4_mutations_0..7 FAILED (every V4 shard CONTROL RED with 2-3 failures; shard 0 also B48c NOT_APPLIED); trust_mutations SUCCESS; certify skipped.
+commit: deabe5cb / 5026b40b
 
 2026-09-23 19:05 +03:00
 command: GitHub Actions PR #102 — Tests run 323 / Recertify Hardened Core run 205
