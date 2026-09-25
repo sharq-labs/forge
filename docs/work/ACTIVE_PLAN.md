@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 4 — Lifecycle/Degradation** closed loop built on BIG 2+3; next BIG step is **BIG 5** (per master plan: Scientific Data + Materials, P4) — not started.
+Current: **BIG 5 — Scientific Data + Materials** built on `scientific.knowledge` and BIG 2–4; BIG 6 not started.
 
 ## Current branch / PR
 
@@ -138,6 +138,33 @@ tests `tests/test_lifecycle_engine.py`. BUILD phase; full tiers NOT RUN.
       demonstrate changed future physics.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 4 section).
 
+
+### P4 / BIG 5 — Scientific Data + Materials
+
+Implemented in `src/engcore/materials/` (non-Core; registered in
+`tests/test_core_api_layering.py::NON_CORE_PACKAGES`) on top of
+`scientific.knowledge`; tests `tests/test_materials_engine.py`. BUILD phase.
+
+- [x] Reuse, not duplicate: values are `KnowledgeClaim`s, sources
+      `KnowledgeSource`, dataset versions `KnowledgeSnapshot`, import identity
+      `KnowledgeIngestionReceipt`. `PropertyApplicability.digest` is the
+      claim's `applicability_context_digest`.
+- [x] Exact `MaterialIdentity` (name-only refused), `MaterialState`,
+      domain-owned `MaterialStateSchema` ranges, `ApplicabilityRange`
+      (omitted bound needs a stated reason).
+- [x] `PropertyDatum` origins (measured/compiled/fitted/derived/assumed;
+      fitted/derived need `TransformationRecord`), explicit
+      `InterpolationRule` with breakpoints, fail-closed `resolve` returning a
+      digest-bound `ResolvedProperty` (SOURCED / ASSUMED / INTERPOLATED / UNKNOWN).
+- [x] Source alignment: `SourceIdentity` view over `KnowledgeSource` and
+      `EnvironmentSource` (no serialized migration); sourceless environment
+      values say `no_source`.
+- [x] Lifecycle: applicability and state ranges are part of
+      `DegradationModelIdentity`; every input needs a declared range; states
+      checked against the owning domain's range; chain links prior state.
+- [x] Executable proofs: temperature-dependent alloy conductivity; moisture
+      uptake (lifecycle) -> MaterialState -> resolved conductivity -> heat flux.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 5 section).
 
 ## Persistent project direction
 

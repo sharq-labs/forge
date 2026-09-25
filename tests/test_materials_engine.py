@@ -314,3 +314,28 @@ def test_degraded_state_beyond_tabulated_data_stops_physics_instead_of_extrapola
             windows=tuple(TimeWindow(p(i), p(i + 1)) for i in range(3)),
             execute=_insulation_executor(props, []), bindings=(InputBinding("wet_time", "wetness"),),
         )
+
+
+def test_interpolation_with_mixed_unit_points_uses_one_unit():
+    rows = [
+        ("kc20", "thermal_conductivity", Quantity(1.0, K_UNIT), None, (point("temperature", Quantity(20, "degC")),), "solid", "measured", None),
+        ("kk373", "thermal_conductivity", Quantity(2.0, K_UNIT), None, (point("temperature", T(373.15)),), "solid", "measured", None),
+    ]
+    props, _ = _dataset(ALLOY, rows, source_id="fixture-mixed", locator="tests::mixed", set_id="mixed",
+                        rules=(InterpolationRule("thermal_conductivity", "temperature", "linear"),))
+    r = props.resolve("thermal_conductivity", MaterialState(ALLOY, (NamedQuantity("temperature", Quantity(50, "degC")),), "solid"))
+    assert r.derivation is PropertyDerivation.INTERPOLATED
+    assert r.value.value.magnitude == pytest.approx(1.375)  # w = 30/80
+    r_k = props.resolve("thermal_conductivity", MaterialState(ALLOY, (NamedQuantity("temperature", T(323.15)),), "solid"))
+    assert r_k.value.value.magnitude == pytest.approx(1.375)
+
+
+def test_assumed_datum_resolves_as_assumed_not_sourced():
+    rows = [("k-assumed", "thermal_conductivity", Quantity(150.0, K_UNIT), None, (ApplicabilityRange("temperature", T(250), T(350)),), "solid", "assumed", None)]
+    props, _ = _dataset(ALLOY, rows, source_id="fixture-assumed", locator="tests::assumed", set_id="assumed")
+    assert props.resolve("thermal_conductivity", _alloy_state(300)).derivation is PropertyDerivation.ASSUMED
+
+
+def test_breakpoints_are_dimension_checked_at_construction():
+    with pytest.raises(Exception):
+        InterpolationRule("thermal_conductivity", "temperature", "linear", (T(500), Quantity(1, "m")))

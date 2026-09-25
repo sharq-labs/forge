@@ -11,7 +11,61 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 4 — Lifecycle / Degradation Engine (BUILD phase; read this first)
+## 2026-09-25 BIG 5 — Scientific Data + Materials (BUILD phase; read this first)
+
+### Pre-check
+BIG 4 re-review at `a2578a6`: PASS WITH NON-BLOCKING GAPS, no materials
+blocker. Its MEDIUM items (per-input + state applicability; chain state link)
+were fixed inside BIG 5's identity design.
+
+### Architecture decisions
+- `scientific.knowledge` is the data authority (claims, sources, snapshots,
+  ingestion receipts, supersession). BIG 5 adds no source/claim/dataset record;
+  it binds claims to exact material + applicability and resolves them.
+- Constitutive models (e.g. `domains/electrical/material.py` R(T)) stay
+  `ScientificModelDefinition`; `materials` holds sourced data only.
+- Source alignment decision: `KnowledgeSource` is canonical for scientific
+  data; `EnvironmentSource` stays an environment-input record. Both are read
+  through `SourceIdentity` (a view). A serialized merge is deferred; it would
+  change the `environment_source` contract and needs an explicit decision.
+- Applicability is identity: `DegradationModelIdentity.applicability` and
+  `.state_ranges` are serialized fields, so changing authorization changes
+  the digest (replaces the BIG 4 "bounds not in identity" gap).
+
+### Scientific review
+BIG 5 review: CHANGES REQUIRED for one HIGH finding, fixed: interpolation
+mixed units across tabulated points (now all positions in the state
+condition's unit; test with degC/K points). Also fixed: ASSUMED datum now
+resolves as ASSUMED, breakpoints dimension-checked at construction. Not re-reviewed.
+
+### Open non-blocking gaps
+- No production (non-test) participant yet constructs `MaterialState` and
+  calls `resolve`; the closed material loop is proven in tests with a
+  reference insulation participant. Domain physics adoption is future work.
+- Removing one of two conflicting data turns UNKNOWN into KNOWN (refusal to
+  arbitrate); should be reconciled with "removing evidence must not increase
+  assurance" via `scientific.knowledge.conflicts`.
+- Only single-variable LINEAR interpolation; no multi-variable tables, no
+  explicitly authorized extrapolation.
+- Fixture data are illustrative (issuer says so); no real open dataset is
+  ingested yet (NIST/NASA/PyBaMM providers are future adapters).
+- `QuantityHistory.integrate` still labels its bound STANDARD (BIG 2 gap).
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/materials src/engcore/scenarios src/engcore/domains/battery/aging.py src/engcore/domains/corrosion src/engcore/domains/hygrothermal` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py tests/oracles/test_oracle_battery.py` — PASS, 300 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+A material property resolves from exact identity/state/source/applicability
+and changes future computation (moisture -> conductivity -> heat flux).
+BIG 6 not started.
+
+## 2026-09-25 BIG 4 — Lifecycle / Degradation Engine (BUILD phase)
 
 ### Pre-check
 `forge-scientific-review` re-run on BIG 2 + BIG 3 at `5584c57`: PASS WITH

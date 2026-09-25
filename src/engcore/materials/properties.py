@@ -187,7 +187,12 @@ class InterpolationRule:
         object.__setattr__(self, "variable_id", _identifier(self.variable_id, "rule variable_id"))
         if self.method != "linear":
             raise InvalidScientificProblem(f"unsupported property interpolation {self.method!r}")
-        object.__setattr__(self, "breakpoints", tuple(self.breakpoints))
+        breakpoints = tuple(self.breakpoints)
+        if any(not isinstance(b, Quantity) for b in breakpoints):
+            raise InvalidScientificProblem("breakpoints must be Quantity records")
+        for b in breakpoints[1:]:
+            b.require_compatible(breakpoints[0].units, context=f"breakpoints of {self.property_id!r}")
+        object.__setattr__(self, "breakpoints", breakpoints)
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": RULE_SCHEMA, "property_id": self.property_id, "variable_id": self.variable_id, "method": self.method, "breakpoints": [b.to_dict() for b in self.breakpoints]}
@@ -200,6 +205,8 @@ class InterpolationRule:
 
 class PropertyDerivation(str, Enum):
     SOURCED = "sourced"
+    #: A single admissible datum whose origin is ASSUMED: a declared assumption.
+    ASSUMED = "assumed"
     INTERPOLATED = "interpolated"
     NONE = "none"
 
@@ -307,7 +314,8 @@ class MaterialPropertySet:
         if len(admitted) == 1:
             d = admitted[0]
             uq = d.claim.uncertainty or Uncertainty.unknown(f"claim {d.claim.claim_id} states no uncertainty")
-            return self._result(property_id, state, PropertyDerivation.SOURCED, NamedQuantity(property_id, d.claim.numeric_value, uq), admitted)
+            derivation = PropertyDerivation.ASSUMED if d.origin is DatumOrigin.ASSUMED else PropertyDerivation.SOURCED
+            return self._result(property_id, state, derivation, NamedQuantity(property_id, d.claim.numeric_value, uq), admitted)
         if len(admitted) > 1:
             return self._result(property_id, state, PropertyDerivation.NONE, None, admitted,
                                 reason="several data admit this state; sources are not arbitrated")
@@ -328,7 +336,10 @@ class MaterialPropertySet:
                 for r in d.applicability.ranges
             ) and (not d.applicability.phase or d.applicability.phase == state.phase)
             if ok:
-                points.append((_exact(along.lower, along.unit), along.unit, d))
+                # Every position is expressed in the STATE condition's unit, so the
+                # sort, bracket, breakpoints and weight compare like with like.
+                along.lower.require_compatible(cond.value.units, context=f"interpolation along {rule.variable_id!r}")
+                points.append((_exact(along.lower, cond.value.units), cond.value.units, d))
         if not points:
             return self._result(property_id, state, PropertyDerivation.NONE, None, (), rule, "no tabulated points admit the other conditions of this state")
         unit = points[0][1]
@@ -341,6 +352,7 @@ class MaterialPropertySet:
                                 f"{rule.variable_id} lies outside the tabulated domain; extrapolation is not authorized")
         lo, hi = below[-1], above[0]
         for b in rule.breakpoints:
+            b.require_compatible(unit, context=f"breakpoint of {property_id!r}")
             bv = _exact(b, unit)
             if lo[0] <= bv <= hi[0]:
                 return self._result(property_id, state, PropertyDerivation.NONE, None, (lo[2], hi[2]), rule,
