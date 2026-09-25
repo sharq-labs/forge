@@ -339,3 +339,17 @@ def test_assumed_datum_resolves_as_assumed_not_sourced():
 def test_breakpoints_are_dimension_checked_at_construction():
     with pytest.raises(Exception):
         InterpolationRule("thermal_conductivity", "temperature", "linear", (T(500), Quantity(1, "m")))
+
+
+def test_interpolation_between_assumed_points_is_refused():
+    rows = [(f"ka{t}", "thermal_conductivity", Quantity(v, K_UNIT), None, (point("temperature", T(t)),), "solid", "assumed", None) for t, v in ((300, 1.0), (400, 2.0))]
+    props, _ = _dataset(ALLOY, rows, source_id="fixture-assumed2", locator="tests::assumed2", set_id="assumed2",
+                        rules=(InterpolationRule("thermal_conductivity", "temperature", "linear"),))
+    r = props.resolve("thermal_conductivity", _alloy_state(350))
+    assert r.status == "unknown" and "assumed" in r.reason
+
+
+def test_condition_in_wrong_dimension_is_inadmissible_not_an_error():
+    props, _ = _alloy_set()
+    r = props.resolve("density", MaterialState(ALLOY, (NamedQuantity("temperature", Quantity(1, "m")),), "solid"))
+    assert r.status == "unknown"

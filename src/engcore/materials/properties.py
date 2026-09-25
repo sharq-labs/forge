@@ -351,6 +351,9 @@ class MaterialPropertySet:
             return self._result(property_id, state, PropertyDerivation.NONE, None, (), rule,
                                 f"{rule.variable_id} lies outside the tabulated domain; extrapolation is not authorized")
         lo, hi = below[-1], above[0]
+        if DatumOrigin.ASSUMED in (lo[2].origin, hi[2].origin):
+            return self._result(property_id, state, PropertyDerivation.NONE, None, (lo[2], hi[2]), rule,
+                                "interpolation between assumed data is not authorized; it would read as a sourced trend")
         for b in rule.breakpoints:
             b.require_compatible(unit, context=f"breakpoint of {property_id!r}")
             bv = _exact(b, unit)

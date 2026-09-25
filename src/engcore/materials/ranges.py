@@ -82,7 +82,8 @@ class ApplicabilityRange:
         return self.lower is not None and self.upper is not None and self.lower.magnitude_in(self.unit) == self.upper.magnitude_in(self.unit)
 
     def admits(self, value: Quantity) -> bool:
-        value.require_compatible(self.unit, context=f"range {self.variable_id!r}")
+        if not value.is_compatible_with(self.unit):
+            return False  # a condition in another dimension is not inside this range
         v = _exact(value, self.unit)
         if self.lower is not None:
             lo = _exact(self.lower, self.unit)
