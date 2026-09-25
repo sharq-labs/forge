@@ -1,0 +1,9 @@
+[project]
+name = "forge-precice-provider"
+version = "0.1.0"
+description = "preCICE coupling provider for Forge (crafty): generates provider configuration from Forge coupling contracts. A coupling mechanics provider, not a scientific authority."
+requires-python = ">=3.11"
+dependencies = ["crafty", "pyprecice>=3.0"]
+
+[tool.setuptools]
+packages = ["forge_precice"]

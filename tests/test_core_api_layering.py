@@ -278,6 +278,26 @@ NON_CORE_PACKAGES = {
     "executionpacks": "execution-provider pack manifests and registry infrastructure above Core",
     "planning": "production planning and provider selection above the frozen Scientific Core",
     "product": "product-facing scientific gateway/orchestration above Core",
+    "materials": (
+        "material identity/state and sourced property resolution built on "
+        "scientific.knowledge; above the frozen Core"
+    ),
+    "numerical": (
+        "provider-neutral numerical execution (NumPy/SciPy/SymPy/PETSc/SUNDIALS "
+        "providers) beneath the Core solver protocol; computes, holds no authority"
+    ),
+    "spatial": (
+        "tagged meshes, framed fields, mappings and material binding on the Core "
+        "field/mesh records; Gmsh/meshio are providers"
+    ),
+    "pde": (
+        "provider-neutral PDE/FEM contracts and the FEniCSx provider; the solver "
+        "computes, Forge keeps identity/applicability/provenance authority"
+    ),
+    "coupling": (
+        "adapters that turn PDE/numerical providers and BIG 7 fields into participants "
+        "of the existing multiphysics runtime; no new coupling authority"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"

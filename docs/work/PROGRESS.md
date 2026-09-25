@@ -5,13 +5,504 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`, PR #105 merged)
-- PR: none recorded yet; verify GitHub before making a current PR claim.
+- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`, PR #106 merged)
+- PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 P0.1 failure triage (read this first)
+## 2026-09-25 BIG 9 — Generic Multiphysics Runtime + preCICE (BUILD phase; read this first)
+
+Pre-BIG 9 rerun of `forge-scientific-review` on BIG 8 final fixes: no blocker.
+BIG 8 gap "iterate identity" is closed by `engcore.coupling.provider_participant`
+rebuilding each provider problem per iterate (distinct execution identities).
+
+Built (engine = existing `execution/multiphysics` MultiphysicsRuntime; no parallel framework):
+- `src/engcore/coupling/` (non-Core, registered): provider_participant, field/scalar
+  ports, SpatialField<->FieldRecord adapters, consumer-side BIG 7 `mapped_input`,
+  CouplingExecutionLog. Failed provider record -> CouplingRefusal (window refused,
+  no fields); coupling outputs carry UNKNOWN uncertainty; initial iterates labelled
+  `declared_initial_iterate_not_a_result`.
+- `domains/electrical/heater_circuit.py` (SciPy root KVL with linear TCR, refuses R<=0).
+- PDE: `PDEProblem.field_inputs`, template THERMOELASTIC_PLANE_STRESS, FEniCSx branch.
+- `providers/precice` (`forge_precice`, pyprecice/preCICE **3.4.0**, conda-forge):
+  Forge contract -> rendered preCICE v3 XML (serial-implicit, absolute measures,
+  constant relaxation, initialized exchanges), two OS processes over sockets.
+- Fix: `SpatialMesh.core_support` treated an empty caller store as falsy (`or`) -> `is None`.
+
+Gate status (all executed in this session in the fenicsx env unless marked):
+A one-way thermal->thermoelastic PASS; B two-way FEniCSx heat <-> SciPy circuit,
+relaxation 0.5, residual history, 16 iterations, T=379.28 K, P=6.4434 W PASS;
+C NTC non-convergent case refused PASS; D two gmsh meshes (0.02/0.03) with explicit
+BIG 7 mapping (NOT_CONSERVATIVE, in provenance), unmapped/wrong-unit edges refused PASS;
+E FEniCSx + SciPy + lumped/preCICE providers PASS; F BIG 2 TimeWindow PASS;
+G BIG 3 hourly_environment ambient preserved, UNKNOWN refused PASS; H BIG 4 lifecycle
+moisture changes next coupled run PASS; I conservation audit FAILS at 1e-9 W
+(relaxed received vs dissipated differ 2.8e-8 W, asserted) and passes at 1e-6 W —
+a diagnostic, not validation; J **real preCICE 3.4.0 execution PASS**: 15 implicit
+iterations, T=377.3349 K, P=6.4758 W, matches independent brentq fixed point to 1e-6;
+max_iterations=3 refused although preCICE continues.
+
+Initial preCICE failures (recorded): children could not import forge_precice
+(relative PYTHONPATH with temp cwd) -> absolute import roots; first participant read
+T=0 (no initial data) -> `initialize="true"` on exchanges.
+
+BIG 9 review (`forge-scientific-reviewer`, read-only, no tests): CHANGES REQUIRED.
+Fixed blockers: (1) units at preCICE boundary were assumed -> MODEL_UNITS declared per
+driver model, contract exchange units must match, refused before launch (test degC);
+(2) caller-supplied acceptance callable -> Forge re-evaluates both declared models
+(`fixed_point_residuals`) against each exchange's absolute limit. Also fixed: empty /
+inconsistent window logs refused, duplicate quantities refused, `result_digest` added.
+Non-blocking gaps: runtime ConvergenceCriterion accepts absolute OR relative (tests
+use relative=0); participant held-state completeness not enforced (closure state could
+break replay); preCICE provider scalar-only, single rank, one mesh vertex; lumped
+thermal resistance and efficiency=1.0 joule conversion are DECLARED assumptions;
+runtime BILINEAR mapping only structured, so unstructured mapping is consumer-side.
+
+Commands executed (this session):
+- `PYTHONPATH=src:providers/precice:providers/fenicsx timeout 1500 /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests providers/precice/tests` -> 28 passed (before review fixes)
+- `PYTHONPATH=src:providers/precice timeout 900 /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/precice/tests` -> 6 passed (after review fixes)
+- `PYTHONPATH=src python -m pytest -q -p no:cacheprovider tests/test_spatial_core.py tests/test_pde_contracts.py tests/test_core_api_layering.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py` -> 53 passed
+- `PYTHONPATH=src python -m pytest -q -p no:cacheprovider tests/test_core_guards.py -k dependenc` -> 6 passed
+- `python tools/forge_check.py --changed` -> 149 passed
+- `git diff --check` -> clean
+NOT RUN: full FAST/SCIENTIFIC tiers, mutation shards, recertification, full CI.
+
+## 2026-09-25 BIG 8 — PDE / FEM Provider Layer (BUILD phase; read this first)
+
+### Pre-check
+BIG 7 re-review at `99f1c1b`: PASS WITH NON-BLOCKING GAPS, no PDE blocker.
+Adopted: COMPUTED spatial fields now require provenance; PDE layer declares
+facet roles.
+
+### Environment (exact)
+- dolfinx has no pip wheel; FEniCS PPA blocked by egress policy (403);
+  micro.mamba.pm blocked (403). Worked: micromamba 2.9.0 from GitHub releases
+  -> `/opt/mm/micromamba create -n fenicsx -c conda-forge python=3.11
+  fenics-dolfinx petsc4py mpich pint numpy scipy sympy python-gmsh meshio pytest`.
+- Versions: dolfinx 0.11.0, basix 0.11.0, ufl 2026.1.0, PETSc/petsc4py 3.25.5,
+  gmsh 4.15.2, meshio 5.3.5, Python 3.11.
+- Architecture decision (after a failed attempt): putting dolfinx/basix/ufl/
+  mpi4py imports in `src/engcore/pde` tripped the certified dependency guard
+  (`tests/test_core_guards.py`, referenced by certification manifests) because
+  `fenics-*` distribution names differ from import names and are not pip
+  installable. Instead of editing a certified guard or hiding imports, the
+  provider moved to a separate distribution `providers/fenicsx`
+  (`forge-fenicsx-provider`, own pyproject declaring `fenics-dolfinx`, etc.).
+
+### Scientific review
+BIG 8 review: CHANGES REQUIRED (no formal BLOCKER). Fixed: facet overlap
+between role groups refused (defense-in-depth; BIG 7 meshes already cannot
+overlap), schedule times must be window start or declared breakpoints with
+unit checks, execution records verify COMPUTED provenance of their fields,
+coefficient slots carry admissible ranges (k, c, E, t, h > 0; 0 <= nu < 0.5),
+transient discrete-bound violations are reported as diagnostics warnings,
+P2 node mapping tested against the analytic solution. Not re-reviewed.
+
+### Open non-blocking gaps
+- 2D affine triangles only; P1/P2 Lagrange; no hexahedra, 3D, mixed cells,
+  nonlinear materials, contact, remeshing, moving meshes, mortar/cohesive
+  interfaces.
+- Inactive PETSc options (e.g. ksp_rtol with preonly) enter identity; PETSc
+  prints "Option left" warnings.
+- Transient: constant step, backward Euler only; boundary values piecewise
+  constant per segment; source terms not exercised.
+- No heat-flux post-processing (reaction/flux integrals) yet; refinement study
+  compares interface temperature only; no asymptotic convergence claim.
+- Provider runs only in the conda env; core CI covers contracts only.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/pde providers/fenicsx/forge_fenicsx` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_pde_contracts.py tests/test_spatial_core.py tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_core_api_layering.py tests/test_field_values.py tests/test_field_records.py` — PASS, 211 passed
+command: `PYTHONPATH=src:providers/fenicsx /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests tests/test_pde_contracts.py tests/test_spatial_core.py tests/test_lifecycle_engine.py` — PASS, 61 passed (16 real FEniCSx/PETSc solves)
+command: `PYTHONPATH=src python -m pytest ... tests/test_core_guards.py -k dependenc` — PASS, 6 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI (CI has no FEniCSx environment).
+
+### Readiness
+Gate A-F executed for real. Forge takes its own mesh/material/time/
+environment/lifecycle records, runs FEniCSx/PETSc, and returns
+provenance-bound BIG 7 fields; the solver holds no scientific authority.
+BIG 9 not started.
+
+## 2026-09-25 BIG 7 — Field + Mesh Core (BUILD phase)
+
+### Pre-check
+BIG 6 re-review at `e70cc2d`: no spatial blocker; found a real ODE bug (after
+a segment with an interior output time, the next segment restarted from the
+last OUTPUT state instead of the breakpoint state). Fixed in `ee7dbcb` with a
+ramp test; `compare_executions` now requires equal output keys and compares
+trajectories.
+
+### Architecture
+- Reuses Core spatial authority: `scientific.fields.UnstructuredMesh`
+  (byte-content fingerprint), `data.mesh.UnstructuredMeshData` (validation,
+  canonical metres), `FieldDefinition`/`FieldValue`/`FieldRecord`.
+  `engcore.spatial` adds tags, facets, groups, frames, richer field
+  semantics, material binding and mappings.
+- Environment: gmsh 4.15.2 and meshio 5.3.5 installed this session
+  (`pip install gmsh meshio`); gmsh needed system GL libraries
+  (`apt-get install libglu1-mesa libxcursor1 libxinerama1 libxft2`).
+  Declared as optional extra `mesh`.
+- Failed approaches: meshio Gmsh-4 writer needs entity tables matching
+  geometrical tags (KeyError) -> Gmsh 2.2 format used; OCC bounding boxes are
+  padded (~1e-7) so a 1e-9 tolerance found no boundary curves -> tolerance
+  1e-5*min(L,H) and empty sides refused; Core bulk encoder refuses `<d`
+  buffers from Gmsh -> native byte order normalized at the mesh boundary.
+
+### Scientific review
+BIG 7 review: PASS WITH NON-BLOCKING GAPS (no BLOCKER). Fixed anyway:
+hand-built regions must match a declared group; meshio read refuses dropping
+non-zero z; group dimensions must be cell or facet; duplicate facets
+refused; `to_core` refuses tensor/mapped/resolved/assumed fields; P1
+interpolation requires P1 (lagrange/1/C0) data. Not re-reviewed.
+
+### Open non-blocking gaps
+- Facets are not checked to lie on the outer boundary (interfaces allowed);
+  BIG 8 must not treat every facet group as an outer boundary.
+- One cell type per mesh; hexahedral facets unsupported; no 3D measures.
+- Gmsh determinism only shown for one version/platform; BIG 8 must bind to
+  mesh digest, not generator options.
+- No conservative cell->cell remap; P1 interpolation is O(N*M) brute force.
+- Coordinate frames: cartesian only, no declared transforms between frames.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/spatial src/engcore/numerical` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_spatial_core.py tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_core_api_layering.py tests/test_field_coefficient_spike.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_field_profile_limit.py tests/test_field_profiled_conditions.py tests/test_field_profiles.py tests/test_field_records.py tests/test_field_values.py` — PASS, 346 passed
+command: `PYTHONPATH=src python -m pytest ... tests/test_core_guards.py -k dependenc` — PASS, 6 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+Exact meshes, regions/boundaries, unit-aware framed fields, safe mappings
+and material bindings exist independently of any PDE solver. BIG 8 not started.
+
+## 2026-09-25 BIG 6 — Mathematical / Numerical Foundation (BUILD phase)
+
+### Pre-check
+BIG 5 re-review at `05c4b2c`: no numerical blocker; one HIGH path fixed first
+(interpolation between ASSUMED points was labelled INTERPOLATED -> now
+refused; wrong-dimension conditions are inadmissible instead of raising).
+
+### Architecture
+- Existing numerical authority found and reused: `scientific.solvers.protocol`
+  (SolverIdentity, SolverSettings, ConvergenceState, RawSolverOutput),
+  `scientific.numerics` (health, conditioning, stability),
+  `solvers.admission.require_finite`. `engcore.numerical` is a kernel layer
+  beneath domain solvers, not a parallel solver framework.
+- Environment: numpy 2.4.6, scipy 1.17.1 present; SymPy 1.14.0 installed this
+  session (`pip install sympy`) and declared as optional extra `symbolic`;
+  `petsc` extra declared (petsc4py not installed). SUNDIALS: contract only;
+  a first attempt probed `scikits.odes` and was removed because an unused
+  import of an undeclarable distribution tripped the dependency guard and the
+  provider would not use it anyway.
+
+### Scientific review
+BIG 6 review: CHANGES REQUIRED for one BLOCKER, fixed: LINEAR problem
+identity with a declared digest did not hash its arrays (two matrices, one
+identity) -> operand digest now always in identity. Also fixed: bridge keeps
+failure reason/termination message; objective value no longer mislabelled
+as residual; GMRES re-checks true residual; missing tolerance -> typed
+refusal before work; minimize tolerances restricted per method; bitwise
+determinism claim removed; PETSc preconditioner must be explicit; ODE output
+times strictly after start and coverage verified. Not re-reviewed.
+
+### Open non-blocking gaps
+- Callable operators (ODE/root/optimization) have declared (attested) identity.
+- `NOT_APPLICABLE` direct solves through Core admission are not yet tested end to end.
+- Sparse problems > 2000 unknowns report no condition estimate.
+- No DAE execution; SUNDIALS/PETSc execution not exercised here.
+- Event *detection* (state-dependent events) is not supported; only declared
+  breakpoints are bridged.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/numerical src/engcore/materials` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_core_api_layering.py tests/test_min_foundation_electrothermal.py` — PASS, 201 passed
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_core_guards.py -k dependenc` — PASS, 6 passed (earlier FAIL on undeclared `scikits`, fixed as above)
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI, PETSc/SUNDIALS execution.
+
+### Readiness
+Linear (3 providers), nonlinear (SymPy operator, 2 methods), ODE (2 methods,
+BIG 2 window, BIG 5 material parameter, breakpoint bridging) and optimization
+execute through provider-neutral contracts with fail-closed diagnostics.
+BIG 7 not started.
+
+## 2026-09-25 BIG 5 — Scientific Data + Materials (BUILD phase)
+
+### Pre-check
+BIG 4 re-review at `a2578a6`: PASS WITH NON-BLOCKING GAPS, no materials
+blocker. Its MEDIUM items (per-input + state applicability; chain state link)
+were fixed inside BIG 5's identity design.
+
+### Architecture decisions
+- `scientific.knowledge` is the data authority (claims, sources, snapshots,
+  ingestion receipts, supersession). BIG 5 adds no source/claim/dataset record;
+  it binds claims to exact material + applicability and resolves them.
+- Constitutive models (e.g. `domains/electrical/material.py` R(T)) stay
+  `ScientificModelDefinition`; `materials` holds sourced data only.
+- Source alignment decision: `KnowledgeSource` is canonical for scientific
+  data; `EnvironmentSource` stays an environment-input record. Both are read
+  through `SourceIdentity` (a view). A serialized merge is deferred; it would
+  change the `environment_source` contract and needs an explicit decision.
+- Applicability is identity: `DegradationModelIdentity.applicability` and
+  `.state_ranges` are serialized fields, so changing authorization changes
+  the digest (replaces the BIG 4 "bounds not in identity" gap).
+
+### Scientific review
+BIG 5 review: CHANGES REQUIRED for one HIGH finding, fixed: interpolation
+mixed units across tabulated points (now all positions in the state
+condition's unit; test with degC/K points). Also fixed: ASSUMED datum now
+resolves as ASSUMED, breakpoints dimension-checked at construction. Not re-reviewed.
+
+### Open non-blocking gaps
+- No production (non-test) participant yet constructs `MaterialState` and
+  calls `resolve`; the closed material loop is proven in tests with a
+  reference insulation participant. Domain physics adoption is future work.
+- Removing one of two conflicting data turns UNKNOWN into KNOWN (refusal to
+  arbitrate); should be reconciled with "removing evidence must not increase
+  assurance" via `scientific.knowledge.conflicts`.
+- Only single-variable LINEAR interpolation; no multi-variable tables, no
+  explicitly authorized extrapolation.
+- Fixture data are illustrative (issuer says so); no real open dataset is
+  ingested yet (NIST/NASA/PyBaMM providers are future adapters).
+- `QuantityHistory.integrate` still labels its bound STANDARD (BIG 2 gap).
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/materials src/engcore/scenarios src/engcore/domains/battery/aging.py src/engcore/domains/corrosion src/engcore/domains/hygrothermal` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py tests/oracles/test_oracle_battery.py` — PASS, 300 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+A material property resolves from exact identity/state/source/applicability
+and changes future computation (moisture -> conductivity -> heat flux).
+BIG 6 not started.
+
+## 2026-09-25 BIG 4 — Lifecycle / Degradation Engine (BUILD phase)
+
+### Pre-check
+`forge-scientific-review` re-run on BIG 2 + BIG 3 at `5584c57`: PASS WITH
+NON-BLOCKING GAPS, no lifecycle blocker. Its advice (bind environment digest
+in lifecycle records; do not treat SAMPLED as evidence) is built into BIG 4.
+Open from it: required-kind placeholders carry empty source/classification
+(explicit, but not a named "unsourced" label).
+
+### Architecture
+- `engcore.scenarios.lifecycle`: contracts + `evaluate_degradation`,
+  `carry_forward`, `LifecycleChain`, `run_lifecycle`. Reuses
+  `InitialStateDefinition/Value/Receipt`, `StateTransitionReceipt` end values,
+  `MultiphysicsRuntime.run(initial_state=...)`, `Timeline` histories and
+  `EnvironmentTimeline`; no new timeline/state/provenance authority.
+- `EnvironmentTimeline.window_mean` (interval channels only; affine allowed;
+  uncertainty UNKNOWN with the correlation-free bound stated in notes).
+- Reference probes (uncalibrated, not validated): `domains/battery/aging.py`
+  `CalendarCycleCapacityFade`; `domains/corrosion/thickness_loss.py`
+  `LinearDoseThicknessLoss`. Chosen because they differ in drivers (mean
+  temperature + cycle count vs. wetness + chloride doses) and state
+  (capacity vs. thickness). `domains/**` is outside the certified core; no
+  pinned file changed.
+
+### Closed-loop proof (executed)
+Three one-day windows through the real `MultiphysicsRuntime`: battery
+capacity fades each window and the next window's state-of-charge swing
+(2 A * 24 h / capacity) grows accordingly; wall thickness decreases and the
+next window's heat flux (k dT / thickness) grows. `LifecycleChain.verify`
+confirms every window acknowledged the degraded state.
+
+### Scientific review
+BIG 4 review: no BLOCKER; findings fixed: (1) verify ignored uncertainty,
+(2) window_mean labelled a bound as STANDARD, (3) empty applicability meant
+"everywhere", (4) chains could mix models, (5) executor could run another
+window, (6) carry_forward could drop degraded state. Fixes tested; not re-reviewed.
+
+### Open non-blocking gaps
+- Applicability bounds are not part of `DegradationModelIdentity`; two models
+  differing only in bounds share an identity (found by a failing test).
+- `QuantityHistory.integrate` (BIG 2) still labels its correlation-free bound
+  STANDARD (notes say UPPER BOUND); `window_mean` now uses UNKNOWN — align.
+- Prior state is not range-checked (e.g. non-positive thickness).
+- No uncertainty propagation through degradation models (always UNKNOWN).
+- Loop is per participant; multi-participant/multi-model lifecycles and
+  degradation inside a single long run (sub-window feed-forward) are not built.
+- Point-sample channels give no dose/mean by design; lifecycle needs interval data.
+- `EnvironmentSource` vs P4 dataset provenance alignment still open.
+- Reference probes: linear/window-additive forms, Jensen gap, uncalibrated.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios src/engcore/domains/battery/aging.py src/engcore/domains/corrosion` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py tests/oracles/test_oracle_battery.py` — PASS, 281 passed
+command: `PYTHONPATH=src python -m pytest ... tests/oracles/test_oracle_battery.py tests/test_solver_lifecycle_state_isolation.py tests/test_world_runtime_sprint1.py` — PASS, 130 passed
+command: `PYTHONPATH=src python -m pytest ... $(ls tests/test_*battery*.py)` — INVALID: glob matched nothing, pytest collected the whole tree and stopped on 6 known duplicate-basename collection errors (2 skipped). Not a test result.
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+Closed loop demonstrated: Time + Environment + Usage/Cycles -> Degradation ->
+State transition -> changed future physics. BIG 5 not started.
+
+## 2026-09-25 BIG 2 gap closure + BIG 3 — Environment Engine (BUILD phase)
+
+### BIG 2 gaps closed
+- Same-instant: `TimePoint` stores exact rational seconds from
+  `repr(magnitude) * repr(unit factor)` (`SAME_INSTANT_RULE`); `0.1 hour ==
+  360 s`, `360.0000000000001 s != 360 s`, no epsilon. Known limit (fail-closed):
+  non-decimal magnitudes (1/3 hour) do not merge with 1200 s.
+- Input ownership: first attempt stored `input_series_digests` on the
+  timeline; the re-review showed it was forgeable (any caller could supply a
+  digest). **Failed approach, removed.** Now `input_value_at(scenario, ...)`
+  recomputes the presented scenario's digest and reads its composed schedule.
+- Mistake recorded: removing a helper by slicing to the next `def` deleted the
+  `SAME_INSTANT_RULE` block; restored in a follow-up commit.
+- BIG 2 re-review verdict: no blocker for BIG 3 after the ownership fix.
+
+### BIG 3 architecture
+`src/engcore/scenarios/environment.py` — see ACTIVE_PLAN BIG 3 checklist.
+Reuses `Timeline`, `TimePoint`, `TimeWindow`, EXPOSURE `QuantityHistory`,
+scenario digest and `NamedQuantity`; adds no clock or state authority.
+
+### BIG 3 scientific review
+First review: CHANGES REQUIRED. Fixed: B1 (BLOCKER) LINEAR interpolated across
+a discontinuity exactly at the upper sample; N1 circular kinds (wind direction)
+now refuse LINEAR; N2 each value carries its source classification; N3
+`verify_state` re-derives a deserialized state; N4 `source()` raised
+StopIteration. Fixes covered by tests; not re-reviewed.
+
+### Open non-blocking gaps (BIG 2 + BIG 3)
+- `required` pairs have no context; a channel in another context satisfies
+  coverage (its own value still appears under its context).
+- `EnvironmentSource` is a new source-identity record; align with P4 dataset
+  provenance/licensing when that lands.
+- No interpolated dose from point samples (deliberate); lifecycle needs interval data.
+- No spatial interpolation between locations; one timeline basis only.
+- Markers-before-order-sensitive precedence at a shared instant is a convention.
+- `canonical_digest` duplication (frozen Core decision needed).
+- Runtime does not emit/restore `TimelineCheckpoint`s.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py` — PASS, 228 passed (includes two executable environment scenarios: coastal exposure day, climb profile)
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 40 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+BIG 3 produces a deterministic, provenance-bound environmental history
+(`EnvironmentTimeline.history/state_at/dose`, digest-bound to scenario,
+timeline and sources). Ready to start BIG 4 Lifecycle.
+
+## 2026-09-25 BIG 2 — Time Engine foundation (BUILD phase)
+
+Strategy change: build the big architecture first; only focused smoke checks
+during the build. The full FAST / SCIENTIFIC / mutation / recertification
+campaign is deferred until after the architecture, real scenarios, a
+scientific/numerical review and a stale-test audit.
+
+### Architecture added
+
+`src/engcore/scenarios/timeline.py` (non-Core package `scenarios`, which is
+the existing transient authority; nothing new in the frozen Core):
+
+- `TimeBasis` (ELAPSED with a named origin, or ABSOLUTE_UTC with the fixed
+  epoch; no default clock), `TimePoint` (cross-basis ordering refused),
+  `TimeWindow` (HALF_OPEN = scenario segment ownership, CLOSED for horizons).
+- `TimelineEvent` + `order_events`: synchronization markers commute;
+  DISCONTINUITY / STATE_CHANGE_REQUEST / TERMINATION at a shared instant need
+  explicit distinct sequences or are refused. Events are markers, not evidence.
+- `QuantityHistory` (USAGE/EXPOSURE, piecewise-constant only): gaps are
+  UNKNOWN; integrals over gaps or affine units are UNKNOWN; the integral
+  uncertainty is the correlation-free bound sum(sigma_i*dt_i), labelled an
+  UPPER BOUND, source kind carried only when shared.
+- `CycleHistory`: indices start at 0 and never skip; counts outside the
+  recorded span are UNKNOWN; partial cycles are listed, never fractionally counted.
+- `Timeline`: binds a `ScenarioSpecification` digest (`from_scenario`) and one
+  `MultiphysicsRunRecord` (`bind_run`, records `run_id`); holds existing
+  `StateTransitionReceipt`s verbatim and enforces per-participant digest and
+  time chaining; every receipt must carry the timeline's scenario digest.
+  `state_at` is KNOWN only at recorded boundaries.
+- `input_value_at`: unsupported interpolation, method mismatch and LINEAR
+  across a declared discontinuity are refused.
+- `TimelineCheckpoint` (prefix digest + existing `CheckpointRecord`s; refused
+  inside a record window, at an order-sensitive event, or for a participant
+  state the timeline has no record of) and `compare_replay` (refuses a prefix
+  with no execution-produced record; classified
+  `replay_consistency_not_validation`).
+
+### Scientific review
+
+`forge-scientific-review` (read-only, no tests executed) returned CHANGES
+REQUIRED on the first cut. Fixed: (1) scenario/run binding bypass via empty
+digests and cross-run mixing; (2) unrecorded time counted as zero cycles;
+(3) integral bound mislabelled / promoted to COMBINED; (4) checkpoints for
+unrecorded participant state; (5) replay passing on declared-only content and
+prefix omitting history kind/unit/cycle kind/horizon end/checkpoints;
+(6) checkpoint ambiguity check only in one constructor; (8, partial) reached
+event instant not checked against its schedule. The fixes were not re-reviewed.
+
+### Open design gaps (not fixed; record before BIG 3 consumes the timeline)
+
+- Same-instant grouping uses exact float seconds after unit normalization;
+  0.1 hour vs 360 s may differ in the last ulp and escape the ambiguity check.
+- Markers are sorted before order-sensitive events at the same instant; that
+  precedence is a convention, not a declared rule.
+- `input_value_at` does not verify the series belongs to the bound scenario.
+- `canonical_digest` duplicates `sria/decision/replay.py` and
+  `claims/_records.py`; consolidating into `scientific.serialization` touches
+  frozen Core and needs a freeze decision.
+- The integral treats each entry as exactly constant; representation error is
+  not quantified (stated in the uncertainty notes, not modelled).
+- The runtime does not yet emit `TimelineCheckpoint`s or restore from them;
+  only one basis per timeline (no declared basis mapping / multi-rate).
+
+### Verification (BUILD-phase smoke only)
+
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios`
+result: PASS
+
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py`
+result: PASS — 194 passed (34 in `test_time_engine.py`)
+
+command: `PYTHONPATH=src python tools/forge_check.py --changed`
+result: PASS — 40 passed (architecture/layering gate set)
+
+command: `git diff --check`
+result: PASS
+
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q tests/test_core_freeze_*manifest.py`
+result: FAIL — 15 failed, identically on clean `main` @ `2b76017f` (stash
+test). Cause: this session's shallow clone lacks historical commits the freeze
+verifiers `git show` (e.g. `af43c896`). Environmental, not caused by BIG 2.
+
+NOT RUN: `forge_check.py --regression`, FAST tier, SCIENTIFIC tier, mutation
+shards, hardened-core recertification, full repository test suite, CI.
+
+### Next BIG step
+
+BIG 3 — Environment Engine: provider-neutral `EnvironmentState` /
+`EnvironmentTimeline` built on `Timeline` + `QuantityHistory(EXPOSURE)`, with
+source, units, uncertainty, interpolation and validity bound to every
+environmental quantity. Close the timeline gaps above that BIG 3 depends on
+(scenario ownership of input series; same-instant tolerance) first.
+
+## 2026-09-25 P0.1 failure triage
 
 `main` @ `deabe5cb` was RED. Read from GitHub Actions (run 36117761308, Tests):
 FAST 3.12, FAST 3.11 and SCIENTIFIC each failed the same **54** tests; the
