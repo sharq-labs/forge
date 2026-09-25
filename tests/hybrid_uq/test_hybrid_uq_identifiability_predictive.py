@@ -171,11 +171,14 @@ def test_linearized_predictive_is_exact_for_an_affine_model_and_keeps_its_source
         assert math.isclose(r.total_interval[1] - r.mean, q * r.total_standard_uncertainty, rel_tol=1e-9)
 
 
-def test_no_declared_sigma_means_no_measurement_part_not_a_zero_one():
+def test_no_declared_sigma_is_refused_instead_of_becoming_zero_noise():
     P = S.affine()
-    (r,) = linearized_predictive_uq(_local(P), lambda t: [Quantity(t[0] + t[1], UNIT)], [_spec("y@1", None)])
-    assert r.measurement_standard_uncertainty is None
-    assert r.total_standard_uncertainty == r.parameter_standard_uncertainty
+    with pytest.raises(HybridUQError, match="undeclared observation noise"):
+        linearized_predictive_uq(
+            _local(P),
+            lambda t: [Quantity(t[0] + t[1], UNIT)],
+            [_spec("y@1", None)],
+        )
 
 
 def test_a_merged_total_is_rejected_by_the_record():
@@ -401,3 +404,24 @@ def test_a_complete_nonlinear_check_still_downgrades_for_nonlinearity_not_incomp
     assert RouteReason.PREDICTIVE_NONLINEAR in r.reasons
     assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE not in r.reasons
     assert r.predictive_nonlinearity > 0.10
+
+
+def test_routed_identifiability_classification_is_fixed_at_95_percent():
+    with pytest.raises(HybridUQError, match="must be 0.95"):
+        assess_routed_identifiability(_local(S.affine()), confidence_level=0.90)
+
+
+def test_linearized_predictive_temperature_noise_uses_spread_semantics():
+    post = _local(S.affine())
+    spec = PredictiveObservableSpec(
+        "temperature",
+        "degC",
+        observation_sigma=Quantity(1.0, "kelvin"),
+    )
+    (result,) = linearized_predictive_uq(
+        post,
+        lambda t: [Quantity(20.0 + t[0], "degC")],
+        (spec,),
+    )
+    assert result.measurement_standard_uncertainty == pytest.approx(1.0)
+    assert result.total_standard_uncertainty >= result.parameter_standard_uncertainty

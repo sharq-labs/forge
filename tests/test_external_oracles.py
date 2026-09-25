@@ -286,3 +286,23 @@ def test_repository_pin_must_match_exact_digest_kind_and_reference(monkeypatch):
     assert check.outcome is ValidationOutcome.PASS
     assert check.establishes is None
     assert "does not match its trusted declaration" in check.detail
+
+
+def test_trusted_oracle_refuses_duck_shaped_prediction_provenance(monkeypatch):
+    oracle = _oracle_at_a_point()
+    _trust(monkeypatch, oracle)
+    predicted = _predicted()
+
+    class DuckResult:
+        result_id = "duck-result"
+        values = predicted
+        provenance = type("DuckProvenance", (), {"inputs": AT})()
+
+    check = oracle.compare(
+        predicted,
+        conditions=AT,
+        predicted_from=DuckResult(),
+    )
+    assert check.outcome is ValidationOutcome.NOT_RUN
+    assert check.establishes is None
+    assert "not a ScientificResult" in check.detail

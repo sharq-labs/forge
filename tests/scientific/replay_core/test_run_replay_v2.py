@@ -73,3 +73,11 @@ def test_run_replay_boundary_requires_typed_manifests_expectations_and_observati
         RunReplayRecord(exp,act,("not-an-expectation",),())
     with pytest.raises(InvalidScientificProblem,match="OutputObservation"):
         RunReplayRecord(exp,act,(),("not-an-observation",))
+
+
+def test_zero_expected_outputs_cannot_verify_output_agreement():
+    exp = expected()
+    item = RunReplayRecord(exp, actual(exp), (), ())
+    result = item.verification
+    assert not result.verified
+    assert any("no expected outputs" in problem for problem in result.problems)

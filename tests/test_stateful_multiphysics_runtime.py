@@ -1,4 +1,5 @@
 import hashlib
+from dataclasses import replace
 
 import pytest
 
@@ -9,10 +10,12 @@ from engcore.execution.multiphysics import (
     MultiphysicsRuntime,
 )
 from engcore.scientific.errors import InvalidScientificProblem, UnitCompatibilityError
+from engcore.scientific.ir.constraints import ConstraintCheck
 from engcore.scientific.multiphysics import (
     CouplingPlan, CouplingScheme, IterationSemantics, MultiphysicsRunRecord,
     ParticipantSpec, PhysicsGraph, PortDefinition, PortDirection, PortKind,
-    PortRef, TimePolicy,
+    PortRef, QuantityOfInterestRecord, ScenarioInputReceipt, TerminationReceipt,
+    TimePolicy,
 )
 from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from engcore.scientific.units.quantity import Quantity
@@ -30,6 +33,15 @@ def _runtime(*, acknowledge=310.0):
         transient=True,
     )
     held = {"temperature": Quantity(300, "K")}
+    held["state_digest"] = hashlib.sha256(
+        str(
+            InitialStateValue(
+                "temperature",
+                held["temperature"],
+                Uncertainty.unknown("initial state uncertainty unknown"),
+            ).to_dict()
+        ).encode()
+    ).hexdigest()
     unknown = Uncertainty.unknown("state/output uncertainty not quantified")
 
     def initialize(_instant, _inputs, _uq):
@@ -41,10 +53,14 @@ def _runtime(*, acknowledge=310.0):
             "temperature", Quantity(acknowledge, "K"), state["temperature"].uncertainty
         )
         digest = hashlib.sha256(str(acknowledged.to_dict()).encode()).hexdigest()
+        held["state_digest"] = digest
         return InitializationResult(
             {"temperature": held["temperature"]}, {"temperature": unknown},
             initial_state_receipt=InitialStateReceipt("body", instant, (acknowledged,), digest),
         )
+
+    def state_identity(_instant):
+        return held["state_digest"]
 
     def advance(request):
         return AdvanceResult(
@@ -56,6 +72,7 @@ def _runtime(*, acknowledge=310.0):
         spec, initialize=initialize, advance=advance,
         initial_state_definitions=(InitialStateDefinition("temperature", "K"),),
         initialize_state=initialize_state,
+        state_identity=state_identity,
     )
     graph = PhysicsGraph("stateful", (spec,), ())
     plan = CouplingPlan(
@@ -149,3 +166,138 @@ def test_scheduled_event_outside_runtime_horizon_is_refused():
             scheduled_events=(ScenarioEvent("late", Quantity(2, "s")),),
             scenario_digest="a" * 64,
         )
+
+
+def _basic_run(run_id="run-record-integrity", *, scenario_digest=""):
+    return _runtime().run(
+        run_id,
+        external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+        scenario_digest=scenario_digest,
+    )
+
+
+def test_run_record_refuses_end_after_plan_horizon():
+    run = _basic_run("after-horizon")
+    with pytest.raises(InvalidScientificProblem, match="ended after"):
+        replace(run, ended_at=Quantity(2, "s"))
+
+
+def test_termination_receipt_must_match_actual_run_end_even_at_nominal_horizon():
+    digest = "d" * 64
+    run = _basic_run("termination-at-horizon", scenario_digest=digest)
+    receipt = TerminationReceipt(
+        "stop",
+        1,
+        run.ended_at,
+        ConstraintCheck(
+            "stop",
+            True,
+            Quantity(0, "K"),
+            Quantity(300, "K"),
+        ),
+        "fixture stop",
+        digest,
+    )
+    bound = replace(run, termination=receipt)
+    assert bound.termination.instant == bound.ended_at
+
+    stale = replace(receipt, boundary_index=0, instant=run.started_at)
+    with pytest.raises(
+        InvalidScientificProblem,
+        match="instant disagrees with run ended_at",
+    ):
+        replace(bound, termination=stale)
+
+
+def test_each_iteration_must_record_exactly_one_step_for_every_graph_participant():
+    run = _basic_run("missing-participant-step")
+    window = run.windows[0]
+    iteration = window.iterations[0]
+    forged_iteration = replace(iteration, participant_steps=())
+    forged_window = replace(window, iterations=(forged_iteration,))
+    with pytest.raises(InvalidScientificProblem, match="exactly one step"):
+        replace(run, windows=(forged_window,))
+
+
+def test_participant_step_must_span_its_coupling_window():
+    run = _basic_run("short-participant-step")
+    window = run.windows[0]
+    iteration = window.iterations[0]
+    step = iteration.participant_steps[0]
+    forged_step = replace(step, start=Quantity(0.1, "s"))
+    forged_iteration = replace(iteration, participant_steps=(forged_step,))
+    forged_window = replace(window, iterations=(forged_iteration,))
+    with pytest.raises(InvalidScientificProblem, match="does not span coupling window"):
+        replace(run, windows=(forged_window,))
+
+
+def test_scheduled_event_inside_executed_horizon_requires_reached_receipt():
+    event = ScenarioEvent("midpoint", Quantity(0.5, "s"))
+    run = _runtime().run(
+        "missing-reached-event",
+        external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+        scheduled_events=(event,),
+        scenario_digest="e" * 64,
+    )
+    with pytest.raises(InvalidScientificProblem, match="no reached-event receipt"):
+        replace(run, reached_scheduled_events=())
+
+
+def test_state_transition_chain_is_bound_to_initial_state_and_previous_window():
+    state = InitialStateValue(
+        "temperature",
+        Quantity(310, "K"),
+        Uncertainty.unknown("initial state uncertainty unknown"),
+    )
+    run = _runtime().run(
+        "broken-state-chain",
+        external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+        initial_state={"body": {"temperature": state}},
+        scheduled_events=(ScenarioEvent("midpoint", Quantity(0.5, "s")),),
+        scenario_digest="f" * 64,
+    )
+    assert len(run.state_transitions) == 2
+    assert run.state_transitions[0].start_state_digest == run.initial_state_receipts[0].state_digest
+
+    second = replace(
+        run.state_transitions[1],
+        start_state_digest="0" * 64,
+    )
+    with pytest.raises(InvalidScientificProblem, match="state chain breaks"):
+        replace(
+            run,
+            state_transitions=(run.state_transitions[0], second),
+        )
+
+
+def test_scenario_input_receipt_is_checked_against_target_port_contract():
+    digest = "1" * 64
+    run = _basic_run("bad-scenario-input-receipt", scenario_digest=digest)
+    forged = ScenarioInputReceipt(
+        "forcing",
+        PortRef("body", "forcing"),
+        0,
+        run.started_at,
+        "segment",
+        Quantity(1, "V"),
+        Uncertainty.unknown("fixture"),
+        digest,
+    )
+    with pytest.raises(UnitCompatibilityError):
+        replace(run, scenario_input_receipts=(forged,))
+
+
+def test_quantity_of_interest_receipt_is_checked_against_output_port_contract():
+    digest = "2" * 64
+    run = _basic_run("bad-qoi-receipt", scenario_digest=digest)
+    forged = QuantityOfInterestRecord(
+        "temperature-qoi",
+        "temperature",
+        PortRef("body", "temperature"),
+        run.ended_at,
+        Quantity(1, "V"),
+        Uncertainty.unknown("fixture"),
+        digest,
+    )
+    with pytest.raises(UnitCompatibilityError):
+        replace(run, quantities_of_interest=(forged,))
