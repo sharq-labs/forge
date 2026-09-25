@@ -73,9 +73,13 @@ def test_standard_uncertainty_uses_delta_conversion_for_offset_units():
     # exact category error this test prevents.
     transfer = _transport(value=Quantity(26.85, "degree_Celsius"))
     propagated = propagate_transfer_uncertainty(transfer, _standard(2.0, "kelvin"))
-    assert propagated.standard_uncertainty is not None
-    assert propagated.standard_uncertainty.magnitude == pytest.approx(2.0)
-    assert propagated.standard_uncertainty.units == "degree_Celsius"
+    spread = propagated.standard_uncertainty
+    assert spread is not None
+    # A spread cannot be stated on an absolute affine coordinate, so it is
+    # carried on the dimension's base unit -- and it is 2 wide on either scale.
+    assert spread.units == "kelvin"
+    assert spread.magnitude == pytest.approx(2.0)
+    assert spread.magnitude_as_spread_in("delta_degC") == pytest.approx(2.0)
 
 
 def test_interval_bounds_are_absolute_values_and_keep_offset_semantics():

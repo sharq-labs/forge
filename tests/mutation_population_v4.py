@@ -5109,7 +5109,7 @@ POPULATION_V4: tuple[tuple, ...] = (
     (
         'B48c',
         'src/engcore/uq/cross_domain.py::_require_the_uncertainty_names_the_source',
-        '    if not attribution or not any(candidate in attribution for candidate in candidates):\n',
+        '    if not references or not any(candidate in references for candidate in candidates):\n',
         '    if False:\n',
         'tests/test_core_scientific_audit_batch48.py::test_r58_an_uncertainty_about_another_quantity_is_refused',
         'KILLED',

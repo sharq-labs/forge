@@ -113,7 +113,8 @@ def test_predictive_uq_refuses_an_unbound_numeric_table() -> None:
         posterior_predictive_uq(
             _posterior(),
             table,
-            PredictiveObservableSpec("H1:y", "kelvin"),
+            # noise is declared so the refusal under test is the missing unit binding, not the missing noise
+            PredictiveObservableSpec("H1:y", "kelvin", Quantity(0.1, "kelvin")),
             twin=TwinReference("system-a", "1"),
             model=ModelReference("model-a", "1"),
             source_ref="evidence:unit-binding",

@@ -925,17 +925,27 @@ def _compare(
     # values that defeat comparison, so the check has to run before it rather
     # than inside it.
     #
-    # The refusal covers EVERY reading a route supplied, not only the shared
-    # ones. A route that produced a NaN anywhere did not finish; admitting its
-    # other numbers as an independent confirmation would credit a run that
-    # failed with corroborating one that did not.
-    offenders = sorted(
-        f"{route_id}.{name}={produced[name]!r}"
-        for route_id, produced in values.items()
-        for name in shared
-        if name in produced and not math.isfinite(float(produced[name]))
-    )
-    if offenders:
+    # Two different things can be non-finite, and they are not the same finding.
+    #
+    # * A COMPARED quantity -- one every route reported. The comparison itself
+    #   has no number to stand on, so nothing is compared at all.
+    # * A quantity outside the compared set -- a diagnostic one route reported
+    #   and another did not. It cannot take part in a comparison, but the route
+    #   that produced it did not finish. That can NEVER help the routes agree
+    #   (an unfinished route corroborates nothing, so an agreement is refused
+    #   below), and it must not ERASE a finite disagreement either: the finite
+    #   shared quantities still differ, and reporting "nothing compared" in place
+    #   of that would hide a real finding. A disagreement blocks the level
+    #   whichever way it is reported, so keeping it loses no caution.
+    def _non_finite(*, compared: bool) -> list[str]:
+        return sorted(
+            f"{route_id}.{name}={produced[name]!r}"
+            for route_id, produced in values.items()
+            for name in produced
+            if (name in shared) is compared and not math.isfinite(float(produced[name]))
+        )
+
+    def _refusal(offenders: list[str]) -> RouteComparison:
         return RouteComparison(
             quantities=(),
             worst_quantity="",
@@ -950,6 +960,11 @@ def _compare(
                 f"unfinished route corroborates nothing"
             ),
         )
+
+    compared_offenders = _non_finite(compared=True)
+    if compared_offenders:
+        return _refusal(sorted(compared_offenders + _non_finite(compared=False)))
+    uncompared_offenders = _non_finite(compared=False)
     worst = 0.0
     worst_name = shared[0]
     declared_floors = dict(floors or {})
@@ -965,6 +980,11 @@ def _compare(
                 if difference > worst:
                     worst = difference
                     worst_name = name
+    if uncompared_offenders and worst <= tolerance:
+        # The finite quantities agree, but a route that reported a non-finite
+        # value did not finish, and an unfinished route cannot be one half of an
+        # agreement. The disagreement branch below is the only one that survives.
+        return _refusal(uncompared_offenders)
     plural = "y" if len(shared) == 1 else "ies"
     return RouteComparison(
         quantities=tuple(shared),
@@ -979,6 +999,13 @@ def _compare(
                 f"; {len(floored)} compared with the absolute floor the "
                 f"threshold set declares for its kind"
                 if floored
+                else ""
+            )
+            + (
+                f"; non-finite value(s) {uncompared_offenders} outside the "
+                f"compared set were also reported, which cannot make routes "
+                f"agree and are not allowed to hide this disagreement"
+                if uncompared_offenders
                 else ""
             )
         ),
@@ -1864,14 +1891,16 @@ class CrossSolverConsensus:
         # A NaN or an infinity cannot, and the comparison below already records
         # that a route returned one and compares nothing -- which establishes
         # nothing whether the numbers travel or not.
-        finite_values = {
-            route_id: {
-                name: float(value)
-                for name, value in produced.items()
-                if math.isfinite(float(value))
-            }
-            for route_id, produced in values.items()
-        }
+        #
+        # ALL of them or none: a route that produced a non-finite reading anywhere
+        # did not finish, and dropping that reading while keeping the rest would
+        # let the record be "derived" from numbers that flatter the run. Without
+        # numbers the record cannot be recomputed, so it cannot earn the level.
+        finite = all(
+            math.isfinite(float(value))
+            for produced in values.values()
+            for value in produced.values()
+        )
         return cls(
             consensus_id=consensus_id,
             routes=routes,
@@ -1889,14 +1918,19 @@ class CrossSolverConsensus:
             # which is what lets `missing_outputs` charge it for the whole
             # required set instead of overlooking it.
             reported_outputs={
-                route.route_id: tuple(
-                    sorted(finite_values.get(route.route_id, {}))
-                )
+                route.route_id: tuple(sorted(values.get(route.route_id, {})))
                 for route in routes
             },
             notes=notes,
             tolerance_key=tolerance_key,
-            reported_values=finite_values,
+            reported_values=(
+                {
+                    route_id: {name: float(value) for name, value in produced.items()}
+                    for route_id, produced in values.items()
+                }
+                if finite
+                else {}
+            ),
         )
 
     @classmethod

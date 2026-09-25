@@ -168,6 +168,45 @@ def test_scheduled_event_outside_runtime_horizon_is_refused():
         )
 
 
+def _two_participant_run(run_id="two-participants"):
+    """A graph with two independent participants, so ONE step can be missing.
+
+    A single-participant graph cannot show the run-level rule: its only way to
+    omit a step is an empty iteration, which the iteration record itself refuses.
+    """
+    unknown = Uncertainty.unknown("state/output uncertainty not quantified")
+
+    def participant(participant_id):
+        spec = ParticipantSpec(
+            participant_id, "model", "1", "realization", "1", "solver", "1",
+            "adapter", "1",
+            (PortDefinition("temperature", PortDirection.OUTPUT, PortKind.SCALAR, "temperature", "K"),),
+            transient=True,
+        )
+
+        def initialize(_instant, _inputs, _uq):
+            return InitializationResult({"temperature": Quantity(300, "K")}, {"temperature": unknown})
+
+        def advance(request):
+            return AdvanceResult(
+                request.end, {"temperature": Quantity(300, "K")}, {"temperature": unknown}, 1, True,
+            )
+
+        return spec, CallbackParticipant(spec, initialize=initialize, advance=advance)
+
+    (body_spec, body), (aux_spec, aux) = participant("body"), participant("aux")
+    plan = CouplingPlan(
+        "two-participant-plan", CouplingScheme.EXPLICIT, IterationSemantics.SERIAL,
+        TimePolicy(Quantity(0, "s"), Quantity(1, "s"), Quantity(1, "s")),
+    )
+    store = InMemoryBulkStore()
+    runtime = MultiphysicsRuntime(
+        PhysicsGraph("two-participants", (body_spec, aux_spec), ()), plan,
+        {"body": body, "aux": aux}, resolver=BulkDataResolver(store), store=store,
+    )
+    return runtime.run(run_id, external_inputs={})
+
+
 def _basic_run(run_id="run-record-integrity", *, scenario_digest=""):
     return _runtime().run(
         run_id,
@@ -209,11 +248,19 @@ def test_termination_receipt_must_match_actual_run_end_even_at_nominal_horizon()
         replace(bound, termination=stale)
 
 
+def test_an_iteration_with_no_participant_steps_is_refused_by_the_record_itself():
+    run = _basic_run("empty-iteration")
+    iteration = run.windows[0].iterations[0]
+    with pytest.raises(InvalidScientificProblem, match="requires participant step records"):
+        replace(iteration, participant_steps=())
+
+
 def test_each_iteration_must_record_exactly_one_step_for_every_graph_participant():
-    run = _basic_run("missing-participant-step")
+    run = _two_participant_run("missing-participant-step")
     window = run.windows[0]
     iteration = window.iterations[0]
-    forged_iteration = replace(iteration, participant_steps=())
+    assert {step.participant_id for step in iteration.participant_steps} == {"body", "aux"}
+    forged_iteration = replace(iteration, participant_steps=(iteration.participant_steps[0],))
     forged_window = replace(window, iterations=(forged_iteration,))
     with pytest.raises(InvalidScientificProblem, match="exactly one step"):
         replace(run, windows=(forged_window,))
@@ -283,7 +330,8 @@ def test_scenario_input_receipt_is_checked_against_target_port_contract():
         Uncertainty.unknown("fixture"),
         digest,
     )
-    with pytest.raises(UnitCompatibilityError):
+    # a port contract violation is an invalid run record (`validate_port_coupling_value`), not a unit parse error
+    with pytest.raises(InvalidScientificProblem, match="port 'forcing' expects"):
         replace(run, scenario_input_receipts=(forged,))
 
 
@@ -299,5 +347,5 @@ def test_quantity_of_interest_receipt_is_checked_against_output_port_contract():
         Uncertainty.unknown("fixture"),
         digest,
     )
-    with pytest.raises(UnitCompatibilityError):
+    with pytest.raises(InvalidScientificProblem, match="port 'temperature' expects"):
         replace(run, quantities_of_interest=(forged,))

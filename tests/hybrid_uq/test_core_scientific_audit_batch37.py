@@ -27,6 +27,7 @@ from engcore.hybrid_uq import router as RO
 from engcore.hybrid_uq.local_gaussian import LocalGaussianPosterior
 from engcore.hybrid_uq.router import HybridUQResult, routed_predictive_uncertainty
 from engcore.hybrid_uq.vocabulary import HybridUQError
+from engcore.scientific.units.quantity import Quantity
 from engcore.uq import PredictiveObservableSpec
 
 SHRINK = 1.0e-4
@@ -146,7 +147,9 @@ def _grid_result(problem):
 
 
 def _specs(problem):
-    return (PredictiveObservableSpec(observation_key=problem.observations.keys[0], unit="dimensionless"),)
+    # declared noise: a missing one is refused, never read as zero
+    return (PredictiveObservableSpec(observation_key=problem.observations.keys[0], unit="dimensionless",
+                                     observation_sigma=Quantity(0.05, "dimensionless")),)
 
 
 def _predict_one(problem):

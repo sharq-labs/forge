@@ -48,6 +48,9 @@ from engcore.scientific.units.quantity import Quantity
 from engcore.uq import PredictiveObservableSpec
 
 UNIT = "dimensionless"
+#: Total predictive uncertainty refuses to treat an undeclared observation noise as zero, so every
+#: fixture declares one. Its size is immaterial to the nonlinearity / table claims these tests are about.
+NOISE = Quantity(0.05, UNIT)
 TWIN = TwinReference("twin.synthetic", "1")
 
 
@@ -102,7 +105,7 @@ def test_r37_each_record_carries_its_own_nonlinearity():
         return [Quantity(100.0 + u1 + u2, UNIT), Quantity(100.0 + u1 + 50.0 * u1 * u2, UNIT)]
 
     affine, curved = linearized_predictive_uq(
-        post, predict, [PredictiveObservableSpec("flat", UNIT), PredictiveObservableSpec("curved", UNIT)])
+        post, predict, [PredictiveObservableSpec("flat", UNIT, NOISE), PredictiveObservableSpec("curved", UNIT, NOISE)])
     assert float(curved.predictive_nonlinearity) > 1.0
     assert float(affine.predictive_nonlinearity) < 1.0e-6, affine.predictive_nonlinearity
     assert RouteReason.PREDICTIVE_NONLINEAR in curved.reasons
@@ -125,13 +128,13 @@ def test_r37_a_prediction_with_no_parameter_uncertainty_that_the_probes_move_is_
         return [Quantity(100.0 + u1 * u1, UNIT)]
 
     with pytest.raises(RouteRefusedError):
-        linearized_predictive_uq(post, predict, [PredictiveObservableSpec("quadratic", UNIT)])
+        linearized_predictive_uq(post, predict, [PredictiveObservableSpec("quadratic", UNIT, NOISE)])
 
 
 def test_r37_a_record_carrying_a_nonfinite_nonlinearity_is_refused_on_read():
     post, _z0, _vec, _s = _affine_frame()
     (good,) = linearized_predictive_uq(post, lambda t: [Quantity(float(t[0]) + float(t[1]), UNIT)],
-                                       [PredictiveObservableSpec("y", UNIT)])
+                                       [PredictiveObservableSpec("y", UNIT, NOISE)])
     for bad in (math.inf, -math.inf):
         with pytest.raises(HybridUQError):
             dataclasses.replace(good, predictive_nonlinearity=bad,
@@ -145,7 +148,7 @@ def test_r37_a_record_carrying_a_nonfinite_nonlinearity_is_refused_on_read():
 def test_r37_a_nonlinearity_that_was_not_measured_still_means_that_and_not_a_refusal():
     post, _z0, _vec, _s = _affine_frame()
     (record,) = linearized_predictive_uq(post, lambda t: [Quantity(float(t[0]) + float(t[1]), UNIT)],
-                                         [PredictiveObservableSpec("y", UNIT)], check_nonlinearity=False)
+                                         [PredictiveObservableSpec("y", UNIT, NOISE)], check_nonlinearity=False)
     assert record.predictive_nonlinearity is None
     assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in record.reasons
     assert record.route_claim is RouteClaim.DOWNGRADED
@@ -160,7 +163,8 @@ def _grid_frame():
     axes = [np.linspace(z[0] - 0.4, z[0] + 0.4, 41), np.linspace(z[1] - 0.8, z[1] + 0.8, 41)]
     grid = problem.grid(axes)
     table = problem.table_builder()(grid.points)
-    spec = PredictiveObservableSpec(observation_key=problem.observations.keys[2], unit=UNIT)
+    spec = PredictiveObservableSpec(
+        observation_key=problem.observations.keys[2], unit=UNIT, observation_sigma=NOISE)
     return problem, grid, table, spec
 
 

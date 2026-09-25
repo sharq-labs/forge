@@ -126,16 +126,25 @@ def test_r58_an_uncertainty_attributed_to_nothing_is_refused():
 
 def test_r58_the_attributions_the_record_itself_names_are_accepted():
     """The control: the candidates are what the crossing already names."""
-    for attribution in (RECORD, "thermal.a", "temperature", f"posterior of {RECORD}"):
+    # Exact identities, alone or as the value of a `label:value` clause. Prose that merely CONTAINS one is not
+    # an attribution (see test_r58_prose_containing_an_identity_is_not_an_attribution).
+    for attribution in (RECORD, "thermal.a", "temperature", f"posterior:{RECORD}", "thermal.a.temperature"):
         assert propagate_transfer_uncertainty(_transport(), _standard(source=attribution)) is not None
+
+
+def test_r58_prose_containing_an_identity_is_not_an_attribution():
+    """An identity buried in a sentence names nothing: matching it as a substring is what spoofing exploits."""
+    for attribution in (f"posterior of {RECORD}", f"{RECORD}_of_another_run", "posterior:temperature@thermal.a"):
+        with pytest.raises(InvalidScientificProblem, match="names nothing"):
+            propagate_transfer_uncertainty(_transport(), _standard(source=attribution))
 
 
 # ---------------------------------------------------------------------------
 # the_propagated_record_keeps_the_original_attribution
 # ---------------------------------------------------------------------------
 def test_r58_the_propagated_record_keeps_both_references():
-    propagated = propagate_transfer_uncertainty(_transport(), _standard(source="posterior:temperature@thermal.a"))
-    assert "posterior:temperature@thermal.a" in propagated.source, propagated.source
+    propagated = propagate_transfer_uncertainty(_transport(), _standard(source="posterior:thermal.a.temperature"))
+    assert "posterior:thermal.a.temperature" in propagated.source, propagated.source
     assert f"transfer:{RECORD}" in propagated.source, propagated.source
 
 

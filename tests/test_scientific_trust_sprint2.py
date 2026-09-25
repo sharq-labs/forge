@@ -295,7 +295,7 @@ def test_one_independence_group_may_not_straddle_the_calibration_boundary():
             conditions=(ReferenceCondition("temperature", Quantity(315.0, "K")),),
         ),
     )
-    with pytest.raises(CorpusLeakageError, match="cannot be the fit and the test"):
+    with pytest.raises(CorpusLeakageError, match=r"independence groups \['specimen-295'\] cross dataset splits"):
         _dataset(
             cases=shared,
             observations=(_observation(295.0), _observation(315.0)),
