@@ -282,6 +282,10 @@ NON_CORE_PACKAGES = {
         "material identity/state and sourced property resolution built on "
         "scientific.knowledge; above the frozen Core"
     ),
+    "numerical": (
+        "provider-neutral numerical execution (NumPy/SciPy/SymPy/PETSc/SUNDIALS "
+        "providers) beneath the Core solver protocol; computes, holds no authority"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"
