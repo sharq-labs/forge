@@ -5,13 +5,20 @@ with `docs/project/FORGE_MASTER_PLAN.md`.
 
 ## Current objective
 
-Complete **P0.1 — Scientific Correctness Hardening**, verify the full BIG 1
-batch, and only then begin the first bounded **Time Engine** slice.
+Execution strategy changed (2026-09-25): **build the big architecture first**
+(BIG 2 Time Engine -> BIG 3 Environment -> BIG 4 Lifecycle ...), using only
+focused smoke/regression checks during the build. After the architecture is
+built: run real scenarios, review it scientifically/numerically, audit/rewrite
+stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
+recertification campaign. The P0/P0.1 full-verification items below are
+deferred to that campaign, not abandoned.
+
+Current: **BIG 2 — Time Engine foundation** (first executable slice built).
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`)
-- PR: none recorded yet; verify GitHub before making a current PR claim.
+- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`)
+- PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 
 ## Task tree
@@ -55,21 +62,42 @@ Implementation exists for BIG 1, but verification is pending.
 - [ ] Obtain green CI on the final source head.
 - [ ] Verify GitHub rules require `recertification-gate` and `tests-gate`.
 
-### P1 — Time Engine foundation
+### P1 / BIG 2 — Time Engine foundation
 
-Start only after P0/P0.1 have a trustworthy integration path.
+Implemented in `src/engcore/scenarios/timeline.py` (tests:
+`tests/test_time_engine.py`). Built during the BUILD phase; full tiers NOT RUN.
 
-- [ ] Define canonical immutable `TimePoint`, `TimeWindow` and timeline identity.
-- [ ] Define typed event, usage, exposure and cycle-history contracts.
-- [ ] Bind time contracts to the existing scenario/transient authority rather
-      than creating a parallel timeline system.
-- [ ] Define explicit state-transition records: requested state change,
-      producing authority, resulting state identity and provenance.
-- [ ] Add fail-closed handling for unsupported interpolation, discontinuities
-      and missing time bases.
-- [ ] Add deterministic serialization/digest/replay tests.
+- [x] Canonical immutable `TimeBasis` (no default clock), `TimePoint`
+      (cross-basis ordering refused), `TimeWindow` (half-open/closed,
+      empty/inverted refused) and deterministic `Timeline.digest`.
+- [x] Typed `TimelineEvent` markers (scheduled/reached synchronization,
+      discontinuity, state-change request, termination) with fail-closed
+      ordering of order-sensitive events at a shared instant.
+- [x] Usage/exposure `QuantityHistory` (gaps are UNKNOWN, integrals over gaps
+      UNKNOWN, affine-unit integrals UNKNOWN) and `CycleHistory` (no skipped
+      indices, no fractional cycle counts).
+- [x] Bound to existing authorities: `Timeline.from_scenario` binds the
+      `ScenarioSpecification` digest; `Timeline.bind_run` copies
+      `MultiphysicsRunRecord` receipts verbatim and refuses another scenario.
+- [x] State transitions reuse `StateTransitionReceipt` (no parallel record);
+      the timeline enforces per-participant digest/time chaining and exposes
+      state identity only at recorded boundaries (UNKNOWN in between).
+- [x] Unsupported interpolation, interpolation mismatch and LINEAR across a
+      declared discontinuity are refused.
+- [x] `TimelineCheckpoint` binds a prefix digest plus existing
+      `CheckpointRecord`s; `compare_replay` refuses empty prefixes and is
+      classified `replay_consistency_not_validation`.
+- [ ] Resolve open design gaps recorded in PROGRESS (BIG 2 section) before the
+      Environment Engine consumes the timeline.
+- [ ] Runtime-side emission: have `MultiphysicsRuntime` produce
+      `TimelineCheckpoint`s from its own `_checkpoint_all` and restore from them.
+- [ ] Multi-basis / multi-rate timelines (P14 prerequisite): an explicit,
+      declared basis-mapping record instead of the current refusal.
 
-### P2 — Environment foundation
+### P2 / BIG 3 — Environment foundation (NEXT BIG step)
+
+Build on `Timeline`/`QuantityHistory` (EXPOSURE kind) rather than a new
+time-series authority.
 
 - [ ] Define provider-neutral `EnvironmentState` / `EnvironmentTimeline`.
 - [ ] Support declared solar, ambient temperature, humidity, wind, rain/water,
