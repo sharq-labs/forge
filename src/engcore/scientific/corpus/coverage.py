@@ -354,7 +354,14 @@ class ValidationCoverage:
         # the region, so this is the authoritative boundary that recomputes it.
         for item in cells:
             derived = _cell_status(
-                item.passed, item.failed, self.region.minimum_supporting_cases
+                item.passed,
+                item.failed,
+                self.region.minimum_supporting_cases,
+                blockers=(
+                    item.unscored
+                    + item.unexpected_refusals
+                    + item.undeclared
+                ),
             )
             if item.status is not derived:
                 raise CorpusError(
@@ -432,17 +439,22 @@ class ValidationCoverage:
 
 
 def _cell_status(
-    passed: int, failed: int, minimum: int
+    passed: int, failed: int, minimum: int, *, blockers: int = 0
 ) -> CoverageStatus:
-    """Support is decided by answers only.
+    """Derive support from the complete evidentiary state of the cell.
 
-    Refusals are not arguments to this function, and that is the point: a cell
-    cannot become SUPPORTED because the model declined there.
+    Correct refusals stay on the guardrail axis and never count as model
+    support.  Every unresolved or adverse in-domain outcome (missing/error,
+    unexpected refusal, or undeclared applicability) blocks SUPPORTED.  This
+    prevents a failed case from being laundered into support merely by
+    replacing its answer with no answer.
     """
     if failed:
         return CoverageStatus.FAILED
     if passed == 0:
         return CoverageStatus.UNTESTED
+    if blockers:
+        return CoverageStatus.SPARSE
     return CoverageStatus.SUPPORTED if passed >= minimum else CoverageStatus.SPARSE
 
 
@@ -479,7 +491,9 @@ def build_coverage(
             "dataset than the one it was run on"
         )
     cases = {case.case_id: case for case in dataset.cases}
-    tallies: dict[tuple[int, ...], dict[str, int]] = {}
+    grouped: dict[
+        tuple[int, ...], dict[str, list[CaseVerdict]]
+    ] = {}
     unlocated: set[str] = set()
 
     for comparison in report.comparisons:
@@ -506,26 +520,40 @@ def build_coverage(
         if located is None:
             unlocated.add(case.case_id)
             continue
-        bucket = tallies.setdefault(located, dict(_EMPTY_CELL))
-        verdict = comparison.verdict
-        if verdict is CaseVerdict.PASS:
-            bucket["passed"] += 1
-        elif verdict is CaseVerdict.FAIL:
-            bucket["failed"] += 1
-        elif verdict is CaseVerdict.CORRECT_REFUSAL:
-            bucket["correct_refusals"] += 1
-        elif verdict is CaseVerdict.UNEXPECTED_REFUSAL:
-            bucket["unexpected_refusals"] += 1
-        elif verdict is CaseVerdict.APPLICABILITY_UNDECLARED:
-            # Not passed, not failed, not a judged refusal. It cannot make this
-            # cell supported and it cannot make it failed.
-            bucket["undeclared"] += 1
-        else:
-            bucket["unscored"] += 1
+        by_group = grouped.setdefault(located, {})
+        by_group.setdefault(case.independence_group, []).append(
+            comparison.verdict
+        )
 
     cells: list[CoverageCell] = []
     for coordinate in _all_cells(region):
-        bucket = tallies.get(coordinate, _EMPTY_CELL)
+        bucket = dict(_EMPTY_CELL)
+        # One independence group is one piece of evidence in a cell, however
+        # many correlated cases it contributed.  Within that group the
+        # conservative outcome wins: a failure or unresolved/adverse outcome
+        # cannot be out-voted by copies of a passing case.
+        for verdicts in grouped.get(coordinate, {}).values():
+            verdict_set = set(verdicts)
+            if CaseVerdict.FAIL in verdict_set:
+                bucket["failed"] += 1
+            elif CaseVerdict.UNEXPECTED_REFUSAL in verdict_set:
+                bucket["unexpected_refusals"] += 1
+            elif CaseVerdict.APPLICABILITY_UNDECLARED in verdict_set:
+                bucket["undeclared"] += 1
+            elif any(
+                item in verdict_set
+                for item in (
+                    CaseVerdict.UNSCORED,
+                    CaseVerdict.MISSING,
+                    CaseVerdict.ERROR,
+                    CaseVerdict.OUTSIDE_APPLICABILITY,
+                )
+            ):
+                bucket["unscored"] += 1
+            elif CaseVerdict.PASS in verdict_set:
+                bucket["passed"] += 1
+            elif CaseVerdict.CORRECT_REFUSAL in verdict_set:
+                bucket["correct_refusals"] += 1
         cells.append(
             CoverageCell(
                 cell=coordinate,
@@ -538,7 +566,14 @@ def build_coverage(
                 undeclared=bucket["undeclared"],
                 # Refusals are not passed in. A declined cell stays untested.
                 status=_cell_status(
-                    bucket["passed"], bucket["failed"], region.minimum_supporting_cases
+                    bucket["passed"],
+                    bucket["failed"],
+                    region.minimum_supporting_cases,
+                    blockers=(
+                        bucket["unscored"]
+                        + bucket["unexpected_refusals"]
+                        + bucket["undeclared"]
+                    ),
                 ),
             )
         )

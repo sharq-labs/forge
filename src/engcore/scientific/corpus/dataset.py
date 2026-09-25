@@ -621,15 +621,13 @@ class ReferenceDataset:
         for case in self.cases:
             by_group.setdefault(case.independence_group, set()).add(case.split)
         offenders = sorted(
-            group
-            for group, splits in by_group.items()
-            if DatasetSplit.CALIBRATION in splits and len(splits) > 1
+            group for group, splits in by_group.items() if len(splits) > 1
         )
         if offenders:
             raise CorpusLeakageError(
-                f"independence groups {offenders} supply both calibration and "
-                f"independent evidence; the same evidence cannot be the fit and "
-                f"the test of the fit"
+                f"independence groups {offenders} cross dataset splits; one "
+                "correlated evidence group cannot be counted in calibration, "
+                "validation, or locked holdout under more than one role"
             )
 
     # ---------------------------------------------------------------

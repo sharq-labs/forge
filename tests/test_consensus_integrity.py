@@ -420,3 +420,15 @@ def test_the_declared_conditions_are_exactly_five_and_each_one_is_load_bearing()
         {"A": dict(FULL), "B": dict(FULL)},
         routes=(_route("A", "same"), _route("B", "same")),
     ).establishes is None
+
+
+def test_unrelated_nonfinite_diagnostic_cannot_hide_a_finite_shared_disagreement():
+    consensus = _consensus(
+        {
+            "A": {**FULL, "diagnostic": float("nan")},
+            "B": {**FULL, "stress": 999.0},
+        }
+    )
+    assert consensus.comparison.agreed is False
+    assert "stress" in consensus.comparison.quantities
+    assert consensus.establishes is None

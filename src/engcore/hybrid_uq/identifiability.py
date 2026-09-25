@@ -446,8 +446,11 @@ def assess_routed_identifiability(
     )
     cov = posterior._require_numbers()
     level = float(confidence_level)
-    if not 0.0 < level < 1.0:
-        raise HybridUQError("confidence_level must lie strictly between 0 and 1")
+    if level != 0.95:
+        raise HybridUQError(
+            "identifiability is the frozen 95% classification rule on both "
+            "routes; confidence_level must be 0.95"
+        )
     q = float(norm.ppf(0.5 + level / 2.0))
     sd = np.sqrt(np.diag(cov))
     scales, lows, highs = _local_marginal_intervals(posterior.inference_point, sd, posterior.inference_transforms, q)

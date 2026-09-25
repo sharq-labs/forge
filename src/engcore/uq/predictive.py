@@ -315,6 +315,11 @@ def posterior_predictive_uq(
         raise UQProblemError("credible_mass must lie strictly between 0 and 1")
 
     _validate_posterior_table_binding(posterior, predictive_table)
+    if spec.observation_sigma is None:
+        raise UQProblemError(
+            "total predictive uncertainty requires declared observation noise; "
+            "missing uncertainty is not zero uncertainty"
+        )
 
     # An under-resolved grid yields understated uncertainty with nothing to say
     # so: a thin posterior ridge between nodes collapses the spread of the
@@ -359,22 +364,15 @@ def posterior_predictive_uq(
         values, weights, credible_mass
     )
 
-    if spec.observation_sigma is None:
-        total_variance = epistemic_variance
-        total_std = epistemic_std
-        total_lower, total_upper = epistemic_lower, epistemic_upper
-        total_method = "weighted_posterior_predictive_discrete"
-    else:
-        # Sigma is a spread. On an affine observable scale (degC/degF), an
-        # absolute conversion would add the offset and turn a 1 K sigma into a
-        # hundreds-of-degrees number. Read only the linear part of the map.
-        sigma = spec.observation_sigma.magnitude_as_spread_in(spec.unit)
-        total_variance = epistemic_variance + sigma * sigma
-        total_std = math.sqrt(total_variance)
-        tail = (1.0 - credible_mass) / 2.0
-        total_lower = _gaussian_mixture_quantile(tail, values, weights, sigma)
-        total_upper = _gaussian_mixture_quantile(1.0 - tail, values, weights, sigma)
-        total_method = "weighted_posterior_predictive_gaussian_mixture"
+    # Sigma is a spread. Missing sigma was refused above rather than
+    # silently treated as zero observation uncertainty.
+    sigma = spec.observation_sigma.magnitude_as_spread_in(spec.unit)
+    total_variance = epistemic_variance + sigma * sigma
+    total_std = math.sqrt(total_variance)
+    tail = (1.0 - credible_mass) / 2.0
+    total_lower = _gaussian_mixture_quantile(tail, values, weights, sigma)
+    total_upper = _gaussian_mixture_quantile(1.0 - tail, values, weights, sigma)
+    total_method = "weighted_posterior_predictive_gaussian_mixture"
 
     confidence = credible_mass
     epistemic_interval = Uncertainty(

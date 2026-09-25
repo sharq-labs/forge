@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from engcore.scientific.units.validation import require_unit
+from engcore.scientific.units.quantity import require_spread_unit
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class ModelResidualObservation:
         oid=str(self.observation_id).strip()
         group=str(self.independence_group).strip()
         quantity=str(self.quantity).strip()
-        units=require_unit(self.units,context="model-form residual units")
+        units=require_spread_unit(self.units,context="model-form residual units")
         residual=float(self.residual)
         known=float(self.known_uncertainty_half_width)
         if not oid or not group or not quantity:

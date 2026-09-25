@@ -85,7 +85,9 @@ def test_predictive_values_are_converted_from_table_units() -> None:
     result = posterior_predictive_uq(
         _posterior(),
         _table(values=(1.0, 2.0, 2.0), unit="volt"),
-        PredictiveObservableSpec("H1:y", "millivolt"),
+        PredictiveObservableSpec(
+            "H1:y", "millivolt", observation_sigma=Quantity(1.0, "millivolt")
+        ),
         twin=TwinReference("system-a", "1"),
         model=ModelReference("model-a", "1"),
         source_ref="evidence:unit-binding",
@@ -151,13 +153,12 @@ def test_total_interval_uses_noise_and_is_wider_than_latent_interval() -> None:
     assert "gaussian_mixture" in result.total_interval.method
 
 
-def test_without_observation_noise_total_equals_epistemic() -> None:
-    result = _run(sigma=None)
-
-    assert result.total_standard_uncertainty == result.epistemic_standard_uncertainty
-    assert result.total_interval.lower == result.epistemic_interval.lower
-    assert result.total_interval.upper == result.epistemic_interval.upper
-    assert result.total_interval.method == "weighted_posterior_predictive_discrete"
+def test_without_observation_noise_total_predictive_uq_is_refused() -> None:
+    with pytest.raises(
+        UQProblemError,
+        match="missing uncertainty is not zero uncertainty",
+    ):
+        _run(sigma=None)
 
 
 def test_replay_and_serialized_summary_are_deterministic() -> None:

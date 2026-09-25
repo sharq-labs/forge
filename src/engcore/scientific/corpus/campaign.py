@@ -432,8 +432,14 @@ def compare_observation(
             unit=unit,
             detail="residual is not finite",
         )
+    zero_tolerance_failure = allowed == 0.0 and residual > 0.0
     if allowed == 0.0:
-        normalized = 0.0 if residual == 0.0 else math.inf
+        # The mathematical ratio is +inf, but campaign reports are canonical
+        # JSON with non-finite numbers forbidden.  Saturating at the largest
+        # finite float preserves the only scientific fact this normalized
+        # number carries here -- it is strictly beyond the acceptance bound --
+        # without making the report impossible to digest or replay.
+        normalized = 0.0 if residual == 0.0 else float.fromhex("0x1.fffffffffffffp+1023")
     else:
         normalized = residual / allowed
     return ValidationComparison(
@@ -446,6 +452,12 @@ def compare_observation(
         normalized_residual=normalized,
         source_uncertainty=reported,
         unit=unit,
+        detail=(
+            "acceptance tolerance is exactly zero; normalized residual is "
+            "finite-saturated for canonical serialization"
+            if zero_tolerance_failure
+            else ""
+        ),
     )
 
 

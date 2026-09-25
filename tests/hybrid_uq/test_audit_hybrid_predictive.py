@@ -27,8 +27,8 @@ def _frame(problem, multistart=MultistartPolicy()):
     return post, np.asarray(post.inference_point), vec, np.sqrt(lam)
 
 
-def _spec(sigma=None):
-    return PredictiveObservableSpec("g", UNIT, None if sigma is None else Quantity(sigma, UNIT))
+def _spec(sigma=0.05):
+    return PredictiveObservableSpec("g", UNIT, Quantity(sigma, UNIT))
 
 
 def test_huq07_a_cross_term_between_two_principal_axes_is_not_linear():

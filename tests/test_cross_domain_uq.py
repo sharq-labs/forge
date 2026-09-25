@@ -211,3 +211,11 @@ def test_hand_forged_propagated_uncertainty_is_refused():
     )
     with pytest.raises(InvalidScientificProblem, match="does not follow"):
         UncertaintyTransfer(transfer, source, wrong)
+
+
+def test_source_uncertainty_attribution_does_not_accept_substring_spoofing():
+    with pytest.raises(InvalidScientificProblem, match="names nothing"):
+        propagate_transfer_uncertainty(
+            _transport(),
+            _standard(source="calibration:temperature_extra"),
+        )
