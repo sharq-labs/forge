@@ -169,7 +169,7 @@ def test_history_gap_is_unknown_never_zero():
 def test_integral_over_gap_is_unknown():
     result = _usage().integrate(win(0, 7))
     assert result.status is ValueStatus.UNKNOWN
-    assert "(4.0, 6.0)" in result.reason
+    assert "[4, 6)" in result.reason
 
 
 def test_integral_uncertainty_bound_and_unknown_propagation():
@@ -246,8 +246,20 @@ def _linear():
     return TimeSeriesInput("load", (TimeSample(Quantity(0, "s"), Quantity(0, "N")), TimeSample(Quantity(10, "s"), Quantity(10, "N"))), InterpolationKind.LINEAR)
 
 
+def _load_scenario(series=None, scenario_id="loads"):
+    series = series or _linear()
+    return ScenarioSpecification(
+        scenario_id, "1", Quantity(0, "s"), Quantity(10, "s"),
+        segments=(ScenarioSegment("all", Quantity(0, "s"), Quantity(10, "s"), inputs=(series,)),),
+    )
+
+
+def _bound(events=()):
+    return Timeline.from_scenario(_load_scenario(), timeline_id="t", basis=BASIS, extra_events=events)
+
+
 def test_unsupported_interpolation_and_mismatch_refused():
-    t = Timeline("t", BASIS, horizon())
+    t = _bound()
     with pytest.raises(InvalidScientificProblem, match="unsupported interpolation"):
         t.input_value_at(_linear(), tp(5), "cubic")
     with pytest.raises(InvalidScientificProblem, match="declares linear"):
@@ -256,11 +268,76 @@ def test_unsupported_interpolation_and_mismatch_refused():
 
 
 def test_linear_interpolation_across_declared_discontinuity_refused():
-    t = Timeline("t", BASIS, horizon(), events=(TimelineEvent("jump", TimelineEventKind.DISCONTINUITY, tp(4), "load"),))
+    t = _bound((TimelineEvent("jump", TimelineEventKind.DISCONTINUITY, tp(4), "load"),))
     with pytest.raises(InvalidScientificProblem, match="discontinuity"):
         t.input_value_at(_linear(), tp(5), InterpolationKind.LINEAR)
     # at a declared sample the value is declared, not interpolated
     assert t.input_value_at(_linear(), tp(10), InterpolationKind.LINEAR).magnitude == 10
+
+
+def test_unbound_series_is_refused_even_with_matching_name():
+    with pytest.raises(InvalidScientificProblem, match="not bound"):
+        Timeline("t", BASIS, horizon()).input_value_at(_linear(), tp(5), "linear")
+    with pytest.raises(InvalidScientificProblem, match="not bound"):
+        _bound().input_value_at(TimeSeriesInput("other", _linear().samples, "linear"), tp(5), "linear")
+
+
+def test_foreign_or_altered_series_is_refused():
+    foreign = TimeSeriesInput("load", (TimeSample(Quantity(0, "s"), Quantity(0, "N")), TimeSample(Quantity(10, "s"), Quantity(99, "N"))), InterpolationKind.LINEAR)
+    Timeline.from_scenario(_load_scenario(foreign, "other"), timeline_id="o", basis=BASIS)  # valid elsewhere
+    with pytest.raises(InvalidScientificProblem, match="not the schedule"):
+        _bound().input_value_at(foreign, tp(5), "linear")
+
+
+def test_forged_binding_without_scenario_is_refused():
+    with pytest.raises(InvalidScientificProblem, match="scenario-bound"):
+        Timeline("t", BASIS, horizon(), input_series_digests=(("load", D("x")),))
+
+
+def test_binding_survives_roundtrip():
+    t = _bound()
+    again = Timeline.from_dict(json.loads(json.dumps(t.to_dict())))
+    assert again.input_value_at(_linear(), tp(5), "linear").magnitude == pytest.approx(5)
+
+
+# ---- same-instant semantics ----------------------------------------------
+
+
+def test_equivalent_representations_are_the_same_instant():
+    assert TimePoint(B, Quantity(0.1, "hour")) == TimePoint(B, Quantity(360, "second"))
+    assert TimePoint(B, Quantity(1.5, "minute")) == tp(90)
+    assert TimePoint(B, Quantity(250, "millisecond")) == tp(0.25)
+    a = TimelineEvent("a", "state_change_request", TimePoint(B, Quantity(0.1, "hour")), "x")
+    b = TimelineEvent("b", "discontinuity", tp(360), "y")
+    with pytest.raises(InvalidScientificProblem, match="ambiguous"):
+        order_events((a, b))
+
+
+def test_nearly_equal_but_distinct_instants_stay_distinct():
+    near = 360.0000000000001
+    assert near != 360.0
+    assert tp(near) != tp(360) and tp(360) < tp(near)
+    a = TimelineEvent("a", "state_change_request", tp(near), "x")
+    b = TimelineEvent("b", "discontinuity", tp(360), "y")
+    assert [e.event_id for e in order_events((a, b))] == ["b", "a"]
+    # 0.1 + 0.2 is declared differently from 0.3 and is not silently merged
+    assert tp(0.1 + 0.2) != tp(0.3)
+
+
+def test_same_offset_on_different_bases_is_not_the_same_instant():
+    assert tp(5) != tp(5, "other")
+    with pytest.raises(InvalidScientificProblem, match="different bases"):
+        tp(5) <= tp(5, "other")
+
+
+def test_exact_instant_serialization_is_canonical():
+    point = TimePoint(B, Quantity(0.1, "hour"))
+    assert point.to_dict()["exact_seconds"] == "360/1"
+    assert TimePoint.from_dict(point.to_dict()) == tp(360)
+    with pytest.raises(InvalidScientificProblem, match="lowest terms"):
+        TimePoint.from_dict({"schema": point.to_dict()["schema"], "basis_id": B, "exact_seconds": "720/2"})
+    with pytest.raises(InvalidScientificProblem, match="rational"):
+        TimePoint.from_dict({"schema": point.to_dict()["schema"], "basis_id": B, "exact_seconds": 360.0})
 
 
 # ---- state transitions (existing receipt authority) -------------------------

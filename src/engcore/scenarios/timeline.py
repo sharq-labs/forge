@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from fractions import Fraction
 import hashlib
 import json
 import re
@@ -80,10 +81,27 @@ def _strict_keys(payload: Mapping[str, Any], expected: set[str], label: str) -> 
         )
 
 
-def _seconds(value: Quantity, label: str) -> Quantity:
+def exact_seconds(value: Any, label: str = "instant") -> Fraction:
+    """The canonical exact instant of a time Quantity under :data:`SAME_INSTANT_RULE`."""
+    if isinstance(value, Fraction):
+        return value
     if not isinstance(value, Quantity) or dimensionality(value.units) != _TIME_DIMENSION:
         raise InvalidScientificProblem(f"{label} must be a time Quantity")
-    return value.to("second")
+    factor = Quantity(1, value.units).to("second").magnitude
+    return Fraction(repr(float(value.magnitude))) * Fraction(repr(float(factor)))
+
+
+def _fraction_text(value: Fraction) -> str:
+    return f"{value.numerator}/{value.denominator}"
+
+
+def _parse_fraction(text: Any, label: str) -> Fraction:
+    if not isinstance(text, str) or not re.fullmatch(r"-?\d+/[1-9]\d*", text):
+        raise InvalidScientificProblem(f"{label} must be an exact 'p/q' rational")
+    value = Fraction(text)
+    if _fraction_text(value) != text:
+        raise InvalidScientificProblem(f"{label} is not in lowest terms")
+    return value
 
 
 def canonical_digest(payload: Any) -> str:
@@ -152,17 +170,24 @@ class TimePoint:
     """
 
     basis_id: str
-    offset: Quantity
+    #: Accepts a time Quantity (any time unit) or an exact ``Fraction`` of
+    #: seconds; stored as the exact canonical instant (:data:`SAME_INSTANT_RULE`).
+    offset: Any
 
     def __post_init__(self) -> None:
         if self.basis_id is None or not str(self.basis_id).strip():
             raise InvalidScientificProblem("time point requires a time basis; none was declared")
         object.__setattr__(self, "basis_id", _identifier(self.basis_id, "time point basis_id"))
-        object.__setattr__(self, "offset", _seconds(self.offset, "time point offset"))
+        object.__setattr__(self, "offset", exact_seconds(self.offset, "time point offset"))
 
     @property
-    def seconds(self) -> float:
-        return self.offset.magnitude
+    def seconds(self) -> Fraction:
+        """Exact canonical seconds; compare these, never float magnitudes."""
+        return self.offset
+
+    @property
+    def quantity(self) -> Quantity:
+        return Quantity(float(self.offset), "second")
 
     def _require_same_basis(self, other: "TimePoint") -> None:
         if not isinstance(other, TimePoint):
@@ -190,13 +215,13 @@ class TimePoint:
         return self.seconds >= other.seconds
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": TIME_POINT_SCHEMA, "basis_id": self.basis_id, "offset": self.offset.to_dict()}
+        return {"schema": TIME_POINT_SCHEMA, "basis_id": self.basis_id, "exact_seconds": _fraction_text(self.offset)}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "TimePoint":
         require_schema(payload, TIME_POINT_SCHEMA)
-        _strict_keys(payload, {"schema", "basis_id", "offset"}, "time point")
-        return cls(payload["basis_id"], Quantity.from_dict(payload["offset"]))
+        _strict_keys(payload, {"schema", "basis_id", "exact_seconds"}, "time point")
+        return cls(payload["basis_id"], _parse_fraction(payload["exact_seconds"], "time point exact_seconds"))
 
 
 class WindowClosure(str, Enum):
@@ -232,7 +257,7 @@ class TimeWindow:
 
     @property
     def duration(self) -> Quantity:
-        return Quantity(self.end.seconds - self.start.seconds, "second")
+        return Quantity(float(self.end.seconds - self.start.seconds), "second")
 
     def contains(self, point: TimePoint) -> bool:
         self.start._require_same_basis(point)
@@ -257,7 +282,7 @@ class TimeWindow:
 
     def intersection_seconds(self, other: "TimeWindow") -> float:
         self.start._require_same_basis(other.start)
-        return max(0.0, min(self.end.seconds, other.end.seconds) - max(self.start.seconds, other.start.seconds))
+        return float(max(Fraction(0), min(self.end.seconds, other.end.seconds) - max(self.start.seconds, other.start.seconds)))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": TIME_WINDOW_SCHEMA, "start": self.start.to_dict(), "end": self.end.to_dict(), "closure": self.closure.value}
@@ -540,7 +565,8 @@ class QuantityHistory:
         if gaps:
             return HistoryValue(
                 ValueStatus.UNKNOWN, None,
-                f"history {self.history_id!r} has no declared value over {list(gaps)} second",
+                f"history {self.history_id!r} has no declared value over "
+                f"{', '.join(f'[{lo}, {hi})' for lo, hi in gaps)} second",
             )
         if not is_ratio_scale(self.unit):
             return HistoryValue(
@@ -746,7 +772,7 @@ class TimelineCheckpoint:
         if len({item.participant_id for item in records}) != len(records):
             raise InvalidScientificProblem("timeline checkpoint holds two checkpoints for one participant")
         for item in records:
-            if item.instant.magnitude_in("second") != self.at.seconds:
+            if exact_seconds(item.instant) != self.at.seconds:
                 raise InvalidScientificProblem(
                     f"participant {item.participant_id!r} checkpoint is at "
                     f"{item.instant.magnitude_in('second')} second, not at the timeline checkpoint"
@@ -798,6 +824,10 @@ class Timeline:
     checkpoints: tuple[TimelineCheckpoint, ...] = ()
     #: The one execution run whose receipts this timeline holds.
     run_id: str = ""
+    #: ``(input_id, series digest)`` for every scenario input schedule this
+    #: timeline may evaluate.  Set only by :meth:`from_scenario`, from the
+    #: scenario's own composed schedules; a series is never adopted by name.
+    input_series_digests: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "timeline_id", _identifier(self.timeline_id, "timeline_id"))
@@ -845,6 +875,15 @@ class Timeline:
         if len({pid for pid, _ in initial}) != len(initial):
             raise InvalidScientificProblem("timeline declares two initial states for one participant")
         object.__setattr__(self, "initial_state_digests", tuple(sorted(initial)))
+        bound_inputs = tuple(sorted(
+            (_identifier(iid, "bound input_id"), require_digest(d, "bound input series digest"))
+            for iid, d in self.input_series_digests
+        ))
+        if len({iid for iid, _ in bound_inputs}) != len(bound_inputs):
+            raise InvalidScientificProblem("timeline binds two series to one input id")
+        if bound_inputs and not self.scenario_digest:
+            raise InvalidScientificProblem("input series can only be bound through a scenario-bound timeline")
+        object.__setattr__(self, "input_series_digests", bound_inputs)
         run_id = str(self.run_id or "").strip()
         object.__setattr__(self, "run_id", _identifier(run_id, "timeline run_id") if run_id else "")
         if self.state_transitions and (not self.scenario_digest or not run_id):
@@ -874,8 +913,8 @@ class Timeline:
         if not self.horizon.contains(point):
             raise InvalidScientificProblem(f"{label} lies outside the timeline horizon")
 
-    def _point(self, seconds: float) -> TimePoint:
-        return TimePoint(self.basis.basis_id, Quantity(seconds, "second"))
+    def _point(self, instant: Any) -> TimePoint:
+        return TimePoint(self.basis.basis_id, exact_seconds(instant))
 
     def _chain_transitions(
         self, transitions: tuple[StateTransitionReceipt, ...], initial: Mapping[str, str]
@@ -890,7 +929,7 @@ class Timeline:
                     f"different scenario; evidence must stay bound to its context"
                 )
             for bound, label in ((item.start, "start"), (item.end, "end")):
-                self._require_inside(self._point(bound.magnitude_in("second")), f"state transition {label}")
+                self._require_inside(self._point(bound), f"state transition {label}")
             by_participant.setdefault(item.participant_id, []).append(item)
         for participant, items in by_participant.items():
             items.sort(key=lambda item: item.window_index)
@@ -901,7 +940,7 @@ class Timeline:
                     f"participant {participant!r} first transition does not start from its declared initial state"
                 )
             for previous, current in zip(items, items[1:]):
-                if current.start != previous.end:
+                if exact_seconds(current.start) != exact_seconds(previous.end):
                     raise InvalidScientificProblem(
                         f"participant {participant!r} state history has a time gap or overlap "
                         f"between windows {previous.window_index} and {current.window_index}"
@@ -942,6 +981,10 @@ class Timeline:
         )
         return cls(
             timeline_id, basis, horizon, scenario.digest,
+            input_series_digests=tuple(
+                (item.input_id, canonical_digest(item.series.to_dict()))
+                for item in scenario.composed_input_schedules()
+            ),
             events=scheduled + tuple(extra_events),
             histories=histories, cycle_histories=cycle_histories,
         )
@@ -974,19 +1017,19 @@ class Timeline:
         scheduled_at = {item.subject_id: item.at.seconds for item in self.events if item.kind is TimelineEventKind.SCHEDULED_SYNCHRONIZATION}
         events = list(self.events)
         for item in run.reached_scheduled_events:
-            if item.instant.magnitude_in("second") != scheduled_at[item.event_id]:
+            if exact_seconds(item.instant) != scheduled_at[item.event_id]:
                 raise InvalidScientificProblem(
                     f"run reached {item.event_id!r} at {item.instant.magnitude_in('second')} "
                     f"second, not at its scheduled instant"
                 )
             events.append(TimelineEvent(
                 f"reached:{item.event_id}", TimelineEventKind.REACHED_SYNCHRONIZATION,
-                self._point(item.instant.magnitude_in("second")), item.event_id,
+                self._point(item.instant), item.event_id,
             ))
         if run.termination is not None:
             events.append(TimelineEvent(
                 f"termination:{run.termination.condition_id}", TimelineEventKind.TERMINATION,
-                self._point(run.termination.instant.magnitude_in("second")), run.termination.condition_id,
+                self._point(run.termination.instant), run.termination.condition_id,
             ))
         return Timeline(
             self.timeline_id, self.basis, self.horizon, self.scenario_digest,
@@ -994,6 +1037,7 @@ class Timeline:
             initial_state_digests=self.initial_state_digests,
             state_transitions=tuple(run.state_transitions), checkpoints=self.checkpoints,
             run_id=run.run_id,
+            input_series_digests=self.input_series_digests,
         )
 
     # ---- queries -----------------------------------------------------------
@@ -1012,10 +1056,10 @@ class Timeline:
         self._require_inside(point, "state query")
         items = [item for item in self.state_transitions if item.participant_id == participant_id]
         initial = dict(self.initial_state_digests).get(participant_id)
-        if items and point.seconds == items[0].start.magnitude_in("second"):
+        if items and point.seconds == exact_seconds(items[0].start):
             return StateIdentity(ValueStatus.KNOWN, items[0].start_state_digest)
         for item in items:
-            if point.seconds == item.end.magnitude_in("second"):
+            if point.seconds == exact_seconds(item.end):
                 return StateIdentity(ValueStatus.KNOWN, item.end_state_digest)
         if not items and initial is not None and point.seconds == self.horizon.start.seconds:
             return StateIdentity(ValueStatus.KNOWN, initial)
@@ -1029,9 +1073,23 @@ class Timeline:
         """Evaluate a scenario input with an explicitly requested interpolation.
 
         Refused: an interpolation method this Core does not implement, a
-        query off the series, and LINEAR interpolation across a declared
-        discontinuity of the input.
+        query off the series, LINEAR interpolation across a declared
+        discontinuity of the input, and any series this timeline's scenario did
+        not compose (unbound, foreign, or edited after binding).
         """
+        if not isinstance(series, TimeSeriesInput):
+            raise InvalidScientificProblem("input_value_at requires a TimeSeriesInput")
+        bound = dict(self.input_series_digests)
+        if series.input_id not in bound:
+            raise InvalidScientificProblem(
+                f"input {series.input_id!r} is not bound to this timeline's scenario; "
+                f"ownership is never inferred from a name"
+            )
+        if canonical_digest(series.to_dict()) != bound[series.input_id]:
+            raise InvalidScientificProblem(
+                f"series {series.input_id!r} is not the schedule this timeline's scenario "
+                f"composed (foreign scenario or altered samples)"
+            )
         try:
             kind = InterpolationKind(method)
         except ValueError as exc:
@@ -1043,7 +1101,7 @@ class Timeline:
             )
         self._require_inside(point, "input query")
         seconds = point.seconds
-        instants = [item.instant.magnitude_in("second") for item in series.samples]
+        instants = [exact_seconds(item.instant) for item in series.samples]
         if kind is InterpolationKind.LINEAR and seconds not in instants:
             if instants[0] < seconds < instants[-1]:
                 upper = next(i for i, value in enumerate(instants) if value > seconds)
@@ -1054,7 +1112,7 @@ class Timeline:
                             f"LINEAR interpolation of {series.input_id!r} would cross the "
                             f"declared discontinuity {event.event_id!r}"
                         )
-        return series.value_at(point.offset)
+        return series.value_at(point.quantity)
 
     # ---- serialization, digests, replay -----------------------------------
 
@@ -1072,6 +1130,7 @@ class Timeline:
             "state_transitions": [item.to_dict() for item in self.state_transitions],
             "checkpoints": [item.to_dict() for item in self.checkpoints],
             "run_id": self.run_id,
+            "input_series_digests": [[iid, d] for iid, d in self.input_series_digests],
         }
 
     @property
@@ -1081,7 +1140,7 @@ class Timeline:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Timeline":
         require_schema(payload, TIMELINE_SCHEMA)
-        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints", "run_id"}, "timeline")
+        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints", "run_id", "input_series_digests"}, "timeline")
         return cls(
             payload["timeline_id"], TimeBasis.from_dict(payload["basis"]), TimeWindow.from_dict(payload["horizon"]),
             payload["scenario_digest"],
@@ -1092,6 +1151,7 @@ class Timeline:
             state_transitions=tuple(StateTransitionReceipt.from_dict(item) for item in payload["state_transitions"]),
             checkpoints=tuple(TimelineCheckpoint.from_dict(item) for item in payload["checkpoints"]),
             run_id=payload["run_id"],
+            input_series_digests=tuple((iid, d) for iid, d in payload["input_series_digests"]),
         )
 
     def prefix(self, at: TimePoint) -> dict[str, Any]:
@@ -1112,7 +1172,7 @@ class Timeline:
                 if cycle.window.start.seconds < s < cycle.window.end.seconds:
                     raise InvalidScientificProblem(f"{s} second splits cycle {cycle.cycle_id!r}")
         for item in self.state_transitions:
-            if item.start.magnitude_in("second") < s < item.end.magnitude_in("second"):
+            if exact_seconds(item.start) < s < exact_seconds(item.end):
                 raise InvalidScientificProblem(f"{s} second splits a state-transition window of {item.participant_id!r}")
         return {
             "timeline_id": self.timeline_id,
@@ -1130,7 +1190,8 @@ class Timeline:
                 for item in self.cycle_histories
             ],
             "initial_state_digests": [[pid, digest] for pid, digest in self.initial_state_digests],
-            "state_transitions": [item.to_dict() for item in self.state_transitions if item.end.magnitude_in("second") <= s],
+            "input_series_digests": [[iid, d] for iid, d in self.input_series_digests],
+            "state_transitions": [item.to_dict() for item in self.state_transitions if exact_seconds(item.end) <= s],
         }
 
     def prefix_digest(self, at: TimePoint) -> str:
@@ -1173,6 +1234,7 @@ class Timeline:
             initial_state_digests=self.initial_state_digests,
             state_transitions=self.state_transitions, checkpoints=self.checkpoints + (checkpoint,),
             run_id=self.run_id,
+            input_series_digests=self.input_series_digests,
         )
 
 
