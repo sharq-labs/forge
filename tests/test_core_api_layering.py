@@ -278,6 +278,10 @@ NON_CORE_PACKAGES = {
     "executionpacks": "execution-provider pack manifests and registry infrastructure above Core",
     "planning": "production planning and provider selection above the frozen Scientific Core",
     "product": "product-facing scientific gateway/orchestration above Core",
+    "materials": (
+        "material identity/state and sourced property resolution built on "
+        "scientific.knowledge; above the frozen Core"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"

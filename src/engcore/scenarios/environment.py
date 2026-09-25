@@ -74,6 +74,9 @@ ENV_VALUE_SCHEMA = schema_string("environment_value")
 ENV_STATE_SCHEMA = schema_string("environment_state")
 ENV_TIMELINE_SCHEMA = schema_string("environment_timeline")
 
+#: Classification of a value no source supplied (an unsupplied required kind).
+NO_SOURCE = "no_source"
+
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]*$")
 
 
@@ -483,8 +486,12 @@ class EnvironmentValue:
 
     def __post_init__(self) -> None:
         status = _enum(ValueStatus, self.status, "value status")
-        if bool(self.source_id) != bool(self.source_classification):
-            raise InvalidScientificProblem("an environment value names its source and that source's classification together")
+        if not self.source_classification:
+            raise InvalidScientificProblem("an environment value always states its source classification")
+        if (not self.source_id) != (self.source_classification == NO_SOURCE):
+            raise InvalidScientificProblem(
+                f"an environment value without a source must say {NO_SOURCE!r}, and only such a value may"
+            )
         derivation = _enum(ValueDerivation, self.derivation, "value derivation")
         object.__setattr__(self, "status", status)
         object.__setattr__(self, "derivation", derivation)
@@ -710,7 +717,7 @@ class EnvironmentTimeline:
         covered = {(v.kind_id, v.location_id) for v in values}
         for kind_id, loc in self.required:
             if loc == location_id and (kind_id, loc) not in covered:
-                values.append(EnvironmentValue(kind_id, loc, "", "", "", ValueStatus.UNKNOWN, ValueDerivation.NONE, None, f"no channel supplies required {kind_id!r} at {loc!r}"))
+                values.append(EnvironmentValue(kind_id, loc, "", "", "", ValueStatus.UNKNOWN, ValueDerivation.NONE, None, f"no channel supplies required {kind_id!r} at {loc!r}", NO_SOURCE))
         return EnvironmentState(at, location_id, self.digest, tuple(values))
 
     def verify_state(self, state: EnvironmentState) -> None:

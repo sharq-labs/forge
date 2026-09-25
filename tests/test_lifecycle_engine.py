@@ -347,9 +347,8 @@ def test_chain_refuses_a_window_that_did_not_start_from_the_degraded_state():
     # even with a step recomputed on the stale run, the chain link is refused
     env = _environment()
     restep = evaluate_degradation(_corrosion_model(), environment=env, run=stale, participant_id="wall", bindings=CORROSION_BINDINGS)
-    relinked = LifecycleChain("wall", (chain.steps[0], restep))
-    with pytest.raises(InvalidScientificProblem, match="did not start from the degraded"):
-        relinked.verify((runs[0], stale))
+    with pytest.raises(InvalidScientificProblem, match="did not start from the"):
+        LifecycleChain("wall", (chain.steps[0], restep))  # refused at construction now
 
 
 def test_chain_refuses_mixed_environments_and_gaps():
@@ -370,15 +369,49 @@ def test_verify_refuses_next_window_with_quantified_uncertainty_forgery():
     forged = _executor(**WALL)(runs[1].run_id, dwin(1, 2), forged_state)
     env = _environment()
     restep = evaluate_degradation(_corrosion_model(), environment=env, run=forged, participant_id="wall", bindings=CORROSION_BINDINGS)
-    with pytest.raises(InvalidScientificProblem, match="did not start from the degraded"):
+    with pytest.raises(InvalidScientificProblem, match="did not start from the"):
         LifecycleChain("wall", (chain.steps[0], restep)).verify((runs[0], forged))
 
 
-def test_model_without_applicability_is_refused():
+def test_model_must_declare_applicability_for_every_input():
+    from dataclasses import replace
     model = _corrosion_model()
-    model.applicability = ()
-    with pytest.raises(InvalidScientificProblem, match="declares no applicability"):
+    model.identity = replace(model.identity, applicability=model.identity.applicability[:1])
+    with pytest.raises(InvalidScientificProblem, match="applicability for every input"):
         _wall_loop(model=model)
+
+
+def test_applicability_is_part_of_model_identity():
+    a, b = _corrosion_model(), _corrosion_model(max_dose=Quantity(2, "g/m^2"))
+    assert a.identity.parameters == b.identity.parameters
+    assert a.identity != b.identity
+    x, _ = _wall_loop(model=a)
+    y, _ = _wall_loop(model=b)
+    with pytest.raises(InvalidScientificProblem, match="mixes degradation models"):
+        LifecycleChain("wall", (x.steps[0], y.steps[1]))
+
+
+def test_non_physical_starting_state_is_refused_by_the_domain_range():
+    with pytest.raises(InvalidScientificProblem, match="physical range"):
+        run_lifecycle(
+            model=_corrosion_model(), environment=_environment(), participant_id="wall",
+            definitions=(InitialStateDefinition("wall_thickness", "m"),),
+            initial_state=_initial("wall", "wall_thickness", -0.001, "m"), windows=WINDOWS,
+            execute=_executor(**WALL), bindings=CORROSION_BINDINGS)
+
+
+def test_result_leaving_the_physical_domain_is_not_applied():
+    eater = LinearDoseThicknessLoss(k_wet=Quantity(1e-7, "m/s"), k_chloride=Quantity(2e-3, "m / (kg/m^2)"), max_chloride_dose=Quantity(1, "g/m^2"))
+    chain, _ = _wall_loop(model=eater)
+    assert chain.steps[-1].status is StepStatus.LEFT_STATE_DOMAIN and not chain.steps[-1].resulting_values
+
+
+def test_deserialized_chain_with_broken_state_link_is_refused():
+    chain, _ = _wall_loop()
+    payload = json.loads(json.dumps(chain.to_dict()))
+    payload["steps"][1]["prior_values"][0]["value"]["magnitude"] = 0.002
+    with pytest.raises(InvalidScientificProblem):
+        LifecycleChain.from_dict(payload)
 
 
 def test_chain_refuses_mixed_models():

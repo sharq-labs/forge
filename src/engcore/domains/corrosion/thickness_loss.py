@@ -20,12 +20,20 @@ from __future__ import annotations
 from typing import Mapping
 
 from ...scenarios.contracts import NamedQuantity
+from ...materials import ApplicabilityRange, MaterialStateSchema
 from ...scenarios.lifecycle import (
-    ApplicabilityBound, DegradationModel, DegradationModelIdentity, InputRequirement, InputSource,
+    DegradationModel, DegradationModelIdentity, InputRequirement, InputSource,
 )
 from ...scientific.multiphysics.state import InitialStateDefinition
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
+
+
+#: The wall domain's physical range for thickness: strictly positive.
+WALL_STATE_SCHEMA = MaterialStateSchema("corrosion.wall_state", (
+    ApplicabilityRange("wall_thickness", Quantity(0, "m"), None, lower_inclusive=False,
+                       unbounded_reason="no physical upper limit on thickness is declared by the domain"),
+))
 
 
 class LinearDoseThicknessLoss(DegradationModel):
@@ -38,13 +46,18 @@ class LinearDoseThicknessLoss(DegradationModel):
                 NamedQuantity("k_chloride", k_chloride.to("m / (kg/m^2)"), unstated),
             ),
             Uncertainty.unknown("window-additive linear probe of a power-law process; discrepancy not quantified"),
+            applicability=(
+                ApplicabilityRange("chloride_dose", Quantity(0, "kg/m^2"), max_chloride_dose),
+                ApplicabilityRange("wet_time", Quantity(0, "s"), None,
+                                   unbounded_reason="a wetness dose cannot exceed the window length by construction"),
+            ),
+            state_ranges=WALL_STATE_SCHEMA.ranges,
         )
         self.state_variables = (InitialStateDefinition("wall_thickness", "m"),)
         self.requirements = (
             InputRequirement("wet_time", InputSource.EXPOSURE_DOSE, "surface_wetness"),
             InputRequirement("chloride_dose", InputSource.EXPOSURE_DOSE, "chloride_deposition_rate"),
         )
-        self.applicability = (ApplicabilityBound("chloride_dose", upper=max_chloride_dose),)
 
     def advance(self, inputs: Mapping[str, Quantity], state: Mapping[str, Quantity], duration: Quantity) -> Mapping[str, Quantity]:
         p = self.identity.parameter

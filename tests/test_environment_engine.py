@@ -127,6 +127,7 @@ def test_coastal_site_state_over_a_day_is_deterministic_and_provenance_bound():
     # required but unsupplied
     wind = noon.value("wind_speed")
     assert wind.status is ValueStatus.UNKNOWN and "no channel" in wind.reason
+    assert wind.source_id == "" and wind.source_classification == "no_source"
     # interval-declared chloride with its declared uncertainty
     cl = noon.value("chloride_deposition_rate")
     assert cl.derivation is ValueDerivation.INTERVAL_DECLARED and cl.value.uncertainty.kind is UncertaintyKind.STANDARD
@@ -349,3 +350,11 @@ def test_values_carry_source_classification_and_states_verify():
         env.verify_state(EnvironmentState.from_dict(forged))
     with pytest.raises(InvalidScientificProblem, match="no source"):
         env.source("ghost")
+
+
+def test_sourceless_value_must_be_labelled_no_source():
+    from engcore.scenarios import EnvironmentValue
+    with pytest.raises(InvalidScientificProblem, match="no_source"):
+        EnvironmentValue("k", "l", "", "", "", "unknown", "none", None, "why", "imposed_environment_input")
+    with pytest.raises(InvalidScientificProblem, match="no_source"):
+        EnvironmentValue("k", "l", "c", "ch", "s", "unknown", "none", None, "why", "no_source")

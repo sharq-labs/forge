@@ -20,14 +20,22 @@ import math
 from typing import Mapping
 
 from ...scenarios.contracts import NamedQuantity
+from ...materials import ApplicabilityRange, MaterialStateSchema
 from ...scenarios.lifecycle import (
-    ApplicabilityBound, DegradationModel, DegradationModelIdentity, InputRequirement, InputSource,
+    DegradationModel, DegradationModelIdentity, InputRequirement, InputSource,
 )
 from ...scientific.multiphysics.state import InitialStateDefinition
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
 
 GAS_CONSTANT = 8.314462618  # J/(mol*K), exact SI definition
+
+#: The battery domain's physical range for its capacity state: a cell with
+#: non-positive capacity is not a state this model (or physics) can start from.
+CELL_STATE_SCHEMA = MaterialStateSchema("battery.cell_state", (
+    ApplicabilityRange("capacity", Quantity(0, "A*h"), None, lower_inclusive=False,
+                       unbounded_reason="no physical upper limit on capacity is declared by the domain"),
+))
 
 
 class CalendarCycleCapacityFade(DegradationModel):
@@ -40,6 +48,7 @@ class CalendarCycleCapacityFade(DegradationModel):
         reference_temperature: Quantity,
         k_cycle: Quantity,
         temperature_range: tuple[Quantity, Quantity] = (Quantity(273.15, "K"), Quantity(318.15, "K")),
+        max_cycles_per_window: int = 50,
     ) -> None:
         unstated = Uncertainty.unknown("reference probe parameter; not calibrated")
         self.identity = DegradationModelIdentity(
@@ -52,13 +61,17 @@ class CalendarCycleCapacityFade(DegradationModel):
                 NamedQuantity("k_cycle", k_cycle.to("dimensionless"), unstated),
             ),
             Uncertainty.unknown("linear-fade probe; Jensen gap and path dependence not quantified"),
+            applicability=(
+                ApplicabilityRange("mean_temperature", *temperature_range),
+                ApplicabilityRange("full_cycles", Quantity(0, "dimensionless"), Quantity(max_cycles_per_window, "dimensionless")),
+            ),
+            state_ranges=CELL_STATE_SCHEMA.ranges,
         )
         self.state_variables = (InitialStateDefinition("capacity", "A*h"),)
         self.requirements = (
             InputRequirement("mean_temperature", InputSource.EXPOSURE_MEAN, "ambient_temperature"),
             InputRequirement("full_cycles", InputSource.CYCLE_COUNT, "equivalent_full_cycle"),
         )
-        self.applicability = (ApplicabilityBound("mean_temperature", *temperature_range),)
 
     def advance(self, inputs: Mapping[str, Quantity], state: Mapping[str, Quantity], duration: Quantity) -> Mapping[str, Quantity]:
         p = self.identity.parameter

@@ -45,6 +45,7 @@ from ..scientific.multiphysics.state import InitialStateDefinition, InitialState
 from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.units.quantity import Quantity, normalize_unit
+from ..materials.ranges import ApplicabilityRange
 from .contracts import NamedQuantity
 from .environment import ChannelRepresentation, EnvironmentTimeline, EnvironmentValue
 from .timeline import HistoryKind, TimePoint, TimeWindow, ValueStatus, canonical_digest, exact_seconds
@@ -122,29 +123,9 @@ class InputBinding:
         object.__setattr__(self, "record_id", _identifier(self.record_id, "binding record_id"))
 
 
-@dataclass(frozen=True)
-class ApplicabilityBound:
-    """Declared range of one gathered input inside which the model is claimed to apply."""
-
-    input_id: str
-    lower: Quantity | None = None
-    upper: Quantity | None = None
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "input_id", _identifier(self.input_id, "applicability input_id"))
-        if self.lower is None and self.upper is None:
-            raise InvalidScientificProblem("an applicability bound needs a lower or an upper limit")
-        if self.lower is not None and self.upper is not None:
-            self.upper.require_compatible(self.lower.units, context="applicability bound")
-            if self.upper.magnitude_in(self.lower.units) < self.lower.magnitude:
-                raise InvalidScientificProblem("applicability upper bound is below lower bound")
-
-    def admits(self, value: Quantity) -> bool:
-        if self.lower is not None and value.magnitude_in(self.lower.units) < self.lower.magnitude:
-            return False
-        if self.upper is not None and value.magnitude_in(self.upper.units) > self.upper.magnitude:
-            return False
-        return True
+#: A model's applicability is declared with the same range record material data
+#: uses.  ``ApplicabilityBound`` is kept as the lifecycle-facing name.
+ApplicabilityBound = ApplicabilityRange
 
 
 @dataclass(frozen=True)
@@ -154,6 +135,13 @@ class DegradationModelIdentity:
     parameters: tuple[NamedQuantity, ...]
     #: Model-form discrepancy of the increment.  Default UNKNOWN, never zero.
     model_discrepancy: Uncertainty = None  # type: ignore[assignment]
+    #: Declared range of every input (bounded, or unbounded with a stated
+    #: reason).  Part of identity: changing it changes what the model is
+    #: authorized to do, so it changes the identity digest.
+    applicability: tuple[ApplicabilityRange, ...] = ()
+    #: Physical ranges of the state variables, from the owning domain's
+    #: MaterialStateSchema.  Also part of identity.
+    state_ranges: tuple[ApplicabilityRange, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "model_id", _identifier(self.model_id, "model_id"))
@@ -171,6 +159,11 @@ class DegradationModelIdentity:
         if not isinstance(discrepancy, Uncertainty):
             raise InvalidScientificProblem("model_discrepancy must be an Uncertainty")
         object.__setattr__(self, "model_discrepancy", discrepancy)
+        for label in ("applicability", "state_ranges"):
+            items = tuple(getattr(self, label))
+            if any(not isinstance(r, ApplicabilityRange) for r in items) or len({r.variable_id for r in items}) != len(items):
+                raise InvalidScientificProblem(f"model {label} must be unique ApplicabilityRange records")
+            object.__setattr__(self, label, tuple(sorted(items, key=lambda r: r.variable_id)))
 
     def parameter(self, parameter_id: str) -> Quantity:
         for p in self.parameters:
@@ -179,13 +172,14 @@ class DegradationModelIdentity:
         raise InvalidScientificProblem(f"model {self.model_id} has no parameter {parameter_id!r}")
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": MODEL_IDENTITY_SCHEMA, "model_id": self.model_id, "version": self.version, "parameters": [p.to_dict() for p in self.parameters], "model_discrepancy": self.model_discrepancy.to_dict()}
+        return {"schema": MODEL_IDENTITY_SCHEMA, "model_id": self.model_id, "version": self.version, "parameters": [p.to_dict() for p in self.parameters], "model_discrepancy": self.model_discrepancy.to_dict(), "applicability": [r.to_dict() for r in self.applicability], "state_ranges": [r.to_dict() for r in self.state_ranges]}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "DegradationModelIdentity":
         require_schema(payload, MODEL_IDENTITY_SCHEMA)
-        _strict_keys(payload, {"schema", "model_id", "version", "parameters", "model_discrepancy"}, "model identity")
-        return cls(payload["model_id"], payload["version"], tuple(NamedQuantity.from_dict(p) for p in payload["parameters"]), Uncertainty.from_dict(payload["model_discrepancy"]))
+        _strict_keys(payload, {"schema", "model_id", "version", "parameters", "model_discrepancy", "applicability", "state_ranges"}, "model identity")
+        return cls(payload["model_id"], payload["version"], tuple(NamedQuantity.from_dict(p) for p in payload["parameters"]), Uncertainty.from_dict(payload["model_discrepancy"]),
+                   tuple(ApplicabilityRange.from_dict(r) for r in payload["applicability"]), tuple(ApplicabilityRange.from_dict(r) for r in payload["state_ranges"]))
 
 
 class DegradationModel(ABC):
@@ -200,7 +194,6 @@ class DegradationModel(ABC):
     identity: DegradationModelIdentity
     state_variables: tuple[InitialStateDefinition, ...]
     requirements: tuple[InputRequirement, ...]
-    applicability: tuple[ApplicabilityBound, ...]
 
     @abstractmethod
     def advance(
@@ -222,6 +215,8 @@ class StepStatus(str, Enum):
     UNKNOWN_INPUT = "unknown_input"
     UNKNOWN_STATE = "unknown_state"
     NOT_APPLICABLE = "not_applicable"
+    #: The model's result left the owning domain's physical state range.
+    LEFT_STATE_DOMAIN = "left_state_domain"
 
 
 @dataclass(frozen=True)
@@ -408,22 +403,31 @@ def evaluate_degradation(
                                      inputs=gathered, status=StepStatus.UNKNOWN_STATE, resulting_values=(), uncertainty_status=(),
                                      reason=f"participant does not publish state {missing_state}; degradation cannot start from an unknown state")
     prior_values = tuple(prior[v] for v in sorted(variables))
+    state_ranges = {r.variable_id: r for r in model.identity.state_ranges}
+    if set(state_ranges) != set(variables):
+        raise InvalidScientificProblem(
+            f"model {model.identity.model_id} must declare the owning domain's physical range for "
+            f"every state variable {sorted(variables)}"
+        )
+    for k in variables:
+        if not state_ranges[k].admits(prior[k].value):
+            raise InvalidScientificProblem(
+                f"prior state {k}={prior[k].value.magnitude} {prior[k].value.units} is outside the "
+                f"owning domain's physical range; degradation cannot start from it"
+            )
     unknown = [g.input_id for g in gathered if g.status is not ValueStatus.KNOWN]
     if unknown:
         return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.UNKNOWN_INPUT, resulting_values=(), uncertainty_status=(),
                                      reason=f"inputs {unknown} are UNKNOWN; missing exposure or usage is not zero")
-    if not model.applicability:
+    declared = {r.variable_id: r for r in model.identity.applicability}
+    if set(declared) != set(required):
         raise InvalidScientificProblem(
-            f"model {model.identity.model_id} declares no applicability; an undeclared domain is not 'everywhere'"
+            f"model {model.identity.model_id} must declare applicability for every input {sorted(required)} "
+            f"(bounded, or unbounded with a reason); declared {sorted(declared)}"
         )
     values = {g.input_id: g.value.value for g in gathered}
-    outside = []
-    for b in model.applicability:
-        if b.input_id not in values:
-            raise InvalidScientificProblem(f"applicability names unknown input {b.input_id!r}")
-        if not b.admits(values[b.input_id]):
-            outside.append(b.input_id)
+    outside = [i for i in sorted(declared) if not declared[i].admits(values[i])]
     if outside:
         return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.NOT_APPLICABLE, resulting_values=(), uncertainty_status=(),
@@ -446,6 +450,11 @@ def evaluate_degradation(
             raise InvalidScientificProblem(f"model returned a non-Quantity for {k!r}")
         value.require_compatible(variables[k].unit, context=f"degraded state {k!r}")
         resulting.append(StateVariableValue(k, value, Uncertainty.unknown(note)))
+    left = [v.variable_id for v in resulting if not state_ranges[v.variable_id].admits(v.value)]
+    if left:
+        return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
+                                     inputs=gathered, status=StepStatus.LEFT_STATE_DOMAIN, resulting_values=(), uncertainty_status=(),
+                                     reason=f"model result for {left} leaves the owning domain's physical range; not applied")
     components.append(("resulting_state", UncertaintyKind.UNKNOWN.value))
     return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
                                  inputs=gathered, status=StepStatus.APPLIED, resulting_values=tuple(resulting),
@@ -475,7 +484,7 @@ def carry_forward(
         raise InvalidScientificProblem(f"definitions omit degraded state {dropped}; it would be silently dropped")
     state: dict[str, InitialStateValue] = {}
     for d in definitions:
-        source = degraded.get(d.variable_id) or published.get(d.variable_id)
+        source = degraded[d.variable_id] if d.variable_id in degraded else published.get(d.variable_id)
         if source is None:
             raise InvalidScientificProblem(f"declared state {d.variable_id!r} has neither a degraded nor a published value")
         state[d.variable_id] = InitialStateValue(d.variable_id, source.value, source.uncertainty)
@@ -515,6 +524,14 @@ class LifecycleChain:
                 raise InvalidScientificProblem(f"window after a {a.status.value} step has no degraded state to start from")
             if a.window.end != b.window.start:
                 raise InvalidScientificProblem("lifecycle windows must be contiguous")
+            carried = {v.variable_id: v for v in b.prior_values}
+            for v in a.resulting_values:
+                got = carried.get(v.variable_id)
+                if got is None or got.value.magnitude_in(v.value.units) != v.value.magnitude or got.uncertainty != v.uncertainty:
+                    raise InvalidScientificProblem(
+                        f"step for window starting {b.window.start.seconds} s did not start from the previous "
+                        f"step's degraded {v.variable_id!r}"
+                    )
         object.__setattr__(self, "steps", steps)
 
     def verify(self, runs: tuple[Any, ...]) -> None:
