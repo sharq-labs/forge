@@ -5,13 +5,60 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`, PR #105 merged)
+- Branch: `ci/self-hosted-heavy-runner` (from `origin/main` @ `2b76017f`, PR #106 merged)
 - PR: none recorded yet; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 P0.1 failure triage (read this first)
+## 2026-09-25 self-hosted heavy CI runner (design + tooling; NOT RUN on the PC)
+
+Goal: run the expensive CI jobs on the owner's PC without weakening any gate.
+Full design, threat model, setup and operating procedure: `docs/assurance/SELF_HOSTED_RUNNER.md`.
+
+- Heavy jobs (`fast`, `mutations`, `scientific`, `reproduce`, `benchmark`; recertify `fast311/312`,
+  `scientific312`, `campaign312`, `regression312`, `formal_mutations_0-3`, `v4_mutations_0-7`,
+  `trust_mutations`; `trust-mutations`) use `runs-on: fromJSON(<classifier>.outputs.heavy_runs_on)`.
+  Everything that mints or pushes trust (`certify`, certificate verification, both gates,
+  `branch-policy`, classifiers) stays GitHub-hosted. Job names, `needs:` and evidence names are unchanged.
+- `tools/ci/select_heavy_runner.py`: default `github-hosted`; `FORGE_HEAVY_RUNNER=self-hosted` opts in;
+  untrusted events (forks, non-collaborators, odd event types) stay on GitHub-hosted; an unknown value
+  fails the run. An offline PC waits in the queue (never re-routed); optional `RUNNER_STATUS_TOKEN`
+  fails fast instead.
+- **The workflow-side routing is not the security boundary** (a fork's PR runs its own copy of the workflow).
+  The boundary is `tools/ci/runner_guard.py` run by a root-owned job-started hook on the PC, the repository's
+  fork-approval setting, and a dedicated WSL2 distro with no Windows drives/interop and no sudo.
+- Each heavy job now: read-only token, `persist-credentials: false`, asserts HEAD == the commit under test and
+  a clean tree before any gate, installs into a job-scoped venv on self-hosted, records
+  `runner-identity-<job>-<sha>`. The scientific gates require ngspice on the PC.
+- Read-only finding: `fork-pr-contributor-approval` is `first_time_contributors` (too weak for this design);
+  no runners or variables existed. **No repository setting was changed.**
+- Failed/abandoned approaches: an uncertified composite action for the shared steps (rejected: `.github/**`
+  outside the two workflows is outside the certificate, so weakening it would not move the control-plane digest);
+  ephemeral runners (rejected: they need an Administration-scoped token stored on the PC); wiping `_temp` or the
+  workspace in the job-started hook (rejected: the runner has already prepared them; cleanup runs after each job and
+  before every service start instead).
+- P0.1 status is unchanged by this slice: PR #106's Recertify run was still executing when #106 merged, so its
+  certificate child can never reach `main` and `certification/current_core_v2.json` stays stale. This PR edits the
+  certified workflows, so it is classified source-mode and its own recertification produces the certificate child.
+
+2026-09-25 (local, Windows host, Python 3.14; not on a runner)
+command: `python -m pytest -q tests/test_ci_runner_selection.py`
+result: PASS
+summary: 72 passed (routing, availability, machine-side guard). 16 targeted mutations of `tools/ci/` were each killed by a test.
+commit: working tree on 2b76017f
+
+2026-09-25 (local)
+command: `python -m pytest -q -n 4 tests/test_recertification_scope.py tests/test_certification_control_plane.py tests/test_certificate_lineage.py tests/test_hardening_assurance.py tests/test_ci_runner_selection.py tests/test_core_guards.py tests/test_pin_portability.py`
+result: PASS
+summary: 537 passed against the modified workflows (topology, gate names, no `git clean`/reset text, control-plane pins)
+commit: working tree on 2b76017f
+
+NOT RUN: `actionlint`; installing/registering the runner; the hooks on a real runner (whether the runner exports the guard's
+variables to hooks is unobserved and the guard refuses if they are absent); the heavy jobs on the PC; numerical agreement of
+pinned-digest tests on the PC's CPU; the `RUNNER_STATUS_TOKEN` API check.
+
+## 2026-09-25 P0.1 failure triage
 
 `main` @ `deabe5cb` was RED. Read from GitHub Actions (run 36117761308, Tests):
 FAST 3.12, FAST 3.11 and SCIENTIFIC each failed the same **54** tests; the

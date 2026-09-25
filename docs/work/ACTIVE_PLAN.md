@@ -10,8 +10,11 @@ batch, and only then begin the first bounded **Time Engine** slice.
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`)
+- Branch: `ci/self-hosted-heavy-runner` (from `origin/main` @ `2b76017f`)
 - PR: none recorded yet; verify GitHub before making a current PR claim.
+- Side slice (owner-requested, not P1): self-hosted heavy CI runner, see `docs/assurance/SELF_HOSTED_RUNNER.md`.
+  P0.1 stays open until a recertification produces the certificate child for `main` and `main` requires
+  `tests-gate` and `recertification-gate`.
 - Base: `main`
 
 ## Task tree
