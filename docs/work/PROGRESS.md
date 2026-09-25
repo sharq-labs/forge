@@ -204,6 +204,9 @@ A second re-review of these follow-up fixes was NOT run.
   on `tree.clean` only (uncommitted files; re-run after commit below). `test_heterogeneous_ngspice::test_r1` passes.
 - `python tools/forge_check.py --changed` — PASS, 149 passed. `python -m compileall -q src providers tests` — OK.
   `git diff --cached --check` — clean; no CRLF in staged files.
+- After commit `ae605fbc` (clean tree): `pytest -q tests/test_core_freeze_manifest.py` — 21 passed, 1 skipped, 1 failed;
+  `test_the_tree_is_core_freeze_v1` PASSES; the one failure is the pre-existing baseline
+  `test_a_descendant_that_keeps_the_contract_still_verifies`.
 
 ## 2026-09-25 BIG 10 — Multi-timescale Runtime (BUILD phase)
 
