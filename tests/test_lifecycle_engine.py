@@ -251,7 +251,7 @@ def test_uncertainty_components_are_separated_and_result_stays_unknown():
     chain, _ = _battery_loop()
     status = dict(chain.steps[0].uncertainty_status)
     assert status["model_discrepancy"] == "unknown"
-    assert status["input:mean_temperature"] == "standard"
+    assert status["input:mean_temperature"] == "unknown"  # bound is not a 1-sigma
     assert status["input:full_cycles"] == "unknown"
     assert status["resulting_state"] == "unknown"
     assert chain.steps[0].resulting_values[0].uncertainty.kind is UncertaintyKind.UNKNOWN
@@ -359,3 +359,46 @@ def test_chain_refuses_mixed_environments_and_gaps():
         LifecycleChain("wall", (a.steps[0], b.steps[1]))
     with pytest.raises(InvalidScientificProblem, match="contiguous"):
         LifecycleChain("wall", (a.steps[0], a.steps[2]))
+
+
+def test_verify_refuses_next_window_with_quantified_uncertainty_forgery():
+    chain, runs = _wall_loop()
+    degraded = chain.steps[0].resulting_values[0]
+    forged_state = {"wall": {"wall_thickness": InitialStateValue(
+        "wall_thickness", degraded.value,
+        Uncertainty(kind="standard", standard_uncertainty=Quantity(1e-6, "m"), method="invented"))}}
+    forged = _executor(**WALL)(runs[1].run_id, dwin(1, 2), forged_state)
+    env = _environment()
+    restep = evaluate_degradation(_corrosion_model(), environment=env, run=forged, participant_id="wall", bindings=CORROSION_BINDINGS)
+    with pytest.raises(InvalidScientificProblem, match="did not start from the degraded"):
+        LifecycleChain("wall", (chain.steps[0], restep)).verify((runs[0], forged))
+
+
+def test_model_without_applicability_is_refused():
+    model = _corrosion_model()
+    model.applicability = ()
+    with pytest.raises(InvalidScientificProblem, match="declares no applicability"):
+        _wall_loop(model=model)
+
+
+def test_chain_refuses_mixed_models():
+    a, _ = _wall_loop()
+    other = LinearDoseThicknessLoss(k_wet=Quantity(2e-11, "m/s"), k_chloride=Quantity(2e-3, "m / (kg/m^2)"), max_chloride_dose=Quantity(1, "g/m^2"))
+    b, _ = _wall_loop(model=other)
+    with pytest.raises(InvalidScientificProblem, match="mixes degradation models"):
+        LifecycleChain("wall", (a.steps[0], b.steps[1]))
+
+
+def test_executor_running_a_different_window_is_refused():
+    inner = _executor(**WALL)
+    with pytest.raises(InvalidScientificProblem, match="different window"):
+        run_lifecycle(model=_corrosion_model(), environment=_environment(), participant_id="wall",
+                      definitions=(InitialStateDefinition("wall_thickness", "m"),),
+                      initial_state=_initial("wall", "wall_thickness", 0.002, "m"), windows=WINDOWS,
+                      execute=lambda rid, w, st: inner(rid, dwin(0, 2), st), bindings=CORROSION_BINDINGS)
+
+
+def test_carry_forward_refuses_definitions_that_drop_degraded_state():
+    chain, runs = _wall_loop()
+    with pytest.raises(InvalidScientificProblem, match="omit degraded"):
+        carry_forward(chain.steps[0], runs[0], ())

@@ -11,7 +11,72 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 2 gap closure + BIG 3 — Environment Engine (BUILD phase; read this first)
+## 2026-09-25 BIG 4 — Lifecycle / Degradation Engine (BUILD phase; read this first)
+
+### Pre-check
+`forge-scientific-review` re-run on BIG 2 + BIG 3 at `5584c57`: PASS WITH
+NON-BLOCKING GAPS, no lifecycle blocker. Its advice (bind environment digest
+in lifecycle records; do not treat SAMPLED as evidence) is built into BIG 4.
+Open from it: required-kind placeholders carry empty source/classification
+(explicit, but not a named "unsourced" label).
+
+### Architecture
+- `engcore.scenarios.lifecycle`: contracts + `evaluate_degradation`,
+  `carry_forward`, `LifecycleChain`, `run_lifecycle`. Reuses
+  `InitialStateDefinition/Value/Receipt`, `StateTransitionReceipt` end values,
+  `MultiphysicsRuntime.run(initial_state=...)`, `Timeline` histories and
+  `EnvironmentTimeline`; no new timeline/state/provenance authority.
+- `EnvironmentTimeline.window_mean` (interval channels only; affine allowed;
+  uncertainty UNKNOWN with the correlation-free bound stated in notes).
+- Reference probes (uncalibrated, not validated): `domains/battery/aging.py`
+  `CalendarCycleCapacityFade`; `domains/corrosion/thickness_loss.py`
+  `LinearDoseThicknessLoss`. Chosen because they differ in drivers (mean
+  temperature + cycle count vs. wetness + chloride doses) and state
+  (capacity vs. thickness). `domains/**` is outside the certified core; no
+  pinned file changed.
+
+### Closed-loop proof (executed)
+Three one-day windows through the real `MultiphysicsRuntime`: battery
+capacity fades each window and the next window's state-of-charge swing
+(2 A * 24 h / capacity) grows accordingly; wall thickness decreases and the
+next window's heat flux (k dT / thickness) grows. `LifecycleChain.verify`
+confirms every window acknowledged the degraded state.
+
+### Scientific review
+BIG 4 review: no BLOCKER; findings fixed: (1) verify ignored uncertainty,
+(2) window_mean labelled a bound as STANDARD, (3) empty applicability meant
+"everywhere", (4) chains could mix models, (5) executor could run another
+window, (6) carry_forward could drop degraded state. Fixes tested; not re-reviewed.
+
+### Open non-blocking gaps
+- Applicability bounds are not part of `DegradationModelIdentity`; two models
+  differing only in bounds share an identity (found by a failing test).
+- `QuantityHistory.integrate` (BIG 2) still labels its correlation-free bound
+  STANDARD (notes say UPPER BOUND); `window_mean` now uses UNKNOWN — align.
+- Prior state is not range-checked (e.g. non-positive thickness).
+- No uncertainty propagation through degradation models (always UNKNOWN).
+- Loop is per participant; multi-participant/multi-model lifecycles and
+  degradation inside a single long run (sub-window feed-forward) are not built.
+- Point-sample channels give no dose/mean by design; lifecycle needs interval data.
+- `EnvironmentSource` vs P4 dataset provenance alignment still open.
+- Reference probes: linear/window-additive forms, Jensen gap, uncalibrated.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios src/engcore/domains/battery/aging.py src/engcore/domains/corrosion` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py tests/oracles/test_oracle_battery.py` — PASS, 281 passed
+command: `PYTHONPATH=src python -m pytest ... tests/oracles/test_oracle_battery.py tests/test_solver_lifecycle_state_isolation.py tests/test_world_runtime_sprint1.py` — PASS, 130 passed
+command: `PYTHONPATH=src python -m pytest ... $(ls tests/test_*battery*.py)` — INVALID: glob matched nothing, pytest collected the whole tree and stopped on 6 known duplicate-basename collection errors (2 skipped). Not a test result.
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+Closed loop demonstrated: Time + Environment + Usage/Cycles -> Degradation ->
+State transition -> changed future physics. BIG 5 not started.
+
+## 2026-09-25 BIG 2 gap closure + BIG 3 — Environment Engine (BUILD phase)
 
 ### BIG 2 gaps closed
 - Same-instant: `TimePoint` stores exact rational seconds from

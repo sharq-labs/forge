@@ -778,19 +778,14 @@ class EnvironmentTimeline:
             else:
                 standard = False
         duration = window.end.seconds - window.start.seconds
-        if standard and is_ratio_scale(c.unit):
-            uncertainty = Uncertainty(
-                kind=UncertaintyKind.STANDARD,
-                standard_uncertainty=Quantity(float(sigma / duration), c.unit),
-                method="sum of sigma_i*dt_i / T: upper bound on the standard deviation of the "
-                       "window mean for any correlation between entries",
-                notes="conservative UPPER BOUND, not an estimated 1-sigma; representation error NOT included",
-            )
-        else:
-            uncertainty = Uncertainty.unknown(
-                f"window mean of {channel_id!r}: an entry lacks standard uncertainty or the unit "
-                f"cannot carry a spread; representation error not included"
-            )
+        # The only computable spread is a correlation-free UPPER BOUND, which is
+        # not a 1-sigma; it is stated in the notes and the kind stays UNKNOWN.
+        bound = (f"; a correlation-free upper bound on its spread is {float(sigma / duration)!r} {c.unit}"
+                 if standard and is_ratio_scale(c.unit) else "")
+        uncertainty = Uncertainty.unknown(
+            f"window mean of {channel_id!r}: standard uncertainty not estimated (correlation "
+            f"between entries undeclared; representation error not included){bound}"
+        )
         return self._known(c, ValueDerivation.INTERVAL_DECLARED, NamedQuantity(f"{channel_id}.mean", Quantity(float(total / duration), c.unit), uncertainty))
 
     # ---- serialization -----------------------------------------------------

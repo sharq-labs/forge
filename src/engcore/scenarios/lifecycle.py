@@ -413,6 +413,10 @@ def evaluate_degradation(
         return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.UNKNOWN_INPUT, resulting_values=(), uncertainty_status=(),
                                      reason=f"inputs {unknown} are UNKNOWN; missing exposure or usage is not zero")
+    if not model.applicability:
+        raise InvalidScientificProblem(
+            f"model {model.identity.model_id} declares no applicability; an undeclared domain is not 'everywhere'"
+        )
     values = {g.input_id: g.value.value for g in gathered}
     outside = []
     for b in model.applicability:
@@ -466,6 +470,9 @@ def carry_forward(
     last = max((t for t in run.state_transitions if t.participant_id == step.participant_id), key=lambda t: t.window_index)
     published = {v.variable_id: v for v in last.end_values}
     degraded = {v.variable_id: v for v in step.resulting_values}
+    dropped = sorted(set(degraded) - {d.variable_id for d in definitions})
+    if dropped:
+        raise InvalidScientificProblem(f"definitions omit degraded state {dropped}; it would be silently dropped")
     state: dict[str, InitialStateValue] = {}
     for d in definitions:
         source = degraded.get(d.variable_id) or published.get(d.variable_id)
@@ -501,6 +508,8 @@ class LifecycleChain:
                 raise InvalidScientificProblem("lifecycle chain mixes participants")
             if (s.scenario_digest, s.environment_digest) != (first.scenario_digest, first.environment_digest):
                 raise InvalidScientificProblem("lifecycle chain mixes scenarios or environments")
+            if s.model != first.model:
+                raise InvalidScientificProblem("lifecycle chain mixes degradation models or parameters")
         for a, b in zip(steps, steps[1:]):
             if not a.applied:
                 raise InvalidScientificProblem(f"window after a {a.status.value} step has no degraded state to start from")
@@ -524,7 +533,8 @@ class LifecycleChain:
                 raise InvalidScientificProblem("next window's initial state is not at the degraded instant")
             for v in step.resulting_values:
                 got = acknowledged.get(v.variable_id)
-                if got is None or got.magnitude_in(v.value.units) != v.value.magnitude:
+                got_uq = {x.variable_id: x.uncertainty for x in receipts[0].values}.get(v.variable_id)
+                if got is None or got.magnitude_in(v.value.units) != v.value.magnitude or got_uq != v.uncertainty:
                     raise InvalidScientificProblem(
                         f"run {following.run_id!r} did not start from the degraded {v.variable_id!r}"
                     )
@@ -568,6 +578,8 @@ def run_lifecycle(
     state = initial_state
     for index, window in enumerate(windows):
         run = execute(f"{participant_id}-window-{index}", window, state)
+        if exact_seconds(run.started_at) != window.start.seconds or exact_seconds(run.ended_at) != window.end.seconds:
+            raise InvalidScientificProblem(f"execute ran a different window than window {index} requested")
         runs.append(run)
         step = evaluate_degradation(model, environment=environment, run=run, participant_id=participant_id, bindings=bindings)
         steps.append(step)

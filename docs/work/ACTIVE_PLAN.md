@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 3 — Environment Engine** built on BIG 2; next is **BIG 4 — Lifecycle/Degradation**.
+Current: **BIG 4 — Lifecycle/Degradation** closed loop built on BIG 2+3; next BIG step is **BIG 5** (per master plan: Scientific Data + Materials, P4) — not started.
 
 ## Current branch / PR
 
@@ -116,18 +116,28 @@ Implemented in `src/engcore/scenarios/environment.py` (tests:
       `dose()` for lifecycle consumers; `verify_state`; deterministic digests.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 2/3 section).
 
-### P3 / BIG 4 — Lifecycle / degradation (NEXT BIG step)
+### P3 / BIG 4 — Lifecycle / degradation
 
-Consume `EnvironmentTimeline.dose()` / `state_at()` and `Timeline` usage/cycle
-histories; update state through the existing `StateTransitionReceipt` chain.
+Implemented in `src/engcore/scenarios/lifecycle.py`; reference probes in
+`src/engcore/domains/battery/aging.py` and `src/engcore/domains/corrosion/`;
+tests `tests/test_lifecycle_engine.py`. BUILD phase; full tiers NOT RUN.
 
-- [ ] Define generic `LifecycleState` and degradation-model contracts.
-- [ ] Separate exposure history, usage history and accumulated damage state.
-- [ ] Ensure degradation updates future physics/material state rather than
-      existing only as post-processing.
-- [ ] Add at least two independent reference degradation families before
-      generalizing the API (for example battery aging and material corrosion or
-      fatigue).
+- [x] Provider-neutral `DegradationModel` contract (state variables as
+      `InitialStateDefinition`, `InputRequirement`, required `ApplicabilityBound`s,
+      `DegradationModelIdentity` with UNKNOWN-by-default discrepancy).
+- [x] Explicit `InputBinding`s to environment doses / window means and to
+      timeline usage integrals / cycle counts; UNKNOWN inputs stop the step.
+- [x] Digest-bound `DegradationStepRecord` (scenario, environment, run
+      digest, window, prior state digest/values, inputs with source
+      provenance, model identity/params, separated uncertainty statuses).
+- [x] Feed-forward via `carry_forward` -> runtime `initial_state` ->
+      `InitialStateReceipt`; `LifecycleChain.verify` checks each next window
+      started from the degraded values and uncertainty; `run_lifecycle` loop.
+- [x] Two independent reference families (battery capacity fade feeding a
+      state-of-charge physics; corrosion thickness loss feeding heat flux)
+      demonstrate changed future physics.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 4 section).
+
 
 ## Persistent project direction
 
