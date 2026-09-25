@@ -223,3 +223,15 @@ def test_source_uncertainty_attribution_does_not_accept_substring_spoofing():
             _transport(),
             _standard(source="calibration:temperature_extra"),
         )
+
+
+@pytest.mark.parametrize("target", ["degree_Celsius", "degree_Fahrenheit"])
+def test_a_spread_on_an_affine_target_is_carried_on_a_scale_that_can_state_it(target):
+    # 300 K expressed on an affine scale; the 2 K standard uncertainty is a 2 K WIDTH on either.
+    value = Quantity(300.0, "kelvin").to(target)
+    item = make_uncertainty_transfer(_transport(value=value), _standard(2.0, "kelvin"))
+    spread = item.uncertainty.standard_uncertainty
+    assert spread is not None and spread.units == "kelvin"
+    assert spread.magnitude == pytest.approx(2.0)
+    restored = UncertaintyTransfer.from_dict(item.to_dict())
+    assert restored.uncertainty == item.uncertainty
