@@ -27,6 +27,13 @@ from .timeline import (
     TimelineEvent, TimelineEventKind, TimePoint, TimeWindow, ValueStatus,
     WindowClosure, canonical_digest, compare_replay, order_events,
 )
+from .environment import (
+    STANDARD_ENVIRONMENT_KINDS, ChannelRepresentation, EnvironmentChannel,
+    EnvironmentInterpolation, EnvironmentKindRegistry, EnvironmentQuantityKind,
+    EnvironmentSample, EnvironmentSource, EnvironmentSourceKind, EnvironmentState,
+    EnvironmentTimeline, EnvironmentValue, InterpolationContract, ReferenceContext,
+    ValueDerivation,
+)
 
 __all__ = [
     "SEGMENT_OWNERSHIP", "ComposedInputSchedule", "ComposedOperatingCondition", "InterpolationKind",
@@ -41,4 +48,10 @@ __all__ = [
     "StateIdentity", "TimeBasis", "TimeBasisKind", "Timeline", "TimelineCheckpoint",
     "TimelineEvent", "TimelineEventKind", "TimePoint", "TimeWindow", "ValueStatus",
     "WindowClosure", "canonical_digest", "compare_replay", "order_events",
+    # Environment Engine
+    "STANDARD_ENVIRONMENT_KINDS", "ChannelRepresentation", "EnvironmentChannel",
+    "EnvironmentInterpolation", "EnvironmentKindRegistry", "EnvironmentQuantityKind",
+    "EnvironmentSample", "EnvironmentSource", "EnvironmentSourceKind", "EnvironmentState",
+    "EnvironmentTimeline", "EnvironmentValue", "InterpolationContract", "ReferenceContext",
+    "ValueDerivation",
 ]
