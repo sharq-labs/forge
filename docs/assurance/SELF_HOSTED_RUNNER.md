@@ -220,10 +220,14 @@ root-owned drop-in sets the hook variables, a per-instance `HOME` and `TMPDIR`, 
 reset of the work directory before every start.
 
 **How many instances.** One instance runs one job at a time, so N instances run N jobs in parallel. A full
-recertification has 18 heavy jobs; `-n 4` pytest gates use 4 processes each, mutation shards are
-essentially serial. Start with **6** and raise it only after watching memory (`free -m`) and the
-runner-identity artifacts; with `memory=24GB` and `processors=20`, 8 is the likely ceiling. Do not raise
-pytest's `-n 4`: worker counts are fixed on purpose.
+recertification has 18 heavy jobs; `-n 4` pytest gates use 4 processes each, while mutation shards are
+mostly serial. On this machine, start with **3 runner instances**, not 6: WSL2 is capped at 24 GB RAM and
+20 processors, while Windows and Docker Desktop still need headroom. Run the smoke test and then benchmark
+real FAST / SCIENTIFIC / mutation workloads while watching `free -m`, swap, CPU saturation and thermal
+throttling. Scale to **4 runners only if measurements show comfortable headroom and lower wall-clock time**.
+Do not assume that more runners are faster: memory pressure, xdist workers, Docker and cache/SSD contention
+can make 5-6 concurrent heavy jobs slower or unstable. Keep pytest's existing `-n 4` worker counts unless
+a separate measured tuning pass justifies changing them.
 
 ### Part 4: prove it, then opt in (GitHub)
 
