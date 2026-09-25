@@ -310,6 +310,10 @@ NON_CORE_PACKAGES = {
         "multi-timescale orchestration (macro windows, representative fast windows, "
         "aggregation, checkpoint/resume) over the BIG 2-9 authorities; no new authority"
     ),
+    "system_runtime": (
+        "end-to-end system execution runtime (canonical request, deterministic plan, preflight, generic executor, "
+        "checkpoint/replay) that delegates to the BIG 9 / 10 / 11 authorities; computes nothing, validates nothing, issues no verdict"
+    ),
 }
 
 
