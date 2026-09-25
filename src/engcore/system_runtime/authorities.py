@@ -104,14 +104,26 @@ class MultiphysicsAuthority(_Base):
     state).  ``outputs`` maps a node output name to a key of the run's ``final_outputs``.
     """
 
-    def __init__(self, authority_id: str, runtime: Any, *, run_kwargs: Callable[[NodeCall], Mapping[str, Any]], outputs: Mapping[str, str],
+    def __init__(self, authority_id: str, runtime: Any = None, *, run_kwargs: Callable[[NodeCall], Mapping[str, Any]], outputs: Mapping[str, str],
                  state_owners: Mapping[str, str] | None = None, config: Mapping[str, Any] | None = None,
                  applicability: Callable[[Any, NodeCall], tuple[ApplicabilityReport, ...]] | None = None,
-                 providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None) -> None:
+                 providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None,
+                 graph: Any = None, plan: Any = None, runtime_factory: Callable[[NodeCall], Any] | None = None,
+                 state_outputs: Mapping[str, tuple[str, str]] | None = None) -> None:
+        """Either a fixed ``runtime``, or ``graph`` + ``plan`` + ``runtime_factory(call)`` for a participant that must be built from the committed
+        state (for example a cell constructed with its initial state of charge).  Identity covers the graph and plan fingerprints and ``config``."""
+        if (runtime is None) == (runtime_factory is None):
+            raise InvalidScientificProblem("give exactly one of a runtime or a runtime_factory")
+        graph = runtime.graph if runtime is not None else graph
+        plan = runtime.plan if runtime is not None else plan
+        if graph is None or plan is None:
+            raise InvalidScientificProblem("a runtime_factory needs the graph and plan whose fingerprints define its identity")
         self._init(authority_id, "multiphysics", {
-            "graph": runtime.graph.fingerprint(), "plan": runtime.plan.fingerprint(), "outputs": dict(sorted(outputs.items())),
+            "graph": graph.fingerprint(), "plan": plan.fingerprint(), "outputs": dict(sorted(outputs.items())),
+            "state_outputs": {k: list(v) for k, v in sorted((state_outputs or {}).items())},
             "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
-        self.runtime, self._kwargs, self._outputs = runtime, run_kwargs, dict(outputs)
+        self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
+        self._state_outputs = dict(state_outputs or {})
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
         self.deterministic = False
         self.stateless = True
@@ -127,12 +139,19 @@ class MultiphysicsAuthority(_Base):
 
     def execute(self, call: NodeCall) -> NodeOutcome:
         kwargs = dict(self._kwargs(call))
-        if self._owners and "initial_state" not in kwargs:
+        runtime = self._factory(call) if self._factory is not None else self.runtime
+        if self._owners and self._factory is None and "initial_state" not in kwargs:
             kwargs["initial_state"] = self._initial_state(call)
         t0 = time.perf_counter()
-        run = self.runtime.run(call.run_id + "." + call.node.node_id, **kwargs)  # refusals raise: the executor records a FAILED node
+        run = runtime.run(call.run_id + "." + call.node.node_id, **kwargs)  # refusals raise: the executor records a FAILED node
         wall = time.perf_counter() - t0
         outputs: dict[str, OutputValue] = {}
+        for name, (participant, variable) in self._state_outputs.items():
+            last = [t for t in run.state_transitions if t.participant_id == participant]
+            match = [v for v in (last[-1].end_values if last else ()) if v.variable_id == variable]
+            if not match:
+                return NodeOutcome.failed(f"participant {participant!r} reported no public state {variable!r}")
+            outputs[name] = OutputValue(match[0].value, match[0].uncertainty, f"multiphysics:{run.run_id}:{participant}.{variable}")
         for name, key in self._outputs.items():
             if key not in run.final_outputs:
                 return NodeOutcome.failed(f"coupled run produced no final output {key!r}")
@@ -170,23 +189,35 @@ class MultiscaleAuthority(_Base):
 
     def __init__(self, authority_id: str, runtime: Any, *, initial_slow_state: Mapping[str, Mapping[str, InitialStateValue]],
                  initial_fast_state: Mapping[str, Mapping[str, InitialStateValue]] | None = None, extractors: Mapping[str, Callable[[Any], Quantity]],
-                 slow_state_owners: Mapping[str, str] | None = None, until: Any = None, config: Mapping[str, Any] | None = None,
+                 slow_state_owners: Mapping[str, str] | None = None, until: Any = None, stages: Mapping[str, Mapping[str, Any]] | None = None,
+                 config: Mapping[str, Any] | None = None,
                  applicability: Callable[[Any, NodeCall], tuple[ApplicabilityReport, ...]] | None = None,
                  providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None) -> None:
         self._init(authority_id, "multiscale", {
             "runtime": dict(sorted(runtime.identities().items())), "outputs": sorted(extractors), "until": None if until is None else str(until.seconds),
+            "stages": {k: {"until": None if v.get("until") is None else str(v["until"].seconds), "resume": bool(v.get("resume"))}
+                       for k, v in sorted((stages or {}).items())},
             "initial_slow": digest_of([v.to_dict() for m in initial_slow_state.values() for v in m.values()]),
             "state_owners": dict(sorted((slow_state_owners or {}).items())), "config": dict(config or {})})
         self.runtime, self._slow, self._fast, self._extract = runtime, initial_slow_state, initial_fast_state, dict(extractors)
         self._until, self._owners, self._applicability, self._providers = until, dict(slow_state_owners or {}), applicability, providers
+        self._stages = {k: dict(v) for k, v in (stages or {}).items()}
         self.deterministic = False
         self.stateless = False
         self.supports_checkpoint = True
         self._last_checkpoint: Mapping[str, Any] | None = None
 
     def execute(self, call: NodeCall) -> NodeOutcome:
+        from ..multiscale import MacroCheckpoint
+        stage = self._stages.get(call.node.node_id, {"until": self._until, "resume": False})
         t0 = time.perf_counter()
-        record = self.runtime.run(initial_slow_state=self._slow, initial_fast_state=self._fast, until=self._until)
+        if stage.get("resume"):
+            if self._last_checkpoint is None:
+                return NodeOutcome.failed("this stage resumes from a macro checkpoint but none is held (it is never regenerated)")
+            self.runtime.set_declared_fast_state(self._fast or {})
+            record = self.runtime.resume(MacroCheckpoint.deserialize(self._last_checkpoint), until=stage.get("until"))
+        else:
+            record = self.runtime.run(initial_slow_state=self._slow, initial_fast_state=self._fast, until=stage.get("until"))
         wall = time.perf_counter() - t0
         if record.status not in ("completed", "paused"):
             return NodeOutcome.failed(f"multi-timescale run ended {record.status}: {record.reason}")
@@ -204,7 +235,7 @@ class MultiscaleAuthority(_Base):
                 updates.append(OwnerState(owner_id, call.state.owner(owner_id).role, new))
             proposal = StateProposal(record.reached.quantity, tuple(updates))
         if record.last_valid_checkpoint is not None:
-            self._last_checkpoint = record.last_valid_checkpoint.to_dict()
+            self._last_checkpoint = record.last_valid_checkpoint.serialize()
         return NodeOutcome(
             "succeeded", outputs, applicability=() if self._applicability is None else self._applicability(record, call), state_proposal=proposal,
             provider_records=() if self._providers is None else self._providers(record), delegated_record_digest=record.digest,
