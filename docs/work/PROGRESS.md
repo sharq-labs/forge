@@ -176,6 +176,7 @@ command: `pytest -q -n 4 <13 multiphysics/lifecycle/coupling test files> tests/t
 command (WSL conda env, `PYTHONPATH=src:providers/fenicsx:providers/precice:.`): `pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests providers/precice/tests` — PASS, 35 passed (BIG 8/9 suites + 4 BIG 10 FEniCSx proofs; real preCICE 3.4.0 run included). Earlier runs in this session: 18 failed before `c-compiler` (environment), 1 failed on a wrong Proof E assertion (steps != executions with remainder tiles; fixed).
 command: `python tools/forge_check.py --changed` — PASS, 149 passed
 command: `git diff --cached --check` — PASS (no CRLF in added files)
+command (after commit 5b5d17f5, clean tree): `pytest -q tests/test_core_freeze_manifest.py` — 21 passed, 1 skipped, 1 failed (test_a_descendant_that_keeps_the_contract_still_verifies); its 27 check outcomes are identical to the pristine e3ae778a run except the HEAD sha, i.e. the same pre-existing (baseline) failure. test_the_tree_is_core_freeze_v1 now PASSES.
 NOT RUN: full FAST, full SCIENTIFIC, `forge_check.py --regression`, mutation shards, hardened
 recertification (owed: certified-scope `execution/multiphysics/runtime.py` and `convergence.py`
 changed), full CI.
