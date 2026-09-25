@@ -81,6 +81,24 @@ def _strict_keys(payload: Mapping[str, Any], expected: set[str], label: str) -> 
         )
 
 
+#: SAME-INSTANT RULE, stated once and used for every time comparison here.
+#:
+#: An instant is the exact rational number of seconds obtained by reading the
+#: declared magnitude and the unit's conversion factor to ``second`` each as
+#: its shortest round-trip decimal (``repr``) and multiplying exactly.  Two
+#: instants are the same instant iff those rationals are equal.  There is no
+#: tolerance: ``0.1 hour`` and ``360 second`` are equal because 0.1 * 3600 is
+#: exactly 360 in rational arithmetic, while ``360 second`` and
+#: ``360.0000000000001 second`` are distinct because they were declared
+#: distinct.  Nothing is collapsed that the declaring source kept apart.
+#:
+#: Limit (fail-closed): a magnitude with no exact decimal form (1/3 hour) is
+#: not merged with its rounded equivalent (1200 second).  Declare instants in
+#: a unit that represents them exactly; a split refuses or yields UNKNOWN,
+#: it never fabricates agreement.
+SAME_INSTANT_RULE = "exact rational seconds from repr(magnitude) * repr(unit factor to second)"
+
+
 def exact_seconds(value: Any, label: str = "instant") -> Fraction:
     """The canonical exact instant of a time Quantity under :data:`SAME_INSTANT_RULE`."""
     if isinstance(value, Fraction):
