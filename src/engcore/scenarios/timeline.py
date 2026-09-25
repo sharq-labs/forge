@@ -550,6 +550,7 @@ class QuantityHistory:
         total = 0.0
         sigma = 0.0
         standard = True
+        sources: set[UncertaintySource] = set()
         for item in self.entries:
             dt = item.window.intersection_seconds(window)
             if dt <= 0.0:
@@ -558,6 +559,7 @@ class QuantityHistory:
             unc = item.value.uncertainty
             if unc.kind is UncertaintyKind.STANDARD:
                 sigma += unc.standard_uncertainty.magnitude_as_spread_in(self.unit) * dt
+                sources.add(unc.source_kind)
             else:
                 standard = False
         unit = normalize_unit(f"({self.unit}) * second")
@@ -567,7 +569,11 @@ class QuantityHistory:
                 standard_uncertainty=Quantity(sigma, unit),
                 method="sum of sigma_i*dt_i: upper bound on the standard deviation "
                        "of the integral for any correlation between entries",
-                source_kind=UncertaintySource.COMBINED,
+                notes="conservative UPPER BOUND, not an estimated 1-sigma: correlation "
+                      "between entries is unknown; the piecewise-constant "
+                      "representation error is NOT included",
+                # A shared source is carried over; a mix is not promoted to COMBINED.
+                source_kind=sources.pop() if len(sources) == 1 else UncertaintySource.UNSPECIFIED,
             )
         else:
             uncertainty = Uncertainty.unknown(
@@ -628,10 +634,16 @@ class CycleRecord:
 
 @dataclass(frozen=True)
 class CycleCount:
-    """Complete cycles inside a window.  Partial cycles are listed, never fractionally counted."""
+    """Complete cycles inside a window.  Partial cycles are listed, never fractionally counted.
 
-    complete: int
+    UNKNOWN (``complete is None``) when the query reaches outside the span the
+    history recorded: unrecorded time is not zero cycles.
+    """
+
+    status: ValueStatus
+    complete: int | None
     partial_cycle_ids: tuple[str, ...]
+    reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -649,6 +661,11 @@ class CycleHistory:
         if len({item.cycle_id for item in cycles}) != len(cycles):
             raise InvalidScientificProblem("cycle history contains duplicate cycle ids")
         ordered = tuple(sorted(cycles, key=lambda item: item.index))
+        if ordered[0].index != 0:
+            raise InvalidScientificProblem(
+                f"cycle history {self.history_id!r} starts at index {ordered[0].index}; "
+                f"earlier cycles are unrecorded, not absent"
+            )
         basis = ordered[0].window.basis_id
         for previous, current in zip(ordered, ordered[1:]):
             if current.window.basis_id != basis:
@@ -669,7 +686,17 @@ class CycleHistory:
     def basis_id(self) -> str:
         return self.cycles[0].window.basis_id
 
+    @property
+    def span(self) -> TimeWindow:
+        return TimeWindow(self.cycles[0].window.start, self.cycles[-1].window.end)
+
     def count_within(self, window: TimeWindow) -> CycleCount:
+        if not self.span.covers(window):
+            return CycleCount(
+                ValueStatus.UNKNOWN, None, (),
+                f"window reaches outside the recorded cycle span "
+                f"[{self.span.start.seconds}, {self.span.end.seconds}) second",
+            )
         complete = 0
         partial: list[str] = []
         for item in self.cycles:
@@ -677,7 +704,7 @@ class CycleHistory:
                 complete += 1
             elif window.overlaps(item.window):
                 partial.append(item.cycle_id)
-        return CycleCount(complete, tuple(partial))
+        return CycleCount(ValueStatus.KNOWN, complete, tuple(partial))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": CYCLE_HISTORY_SCHEMA, "history_id": self.history_id, "cycle_kind": self.cycle_kind, "cycles": [item.to_dict() for item in self.cycles]}
@@ -769,6 +796,8 @@ class Timeline:
     initial_state_digests: tuple[tuple[str, str], ...] = ()
     state_transitions: tuple[StateTransitionReceipt, ...] = ()
     checkpoints: tuple[TimelineCheckpoint, ...] = ()
+    #: The one execution run whose receipts this timeline holds.
+    run_id: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "timeline_id", _identifier(self.timeline_id, "timeline_id"))
@@ -816,6 +845,13 @@ class Timeline:
         if len({pid for pid, _ in initial}) != len(initial):
             raise InvalidScientificProblem("timeline declares two initial states for one participant")
         object.__setattr__(self, "initial_state_digests", tuple(sorted(initial)))
+        run_id = str(self.run_id or "").strip()
+        object.__setattr__(self, "run_id", _identifier(run_id, "timeline run_id") if run_id else "")
+        if self.state_transitions and (not self.scenario_digest or not run_id):
+            raise InvalidScientificProblem(
+                "state transitions require a scenario-bound timeline naming the one run "
+                "that produced them; receipts from unnamed runs or scenarios cannot be mixed"
+            )
         object.__setattr__(self, "state_transitions", self._chain_transitions(tuple(self.state_transitions), dict(initial)))
 
         checkpoints = tuple(self.checkpoints)
@@ -848,7 +884,7 @@ class Timeline:
             raise InvalidScientificProblem("timeline state transitions must be StateTransitionReceipt records")
         by_participant: dict[str, list[StateTransitionReceipt]] = {}
         for item in transitions:
-            if self.scenario_digest and item.scenario_digest and item.scenario_digest != self.scenario_digest:
+            if item.scenario_digest != self.scenario_digest:
                 raise InvalidScientificProblem(
                     f"state transition for {item.participant_id!r} was produced for a "
                     f"different scenario; evidence must stay bound to its context"
@@ -935,8 +971,14 @@ class Timeline:
         unknown = reached_ids - scheduled
         if unknown:
             raise InvalidScientificProblem(f"run reached events the scenario never scheduled: {sorted(unknown)}")
+        scheduled_at = {item.subject_id: item.at.seconds for item in self.events if item.kind is TimelineEventKind.SCHEDULED_SYNCHRONIZATION}
         events = list(self.events)
         for item in run.reached_scheduled_events:
+            if item.instant.magnitude_in("second") != scheduled_at[item.event_id]:
+                raise InvalidScientificProblem(
+                    f"run reached {item.event_id!r} at {item.instant.magnitude_in('second')} "
+                    f"second, not at its scheduled instant"
+                )
             events.append(TimelineEvent(
                 f"reached:{item.event_id}", TimelineEventKind.REACHED_SYNCHRONIZATION,
                 self._point(item.instant.magnitude_in("second")), item.event_id,
@@ -951,6 +993,7 @@ class Timeline:
             events=tuple(events), histories=self.histories, cycle_histories=self.cycle_histories,
             initial_state_digests=self.initial_state_digests,
             state_transitions=tuple(run.state_transitions), checkpoints=self.checkpoints,
+            run_id=run.run_id,
         )
 
     # ---- queries -----------------------------------------------------------
@@ -1028,6 +1071,7 @@ class Timeline:
             "initial_state_digests": [[pid, digest] for pid, digest in self.initial_state_digests],
             "state_transitions": [item.to_dict() for item in self.state_transitions],
             "checkpoints": [item.to_dict() for item in self.checkpoints],
+            "run_id": self.run_id,
         }
 
     @property
@@ -1037,7 +1081,7 @@ class Timeline:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Timeline":
         require_schema(payload, TIMELINE_SCHEMA)
-        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints"}, "timeline")
+        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints", "run_id"}, "timeline")
         return cls(
             payload["timeline_id"], TimeBasis.from_dict(payload["basis"]), TimeWindow.from_dict(payload["horizon"]),
             payload["scenario_digest"],
@@ -1047,6 +1091,7 @@ class Timeline:
             initial_state_digests=tuple((pid, digest) for pid, digest in payload["initial_state_digests"]),
             state_transitions=tuple(StateTransitionReceipt.from_dict(item) for item in payload["state_transitions"]),
             checkpoints=tuple(TimelineCheckpoint.from_dict(item) for item in payload["checkpoints"]),
+            run_id=payload["run_id"],
         )
 
     def prefix(self, at: TimePoint) -> dict[str, Any]:
@@ -1072,16 +1117,16 @@ class Timeline:
         return {
             "timeline_id": self.timeline_id,
             "basis": self.basis.to_dict(),
-            "horizon_start": self.horizon.start.to_dict(),
+            "horizon": self.horizon.to_dict(),
             "scenario_digest": self.scenario_digest,
             "through": at.to_dict(),
             "events": [item.to_dict() for item in self.events if item.at.seconds <= s],
             "histories": [
-                {"history_id": item.history_id, "entries": [e.to_dict() for e in item.entries if e.window.end.seconds <= s]}
+                {"history_id": item.history_id, "kind": item.kind.value, "quantity_id": item.quantity_id, "unit": item.unit, "representation": item.representation.value, "entries": [e.to_dict() for e in item.entries if e.window.end.seconds <= s]}
                 for item in self.histories
             ],
             "cycle_histories": [
-                {"history_id": item.history_id, "cycles": [c.to_dict() for c in item.cycles if c.window.end.seconds <= s]}
+                {"history_id": item.history_id, "cycle_kind": item.cycle_kind, "cycles": [c.to_dict() for c in item.cycles if c.window.end.seconds <= s]}
                 for item in self.cycle_histories
             ],
             "initial_state_digests": [[pid, digest] for pid, digest in self.initial_state_digests],
@@ -1093,24 +1138,29 @@ class Timeline:
 
     def checkpoint(self, checkpoint_id: str, at: TimePoint, participant_checkpoints: tuple[CheckpointRecord, ...] = ()) -> TimelineCheckpoint:
         """Create a checkpoint whose participant records agree with recorded state."""
-        for event in self.events:
-            if event.at.seconds == at.seconds and event.order_sensitive:
-                raise InvalidScientificProblem(
-                    f"checkpoint at {at.seconds} second coincides with order-sensitive event "
-                    f"{event.event_id!r}; before/after is ambiguous"
-                )
         checkpoint = TimelineCheckpoint(checkpoint_id, at, self.prefix_digest(at), tuple(participant_checkpoints))
         self.verify_checkpoint(checkpoint)
         return checkpoint
 
     def verify_checkpoint(self, checkpoint: TimelineCheckpoint) -> None:
+        for event in self.events:
+            if event.at.seconds == checkpoint.at.seconds and event.order_sensitive:
+                raise InvalidScientificProblem(
+                    f"checkpoint at {checkpoint.at.seconds} second coincides with order-sensitive "
+                    f"event {event.event_id!r}; before/after is ambiguous"
+                )
         if checkpoint.prefix_digest != self.prefix_digest(checkpoint.at):
             raise InvalidScientificProblem(
                 f"checkpoint {checkpoint.checkpoint_id!r} does not match this timeline's prefix"
             )
         for record in checkpoint.participant_checkpoints:
             identity = self.state_at(record.participant_id, checkpoint.at)
-            if identity.status is ValueStatus.KNOWN and identity.state_digest != record.state_digest:
+            if identity.status is not ValueStatus.KNOWN:
+                raise InvalidScientificProblem(
+                    f"participant {record.participant_id!r} checkpoint claims a state the "
+                    f"timeline has no record of at {checkpoint.at.seconds} second"
+                )
+            if identity.state_digest != record.state_digest:
                 raise InvalidScientificProblem(
                     f"participant {record.participant_id!r} checkpoint state differs from "
                     f"the recorded state identity at {checkpoint.at.seconds} second"
@@ -1122,6 +1172,7 @@ class Timeline:
             events=self.events, histories=self.histories, cycle_histories=self.cycle_histories,
             initial_state_digests=self.initial_state_digests,
             state_transitions=self.state_transitions, checkpoints=self.checkpoints + (checkpoint,),
+            run_id=self.run_id,
         )
 
 
@@ -1144,31 +1195,35 @@ class ReplayComparison:
         return {"schema": REPLAY_COMPARISON_SCHEMA, "classification": "replay_consistency_not_validation", "consistent": self.consistent, "through": self.through.to_dict(), "original_digest": self.original_digest, "replayed_digest": self.replayed_digest, "compared_records": self.compared_records, "reason": self.reason}
 
 
-def _prefix_record_count(prefix: Mapping[str, Any]) -> int:
-    return (
-        len(prefix["events"]) + len(prefix["state_transitions"])
-        + sum(len(item["entries"]) for item in prefix["histories"])
-        + sum(len(item["cycles"]) for item in prefix["cycle_histories"])
-    )
+_EXECUTION_EVENT_KINDS = frozenset({TimelineEventKind.REACHED_SYNCHRONIZATION.value, TimelineEventKind.TERMINATION.value})
+
+
+def _execution_record_count(prefix: Mapping[str, Any]) -> int:
+    """Records only execution can have produced.  Declared inputs do not count."""
+    return len(prefix["state_transitions"]) + sum(1 for item in prefix["events"] if item["kind"] in _EXECUTION_EVENT_KINDS)
 
 
 def compare_replay(original: Timeline, replayed: Timeline, *, through: TimePoint | None = None) -> ReplayComparison:
     """Compare a replayed timeline to the original up to ``through`` (default: horizon end).
 
-    A prefix with no recorded content cannot pass: an empty comparison proves
-    nothing was compared, not that anything was reproduced.
+    A prefix with no execution-produced record cannot pass: two copies of the
+    same declared scenario agree without anything having been executed.
+    Checkpoints at or before ``through`` are compared too.
     """
     if not isinstance(original, Timeline) or not isinstance(replayed, Timeline):
         raise InvalidScientificProblem("compare_replay requires two Timeline records")
     point = original.horizon.end if through is None else through
     first = original.prefix(point)
-    count = _prefix_record_count(first)
+    count = _execution_record_count(first)
     if count == 0:
         raise InvalidScientificProblem(
-            "replay comparison over an empty prefix is refused; nothing would be compared"
+            "replay comparison over a prefix with no execution-produced records is "
+            "refused; nothing executed would be compared"
         )
+    first["checkpoints"] = [item.to_dict() for item in original.checkpoints if item.at.seconds <= point.seconds]
     try:
         second = replayed.prefix(point)
+        second["checkpoints"] = [item.to_dict() for item in replayed.checkpoints if item.at.seconds <= point.seconds]
     except InvalidScientificProblem as exc:
         return ReplayComparison(False, point, canonical_digest(first), "0" * 64, count, f"replay cannot produce the prefix: {exc}")
     a, b = canonical_digest(first), canonical_digest(second)

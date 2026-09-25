@@ -19,7 +19,7 @@ from engcore.scenarios import (
     CycleHistory, CycleRecord, HistoryEntry, NamedQuantity, QuantityHistory,
     ScenarioEvent, ScenarioSegment, ScenarioSpecification, TimeBasis,
     TimeBasisKind, Timeline, TimelineEvent, TimelineEventKind, TimePoint,
-    TimeSample, TimeSeriesInput, TimeWindow, ValueStatus, WindowClosure,
+    TimelineCheckpoint, TimeSample, TimeSeriesInput, TimeWindow, ValueStatus, WindowClosure,
     compare_replay, order_events,
 )
 from engcore.scenarios.contracts import InterpolationKind
@@ -30,7 +30,7 @@ from engcore.scientific.multiphysics import (
 )
 from engcore.scientific.multiphysics.receipts import StateTransitionReceipt
 from engcore.scientific.multiphysics.state import CheckpointRecord
-from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind, UncertaintySource
 from engcore.scientific.units.quantity import Quantity
 
 B = "elapsed"
@@ -180,6 +180,8 @@ def test_integral_uncertainty_bound_and_unknown_propagation():
     assert result.value.value.units == Quantity(1, "W*s").units
     assert result.value.uncertainty.kind is UncertaintyKind.STANDARD
     assert result.value.uncertainty.standard_uncertainty.magnitude == pytest.approx(1 + 2)
+    assert "UPPER BOUND" in result.value.uncertainty.notes
+    assert result.value.uncertainty.source_kind is UncertaintySource.UNSPECIFIED  # never promoted to COMBINED
     unknown_part = h.integrate(win(6, 8))
     assert unknown_part.status is ValueStatus.KNOWN
     assert unknown_part.value.uncertainty.kind is UncertaintyKind.UNKNOWN
@@ -223,6 +225,13 @@ def test_cycle_counting_never_counts_partial_cycles():
     assert count.complete == 2 and count.partial_cycle_ids == ("c0",)
 
 
+def test_unrecorded_time_is_unknown_cycles_not_zero():
+    count = _cycles().count_within(win(0, 100))
+    assert count.status is ValueStatus.UNKNOWN and count.complete is None
+    with pytest.raises(InvalidScientificProblem, match="unrecorded"):
+        CycleHistory("h", "k", (CycleRecord("a", 5, win(0, 1)),))
+
+
 def test_cycle_gaps_and_misordering_refused():
     with pytest.raises(InvalidScientificProblem, match="skips"):
         CycleHistory("h", "k", (CycleRecord("a", 0, win(0, 1)), CycleRecord("b", 2, win(1, 2))))
@@ -257,27 +266,40 @@ def test_linear_interpolation_across_declared_discontinuity_refused():
 # ---- state transitions (existing receipt authority) -------------------------
 
 
-def _tr(i, a, b, start, end, pid="body"):
-    return StateTransitionReceipt(pid, i, Quantity(a, "s"), Quantity(b, "s"), D(start), D(end))
+SC = D("scenario")
+
+
+def _tr(i, a, b, start, end, pid="body", scenario=SC):
+    return StateTransitionReceipt(pid, i, Quantity(a, "s"), Quantity(b, "s"), D(start), D(end), scenario_digest=scenario)
+
+
+def _tl(**kw):
+    kw.setdefault("run_id", "r1")
+    return Timeline("t", BASIS, horizon(), SC, **kw)
 
 
 def test_state_chain_digest_break_and_time_gap_refused():
-    ok = Timeline("t", BASIS, horizon(), initial_state_digests=(("body", D("s0")),),
+    ok = _tl(initial_state_digests=(("body", D("s0")),),
                   state_transitions=(_tr(0, 0, 1, "s0", "s1"), _tr(1, 1, 2, "s1", "s2")))
     assert ok.state_at("body", tp(2)).state_digest == D("s2")
     assert ok.state_at("body", tp(1.5)).status is ValueStatus.UNKNOWN
     with pytest.raises(InvalidScientificProblem, match="state discontinuity"):
-        Timeline("t", BASIS, horizon(), state_transitions=(_tr(0, 0, 1, "s0", "s1"), _tr(1, 1, 2, "sX", "s2")))
+        _tl(state_transitions=(_tr(0, 0, 1, "s0", "s1"), _tr(1, 1, 2, "sX", "s2")))
     with pytest.raises(InvalidScientificProblem, match="gap"):
-        Timeline("t", BASIS, horizon(), state_transitions=(_tr(0, 0, 1, "s0", "s1"), _tr(1, 1.5, 2, "s1", "s2")))
+        _tl(state_transitions=(_tr(0, 0, 1, "s0", "s1"), _tr(1, 1.5, 2, "s1", "s2")))
     with pytest.raises(InvalidScientificProblem, match="initial state"):
-        Timeline("t", BASIS, horizon(), initial_state_digests=(("body", D("other")),), state_transitions=(_tr(0, 0, 1, "s0", "s1"),))
+        _tl(initial_state_digests=(("body", D("other")),), state_transitions=(_tr(0, 0, 1, "s0", "s1"),))
 
 
-def test_transition_for_other_scenario_is_refused():
-    receipt = StateTransitionReceipt("body", 0, Quantity(0, "s"), Quantity(1, "s"), D("a"), D("b"), scenario_digest=D("other"))
+def test_transition_for_other_or_unnamed_scenario_or_run_is_refused():
     with pytest.raises(InvalidScientificProblem, match="different scenario"):
-        Timeline("t", BASIS, horizon(), scenario_digest=D("mine"), state_transitions=(receipt,))
+        _tl(state_transitions=(_tr(0, 0, 1, "a", "b", scenario=D("other")),))
+    with pytest.raises(InvalidScientificProblem, match="different scenario"):
+        _tl(state_transitions=(_tr(0, 0, 1, "a", "b", scenario=""),))
+    with pytest.raises(InvalidScientificProblem, match="scenario-bound"):
+        Timeline("t", BASIS, horizon(), state_transitions=(_tr(0, 0, 1, "a", "b"),))
+    with pytest.raises(InvalidScientificProblem, match="scenario-bound"):
+        Timeline("t", BASIS, horizon(), SC, state_transitions=(_tr(0, 0, 1, "a", "b"),))
 
 
 # ---- serialization / digest / checkpoint / replay --------------------------
@@ -291,6 +313,7 @@ def _full():
         histories=(_usage(),), cycle_histories=(_cycles(),),
         initial_state_digests=(("body", D("s0")),),
         state_transitions=(_tr(0, 0, 2, "s0", "s1"), _tr(1, 2, 4, "s1", "s2")),
+        run_id="r1",
     )
 
 
@@ -302,7 +325,7 @@ def test_roundtrip_and_digest_are_deterministic_and_order_independent():
     shuffled = Timeline("full", BASIS, horizon(), D("scenario"),
                         events=tuple(reversed(t.events)), histories=t.histories,
                         cycle_histories=t.cycle_histories, initial_state_digests=t.initial_state_digests,
-                        state_transitions=tuple(reversed(t.state_transitions)))
+                        state_transitions=tuple(reversed(t.state_transitions)), run_id="r1")
     assert shuffled.digest == t.digest
 
 
@@ -333,7 +356,7 @@ def test_checkpoint_from_diverged_timeline_is_refused():
     cp = t.checkpoint("cp", tp(4))
     other = Timeline("full", BASIS, horizon(), D("scenario"), histories=t.histories,
                      cycle_histories=t.cycle_histories, initial_state_digests=t.initial_state_digests,
-                     state_transitions=t.state_transitions)  # the sync event at t=4 is missing
+                     state_transitions=t.state_transitions, run_id="r1")  # the sync event at t=4 is missing
     with pytest.raises(InvalidScientificProblem, match="prefix"):
         other.with_checkpoint(cp)
 
@@ -344,13 +367,41 @@ def test_replay_comparison_detects_divergence_and_refuses_empty_prefix():
     assert same.consistent and same.to_dict()["classification"] == "replay_consistency_not_validation"
     changed = Timeline("full", BASIS, horizon(), D("scenario"), events=t.events, histories=t.histories,
                        cycle_histories=t.cycle_histories, initial_state_digests=t.initial_state_digests,
-                       state_transitions=(_tr(0, 0, 2, "s0", "s1"), _tr(1, 2, 4, "s1", "sZ")))
+                       state_transitions=(_tr(0, 0, 2, "s0", "s1"), _tr(1, 2, 4, "s1", "sZ")), run_id="r1")
     diverged = compare_replay(t, changed)
     assert not diverged.consistent and "state_transitions" in diverged.reason
     # divergence after `through` does not affect an earlier prefix
     assert compare_replay(t, changed, through=tp(2)).consistent
-    with pytest.raises(InvalidScientificProblem, match="empty prefix"):
+    with pytest.raises(InvalidScientificProblem, match="no execution-produced"):
         compare_replay(Timeline("e", BASIS, horizon()), Timeline("e", BASIS, horizon()))
+    # declared content alone (a scenario copied twice) is not a replay
+    declared = Timeline("d", BASIS, horizon(), events=(TimelineEvent("s", "scheduled_synchronization", tp(1)),), histories=(_usage(),))
+    with pytest.raises(InvalidScientificProblem, match="no execution-produced"):
+        compare_replay(declared, declared)
+
+
+def test_replay_detects_changed_history_kind():
+    t = _full()
+    exposure = QuantityHistory("power", "exposure", "power", "W", _usage().entries)
+    other = Timeline("full", BASIS, horizon(), D("scenario"), events=t.events, histories=(exposure,),
+                     cycle_histories=t.cycle_histories, initial_state_digests=t.initial_state_digests,
+                     state_transitions=t.state_transitions, run_id="r1")
+    assert not compare_replay(t, other).consistent
+
+
+def test_checkpoint_for_unrecorded_participant_state_is_refused():
+    t = _full()
+    with pytest.raises(InvalidScientificProblem, match="no record"):
+        t.checkpoint("ghost", tp(4), (CheckpointRecord("ghost", Quantity(4, "s"), D("x"), True),))
+    with pytest.raises(InvalidScientificProblem, match="no record"):
+        t.checkpoint("stale", tp(8), (CheckpointRecord("body", Quantity(8, "s"), D("s2"), True),))
+
+
+def test_hand_built_checkpoint_at_order_sensitive_event_is_refused():
+    t = _full()
+    forged = TimelineCheckpoint("clash", tp(6), t.prefix_digest(tp(6)))
+    with pytest.raises(InvalidScientificProblem, match="ambiguous"):
+        t.with_checkpoint(forged)
 
 
 # ---- scenario + multiphysics integration -----------------------------------
@@ -412,6 +463,20 @@ def test_timeline_binds_scenario_and_real_run_receipts():
         scheduled_events=scenario.events, scenario_digest=scenario.digest,
     )
     assert compare_replay(bound, timeline.bind_run(rerun)).consistent
+
+
+def test_reached_event_at_wrong_instant_cannot_bind():
+    scenario = _scenario()
+    timeline = Timeline.from_scenario(scenario, timeline_id="t", basis=BASIS)
+    other = ScenarioSpecification(
+        "mission", "1", Quantity(0, "s"), Quantity(1, "s"),
+        segments=(ScenarioSegment("all", Quantity(0, "s"), Quantity(1, "s")),),
+        events=(ScenarioEvent("switch", Quantity(0.25, "s")),),
+    )
+    run = _runtime().run("run", external_inputs={PortRef("body", "forcing"): Quantity(0, "K")},
+                         scheduled_events=other.events, scenario_digest=scenario.digest)
+    with pytest.raises(InvalidScientificProblem, match="scheduled instant"):
+        timeline.bind_run(run)
 
 
 def test_run_for_a_different_scenario_cannot_bind():

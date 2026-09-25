@@ -5,13 +5,107 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`, PR #105 merged)
-- PR: none recorded yet; verify GitHub before making a current PR claim.
+- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`, PR #106 merged)
+- PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 P0.1 failure triage (read this first)
+## 2026-09-25 BIG 2 — Time Engine foundation (BUILD phase; read this first)
+
+Strategy change: build the big architecture first; only focused smoke checks
+during the build. The full FAST / SCIENTIFIC / mutation / recertification
+campaign is deferred until after the architecture, real scenarios, a
+scientific/numerical review and a stale-test audit.
+
+### Architecture added
+
+`src/engcore/scenarios/timeline.py` (non-Core package `scenarios`, which is
+the existing transient authority; nothing new in the frozen Core):
+
+- `TimeBasis` (ELAPSED with a named origin, or ABSOLUTE_UTC with the fixed
+  epoch; no default clock), `TimePoint` (cross-basis ordering refused),
+  `TimeWindow` (HALF_OPEN = scenario segment ownership, CLOSED for horizons).
+- `TimelineEvent` + `order_events`: synchronization markers commute;
+  DISCONTINUITY / STATE_CHANGE_REQUEST / TERMINATION at a shared instant need
+  explicit distinct sequences or are refused. Events are markers, not evidence.
+- `QuantityHistory` (USAGE/EXPOSURE, piecewise-constant only): gaps are
+  UNKNOWN; integrals over gaps or affine units are UNKNOWN; the integral
+  uncertainty is the correlation-free bound sum(sigma_i*dt_i), labelled an
+  UPPER BOUND, source kind carried only when shared.
+- `CycleHistory`: indices start at 0 and never skip; counts outside the
+  recorded span are UNKNOWN; partial cycles are listed, never fractionally counted.
+- `Timeline`: binds a `ScenarioSpecification` digest (`from_scenario`) and one
+  `MultiphysicsRunRecord` (`bind_run`, records `run_id`); holds existing
+  `StateTransitionReceipt`s verbatim and enforces per-participant digest and
+  time chaining; every receipt must carry the timeline's scenario digest.
+  `state_at` is KNOWN only at recorded boundaries.
+- `input_value_at`: unsupported interpolation, method mismatch and LINEAR
+  across a declared discontinuity are refused.
+- `TimelineCheckpoint` (prefix digest + existing `CheckpointRecord`s; refused
+  inside a record window, at an order-sensitive event, or for a participant
+  state the timeline has no record of) and `compare_replay` (refuses a prefix
+  with no execution-produced record; classified
+  `replay_consistency_not_validation`).
+
+### Scientific review
+
+`forge-scientific-review` (read-only, no tests executed) returned CHANGES
+REQUIRED on the first cut. Fixed: (1) scenario/run binding bypass via empty
+digests and cross-run mixing; (2) unrecorded time counted as zero cycles;
+(3) integral bound mislabelled / promoted to COMBINED; (4) checkpoints for
+unrecorded participant state; (5) replay passing on declared-only content and
+prefix omitting history kind/unit/cycle kind/horizon end/checkpoints;
+(6) checkpoint ambiguity check only in one constructor; (8, partial) reached
+event instant not checked against its schedule. The fixes were not re-reviewed.
+
+### Open design gaps (not fixed; record before BIG 3 consumes the timeline)
+
+- Same-instant grouping uses exact float seconds after unit normalization;
+  0.1 hour vs 360 s may differ in the last ulp and escape the ambiguity check.
+- Markers are sorted before order-sensitive events at the same instant; that
+  precedence is a convention, not a declared rule.
+- `input_value_at` does not verify the series belongs to the bound scenario.
+- `canonical_digest` duplicates `sria/decision/replay.py` and
+  `claims/_records.py`; consolidating into `scientific.serialization` touches
+  frozen Core and needs a freeze decision.
+- The integral treats each entry as exactly constant; representation error is
+  not quantified (stated in the uncertainty notes, not modelled).
+- The runtime does not yet emit `TimelineCheckpoint`s or restore from them;
+  only one basis per timeline (no declared basis mapping / multi-rate).
+
+### Verification (BUILD-phase smoke only)
+
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios`
+result: PASS
+
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py`
+result: PASS — 194 passed (34 in `test_time_engine.py`)
+
+command: `PYTHONPATH=src python tools/forge_check.py --changed`
+result: PASS — 40 passed (architecture/layering gate set)
+
+command: `git diff --check`
+result: PASS
+
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q tests/test_core_freeze_*manifest.py`
+result: FAIL — 15 failed, identically on clean `main` @ `2b76017f` (stash
+test). Cause: this session's shallow clone lacks historical commits the freeze
+verifiers `git show` (e.g. `af43c896`). Environmental, not caused by BIG 2.
+
+NOT RUN: `forge_check.py --regression`, FAST tier, SCIENTIFIC tier, mutation
+shards, hardened-core recertification, full repository test suite, CI.
+
+### Next BIG step
+
+BIG 3 — Environment Engine: provider-neutral `EnvironmentState` /
+`EnvironmentTimeline` built on `Timeline` + `QuantityHistory(EXPOSURE)`, with
+source, units, uncertainty, interpolation and validity bound to every
+environmental quantity. Close the timeline gaps above that BIG 3 depends on
+(scenario ownership of input series; same-instant tolerance) first.
+
+## 2026-09-25 P0.1 failure triage
 
 `main` @ `deabe5cb` was RED. Read from GitHub Actions (run 36117761308, Tests):
 FAST 3.12, FAST 3.11 and SCIENTIFIC each failed the same **54** tests; the
