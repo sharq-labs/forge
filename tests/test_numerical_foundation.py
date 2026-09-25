@@ -279,3 +279,13 @@ def test_ode_output_at_window_start_is_refused():
         window = TimeWindow(TimePoint("lab", Quantity(0, "s")), TimePoint("lab", Quantity(10, "s")))
         NumericalProblem("o", ProblemKind.ODE_IVP, OperatorIdentity("o", "1", "0" * 64, "declared"), UnitBoundary((VariableSpec("y", "m"),)),
                          {"rhs": lambda t, y: -y}, initial={"y": Quantity(1, "m")}, window=window, output_times=(Quantity(0, "s"),))
+
+
+def test_breakpoint_restart_uses_state_at_breakpoint_not_last_output():
+    window = TimeWindow(TimePoint("lab", Quantity(0, "s")), TimePoint("lab", Quantity(10, "s")))
+    p = NumericalProblem("ramp", ProblemKind.ODE_IVP, OperatorIdentity("ramp", "1", "0" * 64, "declared"), UnitBoundary((VariableSpec("y", "m"),)),
+                         {"rhs": lambda t, y: np.array([1.0])}, initial={"y": Quantity(0, "m")}, window=window,
+                         breakpoints=(Quantity(5, "s"),), output_times=(Quantity(2, "s"),))
+    rec = SciPyODEProvider().execute(p, method("RK45", {"rtol": 1e-10, "atol": 1e-12}))
+    assert rec.outputs["y"].magnitude == pytest.approx(10.0)
+    assert [t.magnitude for t, _ in rec.trajectory] == [2.0, 10.0]

@@ -451,8 +451,23 @@ def compare_executions(a: NumericalExecutionRecord, b: NumericalExecutionRecord,
         raise NumericalRefusal("agreement is only defined between executions of the same problem")
     if not (a.succeeded and b.succeeded):
         raise NumericalRefusal("a failed execution has no outputs to compare")
+    if set(a.outputs) != set(b.outputs):
+        raise NumericalRefusal("executions expose different outputs; they are not comparable")
+    if [t.magnitude for t, _ in a.trajectory] != [t.magnitude for t, _ in b.trajectory]:
+        raise NumericalRefusal("executions report trajectories at different times; they are not comparable")
     diffs: dict[str, float] = {}
     ok = True
+    pairs = [(a.outputs, b.outputs, "")] + [(ya, yb, f"@{t.magnitude}s") for (t, ya), (_, yb) in zip(a.trajectory, b.trajectory)]
+    for oa, ob, suffix in pairs:
+        for key in sorted(oa):
+            xa = oa[key] if isinstance(oa[key], tuple) else (oa[key],)
+            xb = ob[key] if isinstance(ob[key], tuple) else (ob[key],)
+            unit = xa[0].units
+            va = np.array([q.magnitude_in(unit) for q in xa])
+            vb = np.array([q.magnitude_in(unit) for q in xb])
+            diffs[key + suffix] = float(np.max(np.abs(va - vb)))
+            ok = ok and bool(np.allclose(va, vb, rtol=rtol, atol=atol))
+    return NumericalAgreement(ok, diffs, float(rtol), float(atol))
     for key in sorted(a.outputs):
         xa = a.outputs[key] if isinstance(a.outputs[key], tuple) else (a.outputs[key],)
         xb = b.outputs[key] if isinstance(b.outputs[key], tuple) else (b.outputs[key],)

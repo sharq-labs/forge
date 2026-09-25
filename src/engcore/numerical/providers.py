@@ -216,7 +216,9 @@ class SciPyODEProvider(NumericalProvider):
         nfev = njev = nlu = 0
         traj: list[tuple[Quantity, dict]] = []
         for a, b in zip(edges, edges[1:]):
-            t_eval = [t for t in outs if a < t <= b]
+            # The segment end is ALWAYS evaluated: the next segment restarts from
+            # the state at the breakpoint, never from the last requested output.
+            t_eval = sorted({t for t in outs if a < t <= b} | {b})
             with np.errstate(all="ignore"):
                 sol = solve_ivp(rhs, (a, b), y, method=method.method, rtol=_tol(method, "rtol"), atol=_tol(method, "atol"),
                                 t_eval=t_eval or None)
@@ -228,7 +230,7 @@ class SciPyODEProvider(NumericalProvider):
                 state = ConvergenceState.DIVERGED if sol_y.size and not np.all(np.isfinite(sol_y)) else ConvergenceState.FAILED
                 return failed(problem, self.identity, method, state, d, f"integration failed in segment [{a}, {b}] s: {sol.message}")
             for i, t in enumerate(sol.t):
-                if any(math.isclose(t, o, rel_tol=0, abs_tol=0) or t == o for o in t_eval):
+                if t in outs:  # only REQUESTED times; the breakpoint evaluation is internal
                     traj.append((Quantity(float(t), "s"), problem.unknowns.from_array(sol_y[:, i])))
             y = sol_y[:, -1]
         missing = sorted(set(outs) - {t.magnitude for t, _ in traj})
