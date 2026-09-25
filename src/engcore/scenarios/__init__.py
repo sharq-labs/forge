@@ -34,6 +34,11 @@ from .environment import (
     EnvironmentTimeline, EnvironmentValue, InterpolationContract, ReferenceContext,
     ValueDerivation,
 )
+from .lifecycle import (
+    ApplicabilityBound, DegradationModel, DegradationModelIdentity, DegradationStepRecord,
+    GatheredInput, InputBinding, InputRequirement, InputSource, LifecycleChain, StepStatus,
+    carry_forward, evaluate_degradation, run_digest, run_lifecycle,
+)
 
 __all__ = [
     "SEGMENT_OWNERSHIP", "ComposedInputSchedule", "ComposedOperatingCondition", "InterpolationKind",
@@ -54,4 +59,8 @@ __all__ = [
     "EnvironmentSample", "EnvironmentSource", "EnvironmentSourceKind", "EnvironmentState",
     "EnvironmentTimeline", "EnvironmentValue", "InterpolationContract", "ReferenceContext",
     "ValueDerivation",
+    # Lifecycle Engine
+    "ApplicabilityBound", "DegradationModel", "DegradationModelIdentity", "DegradationStepRecord",
+    "GatheredInput", "InputBinding", "InputRequirement", "InputSource", "LifecycleChain", "StepStatus",
+    "carry_forward", "evaluate_degradation", "run_digest", "run_lifecycle",
 ]

@@ -47,7 +47,7 @@ from typing import Any, Iterable, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.multiphysics.receipts import require_digest
-from ..scientific.results.uncertainty import Uncertainty
+from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.units.quantity import Quantity, dimensionality, is_ratio_scale, normalize_unit
 from .contracts import NamedQuantity
@@ -744,6 +744,54 @@ class EnvironmentTimeline:
         if result.status is ValueStatus.UNKNOWN:
             return self._unknown(c, result.reason)
         return self._known(c, ValueDerivation.INTERVAL_DECLARED, result.value)
+
+    def window_mean(self, channel_id: str, window: TimeWindow) -> EnvironmentValue:
+        """Time-weighted mean of an interval-history channel over ``window``.
+
+        Allowed for affine kinds (a mean temperature is meaningful where its
+        integral is not).  UNKNOWN for point-sample channels (no declared
+        interval values; interpolation is not averaged into exposure), outside
+        validity, or over any gap.  Uncertainty: sum(sigma_i*dt_i)/T, an upper
+        bound for any correlation, only if every contribution is STANDARD;
+        otherwise UNKNOWN.  Representation error is not included.
+        """
+        c = self.channel(channel_id)
+        if c.representation is not ChannelRepresentation.INTERVAL_HISTORY:
+            return self._unknown(c, f"channel {channel_id!r} holds point samples; no declared window mean")
+        if not c.validity.covers(window):
+            return self._unknown(c, f"window reaches outside the validity of {channel_id!r}")
+        history = self.timeline.history(c.history_id)
+        gaps = history.gaps_within(window)
+        if gaps:
+            return self._unknown(c, f"history {c.history_id!r} has no declared value over part of the window")
+        total = Fraction(0)
+        sigma = Fraction(0)
+        standard = True
+        for entry in history.entries:
+            dt = max(Fraction(0), min(entry.window.end.seconds, window.end.seconds) - max(entry.window.start.seconds, window.start.seconds))
+            if dt <= 0:
+                continue
+            total += Fraction(repr(entry.value.value.magnitude_in(c.unit))) * dt
+            unc = entry.value.uncertainty
+            if unc.kind.value == "standard":
+                sigma += Fraction(repr(unc.standard_uncertainty.magnitude_as_spread_in(c.unit))) * dt
+            else:
+                standard = False
+        duration = window.end.seconds - window.start.seconds
+        if standard and is_ratio_scale(c.unit):
+            uncertainty = Uncertainty(
+                kind=UncertaintyKind.STANDARD,
+                standard_uncertainty=Quantity(float(sigma / duration), c.unit),
+                method="sum of sigma_i*dt_i / T: upper bound on the standard deviation of the "
+                       "window mean for any correlation between entries",
+                notes="conservative UPPER BOUND, not an estimated 1-sigma; representation error NOT included",
+            )
+        else:
+            uncertainty = Uncertainty.unknown(
+                f"window mean of {channel_id!r}: an entry lacks standard uncertainty or the unit "
+                f"cannot carry a spread; representation error not included"
+            )
+        return self._known(c, ValueDerivation.INTERVAL_DECLARED, NamedQuantity(f"{channel_id}.mean", Quantity(float(total / duration), c.unit), uncertainty))
 
     # ---- serialization -----------------------------------------------------
 
