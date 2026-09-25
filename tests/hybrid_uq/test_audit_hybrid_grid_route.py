@@ -54,7 +54,8 @@ def test_huq02_the_grid_predictive_never_supports_a_grid_the_router_refuses():
     routed = route_uncertainty(grid=coarse, observations=P.observations, forward=P.forward)
     assert routed.decision is RouteDecision.REFUSED and routed.considered[0]["outcome"] == "REFUSED_BY_V1"
     table = P.table_builder()(coarse.points)
-    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
+    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
+                                    observation_sigma=Quantity(float(P.sigma), "dimensionless"))
     with pytest.raises(GridResolutionError):
         grid_predictive_uncertainty(coarse, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
                                     source_ref="audit")
@@ -72,7 +73,8 @@ def test_huq02_the_wrapper_judges_the_grid_itself_where_the_v1_checks_would_pass
     P = S.affine()
     grid = P.grid(AXES)
     table = P.table_builder()(grid.points)
-    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
+    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
+                                    observation_sigma=Quantity(float(P.sigma), "dimensionless"))
     weights = np.array(grid.weights, copy=True)
     weights[int(np.argmax(weights))] *= 4.0
     laundered = _forged(grid, weights=weights / weights.sum())
@@ -86,8 +88,12 @@ def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     grid = P.grid(AXES)
     table = P.table_builder()(grid.points)
     # CORE-006: a prediction at the sixth observation's x, inside the range the conditioned observations declare
-    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
-                                    conditions={"x": Quantity(float(P.x[5]), "dimensionless")})
+    spec = PredictiveObservableSpec(
+        observation_key=P.observations.keys[5],
+        unit="dimensionless",
+        observation_sigma=Quantity(float(P.sigma), "dimensionless"),
+        conditions={"x": Quantity(float(P.x[5]), "dimensionless")},
+    )
     # R-23 (I-13 part B, batch 23): SUPPORTED also needs the table to have been CHECKED against the model it
     # is supposed to be the values of. `predict` returns this prediction's value, one per spec, as the local
     # path's does; without it the record carries PREDICTIVE_TABLE_NOT_CHECKED, which the third case below

@@ -123,8 +123,18 @@ def _epistemic_sd(posterior, values):
                                  admission_refs=tuple((("analytic|fixture|ver|bind",) if ok else ()) for ok in posterior.admissible_mask),
                                  rejection_reasons=tuple("" if ok else "inadmissible" for ok in posterior.admissible_mask),
                                  observation_units=("dimensionless",))
-    uq = posterior_predictive_uq(posterior, table, PredictiveObservableSpec(obs_key, "dimensionless", None), twin=TWIN, model=MODEL,
-                                 source_ref="prediction")
+    uq = posterior_predictive_uq(
+        posterior,
+        table,
+        PredictiveObservableSpec(
+            obs_key,
+            "dimensionless",
+            Quantity(1.0, "dimensionless"),
+        ),
+        twin=TWIN,
+        model=MODEL,
+        source_ref="prediction",
+    )
     return uq.epistemic_standard_uncertainty.magnitude
 
 
