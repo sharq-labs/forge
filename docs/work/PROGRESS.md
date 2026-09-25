@@ -11,7 +11,61 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 5 — Scientific Data + Materials (BUILD phase; read this first)
+## 2026-09-25 BIG 6 — Mathematical / Numerical Foundation (BUILD phase; read this first)
+
+### Pre-check
+BIG 5 re-review at `05c4b2c`: no numerical blocker; one HIGH path fixed first
+(interpolation between ASSUMED points was labelled INTERPOLATED -> now
+refused; wrong-dimension conditions are inadmissible instead of raising).
+
+### Architecture
+- Existing numerical authority found and reused: `scientific.solvers.protocol`
+  (SolverIdentity, SolverSettings, ConvergenceState, RawSolverOutput),
+  `scientific.numerics` (health, conditioning, stability),
+  `solvers.admission.require_finite`. `engcore.numerical` is a kernel layer
+  beneath domain solvers, not a parallel solver framework.
+- Environment: numpy 2.4.6, scipy 1.17.1 present; SymPy 1.14.0 installed this
+  session (`pip install sympy`) and declared as optional extra `symbolic`;
+  `petsc` extra declared (petsc4py not installed). SUNDIALS: contract only;
+  a first attempt probed `scikits.odes` and was removed because an unused
+  import of an undeclarable distribution tripped the dependency guard and the
+  provider would not use it anyway.
+
+### Scientific review
+BIG 6 review: CHANGES REQUIRED for one BLOCKER, fixed: LINEAR problem
+identity with a declared digest did not hash its arrays (two matrices, one
+identity) -> operand digest now always in identity. Also fixed: bridge keeps
+failure reason/termination message; objective value no longer mislabelled
+as residual; GMRES re-checks true residual; missing tolerance -> typed
+refusal before work; minimize tolerances restricted per method; bitwise
+determinism claim removed; PETSc preconditioner must be explicit; ODE output
+times strictly after start and coverage verified. Not re-reviewed.
+
+### Open non-blocking gaps
+- Callable operators (ODE/root/optimization) have declared (attested) identity.
+- `NOT_APPLICABLE` direct solves through Core admission are not yet tested end to end.
+- Sparse problems > 2000 unknowns report no condition estimate.
+- No DAE execution; SUNDIALS/PETSc execution not exercised here.
+- Event *detection* (state-dependent events) is not supported; only declared
+  breakpoints are bridged.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/numerical src/engcore/materials` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_core_api_layering.py tests/test_min_foundation_electrothermal.py` — PASS, 201 passed
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_core_guards.py -k dependenc` — PASS, 6 passed (earlier FAIL on undeclared `scikits`, fixed as above)
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI, PETSc/SUNDIALS execution.
+
+### Readiness
+Linear (3 providers), nonlinear (SymPy operator, 2 methods), ODE (2 methods,
+BIG 2 window, BIG 5 material parameter, breakpoint bridging) and optimization
+execute through provider-neutral contracts with fail-closed diagnostics.
+BIG 7 not started.
+
+## 2026-09-25 BIG 5 — Scientific Data + Materials (BUILD phase)
 
 ### Pre-check
 BIG 4 re-review at `a2578a6`: PASS WITH NON-BLOCKING GAPS, no materials

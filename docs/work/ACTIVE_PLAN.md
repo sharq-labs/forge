@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 5 — Scientific Data + Materials** built on `scientific.knowledge` and BIG 2–4; BIG 6 not started.
+Current: **BIG 6 — Mathematical / Numerical Foundation** built beneath the Core solver protocol; BIG 7 not started.
 
 ## Current branch / PR
 
@@ -165,6 +165,27 @@ Implemented in `src/engcore/materials/` (non-Core; registered in
 - [x] Executable proofs: temperature-dependent alloy conductivity; moisture
       uptake (lifecycle) -> MaterialState -> resolved conductivity -> heat flux.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 5 section).
+
+### P5 / BIG 6 — Mathematical / numerical foundation
+
+Implemented in `src/engcore/numerical/` (non-Core; registered) beneath the
+Core `ScientificSolver` protocol; tests `tests/test_numerical_foundation.py`.
+
+- [x] Reuses `SolverIdentity`, `SolverSettings`, `ConvergenceState`,
+      `NumericHealth`, `ConditionEstimate`; bridges via `to_raw_solver_output`.
+- [x] `UnitBoundary` (Quantity <-> normalized array, recorded scale, affine
+      refused), `OperatorIdentity` (array bytes / SymPy srepr / declared =
+      attestation), `NumericalProblem` (explicit initial values; ODEs inside a
+      BIG 2 `TimeWindow` with explicit breakpoints), `NumericalExecutionRecord`
+      (execution identity; outputs withheld on failure), `compare_executions`.
+- [x] Providers: NumPy dense LU; SciPy sparse direct + GMRES; root
+      (hybr/lm); minimize (BFGS/Nelder-Mead); solve_ivp (RK45/BDF/Radau/LSODA);
+      SymPy `SymbolicSystem` (exact Jacobians, derived identity).
+- [x] Optional: PETSc KSP provider (petsc4py absent here -> ProviderUnavailable;
+      execution path NOT RUN); SUNDIALS contract only (always unavailable).
+- [ ] Next numerical slice: SUNDIALS CVODE/IDA implementation, DAE support,
+      PETSc execution in an environment that has petsc4py.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 6 section).
 
 ## Persistent project direction
 

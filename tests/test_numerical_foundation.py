@@ -247,3 +247,35 @@ def test_optional_backends_refuse_when_unavailable():
         _, rec, _ = _cooling("RK45")
         with pytest.raises(ProviderUnavailable):
             sundials.execute(NumericalProblem(**{**_cooling("RK45")[0].__dict__}), method("cvode_bdf", {"rtol": 1e-6, "atol": 1e-9}))
+
+
+def test_linear_identity_hashes_arrays_even_when_digest_is_declared():
+    rhs = np.array([1.0, 2.0])
+    op = OperatorIdentity("declared_linear", "1", "0" * 64, "declared")
+    boundary = UnitBoundary((VariableSpec("x", "m", size=2),))
+    a = NumericalProblem("same-id", ProblemKind.LINEAR, op, boundary, {"matrix": np.eye(2), "rhs": rhs})
+    b = NumericalProblem("same-id", ProblemKind.LINEAR, op, boundary, {"matrix": 2 * np.eye(2), "rhs": rhs})
+    assert a.digest != b.digest
+    ra = NumPyDenseLinearProvider().execute(a, method("dense_lu", {"residual_rtol": 1e-12}))
+    rb = NumPyDenseLinearProvider().execute(b, method("dense_lu", {"residual_rtol": 1e-12}))
+    with pytest.raises(NumericalRefusal, match="same problem"):
+        compare_executions(ra, rb, rtol=1, atol=1)
+
+
+def test_bridge_keeps_failure_reason_and_missing_tolerance_is_a_refusal():
+    singular = np.array([[1.0, 2.0], [2.0, 4.0]])
+    rhs = np.array([1.0, 2.0])
+    p = NumericalProblem("singular2", ProblemKind.LINEAR, OperatorIdentity("s", "1", array_digest(singular, rhs), "array_bytes"),
+                         UnitBoundary((VariableSpec("x", "m", size=2),)), {"matrix": singular, "rhs": rhs})
+    rec = NumPyDenseLinearProvider().execute(p, method("dense_lu", {"residual_rtol": 1e-12}))
+    raw = to_raw_solver_output(rec, {"x": "m"})
+    assert raw.diagnostics["reason"] and raw.values == {}
+    with pytest.raises(NumericalRefusal, match="explicit tolerance"):
+        NumPyDenseLinearProvider().execute(p, method("dense_lu", {}))
+
+
+def test_ode_output_at_window_start_is_refused():
+    with pytest.raises(NumericalRefusal, match="strictly after"):
+        window = TimeWindow(TimePoint("lab", Quantity(0, "s")), TimePoint("lab", Quantity(10, "s")))
+        NumericalProblem("o", ProblemKind.ODE_IVP, OperatorIdentity("o", "1", "0" * 64, "declared"), UnitBoundary((VariableSpec("y", "m"),)),
+                         {"rhs": lambda t, y: -y}, initial={"y": Quantity(1, "m")}, window=window, output_times=(Quantity(0, "s"),))

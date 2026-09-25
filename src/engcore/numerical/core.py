@@ -166,7 +166,9 @@ class OperatorIdentity:
 
     For array operands the digest is computed from the arrays.  For callables
     it is DECLARED by the caller (or derived from a SymPy expression): Forge
-    cannot hash arbitrary code, and that limit is stated, not hidden.
+    cannot hash arbitrary code, so a declared digest is an ATTESTATION, not a
+    proof -- two different callables under one declared digest are not
+    distinguishable.  That limit is stated, not hidden.
     """
 
     operator_id: str
@@ -242,6 +244,9 @@ class NumericalProblem:
         if self.kind in (ProblemKind.ODE_IVP, ProblemKind.DAE):
             if not isinstance(self.window, TimeWindow):
                 raise NumericalRefusal("time integration requires an authorized BIG 2 TimeWindow")
+            for t in self.output_times:
+                if t.to("s").magnitude <= float(self.window.start.seconds):
+                    raise NumericalRefusal("output times must lie strictly after the window start; the initial state is an input, not an output")
             for t in tuple(self.breakpoints) + tuple(self.output_times):
                 from ..scenarios.timeline import TimePoint
                 if not self.window.contains(TimePoint(self.window.basis_id, t)) and t.to("s").magnitude != float(self.window.end.seconds):
@@ -262,6 +267,9 @@ class NumericalProblem:
     def identity(self) -> dict[str, Any]:
         return {
             "problem_id": self.problem_id, "kind": self.kind.value, "operator": self.operator.to_dict(),
+            # Array operands are ALWAYS hashed into identity, whatever the operator
+            # declares: Forge holds the arrays, so their identity is proven, not attested.
+            "operand_digest": array_digest(self.operands["matrix"], self.operands["rhs"]) if self.kind is ProblemKind.LINEAR else None,
             "unknowns": self.unknowns.to_dict(),
             "initial": None if self.initial is None else self.unknowns.to_array(self.initial).tolist(),
             "parameters": {k: v.to_dict() for k, v in sorted(dict(self.parameters).items())},
@@ -305,6 +313,7 @@ class NumericalDiagnostics:
     residual_norm: float | None = None
     residual_history: tuple[float, ...] = ()
     iterations: int | None = None
+    objective_value: float | None = None
     function_evaluations: int | None = None
     jacobian_evaluations: int | None = None
     accepted_steps: int | None = None
@@ -318,7 +327,7 @@ class NumericalDiagnostics:
     def to_dict(self) -> dict[str, Any]:
         return {
             "residual_norm": self.residual_norm, "residual_history": list(self.residual_history),
-            "iterations": self.iterations, "function_evaluations": self.function_evaluations,
+            "iterations": self.iterations, "objective_value": self.objective_value, "function_evaluations": self.function_evaluations,
             "jacobian_evaluations": self.jacobian_evaluations, "accepted_steps": self.accepted_steps,
             "rejected_steps": self.rejected_steps, "error_estimate": self.error_estimate,
             "condition": None if self.condition is None else {"condition_number": self.condition.condition_number, "status": self.condition.status.value, "method": self.condition.method, "threshold": self.condition.threshold},
@@ -474,7 +483,9 @@ def to_raw_solver_output(record: NumericalExecutionRecord, unit_of: Mapping[str,
     return RawSolverOutput(
         record.convergence, values, residuals if record.succeeded or d.residual_norm is None or math.isfinite(d.residual_norm) else {},
         d.iterations, None, tuple(d.warnings),
-        {"numerical_execution_identity": record.execution_identity, "numerical_execution_digest": record.digest, "units": dict(unit_of)},
+        {"numerical_execution_identity": record.execution_identity, "numerical_execution_digest": record.digest, "units": dict(unit_of),
+         "reason": record.reason, "termination_message": d.termination_message,
+         "classification": "numerical_execution_not_scientific_evidence"},
     )
 
 
