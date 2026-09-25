@@ -112,7 +112,9 @@ class ResidualCalculator:
                 comparison_unit
             )
         )
-        satisfied = (
+        # bool(): a unit conversion may yield a NumPy scalar, whose comparison
+        # is numpy.bool_ -- the residual record requires a Python bool.
+        satisfied = bool(
             absolute <= absolute_limit
             or relative <= criterion.relative_tolerance
         )

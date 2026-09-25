@@ -13,11 +13,13 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 9 — Generic Multiphysics Runtime + preCICE** built (heterogeneous two-way coupling; real preCICE 3.4.0 execution); BIG 10 not started.
+Current: **BIG 10 — Multi-timescale Runtime** built (macro windows over BIG 2 time, representative
+FEniCSx+SciPy fast windows, explicit aggregation, BIG 4/5 feed-forward, event refinement,
+checkpoint/resume); BIG 11 not started.
 
 ## Current branch / PR
 
-- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`)
+- Branch: `feat/big-10-multitimescale` (from `main` @ `e3ae778a`, BIG 2-9 merged); local worktree `D:/forge-big10`
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 
@@ -238,7 +240,36 @@ preCICE provider in `providers/precice` (preCICE 3.4.0).
       D cross-mesh via BIG 7 mapping, E >=2 provider types, F TimeWindow, G environment,
       H lifecycle, I conservation diagnostic, J real preCICE run (all executed; see PROGRESS).
 - [x] Review blockers fixed (preCICE unit check; Forge-owned acceptance).
-- [ ] Non-blocking gaps: see PROGRESS (BIG 9 section).
+- [x] Re-review before BIG 10 (CHANGES REQUIRED, 5 BIG 10 blockers) -> fixed: unrelaxed fixed-point
+      residual, undeclared participant events refused, input/condition changes are window boundaries,
+      provider adapter state progression + explicit `ParticipantStateContract`; resume handled at
+      macro boundaries by BIG 10 (`MacroCheckpoint`).
+- [ ] Non-blocking gaps: see PROGRESS (BIG 9 section and BIG 10 "BIG 9 re-review").
+
+### BIG 10 — Multi-timescale runtime
+
+`src/engcore/multiscale/` (non-Core; registered) orchestrating BIG 2-9; reference domain probe
+`domains/electrical/resistance_drift.py`; proofs `tests/test_multiscale_runtime.py`,
+`tests/test_multiscale_review_fixes.py`, `providers/fenicsx/tests/test_multiscale_fenicsx.py`.
+
+- [x] Declared `ScaleHierarchy` (FAST / OPERATIONAL / SLOW roles; domain declares state ownership; in identity).
+- [x] `MacroStepPolicy` (explicit adaptation rules, event SPLIT/REFUSE, explicit-normalization
+      state-change limits, threshold localization); every size change / refinement recorded.
+- [x] `RepresentativeWindow` approximation contract (exact rational weight, whole-period tiling +
+      resolved remainder, declared assumptions/applicability, MEASURED input deviation vs declared
+      periodicity tolerances; beyond tolerance -> rejected and refined).
+- [x] Aggregation with stated preserved/lost history features; models declare accepted forms and
+      required features (`AggregateRequirement`, lifecycle `PHYSICS_AGGREGATE`,
+      `StepStatus.INSUFFICIENT_HISTORY`); `compress_history` (derived, never gains features).
+- [x] Fast/slow separation: fast solver gets read-only state; only APPLIED BIG 4 steps change slow
+      state; material re-resolution enforced per execution (`MaterialBinding`).
+- [x] Exact fast-execution reuse only for a declared-pure system and identical request identity.
+- [x] `MacroCheckpoint` (serialized, digest-verified) + `resume` refused unless all fast participants
+      DECLARED complete state; `compare_resume` (reproducibility, not validation).
+- [x] Approximation ledger (7 separate components; UNKNOWN unless quantified; observations of a more
+      temporally resolved numerical reference are not bounds).
+- [x] Proofs A-F executed (lumped+SciPy in core env; FEniCSx+SciPy in the conda env) — see PROGRESS.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 10 section).
 
 ## Persistent project direction
 

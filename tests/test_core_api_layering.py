@@ -302,6 +302,10 @@ NON_CORE_PACKAGES = {
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"
     ),
+    "multiscale": (
+        "multi-timescale orchestration (macro windows, representative fast windows, "
+        "aggregation, checkpoint/resume) over the BIG 2-9 authorities; no new authority"
+    ),
 }
 
 

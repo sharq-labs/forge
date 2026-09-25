@@ -5,13 +5,187 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`, PR #106 merged)
+- Branch: `feat/big-10-multitimescale` (from `main` @ `e3ae778a`, BIG 2-9 merged)
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 9 — Generic Multiphysics Runtime + preCICE (BUILD phase; read this first)
+## 2026-09-25 BIG 10 — Multi-timescale Runtime (BUILD phase; read this first)
+
+Branch `feat/big-10-multitimescale` created from `main` @ `e3ae778a` (it did not exist locally or
+on origin; the shared checkout was on stale `2b76017f`, so a worktree `D:/forge-big10` was used).
+
+### Environment (exact)
+- Core env: Windows, `.venv` Python 3.14.2, numpy 2.5.2, scipy 1.18.1, pint 0.25.3.
+- FEniCSx env rebuilt in WSL Ubuntu (no `/opt/mm` here, no sudo): micromamba 2.9.0 ->
+  `~/mm/root/envs/fenicsx` (conda-forge, Python 3.11): dolfinx **0.11.0**, petsc4py **3.25.5**,
+  pyprecice/preCICE **3.4.0**. First run failed: FFCx JIT needs a C compiler (`gcc` missing) ->
+  `micromamba install c-compiler` (gcc 15.2.0) and PATH/CC set in the runner.
+
+### BIG 9 re-review (before BIG 10)
+`forge-scientific-review`: CHANGES REQUIRED, five BIG 10 blockers. Fixed:
+- B10-2 `execution/multiphysics/runtime.py`: implicit residual measured on the relaxed increment
+  (omega * r) -> now on the UNRELAXED transfer H(x_k) - x_k (Jacobi and serial); no fallback.
+  Test: omega=0.05 no longer "converges" at x=0.25 K when the fixed point is 10 K.
+- B10-3: events from a participant not declared `event_capable` refused; event alignment requires
+  deterministic checkpoints of every participant (plan admission already refused the latter).
+- B10-4: every STEP-input sample instant and operating-condition segment start is a window
+  boundary (an event-shifted grid delivered them late); float-grid slivers snapped.
+- B10-1 `coupling/adapters.py`: `provider_participant` now advances declared `evolved_state`
+  (FAST) from the solve's `next_state`, refuses a solve that returns held (SLOW) state, digests
+  value+unit+uncertainty, and carries an explicit `ParticipantStateContract`
+  (DECLARED_COMPLETE with a basis, or NOT_ESTABLISHED).
+- B10-5: resume is provided at macro boundaries by BIG 10 `MacroCheckpoint`; each fast execution
+  is a fresh coupled run, so runtime-internal mid-run resume is not needed by BIG 10 (gap below).
+- Found while running: `ConvergenceCriterion` with a watt tolerance produced `numpy.bool_`
+  (pint returns NumPy scalars) -> `satisfied = bool(...)` in `convergence.py`.
+Non-blocking BIG 9 items left open: N1 IDENTITY edge + consumer-side mapping reports
+`coupling_error_bound == 0.0`; N2 event-aligned inner non-convergence relabelled; N3 parameter
+bindings not recorded for replay; N4 preCICE peer process not killed on early return; N5
+absolute-OR-relative acceptance; N6 heater TCR law has no declared temperature range. N7 (PROGRESS
+said relaxation 0.5; the gate-B test uses 0.7) is corrected here: gate B used relaxation **0.7**.
+Changed certified-scope files (`execution/multiphysics/runtime.py`, `convergence.py`): bug fixes
+that are stricter (fail-closed); hardened recertification is still owed (BIG 14-15).
+
+### Architecture (`src/engcore/multiscale/`, non-Core, registered)
+Orchestration only; reuses BIG 2 `Timeline`/`TimeWindow`/events/histories, BIG 3
+`EnvironmentTimeline`, BIG 4 `DegradationModel`/`DegradationStepRecord` (new
+`evaluate_degradation_step` shared with `evaluate_degradation`; new `PHYSICS_AGGREGATE` input,
+`AggregateRequirement`, `HistoryFeature`, `StepStatus.INSUFFICIENT_HISTORY`), BIG 5
+`MaterialState`/resolve, BIG 6/8 providers and the BIG 9 `MultiphysicsRuntime` behind a
+`FastSystem` contract (no dolfinx/preCICE import in `multiscale`).
+- `scales.py` ScaleHierarchy (FAST/OPERATIONAL/SLOW roles; domain-declared state ownership).
+- `windows.py` MacroStepPolicy (adaptation rules DEFAULT/AFTER_ELAPSED/NEAR_THRESHOLD, event
+  SPLIT/REFUSE, StateChangeLimit with explicit scale, ThresholdWatch), RepresentativePolicy /
+  RepresentativeWindow (exact rational weight = represented/resolved; whole-period tiling + resolved
+  remainder; declared assumptions/applicability; measured input deviation vs declared periodicity
+  tolerances), AdaptationDecision, RefinementDecision.
+- `aggregation.py` OutputSeries, AggregationSpec/Record (integral, time-weighted mean, extrema,
+  cycle count, histogram, dwell-above, domain-defined), preserved/lost features, repetition drops
+  ORDER/EXTREMA, gaps -> UNKNOWN, `compress_history` (derived, one spec, never gains features).
+- `fast.py` FastSystemIdentity (providers, graph fingerprint, contracts, material bindings, purity
+  declaration), FastExecutionRequest (identity = exact content), FastExecutionResult,
+  `check_material_reresolution`.
+- `approximation.py` ledger of 7 separate components (numerical, time integration, mapping,
+  aggregation, representative window, model uncertainty, model discrepancy); no score.
+- `checkpoint.py` MacroCheckpoint (self-verifying serialize/deserialize).
+- `runtime.py` MultiTimescaleRuntime (run/resume), MacroStepRecord chain, accounting,
+  `compare_resume`.
+- Domain probe `domains/electrical/resistance_drift.py`: Arrhenius-equivalent-time domain
+  aggregator (needs DWELL; per-sample temperature range 273.15-473.15 K) and linear drift model.
+  `HeaterCircuit.root_method` added (default `hybr` keeps BIG 9 identity).
+
+### Scientific review of BIG 10
+`forge-scientific-review`: CHANGES REQUIRED (F1-F4 HIGH, F5-F13 MEDIUM, F14-F16 LOW). Fixed:
+F1 repetition measured against the resolved period's inputs (declared tolerances; rejection ->
+refine); F2 read-only state snapshots to fast systems and in records/checkpoints; F3 ledger from
+cumulative (checkpointed) accounting + ledger in `compare_resume`; F4 cycle counts UNKNOWN when a
+cycle may straddle a boundary / repetition does not close; F5 whole-period tiling; F6 extrema of a
+repeated window UNKNOWN, nothing admitted that preserves nothing; F7 fast-state validation +
+declared fast state in identity; F8 TERMINATION stops, unapplied STATE_CHANGE_REQUEST refused; F10
+declared purity gates reuse + consumed environment/timeline digests checked; F11 any exception is a
+refusal that keeps checkpoints; F12 compression requires one spec and honours the statistic; F13
+Arrhenius applicability per sample temperature, board property re-resolved at the solved
+temperature bound; F14 run_id check + "corruption, not forgery" docstring; F15 no relaxed fallback.
+Partial: F9 (classification/attribute/digest check and a `multiscale-macro:` run_id prefix; a
+serialized binding-kind discriminator needs a schema-version decision). Focused re-review (read-only, static): F2-F8, F10-F15 confirmed FIXED; it found N1 (HIGH) the
+periodicity check compared only at repeated-entry starts, N2 (HIGH) point-sample channels and cycle
+histories were never measured, N3 (MEDIUM) a caller-edited checkpoint counter could make the ledger
+claim "no repetition", N4 (LOW) events exactly at the horizon end ignored, N5 (LOW) cached results
+not re-verified, N6 (MEDIUM) FEniCSx alloy range never checked. All fixed with tests: comparison at
+the union of both periods' change points; LEADING_PERIOD refused while point-sample channels or
+cycle histories exist; resumed ledgers never report REPRESENTATIVE_WINDOW NOT_APPLICABLE and
+checkpoint counters must match exactly; end-of-horizon TERMINATION/STATE_CHANGE_REQUEST act; cache
+entries re-verified by digest; alloy re-resolved at the solved plate min/max (illustrative
+273.15-600 K fixture set). F9 digest now must be hex. Not re-reviewed after these fixes.
+
+### Executed proofs (all numbers from runs in this session)
+Reference system (illustrative fixtures): heater on a two-region plate / lumped board in a
+DECLARED cyclic damp-heat chamber program (hourly; shaped after IEC 60068-2-30 Db, conformance not
+claimed, source kind `design_assumption`; upper temperature +0.25 K/day; program change = BIG 2
+DISCONTINUITY at day 30.5); heater 10 V 06-18 h / 2 V standby (USAGE history). Slow state: board
+`moisture_content` (wetness-dose uptake) and heater `resistance_drift` (Arrhenius equivalent time
+from the fast heater-temperature DWELL history). Fast: BIG 9 implicit coupling, 1 h coupling windows.
+
+**B / F — 63-day long horizon (FEniCSx 0.11.0 plate + SciPy `lm` circuit, 60 ohm series):**
+completed; represented **63 d** vs resolved **14 d** (1,209,600 s); **13** macro windows, **15**
+representative executions (13 repeated, weights 7/2/3; remainders resolved), **336** real coupled
+FEniCSx+SciPy windows, 2,767 coupling iterations, 1 event split (window ends at day 30.5),
+2 adaptation changes (7 d -> 2 d near the moisture breakpoint 0.05 -> 7 d), threshold crossing
+localized in a 2-day window, 0 rejections, 0 cache reuses, wall 42.8-53.4 s. Moisture 0 -> 0.0817,
+drift 0 -> 0.0115, board k re-resolved every window 0.0350 -> 0.0529 W/(m K) (SOURCED ->
+INTERPOLATED). Same day-0 window/environment/usage with day-63 slow state changes the heater
+temperature by up to **3.96 K** (counterfactual execution). Lumped+SciPy (core env): same
+partition/counts, 2,678 iterations, moisture 0.0816, drift 0.173 (1 ohm series), wall 16.9 s.
+**A — 72 h:** reference = 3 x 1-day fully resolved macro windows (72 h resolved); multi-timescale =
+one 3-day window, 1 day repeated x3 (24 h resolved). Moisture identical (environment dose integrated
+from the full BIG 3 history in both). Drift: FEniCSx ref 3.1966e-4 vs ms 3.1706e-4 (-0.81 %);
+lumped ref 1.0394e-2 vs ms 1.0593e-2 (+1.91 %; the missing daily drift feed-forward dominates the
++0.25 K/day ambient rise). Recorded as observations against a MORE TEMPORALLY RESOLVED NUMERICAL
+REFERENCE, not bounds; REPRESENTATIVE_WINDOW stays UNKNOWN.
+**C:** event at day 4 + 7 h -> window ends exactly there; `event_handling=refuse` -> run refused,
+no step, no checkpoint.
+**D:** drift model bound to a time-weighted MEAN temperature -> `insufficient_history` (DWELL lost),
+run stopped, drift stays 0; Arrhenius aggregator refuses a mean-only source series; a histogram is
+refused for an ORDER-requiring input.
+**E:** checkpoint -> JSON -> fresh runtime (and, core env, a separate OS process) -> continuation:
+`compare_resume` matched (all macro-step digests, final state, accounting, ledger). FEniCSx:
+1 + 3 steps over 21 days with a fresh gmsh mesh/provider; lumped: 12-day pause of a 28-day run.
+Also: NOT_ESTABLISHED completeness -> run continues, resume refused; tampered payload and foreign
+policy refused; a failed step keeps the previous checkpoint.
+
+### Failed approaches (do not repeat)
+- `HeaterCircuit` with SciPy 1.18 `hybr` refuses ~6 % of states of its LINEAR KVL residual after
+  reaching it to 1e-16 ("not making good progress"), independent of xtol/initial guess; `lm` has
+  zero such refusals -> `root_method` field, BIG 10 uses `lm`.
+- 0 V standby: `hybr` refuses the trivial root -> declared 2 V standby.
+- BIG 6 `UnitBoundary(scale=100)` expects NORMALIZED operands; physical operands gave 22,334 K.
+- FEniCSx plate (insulating board half) at 1 ohm: mean 588 K; at 15/25/35 ohm the plate maximum
+  (496.6 K at 25 ohm, ~480 K at 35 ohm) left the declared 473.15 K board-data range -> refused
+  (correct). A 1.0 W declared initial power iterate overshot the range in the first iterate ->
+  0.1 W. 60 ohm keeps the hottest day at a 408.8 K board bound.
+- First "baseline" comparison run imported the modified `src` (sed missed PYTHONPATH) -> redone
+  with a dedicated runner; recorded here so the invalid result is not reused.
+
+### Open non-blocking gaps (BIG 10)
+- Representative selection is LEADING_PERIOD only (no clustering/typical-day selection); weights
+  are whole periods; no quantified representative-window error (UNKNOWN); one observation per
+  scenario/horizon only.
+- Slow state is held constant inside a macro window for the fast physics (no intra-window
+  feed-forward) -- the 72 h lumped discrepancy (+1.9 %) is exactly this.
+- Fast participants in the proofs are quasi-static (steady per coupling window); no transient
+  fast state was exercised with real providers (toy system covers CARRY/DECLARED policies).
+- Board conductivity data are illustrative and DECLARED temperature-independent over 273-473 K;
+  alloy k looked up at a DECLARED 450 K (temperature dependence not iterated). Environment is a
+  declared test-chamber scenario, not a measured dataset.
+- F9 partial (no serialized binding-kind discriminator on DegradationStepRecord).
+- Macro-step events: DISCONTINUITY/SCHEDULED split; TERMINATION stops; STATE_CHANGE_REQUEST is
+  refused (no transition authority yet); state-dependent regime changes beyond declared
+  thresholds are not detected.
+- Point-sample environment channels and cycle histories are not measurable for periodicity yet:
+  representative repetition is refused while they exist.
+- Checkpoint digest is unkeyed (detects corruption, not forgery); runtime-internal mid-run
+  resume of a coupled run (B10-5 in the BIG 9 sense) not built.
+
+### Verification (BUILD-phase focused checks only)
+2026-09-25
+command: `python -m compileall -q src/engcore/multiscale src/engcore/coupling src/engcore/scenarios src/engcore/execution/multiphysics src/engcore/domains/electrical tests/multiscale_reference.py` — PASS
+command: `pytest -q -n 4 tests/test_multiscale_review_fixes.py tests/test_multiscale_runtime.py tests/test_big9_review_runtime_fixes.py` — PASS, 42 passed (final; includes a separate-process resume)
+command: `pytest -q -n 4 <13 multiphysics/lifecycle/coupling test files> tests/test_multiscale_review_fixes.py tests/test_core_guards.py tests/test_pde_contracts.py tests/test_spatial_core.py tests/test_numerical_foundation.py tests/test_environment_engine.py` — final: 1946 passed, 9 failed, 1 error. The same 8 failures + 1 collection error occur on a pristine `e3ae778a` worktree run with its own `src` (environmental in this py3.14 venv): test_verdict_monotonicity (ImportError), test_core_freeze_manifest::test_a_descendant_that_keeps_the_contract_still_verifies, test_core_guards::{test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green, test_the_domain_names_were_derived_from_the_packages_not_listed}, test_numerical_foundation::{test_nonlinear_failure_withholds_the_last_iterate, test_nonlinear_root_two_methods_agree_with_exact_jacobian, test_problem_level_refusals}, test_spatial_core::{test_duplicate_facet_and_flattening_are_refused, test_meshio_roundtrip_preserves_identity}. The one extra failure, test_core_freeze_manifest::test_the_tree_is_core_freeze_v1, failed only its `tree.clean` check (uncommitted files); re-run after the commit: see below.
+command (WSL conda env, `PYTHONPATH=src:providers/fenicsx:providers/precice:.`): `pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests providers/precice/tests` — PASS, 35 passed (BIG 8/9 suites + 4 BIG 10 FEniCSx proofs; real preCICE 3.4.0 run included). Earlier runs in this session: 18 failed before `c-compiler` (environment), 1 failed on a wrong Proof E assertion (steps != executions with remainder tiles; fixed).
+command: `python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --cached --check` — PASS (no CRLF in added files)
+NOT RUN: full FAST, full SCIENTIFIC, `forge_check.py --regression`, mutation shards, hardened
+recertification (owed: certified-scope `execution/multiphysics/runtime.py` and `convergence.py`
+changed), full CI.
+
+### Readiness
+Forge evolves a 63-day system (Time + Environment + real FEniCSx/SciPy coupled fast physics +
+aggregation + lifecycle + material feed-forward + event refinement + checkpoint/resume) resolving
+14 of 63 days. BIG 11 not started.
+
+## 2026-09-25 BIG 9 — Generic Multiphysics Runtime + preCICE (BUILD phase)
 
 Pre-BIG 9 rerun of `forge-scientific-review` on BIG 8 final fixes: no blocker.
 BIG 8 gap "iterate identity" is closed by `engcore.coupling.provider_participant`
@@ -32,7 +206,7 @@ Built (engine = existing `execution/multiphysics` MultiphysicsRuntime; no parall
 
 Gate status (all executed in this session in the fenicsx env unless marked):
 A one-way thermal->thermoelastic PASS; B two-way FEniCSx heat <-> SciPy circuit,
-relaxation 0.5, residual history, 16 iterations, T=379.28 K, P=6.4434 W PASS;
+relaxation 0.7 (corrected in BIG 10; was misrecorded as 0.5), residual history, 16 iterations, T=379.28 K, P=6.4434 W PASS;
 C NTC non-convergent case refused PASS; D two gmsh meshes (0.02/0.03) with explicit
 BIG 7 mapping (NOT_CONSERVATIVE, in provenance), unmapped/wrong-unit edges refused PASS;
 E FEniCSx + SciPy + lumped/preCICE providers PASS; F BIG 2 TimeWindow PASS;
