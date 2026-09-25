@@ -17,6 +17,34 @@ import sys
 import numpy as np
 
 
+# Declared (reads_unit, writes_unit) of each participant model.  The contract's
+# exchange units must match exactly; nothing is converted or assumed silently.
+MODEL_UNITS = {"lumped_thermal": ("W", "K"), "heater_circuit": ("K", "W")}
+
+
+def build_model(setup, reads_unit: str, writes_unit: str):
+    """Return ``received -> written`` for a declared participant model (plain floats in the declared units)."""
+    kind = setup["model"]
+    if kind not in MODEL_UNITS:
+        raise ValueError(f"unknown participant model {kind!r}")
+    if MODEL_UNITS[kind] != (reads_unit, writes_unit):
+        raise ValueError(f"{kind} reads/writes {MODEL_UNITS[kind]}, contract declares {(reads_unit, writes_unit)}; refused")
+    if kind == "lumped_thermal":
+        t_amb, r_th = setup["ambient_K"], setup["thermal_resistance_K_per_W"]
+        return lambda received: t_amb + received * r_th
+    from engcore.domains.electrical.heater_circuit import HeaterCircuit
+    from engcore.scientific.units.quantity import Quantity
+    c = HeaterCircuit(Quantity(setup["V"], "V"), Quantity(setup["Rs_ohm"], "ohm"), Quantity(setup["R0_ohm"], "ohm"),
+                      Quantity(setup["T0_K"], "K"), Quantity(setup["alpha_per_K"], "1/K"))
+
+    def model(received):
+        record, power = c.solve(Quantity(received, "K"))
+        if power is None:
+            raise RuntimeError(f"electrical participant failed: {record.reason}")
+        return power.to("W").magnitude
+    return model
+
+
 def main(spec_json: str) -> None:
     import precice
 
@@ -28,23 +56,7 @@ def main(spec_json: str) -> None:
     reads = next(x for x in contract["exchanges"] if x["writer"] != me)
     mesh_name = f"{me}Mesh"
 
-    if setup["model"] == "lumped_thermal":
-        t_amb, r_th = setup["ambient_K"], setup["thermal_resistance_K_per_W"]
-        model = lambda received: t_amb + received * r_th  # noqa: E731
-    elif setup["model"] == "heater_circuit":
-        from engcore.domains.electrical.heater_circuit import HeaterCircuit
-        from engcore.scientific.units.quantity import Quantity
-        c = HeaterCircuit(Quantity(setup["V"], "V"), Quantity(setup["Rs_ohm"], "ohm"), Quantity(setup["R0_ohm"], "ohm"),
-                          Quantity(setup["T0_K"], "K"), Quantity(setup["alpha_per_K"], "1/K"))
-
-        def model(received):
-            record, power = c.solve(Quantity(received, "K"))
-            if power is None:
-                raise RuntimeError(f"electrical participant failed: {record.reason}")
-            return power.to("W").magnitude
-    else:
-        raise RuntimeError(f"unknown participant model {setup['model']!r}")
-
+    model = build_model(setup, reads["unit"], writes["unit"])
     participant = precice.Participant(me, spec["config"], 0, 1)
     ids = participant.set_mesh_vertices(mesh_name, np.array([[0.0, 0.0]]))
     initial_written = float(setup["initial_written"])

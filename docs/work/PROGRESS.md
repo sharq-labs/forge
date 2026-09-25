@@ -11,6 +11,63 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
+## 2026-09-25 BIG 9 — Generic Multiphysics Runtime + preCICE (BUILD phase; read this first)
+
+Pre-BIG 9 rerun of `forge-scientific-review` on BIG 8 final fixes: no blocker.
+BIG 8 gap "iterate identity" is closed by `engcore.coupling.provider_participant`
+rebuilding each provider problem per iterate (distinct execution identities).
+
+Built (engine = existing `execution/multiphysics` MultiphysicsRuntime; no parallel framework):
+- `src/engcore/coupling/` (non-Core, registered): provider_participant, field/scalar
+  ports, SpatialField<->FieldRecord adapters, consumer-side BIG 7 `mapped_input`,
+  CouplingExecutionLog. Failed provider record -> CouplingRefusal (window refused,
+  no fields); coupling outputs carry UNKNOWN uncertainty; initial iterates labelled
+  `declared_initial_iterate_not_a_result`.
+- `domains/electrical/heater_circuit.py` (SciPy root KVL with linear TCR, refuses R<=0).
+- PDE: `PDEProblem.field_inputs`, template THERMOELASTIC_PLANE_STRESS, FEniCSx branch.
+- `providers/precice` (`forge_precice`, pyprecice/preCICE **3.4.0**, conda-forge):
+  Forge contract -> rendered preCICE v3 XML (serial-implicit, absolute measures,
+  constant relaxation, initialized exchanges), two OS processes over sockets.
+- Fix: `SpatialMesh.core_support` treated an empty caller store as falsy (`or`) -> `is None`.
+
+Gate status (all executed in this session in the fenicsx env unless marked):
+A one-way thermal->thermoelastic PASS; B two-way FEniCSx heat <-> SciPy circuit,
+relaxation 0.5, residual history, 16 iterations, T=379.28 K, P=6.4434 W PASS;
+C NTC non-convergent case refused PASS; D two gmsh meshes (0.02/0.03) with explicit
+BIG 7 mapping (NOT_CONSERVATIVE, in provenance), unmapped/wrong-unit edges refused PASS;
+E FEniCSx + SciPy + lumped/preCICE providers PASS; F BIG 2 TimeWindow PASS;
+G BIG 3 hourly_environment ambient preserved, UNKNOWN refused PASS; H BIG 4 lifecycle
+moisture changes next coupled run PASS; I conservation audit FAILS at 1e-9 W
+(relaxed received vs dissipated differ 2.8e-8 W, asserted) and passes at 1e-6 W —
+a diagnostic, not validation; J **real preCICE 3.4.0 execution PASS**: 15 implicit
+iterations, T=377.3349 K, P=6.4758 W, matches independent brentq fixed point to 1e-6;
+max_iterations=3 refused although preCICE continues.
+
+Initial preCICE failures (recorded): children could not import forge_precice
+(relative PYTHONPATH with temp cwd) -> absolute import roots; first participant read
+T=0 (no initial data) -> `initialize="true"` on exchanges.
+
+BIG 9 review (`forge-scientific-reviewer`, read-only, no tests): CHANGES REQUIRED.
+Fixed blockers: (1) units at preCICE boundary were assumed -> MODEL_UNITS declared per
+driver model, contract exchange units must match, refused before launch (test degC);
+(2) caller-supplied acceptance callable -> Forge re-evaluates both declared models
+(`fixed_point_residuals`) against each exchange's absolute limit. Also fixed: empty /
+inconsistent window logs refused, duplicate quantities refused, `result_digest` added.
+Non-blocking gaps: runtime ConvergenceCriterion accepts absolute OR relative (tests
+use relative=0); participant held-state completeness not enforced (closure state could
+break replay); preCICE provider scalar-only, single rank, one mesh vertex; lumped
+thermal resistance and efficiency=1.0 joule conversion are DECLARED assumptions;
+runtime BILINEAR mapping only structured, so unstructured mapping is consumer-side.
+
+Commands executed (this session):
+- `PYTHONPATH=src:providers/precice:providers/fenicsx timeout 1500 /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests providers/precice/tests` -> 28 passed (before review fixes)
+- `PYTHONPATH=src:providers/precice timeout 900 /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/precice/tests` -> 6 passed (after review fixes)
+- `PYTHONPATH=src python -m pytest -q -p no:cacheprovider tests/test_spatial_core.py tests/test_pde_contracts.py tests/test_core_api_layering.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py` -> 53 passed
+- `PYTHONPATH=src python -m pytest -q -p no:cacheprovider tests/test_core_guards.py -k dependenc` -> 6 passed
+- `python tools/forge_check.py --changed` -> 149 passed
+- `git diff --check` -> clean
+NOT RUN: full FAST/SCIENTIFIC tiers, mutation shards, recertification, full CI.
+
 ## 2026-09-25 BIG 8 — PDE / FEM Provider Layer (BUILD phase; read this first)
 
 ### Pre-check

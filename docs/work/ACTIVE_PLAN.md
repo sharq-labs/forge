@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 8 — PDE / FEM Provider Layer** built (real FEniCSx/PETSc execution); BIG 9 (preCICE) not started.
+Current: **BIG 9 — Generic Multiphysics Runtime + preCICE** built (heterogeneous two-way coupling; real preCICE 3.4.0 execution); BIG 10 not started.
 
 ## Current branch / PR
 
@@ -228,6 +228,17 @@ PETSc/petsc4py 3.25.5, conda-forge env `/opt/mm/root/envs/fenicsx`). Tests:
 - [x] Acceptance = PETSc converged reason AND true residual; failed solves
       expose no field; records verify their fields are COMPUTED by them.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 8 section).
+
+### BIG 9 — Generic multiphysics runtime + preCICE
+
+Adapters in `src/engcore/coupling/` over the existing MultiphysicsRuntime;
+preCICE provider in `providers/precice` (preCICE 3.4.0).
+
+- [x] A one-way, B two-way relaxed iterative with residual history, C non-convergent refused,
+      D cross-mesh via BIG 7 mapping, E >=2 provider types, F TimeWindow, G environment,
+      H lifecycle, I conservation diagnostic, J real preCICE run (all executed; see PROGRESS).
+- [x] Review blockers fixed (preCICE unit check; Forge-owned acceptance).
+- [ ] Non-blocking gaps: see PROGRESS (BIG 9 section).
 
 ## Persistent project direction
 

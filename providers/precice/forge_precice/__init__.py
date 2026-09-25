@@ -68,6 +68,8 @@ class ScalarTwoWayContract:
         for x in self.exchanges:
             if not x.absolute_limit > 0:
                 raise ValueError(f"{x.data_name}: an explicit positive absolute convergence limit is required; none is defaulted")
+        if len({x.quantity for x in self.exchanges}) != len(self.exchanges):
+            raise ValueError("exchanged quantities must be distinct")
         if {x.writer for x in self.exchanges} != {self.first, self.second}:
             raise ValueError("each participant must write exactly one exchanged quantity")
 
@@ -119,23 +121,47 @@ class PreciceExecutionRecord:
     participant_logs: Mapping[str, Any] = field(default_factory=dict)
 
     @property
+    def result_digest(self) -> str:
+        payload = json.dumps({"execution": self.execution_identity, "succeeded": self.succeeded,
+                              "values": dict(self.values), "iterations": list(self.iterations), "reason": self.reason}, sort_keys=True)
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+    @property
     def execution_identity(self) -> str:
         payload = json.dumps({"contract": self.contract, "precice": self.precice_version, "config": self.config_digest}, sort_keys=True)
         return hashlib.sha256(payload.encode()).hexdigest()
 
     def to_dict(self) -> dict[str, Any]:
-        return {"classification": "coupling_execution_not_scientific_evidence", "execution_identity": self.execution_identity,
+        return {"classification": "coupling_execution_not_scientific_evidence", "execution_identity": self.execution_identity, "result_digest": self.result_digest,
                 "precice_version": self.precice_version, "config_digest": self.config_digest, "succeeded": self.succeeded,
                 "values": dict(self.values) if self.succeeded else {}, "iterations": list(self.iterations), "reason": self.reason}
 
 
-def execute(contract: ScalarTwoWayContract, fixed_point_check, *, timeout: float = 300.0) -> PreciceExecutionRecord:
+def fixed_point_residuals(contract: ScalarTwoWayContract, values: Mapping[str, float]) -> dict[str, float]:
+    """Forge's own check: re-evaluate every declared participant model at the final exchanged values."""
+    from .driver import build_model
+    out = {}
+    for p in (contract.first, contract.second):
+        w = next(x for x in contract.exchanges if x.writer == p)
+        r = next(x for x in contract.exchanges if x.writer != p)
+        model = build_model(contract.participant_setup[p], r.unit, w.unit)
+        out[w.quantity] = abs(values[w.quantity] - model(values[r.quantity]))
+    return out
+
+
+def execute(contract: ScalarTwoWayContract, *, timeout: float = 300.0) -> PreciceExecutionRecord:
     """Run both participants of ``contract`` as preCICE processes and check the result.
 
-    ``fixed_point_check(values) -> (ok, detail)`` is Forge's independent
-    acceptance test on the exchanged values (e.g. re-evaluating both models
-    at the final values); preCICE's own convergence flag is not sufficient.
+    Acceptance is NOT a caller-supplied callable: Forge re-evaluates both
+    declared participant models at the final exchanged values and requires
+    each residual to be within that exchange's declared absolute limit;
+    preCICE's own convergence flag is not sufficient.
     """
+    from .driver import build_model
+    for p in (contract.first, contract.second):   # fail closed on units/models before launching anything
+        w = next(x for x in contract.exchanges if x.writer == p)
+        r = next(x for x in contract.exchanges if x.writer != p)
+        build_model(contract.participant_setup[p], r.unit, w.unit)
     ok, version = precice_available()
     if not ok:
         from engcore.numerical.core import ProviderUnavailable
@@ -170,11 +196,17 @@ def execute(contract: ScalarTwoWayContract, fixed_point_check, *, timeout: float
             return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (), f"{name} exited {proc.returncode}", logs)
         outputs[name] = json.loads(out.strip().splitlines()[-1])
     iterations = tuple(outputs[contract.second]["iterations_per_window"])
+    windows = round(contract.max_time / contract.time_window)
+    if len(iterations) != windows or tuple(outputs[contract.first]["iterations_per_window"]) != iterations:
+        return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, iterations,
+                                      f"iteration logs incomplete or inconsistent (expected {windows} windows)", logs)
     values = {k: v for o in outputs.values() for k, v in o["final_written"].items()}
     if any(i >= contract.max_iterations for i in iterations):
         return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, iterations,
                                       "a time window reached max-iterations; preCICE continues, Forge refuses", logs)
-    ok, detail = fixed_point_check(values)
-    if not ok:
+    residuals = fixed_point_residuals(contract, values)
+    limits = {x.quantity: x.absolute_limit for x in contract.exchanges}
+    detail = ", ".join(f"|{q} - model| = {v:.2e} (limit {limits[q]:g})" for q, v in sorted(residuals.items()))
+    if not all(residuals[q] <= limits[q] for q in residuals):
         return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, iterations, f"Forge fixed-point check failed: {detail}", logs)
     return PreciceExecutionRecord(contract.to_dict(), version, digest, True, values, iterations, detail, logs)

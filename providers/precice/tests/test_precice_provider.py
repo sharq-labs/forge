@@ -13,7 +13,7 @@ from scipy.optimize import brentq
 
 from engcore.domains.electrical.heater_circuit import HeaterCircuit
 from engcore.scientific.units.quantity import Quantity
-from forge_precice import ExchangedQuantity, ScalarTwoWayContract, execute, precice_available
+from forge_precice import ExchangedQuantity, ScalarTwoWayContract, execute, fixed_point_residuals, precice_available
 
 OK, VERSION = precice_available()
 pytestmark = pytest.mark.skipif(not OK, reason=f"preCICE unavailable: {VERSION}")
@@ -22,11 +22,11 @@ T_AMB, R_TH = 293.15, 13.0
 CIRCUIT = dict(V=10.0, Rs_ohm=1.0, R0_ohm=10.0, T0_K=293.15, alpha_per_K=0.004)
 
 
-def contract(*, relaxation=0.7, max_iterations=50, alpha=0.004, limit_T=1e-9):
+def contract(*, relaxation=0.7, max_iterations=50, alpha=0.004, limit_T=1e-9, unit_T="K"):
     return ScalarTwoWayContract(
         "joule-lumped", "Electrical", "Thermal",
         (ExchangedQuantity("Power", "electrical_power", "W", "Electrical", 1e-9),
-         ExchangedQuantity("Temperature", "temperature", "K", "Thermal", limit_T)),
+         ExchangedQuantity("Temperature", "temperature", unit_T, "Thermal", limit_T)),
         max_iterations, relaxation, 1.0, 1.0,
         {"Electrical": dict(model="heater_circuit", initial_written=1.0, **dict(CIRCUIT, alpha_per_K=alpha)),
          "Thermal": dict(model="lumped_thermal", initial_written=300.0, ambient_K=T_AMB, thermal_resistance_K_per_W=R_TH)},
@@ -37,19 +37,9 @@ def circuit(alpha=0.004):
     return HeaterCircuit(Quantity(10, "V"), Quantity(1, "ohm"), Quantity(10, "ohm"), Quantity(293.15, "K"), Quantity(alpha, "1/K"))
 
 
-def fixed_point_check(alpha=0.004):
-    def check(values):
-        t, p = values["temperature"], values["electrical_power"]
-        _, p_model = circuit(alpha).solve(Quantity(t, "K"))
-        rt = abs(t - (T_AMB + p * R_TH))
-        rp = abs(p - p_model.to("W").magnitude)
-        return (rt < 1e-6 and rp < 1e-6), f"|T - model| = {rt:.2e} K, |P - model| = {rp:.2e} W"
-    return check
-
-
 def test_precice_two_way_coupling_really_runs_and_matches_forge_fixed_point():
     c = contract()
-    rec = execute(c, fixed_point_check())
+    rec = execute(c)
     assert rec.succeeded, rec.reason
     assert rec.iterations and rec.iterations[0] >= 2 and rec.iterations[0] < c.max_iterations
     # Forge's own fixed point (independent of preCICE): T = T_amb + P(T) R_th
@@ -67,5 +57,20 @@ def test_config_is_generated_from_the_contract_and_changes_identity():
 
 
 def test_precice_iteration_limit_is_refused_even_though_precice_continues():
-    rec = execute(contract(max_iterations=3, relaxation=0.2), fixed_point_check())
+    rec = execute(contract(max_iterations=3, relaxation=0.2))
     assert not rec.succeeded and "max-iterations" in rec.reason and rec.to_dict()["values"] == {}
+
+
+def test_unit_mismatch_at_the_precice_boundary_is_refused_before_launch():
+    with pytest.raises(ValueError, match="contract declares"):
+        execute(contract(unit_T="degC"))
+
+
+def test_forge_acceptance_rederives_both_models_and_rejects_a_non_fixed_point():
+    r = fixed_point_residuals(contract(), {"temperature": 380.0, "electrical_power": 6.0})
+    assert r["temperature"] > 1e-3 and r["electrical_power"] > 1e-3
+
+
+def test_duplicate_exchanged_quantities_are_refused():
+    with pytest.raises(ValueError, match="distinct"):
+        ScalarTwoWayContract("x", "A", "B", (ExchangedQuantity("P", "q", "W", "A", 1e-9), ExchangedQuantity("T", "q", "K", "B", 1e-9)), 5, 1.0, 1.0, 1.0)
