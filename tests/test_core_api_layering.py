@@ -290,6 +290,10 @@ NON_CORE_PACKAGES = {
         "tagged meshes, framed fields, mappings and material binding on the Core "
         "field/mesh records; Gmsh/meshio are providers"
     ),
+    "pde": (
+        "provider-neutral PDE/FEM contracts and the FEniCSx provider; the solver "
+        "computes, Forge keeps identity/applicability/provenance authority"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"

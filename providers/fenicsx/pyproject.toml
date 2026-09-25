@@ -1,0 +1,18 @@
+[project]
+name = "forge-fenicsx-provider"
+version = "0.1.0"
+description = "FEniCSx (dolfinx/UFL/PETSc) PDE provider for Forge (crafty). Computes; holds no scientific authority."
+requires-python = ">=3.11"
+# FEniCSx is normally installed from conda-forge (fenics-dolfinx, petsc4py, mpich);
+# these are its distribution names.
+dependencies = [
+  "crafty",
+  "fenics-dolfinx>=0.10",
+  "fenics-basix>=0.10",
+  "fenics-ufl>=2025.2",
+  "mpi4py>=3.1",
+  "petsc4py>=3.22",
+]
+
+[tool.setuptools]
+packages = ["forge_fenicsx"]

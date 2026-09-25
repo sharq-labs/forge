@@ -115,7 +115,7 @@ class SpatialField:
         self.definition, self.mesh, self.values = definition, mesh, arr
         self.derivation = Derivation(derivation)
         self.provenance = tuple(sorted(str(p) for p in provenance))
-        if self.derivation in (Derivation.MAPPED, Derivation.RESOLVED) and not self.provenance:
+        if self.derivation in (Derivation.MAPPED, Derivation.RESOLVED, Derivation.COMPUTED) and not self.provenance:
             raise SpatialRefusal(f"a {self.derivation.value} field must carry the digest(s) of what produced it")
 
     @property
