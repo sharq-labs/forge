@@ -162,6 +162,11 @@ def read_meshio(path: str, *, frame: CoordinateFrame) -> SpatialMesh:
             facets.append(block.data); ftags.append(tag)
         elif block.type != "vertex":
             raise SpatialRefusal(f"unexpected cell block {block.type!r} in {path}")
+    if m.points.shape[1] > dim and np.any(m.points[:, dim:] != 0):
+        raise SpatialRefusal(f"file has non-zero coordinates beyond dimension {dim}; refusing to flatten geometry")
+    bad = [name for name, v in m.field_data.items() if int(v[1]) not in (dim, dim - 1)]
+    if bad:
+        raise SpatialRefusal(f"groups {bad} have a dimension that is neither cells ({dim}) nor facets ({dim - 1})")
     groups = tuple(PhysicalGroup(name, GroupKind.CELLS if int(v[1]) == dim else GroupKind.FACETS, int(v[0])) for name, v in m.field_data.items())
     return SpatialMesh(coordinates=m.points[:, :dim], cells=np.concatenate(cells), cell_type=CellType.TRIANGLE if dim == 2 else CellType.TETRAHEDRON,
                        frame=frame, cell_tags=np.concatenate(ctags), facets=np.concatenate(facets) if facets else None,

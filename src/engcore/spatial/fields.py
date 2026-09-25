@@ -145,6 +145,11 @@ class SpatialField:
         """The Core FieldValue on the Core support (node/cell only)."""
         if self.definition.location not in (Location.NODE, Location.CELL):
             raise SpatialRefusal("the Core field record holds node and cell fields only")
+        if self.definition.rank is Rank.TENSOR or self.derivation in (Derivation.MAPPED, Derivation.RESOLVED, Derivation.ASSUMED):
+            raise SpatialRefusal(
+                "the Core field record cannot carry tensor layout, frame or derivation/provenance; "
+                "a mapped, resolved, assumed or tensor field is not handed to it"
+            )
         support = self.mesh.core_support()
         core_def = FieldDefinition(self.definition.field_id, self.definition.unit, support.mesh_id,
                                    FieldLocation(self.definition.location.value), self.definition.components(self.mesh.frame.dimension))
@@ -276,6 +281,8 @@ def interpolate_p1_to_mesh(field: SpatialField, target: SpatialMesh, *, toleranc
     src = field.mesh
     if d.location is not Location.NODE or src.cell_type.value != "triangle":
         raise SpatialRefusal("P1 interpolation needs a node field on a triangle mesh")
+    if d.discretization is not None and (d.discretization.family, d.discretization.order, d.discretization.continuity) != ("lagrange", 1, "C0"):
+        raise SpatialRefusal("the field is not a continuous P1 field; P1 interpolation would misrepresent it")
     if target.frame != src.frame:
         raise SpatialRefusal("source and target meshes are in different coordinate frames; no transformation is declared")
     x = src.coordinates

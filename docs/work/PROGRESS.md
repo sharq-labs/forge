@@ -11,7 +11,62 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 6 — Mathematical / Numerical Foundation (BUILD phase; read this first)
+## 2026-09-25 BIG 7 — Field + Mesh Core (BUILD phase; read this first)
+
+### Pre-check
+BIG 6 re-review at `e70cc2d`: no spatial blocker; found a real ODE bug (after
+a segment with an interior output time, the next segment restarted from the
+last OUTPUT state instead of the breakpoint state). Fixed in `ee7dbcb` with a
+ramp test; `compare_executions` now requires equal output keys and compares
+trajectories.
+
+### Architecture
+- Reuses Core spatial authority: `scientific.fields.UnstructuredMesh`
+  (byte-content fingerprint), `data.mesh.UnstructuredMeshData` (validation,
+  canonical metres), `FieldDefinition`/`FieldValue`/`FieldRecord`.
+  `engcore.spatial` adds tags, facets, groups, frames, richer field
+  semantics, material binding and mappings.
+- Environment: gmsh 4.15.2 and meshio 5.3.5 installed this session
+  (`pip install gmsh meshio`); gmsh needed system GL libraries
+  (`apt-get install libglu1-mesa libxcursor1 libxinerama1 libxft2`).
+  Declared as optional extra `mesh`.
+- Failed approaches: meshio Gmsh-4 writer needs entity tables matching
+  geometrical tags (KeyError) -> Gmsh 2.2 format used; OCC bounding boxes are
+  padded (~1e-7) so a 1e-9 tolerance found no boundary curves -> tolerance
+  1e-5*min(L,H) and empty sides refused; Core bulk encoder refuses `<d`
+  buffers from Gmsh -> native byte order normalized at the mesh boundary.
+
+### Scientific review
+BIG 7 review: PASS WITH NON-BLOCKING GAPS (no BLOCKER). Fixed anyway:
+hand-built regions must match a declared group; meshio read refuses dropping
+non-zero z; group dimensions must be cell or facet; duplicate facets
+refused; `to_core` refuses tensor/mapped/resolved/assumed fields; P1
+interpolation requires P1 (lagrange/1/C0) data. Not re-reviewed.
+
+### Open non-blocking gaps
+- Facets are not checked to lie on the outer boundary (interfaces allowed);
+  BIG 8 must not treat every facet group as an outer boundary.
+- One cell type per mesh; hexahedral facets unsupported; no 3D measures.
+- Gmsh determinism only shown for one version/platform; BIG 8 must bind to
+  mesh digest, not generator options.
+- No conservative cell->cell remap; P1 interpolation is O(N*M) brute force.
+- Coordinate frames: cartesian only, no declared transforms between frames.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/spatial src/engcore/numerical` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_spatial_core.py tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_core_api_layering.py tests/test_field_coefficient_spike.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_field_profile_limit.py tests/test_field_profiled_conditions.py tests/test_field_profiles.py tests/test_field_records.py tests/test_field_values.py` — PASS, 346 passed
+command: `PYTHONPATH=src python -m pytest ... tests/test_core_guards.py -k dependenc` — PASS, 6 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+Exact meshes, regions/boundaries, unit-aware framed fields, safe mappings
+and material bindings exist independently of any PDE solver. BIG 8 not started.
+
+## 2026-09-25 BIG 6 — Mathematical / Numerical Foundation (BUILD phase)
 
 ### Pre-check
 BIG 5 re-review at `05c4b2c`: no numerical blocker; one HIGH path fixed first
@@ -109,7 +164,7 @@ resolves as ASSUMED, breakpoints dimension-checked at construction. Not re-revie
 2026-09-25
 command: `PYTHONPATH=src python -m compileall -q src/engcore/materials src/engcore/scenarios src/engcore/domains/battery/aging.py src/engcore/domains/corrosion src/engcore/domains/hygrothermal` — PASS
 command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py tests/oracles/test_oracle_battery.py` — PASS, 300 passed
-command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
 command: `git diff --check` — PASS
 NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
 recertification, full suite, CI.

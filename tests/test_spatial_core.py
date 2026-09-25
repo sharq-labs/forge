@@ -249,3 +249,36 @@ def test_gmsh_unavailable_is_explicit(monkeypatch):
     monkeypatch.setattr(prov, "gmsh_available", lambda: (False, "OSError: simulated"))
     with pytest.raises(ProviderUnavailable, match="simulated"):
         prov.gmsh_two_region_plate(length=1, height=1, split=0.5, size=0.5)
+
+
+def test_hand_built_region_with_undeclared_tag_is_refused(plate):
+    from engcore.spatial import GroupKind, SpatialRegion
+    forged = SpatialRegion(plate.digest, "untagged", GroupKind.CELLS, 0)
+    with pytest.raises(SpatialRefusal, match="not a declared group"):
+        plate.cell_indices(forged)
+
+
+def test_duplicate_facet_and_flattening_are_refused(tmp_path):
+    base = fixture_plate()
+    with pytest.raises(SpatialRefusal, match="declared twice"):
+        SpatialMesh(coordinates=base.coordinates, cells=base.cells, cell_type=CellType.TRIANGLE, frame=FRAME, cell_tags=base.cell_tags,
+                    facets=[base.facets[0], base.facets[0][::-1]], facet_tags=[11, 12], groups=(PhysicalGroup("left", "facets", 11), PhysicalGroup("right", "facets", 12)))
+    import meshio
+    pts = np.column_stack([base.coordinates, np.linspace(0, 1, base.node_count)])
+    path = str(tmp_path / "curved.msh")
+    meshio.write(path, meshio.Mesh(pts, [("triangle", base.cells)], cell_data={"gmsh:physical": [base.cell_tags], "gmsh:geometrical": [base.cell_tags]},
+                                   field_data={"left_plate": np.array([1, 2]), "right_plate": np.array([2, 2])}), file_format="gmsh22", binary=False)
+    with pytest.raises(SpatialRefusal, match="flatten"):
+        read_meshio(path, frame=FRAME)
+
+
+def test_core_bridge_and_p1_refuse_what_they_cannot_represent(plate):
+    from engcore.spatial import Discretization
+    t = temperature(plate)
+    mapped, _ = node_to_cell_average(t)
+    with pytest.raises(SpatialRefusal, match="not handed"):
+        mapped.to_core()
+    p2 = SpatialField(SpatialFieldDefinition("T2", "temperature", "K", Location.NODE, Rank.SCALAR, discretization=Discretization("lagrange", 2, "C0")),
+                      plate, t.values, Derivation.PRESCRIBED)
+    with pytest.raises(SpatialRefusal, match="not a continuous P1"):
+        interpolate_p1_to_mesh(p2, fixture_plate(nx=5, ny=3))

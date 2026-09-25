@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 6 — Mathematical / Numerical Foundation** built beneath the Core solver protocol; BIG 7 not started.
+Current: **BIG 7 — Field + Mesh Core** built on the Core field/mesh records; BIG 8 (Gmsh + FEniCSx + PETSc) not started.
 
 ## Current branch / PR
 
@@ -186,6 +186,26 @@ Core `ScientificSolver` protocol; tests `tests/test_numerical_foundation.py`.
 - [ ] Next numerical slice: SUNDIALS CVODE/IDA implementation, DAE support,
       PETSc execution in an environment that has petsc4py.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 6 section).
+
+### BIG 7 — Field + Mesh core
+
+Implemented in `src/engcore/spatial/` (non-Core; registered) on the Core
+`UnstructuredMesh`/`UnstructuredMeshData`/`FieldDefinition`/`FieldValue`
+records; tests `tests/test_spatial_core.py`. Gmsh 4.15.2 + meshio 5.3.5
+executed for real (optional extra `mesh`).
+
+- [x] `SpatialMesh`: identity = Core byte fingerprint + tag/facet/group/frame
+      bytes; content-derived mesh id; digest-verified serialization.
+- [x] Coordinate frames, physical groups, digest-bound regions/boundaries
+      (forged or foreign regions refused), node/cell/facet/edge locations.
+- [x] Framed scalar/vector/tensor fields with derivation + provenance; lossless
+      bridge to Core `FieldValue` only where nothing would be dropped.
+- [x] Region -> exact BIG 5 `MaterialState` binding; resolved property fields.
+- [x] P1 node->cell (exact for P1 interpolant on triangles) and mesh->mesh
+      barycentric mapping (not conservative; integrals reported); no extrapolation.
+- [x] Gmsh two-region plate generation (replay-identical here) and meshio
+      Gmsh-2.2 roundtrip preserving identity.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 7 section).
 
 ## Persistent project direction
 

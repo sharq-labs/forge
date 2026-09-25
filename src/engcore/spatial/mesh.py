@@ -179,6 +179,8 @@ class SpatialMesh:
         for row in f.tolist():
             if tuple(sorted(row)) not in known:
                 raise SpatialRefusal(f"declared facet {row} is not a facet of any cell")
+        if f.size and len({tuple(sorted(r)) for r in f.tolist()}) != len(f):
+            raise SpatialRefusal("a facet is declared twice; one facet cannot carry two tags")
         # canonical facet order: sort nodes within facet, then rows, so identity is order-independent
         if f.size:
             f = np.sort(f, axis=1)
@@ -298,6 +300,8 @@ class SpatialMesh:
     def _own(self, region: SpatialRegion) -> None:
         if not isinstance(region, SpatialRegion) or region.mesh_digest != self._digest:
             raise SpatialRefusal("region belongs to a different mesh; a tag of one mesh names nothing on another")
+        if not any((g.name, g.kind, g.tag) == (region.name, region.kind, region.tag) for g in self._groups):
+            raise SpatialRefusal(f"region {region.name!r} is not a declared group of this mesh; regions are obtained with mesh.region(name)")
 
     def cell_indices(self, region: SpatialRegion) -> np.ndarray:
         self._own(region)
