@@ -16,7 +16,7 @@ import math
 from ..composition.conversion import EnergyConversion
 from ..composition.transfer import BUDGET_TOLERANCE
 from ..errors import InvalidScientificProblem
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, base_unit, is_ratio_scale
 from ..units.validation import require_same_dimension
 from .uncertainty import Uncertainty, UncertaintyKind
 
@@ -191,9 +191,13 @@ def propagate_declared_mapping_uncertainty(
                 f"independence assumption, it does not establish independence"
             )
 
+        # A standard uncertainty is a spread, and an absolute affine coordinate
+        # (degC, degF) cannot state one. A target on such a scale carries the
+        # spread on the dimension's base unit instead, converted by slope only.
+        spread_unit = target_unit if is_ratio_scale(target_unit) else base_unit(target_unit)
         propagated = Quantity(
-            _delta_magnitude_in(Quantity(source_delta, source_unit), target_unit),
-            target_unit,
+            _delta_magnitude_in(Quantity(source_delta, source_unit), spread_unit),
+            spread_unit,
         )
         return Uncertainty(
             kind=UncertaintyKind.STANDARD,

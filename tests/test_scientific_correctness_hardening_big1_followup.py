@@ -338,7 +338,7 @@ def test_composition_derives_unique_and_ambiguous_targets_from_candidates():
 
 
 def test_frame_transform_refuses_an_orthonormal_reflection():
-    with pytest.raises(InvalidScientificProblem, match="determinant \+1"):
+    with pytest.raises(InvalidScientificProblem, match=r"determinant \+1"):
         FrameTransform(
             "reflection",
             "global",
@@ -378,4 +378,4 @@ def test_numerical_stability_refuses_invalid_normalized_residuals(residual_ratio
     )
     assert result.decision is NumericalStabilityDecision.REFUSED
     assert result.residual_ratio is None
-    assert "non-finite or negative" in result.reasons
+    assert any("non-finite or negative" in reason for reason in result.reasons)

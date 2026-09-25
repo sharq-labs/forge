@@ -73,9 +73,13 @@ def test_standard_uncertainty_uses_delta_conversion_for_offset_units():
     # exact category error this test prevents.
     transfer = _transport(value=Quantity(26.85, "degree_Celsius"))
     propagated = propagate_transfer_uncertainty(transfer, _standard(2.0, "kelvin"))
-    assert propagated.standard_uncertainty is not None
-    assert propagated.standard_uncertainty.magnitude == pytest.approx(2.0)
-    assert propagated.standard_uncertainty.units == "degree_Celsius"
+    spread = propagated.standard_uncertainty
+    assert spread is not None
+    # A spread cannot be stated on an absolute affine coordinate, so it is
+    # carried on the dimension's base unit -- and it is 2 wide on either scale.
+    assert spread.units == "kelvin"
+    assert spread.magnitude == pytest.approx(2.0)
+    assert spread.magnitude_as_spread_in("delta_degC") == pytest.approx(2.0)
 
 
 def test_interval_bounds_are_absolute_values_and_keep_offset_semantics():
@@ -219,3 +223,15 @@ def test_source_uncertainty_attribution_does_not_accept_substring_spoofing():
             _transport(),
             _standard(source="calibration:temperature_extra"),
         )
+
+
+@pytest.mark.parametrize("target", ["degree_Celsius", "degree_Fahrenheit"])
+def test_a_spread_on_an_affine_target_is_carried_on_a_scale_that_can_state_it(target):
+    # 300 K expressed on an affine scale; the 2 K standard uncertainty is a 2 K WIDTH on either.
+    value = Quantity(300.0, "kelvin").to(target)
+    item = make_uncertainty_transfer(_transport(value=value), _standard(2.0, "kelvin"))
+    spread = item.uncertainty.standard_uncertainty
+    assert spread is not None and spread.units == "kelvin"
+    assert spread.magnitude == pytest.approx(2.0)
+    restored = UncertaintyTransfer.from_dict(item.to_dict())
+    assert restored.uncertainty == item.uncertainty

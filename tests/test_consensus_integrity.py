@@ -432,3 +432,44 @@ def test_unrelated_nonfinite_diagnostic_cannot_hide_a_finite_shared_disagreement
     assert consensus.comparison.agreed is False
     assert "stress" in consensus.comparison.quantities
     assert consensus.establishes is None
+
+
+def test_a_nonfinite_shared_reading_cannot_hide_a_finite_shared_disagreement_either():
+    """One rule for every non-finite reading, shared or not: it cannot avoid a FAIL by emitting a NaN.
+
+    ``stress`` is a required output and differs by 8x between the routes; ``pressure`` is NaN on one
+    route. The finite disagreement on ``stress`` stays in the record, and the NaN is named beside it.
+    """
+    consensus = _consensus(
+        {
+            "A": {**FULL, "pressure": float("nan")},
+            "B": {**FULL, "stress": 999.0},
+        }
+    )
+    assert consensus.comparison.agreed is False
+    assert "stress" in consensus.comparison.quantities
+    assert "pressure" not in consensus.comparison.quantities
+    assert "A.pressure=nan" in consensus.comparison.detail
+    assert consensus.establishes is None
+
+
+@pytest.mark.parametrize("shared", [False, True])
+def test_a_nonfinite_reading_can_never_help_routes_agree(shared):
+    """The finite readings agree; the route that also produced a NaN still corroborates nothing."""
+    bad = {**FULL, "pressure": float("nan")} if shared else {**FULL, "diagnostic": float("nan")}
+    consensus = _consensus({"A": bad, "B": dict(FULL)})
+    assert consensus.comparison.agreed is False
+    assert consensus.comparison.compared_anything is False
+    assert consensus.comparison.worst_relative_difference is None
+    assert consensus.comparison_is_derived is False
+    assert consensus.earned is False
+    assert consensus.establishes is None
+    assert consensus.to_check().establishes is None
+
+
+def test_numbers_travel_only_when_every_reading_is_finite():
+    finite = _consensus({"A": dict(FULL), "B": dict(FULL)})
+    assert finite.comparison_is_derived is True
+    unfinished = _consensus({"A": {**FULL, "diagnostic": float("inf")}, "B": dict(FULL)})
+    assert unfinished.comparison_is_derived is False
+    assert dict(unfinished.reported_values) == {}

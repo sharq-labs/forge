@@ -43,6 +43,9 @@ from engcore.scientific.units.quantity import Quantity
 from engcore.uq import PredictiveObservableSpec
 
 UNIT = "dimensionless"
+#: Total predictive uncertainty refuses to treat an undeclared observation noise as zero, so every
+#: fixture declares one. Its size is immaterial to the domain claims these tests are about.
+NOISE = Quantity(0.05, UNIT)
 KELVIN = "kelvin"
 
 
@@ -96,7 +99,7 @@ AUDITED_LINE = [
 
 
 def _spec(conditions):
-    return PredictiveObservableSpec("g", UNIT, None, conditions=conditions)
+    return PredictiveObservableSpec("g", UNIT, NOISE, conditions=conditions)
 
 
 def _predict(theta):

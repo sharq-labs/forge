@@ -10,8 +10,8 @@ batch, and only then begin the first bounded **Time Engine** slice.
 
 ## Current branch / PR
 
-- Branch: `feat/scientific-correctness-hardening`
-- PR: no open PR currently recorded; verify GitHub before making a current PR claim.
+- Branch: `fix/p0-1-scientific-correctness-hardening` (from `origin/main` @ `deabe5cb`)
+- PR: none recorded yet; verify GitHub before making a current PR claim.
 - Base: `main`
 
 ## Task tree
