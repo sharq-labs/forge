@@ -307,6 +307,45 @@ def test_kinds_are_extensible_by_registration_not_branching():
 def test_unknown_value_cannot_be_forged_with_a_value():
     from engcore.scenarios import EnvironmentValue
     with pytest.raises(InvalidScientificProblem, match="carries no value"):
-        EnvironmentValue("k", "l", "c", "ch", "s", "unknown", "interpolated", NamedQuantity("x", Quantity(1, "K")), "why")
+        EnvironmentValue("k", "l", "c", "ch", "s", "unknown", "interpolated", NamedQuantity("x", Quantity(1, "K")), "why", "imposed_environment_input")
     with pytest.raises(InvalidScientificProblem, match="say why"):
-        EnvironmentValue("k", "l", "c", "ch", "s", "unknown", "none", None, "")
+        EnvironmentValue("k", "l", "c", "ch", "s", "unknown", "none", None, "", "imposed_environment_input")
+
+
+@pytest.mark.parametrize("method", ["linear", "step_hold"])
+@pytest.mark.parametrize("event_hours,query,expected", [
+    (6, 4.5, {"linear": ValueStatus.UNKNOWN, "step_hold": ValueStatus.KNOWN}),  # at upper sample
+    (3, 4.5, {"linear": ValueStatus.KNOWN, "step_hold": ValueStatus.KNOWN}),    # at lower sample: new baseline
+    (4.5, 4.5, {"linear": ValueStatus.UNKNOWN, "step_hold": ValueStatus.UNKNOWN}),  # at query
+])
+def test_discontinuity_at_boundaries(method, event_hours, query, expected):
+    c = _channels()[0]
+    channel = EnvironmentChannel(c.channel_id, c.kind_id, c.unit, c.source_id, c.context, c.validity, c.representation,
+                                 c.samples, InterpolationContract(method, Quantity(3, "hour")))
+    env = _environment(events=(TimelineEvent("jump", TimelineEventKind.DISCONTINUITY, tp(event_hours), "air-temp"),), channels=(channel,))
+    assert env.channel_value("air-temp", tp(query)).status is expected[method]
+
+
+def test_circular_kind_refuses_linear_interpolation():
+    ctx = ReferenceContext("mast", "coast-A", "local-enu", (NamedQuantity("direction_reference", Quantity(0, "degree")),))
+    channel = EnvironmentChannel("wd", "wind_direction", "degree", "met-station", ctx, hwin(0, 48, WindowClosure.CLOSED),
+                                 "point_samples", (EnvironmentSample(tp(0), NamedQuantity("wd", Quantity(350, "degree"))),
+                                                   EnvironmentSample(tp(1), NamedQuantity("wd", Quantity(10, "degree")))),
+                                 InterpolationContract("linear", Quantity(1, "hour")))
+    with pytest.raises(InvalidScientificProblem, match="circular"):
+        _environment(channels=(channel,))
+
+
+def test_values_carry_source_classification_and_states_verify():
+    env = _environment()
+    state = env.state_at(tp(12), "coast-A")
+    assert state.value("ambient_temperature").source_classification == "imposed_environment_input"
+    env.verify_state(EnvironmentState.from_dict(state.to_dict()))
+    forged = json.loads(json.dumps(state.to_dict()))
+    for v in forged["values"]:
+        if v["kind_id"] == "ambient_temperature":
+            v["value"]["value"]["magnitude"] = 99.0
+    with pytest.raises(InvalidScientificProblem, match="not the one"):
+        env.verify_state(EnvironmentState.from_dict(forged))
+    with pytest.raises(InvalidScientificProblem, match="no source"):
+        env.source("ghost")

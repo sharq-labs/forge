@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 2 — Time Engine foundation** (first executable slice built).
+Current: **BIG 3 — Environment Engine** built on BIG 2; next is **BIG 4 — Lifecycle/Degradation**.
 
 ## Current branch / PR
 
@@ -87,27 +87,39 @@ Implemented in `src/engcore/scenarios/timeline.py` (tests:
 - [x] `TimelineCheckpoint` binds a prefix digest plus existing
       `CheckpointRecord`s; `compare_replay` refuses empty prefixes and is
       classified `replay_consistency_not_validation`.
-- [ ] Resolve open design gaps recorded in PROGRESS (BIG 2 section) before the
-      Environment Engine consumes the timeline.
+- [x] Exact same-instant rule (`SAME_INSTANT_RULE`, rational seconds, no
+      epsilon) and scenario-proven input ownership (`input_value_at` takes the
+      `ScenarioSpecification`). Re-review: no BIG 3 blocker.
+- [ ] Remaining non-blocking BIG 2 gaps: see PROGRESS (BIG 2/3 section).
 - [ ] Runtime-side emission: have `MultiphysicsRuntime` produce
       `TimelineCheckpoint`s from its own `_checkpoint_all` and restore from them.
 - [ ] Multi-basis / multi-rate timelines (P14 prerequisite): an explicit,
       declared basis-mapping record instead of the current refusal.
 
-### P2 / BIG 3 — Environment foundation (NEXT BIG step)
+### P2 / BIG 3 — Environment Engine
 
-Build on `Timeline`/`QuantityHistory` (EXPOSURE kind) rather than a new
-time-series authority.
+Implemented in `src/engcore/scenarios/environment.py` (tests:
+`tests/test_environment_engine.py`). BUILD phase; full tiers NOT RUN.
 
-- [ ] Define provider-neutral `EnvironmentState` / `EnvironmentTimeline`.
-- [ ] Support declared solar, ambient temperature, humidity, wind, rain/water,
-      salt/chloride, dust/sand, pressure/altitude and gravity/body-force inputs.
-- [ ] Keep source, units, uncertainty, interpolation and validity bound to every
-      environmental quantity.
-- [ ] Ensure environmental history is consumable by domains without adding
-      domain-specific branches to Scientific Core.
+- [x] Typed, extensible `EnvironmentQuantityKind` registry (13 generic kinds:
+      temperature, plane/horizontal irradiance with orientation context,
+      humidity, wind speed/direction, precipitation, wetness, chloride,
+      particulates, pressure, altitude, gravity). No branching on kind ids.
+- [x] `EnvironmentSource` (digest-bound, classified; design assumptions are
+      `declared_assumption_not_evidence`), `ReferenceContext`, explicit
+      `InterpolationContract` (NONE / STEP_HOLD / LINEAR with required max_gap).
+- [x] `EnvironmentChannel` over point samples or the bound timeline's EXPOSURE
+      `QuantityHistory` (stored once, in the timeline).
+- [x] `EnvironmentState` / `EnvironmentTimeline`: UNKNOWN entries rather than
+      omissions; interpolated values labelled and UNKNOWN-uncertainty; no
+      extrapolation / gap / discontinuity crossing; overlapping sources refused;
+      `dose()` for lifecycle consumers; `verify_state`; deterministic digests.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 2/3 section).
 
-### P3 — Lifecycle / degradation foundation
+### P3 / BIG 4 — Lifecycle / degradation (NEXT BIG step)
+
+Consume `EnvironmentTimeline.dose()` / `state_at()` and `Timeline` usage/cycle
+histories; update state through the existing `StateTransitionReceipt` chain.
 
 - [ ] Define generic `LifecycleState` and degradation-model contracts.
 - [ ] Separate exposure history, usage history and accumulated damage state.

@@ -11,7 +11,59 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 2 — Time Engine foundation (BUILD phase; read this first)
+## 2026-09-25 BIG 2 gap closure + BIG 3 — Environment Engine (BUILD phase; read this first)
+
+### BIG 2 gaps closed
+- Same-instant: `TimePoint` stores exact rational seconds from
+  `repr(magnitude) * repr(unit factor)` (`SAME_INSTANT_RULE`); `0.1 hour ==
+  360 s`, `360.0000000000001 s != 360 s`, no epsilon. Known limit (fail-closed):
+  non-decimal magnitudes (1/3 hour) do not merge with 1200 s.
+- Input ownership: first attempt stored `input_series_digests` on the
+  timeline; the re-review showed it was forgeable (any caller could supply a
+  digest). **Failed approach, removed.** Now `input_value_at(scenario, ...)`
+  recomputes the presented scenario's digest and reads its composed schedule.
+- Mistake recorded: removing a helper by slicing to the next `def` deleted the
+  `SAME_INSTANT_RULE` block; restored in a follow-up commit.
+- BIG 2 re-review verdict: no blocker for BIG 3 after the ownership fix.
+
+### BIG 3 architecture
+`src/engcore/scenarios/environment.py` — see ACTIVE_PLAN BIG 3 checklist.
+Reuses `Timeline`, `TimePoint`, `TimeWindow`, EXPOSURE `QuantityHistory`,
+scenario digest and `NamedQuantity`; adds no clock or state authority.
+
+### BIG 3 scientific review
+First review: CHANGES REQUIRED. Fixed: B1 (BLOCKER) LINEAR interpolated across
+a discontinuity exactly at the upper sample; N1 circular kinds (wind direction)
+now refuse LINEAR; N2 each value carries its source classification; N3
+`verify_state` re-derives a deserialized state; N4 `source()` raised
+StopIteration. Fixes covered by tests; not re-reviewed.
+
+### Open non-blocking gaps (BIG 2 + BIG 3)
+- `required` pairs have no context; a channel in another context satisfies
+  coverage (its own value still appears under its context).
+- `EnvironmentSource` is a new source-identity record; align with P4 dataset
+  provenance/licensing when that lands.
+- No interpolated dose from point samples (deliberate); lifecycle needs interval data.
+- No spatial interpolation between locations; one timeline basis only.
+- Markers-before-order-sensitive precedence at a shared instant is a convention.
+- `canonical_digest` duplication (frozen Core decision needed).
+- Runtime does not emit/restore `TimelineCheckpoint`s.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/scenarios` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_environment_engine.py tests/test_time_engine.py tests/test_stateful_multiphysics_runtime.py tests/test_scenario_contracts.py tests/test_multidomain_science_hardening.py tests/test_core_api_layering.py tests/test_system_topology.py tests/test_min_foundation_electrothermal.py tests/test_electrothermal_vertical.py` — PASS, 228 passed (includes two executable environment scenarios: coastal exposure day, climb profile)
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 40 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI.
+
+### Readiness
+BIG 3 produces a deterministic, provenance-bound environmental history
+(`EnvironmentTimeline.history/state_at/dose`, digest-bound to scenario,
+timeline and sources). Ready to start BIG 4 Lifecycle.
+
+## 2026-09-25 BIG 2 — Time Engine foundation (BUILD phase)
 
 Strategy change: build the big architecture first; only focused smoke checks
 during the build. The full FAST / SCIENTIFIC / mutation / recertification

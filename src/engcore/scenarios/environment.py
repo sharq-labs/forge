@@ -121,12 +121,17 @@ class EnvironmentQuantityKind:
     description: str
     affine: bool = False
     context_parameters: tuple[str, ...] = ()
+    #: Periodic quantity (an angle): arithmetic interpolation is meaningless,
+    #: so LINEAR contracts are refused for it.
+    circular: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind_id", _identifier(self.kind_id, "environment kind_id"))
         object.__setattr__(self, "reference_unit", normalize_unit(self.reference_unit))
         if not str(self.description).strip():
             raise InvalidScientificProblem("environment kind requires a description")
+        if not isinstance(self.circular, bool):
+            raise InvalidScientificProblem("environment kind circular must be boolean")
         if not isinstance(self.affine, bool):
             raise InvalidScientificProblem("environment kind affine must be boolean")
         params = tuple(sorted(_identifier(p, "context parameter") for p in self.context_parameters))
@@ -139,13 +144,13 @@ class EnvironmentQuantityKind:
         return dimensionality(self.reference_unit)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": ENV_KIND_SCHEMA, "kind_id": self.kind_id, "reference_unit": self.reference_unit, "description": self.description, "affine": self.affine, "context_parameters": list(self.context_parameters)}
+        return {"schema": ENV_KIND_SCHEMA, "kind_id": self.kind_id, "reference_unit": self.reference_unit, "description": self.description, "affine": self.affine, "context_parameters": list(self.context_parameters), "circular": self.circular}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EnvironmentQuantityKind":
         require_schema(payload, ENV_KIND_SCHEMA)
-        _strict_keys(payload, {"schema", "kind_id", "reference_unit", "description", "affine", "context_parameters"}, "environment kind")
-        return cls(payload["kind_id"], payload["reference_unit"], payload["description"], payload["affine"], tuple(payload["context_parameters"]))
+        _strict_keys(payload, {"schema", "kind_id", "reference_unit", "description", "affine", "context_parameters", "circular"}, "environment kind")
+        return cls(payload["kind_id"], payload["reference_unit"], payload["description"], payload["affine"], tuple(payload["context_parameters"]), payload["circular"])
 
 
 #: The initial environmental dimensions.  Generic physical quantities only; no
@@ -162,7 +167,7 @@ STANDARD_ENVIRONMENT_KINDS: tuple[EnvironmentQuantityKind, ...] = (
     EnvironmentQuantityKind("wind_speed", "meter / second", "wind speed at a declared height", context_parameters=("measurement_height",)),
     EnvironmentQuantityKind(
         "wind_direction", "degree", "direction the wind blows from, clockwise from the declared reference",
-        affine=True, context_parameters=("direction_reference",),
+        affine=True, context_parameters=("direction_reference",), circular=True,
     ),
     EnvironmentQuantityKind("precipitation_rate", "meter / second", "liquid-water-equivalent precipitation rate"),
     EnvironmentQuantityKind("surface_wetness", "dimensionless", "fraction of time a surface is wet"),
@@ -471,9 +476,15 @@ class EnvironmentValue:
     derivation: ValueDerivation
     value: NamedQuantity | None
     reason: str = ""
+    #: The source's evidence class, copied so a consumer never has to look it
+    #: up to tell a design assumption from a measurement.  Empty only when no
+    #: source exists (UNKNOWN for an unsupplied required kind).
+    source_classification: str = ""
 
     def __post_init__(self) -> None:
         status = _enum(ValueStatus, self.status, "value status")
+        if bool(self.source_id) != bool(self.source_classification):
+            raise InvalidScientificProblem("an environment value names its source and that source's classification together")
         derivation = _enum(ValueDerivation, self.derivation, "value derivation")
         object.__setattr__(self, "status", status)
         object.__setattr__(self, "derivation", derivation)
@@ -491,13 +502,13 @@ class EnvironmentValue:
         return (self.kind_id, self.location_id, self.context_id)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": ENV_VALUE_SCHEMA, "kind_id": self.kind_id, "location_id": self.location_id, "context_id": self.context_id, "channel_id": self.channel_id, "source_id": self.source_id, "status": self.status.value, "derivation": self.derivation.value, "value": None if self.value is None else self.value.to_dict(), "reason": self.reason}
+        return {"schema": ENV_VALUE_SCHEMA, "kind_id": self.kind_id, "location_id": self.location_id, "context_id": self.context_id, "channel_id": self.channel_id, "source_id": self.source_id, "status": self.status.value, "derivation": self.derivation.value, "value": None if self.value is None else self.value.to_dict(), "reason": self.reason, "source_classification": self.source_classification}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EnvironmentValue":
         require_schema(payload, ENV_VALUE_SCHEMA)
-        _strict_keys(payload, {"schema", "kind_id", "location_id", "context_id", "channel_id", "source_id", "status", "derivation", "value", "reason"}, "environment value")
-        return cls(payload["kind_id"], payload["location_id"], payload["context_id"], payload["channel_id"], payload["source_id"], payload["status"], payload["derivation"], None if payload["value"] is None else NamedQuantity.from_dict(payload["value"]), payload["reason"])
+        _strict_keys(payload, {"schema", "kind_id", "location_id", "context_id", "channel_id", "source_id", "status", "derivation", "value", "reason", "source_classification"}, "environment value")
+        return cls(payload["kind_id"], payload["location_id"], payload["context_id"], payload["channel_id"], payload["source_id"], payload["status"], payload["derivation"], None if payload["value"] is None else NamedQuantity.from_dict(payload["value"]), payload["reason"], payload["source_classification"])
 
 
 @dataclass(frozen=True)
@@ -588,6 +599,11 @@ class EnvironmentTimeline:
                 raise InvalidScientificProblem(
                     f"channel {c.channel_id!r} unit {c.unit!r} is not a {kind.kind_id} unit ({kind.reference_unit})"
                 )
+            if kind.circular and c.interpolation is not None and c.interpolation.method is EnvironmentInterpolation.LINEAR:
+                raise InvalidScientificProblem(
+                    f"channel {c.channel_id!r}: {kind.kind_id} is circular; LINEAR interpolation "
+                    f"of an angle is not authorized"
+                )
             if c.source_id not in source_ids:
                 raise InvalidScientificProblem(f"channel {c.channel_id!r} names undeclared source {c.source_id!r}")
             declared = {p.quantity_id for p in c.context.parameters}
@@ -624,7 +640,10 @@ class EnvironmentTimeline:
     # ---- evaluation --------------------------------------------------------
 
     def source(self, source_id: str) -> EnvironmentSource:
-        return next(s for s in self.sources if s.source_id == source_id)
+        for item in self.sources:
+            if item.source_id == source_id:
+                return item
+        raise InvalidScientificProblem(f"environment has no source {source_id!r}")
 
     def channel(self, channel_id: str) -> EnvironmentChannel:
         for c in self.channels:
@@ -633,10 +652,10 @@ class EnvironmentTimeline:
         raise InvalidScientificProblem(f"environment has no channel {channel_id!r}")
 
     def _unknown(self, c: EnvironmentChannel, reason: str) -> EnvironmentValue:
-        return EnvironmentValue(c.kind_id, c.context.location_id, c.context.context_id, c.channel_id, c.source_id, ValueStatus.UNKNOWN, ValueDerivation.NONE, None, reason)
+        return EnvironmentValue(c.kind_id, c.context.location_id, c.context.context_id, c.channel_id, c.source_id, ValueStatus.UNKNOWN, ValueDerivation.NONE, None, reason, self.source(c.source_id).classification)
 
     def _known(self, c: EnvironmentChannel, derivation: ValueDerivation, value: NamedQuantity) -> EnvironmentValue:
-        return EnvironmentValue(c.kind_id, c.context.location_id, c.context.context_id, c.channel_id, c.source_id, ValueStatus.KNOWN, derivation, value)
+        return EnvironmentValue(c.kind_id, c.context.location_id, c.context.context_id, c.channel_id, c.source_id, ValueStatus.KNOWN, derivation, value, "", self.source(c.source_id).classification)
 
     def channel_value(self, channel_id: str, at: TimePoint) -> EnvironmentValue:
         c = self.channel(channel_id)
@@ -672,7 +691,7 @@ class EnvironmentTimeline:
             if event.kind is TimelineEventKind.DISCONTINUITY and event.subject_id == channel_id and lo.at.seconds < event.at.seconds <= s:
                 return self._unknown(c, f"declared discontinuity {event.event_id!r} lies between the sample and the query")
             if (event.kind is TimelineEventKind.DISCONTINUITY and event.subject_id == channel_id
-                    and contract.method is EnvironmentInterpolation.LINEAR and s < event.at.seconds < hi.at.seconds):
+                    and contract.method is EnvironmentInterpolation.LINEAR and s < event.at.seconds <= hi.at.seconds):
                 return self._unknown(c, f"LINEAR interpolation would cross declared discontinuity {event.event_id!r}")
         uncertainty = Uncertainty.unknown(
             f"interpolated ({contract.method.value}) between samples of {channel_id!r}; interpolation "
@@ -693,6 +712,13 @@ class EnvironmentTimeline:
             if loc == location_id and (kind_id, loc) not in covered:
                 values.append(EnvironmentValue(kind_id, loc, "", "", "", ValueStatus.UNKNOWN, ValueDerivation.NONE, None, f"no channel supplies required {kind_id!r} at {loc!r}"))
         return EnvironmentState(at, location_id, self.digest, tuple(values))
+
+    def verify_state(self, state: EnvironmentState) -> None:
+        """Refuse a (deserialized) state this environment does not reproduce exactly."""
+        if not isinstance(state, EnvironmentState):
+            raise InvalidScientificProblem("verify_state requires an EnvironmentState")
+        if state.environment_digest != self.digest or state.digest != self.state_at(state.at, state.location_id).digest:
+            raise InvalidScientificProblem("environment state is not the one this environment produces")
 
     def history(self, location_id: str, points: Iterable[TimePoint]) -> tuple[EnvironmentState, ...]:
         """A deterministic sequence of states; the query order is canonicalized."""
