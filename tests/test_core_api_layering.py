@@ -286,6 +286,10 @@ NON_CORE_PACKAGES = {
         "provider-neutral numerical execution (NumPy/SciPy/SymPy/PETSc/SUNDIALS "
         "providers) beneath the Core solver protocol; computes, holds no authority"
     ),
+    "spatial": (
+        "tagged meshes, framed fields, mappings and material binding on the Core "
+        "field/mesh records; Gmsh/meshio are providers"
+    ),
     "scenarios": (
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"
