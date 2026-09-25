@@ -6,10 +6,52 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 ## Current branch / PR
 
 - Branch: `ci/self-hosted-heavy-runner` (from `origin/main` @ `2b76017f`, PR #106 merged)
-- PR: none recorded yet; verify GitHub before making a current PR claim.
+- PR: #107 (open; read from the GitHub API on 2026-09-25).
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
+
+## 2026-09-25 self-hosted runner: isolation check false positive on the PC
+
+Observed on the PC (owner report): `New-ForgeRunnerDistro.ps1` imported `forge-runner` to `D:\WSL\forge-runner`,
+then threw `isolation check failed: Windows drives are mounted`.
+
+- Cause (from the script, not observed inside the distro): the check was `test ! -d /mnt/c`. The script starts the
+  distro once to write `wsl.conf`, before automount is off, so WSL creates `/mnt/c`; the empty directory survives the
+  restart. Directory existence does not show a mount. Second defect found while inspecting: the interop check was
+  `command -v powershell.exe`, which is always negative with `appendWindowsPath=false`, even with interop ON (a
+  false negative, i.e. weaker than documented). `install-host.sh` and the smoke workflow had the same two checks.
+- Fix: one fail-closed script, `tools/ci/self-hosted/check-isolation.sh`, used by all three callers. Drives from
+  `/proc/self/mountinfo` (drvfs / 9p-or-virtiofs of a drive / anything on `/mnt/<letter>`) plus `mountpoint -q`;
+  interop from enabled `binfmt_misc` handlers (`WSLInterop*`, magic `4d5a`, interpreter `/init`) plus PATH; systemd
+  as PID 1; the required `wsl.conf` keys (missing = WSL default = fail). Callers require exit 0 and the final line
+  `FORGE-ISOLATION: PASS`. The `.ps1` now sends scripts into the distro as base64 (no stdin/CRLF/quoting changes),
+  waits for `--terminate` to take effect, and has `-UseExisting` to validate an existing distro without re-import.
+- Own mistake caught before commit: a first draft used `test -s /proc/self/mountinfo`; procfs reports size 0, so it
+  would have failed every real machine. Emptiness is now judged by what awk read.
+- Requirements unchanged: a real mount on `/mnt/c` fails; interop must be off; systemd must be on; the check is now
+  stricter (live interop handlers, `mountFsTab`, `appendWindowsPath` are required, not assumed).
+
+2026-09-25 (cloud session, Linux, Python 3.11, dash as sh, PowerShell 7.4.6)
+command: `python3 -m pytest tests/test_ci_self_hosted_scripts.py tests/test_ci_runner_selection.py tests/test_recertification_scope.py tests/test_certification_control_plane.py -q`
+result: PASS
+summary: 273 passed, incl. 36 new isolation-check tests (run for real under sh on fixture trees) and 8 end-to-end runs of the `.ps1` under pwsh against a fake `wsl.exe`
+commit: working tree on b5d95ed9
+
+2026-09-25 (cloud session)
+command: 8 mutants (check ignores drive mounts; drops the `/mnt/<letter>` rule; ignores binfmt handlers; accepts an empty mount table; re-adds a directory-existence failure; `.ps1` trusts the exit code without the PASS verdict; `.ps1` skips the restart; drops `mountFsTab`), each applied alone against `tests/test_ci_self_hosted_scripts.py`, file restored after each
+result: PASS
+summary: control green first; 8/8 killed
+commit: working tree on b5d95ed9
+
+2026-09-25 (cloud session)
+command: `shellcheck -s sh check-isolation.sh`, `shellcheck install-host.sh`, `bash -n` on every self-hosted script, PyYAML `safe_load` of every workflow, PowerShell `Parser::ParseFile` on the `.ps1`
+result: PASS
+commit: working tree on b5d95ed9
+
+NOT RUN: the corrected verification on the PC's real `forge-runner` distro (Windows native-argument quoting, real
+`/proc/self/mountinfo` and `binfmt_misc` under WSL), `install-host.sh`, runner registration (`forge-pc-1..3`), the
+smoke workflow. `FORGE_HEAVY_RUNNER` stays unset.
 
 ## 2026-09-25 self-hosted heavy CI runner (design + tooling; NOT RUN on the PC)
 

@@ -18,17 +18,12 @@ WORKFLOWS="${FORGE_ALLOWED_WORKFLOWS:-tests,recertify-hardened-core,trust-mutati
 RUNNER_USER=forge-runner
 
 # ---- refuse to run where the isolation assumptions do not hold ---------------------------------
-if [ -d /mnt/c ] || ls /mnt/*/Windows >/dev/null 2>&1; then
-  echo "Windows drives are mounted in this distro. Set [automount] enabled=false in /etc/wsl.conf," >&2
-  echo "run 'wsl --shutdown' from Windows, and start again (docs part 1)." >&2
-  exit 1
-fi
-if command -v powershell.exe >/dev/null 2>&1 || command -v cmd.exe >/dev/null 2>&1; then
-  echo "Windows interop is enabled. Set [interop] enabled=false in /etc/wsl.conf (docs part 1)." >&2
-  exit 1
-fi
-if ! [ -d /run/systemd/system ]; then
-  echo "systemd is not running. Set [boot] systemd=true in /etc/wsl.conf and restart the distro." >&2
+# One definition of "isolated" (mount table, binfmt handlers, PID 1, wsl.conf), shared with
+# New-ForgeRunnerDistro.ps1 and the smoke workflow. Fail-closed: anything but PASS stops here.
+unset FORGE_ISOLATION_FIXTURE_ROOT
+if ! sh "$here/check-isolation.sh"; then
+  echo "refusing to prepare this distro: the isolation check did not pass (see FAIL lines above;" >&2
+  echo "fix /etc/wsl.conf as they say, run 'wsl --terminate <distro>' from Windows, start again - docs part 1)." >&2
   exit 1
 fi
 

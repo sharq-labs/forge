@@ -151,8 +151,8 @@ do not stop code that has already been admitted. Consequences, stated as require
 
 ## 5. Setup
 
-Assumes Windows 11 + WSL2 (this PC: i7-14650HX, 16 cores / 24 threads, ~32 GB RAM). **Nothing below has
-been executed; see section 10.**
+Assumes Windows 11 + WSL2 (this PC: i7-14650HX, 16 cores / 24 threads, ~32 GB RAM). **Only the import in Part 1
+has been executed on the PC; see section 10.**
 
 ### Part 1: the dedicated distro (Windows, PowerShell, once)
 
@@ -169,9 +169,39 @@ and interop turned off.
        -InstallDir D:\WSL\forge-runner -RegisterAutostart
    ```
 
-   It imports the distro onto D: (C: is nearly full), writes `/etc/wsl.conf` (systemd on, `automount` off,
-   `interop` off), terminates only that distro, and verifies that `/mnt/c` is absent and `powershell.exe`
-   is not runnable.
+   It imports the distro onto D: (C: is nearly full), writes `/etc/wsl.conf` (systemd on, `automount` and
+   `mountFsTab` off, `interop` and `appendWindowsPath` off), terminates only that distro (waiting until it has
+   actually stopped), and verifies the fresh start with `tools/ci/self-hosted/check-isolation.sh` (below).
+
+   **Resuming / re-checking an existing distro.** If the distro already exists (for example the import
+   succeeded but a verification failed), do not unregister it; run
+
+   ```powershell
+   .\tools\ci\self-hosted\windows\New-ForgeRunnerDistro.ps1 -UseExisting -RegisterAutostart
+   ```
+
+   It imports nothing, rewrites `/etc/wsl.conf` only if it differs from the required one, terminates the
+   distro (which stops its runner services, if any) and runs the same verification on the next start.
+
+   **What "isolated" means (the verification).** One script, `tools/ci/self-hosted/check-isolation.sh`, is
+   used by this step, by `install-host.sh` and by the smoke workflow. It fails closed: every property must be
+   positively established, anything unreadable or unparseable is a failure, and callers require both exit 0
+   *and* the final line `FORGE-ISOLATION: PASS`.
+
+   | Property | Established from | Not from |
+   | --- | --- | --- |
+   | no Windows drive mounted | the kernel mount table (`/proc/self/mountinfo`, what `findmnt` reads): no `drvfs` mount, no `9p`/`virtiofs` mount of a drive (`C:\`, `path=C:`), and nothing at all mounted on `/mnt/<letter>`; `mountpoint(1)` as a second opinion on `/mnt/<letter>` | whether the directory `/mnt/c` exists |
+   | no Windows interop | the `binfmt_misc` handler table: no enabled `WSLInterop*` handler and no enabled handler for PE files (magic `4d5a`, or interpreter `/init`); also no Windows program on `PATH` | only whether `powershell.exe` is on `PATH` |
+   | systemd | PID 1 is `systemd` and `/run/systemd/system` exists | |
+   | it stays so after a restart | `/etc/wsl.conf` has exactly `systemd=true`, `automount` `enabled=false` and `mountFsTab=false`, `interop` `enabled=false` and `appendWindowsPath=false` (a missing key means WSL's default, i.e. on) | |
+
+   Why the directory test was wrong: the script must start the distro once to write `wsl.conf`, and that first
+   start happens with automount on, so WSL creates `/mnt/c` (and mounts C: there). After the restart the drive
+   is gone but the empty directory stays. `test ! -d /mnt/c` therefore failed an isolated distro; a leftover
+   directory is now reported as a `NOTE` and ignored, while an actual mount on `/mnt/c` still fails. The
+   `PATH` test was the opposite problem: with `appendWindowsPath=false`, `powershell.exe` is never on `PATH`
+   even when interop is on, so it could not detect live interop. `/usr/lib/wsl/drivers` (a read-only `9p`
+   view of the Windows GPU driver store that WSL always provides) is not a drive and is not counted.
 3. Put these in `%UserProfile%\.wslconfig` (global to all WSL2 distros; the script prints it but does not
    write it), then `wsl --shutdown` when convenient:
 
@@ -197,7 +227,8 @@ git clone https://github.com/sharq-labs/forge.git /root/forge && cd /root/forge
 bash tools/ci/self-hosted/install-host.sh
 ```
 
-It refuses to run if Windows drives or interop are visible or systemd is off. It installs git, build tools,
+It refuses to run unless `check-isolation.sh` passes (Part 1: no mounted Windows drive, no live interop, systemd as
+PID 1, the required `wsl.conf`). It installs git, build tools,
 Python 3, **ngspice**, **docker.io**; creates user `forge-runner` (docker group, **no sudo**); installs the
 guard, hooks and reset script root-owned; creates the shared cache and log directories; and enables the
 weekly maintenance timer.
@@ -235,7 +266,8 @@ a separate measured tuning pass justifies changing them.
 2. Run the **Self-hosted runner smoke test** workflow (Actions tab > *Run workflow*). It runs only on the PC
    and fails if: the hooks are not wired into **this job's** runner (it reads the Worker process's
    environment; a wiring failure means jobs are being admitted unchecked), the guard files are not
-   root-owned or are directly writable, the user is root or has sudo, Windows drives or interop are visible,
+   root-owned or are directly writable, the user is root or has sudo, `check-isolation.sh` does not pass
+   (a mounted Windows drive, live interop, systemd not PID 1, or a `wsl.conf` that would undo either on restart),
    docker/ngspice/`PIP_CACHE_DIR` are missing, either Python cannot be installed, or the workspace is not the
    exact commit. `/var/log/forge-runner/hook.log` also shows the admission; note it is writable by the runner
    user, so it is a diagnostic, not evidence.
@@ -309,8 +341,17 @@ Executed in this session (on the Windows host, Python 3.14 and Git Bash; not on 
   `test_certificate_lineage`, `test_hardening_assurance`, `test_core_guards`); all workflows parse as YAML;
   `bash -n` on every script; the PowerShell parser on the `.ps1`.
 * The read-only scientific reviewer (findings and dispositions in `docs/work/PROGRESS.md`).
+* The isolation check (`check-isolation.sh`) run for real under `sh` against fixture trees (leftover empty `/mnt/c`
+  passes; real drive mounts in six forms, live interop handlers, systemd not PID 1, wrong `wsl.conf`, and an
+  unreadable/empty/unparseable mount table all fail), and `New-ForgeRunnerDistro.ps1` run end to end under
+  PowerShell 7 on Linux against a fake `wsl.exe` (resume, rewrite of a wrong `wsl.conf`, real mount fails, a check
+  with exit 0 but no PASS verdict fails). This does **not** exercise Windows' native-argument quoting or real WSL.
 
-**NOT RUN**: any of Parts 1-4 on the PC; the hooks on a real runner (including whether the runner exports the
+On the PC (2026-09-25, reported by the owner): Part 1 imported the distro to `D:\WSL\forge-runner`, then the old
+directory test failed the verification (`isolation check failed: Windows drives are mounted`). That is the false
+positive described in Part 1; the distro was kept and is re-verified with `-UseExisting`.
+
+**NOT RUN**: the corrected Part 1 verification and Parts 2-4 on the PC; the hooks on a real runner (including whether the runner exports the
 guard's variables to hooks, and whether the runner's `.env` could override the drop-in); `actions/setup-python`
 on the WSL runner; the heavy jobs on the PC; a real recertification through it; `actionlint` (not installed);
 the `RUNNER_STATUS_TOKEN` checks against the live API; the smoke workflow itself; **numerical agreement of the

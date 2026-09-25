@@ -7,7 +7,7 @@ name: Self-hosted runner smoke test
 # closed -- if the runner is offline the run waits in the queue.
 #
 # It also proves the assumptions the isolation design rests on, on the real
-# machine: an unprivileged user, no Windows drives, no interop, Docker and ngspice
+# machine: an unprivileged user, no Windows drives, no interop, systemd, Docker and ngspice
 # present, writable local caches, and both Python versions installable.
 
 on:
@@ -66,11 +66,14 @@ jobs:
           if sudo -n true 2>/dev/null; then
             echo "::error::the runner user has passwordless sudo"; exit 1
           fi
-          if [ -d /mnt/c ] || ls /mnt/*/Windows >/dev/null 2>&1; then
-            echo "::error::Windows drives are mounted in this distro (set automount to disabled in /etc/wsl.conf)"; exit 1
-          fi
-          if command -v powershell.exe >/dev/null 2>&1 || command -v cmd.exe >/dev/null 2>&1; then
-            echo "::error::Windows interop is enabled in this distro (set interop to disabled in /etc/wsl.conf)"; exit 1
+          # Windows drives from the mount table (not directory existence), interop from the binfmt_misc
+          # handler table, systemd as PID 1, and wsl.conf; fail-closed, same script as the setup uses.
+          unset FORGE_ISOLATION_FIXTURE_ROOT
+          out="$(sh tools/ci/self-hosted/check-isolation.sh)" && rc=0 || rc=$?
+          printf '%s\n' "$out"
+          if [ "$rc" -ne 0 ] || [ "$(printf '%s\n' "$out" | tail -n 1)" != "FORGE-ISOLATION: PASS" ]; then
+            printf '%s\n' "$out" | grep '^FAIL:' | sed 's/^FAIL: /::error::/' || true
+            echo "::error::isolation check did not pass (exit $rc)"; exit 1
           fi
           echo "isolation checks passed"
       - name: Providers and caches
