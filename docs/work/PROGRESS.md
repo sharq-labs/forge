@@ -11,7 +11,201 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 10 — Multi-timescale Runtime (BUILD phase; read this first)
+## 2026-09-26 BIG 11 — Solver Provider Expansion (BUILD phase; read this first)
+
+Branch `feat/big-10-multitimescale` (continued, per instruction), base HEAD `d5f4b393`, worktree `D:/forge-big10`.
+
+### Pre-BIG 11: final BIG 10 review
+`forge-scientific-reviewer` (read-only): CHANGES REQUIRED, 9 findings that would block new providers; all fixed
+with tests (`tests/test_multiscale_review_fixes.py::test_b1..b9`):
+provider versions in a fast result must equal the identity's, and the reference systems now report
+INSTALLED versions (numpy/scipy/dolfinx), not labels; one state contract per declared participant (empty
+contracts are never "complete"); DECLARED_INITIAL repetition requires the resolved period's fast state to
+return within a declared tolerance; output units and claimed history features/resolution are enforced
+against the fast-system identity (declared `output_semantics`); `field_mapping` undeclared -> MAPPING
+UNKNOWN; results echo `consumed_slow_state_digest` and every SLOW variable declares bound/not_consumed;
+the fast-system identity is snapshotted at construction; LEADING_PERIOD requires the declaration that time
+enters only through the request.  Aggregation refuses mixed-unit tiles.  Non-blocking, recorded: point-sample /
+cycle inputs are only refused for repetition (not coverage-checked for fully resolved runs); unkeyed
+checkpoints; `OutputSeries` keeps an ALL-features default for direct `aggregate()` calls (the runtime path
+enforces declared features).
+
+### Architecture (`src/engcore/providers/`, non-Core, registered)
+- `catalog.py`: descriptive `ProviderCapability` (classification `descriptive_capability_not_applicability`),
+  `ProviderRegistry` (`discover` in id order, `require(id, version=)` -> exactly that provider or
+  `ProviderUnavailable`; no ranking, no fallback), probes for Python distributions (version + RECORD digest)
+  and executables (exact resolved path + sha256 + parsed version; no version -> unavailable),
+  `default_registry()` never raises. `python -m engcore.providers [--json]` lists discovery.
+- `identity.py`: `ProviderExecutionIdentity.from_content` (provider id/version/digest, adapter, problem,
+  generated configuration, input bytes, output request, window, environment, state, and
+  `provider_dependencies`; NaN refused). Result-changing dependencies are identity: declared Python
+  dependencies by RECORD digest (PyBaMM: casadi, pybammsolvers; TESPy: CoolProp) and process providers by
+  a digest of their conda environment's package set (`conda_environment_digest`); `ProviderStatus.digest`
+  combines them, `ProviderStatus.executable_digest` is the executable file alone.
+- `process.py`: argv-only `ProcessInvocation` (absolute executable, digest, explicit env, timeout, sanitized
+  names), `ProcessWorkspace` (fresh dir, run once or a declared `run_sequence`, process-group kill on timeout,
+  outputs = regular files THIS run created/changed, `read_output` digest-verified; stale / foreign / input /
+  symlinked files refused; the executable is re-hashed at launch against `executable_digest`).
+- `records.py`: `ProviderExecutionRecord` (`provider_computation_not_evidence`, UNKNOWN uncertainty, failed
+  records expose nothing, requested outputs must exist, non-finite refused).
+- `compare.py`: `compare_providers(decl, a, a_output, b, b_output, *, a_select, b_select)` takes execution
+  RECORDS (provider, BIG 6 numerical, BIG 8 PDE; stand-ins refused) and reads values AND units from them
+  through a declared, digest-bound `OutputSelection` (rows / component / linear weights); refuses the same
+  provider, any shared declared dependency / identical provider environment, and a side that declares no
+  dependency set (independence UNKNOWN); tolerance is a spread
+  (degC -> K delta), relative tolerance on an offset scale refused, compared values digest-bound,
+  `post_hoc=True` -> `post_hoc_solver_corroboration_not_validation`; otherwise
+  `solver_corroboration_not_validation`.
+- Bounded additions elsewhere: `materials/fluids.py` (`FluidIdentity`, `FluidState`, `FluidPropertyRecord`,
+  classification `provider_derived_property_not_measurement`); `pde/cases.py` (provider-neutral
+  `PlaneStressProblem`/`RegionMaterial` shared by CalculiX and Code_Aster); `domains/battery/throughput_fade.py`.
+- Architecture decision recorded: `tests/test_heterogeneous_ngspice.py::test_r1` pinned "no provider
+  framework"; its preregistration (docs/milestones/heterogeneous-ngspice-prereg.md §4.2) deferred one with the
+  named trigger "a second external provider whose process-execution needs actually overlap". BIG 11 fired it
+  (five process providers share `providers.process`). R1 now asserts the trigger condition, that the provider
+  tree imports no domain, and that the ngspice adapter stays local.
+
+### Provider environments (exact)
+WSL Ubuntu, micromamba 2.9.0, conda-forge, under `~/mm/root/envs` (`FORGE_PROVIDER_ENVS`):
+`sci` (py3.11: cantera 3.2.0, coolprop 6.7.0 -> replaced by pip CoolProp 8.0.0 when `pip install tespy`
+ran, tespy 0.11.2, pybamm 24.1 [conda resolver picked it; its `initial_soc` path calls `np.trapz`, removed in
+numpy 2.4.6 -> UNUSABLE; not used for proofs; since the dependency-identity fix the registry reports it
+UNAVAILABLE there because `pybammsolvers` is absent]); `battery` (py3.12: pybamm 26.8.0.0, numpy 2.5.3, scipy
+1.18.1, tespy 0.11.2 + CoolProp 8.0.0 via pip); `calculix` (ccx 2.23); `openfoam` (openfoam.com v2412); `su2`
+(8.5.0); `openmodelica` (omc v1.27.1-cmake); `code_aster` (18.1.7); `fenicsx` (from BIG 10; + c-compiler).
+Elmer: no conda-forge package and no sudo for apt -> UNAVAILABLE.
+
+### Executed providers and proofs (all runs in this session)
+| Proof | Provider(s) | Result |
+|---|---|---|
+| A battery | PyBaMM 26.8 (SPM, Chen2020 by name, set content digest bound) | 1C 30 min discharge (SOC 0.9 -> 0.4, V down, T up); balanced cycle returns SOC 0.7; 10 Ah from 50 % SOC -> FAILED record (cut-off, infeasible); 273 K vs 318 K isothermal: colder ends lower V; capacity-fade mapping changes cell + identity; ambient/current from exact BIG 3/BIG 2 records |
+| B chemistry | Cantera 3.2.0, gri30.yaml bytes bound | adiabatic CH4/air equilibrium 2150-2300 K band; IdealGasConstPressureReactor 1400 K, 50 ms: ignites (>2400 K), CH4 burned out; edited mechanism bytes = new identity |
+| C thermophysical / system | CoolProp 8.0.0, TESPy 0.11.2 | water 25 C density 997.05 kg/m3 (IAPWS-95 EOS value), k 0.607; two-phase quality; out-of-range -> UNKNOWN record; TESPy chain: dh*m = 5000 W to 1e-9, outlet 43.92 C; impossible network -> FAILED |
+| D second engineering solvers | CalculiX 2.23, OpenFOAM v2412, SU2 8.5.0, Code_Aster 18.1.7, OpenModelica 1.27.1 | all executed through the process boundary (see below) |
+| E cross-provider | FEniCSx vs CalculiX; Code_Aster vs CalculiX; OpenModelica vs SciPy solve_ivp; OpenFOAM vs SU2 (record-bound API; OpenFOAM runs now demand steadiness <= 1e-7 m/s over the last write interval) | plane stress right-edge ux: max rel 0.156 % (both FEniCSx and Code_Aster differ from CalculiX by the identical 7.77e-7 m -- CalculiX expands 2-D elements to 3-D wedges; observation, not proven cause); lumped ODE: max 3.07e-6 K; CFD: declared-before-looking whole-field 3 % of lid speed FAILED (max 24.6 %, lid-adjacent); lower half (region chosen POST HOC) within 3 %: 20x20 2.70e-6 m/s, 40x40 1.44e-6 m/s; grid study lower-half max 2.55 % / 1.41 % / 0.75 % of lid speed at 20/40/80 cells, near-lid ~10 % at every N |
+| F multiphysics | PyBaMM <-> TESPy on the BIG 9 runtime | 6 x 600 s windows IMPLICIT, all converged, iterations [10, 8, 12, 11, 10, 10]; SOC 0.567 -> 0.233 -> rest -> 0.567; final heat 0.479 W, cell 296.11 K; coolant inlet from BIG 3 channel |
+| G multi-timescale | PyBaMM as BIG 10 FastSystem | 56 days represented / 8 days resolved (8 weekly windows, weight 7), 192 hourly PyBaMM segments; fade 0 -> 0.0385 (monotone); counterfactual day 1 with day-56 state: end-of-discharge V 3.7094 -> 3.6978 V; 10 PyBaMM executions, 26.1 s |
+| H environment / material | PyBaMM (ambient), TESPy (coolant inlet), CalculiX + Code_Aster (BIG 5 E/nu records -> material cards), OpenFOAM + SU2 (CoolProp water records -> nu, rho, mu) | provenance digests carried into identities |
+| I unavailable | registry + all 9 adapters in the core venv | `ProviderUnavailable`, never ImportError, never substitution |
+| J stale output | process boundary (core), CalculiX (stale job.dat), OpenFOAM (stale 99999/ time dir) | refused; notably `postProcess -latestTime` picked the planted stale dir and Forge refused the result -> adapter now asks for the exact end time |
+
+Runtime metrics (operational, not a ranking): CalculiX 82 nodes/132 CPS3 ~0.01 s process; Code_Aster same mesh
+1.26 s; OpenFOAM cavity 20x20 1000 steps 0.41 s, 40x40 3000 steps 2.35 s, 80x80 15.5 s; SU2 20x20 1.8-1.9 s
+(149-191 it), 40x40 3.4 s (389 it), 80x80 26.8 s (1361 it); OpenModelica compile+simulate ~5 s; PyBaMM 1-h
+4-step probe 0.08 s solve (import 7.8 s); Cantera equilibrium + reactor < 1 s.
+
+### Failed approaches / findings (do not repeat)
+- `pybamm` with `cantera`+`coolprop` in one conda solve -> PyBaMM 24.1 + NumPy 2.4.6 (broken `np.trapz`); use a
+  dedicated env.  `pip install tespy` replaced conda CoolProp 6.7.0 by 8.0.0 (recorded).
+- numpy 2 `repr(np.float64)` is `np.float64(x)`: broke generated CalculiX decks (exit 201; failed closed).
+- Isothermal PyBaMM reports zero heat unless "calculate heat source for isothermal models" is set.
+- A 10 A x 30 min load from SOC 0.9 on a 5 Ah cell hits the cut-off: PyBaMM stops early and Forge refuses.
+- SU2 8.5 `OUTPUT_FILES=(CSV)` writes no volume CSV here; `RESTART_ASCII` -> `restart.csv`.
+- `omc --version` prints `v1.27.1-cmake`; the first parser required an "OpenModelica" prefix -> unavailable.
+- License strings first written from memory were wrong for OpenFOAM (GPL-3.0-only) and SU2 conda build
+  (GPL-2.0-or-later): descriptors now quote installed package metadata.
+- After binding the conda env digest into `ProviderStatus.digest`, adapters still passed that COMBINED digest as
+  the executable's digest; the new launch-time re-hash refused every process provider ("changed since
+  discovery"). Fixed with a separate `executable_digest`. The re-hash did its job on the first run.
+- `CP.set_reference_state("Water", "IIR")` raises (IIR's 0 C lies below water's triple point 273.16 K);
+  the pinning test uses NBP.
+- `SolverIdentity` names its field `version`, not `solver_version`.
+
+### Open non-blocking gaps (BIG 11)
+- Bounded case families only: OpenFOAM/SU2 lid-driven cavity; OpenModelica lumped thermal capacitance;
+  CalculiX/Code_Aster linear plane stress on triangles; TESPy source->heat exchanger->sink chains.
+- Code_Aster adapter parses displacement only; SU2/OpenFOAM pressures differ in convention (Pa vs m2/s2) and
+  are not compared.
+- PyBaMM parameter sets are provider-bundled literature data (content-digested), not Forge-sourced data;
+  the capacity-fade -> LAM mapping is a declared approximation.
+- TESPy is not independent of CoolProp; `compare_providers` now refuses that pair structurally.
+- Registry `available` cannot detect a broken library build (PyBaMM 24.1 case); executions fail closed.
+- Root `pyproject.toml` extras were NOT changed (providers are separate distributions); `[battery]` etc.
+  extras remain a packaging decision.
+- Provider processes run on Linux/WSL only here; the Windows core env only exercises the boundary.
+- Elmer UNAVAILABLE; SUNDIALS contract only; standalone PETSc provider not run.
+- A `ProviderExecutionRecord` can be constructed directly with an invented identity; the type is a contract,
+  not proof of execution. In-process records are bound to the COMPARING process's environment digest.
+- CoolProp's range check sees only the EOS Tmin/Tmax/pmax; transport correlations can be narrower.
+- `segments_from_records` refuses record changes (interval edges, samples, non-step interpolation) inside a
+  segment rather than splitting segments; PyBaMM `coupling.py` reads the caller's `current_at` at window start.
+- Dependency identity covers declared dependencies and conda package sets, not system libraries outside the env.
+
+### BIG 11 scientific review (forge-scientific-reviewer, read-only)
+First review: CHANGES REQUIRED, no BLOCKER. HIGH: (1) comparison accepted stand-in objects, caller-stated
+units and provider-id overrides; (2) a degC tolerance was converted as a point; (3) independence ignored
+shared dependencies; (4) PyBaMM segments sampled only segment starts; (5) library identity lacked dependency
+digests. MEDIUM: (6) declared-before-looking had no structural form; (7) executable not re-hashed at launch,
+env libraries undigested, symlinked outputs admitted; (8) wall time in the CoolProp request, random workspace
+path in the Code_Aster `.export`; (9) no CoolProp range check, process-global reference state outside identity;
+(10) PyBaMM fast-system contract hid reset state; (11) `RegionMaterial` provenance any string, thickness /
+empty groups unchecked. LOW: (12) echo-check wording; (13) provider defaults in `BatteryFastSystem`, coupling
+initial iterate outside identity; (14) OpenFOAM steadiness only a metric, pressure semantics; (15) compression
+of non-extensive domain aggregates, `_value_digest` truncation, Cantera cross-file mechanism refs, vacuous
+CalculiX tag check.
+Fixes (all with tests): 1-3, 6 in `providers/compare.py` (+ `tests/test_provider_boundary.py`); 4 refusal
+(`test_pybamm_provider.py`); 5, 7 via `ProviderStatus.dependencies` / `executable_digest`, conda env digest,
+launch re-hash, symlink exclusion; 8 request without wall time, workspace-relative `.export`; 9 `DEF` pinned per
+call + EOS range -> UNKNOWN (`test_coolprop_provider.py`); 10 `ParticipantStateContract.reset_state` (in
+identity); 11 digest-shaped provenance, thickness > 0, non-empty groups, one material per region; 12 docstring;
+13 keyword args without defaults, initial iterate in configuration; 14 `steady_tolerance` (run fails when not
+met) + kinematic-pressure semantics recorded; 15 all four (`tests/test_big11_review_fixes.py`,
+`test_cantera_provider.py`).
+
+Focused re-review of the fixes:
+CHANGES REQUIRED, no BLOCKER. Confirmed FIXED: 2, 5, 6, 7, 8, 9, 10, 12, 14, 13 (fast system) and the `compress_history` part of 15. It found five MEDIUM items left open or introduced:
+- (1) compared values were still caller arrays;
+- (3) Forge-internal records and process providers without `FORGE_PROVIDER_ENVS` counted as independent by default;
+- (4) sampled ambient channels were read at segment starts only;
+- (11) `RegionMaterial` accepted any 64-hex string, unbound to E and nu, and Code_Aster did not refuse overlapping or colliding regions;
+- (15, new) `aggregate()` summed a non-extensive domain aggregate across several weight-1 tiles.
+
+All five are fixed with tests:
+- `OutputSelection` (rows / component / declared linear weights, digest-bound): `compare_providers` reads values AND units from the records, and the caller passes no numbers.
+- `shared_dependencies` returns "independence UNKNOWN" when either side declares no dependency set.
+- In-process records, and every Python-library provider, carry `python-environment` (the digest of the interpreter's distribution set plus conda records); identical environments are refused.
+- `segments_from_records` refuses sampled channels that are not step-hold/none or that have samples inside a segment.
+- `RegionMaterial(region, E_record, nu_record)` holds the BIG 5 `ResolvedProperty` objects themselves (KNOWN, right property id).
+- Code_Aster refuses overlapping or colliding region groups.
+- `aggregate()` returns UNKNOWN for a non-extensive domain aggregate over more than one tile.
+- LOW, also fixed: `reset_state` is omitted from `to_dict` when empty, so earlier contract digests do not move.
+
+Open LOW items, recorded rather than fixed:
+- A `ProviderExecutionRecord` can still be constructed directly with an invented identity; the record type is the contract, not a proof of execution.
+- The environment digest of an in-process record is the comparing process's environment.
+- `FastSystemIdentity` names providers by (id, version) only.
+- OpenFOAM `blockMesh` / `postProcess` are hashed when the invocation is built, not at discovery.
+- Hard links are not excluded.
+- CoolProp has no pmin or Hmass range check, and the process-global reference state is not thread-safe.
+- `reset_state` vs `declared_state` overlap is unchecked.
+- The coupling's 0.1 W initial heat iterate is an adapter constant (recorded in configuration).
+- PyBaMM `current_at` in `coupling.py` is sampled at window start (the caller's callable must be constant per coupling window).
+- `_value_digest` falls back to `repr` for some interpolant types.
+- The Cantera cross-file check is a regex heuristic.
+- `ProviderExecutionIdentity` schema stays `/1` (the module is new in BIG 11; no stored records).
+
+A second re-review of these follow-up fixes was NOT run.
+
+### Verification (focused only; full FAST / SCIENTIFIC / mutation / recertification NOT RUN, deferred to BIG 14-15)
+- WSL `sci` env: `pytest --import-mode=importlib -q -p no:cacheprovider providers/coolprop/tests providers/cantera/tests
+  providers/tespy/tests providers/openfoam/tests providers/su2/tests providers/openmodelica/tests` (+ boundary in a
+  `tests/test_provider_boundary.py`) — PASS, 30 passed (the 14 boundary tests incl. the symlink test run there).
+  Earlier runs this session: 8 failed (combined digest passed as executable digest; IIR reference state), then 2 failed
+  (`solver_version` attribute; the 4-cell stale-output OpenFOAM case inherited a steadiness demand) — fixed; final
+  run after the re-review fixes: 30 passed.
+- WSL `battery` env: `pytest ... providers/pybamm/tests` — PASS, 9 passed (Proofs A, F, G, H + sampled-channel
+  refusal; two earlier runs failed on the new test's own fixture: sample quantity id, sample outside validity).
+- WSL `fenicsx` env: `pytest ... providers/fenicsx/tests providers/precice/tests providers/calculix/tests
+  providers/code_aster/tests` — PASS, 38 passed.
+- Windows core venv: `pytest -q -n 4 <focused list> tests/test_numerical_foundation.py tests/test_spatial_core.py
+  tests/test_provider_boundary.py tests/test_big11_review_fixes.py tests/test_multiscale_review_fixes.py` — 1967 passed,
+  9 failed, 3 skipped, 1 error (final tree). Failure set = pre-existing baseline (test_core_freeze_manifest descendant, 2 core_guards,
+  3 numerical_foundation, 2 spatial_core, test_verdict_monotonicity import error) + `test_the_tree_is_core_freeze_v1`
+  on `tree.clean` only (uncommitted files; re-run after commit below). `test_heterogeneous_ngspice::test_r1` passes.
+- `python tools/forge_check.py --changed` — PASS, 149 passed. `python -m compileall -q src providers tests` — OK.
+  `git diff --cached --check` — clean; no CRLF in staged files.
+
+## 2026-09-25 BIG 10 — Multi-timescale Runtime (BUILD phase)
 
 Branch `feat/big-10-multitimescale` created from `main` @ `e3ae778a` (it did not exist locally or
 on origin; the shared checkout was on stale `2b76017f`, so a worktree `D:/forge-big10` was used).

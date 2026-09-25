@@ -147,8 +147,12 @@ class _ToyFast(FastSystem):
         self.env = env
         contract = ParticipantStateContract("thermal", ("core_temperature", "moisture_content"), ("core_temperature",), "declared_complete",
                                             "toy: the next core temperature is start + resolved hours")
-        self.identity = FastSystemIdentity("toy", "1", "0" * 64, {}, (("toy", "1"),), {}, (contract,), (), (("heater_temperature", "K"),),
-                                           pure=True, purity_basis="closed-form function of the request")
+        self.identity = FastSystemIdentity(
+            "toy", "1", "0" * 64, {}, (("toy", "1"),), {}, (contract,), (), (("heater_temperature", "K"),),
+            field_mapping=False, field_mapping_basis="no fields", pure=True, purity_basis="closed-form function of the request",
+            participants=("thermal",), output_semantics=(("heater_temperature", ("dwell", "distribution", "integral", "mean", "order", "extrema", "cycles"), "3600/1"),),
+            slow_state_use=(("thermal", "moisture_content", "not_consumed", "toy physics ignores moisture"),),
+            time_inputs_via_request=True, time_inputs_basis="toy: only the request window")
 
     def execute(self, request):
         from engcore.scientific.multiphysics.receipts import StateVariableValue
@@ -158,8 +162,10 @@ class _ToyFast(FastSystem):
         series = OutputSeries("heater_temperature", "K", tuple(OutputSample(TimeWindow(R.p(s0 + i * HOUR), R.p(s0 + (i + 1) * HOUR)), Quantity(t0 + i, "K"))
                                                                for i in range(n)), "c" * 64)
         end = {"thermal": {"core_temperature": StateVariableValue("core_temperature", Quantity(t0 + n, "K"), Uncertainty.unknown("toy"))}}
+        from engcore.multiscale.fast import slow_state_digest
         return FastExecutionResult(request.identity, ("toy",), ("d" * 64,), (series,), end, (), (), n, n, ("converged",) * n, (("toy", "1"),),
-                                   consumed_environment_digest=self.env.digest, consumed_timeline_digest=self.env.timeline.digest)
+                                   consumed_environment_digest=self.env.digest, consumed_timeline_digest=self.env.timeline.digest,
+                                   consumed_slow_state_digest=slow_state_digest(request.slow_state))
 
 
 def _toy_runtime(env, fast_policy, representative=R.FULLY_RESOLVED):
@@ -186,7 +192,8 @@ def test_f7_fast_state_is_carried_only_when_resolved_and_declared_state_is_ident
     assert declared.final_fast_state["thermal"]["core_temperature"].value.magnitude == 300  # the macro-end fast state is not claimed
     repeated = _toy_runtime(env, FastStateAtMacroStart.CARRY_RESOLVED_END,
                             representative=R.RepresentativePolicy("lead", "leading_period", Quantity(1, "day"), ("repeat",), "p", "x",
-                                                                  periodicity_tolerances=R.REPRESENTATIVE_DAY.periodicity_tolerances))
+                                                                  periodicity_tolerances=R.REPRESENTATIVE_DAY.periodicity_tolerances,
+                                                                  fast_state_tolerances=(("thermal.core_temperature", Quantity(1, "K")),)))
     rt = MultiTimescaleRuntime(run_id="toy", hierarchy=repeated.hierarchy,
                                policy=MacroStepPolicy("toy", "1", (AdaptationRule("default", "default", Quantity(4, "day")),), Quantity(1, "day"),
                                                       EventHandling.SPLIT, repeated.policy.representative),
@@ -356,3 +363,108 @@ def test_f14_resume_under_another_run_id_is_refused():
     other, _, _ = R.build_runtime(14, near_threshold=False, run_id="someone-else")
     with pytest.raises(ResumeRefused, match="belongs to run"):
         other.resume(first.last_valid_checkpoint)
+
+
+# ---- final BIG 10 review (pre-BIG 11 blockers) ------------------------------------------
+
+
+def _rt(system, *, representative=None, near=False):
+    env = system.environment
+    return R.MultiTimescaleRuntime(run_id="heater-board-ms", hierarchy=R.hierarchy(), policy=R.policy(near_threshold=near, **(
+        {"representative": representative} if representative else {})), fast_system=system, environment=env,
+        aggregations=R.aggregations(), lifecycle=R.lifecycle())
+
+
+def _with_identity(**changes):
+    from dataclasses import replace
+    env, _ = R.build_environment(7)
+    system = R.ReferenceHeaterSystem(env)
+    system.identity = replace(system.identity, **changes)
+    return system
+
+
+def test_b1_provider_versions_must_be_the_executed_ones():
+    class Lying(R.ReferenceHeaterSystem):
+        def provider_versions(self):
+            return (("numpy", "0.0-declared"), ("scipy", "0.0-declared"))
+    env, _ = R.build_environment(7)
+    system = Lying(env)
+    import numpy, scipy
+    from dataclasses import replace
+    real = (("numpy", numpy.__version__), ("scipy", scipy.__version__))
+    system.identity = replace(system.identity, providers=real)  # identity names real versions ...
+    run = _rt(system).run(initial_slow_state=R.initial_slow())
+    assert run.status == "refused" and "ran providers" in run.reason  # ... but the execution reports others
+
+
+def test_b2_empty_or_partial_contracts_are_never_complete_by_omission():
+    with pytest.raises(Exception, match="exactly one state contract"):
+        _rt(_with_identity(contracts=()))
+    with pytest.raises(Exception, match="exactly one state contract"):
+        _rt(_with_identity(participants=("electrical", "thermal", "cooler")))
+
+
+def test_b3_declared_initial_repetition_requires_the_fast_state_to_return():
+    env, _ = R.build_environment(4)
+    slow, fast = _toy_state()
+    rep = R.RepresentativePolicy("lead", "leading_period", Quantity(1, "day"), ("repeat",), "p", "x",
+                                 periodicity_tolerances=R.REPRESENTATIVE_DAY.periodicity_tolerances,
+                                 fast_state_tolerances=(("thermal.core_temperature", Quantity(1, "K")),))
+    toy = _toy_runtime(env, FastStateAtMacroStart.DECLARED_INITIAL)
+    rt = MultiTimescaleRuntime(run_id="toy", hierarchy=toy.hierarchy, fast_system=toy.fast_system, environment=env, lifecycle=toy.lifecycle,
+                               policy=MacroStepPolicy("toy", "1", (AdaptationRule("default", "default", Quantity(4, "day")),), Quantity(1, "day"),
+                                                      EventHandling.SPLIT, rep), fast_state_policy=FastStateAtMacroStart.DECLARED_INITIAL)
+    run = rt.run(initial_slow_state=slow, initial_fast_state=fast)
+    rejected = [r for s in run.steps for r in s.refinements if r.kind == "representativity_rejected"]
+    assert run.status == "completed" and rejected and "does not return to its start" in rejected[0].detail
+    assert all(e.representative.weight == 1 for s in run.steps for e in s.executions)  # refined until nothing is repeated
+
+
+def test_b4_b5_output_units_and_claimed_history_are_enforced():
+    class Celsius(R.ReferenceHeaterSystem):
+        def execute(self, request):
+            from dataclasses import replace
+            r = super().execute(request)
+            s = r.series_for("heater_temperature")
+            c = OutputSeries(s.quantity_id, "degC", tuple(OutputSample(x.window, x.value.to("degC")) for x in s.samples), s.source_digest,
+                             s.resolution, s.preserved_features)
+            return replace(r, series=(c, r.series_for("heater_power")))
+    env, _ = R.build_environment(7)
+    run = _rt(Celsius(env)).run(initial_slow_state=R.initial_slow())
+    assert run.status == "refused" and "declared 'K'" in run.reason
+    from engcore.scenarios import HistoryFeature
+    narrow = tuple((q, ("integral", "mean"), r) for q, _, r in R.ReferenceHeaterSystem(env).identity.output_semantics)
+    run2 = _rt(_with_identity(output_semantics=narrow)).run(initial_slow_state=R.initial_slow())
+    assert run2.status == "refused" and "claims more history" in run2.reason
+
+
+def test_b6_undeclared_field_mapping_is_unknown_not_not_applicable():
+    run = _rt(_with_identity(field_mapping=None, field_mapping_basis="")).run(initial_slow_state=R.initial_slow())
+    assert run.ledger.entry(ErrorComponent.MAPPING).status is ComponentStatus.UNKNOWN
+
+
+def test_b7_the_fast_system_must_consume_the_given_slow_state():
+    class Ignoring(R.ReferenceHeaterSystem):
+        def execute(self, request):
+            from dataclasses import replace
+            return replace(super().execute(request), consumed_slow_state_digest="0" * 64)
+    env, _ = R.build_environment(7)
+    run = _rt(Ignoring(env)).run(initial_slow_state=R.initial_slow())
+    assert run.status == "refused" and "did not consume the slow state" in run.reason
+    with pytest.raises(Exception, match="declares whether the fast physics consumes"):
+        _rt(_with_identity(slow_state_use=(("thermal", "moisture_content", "bound", "x"),)))
+
+
+def test_b8_identity_changes_after_validation_are_refused():
+    from dataclasses import replace
+    env, _ = R.build_environment(7)
+    system = R.ReferenceHeaterSystem(env)
+    rt = _rt(system)
+    system.identity = replace(system.identity, version="2")
+    run = rt.run(initial_slow_state=R.initial_slow())
+    assert run.status == "refused" and "identity changed" in run.reason
+
+
+def test_b9_repetition_needs_time_to_enter_only_through_the_request():
+    with pytest.raises(Exception, match="time enters only"):
+        _rt(_with_identity(time_inputs_via_request=False, time_inputs_basis=""))

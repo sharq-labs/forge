@@ -50,6 +50,10 @@ class FenicsxHeaterSystem(R.ReferenceHeaterSystem):
     """The BIG 9 FEniCSx joule plate (alloy | mineral-wool board) as the thermal participant."""
 
     thermal_solver = ("fenicsx.dolfinx", PROVIDER.identity.version) if OK else ("fenicsx.dolfinx", "unavailable")
+
+    def provider_versions(self):
+        import scipy
+        return (self.thermal_solver, ("scipy", scipy.__version__))
     #: A larger series resistance than the lumped system keeps the insulated plate inside the
     #: declared data/Arrhenius ranges (at 1 ohm the plate mean reached 588 K and at 15, 25 and 35 ohm the plate maximum (496.6 K at 25, ~480 K at 35 ohm) still left the
     #: board data range -- both refused, see PROGRESS).
@@ -118,7 +122,8 @@ def long_run():
 def test_proof_f_representative_windows_are_real_fenicsx_scipy_coupled_executions(long_run):
     runtime, system, env, run = long_run
     assert run.status == "completed", run.reason
-    assert dict(system.identity.providers) == {"fenicsx.dolfinx": PROVIDER.identity.version, "scipy.optimize.root": "lm"}
+    import scipy
+    assert dict(system.identity.providers) == {"fenicsx.dolfinx": PROVIDER.identity.version, "scipy": scipy.__version__}  # installed, not labels
     assert PROVIDER.identity.version.startswith("0.11")
     step = run.steps[0]
     result = step.results[0]

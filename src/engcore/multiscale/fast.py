@@ -59,14 +59,28 @@ class FastSystemIdentity:
     contracts: tuple[ParticipantStateContract, ...]
     material_bindings: tuple[MaterialBinding, ...]
     outputs: tuple[tuple[str, str], ...]
-    #: True when a field mapping happens inside the fast system (mapping error
-    #: is then a real, currently unquantified, approximation component).
-    field_mapping: bool = False
+    #: Whether a field mapping happens inside the fast system.  ``None`` is
+    #: UNDECLARED and keeps the mapping-error component UNKNOWN; only an explicit
+    #: ``False`` with a basis makes it NOT_APPLICABLE.
+    field_mapping: bool | None = None
+    field_mapping_basis: str = ""
     #: Declared: an execution is a pure function of its request (no warm
     #: starts, no state carried between executions).  Exact reuse of a cached
     #: result is allowed ONLY for a pure system; the basis is recorded.
     pure: bool = False
     purity_basis: str = ""
+    #: Every participant of the fast graph; one state contract each (no contract
+    #: is never "complete by omission").
+    participants: tuple[str, ...] = ()
+    #: Per output: (quantity_id, preserved history features, max sample duration
+    #: in exact seconds "p/q").  The runtime enforces them; nothing defaults.
+    output_semantics: tuple[tuple[str, tuple[str, ...], str], ...] = ()
+    #: Per SLOW variable: (participant, variable, "bound" | "not_consumed", basis).
+    slow_state_use: tuple[tuple[str, str, str, str], ...] = ()
+    #: Declared: execution depends on time ONLY through the request (window,
+    #: environment and usage records) -- no drive cycle hidden in configuration.
+    time_inputs_via_request: bool = False
+    time_inputs_basis: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "system_id", identifier(self.system_id, "fast system_id"))
@@ -77,6 +91,15 @@ class FastSystemIdentity:
             raise InvalidScientificProblem("one state contract per fast participant")
         if self.pure and not str(self.purity_basis or "").strip():
             raise InvalidScientificProblem("a purity declaration must state its basis")
+        if any(not str(v).strip() for _, v in self.providers):
+            raise InvalidScientificProblem("every provider entry names an installed version")
+        if self.field_mapping is not None and not str(self.field_mapping_basis).strip():
+            raise InvalidScientificProblem("a field-mapping declaration states its basis")
+        if self.time_inputs_via_request and not str(self.time_inputs_basis).strip():
+            raise InvalidScientificProblem("the time-input declaration states its basis")
+        for _, _, use, basis in self.slow_state_use:
+            if use not in ("bound", "not_consumed") or not str(basis).strip():
+                raise InvalidScientificProblem("slow-state use is 'bound' or 'not_consumed', with a basis")
 
     def output_unit(self, quantity_id: str) -> str:
         for q, unit in self.outputs:
@@ -98,7 +121,11 @@ class FastSystemIdentity:
                 "contracts": [c.to_dict() for c in sorted(self.contracts, key=lambda c: c.participant_id)],
                 "material_bindings": [b.to_dict() for b in self.material_bindings],
                 "outputs": [list(o) for o in sorted(self.outputs)], "field_mapping": self.field_mapping,
-                "pure": self.pure, "purity_basis": self.purity_basis}
+                "field_mapping_basis": self.field_mapping_basis, "pure": self.pure, "purity_basis": self.purity_basis,
+                "participants": sorted(self.participants),
+                "output_semantics": [[q, sorted(f), r] for q, f, r in sorted(self.output_semantics)],
+                "slow_state_use": [list(x) for x in sorted(self.slow_state_use)],
+                "time_inputs_via_request": self.time_inputs_via_request, "time_inputs_basis": self.time_inputs_basis}
 
     @property
     def digest(self) -> str:
@@ -158,6 +185,9 @@ class FastExecutionResult:
     #: (echoed so the runtime can refuse a system bound to other inputs).
     consumed_environment_digest: str = ""
     consumed_timeline_digest: str = ""
+    #: canonical digest of the slow state the execution actually used
+    #: (``slow_state_digest(request.slow_state)``); a mismatch is refused.
+    consumed_slow_state_digest: str = ""
     #: Numerical diagnostics that are not identity (e.g. wall time).
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
@@ -176,11 +206,21 @@ class FastExecutionResult:
                 "coupling_iterations": self.coupling_iterations, "window_outcomes": list(self.window_outcomes),
                 "provider_versions": [list(p) for p in sorted(self.provider_versions)],
                 "consumed_environment_digest": self.consumed_environment_digest,
-                "consumed_timeline_digest": self.consumed_timeline_digest}
+                "consumed_timeline_digest": self.consumed_timeline_digest,
+                "consumed_slow_state_digest": self.consumed_slow_state_digest}
 
     @property
     def digest(self) -> str:
         return canonical_digest(self.to_dict())
+
+
+def slow_state_digest(state: Mapping[str, Mapping[str, StateVariableValue]]) -> str:
+    """The digest a fast result must echo for the slow state it says it consumed.
+
+    A consistency check against a mis-wired wrapper -- not a proof of consumption:
+    a wrapper can echo a digest it computed without using the state.
+    """
+    return canonical_digest(_state_list(state))
 
 
 class FastSystem(ABC):

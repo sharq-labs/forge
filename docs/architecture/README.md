@@ -42,6 +42,11 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   `multiscale/` (BIG 10: macro windows, representative fast windows, aggregation with stated
   information loss, slow-state feed-forward, checkpoint/resume). `multiscale` orchestrates the
   others and owns no time, state, lifecycle, material or coupling authority of its own.
+- `providers/` (BIG 11): provider-neutral external solver boundary (descriptive capability registry,
+  content-derived execution identity, argv-only process boundary with stale-output refusal,
+  provider records, declared cross-provider comparison). Provider adapters live in separate
+  distributions under `providers/<name>/`; the provider map and license/deployment matrix are in
+  [providers.md](providers.md).
 
 ## Claims organization
 

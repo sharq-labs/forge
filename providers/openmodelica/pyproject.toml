@@ -1,0 +1,10 @@
+[project]
+name = "forge-openmodelica-provider"
+version = "0.1.0"
+description = "OpenModelica (omc) provider for Forge (crafty), process-based. Computes; holds no scientific authority."
+requires-python = ">=3.10"
+# omc is an external executable (conda-forge `openmodelica`); not a Python dependency.
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_openmodelica"]

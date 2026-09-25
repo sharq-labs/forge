@@ -200,6 +200,7 @@ class AggregationRecord:
     assumption_dependent: bool
     spec_digest: str
     statistic: str = ""
+    extensive: bool = True
     uncertainty: Uncertainty = field(default_factory=lambda: Uncertainty.unknown(
         "aggregate of fast-physics outputs whose uncertainty is not quantified; aggregation adds no uncertainty information"))
 
@@ -233,7 +234,8 @@ class AggregationRecord:
                 "represented_seconds": fraction_text(self.represented_seconds), "resolved_seconds": fraction_text(self.resolved_seconds),
                 "source_digests": list(self.source_digests), "preserved": sorted(self.preserved_features), "lost": list(self.lost),
                 "discarded": list(self.discarded), "assumption_dependent": self.assumption_dependent,
-                "spec_digest": self.spec_digest, "statistic": self.statistic, "uncertainty": self.uncertainty.to_dict()}
+                "spec_digest": self.spec_digest, "statistic": self.statistic, "extensive": self.extensive,
+                "uncertainty": self.uncertainty.to_dict()}
 
     @property
     def digest(self) -> str:
@@ -259,6 +261,9 @@ def aggregate(spec: AggregationSpec, parts: Sequence[tuple[RepresentativeWindow,
             a.end.seconds != b.start.seconds for a, b in zip(tiles, tiles[1:])):
         raise InvalidScientificProblem("representative windows do not tile the represented interval exactly")
     series_unit = parts[0][1].unit
+    if any(s.unit != series_unit for _, s in parts):
+        raise InvalidScientificProblem(f"aggregate {spec.aggregate_id!r} received tiles in different units "
+                                       f"{sorted({s.unit for _, s in parts})}; magnitudes are never mixed")
     weights = tuple(rep.weight for rep, _ in parts)
     repeated = any(w != 1 for w in weights)
     base = dict(aggregate_id=spec.aggregate_id, quantity_id=spec.quantity_id, form_key=spec.form_key, represented=represented,
@@ -301,10 +306,12 @@ def aggregate(spec: AggregationSpec, parts: Sequence[tuple[RepresentativeWindow,
                 return unknown(f"domain aggregator {agg.aggregator_id!r} refused the resolved history: {exc}", agg.output_unit)
             if agg.extensive:
                 v = Quantity(v.magnitude * float(rep.weight), agg.output_unit)
-            elif repeated:
-                return unknown(f"non-extensive domain aggregate {agg.aggregator_id!r} has no declared repetition rule", agg.output_unit)
+            elif repeated or len(parts) > 1:
+                return unknown(f"non-extensive domain aggregate {agg.aggregator_id!r} has no declared rule for combining "
+                               "several windows (a sum is not one)", agg.output_unit)
             total = v if total is None else Quantity(total.magnitude + v.magnitude, agg.output_unit)
         value, unit, preserved = total, agg.output_unit, frozenset(agg.preserves) & source_features
+        base["extensive"] = agg.extensive
     else:
         needs = _FORM_PRESERVES[form]
         if not needs <= source_features:
@@ -447,6 +454,8 @@ def compress_history(history_id: str, records: Sequence[AggregationRecord]) -> C
     if any(r.status != "known" or r.value is None for r in records):
         return CompressedHistory(**base, value=None, status="unknown", retained=(), preserved=(), discarded=tuple(discarded))
     mags = [r.value.magnitude_in(first.unit) for r in records]
+    if first.form_key.startswith("domain_defined:") and not all(r.extensive for r in records):
+        return CompressedHistory(**base, value=None, status="unknown", retained=(), preserved=(), discarded=tuple(discarded))
     if first.form_key in (AggregateForm.INTEGRAL_DOSE.value, AggregateForm.DWELL_ABOVE.value, AggregateForm.CYCLE_COUNT.value) or \
             first.form_key.startswith("domain_defined:"):
         value = Quantity(sum(mags), first.unit)

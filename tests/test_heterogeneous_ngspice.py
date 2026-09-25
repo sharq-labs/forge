@@ -1193,8 +1193,24 @@ def test_n_substituting_the_provider_does_not_inflate_the_record(standalone):
 # =====================================================================
 
 def test_r1_the_adapter_is_local_and_no_provider_framework_exists():
-    """R1. One adapter for one provider; the generalisation has a named trigger."""
-    assert not (REPO_ROOT / "src/engcore/providers").exists()
+    """R1. One adapter for one provider; the generalisation has a named trigger.
+
+    The preregistration (section 4.2) deferred a provider framework until "a second
+    external provider whose process-execution needs actually overlap".  BIG 11 fired
+    that trigger: CalculiX, OpenFOAM, SU2, Code_Aster and OpenModelica share one
+    argv/workspace/digest process boundary (``engcore.providers.process``).  What the
+    preregistration still forbids is pinned here: the provider tree imports no domain
+    (a provider tree that imports a domain is a misfiled domain module), and the
+    ngspice adapter itself stays local, exporting no framework types.
+    """
+    providers = REPO_ROOT / "src/engcore/providers"
+    if providers.exists():
+        process_adapters = [d for d in ("calculix", "openfoam", "su2", "code_aster", "openmodelica")
+                            if (REPO_ROOT / "providers" / d).exists()]
+        assert len(process_adapters) >= 2, "the provider framework exists without its named trigger"
+        for module in providers.glob("*.py"):
+            text = module.read_text(encoding="utf-8")
+            assert "engcore.domains" not in text and "from ..domains" not in text, module.name
     exported = set(ng.__all__)
     for forbidden in (
         "ProviderRegistry", "ProviderDefinition", "ExternalProvider",

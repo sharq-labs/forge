@@ -13,9 +13,10 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 10 — Multi-timescale Runtime** built (macro windows over BIG 2 time, representative
-FEniCSx+SciPy fast windows, explicit aggregation, BIG 4/5 feed-forward, event refinement,
-checkpoint/resume); BIG 11 not started.
+Current: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
+fallback, content-derived execution identity, argv-only process boundary, PyBaMM / Cantera / CoolProp /
+TESPy / CalculiX / OpenFOAM / SU2 / Code_Aster / OpenModelica executed; see PROGRESS); BIG 12 not started.
+BIG 10 (multi-timescale runtime) is built on the same branch.
 
 ## Current branch / PR
 
@@ -270,6 +271,31 @@ preCICE provider in `providers/precice` (preCICE 3.4.0).
       temporally resolved numerical reference are not bounds).
 - [x] Proofs A-F executed (lumped+SciPy in core env; FEniCSx+SciPy in the conda env) — see PROGRESS.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 10 section).
+
+### BIG 11 — Solver provider expansion
+
+`src/engcore/providers/` (non-Core; registered) + separate adapter distributions under `providers/<name>/`;
+map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/test_provider_boundary.py`,
+`tests/test_big11_review_fixes.py`; provider proofs `providers/*/tests/` (run in the WSL conda envs).
+
+- [x] Final BIG 10 review before providers (9 blockers fixed, `test_b1..b9`).
+- [x] Descriptive capability registry, `discover` (id order) / `require` (exact provider or
+      `ProviderUnavailable`); `default_registry()` never raises; `python -m engcore.providers`.
+- [x] Content-derived `ProviderExecutionIdentity` incl. dependency digests (Python RECORDs; conda env
+      package-set digest for process providers).
+- [x] Process boundary: argv only, fresh workspace, explicit env, timeout + process-group kill, executable
+      re-hashed at launch, outputs = regular files THIS run created/changed, digest-verified reads,
+      stale/foreign/input/symlink refused; exit 0 is not success.
+- [x] Providers executed: PyBaMM 26.8, Cantera 3.2.0, CoolProp 8.0.0, TESPy 0.11.2, CalculiX 2.23,
+      OpenFOAM v2412, SU2 8.5.0, Code_Aster 18.1.7, OpenModelica 1.27.1. Elmer UNAVAILABLE (recorded).
+- [x] Integration: PyBaMM <-> TESPy on the BIG 9 runtime; PyBaMM as a BIG 10 FastSystem; BIG 3 ambient /
+      coolant channels consumed; BIG 5 E/nu records -> CalculiX/Code_Aster; CoolProp records -> CFD viscosity.
+- [x] Record-bound cross-provider comparison (independence, spread tolerances, post-hoc label, values digest).
+- [x] Proofs A-J executed — see PROGRESS (BIG 11).
+- [x] `forge-scientific-review` (CHANGES REQUIRED, no blocker) -> findings 1-15 fixed; focused re-review
+      (CHANGES REQUIRED, 5 MEDIUM) -> fixed with tests; LOW residuals recorded; second re-review NOT RUN.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 11 section).
+- [ ] BIG 12 — NOT STARTED (per instruction).
 
 ## Persistent project direction
 

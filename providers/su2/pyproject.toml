@@ -1,0 +1,9 @@
+[project]
+name = "forge-su2-provider"
+version = "0.1.0"
+description = "su2 CFD provider for Forge (crafty), process-based, bounded case family. Computes; holds no scientific authority."
+requires-python = ">=3.10"
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_su2"]

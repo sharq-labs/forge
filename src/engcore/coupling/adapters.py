@@ -123,9 +123,14 @@ class ParticipantStateContract:
     evolved_state: tuple[str, ...]
     completeness: StateCompleteness
     basis: str
+    #: Evolved provider state NOT carried but re-initialised by declaration at
+    #: every execution (e.g. a temperature reset to ambient).  Listed so that a
+    #: completeness claim never hides it; it is part of identity.
+    reset_state: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "completeness", StateCompleteness(self.completeness))
+        object.__setattr__(self, "reset_state", tuple(sorted(str(v) for v in self.reset_state)))
         declared = tuple(sorted(str(v) for v in self.declared_state))
         evolved = tuple(sorted(str(v) for v in self.evolved_state))
         if len(set(declared)) != len(declared) or not set(evolved) <= set(declared):
@@ -140,12 +145,16 @@ class ParticipantStateContract:
         return self.completeness is StateCompleteness.DECLARED_COMPLETE
 
     def to_dict(self) -> dict[str, Any]:
-        return {"participant_id": self.participant_id, "declared_state": list(self.declared_state),
-                "evolved_state": list(self.evolved_state), "completeness": self.completeness.value, "basis": self.basis}
+        d = {"participant_id": self.participant_id, "declared_state": list(self.declared_state),
+             "evolved_state": list(self.evolved_state), "completeness": self.completeness.value, "basis": self.basis}
+        if self.reset_state:  # absent when empty: contracts without reset state keep their earlier digests
+            d["reset_state"] = list(self.reset_state)
+        return d
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "ParticipantStateContract":
-        return cls(p["participant_id"], tuple(p["declared_state"]), tuple(p["evolved_state"]), p["completeness"], p["basis"])
+        return cls(p["participant_id"], tuple(p["declared_state"]), tuple(p["evolved_state"]), p["completeness"], p["basis"],
+                   tuple(p.get("reset_state", ())))
 
 
 @dataclass

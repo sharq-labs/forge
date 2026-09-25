@@ -102,6 +102,9 @@ class RepresentativePolicy:
     #: resolved period's before the repetition is refused.  Every input must
     #: have one under LEADING_PERIOD; there is no default.
     periodicity_tolerances: tuple[tuple[str, Quantity], ...] = ()
+    #: Declared tolerance per FAST state variable ("participant.variable"): a
+    #: repeated period must end within it of the state it started from.
+    fast_state_tolerances: tuple[tuple[str, Quantity], ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", identifier(self.policy_id, "representative policy_id"))
@@ -109,6 +112,10 @@ class RepresentativePolicy:
         if len({k for k, _ in tolerances}) != len(tolerances) or any(not isinstance(q, Quantity) or q.magnitude < 0 for _, q in tolerances):
             raise InvalidScientificProblem("periodicity tolerances are unique, non-negative Quantities per input record")
         object.__setattr__(self, "periodicity_tolerances", tuple(sorted(tolerances, key=lambda x: x[0])))
+        fast = tuple(self.fast_state_tolerances)
+        if len({k for k, _ in fast}) != len(fast) or any(not isinstance(q, Quantity) or q.magnitude < 0 for _, q in fast):
+            raise InvalidScientificProblem("fast-state tolerances are unique, non-negative Quantities")
+        object.__setattr__(self, "fast_state_tolerances", tuple(sorted(fast, key=lambda x: x[0])))
         object.__setattr__(self, "selection", SelectionMethod(self.selection))
         if self.selection is SelectionMethod.LEADING_PERIOD:
             if self.period is None or time_seconds(self.period) <= 0:
@@ -148,7 +155,8 @@ class RepresentativePolicy:
         return {"policy_id": self.policy_id, "selection": self.selection.value,
                 "period": None if self.period is None else self.period.to_dict(), "assumptions": list(self.assumptions),
                 "applicability": self.applicability, "aggregation_semantics": self.aggregation_semantics,
-                "periodicity_tolerances": [[k, q.to_dict()] for k, q in self.periodicity_tolerances]}
+                "periodicity_tolerances": [[k, q.to_dict()] for k, q in self.periodicity_tolerances],
+                "fast_state_tolerances": [[k, q.to_dict()] for k, q in self.fast_state_tolerances]}
 
 
 class EventHandling(str, Enum):

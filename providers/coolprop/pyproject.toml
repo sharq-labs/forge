@@ -1,0 +1,9 @@
+[project]
+name = "forge-coolprop-provider"
+version = "0.1.0"
+description = "CoolProp thermophysical-property provider for Forge (crafty). Computes; holds no scientific authority."
+requires-python = ">=3.10"
+dependencies = ["crafty", "CoolProp>=6.6"]
+
+[tool.setuptools]
+packages = ["forge_coolprop"]

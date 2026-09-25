@@ -1,0 +1,10 @@
+[project]
+name = "forge-calculix-provider"
+version = "0.1.0"
+description = "CalculiX (ccx) structural provider for Forge (crafty), process-based. Computes; holds no scientific authority."
+requires-python = ">=3.10"
+# ccx is an external executable (conda-forge `calculix`); it is not a Python dependency.
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_calculix"]

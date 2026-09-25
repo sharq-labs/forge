@@ -56,6 +56,8 @@ from engcore.scenarios import (
     TimeBasis, Timeline, TimelineEvent, TimelineEventKind, TimePoint, TimeWindow,
 )
 from engcore.scenarios.lifecycle import run_digest
+from engcore.multiscale.aggregation import ALL_FEATURES
+from engcore.multiscale.fast import slow_state_digest
 from engcore.scientific.composition.conversion import EnergyConversion
 from engcore.scientific.multiphysics import (
     ConvergenceCriterion, CouplingEdge, CouplingPlan, CouplingScheme, IterationSemantics, ParticipantSpec, PhysicsGraph,
@@ -199,6 +201,7 @@ REPRESENTATIVE_DAY = RepresentativePolicy(
      "slow state is held constant inside a macro window for the fast physics"),
     "only while the chamber program is 24 h periodic up to a slow drift; program changes are events that split macro windows",
     "extensive aggregates scale by the exact weight; order and extrema of unresolved days are not claimed",
+    fast_state_tolerances=(),
     periodicity_tolerances=(("air_temperature", Quantity(2.0, "K")), ("humidity", Quantity(0.005, "dimensionless")),
                             ("wetness", Quantity(0.0, "dimensionless")), ("supply", Quantity(0.0, "V"))))
 FULLY_RESOLVED = RepresentativePolicy(
@@ -252,8 +255,13 @@ def _spec(pid, ports, solver_id, solver_version):
 class ReferenceHeaterSystem(FastSystem):
     """BIG 9 coupled heater/board system seen as a BIG 10 fast subsystem."""
 
-    thermal_solver = ("numpy.dense_lu", "BIG6")
+    thermal_solver = ("numpy", np.__version__)
     series_ohm = 1.0
+
+    def provider_versions(self):
+        """Installed versions of what actually executes (read at execution, not declared)."""
+        import scipy
+        return (self.thermal_solver, ("scipy", scipy.__version__))
 
     def __init__(self, environment: EnvironmentTimeline, *, coupling_window_s=HOUR, completeness=StateCompleteness.DECLARED_COMPLETE,
                  stale_material=False, fail_after_s=None):
@@ -268,11 +276,19 @@ class ReferenceHeaterSystem(FastSystem):
         self.identity = FastSystemIdentity(
             "heater-board-fast", "1", self._graph_fingerprint(),
             {"template_fingerprint": self._plan(0, coupling_window_s).fingerprint(), "coupling_window_s": coupling_window_s},
-            (self.thermal_solver, ("scipy.optimize.root", "lm")), self.configuration(), contracts,
+            self.provider_versions(), self.configuration(), contracts,
             (MaterialBinding("thermal", "moisture_content", M.BOARD.digest, "moisture_content"),),
-            (("heater_temperature", "K"), ("heater_power", "W")), field_mapping=False, pure=True,
+            (("heater_temperature", "K"), ("heater_power", "W")), field_mapping=False,
+            field_mapping_basis="scalar coupling edges only; no field is transferred between meshes", pure=True,
             purity_basis="every execution builds a fresh MultiphysicsRuntime, fresh participants and fresh provider problems "
-                         "from the request only; declared initial coupling iterates are constants; no warm start")
+                         "from the request only; declared initial coupling iterates are constants; no warm start",
+            participants=("electrical", "thermal"),
+            output_semantics=tuple((q, tuple(f.value for f in ALL_FEATURES), f"{coupling_window_s}/1") for q in ("heater_temperature", "heater_power")),
+            slow_state_use=(("thermal", "moisture_content", "bound", "board conductivity is re-resolved from it every execution"),
+                            ("electrical", "resistance_drift", "bound", "heater R0 is scaled by (1 + drift) every execution")),
+            time_inputs_via_request=True,
+            time_inputs_basis="ambient temperature and supply voltage are read from the request window's BIG 3 channel and "
+                              "BIG 2 usage history; the configuration holds no time-varying load")
         self.executions = 0
 
     # -- identity helpers --
@@ -410,7 +426,9 @@ class ReferenceHeaterSystem(FastSystem):
         # the observer's last window must be what the runtime reported
         assert abs(temps[-1].value.magnitude - run.final_outputs["thermal.t_mean"]["magnitude"]) < 1e-12
         digest = run_digest(run)
-        series = (OutputSeries("heater_temperature", "K", tuple(temps), digest), OutputSeries("heater_power", "W", tuple(powers), digest))
+        resolution = f"piecewise constant over each {self.coupling_window_s} s coupling window"
+        series = (OutputSeries("heater_temperature", "K", tuple(temps), digest, resolution, ALL_FEATURES),
+                  OutputSeries("heater_power", "W", tuple(powers), digest, resolution, ALL_FEATURES))
         props = tuple({"property": "thermal_conductivity", "material": m.material.family, "value_W_mK": r.value.value.magnitude_in("W/(m*K)"),
                        "derivation": r.derivation.value, "state_digest": r.state_digest, "set_digest": r.set_digest, "digest": r.digest}
                       for _, (m, r) in sorted(materials.items()) if m.material.digest == M.BOARD.digest)
@@ -420,7 +438,8 @@ class ReferenceHeaterSystem(FastSystem):
         return FastExecutionResult(
             request.identity, (run.run_id,), (digest,), series, {}, tuple(m for _, (m, _) in sorted(materials.items())), props,
             len(run.windows), sum(len(w.iterations) for w in run.windows), tuple(w.outcome.value for w in run.windows),
-            self.identity.providers, consumed_environment_digest=self.environment.digest, consumed_timeline_digest=self.timeline.digest)
+            self.provider_versions(), consumed_environment_digest=self.environment.digest, consumed_timeline_digest=self.timeline.digest,
+            consumed_slow_state_digest=slow_state_digest(request.slow_state))
 
 
 def build_runtime(days=63, *, run_id="heater-board-ms", change_at_hour=None, system_cls=ReferenceHeaterSystem, system_kwargs=None,

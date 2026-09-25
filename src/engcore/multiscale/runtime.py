@@ -53,7 +53,7 @@ from ._common import fraction_text, identifier, time_seconds, window_seconds
 from .aggregation import AggregationRecord, AggregationSpec, aggregate
 from .approximation import ApproximationEntry, ApproximationLedger, ComponentStatus, ErrorComponent
 from .checkpoint import MacroCheckpoint, state_to_list
-from .fast import FastExecutionRequest, FastExecutionResult, FastSystem, check_material_reresolution
+from .fast import FastExecutionRequest, FastExecutionResult, FastSystem, check_material_reresolution, slow_state_digest
 from .scales import ScaleHierarchy, ScaleRole
 from .windows import AdaptationDecision, AdaptationTrigger, MacroStepPolicy, RefinementDecision, RepresentativeWindow, SelectionMethod
 
@@ -293,6 +293,34 @@ class MultiTimescaleRuntime:
                 raise InvalidScientificProblem(
                     f"a repeated representative period needs a declared periodicity tolerance for exactly the inputs "
                     f"{sorted(inputs)}; missing {sorted(inputs - declared)}, unknown {sorted(declared - inputs)}")
+        ident = fast_system.identity
+        contracts = {c.participant_id: c for c in ident.contracts}
+        if not ident.participants or set(contracts) != set(ident.participants):
+            raise InvalidScientificProblem(
+                f"every fast participant {sorted(ident.participants)} needs exactly one state contract "
+                f"(got {sorted(contracts)}); completeness is never true by omission")
+        uncovered = sorted(k for k in fast if k[0] not in contracts or k[1] not in contracts[k[0]].evolved_state)
+        if uncovered:
+            raise InvalidScientificProblem(f"FAST state {uncovered} is not evolved by any participant contract")
+        declared_out = {q: (f, r) for q, f, r in ident.output_semantics}
+        if set(declared_out) != {q for q, _ in ident.outputs}:
+            raise InvalidScientificProblem("every fast output declares its preserved history features and resolution")
+        from .aggregation import HistoryFeature as _HF
+        self._output_semantics = {q: (frozenset(_HF(x) for x in f), Fraction(r)) for q, (f, r) in declared_out.items()}
+        use = {(p, v): u for p, v, u, _ in ident.slow_state_use}
+        if set(use) != slow:
+            raise InvalidScientificProblem(f"every SLOW variable declares whether the fast physics consumes it; "
+                                           f"missing {sorted(slow - set(use))}, unknown {sorted(set(use) - slow)}")
+        for b in ident.material_bindings:
+            if use.get((b.participant_id, b.variable_id)) != "bound":
+                raise InvalidScientificProblem(f"material binding {b.participant_id}.{b.variable_id} must be SLOW state declared 'bound'")
+        if rep.selection is SelectionMethod.LEADING_PERIOD:
+            if not ident.time_inputs_via_request:
+                raise InvalidScientificProblem("a repeated period needs the fast system to declare that time enters only "
+                                               "through the request (no drive cycle hidden in configuration)")
+            fast_tol = {k for k, _ in rep.fast_state_tolerances}
+            if fast_tol != {f"{p}.{v}" for p, v in fast}:
+                raise InvalidScientificProblem("a repeated period needs a declared end-state tolerance for every FAST variable")
         if fast and fast_state_policy is None:
             raise InvalidScientificProblem("fast state exists; declare how each macro window's fast physics starts")
         self.fast_state_policy = FastStateAtMacroStart(fast_state_policy) if fast_state_policy is not None else None
@@ -300,6 +328,7 @@ class MultiTimescaleRuntime:
         self._fast_units = {(s.participant_id, s.variable_id): s.unit for s in hierarchy.owned(ScaleRole.FAST)}
         self._declared_fast: State = freeze({})
         self._cache: dict[str, tuple[FastExecutionResult, str]] = {}
+        self._identity_digest = ident.digest
 
     # ---- identity ----------------------------------------------------------
 
@@ -403,6 +432,8 @@ class MultiTimescaleRuntime:
             self.environment.digest, rep.resolved, freeze(slow), freeze(fast), self._environment_context(rep.resolved),
             self._usage_context(rep.resolved))
         key = request.identity
+        if self.fast_system.identity.digest != self._identity_digest:
+            raise MultiTimescaleRefusal("the fast system's identity changed after the runtime validated it")
         pure = self.fast_system.identity.pure
         if pure and key in self._cache:
             result, recorded = self._cache[key]
@@ -418,8 +449,22 @@ class MultiTimescaleRuntime:
             if (result.consumed_environment_digest, result.consumed_timeline_digest) != (self.environment.digest, self.timeline.digest):
                 raise MultiTimescaleRefusal("fast system read a different environment/timeline than this run is bound to")
             check_material_reresolution(self.fast_system.identity, request, result)
+            if set(result.provider_versions) != set(self.fast_system.identity.providers):
+                raise MultiTimescaleRefusal(f"fast execution ran providers {sorted(result.provider_versions)}, identity declares "
+                                            f"{sorted(self.fast_system.identity.providers)}")
+            if result.consumed_slow_state_digest != slow_state_digest(request.slow_state):
+                raise MultiTimescaleRefusal("fast execution did not consume the slow state it was given")
+            material_digests = {m.digest for m in result.material_states}
+            for prop in result.resolved_properties:
+                if "state_digest" in prop and prop["state_digest"] not in material_digests:
+                    raise MultiTimescaleRefusal("a resolved property is not bound to a reported material state")
             for q, unit in self.fast_system.identity.outputs:
                 s = result.series_for(q)
+                if s.unit != unit:
+                    raise MultiTimescaleRefusal(f"output {q!r} arrived in {s.unit!r}, declared {unit!r}")
+                features, resolution = self._output_semantics[q]
+                if not s.preserved_features <= features or any(window_seconds(x.window) > resolution for x in s.samples):
+                    raise MultiTimescaleRefusal(f"output {q!r} claims more history (or coarser samples) than the fast system declares")
                 if s.gaps_within(rep.resolved):
                     raise MultiTimescaleRefusal(f"fast execution left {q!r} unresolved inside {rep.window_id!r}")
             end_keys = {(p, k) for p in result.end_fast_state for k in result.end_fast_state[p]}
@@ -651,6 +696,19 @@ class MultiTimescaleRuntime:
         tile_fast = fast
         for rep in reps:
             execution, result = self._execute(rep, slow, tile_fast, acc)
+            if rep.weight != 1 and self._fast_keys:
+                tolerances = dict(self.policy.representative.fast_state_tolerances)
+                for p, k in sorted(self._fast_keys):
+                    start_v = tile_fast[p][k].value
+                    end_v = result.end_fast_state.get(p, {}).get(k)
+                    if end_v is None:
+                        raise RepresentativityRejected(f"repeated period did not report its end fast state {p}.{k}")
+                    tol = tolerances[f"{p}.{k}"]
+                    drift = abs(end_v.value.magnitude_in(start_v.units) - start_v.magnitude)
+                    if drift > tol.magnitude_as_spread_in(start_v.units):
+                        raise RepresentativityRejected(
+                            f"fast state {p}.{k} does not return to its start over the resolved period (drift {drift:.6g} "
+                            f"{start_v.units} > tolerance {tol.magnitude:g} {tol.units}); repetition is not periodic")
             executions.append(execution)
             results.append(result)
             if self.fast_state_policy is FastStateAtMacroStart.CARRY_RESOLVED_END:
@@ -688,9 +746,11 @@ class MultiTimescaleRuntime:
             ApproximationEntry(ErrorComponent.TIME_INTEGRATION, ComponentStatus.UNKNOWN,
                                "fast outputs are resolved per coupling window and held constant across it; time-integration error not quantified"),
             ApproximationEntry(ErrorComponent.MAPPING,
-                               ComponentStatus.UNKNOWN if self.fast_system.identity.field_mapping else ComponentStatus.NOT_APPLICABLE,
-                               "field mapping inside the fast system is not bounded" if self.fast_system.identity.field_mapping
-                               else "the fast system declares no field mapping (scalar coupling only)"),
+                               ComponentStatus.NOT_APPLICABLE if self.fast_system.identity.field_mapping is False else ComponentStatus.UNKNOWN,
+                               f"the fast system declares no field mapping: {self.fast_system.identity.field_mapping_basis}"
+                               if self.fast_system.identity.field_mapping is False else
+                               ("field mapping inside the fast system is not bounded" if self.fast_system.identity.field_mapping
+                                else "field mapping was not declared; its error is UNKNOWN")),
             ApproximationEntry(ErrorComponent.AGGREGATION, ComponentStatus.UNKNOWN,
                                "aggregates discard sub-window variation and state what they lose; the effect on degradation is not quantified"),
             ApproximationEntry(ErrorComponent.REPRESENTATIVE_WINDOW,

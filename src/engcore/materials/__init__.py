@@ -15,12 +15,14 @@ from .identity import (
     CompositionEntry, MaterialIdentity, MaterialState,
     MaterialStateSchema, SourceIdentity, source_identity,
 )
+from .fluids import FluidIdentity, FluidPropertyRecord, FluidState
 from .properties import (
     DatumOrigin, InterpolationRule, MaterialPropertySet, PropertyApplicability,
     PropertyDatum, PropertyDerivation, ResolvedProperty, TransformationRecord,
 )
 
 __all__ = [
+    "FluidIdentity", "FluidPropertyRecord", "FluidState",
     "ApplicabilityRange", "CompositionEntry", "MaterialIdentity", "MaterialState",
     "MaterialStateSchema", "SourceIdentity", "source_identity",
     "DatumOrigin", "InterpolationRule", "MaterialPropertySet", "PropertyApplicability",
