@@ -824,11 +824,6 @@ class Timeline:
     checkpoints: tuple[TimelineCheckpoint, ...] = ()
     #: The one execution run whose receipts this timeline holds.
     run_id: str = ""
-    #: ``(input_id, series digest)`` for every scenario input schedule this
-    #: timeline may evaluate.  Set only by :meth:`from_scenario`, from the
-    #: scenario's own composed schedules; a series is never adopted by name.
-    input_series_digests: tuple[tuple[str, str], ...] = ()
-
     def __post_init__(self) -> None:
         object.__setattr__(self, "timeline_id", _identifier(self.timeline_id, "timeline_id"))
         if not isinstance(self.basis, TimeBasis):
@@ -875,15 +870,6 @@ class Timeline:
         if len({pid for pid, _ in initial}) != len(initial):
             raise InvalidScientificProblem("timeline declares two initial states for one participant")
         object.__setattr__(self, "initial_state_digests", tuple(sorted(initial)))
-        bound_inputs = tuple(sorted(
-            (_identifier(iid, "bound input_id"), require_digest(d, "bound input series digest"))
-            for iid, d in self.input_series_digests
-        ))
-        if len({iid for iid, _ in bound_inputs}) != len(bound_inputs):
-            raise InvalidScientificProblem("timeline binds two series to one input id")
-        if bound_inputs and not self.scenario_digest:
-            raise InvalidScientificProblem("input series can only be bound through a scenario-bound timeline")
-        object.__setattr__(self, "input_series_digests", bound_inputs)
         run_id = str(self.run_id or "").strip()
         object.__setattr__(self, "run_id", _identifier(run_id, "timeline run_id") if run_id else "")
         if self.state_transitions and (not self.scenario_digest or not run_id):
@@ -981,10 +967,6 @@ class Timeline:
         )
         return cls(
             timeline_id, basis, horizon, scenario.digest,
-            input_series_digests=tuple(
-                (item.input_id, canonical_digest(item.series.to_dict()))
-                for item in scenario.composed_input_schedules()
-            ),
             events=scheduled + tuple(extra_events),
             histories=histories, cycle_histories=cycle_histories,
         )
@@ -1037,7 +1019,6 @@ class Timeline:
             initial_state_digests=self.initial_state_digests,
             state_transitions=tuple(run.state_transitions), checkpoints=self.checkpoints,
             run_id=run.run_id,
-            input_series_digests=self.input_series_digests,
         )
 
     # ---- queries -----------------------------------------------------------
@@ -1069,50 +1050,60 @@ class Timeline:
             f"state between coupling boundaries is not observed",
         )
 
-    def input_value_at(self, series: TimeSeriesInput, point: TimePoint, method: Any) -> Quantity:
-        """Evaluate a scenario input with an explicitly requested interpolation.
+    def input_value_at(self, scenario: ScenarioSpecification, input_id: str, point: TimePoint, method: Any) -> Quantity:
+        """Evaluate one of the bound scenario's composed inputs.
 
-        Refused: an interpolation method this Core does not implement, a
-        query off the series, LINEAR interpolation across a declared
-        discontinuity of the input, and any series this timeline's scenario did
-        not compose (unbound, foreign, or edited after binding).
+        Ownership is proven, not inferred or stored: the caller presents the
+        scenario itself, its digest is recomputed and must equal this
+        timeline's, and the series is read from that scenario's own composed
+        schedules.  Refused: an unbound timeline, a foreign or edited scenario,
+        an input the scenario does not compose, an unimplemented interpolation
+        or one the series does not declare, a query off the horizon, and LINEAR
+        interpolation across a declared discontinuity.  Brackets are chosen on
+        exact instants (:data:`SAME_INSTANT_RULE`), and the value is computed
+        from the same bracket the discontinuity check examined.
         """
-        if not isinstance(series, TimeSeriesInput):
-            raise InvalidScientificProblem("input_value_at requires a TimeSeriesInput")
-        bound = dict(self.input_series_digests)
-        if series.input_id not in bound:
+        if not self.scenario_digest:
+            raise InvalidScientificProblem("input evaluation requires a scenario-bound timeline")
+        if not isinstance(scenario, ScenarioSpecification) or scenario.digest != self.scenario_digest:
             raise InvalidScientificProblem(
-                f"input {series.input_id!r} is not bound to this timeline's scenario; "
-                f"ownership is never inferred from a name"
+                "the presented scenario is not the one this timeline is bound to; "
+                "input ownership is never inferred"
             )
-        if canonical_digest(series.to_dict()) != bound[series.input_id]:
-            raise InvalidScientificProblem(
-                f"series {series.input_id!r} is not the schedule this timeline's scenario "
-                f"composed (foreign scenario or altered samples)"
-            )
+        schedules = {item.input_id: item.series for item in scenario.composed_input_schedules()}
+        if input_id not in schedules:
+            raise InvalidScientificProblem(f"scenario composes no input {input_id!r}")
+        series = schedules[input_id]
         try:
             kind = InterpolationKind(method)
         except ValueError as exc:
             raise InvalidScientificProblem(f"unsupported interpolation {method!r}") from exc
         if kind is not series.interpolation:
             raise InvalidScientificProblem(
-                f"input {series.input_id!r} declares {series.interpolation.value} "
+                f"input {input_id!r} declares {series.interpolation.value} "
                 f"interpolation; {kind.value} was requested"
             )
         self._require_inside(point, "input query")
-        seconds = point.seconds
+        s = point.seconds
         instants = [exact_seconds(item.instant) for item in series.samples]
-        if kind is InterpolationKind.LINEAR and seconds not in instants:
-            if instants[0] < seconds < instants[-1]:
-                upper = next(i for i, value in enumerate(instants) if value > seconds)
-                lower_s, upper_s = instants[upper - 1], instants[upper]
-                for event in self.discontinuities(series.input_id):
-                    if lower_s < event.at.seconds < upper_s:
-                        raise InvalidScientificProblem(
-                            f"LINEAR interpolation of {series.input_id!r} would cross the "
-                            f"declared discontinuity {event.event_id!r}"
-                        )
-        return series.value_at(point.quantity)
+        if s < instants[0] or s > instants[-1]:
+            raise InvalidScientificProblem(f"input {input_id!r} has no value at {s} second")
+        if s in instants:
+            return series.samples[instants.index(s)].value
+        upper = next(i for i, value in enumerate(instants) if value > s)
+        lower = upper - 1
+        if kind is InterpolationKind.STEP:
+            return series.samples[lower].value
+        for event in self.discontinuities(input_id):
+            if instants[lower] < event.at.seconds < instants[upper]:
+                raise InvalidScientificProblem(
+                    f"LINEAR interpolation of {input_id!r} would cross the "
+                    f"declared discontinuity {event.event_id!r}"
+                )
+        fraction = (s - instants[lower]) / (instants[upper] - instants[lower])
+        low = series.samples[lower].value.magnitude_in(series.unit)
+        high = series.samples[upper].value.magnitude_in(series.unit)
+        return Quantity(low + float(fraction) * (high - low), series.unit)
 
     # ---- serialization, digests, replay -----------------------------------
 
@@ -1130,7 +1121,6 @@ class Timeline:
             "state_transitions": [item.to_dict() for item in self.state_transitions],
             "checkpoints": [item.to_dict() for item in self.checkpoints],
             "run_id": self.run_id,
-            "input_series_digests": [[iid, d] for iid, d in self.input_series_digests],
         }
 
     @property
@@ -1140,7 +1130,7 @@ class Timeline:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Timeline":
         require_schema(payload, TIMELINE_SCHEMA)
-        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints", "run_id", "input_series_digests"}, "timeline")
+        _strict_keys(payload, {"schema", "timeline_id", "basis", "horizon", "scenario_digest", "events", "histories", "cycle_histories", "initial_state_digests", "state_transitions", "checkpoints", "run_id"}, "timeline")
         return cls(
             payload["timeline_id"], TimeBasis.from_dict(payload["basis"]), TimeWindow.from_dict(payload["horizon"]),
             payload["scenario_digest"],
@@ -1151,7 +1141,6 @@ class Timeline:
             state_transitions=tuple(StateTransitionReceipt.from_dict(item) for item in payload["state_transitions"]),
             checkpoints=tuple(TimelineCheckpoint.from_dict(item) for item in payload["checkpoints"]),
             run_id=payload["run_id"],
-            input_series_digests=tuple((iid, d) for iid, d in payload["input_series_digests"]),
         )
 
     def prefix(self, at: TimePoint) -> dict[str, Any]:
@@ -1190,7 +1179,6 @@ class Timeline:
                 for item in self.cycle_histories
             ],
             "initial_state_digests": [[pid, digest] for pid, digest in self.initial_state_digests],
-            "input_series_digests": [[iid, d] for iid, d in self.input_series_digests],
             "state_transitions": [item.to_dict() for item in self.state_transitions if exact_seconds(item.end) <= s],
         }
 
@@ -1234,7 +1222,6 @@ class Timeline:
             initial_state_digests=self.initial_state_digests,
             state_transitions=self.state_transitions, checkpoints=self.checkpoints + (checkpoint,),
             run_id=self.run_id,
-            input_series_digests=self.input_series_digests,
         )
 
 

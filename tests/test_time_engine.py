@@ -261,43 +261,50 @@ def _bound(events=()):
 def test_unsupported_interpolation_and_mismatch_refused():
     t = _bound()
     with pytest.raises(InvalidScientificProblem, match="unsupported interpolation"):
-        t.input_value_at(_linear(), tp(5), "cubic")
+        t.input_value_at(_load_scenario(), "load", tp(5), "cubic")
     with pytest.raises(InvalidScientificProblem, match="declares linear"):
-        t.input_value_at(_linear(), tp(5), "step")
-    assert t.input_value_at(_linear(), tp(5), "linear").magnitude == pytest.approx(5)
+        t.input_value_at(_load_scenario(), "load", tp(5), "step")
+    assert t.input_value_at(_load_scenario(), "load", tp(5), "linear").magnitude == pytest.approx(5)
 
 
 def test_linear_interpolation_across_declared_discontinuity_refused():
     t = _bound((TimelineEvent("jump", TimelineEventKind.DISCONTINUITY, tp(4), "load"),))
     with pytest.raises(InvalidScientificProblem, match="discontinuity"):
-        t.input_value_at(_linear(), tp(5), InterpolationKind.LINEAR)
+        t.input_value_at(_load_scenario(), "load", tp(5), InterpolationKind.LINEAR)
     # at a declared sample the value is declared, not interpolated
-    assert t.input_value_at(_linear(), tp(10), InterpolationKind.LINEAR).magnitude == 10
+    assert t.input_value_at(_load_scenario(), "load", tp(10), InterpolationKind.LINEAR).magnitude == 10
 
 
-def test_unbound_series_is_refused_even_with_matching_name():
-    with pytest.raises(InvalidScientificProblem, match="not bound"):
-        Timeline("t", BASIS, horizon()).input_value_at(_linear(), tp(5), "linear")
-    with pytest.raises(InvalidScientificProblem, match="not bound"):
-        _bound().input_value_at(TimeSeriesInput("other", _linear().samples, "linear"), tp(5), "linear")
-
-
-def test_foreign_or_altered_series_is_refused():
-    foreign = TimeSeriesInput("load", (TimeSample(Quantity(0, "s"), Quantity(0, "N")), TimeSample(Quantity(10, "s"), Quantity(99, "N"))), InterpolationKind.LINEAR)
-    Timeline.from_scenario(_load_scenario(foreign, "other"), timeline_id="o", basis=BASIS)  # valid elsewhere
-    with pytest.raises(InvalidScientificProblem, match="not the schedule"):
-        _bound().input_value_at(foreign, tp(5), "linear")
-
-
-def test_forged_binding_without_scenario_is_refused():
+def test_unbound_timeline_or_unknown_input_is_refused():
     with pytest.raises(InvalidScientificProblem, match="scenario-bound"):
-        Timeline("t", BASIS, horizon(), input_series_digests=(("load", D("x")),))
+        Timeline("t", BASIS, horizon()).input_value_at(_load_scenario(), "load", tp(5), "linear")
+    with pytest.raises(InvalidScientificProblem, match="composes no input"):
+        _bound().input_value_at(_load_scenario(), "other", tp(5), "linear")
+
+
+def test_foreign_or_edited_scenario_is_refused():
+    foreign = TimeSeriesInput("load", (TimeSample(Quantity(0, "s"), Quantity(0, "N")), TimeSample(Quantity(10, "s"), Quantity(99, "N"))), InterpolationKind.LINEAR)
+    with pytest.raises(InvalidScientificProblem, match="not the one"):
+        _bound().input_value_at(_load_scenario(foreign), "load", tp(5), "linear")
+    with pytest.raises(InvalidScientificProblem, match="not the one"):
+        _bound().input_value_at(_load_scenario(scenario_id="other"), "load", tp(5), "linear")
+
+
+def test_forged_timeline_with_scenario_digest_cannot_adopt_a_foreign_series():
+    foreign = _load_scenario(TimeSeriesInput("load", _linear().samples[:1] + (TimeSample(Quantity(10, "s"), Quantity(99, "N")),), "linear"))
+    forged = Timeline("t", BASIS, horizon(), _load_scenario().digest)
+    with pytest.raises(InvalidScientificProblem, match="not the one"):
+        forged.input_value_at(foreign, "load", tp(5), "linear")
 
 
 def test_binding_survives_roundtrip():
-    t = _bound()
-    again = Timeline.from_dict(json.loads(json.dumps(t.to_dict())))
-    assert again.input_value_at(_linear(), tp(5), "linear").magnitude == pytest.approx(5)
+    again = Timeline.from_dict(json.loads(json.dumps(_bound().to_dict())))
+    assert again.input_value_at(_load_scenario(), "load", tp(5), "linear").magnitude == pytest.approx(5)
+
+
+def test_non_decimal_cross_unit_instant_splits_fail_closed():
+    # 1/3 hour has no exact decimal; it is NOT merged with 1200 s (documented limit)
+    assert TimePoint(B, Quantity(1 / 3, "hour")) != tp(1200)
 
 
 # ---- same-instant semantics ----------------------------------------------
