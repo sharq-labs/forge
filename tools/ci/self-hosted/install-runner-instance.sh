@@ -28,7 +28,7 @@ work="${dir}/_work"
 [ -x /opt/forge-runner/hooks/job-started.sh ] || { echo "run install-host.sh first" >&2; exit 1; }
 if [ -e "$dir/.runner" ]; then echo "instance $index is already configured at $dir" >&2; exit 1; fi
 
-install -d -o "$RUNNER_USER" -g "$RUNNER_USER" "$dir"
+install -d -o "$RUNNER_USER" -g "$RUNNER_USER" "$dir" "$dir/_home" "$dir/_tmp"
 tarball="/tmp/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz"
 curl -fsSL -o "$tarball" \
   "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz"
@@ -48,9 +48,15 @@ runuser -u "$RUNNER_USER" -- "$dir/config.sh" --unattended --replace \
 unit="$(cd "$dir" && cat .service)"
 install -d -m 0755 "/etc/systemd/system/${unit}.d"
 cat > "/etc/systemd/system/${unit}.d/forge.conf" <<EOF
-# root-owned: a job running as ${RUNNER_USER} can edit its own runner directory (including .env),
-# but not this file, so it cannot switch the admission hooks off for the next job.
+# Root-owned configuration for the runner service. It keeps the hook wiring out of the runner
+# directory's own .env. Be clear about what that buys: it is NOT tamper-proof against a job the
+# guard admitted, because that job runs as ${RUNNER_USER}, owns the runner binaries and (docker
+# group) is root-equivalent inside this distro. It protects against accidents and against forks
+# the guard refuses; a hostile collaborator's job is handled by rebuilding the distro.
 [Service]
+# each instance has its own HOME and TMPDIR so cleaning one can never disturb another
+Environment=HOME=${dir}/_home
+Environment=TMPDIR=${dir}/_tmp
 Environment=ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/forge-runner/hooks/job-started.sh
 Environment=ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/forge-runner/hooks/job-completed.sh
 Environment=FORGE_RUNNER_WORK=${work}

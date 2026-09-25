@@ -393,11 +393,12 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
           test -z "$(git status --porcelain --untracked-files=all)"
-      # Layer caching stays on (apt and the dependency layer are reused); --pull refreshes the pinned base tag,
-      # and the image is labelled with the exact commit and removed afterwards.
+      # This job's claim is "it reproduces from a bare machine", so nothing is reused: --no-cache rebuilds
+      # every layer (a cached dependency layer would hide upstream drift a fresh VM exposes) and --pull
+      # refreshes the pinned base tag. The image is labelled with the exact commit and removed afterwards.
       - name: Build the reproducibility image
         run: >-
-          docker build --pull --label "org.forge.commit=${GITHUB_SHA}" -t "${IMAGE}" .
+          docker build --pull --no-cache --label "org.forge.commit=${GITHUB_SHA}" -t "${IMAGE}" .
       - name: Run it
         shell: bash
         run: |
@@ -479,11 +480,12 @@ jobs:
       - name: split is reproducible from the seed and the rule
         run: |
           python benchmarks/hard/split_hard.py --cases benchmarks/hard/cases_hard \
-            --out /tmp/split_check.json
+            --out "${RUNNER_TEMP}/split_check.json"
           python - <<'EOF'
           import json
           a = json.load(open("benchmarks/hard/split_hard.json"))
-          b = json.load(open("/tmp/split_check.json"))
+          import os
+          b = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "split_check.json")))
           for k in ("rule_id", "seed", "case_set_digest", "dev_digest", "holdout_digest"):
               assert a[k] == b[k], (k, a[k], b[k])
           print("split reproduced:", a["n_dev"], "dev +", a["n_holdout"], "hold-out")

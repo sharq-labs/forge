@@ -54,9 +54,44 @@ result: PASS
 summary: 537 passed against the modified workflows (topology, gate names, no `git clean`/reset text, control-plane pins)
 commit: working tree on 2b76017f
 
+2026-09-25 (local)
+command: `python -m pytest -m "not expensive" -q -n 4` (Python 3.14, commit db0e97c3)
+result: FAIL (known baseline only)
+summary: 8488 passed, 8 failed: the 6 Python-3.14 freeze/API-surface tests (identical on a pristine origin/main worktree) and the 2 `test_core_certificate` tests (stale `current_core_v2.json`, fixed only by the CI certify child). Nothing new.
+commit: db0e97c3
+
+Scientific-review dispositions (read-only reviewer, verdict CHANGES REQUIRED; the builder does not overrule findings):
+- B1 root-owned guard is not tamper-proof against an admitted job (docker group is root-equivalent; runner binaries are writable): **ACCEPTED, claims corrected**. Docs and script comments now say the guard stops forks and unexpected events, not a hostile collaborator; the fork-approval setting is a precondition and is enforced by the selector when `RUNNER_STATUS_TOKEN` is present; rebuild-the-distro is the mitigation. Per-instance OS users rejected as moot while Docker is root-equivalent.
+- B2 persistent state: **PARTLY FIXED**. Per-instance `HOME`/`TMPDIR`, toolcache wiped by default, stray files wiped, path check hardened and run under real bash in tests. NOT fixable without ephemeral runners: shared pip cache (documented residual), runner binaries, daemons that leave the workspace.
+- M1 hook interpreter not hermetic: **FIXED** (`python3 -I -S`, fixed PATH, scrubbed PYTHON*/LD_*).
+- M2 hook-not-wired fails open and is undetected: **MITIGATED**: the smoke workflow reads the job's `Runner.Worker` environment and fails if the hooks are not wired or the guard files are not root-owned/unwritable. Not verified on a real runner.
+- M3 certificate does not record where gates ran: **NOT CHANGED, follow-up**. Binding `runner-identity` into `hardening_assurance` changes the certified assurance schema; recorded in `docs/assurance/SELF_HOSTED_RUNNER.md` section 1.
+- M4 no workflow-invariant tests: **FIXED** (`tests/test_ci_self_hosted_scripts.py`; 13 workflow mutants killed).
+- M5 `reproduce` reused layers: **FIXED** (`--no-cache`); Docker layer caching is therefore not used for that job.
+- Minor: `benchmark` shared `/tmp` fixed; reset path check fixed; token exposure documented; longer pip-freeze drift window documented; local checks now recorded below.
+
+2026-09-25 (local, Windows host, Python 3.14, Git Bash)
+command: `python -m pytest -q tests/test_ci_runner_selection.py tests/test_ci_self_hosted_scripts.py`
+result: PASS
+summary: 111 passed (routing, availability, fork-approval enforcement, guard, reset script run for real under bash, workflow invariants)
+commit: working tree on db0e97c3
+
+2026-09-25 (local)
+command: mutation checks: 16 mutants of `tools/ci/{select_heavy_runner,runner_guard}.py` and 13 mutants of the workflows, each applied alone against `tests/test_ci_runner_selection.py` / `tests/test_ci_self_hosted_scripts.py`, file restored after each
+result: PASS
+summary: control GREEN first; 29/29 killed. An earlier run had a RED control (missing TMPDIR redirect / garbled PYTHONPATH) and its "kills" were discarded; one real survivor (reproduce `--no-cache` satisfied by a comment) was found and the test tightened.
+commit: working tree on db0e97c3
+
+2026-09-25 (local)
+command: PyYAML `safe_load` of every `.github/workflows/*.yml`; `bash -n` on every `tools/ci/self-hosted/**/*.sh`; PowerShell `Parser::ParseFile` on `New-ForgeRunnerDistro.ps1`
+result: PASS
+summary: all parse; heavy jobs use `fromJSON(...heavy_runs_on)`, every trust-bearing job is `ubuntu-latest`
+commit: db0e97c3
+
 NOT RUN: `actionlint`; installing/registering the runner; the hooks on a real runner (whether the runner exports the guard's
-variables to hooks is unobserved and the guard refuses if they are absent); the heavy jobs on the PC; numerical agreement of
-pinned-digest tests on the PC's CPU; the `RUNNER_STATUS_TOKEN` API check.
+variables to hooks, and whether the runner's `.env` could override the drop-in, are unobserved); the smoke workflow; the heavy
+jobs on the PC; `actions/setup-python` on WSL; numerical agreement of pinned-digest tests on the PC's CPU; the
+`RUNNER_STATUS_TOKEN` API checks.
 
 ## 2026-09-25 P0.1 failure triage
 

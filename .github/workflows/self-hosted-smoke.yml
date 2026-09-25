@@ -36,6 +36,28 @@ jobs:
           free -m | sed -n 2p
           test "${RUNNER_ENVIRONMENT}" = "self-hosted"
           test -r "${GITHUB_EVENT_PATH}"
+      - name: The admission hooks are wired into THIS job's runner, and are root-owned
+        shell: bash
+        run: |
+          set -euo pipefail
+          # walk up from this step to the runner's Worker process and read the environment it was started with
+          pid=$$
+          worker=""
+          while [ "$pid" -gt 1 ]; do
+            if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q 'Runner.Worker'; then worker="$pid"; break; fi
+            pid="$(awk '{print $4}' "/proc/$pid/stat" 2>/dev/null || echo 1)"
+          done
+          test -n "$worker" || { echo "::error::could not find this job's Runner.Worker process"; exit 1; }
+          env_of_worker="$(tr '\0' '\n' < "/proc/$worker/environ")"
+          echo "$env_of_worker" | grep -qx 'ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/forge-runner/hooks/job-started.sh' \
+            || { echo "::error::ACTIONS_RUNNER_HOOK_JOB_STARTED is not wired to the guard hook: jobs are being ADMITTED UNCHECKED"; exit 1; }
+          echo "$env_of_worker" | grep -qx 'ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/forge-runner/hooks/job-completed.sh' \
+            || { echo "::error::ACTIONS_RUNNER_HOOK_JOB_COMPLETED is not wired"; exit 1; }
+          for f in /opt/forge-runner/hooks/job-started.sh /opt/forge-runner/bin/runner_guard.py /opt/forge-runner/guard.conf; do
+            test "$(stat -c %U "$f")" = root || { echo "::error::$f is not owned by root"; exit 1; }
+            test ! -w "$f" || { echo "::error::$f is writable by the runner user"; exit 1; }
+          done
+          echo "hooks wired; guard files root-owned and not directly writable"
       - name: The runner user is unprivileged and cannot reach Windows
         shell: bash
         run: |

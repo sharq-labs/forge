@@ -34,6 +34,13 @@ queue -- it is never re-routed. The required checks stay pending, not green. Wit
 the optional ``RUNNER_STATUS_TOKEN`` secret (read-only, Administration: read)
 and ``--check-online``, the run fails immediately with an actionable message
 instead. Neither path bypasses the runner.
+
+With the same token, selecting the PC also REQUIRES the repository's fork-approval
+setting to be ``all_external_contributors``: the machine-side guard only holds while
+no admitted job is hostile, so the setting that keeps strangers' workflows from
+running at all is a precondition, not advice. Without the token this cannot be
+checked and the run says so. The token is visible to same-repository pull-request
+code in the step that uses it (as any repository secret is); grant it read access only.
 """
 
 from __future__ import annotations
@@ -173,6 +180,35 @@ def fetch_runners(repository: str, token: str) -> Mapping[str, Any]:
         raise SelectionError(f"could not read the runner list to check availability: {exc}") from exc
 
 
+STRICT_APPROVAL = "all_external_contributors"
+
+
+def fetch_fork_approval(repository: str, token: str) -> str:
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repository}/actions/permissions/fork-pr-contributor-approval",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310 - fixed https host
+            return str(json.load(response).get("approval_policy", ""))
+    except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+        raise SelectionError(f"could not read the fork-approval setting: {exc}") from exc
+
+
+def require_strict_approval(policy: str) -> None:
+    if policy != STRICT_APPROVAL:
+        raise SelectionError(
+            f"the repository's fork-pull-request approval policy is {policy or '<unreadable>'!r}, not "
+            f"{STRICT_APPROVAL!r}. Selecting the personal runner requires every outside contributor's workflow "
+            "run to be approved first (Settings > Actions > General, or the command in "
+            "docs/assurance/SELF_HOSTED_RUNNER.md section 6). Jobs are NOT re-routed automatically."
+        )
+
+
 def _write_output(path: str | None, decision: Decision) -> None:
     if not path:
         return
@@ -210,9 +246,12 @@ def main(argv: Sequence[str] | None = None, environ: Mapping[str, str] | None = 
                         "Jobs are NOT re-routed automatically."
                     )
                 print(f"online runner(s): {online}")
+                require_strict_approval(fetch_fork_approval(env.get("GITHUB_REPOSITORY", ""), token))
+                print(f"fork approval policy: {STRICT_APPROVAL}")
             else:
-                print("::notice::heavy jobs target the self-hosted runner; availability was not "
-                      "checked, so jobs wait in the queue until a forge-pc runner is online")
+                print("::notice::heavy jobs target the self-hosted runner; availability and the fork-approval "
+                      "setting were NOT checked (no RUNNER_STATUS_TOKEN), so jobs wait in the queue until a "
+                      "forge-pc runner is online")
     except SelectionError as exc:
         print(f"::error::{exc}", file=sys.stderr)
         return 1

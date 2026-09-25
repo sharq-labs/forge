@@ -45,12 +45,14 @@ systemctl enable --now docker
 
 # ---- the unprivileged user ---------------------------------------------------------------------
 id "$RUNNER_USER" >/dev/null 2>&1 || useradd --create-home --shell /bin/bash "$RUNNER_USER"
-# Docker access is root-equivalent INSIDE this distro (which cannot reach Windows), and is what
-# the reproduce job needs. It is deliberately the only privilege the user gets: no sudo.
+# Docker access is root-equivalent INSIDE this distro (which cannot reach Windows because the drives
+# and interop are off), and is what the reproduce job needs. It means a job the guard admitted can
+# rewrite the guard, so the guard is a barrier against forks, not against a hostile collaborator
+# (docs/assurance/SELF_HOSTED_RUNNER.md section 4). No sudo is granted.
 usermod -aG docker "$RUNNER_USER"
 rm -f "/etc/sudoers.d/$RUNNER_USER"
 
-# ---- guard, hooks, reset script: root-owned, not writable by the runner user --------------------
+# ---- guard, hooks, reset script: root-owned; the runner user cannot write them directly --------
 install -d -m 0755 -o root -g root /opt/forge-runner /opt/forge-runner/bin /opt/forge-runner/hooks
 install -m 0755 -o root -g root "$repo_root/tools/ci/runner_guard.py"            /opt/forge-runner/bin/runner_guard.py
 install -m 0755 -o root -g root "$here/bin/reset-instance.sh"                    /opt/forge-runner/bin/reset-instance.sh

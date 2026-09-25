@@ -144,9 +144,32 @@ def test_an_offline_pc_fails_with_the_way_out_and_does_not_reroute(tmp_path, mon
 def test_an_online_pc_passes(tmp_path, monkeypatch):
     monkeypatch.setattr(sel, "fetch_runners", lambda repository, token: {
         "runners": [_runner("forge-pc-1", "online", "self-hosted", "Linux", "X64", "forge-pc")]})
+    monkeypatch.setattr(sel, "fetch_fork_approval", lambda repository, token: sel.STRICT_APPROVAL)
     env, out = _env(tmp_path, RUNNER_STATUS_TOKEN="t")
     assert sel.main(["--check-online"], env) == 0
     assert "heavy_runner_mode=self-hosted" in out.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("policy", ["first_time_contributors", "first_time_contributors_new_to_github", "", "ALL_EXTERNAL_CONTRIBUTORS"])
+def test_a_weak_fork_approval_policy_blocks_selecting_the_personal_runner(tmp_path, monkeypatch, capsys, policy):
+    monkeypatch.setattr(sel, "fetch_runners", lambda repository, token: {
+        "runners": [_runner("forge-pc-1", "online", "self-hosted", "Linux", "X64", "forge-pc")]})
+    monkeypatch.setattr(sel, "fetch_fork_approval", lambda repository, token: policy)
+    env, out = _env(tmp_path, RUNNER_STATUS_TOKEN="t")
+    assert sel.main(["--check-online"], env) == 1
+    assert "NOT re-routed" in capsys.readouterr().err
+    assert out.read_bytes() == b""
+
+
+def test_an_unreadable_approval_setting_fails_rather_than_assuming_strict(tmp_path, monkeypatch):
+    monkeypatch.setattr(sel, "fetch_runners", lambda repository, token: {
+        "runners": [_runner("forge-pc-1", "online", "self-hosted", "Linux", "X64", "forge-pc")]})
+    def boom(repository, token):
+        raise sel.SelectionError("could not read the fork-approval setting")
+    monkeypatch.setattr(sel, "fetch_fork_approval", boom)
+    env, out = _env(tmp_path, RUNNER_STATUS_TOKEN="t")
+    assert sel.main(["--check-online"], env) == 1
+    assert out.read_bytes() == b""
 
 
 def test_without_a_status_token_the_job_waits_in_the_queue_and_says_so(tmp_path, capsys):
