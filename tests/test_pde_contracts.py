@@ -193,3 +193,35 @@ def test_transient_refusals():
         TransientSpec(window, Quantity(10, "s"), prescribed(Quantity(300, "K"), "x"), (Quantity(55, "s"),))
     with pytest.raises(PDERefusal, match="outside the authorized window"):
         TransientSpec(window, Quantity(10, "s"), prescribed(Quantity(300, "K"), "x"), (Quantity(200, "s"),))
+
+
+def test_overlapping_role_groups_and_nonphysical_coefficients_are_refused():
+    # Overlapping role groups cannot be built on a BIG 7 mesh: each facet carries one
+    # tag, duplicate facets are refused, and two groups cannot share (kind, tag). The
+    # PDEProblem overlap check is defense-in-depth for future mesh sources.
+    mesh = interface_mesh()
+    with pytest.raises(Exception, match="same tag"):
+        PhysicalGroup("left_half", "facets", 11) and SpatialMesh(
+            coordinates=mesh.coordinates, cells=mesh.cells, cell_type=CellType.TRIANGLE, frame=mesh.frame, cell_tags=mesh.cell_tags,
+            facets=mesh.facets, facet_tags=mesh.facet_tags, groups=mesh.groups + (PhysicalGroup("left_half", "facets", 11),))
+    roles = dict(ROLES, interface=FacetRole.INTERNAL_INTERFACE)
+    ok = steady_problem(mesh, roles=roles)
+    neg = CoefficientBinding("conductivity", constant=prescribed(Quantity(-1, "W/(m*K)"), "bad"))
+    with pytest.raises(PDERefusal, match="admissible"):
+        PDEProblem("p", mesh, HEAT, STEADY_DIFFUSION, ok.unknown, (neg,), ok.boundary_conditions, roles, DiscretizationSpec(), SOLVER)
+
+
+def test_schedule_times_must_be_breakpoints():
+    env, p = ambient_environment()
+    with pytest.raises(PDERefusal, match="not the window start or a declared breakpoint"):
+        mesh = interface_mesh()
+        sched = ((0.0, environment_schedule(env, p)[0][1]), (30.0, environment_schedule(env, p)[1][1]))
+        k = CoefficientBinding("conductivity", constant=prescribed(Quantity(10, "W/(m*K)"), "x"))
+        c = CoefficientBinding("volumetric_heat_capacity", constant=prescribed(Quantity(2e6, "J/(m^3*K)"), "x"))
+        insulated = prescribed(Quantity(0, "W/m^2"), "adiabatic")
+        h = prescribed(Quantity(25, "W/(m^2*K)"), "h")
+        PDEProblem("t", mesh, HEAT, TRANSIENT_DIFFUSION, SpatialFieldDefinition("T", "temperature", "K", Location.NODE, Rank.SCALAR), (k, c),
+                   (BoundaryCondition(BCKind.ROBIN, "left", sched[0][1], coefficient=h),) + tuple(BoundaryCondition(BCKind.NEUMANN, g, insulated) for g in ("right", "top", "bottom")),
+                   dict(ROLES, interface=FacetRole.INTERNAL_INTERFACE), DiscretizationSpec(), SOLVER,
+                   TransientSpec(TimeWindow(p(0), p(100)), Quantity(10, "s"), prescribed(Quantity(300, "K"), "x"), (Quantity(100, "s"),), breakpoints=(Quantity(50, "s"),)),
+                   boundary_schedule={"left": sched})

@@ -286,6 +286,22 @@ class FenicsxProvider:
                     if round(t, 12) in outs:
                         values = self._node_values(problem, dm, V, geom_to_forge, uh, 1)
                         results.append((t, computed_field(problem, self._from_unknown_unit(problem, values), exec_id)))
+            # Bound check: with no source, the heat equation's solution stays within the
+            # range of initial and boundary data; P1 has no discrete maximum principle,
+            # so any excursion is reported as a numerical diagnostic, never hidden.
+            data = [tr.initial.value.to(unknown_unit).magnitude]
+            for bc in problem.boundary_conditions:
+                if bc.kind in (BCKind.DIRICHLET, BCKind.ROBIN):
+                    data.append(bc.value.value.to(unknown_unit).magnitude)
+            for sched in dict(problem.boundary_schedule).values():
+                data += [sq.value.to(unknown_unit).magnitude for _, sq in sched]
+            lo, hi = min(data), max(data)
+            if "source" not in coeff:
+                for t_out, fld in results:
+                    v = fld.values
+                    excess = max(float(v.max()) - hi, lo - float(v.min()), 0.0)
+                    if excess > 0:
+                        warnings.append(f"discrete bound violation at t={t_out} s: {excess:.3e} {unknown_unit} outside the data range [{lo}, {hi}] (P1 has no discrete maximum principle)")
             if [round(t, 12) for t, _ in results] != outs:
                 return fail(ConvergenceState.FAILED, "not every requested output time was produced")
             return PDEExecutionRecord(problem.digest, self.identity, ConvergenceState.CONVERGED, self._diag(diag, V, warnings, steps), tuple(results))

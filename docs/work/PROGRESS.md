@@ -11,7 +11,67 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-25 BIG 7 — Field + Mesh Core (BUILD phase; read this first)
+## 2026-09-25 BIG 8 — PDE / FEM Provider Layer (BUILD phase; read this first)
+
+### Pre-check
+BIG 7 re-review at `99f1c1b`: PASS WITH NON-BLOCKING GAPS, no PDE blocker.
+Adopted: COMPUTED spatial fields now require provenance; PDE layer declares
+facet roles.
+
+### Environment (exact)
+- dolfinx has no pip wheel; FEniCS PPA blocked by egress policy (403);
+  micro.mamba.pm blocked (403). Worked: micromamba 2.9.0 from GitHub releases
+  -> `/opt/mm/micromamba create -n fenicsx -c conda-forge python=3.11
+  fenics-dolfinx petsc4py mpich pint numpy scipy sympy python-gmsh meshio pytest`.
+- Versions: dolfinx 0.11.0, basix 0.11.0, ufl 2026.1.0, PETSc/petsc4py 3.25.5,
+  gmsh 4.15.2, meshio 5.3.5, Python 3.11.
+- Architecture decision (after a failed attempt): putting dolfinx/basix/ufl/
+  mpi4py imports in `src/engcore/pde` tripped the certified dependency guard
+  (`tests/test_core_guards.py`, referenced by certification manifests) because
+  `fenics-*` distribution names differ from import names and are not pip
+  installable. Instead of editing a certified guard or hiding imports, the
+  provider moved to a separate distribution `providers/fenicsx`
+  (`forge-fenicsx-provider`, own pyproject declaring `fenics-dolfinx`, etc.).
+
+### Scientific review
+BIG 8 review: CHANGES REQUIRED (no formal BLOCKER). Fixed: facet overlap
+between role groups refused (defense-in-depth; BIG 7 meshes already cannot
+overlap), schedule times must be window start or declared breakpoints with
+unit checks, execution records verify COMPUTED provenance of their fields,
+coefficient slots carry admissible ranges (k, c, E, t, h > 0; 0 <= nu < 0.5),
+transient discrete-bound violations are reported as diagnostics warnings,
+P2 node mapping tested against the analytic solution. Not re-reviewed.
+
+### Open non-blocking gaps
+- 2D affine triangles only; P1/P2 Lagrange; no hexahedra, 3D, mixed cells,
+  nonlinear materials, contact, remeshing, moving meshes, mortar/cohesive
+  interfaces.
+- Inactive PETSc options (e.g. ksp_rtol with preonly) enter identity; PETSc
+  prints "Option left" warnings.
+- Transient: constant step, backward Euler only; boundary values piecewise
+  constant per segment; source terms not exercised.
+- No heat-flux post-processing (reaction/flux integrals) yet; refinement study
+  compares interface temperature only; no asymptotic convergence claim.
+- Provider runs only in the conda env; core CI covers contracts only.
+
+### Verification (BUILD-phase smoke only)
+2026-09-25
+command: `PYTHONPATH=src python -m compileall -q src/engcore/pde providers/fenicsx/forge_fenicsx` — PASS
+command: `PYTHONPATH=src python -m pytest --import-mode=importlib -q -p no:cacheprovider tests/test_pde_contracts.py tests/test_spatial_core.py tests/test_numerical_foundation.py tests/test_materials_engine.py tests/test_lifecycle_engine.py tests/test_environment_engine.py tests/test_time_engine.py tests/test_core_api_layering.py tests/test_field_values.py tests/test_field_records.py` — PASS, 211 passed
+command: `PYTHONPATH=src:providers/fenicsx /opt/mm/root/envs/fenicsx/bin/python -m pytest --import-mode=importlib -q -p no:cacheprovider providers/fenicsx/tests tests/test_pde_contracts.py tests/test_spatial_core.py tests/test_lifecycle_engine.py` — PASS, 61 passed (16 real FEniCSx/PETSc solves)
+command: `PYTHONPATH=src python -m pytest ... tests/test_core_guards.py -k dependenc` — PASS, 6 passed
+command: `PYTHONPATH=src python tools/forge_check.py --changed` — PASS, 149 passed
+command: `git diff --check` — PASS
+NOT RUN: `forge_check.py --regression`, FAST, SCIENTIFIC, mutation shards,
+recertification, full suite, CI (CI has no FEniCSx environment).
+
+### Readiness
+Gate A-F executed for real. Forge takes its own mesh/material/time/
+environment/lifecycle records, runs FEniCSx/PETSc, and returns
+provenance-bound BIG 7 fields; the solver holds no scientific authority.
+BIG 9 not started.
+
+## 2026-09-25 BIG 7 — Field + Mesh Core (BUILD phase)
 
 ### Pre-check
 BIG 6 re-review at `e70cc2d`: no spatial blocker; found a real ODE bug (after

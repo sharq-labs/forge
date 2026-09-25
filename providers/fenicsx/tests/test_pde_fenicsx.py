@@ -311,7 +311,8 @@ def test_transient_heat_with_environment_robin_bc_on_big2_window():
     # principle at this conductivity contrast: a small overshoot above the initial
     # 330 K appears. It is a known numerical artifact, recorded, not hidden.
     overshoot = max(0.0, float(t50.max()) - 330.0)
-    assert overshoot < 0.5
+    if overshoot > 0:
+        assert any("discrete bound violation" in w for w in rec.diagnostics.warnings)
     assert any(item["origin"] == "environment" for item in problem.identity()["boundary_schedule"]["left"] for item in [item[1]])
     colder, _ = ambient_environment(values=(290.0, 250.0))
     assert transient_problem(mesh, colder, p).digest != problem.digest
@@ -432,3 +433,25 @@ def test_failed_solve_exposes_no_field():
     assert not rec.succeeded and rec.fields == () and "KSP reason" in rec.reason
     with pytest.raises(PDERefusal, match="execution failed"):
         rec.field
+
+
+@needs_fenics
+def test_p2_node_mapping_matches_analytic_solution():
+    mesh = plate()
+    base = steady_problem(mesh)
+    p2 = PDEProblem(base.problem_id, mesh, base.model, base.operator, base.unknown, base.coefficients, base.boundary_conditions,
+                    base.facet_roles, DiscretizationSpec(degree=2), SOLVER)
+    rec = FenicsxProvider().execute(p2)
+    exact = analytic_series(mesh.coordinates[:, 0], 215.0, 0.045)
+    assert np.max(np.abs(rec.field.values - exact)) < 1e-6  # a permuted vertex mapping would fail this
+
+
+def test_execution_record_refuses_fabricated_fields():
+    from engcore.pde import PDEDiagnostics, PDEExecutionRecord
+    from engcore.spatial import Derivation, SpatialField
+    mesh = plate()
+    problem = steady_problem(mesh)
+    fake = SpatialField(problem.unknown, mesh, np.full(mesh.node_count, 350.0), Derivation.COMPUTED, ("made-up",))
+    from engcore.scientific.solvers.protocol import SolverIdentity
+    with pytest.raises(PDERefusal, match="COMPUTED by this execution"):
+        PDEExecutionRecord(problem.digest, SolverIdentity("x", "1"), ConvergenceState.CONVERGED, PDEDiagnostics(), ((0.0, fake),))

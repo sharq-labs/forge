@@ -13,7 +13,7 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 7 — Field + Mesh Core** built on the Core field/mesh records; BIG 8 (Gmsh + FEniCSx + PETSc) not started.
+Current: **BIG 8 — PDE / FEM Provider Layer** built (real FEniCSx/PETSc execution); BIG 9 (preCICE) not started.
 
 ## Current branch / PR
 
@@ -206,6 +206,28 @@ executed for real (optional extra `mesh`).
 - [x] Gmsh two-region plate generation (replay-identical here) and meshio
       Gmsh-2.2 roundtrip preserving identity.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 7 section).
+
+### BIG 8 — PDE / FEM provider layer
+
+Contracts in `src/engcore/pde/` (non-Core; registered); provider in the
+separate distribution `providers/fenicsx` (`forge_fenicsx`, dolfinx 0.11.0 +
+PETSc/petsc4py 3.25.5, conda-forge env `/opt/mm/root/envs/fenicsx`). Tests:
+`tests/test_pde_contracts.py` (core CI) and `providers/fenicsx/tests/`.
+
+- [x] Forge-owned operator templates (steady/transient diffusion, plane-stress
+      elasticity) with dimensioned, range-checked coefficient slots; no caller forms.
+- [x] `PDEProblem` identity from content: mesh digest, facet roles (checked
+      against facet-cell topology), resolved coefficient fields + material
+      provenance, sourced BC values, discretization, PETSc settings, BIG 2
+      window/breakpoints/schedule. Every outer facet needs a declared BC.
+- [x] Real solves: A steady two-material heat (matches series solution; P1+P2),
+      B plane-stress elasticity -> framed vector field, C transient heat on a
+      BIG 2 window with breakpoint reassembly, D Robin BC from BIG 3
+      environment records, E lifecycle moisture -> next real PDE solve,
+      F two mesh resolutions compared (not validated).
+- [x] Acceptance = PETSc converged reason AND true residual; failed solves
+      expose no field; records verify their fields are COMPUTED by them.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 8 section).
 
 ## Persistent project direction
 

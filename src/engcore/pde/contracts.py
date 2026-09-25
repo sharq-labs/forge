@@ -65,6 +65,18 @@ class CoefficientSlot:
     name: str
     reference_unit: str   # dimension the slot requires; values are normalized to it
     required: bool = True
+    #: Admissible range in reference units: (lower, upper, lower_inclusive, upper_inclusive).
+    #: A non-physical coefficient is refused before any solve.
+    admissible: tuple = (None, None, True, True)
+
+    def admits(self, values) -> bool:
+        lo, hi, lo_inc, hi_inc = self.admissible
+        v = np.asarray(values)
+        if lo is not None and (np.any(v < lo) or (not lo_inc and np.any(v == lo))):
+            return False
+        if hi is not None and (np.any(v > hi) or (not hi_inc and np.any(v == hi))):
+            return False
+        return True
 
     @property
     def dimension(self) -> str:
@@ -93,7 +105,7 @@ class OperatorTemplate:
 
     def to_dict(self) -> dict[str, Any]:
         return {"template_id": self.template_id, "version": self.version, "rank": self.rank.value, "unknown_unit": self.unknown_unit,
-                "slots": [[s.name, normalize_unit(s.reference_unit), s.required] for s in self.slots], "transient": self.transient,
+                "slots": [[s.name, normalize_unit(s.reference_unit), s.required, list(s.admissible)] for s in self.slots], "transient": self.transient,
                 "neumann_unit": normalize_unit(self.neumann_unit), "robin_supported": self.robin_supported, "weak_form_text": self.weak_form_text}
 
     @property
@@ -103,21 +115,21 @@ class OperatorTemplate:
 
 STEADY_DIFFUSION = OperatorTemplate(
     "scalar_diffusion_steady", "1", Rank.SCALAR, "kelvin",
-    (CoefficientSlot("conductivity", "W/(m*K)"), CoefficientSlot("source", "W/m^3", required=False)),
+    (CoefficientSlot("conductivity", "W/(m*K)", admissible=(0.0, None, False, True)), CoefficientSlot("source", "W/m^3", required=False)),
     False, "W/m^2", True,
     "find u: int k grad(u).grad(v) dx + int_R h u v ds = int f v dx + int_N g v ds + int_R h u_inf v ds",
 )
 TRANSIENT_DIFFUSION = OperatorTemplate(
     "scalar_diffusion_transient", "1", Rank.SCALAR, "kelvin",
-    (CoefficientSlot("conductivity", "W/(m*K)"), CoefficientSlot("volumetric_heat_capacity", "J/(m^3*K)"),
+    (CoefficientSlot("conductivity", "W/(m*K)", admissible=(0.0, None, False, True)), CoefficientSlot("volumetric_heat_capacity", "J/(m^3*K)", admissible=(0.0, None, False, True)),
      CoefficientSlot("source", "W/m^3", required=False)),
     True, "W/m^2", True,
     "backward Euler: int c (u - u_prev)/dt v dx + int k grad(u).grad(v) dx + int_R h u v ds = int f v dx + int_N g v ds + int_R h u_inf v ds",
 )
 PLANE_STRESS_ELASTICITY = OperatorTemplate(
     "linear_elasticity_plane_stress", "1", Rank.VECTOR, "meter",
-    (CoefficientSlot("youngs_modulus", "Pa"), CoefficientSlot("poisson_ratio", "dimensionless"),
-     CoefficientSlot("thickness", "m")),
+    (CoefficientSlot("youngs_modulus", "Pa", admissible=(0.0, None, False, True)), CoefficientSlot("poisson_ratio", "dimensionless", admissible=(0.0, 0.5, True, False)),
+     CoefficientSlot("thickness", "m", admissible=(0.0, None, False, True))),
     False, "Pa", False,
     "find u: int t sigma(u):eps(v) dx = int_N t g.v ds, sigma = E/(1-nu^2)[(1-nu) eps + nu tr(eps) I] (plane stress)",
 )
@@ -335,7 +347,9 @@ class PDEProblem:
             if s.required and s.name not in bound:
                 raise PDERefusal(f"required coefficient {s.name!r} is not bound; it is never defaulted")
         for name, c in bound.items():
-            c.normalized_cell_values(m, op.slot(name).reference_unit)  # dimension/mesh check now
+            vals = c.normalized_cell_values(m, op.slot(name).reference_unit)  # dimension/mesh check now
+            if not op.slot(name).admits(vals):
+                raise PDERefusal(f"coefficient {name!r} lies outside its admissible range {op.slot(name).admissible}; non-physical operator refused")
             if c.field is not None and not np.all(np.isfinite(c.field.values)):
                 raise PDERefusal(f"coefficient {name!r} has non-finite values")
         # facet roles checked against topology
@@ -351,6 +365,15 @@ class PDEProblem:
                 raise PDERefusal(f"group {name!r} is declared external but has facets shared by two cells")
             if role is FacetRole.INTERNAL_INTERFACE and owners != {2}:
                 raise PDERefusal(f"group {name!r} is declared an interface but has facets on the outer boundary")
+        # a facet may belong to at most one role-bearing group: overlaps would let
+        # one declared condition silently lose facets to another
+        owner: dict[tuple[int, ...], str] = {}
+        for name in dict(self.facet_roles):
+            for i in m.facet_indices(m.region(name)):
+                key = tuple(int(v) for v in m.facets[i])
+                if key in owner:
+                    raise PDERefusal(f"facet {key} belongs to both {owner[key]!r} and {name!r}; overlapping role groups are refused")
+                owner[key] = name
         # boundary conditions
         used = set()
         for bc in self.boundary_conditions:
@@ -374,11 +397,17 @@ class PDEProblem:
             )
         if not any(bc.kind in (BCKind.DIRICHLET, BCKind.ROBIN) for bc in self.boundary_conditions):
             raise PDERefusal("no Dirichlet or Robin condition: the operator is singular (pure Neumann is not supported)")
+        bcs_by_group = {bc.group: bc for bc in self.boundary_conditions}
         for name, schedule in dict(self.boundary_schedule).items():
             if self.transient is None or name not in used:
                 raise PDERefusal("a boundary schedule needs a transient problem and a boundary condition on that group")
-            for _, sq in schedule:
-                dimensionality(sq.value.units)  # parse
+            allowed = {float(self.transient.window.start.seconds)} | {b.to("s").magnitude for b in self.transient.breakpoints}
+            for t0, sq in schedule:
+                if float(t0) not in allowed:
+                    raise PDERefusal(f"schedule time {t0} s for {name!r} is not the window start or a declared breakpoint; "
+                                     f"a value change there would be applied late")
+                bc = bcs_by_group[name]
+                self._check_bc_units(BoundaryCondition(bc.kind, bc.group, sq, bc.coefficient, bc.components, bc.vector_value))
         self._check_solver()
 
     def _check_bc_units(self, bc: BoundaryCondition) -> None:
@@ -396,6 +425,8 @@ class PDEProblem:
                 raise PDERefusal(f"operator {op.template_id} does not support Robin conditions")
             if dimensionality(bc.coefficient.value.units) != dimensionality("W/(m^2*K)"):
                 raise PDERefusal("Robin transfer coefficient must be a heat transfer coefficient")
+            if bc.coefficient.value.to("W/(m^2*K)").magnitude <= 0:
+                raise PDERefusal("Robin transfer coefficient must be positive")
 
     def _check_solver(self) -> None:
         t = self.solver.tolerances
@@ -457,6 +488,9 @@ class PDEExecutionRecord:
     reason: str = ""
 
     def __post_init__(self) -> None:
+        for _, f in self.fields:
+            if f.derivation is not Derivation.COMPUTED or set(f.provenance) != {self.execution_identity, self.problem_digest}:
+                raise PDERefusal("execution fields must be COMPUTED by this execution of this problem")
         ok = self.convergence in (ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE)
         if not ok and self.fields:
             raise PDERefusal("a failed PDE execution exposes no fields; the last iterate is withheld")
