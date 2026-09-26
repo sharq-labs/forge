@@ -297,9 +297,21 @@ The mechanism/discovery layer must:
 9. refuse unsupported extrapolation;
 10. keep mechanism definitions provider-neutral where possible.
 
+## 8.1 Interaction with design synthesis and assembly
+
+Mechanistic discovery does not replace engineering design synthesis.
+
+A future candidate product may be created by the design/assembly layer and then
+explained/evaluated by the mechanism layer. Assembly choices such as a bearing,
+fastener, fit, gear ratio, cooling passage or connector may participate in mechanism
+paths only when the relevant model/applicability is declared.
+
+The design-synthesis/assembly architecture is defined separately in
+`docs/architecture/design_synthesis.md`.
+
 ## 9. Proposed implementation order
 
-This is a future roadmap after the current BIG 14/15 review and hardening campaign.
+This is a future mechanism/discovery workstream after the current BIG 14/15 review and hardening campaign. It composes with the separate design-synthesis/assembly roadmap rather than replacing it.
 
 ### Discovery Foundation A — Mechanism semantics
 
