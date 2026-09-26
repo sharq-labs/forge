@@ -1,0 +1,599 @@
+{
+ "conservation": [
+  "module_heat_fresh: closed residual 7.265e-12 hour * watt (tolerance 1.000e-06)",
+  "module_heat_aged: closed residual 2.021e-12 hour * watt (tolerance 1.000e-06)",
+  "module_heat_control: closed residual 1.371e-12 hour * watt (tolerance 1.000e-06)"
+ ],
+ "constraints": [
+  {
+   "binding_id": "b_fade",
+   "constraint_id": "max_capacity_fade",
+   "margin": "margin 0.0482 dimensionless",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_soc_aged",
+   "constraint_id": "min_soc",
+   "margin": "margin 0.07269 dimensionless",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_soc_fresh",
+   "constraint_id": "min_soc",
+   "margin": "margin 0.1 dimensionless",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_tmax_aged",
+   "constraint_id": "max_cell_temperature",
+   "margin": "margin 14.09 kelvin",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_tmax_fresh",
+   "constraint_id": "max_cell_temperature",
+   "margin": "margin 16.87 kelvin",
+   "note": "",
+   "status": "satisfied"
+  }
+ ],
+ "execution": "succeeded",
+ "identities": [
+  [
+   "request",
+   "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9"
+  ],
+  [
+   "plan",
+   "4218ffe46734a669e019a9679e4107a9342d11e1fe18e8507d9b0da1612016d8"
+  ],
+  [
+   "result",
+   "277c211c512a00b522f1d355ca0c6efe0428fb868b8697276c067a62e729842a"
+  ]
+ ],
+ "key_outputs": [
+  {
+   "availability": "available",
+   "label": "Peak cell temperature, fresh day",
+   "observable_id": "peak_cell_temperature_fresh",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 301.27718797320637,
+    "schema": "quantity/1",
+    "units": "kelvin"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Peak cell temperature, day 56 (aged)",
+   "observable_id": "peak_cell_temperature_aged",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 304.0630160679207,
+    "schema": "quantity/1",
+    "units": "kelvin"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Coolant temperature rise, fresh day (peak)",
+   "observable_id": "coolant_rise_peak_fresh",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.1917849837865333,
+    "schema": "quantity/1",
+    "units": "kelvin"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Module heat removed, fresh day",
+   "observable_id": "module_heat_removed_fresh",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 28.810749234560934,
+    "schema": "quantity/1",
+    "units": "hour * watt"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "End-of-discharge voltage, fresh day",
+   "observable_id": "voltage_end_of_discharge_fresh",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 3.4948062188476667,
+    "schema": "quantity/1",
+    "units": "volt"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "End-of-discharge voltage, aged cell",
+   "observable_id": "voltage_end_of_discharge_aged",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 3.4664376771010694,
+    "schema": "quantity/1",
+    "units": "volt"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Voltage shift caused by degradation",
+   "observable_id": "voltage_shift_degradation",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -0.033744570205948676,
+    "schema": "quantity/1",
+    "units": "volt"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Voltage shift caused by environment drift",
+   "observable_id": "voltage_shift_environment",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.005376028459351367,
+    "schema": "quantity/1",
+    "units": "volt"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "End SOC, fresh day",
+   "observable_id": "end_soc_fresh",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.7999999999999882,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Minimum SOC, aged day",
+   "observable_id": "min_soc_aged",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.2726855537057231,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Capacity fade after 56 days",
+   "observable_id": "final_fade",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.051799161745386395,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Peak cell heat shift caused by degradation",
+   "observable_id": "peak_heat_shift_degradation",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.006571283505703601,
+    "schema": "quantity/1",
+    "units": "watt"
+   }
+  }
+ ],
+ "notes": [
+  "case normal: 20 degC mean site air, 0.5 C discharge hour and 0.5 C charge hour",
+  "all scenario inputs are declared illustrative fixtures, not measurements"
+ ],
+ "providers": [
+  "pybamm 26.8.0.0",
+  "tespy 0.11.2"
+ ],
+ "reference_comparisons": [
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "analytic_limit_comparison_verifies_implementation_only",
+   "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+   "conditions": [
+    [
+     "mean_temperature",
+     {
+      "magnitude": 297.3574378438702,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    ],
+    [
+     "pressure",
+     {
+      "magnitude": 200000.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    ]
+   ],
+   "criterion": {
+    "criterion_id": "first_law_delta_T",
+    "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (pre-registered)",
+    "metric": "max_relative",
+    "post_hoc": false,
+    "quantity": "delta_T_relative_difference",
+    "tolerance": {
+     "magnitude": 0.005,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
+   "note": "2 heat-carrying windows of the fresh day",
+   "outcome": "met",
+   "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
+   "reference_kind": "analytic_reference",
+   "value": {
+    "magnitude": 2.3424371463904412e-08,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  }
+ ],
+ "schema": "engcore.engineering.summary/1",
+ "scientific_status": "insufficient_evidence",
+ "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
+ "system": "Cell module with liquid cooling, 57-day declared profile (normal)",
+ "text_sha256": "8254ff92567b34c95b7f80cba02fe42b1d3f64e574e8b2d2d2dd50bdb690acd2",
+ "trace": {
+  "complete": true,
+  "gaps": []
+ },
+ "trace_observable": "voltage_shift_degradation",
+ "uncertainty": {
+  "benchmark_applicability": "no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared",
+  "known_input_uncertainty": [],
+  "material_provenance": [
+   "contact resistance record 831fcc041478.. (ASSUMED)",
+   "PyBaMM parameter set Chen2020 (provider-bundled literature set)"
+  ],
+  "model_applicability": "cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",
+  "model_discrepancy": "NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)",
+  "unknown_input_uncertainty": [
+   "coolant inlet profile (declared)",
+   "cell current profile (declared)",
+   "initial state of charge (declared)",
+   "contact resistance (ASSUMED)",
+   "cells-in-module multiplicity (declared)",
+   "fade-law constants (declared)",
+   "PyBaMM Chen2020 parameters (provider-bundled literature data)"
+  ]
+ },
+ "verification": {
+  "classification": "report_vocabulary_not_a_validation_grant",
+  "corroboration_reached": false,
+  "levels": [
+   {
+    "evidence": [
+     {
+      "classification": "contract_integrity",
+      "digest": "f029d605cb584bac3e71e3aaadefdbae20e8acf999da0254b3fa363ca4be41f8",
+      "kind": "preflight_and_identity",
+      "note": "preflight deferred_checks; run succeeded",
+      "outcome": "met",
+      "record": {
+       "classification": "preflight_admission_not_scientific_support",
+       "deferred_checks": [
+        {
+         "check_id": "fade_mapping_range",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "aging"
+        },
+        {
+         "check_id": "cell_temperature_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_aged"
+        },
+        {
+         "check_id": "soc_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_aged"
+        },
+        {
+         "check_id": "cell_temperature_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_control"
+        },
+        {
+         "check_id": "soc_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_control"
+        },
+        {
+         "check_id": "cell_temperature_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_fresh"
+        },
+        {
+         "check_id": "soc_window",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "day_fresh"
+        }
+       ],
+       "findings": [],
+       "plan_digest": "4218ffe46734a669e019a9679e4107a9342d11e1fe18e8507d9b0da1612016d8",
+       "request_digest": "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9",
+       "schema": "forge.system_runtime.preflight_report/1",
+       "status": "deferred_checks"
+      },
+      "record_digest": "0a453efad7c6cc37940f7bcd136f41fa41673bc2ed428e01bed48e067962c4c1"
+     }
+    ],
+    "level": 1,
+    "name": "contract_integrity",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['aging:fade_mapping_range', 'day_aged:cell_temperature_window', 'day_aged:soc_window', 'day_control:cell_temperature_window', 'day_control:soc_window', 'day_fresh:cell_temperature_window', 'day_fresh:soc_window']",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "conservation_residual",
+      "digest": "45df96fdc52c53fe7f3882557bf3466f89c33cf0f1448264be3086a3e8b1a2ef",
+      "kind": "conservation_assessment",
+      "note": "module_heat_fresh: residual 7.27e-12 hour * watt",
+      "outcome": "met",
+      "record": {
+       "balance_id": "module_heat_fresh",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [],
+       "reason": "",
+       "residual": {
+        "magnitude": 7.265299473147024e-12,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       },
+       "status": "closed",
+       "tolerance": {
+        "magnitude": 1e-06,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       }
+      },
+      "record_digest": "ae7842734d4541ec33fffc29889607ced20e8b49e436788c58a606c8f85b80d4"
+     },
+     {
+      "classification": "conservation_residual",
+      "digest": "b4a2ee08c4ebfef1c90ef03458729bfc6b31dba30f6efddd2997f7cc473863f8",
+      "kind": "conservation_assessment",
+      "note": "module_heat_aged: residual 2.02e-12 hour * watt",
+      "outcome": "met",
+      "record": {
+       "balance_id": "module_heat_aged",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [],
+       "reason": "",
+       "residual": {
+        "magnitude": 2.021494083237485e-12,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       },
+       "status": "closed",
+       "tolerance": {
+        "magnitude": 1e-06,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       }
+      },
+      "record_digest": "84a0f62450e5d6f572fc6dc54db75f572407e755bae08a492181c95cd0087cab"
+     },
+     {
+      "classification": "conservation_residual",
+      "digest": "6215bf4a7c57414182e7c4186422e908beabd1e6158edd5e929c77cfba4c27bf",
+      "kind": "conservation_assessment",
+      "note": "module_heat_control: residual 1.37e-12 hour * watt",
+      "outcome": "met",
+      "record": {
+       "balance_id": "module_heat_control",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [],
+       "reason": "",
+       "residual": {
+        "magnitude": 1.3713474800169934e-12,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       },
+       "status": "closed",
+       "tolerance": {
+        "magnitude": 1e-06,
+        "schema": "quantity/1",
+        "units": "hour * watt"
+       }
+      },
+      "record_digest": "29e617ea2856195b8c309d02650b5b7a510730932be25b8b5fb79dc5721e9f3b"
+     }
+    ],
+    "level": 2,
+    "name": "conservation_residual",
+    "note": "INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty (tolerance pre-registered). It would fail on a solver or unit error; it cannot detect a wrong heat model",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "analytic_limit_comparison_verifies_implementation_only",
+      "digest": "8cac4259818cbd750c3942600ebe4d8f624f4cac8673b9adf961aa9d34575f2c",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "analytic_limit_comparison_verifies_implementation_only",
+       "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+       "conditions": [
+        [
+         "mean_temperature",
+         {
+          "magnitude": 297.3574378438702,
+          "schema": "quantity/1",
+          "units": "kelvin"
+         }
+        ],
+        [
+         "pressure",
+         {
+          "magnitude": 200000.0,
+          "schema": "quantity/1",
+          "units": "pascal"
+         }
+        ]
+       ],
+       "criterion": {
+        "criterion_id": "first_law_delta_T",
+        "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (pre-registered)",
+        "metric": "max_relative",
+        "post_hoc": false,
+        "quantity": "delta_T_relative_difference",
+        "tolerance": {
+         "magnitude": 0.005,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
+       "note": "2 heat-carrying windows of the fresh day",
+       "outcome": "met",
+       "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
+       "reference_kind": "analytic_reference",
+       "value": {
+        "magnitude": 2.3424371463904412e-08,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      },
+      "record_digest": "c7280733b8790f47ee9b74c3b7b1661e64ba5046abf4622bde3e94cded8fd5d1"
+     }
+    ],
+    "level": 3,
+    "name": "analytic_limit",
+    "note": "first-law coolant temperature rise vs Q/(m cp): verifies the heat -> enthalpy -> temperature implementation only",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "discretisation_convergence",
+      "digest": "a29f32391f95a3374dfd114afc926e272df63499bcfee1a265308d6153477145",
+      "kind": "window_refinement",
+      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '3250f33057d04523', '1800': 'b8cbf96f5b46d456', '900': '9053672164b891bf'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
+      "outcome": "not_met",
+      "record": {
+       "digest": {
+        "1800": "b8cbf96f5b46d456",
+        "3600": "3250f33057d04523",
+        "900": "9053672164b891bf"
+       },
+       "met": false,
+       "monotone_met": false,
+       "orders": {
+        "peak_cell_temperature": -1.3451076395540797,
+        "peak_heat": -3.6756588233007492,
+        "voltage_end_of_discharge": -3.5340516093407266
+       },
+       "quantities": {
+        "peak_cell_temperature": {
+         "1800": 301.28034684390536,
+         "3600": 301.27718797320637,
+         "900": 301.2883719280791,
+         "abs_difference_coarse_pair": 0.003158870698996452,
+         "abs_difference_fine_pair": 0.008025084173709729
+        },
+        "peak_heat": {
+         "1800": 0.16068608478739482,
+         "3600": 0.160461730156445,
+         "900": 0.1635530247473881,
+         "abs_difference_coarse_pair": 0.0002243546309498301,
+         "abs_difference_fine_pair": 0.0028669399599932643
+        },
+        "voltage_end_of_discharge": {
+         "1800": 3.494805058935227,
+         "3600": 3.4948062188476667,
+         "900": 3.494818495267861,
+         "abs_difference_coarse_pair": 1.1599124398742333e-06,
+         "abs_difference_fine_pair": 1.343633263406474e-05
+        }
+       },
+       "status": {
+        "1800": "succeeded",
+        "3600": "succeeded",
+        "900": "succeeded"
+       },
+       "tolerances_met": true,
+       "windows_s": [
+        3600,
+        1800,
+        900
+       ]
+      },
+      "record_digest": "4e8a14fa6a6a89019e1f023f0719c0056e607cb6d0b33aaa222da74d93ffff76"
+     }
+    ],
+    "level": 4,
+    "name": "discretisation_convergence",
+    "note": "the fresh-cell coupled day at three coupling-window sizes, each a separate BIG 12 request (evidence from OTHER requests than this run's). Criteria: finest-pair differences within 0.05 K / 2 mV / 2 % of peak heat (pre-registered, two-level version) AND monotonically decreasing successive differences (added after the review, with the third level; the two-level result had already met the tolerances). Only the coupling window is refined: the cell model's own solver tolerances and points-per-window are not varied",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [],
+    "level": 5,
+    "name": "independent_provider_corroboration",
+    "note": "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider and compare_providers refuses that pair as non-independent",
+    "status": "not_available"
+   },
+   {
+    "evidence": [],
+    "level": 6,
+    "name": "published_numerical_benchmark",
+    "note": "no published numerical benchmark for this module/duty was integrated",
+    "status": "not_available"
+   },
+   {
+    "evidence": [],
+    "level": 7,
+    "name": "experimental_validation",
+    "note": "no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed",
+    "status": "not_available"
+   }
+  ],
+  "reference_level_reached": "none",
+  "verification_reached": 3
+ }
+}

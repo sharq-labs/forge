@@ -1,0 +1,99 @@
+{
+ "bundle_digest": "a44dd5f09a524034c93c15636e78b23542229c0f26b97abdfcec372f1fd91b26",
+ "files": [
+  [
+   "artifacts/openfoam_20.vtu",
+   "528867fa98e407019e2b579b366fa0138ef7d5f33563a52ce5aa501790facf62"
+  ],
+  [
+   "artifacts/openfoam_20_centerlines.csv",
+   "0c8bdc26ccdacd480b9afd97cfa0e733b3add02274f28195d830e1e96897a022"
+  ],
+  [
+   "artifacts/openfoam_40.vtu",
+   "86de9c8c8e872ba8ceacaf17c986324f1d7a1960a944528fcc05bd838af260ba"
+  ],
+  [
+   "artifacts/openfoam_40_centerlines.csv",
+   "565d390908e15ffc424b9f6a58171ae7d003a862bca11f0a03b4eba740b64d8c"
+  ],
+  [
+   "artifacts/openfoam_80.vtu",
+   "b8bddae103dbe77cde3c9ca82ae8c10ed4c1de1313102d0ab7589bb63807f895"
+  ],
+  [
+   "artifacts/openfoam_80_centerlines.csv",
+   "09ae3266ae6a7464e000bc8248257d7913a30f370c6f68e075649a7637374220"
+  ],
+  [
+   "artifacts/su2_20.vtu",
+   "9a21507ac66fc0149bd339daf472493c1b363924a5ff0058959a4f7231be3ead"
+  ],
+  [
+   "artifacts/su2_20_centerlines.csv",
+   "95a068e87531d561894f79ec1394956d10e882914b5294652b02ed2db97638fd"
+  ],
+  [
+   "artifacts/su2_40.vtu",
+   "4830815f4c105c8c53f8bf1e6daa1e97787aaa73732362861ced26376ff91e58"
+  ],
+  [
+   "artifacts/su2_40_centerlines.csv",
+   "b690077552f47b8fbacb7820cc4a4de1af4bb574a2656cbb84b5a907acdf69f5"
+  ],
+  [
+   "artifacts/su2_80.vtu",
+   "3fecb30361a2cb79339dbadf46b3f9e7f503fc0c64e06434bebe732c2c1e6454"
+  ],
+  [
+   "artifacts/su2_80_centerlines.csv",
+   "03ed644ed8cfb201d28d70ee22e23d476b3299ffe5bebe0be15e1fb10bbb9586"
+  ],
+  [
+   "plan.json",
+   "c5278e72c92571df4af08391c1d95174d2d498613050b042cf47c0b0d9486afc"
+  ],
+  [
+   "references/ghia-1982-lid-driven-cavity-re100-centerlines.json",
+   "b1c3b76f1a308730e4cf37cf1a5af7e5f0668e291c6391bc4113d8826027292b"
+  ],
+  [
+   "request.json",
+   "b8180169af4d713b2b344c3c6378da7c085787721bd2fc83ee2dcc7f5eaad102"
+  ],
+  [
+   "result.json",
+   "1d0664b811990075e6319ac8c249ebac085e62d7edb60fd45ee1038aa6455978"
+  ],
+  [
+   "summary.json",
+   "1e6e86fe3f26853feb180c1961141f6dab248662eb77f8706216d74a3af5ca55"
+  ],
+  [
+   "summary.txt",
+   "eca97ec7533f240150f104263086d4ae6f035b356e8dd009ecbb4906d9c16813"
+  ]
+ ],
+ "name": "flagship-cavity-re100",
+ "plan_digest": "0f871ac2198a7994c50e4ec1b0a83c2cfbc68984afcd83d2baea34d6bb503d45",
+ "provider_identities": [
+  "6cb14c13c377fa840c2cf7a9f84ee256fd31ca1b61ef22be918203cee670759b",
+  "705bd60d5768161b7fb02021a564d0966338a8c68aaf4b636d998e6f5d89308e",
+  "7b8699218acab0f793ea4f1b3a5f942af415520747f9c3933449daf0e274ed08",
+  "9b41b967e12b7490213dd0f8127d8581233a45f156ad522c67d5b3445574214c",
+  "ba160ae73212754c908a4c3cbcec1eb244af34790214e183ece8a438927f5e99",
+  "e90b70e9d9d7e1117b7687cc74dd297bbf14fd0498d2c56eef2ccbb27d2b8aaf",
+  "ed03545fa4d80ce19a16e4a4cd40e53cc0888f28e140203407bbca16ca9001c1",
+  "f31ac9230895447f925e0effd08223c777d8e60a06e0be85f294cfb22be50941"
+ ],
+ "reference_digests": [
+  [
+   "ghia-1982-lid-driven-cavity-re100-centerlines",
+   "d5604d64179f0077a10ce4450626e2c8da3b66423c5c24c47d2928a9e02ef77c"
+  ]
+ ],
+ "request_digest": "28b9f14d42a9225c32dfb8829040d2225f9f81a4b21de89c313229742d6ab0f4",
+ "result_digest": "fb133a1004959bb59c8e53f8b194cf46b385fe21884f309641f813c22ebd1208",
+ "schema": "engcore.engineering.bundle/1",
+ "summary_digest": "6933a820e32894cfcca2f2037900b5e16536b365f740c9034743ec28e0d3c838"
+}

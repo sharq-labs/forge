@@ -1,0 +1,57 @@
+{
+ "access_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Units=SI&Mask=1",
+ "authors": "NIST Chemistry WebBook (data: Chase 1998 NIST-JANAF; Manion 2002; Cox, Wagman et al. 1984 CODATA)",
+ "comparable_quantities": [
+  "lower_heating_value"
+ ],
+ "conditions": [
+  {
+   "name": "temperature",
+   "unit": "K",
+   "value": "298.15"
+  },
+  {
+   "name": "pressure",
+   "unit": "Pa",
+   "value": "101325.0"
+  }
+ ],
+ "data": [
+  [
+   "lower_heating_value",
+   [
+    "802.31",
+    "802.562"
+   ]
+  ]
+ ],
+ "envelope": [
+  {
+   "high": "300.0",
+   "low": "290.0",
+   "name": "temperature",
+   "unit": "K"
+  },
+  {
+   "high": "110000.0",
+   "low": "90000.0",
+   "name": "pressure",
+   "unit": "Pa"
+  }
+ ],
+ "extraction": "Hess's law from WebBook gas-phase formation enthalpies (Chase 1998: CH4 -74.87, CO2 -393.52, H2O -241.83 kJ/mol; CODATA CO2/H2O with Manion 2002 CH4 -74.6): {'chase1998': -802.31, 'codata_with_manion': -802.562}; page sha256 8971a7e0b639.. and 2 more; excerpt file sha256 83062a91e76b10b0... The applicability envelope (290-300 K, 0.9-1.1 bar) is AUTHORED by this flagship around the table's 298.15 K / 1 atm standard state, not stated by NIST; the comparison is evaluated at 300 K, the inclusive upper edge of that envelope",
+ "kind": "analytic_reference",
+ "license_status": "NIST Standard Reference Database 69: three tabulated values quoted with attribution; the database pages are not copied",
+ "publication": "NIST SRD 69 retrieved 2026-09-26",
+ "quantities": [
+  [
+   "lower_heating_value",
+   "kJ/mol"
+  ]
+ ],
+ "reference_id": "nist-webbook-formation-enthalpies-hess-lhv-ch4",
+ "role": "data_consistency",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "b739cd368e99e2418b036a094d080060f790c68fef62f8a62d69620e43621094",
+ "title": "Enthalpy of formation of gas at standard conditions: CH4, CO2, H2O (NIST Chemistry WebBook, SRD 69)"
+}

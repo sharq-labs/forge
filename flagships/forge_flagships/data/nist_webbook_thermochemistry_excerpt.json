@@ -1,0 +1,31 @@
+{
+ "access_urls": [
+  "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Units=SI&Mask=1",
+  "https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Units=SI&Mask=1",
+  "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Units=SI&Mask=1"
+ ],
+ "authors": "NIST Chemistry WebBook (data: Chase 1998 NIST-JANAF; Manion 2002; Cox, Wagman et al. 1984 CODATA)",
+ "derived_heat_of_combustion_kJ_per_mol": {
+  "chase1998": -802.31,
+  "codata_with_manion": -802.562
+ },
+ "kind": "analytic_reference",
+ "kind_note": "Hess's-law relation LHV = dHf(CO2) + 2 dHf(H2O) - dHf(CH4) evaluated with critically EVALUATED reference data; a thermochemical consistency check of the mechanism's thermodynamics, not an experiment on this system",
+ "license_status": "NIST Standard Reference Database 69: three tabulated values quoted with attribution; the database pages are not copied",
+ "reference_id": "nist-webbook-formation-enthalpies-hess-lhv-ch4",
+ "retrieved": "2026-09-26",
+ "source_page_digests": {
+  "carbon_dioxide": "8971a7e0b639f32fc93be34f5ecd587a71ab6991c58c8eb5583de86bc36d2c0b",
+  "methane": "bd87d5130ae577946cd71c4b15d0699e0d43030e5086b74753dee7aaa1b79e52",
+  "water": "f9c39a236732b76f72a674cd5dd78d03f000b1cb32988a4002fada5cd1409b83"
+ },
+ "title": "Enthalpy of formation of gas at standard conditions: CH4, CO2, H2O (NIST Chemistry WebBook, SRD 69)",
+ "values_kJ_per_mol": {
+  "dHf_CH4_gas_chase1998": -74.87,
+  "dHf_CH4_gas_manion2002": -74.6,
+  "dHf_CO2_gas_chase1998": -393.52,
+  "dHf_CO2_gas_codata": -393.51,
+  "dHf_H2O_gas_chase1998": -241.83,
+  "dHf_H2O_gas_codata": -241.826
+ }
+}

@@ -1,0 +1,3438 @@
+{
+ "artifacts": [],
+ "checkpoints": [],
+ "classification": "system_execution_not_scientific_support",
+ "diagnostics": [],
+ "final_state": {
+  "environment_digest": "8b52391e1abf2d2e1ef4f85dd06be449430544b23d9dc71b27ac62fb4cca4a07",
+  "material_state_digests": [
+   [
+    "coolant",
+    "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+   ]
+  ],
+  "owners": [
+   {
+    "owner_id": "cell_slow",
+    "role": "slow",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared new cell",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "capacity_fade"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "4f6dc3ff356f87e2bbe9f6caff33882edcb769fffc0ef759ff5bc954fe981115",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "initial_state": {
+  "environment_digest": "8b52391e1abf2d2e1ef4f85dd06be449430544b23d9dc71b27ac62fb4cca4a07",
+  "material_state_digests": [
+   [
+    "coolant",
+    "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+   ]
+  ],
+  "owners": [
+   {
+    "owner_id": "cell_slow",
+    "role": "slow",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared new cell",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "capacity_fade"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "4f6dc3ff356f87e2bbe9f6caff33882edcb769fffc0ef759ff5bc954fe981115",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "node_outputs": {
+  "env.day_aged.inlet": {
+   "value": {
+    "origin": "environment:8b52391e1abf2d2e:coolant_inlet",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "environment channel value: its source states no uncertainty",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 293.707359,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "env.day_control.inlet": {
+   "value": {
+    "origin": "environment:8b52391e1abf2d2e:coolant_inlet",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "environment channel value: its source states no uncertainty",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 293.707359,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "env.day_fresh.inlet": {
+   "value": {
+    "origin": "environment:8b52391e1abf2d2e:coolant_inlet",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "environment channel value: its source states no uncertainty",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 290.907359,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "mat.day_aged.r_contact": {
+   "value": {
+    "origin": "material:assumed:033b3f1b0d491f6b",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.0,
+     "schema": "quantity/1",
+     "units": "kelvin / watt"
+    }
+   }
+  },
+  "mat.day_control.r_contact": {
+   "value": {
+    "origin": "material:assumed:033b3f1b0d491f6b",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.0,
+     "schema": "quantity/1",
+     "units": "kelvin / watt"
+    }
+   }
+  },
+  "mat.day_fresh.r_contact": {
+   "value": {
+    "origin": "material:assumed:033b3f1b0d491f6b",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.0,
+     "schema": "quantity/1",
+     "units": "kelvin / watt"
+    }
+   }
+  }
+ },
+ "node_receipts": [
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "7cc984e7cb4bf5b5dc2d81d00cca7d95b761701e7df28e002c146e2a9dadc7bc",
+   "input_digests": [],
+   "node_digest": "1068fbd048952dafd0c5c9021c9557e679cffbb49de69816b641eebc32bde1a4",
+   "node_id": "env.day_aged.inlet",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "71da677416818b8b660ff79070ae1430bfd60d5ce98b00017760992d8ae95b48"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.018349857999965025
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "32bb7f39bc885ab74914af1e09e6efee322aad5aefdda55cfaed8585474cd875",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "fcb34b2e056bc9060935770cac92399819a8fca8fb70ff7610df29272ff033df",
+   "input_digests": [],
+   "node_digest": "4cfcad1f72c548b59f9822fed57e13d98c4b51997e568e368db0108e28671d2c",
+   "node_id": "env.day_control.inlet",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "71da677416818b8b660ff79070ae1430bfd60d5ce98b00017760992d8ae95b48"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.018257168999980422
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "e85ba49759aed6ff167831621359315f3d9532357c768d94f3a0cfa5bc1d3975",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "e5bf9812ee8b460ed7e8dab3670e6876dd94f21b1f9c8990d254332ac90a4b59",
+   "input_digests": [],
+   "node_digest": "f21f80ccc8092cc959b930424eff1edfe817ac25f20e89bfa1023b2c28fca524",
+   "node_id": "env.day_fresh.inlet",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "79089fb698ec2c0e5580d3bb440dc9bde23f6597a5d27c3413985472db59d757"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.017635311000049114
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "1f995424e4e39a0499fd2c60c4b5ab8c38b79d13b487a8f8e4cd911ed04d2c35",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "a0101722deec3ce4f71d7001d2fcda2e665d09ec23c6eef962cf00a7dc39e5e0",
+   "input_digests": [],
+   "node_digest": "26697efb3e07f5f85886dabb47af3e64016cb256e6e6abafdb1688a21c151424",
+   "node_id": "mat.day_aged.r_contact",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "71852e26f21e1955a5571219fb2fefdc4901500f5d082f3a7d2d66bce774ed86"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0010034040000164168
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "933931ead48de0c1e951db9b53204e8c75d474849ffaa702ae30401db6de1ce2",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "50eef342d82dc3025a3d4b289d341d30d281fb140a8d6d14264775aa54d6dfe6",
+   "input_digests": [],
+   "node_digest": "ebb58ddc603063de938458b37a5195e724d2e45b692a02f8555aceb2430a10c8",
+   "node_id": "mat.day_control.r_contact",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "71852e26f21e1955a5571219fb2fefdc4901500f5d082f3a7d2d66bce774ed86"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0011107809999657547
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "df2564ae59ba3ea1f9d5886e2336304785a8e66bf1d092ab39011990de1f3b31",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "ac0af26cdf9f4ab4f706591a765f9e30a89e89ddacc4b864c6de44bf557831ad",
+   "input_digests": [],
+   "node_digest": "c74b93c4a8f7d44d5649f644b7c4647c346ddea31b5795fb88d1b31dfbca4c12",
+   "node_id": "mat.day_fresh.r_contact",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "71852e26f21e1955a5571219fb2fefdc4901500f5d082f3a7d2d66bce774ed86"
+    ]
+   ],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0009854310000037003
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "761f5f4df59ab04c96178ea3695f21c7ad78aa81eaab30a7347a28b78bd0f020",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "soc_window",
+     "evidence_digest": "30c0a07f7d65766168b138c7cf06a91dddd3b90c2ca4b1dc7c93be9d34abf488",
+     "reason": "SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "outside"
+    },
+    {
+     "check_id": "cell_temperature_window",
+     "evidence_digest": "49e47067bf87b5ddc0ce426873a63e3e89075bac98b4379209aeef3a109ebd69",
+     "reason": "cell temperature [291.95, 304.05] K against the declared window [273.15, 333.15]",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "8791ccdbc057d3805b82add62551558aee20ac5ac8848a7d3b4f656a43591fc8",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "c0e2e5a6e5e63bdffedaddceb19c5e00dac6af1f7962b9761a76d7d85a9a2f9c",
+   "input_digests": [
+    [
+     "fade",
+     "d5d44514c0864ff0d9e077a748de8ed24ce3cfb499a756aead5170a0f600a8ee"
+    ],
+    [
+     "initial_soc",
+     "8f38a12b33942d3317a982e1dbb9763fe2d96972d9182f904c85fe53eb1b5fc1"
+    ],
+    [
+     "inlet",
+     "135f75abcf9f3104b43a3241ebf9044730de57419bc520813e9b578578141b1b"
+    ],
+    [
+     "r_contact",
+     "61096b909107ba8a9cacef228146eff8cab52e497b17d7a658a488e64e1c222a"
+    ]
+   ],
+   "node_digest": "3c431ab2792f48ab341de8c6ff2d4bbc75924749f82dfa005cd30d088b6c7170",
+   "node_id": "day_control",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 9.369623881999928
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "refused"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "soc_window",
+     "evidence_digest": "30c0a07f7d65766168b138c7cf06a91dddd3b90c2ca4b1dc7c93be9d34abf488",
+     "reason": "SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "outside"
+    },
+    {
+     "check_id": "cell_temperature_window",
+     "evidence_digest": "3e403869a6d463cbd0d3ce6cc381ac4516572320f2c1fec93ff0f6188fe26a5e",
+     "reason": "cell temperature [289.15, 301.28] K against the declared window [273.15, 333.15]",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "929bf519c4b911a1a787d65f6ff927ce836584593e66d284ff264d97d0394f63",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "de72ceb916d798357d4addf8e973eea0f40f5c36329b46303136efe9b5ab16d8",
+   "input_digests": [
+    [
+     "fade",
+     "0e48f1cd5719ea5bd72f5b509944bc56e33fbd4918be1c0d9aa393f6375a5fb9"
+    ],
+    [
+     "initial_soc",
+     "8b1e5b2298406001d066d19a131bfee39ff93494f8596dbe85bb09bcd821a553"
+    ],
+    [
+     "inlet",
+     "d7c0490f9de0540447544c27643962a487190a21507cc8433f95758147ca061f"
+    ],
+    [
+     "r_contact",
+     "8e1fffdbd32d18474c3df6fa4c49265c0836fdd3e9ed6fd714dd926c8c8b49e3"
+    ]
+   ],
+   "node_digest": "48a9f007830b76f9beb62d9345637c5467a646d9fec27949d3e9c46331599e34",
+   "node_id": "day_fresh",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 8.911012598999946
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "refused"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "92ecb7917889ee3dc07cd364accbbaca0b5021a0ff5c2e5db6621e2b3909b578",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "5a64ef02f51b0782f2f3d6d8d744ca2dfa0335c4c584c4bad411a1c371d50dd1",
+   "node_id": "aging",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "76022001ff8eeecc35c697dc5b64c4ae675cf6c4b8c2538c6b69d848b0617541",
+   "node_id": "constraint.b_soc_fresh",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "5a45c6c5d52c850d3a307ff83ca556a14637d2a1c44097fda358f97055560bdc",
+   "node_id": "constraint.b_tmax_fresh",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "45ebe29ea27b92ba1527f61a5c3e73c5c90dbbb4a5cce0ffb19aa5a4ae1529b6",
+   "node_id": "constraint.b_fade",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "8d66e74f21423a123d0190a2dc2acfadd41e918e75c69305f4f7721392a71a4d",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "0fd1edc886e2296f69738226282e79cebf92ac3022edb653acc61730bc32199b",
+   "node_id": "day_aged",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "3721eb8cb474159847fb9e080c705d795ab706c485431378ac626073581076ed",
+   "node_id": "constraint.b_soc_aged",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "c61021f3d2bfb927887dbf5381fc6a5a850d969b2af5d8f8af15cbe735b3b784",
+   "node_id": "constraint.b_tmax_aged",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "4ed71eaafbca6f0e5de981af336c587763682fefe81b0f6ea9171cb7b2ff81df",
+   "blocked_by": [
+    "day_control",
+    "day_fresh"
+   ],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "",
+   "input_digests": [],
+   "node_digest": "844c85f731bac6b42a8b0fdeb8dfe485db1474734d5e7cca05b56e1dc63f4631",
+   "node_id": "shift",
+   "original_receipt_digest": "",
+   "output_digests": [],
+   "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+   "provider_records": [],
+   "reason": "blocked by ['day_control', 'day_fresh']",
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "",
+   "state_after_digest": "",
+   "state_before_digest": "fb54e596ab3e3a9cd96d720d01f81edf943586aad1b49eb53cbbef0f2881f5df",
+   "status": "blocked"
+  }
+ ],
+ "observables": [
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "coolant_inlet_peak_aged",
+   "output_name": "coolant_inlet_peak",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "coolant_inlet_peak_control",
+   "output_name": "coolant_inlet_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "coolant_inlet_peak_fresh",
+   "output_name": "coolant_inlet_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "coolant_outlet_peak_aged",
+   "output_name": "coolant_outlet_peak",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "coolant_outlet_peak_control",
+   "output_name": "coolant_outlet_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "coolant_outlet_peak_fresh",
+   "output_name": "coolant_outlet_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "coolant_rise_peak_aged",
+   "output_name": "coolant_rise_peak",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "coolant_rise_peak_control",
+   "output_name": "coolant_rise_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "coolant_rise_peak_fresh",
+   "output_name": "coolant_rise_peak",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "discharge_throughput_aged",
+   "output_name": "discharge_throughput",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "A*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "discharge_throughput_control",
+   "output_name": "discharge_throughput",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "A*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "discharge_throughput_fresh",
+   "output_name": "discharge_throughput",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "A*h",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "end_soc_aged",
+   "output_name": "end_soc",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "end_soc_control",
+   "output_name": "end_soc",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "end_soc_fresh",
+   "output_name": "end_soc",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging"
+   ],
+   "node_id": "aging",
+   "observable_id": "final_fade",
+   "output_name": "final_fade",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "mean_cell_temperature_aged",
+   "output_name": "mean_cell_temperature",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "mean_cell_temperature_control",
+   "output_name": "mean_cell_temperature",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "mean_cell_temperature_fresh",
+   "output_name": "mean_cell_temperature",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "min_soc_aged",
+   "output_name": "min_soc",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "min_soc_control",
+   "output_name": "min_soc",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "min_soc_fresh",
+   "output_name": "min_soc",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "min_voltage_aged",
+   "output_name": "min_voltage",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "min_voltage_control",
+   "output_name": "min_voltage",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "min_voltage_fresh",
+   "output_name": "min_voltage",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "module_heat_generated_aged",
+   "output_name": "module_heat_generated",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "module_heat_generated_control",
+   "output_name": "module_heat_generated",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "module_heat_generated_fresh",
+   "output_name": "module_heat_generated",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "module_heat_removed_aged",
+   "output_name": "module_heat_removed",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "module_heat_removed_control",
+   "output_name": "module_heat_removed",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "module_heat_removed_fresh",
+   "output_name": "module_heat_removed",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W*h",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "peak_cell_temperature_aged",
+   "output_name": "peak_cell_temperature",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "peak_cell_temperature_control",
+   "output_name": "peak_cell_temperature",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "peak_cell_temperature_fresh",
+   "output_name": "peak_cell_temperature",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "peak_heat_aged",
+   "output_name": "peak_heat",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "peak_heat_control",
+   "output_name": "peak_heat",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "peak_heat_fresh",
+   "output_name": "peak_heat",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_control.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_control.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_control",
+    "day_fresh",
+    "aging",
+    "day_aged",
+    "shift"
+   ],
+   "node_id": "shift",
+   "observable_id": "peak_heat_shift_degradation",
+   "output_name": "peak_heat_shift_degradation",
+   "reason": "blocked by ['day_control', 'day_fresh']",
+   "root_causes": [
+    "day_control",
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_control.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_control.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_control",
+    "day_fresh",
+    "aging",
+    "day_aged",
+    "shift"
+   ],
+   "node_id": "shift",
+   "observable_id": "peak_temperature_shift_degradation",
+   "output_name": "peak_temperature_shift_degradation",
+   "reason": "blocked by ['day_control', 'day_fresh']",
+   "root_causes": [
+    "day_control",
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging"
+   ],
+   "node_id": "aging",
+   "observable_id": "represented_days",
+   "output_name": "represented_days",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "day",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging"
+   ],
+   "node_id": "aging",
+   "observable_id": "resolved_days",
+   "output_name": "resolved_days",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "day",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_fresh",
+    "aging",
+    "day_aged"
+   ],
+   "node_id": "day_aged",
+   "observable_id": "voltage_end_of_discharge_aged",
+   "output_name": "voltage_end_of_discharge",
+   "reason": "blocked by ['day_fresh']",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_control.inlet",
+    "mat.day_control.r_contact",
+    "day_control"
+   ],
+   "node_id": "day_control",
+   "observable_id": "voltage_end_of_discharge_control",
+   "output_name": "voltage_end_of_discharge",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_control"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "dependency_path": [
+    "env.day_fresh.inlet",
+    "mat.day_fresh.r_contact",
+    "day_fresh"
+   ],
+   "node_id": "day_fresh",
+   "observable_id": "voltage_end_of_discharge_fresh",
+   "output_name": "voltage_end_of_discharge",
+   "reason": "the solved state left applicability (soc_window: SOC range [0.3000, 0.8000] against the declared window [0.35, 0.95]); the step is not committed",
+   "root_causes": [
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_control.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_control.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_control",
+    "day_fresh",
+    "aging",
+    "day_aged",
+    "shift"
+   ],
+   "node_id": "shift",
+   "observable_id": "voltage_shift_degradation",
+   "output_name": "voltage_shift_degradation",
+   "reason": "blocked by ['day_control', 'day_fresh']",
+   "root_causes": [
+    "day_control",
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "dependency_path": [
+    "env.day_aged.inlet",
+    "env.day_control.inlet",
+    "env.day_fresh.inlet",
+    "mat.day_aged.r_contact",
+    "mat.day_control.r_contact",
+    "mat.day_fresh.r_contact",
+    "day_control",
+    "day_fresh",
+    "aging",
+    "day_aged",
+    "shift"
+   ],
+   "node_id": "shift",
+   "observable_id": "voltage_shift_environment",
+   "output_name": "voltage_shift_environment",
+   "reason": "blocked by ['day_control', 'day_fresh']",
+   "root_causes": [
+    "day_control",
+    "day_fresh"
+   ],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "V",
+   "value": null
+  }
+ ],
+ "plan": {
+  "allow_partial": true,
+  "cache_policy": "off",
+  "checkpoint_after": [],
+  "constraint_observations": [
+   {
+    "binding_id": "b_fade",
+    "constraint_digest": "4761c7f62a1b8c994b0deb218446848cdb2dd21e07b47b9a7d826e9b2687240e",
+    "constraint_id": "max_capacity_fade",
+    "observable_id": "final_fade",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_soc_aged",
+    "constraint_digest": "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237",
+    "constraint_id": "min_soc",
+    "observable_id": "min_soc_aged",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_soc_fresh",
+    "constraint_digest": "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237",
+    "constraint_id": "min_soc",
+    "observable_id": "min_soc_fresh",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_tmax_aged",
+    "constraint_digest": "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b",
+    "constraint_id": "max_cell_temperature",
+    "observable_id": "peak_cell_temperature_aged",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_tmax_fresh",
+    "constraint_digest": "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b",
+    "constraint_id": "max_cell_temperature",
+    "observable_id": "peak_cell_temperature_fresh",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   }
+  ],
+  "nodes": [
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.environment",
+     "identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "at",
+      "{\"magnitude\":4838400.0,\"schema\":\"quantity/1\",\"units\":\"second\"}"
+     ],
+     [
+      "channel",
+      "coolant_inlet"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "evaluate_environment",
+    "literals": [],
+    "node_id": "env.day_aged.inlet",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.environment",
+     "identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "at",
+      "{\"magnitude\":4838400.0,\"schema\":\"quantity/1\",\"units\":\"second\"}"
+     ],
+     [
+      "channel",
+      "coolant_inlet"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "evaluate_environment",
+    "literals": [],
+    "node_id": "env.day_control.inlet",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.environment",
+     "identity_digest": "5fe6bbf86c68790aa2dcb6672f55976a2c2b97a0fb7b05900c428c40f9932ee8",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "at",
+      "{\"magnitude\":0.0,\"schema\":\"quantity/1\",\"units\":\"second\"}"
+     ],
+     [
+      "channel",
+      "coolant_inlet"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "evaluate_environment",
+    "literals": [],
+    "node_id": "env.day_fresh.inlet",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "coolant"
+     ],
+     [
+      "property",
+      "contact_resistance"
+     ],
+     [
+      "resolved_digest",
+      "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.day_aged.r_contact",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/W"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "coolant"
+     ],
+     [
+      "property",
+      "contact_resistance"
+     ],
+     [
+      "resolved_digest",
+      "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.day_control.r_contact",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/W"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "coolant"
+     ],
+     [
+      "property",
+      "contact_resistance"
+     ],
+     [
+      "resolved_digest",
+      "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.day_fresh.r_contact",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/W"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "cell_temperature_window",
+     "soc_window"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "cell-cooling-day-control",
+     "identity_digest": "8791ccdbc057d3805b82add62551558aee20ac5ac8848a7d3b4f656a43591fc8",
+     "kind": "multiphysics",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "baf91b89b4b0176c8d571e2914fdf22ed1bb15fd19317869b66ae8d5e05a6478",
+    "depends_on": [
+     "env.day_control.inlet",
+     "mat.day_control.r_contact"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "inlet",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "env.day_control.inlet",
+      "source_output": "value",
+      "unit": "K"
+     },
+     {
+      "name": "r_contact",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.day_control.r_contact",
+      "source_output": "value",
+      "unit": "K/W"
+     }
+    ],
+    "kind": "multiphysics_execution",
+    "literals": [
+     {
+      "name": "fade",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared new cell",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      }
+     },
+     {
+      "name": "initial_soc",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared recharge target",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.8,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      }
+     }
+    ],
+    "node_id": "day_control",
+    "outputs": [
+     {
+      "name": "coolant_inlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_outlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_rise_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "discharge_throughput",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "A*h"
+     },
+     {
+      "name": "end_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "mean_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "min_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "min_voltage",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     },
+     {
+      "name": "module_heat_generated",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "module_heat_removed",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "peak_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "peak_heat",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "voltage_end_of_discharge",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     }
+    ],
+    "provider_binding_ids": [
+     "pybamm_cell",
+     "tespy_coolant"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "cell_temperature_window",
+     "soc_window"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "cell-cooling-day-fresh",
+     "identity_digest": "929bf519c4b911a1a787d65f6ff927ce836584593e66d284ff264d97d0394f63",
+     "kind": "multiphysics",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "baf91b89b4b0176c8d571e2914fdf22ed1bb15fd19317869b66ae8d5e05a6478",
+    "depends_on": [
+     "env.day_fresh.inlet",
+     "mat.day_fresh.r_contact"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "inlet",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "env.day_fresh.inlet",
+      "source_output": "value",
+      "unit": "K"
+     },
+     {
+      "name": "r_contact",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.day_fresh.r_contact",
+      "source_output": "value",
+      "unit": "K/W"
+     }
+    ],
+    "kind": "multiphysics_execution",
+    "literals": [
+     {
+      "name": "fade",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared new cell",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      }
+     },
+     {
+      "name": "initial_soc",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared recharge target",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.8,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      }
+     }
+    ],
+    "node_id": "day_fresh",
+    "outputs": [
+     {
+      "name": "coolant_inlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_outlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_rise_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "discharge_throughput",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "A*h"
+     },
+     {
+      "name": "end_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "mean_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "min_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "min_voltage",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     },
+     {
+      "name": "module_heat_generated",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "module_heat_removed",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "peak_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "peak_heat",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "voltage_end_of_discharge",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     }
+    ],
+    "provider_binding_ids": [
+     "pybamm_cell",
+     "tespy_coolant"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "fade_mapping_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "cell-cooling-aging",
+     "identity_digest": "92ecb7917889ee3dc07cd364accbbaca0b5021a0ff5c2e5db6621e2b3909b578",
+     "kind": "multiscale",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": true,
+    "commits_state": true,
+    "configuration_digest": "8effa1bedcc93bab1e1690f8357f6f1de3303d343dcae167120be5d1d1d8a855",
+    "depends_on": [
+     "day_fresh"
+    ],
+    "derived": false,
+    "inputs": [],
+    "kind": "multiscale_execution",
+    "literals": [],
+    "node_id": "aging",
+    "outputs": [
+     {
+      "name": "final_fade",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "represented_days",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "day"
+     },
+     {
+      "name": "resolved_days",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "day"
+     }
+    ],
+    "provider_binding_ids": [
+     "pybamm_cell",
+     "tespy_coolant"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": [
+     "cell_slow"
+    ]
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_soc_fresh"
+     ],
+     [
+      "constraint_digest",
+      "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237"
+     ],
+     [
+      "constraint_id",
+      "min_soc"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "day_fresh"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_fresh",
+      "source_output": "min_soc",
+      "unit": "dimensionless"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_soc_fresh",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_tmax_fresh"
+     ],
+     [
+      "constraint_digest",
+      "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b"
+     ],
+     [
+      "constraint_id",
+      "max_cell_temperature"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "day_fresh"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_fresh",
+      "source_output": "peak_cell_temperature",
+      "unit": "K"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_tmax_fresh",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_fade"
+     ],
+     [
+      "constraint_digest",
+      "4761c7f62a1b8c994b0deb218446848cdb2dd21e07b47b9a7d826e9b2687240e"
+     ],
+     [
+      "constraint_id",
+      "max_capacity_fade"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "aging"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "aging",
+      "source_output": "final_fade",
+      "unit": "dimensionless"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_fade",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "cell_temperature_window",
+     "soc_window"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "cell-cooling-day-aged",
+     "identity_digest": "8d66e74f21423a123d0190a2dc2acfadd41e918e75c69305f4f7721392a71a4d",
+     "kind": "multiphysics",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "baf91b89b4b0176c8d571e2914fdf22ed1bb15fd19317869b66ae8d5e05a6478",
+    "depends_on": [
+     "aging",
+     "env.day_aged.inlet",
+     "mat.day_aged.r_contact"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "fade",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "aging",
+      "source_output": "final_fade",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "inlet",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "env.day_aged.inlet",
+      "source_output": "value",
+      "unit": "K"
+     },
+     {
+      "name": "r_contact",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.day_aged.r_contact",
+      "source_output": "value",
+      "unit": "K/W"
+     }
+    ],
+    "kind": "multiphysics_execution",
+    "literals": [
+     {
+      "name": "initial_soc",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared recharge target",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.8,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      }
+     }
+    ],
+    "node_id": "day_aged",
+    "outputs": [
+     {
+      "name": "coolant_inlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_outlet_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "coolant_rise_peak",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "discharge_throughput",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "A*h"
+     },
+     {
+      "name": "end_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "mean_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "min_soc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "min_voltage",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     },
+     {
+      "name": "module_heat_generated",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "module_heat_removed",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W*h"
+     },
+     {
+      "name": "peak_cell_temperature",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "peak_heat",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "voltage_end_of_discharge",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     }
+    ],
+    "provider_binding_ids": [
+     "pybamm_cell",
+     "tespy_coolant"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_soc_aged"
+     ],
+     [
+      "constraint_digest",
+      "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237"
+     ],
+     [
+      "constraint_id",
+      "min_soc"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "day_aged"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_aged",
+      "source_output": "min_soc",
+      "unit": "dimensionless"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_soc_aged",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_tmax_aged"
+     ],
+     [
+      "constraint_digest",
+      "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b"
+     ],
+     [
+      "constraint_id",
+      "max_cell_temperature"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "day_aged"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_aged",
+      "source_output": "peak_cell_temperature",
+      "unit": "K"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_tmax_aged",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "cell-cooling-shift",
+     "identity_digest": "4ed71eaafbca6f0e5de981af336c587763682fefe81b0f6ea9171cb7b2ff81df",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "day_aged",
+     "day_control",
+     "day_fresh"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "q_aged",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_aged",
+      "source_output": "peak_heat",
+      "unit": "W"
+     },
+     {
+      "name": "q_control",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_control",
+      "source_output": "peak_heat",
+      "unit": "W"
+     },
+     {
+      "name": "t_aged",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_aged",
+      "source_output": "peak_cell_temperature",
+      "unit": "K"
+     },
+     {
+      "name": "t_control",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_control",
+      "source_output": "peak_cell_temperature",
+      "unit": "K"
+     },
+     {
+      "name": "v_aged",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_aged",
+      "source_output": "voltage_end_of_discharge",
+      "unit": "V"
+     },
+     {
+      "name": "v_control",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_control",
+      "source_output": "voltage_end_of_discharge",
+      "unit": "V"
+     },
+     {
+      "name": "v_fresh",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "day_fresh",
+      "source_output": "voltage_end_of_discharge",
+      "unit": "V"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "shift",
+    "outputs": [
+     {
+      "name": "peak_heat_shift_degradation",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "peak_temperature_shift_degradation",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "voltage_shift_degradation",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     },
+     {
+      "name": "voltage_shift_environment",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "V"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   }
+  ],
+  "observables": [
+   {
+    "node_id": "day_aged",
+    "observable_id": "coolant_inlet_peak_aged",
+    "output_name": "coolant_inlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "coolant_inlet_peak_control",
+    "output_name": "coolant_inlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "coolant_inlet_peak_fresh",
+    "output_name": "coolant_inlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "coolant_outlet_peak_aged",
+    "output_name": "coolant_outlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "coolant_outlet_peak_control",
+    "output_name": "coolant_outlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "coolant_outlet_peak_fresh",
+    "output_name": "coolant_outlet_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "coolant_rise_peak_aged",
+    "output_name": "coolant_rise_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "coolant_rise_peak_control",
+    "output_name": "coolant_rise_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "coolant_rise_peak_fresh",
+    "output_name": "coolant_rise_peak",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "discharge_throughput_aged",
+    "output_name": "discharge_throughput",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "A*h"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "discharge_throughput_control",
+    "output_name": "discharge_throughput",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "A*h"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "discharge_throughput_fresh",
+    "output_name": "discharge_throughput",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "A*h"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "end_soc_aged",
+    "output_name": "end_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "end_soc_control",
+    "output_name": "end_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "end_soc_fresh",
+    "output_name": "end_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "aging",
+    "observable_id": "final_fade",
+    "output_name": "final_fade",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "mean_cell_temperature_aged",
+    "output_name": "mean_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "mean_cell_temperature_control",
+    "output_name": "mean_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "mean_cell_temperature_fresh",
+    "output_name": "mean_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "min_soc_aged",
+    "output_name": "min_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "min_soc_control",
+    "output_name": "min_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "min_soc_fresh",
+    "output_name": "min_soc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "min_voltage_aged",
+    "output_name": "min_voltage",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "min_voltage_control",
+    "output_name": "min_voltage",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "min_voltage_fresh",
+    "output_name": "min_voltage",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "module_heat_generated_aged",
+    "output_name": "module_heat_generated",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "module_heat_generated_control",
+    "output_name": "module_heat_generated",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "module_heat_generated_fresh",
+    "output_name": "module_heat_generated",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "module_heat_removed_aged",
+    "output_name": "module_heat_removed",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "module_heat_removed_control",
+    "output_name": "module_heat_removed",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "module_heat_removed_fresh",
+    "output_name": "module_heat_removed",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W*h"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "peak_cell_temperature_aged",
+    "output_name": "peak_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "peak_cell_temperature_control",
+    "output_name": "peak_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "peak_cell_temperature_fresh",
+    "output_name": "peak_cell_temperature",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "peak_heat_aged",
+    "output_name": "peak_heat",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "peak_heat_control",
+    "output_name": "peak_heat",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "peak_heat_fresh",
+    "output_name": "peak_heat",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "shift",
+    "observable_id": "peak_heat_shift_degradation",
+    "output_name": "peak_heat_shift_degradation",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "shift",
+    "observable_id": "peak_temperature_shift_degradation",
+    "output_name": "peak_temperature_shift_degradation",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "aging",
+    "observable_id": "represented_days",
+    "output_name": "represented_days",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "day"
+   },
+   {
+    "node_id": "aging",
+    "observable_id": "resolved_days",
+    "output_name": "resolved_days",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "day"
+   },
+   {
+    "node_id": "day_aged",
+    "observable_id": "voltage_end_of_discharge_aged",
+    "output_name": "voltage_end_of_discharge",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "day_control",
+    "observable_id": "voltage_end_of_discharge_control",
+    "output_name": "voltage_end_of_discharge",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "day_fresh",
+    "observable_id": "voltage_end_of_discharge_fresh",
+    "output_name": "voltage_end_of_discharge",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "shift",
+    "observable_id": "voltage_shift_degradation",
+    "output_name": "voltage_shift_degradation",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   },
+   {
+    "node_id": "shift",
+    "observable_id": "voltage_shift_environment",
+    "output_name": "voltage_shift_environment",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "V"
+   }
+  ],
+  "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+  "requested_modes": [
+   "lifecycle",
+   "multiphysics",
+   "multiscale"
+  ],
+  "schema": "forge.system_runtime.execution_plan/1"
+ },
+ "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+ "preflight": {
+  "classification": "preflight_admission_not_scientific_support",
+  "deferred_checks": [
+   {
+    "check_id": "fade_mapping_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "aging"
+   },
+   {
+    "check_id": "cell_temperature_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_aged"
+   },
+   {
+    "check_id": "soc_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_aged"
+   },
+   {
+    "check_id": "cell_temperature_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_control"
+   },
+   {
+    "check_id": "soc_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_control"
+   },
+   {
+    "check_id": "cell_temperature_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_fresh"
+   },
+   {
+    "check_id": "soc_window",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "day_fresh"
+   }
+  ],
+  "findings": [],
+  "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+  "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+  "schema": "forge.system_runtime.preflight_report/1",
+  "status": "deferred_checks"
+ },
+ "provenance": [
+  [
+   "environment",
+   "8b52391e1abf2d2e1ef4f85dd06be449430544b23d9dc71b27ac62fb4cca4a07"
+  ],
+  [
+   "initial_state",
+   "fc8dd669c2b0022731cb796cc7740ee89ea39acadd4feec12990db6af76f6cf2"
+  ],
+  [
+   "material:mat_8a9bd3af9572374c",
+   "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+  ],
+  [
+   "provider_binding:pybamm_cell",
+   "pybamm@26.8.0.0"
+  ],
+  [
+   "provider_binding:tespy_coolant",
+   "tespy@0.11.2"
+  ],
+  [
+   "scenario",
+   "42f83c7185dedd0e175ebbe8d83e9524c9c481e7f2762722f03a3f7caa591c73"
+  ],
+  [
+   "system",
+   "4f6dc3ff356f87e2bbe9f6caff33882edcb769fffc0ef759ff5bc954fe981115"
+  ],
+  [
+   "timeline",
+   "2c8aa0cd7148defb877e0ea616e392c92fc23c8ceace2751d5dd05a3d03ebe69"
+  ]
+ ],
+ "provider_records": [],
+ "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+ "resource_usage": {
+  "cpu_seconds": 0.0,
+  "function_evaluations": 0,
+  "peak_memory_bytes": 0,
+  "wall_seconds": 18.337978434999854
+ },
+ "run_id": "run-c5c320bb58d7",
+ "schema": "forge.system_runtime.system_run_result/1",
+ "state_history": [
+  {
+   "environment_digest": "8b52391e1abf2d2e1ef4f85dd06be449430544b23d9dc71b27ac62fb4cca4a07",
+   "material_state_digests": [
+    [
+     "coolant",
+     "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+    ]
+   ],
+   "owners": [
+    {
+     "owner_id": "cell_slow",
+     "role": "slow",
+     "schema": "forge.system_runtime.owner_state/1",
+     "values": [
+      {
+       "schema": "multiphysics_initial_state_value/1",
+       "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "declared new cell",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+       },
+       "value": {
+        "magnitude": 0.0,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "variable_id": "capacity_fade"
+      }
+     ]
+    }
+   ],
+   "previous_digest": "",
+   "produced_by": "initial",
+   "provider_checkpoints": [],
+   "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+   "schema": "forge.system_runtime.system_state/1",
+   "sequence": 0,
+   "system_digest": "4f6dc3ff356f87e2bbe9f6caff33882edcb769fffc0ef759ff5bc954fe981115",
+   "time": {
+    "magnitude": 0.0,
+    "schema": "quantity/1",
+    "units": "second"
+   }
+  }
+ ],
+ "status": "failed",
+ "trust_inputs": {
+  "applicability_reports": [
+   [
+    "day_control",
+    "cell_temperature_window",
+    "within"
+   ],
+   [
+    "day_control",
+    "soc_window",
+    "outside"
+   ],
+   [
+    "day_fresh",
+    "cell_temperature_window",
+    "within"
+   ],
+   [
+    "day_fresh",
+    "soc_window",
+    "outside"
+   ]
+  ],
+  "assessment": "not_assessed_by_runtime",
+  "execution_status": "failed",
+  "provider_execution_identities": [],
+  "schema": "forge.system_runtime.trust_inputs/1",
+  "unknown_uncertainty_outputs": [
+   "env.day_aged.inlet.value",
+   "env.day_control.inlet.value",
+   "env.day_fresh.inlet.value",
+   "mat.day_aged.r_contact.value",
+   "mat.day_control.r_contact.value",
+   "mat.day_fresh.r_contact.value"
+  ],
+  "validation_evidence": [],
+  "waived_applicability": []
+ }
+}

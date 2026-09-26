@@ -1,0 +1,49 @@
+{
+ "access_url": "",
+ "authors": "textbook thermoelasticity (derived; APPROXIMATE away from the supports)",
+ "comparable_quantities": [
+  "mid_section_stress_error_relative"
+ ],
+ "conditions": [
+  {
+   "name": "aspect_ratio",
+   "unit": "dimensionless",
+   "value": "5.0"
+  },
+  {
+   "name": "section_position",
+   "unit": "dimensionless",
+   "value": "0.5"
+  }
+ ],
+ "data": [],
+ "envelope": [
+  {
+   "high": "1000.0",
+   "low": "5.0",
+   "name": "aspect_ratio",
+   "unit": "dimensionless"
+  },
+  {
+   "high": "0.6",
+   "low": "0.4",
+   "name": "section_position",
+   "unit": "dimensionless"
+  }
+ ],
+ "extraction": "closed form; end effects near the supports are NOT represented. The envelope (aspect ratio >= 5, section within 0.4-0.6 of the length) is DECLARED by this flagship with no external source, and this plate sits exactly on the inclusive aspect-ratio edge",
+ "kind": "analytic_reference",
+ "license_status": "derived relation, not copied data",
+ "publication": "Saint-Venant, mid-section only",
+ "quantities": [
+  [
+   "mid_section_stress_error_relative",
+   "dimensionless"
+  ]
+ ],
+ "reference_id": "bar-theory-mid-plate-stress",
+ "role": "implementation_limit",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "",
+ "title": "Bar theory for a restrained plate with an axial temperature gradient: sigma_xx = -E alpha (T_mean - T_ref)"
+}

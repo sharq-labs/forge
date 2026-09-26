@@ -1,0 +1,1444 @@
+{
+ "constraint_observations": [
+  {
+   "binding_id": "b_tflame",
+   "constraint_digest": "614d8fd89f77eeb3c908c6f41d249707ff95963b11cee3d65b0942b9045f02bd",
+   "constraint_id": "max_flame_temperature",
+   "observable_id": "adiabatic_equilibrium__T_adiabatic",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_twater",
+   "constraint_digest": "29fb2795fe09b7a09d793c7fd93a54dce3888b1af10304360702f1e4e81d7a2b",
+   "constraint_id": "max_water_outlet",
+   "observable_id": "coolant_loop__T_water_out",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  }
+ ],
+ "environment": null,
+ "environment_absent_reason": "steady flow-reactor problem with declared inlet states; no time-varying environment channel is read",
+ "initial_state": {
+  "material_state_digests": [],
+  "owners": [
+   {
+    "owner_id": "reactor",
+    "role": "component",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared placeholder",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "reference"
+     }
+    ]
+   }
+  ],
+  "schema": "forge.system_runtime.initial_state_spec/1",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "materials": [],
+ "model_selections": [
+  {
+   "instance_id": "jacket",
+   "model_id": "tespy-water-jacket",
+   "model_version": "0.11.2",
+   "schema": "forge.system_runtime.model_selection/1"
+  },
+  {
+   "instance_id": "reactor",
+   "model_id": "gri-mech-3.0-equilibrium-and-adiabatic-reactor",
+   "model_version": "3.2.0",
+   "schema": "forge.system_runtime.model_selection/1"
+  }
+ ],
+ "nodes": [
+  {
+   "applicability_checks": [
+    "thermo_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-adiabatic-equilibrium",
+    "identity_digest": "43f929de72b0c8f2399ee859b8fb6c3b11695ce795406d6684379b3ca72189c0",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T0",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared reactant temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 300.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "adiabatic_equilibrium",
+   "outputs": [
+    {
+     "name": "T_adiabatic",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "X_CO",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_CO2",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_H2O",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_NO",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_OH",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "element_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "h_reactants",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "J/kg"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "water_liquid_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-coolant-loop",
+    "identity_digest": "9ea14abf342e12f2062793c0fccb808a535ffd6581f5bdf427bb0bcb2a3862ee",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "Q_duty",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "heat_duty",
+     "source_output": "Q_duty",
+     "unit": "W"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_w_in",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared water inlet",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 293.15,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "m_w",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared water flow",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.3,
+      "schema": "quantity/1",
+      "units": "kilogram / second"
+     }
+    },
+    {
+     "name": "p_w",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared loop pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 200000.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "coolant_loop",
+   "outputs": [
+    {
+     "name": "T_water_out",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "heat_absorbed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "water_rise",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    }
+   ],
+   "provider_binding_ids": [
+    "tespy"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "thermo_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-cooled-equilibrium",
+    "identity_digest": "23aab809cc88e808718a2b4e5b74ed42ebaa9772b3851fbecb25879cacd0bbc6",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_out",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared exhaust outlet temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 400.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "cooled_equilibrium",
+   "outputs": [
+    {
+     "name": "X_CO2_out",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_CO_out",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "X_H2O_out",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "element_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "h_cooled",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "J/kg"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-energy-balance",
+    "identity_digest": "82bb7377372a35e60fd036040f8d6f746af34b5904214c31a9a3808d14bbc747",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "Q_duty",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "heat_duty",
+     "source_output": "Q_duty",
+     "unit": "W"
+    },
+    {
+     "name": "heat_absorbed",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "coolant_loop",
+     "source_output": "heat_absorbed",
+     "unit": "W"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "material_refs": [],
+   "node_id": "energy_balance",
+   "outputs": [
+    {
+     "name": "relative_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-equilibrium-approach",
+    "identity_digest": "8cea28156dbcc75e167c04ea3a292c39678c6c28867a4d8f9d7cccfb756a797d",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "T_equilibrium",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "equilibrium_limit",
+     "source_output": "T_equilibrium",
+     "unit": "K"
+    },
+    {
+     "name": "T_final",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_2",
+     "source_output": "T_final",
+     "unit": "K"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "material_refs": [],
+   "node_id": "equilibrium_approach",
+   "outputs": [
+    {
+     "name": "relative_gap",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "thermo_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-equilibrium-limit",
+    "identity_digest": "df750e5d15cefa0032788edeeef3c9d6526adc94aa099e6264388184db82c52e",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_start",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared kinetic initial temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 1400.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "equilibrium_limit",
+   "outputs": [
+    {
+     "name": "T_equilibrium",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-heat-duty",
+    "identity_digest": "81eb006a89496705515bac8bf9c356eb93a8eab59586c21575a201fa6f219a71",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "h_cooled",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "cooled_equilibrium",
+     "source_output": "h_cooled",
+     "unit": "J/kg"
+    },
+    {
+     "name": "h_reactants",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "adiabatic_equilibrium",
+     "source_output": "h_reactants",
+     "unit": "J/kg"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [
+    {
+     "name": "m_mix",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared reactant mass flow",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.01,
+      "schema": "quantity/1",
+      "units": "kilogram / second"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "heat_duty",
+   "outputs": [
+    {
+     "name": "Q_duty",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "q_specific",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "J/kg"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "thermo_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-heat-of-combustion",
+    "identity_digest": "f8d1d4f8e6c97b79997e0a37be44022ef6e72739b51b3ae98f97997b0a029090",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_ref",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "the mechanism's lowest stored thermodynamic temperature (the reference value is at 298.15 K, below it)",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 300.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "heat_of_combustion",
+   "outputs": [
+    {
+     "name": "fuel_conversion",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "lhv_temperature_slope",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "kJ/(mol*K)"
+    },
+    {
+     "name": "lower_heating_value",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "kJ/mol"
+    },
+    {
+     "name": "temperature_offset_bound",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "kJ/mol"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-integrator-study",
+    "identity_digest": "c30540c04cf98a81ae546731706d29f8884942c004c2d373ca2bd26b96b6f349",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "T_b",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_1",
+     "source_output": "T_final",
+     "unit": "K"
+    },
+    {
+     "name": "T_c",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_2",
+     "source_output": "T_final",
+     "unit": "K"
+    },
+    {
+     "name": "ignition_b",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_1",
+     "source_output": "ignition_delay",
+     "unit": "s"
+    },
+    {
+     "name": "ignition_c",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_2",
+     "source_output": "ignition_delay",
+     "unit": "s"
+    },
+    {
+     "name": "refined_b",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_1",
+     "source_output": "ignition_delay_refined_post_hoc",
+     "unit": "s"
+    },
+    {
+     "name": "refined_c",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "kinetic_2",
+     "source_output": "ignition_delay_refined_post_hoc",
+     "unit": "s"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "material_refs": [],
+   "node_id": "integrator_study",
+   "outputs": [
+    {
+     "name": "final_temperature_change",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "ignition_relative_change",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ignition_relative_change_refined_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-kinetic-0",
+    "identity_digest": "22ef07acce5314fd18d8cf35cd18a3db8c80c751b83b898f175b58780736ff7c",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_start",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared kinetic initial temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 1400.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "kinetic_0",
+   "outputs": [
+    {
+     "name": "T_final",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "fuel_remaining",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ignition_delay",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "ignition_delay_refined_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "max_heating_rate",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K/s"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-kinetic-1",
+    "identity_digest": "cdd6c27566b1fd5fcfee77b562717c20b1dd01315209d8560badeeb59a287815",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_start",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared kinetic initial temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 1400.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "kinetic_1",
+   "outputs": [
+    {
+     "name": "T_final",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "fuel_remaining",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ignition_delay",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "ignition_delay_refined_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "max_heating_rate",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K/s"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "chem-kinetic-2",
+    "identity_digest": "ab1537b1ec8fa8fc1266071a6161bf95bc00ecdcadba568cc16197409db0912c",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "T_start",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared kinetic initial temperature",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 1400.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    },
+    {
+     "name": "p",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared pressure",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    }
+   ],
+   "material_refs": [],
+   "node_id": "kinetic_2",
+   "outputs": [
+    {
+     "name": "T_final",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "fuel_remaining",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ignition_delay",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "ignition_delay_refined_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    },
+    {
+     "name": "max_heating_rate",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K/s"
+    }
+   ],
+   "provider_binding_ids": [
+    "cantera"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  }
+ ],
+ "observables": [
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__T_adiabatic",
+   "output_name": "T_adiabatic",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_CO",
+   "output_name": "X_CO",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_CO2",
+   "output_name": "X_CO2",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_H2O",
+   "output_name": "X_H2O",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_NO",
+   "output_name": "X_NO",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_OH",
+   "output_name": "X_OH",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__element_residual",
+   "output_name": "element_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__h_reactants",
+   "output_name": "h_reactants",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "J/kg"
+  },
+  {
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__T_water_out",
+   "output_name": "T_water_out",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__heat_absorbed",
+   "output_name": "heat_absorbed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__water_rise",
+   "output_name": "water_rise",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_CO2_out",
+   "output_name": "X_CO2_out",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_CO_out",
+   "output_name": "X_CO_out",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_H2O_out",
+   "output_name": "X_H2O_out",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__element_residual",
+   "output_name": "element_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__h_cooled",
+   "output_name": "h_cooled",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "J/kg"
+  },
+  {
+   "node_id": "energy_balance",
+   "observable_id": "energy_balance__relative_residual",
+   "output_name": "relative_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "energy_balance",
+   "observable_id": "energy_balance__residual",
+   "output_name": "residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "equilibrium_approach",
+   "observable_id": "equilibrium_approach__relative_gap",
+   "output_name": "relative_gap",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "equilibrium_limit",
+   "observable_id": "equilibrium_limit__T_equilibrium",
+   "output_name": "T_equilibrium",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "heat_duty",
+   "observable_id": "heat_duty__Q_duty",
+   "output_name": "Q_duty",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "heat_duty",
+   "observable_id": "heat_duty__q_specific",
+   "output_name": "q_specific",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "J/kg"
+  },
+  {
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__fuel_conversion",
+   "output_name": "fuel_conversion",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__lhv_temperature_slope",
+   "output_name": "lhv_temperature_slope",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "kJ/(mol*K)"
+  },
+  {
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__lower_heating_value",
+   "output_name": "lower_heating_value",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "kJ/mol"
+  },
+  {
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__temperature_offset_bound",
+   "output_name": "temperature_offset_bound",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "kJ/mol"
+  },
+  {
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__final_temperature_change",
+   "output_name": "final_temperature_change",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__ignition_relative_change",
+   "output_name": "ignition_relative_change",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__ignition_relative_change_refined_post_hoc",
+   "output_name": "ignition_relative_change_refined_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__T_final",
+   "output_name": "T_final",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__ignition_delay",
+   "output_name": "ignition_delay",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K/s"
+  },
+  {
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__T_final",
+   "output_name": "T_final",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__ignition_delay",
+   "output_name": "ignition_delay",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K/s"
+  },
+  {
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__T_final",
+   "output_name": "T_final",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__ignition_delay",
+   "output_name": "ignition_delay",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K/s"
+  }
+ ],
+ "operational": {
+  "resource_budget": null,
+  "schema": "forge.system_runtime.operational_context/1",
+  "workspace_hint": ""
+ },
+ "profile": {
+  "allow_partial": true,
+  "cache_policy": "off",
+  "checkpoint_after": [],
+  "requested_modes": [],
+  "schema": "forge.system_runtime.execution_profile/1"
+ },
+ "provider_bindings": [
+  {
+   "binding_id": "cantera",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "schema": "forge.system_runtime.provider_binding/1"
+  },
+  {
+   "binding_id": "tespy",
+   "provider_digest": "e8c601d1d0ad04dd05029300541631809c85caf3e36f119cfa2446f7dae88d42",
+   "provider_id": "tespy",
+   "provider_version": "0.11.2",
+   "schema": "forge.system_runtime.provider_binding/1"
+  }
+ ],
+ "request_id": "flagship-d-chemical-thermal-nominal",
+ "scenario": {
+  "digest": "70d82025184734cdd28d685f43b7e7084ee2143edc61682a0af93b272c994bbd",
+  "kind": "scenario",
+  "ref_id": "jacketed-reactor",
+  "schema": "forge.system_runtime.content_ref/1"
+ },
+ "schema": "forge.system_runtime.system_run_request/1",
+ "system": {
+  "digest": "69c2f573c388694e49f157384f7284f0bb17e8c9d09ab92c88e1fa68a4b0f951",
+  "kind": "system",
+  "ref_id": "jacketed-reactor",
+  "schema": "forge.system_runtime.content_ref/1"
+ },
+ "timeline": {
+  "digest": "ddcb4daf2a758e751037118142c7ea8352a92c6ba8e851d0f1f0ecef21f97ab4",
+  "kind": "timeline",
+  "ref_id": "jacketed-reactor",
+  "schema": "forge.system_runtime.content_ref/1"
+ }
+}

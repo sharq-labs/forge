@@ -1,0 +1,42 @@
+{
+ "bundle_digest": "27d730500ea84b1405d23b0e569bc53ff797c133b40ee57e3d17218745e78df4",
+ "files": [
+  [
+   "plan.json",
+   "a8d570cf50a32cfaa39175c1b211ea0d32caf7e0189b79df8fd637e2ae7be9c6"
+  ],
+  [
+   "references/nasa.li_ion_battery_aging.json",
+   "779edee3beeb42f461facf45239d2a1df5a5b957c095b60ce2881f230a26459c"
+  ],
+  [
+   "request.json",
+   "bc4c3f095548e938f950c4c0258ad8008f9b6e7cea75da17bea9462bc22a9f24"
+  ],
+  [
+   "result.json",
+   "f4fb70f7c3771c8d1c07c7f3cae1aa0cc8e46ce55cb7e192858e90652d409ecd"
+  ],
+  [
+   "summary.json",
+   "129e86abb4bdb008a8034196b2fa73353acaba4edb0036ea86dbe328e676ae93"
+  ],
+  [
+   "summary.txt",
+   "2b3faefc2d08aec59ac59f4f45d6775f6cf3b99d2885094d5bb949455e9c4647"
+  ]
+ ],
+ "name": "flagship-battery-outside_window",
+ "plan_digest": "5a3c5a662d103acb96f4511a63f33a04d61a1440636e85285b42674eb5bfae36",
+ "provider_identities": [],
+ "reference_digests": [
+  [
+   "nasa.li_ion_battery_aging",
+   "db9d7e8a73e5175e8b30f5821a8e142d7898852c32587f2f9194ccc522ba49f4"
+  ]
+ ],
+ "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
+ "result_digest": "a1615cbbc8047eac2b623ee56bfc0a14363f14b7135d089135e3d44ef78231c3",
+ "schema": "engcore.engineering.bundle/1",
+ "summary_digest": "33137684bf89e479474ff870b478b9a5cf4d079028e42ec6b338a3e11f77a670"
+}

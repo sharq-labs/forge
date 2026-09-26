@@ -13,11 +13,25 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 9 — Generic Multiphysics Runtime + preCICE** built (heterogeneous two-way coupling; real preCICE 3.4.0 execution); BIG 10 not started.
+Current: **BIG 13 - Flagship Engineering Demonstrations** built on `feat/big-13-flagship-demonstrations` (base `6054ac44`, the BIG 12 HEAD): four
+flagships (A battery + cooling + lifecycle; B thermo-mechanical structure; C lid-driven cavity CFD; D chemistry / thermal-fluid), each one BIG 12
+`SystemRunRequest` executed by the generic `SystemExecutor` (no flagship runtime), with an engineering summary, a verifiable run bundle,
+VTU/CSV exports, reference provenance and a 7-level verification ladder that stops honestly where the evidence stops. All four end
+`insufficient_evidence`; none is validated. Four criteria were NOT met as written and stay visible (see PROGRESS, BIG 13). Reports:
+`docs/flagships/`. BIG 14 NOT STARTED.
+
+Previous: **BIG 12 - End-to-End System Runtime** (branch `feat/big-12-end-to-end-runtime`, HEAD `6054ac44`): one deterministic
+provider-neutral orchestration runtime over the existing authorities (request -> plan -> preflight -> executor -> result/trace ->
+constraints/conservation -> checkpoint/resume/replay -> trust hand-off); two read-only scientific reviews with fixes (see PROGRESS, BIG 12).
+
+Earlier: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
+fallback, content-derived execution identity, argv-only process boundary, PyBaMM / Cantera / CoolProp /
+TESPy / CalculiX / OpenFOAM / SU2 / Code_Aster / OpenModelica executed; see PROGRESS); BIG 12 not started.
+BIG 10 (multi-timescale runtime) is built on the same branch.
 
 ## Current branch / PR
 
-- Branch: `claude/serene-tesla-n7t17w` (from `main` @ `2b76017f`)
+- Branch: `feat/big-13-flagship-demonstrations` (from `6054ac44`, the BIG 12 HEAD on `feat/big-12-end-to-end-runtime`); local worktree `D:/forge-b13`
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 
@@ -238,7 +252,71 @@ preCICE provider in `providers/precice` (preCICE 3.4.0).
       D cross-mesh via BIG 7 mapping, E >=2 provider types, F TimeWindow, G environment,
       H lifecycle, I conservation diagnostic, J real preCICE run (all executed; see PROGRESS).
 - [x] Review blockers fixed (preCICE unit check; Forge-owned acceptance).
-- [ ] Non-blocking gaps: see PROGRESS (BIG 9 section).
+- [x] Re-review before BIG 10 (CHANGES REQUIRED, 5 BIG 10 blockers) -> fixed: unrelaxed fixed-point
+      residual, undeclared participant events refused, input/condition changes are window boundaries,
+      provider adapter state progression + explicit `ParticipantStateContract`; resume handled at
+      macro boundaries by BIG 10 (`MacroCheckpoint`).
+- [ ] Non-blocking gaps: see PROGRESS (BIG 9 section and BIG 10 "BIG 9 re-review").
+
+### BIG 10 — Multi-timescale runtime
+
+`src/engcore/multiscale/` (non-Core; registered) orchestrating BIG 2-9; reference domain probe
+`domains/electrical/resistance_drift.py`; proofs `tests/test_multiscale_runtime.py`,
+`tests/test_multiscale_review_fixes.py`, `providers/fenicsx/tests/test_multiscale_fenicsx.py`.
+
+- [x] Declared `ScaleHierarchy` (FAST / OPERATIONAL / SLOW roles; domain declares state ownership; in identity).
+- [x] `MacroStepPolicy` (explicit adaptation rules, event SPLIT/REFUSE, explicit-normalization
+      state-change limits, threshold localization); every size change / refinement recorded.
+- [x] `RepresentativeWindow` approximation contract (exact rational weight, whole-period tiling +
+      resolved remainder, declared assumptions/applicability, MEASURED input deviation vs declared
+      periodicity tolerances; beyond tolerance -> rejected and refined).
+- [x] Aggregation with stated preserved/lost history features; models declare accepted forms and
+      required features (`AggregateRequirement`, lifecycle `PHYSICS_AGGREGATE`,
+      `StepStatus.INSUFFICIENT_HISTORY`); `compress_history` (derived, never gains features).
+- [x] Fast/slow separation: fast solver gets read-only state; only APPLIED BIG 4 steps change slow
+      state; material re-resolution enforced per execution (`MaterialBinding`).
+- [x] Exact fast-execution reuse only for a declared-pure system and identical request identity.
+- [x] `MacroCheckpoint` (serialized, digest-verified) + `resume` refused unless all fast participants
+      DECLARED complete state; `compare_resume` (reproducibility, not validation).
+- [x] Approximation ledger (7 separate components; UNKNOWN unless quantified; observations of a more
+      temporally resolved numerical reference are not bounds).
+- [x] Proofs A-F executed (lumped+SciPy in core env; FEniCSx+SciPy in the conda env) — see PROGRESS.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 10 section).
+
+### BIG 11 — Solver provider expansion
+
+`src/engcore/providers/` (non-Core; registered) + separate adapter distributions under `providers/<name>/`;
+map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/test_provider_boundary.py`,
+`tests/test_big11_review_fixes.py`; provider proofs `providers/*/tests/` (run in the WSL conda envs).
+
+- [x] Final BIG 10 review before providers (9 blockers fixed, `test_b1..b9`).
+- [x] Descriptive capability registry, `discover` (id order) / `require` (exact provider or
+      `ProviderUnavailable`); `default_registry()` never raises; `python -m engcore.providers`.
+- [x] Content-derived `ProviderExecutionIdentity` incl. dependency digests (Python RECORDs; conda env
+      package-set digest for process providers).
+- [x] Process boundary: argv only, fresh workspace, explicit env, timeout + process-group kill, executable
+      re-hashed at launch, outputs = regular files THIS run created/changed, digest-verified reads,
+      stale/foreign/input/symlink refused; exit 0 is not success.
+- [x] Providers executed: PyBaMM 26.8, Cantera 3.2.0, CoolProp 8.0.0, TESPy 0.11.2, CalculiX 2.23,
+      OpenFOAM v2412, SU2 8.5.0, Code_Aster 18.1.7, OpenModelica 1.27.1. Elmer UNAVAILABLE (recorded).
+- [x] Integration: PyBaMM <-> TESPy on the BIG 9 runtime; PyBaMM as a BIG 10 FastSystem; BIG 3 ambient /
+      coolant channels consumed; BIG 5 E/nu records -> CalculiX/Code_Aster; CoolProp records -> CFD viscosity.
+- [x] Record-bound cross-provider comparison (independence, spread tolerances, post-hoc label, values digest).
+- [x] Proofs A-J executed — see PROGRESS (BIG 11).
+- [x] `forge-scientific-review` (CHANGES REQUIRED, no blocker) -> findings 1-15 fixed; focused re-review
+      (CHANGES REQUIRED, 5 MEDIUM) -> fixed with tests; LOW residuals recorded; second re-review NOT RUN.
+- [ ] Non-blocking gaps: see PROGRESS (BIG 11 section).
+- [x] BIG 12 — End-to-End System Runtime: `src/engcore/system_runtime/`, tests `tests/test_system_runtime_*.py` (112) + real
+      `providers/pybamm/tests/test_system_runtime_battery.py` (8, WSL). Review round 1 fixed; round 2 fixed except the recorded MEDIUM/LOW gaps
+      (model selection not bound to executed authority; waiver rule limited to committing nodes; multiscale resume-stage dependency; taint residuals).
+      The round-2 fix batch was not re-reviewed. Full FAST/SCIENTIFIC/mutation/recertification NOT RUN.
+- [x] BIG 13 — Flagship Engineering Demonstrations: `src/engcore/engineering/` (non-Core, registered), `flagships/` (A battery + cooling + lifecycle, B thermo-mechanical structure,
+      C lid-driven cavity CFD, D chemistry / thermal-fluid), reports and verifiable bundles in `docs/flagships/` (index `README.md`, `runs/`), design note `docs/architecture/engineering.md`,
+      tests `tests/test_engineering_contracts.py`, `tests/test_system_runtime_big13_additions.py`, `flagships/tests/` (provider-free: portfolio, ladders, adapters; real-provider suites per WSL env).
+      All four flagships end `insufficient_evidence`; six criteria were NOT met as written and stay visible (see PROGRESS, BIG 13). Two read-only scientific reviews with fixes;
+      four read-only review rounds (each found a lower-severity residual; the round-4 fix batch was NOT re-reviewed). Full FAST / SCIENTIFIC / mutation / recertification NOT RUN.
+- [ ] BIG 14 — NOT STARTED (per instruction). Gaps handed forward are listed at the end of the BIG 13 entry in PROGRESS (no quantified uncertainty, no experimental comparison,
+      A cell-side conservation check, B/C/D unexplained residuals, unkeyed bundle manifest, optional flagship E).
 
 ## Persistent project direction
 

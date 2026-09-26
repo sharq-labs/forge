@@ -21,7 +21,9 @@ is numerical; conservation audits are diagnostics; neither is validation.
 """
 
 from .adapters import (
-    CouplingExecutionLog, field_port, mapped_input, provider_participant, record_to_spatial, scalar_port, spatial_to_record,
+    CouplingExecutionLog, ParticipantStateContract, StateCompleteness, field_port, mapped_input, provider_participant,
+    record_to_spatial, scalar_port, spatial_to_record,
 )
 
-__all__ = ["CouplingExecutionLog", "field_port", "mapped_input", "provider_participant", "record_to_spatial", "scalar_port", "spatial_to_record"]
+__all__ = ["CouplingExecutionLog", "ParticipantStateContract", "StateCompleteness", "field_port", "mapped_input",
+           "provider_participant", "record_to_spatial", "scalar_port", "spatial_to_record"]

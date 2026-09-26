@@ -1,0 +1,9 @@
+[project]
+name = "forge-cantera-provider"
+version = "0.1.0"
+description = "Cantera chemistry provider for Forge (crafty). Computes; holds no scientific authority."
+requires-python = ">=3.10"
+dependencies = ["crafty", "cantera>=3.0"]
+
+[tool.setuptools]
+packages = ["forge_cantera"]

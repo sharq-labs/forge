@@ -1,0 +1,52 @@
+{
+ "bundle_digest": "82c0e096371e91acafef903c469a89bbb0e6b0a3382288971a497b61c203e2da",
+ "files": [
+  [
+   "plan.json",
+   "9dd017420651aea7b93a02032159f0b984a9fd98774af7a6e54142524c5de5d7"
+  ],
+  [
+   "references/nist-webbook-formation-enthalpies-hess-lhv-ch4.json",
+   "cc49a980742fbfa8f0c89c46d2a2c0c5d24a6d4d884ebab006eb0ab915ad175d"
+  ],
+  [
+   "request.json",
+   "ce2022c7cdc02025214e9ce4700e87e859577cbf3c2e8de6fc579c028a28fcd1"
+  ],
+  [
+   "result.json",
+   "ab8eb9030994f69b66398dc9a3c2bebf5b4dd6eb9644c426b9e4ecdcc8f92f27"
+  ],
+  [
+   "summary.json",
+   "c4479d3aff8c656116e1e02b7844616069bdd07de04cbd17ff46797fb792ada9"
+  ],
+  [
+   "summary.txt",
+   "4e10c663eea36099141c7f05e4ce928bd41f6dec1ff8216f6e14a9aaba27865e"
+  ]
+ ],
+ "name": "flagship-chemistry-nominal",
+ "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+ "provider_identities": [
+  "2fedb346a0ca8373a16e5829ae89f4cbdba4b7d71e5e2e71b698887c977f3ff7",
+  "504d0fd9a5c401330ffac2285b17443ee40b3bfe419e2092dd6479483bf88133",
+  "571af8c8bbcc1f21520c358b7f899e59c32e7785ca308a31ca4deed36669d26a",
+  "6b2b49218811bfaab34d0e864f84c8e9f5fbb8628a4b7aa16399f21eb85c90ff",
+  "7b18952df5908959bf60ac5bf1bd9eaac0c4df20eb21ff6d6b64cddedd49bc76",
+  "7d7d5ec5c642b0752d35cbd36616ba89590bcb136e18054967e95897d9bf86a9",
+  "9f608bc5f91ea6a0d88b9e8475e1b98c1b2175c21974f74f15503f29cb3da1ee",
+  "de467ab3661ba486037b1a5e1a7ebd78e34fe1f3bda9223296414e69ccfe3062",
+  "e33c2a67f006b465265f4db8de928ba3031072c09b10805e84b22e4d2bee3d36"
+ ],
+ "reference_digests": [
+  [
+   "nist-webbook-formation-enthalpies-hess-lhv-ch4",
+   "6333b1640b1061b2c528591efea0898d4724974badb16a866ace327f86217717"
+  ]
+ ],
+ "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+ "result_digest": "bd27a1e4a77ce193a99974b647fe60a90f70708a39b8035a680375de7aa63afa",
+ "schema": "engcore.engineering.bundle/1",
+ "summary_digest": "ddfb8aa0a953406b4681d151d50ff8913d0c22f8c731a1a7146620e84983640b"
+}

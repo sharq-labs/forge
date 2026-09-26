@@ -1,0 +1,5200 @@
+{
+ "artifacts": [],
+ "checkpoints": [],
+ "classification": "system_execution_not_scientific_support",
+ "diagnostics": [],
+ "final_state": {
+  "environment_digest": "",
+  "material_state_digests": [],
+  "owners": [
+   {
+    "owner_id": "reactor",
+    "role": "component",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared placeholder",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "reference"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "69c2f573c388694e49f157384f7284f0bb17e8c9d09ab92c88e1fa68a4b0f951",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "initial_state": {
+  "environment_digest": "",
+  "material_state_digests": [],
+  "owners": [
+   {
+    "owner_id": "reactor",
+    "role": "component",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared placeholder",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "reference"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "69c2f573c388694e49f157384f7284f0bb17e8c9d09ab92c88e1fa68a4b0f951",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "node_outputs": {
+  "adiabatic_equilibrium": {
+   "T_adiabatic": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2225.5245834770026,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "X_CO": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.008987939083209846,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_CO2": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.08536421734727191,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_H2O": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.18346659345859384,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_NO": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0018882057584032957,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_OH": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0028754074850035824,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "element_residual": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.7644787698679372e-11,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "h_reactants": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -254587.04779300306,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  "constraint.b_tflame": {
+   "margin": {
+    "origin": "constraint:max_flame_temperature",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "constraint margin: the observed value's uncertainty is not propagated by this runtime",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 74.47541652299742,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "constraint.b_twater": {
+   "margin": {
+    "origin": "constraint:max_water_outlet",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "constraint margin: the observed value's uncertainty is not propagated by this runtime",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 38.88182216424411,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "coolant_loop": {
+   "T_water_out": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 314.26817783575586,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "heat_absorbed": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 26483.00800497967,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   },
+   "water_rise": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 21.118177835768392,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "cooled_equilibrium": {
+   "X_CO2_out": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.09505703422053233,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_CO_out": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.3401427145595558e-25,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "X_H2O_out": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.19011406844106463,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "element_residual": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.3588646346378156e-16,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "h_cooled": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -2902887.84829097,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  "energy_balance": {
+   "relative_residual": {
+    "origin": "of the duty",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.3737030198411203e-16,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "residual": {
+    "origin": "Q from Cantera - m dh from TESPy",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -3.637978807091713e-12,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  "equilibrium_approach": {
+   "relative_gap": {
+    "origin": "|T(50 ms) - T_HP| / T_HP",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.395751165423358e-12,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  "equilibrium_limit": {
+   "T_equilibrium": {
+    "origin": "HP equilibrium of the kinetic initial state",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8832325060944,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  "heat_duty": {
+   "Q_duty": {
+    "origin": "specific duty x reactant mass flow",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 26483.008004979667,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   },
+   "q_specific": {
+    "origin": "h_reactants - h_cooled (Cantera enthalpies)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2648300.800497967,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  "heat_of_combustion": {
+   "fuel_conversion": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "lhv_temperature_slope": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -0.009896891055404922,
+     "schema": "quantity/1",
+     "units": "kilojoule / kelvin / mole"
+    }
+   },
+   "lower_heating_value": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 802.5391697247701,
+     "schema": "quantity/1",
+     "units": "kilojoule / mole"
+    }
+   },
+   "temperature_offset_bound": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.01830924845249933,
+     "schema": "quantity/1",
+     "units": "kilojoule / mole"
+    }
+   }
+  },
+  "integrator_study": {
+   "final_temperature_change": {
+    "origin": "two finest integrator settings",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.4618308341596276e-08,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "ignition_relative_change": {
+    "origin": "two finest integrator settings, discrete maximum (criterion pre-registered)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.014492753623188442,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "ignition_relative_change_refined_post_hoc": {
+    "origin": "POST HOC: parabola-refined ignition time",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.006333695609669082,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  "kinetic_0": {
+   "T_final": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8831106513926,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "fuel_remaining": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.574263935602246e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "ignition_delay": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0035000000000000005,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "ignition_delay_refined_post_hoc": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034125734936910844,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "max_heating_rate": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2368966.7315419614,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  },
+  "kinetic_1": {
+   "T_final": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8832325115513,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "fuel_remaining": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.5742651915568514e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "ignition_delay": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034000000000000002,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "ignition_delay_refined_post_hoc": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.003449271124043616,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "max_heating_rate": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4752079.822621537,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  },
+  "kinetic_2": {
+   "T_final": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.883232496933,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "fuel_remaining": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.5742651914123e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "ignition_delay": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034500000000000004,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "ignition_delay_refined_post_hoc": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034275619897174738,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   },
+   "max_heating_rate": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8123335.005668592,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  }
+ },
+ "node_receipts": [
+  {
+   "applicability": [
+    {
+     "check_id": "thermo_range",
+     "evidence_digest": "a5842791977abf455e92ded504a48f0b365d7512dd0ea690e6994cf5432288c5",
+     "reason": "equilibrium temperature 2225.5 K against the species thermodynamic data range [300, 3000] K stored in the mechanism bytes",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "43f929de72b0c8f2399ee859b8fb6c3b11695ce795406d6684379b3ca72189c0",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "b3202e6833ac3124d5bc2d8416e11038d5a791117fa37f1ee6931fc47e4f781b",
+   "execution_identity_digest": "8c14364f68ed8aa00fc8db0d0bc291b3641dfdd9db39a2cfc0d8b3b372b644e1",
+   "input_digests": [
+    [
+     "T0",
+     "c9129ed46fde9b0c5ca858b824a80557fb53629503b6e715ce9cc51bcf137373"
+    ],
+    [
+     "p",
+     "71630d03df9a79219c2327141d033a8efed6859bffca92d33d1fe94d290f0de3"
+    ]
+   ],
+   "node_digest": "49986707574837416700da9393435bf18c93c4b5e11f856146e17a72491b2378",
+   "node_id": "adiabatic_equilibrium",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_adiabatic",
+     "301948b0125ea5147ee3819de11fef0e00cc8f91df011f174919985fb44a7f22"
+    ],
+    [
+     "X_CO",
+     "ab8b13ffa9474eb5b71419374e64d8e8aef0902f5f07d652629c051655196459"
+    ],
+    [
+     "X_CO2",
+     "3634903928cfc41427d0120c3d58859f5de2d8ba33801f73f55128726469e5f7"
+    ],
+    [
+     "X_H2O",
+     "7874baa3242f60b0facadab859269c79a4bf3c5516f3e8da952cf8a981b7df6c"
+    ],
+    [
+     "X_NO",
+     "0dc49ba6c6b0d15fc989ba1e1946a9026e4130174fc732f2563427a7a3208b93"
+    ],
+    [
+     "X_OH",
+     "ba6093fc45657449e6e136cc029f684206636938b0502abf39abbd82b2ec871e"
+    ],
+    [
+     "element_residual",
+     "4f54179f40383e64aa6f23c88cb9d19118d95593a92fd855b6a42a9907666af1"
+    ],
+    [
+     "h_reactants",
+     "191ca6e82b7065ff7c4ecaef193270790c2eb874a8785f1bab3daaaf7c4c8fe9"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "571af8c8bbcc1f21520c358b7f899e59c32e7785ca308a31ca4deed36669d26a",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "b3202e6833ac3124d5bc2d8416e11038d5a791117fa37f1ee6931fc47e4f781b",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.05255394799999635
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "398e448e9c03b051090bbcfa3827f53e6595ae511ae83406106d88225068ad9e",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "thermo_range",
+     "evidence_digest": "6387da060615d7335ed33c71c1ce4a5ba0d744dc7b98a114a4956d51b65570f6",
+     "reason": "exhaust outlet temperature 400.0 K against the species thermodynamic data range [300, 3000] K",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "23aab809cc88e808718a2b4e5b74ed42ebaa9772b3851fbecb25879cacd0bbc6",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "7db7296a9bd64b4abfed7a25e939c20c33c5bf1f4bfe1cd48ee41983d4a04c6c",
+   "execution_identity_digest": "950a0b949b007798f4f609064c92f1b890e62b2a3afbff7632c57c01a1fdae6d",
+   "input_digests": [
+    [
+     "T_out",
+     "aeb6cfb809bc4ce3cf29ceacf11079975703d6dc51eea2db2de9ee31272d0fca"
+    ],
+    [
+     "p",
+     "7bf6aef48ebfe55744b69fb492ba4f728dffcaade6fd58223d15daa688824070"
+    ]
+   ],
+   "node_digest": "73ba58ba313810bf5a8a09d00a603f181356bbbd56a0b14741826c0e653b6bfa",
+   "node_id": "cooled_equilibrium",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "X_CO2_out",
+     "6ee3f57b1a8325b3ba22447f6bbfa37eb32095a6572f19f1f5db4cbde0ec2327"
+    ],
+    [
+     "X_CO_out",
+     "a3b1dd2151d2338c40d2ab849adaae1ea3ce49d3256dbb7da6de90725a916c8f"
+    ],
+    [
+     "X_H2O_out",
+     "d720e0c7dd943fd189bc2e9c7b0c3c91e31751e9c13ba06c19492a93cc406f15"
+    ],
+    [
+     "element_residual",
+     "70adfdbba1f4e31e76a819d8cb2842f2d52485c05c02f4ae051d87dd72d66069"
+    ],
+    [
+     "h_cooled",
+     "ce28189ddbf7bad297e14ead0c8f4962073a83e926f0dfa4ad5b69a95dff3618"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "7b18952df5908959bf60ac5bf1bd9eaac0c4df20eb21ff6d6b64cddedd49bc76",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "7db7296a9bd64b4abfed7a25e939c20c33c5bf1f4bfe1cd48ee41983d4a04c6c",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.09944894099999146
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "d9d169cd1ba4124489de0d1f392ff16351d9e488c77c307fa7c7a6ccd28d72d4",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "thermo_range",
+     "evidence_digest": "88afb87f90b50456c2eca97e002302a1ffa6b408766c6e1554533392efd364ce",
+     "reason": "equilibrium temperature 2697.9 K against the species thermodynamic data range [300, 3000] K",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "df750e5d15cefa0032788edeeef3c9d6526adc94aa099e6264388184db82c52e",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "94941b58f3276321d2a0ce6c8a4178f87778af411b65decd1fbcbda5f6075078",
+   "execution_identity_digest": "15cdebcaf6a149f8ea13a31f12da133b8c8db3a9096bd726b3b6b46c0fb41d6b",
+   "input_digests": [
+    [
+     "T_start",
+     "124e4ccb92d100e0deae664ff22e43b6a04c44e8f7802bcef230149e02cbee0b"
+    ],
+    [
+     "p",
+     "34d48751845ea30ad68d1bf8c4fa9bdd200f06215c4d7a8e1ce5099374cffea4"
+    ]
+   ],
+   "node_digest": "2f8a58efb2a418a9d2ade62a37d8f8ede7ec90b1cb8cef28542940028f868d9d",
+   "node_id": "equilibrium_limit",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_equilibrium",
+     "12b55e39da434b781f70abe5dc1f2da8150a8000ecb439326316d22b088f93ae"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "de467ab3661ba486037b1a5e1a7ebd78e34fe1f3bda9223296414e69ccfe3062",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "94941b58f3276321d2a0ce6c8a4178f87778af411b65decd1fbcbda5f6075078",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.05393677000000707
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "9a475041a5cf37ef112adadd53181400967841b976491d48b06bfbc0e4ad7e69",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "thermo_range",
+     "evidence_digest": "d6dc0d2c47d65abc7817e8c2f71150d45d4922f2876496603b7d1facbfda5fb9",
+     "reason": "evaluation temperature 300.00 K against the species thermodynamic data range [300, 3000] K",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "f8d1d4f8e6c97b79997e0a37be44022ef6e72739b51b3ae98f97997b0a029090",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "e1ca28224e850399da3eb98605fd8347b99f245b39bd62e300e9662b20961a21",
+   "execution_identity_digest": "96148d6ee4ec115c0a00d912543431a12991139625b1242d69c053b68a7ed4b5",
+   "input_digests": [
+    [
+     "T_ref",
+     "8a2962707509a85331fa3db8ebdf40c68ef5370c2d3a2fbb3bdea41972e5d763"
+    ],
+    [
+     "p",
+     "c3a1f4093b4f940a1bbb71440719c79843ed2a3baae6c8675f0970e26a883017"
+    ]
+   ],
+   "node_digest": "2e290683b2f2ca2a56b6bc30b745290f2c7cfb84e24228ed1b907d1360f9d719",
+   "node_id": "heat_of_combustion",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "fuel_conversion",
+     "cccaef9d5b4efbb84c7b78c6841a829abb698982f373df9567324a2406ff7504"
+    ],
+    [
+     "lhv_temperature_slope",
+     "198b8ebddb7ec9e6e0488ba277c4ac3436992f97575ff856fb4eaba9f4c08016"
+    ],
+    [
+     "lower_heating_value",
+     "1e9f06d6c98cbb1868c6e55fe1ef02cc38a83853487c13b8f8515abb9c45c65a"
+    ],
+    [
+     "temperature_offset_bound",
+     "be2534a2e1f3b005f676bb8acc8d0a3d4546792de960fe8c55af8c943feae6cc"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "e33c2a67f006b465265f4db8de928ba3031072c09b10805e84b22e4d2bee3d36",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "e1ca28224e850399da3eb98605fd8347b99f245b39bd62e300e9662b20961a21",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    },
+    {
+     "execution_identity_digest": "504d0fd9a5c401330ffac2285b17443ee40b3bfe419e2092dd6479483bf88133",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "2389a02cd0fa086fcef2d6ce04c09f72efbe195c7c81957d6dc3de5f89a3ddf6",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.10578622699998164
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "92b0598cf200b5ceaac9e9dfc33503801509515c8a6cebb7d4046af7df30b9b3",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "22ef07acce5314fd18d8cf35cd18a3db8c80c751b83b898f175b58780736ff7c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "2f010b29c362bfe06794b51265a50e45ed7665af614b99d116884ecca3b01c13",
+   "execution_identity_digest": "c1ea3e16317d0b7ead604ba5123794b9d890fd03c7b8a4a5bc7f4dd2aa0218f1",
+   "input_digests": [
+    [
+     "T_start",
+     "9c00a46ebfa99c393f58f8b0f46d89f5f22a9b4c30f15379bd81dd57b9a93b0d"
+    ],
+    [
+     "p",
+     "e944f56a94604891b591daa155b2d6ac71da48631bea37bf086e2a018a76bda7"
+    ]
+   ],
+   "node_digest": "31e338138fae39b2b98db61463e2779fa046c067e414c95cfba508540ae854b4",
+   "node_id": "kinetic_0",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_final",
+     "ed1acb777d0109d8a17a0d07098edcecf7bfe41a944602d39d658eebc81b678d"
+    ],
+    [
+     "fuel_remaining",
+     "3e0f31dd4548db12ef3bae5f493abe31f4d8e33b948812468376beb8164851ae"
+    ],
+    [
+     "ignition_delay",
+     "1ae9ee4972c2d923b75ea799b78d3706fcd63e0d91481c3819db357aa8d3c803"
+    ],
+    [
+     "ignition_delay_refined_post_hoc",
+     "fd19fc35e7f2dbdef3ca2f3daa57ca81f3d15f4483bb9ba76016601f2c8213ff"
+    ],
+    [
+     "max_heating_rate",
+     "b104c810e71bb37d87c5dd17b823ddc272bfa87fc45d914661726e65e337fba0"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "7d7d5ec5c642b0752d35cbd36616ba89590bcb136e18054967e95897d9bf86a9",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "2f010b29c362bfe06794b51265a50e45ed7665af614b99d116884ecca3b01c13",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.07190495199998281
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "5c3492b4385153a865225658832fbf02788a0d8a46bc484636850d6296016825",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "cdd6c27566b1fd5fcfee77b562717c20b1dd01315209d8560badeeb59a287815",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "42b739d96d1dd8b8a9540f7e9f919fd8de650149a30044a3c3da5a4523c97514",
+   "execution_identity_digest": "df5e9543752a825234cb3b8c337eaf8193b592246e1da19f8b1d9bf60988b838",
+   "input_digests": [
+    [
+     "T_start",
+     "3c1dc041215b6967e4010800c371450841ad7f80873745f5eba1c679edf157a4"
+    ],
+    [
+     "p",
+     "0db631b72742b9dc5345224d1ca84c09a204dae83a3416327f3a5d90b21dedc7"
+    ]
+   ],
+   "node_digest": "9baa2a188b3f43f0d7475b80e93fe58413e8d89f0ec6f35b0b0a9309a2f6af33",
+   "node_id": "kinetic_1",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_final",
+     "b526321ea3dc5e033db5d46fee7fd500143b21717c5b85a9259f31b4f3ddf8da"
+    ],
+    [
+     "fuel_remaining",
+     "76bc7d2fd4763265f7ea0ecae656938cf82ec488ee12060bf8a0423d1f724fcc"
+    ],
+    [
+     "ignition_delay",
+     "2c10ba5a556add7203bfb8451293e07723f3e2522d9228e95b1f5fde0461d369"
+    ],
+    [
+     "ignition_delay_refined_post_hoc",
+     "d5efc694dfb006c2ed8f874177b53b8a9f049cbb86af5a6e37d02a8860e22daa"
+    ],
+    [
+     "max_heating_rate",
+     "3794365c8ebd215deb07c67e235a35575d51aaaf77f4b9b1af9ad6eab480b8a0"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "6b2b49218811bfaab34d0e864f84c8e9f5fbb8628a4b7aa16399f21eb85c90ff",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "42b739d96d1dd8b8a9540f7e9f919fd8de650149a30044a3c3da5a4523c97514",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.08226857399998266
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "c28c88ec6460da9ef35fd4177fb375b4e68bb071a5de009ba87dd59e001259cc",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "ab1537b1ec8fa8fc1266071a6161bf95bc00ecdcadba568cc16197409db0912c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "69f520356e0a9080c6e99b4c8fb598a9bc1995ff83bacbd7011059063d97177f",
+   "execution_identity_digest": "6e6ff252b60427faa7feb4cccdb7f46f578ea72027721cdd46eb498310c7b593",
+   "input_digests": [
+    [
+     "T_start",
+     "2ae20b773ad3661e044d67633ef70139b3c4c589df68bc29bc5d3ca03b09caa2"
+    ],
+    [
+     "p",
+     "40b1859cb4d38eda205f008754bf5d2d1a5a1b4ee6edb5949d6c650c66605827"
+    ]
+   ],
+   "node_digest": "af6cfc27adf0146e05ac1fa960b51e992d5bfd2dd69e6802bdfb7bb5b3334a27",
+   "node_id": "kinetic_2",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_final",
+     "8b5efcaaf167a2be68038b32702a67352372e362e5037417dbfb972a9681aa1a"
+    ],
+    [
+     "fuel_remaining",
+     "e68afce460bfb240e610fb45b8d893f1585ad2b55d730e49b438ca91fb308d11"
+    ],
+    [
+     "ignition_delay",
+     "10e144f6b1c410b19af2308b24aeb45759384c8cf48e6005ced8644b7816778c"
+    ],
+    [
+     "ignition_delay_refined_post_hoc",
+     "c9d06ccc6f441c1da45d6185495488d393282e939544499b5cbc975337d74ffe"
+    ],
+    [
+     "max_heating_rate",
+     "3cd4aa6a237b36994acf443e54301164861718e7ecaf2c0967249b7911dece90"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "2fedb346a0ca8373a16e5829ae89f4cbdba4b7d71e5e2e71b698887c977f3ff7",
+     "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+     "provider_id": "cantera",
+     "provider_version": "3.2.0",
+     "record_digest": "69f520356e0a9080c6e99b4c8fb598a9bc1995ff83bacbd7011059063d97177f",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.12112382800000887
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "ebb01f9a217535ac224dd720277716566d5ce56485db3615ed8041421f4b4d27",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "c0263efda34db064616b834bed7197bdf75e10d8cfa5d7f03c1a84092b48eae3",
+   "input_digests": [
+    [
+     "observed",
+     "91cf68576e6406d9b3ca5eedb0b074aea28012695c4314a5fa287e1e32e34b60"
+    ]
+   ],
+   "node_digest": "cae7b7a63fcfc1778532f6c30d655fe8abc71cd148eb3734bb31c6f171a8e8f4",
+   "node_id": "constraint.b_tflame",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "margin",
+     "9f02c98a1a9f46bebd90f28df2c78868ef78bb9f589446c5aa9043e3ee32d2e0"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0011389459999975315
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "9e5462b7a5784fb4e6f79b143462faada9bf15f17cb58e27e355efe8491ab3e4",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "8cea28156dbcc75e167c04ea3a292c39678c6c28867a4d8f9d7cccfb756a797d",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "77bc0d753954a7faa148e9a408a5601926e6ba926962e14e564be8f26b3e7252",
+   "input_digests": [
+    [
+     "T_equilibrium",
+     "324f0b8f08baac33ecdf3ae2cd7bbc203916d803af127ebe5a94204a94916aa2"
+    ],
+    [
+     "T_final",
+     "34d2dbe6022c3686bd1fd3259749f22ffd9124fde9734d9a50d81dc45f1138ce"
+    ]
+   ],
+   "node_digest": "dae23ae8d72355a7f11837111352d45aa41818ac5283e15c2cd7009a816b73b1",
+   "node_id": "equilibrium_approach",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "relative_gap",
+     "fab3d34920424efd7745fe2fbe3d004ebb412bb01c0bcd6bfa1ed10a15311086"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0013703319999933683
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "ca712c23ef20b91a31513d24a664f411e270afd676e78bb643341bf9963f5cf4",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "81eb006a89496705515bac8bf9c356eb93a8eab59586c21575a201fa6f219a71",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "9d312dbcfc56236fa2afc18476f22f5e47ddb543ff5585206e2d135871694a4e",
+   "input_digests": [
+    [
+     "h_cooled",
+     "00df8b4f8c22abd9055be60940ecea3f8ec0e3ec8161857a4566453f0a97e41f"
+    ],
+    [
+     "h_reactants",
+     "ac094bb3a4da139c89d3cfe73963f4782d70d24e2c0d94fdf6affa005b568416"
+    ],
+    [
+     "m_mix",
+     "d7e7642cb944482594d28a6a4e594ac5ac7e821e5bdb211f32b4dc417e0e5e33"
+    ]
+   ],
+   "node_digest": "b72fd4b73828b227fa6c4b5cc9e1da4afeafc2a73b78d64f0cd5f3848de8e303",
+   "node_id": "heat_duty",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "Q_duty",
+     "f9d72cefa42e317cffd5b6be33e22c2cdaaba0bf8f1c6673fa7e477287d3708b"
+    ],
+    [
+     "q_specific",
+     "a9783ce338304672f77531aa08b40c2bf62c3223d45b0ba1a2a90fb42c9cdb30"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0011472939999919163
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "0c9252bb711f20dcbf59f77a68131302a53237deef1768246dc8b9903cab379c",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "c30540c04cf98a81ae546731706d29f8884942c004c2d373ca2bd26b96b6f349",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "44984b7dd9442c44cf2a44bfbe29aa79c6f7d0c8f7e5704842e90f6ee9b9e446",
+   "input_digests": [
+    [
+     "T_b",
+     "76dfc9b03131830287a95fc6433c73caa44236230b0d175eced5cc2e4114a838"
+    ],
+    [
+     "T_c",
+     "872a1d65824b57974103936aa76aa0f3e96bd6eba1fc5489d023a67f7dae90b0"
+    ],
+    [
+     "ignition_b",
+     "c6fb2704da1b7b1ed9fa2e3a863200a5fde797554a1806a4b7d19fe077d4eb9c"
+    ],
+    [
+     "ignition_c",
+     "8fe1bad1b88621f0966aabbd279dabdd0fa0dcb9ea18b6d14120523694aa93ec"
+    ],
+    [
+     "refined_b",
+     "91f5080cf026ddc2f5af4475b87140bb90ff1725ba25a9aa8c25eac755c9d871"
+    ],
+    [
+     "refined_c",
+     "9125f65b3b90c82702785a1e9a583ce842672a9197854a69caf2c3e9c948e2a6"
+    ]
+   ],
+   "node_digest": "76d025d30c59e075f5aec4acb784f0b97b3f92f298e67f4e437452dbb1c962ae",
+   "node_id": "integrator_study",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "final_temperature_change",
+     "87a45d72e61ff3c0974fba35e906fca63029dab1df1f986176b98de189bff367"
+    ],
+    [
+     "ignition_relative_change",
+     "f15b5a0935e74fc1b72fdc6f938f256633a33f75871e78dcd33e512aca76804b"
+    ],
+    [
+     "ignition_relative_change_refined_post_hoc",
+     "6a8a3d371cf07df3fb4ce146c68f44299a43d13657e28bc5b49896b0b2ff0158"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0011402270000075987
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "15b99c331124f8652da3a4ba78be51a7c04ae9813429f581470c9095e445c0e9",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "water_liquid_range",
+     "evidence_digest": "a6e79c35b373a1e0402fd4ec1d60ed89178ba29e44c25b587ba4bb12253e8bf2",
+     "reason": "water 293.15 -> 314.27 K against the declared liquid range [274.0, 380.0] K",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "9ea14abf342e12f2062793c0fccb808a535ffd6581f5bdf427bb0bcb2a3862ee",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "2987a6c2506220d04faa80f6d9521d53429211e91908fc0ac815fb54d6cdf094",
+   "execution_identity_digest": "e8933837387f34fc27694f65da4eaa9235e07d9d821aa87d3aa102846ad7073d",
+   "input_digests": [
+    [
+     "Q_duty",
+     "d73eead9c69837e1d34de050356aceef0c2769d020d3902329b53979ce3074cc"
+    ],
+    [
+     "T_w_in",
+     "37e2e8b96c4dc3c6692489d2691bed54e7f6c8c7706ccab7556b82d415f09bd8"
+    ],
+    [
+     "m_w",
+     "e0b255e8aea6cad62ce0a2a8a919ff8d8a10e0b29784d704253d782ff200a247"
+    ],
+    [
+     "p_w",
+     "36d13b115fdfe249f7a6b94cba00acb47cb96b56f960a3fb1bfca4e60bd551c0"
+    ]
+   ],
+   "node_digest": "b0fc086ea6b0a281ec653bb35d7bce95f00bacfed2d886b3b75a0aef937e8883",
+   "node_id": "coolant_loop",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "T_water_out",
+     "b0fab075e957378a1586fac8a10d85c7d0bf615a9526342264dd3b2b255ed1eb"
+    ],
+    [
+     "heat_absorbed",
+     "724070e9c23e12e9cd8b9be461f04d3000453c06dbe0c422a47ea8f68ead912f"
+    ],
+    [
+     "water_rise",
+     "b81b71aafaceddc57e46a383107598c7f785c3b7db73a626d223de21ff025dd4"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [
+    {
+     "execution_identity_digest": "9f608bc5f91ea6a0d88b9e8475e1b98c1b2175c21974f74f15503f29cb3da1ee",
+     "provider_digest": "e8c601d1d0ad04dd05029300541631809c85caf3e36f119cfa2446f7dae88d42",
+     "provider_id": "tespy",
+     "provider_version": "0.11.2",
+     "record_digest": "2987a6c2506220d04faa80f6d9521d53429211e91908fc0ac815fb54d6cdf094",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 3.199602725999995
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "3ed74c98d142b96e6c26c044a0f8806443d0f208b6638db9c1733989fe6865a2",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "d9eaf70d4d4b1e9d28be1a99d34a4c0d79eb7d6d26510a6a0be64c3625fb01e6",
+   "input_digests": [
+    [
+     "observed",
+     "d54f87a8f2c1fde095bae86eb6daa8521c1e84e5912e5858c3299f14defa6587"
+    ]
+   ],
+   "node_digest": "99b47002fe53e3a505822a2a2c72aa2af199fc3f41907d9c4d616560aacb94c1",
+   "node_id": "constraint.b_twater",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "margin",
+     "6d3cbe2a7efe13633121f7d0805e4e20b8d58f0cd07ce208c51a37c07679acfd"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.001215223000002652
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "59f321a05cc2bfcbd4021c29b16d8df814dee6c67822d91fac633ff319b72887",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "82bb7377372a35e60fd036040f8d6f746af34b5904214c31a9a3808d14bbc747",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "1ce8cda85607fbbcb16dedac70e666c8822a129e9cc89d1db73c151898b0ad80",
+   "input_digests": [
+    [
+     "Q_duty",
+     "d73eead9c69837e1d34de050356aceef0c2769d020d3902329b53979ce3074cc"
+    ],
+    [
+     "heat_absorbed",
+     "dd2ba2fac5e0edc73ca1c83a0dfacff47856ecd5b95987430e18979077b24bb6"
+    ]
+   ],
+   "node_digest": "d8c6ea0c6633f2972c7fe5226da4ce6b4244a2f92c9ecdd1188d5895b4971b1b",
+   "node_id": "energy_balance",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "relative_residual",
+     "0a0f346ca9511589fe13ebcc6b53683ec90941a4bbbd92902a9f8d9aa16952fd"
+    ],
+    [
+     "residual",
+     "1b7f73a47361d629fb0f654614c2eebc80c893499ef4a8e5bde650e6035e2d87"
+    ]
+   ],
+   "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0011485710000158633
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "953af284cf7fb9479808ad3021488cb2093b4e82ff59d5e49dbf7a073f72e01c",
+   "state_after_digest": "",
+   "state_before_digest": "d225c7436001e8b9f2d989646952acfb4490ef59720854f52e65d6278eb2052a",
+   "status": "succeeded"
+  }
+ ],
+ "observables": [
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__T_adiabatic",
+   "output_name": "T_adiabatic",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2225.5245834770026,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_CO",
+   "output_name": "X_CO",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.008987939083209846,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_CO2",
+   "output_name": "X_CO2",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.08536421734727191,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_H2O",
+   "output_name": "X_H2O",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.18346659345859384,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_NO",
+   "output_name": "X_NO",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0018882057584032957,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__X_OH",
+   "output_name": "X_OH",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0028754074850035824,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__element_residual",
+   "output_name": "element_residual",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.7644787698679372e-11,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium"
+   ],
+   "node_id": "adiabatic_equilibrium",
+   "observable_id": "adiabatic_equilibrium__h_reactants",
+   "output_name": "h_reactants",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "J/kg",
+   "value": {
+    "origin": "cantera 3.2.0 HP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -254587.04779300306,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty",
+    "coolant_loop"
+   ],
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__T_water_out",
+   "output_name": "T_water_out",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 314.26817783575586,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty",
+    "coolant_loop"
+   ],
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__heat_absorbed",
+   "output_name": "heat_absorbed",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 26483.00800497967,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty",
+    "coolant_loop"
+   ],
+   "node_id": "coolant_loop",
+   "observable_id": "coolant_loop__water_rise",
+   "output_name": "water_rise",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "tespy 0.11.2",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 21.118177835768392,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "cooled_equilibrium"
+   ],
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_CO2_out",
+   "output_name": "X_CO2_out",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.09505703422053233,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "cooled_equilibrium"
+   ],
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_CO_out",
+   "output_name": "X_CO_out",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.3401427145595558e-25,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "cooled_equilibrium"
+   ],
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__X_H2O_out",
+   "output_name": "X_H2O_out",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.19011406844106463,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "cooled_equilibrium"
+   ],
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__element_residual",
+   "output_name": "element_residual",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.3588646346378156e-16,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "cooled_equilibrium"
+   ],
+   "node_id": "cooled_equilibrium",
+   "observable_id": "cooled_equilibrium__h_cooled",
+   "output_name": "h_cooled",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "J/kg",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -2902887.84829097,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty",
+    "coolant_loop",
+    "energy_balance"
+   ],
+   "node_id": "energy_balance",
+   "observable_id": "energy_balance__relative_residual",
+   "output_name": "relative_residual",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "of the duty",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.3737030198411203e-16,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty",
+    "coolant_loop",
+    "energy_balance"
+   ],
+   "node_id": "energy_balance",
+   "observable_id": "energy_balance__residual",
+   "output_name": "residual",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": {
+    "origin": "Q from Cantera - m dh from TESPy",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -3.637978807091713e-12,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "equilibrium_limit",
+    "kinetic_2",
+    "equilibrium_approach"
+   ],
+   "node_id": "equilibrium_approach",
+   "observable_id": "equilibrium_approach__relative_gap",
+   "output_name": "relative_gap",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "|T(50 ms) - T_HP| / T_HP",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.395751165423358e-12,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "equilibrium_limit"
+   ],
+   "node_id": "equilibrium_limit",
+   "observable_id": "equilibrium_limit__T_equilibrium",
+   "output_name": "T_equilibrium",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "HP equilibrium of the kinetic initial state",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8832325060944,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty"
+   ],
+   "node_id": "heat_duty",
+   "observable_id": "heat_duty__Q_duty",
+   "output_name": "Q_duty",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": {
+    "origin": "specific duty x reactant mass flow",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 26483.008004979667,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "adiabatic_equilibrium",
+    "cooled_equilibrium",
+    "heat_duty"
+   ],
+   "node_id": "heat_duty",
+   "observable_id": "heat_duty__q_specific",
+   "output_name": "q_specific",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "J/kg",
+   "value": {
+    "origin": "h_reactants - h_cooled (Cantera enthalpies)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2648300.800497967,
+     "schema": "quantity/1",
+     "units": "joule / kilogram"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "heat_of_combustion"
+   ],
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__fuel_conversion",
+   "output_name": "fuel_conversion",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "heat_of_combustion"
+   ],
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__lhv_temperature_slope",
+   "output_name": "lhv_temperature_slope",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "kJ/(mol*K)",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -0.009896891055404922,
+     "schema": "quantity/1",
+     "units": "kilojoule / kelvin / mole"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "heat_of_combustion"
+   ],
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__lower_heating_value",
+   "output_name": "lower_heating_value",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "kJ/mol",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 802.5391697247701,
+     "schema": "quantity/1",
+     "units": "kilojoule / mole"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "heat_of_combustion"
+   ],
+   "node_id": "heat_of_combustion",
+   "observable_id": "heat_of_combustion__temperature_offset_bound",
+   "output_name": "temperature_offset_bound",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "kJ/mol",
+   "value": {
+    "origin": "cantera 3.2.0 TP equilibrium at 300 K, water as vapour",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.01830924845249933,
+     "schema": "quantity/1",
+     "units": "kilojoule / mole"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1",
+    "kinetic_2",
+    "integrator_study"
+   ],
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__final_temperature_change",
+   "output_name": "final_temperature_change",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "two finest integrator settings",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.4618308341596276e-08,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1",
+    "kinetic_2",
+    "integrator_study"
+   ],
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__ignition_relative_change",
+   "output_name": "ignition_relative_change",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "two finest integrator settings, discrete maximum (criterion pre-registered)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.014492753623188442,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1",
+    "kinetic_2",
+    "integrator_study"
+   ],
+   "node_id": "integrator_study",
+   "observable_id": "integrator_study__ignition_relative_change_refined_post_hoc",
+   "output_name": "ignition_relative_change_refined_post_hoc",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "POST HOC: parabola-refined ignition time",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.006333695609669082,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_0"
+   ],
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__T_final",
+   "output_name": "T_final",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8831106513926,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_0"
+   ],
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.574263935602246e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_0"
+   ],
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__ignition_delay",
+   "output_name": "ignition_delay",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0035000000000000005,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_0"
+   ],
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034125734936910844,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_0"
+   ],
+   "node_id": "kinetic_0",
+   "observable_id": "kinetic_0__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K/s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-06",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2368966.7315419614,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1"
+   ],
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__T_final",
+   "output_name": "T_final",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.8832325115513,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1"
+   ],
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.5742651915568514e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1"
+   ],
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__ignition_delay",
+   "output_name": "ignition_delay",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034000000000000002,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1"
+   ],
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.003449271124043616,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_1"
+   ],
+   "node_id": "kinetic_1",
+   "observable_id": "kinetic_1__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K/s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-09",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4752079.822621537,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_2"
+   ],
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__T_final",
+   "output_name": "T_final",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2697.883232496933,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_2"
+   ],
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__fuel_remaining",
+   "output_name": "fuel_remaining",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.5742651914123e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_2"
+   ],
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__ignition_delay",
+   "output_name": "ignition_delay",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034500000000000004,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_2"
+   ],
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__ignition_delay_refined_post_hoc",
+   "output_name": "ignition_delay_refined_post_hoc",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.0034275619897174738,
+     "schema": "quantity/1",
+     "units": "second"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "kinetic_2"
+   ],
+   "node_id": "kinetic_2",
+   "observable_id": "kinetic_2__max_heating_rate",
+   "output_name": "max_heating_rate",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K/s",
+   "value": {
+    "origin": "cantera 3.2.0 reactor rtol=1e-11",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8123335.005668592,
+     "schema": "quantity/1",
+     "units": "kelvin / second"
+    }
+   }
+  }
+ ],
+ "plan": {
+  "allow_partial": true,
+  "cache_policy": "off",
+  "checkpoint_after": [],
+  "constraint_observations": [
+   {
+    "binding_id": "b_tflame",
+    "constraint_digest": "614d8fd89f77eeb3c908c6f41d249707ff95963b11cee3d65b0942b9045f02bd",
+    "constraint_id": "max_flame_temperature",
+    "observable_id": "adiabatic_equilibrium__T_adiabatic",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_twater",
+    "constraint_digest": "29fb2795fe09b7a09d793c7fd93a54dce3888b1af10304360702f1e4e81d7a2b",
+    "constraint_id": "max_water_outlet",
+    "observable_id": "coolant_loop__T_water_out",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   }
+  ],
+  "nodes": [
+   {
+    "applicability_checks": [
+     "thermo_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-adiabatic-equilibrium",
+     "identity_digest": "43f929de72b0c8f2399ee859b8fb6c3b11695ce795406d6684379b3ca72189c0",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T0",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared reactant temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 300.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "adiabatic_equilibrium",
+    "outputs": [
+     {
+      "name": "T_adiabatic",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "X_CO",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_CO2",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_H2O",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_NO",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_OH",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "element_residual",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "h_reactants",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "J/kg"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "thermo_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-cooled-equilibrium",
+     "identity_digest": "23aab809cc88e808718a2b4e5b74ed42ebaa9772b3851fbecb25879cacd0bbc6",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_out",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared exhaust outlet temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 400.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "cooled_equilibrium",
+    "outputs": [
+     {
+      "name": "X_CO2_out",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_CO_out",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "X_H2O_out",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "element_residual",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "h_cooled",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "J/kg"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "thermo_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-equilibrium-limit",
+     "identity_digest": "df750e5d15cefa0032788edeeef3c9d6526adc94aa099e6264388184db82c52e",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_start",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared kinetic initial temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 1400.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "equilibrium_limit",
+    "outputs": [
+     {
+      "name": "T_equilibrium",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "thermo_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-heat-of-combustion",
+     "identity_digest": "f8d1d4f8e6c97b79997e0a37be44022ef6e72739b51b3ae98f97997b0a029090",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_ref",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "the mechanism's lowest stored thermodynamic temperature (the reference value is at 298.15 K, below it)",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 300.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "heat_of_combustion",
+    "outputs": [
+     {
+      "name": "fuel_conversion",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "lhv_temperature_slope",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "kJ/(mol*K)"
+     },
+     {
+      "name": "lower_heating_value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "kJ/mol"
+     },
+     {
+      "name": "temperature_offset_bound",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "kJ/mol"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-kinetic-0",
+     "identity_digest": "22ef07acce5314fd18d8cf35cd18a3db8c80c751b83b898f175b58780736ff7c",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_start",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared kinetic initial temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 1400.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "kinetic_0",
+    "outputs": [
+     {
+      "name": "T_final",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "fuel_remaining",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "ignition_delay",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "ignition_delay_refined_post_hoc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "max_heating_rate",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/s"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-kinetic-1",
+     "identity_digest": "cdd6c27566b1fd5fcfee77b562717c20b1dd01315209d8560badeeb59a287815",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_start",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared kinetic initial temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 1400.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "kinetic_1",
+    "outputs": [
+     {
+      "name": "T_final",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "fuel_remaining",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "ignition_delay",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "ignition_delay_refined_post_hoc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "max_heating_rate",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/s"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-kinetic-2",
+     "identity_digest": "ab1537b1ec8fa8fc1266071a6161bf95bc00ecdcadba568cc16197409db0912c",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [],
+    "derived": false,
+    "inputs": [],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_start",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared kinetic initial temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 1400.0,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "p",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 101325.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "kinetic_2",
+    "outputs": [
+     {
+      "name": "T_final",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "fuel_remaining",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "ignition_delay",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "ignition_delay_refined_post_hoc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "s"
+     },
+     {
+      "name": "max_heating_rate",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K/s"
+     }
+    ],
+    "provider_binding_ids": [
+     "cantera"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_tflame"
+     ],
+     [
+      "constraint_digest",
+      "614d8fd89f77eeb3c908c6f41d249707ff95963b11cee3d65b0942b9045f02bd"
+     ],
+     [
+      "constraint_id",
+      "max_flame_temperature"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "adiabatic_equilibrium"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "adiabatic_equilibrium",
+      "source_output": "T_adiabatic",
+      "unit": "K"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_tflame",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-equilibrium-approach",
+     "identity_digest": "8cea28156dbcc75e167c04ea3a292c39678c6c28867a4d8f9d7cccfb756a797d",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [
+     "equilibrium_limit",
+     "kinetic_2"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "T_equilibrium",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "equilibrium_limit",
+      "source_output": "T_equilibrium",
+      "unit": "K"
+     },
+     {
+      "name": "T_final",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_2",
+      "source_output": "T_final",
+      "unit": "K"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "equilibrium_approach",
+    "outputs": [
+     {
+      "name": "relative_gap",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-heat-duty",
+     "identity_digest": "81eb006a89496705515bac8bf9c356eb93a8eab59586c21575a201fa6f219a71",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [
+     "adiabatic_equilibrium",
+     "cooled_equilibrium"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "h_cooled",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "cooled_equilibrium",
+      "source_output": "h_cooled",
+      "unit": "J/kg"
+     },
+     {
+      "name": "h_reactants",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "adiabatic_equilibrium",
+      "source_output": "h_reactants",
+      "unit": "J/kg"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [
+     {
+      "name": "m_mix",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared reactant mass flow",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.01,
+       "schema": "quantity/1",
+       "units": "kilogram / second"
+      }
+     }
+    ],
+    "node_id": "heat_duty",
+    "outputs": [
+     {
+      "name": "Q_duty",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "q_specific",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "J/kg"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-integrator-study",
+     "identity_digest": "c30540c04cf98a81ae546731706d29f8884942c004c2d373ca2bd26b96b6f349",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [
+     "kinetic_1",
+     "kinetic_2"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "T_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_1",
+      "source_output": "T_final",
+      "unit": "K"
+     },
+     {
+      "name": "T_c",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_2",
+      "source_output": "T_final",
+      "unit": "K"
+     },
+     {
+      "name": "ignition_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_1",
+      "source_output": "ignition_delay",
+      "unit": "s"
+     },
+     {
+      "name": "ignition_c",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_2",
+      "source_output": "ignition_delay",
+      "unit": "s"
+     },
+     {
+      "name": "refined_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_1",
+      "source_output": "ignition_delay_refined_post_hoc",
+      "unit": "s"
+     },
+     {
+      "name": "refined_c",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "kinetic_2",
+      "source_output": "ignition_delay_refined_post_hoc",
+      "unit": "s"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "integrator_study",
+    "outputs": [
+     {
+      "name": "final_temperature_change",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "ignition_relative_change",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "ignition_relative_change_refined_post_hoc",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "water_liquid_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-coolant-loop",
+     "identity_digest": "9ea14abf342e12f2062793c0fccb808a535ffd6581f5bdf427bb0bcb2a3862ee",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [
+     "heat_duty"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "Q_duty",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "heat_duty",
+      "source_output": "Q_duty",
+      "unit": "W"
+     }
+    ],
+    "kind": "provider_execution",
+    "literals": [
+     {
+      "name": "T_w_in",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared water inlet",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 293.15,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      }
+     },
+     {
+      "name": "m_w",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared water flow",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.3,
+       "schema": "quantity/1",
+       "units": "kilogram / second"
+      }
+     },
+     {
+      "name": "p_w",
+      "schema": "forge.system_runtime.literal_input/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared loop pressure",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 200000.0,
+       "schema": "quantity/1",
+       "units": "pascal"
+      }
+     }
+    ],
+    "node_id": "coolant_loop",
+    "outputs": [
+     {
+      "name": "T_water_out",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "heat_absorbed",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "water_rise",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [
+     "tespy"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_twater"
+     ],
+     [
+      "constraint_digest",
+      "29fb2795fe09b7a09d793c7fd93a54dce3888b1af10304360702f1e4e81d7a2b"
+     ],
+     [
+      "constraint_id",
+      "max_water_outlet"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "coolant_loop"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "coolant_loop",
+      "source_output": "T_water_out",
+      "unit": "K"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_twater",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "chem-energy-balance",
+     "identity_digest": "82bb7377372a35e60fd036040f8d6f746af34b5904214c31a9a3808d14bbc747",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "3469cf432f2913dda93afd3af115d6800e3431de80fe5de9c222ca05914fe75e",
+    "depends_on": [
+     "coolant_loop",
+     "heat_duty"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "Q_duty",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "heat_duty",
+      "source_output": "Q_duty",
+      "unit": "W"
+     },
+     {
+      "name": "heat_absorbed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "coolant_loop",
+      "source_output": "heat_absorbed",
+      "unit": "W"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "energy_balance",
+    "outputs": [
+     {
+      "name": "relative_residual",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "residual",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   }
+  ],
+  "observables": [
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__T_adiabatic",
+    "output_name": "T_adiabatic",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__X_CO",
+    "output_name": "X_CO",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__X_CO2",
+    "output_name": "X_CO2",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__X_H2O",
+    "output_name": "X_H2O",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__X_NO",
+    "output_name": "X_NO",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__X_OH",
+    "output_name": "X_OH",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__element_residual",
+    "output_name": "element_residual",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "adiabatic_equilibrium",
+    "observable_id": "adiabatic_equilibrium__h_reactants",
+    "output_name": "h_reactants",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "J/kg"
+   },
+   {
+    "node_id": "coolant_loop",
+    "observable_id": "coolant_loop__T_water_out",
+    "output_name": "T_water_out",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "coolant_loop",
+    "observable_id": "coolant_loop__heat_absorbed",
+    "output_name": "heat_absorbed",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "coolant_loop",
+    "observable_id": "coolant_loop__water_rise",
+    "output_name": "water_rise",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "cooled_equilibrium",
+    "observable_id": "cooled_equilibrium__X_CO2_out",
+    "output_name": "X_CO2_out",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "cooled_equilibrium",
+    "observable_id": "cooled_equilibrium__X_CO_out",
+    "output_name": "X_CO_out",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "cooled_equilibrium",
+    "observable_id": "cooled_equilibrium__X_H2O_out",
+    "output_name": "X_H2O_out",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "cooled_equilibrium",
+    "observable_id": "cooled_equilibrium__element_residual",
+    "output_name": "element_residual",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "cooled_equilibrium",
+    "observable_id": "cooled_equilibrium__h_cooled",
+    "output_name": "h_cooled",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "J/kg"
+   },
+   {
+    "node_id": "energy_balance",
+    "observable_id": "energy_balance__relative_residual",
+    "output_name": "relative_residual",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "energy_balance",
+    "observable_id": "energy_balance__residual",
+    "output_name": "residual",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "equilibrium_approach",
+    "observable_id": "equilibrium_approach__relative_gap",
+    "output_name": "relative_gap",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "equilibrium_limit",
+    "observable_id": "equilibrium_limit__T_equilibrium",
+    "output_name": "T_equilibrium",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "heat_duty",
+    "observable_id": "heat_duty__Q_duty",
+    "output_name": "Q_duty",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "heat_duty",
+    "observable_id": "heat_duty__q_specific",
+    "output_name": "q_specific",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "J/kg"
+   },
+   {
+    "node_id": "heat_of_combustion",
+    "observable_id": "heat_of_combustion__fuel_conversion",
+    "output_name": "fuel_conversion",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "heat_of_combustion",
+    "observable_id": "heat_of_combustion__lhv_temperature_slope",
+    "output_name": "lhv_temperature_slope",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "kJ/(mol*K)"
+   },
+   {
+    "node_id": "heat_of_combustion",
+    "observable_id": "heat_of_combustion__lower_heating_value",
+    "output_name": "lower_heating_value",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "kJ/mol"
+   },
+   {
+    "node_id": "heat_of_combustion",
+    "observable_id": "heat_of_combustion__temperature_offset_bound",
+    "output_name": "temperature_offset_bound",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "kJ/mol"
+   },
+   {
+    "node_id": "integrator_study",
+    "observable_id": "integrator_study__final_temperature_change",
+    "output_name": "final_temperature_change",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "integrator_study",
+    "observable_id": "integrator_study__ignition_relative_change",
+    "output_name": "ignition_relative_change",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "integrator_study",
+    "observable_id": "integrator_study__ignition_relative_change_refined_post_hoc",
+    "output_name": "ignition_relative_change_refined_post_hoc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "kinetic_0",
+    "observable_id": "kinetic_0__T_final",
+    "output_name": "T_final",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "kinetic_0",
+    "observable_id": "kinetic_0__fuel_remaining",
+    "output_name": "fuel_remaining",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "kinetic_0",
+    "observable_id": "kinetic_0__ignition_delay",
+    "output_name": "ignition_delay",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_0",
+    "observable_id": "kinetic_0__ignition_delay_refined_post_hoc",
+    "output_name": "ignition_delay_refined_post_hoc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_0",
+    "observable_id": "kinetic_0__max_heating_rate",
+    "output_name": "max_heating_rate",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K/s"
+   },
+   {
+    "node_id": "kinetic_1",
+    "observable_id": "kinetic_1__T_final",
+    "output_name": "T_final",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "kinetic_1",
+    "observable_id": "kinetic_1__fuel_remaining",
+    "output_name": "fuel_remaining",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "kinetic_1",
+    "observable_id": "kinetic_1__ignition_delay",
+    "output_name": "ignition_delay",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_1",
+    "observable_id": "kinetic_1__ignition_delay_refined_post_hoc",
+    "output_name": "ignition_delay_refined_post_hoc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_1",
+    "observable_id": "kinetic_1__max_heating_rate",
+    "output_name": "max_heating_rate",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K/s"
+   },
+   {
+    "node_id": "kinetic_2",
+    "observable_id": "kinetic_2__T_final",
+    "output_name": "T_final",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "kinetic_2",
+    "observable_id": "kinetic_2__fuel_remaining",
+    "output_name": "fuel_remaining",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "kinetic_2",
+    "observable_id": "kinetic_2__ignition_delay",
+    "output_name": "ignition_delay",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_2",
+    "observable_id": "kinetic_2__ignition_delay_refined_post_hoc",
+    "output_name": "ignition_delay_refined_post_hoc",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "s"
+   },
+   {
+    "node_id": "kinetic_2",
+    "observable_id": "kinetic_2__max_heating_rate",
+    "output_name": "max_heating_rate",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K/s"
+   }
+  ],
+  "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+  "requested_modes": [],
+  "schema": "forge.system_runtime.execution_plan/1"
+ },
+ "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+ "preflight": {
+  "classification": "preflight_admission_not_scientific_support",
+  "deferred_checks": [
+   {
+    "check_id": "thermo_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "adiabatic_equilibrium"
+   },
+   {
+    "check_id": "water_liquid_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "coolant_loop"
+   },
+   {
+    "check_id": "thermo_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "cooled_equilibrium"
+   },
+   {
+    "check_id": "thermo_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "equilibrium_limit"
+   },
+   {
+    "check_id": "thermo_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "heat_of_combustion"
+   }
+  ],
+  "findings": [],
+  "plan_digest": "3569744110d25b78c5857365ee498a06ae19c094a1be04396b84149707a791dd",
+  "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+  "schema": "forge.system_runtime.preflight_report/1",
+  "status": "deferred_checks"
+ },
+ "provenance": [
+  [
+   "initial_state",
+   "3726a5c9842ab544c165fc797d2351dc3289e1fa0d78e5742f7248eeea9bfc29"
+  ],
+  [
+   "provider_binding:cantera",
+   "cantera@3.2.0"
+  ],
+  [
+   "provider_binding:tespy",
+   "tespy@0.11.2"
+  ],
+  [
+   "scenario",
+   "70d82025184734cdd28d685f43b7e7084ee2143edc61682a0af93b272c994bbd"
+  ],
+  [
+   "system",
+   "69c2f573c388694e49f157384f7284f0bb17e8c9d09ab92c88e1fa68a4b0f951"
+  ],
+  [
+   "timeline",
+   "ddcb4daf2a758e751037118142c7ea8352a92c6ba8e851d0f1f0ecef21f97ab4"
+  ]
+ ],
+ "provider_records": [
+  {
+   "execution_identity_digest": "2fedb346a0ca8373a16e5829ae89f4cbdba4b7d71e5e2e71b698887c977f3ff7",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "69f520356e0a9080c6e99b4c8fb598a9bc1995ff83bacbd7011059063d97177f",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "504d0fd9a5c401330ffac2285b17443ee40b3bfe419e2092dd6479483bf88133",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "2389a02cd0fa086fcef2d6ce04c09f72efbe195c7c81957d6dc3de5f89a3ddf6",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "571af8c8bbcc1f21520c358b7f899e59c32e7785ca308a31ca4deed36669d26a",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "b3202e6833ac3124d5bc2d8416e11038d5a791117fa37f1ee6931fc47e4f781b",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "6b2b49218811bfaab34d0e864f84c8e9f5fbb8628a4b7aa16399f21eb85c90ff",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "42b739d96d1dd8b8a9540f7e9f919fd8de650149a30044a3c3da5a4523c97514",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "7b18952df5908959bf60ac5bf1bd9eaac0c4df20eb21ff6d6b64cddedd49bc76",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "7db7296a9bd64b4abfed7a25e939c20c33c5bf1f4bfe1cd48ee41983d4a04c6c",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "7d7d5ec5c642b0752d35cbd36616ba89590bcb136e18054967e95897d9bf86a9",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "2f010b29c362bfe06794b51265a50e45ed7665af614b99d116884ecca3b01c13",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "de467ab3661ba486037b1a5e1a7ebd78e34fe1f3bda9223296414e69ccfe3062",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "94941b58f3276321d2a0ce6c8a4178f87778af411b65decd1fbcbda5f6075078",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "e33c2a67f006b465265f4db8de928ba3031072c09b10805e84b22e4d2bee3d36",
+   "provider_digest": "71e5a6b91eb54afee6b58d7566a9a863847c567c12343df41472f0a442b2a08b",
+   "provider_id": "cantera",
+   "provider_version": "3.2.0",
+   "record_digest": "e1ca28224e850399da3eb98605fd8347b99f245b39bd62e300e9662b20961a21",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "9f608bc5f91ea6a0d88b9e8475e1b98c1b2175c21974f74f15503f29cb3da1ee",
+   "provider_digest": "e8c601d1d0ad04dd05029300541631809c85caf3e36f119cfa2446f7dae88d42",
+   "provider_id": "tespy",
+   "provider_version": "0.11.2",
+   "record_digest": "2987a6c2506220d04faa80f6d9521d53429211e91908fc0ac815fb54d6cdf094",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  }
+ ],
+ "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+ "resource_usage": {
+  "cpu_seconds": 0.0,
+  "function_evaluations": 0,
+  "peak_memory_bytes": 0,
+  "wall_seconds": 3.7937865589999547
+ },
+ "run_id": "run-d685c1dea0e6",
+ "schema": "forge.system_runtime.system_run_result/1",
+ "state_history": [
+  {
+   "environment_digest": "",
+   "material_state_digests": [],
+   "owners": [
+    {
+     "owner_id": "reactor",
+     "role": "component",
+     "schema": "forge.system_runtime.owner_state/1",
+     "values": [
+      {
+       "schema": "multiphysics_initial_state_value/1",
+       "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "declared placeholder",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+       },
+       "value": {
+        "magnitude": 0.0,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "variable_id": "reference"
+      }
+     ]
+    }
+   ],
+   "previous_digest": "",
+   "produced_by": "initial",
+   "provider_checkpoints": [],
+   "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
+   "schema": "forge.system_runtime.system_state/1",
+   "sequence": 0,
+   "system_digest": "69c2f573c388694e49f157384f7284f0bb17e8c9d09ab92c88e1fa68a4b0f951",
+   "time": {
+    "magnitude": 0.0,
+    "schema": "quantity/1",
+    "units": "second"
+   }
+  }
+ ],
+ "status": "succeeded",
+ "trust_inputs": {
+  "applicability_reports": [
+   [
+    "adiabatic_equilibrium",
+    "thermo_range",
+    "within"
+   ],
+   [
+    "coolant_loop",
+    "water_liquid_range",
+    "within"
+   ],
+   [
+    "cooled_equilibrium",
+    "thermo_range",
+    "within"
+   ],
+   [
+    "equilibrium_limit",
+    "thermo_range",
+    "within"
+   ],
+   [
+    "heat_of_combustion",
+    "thermo_range",
+    "within"
+   ]
+  ],
+  "assessment": "not_assessed_by_runtime",
+  "execution_status": "succeeded",
+  "provider_execution_identities": [
+   "2fedb346a0ca8373a16e5829ae89f4cbdba4b7d71e5e2e71b698887c977f3ff7",
+   "504d0fd9a5c401330ffac2285b17443ee40b3bfe419e2092dd6479483bf88133",
+   "571af8c8bbcc1f21520c358b7f899e59c32e7785ca308a31ca4deed36669d26a",
+   "6b2b49218811bfaab34d0e864f84c8e9f5fbb8628a4b7aa16399f21eb85c90ff",
+   "7b18952df5908959bf60ac5bf1bd9eaac0c4df20eb21ff6d6b64cddedd49bc76",
+   "7d7d5ec5c642b0752d35cbd36616ba89590bcb136e18054967e95897d9bf86a9",
+   "9f608bc5f91ea6a0d88b9e8475e1b98c1b2175c21974f74f15503f29cb3da1ee",
+   "de467ab3661ba486037b1a5e1a7ebd78e34fe1f3bda9223296414e69ccfe3062",
+   "e33c2a67f006b465265f4db8de928ba3031072c09b10805e84b22e4d2bee3d36"
+  ],
+  "schema": "forge.system_runtime.trust_inputs/1",
+  "unknown_uncertainty_outputs": [
+   "adiabatic_equilibrium.T_adiabatic",
+   "adiabatic_equilibrium.X_CO",
+   "adiabatic_equilibrium.X_CO2",
+   "adiabatic_equilibrium.X_H2O",
+   "adiabatic_equilibrium.X_NO",
+   "adiabatic_equilibrium.X_OH",
+   "adiabatic_equilibrium.element_residual",
+   "adiabatic_equilibrium.h_reactants",
+   "constraint.b_tflame.margin",
+   "constraint.b_twater.margin",
+   "coolant_loop.T_water_out",
+   "coolant_loop.heat_absorbed",
+   "coolant_loop.water_rise",
+   "cooled_equilibrium.X_CO2_out",
+   "cooled_equilibrium.X_CO_out",
+   "cooled_equilibrium.X_H2O_out",
+   "cooled_equilibrium.element_residual",
+   "cooled_equilibrium.h_cooled",
+   "energy_balance.relative_residual",
+   "energy_balance.residual",
+   "equilibrium_approach.relative_gap",
+   "equilibrium_limit.T_equilibrium",
+   "heat_duty.Q_duty",
+   "heat_duty.q_specific",
+   "heat_of_combustion.fuel_conversion",
+   "heat_of_combustion.lhv_temperature_slope",
+   "heat_of_combustion.lower_heating_value",
+   "heat_of_combustion.temperature_offset_bound",
+   "integrator_study.final_temperature_change",
+   "integrator_study.ignition_relative_change",
+   "integrator_study.ignition_relative_change_refined_post_hoc",
+   "kinetic_0.T_final",
+   "kinetic_0.fuel_remaining",
+   "kinetic_0.ignition_delay",
+   "kinetic_0.ignition_delay_refined_post_hoc",
+   "kinetic_0.max_heating_rate",
+   "kinetic_1.T_final",
+   "kinetic_1.fuel_remaining",
+   "kinetic_1.ignition_delay",
+   "kinetic_1.ignition_delay_refined_post_hoc",
+   "kinetic_1.max_heating_rate",
+   "kinetic_2.T_final",
+   "kinetic_2.fuel_remaining",
+   "kinetic_2.ignition_delay",
+   "kinetic_2.ignition_delay_refined_post_hoc",
+   "kinetic_2.max_heating_rate"
+  ],
+  "validation_evidence": [],
+  "waived_applicability": []
+ }
+}

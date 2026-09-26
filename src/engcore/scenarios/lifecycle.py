@@ -91,6 +91,90 @@ class InputSource(str, Enum):
     USAGE_INTEGRAL = "usage_integral"
     #: Number of complete cycles of a ``CycleHistory`` inside the window.
     CYCLE_COUNT = "cycle_count"
+    #: An explicit aggregate of fast-physics results (a DERIVED record, never
+    #: a measurement).  The model must declare an :class:`AggregateRequirement`
+    #: saying which aggregate forms it accepts and which history features
+    #: it needs preserved.
+    PHYSICS_AGGREGATE = "physics_aggregate"
+
+
+class HistoryFeature(str, Enum):
+    """Information about a history that an aggregation may keep or discard."""
+
+    ORDER = "order"
+    EXTREMA = "extrema"
+    CYCLES = "cycles"
+    DWELL = "dwell"
+    DISTRIBUTION = "distribution"
+    INTEGRAL = "integral"
+    MEAN = "mean"
+
+
+class AggregateForm(str, Enum):
+    INTEGRAL_DOSE = "integral_dose"
+    TIME_WEIGHTED_MEAN = "time_weighted_mean"
+    EXTREMA = "extrema"
+    CYCLE_COUNT = "cycle_count"
+    HISTOGRAM = "histogram"
+    DWELL_ABOVE = "dwell_above"
+    #: A form defined by a domain aggregator, named ``domain_defined:<id>``.
+    DOMAIN_DEFINED = "domain_defined"
+
+
+#: What a physics aggregate record must be to feed PHYSICS_AGGREGATE inputs.
+#: The record type lives in the multi-timescale layer (above this module);
+#: this is the contract it is checked against here.
+PHYSICS_AGGREGATE_CLASSIFICATION = "derived_aggregate_not_measurement"
+PHYSICS_AGGREGATE_ATTRIBUTES = ("aggregate_id", "quantity_id", "form_key", "preserved_features", "represented",
+                                "named_value", "classification", "digest", "reason")
+#: ``run_id`` prefix of a degradation step bound to a multi-timescale macro
+#: step; its ``run_digest`` is then the digest of that step's representative
+#: fast executions, not of one MultiphysicsRunRecord.
+MACRO_STEP_RUN_PREFIX = "multiscale-macro:"
+
+
+@dataclass(frozen=True)
+class AggregateRequirement:
+    """What a degradation model accepts from a physics aggregate.
+
+    ``accepted_forms`` are :class:`AggregateForm` values, or
+    ``domain_defined:<aggregator_id>`` for a named domain aggregator.  Every
+    ``required_features`` entry must be PRESERVED by the aggregate actually
+    bound; otherwise the model must not run (the history it needs was
+    removed, and it is not reconstructed).
+    """
+
+    input_id: str
+    accepted_forms: tuple[str, ...]
+    required_features: tuple[HistoryFeature, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "input_id", _identifier(self.input_id, "aggregate requirement input_id"))
+        forms = tuple(sorted(str(f) for f in self.accepted_forms))
+        if not forms:
+            raise InvalidScientificProblem("an aggregate requirement must accept at least one declared form")
+        for f in forms:
+            base = f.split(":", 1)[0]
+            AggregateForm(base)
+            if base == AggregateForm.DOMAIN_DEFINED.value and ":" not in f:
+                raise InvalidScientificProblem("a domain-defined form must name its aggregator: domain_defined:<id>")
+        object.__setattr__(self, "accepted_forms", forms)
+        object.__setattr__(self, "required_features", tuple(sorted(HistoryFeature(x) for x in self.required_features)))
+
+    def admit(self, aggregate: Any) -> str:
+        """Empty string if ``aggregate`` may feed this input, else the refusal reason."""
+        form = aggregate.form_key
+        if not aggregate.preserved_features:
+            return "the aggregate preserves no history feature at all; it cannot feed a model"
+        if form not in self.accepted_forms:
+            return f"aggregate form {form!r} is not accepted by this input (accepts {list(self.accepted_forms)})"
+        lost = sorted(f.value for f in self.required_features if f.value not in aggregate.preserved_features)
+        if lost:
+            return f"aggregation removed history features {lost} that this model requires; they are not reconstructed"
+        return ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"input_id": self.input_id, "accepted_forms": list(self.accepted_forms), "required_features": [f.value for f in self.required_features]}
 
 
 @dataclass(frozen=True)
@@ -194,6 +278,9 @@ class DegradationModel(ABC):
     identity: DegradationModelIdentity
     state_variables: tuple[InitialStateDefinition, ...]
     requirements: tuple[InputRequirement, ...]
+    #: One entry per PHYSICS_AGGREGATE requirement: accepted forms and the
+    #: history features the model needs preserved.
+    aggregate_requirements: tuple[AggregateRequirement, ...] = ()
 
     @abstractmethod
     def advance(
@@ -217,6 +304,9 @@ class StepStatus(str, Enum):
     NOT_APPLICABLE = "not_applicable"
     #: The model's result left the owning domain's physical state range.
     LEFT_STATE_DOMAIN = "left_state_domain"
+    #: A bound physics aggregate lost history the model requires (or is not
+    #: a form the model accepts).  Refused; nothing is reconstructed.
+    INSUFFICIENT_HISTORY = "insufficient_history"
 
 
 @dataclass(frozen=True)
@@ -319,8 +409,34 @@ class DegradationStepRecord:
 # --------------------------------------------------------------------------
 
 
-def _gather(requirement: InputRequirement, record_id: str, environment: EnvironmentTimeline, window: TimeWindow) -> GatheredInput:
+def _gather(requirement: InputRequirement, record_id: str, environment: EnvironmentTimeline, window: TimeWindow,
+            aggregates: Mapping[str, Any] | None = None, aggregate_requirement: AggregateRequirement | None = None) -> GatheredInput:
     source = requirement.source
+    if source is InputSource.PHYSICS_AGGREGATE:
+        aggregate = (aggregates or {}).get(record_id)
+        if aggregate is None:
+            raise InvalidScientificProblem(f"input {requirement.input_id!r} is bound to aggregate {record_id!r}, which was not supplied")
+        missing = [a for a in PHYSICS_AGGREGATE_ATTRIBUTES if not hasattr(aggregate, a)]
+        digest = str(getattr(aggregate, "digest", ""))
+        if missing or aggregate.classification != PHYSICS_AGGREGATE_CLASSIFICATION or len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise InvalidScientificProblem(
+                f"aggregate {record_id!r} is not a digest-bound derived physics-aggregate record "
+                f"(classification {PHYSICS_AGGREGATE_CLASSIFICATION!r}); a caller mapping is not admitted")
+        if aggregate.quantity_id != requirement.subject:
+            raise InvalidScientificProblem(
+                f"input {requirement.input_id!r} needs an aggregate of {requirement.subject!r}; {record_id!r} aggregates {aggregate.quantity_id!r}")
+        if not aggregate.represented.covers(window) or not window.covers(aggregate.represented):
+            raise InvalidScientificProblem(f"aggregate {record_id!r} represents a different interval than the degradation window")
+        if aggregate_requirement is None:
+            raise InvalidScientificProblem(
+                f"model consumes physics aggregate {requirement.input_id!r} without declaring the forms and history features it accepts")
+        provenance = dict(source_id=aggregate.aggregate_id, source_classification=aggregate.classification, source_content_digest=aggregate.digest)
+        refusal = aggregate_requirement.admit(aggregate)
+        if refusal:
+            return GatheredInput(requirement.input_id, source, record_id, ValueStatus.UNKNOWN, None, "INSUFFICIENT_HISTORY: " + refusal, **provenance)
+        value = aggregate.named_value(requirement.input_id)
+        status = ValueStatus.KNOWN if value is not None else ValueStatus.UNKNOWN
+        return GatheredInput(requirement.input_id, source, record_id, status, value, aggregate.reason, **provenance)
     if source in (InputSource.EXPOSURE_DOSE, InputSource.EXPOSURE_MEAN):
         channel = environment.channel(record_id)
         if channel.kind_id != requirement.subject:
@@ -378,28 +494,61 @@ def evaluate_degradation(
     if not timeline.horizon.covers(window):
         raise InvalidScientificProblem("the physics run window lies outside the scenario horizon")
 
+    transitions = [t for t in run.state_transitions if t.participant_id == participant_id]
+    if not transitions:
+        raise InvalidScientificProblem(f"run records no state transition for participant {participant_id!r}")
+    last: StateTransitionReceipt = max(transitions, key=lambda t: t.window_index)
+    if exact_seconds(last.end) != window.end.seconds:
+        raise InvalidScientificProblem("participant's last recorded state is not at the end of the run window")
+    return evaluate_degradation_step(
+        model, environment=environment, window=window, participant_id=participant_id,
+        prior_values=tuple(last.end_values), prior_state_digest=last.end_state_digest, bindings=bindings,
+        run_id=run.run_id, run_digest_value=run_digest(run))
+
+
+def evaluate_degradation_step(
+    model: DegradationModel,
+    *,
+    environment: EnvironmentTimeline,
+    window: TimeWindow,
+    participant_id: str,
+    prior_values: tuple[StateVariableValue, ...],
+    prior_state_digest: str,
+    bindings: tuple[InputBinding, ...],
+    run_id: str,
+    run_digest_value: str,
+    aggregates: Mapping[str, Any] | None = None,
+) -> DegradationStepRecord:
+    """Degrade one participant's state over ``window`` from explicitly given prior state.
+
+    ``run_id`` / ``run_digest_value`` bind the physics execution(s) the inputs
+    came from: one covering run (:func:`evaluate_degradation`) or, for a
+    multi-timescale macro step, the digest of the representative fast
+    executions whose aggregates are bound.  ``aggregates`` are the derived
+    physics-aggregate records the PHYSICS_AGGREGATE bindings name.
+    """
+    if not isinstance(model, DegradationModel):
+        raise InvalidScientificProblem("evaluate_degradation_step requires a DegradationModel")
+    timeline = environment.timeline
+    if not timeline.horizon.covers(window):
+        raise InvalidScientificProblem("the degradation window lies outside the scenario horizon")
     required = {r.input_id: r for r in model.requirements}
     bound = {b.input_id: b.record_id for b in bindings}
     if len(bound) != len(tuple(bindings)) or set(bound) != set(required):
         raise InvalidScientificProblem(
             f"bindings must name exactly the model's inputs {sorted(required)}; got {sorted(bound)}"
         )
-
-    transitions = [t for t in run.state_transitions if t.participant_id == participant_id]
+    aggregate_requirements = {r.input_id: r for r in getattr(model, "aggregate_requirements", ())}
     variables = {d.variable_id: d for d in model.state_variables}
     base = dict(participant_id=participant_id, scenario_digest=timeline.scenario_digest,
-                environment_digest=environment.digest, run_id=run.run_id, run_digest=run_digest(run),
+                environment_digest=environment.digest, run_id=run_id, run_digest=run_digest_value,
                 window=window, model=model.identity)
-    if not transitions:
-        raise InvalidScientificProblem(f"run records no state transition for participant {participant_id!r}")
-    last: StateTransitionReceipt = max(transitions, key=lambda t: t.window_index)
-    if exact_seconds(last.end) != window.end.seconds:
-        raise InvalidScientificProblem("participant's last recorded state is not at the end of the run window")
-    prior = {v.variable_id: v for v in last.end_values}
-    gathered = tuple(_gather(required[i], bound[i], environment, window) for i in sorted(required))
+    prior = {v.variable_id: v for v in prior_values}
+    last_digest = prior_state_digest
+    gathered = tuple(_gather(required[i], bound[i], environment, window, aggregates, aggregate_requirements.get(i)) for i in sorted(required))
     missing_state = sorted(set(variables) - set(prior))
     if missing_state:
-        return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=tuple(prior.values()),
+        return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=tuple(prior.values()),
                                      inputs=gathered, status=StepStatus.UNKNOWN_STATE, resulting_values=(), uncertainty_status=(),
                                      reason=f"participant does not publish state {missing_state}; degradation cannot start from an unknown state")
     prior_values = tuple(prior[v] for v in sorted(variables))
@@ -415,9 +564,15 @@ def evaluate_degradation(
                 f"prior state {k}={prior[k].value.magnitude} {prior[k].value.units} is outside the "
                 f"owning domain's physical range; degradation cannot start from it"
             )
+    insufficient = [g.input_id for g in gathered if g.reason.startswith("INSUFFICIENT_HISTORY")]
+    if insufficient:
+        return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=prior_values,
+                                     inputs=gathered, status=StepStatus.INSUFFICIENT_HISTORY, resulting_values=(), uncertainty_status=(),
+                                     reason=f"inputs {insufficient}: the bound aggregation lost history the model requires; no degradation is guessed ("
+                                            + "; ".join(g.reason for g in gathered if g.input_id in insufficient) + ")")
     unknown = [g.input_id for g in gathered if g.status is not ValueStatus.KNOWN]
     if unknown:
-        return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
+        return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.UNKNOWN_INPUT, resulting_values=(), uncertainty_status=(),
                                      reason=f"inputs {unknown} are UNKNOWN; missing exposure or usage is not zero")
     declared = {r.variable_id: r for r in model.identity.applicability}
@@ -429,7 +584,7 @@ def evaluate_degradation(
     values = {g.input_id: g.value.value for g in gathered}
     outside = [i for i in sorted(declared) if not declared[i].admits(values[i])]
     if outside:
-        return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
+        return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.NOT_APPLICABLE, resulting_values=(), uncertainty_status=(),
                                      reason=f"inputs {outside} lie outside the model's declared applicability")
 
@@ -452,11 +607,11 @@ def evaluate_degradation(
         resulting.append(StateVariableValue(k, value, Uncertainty.unknown(note)))
     left = [v.variable_id for v in resulting if not state_ranges[v.variable_id].admits(v.value)]
     if left:
-        return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
+        return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=prior_values,
                                      inputs=gathered, status=StepStatus.LEFT_STATE_DOMAIN, resulting_values=(), uncertainty_status=(),
                                      reason=f"model result for {left} leaves the owning domain's physical range; not applied")
     components.append(("resulting_state", UncertaintyKind.UNKNOWN.value))
-    return DegradationStepRecord(**base, prior_state_digest=last.end_state_digest, prior_values=prior_values,
+    return DegradationStepRecord(**base, prior_state_digest=last_digest, prior_values=prior_values,
                                  inputs=gathered, status=StepStatus.APPLIED, resulting_values=tuple(resulting),
                                  uncertainty_status=tuple(components))
 

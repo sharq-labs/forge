@@ -32,9 +32,17 @@ class HeaterCircuit:
     r0: Quantity
     t0: Quantity
     alpha: Quantity
+    #: BIG 6 root method.  SciPy 1.18 ``hybr`` reports "not making good
+    #: progress" for ~6% of states of this LINEAR residual after reaching it to
+    #: machine precision (and BIG 6 correctly refuses a backend non-success);
+    #: ``lm`` does not.  Default kept for BIG 9 identity.
+    root_method: str = "hybr"
 
     def identity(self) -> dict:
-        return {k: getattr(self, k).to_dict() for k in ("supply_voltage", "series_resistance", "r0", "t0", "alpha")}
+        ident = {k: getattr(self, k).to_dict() for k in ("supply_voltage", "series_resistance", "r0", "t0", "alpha")}
+        if self.root_method != "hybr":
+            ident["root_method"] = self.root_method
+        return ident
 
     def heater_resistance(self, temperature: Quantity) -> float:
         r = self.r0.to("ohm").magnitude * (1 + self.alpha.to("1/K").magnitude * (temperature.to("K").magnitude - self.t0.to("K").magnitude))
@@ -54,7 +62,7 @@ class HeaterCircuit:
                                    UnitBoundary((VariableSpec("current", "A"),)), {"residual": residual, "jacobian": jac},
                                    initial={"current": Quantity(v / (rs + rh) * 0.5, "A")},
                                    parameters={"temperature": temperature.to("K"), "heater_resistance": Quantity(rh, "ohm")})
-        record = SciPyRootProvider().execute(problem, NumericalMethod("hybr", SolverSettings({"xtol": 1e-14, "residual_atol": 1e-10},
+        record = SciPyRootProvider().execute(problem, NumericalMethod(self.root_method, SolverSettings({"xtol": 1e-14, "residual_atol": 1e-10},
                                                                                                {"max_function_evaluations": 100})))
         if not record.succeeded:
             return record, None

@@ -535,6 +535,14 @@ class MultiphysicsRuntime:
             result.outputs,
             result.uncertainty,
         )
+        if result.events and not participant.spec.event_capable:
+            # Only declared event-capable participants are checkpointed for
+            # event alignment; an undeclared event would be aligned by
+            # re-advancing an already-advanced participant.
+            raise MultiphysicsExecutionError(
+                f"participant {participant_id!r} emitted events but is not "
+                f"declared event_capable"
+            )
 
         actual = self._seconds(result.end)
         requested = self._seconds(end)
@@ -633,12 +641,16 @@ class MultiphysicsRuntime:
         *,
         implicit: bool,
         instant: Quantity,
+        raw_out: dict[str, CouplingValue] | None = None,
     ) -> tuple[
         dict[str, CouplingValue],
         dict[str, Uncertainty],
         dict[str, TransferResult],
         dict[str, float],
     ]:
+        # ``raw_out`` receives each edge's UNRELAXED transferred value H(x_k):
+        # the fixed-point residual is measured on it, never on the relaxed
+        # increment (which would shrink the residual by the relaxation factor).
         made_values: dict[str, CouplingValue] = {}
         made_uncertainty: dict[str, Uncertainty] = {}
         made_transfers: dict[str, TransferResult] = {}
@@ -656,6 +668,8 @@ class MultiphysicsRuntime:
             )
             value = transfer.value
             uncertainty = transfer.uncertainty
+            if raw_out is not None:
+                raw_out[edge.edge_id] = value
 
             if implicit and edge.edge_id in previous:
                 target_port = self.graph.participant(
@@ -737,6 +751,7 @@ class MultiphysicsRuntime:
         steps: list[ParticipantStepRecord] = []
         factors: dict[str, float] = {}
         results: dict[str, AdvanceResult] = {}
+        unrelaxed: dict[str, CouplingValue] = {}
         order = self.plan.resolved_order(self.graph)
 
         if self.plan.iteration_semantics.value == "jacobi":
@@ -793,6 +808,7 @@ class MultiphysicsRuntime:
                 value = raw_values[edge.edge_id]
                 uncertainty = raw_uncertainty[edge.edge_id]
                 transfer = raw_transfers[edge.edge_id]
+                unrelaxed[edge.edge_id] = value
                 if implicit:
                     target_port = self.graph.participant(
                         edge.target.participant_id
@@ -859,6 +875,7 @@ class MultiphysicsRuntime:
                     current_edge_uncertainty,
                     implicit=implicit,
                     instant=end,
+                    raw_out=unrelaxed,
                 )
                 current_edges.update(values)
                 current_edge_uncertainty.update(uncertainty)
@@ -873,11 +890,21 @@ class MultiphysicsRuntime:
                 target_port = self.graph.participant(
                     edge.target.participant_id
                 ).port(edge.target.port_id)
+                # Fixed-point residual r_k = H(x_k) - x_k on the UNRELAXED
+                # transfer.  Comparing against the relaxed iterate would
+                # report omega * r_k and label a window CONVERGED while the
+                # coupled equations are still unsatisfied.
+                if criterion.edge_id not in unrelaxed:
+                    raise MultiphysicsExecutionError(
+                        f"no unrelaxed transfer recorded for criterion edge "
+                        f"{criterion.edge_id!r}; the fixed-point residual "
+                        f"cannot be measured"
+                    )
                 residuals.append(
                     self.residuals.compare(
                         criterion,
                         edge_values[criterion.edge_id],
-                        current_edges[criterion.edge_id],
+                        unrelaxed[criterion.edge_id],
                         unit=target_port.unit,
                     )
                 )
@@ -1036,6 +1063,20 @@ class MultiphysicsRuntime:
                     raise MultiphysicsExecutionError(
                         f"terminal event {outcome.event.get('event_id')!r} "
                         f"did not advance beyond coupling-window start"
+                    )
+                uncovered = sorted(
+                    spec.participant_id
+                    for spec in self.graph.participants
+                    if spec.participant_id not in checkpoints
+                    or not spec.deterministic_restore
+                )
+                if uncovered:
+                    # Re-running [start, event] needs every participant back
+                    # at ``start``; without a deterministic checkpoint it
+                    # would advance twice and be recorded as a clean window.
+                    raise MultiphysicsExecutionError(
+                        f"event alignment requires deterministic checkpoints of "
+                        f"every participant; missing for {uncovered}"
                     )
                 self._restore_all(checkpoints)
                 (
@@ -1472,6 +1513,14 @@ class MultiphysicsRuntime:
 
         condition_consumers = self._operating_condition_plan(conditions)
         composed_conditions = {item.condition_id: item for item in conditions}
+        # Every instant at which a declared STEP input or operating condition
+        # changes is a window boundary, exactly like a scheduled event: a
+        # window whose grid was shifted by an event would otherwise deliver
+        # the change late, at its next boundary.
+        change_seconds = tuple(sorted(
+            {self._seconds(sample.instant) for item in schedules.values() for sample in item.series.samples}
+            | {self._seconds(contribution.start) for item in conditions for contribution, _ in item.values}
+        ))
         if parameter_bindings:
             self._bind_parameters(parameter_bindings)
 
@@ -1567,10 +1616,21 @@ class MultiphysicsRuntime:
                     item for item in event_seconds
                     if item > current_time + 1e-15
                 )
+                grid_target = current_time + width
+                snap = 1e-12 * max(1.0, abs(grid_target))
+                next_changes = tuple(
+                    item for item in change_seconds
+                    if item > current_time + snap
+                )
+                if next_changes and abs(next_changes[0] - grid_target) <= snap:
+                    # the change IS on the grid; land on its exact instant
+                    # rather than leave a floating-point sliver window
+                    grid_target = next_changes[0]
                 target = min(
                     end_time,
-                    current_time + width,
+                    grid_target,
                     *(next_events[:1]),
+                    *(next_changes[:1]),
                 )
                 instant = Quantity(current_time, "second")
                 window_values = values_at(instant)

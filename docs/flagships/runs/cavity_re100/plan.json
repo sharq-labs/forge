@@ -1,0 +1,1930 @@
+{
+ "allow_partial": true,
+ "cache_policy": "off",
+ "checkpoint_after": [],
+ "constraint_observations": [
+  {
+   "binding_id": "b_flux_openfoam",
+   "constraint_digest": "71e4cce7b9c37d0664083da58cf131aedd6967e2eb061a2d2325a43402fe4455",
+   "constraint_id": "max_midplane_flux",
+   "observable_id": "flux_residual_abs_openfoam_80",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_flux_su2",
+   "constraint_digest": "71e4cce7b9c37d0664083da58cf131aedd6967e2eb061a2d2325a43402fe4455",
+   "constraint_id": "max_midplane_flux",
+   "observable_id": "flux_residual_abs_su2_80",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  }
+ ],
+ "nodes": [
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cavity-fluid",
+    "identity_digest": "5eb02eb70f661266d533a09d3141c2518575056c39932d163335b79170adc05f",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [],
+   "derived": false,
+   "inputs": [],
+   "kind": "provider_execution",
+   "literals": [
+    {
+     "name": "reynolds",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared Reynolds number",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 100.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    },
+    {
+     "name": "side",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared cavity side",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.1,
+      "schema": "quantity/1",
+      "units": "meter"
+     }
+    }
+   ],
+   "node_id": "fluid_properties",
+   "outputs": [
+    {
+     "name": "density",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "kg/m^3"
+    },
+    {
+     "name": "dynamic_viscosity",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "Pa*s"
+    },
+    {
+     "name": "kinematic_viscosity",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    }
+   ],
+   "provider_binding_ids": [
+    "coolprop"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-openfoam-20",
+    "identity_digest": "338befa4f7505959e865d04f598105ad6ee7dcdcd9f4afb6d9626af3e8d61baf",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "openfoam_20",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "openfoam"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-openfoam-40",
+    "identity_digest": "275476ce52578b532af032ed963e24b2eb8732fb64aed5ae5e70fef706b7fcb8",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "openfoam_40",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "openfoam"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-openfoam-80",
+    "identity_digest": "98754eefa21dd946e2bf7d59e70668f0c27ec64fcbd0c54b27008dde821174f4",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "openfoam_80",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "openfoam"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-su2-20",
+    "identity_digest": "2aa2b48cd26d0370c1ad275bb53b8f6b71b875c681ca129c44d3e8699dcf05e9",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "su2_20",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "su2"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-su2-40",
+    "identity_digest": "2499c29f0d94c564026183bd8eab961ff03538512b3f26810c2a61e708677312",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "su2_40",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "su2"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
+   "authority": {
+    "authority_id": "cavity-su2-80",
+    "identity_digest": "193a836bc0a67a84930c6d89ded96c90a937bd29061b18ca4e247f04263a6b37",
+    "kind": "provider",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "fluid_properties"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "lid_velocity",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "lid_velocity",
+     "unit": "m/s"
+    },
+    {
+     "name": "nu",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "kinematic_viscosity",
+     "unit": "m^2/s"
+    },
+    {
+     "name": "rho",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "fluid_properties",
+     "source_output": "density",
+     "unit": "kg/m^3"
+    }
+   ],
+   "kind": "provider_execution",
+   "literals": [],
+   "node_id": "su2_80",
+   "outputs": [
+    {
+     "name": "flux_residual_abs",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_speed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "m/s"
+    },
+    {
+     "name": "u_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_flux_residual",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_x",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "vortex_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "wall_seconds",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "s"
+    }
+   ],
+   "provider_binding_ids": [
+    "su2"
+   ],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cavity-compare-20",
+    "identity_digest": "e5fded9b407fd7dca4214c03a3f43c80664fc1596e3ee3b9e93b156fc5e34b31",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "openfoam_20",
+    "su2_20"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "ofx",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_20",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "su2x",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_20",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "node_id": "compare_20",
+   "outputs": [
+    {
+     "name": "lower_half_max_difference_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_difference_cell_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "rms_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_max_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_within_tolerance",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cavity-compare-40",
+    "identity_digest": "27d5fb571f43bd867109d47073e507c10705e75e6da1e6e00fd4ef2dda3ae5c3",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "openfoam_40",
+    "su2_40"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "ofx",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_40",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "su2x",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_40",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "node_id": "compare_40",
+   "outputs": [
+    {
+     "name": "lower_half_max_difference_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_difference_cell_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "rms_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_max_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_within_tolerance",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cavity-compare-80",
+    "identity_digest": "98b265edad178f4f689484bf1ab693015dc2dca09dfda47a01e569cf53a8b9bd",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "openfoam_80",
+    "su2_80"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "ofx",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "su2x",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "node_id": "compare_80",
+   "outputs": [
+    {
+     "name": "lower_half_max_difference_post_hoc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "max_difference_cell_y",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "rms_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_max_difference",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "whole_field_within_tolerance",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "builtin.constraint",
+    "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+    "kind": "builtin",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [
+    [
+     "binding",
+     "b_flux_openfoam"
+    ],
+    [
+     "constraint_digest",
+     "71e4cce7b9c37d0664083da58cf131aedd6967e2eb061a2d2325a43402fe4455"
+    ],
+    [
+     "constraint_id",
+     "max_midplane_flux"
+    ]
+   ],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "",
+   "depends_on": [
+    "openfoam_80"
+   ],
+   "derived": true,
+   "inputs": [
+    {
+     "name": "observed",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "flux_residual_abs",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "constraint_assessment",
+   "literals": [],
+   "node_id": "constraint.b_flux_openfoam",
+   "outputs": [
+    {
+     "name": "margin",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "builtin.constraint",
+    "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+    "kind": "builtin",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [
+    [
+     "binding",
+     "b_flux_su2"
+    ],
+    [
+     "constraint_digest",
+     "71e4cce7b9c37d0664083da58cf131aedd6967e2eb061a2d2325a43402fe4455"
+    ],
+    [
+     "constraint_id",
+     "max_midplane_flux"
+    ]
+   ],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "",
+   "depends_on": [
+    "su2_80"
+   ],
+   "derived": true,
+   "inputs": [
+    {
+     "name": "observed",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "flux_residual_abs",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "constraint_assessment",
+   "literals": [],
+   "node_id": "constraint.b_flux_su2",
+   "outputs": [
+    {
+     "name": "margin",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cavity-convergence",
+    "identity_digest": "c0167f2bccdd1377917f7ece27eef5cefadf56db2a50ef1223871b9a8cba7ab6",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "builtin_args": [],
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "79a0343d19a3f01e2980b1c361c7c113878a14adfbc9b6df767c196bc48dad54",
+   "depends_on": [
+    "openfoam_20",
+    "openfoam_40",
+    "openfoam_80",
+    "su2_20",
+    "su2_40",
+    "su2_80"
+   ],
+   "derived": false,
+   "inputs": [
+    {
+     "name": "ghia_u_max_error_of_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_20",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_of_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_40",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_of_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_su2_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_20",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_su2_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_40",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_su2_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "ghia_u_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_of_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_20",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_of_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_40",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_of_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_su2_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_20",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_su2_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_40",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_su2_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "ghia_v_max_error",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_of_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_20",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_of_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_40",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_of_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_su2_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_20",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_su2_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_40",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_su2_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "u_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_of_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_20",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_of_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_40",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_of_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "openfoam_80",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_su2_20",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_20",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_su2_40",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_40",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "v_center_su2_80",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "su2_80",
+     "source_output": "v_center",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "node_id": "convergence",
+   "outputs": [
+    {
+     "name": "ghia_u_max_error_of_decreasing",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_u_max_error_su2_decreasing",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_of_decreasing",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "ghia_v_max_error_su2_decreasing",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_of_observed_order",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "u_center_su2_observed_order",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.plan_node/1",
+   "writes_owners": []
+  }
+ ],
+ "observables": [
+  {
+   "node_id": "fluid_properties",
+   "observable_id": "density",
+   "output_name": "density",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "kg/m^3"
+  },
+  {
+   "node_id": "fluid_properties",
+   "observable_id": "dynamic_viscosity",
+   "output_name": "dynamic_viscosity",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "Pa*s"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "flux_residual_abs_openfoam_20",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "flux_residual_abs_openfoam_40",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "flux_residual_abs_openfoam_80",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "flux_residual_abs_su2_20",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "flux_residual_abs_su2_40",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "flux_residual_abs_su2_80",
+   "output_name": "flux_residual_abs",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "ghia_u_max_error_of_decreasing",
+   "output_name": "ghia_u_max_error_of_decreasing",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "ghia_u_max_error_openfoam_20",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "ghia_u_max_error_openfoam_40",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "ghia_u_max_error_openfoam_80",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "ghia_u_max_error_su2_20",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "ghia_u_max_error_su2_40",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "ghia_u_max_error_su2_80",
+   "output_name": "ghia_u_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "ghia_u_max_error_su2_decreasing",
+   "output_name": "ghia_u_max_error_su2_decreasing",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "ghia_v_max_error_of_decreasing",
+   "output_name": "ghia_v_max_error_of_decreasing",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "ghia_v_max_error_openfoam_20",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "ghia_v_max_error_openfoam_40",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "ghia_v_max_error_openfoam_80",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "ghia_v_max_error_su2_20",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "ghia_v_max_error_su2_40",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "ghia_v_max_error_su2_80",
+   "output_name": "ghia_v_max_error",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "ghia_v_max_error_su2_decreasing",
+   "output_name": "ghia_v_max_error_su2_decreasing",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "fluid_properties",
+   "observable_id": "kinematic_viscosity",
+   "output_name": "kinematic_viscosity",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m^2/s"
+  },
+  {
+   "node_id": "fluid_properties",
+   "observable_id": "lid_velocity",
+   "output_name": "lid_velocity",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "compare_20",
+   "observable_id": "lower_half_max_difference_post_hoc_20",
+   "output_name": "lower_half_max_difference_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_40",
+   "observable_id": "lower_half_max_difference_post_hoc_40",
+   "output_name": "lower_half_max_difference_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_80",
+   "observable_id": "lower_half_max_difference_post_hoc_80",
+   "output_name": "lower_half_max_difference_post_hoc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_20",
+   "observable_id": "max_difference_cell_y_20",
+   "output_name": "max_difference_cell_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_40",
+   "observable_id": "max_difference_cell_y_40",
+   "output_name": "max_difference_cell_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_80",
+   "observable_id": "max_difference_cell_y_80",
+   "output_name": "max_difference_cell_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "max_speed_openfoam_20",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "max_speed_openfoam_40",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "max_speed_openfoam_80",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "max_speed_su2_20",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "max_speed_su2_40",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "max_speed_su2_80",
+   "output_name": "max_speed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "m/s"
+  },
+  {
+   "node_id": "compare_20",
+   "observable_id": "rms_difference_20",
+   "output_name": "rms_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_40",
+   "observable_id": "rms_difference_40",
+   "output_name": "rms_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_80",
+   "observable_id": "rms_difference_80",
+   "output_name": "rms_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "u_center_of_observed_order",
+   "output_name": "u_center_of_observed_order",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "u_center_openfoam_20",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "u_center_openfoam_40",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "u_center_openfoam_80",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "u_center_su2_20",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "u_center_su2_40",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "u_center_su2_80",
+   "output_name": "u_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "convergence",
+   "observable_id": "u_center_su2_observed_order",
+   "output_name": "u_center_su2_observed_order",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "u_flux_residual_openfoam_20",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "u_flux_residual_openfoam_40",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "u_flux_residual_openfoam_80",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "u_flux_residual_su2_20",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "u_flux_residual_su2_40",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "u_flux_residual_su2_80",
+   "output_name": "u_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "v_center_openfoam_20",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "v_center_openfoam_40",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "v_center_openfoam_80",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "v_center_su2_20",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "v_center_su2_40",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "v_center_su2_80",
+   "output_name": "v_center",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "v_flux_residual_openfoam_20",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "v_flux_residual_openfoam_40",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "v_flux_residual_openfoam_80",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "v_flux_residual_su2_20",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "v_flux_residual_su2_40",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "v_flux_residual_su2_80",
+   "output_name": "v_flux_residual",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "vortex_x_openfoam_20",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "vortex_x_openfoam_40",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "vortex_x_openfoam_80",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "vortex_x_su2_20",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "vortex_x_su2_40",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "vortex_x_su2_80",
+   "output_name": "vortex_x",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "vortex_y_openfoam_20",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "vortex_y_openfoam_40",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "vortex_y_openfoam_80",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "vortex_y_su2_20",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "vortex_y_su2_40",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "vortex_y_su2_80",
+   "output_name": "vortex_y",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "openfoam_20",
+   "observable_id": "wall_seconds_openfoam_20",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "openfoam_40",
+   "observable_id": "wall_seconds_openfoam_40",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "openfoam_80",
+   "observable_id": "wall_seconds_openfoam_80",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "su2_20",
+   "observable_id": "wall_seconds_su2_20",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "su2_40",
+   "observable_id": "wall_seconds_su2_40",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "su2_80",
+   "observable_id": "wall_seconds_su2_80",
+   "output_name": "wall_seconds",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "s"
+  },
+  {
+   "node_id": "compare_20",
+   "observable_id": "whole_field_max_difference_20",
+   "output_name": "whole_field_max_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_40",
+   "observable_id": "whole_field_max_difference_40",
+   "output_name": "whole_field_max_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_80",
+   "observable_id": "whole_field_max_difference_80",
+   "output_name": "whole_field_max_difference",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_20",
+   "observable_id": "whole_field_within_tolerance_20",
+   "output_name": "whole_field_within_tolerance",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_40",
+   "observable_id": "whole_field_within_tolerance_40",
+   "output_name": "whole_field_within_tolerance",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "compare_80",
+   "observable_id": "whole_field_within_tolerance_80",
+   "output_name": "whole_field_within_tolerance",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  }
+ ],
+ "request_digest": "28b9f14d42a9225c32dfb8829040d2225f9f81a4b21de89c313229742d6ab0f4",
+ "requested_modes": [],
+ "schema": "forge.system_runtime.execution_plan/1"
+}

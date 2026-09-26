@@ -1,0 +1,164 @@
+{
+ "access_urls": [
+  "https://gist.github.com/ivan-pi/3e9326d18a366ffe6a8e5bfda6353219",
+  "https://gist.github.com/ivan-pi/caa6c6737d36a9140fbcf2ea59c78b3c"
+ ],
+ "authors": "U. Ghia, K. N. Ghia, C. T. Shin",
+ "conditions": {
+  "geometry": "unit square cavity, lid moving in +x at unit speed, no-slip walls",
+  "normalisation": "u/U_lid on x/L = 0.5, v/U_lid on y/L = 0.5",
+  "reynolds": 100.0
+ },
+ "cross_check": "Re = 100 u column and the v column agree with a second, independent public transcription (sites.google.com/view/sidrg ... lid-driven-cavity-flow), 2026-09-26",
+ "kind": "benchmark_dataset",
+ "kind_note": "a NUMERICAL benchmark (multigrid finite-difference solution, 129 x 129 grid), not an experiment",
+ "license_status": "the tabulated numbers of one Reynolds number (17 points per line) are quoted with full attribution; the paper and the transcription files are NOT copied",
+ "publication": "Journal of Computational Physics 48(3), 387-411 (1982), Tables I and II, Re = 100 column",
+ "reference_id": "ghia-1982-lid-driven-cavity-re100-centerlines",
+ "source_digests": {
+  "table_II_transcription_sha256": "9589dde451862382a4d0c552a05407b0360c35d129140c668b1a5d477fcd14d0",
+  "table_I_transcription_sha256": "51b65a487eb5b424b4aecdd11ebfa612e3dc646a04217bdd8b14c20cf72f3b54"
+ },
+ "title": "High-Re solutions for incompressible flow using the Navier-Stokes equations and a multigrid method",
+ "transcription_caveat": "the same transcriptions carry obvious typographical errors in OTHER Reynolds-number columns (e.g. Re=3200 at y=0.4531); only the Re=100 columns are used here",
+ "u_vs_y": [
+  [
+   1.0,
+   1.0
+  ],
+  [
+   0.9766,
+   0.84123
+  ],
+  [
+   0.9688,
+   0.78871
+  ],
+  [
+   0.9609,
+   0.73722
+  ],
+  [
+   0.9531,
+   0.68717
+  ],
+  [
+   0.8516,
+   0.23151
+  ],
+  [
+   0.7344,
+   0.00332
+  ],
+  [
+   0.6172,
+   -0.13641
+  ],
+  [
+   0.5,
+   -0.20581
+  ],
+  [
+   0.4531,
+   -0.2109
+  ],
+  [
+   0.2813,
+   -0.15662
+  ],
+  [
+   0.1719,
+   -0.1015
+  ],
+  [
+   0.1016,
+   -0.06434
+  ],
+  [
+   0.0703,
+   -0.04775
+  ],
+  [
+   0.0625,
+   -0.04192
+  ],
+  [
+   0.0547,
+   -0.03717
+  ],
+  [
+   0.0,
+   0.0
+  ]
+ ],
+ "v_vs_x": [
+  [
+   1.0,
+   0.0
+  ],
+  [
+   0.9688,
+   -0.05906
+  ],
+  [
+   0.9609,
+   -0.07391
+  ],
+  [
+   0.9531,
+   -0.08864
+  ],
+  [
+   0.9453,
+   -0.10313
+  ],
+  [
+   0.9063,
+   -0.16914
+  ],
+  [
+   0.8594,
+   -0.22445
+  ],
+  [
+   0.8047,
+   -0.24533
+  ],
+  [
+   0.5,
+   0.05454
+  ],
+  [
+   0.2344,
+   0.17527
+  ],
+  [
+   0.2266,
+   0.17507
+  ],
+  [
+   0.1563,
+   0.16077
+  ],
+  [
+   0.0938,
+   0.12317
+  ],
+  [
+   0.0781,
+   0.1089
+  ],
+  [
+   0.0703,
+   0.10091
+  ],
+  [
+   0.0625,
+   0.09233
+  ],
+  [
+   0.0,
+   0.0
+  ]
+ ]
+}

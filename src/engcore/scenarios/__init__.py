@@ -35,9 +35,10 @@ from .environment import (
     ValueDerivation,
 )
 from .lifecycle import (
-    ApplicabilityBound, DegradationModel, DegradationModelIdentity, DegradationStepRecord,
-    GatheredInput, InputBinding, InputRequirement, InputSource, LifecycleChain, StepStatus,
-    carry_forward, evaluate_degradation, run_digest, run_lifecycle,
+    AggregateForm, AggregateRequirement, ApplicabilityBound, DegradationModel, DegradationModelIdentity,
+    DegradationStepRecord, GatheredInput, HistoryFeature, InputBinding, InputRequirement, InputSource,
+    LifecycleChain, StepStatus, carry_forward, evaluate_degradation, evaluate_degradation_step, run_digest,
+    run_lifecycle,
 )
 
 __all__ = [
@@ -60,6 +61,7 @@ __all__ = [
     "EnvironmentTimeline", "EnvironmentValue", "InterpolationContract", "ReferenceContext",
     "ValueDerivation",
     # Lifecycle Engine
+    "AggregateForm", "AggregateRequirement", "HistoryFeature", "evaluate_degradation_step",
     "ApplicabilityBound", "DegradationModel", "DegradationModelIdentity", "DegradationStepRecord",
     "GatheredInput", "InputBinding", "InputRequirement", "InputSource", "LifecycleChain", "StepStatus",
     "carry_forward", "evaluate_degradation", "run_digest", "run_lifecycle",

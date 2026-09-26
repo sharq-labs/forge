@@ -302,6 +302,22 @@ NON_CORE_PACKAGES = {
         "transient/scenario contracts currently outside the frozen Core surface; "
         "promotion requires an explicit version/freeze decision"
     ),
+    "providers": (
+        "provider-neutral external solver boundary: descriptive capability registry, content-derived "
+        "execution identity, safe process boundary, provider records; computes nothing, decides nothing"
+    ),
+    "multiscale": (
+        "multi-timescale orchestration (macro windows, representative fast windows, "
+        "aggregation, checkpoint/resume) over the BIG 2-9 authorities; no new authority"
+    ),
+    "system_runtime": (
+        "end-to-end system execution runtime (canonical request, deterministic plan, preflight, generic executor, "
+        "checkpoint/replay) that delegates to the BIG 9 / 10 / 11 authorities; computes nothing, validates nothing, issues no verdict"
+    ),
+    "engineering": (
+        "engineering output layer over system_runtime (BIG 13): reference provenance, verification ladder, engineering summary, "
+        "run bundle, viewable fields; adds no execution, no solver and no trust vocabulary"
+    ),
 }
 
 

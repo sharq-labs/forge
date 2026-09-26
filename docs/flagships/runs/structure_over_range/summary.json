@@ -1,0 +1,300 @@
+{
+ "conservation": [
+  "thermal_energy: incomplete (missing: heat_in (heat_in: refused), heat_out (heat_out: refused))"
+ ],
+ "constraints": [
+  {
+   "binding_id": "b_disp",
+   "constraint_id": "max_displacement",
+   "margin": "",
+   "note": "observable 'disp_max_fenicsx' is blocked: blocked by ['thermal']",
+   "status": "unavailable"
+  },
+  {
+   "binding_id": "b_vm",
+   "constraint_id": "max_von_mises",
+   "margin": "",
+   "note": "observable 'vm_max_fenicsx' is blocked: blocked by ['thermal']",
+   "status": "unavailable"
+  }
+ ],
+ "execution": "failed",
+ "identities": [
+  [
+   "request",
+   "46811a0ca20fabda4b0926b8a74f9817567b3a77eb94f21a6e575ddb933a562d"
+  ],
+  [
+   "plan",
+   "c1d2e1b7103518ef2e6546bf40d9cdb8b8906cb9bd5c1595ac3366f28989218d"
+  ],
+  [
+   "result",
+   "9a7c09ab38b4524006d389bcfeefd194b19a85f21ef1e89c8099e1d75998445a"
+  ]
+ ],
+ "key_outputs": [
+  {
+   "availability": "refused",
+   "label": "Hot-end temperature",
+   "observable_id": "t_max",
+   "reason": "the solved state left applicability (property_range: plate temperature [303.15, 590.58] K against the declared property range [250.0, 450.0] K); the step is not committed",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "refused",
+   "label": "Sink-end temperature",
+   "observable_id": "t_min",
+   "reason": "the solved state left applicability (property_range: plate temperature [303.15, 590.58] K against the declared property range [250.0, 450.0] K); the step is not committed",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max displacement (FEniCSx)",
+   "observable_id": "disp_max_fenicsx",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max displacement (CalculiX)",
+   "observable_id": "disp_max_calculix",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max displacement (Code_Aster)",
+   "observable_id": "disp_max_code_aster",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Mid-plate axial stress (FEniCSx)",
+   "observable_id": "sxx_mid_fenicsx",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Mid-plate axial stress (CalculiX)",
+   "observable_id": "sxx_mid_calculix",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Mid-plate axial stress (Code_Aster)",
+   "observable_id": "sxx_mid_code_aster",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Peak von Mises (FEniCSx)",
+   "observable_id": "vm_max_fenicsx",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Peak von Mises (CalculiX)",
+   "observable_id": "vm_max_calculix",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max |displacement| difference FEniCSx-CalculiX",
+   "observable_id": "max_abs_displacement_difference_fenicsx_calculix",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max |displacement| difference FEniCSx-Code_Aster",
+   "observable_id": "max_abs_displacement_difference_fenicsx_code_aster",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  },
+  {
+   "availability": "blocked",
+   "label": "Max |stress| difference CalculiX-Code_Aster",
+   "observable_id": "max_abs_stress_difference_calculix_code_aster",
+   "reason": "blocked by ['thermal']",
+   "uncertainty": "not available",
+   "value": null
+  }
+ ],
+ "notes": [
+  "case over_range: a heat load that drives the plate above the declared property range",
+  "material properties are illustrative ASSUMED records, not datasheet or measured values"
+ ],
+ "providers": [],
+ "reference_comparisons": [],
+ "schema": "engcore.engineering.summary/1",
+ "scientific_status": "insufficient_evidence",
+ "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
+ "system": "Heated aluminium plate, constrained, 40x8 P1 mesh (over_range)",
+ "text_sha256": "8f42766d24b896f605c18a7e9ce9d76d08cb5907f00615bc6e8d7b122c53c15c",
+ "trace": {
+  "complete": false,
+  "gaps": [
+   "observable is refused: the solved state left applicability (property_range: plate temperature [303.15, 590.58] K against the declared property range [250.0, 450.0] K); the step is not committed"
+  ]
+ },
+ "trace_observable": "t_max",
+ "uncertainty": {
+  "benchmark_applicability": "no reference comparison was made in this run (the exact-limit and mesh-study requests were not run here, or this run did not succeed); no numerical benchmark and no experiment exists for this plate",
+  "known_input_uncertainty": [],
+  "material_provenance": [
+   "E 4ccd88c72c40.. nu 440aa52136f3.. alpha ab866da9cdda.. k af0acef476c8.. (all ASSUMED)"
+  ],
+  "model_applicability": "thermal solution checked against the declared property range [250.0, 450.0] K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)",
+  "model_discrepancy": "NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)",
+  "unknown_input_uncertainty": [
+   "heat flux and sink temperature (declared)",
+   "stress-free temperature (declared)",
+   "E, nu, alpha, k (ASSUMED illustrative records)",
+   "plate thickness and geometry (declared)"
+  ]
+ },
+ "verification": {
+  "classification": "report_vocabulary_not_a_validation_grant",
+  "corroboration_reached": false,
+  "levels": [
+   {
+    "evidence": [
+     {
+      "classification": "contract_integrity",
+      "digest": "6cd3c906dce723dc66bb621058bf6f232ba88071095bcc869b9d3640e83a483f",
+      "kind": "preflight_and_identity",
+      "note": "preflight deferred_checks; run failed",
+      "outcome": "met",
+      "record": {
+       "classification": "preflight_admission_not_scientific_support",
+       "deferred_checks": [
+        {
+         "check_id": "property_range",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "thermal"
+        }
+       ],
+       "findings": [
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_calculix"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_code_aster"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_fenicsx"
+        }
+       ],
+       "plan_digest": "c1d2e1b7103518ef2e6546bf40d9cdb8b8906cb9bd5c1595ac3366f28989218d",
+       "request_digest": "46811a0ca20fabda4b0926b8a74f9817567b3a77eb94f21a6e575ddb933a562d",
+       "schema": "forge.system_runtime.preflight_report/1",
+       "status": "deferred_checks"
+      },
+      "record_digest": "3d0d8c684d6c3bc2058c8e2d623467e5f41ee16df68b486790c440893f35c553"
+     }
+    ],
+    "level": 1,
+    "name": "contract_integrity",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not); applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "conservation_residual",
+      "digest": "f1828d17f14222e052a235f15560eb8a1abf46dcf874b92f24d30bcf2a711ec2",
+      "kind": "conservation_assessment",
+      "note": "thermal_energy: incomplete",
+      "outcome": "not_met",
+      "record": {
+       "balance_id": "thermal_energy",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [
+        "heat_in (heat_in: refused)",
+        "heat_out (heat_out: refused)"
+       ],
+       "reason": "a term was not computed, so the balance cannot be closed; no term is assumed zero",
+       "residual": null,
+       "status": "incomplete",
+       "tolerance": {
+        "magnitude": 1e-09,
+        "schema": "quantity/1",
+        "units": "watt"
+       }
+      },
+      "record_digest": "74b8fe98d615720b53b5f6b619da33c2ec26ce957bff176e7ee2c82676a05288"
+     }
+    ],
+    "level": 2,
+    "name": "conservation_residual",
+    "note": "thermal_energy: incomplete; axial-force diagnostic NOT MET or not read (relative spread {'fenicsx': None, 'calculix': None, 'code_aster': None}, mean force over the thermal scale {'fenicsx': None, 'calculix': None, 'code_aster': None}; needs spread <= 0.001 and mean force >= 0.1)",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [],
+    "level": 3,
+    "name": "analytic_limit",
+    "note": "exact-limit verification requests were not run in this call",
+    "status": "not_attempted"
+   },
+   {
+    "evidence": [],
+    "level": 4,
+    "name": "discretisation_convergence",
+    "note": "mesh study not run in this call",
+    "status": "not_attempted"
+   },
+   {
+    "evidence": [],
+    "level": 5,
+    "name": "independent_provider_corroboration",
+    "note": "no provider comparison was produced",
+    "status": "not_attempted"
+   },
+   {
+    "evidence": [],
+    "level": 6,
+    "name": "published_numerical_benchmark",
+    "note": "no published thermo-structural numerical benchmark was integrated for this problem",
+    "status": "not_available"
+   },
+   {
+    "evidence": [],
+    "level": 7,
+    "name": "experimental_validation",
+    "note": "no measured deformation or stress data for this plate exists",
+    "status": "not_available"
+   }
+  ],
+  "reference_level_reached": "none",
+  "verification_reached": 1
+ }
+}

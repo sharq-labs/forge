@@ -1,0 +1,40 @@
+{
+ "access_url": "https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
+ "authors": "B. Saha and K. Goebel (2007), Battery Data Set, NASA Prognostics Data Repository, NASA Ames Research Center",
+ "comparable_quantities": [],
+ "conditions": [
+  {
+   "name": "cell_format_diameter",
+   "unit": "mm",
+   "value": "18.0"
+  }
+ ],
+ "data": [],
+ "envelope": [
+  {
+   "high": "18.5",
+   "low": "17.5",
+   "name": "cell_format_diameter",
+   "unit": "mm"
+  }
+ ],
+ "extraction": "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md). The applicability envelope (cell format 17.5-18.5 mm) is AUTHORED by this flagship from the pack's description (the '18650' name), not read from the dataset's own metadata",
+ "kind": "experimental_dataset",
+ "license_status": "NASA open data; NOT copied into this repository - only the pinned manifest identity is referenced",
+ "publication": "NASA Ames Prognostics Center of Excellence / DASHlink, version 2022-07-14",
+ "quantities": [
+  [
+   "terminal_voltage",
+   "V"
+  ],
+  [
+   "discharge_capacity",
+   "A*h"
+  ]
+ ],
+ "reference_id": "nasa.li_ion_battery_aging",
+ "role": "implementation_limit",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "47c3dde529c2351e6fd890ab7a64c13e046d4a642c7fdea36749cd1309aa752c",
+ "title": "Li-ion Battery Aging Datasets"
+}

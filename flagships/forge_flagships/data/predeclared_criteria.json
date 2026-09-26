@@ -1,0 +1,49 @@
+{
+ "added_after_the_first_execution_labelled": {
+  "battery window study: third level (900 s) and the monotone-decrease requirement": "added after review; the two-level result had already met the tolerances",
+  "cavity flux constraint bound for both codes on an unsigned residual": "added by the re-review; the criterion FLUX_TOL is unchanged, the constraint now reports SU2 VIOLATED instead of citing only OpenFOAM",
+  "cavity post-hoc lower-half comparison and intrinsic u_center reading": "post hoc, sits beside the predeclared outcome",
+  "chemistry heating value evaluated at 300 K instead of 298.15 K": "changed after review because 298.15 K is below the mechanism's stored thermodynamic range; tolerance unchanged",
+  "chemistry post-hoc refined ignition time": "post hoc, sits beside the predeclared outcome",
+  "structure equilibrium diagnostic floor (FORCE_FLOOR_RATIO)": "added by the re-review: a load-blind solve gave a zero spread that passed; the tolerance itself is unchanged",
+  "structure post-hoc noise-aware convergence reading": "post hoc, sits beside the predeclared outcome"
+ },
+ "criteria": {
+  "battery.FIRST_LAW_MIN_HEAT_W": 0.5,
+  "battery.FIRST_LAW_REL_TOL": 0.005,
+  "battery.HEAT_BALANCE_TOL_WH": 1e-06,
+  "battery.REFINEMENT_PEAK_HEAT_REL": 0.02,
+  "battery.REFINEMENT_TOL.peak_cell_temperature_K": 0.05,
+  "battery.REFINEMENT_TOL.voltage_end_of_discharge_V": 0.002,
+  "cavity.FLUX_TOL": 0.001,
+  "cavity.GHIA_TOL": 0.02,
+  "cavity.INTRINSIC_ORDER_MIN_post_hoc": 0.9,
+  "cavity.STEADY_TOL_M_S": 1e-07,
+  "cavity.WHOLE_FIELD_TOL": 0.03,
+  "chemistry.ELEMENT_TOL": 1e-09,
+  "chemistry.ENERGY_BALANCE_REL_TOL": 1e-06,
+  "chemistry.EQUILIBRIUM_APPROACH_REL": 0.01,
+  "chemistry.INTEGRATOR_IGNITION_REL": 0.01,
+  "chemistry.INTEGRATOR_T_ABS_K": 0.1,
+  "chemistry.LHV_TOL_KJ_PER_MOL": 0.5,
+  "structure.ANALYTIC_REL_TOL": 1e-06,
+  "structure.BAR_THEORY_REL_TOL": 0.03,
+  "structure.CONVERGENCE_ORDER_MIN": 0.9,
+  "structure.DISP_AGREEMENT_TOL_m": 2.2610778443113777e-06,
+  "structure.EQUILIBRIUM_SPREAD_TOL": 0.001,
+  "structure.FORCE_FLOOR_RATIO": 0.1,
+  "structure.HEAT_BALANCE_REL_TOL": 1e-06,
+  "structure.NOISE_BAND_REL_post_hoc": 1e-06,
+  "structure.STRESS_AGREEMENT_TOL_Pa": 778941.3173652695
+ },
+ "first_present_in_commit": "1dc1da2f contained the constants; that commit was made AFTER the first executions of every flagship, so git shows what the criteria were when committed, not that they preceded the first run. That ordering rests on the session record in docs/work/PROGRESS.md only. The five entries added after the first review (FIRST_LAW_MIN_HEAT_W, INTRINSIC_ORDER_MIN_post_hoc, EQUILIBRIUM_SPREAD_TOL, FORCE_FLOOR_RATIO, NOISE_BAND_REL_post_hoc) name literals that were already in the code (or, for FORCE_FLOOR_RATIO, a guard added by the re-review) so they can be pinned",
+ "purpose": "Pre-registration of the numeric criteria the four flagships judge themselves by. Changing a value here AND in code is a visible, reviewable act; the test pins them.",
+ "recorded_outcomes_of_criteria_that_were_not_met_as_written": {
+  "battery.window_refinement_monotone": "NOT MET: tolerances met, but the successive differences GROW with a smaller coupling window (peak cell temperature 0.0032 K then 0.0080 K; end-of-discharge voltage 1.2e-06 V then 1.3e-05 V; peak heat 2.2e-04 W then 2.9e-03 W); the study does not demonstrate convergence, cause not investigated",
+  "cavity.FLUX_TOL": "NOT MET by SU2 at 80x80",
+  "cavity.WHOLE_FIELD_TOL": "NOT MET at 20x20, 40x40, 80x80 (26 %, 24 %, 24 % of lid speed, lid-adjacent)",
+  "cavity.monotone_error_vs_benchmark": "NOT MET for OpenFOAM (u-line error 0.0127, 0.0027, 0.0044)",
+  "chemistry.INTEGRATOR_IGNITION_REL": "NOT MET (1.45 % against 1 %): sampling spacing exceeds the criterion",
+  "structure.CONVERGENCE_ORDER_MIN": "NOT MET for mid-plate stress (FEniCSx, Code_Aster): the quantity is converged to solver noise so no order exists"
+ }
+}
