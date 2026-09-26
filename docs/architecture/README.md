@@ -57,6 +57,10 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   dependencies, mechanisms, state transitions, interventions, competing hypotheses and mechanistic explanations without promoting model
   dependency/sensitivity into causal proof. It must reuse existing state, lifecycle, evidence, UQ, provenance and trust authorities rather
   than create parallel vocabularies. See [mechanistic_discovery.md](mechanistic_discovery.md).
+- **Future strategic layer — design-synthesis / assembly layer:** not implemented yet. It turns requirements and design spaces into parametric
+  geometry, buildable assembly graphs, standard-component selections, joints/interfaces/fits, manufacturing/serviceability constraints and
+  high-throughput candidate campaigns. It is explicitly separate from mesh semantics and from mechanism authority. See
+  [design_synthesis.md](design_synthesis.md).
 
 ## Claims organization
 
