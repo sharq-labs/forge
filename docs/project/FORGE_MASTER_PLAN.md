@@ -59,7 +59,8 @@ The long-term differentiator is the combination of:
 5. environment and exposure;
 6. degradation and lifecycle state;
 7. solver/data neutrality;
-8. scientific trust, evidence, uncertainty and refusal.
+8. scientific trust, evidence, uncertainty and refusal;
+9. mechanism-aware reasoning: explicit laws/mechanisms, state transitions, interventions, competing explanations and discovery without confusing model dependency with causal proof.
 
 ## 3. Explicit non-goals
 
@@ -261,6 +262,62 @@ In particular:
 - removing evidence cannot increase assurance;
 - unsupported claims must remain REVIEW/REFUSED rather than being forced through.
 
+## 4.10 Mechanistic discovery and scientific reasoning
+
+Forge's long-term discovery direction is **mechanism-aware**, not black-box search.
+
+A scientifically useful domain must eventually expose more than `input -> solver -> output`.
+Where the domain knowledge supports it, Forge should be able to trace:
+
+```text
+declared cause candidate
+        ↓
+mechanism / governing law
+        ↓
+state transition
+        ↓
+observable
+        ↓
+downstream system consequence
+        ↓
+evidence + applicability + uncertainty
+```
+
+This is a cross-domain requirement. It applies to existing battery, thermal,
+structural, CFD, chemistry, materials, environment and lifecycle capabilities,
+and to future motor, vehicle, drone, aircraft, HVAC, reactor and energy domains.
+
+Three concepts must remain distinct:
+
+- **dependency** — a model/run consumes another quantity or state;
+- **mechanism** — a declared physical/chemical/engineering model explains how an
+  influence is represented under stated assumptions and applicability;
+- **causal claim** — a stronger claim about what would happen under intervention
+  in the target system/context.
+
+A dependency edge, sensitivity result, solver agreement, correlation, planner
+proposal or LLM explanation must never be promoted into a causal claim.
+
+Strategic discovery capabilities built on this layer include:
+
+- mechanism and equation/law graphs;
+- typed interventions and counterfactual runs;
+- mechanism-conditioned root-cause analysis;
+- competing hypotheses and falsification;
+- model discrepancy and quantified uncertainty;
+- sensitivity and identifiability;
+- inverse problems and calibration with calibration/validation separation;
+- experimental evidence registry;
+- experiment design and active learning;
+- negative-result memory;
+- multi-fidelity models and trust-bounded surrogates;
+- robust multidisciplinary design optimization;
+- residual/novelty detection that records **unexplained** behavior without
+  inventing a new mechanism.
+
+The detailed architecture, authority boundaries and proposed implementation order
+are in `docs/architecture/mechanistic_discovery.md`.
+
 ## 5. Multi-timescale execution
 
 Forge must eventually coordinate phenomena whose natural time scales differ by many orders of magnitude.
@@ -364,6 +421,11 @@ the active slice requires them.
 | **P16** | Flagship systems | HVAC, battery pack, drone and vehicle subsystem demonstrate the architecture |
 | **P17** | HPC/scale | distributed/remote execution with documented scale and replay |
 | **P18** | Commercial data/funding expansion | paid data/providers only where technically justified |
+| **P19** | Mechanism semantics | provider-neutral dependency/mechanism/state-transition/explanation contracts proven on existing flagships without granting causal authority |
+| **P20** | Intervention + counterfactual runtime | typed controllable variables and replayable interventions/counterfactuals with model-conditioned conclusions |
+| **P21** | UQ + sensitivity + identifiability | quantified uncertainty only from admitted information; model discrepancy, sensitivity and identifiability compose across systems |
+| **P22** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and experimental evidence registry |
+| **P23** | Mechanism-aware design discovery | multi-fidelity, robust/MDO search and trust-bounded surrogates produce candidate designs without turning optimization scores into evidence |
 
 Do not skip prerequisite phases merely to increase the number of domains.
 
@@ -495,5 +557,8 @@ Before adding a large feature, ask:
 8. Can it replay?
 9. Does it preserve fail-closed behavior?
 10. Does it make the flagship systems more complete?
+11. If the feature explains *why*, is it recording a dependency, a mechanism or an actual causal claim?
+12. What intervention or falsification could distinguish the proposed mechanism from competing explanations?
+13. If the observed behavior is not explained, can the system preserve it as UNEXPLAINED rather than inventing a mechanism?
 
 If those questions cannot be answered, the feature is not ready for Core.
