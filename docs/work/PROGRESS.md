@@ -1455,3 +1455,33 @@ works.
 - Continue reducing the remaining flat claim modules only after PR #65 is
   verified.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
+
+## 2026-09-27 strategic decision — assembly and buildable design synthesis
+
+Accepted a new first-class strategic requirement for the post-hardening roadmap:
+Forge must not stop at geometry/physics optimization. A candidate product must be
+able to carry an explicit assembly graph and, where applicable, standard/catalog
+component selections, joints/interfaces/fits, tolerances, routing, assembly access,
+serviceability and manufacturability constraints.
+
+Strategic consequences:
+
+- added `docs/architecture/design_synthesis.md`;
+- updated the Master Plan so design synthesis includes requirements, design space,
+  parametric CAD/topology, assembly/component synthesis, joints/interfaces,
+  capability-based solver planning, high-throughput multi-fidelity campaigns,
+  reliability/manufacturability and closed-loop validation;
+- distinguished reusable CapabilityPack/DomainPack science from SystemPack /
+  ProductTemplate composition;
+- standard components such as fasteners, bearings, shafts, gears, couplings,
+  seals, connectors and actuators should normally be selected from provenance-bound
+  catalogs/standards rather than re-created from scratch;
+- a CAD-valid/mesh-valid candidate is not automatically buildable, mechanically
+  valid or experimentally validated;
+- missing component ratings, tolerances, availability, cost or lifetime remain UNKNOWN;
+- the mechanism/discovery architecture now explicitly composes with, rather than
+  replaces, the design-synthesis/assembly layer;
+- BIG 14/15 remain the next execution work. No production contracts or code were
+  added by this decision.
+
+Tests: **NOT RUN** — documentation/strategic architecture change only.
