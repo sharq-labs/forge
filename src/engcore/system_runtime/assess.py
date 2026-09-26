@@ -78,6 +78,9 @@ def assess_constraints(result: SystemRunResult, system: Any, definitions: Mappin
             raise InvalidScientificProblem(f"constraint definition filed under {obs.constraint_digest[:12]}.. does not have that digest")
         if definition is None or definition.name != binding.constraint_id or by_name.get(binding.constraint_id) is None:
             raise InvalidScientificProblem(f"constraint binding {binding.binding_id!r} does not resolve to the system's definition")
+        if digest_of(by_name[binding.constraint_id].to_dict()) != obs.constraint_digest:
+            raise InvalidScientificProblem(
+                f"constraint binding {binding.binding_id!r} was assessed against a definition that is not the one the system declares (the request cannot choose the limit)")
         observable = result.observable(obs.observable_id)
         if observable.availability is not Availability.AVAILABLE:
             out.append(ConstraintAssessment(binding.binding_id, binding.instance_id, binding.constraint_id, obs.observable_id, "unavailable", None,
@@ -180,4 +183,9 @@ def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = No
         run_id=result.run_id, values=values, provenance=provenance, validity=tuple(validity), validation=tuple(validation),
         required_levels=tuple(required_levels), uncertainty=uncertainty,
         notes=("assembled by the system runtime from execution facts; the runtime supplies no validity record and no validation check"
+               + ("" if request is not None else "; no request was supplied, so model selections are absent from the provenance (nothing is assumed)")
+               + ("" if not result.trust_inputs.waived_applicability
+                  else "; nodes that committed state under a stated applicability WAIVER (a caller statement, not evidence): " + ", ".join(result.trust_inputs.waived_applicability))
+               + ("" if not result.trust_inputs.unknown_uncertainty_outputs
+                  else "; outputs whose uncertainty is UNKNOWN: " + ", ".join(result.trust_inputs.unknown_uncertainty_outputs))
                + ("" if not unavailable else "; UNAVAILABLE observables (not in this report): " + ", ".join(f"{o.observable_id}={o.availability.value}" for o in unavailable))))

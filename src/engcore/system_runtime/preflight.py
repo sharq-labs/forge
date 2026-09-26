@@ -275,16 +275,29 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
                         add("INVALID_CONSTRAINT_BINDING", node.node_id, "constraint bound and observable differ in dimension")
                 except Exception as exc:
                     add("INVALID_CONSTRAINT_BINDING", node.node_id, str(exc))
-                if system is not None and definition.name not in {c.name for c in system.constraints}:
-                    add("INVALID_CONSTRAINT_BINDING", node.node_id, f"constraint {definition.name!r} is not declared by the system")
+                if system is not None:
+                    declared = {c.name: c for c in system.constraints}.get(definition.name)
+                    if declared is None:
+                        add("INVALID_CONSTRAINT_BINDING", node.node_id, f"constraint {definition.name!r} is not declared by the system")
+                    elif digest_of(declared.to_dict()) != digest_of(definition.to_dict()):
+                        # the system, not the request, owns the limit: a caller cannot loosen a declared constraint by pinning another definition
+                        add("INVALID_CONSTRAINT_BINDING", node.node_id,
+                            f"constraint {definition.name!r} supplied differs from the definition the system declares (the request cannot choose the limit)")
     if system is not None:
         observed = {c.binding_id for c in request.constraint_observations}
         for binding in system.constraint_bindings:
             if binding.binding_id not in observed:
                 add("CONSTRAINT_NOT_OBSERVED", "", f"system constraint binding {binding.binding_id!r} has no observable; its assessment will be UNAVAILABLE", False)
         for obs in request.constraint_observations:
-            if obs.binding_id not in {b.binding_id for b in system.constraint_bindings}:
+            matching = {b.binding_id: b for b in system.constraint_bindings}.get(obs.binding_id)
+            if matching is None:
                 add("INVALID_CONSTRAINT_BINDING", "", f"constraint observation {obs.binding_id!r} matches no system constraint binding")
+            elif matching.constraint_id != obs.constraint_id:
+                add("INVALID_CONSTRAINT_BINDING", "", f"constraint observation {obs.binding_id!r} names constraint {obs.constraint_id!r} but the system binds {matching.constraint_id!r}")
+
+    for node in plan.nodes:
+        if node.applicability_waiver:
+            add("APPLICABILITY_WAIVED", node.node_id, f"node declares no applicability check and states: {node.applicability_waiver!r}; the waiver is a caller statement, not evidence", False)
 
     # 7. checkpoint requirements
     for node_id in plan.checkpoint_after:

@@ -17,6 +17,7 @@ from typing import Any, Mapping
 
 from ..execution.orchestration.resources import ResourceUsage
 from ..scientific.errors import InvalidScientificProblem
+from ..scientific.results.uncertainty import UncertaintyKind
 from ._common import digest_of, hex64, identifier, require_schema, schema, strict_keys
 from .plan import SystemExecutionPlan
 from .preflight import PreflightReport
@@ -97,6 +98,8 @@ class TrustInputs:
     unknown_uncertainty_outputs: tuple[str, ...]
     applicability_reports: tuple[tuple[str, str, str], ...]
     provider_execution_identities: tuple[str, ...]
+    #: state-committing nodes that ran with a stated applicability waiver instead of a runtime check (caller statement, not evidence)
+    waived_applicability: tuple[str, ...] = ()
     validation_evidence: tuple[str, ...] = ()
     assessment: str = "not_assessed_by_runtime"
 
@@ -111,16 +114,17 @@ class TrustInputs:
                 "unknown_uncertainty_outputs": list(self.unknown_uncertainty_outputs),
                 "applicability_reports": [list(a) for a in self.applicability_reports],
                 "provider_execution_identities": list(self.provider_execution_identities),
+                "waived_applicability": list(self.waived_applicability),
                 "validation_evidence": list(self.validation_evidence), "assessment": self.assessment}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "TrustInputs":
         require_schema(payload, TRUST_INPUTS_SCHEMA)
         strict_keys(payload, {"schema", "execution_status", "unknown_uncertainty_outputs", "applicability_reports", "provider_execution_identities",
-                              "validation_evidence", "assessment"}, "trust inputs")
+                              "waived_applicability", "validation_evidence", "assessment"}, "trust inputs")
         return cls(payload["execution_status"], tuple(payload["unknown_uncertainty_outputs"]),
                    tuple(tuple(a) for a in payload["applicability_reports"]), tuple(payload["provider_execution_identities"]),
-                   tuple(payload["validation_evidence"]), payload["assessment"])
+                   tuple(payload["waived_applicability"]), tuple(payload["validation_evidence"]), payload["assessment"])
 
 
 def _outputs_to_dict(outputs: Mapping[str, Mapping[str, OutputValue]]) -> dict[str, Any]:
@@ -152,6 +156,8 @@ class AuthorityCheckpoint:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "AuthorityCheckpoint":
         strict_keys(payload, {"node_id", "authority_id", "identity_digest", "payload", "declared_complete"}, "authority checkpoint")
+        if not isinstance(payload["declared_complete"], bool):
+            raise InvalidScientificProblem("an authority checkpoint's completeness declaration must be a boolean")
         return cls(payload["node_id"], payload["authority_id"], hex64(payload["identity_digest"], "authority identity digest"),
                    payload["payload"], payload["declared_complete"])
 
@@ -215,6 +221,8 @@ class SystemCheckpoint:
         require_schema(payload, CHECKPOINT_SCHEMA)
         strict_keys(payload, {"schema", "classification", "request_digest", "plan_digest", "run_id", "state", "state_history", "completed_receipts", "outputs",
                               "authority_checkpoints", "context_digests", "complete", "incomplete_reason"}, "system checkpoint")
+        if not isinstance(payload["complete"], bool):
+            raise InvalidScientificProblem("a system checkpoint's completeness flag must be a boolean")
         return cls(payload["request_digest"], payload["plan_digest"], payload["run_id"], SystemState.from_dict(payload["state"]),
                    tuple(SystemState.from_dict(s) for s in payload["state_history"]),
                    tuple(NodeReceipt.from_dict(r) for r in payload["completed_receipts"]), _outputs_from_dict(payload["outputs"]),
@@ -299,6 +307,12 @@ class SystemRunResult:
         if self.trust_inputs.execution_status != self.status.value or \
                 set(self.trust_inputs.provider_execution_identities) != {p.execution_identity_digest for p in derived_refs}:
             raise InvalidScientificProblem("result trust inputs differ from what its status and receipts state")
+        unknown = tuple(sorted(f"{n}.{k}" for n, items in self.node_outputs.items() for k, v in items.items() if v.uncertainty.kind is UncertaintyKind.UNKNOWN))
+        applic = tuple(sorted((r.node_id, a.check_id, a.status) for r in self.node_receipts for a in r.applicability))
+        waived = tuple(sorted(n.node_id for n in self.plan.nodes if n.applicability_waiver))
+        if (tuple(self.trust_inputs.unknown_uncertainty_outputs) != unknown or tuple(self.trust_inputs.applicability_reports) != applic
+                or tuple(self.trust_inputs.waived_applicability) != waived):
+            raise InvalidScientificProblem("result trust inputs differ from what its outputs, applicability reports and plan state (uncertainty and waivers are re-derived)")
 
     def observable(self, observable_id: str) -> ObservableResult:
         for item in self.observables:

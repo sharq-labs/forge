@@ -74,11 +74,12 @@ def _coupled_stub(end_uncertainty):
     return runtime
 
 
-def _state_commit_request(end_uncertainty, prior_uncertainty):
+def _state_commit_request(end_uncertainty, prior_uncertainty, accounts=False):
     request, context, knobs = build()
     auth = MultiphysicsAuthority("stub-coupled", _coupled_stub(end_uncertainty), run_kwargs=lambda c: {}, outputs={"temperature": "body.temperature"},
                                  state_owners={"body": "cell"},
                                  applicability=lambda run, call: (ApplicabilityReport("ok", "within", sha("e")),))
+    auth.accounts_for_input_uncertainty = accounts
     context.authorities.register(auth)
     prior = OwnerState("cell", "component", (InitialStateValue("temperature", Quantity(300.0, "K"), prior_uncertainty),))
     node = NodeSpec("stub", NodeKind.MULTIPHYSICS_EXECUTION, auth.ref, (NodeOutputSpec("temperature", "K"),), commits_state=True, writes_owners=("cell",),
@@ -150,9 +151,11 @@ def test_h4_a_self_consistent_checkpoint_from_another_initial_state_is_still_ref
     s0 = SystemState.initial(forged_spec, request_digest=request.digest, system_digest=request.system.digest, environment_digest=request.environment.digest)
     s1 = s0.advance(time=Quantity(1800, "s"), updates=(OwnerState("cell", "component", (InitialStateValue("temperature", Quantity(295.0, "K"), UNKNOWN),)),),
                     produced_by="thermal")
-    forged = replace(cp, state_history=(s0, s1), state=s1)                      # internally consistent: a valid digest chain
-    with pytest.raises(ResumeRefused, match="does not start from this request's initial state|not the state after the last committed node"):
-        verify_checkpoint(forged, request, compile_plan(request), (), context)
+    receipts = tuple(replace(r, state_before_digest=s0.digest, state_after_digest=s1.digest) if r.node_id == "thermal" else r for r in cp.completed_receipts)
+    forged = replace(cp, state_history=(s0, s1), state=s1, completed_receipts=receipts)     # consistent: chain, tip and receipts all agree with each other
+    with pytest.raises(ResumeRefused) as caught:
+        verify_checkpoint(forged, request, compile_plan(request), tuple(sorted(cp.context_digests)), context)
+    assert "does not start from this request's initial state" in str(caught.value) and "not the state after" not in str(caught.value)
 
 
 def test_h4_a_swapped_authority_payload_and_a_dishonest_completeness_flag_are_refused():
@@ -246,7 +249,7 @@ def test_m1_a_state_committing_node_must_declare_applicability_checks_or_state_w
     assert compile_plan(replace(request, nodes=tuple(waived if n.node_id == "thermal" else n for n in request.nodes))).node("thermal").applicability_waiver
     with pytest.raises(InvalidScientificProblem, match="both declares"):
         replace(node, applicability_waiver="also waived")
-    assert waived.digest if hasattr(waived, "digest") else True
+    assert waived.to_dict()["applicability_waiver"] == waived.applicability_waiver
 
 
 def test_m1_a_within_report_must_carry_the_evidence_it_was_decided_on():
@@ -381,11 +384,14 @@ def test_m7_a_stateful_authority_is_never_served_from_the_cache_so_its_own_state
 
 
 # ------------------------------------------------------------------------------------------------------------- LOW
-def test_low_replay_compares_execution_identity_and_uncertainty_kind():
-    a = _run()[3]
-    b = _run(knobs=Knobs(current_a=11.0))[3]
-    cmp = compare_runs(a, b, rel_tol=1.0)
-    assert not cmp.identity_replay and any("execution identity" in d or "request digest" in d for d in cmp.identity_differences)
+def test_low_replay_compares_execution_identity_not_just_the_request_digest():
+    request, context, knobs = build()
+    first = SystemExecutor(context).run(request)
+    knobs.volts = knobs.volts + 1.0                              # same request, different computation behind an unchanged authority identity
+    second = SystemExecutor(context).run(request)
+    cmp = compare_runs(first, second, rel_tol=1.0)
+    assert "request digest" not in cmp.identity_differences and not cmp.identity_replay
+    assert any("execution identity" in d for d in cmp.identity_differences)
 
 
 def test_low_a_balance_term_scale_cannot_erase_a_term():
@@ -417,3 +423,118 @@ def test_low_a_loaded_result_cannot_carry_derived_collections_that_its_receipts_
     wire["preflight"]["status"] = "ready"                                   # a report with a deferred check cannot claim READY
     with pytest.raises(InvalidScientificProblem, match="disagrees with its findings"):
         SystemRunResult.from_dict(wire)
+
+
+# ------------------------------------------------------------------------------------------------------------- re-review round
+def test_r1_the_system_not_the_request_owns_a_constraint_limit():
+    from engcore.system_runtime import ConstraintObservation
+    from tests.system_runtime_fixtures import constraint
+    request, context, _ = build()
+    loose = constraint(limit=1000.0)
+    loose_digest = digest_of(loose.to_dict())
+    (obs,) = request.constraint_observations
+    pinned = ConstraintObservation(obs.binding_id, obs.constraint_id, loose_digest, obs.observable_id)
+    request = replace(request, constraint_observations=(pinned,))
+    context.constraints = {loose_digest: loose}                       # filed under its own true digest, so H3 alone cannot see it
+    report = preflight(request, compile_plan(request), context)
+    assert report.status is PreflightStatus.REFUSED
+    assert any("request cannot choose the limit" in f.message for f in report.findings)
+
+
+def test_r1_a_constraint_observation_must_name_the_constraint_the_system_binds():
+    from engcore.system_runtime import ConstraintObservation
+    request, context, _ = build()
+    (obs,) = request.constraint_observations
+    other = replace(request, constraint_observations=(ConstraintObservation(obs.binding_id, "some_other_constraint", obs.constraint_digest, obs.observable_id),))
+    assert any("binds" in f.message for f in preflight(other, compile_plan(other), context).findings)
+
+
+def test_r2_a_quantified_state_uncertainty_over_an_unknown_prior_is_refused_unless_the_authority_accounts_for_it():
+    known = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.01, "K"), source="declared", method="declared")
+    request, context = _state_commit_request(known, UNKNOWN)          # prior UNKNOWN, participant claims a quantified end value
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("stub").status is NodeStatus.FAILED and "UNKNOWN in, UNKNOWN out" in result.receipt("stub").reason
+    assert len(result.state_history) == 1                              # nothing was committed
+    request, context = _state_commit_request(known, UNKNOWN, accounts=True)
+    assert SystemExecutor(context).run(request).receipt("stub").status is NodeStatus.SUCCEEDED
+
+
+def test_r3_a_waiver_is_visible_in_preflight_trust_inputs_and_the_credibility_notes():
+    request, context, _ = build()
+    node = next(n for n in request.nodes if n.node_id == "thermal")
+    waived = replace(node, applicability_checks=(), applicability_waiver="linear response over the declared load range")
+    request = replace(request, nodes=tuple(waived if n.node_id == "thermal" else n for n in request.nodes))
+    result = SystemExecutor(context).run(request)
+    assert result.status is RunStatus.SUCCEEDED
+    assert "APPLICABILITY_WAIVED" in result.preflight.codes() and result.trust_inputs.waived_applicability == ("thermal",)
+    notes = trust_handoff(result, request).notes
+    assert "WAIVER" in notes and "thermal" in notes and "UNKNOWN" in notes
+    wire = json.loads(json.dumps(result.to_dict()))
+    wire["trust_inputs"]["waived_applicability"] = []
+    with pytest.raises(InvalidScientificProblem, match="re-derived"):
+        SystemRunResult.from_dict(wire)
+
+
+def test_r4_a_dropped_commit_is_refused_even_when_the_receipt_and_the_tip_are_rewritten_to_agree():
+    from engcore.system_runtime import LiteralInput
+    request, context, knobs = build()
+    node = next(n for n in request.nodes if n.node_id == "thermal")
+    second = replace(node, node_id="thermal2", inputs=(NodeInput("heat_in", "heat", "power", "W"),), material_refs=(), environment_requirements=(),
+                     literals=(LiteralInput("ambient", Quantity(293.15, "K"), UNKNOWN),), depends_on=("thermal",))
+    request = replace(request, nodes=request.nodes + (second,), profile=ExecutionProfile((), "off", True, ("thermal2",)))
+    part1 = SystemExecutor(context).run(request, stop_after="thermal2")
+    assert part1.receipt("thermal2").status is NodeStatus.SUCCEEDED, part1.receipt("thermal2").reason
+    cp = part1.checkpoints[-1]
+    h0, h1 = cp.state_history[0], cp.state_history[1]
+    receipts = tuple(replace(r, state_before_digest=h0.digest, state_after_digest=h1.digest) if r.node_id == "thermal2" else r for r in cp.completed_receipts)
+    forged = replace(cp, state=h1, state_history=(h0, h1), completed_receipts=receipts)
+    with pytest.raises(ResumeRefused, match="commit was dropped or invented|disagrees with the receipt"):
+        verify_checkpoint(forged, request, compile_plan(request), tuple(sorted(cp.context_digests)), context)
+
+
+def test_r4_an_undeclared_payload_a_deleted_declaration_and_a_non_boolean_flag_are_refused():
+    request, context = _with_authority(Counting())
+    part1 = SystemExecutor(context).run(request, stop_after="thermal")
+    cp = part1.checkpoints[-1]
+    ctx = tuple(sorted(cp.context_digests))
+    undeclared = replace(cp, completed_receipts=tuple(replace(r, authority_checkpoint=None) if r.node_id == "heat" else r for r in cp.completed_receipts))
+    with pytest.raises(ResumeRefused, match="payload its receipt never declared"):
+        verify_checkpoint(undeclared, request, compile_plan(request), ctx, context)
+    deleted = replace(cp, authority_checkpoints=())
+    with pytest.raises(ResumeRefused, match="stateful authority but the checkpoint carries no declaration"):
+        verify_checkpoint(deleted, request, compile_plan(request), ctx, context)
+    wire = json.loads(json.dumps(cp.to_dict()))
+    wire["complete"] = "false"
+    with pytest.raises(InvalidScientificProblem, match="must be a boolean"):
+        SystemCheckpoint.from_dict(wire)
+    wire = json.loads(json.dumps(cp.to_dict()))
+    wire["authority_checkpoints"][0]["declared_complete"] = "no"
+    with pytest.raises(InvalidScientificProblem, match="must be a boolean"):
+        SystemCheckpoint.from_dict(wire)
+
+
+def test_r5_a_loaded_result_cannot_hide_unknown_uncertainty_or_applicability_reports():
+    request, context, knobs, result = _run()
+    wire = json.loads(json.dumps(result.to_dict()))
+    assert wire["trust_inputs"]["unknown_uncertainty_outputs"]
+    wire["trust_inputs"]["unknown_uncertainty_outputs"] = []
+    with pytest.raises(InvalidScientificProblem, match="re-derived"):
+        SystemRunResult.from_dict(wire)
+    wire = json.loads(json.dumps(result.to_dict()))
+    wire["trust_inputs"]["applicability_reports"] = []
+    with pytest.raises(InvalidScientificProblem, match="re-derived"):
+        SystemRunResult.from_dict(wire)
+
+
+def test_r7_conflicting_applicability_reports_for_one_check_are_refused():
+    request, context, knobs = build()
+    auth = context.authorities._items["thermal-auth"]
+    original = auth._fn
+    auth._fn = lambda call: (lambda out: replace(out, applicability=out.applicability + (ApplicabilityReport("temp_in_range", "unknown"),)))(original(call))
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("thermal").status is NodeStatus.FAILED and "conflicting applicability" in result.receipt("thermal").reason
+
+
+def test_r_no_request_handoff_states_that_models_are_absent():
+    request, context, knobs, result = _run()
+    assert "model selections are absent" in trust_handoff(result).notes

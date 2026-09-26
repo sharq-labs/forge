@@ -324,6 +324,14 @@ class SystemExecutor:
         problem = self._check_providers(node, request, outcome)
         if problem:
             return fail(NodeStatus.FAILED, problem, **kw)
+        if authority.supports_checkpoint and outcome.authority_checkpoint is None:
+            return fail(NodeStatus.FAILED, "the authority supports checkpointing but reported no state declaration (its checkpoint could not be verified on resume)", **kw)
+        statuses_by_check: dict[str, set[str]] = {}
+        for a in outcome.applicability:
+            statuses_by_check.setdefault(a.check_id, set()).add(a.status)
+        conflicting = sorted(c for c, s in statuses_by_check.items() if len(s) > 1)
+        if conflicting:
+            return fail(NodeStatus.FAILED, f"the authority reported conflicting applicability statuses for {conflicting} (a check cannot be both established and not)", **kw)
         reported = {a.check_id: a for a in outcome.applicability}
         for check_id in node.applicability_checks:
             item = reported.get(check_id)
@@ -351,6 +359,21 @@ class SystemExecutor:
             owners = {u.owner_id for u in proposal.updates}
             if not owners <= set(node.writes_owners):
                 return fail(NodeStatus.FAILED, f"state proposal writes {sorted(owners - set(node.writes_owners))}, which the node is not allowed to write", **kw)
+            if not authority.accounts_for_input_uncertainty:
+                inputs_unknown = any(v.uncertainty.kind is UncertaintyKind.UNKNOWN for v in values.values())
+                claimed_state = []
+                for update in proposal.updates:
+                    try:
+                        previous = {v.variable_id: v for v in state.owner(update.owner_id).values}
+                    except Exception:
+                        previous = {}
+                    for v in update.values:
+                        was_unknown = v.variable_id not in previous or previous[v.variable_id].uncertainty.kind is UncertaintyKind.UNKNOWN
+                        if v.uncertainty.kind is not UncertaintyKind.UNKNOWN and (inputs_unknown or was_unknown):
+                            claimed_state.append(f"{update.owner_id}.{v.variable_id}")
+                if claimed_state:
+                    return fail(NodeStatus.FAILED, f"state values {sorted(claimed_state)} claim a quantified uncertainty although an input or the value they replace is UNKNOWN "
+                                                  f"and the authority does not declare that it accounts for it (UNKNOWN in, UNKNOWN out)", **kw)
             try:
                 new_state = state.advance(time=proposal.time, updates=proposal.updates, produced_by=node.node_id,
                                           provider_checkpoints=proposal.provider_checkpoints)
@@ -466,7 +489,7 @@ class SystemExecutor:
                                              ("preflight",), f"preflight refused: {reason}") for o in plan.observables)
         return SystemRunResult(
             request.digest, plan.digest, run_id, RunStatus.REFUSED, report, plan, None, None, (), (), {}, observables, (), (), (), ResourceUsage(), (),
-            self._provenance(request), TrustInputs("refused", (), (), ()))
+            self._provenance(request), TrustInputs("refused", (), (), (), tuple(sorted(n.node_id for n in plan.nodes if n.applicability_waiver))))
 
     def _provenance(self, request: SystemRunRequest) -> tuple[tuple[str, str], ...]:
         pairs = [("system", request.system.digest), ("scenario", request.scenario.digest), ("timeline", request.timeline.digest),
@@ -516,7 +539,8 @@ class SystemExecutor:
         artifacts = tuple(sorted((r.node_id, a) for r in ordered for a in r.artifacts))
         unknown_unc = tuple(sorted(f"{n}.{k}" for n, items in outputs.items() for k, v in items.items() if v.uncertainty.kind is UncertaintyKind.UNKNOWN))
         applic = tuple(sorted((r.node_id, a.check_id, a.status) for r in ordered for a in r.applicability))
-        trust = TrustInputs(run_status.value, unknown_unc, applic, tuple(sorted({p.execution_identity_digest for p in provider_refs})))
+        trust = TrustInputs(run_status.value, unknown_unc, applic, tuple(sorted({p.execution_identity_digest for p in provider_refs})),
+                            tuple(sorted(n.node_id for n in plan.nodes if n.applicability_waiver)))
         return SystemRunResult(
             request.digest, plan.digest, run_id, run_status, report, plan, history[0], history[-1], tuple(history), ordered, outputs, tuple(observables),
             provider_refs, artifacts, (), usage, tuple(checkpoints), self._provenance(request), trust)
