@@ -51,7 +51,9 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
 * A run bundle contains only artifacts a SUCCEEDED node's receipt references (name and sha256). `verify_bundle` re-hashes every file and
   RE-DERIVES: the result and request (their own digests), the plan, the scientific status (`trust_handoff`), `summary.txt` (re-rendered
   from `summary.json`), the summary's key outputs / execution / providers against the result, level 1 (from the result's own preflight),
-  every reference comparison (rebuilt from its bundled reference), and the ladder (every guard; every link digest).
+  every reference comparison (rebuilt from its bundled reference), every provider comparison (two different providers, executions the result recorded, a post-hoc flag
+  that matches its classification, an outcome that follows from its maximum difference for a purely absolute tolerance), the uncertainty statement, the trace, and the ladder
+  (every guard; every link digest).
 
 ## What the bundle check does NOT establish
 
@@ -59,6 +61,9 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
   constraint and conservation lines are JUDGMENTS the flagship recorded with their records; they cannot be re-derived from the bundle.
 * The manifest is unkeyed. Someone who consistently rewrites `summary.json`, `summary.txt` and the manifest together produces a bundle
   that verifies. Authenticity needs the `bundle_digest` recorded somewhere its author cannot edit (a commit, a signed report).
+* The INPUTS of a reference comparison (compared difference, stated conditions, tolerance, `compared_identity`) are stated by the flagship; the bundle re-derives
+  what follows from them, not the inputs. A relative-tolerance provider comparison cannot be re-derived from its aggregate and is refused.
+* The free-text notes and the level notes are recorded prose, bound to the record only through the re-rendered text.
 * A reference no comparison cites is bound only by the manifest.
 * The exact-limit, mesh-study and window-study requests behind levels 3 and 4 are separate BIG 12 requests; their records are inside the
   summary but their provider bindings are not compared with the main request's.

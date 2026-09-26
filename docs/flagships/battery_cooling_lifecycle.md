@@ -2,7 +2,7 @@
 
 Statement labels: **FACT** a checkable statement about the run artifacts - **REFERENCE DATA** taken from an external source with provenance - **ASSUMPTION** declared, not evidenced - **MODEL OUTPUT** a provider's computed value - **CORROBORATION** independent solvers agreeing (never validation) - **VALIDATION** comparison with a reference or measurement, stated with its scope (a numerical benchmark is not an experiment).
 
-`request 3d1e739e940d7b23  plan 4218ffe46734a669  result e8097b8b8130198d`
+`request 3d1e739e940d7b23  plan 4218ffe46734a669  result 277c211c512a00b5`
 
 ## 1. Engineering question
 
@@ -38,7 +38,7 @@ Constraints: cell temperature <= 45 degC, minimum SOC >= 0.2, capacity fade <= 0
 
 ## 7. Execution
 
-[FACT] Normal case: SUCCEEDED in 79 s of wall time; 1499 recorded provider executions (PyBaMM windows + every TESPy solve); 6ecf5f64a5d0.. is the delegated BIG 10 run record; 1 committed slow-state change (final state digest 6a9afadc8d2e..). Wall times are operational, not evidence.
+[FACT] Normal case: SUCCEEDED in 76 s of wall time; 1499 recorded provider executions (PyBaMM windows + every TESPy solve); 6ecf5f64a5d0.. is the delegated BIG 10 run record; 1 committed slow-state change (final state digest 6a9afadc8d2e..). Wall times are operational, not evidence.
 
 ## 8. Results
 
@@ -154,8 +154,12 @@ UNCERTAINTY
   model discrepancy: NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)
   model applicability: cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge
   benchmark applicability: no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared
+  material provenance: contact resistance record 831fcc041478.. (ASSUMED), PyBaMM parameter set Chen2020 (provider-bundled literature set)
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE
   complete
+NOTES
+  case normal: 20 degC mean site air, 0.5 C discharge hour and 0.5 C charge hour
+  all scenario inputs are declared illustrative fixtures, not measurements
 ```

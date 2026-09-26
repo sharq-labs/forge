@@ -22,7 +22,7 @@ CONSTRAINTS
 CONSERVATION
   thermal_energy: incomplete (missing: heat_in (heat_in: refused), heat_out (heat_out: refused))
 VERIFICATION
-  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not)
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not); applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']
   L2 attempted not reached: thermal_energy: incomplete; axial-force diagnostic NOT MET or not read (relative spread {'fenicsx': None, 'calculix': None, 'code_aster': None}, mean force over the thermal scale {'fenicsx': None, 'calculix': None, 'code_aster': None}; needs spread <= 0.001 and mean force >= 0.1)
   L3 not attempted: exact-limit verification requests were not run in this call
   L4 not attempted: mesh study not run in this call
@@ -37,7 +37,11 @@ UNCERTAINTY
   model discrepancy: NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)
   model applicability: thermal solution checked against the declared property range [250.0, 450.0] K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)
   benchmark applicability: no reference comparison was made in this run (the exact-limit and mesh-study requests were not run here, or this run did not succeed); no numerical benchmark and no experiment exists for this plate
+  material provenance: E 4ccd88c72c40.. nu 440aa52136f3.. alpha ab866da9cdda.. k af0acef476c8.. (all ASSUMED)
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE
   GAPS: observable is refused: the solved state left applicability (property_range: plate temperature [303.15, 590.58] K against the declared property range [250.0, 450.0] K); the step is not committed
+NOTES
+  case over_range: a heat load that drives the plate above the declared property range
+  material properties are illustrative ASSUMED records, not datasheet or measured values

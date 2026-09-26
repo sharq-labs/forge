@@ -24,7 +24,9 @@ Guards that make a level unable to be claimed by accident:
 Every evidence link CARRIES the record it names (a comparison, a study, a conservation assessment, the preflight report) and its
 digest is re-derived from that record, so a link cannot name something that is not in the summary and a bundle re-checks each one.  The
 ladder still cannot prove that a record is authentic (a flagship that builds a false record can put it here); it refuses evidence of the
-wrong kind, outcome or timing, and a reference comparison can only be issued by ``compare_to_reference``.
+wrong kind, outcome or timing.  A reference comparison stores nothing about its own outcome (it is derived from its reference, criterion,
+conditions and value), and a provider comparison must name two different providers whose executions the run recorded and, with a purely
+absolute tolerance, an outcome that follows from its own maximum difference (``check_provider_comparison``).
 """
 
 from __future__ import annotations
@@ -32,10 +34,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Collection, Mapping
 
 from ..scenarios.timeline import canonical_digest
 from ..scientific.errors import InvalidScientificProblem
+from ..scientific.units.quantity import Quantity
 from .reference import COMPARISON_CLASSIFICATIONS, OracleKind, ReferenceComparison
 
 LEVELS = (
@@ -256,6 +259,27 @@ class VerificationLadder:
                 "classification": "report_vocabulary_not_a_validation_grant"}
 
 
+def check_provider_comparison(record: Mapping[str, Any], identities: Collection[str]) -> None:
+    """A provider-comparison record is checked against the run it is cited by.
+
+    It must name two DIFFERENT providers whose executions (``identities``: the run's recorded provider execution identities) exist in the run;
+    its post-hoc flag must match its classification; and its tolerance outcome must follow from its own maximum difference.  Only a purely
+    ABSOLUTE tolerance can be re-derived from the aggregate: a relative tolerance is judged per point, so it is refused here."""
+    a, b = record.get("a_identity"), record.get("b_identity")
+    if a not in identities or b not in identities:
+        raise InvalidScientificProblem("a provider comparison names an execution that the run did not record")
+    if a == b or record.get("a_provider") == record.get("b_provider"):
+        raise InvalidScientificProblem("a provider comparison compares two different providers")
+    declaration = record["declaration"]
+    if str(record["classification"]).startswith("post_hoc_") != bool(declaration["post_hoc"]):
+        raise InvalidScientificProblem("a provider comparison's post-hoc flag does not match its classification")
+    if float(declaration["relative_tolerance"]) != 0.0:
+        raise InvalidScientificProblem("a provider comparison with a relative tolerance cannot be re-derived from its aggregate")
+    atol = Quantity.from_dict(declaration["absolute_tolerance"]).magnitude_as_spread_in(declaration["unit"])
+    if bool(record["within_tolerance"]) != (float(record["max_absolute"]) <= atol):
+        raise InvalidScientificProblem("a provider comparison's tolerance outcome does not follow from its maximum difference and tolerance")
+
+
 def contract_integrity_entry(report: Any, result: Any) -> LevelEntry:
     """Level 1 from the run's own preflight and status: reached only if neither the preflight nor the run was REFUSED.
 
@@ -267,7 +291,8 @@ def contract_integrity_entry(report: Any, result: Any) -> LevelEntry:
     solved_state_refusals = sorted(r.node_id for r in result.node_receipts if r.status.value == "refused")
     note = ("units, material-record digests, provider bindings and identities checked by BIG 12 preflight"
             + (f"; deferred to the solved state: {deferred}" if deferred else "")
-            + (f"; REFUSED on the solved state: {solved_state_refusals} (the request was admissible; the solved state was not)" if solved_state_refusals else ""))
+            + (f"; REFUSED on the solved state: {solved_state_refusals} (the request was admissible; the solved state was not)" if solved_state_refusals else "")
+            + (f"; applicability WAIVED (a caller statement, not evidence) for: {sorted(result.trust_inputs.waived_applicability)}" if result.trust_inputs.waived_applicability else ""))
     if refused:
         return LevelEntry(1, LevelStatus.ATTEMPTED_NOT_REACHED, (link,), "the preflight or the run was REFUSED: " + note)
     return LevelEntry(1, LevelStatus.REACHED, (link,), note)

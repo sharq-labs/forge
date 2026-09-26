@@ -574,7 +574,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-openfoam-20",
     "identity_digest": "338befa4f7505959e865d04f598105ad6ee7dcdcd9f4afb6d9626af3e8d61baf",
@@ -678,7 +678,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-openfoam-40",
     "identity_digest": "275476ce52578b532af032ed963e24b2eb8732fb64aed5ae5e70fef706b7fcb8",
@@ -782,7 +782,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-openfoam-80",
     "identity_digest": "98754eefa21dd946e2bf7d59e70668f0c27ec64fcbd0c54b27008dde821174f4",
@@ -886,7 +886,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-su2-20",
     "identity_digest": "2aa2b48cd26d0370c1ad275bb53b8f6b71b875c681ca129c44d3e8699dcf05e9",
@@ -990,7 +990,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-su2-40",
     "identity_digest": "2499c29f0d94c564026183bd8eab961ff03538512b3f26810c2a61e708677312",
@@ -1094,7 +1094,7 @@
   },
   {
    "applicability_checks": [],
-   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs",
+   "applicability_waiver": "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)",
    "authority": {
     "authority_id": "cavity-su2-80",
     "identity_digest": "193a836bc0a67a84930c6d89ded96c90a937bd29061b18ca4e247f04263a6b37",

@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "caa6522575ae323da778c4a9d1aaf2ac44fbec615b5201abef69bf99aacd1752"
+   "9a7c09ab38b4524006d389bcfeefd194b19a85f21ef1e89c8099e1d75998445a"
   ]
  ],
  "key_outputs": [
@@ -149,13 +149,14 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Heated aluminium plate, constrained, 40x8 P1 mesh (over_range)",
- "text_sha256": "5848e338e52159cc2e8044901f190855e1c299afaacdfecd7e5e100bce79e2f2",
+ "text_sha256": "8f42766d24b896f605c18a7e9ce9d76d08cb5907f00615bc6e8d7b122c53c15c",
  "trace": {
   "complete": false,
   "gaps": [
    "observable is refused: the solved state left applicability (property_range: plate temperature [303.15, 590.58] K against the declared property range [250.0, 450.0] K); the step is not committed"
   ]
  },
+ "trace_observable": "t_max",
  "uncertainty": {
   "benchmark_applicability": "no reference comparison was made in this run (the exact-limit and mesh-study requests were not run here, or this run did not succeed); no numerical benchmark and no experiment exists for this plate",
   "known_input_uncertainty": [],
@@ -222,7 +223,7 @@
     ],
     "level": 1,
     "name": "contract_integrity",
-    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not)",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not); applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']",
     "status": "reached"
    },
    {

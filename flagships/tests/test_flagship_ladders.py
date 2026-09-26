@@ -134,3 +134,87 @@ def test_level_two_of_the_structure_flagship_records_a_failing_reading_instead_o
     # nothing assessable at all
     nothing = tm.level2_entry((), {p: None for p in PROVIDERS}, {p: None for p in PROVIDERS})
     assert nothing.status is LevelStatus.NOT_ATTEMPTED and not nothing.evidence
+
+
+# --------------------------------------------------------------------------------------------------- C: level 5 builder (round 4, M-4)
+class _FakeProviderComparison:
+    """A stand-in for a ProviderComparison (the link builder reads classification, within_tolerance, to_dict and digest)."""
+
+    def __init__(self, within: bool, post_hoc: bool = False, tag: str = "x"):
+        self.within_tolerance = within
+        self.classification = "post_hoc_solver_corroboration_not_validation" if post_hoc else "solver_corroboration_not_validation"
+        self.tag = tag
+
+    def to_dict(self) -> dict:
+        return {"classification": self.classification, "within_tolerance": self.within_tolerance, "a_selection": {"rows": [1, 2]}, "b_selection": {"rows": [3]}, "tag": self.tag}
+
+    @property
+    def digest(self) -> str:
+        return "d" * 64
+
+
+LEVELS3 = (20, 40, 80)
+
+
+def _whole(flags):
+    return {n: (None if f is None else _FakeProviderComparison(bool(f), tag=str(n))) for n, f in zip(LEVELS3, flags)}
+
+
+def test_level_five_of_the_cavity_flagship_records_a_missing_or_failing_whole_field_comparison_instead_of_dropping_it():
+    lower = {n: _FakeProviderComparison(True, post_hoc=True, tag=f"low{n}") for n in LEVELS3}
+    details = {n: f"whole field {n}x{n}" for n in LEVELS3}
+    reached = cf.level5_entry(LEVELS3, dict(zip(LEVELS3, (1.0, 1.0, 1.0))), _whole((1, 1, 1)), lower, details)
+    assert reached.status is LevelStatus.REACHED and len(reached.evidence) == 3 and not any(e.classification.startswith("post_hoc") for e in reached.evidence)
+    # every level disagrees (the recorded result): NOT reached, the post-hoc lower-half readings sit beside it
+    unmet = cf.level5_entry(LEVELS3, dict(zip(LEVELS3, (0.0, 0.0, 0.0))), _whole((0, 0, 0)), lower, details)
+    assert unmet.status is LevelStatus.ATTEMPTED_NOT_REACHED and sum(e.classification.startswith("post_hoc") for e in unmet.evidence) == 3
+    # the finest level failed to run: its comparison is MISSING - it must not read as 'not attempted', and the two produced comparisons stay in the evidence
+    partial = cf.level5_entry(LEVELS3, {20: 0.0, 40: 0.0, 80: None}, _whole((0, 0, None)), lower, details)
+    assert partial.status is LevelStatus.ATTEMPTED_NOT_REACHED
+    missing = [e for e in partial.evidence if e.kind == "whole_field_missing"]
+    assert len(missing) == 1 and missing[0].outcome == "not_met" and "80x80" in partial.note
+    assert sum(e.kind == "provider_comparison" and not e.classification.startswith("post_hoc") for e in partial.evidence) == 2
+    # a level missing while the others agree is still not a pass
+    assert cf.level5_entry(LEVELS3, {20: 1.0, 40: 1.0, 80: None}, _whole((1, 1, None)), lower, details).status is LevelStatus.ATTEMPTED_NOT_REACHED
+    assert cf.level5_entry(LEVELS3, {n: None for n in LEVELS3}, _whole((None, None, None)), {}, {}).status is LevelStatus.NOT_ATTEMPTED
+
+
+# --------------------------------------------------------------------------------------------------- B: level 4 builder (round 4)
+def _study(vm_last=60.06e6, sxx=-55.207466e6, fail_level=None):
+    import math
+    ux = [2.790824e-05, 2.789204e-05, 2.788798e-05, 2.788696e-05]
+    vm = [58.917e6, 59.409e6, 59.817e6, vm_last]
+    rows = []
+    for i, (nx, ny) in enumerate(((20, 4), (40, 8), (80, 16), (160, 32))):
+        row = {"nx": nx, "ny": ny, "nodes": 100 * (i + 1), "status": "succeeded", "result": "r" * 64}
+        for p in tm.PROVIDERS if hasattr(tm, "PROVIDERS") else ("fenicsx", "calculix", "code_aster"):
+            row |= {f"ux_mid_{p}": ux[i], f"sxx_mid_{p}": sxx, f"ux_max_{p}": 3.65e-05, f"vm_max_{p}": vm[i]}
+        if fail_level == i:
+            row["status"] = "failed"
+            row |= {k: None for k in list(row) if k.endswith(("fenicsx", "calculix", "code_aster"))}
+        rows.append(row)
+    table = {"levels": rows, "orders": {}, "monotone": {}}
+    for p in ("fenicsx", "calculix", "code_aster"):
+        for q in ("ux_mid", "sxx_mid", "ux_max", "vm_max"):
+            v = [r[f"{q}_{p}"] for r in rows]
+            if any(x is None for x in v):
+                continue
+            d1, d2 = abs(v[-2] - v[-3]), abs(v[-1] - v[-2])
+            table["orders"][f"{q}_{p}"] = None if d2 == 0 or d1 == 0 else float(math.log2(d1 / d2))
+            table["monotone"][f"{q}_{p}"] = bool(d2 < d1)
+    return table
+
+
+def test_level_four_of_the_structure_flagship_keeps_the_pre_registered_outcome_and_survives_an_incomplete_study():
+    entry, extra = tm.level4_entry(_study())
+    # displacement converges at order ~2, the mid-plate stress is constant (no order exists): the pre-registered criterion is NOT met, the post hoc reading is
+    assert entry.status is LevelStatus.ATTEMPTED_NOT_REACHED and extra["predeclared_criterion_met"] is False and extra["post_hoc_noise_aware_met"] is True
+    assert {e.classification for e in entry.evidence} == {"discretisation_convergence", "post_hoc_discretisation_convergence"}
+    assert "Pre-registered criterion" in entry.note and "NOT claimed converged" in entry.note
+    # a mesh level that failed: recorded as not_met evidence, no order computed, no crash
+    broken_entry, broken_extra = tm.level4_entry(_study(fail_level=3))
+    assert broken_entry.status is LevelStatus.ATTEMPTED_NOT_REACHED and broken_extra["incomplete_levels"] == ["160x32"]
+    assert [e.outcome for e in broken_entry.evidence] == ["not_met"] and "incomplete" in broken_entry.note
+    fewer = _study()
+    fewer["levels"] = fewer["levels"][:2]
+    assert tm.level4_entry(fewer)[0].status is LevelStatus.ATTEMPTED_NOT_REACHED

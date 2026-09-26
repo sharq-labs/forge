@@ -53,7 +53,7 @@
   ],
   [
    "result",
-   "e8097b8b8130198d988e460fb5d03b05c52bff454876a22d1331a0a634219751"
+   "277c211c512a00b522f1d355ca0c6efe0428fb868b8697276c067a62e729842a"
   ]
  ],
  "key_outputs": [
@@ -253,7 +253,7 @@
    "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
    "note": "2 heat-carrying windows of the fresh day",
    "outcome": "met",
-   "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
+   "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
    "reference_kind": "analytic_reference",
    "value": {
     "magnitude": 2.3424371463904412e-08,
@@ -267,11 +267,12 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (normal)",
- "text_sha256": "f02b074645b5daf77b1132f061804e7bd4e93cbc142d7fd046e139ba045aba1b",
+ "text_sha256": "8254ff92567b34c95b7f80cba02fe42b1d3f64e574e8b2d2d2dd50bdb690acd2",
  "trace": {
   "complete": true,
   "gaps": []
  },
+ "trace_observable": "voltage_shift_degradation",
  "uncertainty": {
   "benchmark_applicability": "no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared",
   "known_input_uncertainty": [],
@@ -443,7 +444,7 @@
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "048c5e83c8f3a5970536a8470cc15de01216f650654e0b863123ab04b0897e9c",
+      "digest": "8cac4259818cbd750c3942600ebe4d8f624f4cac8673b9adf961aa9d34575f2c",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -489,7 +490,7 @@
        "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
        "note": "2 heat-carrying windows of the fresh day",
        "outcome": "met",
-       "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
+       "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
        "reference_kind": "analytic_reference",
        "value": {
         "magnitude": 2.3424371463904412e-08,
@@ -498,7 +499,7 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "ddb990fdcec3d8181a824b147e7a722fb9b9efc1c69167f61048e027f297d06e"
+      "record_digest": "c7280733b8790f47ee9b74c3b7b1661e64ba5046abf4622bde3e94cded8fd5d1"
      }
     ],
     "level": 3,
@@ -510,15 +511,15 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "e93cee9043b3fa204dd9f46953beac81c11d1eb8fc4dab1de4863bba91a6467f",
+      "digest": "a29f32391f95a3374dfd114afc926e272df63499bcfee1a265308d6153477145",
       "kind": "window_refinement",
-      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '94ea63f73ea893dc', '1800': 'a70229e20b09ad29', '900': '435d33ada8c944d2'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
+      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '3250f33057d04523', '1800': 'b8cbf96f5b46d456', '900': '9053672164b891bf'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
       "outcome": "not_met",
       "record": {
        "digest": {
-        "1800": "a70229e20b09ad29",
-        "3600": "94ea63f73ea893dc",
-        "900": "435d33ada8c944d2"
+        "1800": "b8cbf96f5b46d456",
+        "3600": "3250f33057d04523",
+        "900": "9053672164b891bf"
        },
        "met": false,
        "monotone_met": false,
@@ -562,7 +563,7 @@
         900
        ]
       },
-      "record_digest": "956db599d13c888987c4fca1b0403026203bf06cf612c4e0c1fda3ad6227d238"
+      "record_digest": "4e8a14fa6a6a89019e1f023f0719c0056e607cb6d0b33aaa222da74d93ffff76"
      }
     ],
     "level": 4,

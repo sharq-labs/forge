@@ -53,7 +53,7 @@
   ],
   [
    "result",
-   "cabf14d6d938868d17022ac8873c01043591c2a6421a8f3d1e48c9fa08efc822"
+   "83daaa9a07a906cb2ddd0fd4fcee33a6cd904c6dd44235ee4792a1d17bd363c3"
   ]
  ],
  "key_outputs": [
@@ -164,13 +164,14 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (overload)",
- "text_sha256": "f9718290229953cc22036f417b25db6d77d67ceddfb0acb7331e6e75ecffc68b",
+ "text_sha256": "0ceefbc8d126c4783fefe9fc87b6fd6a85a2a697eb9502502f817f75ac66306c",
  "trace": {
   "complete": false,
   "gaps": [
    "observable is failed: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused"
   ]
  },
+ "trace_observable": "peak_cell_temperature_fresh",
  "uncertainty": {
   "benchmark_applicability": "no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared",
   "known_input_uncertainty": [],

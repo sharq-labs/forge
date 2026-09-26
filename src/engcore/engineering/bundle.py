@@ -18,11 +18,16 @@ and every digest it states are regenerated to match:
 * every reference comparison, REBUILT from its shipped reference, criterion, conditions and value (applicability, tolerance outcome, kind
   and classification are derived, never read), and every ladder link that claims to be a comparison must be one of them, and every
   comparison must be cited by the ladder;
+* every provider comparison (level 5): it must name two different providers whose executions the result recorded, carry a post-hoc flag that matches its
+  classification and, for a purely absolute tolerance, an outcome that follows from its own maximum difference (a relative tolerance is judged per point and is refused);
+* the uncertainty statement (its guards re-run; it may not be emptied while outputs are UNKNOWN) and the trace (re-derived from the result);
 * the ladder itself, rebuilt with every guard, each evidence link's digest re-derived from the kind, classification, outcome and record it carries.
 
 What this does NOT do: levels 2-4 evidence that is not a comparison (a conservation residual, a mesh or window study, an equilibrium
 diagnostic) is a JUDGMENT the flagship recorded with its record; it cannot be re-derived from the bundle, and neither can the constraint and
-conservation lines. And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest together
+conservation lines or the free-text notes.  The INPUTS of a reference comparison (the compared difference, the conditions, the tolerance, the
+identity of what was compared) are stated by the flagship: the bundle re-derives what follows from them (outcome, applicability, kind,
+classification) but not the inputs themselves. And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest together
 produces a bundle that verifies.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a
 signed report).  A bundle is a record of a run; it is not evidence and it cannot raise a scientific status.
 Files are written as bytes with LF line endings so digests are stable across platforms.
@@ -38,10 +43,10 @@ from typing import Any, Mapping, Sequence
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scenarios.timeline import canonical_digest
-from ..system_runtime import NodeStatus, RunStatus, SystemRunRequest, SystemRunResult, trust_handoff
-from .ladder import VerificationLadder, contract_integrity_entry
+from ..system_runtime import NodeStatus, RunStatus, SystemRunRequest, SystemRunResult, trace_result, trust_handoff
+from .ladder import VerificationLadder, check_provider_comparison, contract_integrity_entry
 from .reference import ReferenceComparison, ReferenceRecord
-from .summary import EngineeringSummary, _uncertainty_text, render_summary_text
+from .summary import EngineeringSummary, UncertaintyStatement, _uncertainty_text, render_summary_text
 
 MANIFEST_SCHEMA = "engcore.engineering.bundle/1"
 
@@ -147,13 +152,21 @@ def verify_bundle(directory: str) -> BundleManifest:
     on_disk = {rel for rel, _ in _walk(directory)} - {"manifest.json"}
     if on_disk != set(files):
         raise BundleRefused(f"files not in the manifest: {sorted(on_disk - set(files))}; missing: {sorted(set(files) - on_disk)}")
-    with open(os.path.join(directory, "result.json"), "rb") as fh:
-        result = SystemRunResult.from_dict(json.loads(fh.read().decode("utf-8")))
+    try:
+        with open(os.path.join(directory, "result.json"), "rb") as fh:
+            result = SystemRunResult.from_dict(json.loads(fh.read().decode("utf-8")))
+    except BundleRefused:
+        raise
+    except Exception as exc:
+        raise BundleRefused(f"result.json does not load as a run result: {exc}") from exc
     if result.digest != payload["result_digest"] or result.request_digest != payload["request_digest"] or result.plan_digest != payload["plan_digest"]:
         raise BundleRefused("the result does not carry the identities the manifest states")
     # the rest of the bundle must agree with the result it claims to describe (a re-generated manifest is not enough)
-    with open(os.path.join(directory, "request.json"), "rb") as fh:
-        request = SystemRunRequest.from_dict(json.loads(fh.read().decode("utf-8")))
+    try:
+        with open(os.path.join(directory, "request.json"), "rb") as fh:
+            request = SystemRunRequest.from_dict(json.loads(fh.read().decode("utf-8")))
+    except Exception as exc:
+        raise BundleRefused(f"request.json does not load as a run request: {exc}") from exc
     if request.digest != payload["request_digest"] or request.digest != result.request_digest:
         raise BundleRefused("request.json is not the request this result was produced for")
     with open(os.path.join(directory, "plan.json"), "rb") as fh:
@@ -163,8 +176,8 @@ def verify_bundle(directory: str) -> BundleManifest:
         return _verify_rest(directory, payload, files, result, request)
     except BundleRefused:
         raise
-    except (KeyError, TypeError, ValueError, IndexError) as exc:
-        raise BundleRefused(f"the bundle is malformed: {exc!r}") from exc
+    except Exception as exc:                # any other failure to re-derive is a refusal, never a crash and never a pass
+        raise BundleRefused(f"the bundle does not re-derive: {exc!r}") from exc
 
 
 def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result: SystemRunResult, request: SystemRunRequest) -> BundleManifest:
@@ -208,6 +221,26 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
         ladder = VerificationLadder.from_dict(summary["verification"])
     except (InvalidScientificProblem, KeyError, ValueError, TypeError) as exc:
         raise BundleRefused(f"the summary's verification ladder does not re-validate: {exc}") from exc
+    recorded_identities = {p.execution_identity_digest for p in result.provider_records}
+    for entry in ladder.entries:
+        for link in entry.evidence:
+            if link.kind == "provider_comparison":
+                try:
+                    check_provider_comparison(link.record, recorded_identities)
+                except InvalidScientificProblem as exc:
+                    raise BundleRefused(f"level {entry.level}: {exc}") from exc
+    # the uncertainty statement re-runs its own guards, and may not be emptied while outputs are UNKNOWN; the trace is re-derived
+    uncertainty = summary["uncertainty"]
+    try:
+        statement = UncertaintyStatement(tuple(uncertainty["known_input_uncertainty"]), tuple(uncertainty["unknown_input_uncertainty"]), uncertainty["model_discrepancy"],
+                                         tuple(uncertainty["material_provenance"]), uncertainty["model_applicability"], uncertainty["benchmark_applicability"])
+    except InvalidScientificProblem as exc:
+        raise BundleRefused(f"the summary's uncertainty statement does not re-validate: {exc}") from exc
+    if result.trust_inputs.unknown_uncertainty_outputs and not statement.unknown_input_uncertainty:
+        raise BundleRefused("outputs with UNKNOWN uncertainty exist, but the summary names no UNKNOWN input uncertainty")
+    traced = trace_result(result, summary["trace_observable"])
+    if summary["trace"] != {"complete": traced.complete, "gaps": list(traced.gaps)}:
+        raise BundleRefused("the summary's trace is not the trace the result derives")
     expected_l1 = json.loads(json.dumps(contract_integrity_entry(result.preflight, result).to_dict()))
     if canonical_digest(summary["verification"]["levels"][0]) != canonical_digest(expected_l1):
         raise BundleRefused("level 1 is not what the result's own preflight report and status derive")

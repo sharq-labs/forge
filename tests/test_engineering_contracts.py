@@ -627,3 +627,89 @@ def test_a_bundle_needs_the_reference_of_every_comparison_it_reports(tmp_path):
     os.remove(os.path.join(d, "references", "ghia-like.json"))                                       # a comparison whose reference file is gone cannot be checked
     with pytest.raises(BundleRefused):
         verify_bundle(d)
+
+
+# ------------------------------------------------------------------------------------------------ round 4: provider comparisons, uncertainty, trace
+def _provider_record(*, within=True, max_absolute="0.0009", post_hoc=False, a="a" * 64, b="b" * 64, rel=0.0, pa="openfoam", pb="su2"):
+    cls = "post_hoc_solver_corroboration_not_validation" if post_hoc else "solver_corroboration_not_validation"
+    return {"classification": cls, "a_identity": a, "b_identity": b, "a_provider": pa, "b_provider": pb, "max_absolute": max_absolute, "within_tolerance": within,
+            "declaration": {"post_hoc": post_hoc, "relative_tolerance": rel, "absolute_tolerance": Quantity(0.03, DIMLESS).to_dict(), "unit": DIMLESS}}
+
+
+def test_a_provider_comparison_must_name_executions_the_run_recorded_and_an_outcome_that_follows_from_its_own_maximum_difference():
+    from engcore.engineering.ladder import check_provider_comparison
+    ids = {"a" * 64, "b" * 64}
+    check_provider_comparison(_provider_record(), ids)
+    with pytest.raises(InvalidScientificProblem, match="did not record"):
+        check_provider_comparison(_provider_record(a="c" * 64), ids)                               # an execution that is not in the run
+    with pytest.raises(InvalidScientificProblem, match="two different providers"):
+        check_provider_comparison(_provider_record(pb="openfoam"), ids)
+    with pytest.raises(InvalidScientificProblem, match="post-hoc flag"):
+        check_provider_comparison(_provider_record(post_hoc=True) | {"classification": "solver_corroboration_not_validation"}, ids)
+    with pytest.raises(InvalidScientificProblem, match="relative tolerance"):
+        check_provider_comparison(_provider_record(rel=0.01), ids)                                 # judged per point: not re-derivable from the aggregate
+    with pytest.raises(InvalidScientificProblem, match="does not follow"):
+        check_provider_comparison(_provider_record(within=True, max_absolute="0.26"), ids)         # a 26 % difference cannot be 'within' a 3 % tolerance
+    check_provider_comparison(_provider_record(within=False, max_absolute="0.26"), ids)             # ... and honestly not within is fine
+
+
+def test_a_summary_refuses_a_provider_comparison_that_names_executions_the_run_did_not_record():
+    request, context, result = _run()                                                              # this fixture run executed no provider
+    link = EvidenceLink.of_record("provider_comparison", _provider_record(), "solver_corroboration_not_validation", "met")
+    with pytest.raises(InvalidScientificProblem, match="did not record"):
+        _summary(request, context, result, entries=(LevelEntry(5, LevelStatus.REACHED, (link,)),))
+
+
+def test_a_bundle_whose_level_five_is_promoted_with_a_fabricated_provider_comparison_is_refused(tmp_path):
+    """Round-4 H-1: a two-key record with the right class string used to verify; the comparison must be bound to executions the result recorded."""
+    d, *_ = _write(tmp_path, "l5")
+    verify_bundle(d)
+
+    def promote(w):
+        link = EvidenceLink.of_record("provider_comparison", _provider_record(), "solver_corroboration_not_validation", "met")
+        level = w["verification"]["levels"][4]
+        level["status"] = "reached"
+        level["evidence"] = [link.to_dict()]
+        w["verification"]["corroboration_reached"] = True
+    _rewrite_summary(d, promote)
+    with pytest.raises(BundleRefused, match="level 5"):
+        verify_bundle(d)
+
+
+def test_the_uncertainty_statement_and_the_trace_are_re_derived_from_the_bundle(tmp_path):
+    d, *_ = _write(tmp_path, "unc")
+    _rewrite_summary(d, lambda w: w["uncertainty"].update(model_discrepancy="0"))
+    with pytest.raises(BundleRefused, match="uncertainty statement does not re-validate"):
+        verify_bundle(d)
+    d, *_ = _write(tmp_path, "unk")
+    _rewrite_summary(d, lambda w: w["uncertainty"].update(unknown_input_uncertainty=[]))            # the fixture's outputs are UNKNOWN: an empty list would read as none
+    with pytest.raises(BundleRefused, match="UNKNOWN input uncertainty"):
+        verify_bundle(d)
+    d, *_ = _write(tmp_path, "trace")
+    _rewrite_summary(d, lambda w: w.update(trace={"complete": False, "gaps": ["made up"]}))
+    with pytest.raises(BundleRefused, match="trace"):
+        verify_bundle(d)
+
+
+def test_verify_bundle_always_refuses_with_a_bundle_error_never_a_raw_exception(tmp_path):
+    d, *_ = _write(tmp_path, "garbage")
+    open(os.path.join(d, "result.json"), "wb").write(b"{not json")
+    _remanifest(d)
+    with pytest.raises(BundleRefused):
+        verify_bundle(d)
+    d, *_ = _write(tmp_path, "badrequest")
+    open(os.path.join(d, "request.json"), "wb").write(b"{}")
+    _remanifest(d)
+    with pytest.raises(BundleRefused):
+        verify_bundle(d)
+
+
+def test_the_summary_text_covers_the_notes_and_the_material_provenance_so_they_are_bound_to_the_record(tmp_path):
+    d, *_ = _write(tmp_path, "notes")
+    text = open(os.path.join(d, "summary.txt"), "rb").read().decode()
+    assert "material provenance: fixture" in text
+    d2, request, result, s = _write(tmp_path, "notes2")
+    open(os.path.join(d2, "summary.txt"), "ab").write(b"NOTES\n  something added\n")
+    _remanifest(d2)
+    with pytest.raises(BundleRefused, match="summary.txt"):
+        verify_bundle(d2)

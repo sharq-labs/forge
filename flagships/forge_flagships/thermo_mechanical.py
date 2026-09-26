@@ -520,11 +520,11 @@ def analytic_references():
     env = (EnvelopeBound("temperature_rise", 0.1, 300.0, "K"), EnvelopeBound("thermal_strain", 0.0, 1e-2, "dimensionless"))
     free = ReferenceRecord("uniform-free-thermal-expansion", "Free thermal growth of a uniformly heated isotropic body: u = alpha dT x", "textbook thermoelasticity (derived)",
                            "small-strain linear thermoelasticity", "", "derived relation, not copied data", OracleKind.ANALYTIC_REFERENCE, common,
-                           (("max_displacement_error_relative", "dimensionless"),), (), "", "closed form; roller/symmetry restraints admit exactly this field", env,
+                           (("max_displacement_error_relative", "dimensionless"),), (), "", "closed form; roller/symmetry restraints admit exactly this field. The applicability envelope (temperature rise 0.1-300 K, thermal strain below 1e-2) is AUTHORED by this flagship, not stated by a source", env,
                            comparable_quantities=("max_displacement_error_relative",))
     constrained = ReferenceRecord("uniform-constrained-thermal-stress", "Fully restrained uniform heating: sigma_xx = -E alpha dT", "textbook thermoelasticity (derived)",
                                   "small-strain linear thermoelasticity, plane stress", "", "derived relation, not copied data", OracleKind.ANALYTIC_REFERENCE, common,
-                                  (("axial_stress_error_relative", "dimensionless"),), (), "", "closed form; uniform axial stress, free lateral expansion", env,
+                                  (("axial_stress_error_relative", "dimensionless"),), (), "", "closed form; uniform axial stress, free lateral expansion. The applicability envelope (temperature rise 0.1-300 K, thermal strain below 1e-2) is AUTHORED by this flagship, not stated by a source", env,
                                   comparable_quantities=("axial_stress_error_relative",))
     bar = ReferenceRecord("bar-theory-mid-plate-stress", "Bar theory for a restrained plate with an axial temperature gradient: sigma_xx = -E alpha (T_mean - T_ref)",
                           "textbook thermoelasticity (derived; APPROXIMATE away from the supports)", "Saint-Venant, mid-section only", "", "derived relation, not copied data",
@@ -609,6 +609,56 @@ def mesh_study(levels=((20, 4), (40, 8), (80, 16), (160, 32)), registry=None) ->
             table["orders"][f"{q}_{p_id}"] = None if d2 == 0 or d1 == 0 else float(math.log2(d1 / d2))
             table["monotone"][f"{q}_{p_id}"] = bool(d2 < d1)
     return table
+
+
+def level4_entry(study: dict) -> tuple[LevelEntry, dict]:
+    """Level 4 from the mesh study table; returns the entry and the extra fields (the pre-registered outcome and the post hoc reading) recorded beside the study.
+
+    An incomplete study (a mesh level failed or produced no value) is recorded as not_met evidence and no order is computed from it."""
+    providers = ("fenicsx", "calculix", "code_aster")
+    quantities = ("ux_mid", "sxx_mid", "ux_max", "vm_max")
+    ok_q = ("ux_mid", "sxx_mid")
+    rows = study["levels"]
+    incomplete = [f"{r.get('nx')}x{r.get('ny')}" for r in rows if r.get("status") != "succeeded" or any(r.get(f"{q}_{p}") is None for q in quantities for p in providers)]
+    if incomplete or len(rows) < 3:
+        extra = {"predeclared_criterion_met": False, "predeclared_failing": ["incomplete study"], "post_hoc_noise_aware_met": False, "incomplete_levels": incomplete}
+        link = EvidenceLink.of_record("mesh_study", {**study, **extra}, "discretisation_convergence", "not_met",
+                                      f"mesh levels {incomplete or 'fewer than three were run'}: a level failed or produced no value; no order is computed from incomplete data")
+        return LevelEntry(4, LevelStatus.ATTEMPTED_NOT_REACHED, (link,), f"the mesh study is incomplete (levels {incomplete or 'fewer than three'}): no convergence is claimed, no order is computed"), extra
+
+    def ordered(q: str, p: str) -> bool:
+        return bool(study["monotone"].get(f"{q}_{p}")) and (study["orders"].get(f"{q}_{p}") or 0) >= CONVERGENCE_ORDER_MIN
+    # PRE-REGISTERED criterion: every provider's mid-plate displacement and stress converge monotonically at observed order >= CONVERGENCE_ORDER_MIN
+    good = all(ordered(q, p) for q in ok_q for p in providers)
+    failing = sorted(f"{q}_{p}" for q in ok_q for p in providers if not ordered(q, p))
+
+    def converged_to_noise(q: str, p: str) -> bool:
+        v = [row[f"{q}_{p}"] for row in rows]
+        return abs(v[-1] - v[-2]) <= NOISE_BAND_REL * max(abs(v[-1]), 1e-30)
+    # POST-HOC reading, added after the pre-registered outcome was seen: a quantity whose last change is below NOISE_BAND_REL (relative) has already converged to
+    # solver noise, so an observed order is not defined for it.  Reported beside the pre-registered outcome, never in place of it.
+    post_good = all(ordered(q, p) or converged_to_noise(q, p) for q in ok_q for p in providers)
+    extra = {"predeclared_criterion_met": good, "predeclared_failing": failing, "post_hoc_noise_aware_met": post_good}
+    record = {**study, **extra}
+    ux_orders = {p: study["orders"].get(f"ux_mid_{p}") for p in providers}
+    vm_orders = {p: study["orders"].get(f"vm_max_{p}") for p in providers}
+    sxx_rel = {p: abs(rows[-1][f"sxx_mid_{p}"] - rows[-2][f"sxx_mid_{p}"]) / max(abs(rows[-1][f"sxx_mid_{p}"]), 1e-30) for p in providers}
+    vm_seq = [row["vm_max_fenicsx"] / 1e6 for row in rows]
+    vm_orders_txt = {p: (None if v is None else round(v, 2)) for p, v in vm_orders.items()}
+    known_vm = [v for v in vm_orders.values() if v is not None]
+    links4 = [EvidenceLink.of_record("mesh_study", record, "discretisation_convergence", "met" if good else "not_met", f"pre-registered criterion; failing: {failing}")]
+    if not good:      # a post-hoc reading may sit beside a level that is NOT reached; it can never be attached to a REACHED one
+        links4.append(EvidenceLink.of_record("mesh_study_post_hoc", {"reading": "noise_aware", "relative_change_threshold": NOISE_BAND_REL, "met": post_good, "study_digest": digest_of(record)},
+                                             "post_hoc_discretisation_convergence", "met" if post_good else "not_met",
+                                             f"added after seeing the outcome: quantities already converged to solver noise (last change < {NOISE_BAND_REL:g} relative) are not judged by an observed order"))
+    entry = LevelEntry(
+        4, LevelStatus.REACHED if good else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
+        f"four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Pre-registered criterion (monotone, observed order >= {CONVERGENCE_ORDER_MIN} for mid-plate "
+        "displacement AND stress, every provider): " + ("MET" if good else f"NOT MET - {failing}") + f". Observed orders of the mid-length displacement {ux_orders}; last relative change of the mid-plate stress "
+        f"{ {p: f'{v:.1e}' for p, v in sxx_rel.items()} }" + (" (at solver noise, so an order is undefined for it)" if all(v <= NOISE_BAND_REL for v in sxx_rel.values()) else "")
+        + f". Peak von Mises (FEniCSx, MPa) over the meshes {[round(x, 3) for x in vm_seq]}, observed orders {vm_orders_txt}"
+        + (": it is NOT claimed converged and the cause of its slow behaviour was not investigated" if (not known_vm or min(known_vm) < CONVERGENCE_ORDER_MIN) else ""))
+    return entry, extra
 
 
 def level2_entry(conservation, spreads: dict, ratios: dict) -> LevelEntry:
@@ -712,42 +762,9 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
         entries.append(LevelEntry(3, LevelStatus.NOT_ATTEMPTED, (), "exact-limit verification requests were not run in this call"))
     if study and ran:
         run.study = mesh_study(registry=registry)
-        ok_q = ("ux_mid", "sxx_mid")
-        # PRE-REGISTERED criterion: every provider's mid-plate displacement and stress converge monotonically at observed order >= 0.9
-        good = all(run.study["monotone"].get(f"{q}_{p}") and (run.study["orders"].get(f"{q}_{p}") or 0) >= CONVERGENCE_ORDER_MIN
-                   for q in ok_q for p in ("fenicsx", "calculix", "code_aster"))
-        failing = sorted(f"{q}_{p}" for q in ok_q for p in ("fenicsx", "calculix", "code_aster")
-                         if not (run.study["monotone"].get(f"{q}_{p}") and (run.study["orders"].get(f"{q}_{p}") or 0) >= CONVERGENCE_ORDER_MIN))
-        # POST-HOC reading, added after the predeclared outcome was seen: a quantity whose last change is below 1e-6 (relative) has already converged to solver noise,
-        # so an observed order is not defined for it.  Reported beside the predeclared outcome, never in place of it.
-        last = run.study["levels"]
-        def converged_to_noise(q: str, p: str) -> bool:
-            v = [row[f"{q}_{p}"] for row in last]
-            return abs(v[-1] - v[-2]) <= NOISE_BAND_REL * max(abs(v[-1]), 1e-30)
-        post_good = all((run.study["monotone"].get(f"{q}_{p}") and (run.study["orders"].get(f"{q}_{p}") or 0) >= CONVERGENCE_ORDER_MIN) or converged_to_noise(q, p)
-                        for q in ok_q for p in ("fenicsx", "calculix", "code_aster"))
-        run.study["predeclared_criterion_met"] = good
-        run.study["predeclared_failing"] = failing
-        run.study["post_hoc_noise_aware_met"] = post_good
-        st_ = run.study
-        ux_orders = {p: st_["orders"][f"ux_mid_{p}"] for p in ("fenicsx", "calculix", "code_aster")}
-        vm_orders = {p: st_["orders"][f"vm_max_{p}"] for p in ("fenicsx", "calculix", "code_aster")}
-        sxx_rel = {p: abs(last[-1][f"sxx_mid_{p}"] - last[-2][f"sxx_mid_{p}"]) / abs(last[-1][f"sxx_mid_{p}"]) for p in ("fenicsx", "calculix", "code_aster")}
-        vm_seq = [row["vm_max_fenicsx"] / 1e6 for row in last]
-        vm_orders_txt = {p: round(v, 2) for p, v in vm_orders.items()}
-        links4 = [EvidenceLink.of_record("mesh_study", run.study, "discretisation_convergence", "met" if good else "not_met", f"predeclared criterion; failing: {failing}")]
-        if not good:      # a post-hoc reading may sit beside a level that is NOT reached; it can never be attached to a REACHED one
-            links4.append(EvidenceLink.of_record("mesh_study_post_hoc", {"reading": "noise_aware", "relative_change_threshold": NOISE_BAND_REL, "met": post_good,
-                                                                        "study_digest": digest_of(run.study)},
-                                                 "post_hoc_discretisation_convergence", "met" if post_good else "not_met",
-                                                 f"added after seeing the outcome: quantities already converged to solver noise (last change < {NOISE_BAND_REL:g} relative) are not judged by an observed order"))
-        entries.append(LevelEntry(
-            4, LevelStatus.REACHED if good else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
-            f"four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= {CONVERGENCE_ORDER_MIN} for mid-plate "
-            "displacement AND stress, every provider): " + ("MET" if good else f"NOT MET - {failing}") + f". Observed orders of the mid-length displacement {ux_orders}; last relative change of the mid-plate stress "
-            f"{ {p: f'{v:.1e}' for p, v in sxx_rel.items()} }" + (" (at solver noise, so an order is undefined for it)" if all(v <= 1e-6 for v in sxx_rel.values()) else "")
-            + f". Peak von Mises (FEniCSx, MPa) over the meshes {[round(x, 3) for x in vm_seq]}, observed orders {vm_orders_txt}"
-            + (": it is NOT claimed converged and the cause of its slow behaviour was not investigated" if min(vm_orders.values()) < CONVERGENCE_ORDER_MIN else "")))
+        entry4, extra4 = level4_entry(run.study)
+        run.study.update(extra4)
+        entries.append(entry4)
     else:
         entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "mesh study not run in this call"))
     pair_flags = [result.observable(f"displacement_within_tolerance_{a}_{b}") for a, b in (("fenicsx", "calculix"), ("fenicsx", "code_aster"), ("calculix", "code_aster"))]

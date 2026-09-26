@@ -26,7 +26,7 @@ VERIFICATION
   L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['adiabatic_equilibrium:thermo_range', 'coolant_loop:water_liquid_range', 'cooled_equilibrium:thermo_range', 'equilibrium_limit:thermo_range', 'heat_of_combustion:thermo_range']
   L2 reached: elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered
   L3 reached: heating value of methane vs Hess's law with evaluated NIST data: MET; the kinetic reactor converges to the equilibrium it must approach (thermodynamic consistency of mechanism and integrator): MET
-  L4 attempted not reached: three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it
+  L4 attempted not reached: three integrator tolerances / output resolutions. The pre-registered ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it
   L5 not available: no second, independent chemistry provider exists in the ecosystem; the two chemistry solvers would share the mechanism and thermodynamic data
   L6 not available: no published numerical benchmark for this system was integrated
   L7 not available: no measured data (ignition delays, flame temperature, exhaust composition) were integrated; GRI-Mech 3.0 was optimised against experiments by its AUTHORS, which is their claim, not a Forge result
@@ -38,7 +38,11 @@ UNCERTAINTY
   model discrepancy: NOT QUANTIFIED: equilibrium and 0-D adiabatic reactor idealisations, ideal gas, no heat loss, water assumed to absorb every watt of the duty (unknown, not zero)
   model applicability: equilibrium temperatures were checked against the species thermodynamic data range stored in the mechanism and the water loop against a declared liquid range; the mechanism's KINETIC validity range is the authors' statement and is NOT established by Forge (the kinetic reactor is therefore a demonstration of execution and consistency only)
   benchmark applicability: the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)
+  material provenance: mechanism: GRI-Mech 3.0 bytes bound by digest (provider-bundled with Cantera); no property records for the gas
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE
   complete
+NOTES
+  the reactor-to-jacket interface is an energy balance: the water loop is handed the heat the chemistry says must be removed
+  inlet states, flows and the exhaust outlet temperature are declared illustrative values

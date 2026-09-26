@@ -20,15 +20,15 @@
  "identities": [
   [
    "request",
-   "c3da5a4871d87b736734e8154ddea9340fe03dc79a816acdafeb56c97624754d"
+   "28b9f14d42a9225c32dfb8829040d2225f9f81a4b21de89c313229742d6ab0f4"
   ],
   [
    "plan",
-   "3102df25564e3590dc3304ff9347abe6828f9552aab11ecd1ae17e4d5e4ea10b"
+   "0f871ac2198a7994c50e4ec1b0a83c2cfbc68984afcd83d2baea34d6bb503d45"
   ],
   [
    "result",
-   "812856296838ab4ac3822b85870d5d8139bc1f415d73029bf87ac4197ee8f8bf"
+   "fb133a1004959bb59c8e53f8b194cf46b385fe21884f309641f813c22ebd1208"
   ]
  ],
  "key_outputs": [
@@ -58,7 +58,7 @@
   },
   {
    "availability": "available",
-   "label": "OpenFOAM max centerline error vs Ghia 20x20",
+   "label": "OpenFOAM max u-centerline error vs Ghia 20x20",
    "observable_id": "ghia_u_max_error_openfoam_20",
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
@@ -106,7 +106,7 @@
   },
   {
    "availability": "available",
-   "label": "OpenFOAM max centerline error vs Ghia 40x40",
+   "label": "OpenFOAM max u-centerline error vs Ghia 40x40",
    "observable_id": "ghia_u_max_error_openfoam_40",
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
@@ -154,7 +154,7 @@
   },
   {
    "availability": "available",
-   "label": "OpenFOAM max centerline error vs Ghia 80x80",
+   "label": "OpenFOAM max u-centerline error vs Ghia 80x80",
    "observable_id": "ghia_u_max_error_openfoam_80",
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
@@ -291,7 +291,7 @@
     "status": "within"
    },
    "classification": "numerical_benchmark_comparison_not_validation_grant",
-   "compared_identity": "09b49430821940415869346ae2bbf6d51d5ac0c3b9b18ee1fe15fd76f92d3279",
+   "compared_identity": "6ff33ab57ce76e71f8833d3868b8371a3a5eea5ed5a0c7c182b90b263016ffcb",
    "conditions": [
     [
      "cavity_aspect_ratio",
@@ -342,7 +342,7 @@
     "status": "within"
    },
    "classification": "numerical_benchmark_comparison_not_validation_grant",
-   "compared_identity": "d9cbd40fb74da8cc1bb7f34db97bd65eec9b8ac00cd72c0c7efcf87953cf1225",
+   "compared_identity": "ab0a3fcb8966cd8a976522d678419f4fad638251472d0b4e16ddcd400b7b9c10",
    "conditions": [
     [
      "cavity_aspect_ratio",
@@ -390,11 +390,12 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Lid-driven cavity, Re = 100, water 20 degC, ['20x20', '40x40', '80x80'] cells (re100)",
- "text_sha256": "c46b090d4e77d62828fb063392b90132e2bf43eecd775ad64e58a48c130a7fa0",
+ "text_sha256": "eca97ec7533f240150f104263086d4ae6f035b356e8dd009ecbb4906d9c16813",
  "trace": {
   "complete": true,
   "gaps": []
  },
+ "trace_observable": "ghia_u_max_error_openfoam_80",
  "uncertainty": {
   "benchmark_applicability": "Ghia et al. (1982) applies at Re = 100 only; this case is Re = 100",
   "known_input_uncertainty": [],
@@ -417,7 +418,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "d3ae0e002a2789ca3feec20546a043fc0baa0dbd0f30ef940567ce7307345503",
+      "digest": "7b43724377e02a2e96f7e122022f4600a1df66777a3f59c272a46c00e869102d",
       "kind": "preflight_and_identity",
       "note": "preflight ready; run succeeded",
       "outcome": "met",
@@ -428,51 +429,51 @@
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "openfoam_20"
         },
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "openfoam_40"
         },
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "openfoam_80"
         },
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "su2_20"
         },
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "su2_40"
         },
         {
          "blocking": false,
          "code": "APPLICABILITY_WAIVED",
-         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "message": "node declares no applicability check and states: \"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = 100 (a caller statement, not evidence)\"; the waiver is a caller statement, not evidence",
          "node_id": "su2_80"
         }
        ],
-       "plan_digest": "3102df25564e3590dc3304ff9347abe6828f9552aab11ecd1ae17e4d5e4ea10b",
-       "request_digest": "c3da5a4871d87b736734e8154ddea9340fe03dc79a816acdafeb56c97624754d",
+       "plan_digest": "0f871ac2198a7994c50e4ec1b0a83c2cfbc68984afcd83d2baea34d6bb503d45",
+       "request_digest": "28b9f14d42a9225c32dfb8829040d2225f9f81a4b21de89c313229742d6ab0f4",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "ready"
       },
-      "record_digest": "da45ffafcd4cd5de36009795e4bd0ab4f61750730000c78a221211440c53e320"
+      "record_digest": "44544d3c490a558cd9b17f901391d8e4b71d8584d6f25de38b7efc63cac0d25f"
      }
     ],
     "level": 1,
     "name": "contract_integrity",
-    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; applicability WAIVED (a caller statement, not evidence) for: ['openfoam_20', 'openfoam_40', 'openfoam_80', 'su2_20', 'su2_40', 'su2_80']",
     "status": "reached"
    },
    {
@@ -558,7 +559,7 @@
     ],
     "level": 4,
     "name": "discretisation_convergence",
-    "note": "[20, 40, 80] cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place",
+    "note": "[20, 40, 80] cells per side. Pre-registered criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place",
     "status": "attempted_not_reached"
    },
    {
@@ -806,14 +807,14 @@
     ],
     "level": 5,
     "name": "independent_provider_corroboration",
-    "note": "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only",
+    "note": "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): NOT MET or not produced at ['20x20', '40x40', '80x80']; where produced, the codes disagree most near the lid and the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only",
     "status": "attempted_not_reached"
    },
    {
     "evidence": [
      {
       "classification": "numerical_benchmark_comparison_not_validation_grant",
-      "digest": "b09f32b9c7d112b3c6d20f8129f41d6d9d01339b8defb475fb046fb8d6e6ea58",
+      "digest": "1346e7b1a67dddd71bf63e6c8599aa64cea91d7a50cc46f88ed0907775437b22",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -825,7 +826,7 @@
         "status": "within"
        },
        "classification": "numerical_benchmark_comparison_not_validation_grant",
-       "compared_identity": "09b49430821940415869346ae2bbf6d51d5ac0c3b9b18ee1fe15fd76f92d3279",
+       "compared_identity": "6ff33ab57ce76e71f8833d3868b8371a3a5eea5ed5a0c7c182b90b263016ffcb",
        "conditions": [
         [
          "cavity_aspect_ratio",
@@ -868,11 +869,11 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "eee4841f1a1d059e7a654ad36fde127dfb448ae1ab60623133bf24837a901539"
+      "record_digest": "9d38155a440e1cec234ed92833196aa3bf37dd8665f60e30aa70a2ccabf1415d"
      },
      {
       "classification": "numerical_benchmark_comparison_not_validation_grant",
-      "digest": "57c0e00106248a8b3601d37eef4ad4b06d65d2cca8f2964196cda7a70828aff9",
+      "digest": "e62f05e14cbdd1f8cb3fe3f97a9efd682969e8b0ba4bf32e8dbdd8d17bb0ad6a",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -884,7 +885,7 @@
         "status": "within"
        },
        "classification": "numerical_benchmark_comparison_not_validation_grant",
-       "compared_identity": "d9cbd40fb74da8cc1bb7f34db97bd65eec9b8ac00cd72c0c7efcf87953cf1225",
+       "compared_identity": "ab0a3fcb8966cd8a976522d678419f4fad638251472d0b4e16ddcd400b7b9c10",
        "conditions": [
         [
          "cavity_aspect_ratio",
@@ -927,7 +928,7 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "995554af8e84e0c60d60e1bbae17c727504c407bc62dd67ea5261b499439be53"
+      "record_digest": "66c7fbb26f0326c556450b54fc0c20e805c2bbc5c116788c72e32f35e014da20"
      }
     ],
     "level": 6,

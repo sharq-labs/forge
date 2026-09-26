@@ -31,7 +31,7 @@
    "unit": "dimensionless"
   }
  ],
- "extraction": "closed form; roller/symmetry restraints admit exactly this field",
+ "extraction": "closed form; roller/symmetry restraints admit exactly this field. The applicability envelope (temperature rise 0.1-300 K, thermal strain below 1e-2) is AUTHORED by this flagship, not stated by a source",
  "kind": "analytic_reference",
  "license_status": "derived relation, not copied data",
  "publication": "small-strain linear thermoelasticity",

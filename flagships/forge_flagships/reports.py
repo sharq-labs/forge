@@ -144,6 +144,17 @@ def battery_report(runs: dict) -> tuple[str, str]:
 
 
 # ==================================================================================================== B
+def _noise_reason(st: dict) -> str:
+    """Why an order is undefined, computed from the failing stress quantities themselves (never from another provider's figure)."""
+    failing = [k for k in st["predeclared_failing"] if k.startswith("sxx_mid_")]
+    if not failing:
+        return "no mid-plate stress quantity failed; the failing quantities are listed above."
+    last, prev = st["levels"][-1], st["levels"][-2]
+    rel = {k: abs(last[k] - prev[k]) / max(abs(last[k]), 1e-30) for k in failing}
+    return (f"for the failing stress quantities {failing} the last relative change over the finest two meshes is {max(rel.values()):.1e}, at the level of solver noise, "
+            "so an observed order is not defined for them.")
+
+
 def structure_report(run, over) -> tuple[str, str]:
     from . import thermo_mechanical as tm
     r = run.result
@@ -181,9 +192,8 @@ def structure_report(run, over) -> tuple[str, str]:
                          + f"\n\n[FACT] Exact uniform-temperature limits (each through BIG 12): free growth u = alpha dT (x, y) max relative error by provider {v['free']['errors']}; fully restrained sigma_xx = -E alpha dT {v['constrained']['errors']} (criterion {tm.ANALYTIC_REL_TOL:g}, pre-registered).\n\n"
                          f"[MODEL OUTPUT] Mesh study through BIG 12 (mid-length displacement, mid-plate stress, peak von Mises):\n\n| mesh | nodes | ux_mid FEniCSx | ux_mid CalculiX | ux_mid Code_Aster | sxx_mid FEniCSx (MPa) | vm_max FEniCSx (MPa) |\n|---|---|---|---|---|---|---|\n{rows}\n\n"
                          f"Observed orders: {orders}. **Pre-registered criterion (monotone, order >= 0.9 for mid-plate displacement AND stress, every provider): "
-                         f"{'MET' if st['predeclared_criterion_met'] else 'NOT MET'}** - failing: {st['predeclared_failing']}. Reason: the last relative change of the mid-plate stress over the finest two meshes is {max(abs(st['levels'][-1][k] - st['levels'][-2][k]) / abs(st['levels'][-1][k]) for k in st['levels'][-1] if k.startswith('sxx_mid_')):.1e}, "
-                         "which is at the level of solver noise, so an observed order is not defined for it. "
-                         f"A post-hoc noise-aware reading (labelled post hoc, added after seeing the outcome) is {'met' if st['post_hoc_noise_aware_met'] else 'not met'}; it does not replace the predeclared outcome."),
+                         f"{'MET' if st['predeclared_criterion_met'] else 'NOT MET'}** - failing: {st['predeclared_failing']}. Reason: " + _noise_reason(st) + " "
+                         f"A post-hoc noise-aware reading (labelled post hoc, added after seeing the outcome) is {'met' if st['post_hoc_noise_aware_met'] else 'not met'}; it does not replace the pre-registered outcome."),
         "Cross-provider results": (
             "[CORROBORATION] Pairwise agreement, criteria pre-registered (1 % of the free thermal growth scale alpha dT L for displacement, 1 % of E alpha dT for stress): "
             f"FEniCSx-CalculiX max |du| {_q(run, 'max_abs_displacement_difference_fenicsx_calculix')}, FEniCSx-Code_Aster {_q(run, 'max_abs_displacement_difference_fenicsx_code_aster')}, "
@@ -207,7 +217,7 @@ def structure_report(run, over) -> tuple[str, str]:
         "Negative control": (f"[FACT] Over-range load ({tm.STRUCT_CASES['over_range'].description}): thermal node {over.result.receipt('thermal').status.value.upper()} - {over.result.receipt('thermal').reason[:300]}; "
                              "all three structural nodes BLOCKED; every structural observable and both constraints UNAVAILABLE."),
         "Scientific status": (f"[FACT] Credibility verdict (existing authority): **{run.summary.scientific_status}**. Verification ladder (from the run): " + _ladder_status(run.ladder) + f"; reference level: {run.ladder.reference_level_reached}. "
-                              "Level 5, where reached, is corroboration of the implementations only. This flagship demonstrates coupled thermo-mechanical execution, exact-limit verification, a mesh study (see its predeclared outcome above) "
+                              "Level 5, where reached, is corroboration of the implementations only. This flagship demonstrates coupled thermo-mechanical execution, exact-limit verification, a mesh study (see its pre-registered outcome above) "
                               "and independent-implementation corroboration. It validates nothing physical."),
         "Known limitations": ("[FACT] Illustrative material records; 2-D linear thermoelasticity only; one geometry; no reference benchmark beyond analytic limits; the peak von Mises value is mesh-dependent (order < 1) and "
                               "not claimed converged and its cause was not investigated; CalculiX and the other two differ by a small difference not explained in detail; FEniCSx stress is recovered, not native; the property range is a declared envelope; "

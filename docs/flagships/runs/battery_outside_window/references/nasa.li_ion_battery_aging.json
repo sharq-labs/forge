@@ -18,7 +18,7 @@
    "unit": "mm"
   }
  ],
- "extraction": "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md)",
+ "extraction": "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md). The applicability envelope (cell format 17.5-18.5 mm) is AUTHORED by this flagship from the pack's description (the '18650' name), not read from the dataset's own metadata",
  "kind": "experimental_dataset",
  "license_status": "NASA open data; NOT copied into this repository - only the pinned manifest identity is referenced",
  "publication": "NASA Ames Prognostics Center of Excellence / DASHlink, version 2022-07-14",

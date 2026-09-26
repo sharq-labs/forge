@@ -1,5 +1,5 @@
 {
- "bundle_digest": "31f90ab8203ad1833669cdcef721ab5ccae2ed4089a5c9d8cf4ffaf8617115e6",
+ "bundle_digest": "24274cc0ccd550f374e6d81915cca955f60f09ccb201adbd2bbd59017dc96266",
  "files": [
   [
    "artifacts/day-aged_history.csv",
@@ -19,11 +19,11 @@
   ],
   [
    "references/first-law-cold-plate.json",
-   "aeeef2e54ff219a29080a5a3a7b3a60923c9ded8452d316a8d1c4d9339f373bd"
+   "1c669d7024e857826f34ea26cf9ba50eb075aa1db49e9b5e41164ecd6db40649"
   ],
   [
    "references/nasa.li_ion_battery_aging.json",
-   "7d7f72c12408bf703ec2915f6015af55104a03808b2ba8923b1403524de3df12"
+   "779edee3beeb42f461facf45239d2a1df5a5b957c095b60ce2881f230a26459c"
   ],
   [
    "request.json",
@@ -31,15 +31,15 @@
   ],
   [
    "result.json",
-   "ef48a882f930099041800ebdb1041380670ab7be17bfeda12b0f77088c6a23bc"
+   "11c7e603f2a8cab0d7478c0eb94457afd690f09dab3aa99b93170ea2265f943a"
   ],
   [
    "summary.json",
-   "33c52935e8eefa889e2be9b53df3ef2e03605977a06c65ba29737a0502fb81cd"
+   "efbbdd25f7ece95ba27269134bf341adb39546b19627ff223dc70e1974573517"
   ],
   [
    "summary.txt",
-   "3d8bd19997ac314f1e4988646e72cdffa7d6d3ffa740a4a9cd39306e9b302a72"
+   "1d2f6982604e5f9595ddab3696ed3a0662d6168dee0e59464bd2148db165e3a1"
   ]
  ],
  "name": "flagship-battery-hot",
@@ -1541,15 +1541,15 @@
  "reference_digests": [
   [
    "first-law-cold-plate",
-   "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8"
+   "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177"
   ],
   [
    "nasa.li_ion_battery_aging",
-   "3cbbdc66c611fbfdb2c1d69cc30b105621a3a7b42a8f1d87ad3c7467ca467fde"
+   "db9d7e8a73e5175e8b30f5821a8e142d7898852c32587f2f9194ccc522ba49f4"
   ]
  ],
  "request_digest": "b110d4ce559e2802d90fde15c582656b32355dc1db3ad46d0bd550630438dcf3",
- "result_digest": "a3a6daa21130c5e6a14681791a73d53ede9f984d4567ccac4ad33c04fc8d86a1",
+ "result_digest": "a0f369567c4141488e6a6f59c9e92b66cc31e00a574c92220f78873ca444bbba",
  "schema": "engcore.engineering.bundle/1",
- "summary_digest": "7598255468d4a23360475985cb7d0056dd2abb921b3b57df3bbd37f05bd1c623"
+ "summary_digest": "e09de12d519878c57a2e8818824944c25a41a763de69c8b4d3338b85a5772895"
 }

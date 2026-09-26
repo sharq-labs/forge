@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "103fb147d26b1811c2aeb6ea1e53f0f61a31a17dcacfe74e37e878bfb3cacfd4"
+   "bd27a1e4a77ce193a99974b647fe60a90f70708a39b8035a680375de7aa63afa"
   ]
  ],
  "key_outputs": [
@@ -268,11 +268,12 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Jacketed stoichiometric methane/air reactor with a water cooling loop (nominal)",
- "text_sha256": "1539d32d54de85980d27c27853c7c3fe42f3cd6902a39d47576745d4ac78133f",
+ "text_sha256": "4e10c663eea36099141c7f05e4ce928bd41f6dec1ff8216f6e14a9aaba27865e",
  "trace": {
   "complete": true,
   "gaps": []
  },
+ "trace_observable": "coolant_loop__T_water_out",
  "uncertainty": {
   "benchmark_applicability": "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)",
   "known_input_uncertainty": [],
@@ -503,7 +504,7 @@
     ],
     "level": 4,
     "name": "discretisation_convergence",
-    "note": "three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it",
+    "note": "three integrator tolerances / output resolutions. The pre-registered ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it",
     "status": "attempted_not_reached"
    },
    {

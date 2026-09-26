@@ -21,7 +21,7 @@ from ..scientific.units.quantity import Quantity
 from ..system_runtime import (
     Availability, ConstraintAssessment, ConservationAssessment, RunStatus, SystemRunRequest, SystemRunResult, trace_result, trust_handoff,
 )
-from .ladder import VerificationLadder
+from .ladder import VerificationLadder, check_provider_comparison
 from .reference import ReferenceComparison, ReferenceRecord
 
 SUMMARY_SCHEMA = "engcore.engineering.summary/1"
@@ -101,6 +101,8 @@ class EngineeringSummary:
     trace_complete: bool
     trace_gaps: tuple[str, ...]
     notes: tuple[str, ...] = ()
+    #: the observable whose trace was checked (stored so a bundle can re-run the trace)
+    trace_observable: str = ""
 
     def _core_dict(self) -> dict[str, Any]:
         return {"schema": SUMMARY_SCHEMA, "system": self.system, "execution": self.execution,
@@ -109,7 +111,7 @@ class EngineeringSummary:
                 "reference_comparisons": [c.to_dict() for c in self.comparisons], "uncertainty": self.uncertainty.to_dict(),
                 "scientific_status": self.scientific_status, "scientific_status_basis": self.scientific_status_basis,
                 "identities": [list(i) for i in self.identities], "providers": list(self.providers),
-                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "notes": list(self.notes)}
+                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "trace_observable": self.trace_observable, "notes": list(self.notes)}
 
     def to_dict(self) -> dict[str, Any]:
         core = self._core_dict()
@@ -147,8 +149,11 @@ def render_summary_text(payload: Mapping[str, Any]) -> str:
     out += ["UNCERTAINTY", f"  known input uncertainty: {', '.join(u['known_input_uncertainty']) or 'none stated'}",
             f"  UNKNOWN input uncertainty: {', '.join(u['unknown_input_uncertainty']) or 'none'}", f"  model discrepancy: {u['model_discrepancy']}",
             f"  model applicability: {u['model_applicability']}", f"  benchmark applicability: {u['benchmark_applicability']}",
+            f"  material provenance: {', '.join(u['material_provenance']) or 'none stated'}",
             f"SCIENTIFIC STATUS\n  {payload['scientific_status']} - {payload['scientific_status_basis']}",
             f"TRACE\n  {'complete' if payload['trace']['complete'] else 'GAPS: ' + '; '.join(payload['trace']['gaps'])}"]
+    if payload["notes"]:
+        out += ["NOTES"] + [f"  {n}" for n in payload["notes"]]
     return "\n".join(out) + "\n"
 
 
@@ -168,8 +173,11 @@ def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult
             raise InvalidScientificProblem(f"comparison {c.criterion.criterion_id!r} names a reference that is not supplied with the summary (it cannot be bundled)")
     supplied_cmps = {canonical_digest(c.to_dict()) for c in comparisons}
     cited: set[str] = set()
+    recorded_identities = {p.execution_identity_digest for p in result.provider_records}
     for entry in ladder.entries:
         for link in entry.evidence:
+            if link.kind == "provider_comparison":
+                check_provider_comparison(link.record, recorded_identities)
             if link.kind == "reference_comparison":
                 if link.record_digest not in supplied_cmps:
                     raise InvalidScientificProblem(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
@@ -198,4 +206,4 @@ def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult
     return EngineeringSummary(
         title, result.status.value, tuple(key), lines, cons, ladder, tuple(comparisons), uncertainty, verdict.value, basis,
         (("request", result.request_digest), ("plan", result.plan_digest), ("result", result.digest)), providers, trace.complete,
-        tuple(trace.gaps), tuple(notes))
+        tuple(trace.gaps), tuple(notes), trace_observable)

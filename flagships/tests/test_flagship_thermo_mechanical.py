@@ -158,3 +158,32 @@ def test_the_request_identity_moves_with_every_declared_case_parameter():
         assert other.digest != base.digest, change
     same = tm.build_structure(tm.STRUCT_CASES["flagship"], REG).request
     assert same.digest == base.digest                                                    # and the same declaration is the same request
+
+
+def test_a_failed_exact_limit_request_is_recorded_in_the_evidence_not_reported_as_not_run(monkeypatch):
+    """Round-4 finding: a limit request that failed used to make level 3 'NOT_ATTEMPTED: not run in this call'."""
+    real = tm.exact_limit_check
+
+    def failing(kind, registry=None):
+        out = real(kind, registry)
+        if kind == "constrained":
+            return {**out, "status": "failed", "errors": {p: None for p in out["errors"]}}
+        return out
+    monkeypatch.setattr(tm, "exact_limit_check", failing)
+    run = tm.run_structure("flagship", REG, verification=True)
+    l3 = run.ladder.entry(3)
+    assert l3.status is LevelStatus.ATTEMPTED_NOT_REACHED and "NO COMPARISON" in l3.note
+    bad = [e for e in l3.evidence if e.kind == "exact_limit_request"]
+    assert len(bad) == 1 and bad[0].outcome == "not_met" and bad[0].record["status"] == "failed" and "constrained" in bad[0].record["case"]
+    assert any(e.kind == "reference_comparison" and e.outcome == "met" for e in l3.evidence)          # the limit that did run keeps its comparison
+
+
+def test_an_unmet_stress_comparison_makes_level_five_not_reached_instead_of_raising(monkeypatch):
+    """Round-4 finding: green displacement flags beside a failing stress link made LevelEntry(5, REACHED) raise."""
+    from engcore.scientific.units.quantity import Quantity
+    monkeypatch.setattr(tm, "STRESS_AGREEMENT_TOL", Quantity(1e-9, "Pa"))
+    run = tm.run_structure("flagship", REG)
+    assert run.result.status is RunStatus.SUCCEEDED
+    l5 = run.ladder.entry(5)
+    assert l5.status is LevelStatus.ATTEMPTED_NOT_REACHED and any(e.outcome == "not_met" for e in l5.evidence)
+    assert "not met" in l5.note and run.ladder.reference_level_reached == "none"

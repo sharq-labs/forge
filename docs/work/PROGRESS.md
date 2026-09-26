@@ -5,11 +5,126 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `feat/big-12-end-to-end-runtime` (base `7da8d02e`, BIG 10/11 tree); previously `feat/big-10-multitimescale`
+- Branch: `feat/big-13-flagship-demonstrations` (base `6054ac44`, the BIG 12 HEAD); previously `feat/big-12-end-to-end-runtime`, `feat/big-10-multitimescale`
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
+
+## 2026-09-26 BIG 13 — Flagship Engineering Demonstrations (BUILD phase; read this first)
+
+Branch `feat/big-13-flagship-demonstrations`, base `6054ac44811cec26e074ad5be275396cccfd3b13` (the BIG 12 HEAD), worktree `D:/forge-b13`. Reports: `docs/flagships/`
+(index `README.md`, four per-flagship reports, `runs/` = the complete verifiable bundles the reports were generated from). Design note: `docs/architecture/engineering.md`.
+BIG 14 NOT STARTED.
+
+### What exists
+- `src/engcore/engineering/` (non-Core, registered in `tests/test_core_api_layering.py`): `reference.py` (reference records with kind / provenance / applicability envelope /
+  comparable quantities; `PredeclaredCriterion`; `ReferenceComparison`, DERIVED from reference + criterion + stated conditions + value - nothing about its outcome is stored - with the tolerance read as a SPREAD), `ladder.py` (7-level verification
+  ladder = report vocabulary; every `EvidenceLink` carries the record it names and its digest is re-derived), `summary.py` (`EngineeringSummary`, status only from `trust_handoff`),
+  `bundle.py` (`write_bundle` / `verify_bundle`), `fieldio.py` (VTU), `report.py` (17 required sections, statement labels).
+- `flagships/forge_flagships/`: `battery_cooling.py` (A), `thermo_mechanical.py` (B), `cavity_cfd.py` (C), `chem_thermal.py` (D), `reports.py`, `__main__.py`, `data/` (Ghia Re=100 excerpt,
+  NIST WebBook excerpt, `predeclared_criteria.json`). Every flagship is one BIG 12 `SystemRunRequest` run by the generic `SystemExecutor` (`test_flagship_portfolio.py` checks from the source that no
+  flagship defines its own runtime).
+- BIG 12 generalisations (each tested in `tests/test_system_runtime_big13_additions.py`): `NodeCall.execution_identity`; `MultiphysicsAuthority(extractors=, artifacts=)`.
+- Provider adapter additions (additive): CalculiX and Code_Aster `execute_thermoelastic` (+ deck/mesh generators, element-stress parsers), Cantera enthalpy / element-mass-fraction / thermo-range scalars,
+  PyBaMM coupling `capacity_fade` + dense series logging, FEniCSx `descriptor.py` (it was undiscoverable), `pde.cases.ThermoelasticPlaneStressProblem`, `pde.postprocess` stress recovery,
+  `tools/wsl_env.sh`.
+
+### Results (from the runs behind `docs/flagships/runs/`; every scientific status is `insufficient_evidence`)
+- A battery + cooling + lifecycle (PyBaMM 26.8, TESPy 0.11.2; BIG 9 coupling, BIG 10 multi-timescale, 56 represented days from 4 resolved): fresh peak cell temperature 301.28 K, day-56 aged 304.06 K;
+  capacity fade 0.0518 (limit 0.10); end-of-discharge voltage shift caused by degradation -0.0337 V vs +0.0054 V from environment drift; the `hot` case violates temperature and fade constraints (fade 0.112).
+- B thermo-mechanical plate (FEniCSx 0.11, CalculiX 2.23, Code_Aster 18.1.7 on one mesh and one shared FEniCSx temperature field): hot end 351.05 K, max displacement 3.654e-5 m (three codes agree to 0.023 %),
+  mid-plate axial stress -55.21 MPa = the bar-theory value, peak von Mises 59.8-60.0 MPa (mesh-dependent, order 0.7, NOT claimed converged).
+- C lid-driven cavity Re = 100 (OpenFOAM v2412, SU2 8.5.0): both codes within 0.02 of lid speed of Ghia et al. 1982 (numerical benchmark) at 80x80 (OpenFOAM 0.0090, SU2 0.0112) - and the two codes DISAGREE with each
+  other by 24-26 % of lid speed in the cell layer next to the lid at every mesh (BIG 11 criterion 3 %, not loosened); part of that is probably the declared corner-mean mapping (untested).
+- D methane/air + water loop (Cantera 3.2.0 / GRI-Mech 3.0, TESPy 0.11.2): adiabatic flame temperature 2225.5 K, heat to remove 26.48 kW, cooling water +21.1 K; Hess's-law LHV consistency 0.229 kJ/mol against 0.5.
+
+### Criteria NOT met as written (kept visible; tolerances were not changed)
+1. A window-refinement study: tolerances met, but successive differences GROW as the coupling window shrinks (0.0032 K then 0.0080 K; 1.2e-6 V then 1.3e-5 V; 2.2e-4 W then 2.9e-3 W); the monotone requirement was added after
+   the first review together with the third level (labelled in the pre-registration). L4 not reached; cause not investigated.
+2. B convergence order >= 0.9 for the mid-plate stress: the quantity is at solver noise (1e-9 relative), so no order exists; a labelled post hoc noise-aware reading is met and does not replace the outcome.
+3. C whole-field OpenFOAM vs SU2 (3 % of lid speed) NOT MET at 20/40/80; the lower-half readings are post hoc only.
+4. C benchmark error monotone under refinement NOT MET for OpenFOAM (0.0127, 0.0027, 0.0044): it folds in the benchmark's own truncation error.
+5. C SU2 mid-plane flux 6.2e-3 against 1e-3 NOT MET (cause not investigated); the constraint now reports `b_flux_su2` VIOLATED beside `b_flux_openfoam` SATISFIED.
+6. D discrete ignition-time criterion (1 %): the sampling spacing is 1.4-7.2 % of the ignition delay, so it cannot be met by a converged solution; a post hoc parabola-refined reading is labelled beside it.
+- Changed AFTER seeing results, each labelled in `predeclared_criteria.json` with the tolerance unchanged: D heating value evaluated at 300 K (298.15 K is below the mechanism's stored thermo range; the offset is bounded
+  at 0.018 kJ/mol); B equilibrium-diagnostic force floor (a load-blind solve gave a zero spread that passed); C flux constraint bound for both codes on an unsigned residual. Git cannot show that the constants preceded the
+  first execution (the first commit was made after it); that rests on this record.
+
+### Failed approaches / gotchas (do not repeat)
+- Long bash heredocs / `'''` write nothing or mangle; use the Write tool for patch scripts. The bash tool halves backslashes in heredocs.
+- Nested same-quote f-strings parse on Windows Python 3.14 and fail on the WSL 3.11 envs; check syntax with `python -c ast.parse` INSIDE each env (`D:/ftmp/syn311.py`).
+- Slicing a source file between two `str.index` results is only safe if the second index is AFTER the first: an early `allowed = {` match duplicated `write_bundle` in `bundle.py` (caught by the tests). Assert `i < j`.
+- CalculiX / Code_Aster need `FORCE_PROVIDER_ENVS`; FEniCSx JIT needs the env `bin` on PATH (`tools/wsl_env.sh`); Code_Aster stress output must use logical unit 30 (unit 9 is redefined -> job error).
+- BIG 12 Gate G test had assumed CalculiX unavailable; it now `monkeypatch.delenv("FORGE_PROVIDER_ENVS")`.
+- A request with no environment needs `environment_absent_reason`; two executable components need a declared `ComponentConnection` (an energy-balance interface for reactor -> jacket) or the topology is refused.
+- A blanket `str.replace` of a prose word ("predeclared") also rewrote a FILE NAME in the README (`predeclared_criteria.json`); replace phrases, then grep for the identifier. Bundles are hashed: regenerate them after ANY change to what a summary renders.
+- The whole-result digest includes provider wall time, so two runs of one flagship have different result digests; request and plan digests and `compare_runs` are the replay identity.
+
+### Scientific review (read-only `forge-scientific-reviewer`), dispositions
+Round 1 (static, CHANGES REQUIRED; 3 HIGH, 15 MEDIUM, many LOW):
+- H1 refused node's side-store table reached L3 and the bundle -> FIXED (L3 gated on a SUCCEEDED receipt; `committed_artifacts`; `write_bundle` refuses unreferenced files; tests). H2 ladder guards only for L5-7 -> FIXED for every level (class, outcome, post-hoc)
+  and, after round 2, links carry their records. H3 L1 unconditional -> FIXED (`contract_integrity_entry(report, result)`; refusals named).
+- M1 criteria as prose -> `predeclared_criteria.json` pinned by `test_flagship_portfolio.py`. M2 displacement tolerance scale -> disclosed (6.2 % of the peak; observed 0.023 %). M3/M4 static prose and stale report -> regenerated from runs; more generated in round 2.
+  M5 README/PROGRESS -> this entry, `runs/`, tests that tie each report to its bundle. M6 uncertainty guards -> discrepancy must be UNKNOWN / NOT QUANTIFIED, unknown list required when outputs are UNKNOWN. M7 comparison guards -> non-negative, not_applicable judges nothing,
+  round 2: spread conversion, quantity binding; round 3: the comparison is derived, not issued. M8 envelopes -> stated as flagship-authored. M9 cross-request evidence -> gated on a succeeded run, notes name it. M10 identity -> every case parameter is in the request (tested);
+  `verify_bundle` extended in round 2. M11 tautological checks -> disclosed in level notes and README. M12 LHV range check -> `thermo_range` declared on the node (evaluated at 300 K). M13 labelling -> `reference_level_reached`, data-consistency class. M14 -> A L4 relabelled, C benchmark-relative criterion disclosed. M15 -> tests added.
+Round 2 (focused re-review of the round-1 batch; CHANGES REQUIRED: 2 HIGH, 9 MEDIUM, LOW):
+- H-A D level 3 reached on partial evidence -> FIXED (`level3_entry`: every declared check must have run and been met; note built from links; tests incl. degraded cases).
+- H-B `verify_bundle` did not close a fully regenerated manifest -> FIXED (request/result/plan re-derived, verdict re-derived by `trust_handoff`, ladder rebuilt with every guard, evidence-record digests re-derived,
+  every comparison must name a bundled reference, `summary.txt` bound by hash; a missing file is a refusal; tests regenerate the WHOLE manifest). The manifest stays unkeyed: an adversary who rebuilds every file passes; authenticity needs the `bundle_digest` recorded elsewhere.
+- M1 unresolvable links -> FIXED (records inline; `build_summary` cross-checks comparisons and references). M2 offset-unit hazard -> FIXED (`magnitude_as_spread_in`). M3 quantity binding -> FIXED (`comparable_quantities`). M4 zero spread from a load-blind solve -> FIXED (force floor).
+  M5 A L2/L3 interface consistency -> NOT changed in code; disclosed in notes, report and README (no independent cell-side conservation check exists). M6 static prose -> the flagged sentences are now generated; some remain typed (below).
+  M7 cross-request evidence not shipped -> partly: the study / limit records are inline in `summary.json`; their provider bindings are NOT compared with the main request. M8 cavity constraint signed and cherry-picked -> FIXED. M9 PROGRESS/README/timestamp claim -> FIXED / re-worded.
+- LOW fixed: duplicate ladder level refused, `inf` flux no longer crashes, 1e30 sentinel removed, fieldio / report legend wording, README provider order, NASA envelope-authorship wording. LOW not fixed: `UncertaintyStatement` is a substring guard; `report.py` label check is per section not per claim;
+  `[CORROBORATION]` label on sections that say it is not reached; D/Ghia envelopes are flagship-authored (now stated); NASA reference is bundled in refused runs though never compared.
+Round 3 (focused re-review of the round-2 batch; CHANGES REQUIRED: 1 HIGH, 5 MEDIUM, LOW):
+- H1 a level promotion in `summary.json` still verified (the digests, the text and the manifest were refreshed consistently) -> FIXED for everything that can be re-derived: an evidence link's digest now covers kind, classification and outcome;
+  `ReferenceComparison` has no settable outcome / applicability / kind (all derived from reference + criterion + stated conditions + value) and `verify_bundle` REBUILDS every comparison from its bundled reference; level 1 is re-derived from the
+  result's own preflight; key outputs / execution / providers are checked against the result; `summary.txt` is re-rendered from `summary.json`; every comparison must be cited by the ladder; levels 5-7 need a link OF the matching kind. NOT re-derivable
+  (documented in `bundle.py`, `docs/architecture/engineering.md`, the README): levels 2-4 evidence that is not a comparison and the constraint / conservation lines are recorded judgments; the manifest is unkeyed; a reference no comparison cites is bound only by
+  the manifest. Tests regenerate the WHOLE manifest, refresh the text and every digest, and still expect refusal (status, text, request, plan, key output, level 1, provider list, a promoted comparison level, a re-kinded reference).
+- M1 summary text only hash-bound -> FIXED (re-rendered). M2 L6/L7 gate was a string -> FIXED (kind gate). M3 issuer token bypass via `dataclasses.replace` -> FIXED (nothing forgeable is stored; conditions are recorded and re-derived).
+- M4 B builders dropped failing evidence / level 5 raised -> FIXED (`level2_entry` is a pure builder with provider-free tests; a failed exact-limit request is recorded as a not_met link; level 5 records an unmet stress comparison as ATTEMPTED_NOT_REACHED).
+- M5 docs exceeded tests -> the `battery_hot` bundle is now verified by a test; "fixed before the first run" replaced by "pre-registered" (defined in the README and engineering.md: listed in `predeclared_criteria.json` and pinned by a test; git cannot show it preceded the first run);
+  the Ghia "not checked against the printed paper" caveat and the flagship-authored envelopes are stated inside the shipped reference records.
+- LOW fixed: duplicate-level guard reachable (`VerificationLadder(tuple(entries))`), D/B level-2 `closed` truthiness, dead filter in `cavity_cfd`, static prose derived (C cross-provider text, A per-case statuses, D section-10 label, B level-5 note and benchmark applicability, D applicability wording,
+  A level-4 literals), `b_flux_su2` VIOLATED asserted by the cavity suite. LOW not fixed: `comparable_quantities` is a name tag (units are not compared with the tolerance unit); the conditions handed to `compare_to_reference` are literals retyped in the flagship
+  (the bar-theory and Hess envelopes end exactly at the case value, disclosed in their records); the exact-limit / mesh-study / window-study requests are not shipped (only their records, inside the summary); a NaN flux raises (fail-closed).
+Round 4 (focused re-review of the round-3 batch; CHANGES REQUIRED: 1 HIGH, 4 MEDIUM, LOW):
+- H-1 level 5 (provider comparisons) neither re-derived nor bound to the run -> FIXED (`check_provider_comparison`: two different providers, executions the result recorded, post-hoc flag matches the classification, a purely absolute tolerance's
+  outcome follows from its maximum difference, a relative tolerance is refused; applied in `build_summary` and `verify_bundle`; a test promotes level 5 in a consistently rewritten bundle and expects refusal).
+- M-1 comparison INPUTS (difference, conditions, tolerance, `compared_identity`) recorded, not derived -> a documented limit (`bundle.py`, `engineering.md`); not fixable generically. M-2 uncertainty and trace not re-run -> FIXED (guards re-run, an emptied UNKNOWN list refused,
+  trace re-derived from the result; `trace_observable` is stored). M-3 envelope-authorship claim false for 4 of 7 records -> FIXED (stated in each record's `extraction`). M-4 C level 5 all-or-nothing -> FIXED (`level5_entry`: a missing level is a not_met link; provider-free tests).
+- LOW fixed: B level 4 crash on a failed mesh level (`level4_entry`, tested); D level 2 dropped readings; `verify_bundle` raises `BundleRefused` for every failure (malformed result / request included); level 1 names waived applicability; the summary text covers notes and material provenance;
+  D level-2 note and benchmark applicability are conditional; the B report's noise reason is computed from the failing quantities; the cavity key-output label and waiver wording; stale docstrings; "predeclared" prose -> "pre-registered". Provider-backed tests for a failed exact-limit request and an unmet stress comparison.
+- LOW not fixed: conditions retyped as literals in the flagships (Hess 300 K, B 40 K, C aspect ratio); `plan.json` is compared with the result's own plan, not recompiled from the request; the `battery_hot` column is bound to no report identity; the exact-limit / mesh-study / window-study requests are not shipped.
+- Round 5: NOT RUN. **The round-4 fix batch was NOT re-reviewed**; it is covered by the tests listed below only. Four review rounds each found a lower-severity residual in the bundle-authenticity area, whose real limit (an unkeyed manifest) is documented.
+
+### Verification actually executed (this session; TMPDIR=D:/ftmp, `--basetemp=D:/fbt`, venv python on Windows, WSL conda envs for providers)
+Windows (no provider), `TMPDIR=D:/ftmp`, main-checkout venv python, `PYTHONPATH="D:/forge-b13/src;D:/forge-b13;D:/forge-b13/flagships;<providers/*>"`, `--import-mode=importlib -p no:cacheprovider --basetemp=D:/fbt`, final tree (the commit that carries this entry):
+- `pytest tests/test_system_runtime_contracts.py tests/test_system_runtime_executor.py tests/test_system_runtime_checkpoint.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_big13_additions.py tests/test_engineering_contracts.py tests/test_core_api_layering.py tests/test_repository_architecture.py flagships/tests/test_flagship_ladders.py flagships/tests/test_flagship_portfolio.py flagships/tests/test_thermoelastic_adapters.py` -> **208 passed**.
+  New/rewritten: `tests/test_engineering_contracts.py` 35 (incl. fully regenerated-manifest attacks and a promoted level 5), `tests/test_system_runtime_big13_additions.py` 4, `flagships/tests/test_flagship_portfolio.py` 26 (14 functions, parametrized; re-verifies all 8 committed bundles and ties each report to its bundle digests), `test_flagship_ladders.py` 7 (provider-free level builders), `test_thermoelastic_adapters.py` 7.
+- `python tools/forge_check.py --changed` -> exit 0, **149 passed** (it ran one pytest command, the fixed regression pack).
+Real providers, WSL conda envs (`tools/wsl_env.sh`; `MSYS_NO_PATHCONV=1 wsl.exe -e bash pt.sh <env> ...`), flagship suites on the FINAL flagship / engineering code:
+- env `fenicsx`: `flagships/tests/test_flagship_thermo_mechanical.py flagships/tests/test_thermoelastic_adapters.py` -> **20 passed** (24.8 s; includes the failed-exact-limit-request and unmet-stress-comparison tests).
+- env `sci`: `flagships/tests/test_flagship_chemistry.py flagships/tests/test_flagship_cavity.py` -> **15 passed** (95.7 s).
+- env `battery`: `flagships/tests/test_flagship_battery.py` -> **11 passed** (475.9 s).
+Provider-adapter suites (no adapter, `system_runtime` or `pde` file changed after these runs; `git diff --stat 492da36a HEAD -- providers src/engcore/system_runtime src/engcore/pde` is empty):
+- env `fenicsx`: `providers/calculix/tests providers/code_aster/tests providers/fenicsx/tests` (with the adapter and flagship-B suites) -> 50 passed; env `sci`: `providers/cantera/tests providers/tespy/tests providers/coolprop/tests` (with chemistry / cavity) -> 24 passed, `providers/openfoam/tests providers/su2/tests` -> 5 passed;
+  env `battery`: `providers/pybamm/tests` (includes the BIG 12 real battery system test) -> 17 passed (351 s).
+- First battery run of the first fix batch: **1 failed** (`test_window_refinement...` asserted the study MET). The study is NOT met (successive differences grow); the test now asserts that outcome and L4 ATTEMPTED_NOT_REACHED. Tolerances were not touched.
+- Reports and bundles regenerated from real runs: `python -m forge_flagships.reports <battery|structure|cavity|chemistry> --docs docs/flagships --bundles docs/flagships/runs` in the matching env.
+- **NOT RUN:** full FAST, full SCIENTIFIC, mutation shards, hardened recertification, CI / GitHub workflows, `forge_check --regression`; `providers/openmodelica/tests`, `providers/precice/tests` (untouched); no PR opened.
+
+### Remaining gaps (BIG 14+)
+- No uncertainty is quantified anywhere: every output is UNKNOWN and model discrepancy is NOT QUANTIFIED for all four; no experimental data was compared (the NASA PCoE pack is considered, applicability UNKNOWN, not compared).
+- A: no independent cell-side conservation check; L2/L3 rest on one interface identity; window study not converging (cause unknown); Chen2020 applicability to this duty unknown; representative-day error unquantified.
+- B: one shared mesh and temperature field (corroborates implementations only, FEniCSx/Code_Aster share a formulation); peak von Mises slow convergence and the CalculiX difference (0.023 %) not explained; no numerical thermo-structural benchmark integrated.
+- C: near-lid disagreement and SU2 flux miss unexplained (mapping artifact untested); Ghia values transcribed from public sources, NOT checked against the printed paper.
+- D: one chemistry provider; kinetic validity range of GRI-Mech 3.0 not established; no ignition-delay or flame data compared.
+- Ladder / bundle: evidence records are self-consistent, not authenticated; the manifest is unkeyed.
+- Optional flagship E (environmental degradation) not built.
 
 ## 2026-09-26 BIG 12 — End-to-End System Runtime (BUILD phase; read this first)
 

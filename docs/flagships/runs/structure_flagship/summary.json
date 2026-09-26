@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e"
+   "9d738468d2b5587389e78adc428f72be545db89a03379bf3504a442025e0adda"
   ]
  ],
  "key_outputs": [
@@ -209,7 +209,7 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "a88681cabf1ef9fc7b5565793726ccb56bf378b451830ee49f57d5edce6754c5",
+   "compared_identity": "514a54cd442e8673246e66f37c676a991dc0911fcb135515b1557c3b723b518f",
    "conditions": [
     [
      "temperature_rise",
@@ -243,7 +243,7 @@
    "criterion_digest": "a430b6f6a2f2d76121c48b0a64fdba8c5a35035578a5e5fb7e53723db9937a6e",
    "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
    "outcome": "met",
-   "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
+   "reference_digest": "79a534d92d9518f70cc757238ced556091c0373de45f95b2a38f8f9c0ad9d136",
    "reference_kind": "analytic_reference",
    "value": {
     "magnitude": 2.571247472088901e-13,
@@ -260,7 +260,7 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "6cb356e7e95c0a5d76813a446f3aef5bdf52c68c469e22e8755aed80d81d977e",
+   "compared_identity": "21163ae980fa12decb1e5d45969f1515b45eb10a1d0b5a13f1a115023f8dce66",
    "conditions": [
     [
      "temperature_rise",
@@ -294,7 +294,7 @@
    "criterion_digest": "1c0271eb50ffda0cf99d666abc67ac30d3b07e722f8659a092f03e34651574ca",
    "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
    "outcome": "met",
-   "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
+   "reference_digest": "f6f2ebc562a6ff99cd2bc9ec2f6d2260adc30735beed0919e7271d9bf0112dfb",
    "reference_kind": "analytic_reference",
    "value": {
     "magnitude": 2.4445184303331175e-13,
@@ -311,7 +311,7 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e",
+   "compared_identity": "9d738468d2b5587389e78adc428f72be545db89a03379bf3504a442025e0adda",
    "conditions": [
     [
      "aspect_ratio",
@@ -359,11 +359,12 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Heated aluminium plate, constrained, 80x16 P1 mesh (flagship)",
- "text_sha256": "e6e0677dbe5fe0ffd889d8f6b1234f7550920766f725653ee098c2bdaa9e952d",
+ "text_sha256": "913086149421eae311bcf2894ce791a55c74915f5764e67e9bd8c193af6ac10c",
  "trace": {
   "complete": true,
   "gaps": []
  },
+ "trace_observable": "sxx_mid_calculix",
  "uncertainty": {
   "benchmark_applicability": "analytic references only (bar_theory_mid_plate, uniform_constrained_exact, uniform_free_exact); analytic references are not numerical benchmarks and not experiments",
   "known_input_uncertainty": [],
@@ -430,7 +431,7 @@
     ],
     "level": 1,
     "name": "contract_integrity",
-    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']",
     "status": "reached"
    },
    {
@@ -492,7 +493,7 @@
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "a722d6e397e496d53f168639724d0f36dced8658779f2ab0aff80e7655b32cc5",
+      "digest": "d4ff20d7050906c86f8d9aca68be212104ca3c934f8f2d99a3cb0d8b8b3f93ad",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -504,7 +505,7 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "a88681cabf1ef9fc7b5565793726ccb56bf378b451830ee49f57d5edce6754c5",
+       "compared_identity": "514a54cd442e8673246e66f37c676a991dc0911fcb135515b1557c3b723b518f",
        "conditions": [
         [
          "temperature_rise",
@@ -538,7 +539,7 @@
        "criterion_digest": "a430b6f6a2f2d76121c48b0a64fdba8c5a35035578a5e5fb7e53723db9937a6e",
        "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
        "outcome": "met",
-       "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
+       "reference_digest": "79a534d92d9518f70cc757238ced556091c0373de45f95b2a38f8f9c0ad9d136",
        "reference_kind": "analytic_reference",
        "value": {
         "magnitude": 2.571247472088901e-13,
@@ -547,11 +548,11 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "56faf14b6316b5f19fb1321733dda2dd9dc4372817a5bc4c9a150dccdbcc126e"
+      "record_digest": "7ac2e29a3c4994ec41adc7e94e52ecd3b64513e5e9a860e58c55ef700000aae0"
      },
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "3a03f3a224d2bdbb3e52d4086d30f4de659b3d24f9004ca8a3d7e6cc068abf3a",
+      "digest": "88bfd6362738ce463aec6dcef47098beec4b4b4c63efef8567ad1434e0d3629a",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -563,7 +564,7 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "6cb356e7e95c0a5d76813a446f3aef5bdf52c68c469e22e8755aed80d81d977e",
+       "compared_identity": "21163ae980fa12decb1e5d45969f1515b45eb10a1d0b5a13f1a115023f8dce66",
        "conditions": [
         [
          "temperature_rise",
@@ -597,7 +598,7 @@
        "criterion_digest": "1c0271eb50ffda0cf99d666abc67ac30d3b07e722f8659a092f03e34651574ca",
        "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
        "outcome": "met",
-       "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
+       "reference_digest": "f6f2ebc562a6ff99cd2bc9ec2f6d2260adc30735beed0919e7271d9bf0112dfb",
        "reference_kind": "analytic_reference",
        "value": {
         "magnitude": 2.4445184303331175e-13,
@@ -606,11 +607,11 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "043b7ebaa3a12c8bedba8d38c19057e9a2a688d4b43e78849cd6cedf3dd234e8"
+      "record_digest": "ea848006c7d7b46f44d7d0b6d002ba8ffa852dbad6b3d1919f6774d2153321cc"
      },
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "e6e6509a10137d8e20e879ff5275d75031e50de00f391269e6dd4082a7ad2a33",
+      "digest": "f5f579a19f3a908e0dea3a504703dd889cf6e93edcc6b821f191e5cc47fcd15e",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -622,7 +623,7 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e",
+       "compared_identity": "9d738468d2b5587389e78adc428f72be545db89a03379bf3504a442025e0adda",
        "conditions": [
         [
          "aspect_ratio",
@@ -665,7 +666,7 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "44f7aa8084c2803f78b00f2fd622f969892125d8c327ee4f4ba4d840d7ae77b7"
+      "record_digest": "9ac37273793de3e0d7ad5152108b5d3dc1e7be0d1981b17d39700677335cfe94"
      }
     ],
     "level": 3,
@@ -677,9 +678,9 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "57b56e99b11a6a80c9fb380cd33ff0b84b43bef8fe1a6d629d21092d9c043bc3",
+      "digest": "775841645ce60a036aac5a5e2cf931d2c8dec69af6611bd87b1c50d2d93b073d",
       "kind": "mesh_study",
-      "note": "predeclared criterion; failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']",
+      "note": "pre-registered criterion; failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']",
       "outcome": "not_met",
       "record": {
        "levels": [
@@ -687,7 +688,7 @@
          "nodes": 105,
          "nx": 20,
          "ny": 4,
-         "result": "92026b1cfe5e21ddfe117d1b5ccb19d4fd77e94098a38abe1a6a6fa255345439",
+         "result": "4f70005fd48d2395a748b13dbfd26b2859ef12abe16c36ab77ef3b363f251395",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.62500001,
          "sxx_mid_code_aster": -55207465.86827721,
@@ -706,7 +707,7 @@
          "nodes": 369,
          "nx": 40,
          "ny": 8,
-         "result": "09c5e4732d96423e4e1ebdefdcb690018595ce029f49d33adde6f933439c30a2",
+         "result": "2a4046df7ed95cfbb15e090be9cfae3dd6c12c11f9873d55c25b53fe0afce894",
          "status": "succeeded",
          "sxx_mid_calculix": -55207466.01562499,
          "sxx_mid_code_aster": -55207465.86835872,
@@ -725,7 +726,7 @@
          "nodes": 1377,
          "nx": 80,
          "ny": 16,
-         "result": "924b80ce4e88b7aeaa0a54eae4cf304e388aa2995b6e6734c97daf46a1a7f66f",
+         "result": "e4e7ebd24aa4da3103afc65066cfa0559155e0aba46c14ea1b4691e1cf6c66c0",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.72265625,
          "sxx_mid_code_aster": -55207465.86867988,
@@ -744,7 +745,7 @@
          "nodes": 5313,
          "nx": 160,
          "ny": 32,
-         "result": "12d16ae7e9e4fba7b0662132dce477086c78800858609b5789d27db9afd69ff7",
+         "result": "e944a1b9e316a4be74cba1efa0af617f67af4ea1322d7325e70bdeafac2d0cbe",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.810546875,
          "sxx_mid_code_aster": -55207465.87033043,
@@ -795,11 +796,11 @@
         "sxx_mid_fenicsx"
        ]
       },
-      "record_digest": "2509d670fb3b3889a703454eefd32b5a04daade4426b146eef2fb4f8c78c0ca3"
+      "record_digest": "9177ca721b90312020fb4eb4769b3eb4b7913779480cf727f7fc156a560b5385"
      },
      {
       "classification": "post_hoc_discretisation_convergence",
-      "digest": "356bbc277e68984a5807e1ba3e73c7a4041b3e2ca1f0a9977a1e4e945a65ceeb",
+      "digest": "ca1d2401c2be88e82f52a13e95e5f443999ad7d8dbf246886d087af80f8423df",
       "kind": "mesh_study_post_hoc",
       "note": "added after seeing the outcome: quantities already converged to solver noise (last change < 1e-06 relative) are not judged by an observed order",
       "outcome": "met",
@@ -807,14 +808,14 @@
        "met": true,
        "reading": "noise_aware",
        "relative_change_threshold": 1e-06,
-       "study_digest": "2509d670fb3b3889a703454eefd32b5a04daade4426b146eef2fb4f8c78c0ca3"
+       "study_digest": "9177ca721b90312020fb4eb4769b3eb4b7913779480cf727f7fc156a560b5385"
       },
-      "record_digest": "8e52b644e663b9c1e43ebe7dd7502fc73eb2bf6005a12aaa0dd031d057a58b7f"
+      "record_digest": "b29a1bcaa3e4eedadaadaac42d32d868e59e08bd38630c71667bb13491673690"
      }
     ],
     "level": 4,
     "name": "discretisation_convergence",
-    "note": "four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated",
+    "note": "four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Pre-registered criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated",
     "status": "attempted_not_reached"
    },
    {

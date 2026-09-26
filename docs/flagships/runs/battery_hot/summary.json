@@ -53,7 +53,7 @@
   ],
   [
    "result",
-   "a3a6daa21130c5e6a14681791a73d53ede9f984d4567ccac4ad33c04fc8d86a1"
+   "a0f369567c4141488e6a6f59c9e92b66cc31e00a574c92220f78873ca444bbba"
   ]
  ],
  "key_outputs": [
@@ -253,7 +253,7 @@
    "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
    "note": "2 heat-carrying windows of the fresh day",
    "outcome": "met",
-   "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
+   "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
    "reference_kind": "analytic_reference",
    "value": {
     "magnitude": 5.172388342088332e-09,
@@ -267,11 +267,12 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (hot)",
- "text_sha256": "3d8bd19997ac314f1e4988646e72cdffa7d6d3ffa740a4a9cd39306e9b302a72",
+ "text_sha256": "1d2f6982604e5f9595ddab3696ed3a0662d6168dee0e59464bd2148db165e3a1",
  "trace": {
   "complete": true,
   "gaps": []
  },
+ "trace_observable": "voltage_shift_degradation",
  "uncertainty": {
   "benchmark_applicability": "no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared",
   "known_input_uncertainty": [],
@@ -443,7 +444,7 @@
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "a6d3c72328618c42de6a3f2d7a877cb6383648352ee8f5c7a1415e88acdfbc89",
+      "digest": "4db2c7679ad9d4030530ed1b50f79abe371b01ec8eb1c8b38f338ab4b7aaf170",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -489,7 +490,7 @@
        "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
        "note": "2 heat-carrying windows of the fresh day",
        "outcome": "met",
-       "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
+       "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
        "reference_kind": "analytic_reference",
        "value": {
         "magnitude": 5.172388342088332e-09,
@@ -498,7 +499,7 @@
        },
        "within_tolerance": true
       },
-      "record_digest": "403060b8b2519593641e100069dff84486bfcdf09db1a8049f2d7682f54b127d"
+      "record_digest": "64ef68ba8e46f5ba7a9a9b88b48658927d7c27abcfd714607479c7401ccb9b8b"
      }
     ],
     "level": 3,

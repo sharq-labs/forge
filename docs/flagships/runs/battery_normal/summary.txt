@@ -41,7 +41,11 @@ UNCERTAINTY
   model discrepancy: NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)
   model applicability: cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge
   benchmark applicability: no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared
+  material provenance: contact resistance record 831fcc041478.. (ASSUMED), PyBaMM parameter set Chen2020 (provider-bundled literature set)
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE
   complete
+NOTES
+  case normal: 20 degC mean site air, 0.5 C discharge hour and 0.5 C charge hour
+  all scenario inputs are declared illustrative fixtures, not measurements

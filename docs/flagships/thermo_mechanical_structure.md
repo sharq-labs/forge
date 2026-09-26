@@ -2,7 +2,7 @@
 
 Statement labels: **FACT** a checkable statement about the run artifacts - **REFERENCE DATA** taken from an external source with provenance - **ASSUMPTION** declared, not evidenced - **MODEL OUTPUT** a provider's computed value - **CORROBORATION** independent solvers agreeing (never validation) - **VALIDATION** comparison with a reference or measurement, stated with its scope (a numerical benchmark is not an experiment).
 
-`request 9ced744352e29c36  plan 26808b19e864cb9b  result 133e3b6220393432`
+`request 9ced744352e29c36  plan 26808b19e864cb9b  result 9d738468d2b55873`
 
 ## 1. Engineering question
 
@@ -40,10 +40,10 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 
 [FACT] Verification pyramid position:
 
-- **L1 reached** - units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']
+- **L1 reached** - units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']
 - **L2 reached** - heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, pre-registered; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic
 - **L3 reached** - evidence from OTHER requests for the two exact uniform-temperature limits (request digests a957a5497dd7.., d555683f47c1..) and from this run for bar theory: uniform_free_exact MET (2.6e-13 vs 1e-06); uniform_constrained_exact MET (2.4e-13 vs 1e-06); bar_theory_mid_plate MET (2.6e-09 vs 0.03)
-- **L4 attempted not reached** - four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated
+- **L4 attempted not reached** - four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Pre-registered criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated
 - **L5 reached** - three structural implementations agree on displacement and CalculiX/Code_Aster on element stress within tolerances pre-registered: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation
 - **L6 not available** - no published thermo-structural numerical benchmark was integrated for this problem
 - **L7 not available** - no measured deformation or stress data for this plate exists
@@ -59,7 +59,7 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 | 80x16 | 1377 | 2.788798e-05 | 2.789002e-05 | 2.788798e-05 | -55.207466 | 59.817 |
 | 160x32 | 5313 | 2.788696e-05 | 2.788857e-05 | 2.788696e-05 | -55.207466 | 60.060 |
 
-Observed orders: ux_mid_fenicsx: 2.00, vm_max_fenicsx: 0.74, ux_mid_calculix: 1.99, vm_max_calculix: 0.69, ux_mid_code_aster: 2.00, vm_max_code_aster: 0.74. **Pre-registered criterion (monotone, order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET** - failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Reason: the last relative change of the mid-plate stress over the finest two meshes is 1.6e-09, which is at the level of solver noise, so an observed order is not defined for it. A post-hoc noise-aware reading (labelled post hoc, added after seeing the outcome) is met; it does not replace the predeclared outcome.
+Observed orders: ux_mid_fenicsx: 2.00, vm_max_fenicsx: 0.74, ux_mid_calculix: 1.99, vm_max_calculix: 0.69, ux_mid_code_aster: 2.00, vm_max_code_aster: 0.74. **Pre-registered criterion (monotone, order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET** - failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Reason: for the failing stress quantities ['sxx_mid_code_aster', 'sxx_mid_fenicsx'] the last relative change over the finest two meshes is 3.0e-11, at the level of solver noise, so an observed order is not defined for them. A post-hoc noise-aware reading (labelled post hoc, added after seeing the outcome) is met; it does not replace the pre-registered outcome.
 
 ## 10. Cross-provider results
 
@@ -83,7 +83,7 @@ Observed orders: ux_mid_fenicsx: 2.00, vm_max_fenicsx: 0.74, ux_mid_calculix: 1.
 
 ## 15. Scientific status
 
-[FACT] Credibility verdict (existing authority): **insufficient_evidence**. Verification ladder (from the run): L1 reached; L2 reached; L3 reached; L4 attempted not reached; L5 reached; L6 not available; L7 not available; reference level: none. Level 5, where reached, is corroboration of the implementations only. This flagship demonstrates coupled thermo-mechanical execution, exact-limit verification, a mesh study (see its predeclared outcome above) and independent-implementation corroboration. It validates nothing physical.
+[FACT] Credibility verdict (existing authority): **insufficient_evidence**. Verification ladder (from the run): L1 reached; L2 reached; L3 reached; L4 attempted not reached; L5 reached; L6 not available; L7 not available; reference level: none. Level 5, where reached, is corroboration of the implementations only. This flagship demonstrates coupled thermo-mechanical execution, exact-limit verification, a mesh study (see its pre-registered outcome above) and independent-implementation corroboration. It validates nothing physical.
 
 ## 16. Known limitations
 
@@ -123,10 +123,10 @@ CONSTRAINTS
 CONSERVATION
   thermal_energy: closed residual 6.823e-11 watt (tolerance 4.000e-06)
 VERIFICATION
-  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; applicability WAIVED (a caller statement, not evidence) for: ['struct_calculix', 'struct_code_aster', 'struct_fenicsx']
   L2 reached: heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, pre-registered; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic
   L3 reached: evidence from OTHER requests for the two exact uniform-temperature limits (request digests a957a5497dd7.., d555683f47c1..) and from this run for bar theory: uniform_free_exact MET (2.6e-13 vs 1e-06); uniform_constrained_exact MET (2.4e-13 vs 1e-06); bar_theory_mid_plate MET (2.6e-09 vs 0.03)
-  L4 attempted not reached: four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated
+  L4 attempted not reached: four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Pre-registered criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated
   L5 reached: three structural implementations agree on displacement and CalculiX/Code_Aster on element stress within tolerances pre-registered: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation
   L6 not available: no published thermo-structural numerical benchmark was integrated for this problem
   L7 not available: no measured deformation or stress data for this plate exists
@@ -140,8 +140,12 @@ UNCERTAINTY
   model discrepancy: NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)
   model applicability: thermal solution checked against the declared property range [250.0, 450.0] K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)
   benchmark applicability: analytic references only (bar_theory_mid_plate, uniform_constrained_exact, uniform_free_exact); analytic references are not numerical benchmarks and not experiments
+  material provenance: E 4ccd88c72c40.. nu 440aa52136f3.. alpha ab866da9cdda.. k af0acef476c8.. (all ASSUMED)
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE
   complete
+NOTES
+  case flagship: 40 kW/m2 into one end, 30 degC sink end, rollers at both ends
+  material properties are illustrative ASSUMED records, not datasheet or measured values
 ```

@@ -13,19 +13,25 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 12 — End-to-End System Runtime** built on `feat/big-12-end-to-end-runtime` (base `7da8d02e`): one deterministic
-provider-neutral orchestration runtime over the existing authorities (request -> plan -> preflight -> executor -> result/trace ->
-constraints/conservation -> checkpoint/resume/replay -> trust hand-off); real PyBaMM <-> TESPy + aging system executed; two read-only
-scientific reviews with fixes (see PROGRESS, BIG 12); BIG 13 not started.
+Current: **BIG 13 - Flagship Engineering Demonstrations** built on `feat/big-13-flagship-demonstrations` (base `6054ac44`, the BIG 12 HEAD): four
+flagships (A battery + cooling + lifecycle; B thermo-mechanical structure; C lid-driven cavity CFD; D chemistry / thermal-fluid), each one BIG 12
+`SystemRunRequest` executed by the generic `SystemExecutor` (no flagship runtime), with an engineering summary, a verifiable run bundle,
+VTU/CSV exports, reference provenance and a 7-level verification ladder that stops honestly where the evidence stops. All four end
+`insufficient_evidence`; none is validated. Four criteria were NOT met as written and stay visible (see PROGRESS, BIG 13). Reports:
+`docs/flagships/`. BIG 14 NOT STARTED.
 
-Previous: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
+Previous: **BIG 12 - End-to-End System Runtime** (branch `feat/big-12-end-to-end-runtime`, HEAD `6054ac44`): one deterministic
+provider-neutral orchestration runtime over the existing authorities (request -> plan -> preflight -> executor -> result/trace ->
+constraints/conservation -> checkpoint/resume/replay -> trust hand-off); two read-only scientific reviews with fixes (see PROGRESS, BIG 12).
+
+Earlier: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
 fallback, content-derived execution identity, argv-only process boundary, PyBaMM / Cantera / CoolProp /
 TESPy / CalculiX / OpenFOAM / SU2 / Code_Aster / OpenModelica executed; see PROGRESS); BIG 12 not started.
 BIG 10 (multi-timescale runtime) is built on the same branch.
 
 ## Current branch / PR
 
-- Branch: `feat/big-10-multitimescale` (from `main` @ `e3ae778a`, BIG 2-9 merged); local worktree `D:/forge-big10`
+- Branch: `feat/big-13-flagship-demonstrations` (from `6054ac44`, the BIG 12 HEAD on `feat/big-12-end-to-end-runtime`); local worktree `D:/forge-b13`
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 
@@ -304,7 +310,13 @@ map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/
       `providers/pybamm/tests/test_system_runtime_battery.py` (8, WSL). Review round 1 fixed; round 2 fixed except the recorded MEDIUM/LOW gaps
       (model selection not bound to executed authority; waiver rule limited to committing nodes; multiscale resume-stage dependency; taint residuals).
       The round-2 fix batch was not re-reviewed. Full FAST/SCIENTIFIC/mutation/recertification NOT RUN.
-- [ ] BIG 13 — NOT STARTED (per instruction).
+- [x] BIG 13 — Flagship Engineering Demonstrations: `src/engcore/engineering/` (non-Core, registered), `flagships/` (A battery + cooling + lifecycle, B thermo-mechanical structure,
+      C lid-driven cavity CFD, D chemistry / thermal-fluid), reports and verifiable bundles in `docs/flagships/` (index `README.md`, `runs/`), design note `docs/architecture/engineering.md`,
+      tests `tests/test_engineering_contracts.py`, `tests/test_system_runtime_big13_additions.py`, `flagships/tests/` (provider-free: portfolio, ladders, adapters; real-provider suites per WSL env).
+      All four flagships end `insufficient_evidence`; six criteria were NOT met as written and stay visible (see PROGRESS, BIG 13). Two read-only scientific reviews with fixes;
+      four read-only review rounds (each found a lower-severity residual; the round-4 fix batch was NOT re-reviewed). Full FAST / SCIENTIFIC / mutation / recertification NOT RUN.
+- [ ] BIG 14 — NOT STARTED (per instruction). Gaps handed forward are listed at the end of the BIG 13 entry in PROGRESS (no quantified uncertainty, no experimental comparison,
+      A cell-side conservation check, B/C/D unexplained residuals, unkeyed bundle manifest, optional flagship E).
 
 ## Persistent project direction
 

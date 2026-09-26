@@ -266,7 +266,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.019384349000006296
+    "wall_seconds": 0.018349857999965025
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "32bb7f39bc885ab74914af1e09e6efee322aad5aefdda55cfaed8585474cd875",
@@ -302,7 +302,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.019473825000090983
+    "wall_seconds": 0.018257168999980422
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "e85ba49759aed6ff167831621359315f3d9532357c768d94f3a0cfa5bc1d3975",
@@ -338,7 +338,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.018357236000042576
+    "wall_seconds": 0.017635311000049114
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "1f995424e4e39a0499fd2c60c4b5ab8c38b79d13b487a8f8e4cd911ed04d2c35",
@@ -374,7 +374,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.0009980869999708375
+    "wall_seconds": 0.0010034040000164168
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "933931ead48de0c1e951db9b53204e8c75d474849ffaa702ae30401db6de1ce2",
@@ -410,7 +410,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.0009465640000598796
+    "wall_seconds": 0.0011107809999657547
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "df2564ae59ba3ea1f9d5886e2336304785a8e66bf1d092ab39011990de1f3b31",
@@ -446,7 +446,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 0.0009252739999965343
+    "wall_seconds": 0.0009854310000037003
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "761f5f4df59ab04c96178ea3695f21c7ad78aa81eaab30a7347a28b78bd0f020",
@@ -509,7 +509,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 9.930833151999991
+    "wall_seconds": 9.369623881999928
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "",
@@ -572,7 +572,7 @@
     "cpu_seconds": 0.0,
     "function_evaluations": 0,
     "peak_memory_bytes": 0,
-    "wall_seconds": 9.58540054699995
+    "wall_seconds": 8.911012598999946
    },
    "schema": "forge.system_runtime.node_receipt/1",
    "stamp": "",
@@ -3340,7 +3340,7 @@
   "cpu_seconds": 0.0,
   "function_evaluations": 0,
   "peak_memory_bytes": 0,
-  "wall_seconds": 19.576319034000107
+  "wall_seconds": 18.337978434999854
  },
  "run_id": "run-c5c320bb58d7",
  "schema": "forge.system_runtime.system_run_result/1",

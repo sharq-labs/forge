@@ -11,12 +11,12 @@ Rules kept here on purpose:
   experimental (``benchmark_dataset`` is not ``experimental_dataset``);
 * a numerical or experimental reference must carry a source digest and an https access URL; only an analytic reference may have
   neither.  ``source_digest`` is the sha256 of the bytes the values were extracted from, or, when several source files were used,
-  of the concatenation of THEIR sha256 hex digests in the order stated in ``extraction`` (the source bytes themselves are not
+  of the concatenation of THEIR sha256 hex digests in the order the flagship states (the source bytes themselves are not
   stored here when their license does not allow it);
 * applicability is ``within`` only when EVERY declared envelope condition is known and inside; a missing
   condition or a missing envelope is ``unknown``, never ``within``;
-* a comparison is either PRE-DECLARED (its criterion carries a digest fixed before the result existed) or it
-  is labelled post hoc; a tolerance edited after seeing a result is a different criterion with a different
+* a comparison is either PRE-REGISTERED (its criterion is listed in the flagships' pre-registration file; git cannot show that it preceded the first
+  run) or it is labelled post hoc; a tolerance edited after seeing a result is a different criterion with a different
   digest, and the original outcome stays visible.
 """
 

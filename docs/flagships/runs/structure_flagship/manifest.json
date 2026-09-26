@@ -1,5 +1,5 @@
 {
- "bundle_digest": "1c45a49bf14cebce65f2eac0e168140940c07684076a6ae2d2a5ef2f8dd0d795",
+ "bundle_digest": "1b40d7935aadcebdbe6d39d041cb820b3f41208d6cdac789e6d501a729d78538",
  "files": [
   [
    "artifacts/flagship_calculix.vtu",
@@ -27,11 +27,11 @@
   ],
   [
    "references/uniform-constrained-thermal-stress.json",
-   "4a2b245cb2ad518dad54ae3e0d238974b9ebc76ceb3494abf917981338b5c1e9"
+   "f39355e3f0b6c431292d0829f3d16ede7c15ef114a77ab1207f88ef51b32b36a"
   ],
   [
    "references/uniform-free-thermal-expansion.json",
-   "06cd395994b34accc604fd5c708fdac81b5fbf3ac4d2283852d6a9387a7cb43d"
+   "d1f5ebd56c554d0d526e336784b709330f345e3b0a79ef73a681e6f69399f949"
   ],
   [
    "request.json",
@@ -39,15 +39,15 @@
   ],
   [
    "result.json",
-   "fa8acc0fdc659d418b51cfe74cda71fd7b9bea39afca20775a90beef3623c2cf"
+   "ffee3e172423b20602594ef1fcc256a4f49bfb89b0da08651e627bd2bb1a7250"
   ],
   [
    "summary.json",
-   "f5b1fd34ce38cd03d80769fbe8211ff3915477c66e923aacf9ae9734b607eb9e"
+   "5513741d818063bd6e9ae320ea5ac8d48f655996ab25a969735fe86a22b8f7db"
   ],
   [
    "summary.txt",
-   "e6e0677dbe5fe0ffd889d8f6b1234f7550920766f725653ee098c2bdaa9e952d"
+   "913086149421eae311bcf2894ce791a55c74915f5764e67e9bd8c193af6ac10c"
   ]
  ],
  "name": "flagship-structure-flagship",
@@ -65,15 +65,15 @@
   ],
   [
    "uniform-constrained-thermal-stress",
-   "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298"
+   "f6f2ebc562a6ff99cd2bc9ec2f6d2260adc30735beed0919e7271d9bf0112dfb"
   ],
   [
    "uniform-free-thermal-expansion",
-   "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b"
+   "79a534d92d9518f70cc757238ced556091c0373de45f95b2a38f8f9c0ad9d136"
   ]
  ],
  "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
- "result_digest": "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e",
+ "result_digest": "9d738468d2b5587389e78adc428f72be545db89a03379bf3504a442025e0adda",
  "schema": "engcore.engineering.bundle/1",
- "summary_digest": "df43ca37df5fb8002b4cc2f8ced8e21aa95a45164cd0940ab65d9539381acf2a"
+ "summary_digest": "761dc50e85f218f72a4e7de098a93fbaba37242ed125305792ad5aaa927a4c43"
 }

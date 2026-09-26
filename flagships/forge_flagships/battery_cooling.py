@@ -643,7 +643,7 @@ def first_law_reference():
         "first law for a steady-flow control volume", "", "derived relation, not copied data", OracleKind.ANALYTIC_REFERENCE,
         (ReferenceCondition("pressure", 2e5, "Pa"), ReferenceCondition("mean_temperature", 300.0, "K")), (("delta_T_relative_difference", "dimensionless"),), (), "",
         "cp from CoolProp at the stream mean temperature (the same property backend TESPy uses: this verifies the energy-balance implementation, "
-        "not the property data)", (EnvelopeBound("pressure", 1e5, 1e7, "Pa"), EnvelopeBound("mean_temperature", 274.0, 370.0, "K")),
+        "not the property data). The applicability envelope (pressure 1e5-1e7 Pa, mean temperature 274-370 K) is AUTHORED by this flagship, not stated by a source", (EnvelopeBound("pressure", 1e5, 1e7, "Pa"), EnvelopeBound("mean_temperature", 274.0, 370.0, "K")),
         comparable_quantities=("delta_T_relative_difference",))
 
 
@@ -789,7 +789,8 @@ def nasa_reference():
         m["dataset_id"], m["title"], m["citation"], f"{m['publisher']}, version {m['version']}", m["landing_page"],
         "NASA open data; NOT copied into this repository - only the pinned manifest identity is referenced", OracleKind.EXPERIMENTAL_DATASET,
         (ReferenceCondition("cell_format_diameter", 18.0, "mm"),), (("terminal_voltage", "V"), ("discharge_capacity", "A*h")), (), m["catalog_source_hash"],
-        "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md)",
+        "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md). "
+        "The applicability envelope (cell format 17.5-18.5 mm) is AUTHORED by this flagship from the pack's description (the '18650' name), not read from the dataset's own metadata",
         (EnvelopeBound("cell_format_diameter", 17.5, 18.5, "mm"),))
 
 

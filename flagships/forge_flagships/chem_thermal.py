@@ -448,10 +448,18 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
                                   (EvidenceLink.of_record("element_balance", {"max_relative_change_by_node": dict(zip(("adiabatic_equilibrium", "cooled_equilibrium"), el)), "criterion": ELEMENT_TOL},
                                                           "conservation_residual", "met" if ok else "not_met", f"max relative change of C, H, O, N mass fractions {max(el):.2e} (criterion {ELEMENT_TOL:g})"),
                                    EvidenceLink.of_record("conservation_assessment", closed[0].to_dict(), "conservation_residual", "met", f"heat duty: Cantera vs TESPy residual {closed[0].residual.magnitude:.2e} W")),
-                                  "elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat "
+                                  ("elemental mass conserved through both equilibrations" if ok else f"elemental mass NOT conserved to the criterion (max relative change {max(el):.2e})")
+                                  + " (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat "
                                   "the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered"))
     else:
-        entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(f"{c.balance_id}: {c.status}" for c in conservation) or "not assessable"))
+        # whatever was read is recorded (a missing reading is a not_met link), never dropped
+        links2 = [EvidenceLink.of_record("conservation_assessment", c.to_dict(), "conservation_residual", "met" if c.status == "closed" else "not_met", f"{c.balance_id}: {c.status}")
+                  for c in conservation]
+        if any(x is not None for x in el):
+            links2.append(EvidenceLink.of_record("element_balance", {"max_relative_change_by_node": dict(zip(("adiabatic_equilibrium", "cooled_equilibrium"), el)), "criterion": ELEMENT_TOL},
+                                                 "conservation_residual", "not_met", "an elemental balance reading is missing or its balances did not close"))
+        entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if links2 else LevelStatus.NOT_ATTEMPTED, tuple(links2),
+                                  "; ".join(f"{c.balance_id}: {c.status}" for c in conservation) + ("; an elemental balance reading is missing" if any(x is None for x in el) else "") or "not assessable"))
     hess, _ = load_hess()
     comparisons, references = [], []
     lhv, gap = _v(result, "heat_of_combustion", "lower_heating_value"), _v(result, "equilibrium_approach", "relative_gap")
@@ -483,7 +491,7 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
         spacing_text = (f"whose spacing ({min(spacings) * 1e3:.2g}-{max(spacings) * 1e3:.2g} ms) is itself {100 * min(spacings) / delay:.1f}-{100 * max(spacings) / delay:.1f} % of the ignition delay"
                         if delay else "whose spacing is not compared with the ignition delay (no delay was produced)")
         entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
-                                  "three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time " + spacing_text
+                                  "three integrator tolerances / output resolutions. The pre-registered ignition criterion compares a discrete sample time " + spacing_text
                                   + ("; the outcome is reported as it came out" if ok else ", so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, "
                                      "with a post hoc refined reading beside it")))
     else:
@@ -500,7 +508,8 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
         ("mechanism: GRI-Mech 3.0 bytes bound by digest (provider-bundled with Cantera); no property records for the gas",),
         "equilibrium temperatures were checked against the species thermodynamic data range stored in the mechanism and the water loop against a declared liquid range; the mechanism's "
         "KINETIC validity range is the authors' statement and is NOT established by Forge (the kinetic reactor is therefore a demonstration of execution and consistency only)",
-        "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)")
+        ("the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)"
+         if lhv_cmp is not None else "no reference comparison was made in this run (the heating-value node produced nothing); the Hess's-law reference applies near 298.15 K, 1 atm and to gas-phase products only"))
     run.summary = build_summary(
         f"Jacketed stoichiometric methane/air reactor with a water cooling loop ({variant})", ch.request, result, references=tuple(dict.fromkeys(references)),
         outputs=[("Adiabatic flame temperature", "adiabatic_equilibrium__T_adiabatic"), ("CO2 mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_CO2"),

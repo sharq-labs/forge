@@ -31,7 +31,7 @@
    "unit": "K"
   }
  ],
- "extraction": "cp from CoolProp at the stream mean temperature (the same property backend TESPy uses: this verifies the energy-balance implementation, not the property data)",
+ "extraction": "cp from CoolProp at the stream mean temperature (the same property backend TESPy uses: this verifies the energy-balance implementation, not the property data). The applicability envelope (pressure 1e5-1e7 Pa, mean temperature 274-370 K) is AUTHORED by this flagship, not stated by a source",
  "kind": "analytic_reference",
  "license_status": "derived relation, not copied data",
  "publication": "first law for a steady-flow control volume",

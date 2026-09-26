@@ -355,7 +355,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
     nodes = [fluid_node]
     u_inputs = (NodeInput("rho", "fluid_properties", "density", "kg/m^3"), NodeInput("lid_velocity", "fluid_properties", "lid_velocity", "m/s"),
                 NodeInput("nu", "fluid_properties", "kinematic_viscosity", "m^2/s"))
-    laminar = "laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs"
+    laminar = f"laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime at THIS request's Re = {reynolds:g} (a caller statement, not evidence)"
     for n in levels:
         nodes.append(NodeSpec(f"openfoam_{n}", NodeKind.PROVIDER_EXECUTION, of_auth[n].ref, tuple(NodeOutputSpec(k, u) for k, u in U_OUT), inputs=u_inputs,
                               provider_binding_ids=("openfoam",), applicability_waiver=laminar, configuration_digest=conf))
@@ -411,6 +411,32 @@ class CavityRun:
     l2_failing: tuple = ()
 
 
+def level5_entry(levels, flags: dict, whole: dict, lower: dict, details: dict) -> LevelEntry:
+    """Level 5 from the whole-field OpenFOAM-vs-SU2 comparisons.
+
+    ``flags[n]`` is 1.0 / 0.0 (within tolerance or not) or None (the comparison was not produced); ``whole[n]`` / ``lower[n]`` are the comparison
+    records (None when missing).  Reached only if EVERY level produced a comparison and every one is within tolerance; a missing level is recorded
+    as a not_met link (never dropped, never a pass); the post-hoc lower-half readings sit beside a level that is NOT reached and never on one that is."""
+    links = []
+    for n in levels:
+        if whole.get(n) is not None:
+            links.append(EvidenceLink.of_provider_comparison(whole[n], details.get(n, "")))
+        else:
+            links.append(EvidenceLink.of_record("whole_field_missing", {"mesh": f"{n}x{n}", "comparison_produced": False}, "solver_corroboration_not_validation", "not_met",
+                                                f"whole field {n}x{n}: no comparison was produced (a provider execution failed or was refused)"))
+    produced = [n for n in levels if whole.get(n) is not None]
+    if not produced:
+        return LevelEntry(5, LevelStatus.NOT_ATTEMPTED, (), "no whole-field comparison was produced")
+    unmet = [f"{n}x{n}" for n in levels if whole.get(n) is None or flags.get(n) != 1.0]
+    ok = not unmet
+    if not ok:
+        links += [EvidenceLink.of_provider_comparison(lower[n], f"POST HOC lower half {n}x{n}") for n in levels if lower.get(n) is not None]
+    return LevelEntry(5, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links),
+                      "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): "
+                      + ("MET at every level" if ok else f"NOT MET or not produced at {unmet}; where produced, the codes disagree most near the lid and the disagreement is the result")
+                      + ". The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only")
+
+
 def _obs(result, oid) -> float | None:
     o = result.observable(oid)
     return None if o.value is None else o.value.value.magnitude
@@ -452,26 +478,18 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
             links4.append(EvidenceLink.of_record("grid_study_intrinsic_post_hoc", {"orders": orders, "seq": seq}, "post_hoc_discretisation_convergence", "met" if intrinsic else "not_met",
                                                  f"POST HOC intrinsic reading (added after seeing the outcome): u(0.5, 0.5)/U over {list(levels)}: {seq}, observed orders {orders}"))
         entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
-                                  f"{list(levels)} cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): "
+                                  f"{list(levels)} cells per side. Pre-registered criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): "
                                   + ("MET" if ok else f"NOT MET - flags {decs}") + ". It is benchmark-relative, so it also folds in the benchmark's own truncation error; "
                                   "an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place"))
     else:
         entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "the convergence aggregate was not produced"))
-    # ---- level 5: whole-field OpenFOAM vs SU2, pre-declared 3 % of lid speed at every level; the lower-half comparison is post hoc
-    flags = {n: _obs(result, f"whole_field_within_tolerance_{n}") for n in levels}
-    if all(v is not None for v in flags.values()):
-        ok = all(v == 1.0 for v in flags.values())
-        links = [EvidenceLink.of_provider_comparison(cv.exchange.comparisons[f"whole_{n}"],
-                                                     f"whole field {n}x{n}: max difference {_obs(result, f'whole_field_max_difference_{n}'):.4f} of lid speed at y/L={_obs(result, f'max_difference_cell_y_{n}'):.3f}")
-                 for n in levels]
-        if not ok:       # post-hoc readings sit beside a level that is NOT reached; they can never be attached to a reached one
-            links += [EvidenceLink.of_provider_comparison(cv.exchange.comparisons[f"lower_{n}"], f"POST HOC lower half {n}x{n}") for n in levels]
-        entries.append(LevelEntry(5, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links),
-                                  "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): "
-                                  + ("MET at every level" if ok else "NOT MET - the codes disagree, most near the lid; the disagreement is the result")
-                                  + ". The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only"))
-    else:
-        entries.append(LevelEntry(5, LevelStatus.NOT_ATTEMPTED, (), "no whole-field comparison was produced"))
+    # ---- level 5: whole-field OpenFOAM vs SU2, pre-registered 3 % of lid speed at every level; the lower-half comparison is post hoc
+    def _fmt(x, spec):
+        return "n/a" if x is None else format(x, spec)
+    entries.append(level5_entry(
+        levels, {n: _obs(result, f"whole_field_within_tolerance_{n}") for n in levels},
+        {n: cv.exchange.comparisons.get(f"whole_{n}") for n in levels}, {n: cv.exchange.comparisons.get(f"lower_{n}") for n in levels},
+        {n: f"whole field {n}x{n}: max difference {_fmt(_obs(result, f'whole_field_max_difference_{n}'), '.4f')} of lid speed at y/L={_fmt(_obs(result, f'max_difference_cell_y_{n}'), '.3f')}" for n in levels}))
     # ---- level 6: Ghia et al., a NUMERICAL benchmark, judged only if it applies
     comparisons, references = [], []
     conditions = {"reynolds": Quantity(reynolds, "dimensionless"), "cavity_aspect_ratio": Quantity(1.0, "dimensionless")}          # the flagship's own declared square cavity
@@ -510,7 +528,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     ladder_levels = [f"{n}x{n}" for n in levels]
     outputs = [("Water density", "density"), ("Lid velocity for the declared Re", "lid_velocity")]
     for n in levels:
-        outputs += [(f"OpenFOAM max centerline error vs Ghia {n}x{n}", f"ghia_u_max_error_openfoam_{n}"), (f"SU2 max u-centerline error vs Ghia {n}x{n}", f"ghia_u_max_error_su2_{n}"),
+        outputs += [(f"OpenFOAM max u-centerline error vs Ghia {n}x{n}", f"ghia_u_max_error_openfoam_{n}"), (f"SU2 max u-centerline error vs Ghia {n}x{n}", f"ghia_u_max_error_su2_{n}"),
                     (f"OpenFOAM vs SU2 whole-field max difference {n}x{n} (of lid speed)", f"whole_field_max_difference_{n}"),
                     (f"...where the two differ most (y/L) {n}x{n}", f"max_difference_cell_y_{n}")]
     outputs += [(f"OpenFOAM u(0.5,0.5)/U {finest}x{finest}", f"u_center_openfoam_{finest}"), (f"SU2 u(0.5,0.5)/U {finest}x{finest}", f"u_center_su2_{finest}"),
