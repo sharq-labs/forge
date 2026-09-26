@@ -318,6 +318,33 @@ map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/
 - [ ] BIG 14 — NOT STARTED (per instruction). Gaps handed forward are listed at the end of the BIG 13 entry in PROGRESS (no quantified uncertainty, no experimental comparison,
       A cell-side conservation check, B/C/D unexplained residuals, unkeyed bundle manifest, optional flagship E).
 
+## Accepted post-hardening strategic direction — Mechanism-aware discovery
+
+This is **not an active BIG 14 task** and must not displace BIG 14/15 review,
+test-audit, validation, mutation and recertification work.
+
+After the current hardening campaign, Forge should evolve from
+`input -> solver -> output` toward a mechanism-aware discovery architecture that
+can represent:
+
+- dependency vs mechanism vs causal-claim semantics;
+- explicit mechanism/law -> state-transition -> observable paths;
+- typed interventions and counterfactual runs;
+- mechanism-conditioned root-cause candidates;
+- competing falsifiable hypotheses;
+- model discrepancy, UQ, sensitivity and identifiability;
+- experimental evidence, experiment design and active learning;
+- negative results and unexplained residuals as first-class records;
+- multi-fidelity and robust/MDO design discovery.
+
+The layer must reuse existing state, timeline, lifecycle, provenance, evidence,
+applicability, uncertainty, result and trust authorities. It must never convert
+sensitivity, solver agreement, a dependency edge, optimization score or LLM
+proposal into causal/scientific evidence.
+
+Architecture: `docs/architecture/mechanistic_discovery.md`.
+Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P19-P23.
+
 ## Persistent project direction
 
 The long-term roadmap, non-goals, provider strategy, data policy, flagship
