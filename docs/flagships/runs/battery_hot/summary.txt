@@ -1,0 +1,47 @@
+SYSTEM
+  Cell module with liquid cooling, 57-day declared profile (hot)
+EXECUTION
+  SUCCEEDED
+KEY OUTPUTS
+  Peak cell temperature, fresh day: 321.15 kelvin   [uncertainty UNKNOWN (not quantified)]
+  Peak cell temperature, day 56 (aged): 323.95 kelvin   [uncertainty UNKNOWN (not quantified)]
+  Coolant temperature rise, fresh day (peak): 0.100679 kelvin   [uncertainty UNKNOWN (not quantified)]
+  Module heat removed, fresh day: 15.0212 hour * watt   [uncertainty UNKNOWN (not quantified)]
+  End-of-discharge voltage, fresh day: 3.52632 volt   [uncertainty UNKNOWN (not quantified)]
+  End-of-discharge voltage, aged cell: 3.45578 volt   [uncertainty UNKNOWN (not quantified)]
+  Voltage shift caused by degradation: -0.0736653 volt   [uncertainty UNKNOWN (not quantified)]
+  Voltage shift caused by environment drift: 0.00312097 volt   [uncertainty UNKNOWN (not quantified)]
+  End SOC, fresh day: 0.8 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  Minimum SOC, aged day: 0.237036 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  Capacity fade after 56 days: 0.111843 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  Peak cell heat shift caused by degradation: 0.00974233 watt   [uncertainty UNKNOWN (not quantified)]
+CONSTRAINTS
+  b_fade (max_capacity_fade): VIOLATED  (margin -0.01184 dimensionless)
+  b_soc_aged (min_soc): SATISFIED  (margin 0.03704 dimensionless)
+  b_soc_fresh (min_soc): SATISFIED  (margin 0.1 dimensionless)
+  b_tmax_aged (max_cell_temperature): VIOLATED  (margin -5.8 kelvin)
+  b_tmax_fresh (max_cell_temperature): VIOLATED  (margin -3 kelvin)
+CONSERVATION
+  module_heat_fresh: closed residual 7.367e-12 hour * watt (tolerance 1.000e-06)
+  module_heat_aged: closed residual 3.162e-13 hour * watt (tolerance 1.000e-06)
+  module_heat_control: closed residual 4.974e-13 hour * watt (tolerance 1.000e-06)
+VERIFICATION
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['aging:fade_mapping_range', 'day_aged:cell_temperature_window', 'day_aged:soc_window', 'day_control:cell_temperature_window', 'day_control:soc_window', 'day_fresh:cell_temperature_window', 'day_fresh:soc_window']
+  L2 reached: INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty (tolerance declared before the run). It would fail on a solver or unit error; it cannot detect a wrong heat model
+  L3 reached: first-law coolant temperature rise vs Q/(m cp): verifies the heat -> enthalpy -> temperature implementation only
+  L4 not attempted: window-size refinement is a separate set of BIG 12 requests (window_refinement_study); not run here, or this run did not succeed
+  L5 not available: no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider and compare_providers refuses that pair as non-independent
+  L6 not available: no published numerical benchmark for this module/duty was integrated
+  L7 not available: no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed
+REFERENCE COMPARISONS
+  analytic_limit_comparison_verifies_implementation_only: first_law_delta_T MET (5.172e-09 dimensionless; tolerance 0.005 dimensionless)
+UNCERTAINTY
+  known input uncertainty: none stated
+  UNKNOWN input uncertainty: coolant inlet profile (declared), cell current profile (declared), initial state of charge (declared), contact resistance (ASSUMED), cells-in-module multiplicity (declared), fade-law constants (declared), PyBaMM Chen2020 parameters (provider-bundled literature data)
+  model discrepancy: NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)
+  model applicability: cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge
+  benchmark applicability: no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared
+SCIENTIFIC STATUS
+  insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
+TRACE
+  complete

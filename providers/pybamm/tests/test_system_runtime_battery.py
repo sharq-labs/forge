@@ -283,9 +283,10 @@ def test_gate_h_a_real_solved_state_that_leaves_applicability_is_not_committed_a
 
 
 # ==================================================================================================== Gate G (real)
-def test_gate_g_a_required_provider_that_is_not_installed_refuses_and_pybamm_is_not_substituted():
+def test_gate_g_a_required_provider_that_is_not_installed_refuses_and_pybamm_is_not_substituted(monkeypatch):
     request, context, authority = coupled_kit()
-    registry = default_registry()                                                         # every known adapter; CalculiX is not in this environment
+    monkeypatch.delenv("FORGE_PROVIDER_ENVS", raising=False)                              # CalculiX is a process provider found only through FORGE_PROVIDER_ENVS: not visible here
+    registry = default_registry()                                                         # every known adapter
     assert not registry.status("calculix").available
     node = replace(request.nodes[0], provider_binding_ids=("pybamm_cell", "tespy_coolant", "structural"))
     bindings = request.provider_bindings + (ProviderBinding("structural", "calculix", "2.23"),)

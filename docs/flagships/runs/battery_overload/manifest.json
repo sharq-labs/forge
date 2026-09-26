@@ -1,0 +1,42 @@
+{
+ "bundle_digest": "f8c86a32f86325322179f37f0f2180d61368ddfb628c3c02f6109e2fd816b7fd",
+ "files": [
+  [
+   "plan.json",
+   "28f87a6005f62bae660e867898ac676dd926022d82b718b60c557422efb41eec"
+  ],
+  [
+   "references/nasa.li_ion_battery_aging.json",
+   "7d7f72c12408bf703ec2915f6015af55104a03808b2ba8923b1403524de3df12"
+  ],
+  [
+   "request.json",
+   "99d8920586fa51df78bd3c1e58169a8c59fc8e155d9f1633acda9842c05c3422"
+  ],
+  [
+   "result.json",
+   "9a2fb1e4a0541c691101a3aa9d730b680093fe519c19ad693334f7f2f0031796"
+  ],
+  [
+   "summary.json",
+   "4f147d60c21f4558284bfc6787db1e94c995db143947fc4306fd0a257116d69f"
+  ],
+  [
+   "summary.txt",
+   "f9718290229953cc22036f417b25db6d77d67ceddfb0acb7331e6e75ecffc68b"
+  ]
+ ],
+ "name": "flagship-battery-overload",
+ "plan_digest": "18d875692fdfe65e243653a3a3334422e52662c23883b97d216f8cf57b7a9cae",
+ "provider_identities": [],
+ "reference_digests": [
+  [
+   "nasa.li_ion_battery_aging",
+   "3cbbdc66c611fbfdb2c1d69cc30b105621a3a7b42a8f1d87ad3c7467ca467fde"
+  ]
+ ],
+ "request_digest": "73ca1fd523d3eb5f14fac0f338a3c8d089749686ec3f62299b49ca3dbbab5773",
+ "result_digest": "828fed15aace0cce46daef1a113f726f5df86270e9fdc313a8fbf82a032ba05e",
+ "schema": "engcore.engineering.bundle/1",
+ "summary_digest": "ea53312347e7ad8a1204faac0d4a3e73d3f893d618e07c35b6ae16f3f39c9ae4"
+}

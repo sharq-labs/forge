@@ -1,0 +1,5009 @@
+{
+ "artifacts": [
+  [
+   "struct_calculix",
+   {
+    "description": "calculix displacement and von Mises on the plate mesh; presentation, not evidence",
+    "digest": "18aa0da1e4bea052a3dfe0294ba3e74dba939d779bccaaeb5b5e43b12060aa4b",
+    "kind": "vtu",
+    "name": "flagship_calculix.vtu",
+    "schema": "forge.system_runtime.artifact_ref/1"
+   }
+  ],
+  [
+   "struct_code_aster",
+   {
+    "description": "code_aster displacement and von Mises on the plate mesh; presentation, not evidence",
+    "digest": "91b71e3222dd8103752a8291f228ac2404adc11a8a278bb3000c99d04adb5495",
+    "kind": "vtu",
+    "name": "flagship_code_aster.vtu",
+    "schema": "forge.system_runtime.artifact_ref/1"
+   }
+  ],
+  [
+   "struct_fenicsx",
+   {
+    "description": "fenicsx displacement and von Mises on the plate mesh; presentation, not evidence",
+    "digest": "c8ca871c20055a0eec94bf99c661edbaf7c75fda18f7e3170d60926cf0e90637",
+    "kind": "vtu",
+    "name": "flagship_fenicsx.vtu",
+    "schema": "forge.system_runtime.artifact_ref/1"
+   }
+  ],
+  [
+   "thermal",
+   {
+    "description": "temperature on the plate mesh; presentation, not evidence",
+    "digest": "0d7b1e0643b07c8ac5366946a8869f352381838ae8c147fcafc14f4bf9f2f0a1",
+    "kind": "vtu",
+    "name": "flagship_temperature.vtu",
+    "schema": "forge.system_runtime.artifact_ref/1"
+   }
+  ]
+ ],
+ "checkpoints": [],
+ "classification": "system_execution_not_scientific_support",
+ "diagnostics": [],
+ "final_state": {
+  "environment_digest": "",
+  "material_state_digests": [
+   [
+    "plate",
+    "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+   ]
+  ],
+  "owners": [
+   {
+    "owner_id": "plate",
+    "role": "component",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared stress-free temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 293.15,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      },
+      "variable_id": "reference_temperature"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "6a065cfb4c25b1eded941310f303a9339a702be2b9df0adde56324d14fe475f0",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "initial_state": {
+  "environment_digest": "",
+  "material_state_digests": [
+   [
+    "plate",
+    "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+   ]
+  ],
+  "owners": [
+   {
+    "owner_id": "plate",
+    "role": "component",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared stress-free temperature",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 293.15,
+       "schema": "quantity/1",
+       "units": "kelvin"
+      },
+      "variable_id": "reference_temperature"
+     }
+    ]
+   }
+  ],
+  "previous_digest": "",
+  "produced_by": "initial",
+  "provider_checkpoints": [],
+  "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+  "schema": "forge.system_runtime.system_state/1",
+  "sequence": 0,
+  "system_digest": "6a065cfb4c25b1eded941310f303a9339a702be2b9df0adde56324d14fe475f0",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "node_outputs": {
+  "compare_calculix_code_aster": {
+   "displacement_within_tolerance": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "max_abs_displacement_difference": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8.409295899900658e-09,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "max_abs_stress_difference": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 232363.936985299,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "compare_fenicsx_calculix": {
+   "displacement_within_tolerance": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "max_abs_displacement_difference": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8.409295899917599e-09,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  "compare_fenicsx_code_aster": {
+   "displacement_within_tolerance": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "max_abs_displacement_difference": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0672615135404184e-18,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  "constraint.b_disp": {
+   "margin": {
+    "origin": "constraint:max_displacement",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "constraint margin: the observed value's uncertainty is not propagated by this runtime",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 6.346080361013291e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  "constraint.b_vm": {
+   "margin": {
+    "origin": "constraint:max_von_mises",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "constraint margin: the observed value's uncertainty is not propagated by this runtime",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 77683384.6245475,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "mat.struct_calculix.E": {
+   "value": {
+    "origin": "material:assumed:4ccd88c72c40981d",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 68900000000.0,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "mat.struct_calculix.alpha": {
+   "value": {
+    "origin": "material:assumed:ab866da9cdda8b9a",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.36e-05,
+     "schema": "quantity/1",
+     "units": "1 / kelvin"
+    }
+   }
+  },
+  "mat.struct_calculix.nu": {
+   "value": {
+    "origin": "material:assumed:440aa52136f32dbc",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.33,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  "mat.struct_code_aster.E": {
+   "value": {
+    "origin": "material:assumed:4ccd88c72c40981d",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 68900000000.0,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "mat.struct_code_aster.alpha": {
+   "value": {
+    "origin": "material:assumed:ab866da9cdda8b9a",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.36e-05,
+     "schema": "quantity/1",
+     "units": "1 / kelvin"
+    }
+   }
+  },
+  "mat.struct_code_aster.nu": {
+   "value": {
+    "origin": "material:assumed:440aa52136f32dbc",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.33,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  "mat.struct_fenicsx.E": {
+   "value": {
+    "origin": "material:assumed:4ccd88c72c40981d",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 68900000000.0,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "mat.struct_fenicsx.alpha": {
+   "value": {
+    "origin": "material:assumed:ab866da9cdda8b9a",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.36e-05,
+     "schema": "quantity/1",
+     "units": "1 / kelvin"
+    }
+   }
+  },
+  "mat.struct_fenicsx.nu": {
+   "value": {
+    "origin": "material:assumed:440aa52136f32dbc",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.33,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  "mat.thermal.k": {
+   "value": {
+    "origin": "material:assumed:af0acef476c82737",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "resolved material property: no uncertainty carried by the record",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 167.0,
+     "schema": "quantity/1",
+     "units": "watt / kelvin / meter"
+    }
+   }
+  },
+  "struct_calculix": {
+   "disp_max": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.6540769439475404e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "section_force_ratio": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.708749996208356,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "section_force_spread": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.8302332990654243e-09,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "sxx_mid": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.72265625,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   },
+   "ux_max": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.902054e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "ux_mid": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.789002e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "vm_max": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59967784.103753895,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "struct_code_aster": {
+   "disp_max": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.653919638986677e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "section_force_ratio": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.7087500000053466,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "section_force_spread": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.0427915182360042e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "sxx_mid": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.86867988,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   },
+   "ux_max": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.90185003811232e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "ux_mid": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.78879801633139e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "vm_max": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59816615.37545215,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "struct_fenicsx": {
+   "disp_max": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.65391963898671e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "section_force_ratio": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.7087500000053523,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "section_force_spread": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.191058644559568e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "sxx_mid": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.86868067,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   },
+   "ux_max": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.9018500381124057e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "ux_mid": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.7887980163314698e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   },
+   "vm_max": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59816615.3754525,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  "thermal": {
+   "heat_in": {
+    "origin": "declared flux x edge area",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4.0,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   },
+   "heat_out": {
+    "origin": "conductivity x recovered gradient at the sink end",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4.000000000068227,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   },
+   "t_exact_error": {
+    "origin": "max |T - exact linear profile| (the exact 1-D conduction solution from the declared inputs)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.5936409403802827e-10,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "t_max": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 351.05419161712393,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "t_mean": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 327.1020958086383,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   },
+   "t_min": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 303.15,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  }
+ },
+ "node_receipts": [
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "b152766f66a6c50d1c9b95df46bff60346cba282658c08d2e1037738b239017b",
+   "input_digests": [],
+   "node_digest": "c716fd1b84a2edc884092a196b556635351fdb9db3b1a606dca64986e659ec82",
+   "node_id": "mat.struct_calculix.E",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "d4270c9eb3249991dc7df1f5324b2a0e6cb90670d4465fd569b1836fa57ea044"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0009028789999092623
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "22e167df2751ac1f5ebe9334042e7f2e6ece0b993079633a266092f7e0b3a99b",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "bce5a3f97f622e8f3f33aa6f764c0e2617684c6fc5fcdbae917aea0924c2ec56",
+   "input_digests": [],
+   "node_digest": "6886707e23d0b759afcaac758f78a8a079aa6a75b5fd166cffaedd668955d1df",
+   "node_id": "mat.struct_calculix.alpha",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "732c53d656878aa183d84d73de1b7fd7db82ecb4dbc86ef3e1668878347581f3"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0009134729999686897
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "c88e436b2e3b5a008fb836c64ab8aaf8cd482a099ab7ecc8d9522e0d09c1e6c0",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "0633f5394c01b01b79ccfd29ef8a4d131cd0594e84ea2e92295ab16e7e1e7ada",
+   "input_digests": [],
+   "node_digest": "5788f0158096b791374edd48e34fbb6d5adb77f24d5774dcef7d5d6e68d1f943",
+   "node_id": "mat.struct_calculix.nu",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "0526a9792479d04f364a4394434854d45170bf909d6edd9adf3fa0be7d8a04db"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0008867730000474694
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "b11166736d9484f0b79e60f5b0782de8101cf7e011ffa857bebbb05d556996d1",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "2b4b1d59828dc9f55079058f92f564d14cf84b935a5101928d550622ff023241",
+   "input_digests": [],
+   "node_digest": "b2abb89a360fe91986ec456f35775e342dfe8795b8c6bcefbbad7bf489ea836a",
+   "node_id": "mat.struct_code_aster.E",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "d4270c9eb3249991dc7df1f5324b2a0e6cb90670d4465fd569b1836fa57ea044"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0008712659999901007
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "16967959fa0e5ad42e2d70f8ae7d5152d21ad9f40db2a3fb84c5d8ae4151e78d",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "e98ab62985e71ce50df89fb3d56421ab792fbcadea329100ab990f805e30c858",
+   "input_digests": [],
+   "node_digest": "7beee90ac8c3ffc7301724ab229bb3721b0da06c0c9e0c711b52e15a703fa1fa",
+   "node_id": "mat.struct_code_aster.alpha",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "732c53d656878aa183d84d73de1b7fd7db82ecb4dbc86ef3e1668878347581f3"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.000878694999983054
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "5eec0b51787142b09ce0be9a4cdd0dba5ff4d371353e1a71ed0af92191a55510",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "fc0c1cd9bddc2544c63ffdf7c5ea2aaab8b994b5e097ed1f8c8cba10007ab819",
+   "input_digests": [],
+   "node_digest": "49e2bf8b4bd69e9a6a30687b499538d9a1294db0a99abcb7c85258dc57a7056d",
+   "node_id": "mat.struct_code_aster.nu",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "0526a9792479d04f364a4394434854d45170bf909d6edd9adf3fa0be7d8a04db"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.000906593000081557
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "6921ffbf99b764026c86ecc48b69029342e0589b49b33ef1ef65b8ec02913d56",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "3da73902b767d9eab86565cc9758287dd3f902cdb5cc83f13d71f92e8fcfac7b",
+   "input_digests": [],
+   "node_digest": "ab77cf0e012087607eb16d088f63b1651143307054f7984156f5f1617c578fa2",
+   "node_id": "mat.struct_fenicsx.E",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "d4270c9eb3249991dc7df1f5324b2a0e6cb90670d4465fd569b1836fa57ea044"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.00087741500010452
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "c4deee4300b7ad57ecfc1f7ef9aba95fa2ada6dba1aa1db28b989f2280be1caa",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "9ba6ba1731fa0ea8eb8dae269e501c5dea342573d036650753feddd6da706355",
+   "input_digests": [],
+   "node_digest": "3140e286ce465cbeb737ab4ef17a413aa9a5011914f88d3b17f492414c9b6f59",
+   "node_id": "mat.struct_fenicsx.alpha",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "732c53d656878aa183d84d73de1b7fd7db82ecb4dbc86ef3e1668878347581f3"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0012559939999619019
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "816dc748d060f5f8e5f27a0b186f14ebbcfbf147b04000c23bcda0251bd05753",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "6a7c8739fe1353a96f631d63f9cfdf1b9beaf228ebdb9d15c8932d821117f432",
+   "input_digests": [],
+   "node_digest": "46c56ceb75fb04e2c2a38a592d641685107f550afc686de65408b8a5aa0b3a42",
+   "node_id": "mat.struct_fenicsx.nu",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "0526a9792479d04f364a4394434854d45170bf909d6edd9adf3fa0be7d8a04db"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0008945040000298832
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "fb77b522d49928d4deeaeefd1d8cabaae30ba306f145ea005e540638cb419fdc",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "2ce0f7f19470740da8a103209b1eae2e75ef9791636050b725165f6e49d5b6ef",
+   "input_digests": [],
+   "node_digest": "f41aa2c664a54db473d0f4f29066f2ef0575c616ff57ffa2a46085b209cdc1be",
+   "node_id": "mat.thermal.k",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "value",
+     "a89f250e3d0abeda765b87e61d4440ce9fe15c6079871a187b98ca3eb4d1a0e1"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0008888319999869054
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "d139d32c13a20625a34805f5705a5c5006e5904792ea6c961afe9eb90a86f713",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [
+    {
+     "check_id": "property_range",
+     "evidence_digest": "604166da1e8bfaf57d57a3dd0e6d5d6c8a955f0034de1e8f0e786c9841655b03",
+     "reason": "plate temperature [303.15, 351.05] K against the declared property range [250.0, 450.0] K",
+     "schema": "forge.system_runtime.applicability_report/1",
+     "status": "within"
+    }
+   ],
+   "artifacts": [
+    {
+     "description": "temperature on the plate mesh; presentation, not evidence",
+     "digest": "0d7b1e0643b07c8ac5366946a8869f352381838ae8c147fcafc14f4bf9f2f0a1",
+     "kind": "vtu",
+     "name": "flagship_temperature.vtu",
+     "schema": "forge.system_runtime.artifact_ref/1"
+    }
+   ],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "f1c8763608a27585459eb9a91d1ca446d894a63ed9015b49c66887630f8e31ad",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "bbb60bac1b7f9a9d10ad5ecb03a9df4a6ae601bface1b8942fd7fb73dc93b608",
+   "execution_identity_digest": "543832156a8b96c3d9f1915f6091588301c428511a7ecdc1ba4840ea62406ef7",
+   "input_digests": [
+    [
+     "k",
+     "c4d0479a69739a6a3be02f20b073ef87267f5ab8b2592e8cc28166f80942c22e"
+    ]
+   ],
+   "node_digest": "bf39cb06013e5cf4b84156e9ab3b5d3f9a0501a2aad80f8735c21912b9f4c3a3",
+   "node_id": "thermal",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "heat_in",
+     "ef5b00a73f16d9cd8c83eac1961f799286aeedb86816aee85e5059400d0fa753"
+    ],
+    [
+     "heat_out",
+     "9eaa38553bc7edd4e8d66c429afe929f4cf0a305156efa7637d6f06bb36798bf"
+    ],
+    [
+     "t_exact_error",
+     "24f44786f30016991167c605e58cb4c2cb6c86be0497b1c3bd03bfb5c6dcb8e6"
+    ],
+    [
+     "t_max",
+     "10bdafe773cf5907528874383b8b990d4e5625e9a908ad17c0572394f175bfbd"
+    ],
+    [
+     "t_mean",
+     "8393605daa0af113d7b32a3c5e95008fa05b7241e73b3b6def88557ce98901a8"
+    ],
+    [
+     "t_min",
+     "13a7bb755f9ec493473e9fdac6e89bc5a6bb023e99f4ee5ab6bdf2bcb4d8041d"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [
+    {
+     "execution_identity_digest": "ce8767adbeefcdb2a5acbdfa2e8cf910caa56ab19a01f9a2f670acc9b1386ab1",
+     "provider_digest": "5987de1af7db6d1d3d4abd15e8bb77bc78d66afe207eb3ece04b69221e34d746",
+     "provider_id": "fenicsx",
+     "provider_version": "0.11.0",
+     "record_digest": "bbb60bac1b7f9a9d10ad5ecb03a9df4a6ae601bface1b8942fd7fb73dc93b608",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.07045664699990084
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "d8e85049bd6618d7d2627f32ec498f608e18a20dcf0ba00f2247b40aea2b0b82",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [
+    {
+     "description": "calculix displacement and von Mises on the plate mesh; presentation, not evidence",
+     "digest": "18aa0da1e4bea052a3dfe0294ba3e74dba939d779bccaaeb5b5e43b12060aa4b",
+     "kind": "vtu",
+     "name": "flagship_calculix.vtu",
+     "schema": "forge.system_runtime.artifact_ref/1"
+    }
+   ],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "882a3829d35628b1bec51b0b3a88b7ee5f67cf3d8ae12354415572bc6c66a655",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "4801fbc3ab19979fe0c679710db28e4582ffb07ae6be6fb398f6af7e1bebfa3c",
+   "execution_identity_digest": "79cc60203ccb66b820da5d63a83b23e70ace83ea9492121cd03f0da5858e751b",
+   "input_digests": [
+    [
+     "E",
+     "f2a3d8361137bff64beb341fa069648198f192d74eb315505a8604ac842c4bc3"
+    ],
+    [
+     "alpha",
+     "0108bcc88345d5309c05da9b9508bc5fe5479781f203b76f3d2c4af529783cc8"
+    ],
+    [
+     "nu",
+     "f5ca7979c232e29f351eab6d3ad1aebaf8b5e4b69326ff8e6064e08fb9a07e8e"
+    ],
+    [
+     "t_max",
+     "43bd305c09c6efbf6baa8ac18b0012f57a8ad504edbe7f4a95320468bd702a5e"
+    ],
+    [
+     "t_mean",
+     "61b184936bca1afc111df1d7949224b80d7d3aa1635ce64903e1f5df98f91045"
+    ],
+    [
+     "t_min",
+     "2d0419f7643d1058424ab9a20de0060312a2cd37ff9dd8588d76e25f0578551e"
+    ]
+   ],
+   "node_digest": "86c27a051e753cbcb095593a8a23692ea96711374cea201293d60316a83d23eb",
+   "node_id": "struct_calculix",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "disp_max",
+     "63b1fccd776d0bfa0f5683c4804a58a5d60ce395842a7e5788ee85fa86553d31"
+    ],
+    [
+     "section_force_ratio",
+     "903316a75ae5eca64df789144edeba6837ac76628d7d55ae9cc961c051889ae0"
+    ],
+    [
+     "section_force_spread",
+     "6bead3f22c5ae61ec9810c44e379ad312c1e6d8cb374d0693e88f84d5a4196f2"
+    ],
+    [
+     "sxx_mid",
+     "5781b262f74043b82f65f4da3fdd5c472464c4a9bc1777d21a77c4f4d853eaf9"
+    ],
+    [
+     "ux_max",
+     "e06c15065b0b8a1c288374fb6c49507e7abb5131292c81698d5bd4cd92dc8d8a"
+    ],
+    [
+     "ux_mid",
+     "9e03de72281391e59e0f70bd5d474af0572dd6102f326f871caec91d832de38b"
+    ],
+    [
+     "vm_max",
+     "bfd11c914b9020dc251124b55807bc9fdad4936a26a85027648acff2cb095d48"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [
+    {
+     "execution_identity_digest": "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+     "provider_digest": "f2ee8adde6b6e00a6cd40a37bc91ba2b1683e9d55b2d38a127b9ca7048923b13",
+     "provider_id": "calculix",
+     "provider_version": "2.23",
+     "record_digest": "4801fbc3ab19979fe0c679710db28e4582ffb07ae6be6fb398f6af7e1bebfa3c",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.21195501500005776
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "de1aed1d2e2d3fd98ba422d0da3da6a36903a5d44b5c0566ad7143ed9e7e4fe1",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [
+    {
+     "description": "code_aster displacement and von Mises on the plate mesh; presentation, not evidence",
+     "digest": "91b71e3222dd8103752a8291f228ac2404adc11a8a278bb3000c99d04adb5495",
+     "kind": "vtu",
+     "name": "flagship_code_aster.vtu",
+     "schema": "forge.system_runtime.artifact_ref/1"
+    }
+   ],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "b5814aca855daa8b8d2c6e0c9df6f1da48afa758e657dee4b8c357064a847e79",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "7babd941aa615e380b20f419f571e5811e0764b3045d5323f0a540301126b379",
+   "execution_identity_digest": "c9c5cf949d5c4540853443df9f6d3a5ea0de1cb6f3009c28e87d28216cae89af",
+   "input_digests": [
+    [
+     "E",
+     "8dc451bdb8bacf804bdf4215e7b3c8e0afa0aaf224318ec6b751763021a1a618"
+    ],
+    [
+     "alpha",
+     "2b596591c0e0dc7f7f6a8d0f6a091e38a8f4a540f72aa6a5b13e3e5ec5fce2b2"
+    ],
+    [
+     "nu",
+     "62956aa920fd9f1ec9c9b5543217642eca86603bd92761b49258d92f58a6d143"
+    ],
+    [
+     "t_max",
+     "43bd305c09c6efbf6baa8ac18b0012f57a8ad504edbe7f4a95320468bd702a5e"
+    ],
+    [
+     "t_mean",
+     "61b184936bca1afc111df1d7949224b80d7d3aa1635ce64903e1f5df98f91045"
+    ],
+    [
+     "t_min",
+     "2d0419f7643d1058424ab9a20de0060312a2cd37ff9dd8588d76e25f0578551e"
+    ]
+   ],
+   "node_digest": "cd39685c0956debda42334916081eedc7c3bd824981d064ec87e877c5e605804",
+   "node_id": "struct_code_aster",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "disp_max",
+     "e54fbd227844e17943d162c74e75ec3d7d0be398bab4b9732c6e5aa6552cf8df"
+    ],
+    [
+     "section_force_ratio",
+     "e244b8d5f53916b2b318152e932255add5d5c0b3df46cd02f07d1e535c16d7db"
+    ],
+    [
+     "section_force_spread",
+     "edc6221add744718332a9449cc33bb03b54e57c642446adadfd2230789ae3e2b"
+    ],
+    [
+     "sxx_mid",
+     "ad76d7d5b50274588f55e5d8b641a8843dc75fb132f73357a85eb545c186ed3c"
+    ],
+    [
+     "ux_max",
+     "c75da36b8df097a6d3e1b276f71d49ac377e03842f56c6607dceb074fabadcee"
+    ],
+    [
+     "ux_mid",
+     "08a7ebcea86082bb299f6b39f03f2934b013b9b86ee6440bc3937c99e63c0909"
+    ],
+    [
+     "vm_max",
+     "0b60e82b93b8c70d54a0d242abe1687f4f81b9b4ec0ea7c5f10519356bb8dbdc"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [
+    {
+     "execution_identity_digest": "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+     "provider_digest": "4f8b4b0fdd25d2c30dc5cffc1856a6795589ad2f65810286a08aa64b2a5c2d05",
+     "provider_id": "code_aster",
+     "provider_version": "18.1.7",
+     "record_digest": "7babd941aa615e380b20f419f571e5811e0764b3045d5323f0a540301126b379",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 1.4937064130000408
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "802b420b23eed2e8c367b1b827ee976358b7e47875c8bade47dd7ef201527171",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [
+    {
+     "description": "fenicsx displacement and von Mises on the plate mesh; presentation, not evidence",
+     "digest": "c8ca871c20055a0eec94bf99c661edbaf7c75fda18f7e3170d60926cf0e90637",
+     "kind": "vtu",
+     "name": "flagship_fenicsx.vtu",
+     "schema": "forge.system_runtime.artifact_ref/1"
+    }
+   ],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "050a6b9427b3a49962178c9f5f9e57f5949e24789cb0bf6e8ebda4ccfd3e16c3",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "946a3352cc1b714a72f60cbaed321c1e9e5ad47e0246f0730194c9c4654a99bb",
+   "execution_identity_digest": "c6857af70fe56126caee3668106e349b01849d0d534b1ec95a763bd253c42442",
+   "input_digests": [
+    [
+     "E",
+     "275f3f4ed477298d47ed67f130e13da62840f00a5d8659f7783a2559ac992330"
+    ],
+    [
+     "alpha",
+     "3c21e798070a0aa1a124bee4620fe51045b7aac7d645400a1c8b94a2afd017ac"
+    ],
+    [
+     "nu",
+     "893c3764a95ec9bc0a23e5c1c8d294d692e28986a318904627817f4c589806c4"
+    ],
+    [
+     "t_max",
+     "43bd305c09c6efbf6baa8ac18b0012f57a8ad504edbe7f4a95320468bd702a5e"
+    ],
+    [
+     "t_mean",
+     "61b184936bca1afc111df1d7949224b80d7d3aa1635ce64903e1f5df98f91045"
+    ],
+    [
+     "t_min",
+     "2d0419f7643d1058424ab9a20de0060312a2cd37ff9dd8588d76e25f0578551e"
+    ]
+   ],
+   "node_digest": "75e359d3160a532f7f3953f717d3e8a5828bd94b94f301d9dcc51a149556afc4",
+   "node_id": "struct_fenicsx",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "disp_max",
+     "af25055b6968e9a7bee1083407dad0d323b08c0ec62348cd9ead83ef5df1d2a8"
+    ],
+    [
+     "section_force_ratio",
+     "de1620c0d8562e3b9cfebc3611cd96da03622b306130fc8ec0ec8da2cc634bfb"
+    ],
+    [
+     "section_force_spread",
+     "efcc8febdf31976b518ac66c7ec48a44ffa0a57972787d7e38bba8560b14e31a"
+    ],
+    [
+     "sxx_mid",
+     "56cdf060dedd75b9a95204d3982472fad76e7cad90aa9b06a8dcbdafc6402ea8"
+    ],
+    [
+     "ux_max",
+     "3ab37b08bc2db2199d09a0559f5fcdaae1a7835a0e9344c00c55bfc657981126"
+    ],
+    [
+     "ux_mid",
+     "31ee0a7e4c3602649fe89a876fa639125194ff319daa9e95910c190afd3948a1"
+    ],
+    [
+     "vm_max",
+     "a3bb5774f8ceaa339754d1c1daf09da93c2e3ac391734a9a787bd657e0b8a096"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [
+    {
+     "execution_identity_digest": "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0",
+     "provider_digest": "5987de1af7db6d1d3d4abd15e8bb77bc78d66afe207eb3ece04b69221e34d746",
+     "provider_id": "fenicsx",
+     "provider_version": "0.11.0",
+     "record_digest": "946a3352cc1b714a72f60cbaed321c1e9e5ad47e0246f0730194c9c4654a99bb",
+     "schema": "forge.system_runtime.provider_record_ref/1",
+     "succeeded": true
+    }
+   ],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.05140667399996346
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "5d224643297508c29ee8139508000813a9b93075850c02e439156ab048b5839a",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "83b0dbfc7f09bf81733f2bf7916db41f7efcd63bfad05e31e9f40c3b0902e271",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "354ed5fff4ecf7375f5dc048f3a0f7280f0d6ed304445d22ddad93ca290b5062",
+   "input_digests": [
+    [
+     "ux_a",
+     "e391575e4bb3279bdedf6cb15b01a2335b9192e7ae2ee998f25c16fe12f24da9"
+    ],
+    [
+     "ux_b",
+     "f3ea6af39b3b33561cb92a2210cc05c8f66bd6d5b00765e7dc6e4dcea5452d0d"
+    ]
+   ],
+   "node_digest": "f0816b173bc16896807280cce54ab7305052a94a987acbbec9a2f006089d1653",
+   "node_id": "compare_calculix_code_aster",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "displacement_within_tolerance",
+     "e2b214bc6ec3d44709758c7d37ab365acd59f1810cbe00f13447befed8cd6e4e"
+    ],
+    [
+     "max_abs_displacement_difference",
+     "9bbdb826e92b52f7aeafced5df8c05f4454d76bfcc704876b78589d293baca4d"
+    ],
+    [
+     "max_abs_stress_difference",
+     "f28e371fc509e2b4336d2878d74a0ebb9343b9a9adaa65c17a6fe660360013e2"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0210608920000368
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "f7c7436543744732781d796a6c274e9683dca954a2a9438f5cc5e69e06cb1286",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "f4327bd55bfc5ff4aa8f3d6931a3254cbdb450b3092f0f802dab55208d96b86f",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "0e1ebabba8708e7376cd920520168cfbd526fde1b27baca72d2fcdd7d87637ed",
+   "input_digests": [
+    [
+     "ux_a",
+     "c4c4ea6e5a5d9c46ca53e3ffb58aa560052c2e77583e42cf621225c456024587"
+    ],
+    [
+     "ux_b",
+     "d973eb75e93b1f3958c4a8e40563f0c53756ffe8e1e55ec2983a26c9e1ace661"
+    ]
+   ],
+   "node_digest": "7d6e9539be3f9f76d67908c924a2d3fdc56c7865de9f70589f3f9ca02f8a20f8",
+   "node_id": "compare_fenicsx_calculix",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "displacement_within_tolerance",
+     "e2b214bc6ec3d44709758c7d37ab365acd59f1810cbe00f13447befed8cd6e4e"
+    ],
+    [
+     "max_abs_displacement_difference",
+     "5f1f5189df99bcf09c0da94d5dd94210780a93b1cafd5205571bc99ade84aad0"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.006103516000052878
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "ca2c58fca4c5ce64db5611b4f48f0dba54571749b4b63c07ea03458f437f828a",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "e9876007e00efa03cd5fd1c3424785e852493f41c9a32cb4b285982d9812a3a8",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "3f8d19c59b46d25d79c872f48bdc170abbab722095596acb43815ebe8e74d4cb",
+   "input_digests": [
+    [
+     "ux_a",
+     "c4c4ea6e5a5d9c46ca53e3ffb58aa560052c2e77583e42cf621225c456024587"
+    ],
+    [
+     "ux_b",
+     "f3ea6af39b3b33561cb92a2210cc05c8f66bd6d5b00765e7dc6e4dcea5452d0d"
+    ]
+   ],
+   "node_digest": "dcb59e9877181fe44be18285483cc9a1b2b9aa79af4aa1d67846b66c46bf7f9c",
+   "node_id": "compare_fenicsx_code_aster",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "displacement_within_tolerance",
+     "e2b214bc6ec3d44709758c7d37ab365acd59f1810cbe00f13447befed8cd6e4e"
+    ],
+    [
+     "max_abs_displacement_difference",
+     "ca2efa9362978edf105a7205c0f51e44ee41d416a0d39ab5ff9cabae916a0222"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.007166901999994479
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "f7f30e087b7fe79e785d1b44efe3cc26501bdbb68598adbc07e6c8c8b838d792",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "1f91212194726e5022445a425b897337b11563d2a90c6519c8aa6bf36ad287c7",
+   "input_digests": [
+    [
+     "observed",
+     "29ec432d4dc283c22070ec0740ff041326f7627c3bbe8f63a8fce3013cb8626e"
+    ]
+   ],
+   "node_digest": "5100de0e4184381a2726c348e418bb12d2dac2d78789d39a78baa2e169908bfd",
+   "node_id": "constraint.b_disp",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "margin",
+     "713238ae8695713a5378fe80af534e26616ed3cf41c5d6421ccd516c11aba570"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.0009157289999848217
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "138bbb0cd31141969ae3270869fb5d417f737da6024c50517a3d667fc23b1b71",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  },
+  {
+   "applicability": [],
+   "artifacts": [],
+   "attempt": 1,
+   "authority_checkpoint": null,
+   "authority_identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+   "blocked_by": [],
+   "cache_hit": false,
+   "delegated_record_digest": "",
+   "execution_identity_digest": "e6711225280bdd80bee24e710035f6854e30ee2e44871ae96067651f1f44b1c5",
+   "input_digests": [
+    [
+     "observed",
+     "40bfe6b49519feb9178e4d7feff6395eee653d63ae9764caa9643f28043d78e5"
+    ]
+   ],
+   "node_digest": "7cb70bc5370941e2f1c7f28287a9e734f6bcca86f960670ee10f507852ff9598",
+   "node_id": "constraint.b_vm",
+   "original_receipt_digest": "",
+   "output_digests": [
+    [
+     "margin",
+     "b60a5d979767aaa169a0053ddb56111857c74e90c23d3d17b064072333bcdd74"
+    ]
+   ],
+   "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+   "provider_records": [],
+   "reason": "",
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "resource_usage": {
+    "cpu_seconds": 0.0,
+    "function_evaluations": 0,
+    "peak_memory_bytes": 0,
+    "wall_seconds": 0.000909626000066055
+   },
+   "schema": "forge.system_runtime.node_receipt/1",
+   "stamp": "a4ebe2f87385529b55c5d5ef9be53ffef148980769b7054a53db6a600f4dce3f",
+   "state_after_digest": "",
+   "state_before_digest": "d3ee0128ee192cf7dd0396c2db343907c742075aaa0dff7a6aac2cdc61e363fd",
+   "status": "succeeded"
+  }
+ ],
+ "observables": [
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "disp_max_calculix",
+   "output_name": "disp_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.6540769439475404e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "disp_max_code_aster",
+   "output_name": "disp_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.653919638986677e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "disp_max_fenicsx",
+   "output_name": "disp_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.65391963898671e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix",
+    "struct_code_aster",
+    "compare_calculix_code_aster"
+   ],
+   "node_id": "compare_calculix_code_aster",
+   "observable_id": "displacement_within_tolerance_calculix_code_aster",
+   "output_name": "displacement_within_tolerance",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix",
+    "struct_fenicsx",
+    "compare_fenicsx_calculix"
+   ],
+   "node_id": "compare_fenicsx_calculix",
+   "observable_id": "displacement_within_tolerance_fenicsx_calculix",
+   "output_name": "displacement_within_tolerance",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster",
+    "struct_fenicsx",
+    "compare_fenicsx_code_aster"
+   ],
+   "node_id": "compare_fenicsx_code_aster",
+   "observable_id": "displacement_within_tolerance_fenicsx_code_aster",
+   "output_name": "displacement_within_tolerance",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "declared before the run",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "heat_in",
+   "output_name": "heat_in",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": {
+    "origin": "declared flux x edge area",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4.0,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "heat_out",
+   "output_name": "heat_out",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "W",
+   "value": {
+    "origin": "conductivity x recovered gradient at the sink end",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 4.000000000068227,
+     "schema": "quantity/1",
+     "units": "watt"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix",
+    "struct_code_aster",
+    "compare_calculix_code_aster"
+   ],
+   "node_id": "compare_calculix_code_aster",
+   "observable_id": "max_abs_displacement_difference_calculix_code_aster",
+   "output_name": "max_abs_displacement_difference",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8.409295899900658e-09,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix",
+    "struct_fenicsx",
+    "compare_fenicsx_calculix"
+   ],
+   "node_id": "compare_fenicsx_calculix",
+   "observable_id": "max_abs_displacement_difference_fenicsx_calculix",
+   "output_name": "max_abs_displacement_difference",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 8.409295899917599e-09,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster",
+    "struct_fenicsx",
+    "compare_fenicsx_code_aster"
+   ],
+   "node_id": "compare_fenicsx_code_aster",
+   "observable_id": "max_abs_displacement_difference_fenicsx_code_aster",
+   "output_name": "max_abs_displacement_difference",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 1.0672615135404184e-18,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix",
+    "struct_code_aster",
+    "compare_calculix_code_aster"
+   ],
+   "node_id": "compare_calculix_code_aster",
+   "observable_id": "max_abs_stress_difference_calculix_code_aster",
+   "output_name": "max_abs_stress_difference",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "compare_providers",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 232363.936985299,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "section_force_ratio_calculix",
+   "output_name": "section_force_ratio",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.708749996208356,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "section_force_ratio_code_aster",
+   "output_name": "section_force_ratio",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.7087500000053466,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "section_force_ratio_fenicsx",
+   "output_name": "section_force_ratio",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 0.7087500000053523,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "section_force_spread_calculix",
+   "output_name": "section_force_spread",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.8302332990654243e-09,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "section_force_spread_code_aster",
+   "output_name": "section_force_spread",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.0427915182360042e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "section_force_spread_fenicsx",
+   "output_name": "section_force_spread",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "dimensionless",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.191058644559568e-14,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "sxx_mid_calculix",
+   "output_name": "sxx_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.72265625,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "sxx_mid_code_aster",
+   "output_name": "sxx_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.86867988,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "sxx_mid_fenicsx",
+   "output_name": "sxx_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": -55207465.86868067,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "t_exact_error",
+   "output_name": "t_exact_error",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "max |T - exact linear profile| (the exact 1-D conduction solution from the declared inputs)",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 3.5936409403802827e-10,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "t_max",
+   "output_name": "t_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 351.05419161712393,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "t_mean",
+   "output_name": "t_mean",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 327.1020958086383,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.thermal.k",
+    "thermal"
+   ],
+   "node_id": "thermal",
+   "observable_id": "t_min",
+   "output_name": "t_min",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "K",
+   "value": {
+    "origin": "fenicsx",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 303.15,
+     "schema": "quantity/1",
+     "units": "kelvin"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "ux_max_calculix",
+   "output_name": "ux_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.902054e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "ux_max_code_aster",
+   "output_name": "ux_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.90185003811232e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "ux_max_fenicsx",
+   "output_name": "ux_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.9018500381124057e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "ux_mid_calculix",
+   "output_name": "ux_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.789002e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "ux_mid_code_aster",
+   "output_name": "ux_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.78879801633139e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "ux_mid_fenicsx",
+   "output_name": "ux_mid",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "m",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 2.7887980163314698e-05,
+     "schema": "quantity/1",
+     "units": "meter"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_calculix.E",
+    "mat.struct_calculix.alpha",
+    "mat.struct_calculix.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_calculix"
+   ],
+   "node_id": "struct_calculix",
+   "observable_id": "vm_max_calculix",
+   "output_name": "vm_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "calculix plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59967784.103753895,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_code_aster.E",
+    "mat.struct_code_aster.alpha",
+    "mat.struct_code_aster.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_code_aster"
+   ],
+   "node_id": "struct_code_aster",
+   "observable_id": "vm_max_code_aster",
+   "output_name": "vm_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "code_aster plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59816615.37545215,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  },
+  {
+   "availability": "available",
+   "dependency_path": [
+    "mat.struct_fenicsx.E",
+    "mat.struct_fenicsx.alpha",
+    "mat.struct_fenicsx.nu",
+    "mat.thermal.k",
+    "thermal",
+    "struct_fenicsx"
+   ],
+   "node_id": "struct_fenicsx",
+   "observable_id": "vm_max_fenicsx",
+   "output_name": "vm_max",
+   "reason": "",
+   "root_causes": [],
+   "schema": "forge.system_runtime.observable_result/1",
+   "unit": "Pa",
+   "value": {
+    "origin": "fenicsx plate displacement/stress",
+    "schema": "forge.system_runtime.output_value/1",
+    "uncertainty": {
+     "confidence_level": null,
+     "kind": "unknown",
+     "lower": null,
+     "method": "",
+     "notes": "declared or derived quantity; no uncertainty was quantified",
+     "schema": "uncertainty/1",
+     "source": "",
+     "standard_uncertainty": null,
+     "upper": null
+    },
+    "value": {
+     "magnitude": 59816615.3754525,
+     "schema": "quantity/1",
+     "units": "pascal"
+    }
+   }
+  }
+ ],
+ "plan": {
+  "allow_partial": true,
+  "cache_policy": "off",
+  "checkpoint_after": [],
+  "constraint_observations": [
+   {
+    "binding_id": "b_disp",
+    "constraint_digest": "d7ec2d5193172b9e7cb43a0640b7f73d7d57411eea6e39706c750a86ab6ea131",
+    "constraint_id": "max_displacement",
+    "observable_id": "disp_max_fenicsx",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   },
+   {
+    "binding_id": "b_vm",
+    "constraint_digest": "2b48c7a115b210a0441dc3a299fb5a6dacc206bb2bf10cd7c54cf901e05571de",
+    "constraint_id": "max_von_mises",
+    "observable_id": "vm_max_fenicsx",
+    "schema": "forge.system_runtime.constraint_observation/1"
+   }
+  ],
+  "nodes": [
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "youngs_modulus"
+     ],
+     [
+      "resolved_digest",
+      "4ccd88c72c40981de58a3ddfca5729af740398e4079cebdd9cc8622d7cd07931"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_calculix.E",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "thermal_expansion"
+     ],
+     [
+      "resolved_digest",
+      "ab866da9cdda8b9abf8dc1442c86ad0350f6c9ba710655e70babe7f3f2a762c9"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_calculix.alpha",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "1/K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "poisson_ratio"
+     ],
+     [
+      "resolved_digest",
+      "440aa52136f32dbca1edb13f7aef03b7e3cea536db631c72ce16a53f94516b97"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_calculix.nu",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "youngs_modulus"
+     ],
+     [
+      "resolved_digest",
+      "4ccd88c72c40981de58a3ddfca5729af740398e4079cebdd9cc8622d7cd07931"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_code_aster.E",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "thermal_expansion"
+     ],
+     [
+      "resolved_digest",
+      "ab866da9cdda8b9abf8dc1442c86ad0350f6c9ba710655e70babe7f3f2a762c9"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_code_aster.alpha",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "1/K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "poisson_ratio"
+     ],
+     [
+      "resolved_digest",
+      "440aa52136f32dbca1edb13f7aef03b7e3cea536db631c72ce16a53f94516b97"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_code_aster.nu",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "youngs_modulus"
+     ],
+     [
+      "resolved_digest",
+      "4ccd88c72c40981de58a3ddfca5729af740398e4079cebdd9cc8622d7cd07931"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_fenicsx.E",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "thermal_expansion"
+     ],
+     [
+      "resolved_digest",
+      "ab866da9cdda8b9abf8dc1442c86ad0350f6c9ba710655e70babe7f3f2a762c9"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_fenicsx.alpha",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "1/K"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "poisson_ratio"
+     ],
+     [
+      "resolved_digest",
+      "440aa52136f32dbca1edb13f7aef03b7e3cea536db631c72ce16a53f94516b97"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.struct_fenicsx.nu",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.material",
+     "identity_digest": "fc9ce450856983a63203e7fb670fcf09029af126a34e36818e87870094e9a15c",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "owner",
+      "plate"
+     ],
+     [
+      "property",
+      "thermal_conductivity"
+     ],
+     [
+      "resolved_digest",
+      "af0acef476c82737afa43af415ccaf43c9ec126aa7e02ac587b1e55ec7057fc9"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [],
+    "derived": true,
+    "inputs": [],
+    "kind": "resolve_material",
+    "literals": [],
+    "node_id": "mat.thermal.k",
+    "outputs": [
+     {
+      "name": "value",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W/(m*K)"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [
+     "property_range"
+    ],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "plate-thermal-fenicsx",
+     "identity_digest": "f1c8763608a27585459eb9a91d1ca446d894a63ed9015b49c66887630f8e31ad",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "mat.thermal.k"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "k",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.thermal.k",
+      "source_output": "value",
+      "unit": "W/(m*K)"
+     }
+    ],
+    "kind": "provider_execution",
+    "literals": [],
+    "node_id": "thermal",
+    "outputs": [
+     {
+      "name": "heat_in",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "heat_out",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "W"
+     },
+     {
+      "name": "t_exact_error",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "t_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "t_mean",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     },
+     {
+      "name": "t_min",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "K"
+     }
+    ],
+    "provider_binding_ids": [
+     "fx"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures",
+    "authority": {
+     "authority_id": "plate-struct-calculix",
+     "identity_digest": "882a3829d35628b1bec51b0b3a88b7ee5f67cf3d8ae12354415572bc6c66a655",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "mat.struct_calculix.E",
+     "mat.struct_calculix.alpha",
+     "mat.struct_calculix.nu",
+     "thermal"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "E",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_calculix.E",
+      "source_output": "value",
+      "unit": "Pa"
+     },
+     {
+      "name": "alpha",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_calculix.alpha",
+      "source_output": "value",
+      "unit": "1/K"
+     },
+     {
+      "name": "nu",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_calculix.nu",
+      "source_output": "value",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "t_max",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_max",
+      "unit": "K"
+     },
+     {
+      "name": "t_mean",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_mean",
+      "unit": "K"
+     },
+     {
+      "name": "t_min",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_min",
+      "unit": "K"
+     }
+    ],
+    "kind": "provider_execution",
+    "literals": [],
+    "node_id": "struct_calculix",
+    "outputs": [
+     {
+      "name": "disp_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "section_force_ratio",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "section_force_spread",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "sxx_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     },
+     {
+      "name": "ux_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "ux_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "vm_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [
+     "ccx"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures",
+    "authority": {
+     "authority_id": "plate-struct-code-aster",
+     "identity_digest": "b5814aca855daa8b8d2c6e0c9df6f1da48afa758e657dee4b8c357064a847e79",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "mat.struct_code_aster.E",
+     "mat.struct_code_aster.alpha",
+     "mat.struct_code_aster.nu",
+     "thermal"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "E",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_code_aster.E",
+      "source_output": "value",
+      "unit": "Pa"
+     },
+     {
+      "name": "alpha",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_code_aster.alpha",
+      "source_output": "value",
+      "unit": "1/K"
+     },
+     {
+      "name": "nu",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_code_aster.nu",
+      "source_output": "value",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "t_max",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_max",
+      "unit": "K"
+     },
+     {
+      "name": "t_mean",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_mean",
+      "unit": "K"
+     },
+     {
+      "name": "t_min",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_min",
+      "unit": "K"
+     }
+    ],
+    "kind": "provider_execution",
+    "literals": [],
+    "node_id": "struct_code_aster",
+    "outputs": [
+     {
+      "name": "disp_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "section_force_ratio",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "section_force_spread",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "sxx_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     },
+     {
+      "name": "ux_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "ux_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "vm_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [
+     "ca"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures",
+    "authority": {
+     "authority_id": "plate-struct-fenicsx",
+     "identity_digest": "050a6b9427b3a49962178c9f5f9e57f5949e24789cb0bf6e8ebda4ccfd3e16c3",
+     "kind": "provider",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "mat.struct_fenicsx.E",
+     "mat.struct_fenicsx.alpha",
+     "mat.struct_fenicsx.nu",
+     "thermal"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "E",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_fenicsx.E",
+      "source_output": "value",
+      "unit": "Pa"
+     },
+     {
+      "name": "alpha",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_fenicsx.alpha",
+      "source_output": "value",
+      "unit": "1/K"
+     },
+     {
+      "name": "nu",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "mat.struct_fenicsx.nu",
+      "source_output": "value",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "t_max",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_max",
+      "unit": "K"
+     },
+     {
+      "name": "t_mean",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_mean",
+      "unit": "K"
+     },
+     {
+      "name": "t_min",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "thermal",
+      "source_output": "t_min",
+      "unit": "K"
+     }
+    ],
+    "kind": "provider_execution",
+    "literals": [],
+    "node_id": "struct_fenicsx",
+    "outputs": [
+     {
+      "name": "disp_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "section_force_ratio",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "section_force_spread",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "sxx_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     },
+     {
+      "name": "ux_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "ux_mid",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "vm_max",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [
+     "fx"
+    ],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "plate-compare-calculix-code-aster",
+     "identity_digest": "83b0dbfc7f09bf81733f2bf7916db41f7efcd63bfad05e31e9f40c3b0902e271",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "struct_calculix",
+     "struct_code_aster"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "ux_a",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_calculix",
+      "source_output": "ux_max",
+      "unit": "m"
+     },
+     {
+      "name": "ux_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_code_aster",
+      "source_output": "ux_max",
+      "unit": "m"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "compare_calculix_code_aster",
+    "outputs": [
+     {
+      "name": "displacement_within_tolerance",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "max_abs_displacement_difference",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     },
+     {
+      "name": "max_abs_stress_difference",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "plate-compare-fenicsx-calculix",
+     "identity_digest": "f4327bd55bfc5ff4aa8f3d6931a3254cbdb450b3092f0f802dab55208d96b86f",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "struct_calculix",
+     "struct_fenicsx"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "ux_a",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_fenicsx",
+      "source_output": "ux_max",
+      "unit": "m"
+     },
+     {
+      "name": "ux_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_calculix",
+      "source_output": "ux_max",
+      "unit": "m"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "compare_fenicsx_calculix",
+    "outputs": [
+     {
+      "name": "displacement_within_tolerance",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "max_abs_displacement_difference",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "plate-compare-fenicsx-code-aster",
+     "identity_digest": "e9876007e00efa03cd5fd1c3424785e852493f41c9a32cb4b285982d9812a3a8",
+     "kind": "callback",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "f06ce90e86215730034105d0d9ca34fbcdf3f9fc5c97968c79ae8824e959712d",
+    "depends_on": [
+     "struct_code_aster",
+     "struct_fenicsx"
+    ],
+    "derived": false,
+    "inputs": [
+     {
+      "name": "ux_a",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_fenicsx",
+      "source_output": "ux_max",
+      "unit": "m"
+     },
+     {
+      "name": "ux_b",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_code_aster",
+      "source_output": "ux_max",
+      "unit": "m"
+     }
+    ],
+    "kind": "aggregate",
+    "literals": [],
+    "node_id": "compare_fenicsx_code_aster",
+    "outputs": [
+     {
+      "name": "displacement_within_tolerance",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "dimensionless"
+     },
+     {
+      "name": "max_abs_displacement_difference",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_disp"
+     ],
+     [
+      "constraint_digest",
+      "d7ec2d5193172b9e7cb43a0640b7f73d7d57411eea6e39706c750a86ab6ea131"
+     ],
+     [
+      "constraint_id",
+      "max_displacement"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "struct_fenicsx"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_fenicsx",
+      "source_output": "disp_max",
+      "unit": "m"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_disp",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "m"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   },
+   {
+    "applicability_checks": [],
+    "applicability_waiver": "",
+    "authority": {
+     "authority_id": "builtin.constraint",
+     "identity_digest": "bd9290c067c408715b8a310db6adc294b5789b093079cfce03f1ee38572a3208",
+     "kind": "builtin",
+     "schema": "forge.system_runtime.authority_ref/1"
+    },
+    "builtin_args": [
+     [
+      "binding",
+      "b_vm"
+     ],
+     [
+      "constraint_digest",
+      "2b48c7a115b210a0441dc3a299fb5a6dacc206bb2bf10cd7c54cf901e05571de"
+     ],
+     [
+      "constraint_id",
+      "max_von_mises"
+     ]
+    ],
+    "checkpointable": false,
+    "commits_state": false,
+    "configuration_digest": "",
+    "depends_on": [
+     "struct_fenicsx"
+    ],
+    "derived": true,
+    "inputs": [
+     {
+      "name": "observed",
+      "schema": "forge.system_runtime.node_input/1",
+      "source_node": "struct_fenicsx",
+      "source_output": "vm_max",
+      "unit": "Pa"
+     }
+    ],
+    "kind": "constraint_assessment",
+    "literals": [],
+    "node_id": "constraint.b_vm",
+    "outputs": [
+     {
+      "name": "margin",
+      "schema": "forge.system_runtime.node_output_spec/1",
+      "unit": "Pa"
+     }
+    ],
+    "provider_binding_ids": [],
+    "schema": "forge.system_runtime.plan_node/1",
+    "writes_owners": []
+   }
+  ],
+  "observables": [
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "disp_max_calculix",
+    "output_name": "disp_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "disp_max_code_aster",
+    "output_name": "disp_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "disp_max_fenicsx",
+    "output_name": "disp_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "compare_calculix_code_aster",
+    "observable_id": "displacement_within_tolerance_calculix_code_aster",
+    "output_name": "displacement_within_tolerance",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "compare_fenicsx_calculix",
+    "observable_id": "displacement_within_tolerance_fenicsx_calculix",
+    "output_name": "displacement_within_tolerance",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "compare_fenicsx_code_aster",
+    "observable_id": "displacement_within_tolerance_fenicsx_code_aster",
+    "output_name": "displacement_within_tolerance",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "heat_in",
+    "output_name": "heat_in",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "heat_out",
+    "output_name": "heat_out",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "W"
+   },
+   {
+    "node_id": "compare_calculix_code_aster",
+    "observable_id": "max_abs_displacement_difference_calculix_code_aster",
+    "output_name": "max_abs_displacement_difference",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "compare_fenicsx_calculix",
+    "observable_id": "max_abs_displacement_difference_fenicsx_calculix",
+    "output_name": "max_abs_displacement_difference",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "compare_fenicsx_code_aster",
+    "observable_id": "max_abs_displacement_difference_fenicsx_code_aster",
+    "output_name": "max_abs_displacement_difference",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "compare_calculix_code_aster",
+    "observable_id": "max_abs_stress_difference_calculix_code_aster",
+    "output_name": "max_abs_stress_difference",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "section_force_ratio_calculix",
+    "output_name": "section_force_ratio",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "section_force_ratio_code_aster",
+    "output_name": "section_force_ratio",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "section_force_ratio_fenicsx",
+    "output_name": "section_force_ratio",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "section_force_spread_calculix",
+    "output_name": "section_force_spread",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "section_force_spread_code_aster",
+    "output_name": "section_force_spread",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "section_force_spread_fenicsx",
+    "output_name": "section_force_spread",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "dimensionless"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "sxx_mid_calculix",
+    "output_name": "sxx_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "sxx_mid_code_aster",
+    "output_name": "sxx_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "sxx_mid_fenicsx",
+    "output_name": "sxx_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "t_exact_error",
+    "output_name": "t_exact_error",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "t_max",
+    "output_name": "t_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "t_mean",
+    "output_name": "t_mean",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "thermal",
+    "observable_id": "t_min",
+    "output_name": "t_min",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "K"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "ux_max_calculix",
+    "output_name": "ux_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "ux_max_code_aster",
+    "output_name": "ux_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "ux_max_fenicsx",
+    "output_name": "ux_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "ux_mid_calculix",
+    "output_name": "ux_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "ux_mid_code_aster",
+    "output_name": "ux_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "ux_mid_fenicsx",
+    "output_name": "ux_mid",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "m"
+   },
+   {
+    "node_id": "struct_calculix",
+    "observable_id": "vm_max_calculix",
+    "output_name": "vm_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "struct_code_aster",
+    "observable_id": "vm_max_code_aster",
+    "output_name": "vm_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   },
+   {
+    "node_id": "struct_fenicsx",
+    "observable_id": "vm_max_fenicsx",
+    "output_name": "vm_max",
+    "schema": "forge.system_runtime.requested_observable/1",
+    "unit": "Pa"
+   }
+  ],
+  "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+  "requested_modes": [],
+  "schema": "forge.system_runtime.execution_plan/1"
+ },
+ "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+ "preflight": {
+  "classification": "preflight_admission_not_scientific_support",
+  "deferred_checks": [
+   {
+    "check_id": "property_range",
+    "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+    "node_id": "thermal"
+   }
+  ],
+  "findings": [
+   {
+    "blocking": false,
+    "code": "APPLICABILITY_WAIVED",
+    "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+    "node_id": "struct_calculix"
+   },
+   {
+    "blocking": false,
+    "code": "APPLICABILITY_WAIVED",
+    "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+    "node_id": "struct_code_aster"
+   },
+   {
+    "blocking": false,
+    "code": "APPLICABILITY_WAIVED",
+    "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+    "node_id": "struct_fenicsx"
+   }
+  ],
+  "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+  "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+  "schema": "forge.system_runtime.preflight_report/1",
+  "status": "deferred_checks"
+ },
+ "provenance": [
+  [
+   "initial_state",
+   "712b8569bf51c4f95958d19e6ea8007d0bfa6e433ca57cad47a5977641c473f8"
+  ],
+  [
+   "material:mat_8a9bd3af9572374c",
+   "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+  ],
+  [
+   "provider_binding:ca",
+   "code_aster@18.1.7"
+  ],
+  [
+   "provider_binding:ccx",
+   "calculix@2.23"
+  ],
+  [
+   "provider_binding:fx",
+   "fenicsx@0.11.0"
+  ],
+  [
+   "scenario",
+   "3728211c116631ade0bbee7bb9564c8d1e7872d2997064443437c91f7f1237e1"
+  ],
+  [
+   "system",
+   "6a065cfb4c25b1eded941310f303a9339a702be2b9df0adde56324d14fe475f0"
+  ],
+  [
+   "timeline",
+   "e80cdc7f116ef515ac60601b8a375ba6909403e75e827933196020ba07b1f883"
+  ]
+ ],
+ "provider_records": [
+  {
+   "execution_identity_digest": "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+   "provider_digest": "f2ee8adde6b6e00a6cd40a37bc91ba2b1683e9d55b2d38a127b9ca7048923b13",
+   "provider_id": "calculix",
+   "provider_version": "2.23",
+   "record_digest": "4801fbc3ab19979fe0c679710db28e4582ffb07ae6be6fb398f6af7e1bebfa3c",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+   "provider_digest": "4f8b4b0fdd25d2c30dc5cffc1856a6795589ad2f65810286a08aa64b2a5c2d05",
+   "provider_id": "code_aster",
+   "provider_version": "18.1.7",
+   "record_digest": "7babd941aa615e380b20f419f571e5811e0764b3045d5323f0a540301126b379",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "ce8767adbeefcdb2a5acbdfa2e8cf910caa56ab19a01f9a2f670acc9b1386ab1",
+   "provider_digest": "5987de1af7db6d1d3d4abd15e8bb77bc78d66afe207eb3ece04b69221e34d746",
+   "provider_id": "fenicsx",
+   "provider_version": "0.11.0",
+   "record_digest": "bbb60bac1b7f9a9d10ad5ecb03a9df4a6ae601bface1b8942fd7fb73dc93b608",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  },
+  {
+   "execution_identity_digest": "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0",
+   "provider_digest": "5987de1af7db6d1d3d4abd15e8bb77bc78d66afe207eb3ece04b69221e34d746",
+   "provider_id": "fenicsx",
+   "provider_version": "0.11.0",
+   "record_digest": "946a3352cc1b714a72f60cbaed321c1e9e5ad47e0246f0730194c9c4654a99bb",
+   "schema": "forge.system_runtime.provider_record_ref/1",
+   "succeeded": true
+  }
+ ],
+ "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+ "resource_usage": {
+  "cpu_seconds": 0.0,
+  "function_evaluations": 0,
+  "peak_memory_bytes": 0,
+  "wall_seconds": 1.8729578380001612
+ },
+ "run_id": "run-9ced744352e2",
+ "schema": "forge.system_runtime.system_run_result/1",
+ "state_history": [
+  {
+   "environment_digest": "",
+   "material_state_digests": [
+    [
+     "plate",
+     "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+    ]
+   ],
+   "owners": [
+    {
+     "owner_id": "plate",
+     "role": "component",
+     "schema": "forge.system_runtime.owner_state/1",
+     "values": [
+      {
+       "schema": "multiphysics_initial_state_value/1",
+       "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "declared stress-free temperature",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+       },
+       "value": {
+        "magnitude": 293.15,
+        "schema": "quantity/1",
+        "units": "kelvin"
+       },
+       "variable_id": "reference_temperature"
+      }
+     ]
+    }
+   ],
+   "previous_digest": "",
+   "produced_by": "initial",
+   "provider_checkpoints": [],
+   "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+   "schema": "forge.system_runtime.system_state/1",
+   "sequence": 0,
+   "system_digest": "6a065cfb4c25b1eded941310f303a9339a702be2b9df0adde56324d14fe475f0",
+   "time": {
+    "magnitude": 0.0,
+    "schema": "quantity/1",
+    "units": "second"
+   }
+  }
+ ],
+ "status": "succeeded",
+ "trust_inputs": {
+  "applicability_reports": [
+   [
+    "thermal",
+    "property_range",
+    "within"
+   ]
+  ],
+  "assessment": "not_assessed_by_runtime",
+  "execution_status": "succeeded",
+  "provider_execution_identities": [
+   "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+   "ce8767adbeefcdb2a5acbdfa2e8cf910caa56ab19a01f9a2f670acc9b1386ab1",
+   "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+   "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0"
+  ],
+  "schema": "forge.system_runtime.trust_inputs/1",
+  "unknown_uncertainty_outputs": [
+   "compare_calculix_code_aster.displacement_within_tolerance",
+   "compare_calculix_code_aster.max_abs_displacement_difference",
+   "compare_calculix_code_aster.max_abs_stress_difference",
+   "compare_fenicsx_calculix.displacement_within_tolerance",
+   "compare_fenicsx_calculix.max_abs_displacement_difference",
+   "compare_fenicsx_code_aster.displacement_within_tolerance",
+   "compare_fenicsx_code_aster.max_abs_displacement_difference",
+   "constraint.b_disp.margin",
+   "constraint.b_vm.margin",
+   "mat.struct_calculix.E.value",
+   "mat.struct_calculix.alpha.value",
+   "mat.struct_calculix.nu.value",
+   "mat.struct_code_aster.E.value",
+   "mat.struct_code_aster.alpha.value",
+   "mat.struct_code_aster.nu.value",
+   "mat.struct_fenicsx.E.value",
+   "mat.struct_fenicsx.alpha.value",
+   "mat.struct_fenicsx.nu.value",
+   "mat.thermal.k.value",
+   "struct_calculix.disp_max",
+   "struct_calculix.section_force_ratio",
+   "struct_calculix.section_force_spread",
+   "struct_calculix.sxx_mid",
+   "struct_calculix.ux_max",
+   "struct_calculix.ux_mid",
+   "struct_calculix.vm_max",
+   "struct_code_aster.disp_max",
+   "struct_code_aster.section_force_ratio",
+   "struct_code_aster.section_force_spread",
+   "struct_code_aster.sxx_mid",
+   "struct_code_aster.ux_max",
+   "struct_code_aster.ux_mid",
+   "struct_code_aster.vm_max",
+   "struct_fenicsx.disp_max",
+   "struct_fenicsx.section_force_ratio",
+   "struct_fenicsx.section_force_spread",
+   "struct_fenicsx.sxx_mid",
+   "struct_fenicsx.ux_max",
+   "struct_fenicsx.ux_mid",
+   "struct_fenicsx.vm_max",
+   "thermal.heat_in",
+   "thermal.heat_out",
+   "thermal.t_exact_error",
+   "thermal.t_max",
+   "thermal.t_mean",
+   "thermal.t_min"
+  ],
+  "validation_evidence": [],
+  "waived_applicability": [
+   "struct_calculix",
+   "struct_code_aster",
+   "struct_fenicsx"
+  ]
+ }
+}

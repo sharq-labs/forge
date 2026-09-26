@@ -1,0 +1,1095 @@
+{
+ "constraint_observations": [
+  {
+   "binding_id": "b_fade",
+   "constraint_digest": "4761c7f62a1b8c994b0deb218446848cdb2dd21e07b47b9a7d826e9b2687240e",
+   "constraint_id": "max_capacity_fade",
+   "observable_id": "final_fade",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_soc_aged",
+   "constraint_digest": "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237",
+   "constraint_id": "min_soc",
+   "observable_id": "min_soc_aged",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_soc_fresh",
+   "constraint_digest": "eeac5b84653611303836e931455de420bbcb61bf34dc976649206ca92d9d3237",
+   "constraint_id": "min_soc",
+   "observable_id": "min_soc_fresh",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_tmax_aged",
+   "constraint_digest": "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b",
+   "constraint_id": "max_cell_temperature",
+   "observable_id": "peak_cell_temperature_aged",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  },
+  {
+   "binding_id": "b_tmax_fresh",
+   "constraint_digest": "c95bda1f3175a6bf76d007c3a502ee386c46856b899288bc43e04e9f7508564b",
+   "constraint_id": "max_cell_temperature",
+   "observable_id": "peak_cell_temperature_fresh",
+   "schema": "forge.system_runtime.constraint_observation/1"
+  }
+ ],
+ "environment": {
+  "digest": "ad488d195da59312e1ff9b99217d8ae16a7a3486c9b9683427dbe484959f004c",
+  "kind": "environment",
+  "ref_id": "cell-cooling-env-hot",
+  "schema": "forge.system_runtime.content_ref/1"
+ },
+ "environment_absent_reason": "",
+ "initial_state": {
+  "material_state_digests": [
+   [
+    "coolant",
+    "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5"
+   ]
+  ],
+  "owners": [
+   {
+    "owner_id": "cell_slow",
+    "role": "slow",
+    "schema": "forge.system_runtime.owner_state/1",
+    "values": [
+     {
+      "schema": "multiphysics_initial_state_value/1",
+      "uncertainty": {
+       "confidence_level": null,
+       "kind": "unknown",
+       "lower": null,
+       "method": "",
+       "notes": "declared new cell",
+       "schema": "uncertainty/1",
+       "source": "",
+       "standard_uncertainty": null,
+       "upper": null
+      },
+      "value": {
+       "magnitude": 0.0,
+       "schema": "quantity/1",
+       "units": "dimensionless"
+      },
+      "variable_id": "capacity_fade"
+     }
+    ]
+   }
+  ],
+  "schema": "forge.system_runtime.initial_state_spec/1",
+  "time": {
+   "magnitude": 0.0,
+   "schema": "quantity/1",
+   "units": "second"
+  }
+ },
+ "materials": [
+  {
+   "digest": "8a9bd3af9572374cfb138e9af196581b320be42d6667225a383e6700a6bc76a5",
+   "kind": "material_state",
+   "ref_id": "mat_8a9bd3af9572374c",
+   "schema": "forge.system_runtime.content_ref/1"
+  }
+ ],
+ "model_selections": [
+  {
+   "instance_id": "cell",
+   "model_id": "pybamm-spm-chen2020",
+   "model_version": "26.8.0.0",
+   "schema": "forge.system_runtime.model_selection/1"
+  },
+  {
+   "instance_id": "coolant",
+   "model_id": "tespy-cold-plate-water",
+   "model_version": "0.11.2",
+   "schema": "forge.system_runtime.model_selection/1"
+  }
+ ],
+ "nodes": [
+  {
+   "applicability_checks": [
+    "fade_mapping_range"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cell-cooling-aging",
+    "identity_digest": "6b2c87a74bbfd94ef006c802ea5777e471c261b6e1395509f1e256288c5c7949",
+    "kind": "multiscale",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": true,
+   "commits_state": true,
+   "configuration_digest": "427b07b783e5ebab18538aee6d918d3629184a7ae0d17720fc08ae41307a0946",
+   "depends_on": [
+    "day_fresh"
+   ],
+   "environment_requirements": [],
+   "inputs": [],
+   "kind": "multiscale_execution",
+   "literals": [],
+   "material_refs": [],
+   "node_id": "aging",
+   "outputs": [
+    {
+     "name": "final_fade",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "represented_days",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "day"
+    },
+    {
+     "name": "resolved_days",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "day"
+    }
+   ],
+   "provider_binding_ids": [
+    "pybamm_cell",
+    "tespy_coolant"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": [
+    "cell_slow"
+   ]
+  },
+  {
+   "applicability_checks": [
+    "cell_temperature_window",
+    "soc_window"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cell-cooling-day-aged",
+    "identity_digest": "ea6d8e9ba34caea9ccb9b7d3b1e89a016e3156e2c3ad72587d170682605cd673",
+    "kind": "multiphysics",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "10b5ebb7546af11c31fce91a53168435b68d1ea9350aa9ec041d5d1a2e0c8706",
+   "depends_on": [],
+   "environment_requirements": [
+    {
+     "alias": "inlet",
+     "at": {
+      "magnitude": 4838400.0,
+      "schema": "quantity/1",
+      "units": "second"
+     },
+     "channel_id": "coolant_inlet",
+     "schema": "forge.system_runtime.environment_requirement/1",
+     "unit": "K"
+    }
+   ],
+   "inputs": [
+    {
+     "name": "fade",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "aging",
+     "source_output": "final_fade",
+     "unit": "dimensionless"
+    }
+   ],
+   "kind": "multiphysics_execution",
+   "literals": [
+    {
+     "name": "initial_soc",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared recharge target",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.8,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    }
+   ],
+   "material_refs": [
+    {
+     "alias": "r_contact",
+     "owner_id": "coolant",
+     "property_id": "contact_resistance",
+     "resolved_digest": "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d",
+     "schema": "forge.system_runtime.material_property_ref/1",
+     "unit": "K/W"
+    }
+   ],
+   "node_id": "day_aged",
+   "outputs": [
+    {
+     "name": "coolant_inlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_outlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_rise_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "discharge_throughput",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "A*h"
+    },
+    {
+     "name": "end_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "mean_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "min_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "min_voltage",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    },
+    {
+     "name": "module_heat_generated",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "module_heat_removed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "peak_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "peak_heat",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "voltage_end_of_discharge",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    }
+   ],
+   "provider_binding_ids": [
+    "pybamm_cell",
+    "tespy_coolant"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "cell_temperature_window",
+    "soc_window"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cell-cooling-day-control",
+    "identity_digest": "271df5e210640be8f3a2a67f9679bbd0693fbdbabbaeca5cb5954397c140ba3f",
+    "kind": "multiphysics",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "10b5ebb7546af11c31fce91a53168435b68d1ea9350aa9ec041d5d1a2e0c8706",
+   "depends_on": [],
+   "environment_requirements": [
+    {
+     "alias": "inlet",
+     "at": {
+      "magnitude": 4838400.0,
+      "schema": "quantity/1",
+      "units": "second"
+     },
+     "channel_id": "coolant_inlet",
+     "schema": "forge.system_runtime.environment_requirement/1",
+     "unit": "K"
+    }
+   ],
+   "inputs": [],
+   "kind": "multiphysics_execution",
+   "literals": [
+    {
+     "name": "fade",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared new cell",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    },
+    {
+     "name": "initial_soc",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared recharge target",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.8,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    }
+   ],
+   "material_refs": [
+    {
+     "alias": "r_contact",
+     "owner_id": "coolant",
+     "property_id": "contact_resistance",
+     "resolved_digest": "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d",
+     "schema": "forge.system_runtime.material_property_ref/1",
+     "unit": "K/W"
+    }
+   ],
+   "node_id": "day_control",
+   "outputs": [
+    {
+     "name": "coolant_inlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_outlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_rise_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "discharge_throughput",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "A*h"
+    },
+    {
+     "name": "end_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "mean_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "min_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "min_voltage",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    },
+    {
+     "name": "module_heat_generated",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "module_heat_removed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "peak_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "peak_heat",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "voltage_end_of_discharge",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    }
+   ],
+   "provider_binding_ids": [
+    "pybamm_cell",
+    "tespy_coolant"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [
+    "cell_temperature_window",
+    "soc_window"
+   ],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cell-cooling-day-fresh",
+    "identity_digest": "1468e3ba1b451f6c941cbdf47c4f3161058b6ef84c3a717f033056954415a6b1",
+    "kind": "multiphysics",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "10b5ebb7546af11c31fce91a53168435b68d1ea9350aa9ec041d5d1a2e0c8706",
+   "depends_on": [],
+   "environment_requirements": [
+    {
+     "alias": "inlet",
+     "at": {
+      "magnitude": 0.0,
+      "schema": "quantity/1",
+      "units": "second"
+     },
+     "channel_id": "coolant_inlet",
+     "schema": "forge.system_runtime.environment_requirement/1",
+     "unit": "K"
+    }
+   ],
+   "inputs": [],
+   "kind": "multiphysics_execution",
+   "literals": [
+    {
+     "name": "fade",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared new cell",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    },
+    {
+     "name": "initial_soc",
+     "schema": "forge.system_runtime.literal_input/1",
+     "uncertainty": {
+      "confidence_level": null,
+      "kind": "unknown",
+      "lower": null,
+      "method": "",
+      "notes": "declared recharge target",
+      "schema": "uncertainty/1",
+      "source": "",
+      "standard_uncertainty": null,
+      "upper": null
+     },
+     "value": {
+      "magnitude": 0.8,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    }
+   ],
+   "material_refs": [
+    {
+     "alias": "r_contact",
+     "owner_id": "coolant",
+     "property_id": "contact_resistance",
+     "resolved_digest": "033b3f1b0d491f6be769c2839c217e05d3841ab2edfd6a47a14cec79f983a84d",
+     "schema": "forge.system_runtime.material_property_ref/1",
+     "unit": "K/W"
+    }
+   ],
+   "node_id": "day_fresh",
+   "outputs": [
+    {
+     "name": "coolant_inlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_outlet_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "coolant_rise_peak",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "discharge_throughput",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "A*h"
+    },
+    {
+     "name": "end_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "mean_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "min_soc",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "dimensionless"
+    },
+    {
+     "name": "min_voltage",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    },
+    {
+     "name": "module_heat_generated",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "module_heat_removed",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W*h"
+    },
+    {
+     "name": "peak_cell_temperature",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "peak_heat",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "voltage_end_of_discharge",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    }
+   ],
+   "provider_binding_ids": [
+    "pybamm_cell",
+    "tespy_coolant"
+   ],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  },
+  {
+   "applicability_checks": [],
+   "applicability_waiver": "",
+   "authority": {
+    "authority_id": "cell-cooling-shift",
+    "identity_digest": "4ed71eaafbca6f0e5de981af336c587763682fefe81b0f6ea9171cb7b2ff81df",
+    "kind": "callback",
+    "schema": "forge.system_runtime.authority_ref/1"
+   },
+   "checkpointable": false,
+   "commits_state": false,
+   "configuration_digest": "",
+   "depends_on": [],
+   "environment_requirements": [],
+   "inputs": [
+    {
+     "name": "q_aged",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_aged",
+     "source_output": "peak_heat",
+     "unit": "W"
+    },
+    {
+     "name": "q_control",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_control",
+     "source_output": "peak_heat",
+     "unit": "W"
+    },
+    {
+     "name": "t_aged",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_aged",
+     "source_output": "peak_cell_temperature",
+     "unit": "K"
+    },
+    {
+     "name": "t_control",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_control",
+     "source_output": "peak_cell_temperature",
+     "unit": "K"
+    },
+    {
+     "name": "v_aged",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_aged",
+     "source_output": "voltage_end_of_discharge",
+     "unit": "V"
+    },
+    {
+     "name": "v_control",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_control",
+     "source_output": "voltage_end_of_discharge",
+     "unit": "V"
+    },
+    {
+     "name": "v_fresh",
+     "schema": "forge.system_runtime.node_input/1",
+     "source_node": "day_fresh",
+     "source_output": "voltage_end_of_discharge",
+     "unit": "V"
+    }
+   ],
+   "kind": "aggregate",
+   "literals": [],
+   "material_refs": [],
+   "node_id": "shift",
+   "outputs": [
+    {
+     "name": "peak_heat_shift_degradation",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "W"
+    },
+    {
+     "name": "peak_temperature_shift_degradation",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "K"
+    },
+    {
+     "name": "voltage_shift_degradation",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    },
+    {
+     "name": "voltage_shift_environment",
+     "schema": "forge.system_runtime.node_output_spec/1",
+     "unit": "V"
+    }
+   ],
+   "provider_binding_ids": [],
+   "schema": "forge.system_runtime.node_spec/1",
+   "writes_owners": []
+  }
+ ],
+ "observables": [
+  {
+   "node_id": "day_aged",
+   "observable_id": "coolant_inlet_peak_aged",
+   "output_name": "coolant_inlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "coolant_inlet_peak_control",
+   "output_name": "coolant_inlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "coolant_inlet_peak_fresh",
+   "output_name": "coolant_inlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "coolant_outlet_peak_aged",
+   "output_name": "coolant_outlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "coolant_outlet_peak_control",
+   "output_name": "coolant_outlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "coolant_outlet_peak_fresh",
+   "output_name": "coolant_outlet_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "coolant_rise_peak_aged",
+   "output_name": "coolant_rise_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "coolant_rise_peak_control",
+   "output_name": "coolant_rise_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "coolant_rise_peak_fresh",
+   "output_name": "coolant_rise_peak",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "discharge_throughput_aged",
+   "output_name": "discharge_throughput",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "A*h"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "discharge_throughput_control",
+   "output_name": "discharge_throughput",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "A*h"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "discharge_throughput_fresh",
+   "output_name": "discharge_throughput",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "A*h"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "end_soc_aged",
+   "output_name": "end_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "end_soc_control",
+   "output_name": "end_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "end_soc_fresh",
+   "output_name": "end_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "aging",
+   "observable_id": "final_fade",
+   "output_name": "final_fade",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "mean_cell_temperature_aged",
+   "output_name": "mean_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "mean_cell_temperature_control",
+   "output_name": "mean_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "mean_cell_temperature_fresh",
+   "output_name": "mean_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "min_soc_aged",
+   "output_name": "min_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "min_soc_control",
+   "output_name": "min_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "min_soc_fresh",
+   "output_name": "min_soc",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "dimensionless"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "min_voltage_aged",
+   "output_name": "min_voltage",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "min_voltage_control",
+   "output_name": "min_voltage",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "min_voltage_fresh",
+   "output_name": "min_voltage",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "module_heat_generated_aged",
+   "output_name": "module_heat_generated",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "module_heat_generated_control",
+   "output_name": "module_heat_generated",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "module_heat_generated_fresh",
+   "output_name": "module_heat_generated",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "module_heat_removed_aged",
+   "output_name": "module_heat_removed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "module_heat_removed_control",
+   "output_name": "module_heat_removed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "module_heat_removed_fresh",
+   "output_name": "module_heat_removed",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W*h"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "peak_cell_temperature_aged",
+   "output_name": "peak_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "peak_cell_temperature_control",
+   "output_name": "peak_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "peak_cell_temperature_fresh",
+   "output_name": "peak_cell_temperature",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "peak_heat_aged",
+   "output_name": "peak_heat",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "peak_heat_control",
+   "output_name": "peak_heat",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "peak_heat_fresh",
+   "output_name": "peak_heat",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "shift",
+   "observable_id": "peak_heat_shift_degradation",
+   "output_name": "peak_heat_shift_degradation",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "W"
+  },
+  {
+   "node_id": "shift",
+   "observable_id": "peak_temperature_shift_degradation",
+   "output_name": "peak_temperature_shift_degradation",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "K"
+  },
+  {
+   "node_id": "aging",
+   "observable_id": "represented_days",
+   "output_name": "represented_days",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "day"
+  },
+  {
+   "node_id": "aging",
+   "observable_id": "resolved_days",
+   "output_name": "resolved_days",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "day"
+  },
+  {
+   "node_id": "day_aged",
+   "observable_id": "voltage_end_of_discharge_aged",
+   "output_name": "voltage_end_of_discharge",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "day_control",
+   "observable_id": "voltage_end_of_discharge_control",
+   "output_name": "voltage_end_of_discharge",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "day_fresh",
+   "observable_id": "voltage_end_of_discharge_fresh",
+   "output_name": "voltage_end_of_discharge",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "shift",
+   "observable_id": "voltage_shift_degradation",
+   "output_name": "voltage_shift_degradation",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  },
+  {
+   "node_id": "shift",
+   "observable_id": "voltage_shift_environment",
+   "output_name": "voltage_shift_environment",
+   "schema": "forge.system_runtime.requested_observable/1",
+   "unit": "V"
+  }
+ ],
+ "operational": {
+  "resource_budget": null,
+  "schema": "forge.system_runtime.operational_context/1",
+  "workspace_hint": ""
+ },
+ "profile": {
+  "allow_partial": true,
+  "cache_policy": "off",
+  "checkpoint_after": [],
+  "requested_modes": [
+   "lifecycle",
+   "multiphysics",
+   "multiscale"
+  ],
+  "schema": "forge.system_runtime.execution_profile/1"
+ },
+ "provider_bindings": [
+  {
+   "binding_id": "pybamm_cell",
+   "provider_digest": "3d9c7ac41d352b4f9d4ecf5e032fd7600541db39e94964cfb27679ff79cbb43e",
+   "provider_id": "pybamm",
+   "provider_version": "26.8.0.0",
+   "schema": "forge.system_runtime.provider_binding/1"
+  },
+  {
+   "binding_id": "tespy_coolant",
+   "provider_digest": "4fb8d70896f723b8a698d22d737c1f6200e0698f00ad1ed6f7671f14fa19dd9f",
+   "provider_id": "tespy",
+   "provider_version": "0.11.2",
+   "schema": "forge.system_runtime.provider_binding/1"
+  }
+ ],
+ "request_id": "flagship-a-battery-cooling-lifecycle-hot",
+ "scenario": {
+  "digest": "0a93a93611d73babdefd6685bde85e8ba640cd3e64314c0b0e12f71b8446ff22",
+  "kind": "scenario",
+  "ref_id": "cell-cooling-hot",
+  "schema": "forge.system_runtime.content_ref/1"
+ },
+ "schema": "forge.system_runtime.system_run_request/1",
+ "system": {
+  "digest": "4f6dc3ff356f87e2bbe9f6caff33882edcb769fffc0ef759ff5bc954fe981115",
+  "kind": "system",
+  "ref_id": "cell-cooling-module",
+  "schema": "forge.system_runtime.content_ref/1"
+ },
+ "timeline": {
+  "digest": "75dad26001b4ed76ce83c8da6e97ed74f5f6f9a19f29e679864180c0643441f0",
+  "kind": "timeline",
+  "ref_id": "cell-cooling-hot",
+  "schema": "forge.system_runtime.content_ref/1"
+ }
+}

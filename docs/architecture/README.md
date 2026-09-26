@@ -47,6 +47,12 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   provider records, declared cross-provider comparison). Provider adapters live in separate
   distributions under `providers/<name>/`; the provider map and license/deployment matrix are in
   [providers.md](providers.md).
+- `system_runtime/` (BIG 12): one provider-neutral orchestration runtime (request -> plan -> preflight -> executor -> result / trace ->
+  constraints / conservation -> checkpoint / replay -> trust hand-off) over the existing authorities; see [system_runtime.md](system_runtime.md).
+- `engineering/` (BIG 13, non-Core, registered): engineering summaries, reference records with applicability, the 7-level verification
+  ladder (a report vocabulary, not an authority), run bundles and VTU export over a BIG 12 result; it executes and solves nothing. See
+  [engineering.md](engineering.md). The four flagship systems are driven from `flagships/` (a separate distribution, not part of `engcore`);
+  their reports are in `docs/flagships/`.
 
 ## Claims organization
 

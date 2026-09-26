@@ -9,8 +9,10 @@ Rules kept here on purpose:
 
 * the kind reuses :class:`engcore.scientific.oracles.OracleKind`; a numerical benchmark is never labelled
   experimental (``benchmark_dataset`` is not ``experimental_dataset``);
-* a numerical or experimental reference must carry the digest of the bytes it was extracted from and an
-  https access URL; only an analytic reference may have neither;
+* a numerical or experimental reference must carry a source digest and an https access URL; only an analytic reference may have
+  neither.  ``source_digest`` is the sha256 of the bytes the values were extracted from, or, when several source files were used,
+  of the concatenation of THEIR sha256 hex digests in the order stated in ``extraction`` (the source bytes themselves are not
+  stored here when their license does not allow it);
 * applicability is ``within`` only when EVERY declared envelope condition is known and inside; a missing
   condition or a missing envelope is ``unknown``, never ``within``;
 * a comparison is either PRE-DECLARED (its criterion carries a digest fixed before the result existed) or it
@@ -21,7 +23,7 @@ Rules kept here on purpose:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ..scenarios.timeline import canonical_digest
@@ -117,8 +119,17 @@ class ReferenceRecord:
     source_digest: str
     extraction: str
     envelope: tuple[EnvelopeBound, ...] = ()
+    #: "implementation_limit": an exact/closed-form relation the implementation must reproduce;
+    #: "data_consistency": an analytic relation evaluated with tabulated (evaluated) reference DATA, so it checks the data the
+    #: model carries, not just the implementation
+    role: str = "implementation_limit"
+    #: the names a comparison criterion may bind to (the compared quantity, e.g. a max centerline error); a criterion naming anything
+    #: else is refused, so a tolerance cannot be attached to a reference that says nothing about that quantity
+    comparable_quantities: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        if self.role not in ("implementation_limit", "data_consistency"):
+            raise InvalidScientificProblem("reference role is implementation_limit or data_consistency")
         for label in ("reference_id", "title", "authors", "publication", "license_status", "extraction"):
             object.__setattr__(self, label, _text(getattr(self, label), f"reference {label}"))
         object.__setattr__(self, "kind", OracleKind(self.kind))
@@ -141,6 +152,7 @@ class ReferenceRecord:
                 raise InvalidScientificProblem("reference data are finite")
         if {b.name for b in self.envelope} - set(names):
             raise InvalidScientificProblem("an applicability bound names a condition the reference does not state")
+        object.__setattr__(self, "comparable_quantities", tuple(_text(q, "comparable quantity") for q in self.comparable_quantities))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": REFERENCE_SCHEMA, "reference_id": self.reference_id, "title": self.title, "authors": self.authors,
@@ -148,7 +160,8 @@ class ReferenceRecord:
                 "kind": self.kind.value, "conditions": [c.to_dict() for c in self.conditions],
                 "quantities": [list(q) for q in self.quantities],
                 "data": [[q, [repr(float(v)) for v in values]] for q, values in self.data],
-                "source_digest": self.source_digest, "extraction": self.extraction, "envelope": [b.to_dict() for b in self.envelope]}
+                "source_digest": self.source_digest, "extraction": self.extraction, "envelope": [b.to_dict() for b in self.envelope], "role": self.role,
+                "comparable_quantities": list(self.comparable_quantities)}
 
     @property
     def digest(self) -> str:
@@ -220,9 +233,16 @@ class PredeclaredCriterion:
         return canonical_digest(self.to_dict())
 
 
+#: issued only by :func:`compare_to_reference`; a comparison built any other way carries no applicability that came from a reference
+_ISSUER = object()
+
+
 @dataclass(frozen=True)
 class ReferenceComparison:
-    """One measured difference between a flagship result and a reference, judged by a criterion."""
+    """One measured difference between a flagship result and a reference, judged by a criterion.
+
+    Built only by :func:`compare_to_reference` (which evaluates the reference's applicability and re-derives the tolerance
+    outcome); a hand-built instance is refused, and every field is re-checked here so an outcome cannot disagree with the value."""
 
     reference_digest: str
     reference_kind: OracleKind
@@ -231,22 +251,38 @@ class ReferenceComparison:
     #: what was compared with what (the predicted values' own identity, e.g. a provider record digest)
     compared_identity: str
     value: Quantity
-    within_tolerance: bool
+    #: None when the reference does not apply: nothing was judged, so neither True nor False is stated
+    within_tolerance: bool | None
     #: "met" | "not_met" | "not_applicable" - a reference that does not apply is never read as met OR unmet
     outcome: str
     note: str = ""
+    role: str = "implementation_limit"
+    issued_by: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if self.issued_by is not _ISSUER:
+            raise InvalidScientificProblem("a ReferenceComparison is issued by compare_to_reference only (it evaluates the reference's applicability and the tolerance)")
+        object.__setattr__(self, "reference_digest", _hex64(self.reference_digest, "comparison reference digest"))
+        object.__setattr__(self, "compared_identity", _text(self.compared_identity, "compared identity"))
         if self.outcome not in ("met", "not_met", "not_applicable"):
             raise InvalidScientificProblem("comparison outcome is met, not_met or not_applicable")
         if (self.applicability.status != "within") != (self.outcome == "not_applicable"):
             raise InvalidScientificProblem("a comparison is read only when the reference applies; otherwise it is not_applicable")
-        if self.outcome != "not_applicable" and (self.outcome == "met") != self.within_tolerance:
+        if self.outcome == "not_applicable":
+            if self.within_tolerance is not None:
+                raise InvalidScientificProblem("a comparison against a reference that does not apply judges nothing: within_tolerance is None")
+        elif (self.outcome == "met") != self.within_tolerance:
             raise InvalidScientificProblem("comparison outcome disagrees with its tolerance check")
+        if not math.isfinite(self.value.magnitude) or self.value.magnitude < 0:
+            raise InvalidScientificProblem("a compared difference is a finite non-negative magnitude (a signed value would read as met)")
+        if self.outcome != "not_applicable" and self.within_tolerance != _within(self.value, self.criterion):
+            raise InvalidScientificProblem("the stated tolerance outcome does not follow from the value and the criterion")
 
     @property
     def classification(self) -> str:
         base = COMPARISON_CLASSIFICATIONS[self.reference_kind]
+        if self.reference_kind is OracleKind.ANALYTIC_REFERENCE and self.role == "data_consistency":
+            base = "reference_data_consistency_check_not_validation"
         return f"post_hoc_{base}" if self.criterion.post_hoc else base
 
     def to_dict(self) -> dict[str, Any]:
@@ -260,11 +296,21 @@ class ReferenceComparison:
         return canonical_digest(self.to_dict())
 
 
+def _within(value: Quantity, criterion: PredeclaredCriterion) -> bool:
+    """A compared difference is a SPREAD: it converts by the linear part of a unit map only (a 5 K difference is not -268 degC)."""
+    return value.magnitude_as_spread_in(criterion.tolerance.units) <= criterion.tolerance.magnitude
+
+
 def compare_to_reference(reference: ReferenceRecord, criterion: PredeclaredCriterion, conditions: Mapping[str, Quantity], *,
                          value: Quantity, compared_identity: str, note: str = "") -> ReferenceComparison:
     """Judge one already-computed difference ``value`` by a criterion, only if the reference applies to ``conditions``."""
+    if not math.isfinite(value.magnitude) or value.magnitude < 0:
+        raise InvalidScientificProblem("a compared difference is a finite non-negative magnitude (take the absolute value first)")
+    if criterion.quantity not in reference.comparable_quantities:
+        raise InvalidScientificProblem(f"criterion {criterion.criterion_id!r} compares {criterion.quantity!r}, which reference {reference.reference_id!r} "
+                                       f"does not declare as comparable {list(reference.comparable_quantities)}")
     applicability = reference.applicability(conditions)
     if applicability.status != "within":
-        return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, False, "not_applicable", note)
-    ok = value.magnitude_in(criterion.tolerance.units) <= criterion.tolerance.magnitude
-    return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, ok, "met" if ok else "not_met", note)
+        return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, None, "not_applicable", note, reference.role, _ISSUER)
+    ok = _within(value, criterion)
+    return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, ok, "met" if ok else "not_met", note, reference.role, _ISSUER)

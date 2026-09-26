@@ -7,8 +7,8 @@ Engineering question
 
 System (one BIG 12 request)
     day_fresh    real PyBaMM cell <-> real TESPy cold plate on the BIG 9 coupling runtime, one operating day, new cell
-    aging        the same coupled day as a BIG 10 FAST system inside a 56-day multi-timescale run (8 days resolved
-                 of 56 represented at 14-day macro steps -> 4 resolved days), BIG 4 throughput/temperature fade
+    aging        the same coupled day as a BIG 10 FAST system inside a 56-day multi-timescale run (4 days resolved
+                 of 56 represented, 14-day macro steps), BIG 4 throughput/temperature fade
                  commits the slow state ``capacity_fade``
     day_aged     the coupled day again at day 56, cell built from the COMMITTED fade
     day_control  the identical day-56 window with a NEW cell: isolates the effect of degradation from the effect of
@@ -27,6 +27,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 import math
 import re
 import time
@@ -141,11 +142,16 @@ def build_environment(case: Case):
     return EnvironmentTimeline(f"cell-cooling-env-{case.name}", timeline, EnvironmentKindRegistry.standard(), (source,), (channel,)), scenario
 
 
+ASSUMPTION_DOCUMENT = {"statement": "cell-to-coolant thermal resistance per cell is DECLARED, not measured or sourced", "value": R_CONTACT_K_PER_W, "unit": "K/W",
+                       "basis": "illustrative; chosen so the cell runs a few kelvin above the coolant at the declared heat"}
+
+
 def contact_resistance():
     state = MaterialState(MaterialIdentity("aluminium", grade="6061"))
+    doc = digest_of(ASSUMPTION_DOCUMENT)          # the digest of the declared assumption document itself (its content is above), not a label
     prop = ResolvedProperty("contact_resistance", "known", PropertyDerivation.ASSUMED,
-                            NamedQuantity("contact_resistance", Quantity(R_CONTACT_K_PER_W, "K/W")), sha("assumption-set-cell-cooling"),
-                            sha("assumption-snapshot-cell-cooling"), state.digest, (sha("declared-assumption-cell-cooling"),), ("assumed",), (), None)
+                            NamedQuantity("contact_resistance", Quantity(R_CONTACT_K_PER_W, "K/W")), doc, digest_of({"snapshot": ASSUMPTION_DOCUMENT, "property": "contact_resistance"}),
+                            state.digest, (doc,), ("assumed",), (), None)
     return state, prop
 
 
@@ -508,7 +514,8 @@ def build_system_definition(plant: Plant):
     return system, {"max_cell_temperature": t_max, "min_soc": soc_min, "max_capacity_fade": fade_max}
 
 
-def build_flagship(case: Case, registry=None, *, macro_days: int = 14, window_s: int = H) -> Flagship:
+def build_flagship(case: Case, registry=None, *, macro_days: int = 14, window_s: int = H, only_day: bool = False) -> Flagship:
+    """``only_day`` builds the single fresh-cell coupled day (used by the window-size refinement study); the full flagship is the default."""
     registry = registry or make_registry()
     env, scenario = build_environment(case)
     plant = Plant(registry, env, scenario.digest, window_s)
@@ -587,18 +594,24 @@ def build_flagship(case: Case, registry=None, *, macro_days: int = 14, window_s:
                               NodeInput("v_fresh", "day_fresh", "voltage_end_of_discharge", "V"), NodeInput("t_aged", "day_aged", "peak_cell_temperature", "K"),
                               NodeInput("t_control", "day_control", "peak_cell_temperature", "K"), NodeInput("q_aged", "day_aged", "peak_heat", "W"),
                               NodeInput("q_control", "day_control", "peak_heat", "W")))]
+    if only_day:
+        nodes = nodes[:1]
     obs = []
     for tag, node in (("fresh", "day_fresh"), ("aged", "day_aged"), ("control", "day_control")):
         for n, u in DAY_OUTPUTS:
             obs.append(RequestedObservable(f"{n}_{tag}", node, n, u))
     obs += [RequestedObservable(n, "aging", n, u) for n, u in (("final_fade", "dimensionless"), ("represented_days", "day"), ("resolved_days", "day"))]
     obs += [RequestedObservable(n, "shift", n, u) for n, u in shift_out]
+    if only_day:
+        obs = [o for o in obs if o.observable_id.endswith("_fresh")]
     cdig = {k: digest_of(v.to_dict()) for k, v in defs.items()}
     cobs = (ConstraintObservation("b_tmax_fresh", "max_cell_temperature", cdig["max_cell_temperature"], "peak_cell_temperature_fresh"),
             ConstraintObservation("b_tmax_aged", "max_cell_temperature", cdig["max_cell_temperature"], "peak_cell_temperature_aged"),
             ConstraintObservation("b_soc_fresh", "min_soc", cdig["min_soc"], "min_soc_fresh"),
             ConstraintObservation("b_soc_aged", "min_soc", cdig["min_soc"], "min_soc_aged"),
             ConstraintObservation("b_fade", "max_capacity_fade", cdig["max_capacity_fade"], "final_fade"))
+    if only_day:
+        cobs = cobs[:1] + cobs[2:3]
     initial = InitialStateSpec(Quantity(0, "s"), (OwnerState("cell_slow", "slow", (InitialStateValue("capacity_fade", Quantity(0.0, "dimensionless"),
                                                                                                         Uncertainty.unknown("declared new cell")),)),),
                                (("coolant", mat_state.digest),))
@@ -608,7 +621,7 @@ def build_flagship(case: Case, registry=None, *, macro_days: int = 14, window_s:
         model_selections=(ModelSelection("cell", "pybamm-spm-chen2020", pb.version), ModelSelection("coolant", "tespy-cold-plate-water", ts.version)),
         provider_bindings=(ProviderBinding("pybamm_cell", "pybamm", pb.version, pb.digest), ProviderBinding("tespy_coolant", "tespy", ts.version, ts.digest)),
         constraint_observations=cobs, profile=ExecutionProfile(("multiphysics", "multiscale", "lifecycle"), "off", True, ()))
-    authorities = AuthorityRegistry((fresh_auth, aging_auth, aged_auth, control_auth, shift_auth))
+    authorities = AuthorityRegistry((fresh_auth,) if only_day else (fresh_auth, aging_auth, aged_auth, control_auth, shift_auth))
     context = RuntimeContext(authorities, system=system, scenario=scenario, timeline=env.timeline, environment=env, material_states={mat_state.digest: mat_state},
                              resolved_properties={resolved.digest: resolved}, constraints={v: defs[k] for k, v in cdig.items()}, providers=registry)
     return Flagship(case, request, context, store, plant, fast, runtime, env, defs, registry, aging_auth)
@@ -616,6 +629,7 @@ def build_flagship(case: Case, registry=None, *, macro_days: int = 14, window_s:
 
 # ==================================================================================================== verification, summary, bundle
 HEAT_BALANCE_TOL_WH = 1e-6          # DECLARED before any run: absolute closure of generated vs removed module heat (W h)
+FIRST_LAW_MIN_HEAT_W = 0.5              # windows carrying less module heat than this are not used by the first-law check (a ratio of tiny numbers)
 FIRST_LAW_REL_TOL = 5e-3            # DECLARED before any run: TESPy coolant temperature rise vs Q / (m cp)
 REFINEMENT_TOL = {"peak_cell_temperature": Quantity(0.05, "K"), "voltage_end_of_discharge": Quantity(0.002, "V")}   # DECLARED before any run
 REFINEMENT_PEAK_HEAT_REL = 0.02     # DECLARED before any run: relative change of the peak cell heat between window sizes
@@ -629,7 +643,8 @@ def first_law_reference():
         "first law for a steady-flow control volume", "", "derived relation, not copied data", OracleKind.ANALYTIC_REFERENCE,
         (ReferenceCondition("pressure", 2e5, "Pa"), ReferenceCondition("mean_temperature", 300.0, "K")), (("delta_T_relative_difference", "dimensionless"),), (), "",
         "cp from CoolProp at the stream mean temperature (the same property backend TESPy uses: this verifies the energy-balance implementation, "
-        "not the property data)", (EnvelopeBound("pressure", 1e5, 1e7, "Pa"), EnvelopeBound("mean_temperature", 274.0, 370.0, "K")))
+        "not the property data)", (EnvelopeBound("pressure", 1e5, 1e7, "Pa"), EnvelopeBound("mean_temperature", 274.0, 370.0, "K")),
+        comparable_quantities=("delta_T_relative_difference",))
 
 
 def first_law_check(table: DayTable):
@@ -638,7 +653,7 @@ def first_law_check(table: DayTable):
     worst, mean_T, used = 0.0, [], 0
     for r in table.rows:
         q = r["module_heat_generated_W"]
-        if q < 0.5:
+        if q < FIRST_LAW_MIN_HEAT_W:
             continue
         tm = 0.5 * (r["coolant_in_K"] + r["coolant_out_K"])
         cp = CP.PropsSI("CPMASS", "T", tm, "P", PRESSURE, "Water")
@@ -664,11 +679,14 @@ class FlagshipRun:
     comparisons: tuple = ()
     references: tuple = ()
     ladder: Any = None
+    study: dict = field(default_factory=dict)
+    references_considered: tuple = ()
 
 
-def run_flagship(case_name: str, registry=None, *, first_law: bool = True) -> FlagshipRun:
+def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refinement: bool = False) -> FlagshipRun:
     from engcore.engineering import (
         EvidenceLink, LevelEntry, LevelStatus, PredeclaredCriterion, UncertaintyStatement, VerificationLadder, build_summary, compare_to_reference,
+        contract_integrity_entry,
     )
     from engcore.system_runtime import BalanceSpec, RunStatus, SystemExecutor, TermSource, assess_conservation, assess_constraints, compile_plan, preflight
 
@@ -683,21 +701,20 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True) -> Fl
     conservation = assess_conservation(result, specs)
     run = FlagshipRun(fl, result, report, wall, constraints, conservation)
     # ---- ladder
-    entries = [LevelEntry(1, LevelStatus.REACHED, (EvidenceLink("preflight_and_identity", report.digest, "contract_integrity", "met",
-                                                                 f"preflight {report.status.value}; request/plan/result identities re-derived"),),
-                          "units, identities and provider bindings checked by BIG 12 preflight")]
+    entries = [contract_integrity_entry(report, result)]
     closed = [c for c in conservation if c.status == "closed"]
     if conservation and len(closed) == len(conservation):
-        entries.append(LevelEntry(2, LevelStatus.REACHED, tuple(EvidenceLink("conservation_assessment", digest_of(c.to_dict()), "conservation_residual", "met",
-                                                                             f"{c.balance_id}: residual {c.residual.magnitude:.2e} {c.residual.units}") for c in closed),
-                                  "generated cell heat = heat absorbed by the coolant (m dh) per operating day, closed within a tolerance declared before the run"))
+        entries.append(LevelEntry(2, LevelStatus.REACHED, tuple(EvidenceLink.of_record("conservation_assessment", c.to_dict(), "conservation_residual", "met",
+                                                                                     f"{c.balance_id}: residual {c.residual.magnitude:.2e} {c.residual.units}") for c in closed),
+                                  "INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty "
+                                  "(tolerance declared before the run). It would fail on a solver or unit error; it cannot detect a wrong heat model"))
     else:
         entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(
             f"{c.balance_id}: {c.status}" for c in conservation) or "no balance could be assessed"))
     comparisons = []
     references = []
     tables = fl.store.tables
-    if first_law and "day-fresh" in tables:
+    if first_law and "day-fresh" in tables and result.receipt("day_fresh").status.value == "succeeded":
         ref = first_law_reference()
         worst, mean_T, used = first_law_check(tables["day-fresh"])
         crit = PredeclaredCriterion("first_law_delta_T", "delta_T_relative_difference", "max_relative", Quantity(FIRST_LAW_REL_TOL, "dimensionless"),
@@ -710,11 +727,27 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True) -> Fl
         references.append(ref)
         entries.append(LevelEntry(3, LevelStatus.REACHED if cmp_.outcome == "met" else LevelStatus.ATTEMPTED_NOT_REACHED, (EvidenceLink.of_comparison(cmp_),),
                                   "first-law coolant temperature rise vs Q/(m cp): verifies the heat -> enthalpy -> temperature implementation only"))
-    entries += [LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "window-size refinement is a separate BIG 12 request (see window_refinement_study); not part of this run"),
-                LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider "
+    if refinement and result.status.value == "succeeded":
+        study = window_refinement_study(registry, case_name)
+        run.study = study
+        q = study["quantities"]
+        entries.append(LevelEntry(4, LevelStatus.REACHED if study["met"] else LevelStatus.ATTEMPTED_NOT_REACHED,
+                                  (EvidenceLink.of_record("window_refinement", study, "discretisation_convergence", "met" if study["met"] else "not_met",
+                                                        f"coupling windows {study['windows_s']} s (three separate BIG 12 requests, digests {study['digest']}): {q}; observed orders {study['orders']}"),),
+                                  "the fresh-cell coupled day at three coupling-window sizes, each a separate BIG 12 request (evidence from OTHER requests than this run's). Criteria: finest-pair "
+                                  "differences within 0.05 K / 2 mV / 2 % of peak heat (fixed before the first run, two-level version) AND monotonically decreasing successive differences "
+                                  "(added after the review, with the third level; the two-level result had already met the tolerances). Only the coupling window is refined: the cell model's own "
+                                  "solver tolerances and points-per-window are not varied"))
+    else:
+        entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "window-size refinement is a separate set of BIG 12 requests (window_refinement_study); not run here, or this run did not succeed"))
+    nasa = nasa_reference()
+    applic = nasa.applicability({})
+    run.references_considered = ((nasa, applic),)
+    entries += [LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider "
                                                              "and compare_providers refuses that pair as non-independent"),
                 LevelEntry(6, LevelStatus.NOT_AVAILABLE, (), "no published numerical benchmark for this module/duty was integrated"),
-                LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no experimental dataset applicable to this cell was integrated (see the reference-applicability record in the report)")]
+                LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: "
+                                                             f"the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is {applic.status.upper()} ({'; '.join(applic.reasons)}); no comparison was made and none is claimed")]
     if not any(e.level == 3 for e in entries):
         entries.append(LevelEntry(3, LevelStatus.NOT_ATTEMPTED, (), "the coupled day produced no result to check against the first-law relation"))
     run.ladder = VerificationLadder.of(**{f"l{e.level}": e for e in entries})
@@ -727,7 +760,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True) -> Fl
         (f"contact resistance record {digest_of({'r': R_CONTACT_K_PER_W})[:12]}.. (ASSUMED)", f"PyBaMM parameter set {PARAMETER_SET} (provider-bundled literature set)"),
         f"cell temperature window {list(TEMP_WINDOW_K)} K and SOC window {list(fl.case.soc_window)} were checked on every solved day; the aging map range [0, 0.5) on the slow state. "
         "The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",
-        "no benchmark was used; the NASA PCoE 2 Ah 18650 cells are a different cell (5 Ah 21700 model) and are not applicable")
+        "no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared")
     if True:
         run.summary = build_summary(
             f"Cell module with liquid cooling, 57-day declared profile ({fl.case.name})", fl.request, result,
@@ -737,9 +770,55 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True) -> Fl
                      ("Voltage shift caused by degradation", "voltage_shift_degradation"), ("Voltage shift caused by environment drift", "voltage_shift_environment"),
                      ("End SOC, fresh day", "end_soc_fresh"), ("Minimum SOC, aged day", "min_soc_aged"), ("Capacity fade after 56 days", "final_fade"),
                      ("Peak cell heat shift caused by degradation", "peak_heat_shift_degradation")],
-            constraints=constraints, conservation=conservation, ladder=run.ladder, comparisons=comparisons, uncertainty=uncertainty,
+            constraints=constraints, conservation=conservation, ladder=run.ladder, comparisons=comparisons, references=references, uncertainty=uncertainty,
             trace_observable="voltage_shift_degradation" if result.observable("voltage_shift_degradation").value is not None else "final_fade"
             if result.observable("final_fade").value is not None else "peak_cell_temperature_fresh",
             notes=(f"case {fl.case.name}: {fl.case.description}", "all scenario inputs are declared illustrative fixtures, not measurements"))
     run.uncertainty = uncertainty
     return run
+
+
+def nasa_reference():
+    """The NASA PCoE Li-ion aging dataset AS PINNED BY THE REPOSITORY (manifest identity only; no data copied).  The one envelope term
+    (cell format, 18 mm) is AUTHORED HERE from the pack's public description of the cells, not read from the dataset's own metadata.  This
+    flagship cannot state a recorded cell format for its PyBaMM parameter set, so applicability is UNKNOWN and no comparison is made."""
+    from engcore.engineering import EnvelopeBound, ReferenceCondition, ReferenceRecord
+    from engcore.scientific.oracles import OracleKind
+    m = json.loads(open(os.path.join(os.path.dirname(__file__), "..", "..", "benchmarks", "measurements", "nasa_battery_aging", "manifest.json"), "rb").read().decode())
+    return ReferenceRecord(
+        m["dataset_id"], m["title"], m["citation"], f"{m['publisher']}, version {m['version']}", m["landing_page"],
+        "NASA open data; NOT copied into this repository - only the pinned manifest identity is referenced", OracleKind.EXPERIMENTAL_DATASET,
+        (ReferenceCondition("cell_format_diameter", 18.0, "mm"),), (("terminal_voltage", "V"), ("discharge_capacity", "A*h")), (), m["catalog_source_hash"],
+        "no values extracted; the repository pack describes commercial 18650 cells cycled at several ambient temperatures (benchmarks/measurements/nasa_battery_aging/README.md)",
+        (EnvelopeBound("cell_format_diameter", 17.5, 18.5, "mm"),))
+
+
+def window_refinement_study(registry=None, case_name: str = "normal", windows=(3600, 1800, 900)) -> dict:
+    """The fresh-cell coupled day at three coupling-window sizes, each through BIG 12.  Returns differences, observed orders and the outcome."""
+    from engcore.system_runtime import SystemExecutor
+    out: dict = {"windows_s": list(windows), "quantities": {}, "orders": {}, "status": {}, "digest": {}}
+    results = {}
+    for w in windows:
+        fl = build_flagship(CASES[case_name], registry, window_s=w, only_day=True)
+        res = SystemExecutor(fl.context).run(fl.request)
+        results[w] = res
+        out["status"][str(w)] = res.status.value
+        out["digest"][str(w)] = res.digest[:16]
+    if not all(r.status.value == "succeeded" for r in results.values()):
+        out["met"] = False
+        return out
+    w0, w1, w2 = windows
+    tol_ok, mono_ok = True, True
+    for name in ("peak_cell_temperature", "voltage_end_of_discharge", "peak_heat"):
+        v = [results[w].observable(f"{name}_fresh").value.value.magnitude for w in windows]
+        d1, d2 = abs(v[1] - v[0]), abs(v[2] - v[1])
+        out["quantities"][name] = {str(w): x for w, x in zip(windows, v)} | {"abs_difference_coarse_pair": d1, "abs_difference_fine_pair": d2}
+        out["orders"][name] = float(math.log2(d1 / d2)) if d1 > 0 and d2 > 0 else None
+        mono_ok = mono_ok and d2 < d1
+        if name == "peak_heat":
+            tol_ok = tol_ok and d2 / abs(v[2]) <= REFINEMENT_PEAK_HEAT_REL
+        else:
+            tol_ok = tol_ok and d2 <= REFINEMENT_TOL[name].magnitude
+    out["tolerances_met"], out["monotone_met"] = tol_ok, mono_ok
+    out["met"] = tol_ok and mono_ok
+    return out

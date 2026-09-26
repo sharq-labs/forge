@@ -32,7 +32,7 @@ import numpy as np
 
 from engcore.engineering import (
     EnvelopeBound, EvidenceLink, LevelEntry, LevelStatus, PredeclaredCriterion, ReferenceCondition, ReferenceRecord, UncertaintyStatement, VerificationLadder,
-    build_summary, compare_to_reference, write_vtu,
+    build_summary, compare_to_reference, contract_integrity_entry, write_vtu,
 )
 from engcore.execution.multiphysics import InitialStateValue
 from engcore.materials import FluidIdentity, FluidState
@@ -57,9 +57,11 @@ UNKNOWN = Uncertainty.unknown("declared or derived quantity; no uncertainty was 
 # ---- criteria fixed BEFORE any run ------------------------------------------------------------------------------------------------
 WHOLE_FIELD_TOL = 0.03         # of lid speed: OpenFOAM vs SU2 cell-centre velocity, whole field (the BIG 11 criterion, NOT loosened)
 GHIA_TOL = 0.02                # of lid speed: max |profile - Ghia| on each centerline at the finest mesh
+INTRINSIC_ORDER_MIN = 0.9         # POST HOC reading only: observed order of the fixed centre-velocity sequence
 FLUX_TOL = 1e-3                # of U L: net flux through each mid-plane (mass conservation of the sampled profile)
 STEADY_TOL_M_S = 1e-7          # OpenFOAM max|dU| over the last write interval
 SU2_TARGET = -10.0             # log10 rms residual
+SU2_ITERATIONS = 20000         # iteration cap (a run that stops on the cap without reaching the target is FAILED)
 
 
 def sha(text: str) -> str:
@@ -76,12 +78,14 @@ def load_ghia() -> tuple[ReferenceRecord, dict]:
     sd = d["source_digests"]
     ref = ReferenceRecord(
         d["reference_id"], d["title"], d["authors"], d["publication"], d["access_urls"][0], d["license_status"], OracleKind.BENCHMARK_DATASET,
-        (ReferenceCondition("reynolds", 100.0, "dimensionless"),), (("y", "dimensionless"), ("u", "dimensionless"), ("x", "dimensionless"), ("v", "dimensionless")),
+        (ReferenceCondition("reynolds", 100.0, "dimensionless"), ReferenceCondition("cavity_aspect_ratio", 1.0, "dimensionless")), (("y", "dimensionless"), ("u", "dimensionless"), ("x", "dimensionless"), ("v", "dimensionless")),
         (("y", y), ("u", u), ("x", x), ("v", v)), sha(sd["table_I_transcription_sha256"] + sd["table_II_transcription_sha256"]),
         "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second independent transcription; "
         f"transcription sha256: {sd['table_I_transcription_sha256'][:16]}.. / {sd['table_II_transcription_sha256'][:16]}..; excerpt file sha256 {hashlib.sha256(raw).hexdigest()[:16]}..; "
-        "a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment",
-        (EnvelopeBound("reynolds", 99.0, 101.0, "dimensionless"),))
+        "a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment; the applicability envelope (Re 99-101, square cavity) is AUTHORED by this flagship from the paper's stated case, "
+        "not a machine-readable statement of the source, and covers Re and aspect ratio only (boundary conditions, steadiness and dimensionality are not enforced)",
+        (EnvelopeBound("reynolds", 99.0, 101.0, "dimensionless"), EnvelopeBound("cavity_aspect_ratio", 0.999, 1.001, "dimensionless")),
+        comparable_quantities=("centerline_velocity_over_lid_speed",))
     return ref, d
 
 
@@ -144,7 +148,8 @@ def system_definition():
     twin = lambda n: ScientificTwin(n, "1", TwinKind.CONCEPT).reference  # noqa: E731
     flux = ConstraintDefinition("max_midplane_flux", "midplane_flux_residual", ConstraintOperator.LESS_EQUAL, Quantity(FLUX_TOL, "dimensionless"))
     system = SystemDefinition("lid-driven-cavity", "1", (ComponentDefinition("cavity", "1"),), (ComponentInstance("cavity", "cavity", "1", twin("cavity"), participant_id="cavity"),),
-                              constraint_bindings=(ConstraintBinding("b_flux", "cavity", "max_midplane_flux"),), constraints=(flux,))
+                              constraint_bindings=(ConstraintBinding("b_flux_openfoam", "cavity", "max_midplane_flux"), ConstraintBinding("b_flux_su2", "cavity", "max_midplane_flux")),
+                              constraints=(flux,))
     return system, flux
 
 
@@ -197,7 +202,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
 
     U_OUT = (("ghia_u_max_error", "dimensionless"), ("ghia_v_max_error", "dimensionless"), ("u_center", "dimensionless"), ("v_center", "dimensionless"),
              ("vortex_x", "dimensionless"), ("vortex_y", "dimensionless"), ("u_flux_residual", "dimensionless"), ("v_flux_residual", "dimensionless"),
-             ("max_speed", "m/s"), ("wall_seconds", "s"))
+             ("flux_residual_abs", "dimensionless"), ("max_speed", "m/s"), ("wall_seconds", "s"))
 
     def analyse(call, n: int, provider: str, u_lid: float, cells_xy: np.ndarray, line: tuple, record, ref_id: ProviderRecordRef, file_pairs) -> NodeOutcome:
         y, u, x, v = line
@@ -209,6 +214,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
         outs = {"ghia_u_max_error": np.abs(u_at - gu).max(), "ghia_v_max_error": np.abs(v_at - gv).max(), "u_center": float(sample_at(y, u, np.array([0.5 * SIDE]))[0] / U),
                 "v_center": float(sample_at(x, v, np.array([0.5 * SIDE]))[0] / U), "vortex_x": vx / SIDE, "vortex_y": vy / SIDE,
                 "u_flux_residual": flux_residual(y, u, SIDE, U), "v_flux_residual": flux_residual(x, v, SIDE, U)}
+        outs["flux_residual_abs"] = max(abs(outs["u_flux_residual"]), abs(outs["v_flux_residual"]))
         ex.profiles[call.execution_identity] = {"provider": provider, "n": n, "y_over_L": (y / SIDE).tolist(), "u_over_U": (u / U).tolist(), "x_over_L": (x / SIDE).tolist(),
                                                 "v_over_U": (v / U).tolist(), "ghia_y": gy.tolist(), "ghia_u": gu.tolist(), "ghia_x": gx.tolist(), "ghia_v": gv.tolist(),
                                                 "u_at_ghia_points": u_at.tolist(), "v_at_ghia_points": v_at.tolist()}
@@ -262,7 +268,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             rho, mu = properties(call)
             u_lid = call.value("lid_velocity").magnitude_in("m/s")
             prob = CavityProblemSU2(f"cavity-{tag}-{n}", Quantity(SIDE, "m"), n, Quantity(u_lid, "m/s"), rho.value, mu.value,
-                                    (("dynamic_viscosity", mu.digest), ("density", rho.digest)), iterations=20000, residual_log10_target=SU2_TARGET)
+                                    (("dynamic_viscosity", mu.digest), ("density", rho.digest)), iterations=SU2_ITERATIONS, residual_log10_target=SU2_TARGET)
             rec = SU2Provider(registry).run_cavity(prob)
             ref_id = ProviderRecordRef.of_record(rec)
             if not rec.succeeded:
@@ -335,7 +341,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
 
     cfg = {"side_m": SIDE, "reynolds": reynolds, "ghia": ref.digest, "fluid": "water 20 C 1 atm CoolProp", "openfoam": of_status.version, "su2": su2_status.version}
     of_auth = {n: CallbackAuthority(f"cavity-openfoam-{n}", make_of(n), config={**cfg, "n": n, "steady_tol": STEADY_TOL_M_S, "dt_s": 5.0, "steps": 6000}, kind="provider") for n in levels}
-    su2_auth = {n: CallbackAuthority(f"cavity-su2-{n}", make_su2(n), config={**cfg, "n": n, "target": SU2_TARGET}, kind="provider") for n in levels}
+    su2_auth = {n: CallbackAuthority(f"cavity-su2-{n}", make_su2(n), config={**cfg, "n": n, "target": SU2_TARGET, "iterations": SU2_ITERATIONS, "cfl": 50.0}, kind="provider") for n in levels}
     cmp_auth = {n: CallbackAuthority(f"cavity-compare-{n}", make_compare(n), config={**cfg, "n": n, "whole_tol": WHOLE_FIELD_TOL}, deterministic=True) for n in levels}
     conv_auth = CallbackAuthority("cavity-convergence", convergence, config={"levels": list(levels)}, deterministic=True)
 
@@ -373,7 +379,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
     obs += [RequestedObservable(s.name, "convergence", s.name, "dimensionless") for s in conv_out]
     cdig = digest_of(flux_c.to_dict())
     finest = levels[-1]
-    cobs = (ConstraintObservation("b_flux", "max_midplane_flux", cdig, f"u_flux_residual_openfoam_{finest}"),)
+    cobs = tuple(ConstraintObservation(f"b_flux_{prov}", "max_midplane_flux", cdig, f"flux_residual_abs_{prov}_{finest}") for prov in ("openfoam", "su2"))
     scenario = ScenarioSpecification(f"cavity-{tag}", "1", Quantity(0, "s"), Quantity(1, "s"), segments=(ScenarioSegment("steady", Quantity(0, "s"), Quantity(1, "s")),))
     timeline = Timeline.from_scenario(scenario, timeline_id=f"cavity-{tag}", basis=TimeBasis("cavity", "elapsed", "start"), histories=())
     initial = InitialStateSpec(Quantity(0, "s"), (OwnerState("cavity", "component", (InitialStateValue("reference", Quantity(0.0, "dimensionless"), Uncertainty.unknown("declared placeholder")),)),))
@@ -401,6 +407,7 @@ class CavityRun:
     references: tuple = ()
     uncertainty: Any = None
     table: dict = field(default_factory=dict)
+    l2_failing: tuple = ()
 
 
 def _obs(result, oid) -> float | None:
@@ -418,33 +425,46 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     run = CavityRun(cv, result, report, constraints)
     ref = cv.reference
     finest = levels[-1]
-    entries = [LevelEntry(1, LevelStatus.REACHED, (EvidenceLink("preflight_and_identity", report.digest, "contract_integrity", "met", f"preflight {report.status.value}"),),
-                          "units, provider bindings, fluid-record digests and identities checked by BIG 12 preflight")]
+    entries = [contract_integrity_entry(report, result)]
     # ---- level 2: mass conservation of the sampled mid-plane profiles, criterion FLUX_TOL fixed before the run
-    flux = {p: max(abs(_obs(result, f"{k}_{p}_{finest}") or math.inf) for k in ("u_flux_residual", "v_flux_residual")) for p in ("openfoam", "su2")}
+    flux = {p: max(abs(x) if x is not None else math.inf for x in (_obs(result, f"u_flux_residual_{p}_{finest}"), _obs(result, f"v_flux_residual_{p}_{finest}"))) for p in ("openfoam", "su2")}
     l2_ok = all(v <= FLUX_TOL for v in flux.values())
+    l2_failing = sorted(p for p, v in flux.items() if not v <= FLUX_TOL)
+    run.l2_failing = tuple(l2_failing)
+    flux_record = {p: (None if math.isinf(v) else v) for p, v in flux.items()}          # None = the profile was not produced (never a pass)
     entries.append(LevelEntry(2, LevelStatus.REACHED if l2_ok else LevelStatus.ATTEMPTED_NOT_REACHED,
-                              (EvidenceLink("midplane_flux", digest_of(flux), "conservation_residual", "met" if l2_ok else "not_met", f"net flux / (U L) at {finest}x{finest}: {flux}"),),
-                              f"net flux through each mid-plane relative to U L (criterion {FLUX_TOL:g}, fixed before the run): {flux}"))
+                              (EvidenceLink.of_record("midplane_flux", {"mesh": f"{finest}x{finest}", "max_abs_net_flux_over_UL": flux_record, "criterion": FLUX_TOL},
+                                                      "conservation_residual", "met" if l2_ok else "not_met", f"net flux / (U L) at {finest}x{finest}: {flux_record}"),),
+                              f"net flux through each mid-plane relative to U L (criterion {FLUX_TOL:g}, fixed before the run): {flux}"
+                              + ("" if l2_ok else f". NOT MET by {l2_failing} (its sampled profile is not mass-conserving to the criterion; cause not investigated)")))
     entries.append(LevelEntry(3, LevelStatus.NOT_AVAILABLE, (), "there is no closed-form solution of the cavity at Re = 100 to compare with"))
-    # ---- level 4: Ghia error decreases monotonically under refinement (criterion fixed before the run)
+    # ---- level 4: PREDECLARED criterion = error against the benchmark decreases monotonically under refinement (fixed before the first run).
+    # That criterion is BENCHMARK-RELATIVE: it mixes each code's discretisation error with the benchmark's own truncation error, so it is a weak stand-in for convergence.
     decs = {f"{q}_{p}": _obs(result, f"{q}_{p}_decreasing") for p in ("of", "su2") for q in ("ghia_u_max_error", "ghia_v_max_error")}
     if all(v is not None for v in decs.values()):
         ok = all(v == 1.0 for v in decs.values())
-        entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED,
-                                  (EvidenceLink("grid_study", digest_of(decs), "discretisation_convergence", "met" if ok else "not_met", f"monotone decrease flags {decs}"),),
-                                  f"{list(levels)} cells per side: max centerline error against the benchmark decreases monotonically for both codes and both lines (criterion fixed before the run)"))
+        orders = {p: _obs(result, f"u_center_{p}_observed_order") for p in ("of", "su2")}
+        links4 = [EvidenceLink.of_record("grid_study", {"levels": list(levels), "monotone_decrease_flags": decs}, "discretisation_convergence", "met" if ok else "not_met", f"monotone decrease flags {decs}")]
+        if not ok:
+            seq = {p: [_obs(result, f"u_center_{prov}_{n}") for n in levels] for p, prov in (("of", "openfoam"), ("su2", "su2"))}
+            intrinsic = all(orders[p] is not None and orders[p] >= INTRINSIC_ORDER_MIN for p in orders) and all(abs(s[-1] - s[-2]) < abs(s[-2] - s[-3]) for s in seq.values())
+            links4.append(EvidenceLink.of_record("grid_study_intrinsic_post_hoc", {"orders": orders, "seq": seq}, "post_hoc_discretisation_convergence", "met" if intrinsic else "not_met",
+                                                 f"POST HOC intrinsic reading (added after seeing the outcome): u(0.5, 0.5)/U over {list(levels)}: {seq}, observed orders {orders}"))
+        entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
+                                  f"{list(levels)} cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): "
+                                  + ("MET" if ok else f"NOT MET - flags {decs}") + ". It is benchmark-relative, so it also folds in the benchmark's own truncation error; "
+                                  "an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place"))
     else:
         entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "the convergence aggregate was not produced"))
     # ---- level 5: whole-field OpenFOAM vs SU2, pre-declared 3 % of lid speed at every level; the lower-half comparison is post hoc
     flags = {n: _obs(result, f"whole_field_within_tolerance_{n}") for n in levels}
     if all(v is not None for v in flags.values()):
         ok = all(v == 1.0 for v in flags.values())
-        links = [EvidenceLink("provider_comparison", cv.exchange.comparisons[f"whole_{n}"].digest, cv.exchange.comparisons[f"whole_{n}"].classification,
-                              "met" if flags[n] == 1.0 else "not_met", f"whole field {n}x{n}: max difference {_obs(result, f'whole_field_max_difference_{n}'):.4f} of lid speed at y/L={_obs(result, f'max_difference_cell_y_{n}'):.3f}")
+        links = [EvidenceLink.of_provider_comparison(cv.exchange.comparisons[f"whole_{n}"],
+                                                     f"whole field {n}x{n}: max difference {_obs(result, f'whole_field_max_difference_{n}'):.4f} of lid speed at y/L={_obs(result, f'max_difference_cell_y_{n}'):.3f}")
                  for n in levels]
-        links += [EvidenceLink("provider_comparison", cv.exchange.comparisons[f"lower_{n}"].digest, cv.exchange.comparisons[f"lower_{n}"].classification,
-                               "met" if cv.exchange.comparisons[f"lower_{n}"].within_tolerance else "not_met", f"POST HOC lower half {n}x{n}") for n in levels]
+        if not ok:       # post-hoc readings sit beside a level that is NOT reached; they can never be attached to a reached one
+            links += [EvidenceLink.of_provider_comparison(cv.exchange.comparisons[f"lower_{n}"], f"POST HOC lower half {n}x{n}") for n in levels]
         entries.append(LevelEntry(5, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links),
                                   "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): "
                                   + ("MET at every level" if ok else "NOT MET - the codes disagree, most near the lid; the disagreement is the result")
@@ -453,7 +473,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
         entries.append(LevelEntry(5, LevelStatus.NOT_ATTEMPTED, (), "no whole-field comparison was produced"))
     # ---- level 6: Ghia et al., a NUMERICAL benchmark, judged only if it applies
     comparisons, references = [], []
-    conditions = {"reynolds": Quantity(reynolds, "dimensionless")}
+    conditions = {"reynolds": Quantity(reynolds, "dimensionless"), "cavity_aspect_ratio": Quantity(1.0, "dimensionless")}          # the flagship's own declared square cavity
     links6 = []
     finest_ok: dict[str, bool] = {}
     for prov in ("openfoam", "su2"):
@@ -498,7 +518,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     outputs = [(l, o) for l, o in outputs if not result.observable(o).availability.value == "unavailable"]
     trace_id = f"ghia_u_max_error_openfoam_{finest}" if _obs(result, f"ghia_u_max_error_openfoam_{finest}") is not None else "density"
     run.summary = build_summary(f"Lid-driven cavity, Re = {reynolds:g}, water 20 degC, {ladder_levels} cells ({tag})", cv.request, result, outputs=outputs, constraints=constraints,
-                                ladder=run.ladder, comparisons=comparisons, uncertainty=run.uncertainty, trace_observable=trace_id,
+                                ladder=run.ladder, comparisons=comparisons, references=run.references, uncertainty=run.uncertainty, trace_observable=trace_id,
                                 notes=("OpenFOAM and SU2 receive identical declared geometry, fluid records, Reynolds number and comparison quantities",
                                        "the whole-field disagreement between the two codes is preserved, not tuned away"))
     return run

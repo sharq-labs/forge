@@ -1,0 +1,49 @@
+{
+ "access_url": "",
+ "authors": "textbook thermodynamics (no source file: derived)",
+ "comparable_quantities": [
+  "delta_T_relative_difference"
+ ],
+ "conditions": [
+  {
+   "name": "pressure",
+   "unit": "Pa",
+   "value": "200000.0"
+  },
+  {
+   "name": "mean_temperature",
+   "unit": "K",
+   "value": "300.0"
+  }
+ ],
+ "data": [],
+ "envelope": [
+  {
+   "high": "10000000.0",
+   "low": "100000.0",
+   "name": "pressure",
+   "unit": "Pa"
+  },
+  {
+   "high": "370.0",
+   "low": "274.0",
+   "name": "mean_temperature",
+   "unit": "K"
+  }
+ ],
+ "extraction": "cp from CoolProp at the stream mean temperature (the same property backend TESPy uses: this verifies the energy-balance implementation, not the property data)",
+ "kind": "analytic_reference",
+ "license_status": "derived relation, not copied data",
+ "publication": "first law for a steady-flow control volume",
+ "quantities": [
+  [
+   "delta_T_relative_difference",
+   "dimensionless"
+  ]
+ ],
+ "reference_id": "first-law-cold-plate",
+ "role": "implementation_limit",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "",
+ "title": "Steady single-phase heat balance Q = m cp (T_out - T_in)"
+}

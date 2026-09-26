@@ -1,0 +1,150 @@
+{
+ "access_url": "https://gist.github.com/ivan-pi/3e9326d18a366ffe6a8e5bfda6353219",
+ "authors": "U. Ghia, K. N. Ghia, C. T. Shin",
+ "comparable_quantities": [
+  "centerline_velocity_over_lid_speed"
+ ],
+ "conditions": [
+  {
+   "name": "reynolds",
+   "unit": "dimensionless",
+   "value": "100.0"
+  },
+  {
+   "name": "cavity_aspect_ratio",
+   "unit": "dimensionless",
+   "value": "1.0"
+  }
+ ],
+ "data": [
+  [
+   "y",
+   [
+    "1.0",
+    "0.9766",
+    "0.9688",
+    "0.9609",
+    "0.9531",
+    "0.8516",
+    "0.7344",
+    "0.6172",
+    "0.5",
+    "0.4531",
+    "0.2813",
+    "0.1719",
+    "0.1016",
+    "0.0703",
+    "0.0625",
+    "0.0547",
+    "0.0"
+   ]
+  ],
+  [
+   "u",
+   [
+    "1.0",
+    "0.84123",
+    "0.78871",
+    "0.73722",
+    "0.68717",
+    "0.23151",
+    "0.00332",
+    "-0.13641",
+    "-0.20581",
+    "-0.2109",
+    "-0.15662",
+    "-0.1015",
+    "-0.06434",
+    "-0.04775",
+    "-0.04192",
+    "-0.03717",
+    "0.0"
+   ]
+  ],
+  [
+   "x",
+   [
+    "1.0",
+    "0.9688",
+    "0.9609",
+    "0.9531",
+    "0.9453",
+    "0.9063",
+    "0.8594",
+    "0.8047",
+    "0.5",
+    "0.2344",
+    "0.2266",
+    "0.1563",
+    "0.0938",
+    "0.0781",
+    "0.0703",
+    "0.0625",
+    "0.0"
+   ]
+  ],
+  [
+   "v",
+   [
+    "0.0",
+    "-0.05906",
+    "-0.07391",
+    "-0.08864",
+    "-0.10313",
+    "-0.16914",
+    "-0.22445",
+    "-0.24533",
+    "0.05454",
+    "0.17527",
+    "0.17507",
+    "0.16077",
+    "0.12317",
+    "0.1089",
+    "0.10091",
+    "0.09233",
+    "0.0"
+   ]
+  ]
+ ],
+ "envelope": [
+  {
+   "high": "101.0",
+   "low": "99.0",
+   "name": "reynolds",
+   "unit": "dimensionless"
+  },
+  {
+   "high": "1.001",
+   "low": "0.999",
+   "name": "cavity_aspect_ratio",
+   "unit": "dimensionless"
+  }
+ ],
+ "extraction": "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second independent transcription; transcription sha256: 51b65a487eb5b424.. / 9589dde451862382..; excerpt file sha256 a01ab55c9ada0f75..; a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment; the applicability envelope (Re 99-101, square cavity) is AUTHORED by this flagship from the paper's stated case, not a machine-readable statement of the source, and covers Re and aspect ratio only (boundary conditions, steadiness and dimensionality are not enforced)",
+ "kind": "benchmark_dataset",
+ "license_status": "the tabulated numbers of one Reynolds number (17 points per line) are quoted with full attribution; the paper and the transcription files are NOT copied",
+ "publication": "Journal of Computational Physics 48(3), 387-411 (1982), Tables I and II, Re = 100 column",
+ "quantities": [
+  [
+   "y",
+   "dimensionless"
+  ],
+  [
+   "u",
+   "dimensionless"
+  ],
+  [
+   "x",
+   "dimensionless"
+  ],
+  [
+   "v",
+   "dimensionless"
+  ]
+ ],
+ "reference_id": "ghia-1982-lid-driven-cavity-re100-centerlines",
+ "role": "implementation_limit",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "bf95994ba4b13061bda1e86a9de9f0b258d5152e07462e32dd94a98305c34eca",
+ "title": "High-Re solutions for incompressible flow using the Navier-Stokes equations and a multigrid method"
+}

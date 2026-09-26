@@ -1,0 +1,865 @@
+{
+ "conservation": [],
+ "constraints": [
+  {
+   "binding_id": "b_flux_openfoam",
+   "constraint_id": "max_midplane_flux",
+   "margin": "margin 0.0008573 dimensionless",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_flux_su2",
+   "constraint_id": "max_midplane_flux",
+   "margin": "margin -0.005249 dimensionless",
+   "note": "",
+   "status": "violated"
+  }
+ ],
+ "execution": "succeeded",
+ "identities": [
+  [
+   "request",
+   "573e9a4cdf8b5081708b80bfe697730877b2e01840906caf051eca9d0985d7b2"
+  ],
+  [
+   "plan",
+   "3956b33a45b6dd55c6b48f765e5b9009aaecb48bea4f5f59b86751e680705b59"
+  ],
+  [
+   "result",
+   "4e9c9b64d727f45859e31e209b4f4f1d20ce9c15f955895e0cc9fa1d656c3ee5"
+  ]
+ ],
+ "key_outputs": [
+  {
+   "availability": "available",
+   "label": "Water density",
+   "observable_id": "density",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 998.2071504679437,
+    "schema": "quantity/1",
+    "units": "kilogram / meter ** 3"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Lid velocity for the declared Re",
+   "observable_id": "lid_velocity",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.001003395079519367,
+    "schema": "quantity/1",
+    "units": "meter / second"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM max centerline error vs Ghia 20x20",
+   "observable_id": "ghia_u_max_error_openfoam_20",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.01267288863118754,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 max u-centerline error vs Ghia 20x20",
+   "observable_id": "ghia_u_max_error_su2_20",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.05142707301165561,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM vs SU2 whole-field max difference 20x20 (of lid speed)",
+   "observable_id": "whole_field_max_difference_20",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.2603109034432372,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "...where the two differ most (y/L) 20x20",
+   "observable_id": "max_difference_cell_y_20",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.975,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM max centerline error vs Ghia 40x40",
+   "observable_id": "ghia_u_max_error_openfoam_40",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.002705739650034983,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 max u-centerline error vs Ghia 40x40",
+   "observable_id": "ghia_u_max_error_su2_40",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.024628339278002037,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM vs SU2 whole-field max difference 40x40 (of lid speed)",
+   "observable_id": "whole_field_max_difference_40",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.244641285285327,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "...where the two differ most (y/L) 40x40",
+   "observable_id": "max_difference_cell_y_40",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.9875,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM max centerline error vs Ghia 80x80",
+   "observable_id": "ghia_u_max_error_openfoam_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.004441708079774925,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 max u-centerline error vs Ghia 80x80",
+   "observable_id": "ghia_u_max_error_su2_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.011210356165600205,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM vs SU2 whole-field max difference 80x80 (of lid speed)",
+   "observable_id": "whole_field_max_difference_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.23929454893637087,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "...where the two differ most (y/L) 80x80",
+   "observable_id": "max_difference_cell_y_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.9937499999999999,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM u(0.5,0.5)/U 80x80",
+   "observable_id": "u_center_openfoam_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -0.20813086543242224,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 u(0.5,0.5)/U 80x80",
+   "observable_id": "u_center_su2_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -0.19517436670576793,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM vortex centre x/L 80x80",
+   "observable_id": "vortex_x_openfoam_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.6187499999999999,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "OpenFOAM vortex centre y/L 80x80",
+   "observable_id": "vortex_y_openfoam_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.7437499999999999,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 vortex centre x/L 80x80",
+   "observable_id": "vortex_x_su2_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.6187499999999999,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "SU2 vortex centre y/L 80x80",
+   "observable_id": "vortex_y_su2_80",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 0.73125,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   }
+  }
+ ],
+ "notes": [
+  "OpenFOAM and SU2 receive identical declared geometry, fluid records, Reynolds number and comparison quantities",
+  "the whole-field disagreement between the two codes is preserved, not tuned away"
+ ],
+ "providers": [
+  "coolprop 8.0.0",
+  "openfoam v2412",
+  "su2 8.5.0"
+ ],
+ "reference_comparisons": [
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "numerical_benchmark_comparison_not_validation_grant",
+   "compared_identity": "f0982ac02859f32dc424f8ceb5290fcedbcba516c820bfbf10399e445de970e7",
+   "criterion": {
+    "criterion_id": "ghia_openfoam_80",
+    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+    "metric": "max_absolute_error",
+    "post_hoc": false,
+    "quantity": "centerline_velocity_over_lid_speed",
+    "tolerance": {
+     "magnitude": 0.02,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "ca4ae65b4ca29d1aeefd999308e06e77f3fe074a8e39bdbf51ec467b7c15514c",
+   "note": "openfoam 80x80: max |u - Ghia| = 0.0044, max |v - Ghia| = 0.0090 (of lid speed)",
+   "outcome": "met",
+   "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+   "reference_kind": "benchmark_dataset",
+   "value": {
+    "magnitude": 0.00902753705942319,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  },
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "numerical_benchmark_comparison_not_validation_grant",
+   "compared_identity": "0cd0e345bb13fabac0de939105cb1323c341abd8ae5b0720847d62ac3c2eab31",
+   "criterion": {
+    "criterion_id": "ghia_su2_80",
+    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+    "metric": "max_absolute_error",
+    "post_hoc": false,
+    "quantity": "centerline_velocity_over_lid_speed",
+    "tolerance": {
+     "magnitude": 0.02,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "c76b1af4d90e955068b7728e34f683e51a6e20fc0ce0a77a51917551d9ed738f",
+   "note": "su2 80x80: max |u - Ghia| = 0.0112, max |v - Ghia| = 0.0070 (of lid speed)",
+   "outcome": "met",
+   "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+   "reference_kind": "benchmark_dataset",
+   "value": {
+    "magnitude": 0.011210356165600205,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  }
+ ],
+ "schema": "engcore.engineering.summary/1",
+ "scientific_status": "insufficient_evidence",
+ "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
+ "system": "Lid-driven cavity, Re = 100, water 20 degC, ['20x20', '40x40', '80x80'] cells (re100)",
+ "text_sha256": "59d9da44e63a121e2a2babfc65a88da383787b066a046b0ea62a2e5ad6ec2109",
+ "trace": {
+  "complete": true,
+  "gaps": []
+ },
+ "uncertainty": {
+  "benchmark_applicability": "Ghia et al. (1982) applies at Re = 100 only; this case is Re = 100",
+  "known_input_uncertainty": [],
+  "material_provenance": [
+   "water density / viscosity: provider-derived CoolProp records (not measurements)"
+  ],
+  "model_applicability": "laminar regime declared for Re < 1000 by both adapters; this case has Re = 100",
+  "model_discrepancy": "NOT QUANTIFIED: incompressible laminar model, 2-D idealisation, no discretisation-error bound (only a grid study), each code's own scheme error",
+  "unknown_input_uncertainty": [
+   "fluid state (declared 20 degC, 1 atm)",
+   "lid speed and cavity size (declared)",
+   "water density and viscosity: CoolProp equation-of-state values, uncertainty not propagated"
+  ]
+ },
+ "verification": {
+  "classification": "report_vocabulary_not_a_validation_grant",
+  "corroboration_reached": false,
+  "levels": [
+   {
+    "evidence": [
+     {
+      "classification": "contract_integrity",
+      "digest": "ab9dd0621ff14ad82acb5fdca1f9236169008058efebff48f49a2c2a1217ceda",
+      "kind": "preflight_and_identity",
+      "note": "preflight ready; run succeeded",
+      "outcome": "met",
+      "record": {
+       "classification": "preflight_admission_not_scientific_support",
+       "deferred_checks": [],
+       "findings": [
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "openfoam_20"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "openfoam_40"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "openfoam_80"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "su2_20"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "su2_40"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'laminar Navier-Stokes (adapter refuses Re >= 1000): inside the declared regime for every case this flagship runs'; the waiver is a caller statement, not evidence",
+         "node_id": "su2_80"
+        }
+       ],
+       "plan_digest": "3956b33a45b6dd55c6b48f765e5b9009aaecb48bea4f5f59b86751e680705b59",
+       "request_digest": "573e9a4cdf8b5081708b80bfe697730877b2e01840906caf051eca9d0985d7b2",
+       "schema": "forge.system_runtime.preflight_report/1",
+       "status": "ready"
+      }
+     }
+    ],
+    "level": 1,
+    "name": "contract_integrity",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "conservation_residual",
+      "digest": "18911080f38a1769999c69f00a823d8d023390902f5ecc52435b649c3313da9c",
+      "kind": "midplane_flux",
+      "note": "net flux / (U L) at 80x80: {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}",
+      "outcome": "not_met",
+      "record": {
+       "criterion": 0.001,
+       "max_abs_net_flux_over_UL": {
+        "openfoam": 0.00014267869136348632,
+        "su2": 0.006249425270081174
+       },
+       "mesh": "80x80"
+      }
+     }
+    ],
+    "level": 2,
+    "name": "conservation_residual",
+    "note": "net flux through each mid-plane relative to U L (criterion 0.001, fixed before the run): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [],
+    "level": 3,
+    "name": "analytic_limit",
+    "note": "there is no closed-form solution of the cavity at Re = 100 to compare with",
+    "status": "not_available"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "discretisation_convergence",
+      "digest": "0f1bf9b2e7f6406ef0a69531cb22cc41ce684cac3863aac49631e9f422235126",
+      "kind": "grid_study",
+      "note": "monotone decrease flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}",
+      "outcome": "not_met",
+      "record": {
+       "levels": [
+        20,
+        40,
+        80
+       ],
+       "monotone_decrease_flags": {
+        "ghia_u_max_error_of": 0.0,
+        "ghia_u_max_error_su2": 1.0,
+        "ghia_v_max_error_of": 0.0,
+        "ghia_v_max_error_su2": 1.0
+       }
+      }
+     },
+     {
+      "classification": "post_hoc_discretisation_convergence",
+      "digest": "45059bd77cce2fa19c6bfb01428638d31afc5ce17532508b8ee69af3b9192ec8",
+      "kind": "grid_study_intrinsic_post_hoc",
+      "note": "POST HOC intrinsic reading (added after seeing the outcome): u(0.5, 0.5)/U over [20, 40, 80]: {'of': [-0.19428748498834672, -0.2051639758407611, -0.20813086543242224], 'su2': [-0.15544785287080942, -0.18182255800289523, -0.19517436670576793]}, observed orders {'of': 1.8741900210906075, 'su2': 0.9821197748033897}",
+      "outcome": "met",
+      "record": {
+       "orders": {
+        "of": 1.8741900210906075,
+        "su2": 0.9821197748033897
+       },
+       "seq": {
+        "of": [
+         -0.19428748498834672,
+         -0.2051639758407611,
+         -0.20813086543242224
+        ],
+        "su2": [
+         -0.15544785287080942,
+         -0.18182255800289523,
+         -0.19517436670576793
+        ]
+       }
+      }
+     }
+    ],
+    "level": 4,
+    "name": "discretisation_convergence",
+    "note": "[20, 40, 80] cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "dc0ed2f62d39f353c4255b6ac71d75587d3a582e6858ab21fd1af9185c3c4fa8",
+      "kind": "provider_comparison",
+      "note": "whole field 20x20: max difference 0.2603 of lid speed at y/L=0.975",
+      "outcome": "not_met",
+      "record": {
+       "a_identity": "705bd60d5768161b7fb02021a564d0966338a8c68aaf4b636d998e6f5d89308e",
+       "a_output": "velocity",
+       "a_problem": "b12789c09c931001f21f1130efc06f5c9460bcb0ca7fd5673e9815a69b037497",
+       "a_provider": "openfoam",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "e90b70e9d9d7e1117b7687cc74dd297bbf14fd0498d2c56eef2ccbb27d2b8aaf",
+       "b_output": "velocity",
+       "b_problem": "e2531141fec029c92be634cd52859f8aec19a0291375bfd145d6125e76aa8629",
+       "b_provider": "su2",
+       "b_selection": "55ad727c7815dbac4fe91def90d73ea4235c02f86903e994630714bc1cd50a74",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 20x20, water 20 C from CoolProp 8.0.0",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity (x, y) of the lid-driven cavity, WHOLE FIELD, 20x20",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "0.00026119467966018525",
+       "max_relative": "1.9845559130314157",
+       "points": 800,
+       "provider_comparison_digest": "d71023463841d374e8640d626cf91056b2846a5fd05c2b98e47998ce76b707b6",
+       "values_digest": "fb03f47cd80d591a228a083b499c35a763b14f3af97c315792ca230f40327e22",
+       "within_tolerance": false
+      }
+     },
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "edfae0ac1f3453cb99a8484143b8dd2384fcfddcb96c8239e3d85f9c323a6194",
+      "kind": "provider_comparison",
+      "note": "whole field 40x40: max difference 0.2446 of lid speed at y/L=0.988",
+      "outcome": "not_met",
+      "record": {
+       "a_identity": "f31ac9230895447f925e0effd08223c777d8e60a06e0be85f294cfb22be50941",
+       "a_output": "velocity",
+       "a_problem": "734600206a4cc647e6e470b4962fcf3ce53dbc84de0ea816541f813a51df16fa",
+       "a_provider": "openfoam",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "6cb14c13c377fa840c2cf7a9f84ee256fd31ca1b61ef22be918203cee670759b",
+       "b_output": "velocity",
+       "b_problem": "7bba1cd929fd8095443e9946b0f15f7c21f41ce16fbab62d20817a38ffcac550",
+       "b_provider": "su2",
+       "b_selection": "4df175f874ceea86878aa7d6d9af428dfc5e8ca137985a9b87cb73c635dd017c",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 40x40, water 20 C from CoolProp 8.0.0",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity (x, y) of the lid-driven cavity, WHOLE FIELD, 40x40",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "0.00024547186190259084",
+       "max_relative": "1.9845896907056364",
+       "points": 3200,
+       "provider_comparison_digest": "074aeb77b09436f1508dd7016792fa3648e5cf3b1096dadf8117b25cf19cda7e",
+       "values_digest": "b88c82d937c15e021d216b2549ec08a101348ef18c434ef93d1c562a844c725c",
+       "within_tolerance": false
+      }
+     },
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "62cf8fcb7303750db122e836a92647448bf97d8f8530672b940ccb38a358fcf4",
+      "kind": "provider_comparison",
+      "note": "whole field 80x80: max difference 0.2393 of lid speed at y/L=0.994",
+      "outcome": "not_met",
+      "record": {
+       "a_identity": "ed03545fa4d80ce19a16e4a4cd40e53cc0888f28e140203407bbca16ca9001c1",
+       "a_output": "velocity",
+       "a_problem": "e17a7e73e407ecf4670e278fbd494084721b210a96852c18ed59b8ecd930d6ca",
+       "a_provider": "openfoam",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "9b41b967e12b7490213dd0f8127d8581233a45f156ad522c67d5b3445574214c",
+       "b_output": "velocity",
+       "b_problem": "eea1a5ca2584f9210b61387d4ac5e59323d5136f081aace864e972fd605b77aa",
+       "b_provider": "su2",
+       "b_selection": "07e12c2857bb4064f0d31a76ad5f782770b63126ad2f89566b79cbfe042c071e",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 80x80, water 20 C from CoolProp 8.0.0",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity (x, y) of the lid-driven cavity, WHOLE FIELD, 80x80",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "0.0002401069729585609",
+       "max_relative": "1.9955673934746279",
+       "points": 12800,
+       "provider_comparison_digest": "ddf05356a1aa9a3950ab4369a52bbd9912956a6b773fa93a850f474253ef4fce",
+       "values_digest": "74c94e4fd3b17f1b9c59b93680970879cb7d68cde6d343f084f44419b05959c3",
+       "within_tolerance": false
+      }
+     },
+     {
+      "classification": "post_hoc_solver_corroboration_not_validation",
+      "digest": "8e8757bffd5368defbc7ed576876b1754e5b533bdedb09aff8a41cc7d94d7557",
+      "kind": "provider_comparison",
+      "note": "POST HOC lower half 20x20",
+      "outcome": "not_met",
+      "record": {
+       "a_identity": "705bd60d5768161b7fb02021a564d0966338a8c68aaf4b636d998e6f5d89308e",
+       "a_output": "velocity",
+       "a_problem": "b12789c09c931001f21f1130efc06f5c9460bcb0ca7fd5673e9815a69b037497",
+       "a_provider": "openfoam",
+       "a_selection": "60f9bbc15c8ae0728f4553021c2bdb4208807bbb6af652cf30015a275332e536",
+       "b_identity": "e90b70e9d9d7e1117b7687cc74dd297bbf14fd0498d2c56eef2ccbb27d2b8aaf",
+       "b_output": "velocity",
+       "b_problem": "e2531141fec029c92be634cd52859f8aec19a0291375bfd145d6125e76aa8629",
+       "b_provider": "su2",
+       "b_selection": "23964eb55e07e2b7e1855598a24e96d75a015d72e4aca2655f94822ae2a016a2",
+       "classification": "post_hoc_solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 20x20",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity, LOWER HALF y < L/2 (region chosen POST HOC, after the whole-field result), 20x20",
+        "post_hoc": true,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "4.921712722819464e-05",
+       "max_relative": "1.864916225006107",
+       "points": 400,
+       "provider_comparison_digest": "fe53bd4d8d218abd136edb9df5367729de4e6a62d4a70e5ff114dfbe9f9ebb47",
+       "values_digest": "b337ab38c1a4496f0e345eece07907751f7122aadeb169d90db3084834cbf59c",
+       "within_tolerance": false
+      }
+     },
+     {
+      "classification": "post_hoc_solver_corroboration_not_validation",
+      "digest": "222758f9606e750b46af75265e1778577782b1b75f692f449c78171716376623",
+      "kind": "provider_comparison",
+      "note": "POST HOC lower half 40x40",
+      "outcome": "met",
+      "record": {
+       "a_identity": "f31ac9230895447f925e0effd08223c777d8e60a06e0be85f294cfb22be50941",
+       "a_output": "velocity",
+       "a_problem": "734600206a4cc647e6e470b4962fcf3ce53dbc84de0ea816541f813a51df16fa",
+       "a_provider": "openfoam",
+       "a_selection": "b9326ffea9b8839e6b092b68810b5add0793f5317ff45ceab36f8a3694bf5c2a",
+       "b_identity": "6cb14c13c377fa840c2cf7a9f84ee256fd31ca1b61ef22be918203cee670759b",
+       "b_output": "velocity",
+       "b_problem": "7bba1cd929fd8095443e9946b0f15f7c21f41ce16fbab62d20817a38ffcac550",
+       "b_provider": "su2",
+       "b_selection": "cceb845a4c8a3c8d9de6186d96db094b935b04940c4ad2090d2053383d38bace",
+       "classification": "post_hoc_solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 40x40",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity, LOWER HALF y < L/2 (region chosen POST HOC, after the whole-field result), 40x40",
+        "post_hoc": true,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "2.6919010877184005e-05",
+       "max_relative": "1.9318939826452588",
+       "points": 1600,
+       "provider_comparison_digest": "25b1a6d362c219057942bb1b36aa9703c3f91f559c3976ae8ec53481014728ba",
+       "values_digest": "d944725861b59e6cf8d8e50248e94cc8785a23129e594c0c8d93a218f989e12b",
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "post_hoc_solver_corroboration_not_validation",
+      "digest": "7eaf5c007dae08cfbd2ad096d5d99dbdddf07ab76e8e74999f020687b3b73c2c",
+      "kind": "provider_comparison",
+      "note": "POST HOC lower half 80x80",
+      "outcome": "met",
+      "record": {
+       "a_identity": "ed03545fa4d80ce19a16e4a4cd40e53cc0888f28e140203407bbca16ca9001c1",
+       "a_output": "velocity",
+       "a_problem": "e17a7e73e407ecf4670e278fbd494084721b210a96852c18ed59b8ecd930d6ca",
+       "a_provider": "openfoam",
+       "a_selection": "b94c25e04d15a6de8d3f639900f60abf49104e0f04d0417a05098f51f6b40997",
+       "b_identity": "9b41b967e12b7490213dd0f8127d8581233a45f156ad522c67d5b3445574214c",
+       "b_output": "velocity",
+       "b_problem": "eea1a5ca2584f9210b61387d4ac5e59323d5136f081aace864e972fd605b77aa",
+       "b_provider": "su2",
+       "b_selection": "b1bd3953c4e048942d74aa19537580ee801911d1af1dd61391faa1657af56eee",
+       "classification": "post_hoc_solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 3.010185238558101e-05,
+         "schema": "quantity/1",
+         "units": "meter / second"
+        },
+        "context": "Re=100, 80x80",
+        "mapping": "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners",
+        "observable": "cell-centre velocity, LOWER HALF y < L/2 (region chosen POST HOC, after the whole-field result), 80x80",
+        "post_hoc": true,
+        "relative_tolerance": 0.0,
+        "unit": "m/s"
+       },
+       "max_absolute": "1.4486830440443079e-05",
+       "max_relative": "1.9896150945302513",
+       "points": 6400,
+       "provider_comparison_digest": "06cc4c8500d6e2c45aae8c06169f21f9af92f18190e8dd703abd63914ba93db2",
+       "values_digest": "96914565dc9aac5df26339b83b402b28528d604ab60bc251f36b8ed5e8f48c32",
+       "within_tolerance": true
+      }
+     }
+    ],
+    "level": 5,
+    "name": "independent_provider_corroboration",
+    "note": "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "numerical_benchmark_comparison_not_validation_grant",
+      "digest": "83584c171bf8e306d41234b23d9bf58a5c78b69071fad1a5827c079f667ee979",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "numerical_benchmark_comparison_not_validation_grant",
+       "compared_identity": "f0982ac02859f32dc424f8ceb5290fcedbcba516c820bfbf10399e445de970e7",
+       "criterion": {
+        "criterion_id": "ghia_openfoam_80",
+        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+        "metric": "max_absolute_error",
+        "post_hoc": false,
+        "quantity": "centerline_velocity_over_lid_speed",
+        "tolerance": {
+         "magnitude": 0.02,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "ca4ae65b4ca29d1aeefd999308e06e77f3fe074a8e39bdbf51ec467b7c15514c",
+       "note": "openfoam 80x80: max |u - Ghia| = 0.0044, max |v - Ghia| = 0.0090 (of lid speed)",
+       "outcome": "met",
+       "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+       "reference_kind": "benchmark_dataset",
+       "value": {
+        "magnitude": 0.00902753705942319,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "numerical_benchmark_comparison_not_validation_grant",
+      "digest": "fb74b2cb1e4ddf4da3e232661324ea874a35387e9e97b3b766b3b3afa0991038",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "numerical_benchmark_comparison_not_validation_grant",
+       "compared_identity": "0cd0e345bb13fabac0de939105cb1323c341abd8ae5b0720847d62ac3c2eab31",
+       "criterion": {
+        "criterion_id": "ghia_su2_80",
+        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+        "metric": "max_absolute_error",
+        "post_hoc": false,
+        "quantity": "centerline_velocity_over_lid_speed",
+        "tolerance": {
+         "magnitude": 0.02,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "c76b1af4d90e955068b7728e34f683e51a6e20fc0ce0a77a51917551d9ed738f",
+       "note": "su2 80x80: max |u - Ghia| = 0.0112, max |v - Ghia| = 0.0070 (of lid speed)",
+       "outcome": "met",
+       "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+       "reference_kind": "benchmark_dataset",
+       "value": {
+        "magnitude": 0.011210356165600205,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      }
+     }
+    ],
+    "level": 6,
+    "name": "published_numerical_benchmark",
+    "note": "Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed fixed before the run: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation",
+    "status": "reached"
+   },
+   {
+    "evidence": [],
+    "level": 7,
+    "name": "experimental_validation",
+    "note": "no experimental data for this cavity was integrated",
+    "status": "not_available"
+   }
+  ],
+  "reference_level_reached": "published_numerical_benchmark",
+  "verification_reached": 1
+ }
+}

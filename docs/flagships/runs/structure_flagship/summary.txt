@@ -1,0 +1,45 @@
+SYSTEM
+  Heated aluminium plate, constrained, 80x16 P1 mesh (flagship)
+EXECUTION
+  SUCCEEDED
+KEY OUTPUTS
+  Hot-end temperature: 351.054 kelvin   [uncertainty UNKNOWN (not quantified)]
+  Sink-end temperature: 303.15 kelvin   [uncertainty UNKNOWN (not quantified)]
+  Max displacement (FEniCSx): 3.65392e-05 meter   [uncertainty UNKNOWN (not quantified)]
+  Max displacement (CalculiX): 3.65408e-05 meter   [uncertainty UNKNOWN (not quantified)]
+  Max displacement (Code_Aster): 3.65392e-05 meter   [uncertainty UNKNOWN (not quantified)]
+  Mid-plate axial stress (FEniCSx): -5.52075e+07 pascal   [uncertainty UNKNOWN (not quantified)]
+  Mid-plate axial stress (CalculiX): -5.52075e+07 pascal   [uncertainty UNKNOWN (not quantified)]
+  Mid-plate axial stress (Code_Aster): -5.52075e+07 pascal   [uncertainty UNKNOWN (not quantified)]
+  Peak von Mises (FEniCSx): 5.98166e+07 pascal   [uncertainty UNKNOWN (not quantified)]
+  Peak von Mises (CalculiX): 5.99678e+07 pascal   [uncertainty UNKNOWN (not quantified)]
+  Max |displacement| difference FEniCSx-CalculiX: 8.4093e-09 meter   [uncertainty UNKNOWN (not quantified)]
+  Max |displacement| difference FEniCSx-Code_Aster: 1.06726e-18 meter   [uncertainty UNKNOWN (not quantified)]
+  Max |stress| difference CalculiX-Code_Aster: 232364 pascal   [uncertainty UNKNOWN (not quantified)]
+CONSTRAINTS
+  b_disp (max_displacement): SATISFIED  (margin 6.346e-05 meter)
+  b_vm (max_von_mises): SATISFIED  (margin 7.768e+07 pascal)
+CONSERVATION
+  thermal_energy: closed residual 6.823e-11 watt (tolerance 4.000e-06)
+VERIFICATION
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']
+  L2 reached: heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, fixed before the run; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic
+  L3 reached: evidence from OTHER requests for the two exact uniform-temperature limits (request digests a957a5497dd7.., d555683f47c1..) and from this run for bar theory: uniform_free_exact MET (2.6e-13 vs 1e-06); uniform_constrained_exact MET (2.4e-13 vs 1e-06); bar_theory_mid_plate MET (2.6e-09 vs 0.03)
+  L4 attempted not reached: four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated
+  L5 reached: three structural implementations agree on displacement (and CalculiX/Code_Aster on element stress) within tolerances declared before the run: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation
+  L6 not available: no published thermo-structural numerical benchmark was integrated for this problem
+  L7 not available: no measured deformation or stress data for this plate exists
+REFERENCE COMPARISONS
+  analytic_limit_comparison_verifies_implementation_only: uniform_free_exact MET (2.571e-13 dimensionless; tolerance 1e-06 dimensionless)
+  analytic_limit_comparison_verifies_implementation_only: uniform_constrained_exact MET (2.445e-13 dimensionless; tolerance 1e-06 dimensionless)
+  analytic_limit_comparison_verifies_implementation_only: bar_theory_mid_plate MET (2.637e-09 dimensionless; tolerance 0.03 dimensionless)
+UNCERTAINTY
+  known input uncertainty: none stated
+  UNKNOWN input uncertainty: heat flux and sink temperature (declared), stress-free temperature (declared), E, nu, alpha, k (ASSUMED illustrative records), plate thickness and geometry (declared)
+  model discrepancy: NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)
+  model applicability: thermal solution checked against the declared property range [250.0, 450.0] K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)
+  benchmark applicability: exact analytic limits and a bar-theory estimate were used; both are analytic references, not numerical benchmarks and not experiments
+SCIENTIFIC STATUS
+  insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
+TRACE
+  complete

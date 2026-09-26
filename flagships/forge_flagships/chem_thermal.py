@@ -34,7 +34,7 @@ import numpy as np
 
 from engcore.engineering import (
     EnvelopeBound, EvidenceLink, LevelEntry, LevelStatus, PredeclaredCriterion, ReferenceCondition, ReferenceRecord, UncertaintyStatement, VerificationLadder,
-    build_summary, compare_to_reference,
+    build_summary, compare_to_reference, contract_integrity_entry,
 )
 from engcore.execution.multiphysics import InitialStateValue
 from engcore.materials import FluidIdentity
@@ -90,8 +90,11 @@ def load_hess() -> tuple[ReferenceRecord, dict]:
         (ReferenceCondition("temperature", 298.15, "K"), ReferenceCondition("pressure", 101325.0, "Pa")), (("lower_heating_value", "kJ/mol"),),
         (("lower_heating_value", (-heats["chase1998"], -heats["codata_with_manion"])),), src,
         "Hess's law from WebBook gas-phase formation enthalpies (Chase 1998: CH4 -74.87, CO2 -393.52, H2O -241.83 kJ/mol; CODATA CO2/H2O with Manion 2002 CH4 -74.6): "
-        f"{heats}; page sha256 {list(d['source_page_digests'].values())[0][:12]}.. and 2 more; excerpt file sha256 {hashlib.sha256(raw).hexdigest()[:16]}..",
-        (EnvelopeBound("temperature", 290.0, 300.0, "K"), EnvelopeBound("pressure", 9e4, 1.1e5, "Pa")))
+        f"{heats}; page sha256 {list(d['source_page_digests'].values())[0][:12]}.. and 2 more; excerpt file sha256 {hashlib.sha256(raw).hexdigest()[:16]}... "
+        "The applicability envelope (290-300 K, 0.9-1.1 bar) is AUTHORED by this flagship around the table's 298.15 K / 1 atm standard state, not stated by NIST; "
+        "the comparison is evaluated at 300 K, the inclusive upper edge of that envelope",
+        (EnvelopeBound("temperature", 290.0, 300.0, "K"), EnvelopeBound("pressure", 9e4, 1.1e5, "Pa")), role="data_consistency",
+        comparable_quantities=("lower_heating_value",))
     return ref, d
 
 
@@ -261,8 +264,12 @@ def build_chemistry(registry=None, *, variant: str = "nominal") -> Chemistry:
         if not rec.succeeded:
             return NodeOutcome.failed(rec.reason, provider_records=(ct_ref(rec),))
         ex.records[call.execution_identity] = rec
+        lo, hi = q(rec, "thermo_T_min").magnitude, q(rec, "thermo_T_max").magnitude
+        T = q(rec, "temperature").magnitude
+        rep = ApplicabilityReport("thermo_range", "within" if lo <= T <= hi else "outside", digest_of({"T": T, "range": [lo, hi]}),
+                                  f"equilibrium temperature {T:.1f} K against the species thermodynamic data range [{lo:g}, {hi:g}] K")
         return NodeOutcome("succeeded", {"T_equilibrium": OutputValue(q(rec, "temperature"), UNKNOWN, "HP equilibrium of the kinetic initial state")}, provider_records=(ct_ref(rec),),
-                           delegated_record_digest=rec.digest)
+                           applicability=(rep,), delegated_record_digest=rec.digest)
 
     def approach(call):
         eq = call.value("T_equilibrium").magnitude_in("K")
@@ -278,15 +285,28 @@ def build_chemistry(registry=None, *, variant: str = "nominal") -> Chemistry:
             "final_temperature_change": OutputValue(Quantity(abs(call.value("T_c").magnitude_in("K") - call.value("T_b").magnitude_in("K")), "K"), UNKNOWN, "two finest integrator settings")})
 
     def lhv(call):
-        rec = cant.equilibrium(gri, LHV_MIXTURE, call.value("T_ref"), call.value("p"), constraint="TP", species=("CO2", "H2O", "CH4"))
-        if not rec.succeeded:
-            return NodeOutcome.failed(rec.reason, provider_records=(ct_ref(rec),))
+        """Complete combustion of CH4 + 2 O2 (water as vapour) at the mechanism's LOWEST stored temperature (300 K), not at the reference's 298.15 K: 298.15 K lies below the range the
+        mechanism bytes store, so the applicability check would (rightly) be 'outside'.  The heating value at 310 K gives the local temperature slope, from which the size of the 1.85 K offset to the reference
+        temperature is BOUNDED (reported, from the same thermodynamic data, not used to adjust the value)."""
+        T0 = call.value("T_ref")
+        rec = cant.equilibrium(gri, LHV_MIXTURE, T0, call.value("p"), constraint="TP", species=("CO2", "H2O", "CH4"))
+        rec2 = cant.equilibrium(gri, LHV_MIXTURE, Quantity(T0.magnitude_in("K") + 10.0, "K"), call.value("p"), constraint="TP", species=("CO2", "H2O", "CH4"))
+        for r in (rec, rec2):
+            if not r.succeeded:
+                return NodeOutcome.failed(r.reason, provider_records=(ct_ref(r),))
         ex.records[call.execution_identity] = rec
-        d_h = (q(rec, "h_mole_initial").magnitude - q(rec, "h_mole").magnitude) * 3.0   # J per kmol of CH4 (3 kmol of mixture per kmol CH4)
+        heat = lambda r: (q(r, "h_mole_initial").magnitude - q(r, "h_mole").magnitude) * 3.0 / 1e6      # kJ per mol of CH4 (3 mol of mixture per mol CH4)
+        v0, v1 = heat(rec), heat(rec2)
+        slope = (v1 - v0) / 10.0
         conversion = 1.0 - q(rec, "X_CH4").magnitude / LHV_MIXTURE["CH4"]
-        return NodeOutcome("succeeded", {"lower_heating_value": OutputValue(Quantity(d_h / 1e6, "kJ/mol"), UNKNOWN, "complete combustion at 298.15 K, water as vapour"),
-                                         "fuel_conversion": OutputValue(Quantity(conversion, "dimensionless"), UNKNOWN, "1 - X_CH4/X_CH4_0 at TP equilibrium")},
-                           provider_records=(ct_ref(rec),), delegated_record_digest=rec.digest)
+        lo, hi = q(rec, "thermo_T_min").magnitude, q(rec, "thermo_T_max").magnitude
+        T = T0.magnitude_in("K")
+        rep = ApplicabilityReport("thermo_range", "within" if lo <= T <= hi else "outside", digest_of({"T": T, "range": [lo, hi]}),
+                                  f"evaluation temperature {T:.2f} K against the species thermodynamic data range [{lo:g}, {hi:g}] K")
+        outs = {"lower_heating_value": Quantity(v0, "kJ/mol"), "lhv_temperature_slope": Quantity(slope, "kJ/(mol*K)"),
+                "temperature_offset_bound": Quantity(abs(slope) * (T - 298.15), "kJ/mol"), "fuel_conversion": Quantity(conversion, "dimensionless")}
+        return NodeOutcome("succeeded", {k: OutputValue(v, UNKNOWN, f"cantera {ct_s.version} TP equilibrium at {T:g} K, water as vapour") for k, v in outs.items()},
+                           provider_records=(ct_ref(rec), ct_ref(rec2)), applicability=(rep,), delegated_record_digest=rec.digest)
 
     cfg = {"mechanism": gri.sha256, "composition": sorted([k, repr(v)] for k, v in comp.items()), "cantera": ct_s.version, "tespy": ts_s.version, "variant": variant}
     auth = {"adiabatic": CallbackAuthority("chem-adiabatic-equilibrium", adiabatic, config=cfg, kind="provider", deterministic=True),
@@ -323,9 +343,12 @@ def build_chemistry(registry=None, *, variant: str = "nominal") -> Chemistry:
         NodeSpec("energy_balance", NodeKind.AGGREGATE, auth["balance"].ref, (NodeOutputSpec("residual", "W"), NodeOutputSpec("relative_residual", "dimensionless")),
                  inputs=(NodeInput("Q_duty", "heat_duty", "Q_duty", "W"), NodeInput("heat_absorbed", "coolant_loop", "heat_absorbed", "W")), configuration_digest=conf),
         NodeSpec("equilibrium_limit", NodeKind.PROVIDER_EXECUTION, auth["limit"].ref, (NodeOutputSpec("T_equilibrium", "K"),),
-                 literals=(lit("T_start", T_KINETIC_START, "K", "declared kinetic initial temperature"), P), provider_binding_ids=binds_c, configuration_digest=conf),
-        NodeSpec("heat_of_combustion", NodeKind.PROVIDER_EXECUTION, auth["lhv"].ref, (NodeOutputSpec("lower_heating_value", "kJ/mol"), NodeOutputSpec("fuel_conversion", "dimensionless")),
-                 literals=(lit("T_ref", 298.15, "K", "standard reference temperature"), P), provider_binding_ids=binds_c, configuration_digest=conf)]
+                 literals=(lit("T_start", T_KINETIC_START, "K", "declared kinetic initial temperature"), P), provider_binding_ids=binds_c, applicability_checks=("thermo_range",),
+                 configuration_digest=conf),
+        NodeSpec("heat_of_combustion", NodeKind.PROVIDER_EXECUTION, auth["lhv"].ref,
+                 tuple(NodeOutputSpec(n, u) for n, u in (("lower_heating_value", "kJ/mol"), ("lhv_temperature_slope", "kJ/(mol*K)"), ("temperature_offset_bound", "kJ/mol"), ("fuel_conversion", "dimensionless"))),
+                 literals=(lit("T_ref", 300.0, "K", "the mechanism's lowest stored thermodynamic temperature (the reference value is at 298.15 K, below it)"), P),
+                 provider_binding_ids=binds_c, applicability_checks=("thermo_range",), configuration_digest=conf)]
     for i, s in enumerate(KINETIC_SETTINGS):
         nodes.append(NodeSpec(f"kinetic_{i}", NodeKind.PROVIDER_EXECUTION, kin[i].ref,
                               tuple(NodeOutputSpec(n, u) for n, u in (("ignition_delay", "s"), ("T_final", "K"), ("max_heating_rate", "K/s"), ("fuel_remaining", "dimensionless"),
@@ -375,6 +398,32 @@ class ChemistryRun:
     uncertainty: Any = None
 
 
+#: level 3 is REACHED only if EVERY one of these checks ran and was met: a check that did not run is not a pass (removing evidence must not raise the level)
+LEVEL3_CHECKS = ("lhv_hess_law", "equilibrium_limit")
+
+
+def level3_entry(lhv_comparison, gap: float | None) -> LevelEntry:
+    """Level 3 from the Hess's-law comparison (None if that node produced nothing) and the kinetic-vs-equilibrium gap (None likewise)."""
+    links: list[EvidenceLink] = []
+    state: dict[str, str] = {}
+    if lhv_comparison is not None:
+        links.append(EvidenceLink.of_comparison(lhv_comparison))
+        state["lhv_hess_law"] = lhv_comparison.outcome
+    if gap is not None:
+        ok = gap <= EQUILIBRIUM_APPROACH_REL
+        links.append(EvidenceLink.of_record("equilibrium_limit", {"relative_gap": gap, "criterion": EQUILIBRIUM_APPROACH_REL},
+                                            "analytic_limit_comparison_verifies_implementation_only", "met" if ok else "not_met",
+                                            f"kinetic end state vs HP equilibrium of the same initial state: relative gap {gap:.2e} (criterion {EQUILIBRIUM_APPROACH_REL:g})"))
+        state["equilibrium_limit"] = "met" if ok else "not_met"
+    missing = [c for c in LEVEL3_CHECKS if c not in state]
+    reached = not missing and all(v == "met" for v in state.values())
+    text = {"lhv_hess_law": "heating value of methane vs Hess's law with evaluated NIST data",
+            "equilibrium_limit": "the kinetic reactor converges to the equilibrium it must approach (thermodynamic consistency of mechanism and integrator)"}
+    note = "; ".join(f"{text[c]}: " + (state[c].upper().replace("_", " ") if c in state else "NOT RUN (its node produced nothing)") for c in LEVEL3_CHECKS)
+    status = LevelStatus.REACHED if reached else LevelStatus.ATTEMPTED_NOT_REACHED if links else LevelStatus.NOT_ATTEMPTED
+    return LevelEntry(3, status, tuple(links), note)
+
+
 def _v(result, node: str, name: str) -> float | None:
     o = result.observable(f"{node}__{name}")
     return None if o.value is None else o.value.value.magnitude
@@ -390,50 +439,53 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
     conservation = assess_conservation(result, (BalanceSpec("heat_duty", (TermSource("cantera_duty", "heat_duty__Q_duty"),), (TermSource("water_absorbed", "coolant_loop__heat_absorbed"),),
                                                             Quantity(ENERGY_BALANCE_REL_TOL * (_v(result, "heat_duty", "Q_duty") or 1.0), "W")),))
     run = ChemistryRun(ch, result, report, constraints, conservation)
-    entries = [LevelEntry(1, LevelStatus.REACHED, (EvidenceLink("preflight_and_identity", report.digest, "contract_integrity", "met", f"preflight {report.status.value}"),),
-                          "units, provider bindings, mechanism bytes (by digest inside each provider identity) and identities checked")]
+    entries = [contract_integrity_entry(report, result)]
     el = [_v(result, n, "element_residual") for n in ("adiabatic_equilibrium", "cooled_equilibrium")]
     closed = [c for c in conservation if c.status == "closed"]
     if all(x is not None for x in el) and closed:
         ok = max(el) <= ELEMENT_TOL
         entries.append(LevelEntry(2, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED,
-                                  (EvidenceLink("element_balance", digest_of(el), "conservation_residual", "met" if ok else "not_met", f"max relative change of C, H, O, N mass fractions {max(el):.2e} (criterion {ELEMENT_TOL:g})"),
-                                   EvidenceLink("conservation_assessment", digest_of(closed[0].to_dict()), "conservation_residual", "met", f"heat duty: Cantera vs TESPy residual {closed[0].residual.magnitude:.2e} W")),
-                                  "elemental mass conserved through both equilibrations; the heat the chemistry releases equals the heat the water absorbs (criteria fixed before the run)"))
+                                  (EvidenceLink.of_record("element_balance", {"max_relative_change_by_node": dict(zip(("adiabatic_equilibrium", "cooled_equilibrium"), el)), "criterion": ELEMENT_TOL},
+                                                          "conservation_residual", "met" if ok else "not_met", f"max relative change of C, H, O, N mass fractions {max(el):.2e} (criterion {ELEMENT_TOL:g})"),
+                                   EvidenceLink.of_record("conservation_assessment", closed[0].to_dict(), "conservation_residual", "met", f"heat duty: Cantera vs TESPy residual {closed[0].residual.magnitude:.2e} W")),
+                                  "elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat "
+                                  "the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria fixed before the run"))
     else:
         entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(f"{c.balance_id}: {c.status}" for c in conservation) or "not assessable"))
     hess, _ = load_hess()
-    comparisons, references, links3 = [], [], []
+    comparisons, references = [], []
     lhv, gap = _v(result, "heat_of_combustion", "lower_heating_value"), _v(result, "equilibrium_approach", "relative_gap")
-    ok3 = True
+    lhv_cmp = None
     if lhv is not None:
         crit = PredeclaredCriterion("lhv_hess_law", "lower_heating_value", "absolute_difference", Quantity(LHV_TOL_KJ_PER_MOL, "kJ/mol"),
                                     "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (fixed before the first run)")
-        c = compare_to_reference(hess, crit, {"temperature": Quantity(298.15, "K"), "pressure": Quantity(P_ATM, "Pa")}, value=Quantity(abs(lhv - hess.values("lower_heating_value")[0]), "kJ/mol"),
-                                 compared_identity=result.receipt("heat_of_combustion").execution_identity_digest,
-                                 note=f"Cantera/GRI-Mech 3.0 thermo {lhv:.3f} kJ/mol vs Hess's law {hess.values('lower_heating_value')[0]:.3f} (Chase 1998) / {hess.values('lower_heating_value')[1]:.3f} (CODATA with Manion 2002)")
-        comparisons.append(c)
+        bound = _v(result, "heat_of_combustion", "temperature_offset_bound")
+        lhv_cmp = compare_to_reference(hess, crit, {"temperature": Quantity(300.0, "K"), "pressure": Quantity(P_ATM, "Pa")}, value=Quantity(abs(lhv - hess.values("lower_heating_value")[0]), "kJ/mol"),
+                                       compared_identity=result.receipt("heat_of_combustion").execution_identity_digest,
+                                       note=f"Cantera/GRI-Mech 3.0 thermo at 300 K {lhv:.3f} kJ/mol vs Hess's law at 298.15 K {hess.values('lower_heating_value')[0]:.3f} (Chase 1998) / "
+                                            f"{hess.values('lower_heating_value')[1]:.3f} (CODATA with Manion 2002); the 1.85 K offset is bounded by {bound:.3f} kJ/mol from the same thermodynamic data")
+        comparisons.append(lhv_cmp)
         references.append(hess)
-        links3.append(EvidenceLink.of_comparison(c))
-        ok3 = ok3 and c.outcome == "met"
-    if gap is not None:
-        ok = gap <= EQUILIBRIUM_APPROACH_REL
-        links3.append(EvidenceLink("equilibrium_limit", digest_of({"gap": gap}), "analytic_limit_comparison_verifies_implementation_only", "met" if ok else "not_met",
-                                   f"kinetic end state vs HP equilibrium of the same initial state: relative gap {gap:.2e} (criterion {EQUILIBRIUM_APPROACH_REL:g})"))
-        ok3 = ok3 and ok
-    entries.append(LevelEntry(3, LevelStatus.REACHED if links3 and ok3 else (LevelStatus.ATTEMPTED_NOT_REACHED if links3 else LevelStatus.NOT_ATTEMPTED), tuple(links3),
-                              "heating value of methane vs Hess's law with evaluated NIST data; the kinetic reactor converges to the equilibrium it must approach (thermodynamic consistency of mechanism and integrator)"))
+    entries.append(level3_entry(lhv_cmp, gap))
     ic, fc = _v(result, "integrator_study", "ignition_relative_change"), _v(result, "integrator_study", "final_temperature_change")
     if ic is not None:
         ok = ic <= INTEGRATOR_IGNITION_REL and fc <= INTEGRATOR_T_ABS_K
         post = _v(result, "integrator_study", "ignition_relative_change_refined_post_hoc")
-        entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED,
-                                  (EvidenceLink("integrator_study", digest_of({"ic": ic, "fc": fc}), "discretisation_convergence", "met" if ok else "not_met",
-                                                f"ignition delay (discrete maximum of dT/dt) changed {ic:.3%} between the two finest settings (criterion {INTEGRATOR_IGNITION_REL:.0%}); final temperature changed {fc:.2e} K (criterion {INTEGRATOR_T_ABS_K} K)"),
-                                   EvidenceLink("integrator_study_post_hoc", digest_of({"post": post}), "post_hoc_discretisation_convergence", "met" if post <= INTEGRATOR_IGNITION_REL else "not_met",
-                                                f"POST HOC: with the ignition time refined by a parabola through the three samples around the maximum the change is {post:.3%}")),
-                                  "three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.5-7 % of the "
-                                  "ignition delay, so it cannot be satisfied by a converged solution; the outcome is reported as it came out, with a post hoc refined reading beside it"))
+        links4 = [EvidenceLink.of_record("integrator_study", {"ignition_relative_change": ic, "final_temperature_change_K": fc, "criteria": {"ignition_relative": INTEGRATOR_IGNITION_REL, "final_temperature_K": INTEGRATOR_T_ABS_K}},
+                                         "discretisation_convergence", "met" if ok else "not_met",
+                               f"ignition delay (discrete maximum of dT/dt) changed {ic:.3%} between the two finest settings (criterion {INTEGRATOR_IGNITION_REL:.0%}); final temperature changed {fc:.2e} K (criterion {INTEGRATOR_T_ABS_K} K)")]
+        if not ok and post is not None:
+            links4.append(EvidenceLink.of_record("integrator_study_post_hoc", {"refined_ignition_relative_change": post, "criterion": INTEGRATOR_IGNITION_REL},
+                                                 "post_hoc_discretisation_convergence", "met" if post <= INTEGRATOR_IGNITION_REL else "not_met",
+                                                 f"POST HOC: with the ignition time refined by a parabola through the three samples around the maximum the change is {post:.3%}"))
+        delay = _v(result, "kinetic_2", "ignition_delay")
+        spacings = [KINETIC_END_S / (s - 1) for _, _, s in KINETIC_SETTINGS]
+        spacing_text = (f"whose spacing ({min(spacings) * 1e3:.2g}-{max(spacings) * 1e3:.2g} ms) is itself {100 * min(spacings) / delay:.1f}-{100 * max(spacings) / delay:.1f} % of the ignition delay"
+                        if delay else "whose spacing is not compared with the ignition delay (no delay was produced)")
+        entries.append(LevelEntry(4, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links4),
+                                  "three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time " + spacing_text
+                                  + ("; the outcome is reported as it came out" if ok else ", so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, "
+                                     "with a post hoc refined reading beside it")))
     else:
         entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "the integrator study was not produced"))
     entries += [LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent chemistry provider exists in the ecosystem; the two chemistry solvers would share the mechanism and thermodynamic data"),
@@ -450,7 +502,7 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
         "KINETIC validity range is the authors' statement and is NOT established by Forge (the kinetic reactor is therefore a demonstration of execution and consistency only)",
         "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; it applies at 298.15 K, 1 atm and to gas-phase products only")
     run.summary = build_summary(
-        f"Jacketed stoichiometric methane/air reactor with a water cooling loop ({variant})", ch.request, result,
+        f"Jacketed stoichiometric methane/air reactor with a water cooling loop ({variant})", ch.request, result, references=tuple(dict.fromkeys(references)),
         outputs=[("Adiabatic flame temperature", "adiabatic_equilibrium__T_adiabatic"), ("CO2 mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_CO2"),
                  ("H2O mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_H2O"), ("CO mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_CO"),
                  ("NO mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_NO"), ("Heat to remove from the exhaust", "heat_duty__Q_duty"),
@@ -472,6 +524,6 @@ def negative_controls(registry=None) -> dict:
     for variant in ("missing_species", "below_thermo_range"):
         ch = build_chemistry(registry, variant=variant)
         res = SystemExecutor(ch.context).run(ch.request)
-        out[variant] = {"status": res.status.value, "nodes": {r.node_id: (r.status.value, (r.reason or "")[:160]) for r in res.node_receipts if not r.node_id.startswith(("env.", "mat.", "constraint."))
+        out[variant] = {"status": res.status.value, "nodes": {r.node_id: (r.status.value, (r.reason or "")[:300]) for r in res.node_receipts if not r.node_id.startswith(("env.", "mat.", "constraint."))
                                                               and r.status.value != "succeeded"}}
     return out

@@ -1,0 +1,49 @@
+{
+ "access_url": "",
+ "authors": "textbook thermoelasticity (derived)",
+ "comparable_quantities": [
+  "max_displacement_error_relative"
+ ],
+ "conditions": [
+  {
+   "name": "temperature_rise",
+   "unit": "K",
+   "value": "40.0"
+  },
+  {
+   "name": "thermal_strain",
+   "unit": "dimensionless",
+   "value": "0.0009440000000000001"
+  }
+ ],
+ "data": [],
+ "envelope": [
+  {
+   "high": "300.0",
+   "low": "0.1",
+   "name": "temperature_rise",
+   "unit": "K"
+  },
+  {
+   "high": "0.01",
+   "low": "0.0",
+   "name": "thermal_strain",
+   "unit": "dimensionless"
+  }
+ ],
+ "extraction": "closed form; roller/symmetry restraints admit exactly this field",
+ "kind": "analytic_reference",
+ "license_status": "derived relation, not copied data",
+ "publication": "small-strain linear thermoelasticity",
+ "quantities": [
+  [
+   "max_displacement_error_relative",
+   "dimensionless"
+  ]
+ ],
+ "reference_id": "uniform-free-thermal-expansion",
+ "role": "implementation_limit",
+ "schema": "engcore.engineering.reference/1",
+ "source_digest": "",
+ "title": "Free thermal growth of a uniformly heated isotropic body: u = alpha dT x"
+}

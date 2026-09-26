@@ -1,0 +1,47 @@
+SYSTEM
+  Cell module with liquid cooling, 57-day declared profile (overload)
+EXECUTION
+  FAILED
+KEY OUTPUTS
+  Peak cell temperature, fresh day: FAILED: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused   [uncertainty not available]
+  Peak cell temperature, day 56 (aged): BLOCKED: blocked by ['day_fresh']   [uncertainty not available]
+  Coolant temperature rise, fresh day (peak): FAILED: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused   [uncertainty not available]
+  Module heat removed, fresh day: FAILED: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused   [uncertainty not available]
+  End-of-discharge voltage, fresh day: FAILED: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused   [uncertainty not available]
+  End-of-discharge voltage, aged cell: BLOCKED: blocked by ['day_fresh']   [uncertainty not available]
+  Voltage shift caused by degradation: BLOCKED: blocked by ['day_control', 'day_fresh']   [uncertainty not available]
+  Voltage shift caused by environment drift: BLOCKED: blocked by ['day_control', 'day_fresh']   [uncertainty not available]
+  End SOC, fresh day: FAILED: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused   [uncertainty not available]
+  Minimum SOC, aged day: BLOCKED: blocked by ['day_fresh']   [uncertainty not available]
+  Capacity fade after 56 days: BLOCKED: blocked by ['day_fresh']   [uncertainty not available]
+  Peak cell heat shift caused by degradation: BLOCKED: blocked by ['day_control', 'day_fresh']   [uncertainty not available]
+CONSTRAINTS
+  b_fade (max_capacity_fade): UNAVAILABLE
+  b_soc_aged (min_soc): UNAVAILABLE
+  b_soc_fresh (min_soc): UNAVAILABLE
+  b_tmax_aged (max_cell_temperature): UNAVAILABLE
+  b_tmax_fresh (max_cell_temperature): UNAVAILABLE
+CONSERVATION
+  module_heat_fresh: incomplete (missing: generated (module_heat_generated_fresh: failed), removed (module_heat_removed_fresh: failed))
+  module_heat_aged: incomplete (missing: generated (module_heat_generated_aged: blocked), removed (module_heat_removed_aged: blocked))
+  module_heat_control: incomplete (missing: generated (module_heat_generated_control: failed), removed (module_heat_removed_control: failed))
+VERIFICATION
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['aging:fade_mapping_range', 'day_aged:cell_temperature_window', 'day_aged:soc_window', 'day_control:cell_temperature_window', 'day_control:soc_window', 'day_fresh:cell_temperature_window', 'day_fresh:soc_window']
+  L2 attempted not reached: module_heat_fresh: incomplete; module_heat_aged: incomplete; module_heat_control: incomplete
+  L3 not attempted: the coupled day produced no result to check against the first-law relation
+  L4 not attempted: window-size refinement is a separate set of BIG 12 requests (window_refinement_study); not run here, or this run did not succeed
+  L5 not available: no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider and compare_providers refuses that pair as non-independent
+  L6 not available: no published numerical benchmark for this module/duty was integrated
+  L7 not available: no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed
+REFERENCE COMPARISONS
+  NOT AVAILABLE
+UNCERTAINTY
+  known input uncertainty: none stated
+  UNKNOWN input uncertainty: coolant inlet profile (declared), cell current profile (declared), initial state of charge (declared), contact resistance (ASSUMED), cells-in-module multiplicity (declared), fade-law constants (declared), PyBaMM Chen2020 parameters (provider-bundled literature data)
+  model discrepancy: NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)
+  model applicability: cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge
+  benchmark applicability: no benchmark was used: the NASA PCoE Li-ion aging dataset (repository-pinned; 18650 cells) has a Forge-authored reference record with one envelope term (cell format) that this flagship cannot state for its parameter set, so its applicability is UNKNOWN and it is not compared
+SCIENTIFIC STATUS
+  insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
+TRACE
+  GAPS: observable is failed: ProviderRefusal: PyBaMM stopped early in [28800.0 second, 32400.0 second] (event); window refused

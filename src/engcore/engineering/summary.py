@@ -9,6 +9,7 @@ default), and an output whose uncertainty is UNKNOWN is printed as UNKNOWN, neve
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any, Sequence
 
@@ -21,7 +22,7 @@ from ..system_runtime import (
     Availability, ConstraintAssessment, ConservationAssessment, RunStatus, SystemRunRequest, SystemRunResult, trace_result, trust_handoff,
 )
 from .ladder import VerificationLadder
-from .reference import ReferenceComparison
+from .reference import ReferenceComparison, ReferenceRecord
 
 SUMMARY_SCHEMA = "engcore.engineering.summary/1"
 
@@ -66,6 +67,8 @@ class UncertaintyStatement:
     def __post_init__(self) -> None:
         if not str(self.model_discrepancy).strip() or not str(self.model_applicability).strip() or not str(self.benchmark_applicability).strip():
             raise InvalidScientificProblem("model discrepancy, model applicability and benchmark applicability must each be stated")
+        if not any(tok in self.model_discrepancy.upper() for tok in ("NOT QUANTIFIED", "UNKNOWN")):
+            raise InvalidScientificProblem("model discrepancy must be stated as UNKNOWN / NOT QUANTIFIED: this layer holds no quantified discrepancy record, and a number or 'none' here would read as zero")
 
     def to_dict(self) -> dict[str, Any]:
         return {"known_input_uncertainty": list(self.known_input_uncertainty), "unknown_input_uncertainty": list(self.unknown_input_uncertainty),
@@ -106,7 +109,9 @@ class EngineeringSummary:
                 "reference_comparisons": [c.to_dict() for c in self.comparisons], "uncertainty": self.uncertainty.to_dict(),
                 "scientific_status": self.scientific_status, "scientific_status_basis": self.scientific_status_basis,
                 "identities": [list(i) for i in self.identities], "providers": list(self.providers),
-                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "notes": list(self.notes)}
+                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "notes": list(self.notes),
+                #: the sha256 of ``summary.txt`` (the rendering of everything above), so the text a bundle ships cannot be edited apart from this record
+                "text_sha256": hashlib.sha256(self.render_text().encode("utf-8")).hexdigest()}
 
     @property
     def digest(self) -> str:
@@ -139,11 +144,25 @@ class EngineeringSummary:
 
 def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult, *, outputs: Sequence[tuple[str, str]],
                   constraints: Sequence[ConstraintAssessment] = (), conservation: Sequence[ConservationAssessment] = (),
-                  ladder: VerificationLadder, comparisons: Sequence[ReferenceComparison] = (), uncertainty: UncertaintyStatement,
-                  trace_observable: str, notes: Sequence[str] = ()) -> EngineeringSummary:
-    """Assemble the summary of ``result``.  ``outputs`` are (label, observable id) pairs the flagship declares as headline."""
+                  ladder: VerificationLadder, comparisons: Sequence[ReferenceComparison] = (), references: Sequence[ReferenceRecord] = (),
+                  uncertainty: UncertaintyStatement, trace_observable: str, notes: Sequence[str] = ()) -> EngineeringSummary:
+    """Assemble the summary of ``result``.  ``outputs`` are (label, observable id) pairs the flagship declares as headline.
+
+    Every reference comparison must name a reference that is supplied (so a bundle can ship it), and every ladder link that claims to be a
+    reference comparison must carry exactly one of the supplied comparisons."""
     if result.request_digest != request.digest:
         raise InvalidScientificProblem("the request is not the one this result was produced for")
+    supplied_refs = {r.digest for r in references}
+    for c in comparisons:
+        if c.reference_digest not in supplied_refs:
+            raise InvalidScientificProblem(f"comparison {c.criterion.criterion_id!r} names a reference that is not supplied with the summary (it cannot be bundled)")
+    supplied_cmps = {canonical_digest(c.to_dict()) for c in comparisons}
+    for entry in ladder.entries:
+        for link in entry.evidence:
+            if link.kind == "reference_comparison" and link.digest not in supplied_cmps:
+                raise InvalidScientificProblem(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
+    if result.trust_inputs.unknown_uncertainty_outputs and not uncertainty.unknown_input_uncertainty:
+        raise InvalidScientificProblem("outputs with UNKNOWN uncertainty exist, so the statement must name the UNKNOWN input uncertainty (an empty list would read as none)")
     key: list[KeyOutput] = []
     for label, obs_id in outputs:
         o = result.observable(obs_id)

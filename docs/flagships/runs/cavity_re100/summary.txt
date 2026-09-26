@@ -1,0 +1,49 @@
+SYSTEM
+  Lid-driven cavity, Re = 100, water 20 degC, ['20x20', '40x40', '80x80'] cells (re100)
+EXECUTION
+  SUCCEEDED
+KEY OUTPUTS
+  Water density: 998.207 kilogram / meter ** 3   [uncertainty UNKNOWN (not quantified)]
+  Lid velocity for the declared Re: 0.0010034 meter / second   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM max centerline error vs Ghia 20x20: 0.0126729 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 max u-centerline error vs Ghia 20x20: 0.0514271 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM vs SU2 whole-field max difference 20x20 (of lid speed): 0.260311 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  ...where the two differ most (y/L) 20x20: 0.975 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM max centerline error vs Ghia 40x40: 0.00270574 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 max u-centerline error vs Ghia 40x40: 0.0246283 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM vs SU2 whole-field max difference 40x40 (of lid speed): 0.244641 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  ...where the two differ most (y/L) 40x40: 0.9875 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM max centerline error vs Ghia 80x80: 0.00444171 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 max u-centerline error vs Ghia 80x80: 0.0112104 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM vs SU2 whole-field max difference 80x80 (of lid speed): 0.239295 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  ...where the two differ most (y/L) 80x80: 0.99375 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM u(0.5,0.5)/U 80x80: -0.208131 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 u(0.5,0.5)/U 80x80: -0.195174 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM vortex centre x/L 80x80: 0.61875 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  OpenFOAM vortex centre y/L 80x80: 0.74375 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 vortex centre x/L 80x80: 0.61875 dimensionless   [uncertainty UNKNOWN (not quantified)]
+  SU2 vortex centre y/L 80x80: 0.73125 dimensionless   [uncertainty UNKNOWN (not quantified)]
+CONSTRAINTS
+  b_flux_openfoam (max_midplane_flux): SATISFIED  (margin 0.0008573 dimensionless)
+  b_flux_su2 (max_midplane_flux): VIOLATED  (margin -0.005249 dimensionless)
+VERIFICATION
+  L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight
+  L2 attempted not reached: net flux through each mid-plane relative to U L (criterion 0.001, fixed before the run): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)
+  L3 not available: there is no closed-form solution of the cavity at Re = 100 to compare with
+  L4 attempted not reached: [20, 40, 80] cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place
+  L5 attempted not reached: OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only
+  L6 reached: Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed fixed before the run: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation
+  L7 not available: no experimental data for this cavity was integrated
+REFERENCE COMPARISONS
+  numerical_benchmark_comparison_not_validation_grant: ghia_openfoam_80 MET (0.009028 dimensionless; tolerance 0.02 dimensionless)
+  numerical_benchmark_comparison_not_validation_grant: ghia_su2_80 MET (0.01121 dimensionless; tolerance 0.02 dimensionless)
+UNCERTAINTY
+  known input uncertainty: none stated
+  UNKNOWN input uncertainty: fluid state (declared 20 degC, 1 atm), lid speed and cavity size (declared), water density and viscosity: CoolProp equation-of-state values, uncertainty not propagated
+  model discrepancy: NOT QUANTIFIED: incompressible laminar model, 2-D idealisation, no discretisation-error bound (only a grid study), each code's own scheme error
+  model applicability: laminar regime declared for Re < 1000 by both adapters; this case has Re = 100
+  benchmark applicability: Ghia et al. (1982) applies at Re = 100 only; this case is Re = 100
+SCIENTIFIC STATUS
+  insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
+TRACE
+  complete

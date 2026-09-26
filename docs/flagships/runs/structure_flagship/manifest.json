@@ -1,0 +1,79 @@
+{
+ "bundle_digest": "73da5e0bd9382ac9f708078a99225365f08408e9882dd52b28d4d9a57df6a5ba",
+ "files": [
+  [
+   "artifacts/flagship_calculix.vtu",
+   "18aa0da1e4bea052a3dfe0294ba3e74dba939d779bccaaeb5b5e43b12060aa4b"
+  ],
+  [
+   "artifacts/flagship_code_aster.vtu",
+   "91b71e3222dd8103752a8291f228ac2404adc11a8a278bb3000c99d04adb5495"
+  ],
+  [
+   "artifacts/flagship_fenicsx.vtu",
+   "c8ca871c20055a0eec94bf99c661edbaf7c75fda18f7e3170d60926cf0e90637"
+  ],
+  [
+   "artifacts/flagship_temperature.vtu",
+   "0d7b1e0643b07c8ac5366946a8869f352381838ae8c147fcafc14f4bf9f2f0a1"
+  ],
+  [
+   "plan.json",
+   "2b3af0a9546e301097f310b875fd2c710e3ac59169377f2a1c7e2ac6e26fdfe1"
+  ],
+  [
+   "references/bar-theory-mid-plate-stress.json",
+   "539f06a828401afcebfeea33aa56866fc7a923c8d9010201fb246f2faf5b5e7b"
+  ],
+  [
+   "references/uniform-constrained-thermal-stress.json",
+   "4a2b245cb2ad518dad54ae3e0d238974b9ebc76ceb3494abf917981338b5c1e9"
+  ],
+  [
+   "references/uniform-free-thermal-expansion.json",
+   "06cd395994b34accc604fd5c708fdac81b5fbf3ac4d2283852d6a9387a7cb43d"
+  ],
+  [
+   "request.json",
+   "944d73b81478590b12b038c3ea9151a94bbc20d94d2fa2f1012c46cdd92e11a0"
+  ],
+  [
+   "result.json",
+   "51ec0f025fe6b4c3b9895528ee17b274ccb35790c0613d751f4a8da813460b7a"
+  ],
+  [
+   "summary.json",
+   "80c0f9d9527911ad2abd417f4b596e9500863feed4ee30b13d365ad913b7fc74"
+  ],
+  [
+   "summary.txt",
+   "5ab36cf60545b4107aa282301955a1e6b77338ce07be9e8047d1d91ab9ce8ad2"
+  ]
+ ],
+ "name": "flagship-structure-flagship",
+ "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+ "provider_identities": [
+  "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+  "ce8767adbeefcdb2a5acbdfa2e8cf910caa56ab19a01f9a2f670acc9b1386ab1",
+  "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+  "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0"
+ ],
+ "reference_digests": [
+  [
+   "bar-theory-mid-plate-stress",
+   "f5fa8a36ef0b75cf24f3f6405dd183a3942549d12b4be20619ba9e0313d3cc78"
+  ],
+  [
+   "uniform-constrained-thermal-stress",
+   "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298"
+  ],
+  [
+   "uniform-free-thermal-expansion",
+   "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b"
+  ]
+ ],
+ "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+ "result_digest": "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640",
+ "schema": "engcore.engineering.bundle/1",
+ "summary_digest": "6baabe5ff9a3acd58b33030b060acfbd5d4e2aa74d6f9fab9c217f96e2d7d873"
+}

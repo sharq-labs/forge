@@ -1,0 +1,886 @@
+{
+ "conservation": [
+  "thermal_energy: closed residual 6.823e-11 watt (tolerance 4.000e-06)"
+ ],
+ "constraints": [
+  {
+   "binding_id": "b_disp",
+   "constraint_id": "max_displacement",
+   "margin": "margin 6.346e-05 meter",
+   "note": "",
+   "status": "satisfied"
+  },
+  {
+   "binding_id": "b_vm",
+   "constraint_id": "max_von_mises",
+   "margin": "margin 7.768e+07 pascal",
+   "note": "",
+   "status": "satisfied"
+  }
+ ],
+ "execution": "succeeded",
+ "identities": [
+  [
+   "request",
+   "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c"
+  ],
+  [
+   "plan",
+   "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516"
+  ],
+  [
+   "result",
+   "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640"
+  ]
+ ],
+ "key_outputs": [
+  {
+   "availability": "available",
+   "label": "Hot-end temperature",
+   "observable_id": "t_max",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 351.05419161712393,
+    "schema": "quantity/1",
+    "units": "kelvin"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Sink-end temperature",
+   "observable_id": "t_min",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 303.15,
+    "schema": "quantity/1",
+    "units": "kelvin"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max displacement (FEniCSx)",
+   "observable_id": "disp_max_fenicsx",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 3.65391963898671e-05,
+    "schema": "quantity/1",
+    "units": "meter"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max displacement (CalculiX)",
+   "observable_id": "disp_max_calculix",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 3.6540769439475404e-05,
+    "schema": "quantity/1",
+    "units": "meter"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max displacement (Code_Aster)",
+   "observable_id": "disp_max_code_aster",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 3.653919638986677e-05,
+    "schema": "quantity/1",
+    "units": "meter"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Mid-plate axial stress (FEniCSx)",
+   "observable_id": "sxx_mid_fenicsx",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -55207465.86868067,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Mid-plate axial stress (CalculiX)",
+   "observable_id": "sxx_mid_calculix",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -55207465.72265625,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Mid-plate axial stress (Code_Aster)",
+   "observable_id": "sxx_mid_code_aster",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": -55207465.86867988,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Peak von Mises (FEniCSx)",
+   "observable_id": "vm_max_fenicsx",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 59816615.3754525,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Peak von Mises (CalculiX)",
+   "observable_id": "vm_max_calculix",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 59967784.103753895,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max |displacement| difference FEniCSx-CalculiX",
+   "observable_id": "max_abs_displacement_difference_fenicsx_calculix",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 8.409295899917599e-09,
+    "schema": "quantity/1",
+    "units": "meter"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max |displacement| difference FEniCSx-Code_Aster",
+   "observable_id": "max_abs_displacement_difference_fenicsx_code_aster",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 1.0672615135404184e-18,
+    "schema": "quantity/1",
+    "units": "meter"
+   }
+  },
+  {
+   "availability": "available",
+   "label": "Max |stress| difference CalculiX-Code_Aster",
+   "observable_id": "max_abs_stress_difference_calculix_code_aster",
+   "reason": "",
+   "uncertainty": "UNKNOWN (not quantified)",
+   "value": {
+    "magnitude": 232363.936985299,
+    "schema": "quantity/1",
+    "units": "pascal"
+   }
+  }
+ ],
+ "notes": [
+  "case flagship: 40 kW/m2 into one end, 30 degC sink end, rollers at both ends",
+  "material properties are illustrative ASSUMED records, not datasheet or measured values"
+ ],
+ "providers": [
+  "calculix 2.23",
+  "code_aster 18.1.7",
+  "fenicsx 0.11.0"
+ ],
+ "reference_comparisons": [
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "analytic_limit_comparison_verifies_implementation_only",
+   "compared_identity": "5970051ab7c58a49b0f578f45136d52872ba774774612f69e19888227d90810e",
+   "criterion": {
+    "criterion_id": "uniform_free_exact",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+    "metric": "max_relative_error",
+    "post_hoc": false,
+    "quantity": "max_displacement_error_relative",
+    "tolerance": {
+     "magnitude": 1e-06,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "5dda8dee4643340e1952b7f5c9f536e2909549f9e9b46a2de9864774be0c51ad",
+   "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
+   "outcome": "met",
+   "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
+   "reference_kind": "analytic_reference",
+   "value": {
+    "magnitude": 2.571247472088901e-13,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  },
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "analytic_limit_comparison_verifies_implementation_only",
+   "compared_identity": "4329dabd7b223c880ea82ee4e24ffc79736a1ca6af6edaa24c8235d395c47897",
+   "criterion": {
+    "criterion_id": "uniform_constrained_exact",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+    "metric": "max_relative_error",
+    "post_hoc": false,
+    "quantity": "axial_stress_error_relative",
+    "tolerance": {
+     "magnitude": 1e-06,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "7130410b762889950e1b86c3323c6c29104ca5dd818cbc35f571f968aa51717b",
+   "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
+   "outcome": "met",
+   "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
+   "reference_kind": "analytic_reference",
+   "value": {
+    "magnitude": 2.4445184303331175e-13,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  },
+  {
+   "applicability": {
+    "reasons": [
+     "every declared condition is known and inside the reference envelope"
+    ],
+    "status": "within"
+   },
+   "classification": "analytic_limit_comparison_verifies_implementation_only",
+   "compared_identity": "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640",
+   "criterion": {
+    "criterion_id": "bar_theory_mid_plate",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (fixed before the first run)",
+    "metric": "max_relative_error",
+    "post_hoc": false,
+    "quantity": "mid_section_stress_error_relative",
+    "tolerance": {
+     "magnitude": 0.03,
+     "schema": "quantity/1",
+     "units": "dimensionless"
+    }
+   },
+   "criterion_digest": "e079855e3020d6d0205a936c684bf6f96a06c6b3c1dd4cbf028056c556b244c7",
+   "note": "mid-plate sigma_xx, three providers",
+   "outcome": "met",
+   "reference_digest": "f5fa8a36ef0b75cf24f3f6405dd183a3942549d12b4be20619ba9e0313d3cc78",
+   "reference_kind": "analytic_reference",
+   "value": {
+    "magnitude": 2.637454529082541e-09,
+    "schema": "quantity/1",
+    "units": "dimensionless"
+   },
+   "within_tolerance": true
+  }
+ ],
+ "schema": "engcore.engineering.summary/1",
+ "scientific_status": "insufficient_evidence",
+ "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
+ "system": "Heated aluminium plate, constrained, 80x16 P1 mesh (flagship)",
+ "text_sha256": "5ab36cf60545b4107aa282301955a1e6b77338ce07be9e8047d1d91ab9ce8ad2",
+ "trace": {
+  "complete": true,
+  "gaps": []
+ },
+ "uncertainty": {
+  "benchmark_applicability": "exact analytic limits and a bar-theory estimate were used; both are analytic references, not numerical benchmarks and not experiments",
+  "known_input_uncertainty": [],
+  "material_provenance": [
+   "E 4ccd88c72c40.. nu 440aa52136f3.. alpha ab866da9cdda.. k af0acef476c8.. (all ASSUMED)"
+  ],
+  "model_applicability": "thermal solution checked against the declared property range [250.0, 450.0] K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)",
+  "model_discrepancy": "NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)",
+  "unknown_input_uncertainty": [
+   "heat flux and sink temperature (declared)",
+   "stress-free temperature (declared)",
+   "E, nu, alpha, k (ASSUMED illustrative records)",
+   "plate thickness and geometry (declared)"
+  ]
+ },
+ "verification": {
+  "classification": "report_vocabulary_not_a_validation_grant",
+  "corroboration_reached": true,
+  "levels": [
+   {
+    "evidence": [
+     {
+      "classification": "contract_integrity",
+      "digest": "9aa6171e1945da509364e1df44fa1e73a61f8c3d59c88f7bf013c0e2f348633f",
+      "kind": "preflight_and_identity",
+      "note": "preflight deferred_checks; run succeeded",
+      "outcome": "met",
+      "record": {
+       "classification": "preflight_admission_not_scientific_support",
+       "deferred_checks": [
+        {
+         "check_id": "property_range",
+         "description": "evaluated on the solved state before the node's state is committed; UNKNOWN or outside refuses",
+         "node_id": "thermal"
+        }
+       ],
+       "findings": [
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_calculix"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_code_aster"
+        },
+        {
+         "blocking": false,
+         "code": "APPLICABILITY_WAIVED",
+         "message": "node declares no applicability check and states: 'linear elastic small-strain response inside the declared property range, which the thermal node checks at the solved temperatures'; the waiver is a caller statement, not evidence",
+         "node_id": "struct_fenicsx"
+        }
+       ],
+       "plan_digest": "26808b19e864cb9b236008d842efe279e520707b4dbd0b66ec0825820a66d516",
+       "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
+       "schema": "forge.system_runtime.preflight_report/1",
+       "status": "deferred_checks"
+      }
+     }
+    ],
+    "level": 1,
+    "name": "contract_integrity",
+    "note": "units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "conservation_residual",
+      "digest": "d4dfda4f6af78e841114e2f3da57fed86243483526cfccf45986b4cb57a14ddd",
+      "kind": "conservation_assessment",
+      "note": "thermal energy: residual 6.82e-11 W",
+      "outcome": "met",
+      "record": {
+       "balance_id": "thermal_energy",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [],
+       "reason": "",
+       "residual": {
+        "magnitude": 6.822720166610452e-11,
+        "schema": "quantity/1",
+        "units": "watt"
+       },
+       "status": "closed",
+       "tolerance": {
+        "magnitude": 4e-06,
+        "schema": "quantity/1",
+        "units": "watt"
+       }
+      }
+     },
+     {
+      "classification": "conservation_residual",
+      "digest": "92cc445e3874ab669408cb7a6d434f6ccf908c05c746c6934216f9ad67782ef6",
+      "kind": "equilibrium_diagnostic",
+      "note": "axial section force constant along the plate for all three solvers (relative spread <= 0.001, mean force >= 0.1 of the thermal force scale)",
+      "outcome": "met",
+      "record": {
+       "force_floor_ratio": 0.1,
+       "mean_force_over_scale": {
+        "calculix": 0.708749996208356,
+        "code_aster": 0.7087500000053466,
+        "fenicsx": 0.7087500000053523
+       },
+       "relative_spread": {
+        "calculix": 2.8302332990654243e-09,
+        "code_aster": 2.0427915182360042e-14,
+        "fenicsx": 2.191058644559568e-14
+       },
+       "spread_tolerance": 0.001
+      }
+     }
+    ],
+    "level": 2,
+    "name": "conservation_residual",
+    "note": "heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, fixed before the run; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "analytic_limit_comparison_verifies_implementation_only",
+      "digest": "2f8c823003b32e1b5775792ceade058595da8bcc9c0d0fd368a957d3276b6431",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "analytic_limit_comparison_verifies_implementation_only",
+       "compared_identity": "5970051ab7c58a49b0f578f45136d52872ba774774612f69e19888227d90810e",
+       "criterion": {
+        "criterion_id": "uniform_free_exact",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+        "metric": "max_relative_error",
+        "post_hoc": false,
+        "quantity": "max_displacement_error_relative",
+        "tolerance": {
+         "magnitude": 1e-06,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "5dda8dee4643340e1952b7f5c9f536e2909549f9e9b46a2de9864774be0c51ad",
+       "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
+       "outcome": "met",
+       "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
+       "reference_kind": "analytic_reference",
+       "value": {
+        "magnitude": 2.571247472088901e-13,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "analytic_limit_comparison_verifies_implementation_only",
+      "digest": "08bb7fd088516843fd4904b06555086c57f324548a23c5964329db4ce0627ccd",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "analytic_limit_comparison_verifies_implementation_only",
+       "compared_identity": "4329dabd7b223c880ea82ee4e24ffc79736a1ca6af6edaa24c8235d395c47897",
+       "criterion": {
+        "criterion_id": "uniform_constrained_exact",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+        "metric": "max_relative_error",
+        "post_hoc": false,
+        "quantity": "axial_stress_error_relative",
+        "tolerance": {
+         "magnitude": 1e-06,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "7130410b762889950e1b86c3323c6c29104ca5dd818cbc35f571f968aa51717b",
+       "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
+       "outcome": "met",
+       "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
+       "reference_kind": "analytic_reference",
+       "value": {
+        "magnitude": 2.4445184303331175e-13,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "analytic_limit_comparison_verifies_implementation_only",
+      "digest": "854d3a8ce837f70a7926c138ddf408a593b485b155d5bc4e9f1a4c6c9cd9ce01",
+      "kind": "reference_comparison",
+      "note": "",
+      "outcome": "met",
+      "record": {
+       "applicability": {
+        "reasons": [
+         "every declared condition is known and inside the reference envelope"
+        ],
+        "status": "within"
+       },
+       "classification": "analytic_limit_comparison_verifies_implementation_only",
+       "compared_identity": "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640",
+       "criterion": {
+        "criterion_id": "bar_theory_mid_plate",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (fixed before the first run)",
+        "metric": "max_relative_error",
+        "post_hoc": false,
+        "quantity": "mid_section_stress_error_relative",
+        "tolerance": {
+         "magnitude": 0.03,
+         "schema": "quantity/1",
+         "units": "dimensionless"
+        }
+       },
+       "criterion_digest": "e079855e3020d6d0205a936c684bf6f96a06c6b3c1dd4cbf028056c556b244c7",
+       "note": "mid-plate sigma_xx, three providers",
+       "outcome": "met",
+       "reference_digest": "f5fa8a36ef0b75cf24f3f6405dd183a3942549d12b4be20619ba9e0313d3cc78",
+       "reference_kind": "analytic_reference",
+       "value": {
+        "magnitude": 2.637454529082541e-09,
+        "schema": "quantity/1",
+        "units": "dimensionless"
+       },
+       "within_tolerance": true
+      }
+     }
+    ],
+    "level": 3,
+    "name": "analytic_limit",
+    "note": "evidence from OTHER requests for the two exact uniform-temperature limits (request digests a957a5497dd7.., d555683f47c1..) and from this run for bar theory: uniform_free_exact MET (2.6e-13 vs 1e-06); uniform_constrained_exact MET (2.4e-13 vs 1e-06); bar_theory_mid_plate MET (2.6e-09 vs 0.03)",
+    "status": "reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "discretisation_convergence",
+      "digest": "db9d7ff8a95578d161ec5d4cc97cfd11dc7b79fba1ec6861625f93cd03e2e113",
+      "kind": "mesh_study",
+      "note": "predeclared criterion; failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']",
+      "outcome": "not_met",
+      "record": {
+       "levels": [
+        {
+         "nodes": 105,
+         "nx": 20,
+         "ny": 4,
+         "result": "f1acc4deba34ba1ed3ea449b07274f9a8d575c08502a81c55a08f42587c99c4d",
+         "status": "succeeded",
+         "sxx_mid_calculix": -55207465.62500001,
+         "sxx_mid_code_aster": -55207465.86827721,
+         "sxx_mid_fenicsx": -55207465.86827726,
+         "ux_max_calculix": 2.904918e-05,
+         "ux_max_code_aster": 2.90389624305453e-05,
+         "ux_max_fenicsx": 2.903896243054586e-05,
+         "ux_mid_calculix": 2.791838e-05,
+         "ux_mid_code_aster": 2.79082441477496e-05,
+         "ux_mid_fenicsx": 2.7908244147750178e-05,
+         "vm_max_calculix": 58958254.59685726,
+         "vm_max_code_aster": 58917100.39037917,
+         "vm_max_fenicsx": 58917100.390379705
+        },
+        {
+         "nodes": 369,
+         "nx": 40,
+         "ny": 8,
+         "result": "a051da80a6db7fdc4060398d4eee72b319682bf6ae3e6f6d9f2cd13eaa5dc3f2",
+         "status": "succeeded",
+         "sxx_mid_calculix": -55207466.01562499,
+         "sxx_mid_code_aster": -55207465.86835872,
+         "sxx_mid_fenicsx": -55207465.86835914,
+         "ux_max_calculix": 2.902633e-05,
+         "ux_max_code_aster": 2.90225773868725e-05,
+         "ux_max_fenicsx": 2.902257738687398e-05,
+         "ux_mid_calculix": 2.789579e-05,
+         "ux_mid_code_aster": 2.78920444270548e-05,
+         "ux_mid_fenicsx": 2.789204442705627e-05,
+         "vm_max_calculix": 59503221.73724042,
+         "vm_max_code_aster": 59408734.10905949,
+         "vm_max_fenicsx": 59408734.10906035
+        },
+        {
+         "nodes": 1377,
+         "nx": 80,
+         "ny": 16,
+         "result": "b9235894c1f7a62b51d4f6c53155a301a9cd895872fa1fadf3f92abd96ec4b84",
+         "status": "succeeded",
+         "sxx_mid_calculix": -55207465.72265625,
+         "sxx_mid_code_aster": -55207465.86867988,
+         "sxx_mid_fenicsx": -55207465.86868067,
+         "ux_max_calculix": 2.902054e-05,
+         "ux_max_code_aster": 2.90185003811232e-05,
+         "ux_max_fenicsx": 2.9018500381124057e-05,
+         "ux_mid_calculix": 2.789002e-05,
+         "ux_mid_code_aster": 2.78879801633139e-05,
+         "ux_mid_fenicsx": 2.7887980163314698e-05,
+         "vm_max_calculix": 59967784.103753895,
+         "vm_max_code_aster": 59816615.37545215,
+         "vm_max_fenicsx": 59816615.3754525
+        },
+        {
+         "nodes": 5313,
+         "nx": 160,
+         "ny": 32,
+         "result": "8b35c2800efbac8b2946c5d55354294c92c441cb473f239d6697d1cf98e127b3",
+         "status": "succeeded",
+         "sxx_mid_calculix": -55207465.810546875,
+         "sxx_mid_code_aster": -55207465.87033043,
+         "sxx_mid_fenicsx": -55207465.87033173,
+         "ux_max_calculix": 2.901909e-05,
+         "ux_max_code_aster": 2.90174819592386e-05,
+         "ux_max_fenicsx": 2.901748195924072e-05,
+         "ux_mid_calculix": 2.788857e-05,
+         "ux_mid_code_aster": 2.78869631669348e-05,
+         "ux_mid_fenicsx": 2.788696316693649e-05,
+         "vm_max_calculix": 60255465.48119761,
+         "vm_max_code_aster": 60060465.729146525,
+         "vm_max_fenicsx": 60060465.729148865
+        }
+       ],
+       "monotone": {
+        "sxx_mid_calculix": true,
+        "sxx_mid_code_aster": false,
+        "sxx_mid_fenicsx": false,
+        "ux_max_calculix": true,
+        "ux_max_code_aster": true,
+        "ux_max_fenicsx": true,
+        "ux_mid_calculix": true,
+        "ux_mid_code_aster": true,
+        "ux_mid_fenicsx": true,
+        "vm_max_calculix": true,
+        "vm_max_code_aster": true,
+        "vm_max_fenicsx": true
+       },
+       "orders": {
+        "sxx_mid_calculix": 1.7369655574765734,
+        "sxx_mid_code_aster": -2.361561021869591,
+        "sxx_mid_fenicsx": -2.360364764818101,
+        "ux_max_calculix": 1.9975104479741275,
+        "ux_max_code_aster": 2.0011746649063937,
+        "ux_max_fenicsx": 2.0011746669124566,
+        "ux_mid_calculix": 1.9925184186308693,
+        "ux_mid_code_aster": 1.9986794828219003,
+        "ux_mid_fenicsx": 1.9986794843229,
+        "vm_max_calculix": 0.6914004546301258,
+        "vm_max_code_aster": 0.7421531820682359,
+        "vm_max_fenicsx": 0.7421531820546745
+       },
+       "post_hoc_noise_aware_met": true,
+       "predeclared_criterion_met": false,
+       "predeclared_failing": [
+        "sxx_mid_code_aster",
+        "sxx_mid_fenicsx"
+       ]
+      }
+     },
+     {
+      "classification": "post_hoc_discretisation_convergence",
+      "digest": "fbefb0739ce6eea1992ac2b56384431fb879fd697df9dd7678d0e43517ca17ea",
+      "kind": "mesh_study_post_hoc",
+      "note": "added after seeing the outcome: quantities already converged to solver noise (last change < 1e-06 relative) are not judged by an observed order",
+      "outcome": "met",
+      "record": {
+       "met": true,
+       "reading": "noise_aware",
+       "relative_change_threshold": 1e-06,
+       "study_digest": "db9d7ff8a95578d161ec5d4cc97cfd11dc7b79fba1ec6861625f93cd03e2e113"
+      }
+     }
+    ],
+    "level": 4,
+    "name": "discretisation_convergence",
+    "note": "four uniformly refined meshes, each a separate BIG 12 request (evidence from OTHER requests). Predeclared criterion (monotone, observed order >= 0.9 for mid-plate displacement AND stress, every provider): NOT MET - ['sxx_mid_code_aster', 'sxx_mid_fenicsx']. Observed orders of the mid-length displacement {'fenicsx': 1.9986794843229, 'calculix': 1.9925184186308693, 'code_aster': 1.9986794828219003}; last relative change of the mid-plate stress {'fenicsx': '3.0e-11', 'calculix': '1.6e-09', 'code_aster': '3.0e-11'} (at solver noise, so an order is undefined for it). Peak von Mises (FEniCSx, MPa) over the meshes [58.917, 59.409, 59.817, 60.06], observed orders {'fenicsx': 0.74, 'calculix': 0.69, 'code_aster': 0.74}: it is NOT claimed converged and the cause of its slow behaviour was not investigated",
+    "status": "attempted_not_reached"
+   },
+   {
+    "evidence": [
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "c6307a071f93277dcf6c02857ee178b3358da0ee1674c8b67a34860d20039497",
+      "kind": "provider_comparison",
+      "note": "calculix~code_aster",
+      "outcome": "met",
+      "record": {
+       "a_identity": "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+       "a_output": "displacement",
+       "a_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "a_provider": "calculix",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+       "b_output": "displacement",
+       "b_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "b_provider": "code_aster",
+       "b_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 2.2610778443113777e-06,
+         "schema": "quantity/1",
+         "units": "meter"
+        },
+        "context": "plate 80x16, mesh 7668efb38517, temperature field 3c7407f8",
+        "mapping": "identity: both solve on the same mesh nodes (P1 / CPS3 / TRIA3)",
+        "observable": "nodal displacement vector, all nodes (calculix vs code_aster)",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m"
+       },
+       "max_absolute": "8.409295899900658e-09",
+       "max_relative": "1.0",
+       "points": 2754,
+       "provider_comparison_digest": "28c26d4b344077ea85060a5f20f38d8bff88d89e7d9c332dd4da2de53e512d73",
+       "values_digest": "44d401c8339d63eb4dbafe7fa6bb734a54fae5461d2812e689fd99eb60fc5d14",
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "394f495fde05c5c225b8aba09827e12706bf18146309a4a102ca7511272b0789",
+      "kind": "provider_comparison",
+      "note": "calculix~code_aster:stress",
+      "outcome": "met",
+      "record": {
+       "a_identity": "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+       "a_output": "stress",
+       "a_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "a_provider": "calculix",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+       "b_output": "stress",
+       "b_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "b_provider": "code_aster",
+       "b_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 778941.3173652695,
+         "schema": "quantity/1",
+         "units": "pascal"
+        },
+        "context": "plate 80x16",
+        "mapping": "identity: same triangles",
+        "observable": "element stress components (sxx, syy, sxy), all elements (calculix vs code_aster)",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "Pa"
+       },
+       "max_absolute": "232363.936985299",
+       "max_relative": "1.9384513387205573",
+       "points": 7680,
+       "provider_comparison_digest": "7fd92b3f1e37dd069bc8a4d29be47b95b92db5b540561ace0c9a55cec1f21317",
+       "values_digest": "f991d0059b4ebadeae2e0d8950013bc720c5215249322cfd186095f382af5d22",
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "23dbd7235ecb4c6c2b0e5176d636205e67c87e7c12077e3aacb3f930f279a85e",
+      "kind": "provider_comparison",
+      "note": "fenicsx~calculix",
+      "outcome": "met",
+      "record": {
+       "a_identity": "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0",
+       "a_output": "displacement",
+       "a_problem": "2cee502437853b504378871097687374bb0bcfa195c6e1887fb8778467efffa0",
+       "a_provider": "fenicsx.dolfinx",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "de2fed8085944f35200ee96fae62bde12f77f4c8730f472d8e0c7d6f8fe93e6b",
+       "b_output": "displacement",
+       "b_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "b_provider": "calculix",
+       "b_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 2.2610778443113777e-06,
+         "schema": "quantity/1",
+         "units": "meter"
+        },
+        "context": "plate 80x16, mesh 7668efb38517, temperature field 3c7407f8",
+        "mapping": "identity: both solve on the same mesh nodes (P1 / CPS3 / TRIA3)",
+        "observable": "nodal displacement vector, all nodes (fenicsx vs calculix)",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m"
+       },
+       "max_absolute": "8.409295899917599e-09",
+       "max_relative": "0.002739821913339127",
+       "points": 2754,
+       "provider_comparison_digest": "f89f313970a4f7b116e50f2a03e16077f652fb8e7013a09657e35b666f0a8615",
+       "values_digest": "3a33acbf1703f95b140c43ea62c0cf08806778e98a782a39252128ae82f226a2",
+       "within_tolerance": true
+      }
+     },
+     {
+      "classification": "solver_corroboration_not_validation",
+      "digest": "91c5882fd063d6ac4940061c4bb8e11eb092d0f99d4b191a2013a36f4dde6739",
+      "kind": "provider_comparison",
+      "note": "fenicsx~code_aster",
+      "outcome": "met",
+      "record": {
+       "a_identity": "f7bb9114e8c4ed7d02f99dd1d3cfe3f0f23475641a00a6c944dc2848c06471e0",
+       "a_output": "displacement",
+       "a_problem": "2cee502437853b504378871097687374bb0bcfa195c6e1887fb8778467efffa0",
+       "a_provider": "fenicsx.dolfinx",
+       "a_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "b_identity": "625740852da5417ad4fc9859e646402d359abb8481f73080526490f3362b8904",
+       "b_output": "displacement",
+       "b_problem": "09fd266167e5d6a0fddef0abd3112bf41bbc245fa87af64da4562a1a770df490",
+       "b_provider": "code_aster",
+       "b_selection": "94da57346683a53e01916121284f4137ec33bb06b527e45436388842e85b30ca",
+       "classification": "solver_corroboration_not_validation",
+       "declaration": {
+        "absolute_tolerance": {
+         "magnitude": 2.2610778443113777e-06,
+         "schema": "quantity/1",
+         "units": "meter"
+        },
+        "context": "plate 80x16, mesh 7668efb38517, temperature field 3c7407f8",
+        "mapping": "identity: both solve on the same mesh nodes (P1 / CPS3 / TRIA3)",
+        "observable": "nodal displacement vector, all nodes (fenicsx vs code_aster)",
+        "post_hoc": false,
+        "relative_tolerance": 0.0,
+        "unit": "m"
+       },
+       "max_absolute": "1.0672615135404184e-18",
+       "max_relative": "1.0",
+       "points": 2754,
+       "provider_comparison_digest": "fb11a14cb76c644b4d98b948f4c0c2f37fcda3ec7d354244063e5f974b433e18",
+       "values_digest": "75cb0273e608348ea68ba45c94741e807019f279e0676aae6ba09de0026a87cd",
+       "within_tolerance": true
+      }
+     }
+    ],
+    "level": 5,
+    "name": "independent_provider_corroboration",
+    "note": "three structural implementations agree on displacement (and CalculiX/Code_Aster on element stress) within tolerances declared before the run: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation",
+    "status": "reached"
+   },
+   {
+    "evidence": [],
+    "level": 6,
+    "name": "published_numerical_benchmark",
+    "note": "no published thermo-structural numerical benchmark was integrated for this problem",
+    "status": "not_available"
+   },
+   {
+    "evidence": [],
+    "level": 7,
+    "name": "experimental_validation",
+    "note": "no measured deformation or stress data for this plate exists",
+    "status": "not_available"
+   }
+  ],
+  "reference_level_reached": "none",
+  "verification_reached": 3
+ }
+}

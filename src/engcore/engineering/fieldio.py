@@ -1,10 +1,10 @@
 """Viewable field files (VTU for ParaView) and the few generic field reductions the flagships need.
 
 A VTU written here is a PRESENTATION artifact.  It is not evidence and nothing reads it back as such.  It
-carries what identifies it: an XML comment with the mesh digest, run, provider, per-field units and the
-digest of the numbers, and array names that include the unit.  ``write_vtu`` returns the sha256 of the file
-bytes so a run bundle can list it by content.  Files are ASCII XML written as bytes (LF), so the digest is
-stable across platforms.
+carries what identifies it: an XML comment with the caller's metadata, the mesh digest and the per-field
+units, and array names that include the unit.  ``write_vtu`` returns the file bytes; a run bundle lists them
+by their sha256.  Files are ASCII XML written as bytes (LF), so the digest is stable across platforms for
+identical numbers.
 """
 
 from __future__ import annotations
