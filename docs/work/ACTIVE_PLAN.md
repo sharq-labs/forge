@@ -13,7 +13,12 @@ stale tests, and only then run the full FAST / SCIENTIFIC / mutation /
 recertification campaign. The P0/P0.1 full-verification items below are
 deferred to that campaign, not abandoned.
 
-Current: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
+Current: **BIG 12 — End-to-End System Runtime** built on `feat/big-12-end-to-end-runtime` (base `7da8d02e`): one deterministic
+provider-neutral orchestration runtime over the existing authorities (request -> plan -> preflight -> executor -> result/trace ->
+constraints/conservation -> checkpoint/resume/replay -> trust hand-off); real PyBaMM <-> TESPy + aging system executed; two read-only
+scientific reviews with fixes (see PROGRESS, BIG 12); BIG 13 not started.
+
+Previous: **BIG 11 — Solver Provider Expansion** built (provider registry/discovery with no ranking or
 fallback, content-derived execution identity, argv-only process boundary, PyBaMM / Cantera / CoolProp /
 TESPy / CalculiX / OpenFOAM / SU2 / Code_Aster / OpenModelica executed; see PROGRESS); BIG 12 not started.
 BIG 10 (multi-timescale runtime) is built on the same branch.
@@ -295,7 +300,11 @@ map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/
 - [x] `forge-scientific-review` (CHANGES REQUIRED, no blocker) -> findings 1-15 fixed; focused re-review
       (CHANGES REQUIRED, 5 MEDIUM) -> fixed with tests; LOW residuals recorded; second re-review NOT RUN.
 - [ ] Non-blocking gaps: see PROGRESS (BIG 11 section).
-- [ ] BIG 12 — NOT STARTED (per instruction).
+- [x] BIG 12 — End-to-End System Runtime: `src/engcore/system_runtime/`, tests `tests/test_system_runtime_*.py` (112) + real
+      `providers/pybamm/tests/test_system_runtime_battery.py` (8, WSL). Review round 1 fixed; round 2 fixed except the recorded MEDIUM/LOW gaps
+      (model selection not bound to executed authority; waiver rule limited to committing nodes; multiscale resume-stage dependency; taint residuals).
+      The round-2 fix batch was not re-reviewed. Full FAST/SCIENTIFIC/mutation/recertification NOT RUN.
+- [ ] BIG 13 — NOT STARTED (per instruction).
 
 ## Persistent project direction
 

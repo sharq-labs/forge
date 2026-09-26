@@ -1,7 +1,15 @@
 # System runtime (BIG 12)
 
-**Status:** design of `src/engcore/system_runtime/` (non-Core, registered). This page is written
-before the code so the reuse decisions are checkable against it. The runtime is an
+**Status:** built (BIG 12), `src/engcore/system_runtime/` (non-Core, registered in
+`tests/test_core_api_layering.py`). The reuse decisions below were written before the code and
+are checkable against it. Rules added by the scientific review: every executable component needs an
+explicit `ModelSelection`; a node that commits state declares `applicability_checks` or a
+`applicability_waiver`; a `within` applicability report carries evidence; committed state
+uncertainty comes from the solve, never from the value it replaces; supplied content must have the
+digest it is filed under; a checkpoint is verified against the request's own initial-state chain,
+tip state and per-authority payload digests; a quantified output uncertainty from UNKNOWN inputs is
+refused unless the authority declares `accounts_for_input_uncertainty`. A checkpoint is
+self-consistent and context-bound, **not authenticated** (no key). The runtime is an
 *orchestration* layer over authorities that already exist. It adds no solver family, no coupling
 loop, no clock, no trust verdict.
 

@@ -5,11 +5,46 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `feat/big-10-multitimescale` (from `main` @ `e3ae778a`, BIG 2-9 merged)
+- Branch: `feat/big-12-end-to-end-runtime` (base `7da8d02e`, BIG 10/11 tree); previously `feat/big-10-multitimescale`
 - PR: none opened; verify GitHub before making a current PR claim.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
+
+## 2026-09-26 BIG 12 — End-to-End System Runtime (BUILD phase; read this first)
+
+Branch `feat/big-12-end-to-end-runtime`, base `7da8d02e` (BIG 10/11 tree; `main` does not contain BIG 10/11), worktree `D:/forge-b12`.
+New package `src/engcore/system_runtime/` (3.6k lines, non-Core, registered in `tests/test_core_api_layering.py`). Design: `docs/architecture/system_runtime.md`.
+
+### What exists
+- `SystemRunRequest` (content-bound: system/scenario/timeline/environment/material digests, initial state, nodes, observables, provider bindings, model selections, constraint observations; digest excludes label/workspace/budget), `SystemState` (authoritative, digest chain, atomic `advance`), `SystemExecutionPlan` (deterministic DAG + digest, derived nodes `env.*`/`mat.*`/`constraint.*`), `preflight` (READY / DEFERRED_CHECKS / REFUSED, never "validated"), `SystemExecutor` (PENDING/RUNNING/SUCCEEDED/REFUSED/FAILED/BLOCKED; dependency-based BLOCKED; independent branches still run; applicability is checked on the solved state BEFORE commit, so a refused step is rolled back), `SystemRunResult` (per-observable AVAILABLE/BLOCKED/REFUSED/FAILED/UNKNOWN, transitive `trace_result`), `assess_constraints` / `assess_conservation` / `trust_handoff` (existing `CredibilityEvidenceReport`; no new verdict enum), `SystemCheckpoint` + `verify_checkpoint` + resume, `compare_runs` (identity replay / numerical reproducibility / `scientific_validation="not_assessed"`), optional exact-identity `ExecutionCache`.
+- Authorities: `CallbackAuthority`, `ProviderAuthority`, `MultiphysicsAuthority` (delegates to BIG 9 `MultiphysicsRuntime`), `MultiscaleAuthority` (delegates to BIG 10 `MultiTimescaleRuntime`; resume uses its `MacroCheckpoint`). No coupling loop, clock, scheduler or verdict is re-implemented.
+- Real reference system: PyBaMM <-> TESPy (BIG 9) plus PyBaMM aging through BIG 10 / BIG 4 lifecycle, executed through the system runtime (`providers/pybamm/tests/test_system_runtime_battery.py`).
+
+### Failed approaches / gotchas recorded
+- Trace initially listed only direct-input lineage -> made transitive. Preflight refused checkpoints for stateless authorities -> rule is `supports_checkpoint or stateless`.
+- Bash heredocs containing `'''` write nothing and stop the script; use the Write tool for patch scripts.
+- Provider tests need `PYTHONPATH=src:.:providers/pybamm:providers/tespy` inside WSL or all 8 skip silently (`8 skipped`); and `MSYS_NO_PATHCONV=1` for `wsl.exe` paths.
+- A `scientific_digest` that included the run-bound staleness `stamp` made two identical runs differ; the stamp is now excluded (`_verify_stored` compares the stamp directly, never through the digest).
+- A separate first-pass rule "every binding of a provider must match" is what preflight does; an executor rule of "any binding matches" is only reachable across providers. The M3 test therefore uses two providers.
+
+### Scientific review (read-only `forge-scientific-reviewer`), dispositions
+Round 1 (9 HIGH/MEDIUM clusters, all fixed with tests in `tests/test_system_runtime_review_fixes.py`): H1 model selection required per executable instance + `trust_handoff` refuses a foreign request; H2 committed state uncertainty comes from the solve; H3 supplied content verified against its filing digest, material owner/state link; H4 checkpoint forgeries (initial-state chain, tip state, payload digest, completeness flag); H5 pending authority checkpoint promoted only after commit; H6 quantified output uncertainty from UNKNOWN inputs refused unless `accounts_for_input_uncertainty`; M1 waiver / `within` needs evidence digest; M2 partial run not silently assembled; M3-M7 provider binding match, plan-order restore, scenario-end/paused/NaN time, commit taint, cross-run cache reuse + stateful-never-cached + trace `reuse` link.
+Round 2 (focused re-review of that batch: CHANGES REQUIRED, 1 HIGH + 5 MEDIUM + LOW):
+- HIGH constraint limit chosen by the request -> FIXED (preflight + `assess_constraints` require the definition to equal the system's own; observation must name the bound constraint).
+- MEDIUM state-borne UNKNOWN not gated -> FIXED (same gate on proposed state values). Waiver invisible -> FIXED (`APPLICABILITY_WAIVED` finding, `TrustInputs.waived_applicability`, credibility notes; trust inputs re-derived on load). Checkpoint conditional checks -> FIXED (history == committing-receipt chain, undeclared payload, deleted stateful declaration, non-boolean flags; `supports_checkpoint` authorities must declare state). Result derived fields -> FIXED (unknown-uncertainty outputs, applicability reports, waivers re-derived).
+- LOW conflicting applicability reports -> FIXED. Four vacuous tests -> tightened.
+- NOT FIXED, recorded: (a) model selection is a declared label, not bound to the authority/provider that executed (`trust_handoff` puts it in `provenance.models`); (b) the "declare or waive applicability" rule covers state-committing nodes only, output nodes still need none; (c) a `MultiscaleAuthority` resume stage with no `depends_on` on its producing stage reuses its own previous run's checkpoint (hidden instance state not in the node identity); (d) commit-taint residuals: wall-budget REFUSED branch does not taint, non-committing state readers after a tainted commit still run, `blocked_by` holds free text, derived-node cache reuse has no trace link; (e) waiver text and `within` evidence digest are format-checked only.
+- The round-2 fix batch itself was NOT re-reviewed (a third review was not run).
+
+### Verification actually executed (this session)
+All with `TMPDIR=D:/ftmp`, main-checkout venv python, `PYTHONPATH="D:/forge-b12/src;D:/forge-b12"`, worktree `D:/forge-b12`:
+- `pytest tests/test_system_runtime_contracts.py` 28 passed; `..._executor.py` 39 passed; `..._checkpoint.py` 11 passed; `..._review_fixes.py` 34 passed (HEAD `21a2c75c`).
+- `pytest tests/test_core_api_layering.py tests/test_repository_architecture.py` + the four above: 129 passed.
+- `python tools/forge_check.py --changed`: 149 passed.
+- Real providers, WSL `battery` env (PyBaMM 26.8, TESPy 0.11.2): `providers/pybamm/tests/test_system_runtime_battery.py` 8 passed in 207 s (after the round-2 fixes).
+- Earlier at `4e8252ce`, a wider focused regression showed 4 failures that were reproduced identically on a pristine base worktree; that wider set was NOT re-run at the final HEAD.
+- **NOT RUN:** full FAST, full SCIENTIFIC, mutation shards, hardened recertification, `--regression` pack, CI. Conservation was demonstrated on toy core fixtures only, not on independent provider terms. Gate J (resource budget) on real providers not run. No multi-process preCICE participant was involved.
 
 ## 2026-09-26 BIG 11 — Solver Provider Expansion (BUILD phase; read this first)
 
