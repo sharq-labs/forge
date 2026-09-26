@@ -56,5 +56,26 @@ def verify_checkpoint(checkpoint: SystemCheckpoint, request: SystemRunRequest, p
     for cp in checkpoint.authority_checkpoints:
         if cp.node_id in plan_ids and plan.node(cp.node_id).authority.identity_digest != cp.identity_digest:
             problems.append(f"authority of {cp.node_id!r} has another identity than the checkpoint recorded")
+    # a checkpoint that is merely self-consistent is not enough: it must be the state chain THIS request produces
+    from .state import SystemState
+    expected_initial = SystemState.initial(request.initial_state, request_digest=request.digest, system_digest=request.system.digest,
+                                           environment_digest="" if request.environment is None else request.environment.digest)
+    if checkpoint.state_history[0].digest != expected_initial.digest:
+        problems.append("the state history does not start from this request's initial state")
+    order = {n.node_id: i for i, n in enumerate(plan.nodes)}
+    committed = sorted((r for r in checkpoint.completed_receipts if r.state_after_digest and r.node_id in order), key=lambda r: order[r.node_id])
+    tip = committed[-1].state_after_digest if committed else expected_initial.digest
+    if checkpoint.state.digest != tip:
+        problems.append("the checkpoint state is not the state after the last committed node")
+    by_node = {r.node_id: r for r in checkpoint.completed_receipts}
+    for cp in checkpoint.authority_checkpoints:
+        receipt = by_node.get(cp.node_id)
+        if receipt is not None and receipt.authority_checkpoint is not None:
+            if receipt.authority_checkpoint[0] != cp.payload_digest:
+                problems.append(f"the authority payload of {cp.node_id!r} is not the one its receipt recorded")
+            if bool(receipt.authority_checkpoint[1]) != cp.declared_complete:
+                problems.append(f"the completeness declaration of {cp.node_id!r} differs from its receipt")
+    if checkpoint.complete != all(cp.declared_complete for cp in checkpoint.authority_checkpoints):
+        problems.append("the checkpoint's completeness flag does not follow from its authority declarations")
     if problems:
         raise ResumeRefused("checkpoint refused: " + "; ".join(problems))

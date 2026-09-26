@@ -75,11 +75,16 @@ def compare_runs(a: SystemRunResult, b: SystemRunResult, *, rel_tol: float, abs_
         if x.status is not y.status:
             ids.append(f"{node_id}: status {x.status.value} vs {y.status.value}")
         # execution identity binds authority identity + input digests + state; the state chain differs across runs only by design
-        if x.status is NodeStatus.SUCCEEDED and y.status is NodeStatus.SUCCEEDED and x.authority_identity_digest != y.authority_identity_digest:
-            ids.append(f"{node_id}: authority identity")
+        if x.status is NodeStatus.SUCCEEDED and y.status is NodeStatus.SUCCEEDED:
+            if x.authority_identity_digest != y.authority_identity_digest:
+                ids.append(f"{node_id}: authority identity")
+            if x.execution_identity_digest != y.execution_identity_digest:
+                ids.append(f"{node_id}: execution identity (authority, input digests and state)")
     diffs: list[OutputDifference] = []
     for node_id in sorted(set(a.node_outputs) & set(b.node_outputs)):
         for name in sorted(set(a.node_outputs[node_id]) & set(b.node_outputs[node_id])):
+            if a.node_outputs[node_id][name].uncertainty.kind != b.node_outputs[node_id][name].uncertainty.kind:
+                ids.append(f"{node_id}.{name}: uncertainty kind differs")
             va, vb = a.node_outputs[node_id][name].value, b.node_outputs[node_id][name].value
             xa = float(va.magnitude)
             xb = float(vb.to(va.units).magnitude)

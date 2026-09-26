@@ -26,7 +26,7 @@ from typing import Any, Callable, Mapping
 
 from ..execution.orchestration.resources import ResourceBudget, ResourceUsage
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.results.uncertainty import UncertaintyKind, Uncertainty
+from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ..scientific.units.quantity import Quantity
 from ._common import digest_of
 from .plan import BUILTIN_CONSTRAINT, BUILTIN_ENVIRONMENT, BUILTIN_MATERIAL, PlanNode, SystemExecutionPlan, compile_plan, spread_unit
@@ -175,6 +175,9 @@ class SystemExecutor:
         started = self._clock()
         stopped = False
         failed_any = False
+        commit_tainted = False     # a state-committing node did not succeed: later commits would build on a state that node was meant to advance
+        if stop_after is not None and stop_after in store:
+            raise InvalidScientificProblem(f"stop_after names {stop_after!r}, which the resumed checkpoint already completed")
 
         for node in plan.nodes:
             if node.node_id in store:
@@ -188,6 +191,13 @@ class SystemExecutor:
                 blocked_by[node.node_id] = roots
                 receipts[node.node_id] = self._receipt(node, plan, request, NodeStatus.BLOCKED, state.digest, "", f"blocked by {list(roots)}",
                                                       blocked_by=roots, run_id=run_id)
+                commit_tainted = commit_tainted or node.commits_state
+                continue
+            if node.commits_state and commit_tainted:
+                statuses[node.node_id] = NodeStatus.BLOCKED
+                blocked_by[node.node_id] = ("an earlier state-committing node did not succeed; committing on a state it was meant to advance is refused",)
+                receipts[node.node_id] = self._receipt(node, plan, request, NodeStatus.BLOCKED, state.digest, "", "an earlier state-committing node did not succeed",
+                                                      blocked_by=blocked_by[node.node_id], run_id=run_id)
                 continue
             if failed_any and not plan.allow_partial:
                 statuses[node.node_id] = NodeStatus.BLOCKED
@@ -219,6 +229,7 @@ class SystemExecutor:
                     stopped = True
             else:
                 failed_any = True
+                commit_tainted = commit_tainted or node.commits_state
 
         return self._assemble(request, plan, report, run_id, statuses, blocked_by, receipts, store, history, checkpoints, usage, stopped)
 
@@ -255,15 +266,19 @@ class SystemExecutor:
                 converted = output.value.to(item.unit)
             except Exception as exc:
                 return fail(NodeStatus.FAILED, f"input {item.name!r}: cannot express {output.value} as {item.unit!r} ({exc})", authority_digest=authority.identity_digest)
-            values[item.name] = InputValue(item.name, converted, output.uncertainty, item.source_node, item.source_output, producer_receipt.stamp)
+            values[item.name] = InputValue(item.name, converted, output.uncertainty, item.source_node, item.source_output, producer_receipt.stamp,
+                                           producer_receipt.execution_identity_digest)
         for lit in node.literals:
-            values[lit.name] = InputValue(lit.name, lit.value, lit.uncertainty, f"literal:{node.node_id}", lit.name, digest_of(lit.to_dict()))
+            values[lit.name] = InputValue(lit.name, lit.value, lit.uncertainty, f"literal:{node.node_id}", lit.name, digest_of(lit.to_dict()),
+                                          digest_of(lit.to_dict()))
         input_digests = tuple(sorted((name, v.digest) for name, v in values.items()))
         identity = digest_of({"node": node.digest, "authority": authority.identity_digest, "inputs": input_digests, "state": state.digest})
 
         # 2. exact reuse (deterministic authorities, identical identity, successes only)
         hit = None
-        if self.cache is not None and plan.cache_policy == "exact" and authority.deterministic:
+        call = None
+        reusable = authority.deterministic and authority.stateless        # a stateful authority must execute so its own state advances
+        if self.cache is not None and plan.cache_policy == "exact" and reusable:
             hit = self.cache.get(identity)
         t0 = self._clock()
         if hit is not None:
@@ -301,6 +316,11 @@ class SystemExecutor:
             except Exception as exc:
                 return fail(NodeStatus.FAILED, f"output {name!r} is not expressible in {declared[name]!r} ({exc})", **kw)
             converted_outputs[name] = OutputValue(value, output.uncertainty, output.origin)
+        if any(v.uncertainty.kind is UncertaintyKind.UNKNOWN for v in values.values()) and not authority.accounts_for_input_uncertainty:
+            claimed = sorted(n for n, o in converted_outputs.items() if o.uncertainty.kind is not UncertaintyKind.UNKNOWN)
+            if claimed:
+                return fail(NodeStatus.FAILED, f"outputs {claimed} claim a quantified uncertainty although an input's uncertainty is UNKNOWN and the authority does not "
+                                              f"declare that it accounts for its inputs (UNKNOWN in, UNKNOWN out)", **kw)
         problem = self._check_providers(node, request, outcome)
         if problem:
             return fail(NodeStatus.FAILED, problem, **kw)
@@ -321,6 +341,13 @@ class SystemExecutor:
             proposal = outcome.state_proposal
             if proposal is None:
                 return fail(NodeStatus.FAILED, "node declares commits_state but proposed no state", **kw)
+            scenario = self.context.scenario
+            try:
+                proposed_s = proposal.time.magnitude_in("second")
+                if scenario is not None and proposed_s > scenario.end.magnitude_in("second") + 1e-9:
+                    return fail(NodeStatus.FAILED, f"proposed state time {proposed_s} s lies beyond the scenario end", **kw)
+            except Exception as exc:
+                return fail(NodeStatus.FAILED, f"proposed state time is not a valid time ({exc})", **kw)
             owners = {u.owner_id for u in proposal.updates}
             if not owners <= set(node.writes_owners):
                 return fail(NodeStatus.FAILED, f"state proposal writes {sorted(owners - set(node.writes_owners))}, which the node is not allowed to write", **kw)
@@ -338,8 +365,10 @@ class SystemExecutor:
                                 provider_records=outcome.provider_records, applicability=outcome.applicability, artifacts=outcome.artifacts,
                                 delegated=outcome.delegated_record_digest, checkpoint=outcome.authority_checkpoint, stamp=stamp, run_id=run_id,
                                 attempt=attempt, **cache_meta)
-        if self.cache is not None and hit is None and authority.deterministic and plan.cache_policy == "exact":
+        if self.cache is not None and hit is None and reusable and plan.cache_policy == "exact":
             self.cache.put(identity, outcome, receipt.digest)
+        if hit is None and call is not None:
+            authority.committed(call, outcome)      # only now may an authority promote pending internal state
         cp = None
         if node.checkpointable or authority.supports_checkpoint:
             payload = authority.checkpoint_payload() if authority.supports_checkpoint else None
@@ -350,16 +379,17 @@ class SystemExecutor:
         return NodeStatus.SUCCEEDED, receipt, converted_outputs, new_state, cp
 
     def _check_providers(self, node: PlanNode, request: SystemRunRequest, outcome: NodeOutcome) -> str:
-        allowed = {b.binding_id: b for b in request.provider_bindings if b.binding_id in node.provider_binding_ids}
+        allowed = [b for b in request.provider_bindings if b.binding_id in node.provider_binding_ids]
+        if allowed and not outcome.provider_records:
+            return f"node {node.node_id!r} names provider bindings {sorted(node.provider_binding_ids)} but reported no provider execution (an unreported provider is untraceable)"
         for ref in outcome.provider_records:
-            match = [b for b in allowed.values() if b.provider_id == ref.provider_id]
-            if not match:
+            candidates = [b for b in allowed if b.provider_id == ref.provider_id]
+            if not candidates:
                 return f"provider {ref.provider_id!r} executed but the request authorised none for node {node.node_id!r} (no substitute provider)"
-            binding = match[0]
-            if ref.provider_version != binding.provider_version:
-                return f"provider {ref.provider_id!r} executed at version {ref.provider_version!r}, the request requires {binding.provider_version!r}"
-            if binding.provider_digest and ref.provider_digest != binding.provider_digest:
-                return f"provider {ref.provider_id!r} executed a build other than the pinned digest"
+            if not any(b.provider_version == ref.provider_version and (not b.provider_digest or b.provider_digest == ref.provider_digest) for b in candidates):
+                versions = sorted({b.provider_version for b in candidates})
+                return (f"provider {ref.provider_id!r} executed at version {ref.provider_version!r}"
+                        f"{'' if ref.provider_digest else ' (no build digest)'}; no authorising binding matches (requires {versions} and any pinned build)")
             if not ref.succeeded:
                 return f"provider {ref.provider_id!r} reports a failed execution but the node claims success"
         return ""
@@ -423,10 +453,10 @@ class SystemExecutor:
             if problem:
                 raise InvalidScientificProblem(f"checkpoint refused: {problem}")
         cps = {c.node_id: c for c in checkpoint.authority_checkpoints}
-        for node_id in store:
-            cp = cps.get(node_id)
+        for node in plan.nodes:              # plan (= execution) order, so an authority shared by several nodes ends on its LATEST checkpoint
+            cp = cps.get(node.node_id) if node.node_id in store else None
             if cp is not None and cp.payload is not None:
-                self._authority(plan.node(node_id)).restore(cp.payload)
+                self._authority(node).restore(cp.payload)
         return checkpoint.state, list(checkpoint.state_history), store, cps
 
     # ---------------------------------------------------------------------------------------------- assembly

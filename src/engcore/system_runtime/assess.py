@@ -24,9 +24,9 @@ from ..scientific.ir.constraints import ConstraintCheck, ConstraintDefinition
 from ..scientific.results.provenance import ProvenanceRecord
 from ..scientific.results.uncertainty import UncertaintyKind
 from ..scientific.units.quantity import Quantity
-from ._common import identifier
+from ._common import digest_of, identifier
 from .request import SystemRunRequest
-from .result import Availability, SystemRunResult
+from .result import Availability, RunStatus, SystemRunResult
 
 CONSTRAINT_CLASSIFICATION = "constraint_assessment_not_validation"
 CONSERVATION_CLASSIFICATION = "conservation_diagnostic_not_validation"
@@ -62,6 +62,8 @@ class ConstraintAssessment:
 
 def assess_constraints(result: SystemRunResult, system: Any, definitions: Mapping[str, ConstraintDefinition]) -> tuple[ConstraintAssessment, ...]:
     """One assessment per system constraint binding.  ``definitions`` maps definition digest -> definition."""
+    if dict(result.provenance).get("system") != system.digest:
+        raise InvalidScientificProblem("the supplied system is not the system this result was produced for")
     observations = {o.binding_id: o for o in result.plan.constraint_observations}
     by_name = {c.name: c for c in system.constraints}
     out: list[ConstraintAssessment] = []
@@ -72,6 +74,8 @@ def assess_constraints(result: SystemRunResult, system: Any, definitions: Mappin
                                             "the request bound no observable to this constraint", "unknown"))
             continue
         definition = definitions.get(obs.constraint_digest)
+        if definition is not None and digest_of(definition.to_dict()) != obs.constraint_digest:
+            raise InvalidScientificProblem(f"constraint definition filed under {obs.constraint_digest[:12]}.. does not have that digest")
         if definition is None or definition.name != binding.constraint_id or by_name.get(binding.constraint_id) is None:
             raise InvalidScientificProblem(f"constraint binding {binding.binding_id!r} does not resolve to the system's definition")
         observable = result.observable(obs.observable_id)
@@ -97,6 +101,8 @@ class TermSource:
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", identifier(self.name, "balance term name"))
         object.__setattr__(self, "observable_id", identifier(self.observable_id, "balance term observable"))
+        if isinstance(self.scale, bool) or not isinstance(self.scale, (int, float)) or self.scale != self.scale or abs(self.scale) == float("inf") or self.scale == 0:
+            raise InvalidScientificProblem("a balance term scale is a declared finite non-zero factor (0 would erase the term and close the balance)")
 
 
 @dataclass(frozen=True)
@@ -148,11 +154,19 @@ def assess_conservation(result: SystemRunResult, specs: Sequence[BalanceSpec]) -
 
 
 def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = None, *,
-                  validity: tuple[Any, ...] = (), validation: tuple[Any, ...] = (), required_levels: tuple[Any, ...] = ()) -> CredibilityEvidenceReport:
+                  validity: tuple[Any, ...] = (), validation: tuple[Any, ...] = (), required_levels: tuple[Any, ...] = (),
+                  allow_partial: bool = False) -> CredibilityEvidenceReport:
     """Assemble the existing credibility report from a run.  The verdict is the existing one and is never raised here.
 
     ``validity`` / ``validation`` are records produced by their own authorities; this runtime adds none.
     """
+    if request is not None and request.digest != result.request_digest:
+        raise InvalidScientificProblem("the request is not the one this result was produced for; model selections cannot be read from it")
+    unavailable = [o for o in result.observables if o.availability is not Availability.AVAILABLE]
+    if result.status is not RunStatus.SUCCEEDED and not allow_partial:
+        raise InvalidScientificProblem(
+            f"a {result.status.value} run is not assembled into a credibility report: dropping its unavailable observables would lower the evidence "
+            f"bar. Pass allow_partial=True to assemble the available subset, which then states what is missing")
     values = {o.observable_id: o.value.value for o in result.observables if o.availability is Availability.AVAILABLE}
     uncertainty = {o.observable_id: o.value.uncertainty for o in result.observables if o.availability is Availability.AVAILABLE}
     solvers = sorted({(p.provider_id, p.provider_version) for p in result.provider_records}
@@ -165,4 +179,5 @@ def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = No
     return CredibilityEvidenceReport(
         run_id=result.run_id, values=values, provenance=provenance, validity=tuple(validity), validation=tuple(validation),
         required_levels=tuple(required_levels), uncertainty=uncertainty,
-        notes="assembled by the system runtime from execution facts; the runtime supplies no validity record and no validation check")
+        notes=("assembled by the system runtime from execution facts; the runtime supplies no validity record and no validation check"
+               + ("" if not unavailable else "; UNAVAILABLE observables (not in this report): " + ", ".join(f"{o.observable_id}={o.availability.value}" for o in unavailable))))

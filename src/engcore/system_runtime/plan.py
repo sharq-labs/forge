@@ -60,6 +60,7 @@ class PlanNode:
     derived: bool
     #: string pairs a built-in authority needs (channel id, evaluation time, ...); sorted, part of identity
     builtin_args: tuple[tuple[str, str], ...] = ()
+    applicability_waiver: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_id", identifier(self.node_id, "plan node id"))
@@ -87,6 +88,7 @@ class PlanNode:
             "commits_state": self.commits_state, "writes_owners": list(self.writes_owners),
             "applicability_checks": list(self.applicability_checks), "checkpointable": self.checkpointable,
             "configuration_digest": self.configuration_digest, "derived": self.derived, "builtin_args": [list(p) for p in self.builtin_args],
+            "applicability_waiver": self.applicability_waiver,
         }
 
     @property
@@ -98,13 +100,13 @@ class PlanNode:
         require_schema(payload, PLAN_NODE_SCHEMA)
         strict_keys(payload, {"schema", "node_id", "kind", "authority", "depends_on", "inputs", "literals", "outputs", "provider_binding_ids",
                               "commits_state", "writes_owners", "applicability_checks", "checkpointable", "configuration_digest",
-                              "derived", "builtin_args"}, "plan node")
+                              "derived", "builtin_args", "applicability_waiver"}, "plan node")
         return cls(payload["node_id"], NodeKind(payload["kind"]), AuthorityRef.from_dict(payload["authority"]), tuple(payload["depends_on"]),
                    tuple(NodeInput.from_dict(i) for i in payload["inputs"]), tuple(LiteralInput.from_dict(x) for x in payload["literals"]),
                    tuple(NodeOutputSpec.from_dict(o) for o in payload["outputs"]), tuple(payload["provider_binding_ids"]),
                    payload["commits_state"], tuple(payload["writes_owners"]), tuple(payload["applicability_checks"]), payload["checkpointable"],
                    hex64(payload["configuration_digest"], "configuration digest", allow_empty=True), payload["derived"],
-                   tuple((a, b) for a, b in payload["builtin_args"]))
+                   tuple((a, b) for a, b in payload["builtin_args"]), payload["applicability_waiver"])
 
 
 @dataclass(frozen=True)
@@ -217,7 +219,8 @@ def compile_plan(request: SystemRunRequest) -> SystemExecutionPlan:
         deps = set(node.depends_on) | extra_deps[node.node_id] | {i.source_node for i in inputs}
         plan_nodes[node.node_id] = PlanNode(
             node.node_id, node.kind, node.authority, tuple(sorted(deps)), inputs, node.literals, node.outputs, node.provider_binding_ids,
-            node.commits_state, node.writes_owners, node.applicability_checks, node.checkpointable, node.configuration_digest, False)
+            node.commits_state, node.writes_owners, node.applicability_checks, node.checkpointable, node.configuration_digest, False, (),
+            node.applicability_waiver)
 
     observable_by_id = {o.observable_id: o for o in request.observables}
     for obs in request.constraint_observations:

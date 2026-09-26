@@ -172,7 +172,7 @@ class MultiphysicsAuthority(_Base):
                     base = previous.get(item.variable_id)
                     if base is None:
                         return NodeOutcome.failed(f"participant reported unknown state variable {item.variable_id!r}")
-                    new.append(InitialStateValue(item.variable_id, item.value.to(base.value.units), base.uncertainty))
+                    new.append(InitialStateValue(item.variable_id, item.value.to(base.value.units), item.uncertainty))
                 if {v.variable_id for v in new} != set(previous):
                     return NodeOutcome.failed(f"participant {participant!r} did not report every variable of owner {owner_id!r}")
                 updates.append(OwnerState(owner_id, call.state.owner(owner_id).role, tuple(new)))
@@ -205,10 +205,15 @@ class MultiscaleAuthority(_Base):
         self.deterministic = False
         self.stateless = False
         self.supports_checkpoint = True
-        self._last_checkpoint: Mapping[str, Any] | None = None
+        self._last_checkpoint: Mapping[str, Any] | None = None       # from a COMMITTED stage only
+        self._pending_checkpoint: Mapping[str, Any] | None = None    # from the stage being executed; promoted in committed()
+
+    def committed(self, call: NodeCall, outcome: NodeOutcome) -> None:
+        self._last_checkpoint = self._pending_checkpoint
 
     def execute(self, call: NodeCall) -> NodeOutcome:
         from ..multiscale import MacroCheckpoint
+        self._pending_checkpoint = None
         stage = self._stages.get(call.node.node_id, {"until": self._until, "resume": False})
         t0 = time.perf_counter()
         if stage.get("resume"):
@@ -217,10 +222,14 @@ class MultiscaleAuthority(_Base):
             self.runtime.set_declared_fast_state(self._fast or {})
             record = self.runtime.resume(MacroCheckpoint.deserialize(self._last_checkpoint), until=stage.get("until"))
         else:
+            self._last_checkpoint = None      # a fresh run never inherits a checkpoint from an earlier run
             record = self.runtime.run(initial_slow_state=self._slow, initial_fast_state=self._fast, until=stage.get("until"))
         wall = time.perf_counter() - t0
         if record.status not in ("completed", "paused"):
             return NodeOutcome.failed(f"multi-timescale run ended {record.status}: {record.reason}")
+        until = stage.get("until")
+        if record.status == "paused" and (until is None or record.reached.seconds < until.seconds):
+            return NodeOutcome.failed("the multi-timescale run paused before the instant this stage requested; a short run is not exposed as complete")
         outputs = {name: OutputValue(fn(record), Uncertainty.unknown("multi-timescale output: uncertainty is not quantified; see the approximation ledger"),
                                      f"multiscale:{record.run_id}:{name}") for name, fn in self._extract.items()}
         proposal = None
@@ -235,11 +244,11 @@ class MultiscaleAuthority(_Base):
                 updates.append(OwnerState(owner_id, call.state.owner(owner_id).role, new))
             proposal = StateProposal(record.reached.quantity, tuple(updates))
         if record.last_valid_checkpoint is not None:
-            self._last_checkpoint = record.last_valid_checkpoint.serialize()
+            self._pending_checkpoint = record.last_valid_checkpoint.serialize()
         return NodeOutcome(
             "succeeded", outputs, applicability=() if self._applicability is None else self._applicability(record, call), state_proposal=proposal,
             provider_records=() if self._providers is None else self._providers(record), delegated_record_digest=record.digest,
-            resource_usage=ResourceUsage(wall_seconds=wall), authority_checkpoint=(digest_of(self._last_checkpoint or {"none": True}), self._last_checkpoint is not None),
+            resource_usage=ResourceUsage(wall_seconds=wall), authority_checkpoint=(digest_of(self._pending_checkpoint or {"none": True}), self._pending_checkpoint is not None),
             diagnostics={"status": record.status, "accounting": str(sorted(dict(record.accounting).items()))})
 
     def checkpoint_payload(self) -> Mapping[str, Any] | None:

@@ -186,7 +186,7 @@ def test_a_node_cannot_use_a_provider_the_request_did_not_bind_or_a_different_ve
     request2 = replace(request2, nodes=tuple(thermal if n.node_id == "thermal" else n for n in request2.nodes), provider_bindings=(ProviderBinding("b", "pybamm", "26.8"),))
     context2.providers = FakeProviders(pybamm=_prov())
     result2 = SystemExecutor(context2).run(request2)
-    assert result2.receipt("thermal").status is NodeStatus.FAILED and "requires '26.8'" in result2.receipt("thermal").reason
+    assert result2.receipt("thermal").status is NodeStatus.FAILED and "no authorising binding matches" in result2.receipt("thermal").reason
 
 
 def test_missing_authorities_and_authority_identity_changes_refuse_before_execution():
@@ -453,13 +453,19 @@ def test_the_trace_reports_gaps_instead_of_inventing_lineage():
     assert any("scenario" in g for g in trace_result(partial, "peak_temperature").gaps)
 
 
-def test_a_node_with_provider_bindings_and_no_provider_record_is_a_lineage_gap():
+def test_a_node_that_names_provider_bindings_must_report_a_provider_execution():
     request, context, knobs = _with_provider(ProviderBinding("b", "pybamm", "26.8"), FakeProviders(pybamm=_prov()))
-    result = SystemExecutor(context).run(request)
-    assert result.status is RunStatus.SUCCEEDED
-    gaps = trace_result(result, "peak_temperature").gaps
-    # lineage is transitive: 'thermal' (upstream of 'report') names a provider binding but recorded no execution
-    assert any("node 'thermal' names provider bindings but its receipt records no provider execution" in g for g in gaps)
-    request2 = replace(request, observables=(RequestedObservable("t", "thermal", "temperature", "K"),), constraint_observations=())
-    r2 = SystemExecutor(context).run(request2)
-    assert any("names provider bindings but its receipt records no provider execution" in g for g in trace_result(r2, "t").gaps)
+    result = SystemExecutor(context).run(request)                # thermal executes but reports no provider record
+    thermal = result.receipt("thermal")
+    assert thermal.status is NodeStatus.FAILED and "reported no provider execution" in thermal.reason
+    assert result.observable("peak_temperature").availability is Availability.BLOCKED and len(result.state_history) == 1
+    ref = ProviderRecordRef("pybamm", "26.8", sha("build"), sha("identity"), sha("record"), True)
+    request, context, knobs = _with_provider(ProviderBinding("b", "pybamm", "26.8"), FakeProviders(pybamm=_prov()))
+    request2, context2, knobs2 = build(knobs=Knobs(provider_ref=ref))
+    thermal_node = replace(next(n for n in request2.nodes if n.node_id == "thermal"), provider_binding_ids=("b",), configuration_digest=sha("thermal-config"))
+    request2 = replace(request2, nodes=tuple(thermal_node if n.node_id == "thermal" else n for n in request2.nodes),
+                       provider_bindings=(ProviderBinding("b", "pybamm", "26.8"),))
+    context2.providers = FakeProviders(pybamm=_prov())
+    ok = SystemExecutor(context2).run(request2)
+    assert ok.status is RunStatus.SUCCEEDED and ok.receipt("thermal").provider_records == (ref,)
+    assert trace_result(ok, "peak_temperature").complete

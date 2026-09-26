@@ -153,6 +153,8 @@ class ApplicabilityReport:
             raise InvalidScientificProblem(f"applicability status must be one of {_APPLICABILITY}")
         object.__setattr__(self, "evidence_digest", hex64(self.evidence_digest, "applicability evidence digest", allow_empty=True))
         object.__setattr__(self, "reason", str(self.reason).strip())
+        if self.status == "within" and not self.evidence_digest:
+            raise InvalidScientificProblem("a 'within' applicability report must carry the digest of the evidence it was decided on")
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": APPLICABILITY_SCHEMA, "check_id": self.check_id, "status": self.status, "evidence_digest": self.evidence_digest,
@@ -248,13 +250,15 @@ class InputValue:
     uncertainty: Uncertainty
     producer_node: str
     producer_output: str
-    #: digest binding this value to (run, producer node, plan, producer execution identity)
+    #: digest binding this value to (run, producer node, plan, producer execution identity): an in-run staleness check
     producer_stamp: str
+    #: the producer's RUN-INDEPENDENT execution identity; this (not the stamp) is what identifies the input's content
+    producer_identity: str = ""
 
     @property
     def digest(self) -> str:
         return digest_of({"name": self.name, "value": self.value.to_dict(), "uncertainty": self.uncertainty.to_dict(),
-                          "producer_node": self.producer_node, "producer_output": self.producer_output, "producer_stamp": self.producer_stamp})
+                          "producer_node": self.producer_node, "producer_output": self.producer_output, "producer_identity": self.producer_identity})
 
 
 @dataclass(frozen=True)
@@ -289,6 +293,13 @@ class NodeAuthority(ABC):
     supports_checkpoint: bool = False
     #: True when the authority holds no state between executions (so it never blocks checkpoint completeness)
     stateless: bool = False
+    #: True only for an authority that DECLARES its output uncertainty accounts for its inputs' uncertainty. Otherwise a quantified
+    #: output uncertainty from UNKNOWN inputs is refused (UNKNOWN in, UNKNOWN out).
+    accounts_for_input_uncertainty: bool = False
+
+    def committed(self, call: "NodeCall", outcome: "NodeOutcome") -> None:
+        """Called by the executor only AFTER the node's outputs, provider records, applicability and state proposal were all
+        accepted and committed.  An authority must promote any pending internal state here, never in ``execute``."""
 
     @abstractmethod
     def execute(self, call: NodeCall) -> NodeOutcome:
@@ -408,9 +419,9 @@ class NodeReceipt:
 
     @property
     def scientific_digest(self) -> str:
-        """The receipt without operational fields (resource usage, attempt, cache provenance): same science, same digest."""
+        """The receipt without operational fields (resource usage, attempt, cache provenance, the run-bound staleness stamp): same science, same digest."""
         payload = self.to_dict()
-        for key in ("resource_usage", "attempt", "cache_hit", "original_receipt_digest"):
+        for key in ("resource_usage", "attempt", "cache_hit", "original_receipt_digest", "stamp"):
             payload.pop(key)
         return digest_of(payload)
 

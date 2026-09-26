@@ -62,6 +62,12 @@ class PreflightReport:
     findings: tuple[Finding, ...]
     deferred_checks: tuple[DeferredCheck, ...]
 
+    def __post_init__(self) -> None:
+        blocking = any(f.blocking for f in self.findings)
+        expected = PreflightStatus.REFUSED if blocking else (PreflightStatus.DEFERRED_CHECKS if self.deferred_checks else PreflightStatus.READY)
+        if self.status is not expected:
+            raise InvalidScientificProblem(f"preflight status {self.status.value!r} disagrees with its findings (expected {expected.value!r})")
+
     @property
     def blocking(self) -> tuple[Finding, ...]:
         return tuple(f for f in self.findings if f.blocking)
@@ -123,6 +129,17 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
         state = context.material_states.get(ref.digest)
         if state is None:
             add("MISSING_CONTENT", "", f"material state {ref.ref_id!r} was not supplied")
+    for label, table, digest_of_obj in (("material state", context.material_states, lambda o: o.digest),
+                                        ("resolved property", context.resolved_properties, lambda o: o.digest),
+                                        ("constraint definition", context.constraints, lambda o: digest_of(o.to_dict()))):
+        for key, obj in table.items():
+            try:
+                actual = digest_of_obj(obj)
+            except Exception as exc:
+                add("CONTENT_DIGEST_MISMATCH", "", f"a supplied {label} filed under {key[:12]}.. has no computable digest ({exc})")
+                continue
+            if actual != key:
+                add("CONTENT_DIGEST_MISMATCH", "", f"a supplied {label} is filed under {key[:12]}.. but its content digest is {actual[:12]}..")
 
     system, scenario, timeline = context.system, context.scenario, context.timeline
     if timeline is not None and scenario is not None and timeline.scenario_digest != scenario.digest:
@@ -142,6 +159,13 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
         for owner in request.initial_state.owners:
             if owner.role == "component" and owner.owner_id not in instance_ids:
                 add("UNKNOWN_STATE_OWNER", "", f"initial state owner {owner.owner_id!r} is not a component instance of the system")
+        selected = {s.instance_id for s in request.model_selections}
+        for instance in system.instances:
+            if instance.participant_id and instance.instance_id not in selected:
+                add("MODEL_SELECTION_MISSING", "", f"executable component {instance.instance_id!r} has no explicit model selection; the runtime never chooses a model")
+        for selection in request.model_selections:
+            if selection.instance_id not in instance_ids:
+                add("UNKNOWN_MODEL_SELECTION_TARGET", "", f"model selection names {selection.instance_id!r}, which is not a component instance of the system")
         participants = [i.instance_id for i in system.instances if i.participant_id]
         if len(participants) > 1:
             parent = {p: p for p in participants}
@@ -206,6 +230,11 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
         if node.kind.value == "resolve_material":
             digest = node.arg("resolved_digest")
             prop = context.resolved_properties.get(digest)
+            owner_state = dict(request.initial_state.material_state_digests).get(node.arg("owner"))
+            if owner_state is None:
+                add("MATERIAL_MISMATCH", node.node_id, f"owner {node.arg('owner')!r} has no material state in the initial state, so the property has no material to belong to")
+            elif owner_state not in {m.digest for m in request.materials}:
+                add("MISSING_CONTENT", node.node_id, f"the material state bound to owner {node.arg('owner')!r} is not among the request's materials")
             if prop is None:
                 add("MISSING_MATERIAL", node.node_id, f"resolved property {node.arg('property')!r} ({digest[:12]}..) was not supplied")
             elif prop.status != "known" or prop.value is None:
@@ -213,6 +242,8 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
             else:
                 if prop.property_id != node.arg("property"):
                     add("MATERIAL_MISMATCH", node.node_id, f"resolved property is {prop.property_id!r}, the node declares {node.arg('property')!r}")
+                if owner_state is not None and prop.state_digest != owner_state:
+                    add("MATERIAL_MISMATCH", node.node_id, "the resolved property was resolved for another material state than the one bound to its owner")
                 try:
                     if prop.value.value.dimensionality != _dim(node.outputs[0].unit):
                         add("UNIT_INCOMPATIBLE", node.node_id, "resolved property dimension differs from the declared unit")

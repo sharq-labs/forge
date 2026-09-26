@@ -33,6 +33,8 @@ def _time_seconds(value: Quantity, label: str) -> float:
     if not isinstance(value, Quantity):
         raise InvalidScientificProblem(f"{label} must be a time Quantity")
     seconds = float(value.magnitude_in("second"))  # dimension mismatch raises
+    if seconds != seconds or seconds in (float("inf"), float("-inf")):
+        raise InvalidScientificProblem(f"{label} must be finite")
     return seconds
 
 

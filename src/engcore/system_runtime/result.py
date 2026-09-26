@@ -292,6 +292,13 @@ class SystemRunResult:
             raise InvalidScientificProblem("a SUCCEEDED run has a node that did not succeed")
         if self.status is RunStatus.SUCCEEDED and any(o.availability is not Availability.AVAILABLE for o in self.observables):
             raise InvalidScientificProblem("a SUCCEEDED run has an unavailable observable")
+        # derived collections are re-derived, never trusted
+        derived_refs = tuple(sorted({p for r in self.node_receipts for p in r.provider_records}))
+        if tuple(sorted(self.provider_records)) != derived_refs:
+            raise InvalidScientificProblem("result provider records differ from those its receipts carry")
+        if self.trust_inputs.execution_status != self.status.value or \
+                set(self.trust_inputs.provider_execution_identities) != {p.execution_identity_digest for p in derived_refs}:
+            raise InvalidScientificProblem("result trust inputs differ from what its status and receipts state")
 
     def observable(self, observable_id: str) -> ObservableResult:
         for item in self.observables:
@@ -410,6 +417,8 @@ def trace_result(result: SystemRunResult, observable_id: str) -> ResultTrace:
             links.append(TraceLink(kind, key, f"resolved by {node_id}, receipt {receipt.digest[:16]}"))
             continue
         links.append(TraceLink("node", node_id, f"receipt {receipt.digest[:16]} status {receipt.status.value}"))
+        if receipt.cache_hit:
+            links.append(TraceLink("reuse", receipt.original_receipt_digest, f"{node_id!r} was NOT executed in this run: exact reuse of an earlier execution"))
         links.append(TraceLink("authority", node.authority.authority_id, f"identity {receipt.authority_identity_digest[:16]}"))
         if receipt.delegated_record_digest:
             links.append(TraceLink("execution_record", receipt.delegated_record_digest, f"delegated runtime record of {node_id}"))

@@ -13,9 +13,10 @@ import pytest
 from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.units.quantity import Quantity
 from engcore.system_runtime import (
-    AuthorityRegistry, NodeAuthority, NodeOutcome, NodeStatus, OutputValue, ProviderBinding, ResumeRefused, RunStatus, SystemCheckpoint, SystemExecutor,
-    compare_runs, compile_plan,
+    AuthorityRegistry, NodeAuthority, NodeOutcome, NodeStatus, OutputValue, ProviderBinding, ProviderRecordRef, ResumeRefused, RunStatus, SystemCheckpoint,
+    SystemExecutor, compare_runs, compile_plan,
 )
+from engcore.system_runtime._common import digest_of
 from tests.system_runtime_fixtures import UNKNOWN, Knobs, build, sha
 from tests.test_system_runtime_executor import FakeProviders, _prov
 
@@ -97,7 +98,8 @@ def test_resume_refuses_every_change_to_what_the_run_means():
 
 def test_resume_refuses_a_provider_build_change_that_leaves_the_request_unchanged():
     def with_provider(digest):
-        request, context, knobs = build(checkpoint_after=("thermal",))
+        ref = ProviderRecordRef("pybamm", "26.8", digest, sha("identity"), sha("record"), True)
+        request, context, knobs = build(checkpoint_after=("thermal",), knobs=Knobs(provider_ref=ref))
         thermal = replace(next(n for n in request.nodes if n.node_id == "thermal"), provider_binding_ids=("b",))
         request = replace(request, nodes=tuple(thermal if n.node_id == "thermal" else n for n in request.nodes),
                           provider_bindings=(ProviderBinding("b", "pybamm", "26.8"),))
@@ -130,7 +132,7 @@ class Counting(NodeAuthority):
 
     def execute(self, call):
         self.n += 1
-        return NodeOutcome("succeeded", {"power": OutputValue(Quantity(37.0, "W"), UNKNOWN, "counter")}, authority_checkpoint=(sha(str(self.n)), True))
+        return NodeOutcome("succeeded", {"power": OutputValue(Quantity(37.0, "W"), UNKNOWN, "counter")}, authority_checkpoint=(digest_of({"n": self.n}), True))
 
     def checkpoint_payload(self):
         return {"n": self.n}
@@ -146,7 +148,7 @@ class Incomplete(Counting):
 
     def execute(self, call):
         self.n += 1
-        return NodeOutcome("succeeded", {"power": OutputValue(Quantity(37.0, "W"), UNKNOWN, "incomplete")}, authority_checkpoint=(sha("partial"), False))
+        return NodeOutcome("succeeded", {"power": OutputValue(Quantity(37.0, "W"), UNKNOWN, "incomplete")}, authority_checkpoint=(digest_of({"n": self.n}), False))
 
 
 def _with_authority(authority, node_id="heat", **build_kw):

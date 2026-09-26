@@ -287,6 +287,9 @@ class NodeSpec:
     writes_owners: tuple[str, ...] = ()
     #: Runtime applicability checks that must all report "within" BEFORE the node's state is committed.
     applicability_checks: tuple[str, ...] = ()
+    #: A node that commits state must declare the runtime applicability checks it is subject to, or STATE why none applies.
+    #: "No check declared" is never silently "applicable".
+    applicability_waiver: str = ""
     checkpointable: bool = False
     configuration_digest: str = ""
 
@@ -311,6 +314,13 @@ class NodeSpec:
             raise InvalidScientificProblem(f"node {self.node_id!r} commits state but declares no owners it may write")
         if tuple(self.writes_owners) and not self.commits_state:
             raise InvalidScientificProblem(f"node {self.node_id!r} declares writes_owners without commits_state")
+        object.__setattr__(self, "applicability_waiver", str(self.applicability_waiver or "").strip())
+        if self.commits_state and not tuple(self.applicability_checks) and not self.applicability_waiver:
+            raise InvalidScientificProblem(
+                f"node {self.node_id!r} commits state but declares no applicability check and states no waiver; "
+                f"missing applicability is never read as 'applicable'")
+        if self.applicability_waiver and tuple(self.applicability_checks):
+            raise InvalidScientificProblem(f"node {self.node_id!r} both declares applicability checks and waives them")
         if self.node_id in set(self.depends_on):
             raise InvalidScientificProblem(f"node {self.node_id!r} depends on itself")
         object.__setattr__(self, "outputs", tuple(sorted(outputs)))
@@ -334,6 +344,7 @@ class NodeSpec:
             "provider_binding_ids": list(self.provider_binding_ids), "material_refs": [m.to_dict() for m in self.material_refs],
             "environment_requirements": [e.to_dict() for e in self.environment_requirements], "commits_state": self.commits_state,
             "writes_owners": list(self.writes_owners), "applicability_checks": list(self.applicability_checks),
+            "applicability_waiver": self.applicability_waiver,
             "checkpointable": self.checkpointable, "configuration_digest": self.configuration_digest,
         }
 
@@ -342,14 +353,15 @@ class NodeSpec:
         require_schema(payload, NODE_SPEC_SCHEMA)
         strict_keys(payload, {"schema", "node_id", "kind", "authority", "outputs", "depends_on", "inputs", "literals", "provider_binding_ids",
                               "material_refs", "environment_requirements", "commits_state", "writes_owners", "applicability_checks",
-                              "checkpointable", "configuration_digest"}, "node spec")
+                              "applicability_waiver", "checkpointable", "configuration_digest"}, "node spec")
         return cls(
             payload["node_id"], NodeKind(payload["kind"]), AuthorityRef.from_dict(payload["authority"]),
             tuple(NodeOutputSpec.from_dict(o) for o in payload["outputs"]), tuple(payload["depends_on"]),
             tuple(NodeInput.from_dict(i) for i in payload["inputs"]), tuple(LiteralInput.from_dict(x) for x in payload["literals"]),
             tuple(payload["provider_binding_ids"]), tuple(MaterialPropertyRef.from_dict(m) for m in payload["material_refs"]),
             tuple(EnvironmentRequirement.from_dict(e) for e in payload["environment_requirements"]), payload["commits_state"],
-            tuple(payload["writes_owners"]), tuple(payload["applicability_checks"]), payload["checkpointable"], payload["configuration_digest"])
+            tuple(payload["writes_owners"]), tuple(payload["applicability_checks"]), payload["applicability_waiver"], payload["checkpointable"],
+            payload["configuration_digest"])
 
 
 @dataclass(frozen=True, order=True)

@@ -43,7 +43,7 @@ from engcore.scientific.units.quantity import Quantity
 from engcore.system_runtime import (
     ApplicabilityReport, AuthorityRegistry, Availability, CallbackAuthority, ConstraintObservation, EnvironmentRequirement, ExecutionProfile, InitialStateSpec,
     LiteralInput, MaterialPropertyRef, MultiphysicsAuthority, MultiscaleAuthority, NodeInput, NodeKind, NodeOutcome, NodeOutputSpec, NodeSpec, NodeStatus,
-    OutputValue, OwnerState, PreflightStatus, ProviderAuthority, ProviderBinding, ProviderRecordRef, RequestedObservable, RunStatus, RuntimeContext,
+    ModelSelection, OutputValue, OwnerState, PreflightStatus, ProviderAuthority, ProviderBinding, ProviderRecordRef, RequestedObservable, RunStatus, RuntimeContext,
     SystemCheckpoint, SystemExecutor, SystemRunRequest, assess_constraints, compare_runs, compile_plan, preflight, trace_result, trust_handoff,
 )
 from engcore.system_runtime._common import digest_of
@@ -204,7 +204,8 @@ def coupled_kit(*, soc_lower: float = 0.05, soc_upper: float = 0.95, initial_soc
     request = SystemRunRequest.build(
         request_id="battery-cooling-hour", system=system, scenario=scenario, timeline=env.timeline, environment=env, initial_state=initial, nodes=(node,),
         observables=(RequestedObservable("cell_temperature_final", "coupled", "cell_temperature", "K"), RequestedObservable("end_soc", "coupled", "soc", "dimensionless")),
-        materials=(mat_state,), provider_bindings=(ProviderBinding("pybamm_cell", "pybamm", pb.version, pb.digest), ProviderBinding("tespy_coolant", "tespy", ts.version, ts.digest)),
+        materials=(mat_state,), model_selections=(ModelSelection("cell", "pybamm-spm-chen2020", pb.version), ModelSelection("coolant", "tespy-cold-plate-water", ts.version)),
+        provider_bindings=(ProviderBinding("pybamm_cell", "pybamm", pb.version, pb.digest), ProviderBinding("tespy_coolant", "tespy", ts.version, ts.digest)),
         constraint_observations=(ConstraintObservation("b_tmax", "max_cell_temperature", digest_of(t_max.to_dict()), "cell_temperature_final"),
                                  ConstraintObservation("b_soc", "min_end_soc", digest_of(soc_min.to_dict()), "end_soc")),
         profile=ExecutionProfile(("multiphysics",), "off", True, ("coupled",)))
@@ -319,6 +320,8 @@ def test_gate_a_one_real_provider_request_to_result_to_receipt_to_trace():
     initial = InitialStateSpec(Quantity(0, "s"), (OwnerState("cell", "component", (InitialStateValue("soc", Quantity(0.9, "dimensionless"), UNKNOWN),)),))
     request = SystemRunRequest.build(request_id="cold-plate", system=system, scenario=scenario, timeline=env.timeline, environment=env, initial_state=initial,
                                      nodes=(node,), observables=(RequestedObservable("outlet_temperature", "chain", "outlet_temperature", "K"),),
+                                     model_selections=(ModelSelection("cell", "pybamm-spm-chen2020", REG.status("pybamm").version),
+                                                       ModelSelection("coolant", "tespy-cold-plate-water", ts.version)),
                                      provider_bindings=(ProviderBinding("tespy", "tespy", ts.version, ts.digest),))
     context = RuntimeContext(AuthorityRegistry((authority,)), system=system, scenario=scenario, timeline=env.timeline, environment=env, providers=REG)
     result = SystemExecutor(context).run(request)
@@ -371,6 +374,7 @@ def _multiscale_kit(*, staged: bool, day_nodes: bool):
 def _aging_request(ms, env, authority, system_def, *, staged: bool, day_nodes: bool, extra_authorities=()):
     outs = (NodeOutputSpec("final_fade", "dimensionless"), NodeOutputSpec("represented_days", "day"))
     common = dict(provider_binding_ids=("pybamm_cell",), commits_state=True, writes_owners=("cell_slow",), applicability_checks=(),
+                  applicability_waiver="the aging map is exercised only inside its declared weekly-window policy; this node asserts no runtime applicability bound",
                   configuration_digest=digest_of({"policy": "weekly macro windows", "hierarchy": "cell-aging"}))
     if staged:
         nodes = [NodeSpec("aging_a", NodeKind.MULTISCALE_EXECUTION, authority.ref, outs, checkpointable=True, **common),
