@@ -318,6 +318,35 @@ map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/
 - [ ] BIG 14 — NOT STARTED (per instruction). Gaps handed forward are listed at the end of the BIG 13 entry in PROGRESS (no quantified uncertainty, no experimental comparison,
       A cell-side conservation check, B/C/D unexplained residuals, unkeyed bundle manifest, optional flagship E).
 
+## Accepted post-hardening strategic direction — Engineering design synthesis and assembly
+
+This is **not an active BIG 14 task** and must not displace BIG 14/15 review,
+test-audit, validation, mutation and recertification work.
+
+After the hardening campaign, Forge's design-discovery direction must include an
+explicit product-realization layer between design variables and expensive solver
+execution:
+
+- Engineering Requirements IR and identity-bound design spaces;
+- parametric geometry/CAD/topology;
+- **assembly synthesis as a first-class capability**;
+- standard/catalog-component selection with provenance;
+- custom-part generation only when required;
+- fasteners, nuts/washers, pins, shafts, bearings/bushings, keys/splines,
+  gears, belts/chains, couplings, springs, seals, welds, bonded joints and press-fits;
+- electrical/mechanical connectors, cable/hose/pipe routing and mechanical stops;
+- tolerances, fits, tool access, assembly sequence and serviceability;
+- manufacturability and component-rating checks before expensive solver runs;
+- capability-based solver planning;
+- high-throughput multi-fidelity design campaigns.
+
+A geometry that solves is not automatically a buildable product, and a catalog
+component is not admissible merely because it fits geometrically. Missing ratings,
+tolerances, lifecycle, availability or cost remain UNKNOWN.
+
+Architecture: `docs/architecture/design_synthesis.md`.
+Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P23-P33.
+
 ## Accepted post-hardening strategic direction — Mechanism-aware discovery
 
 This is **not an active BIG 14 task** and must not displace BIG 14/15 review,
@@ -343,7 +372,7 @@ sensitivity, solver agreement, a dependency edge, optimization score or LLM
 proposal into causal/scientific evidence.
 
 Architecture: `docs/architecture/mechanistic_discovery.md`.
-Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P19-P23.
+Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P21-P33.
 
 ## Persistent project direction
 
