@@ -53,6 +53,10 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   ladder (a report vocabulary, not an authority), run bundles and VTU export over a BIG 12 result; it executes and solves nothing. See
   [engineering.md](engineering.md). The four flagship systems are driven from `flagships/` (a separate distribution, not part of `engcore`);
   their reports are in `docs/flagships/`.
+- **Future strategic layer — mechanism-aware discovery:** not implemented yet. The architecture direction is to represent provider-neutral
+  dependencies, mechanisms, state transitions, interventions, competing hypotheses and mechanistic explanations without promoting model
+  dependency/sensitivity into causal proof. It must reuse existing state, lifecycle, evidence, UQ, provenance and trust authorities rather
+  than create parallel vocabularies. See [mechanistic_discovery.md](mechanistic_discovery.md).
 
 ## Claims organization
 
