@@ -26,7 +26,7 @@ from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.units.quantity import Quantity
 from ._common import digest_of, identifier
 from .plan import PlanNode
-from .records import ApplicabilityReport, NodeAuthority, NodeCall, NodeOutcome, OutputValue, ProviderRecordRef, StateProposal
+from .records import ApplicabilityReport, ArtifactRef, NodeAuthority, NodeCall, NodeOutcome, OutputValue, ProviderRecordRef, StateProposal
 from .request import AuthorityRef
 from .state import OwnerState
 
@@ -109,7 +109,9 @@ class MultiphysicsAuthority(_Base):
                  applicability: Callable[[Any, NodeCall], tuple[ApplicabilityReport, ...]] | None = None,
                  providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None,
                  graph: Any = None, plan: Any = None, runtime_factory: Callable[[NodeCall], Any] | None = None,
-                 state_outputs: Mapping[str, tuple[str, str]] | None = None) -> None:
+                 state_outputs: Mapping[str, tuple[str, str]] | None = None,
+                 extractors: Mapping[str, Callable[[Any, NodeCall], Quantity]] | None = None,
+                 artifacts: Callable[[Any, NodeCall], tuple[ArtifactRef, ...]] | None = None) -> None:
         """Either a fixed ``runtime``, or ``graph`` + ``plan`` + ``runtime_factory(call)`` for a participant that must be built from the committed
         state (for example a cell constructed with its initial state of charge).  Identity covers the graph and plan fingerprints and ``config``."""
         if (runtime is None) == (runtime_factory is None):
@@ -121,7 +123,9 @@ class MultiphysicsAuthority(_Base):
         self._init(authority_id, "multiphysics", {
             "graph": graph.fingerprint(), "plan": plan.fingerprint(), "outputs": dict(sorted(outputs.items())),
             "state_outputs": {k: list(v) for k, v in sorted((state_outputs or {}).items())},
+            "extractors": sorted(extractors or {}), "artifacts": artifacts is not None,
             "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
+        self._extractors, self._artifacts = dict(extractors or {}), artifacts
         self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
         self._state_outputs = dict(state_outputs or {})
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
@@ -159,6 +163,10 @@ class MultiphysicsAuthority(_Base):
                 "coupled-run output: participants state no uncertainty; convergence is numerical, not uncertainty"), f"multiphysics:{run.run_id}:{key}")
         if any(w.outcome.value != "converged" for w in run.windows):
             return NodeOutcome.failed("a coupling window did not converge; nothing is exposed")
+        for name, fn in self._extractors.items():   # scalars the caller derives from the run's own histories; uncertainty stays UNKNOWN
+            outputs[name] = OutputValue(fn(run, call), Uncertainty.unknown(
+                "derived from the coupled run's histories: participants state no uncertainty; convergence is numerical, not uncertainty"),
+                f"multiphysics:{run.run_id}:derived:{name}")
         proposal = None
         if call.node.commits_state:
             updates = []
@@ -180,6 +188,7 @@ class MultiphysicsAuthority(_Base):
         return NodeOutcome(
             "succeeded", outputs, applicability=() if self._applicability is None else self._applicability(run, call), state_proposal=proposal,
             provider_records=() if self._providers is None else self._providers(run), delegated_record_digest=digest_of(run.to_dict()),
+            artifacts=() if self._artifacts is None else self._artifacts(run, call),
             resource_usage=ResourceUsage(wall_seconds=wall), diagnostics={"windows": str(len(run.windows)),
                                                                         "iterations": str(sum(len(w.iterations) for w in run.windows))})
 

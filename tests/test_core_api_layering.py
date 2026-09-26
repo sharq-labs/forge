@@ -314,6 +314,10 @@ NON_CORE_PACKAGES = {
         "end-to-end system execution runtime (canonical request, deterministic plan, preflight, generic executor, "
         "checkpoint/replay) that delegates to the BIG 9 / 10 / 11 authorities; computes nothing, validates nothing, issues no verdict"
     ),
+    "engineering": (
+        "engineering output layer over system_runtime (BIG 13): reference provenance, verification ladder, engineering summary, "
+        "run bundle, viewable fields; adds no execution, no solver and no trust vocabulary"
+    ),
 }
 
 

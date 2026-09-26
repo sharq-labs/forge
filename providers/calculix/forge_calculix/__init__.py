@@ -26,7 +26,7 @@ from engcore.providers import (
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal,
     failed, minimal_environment,
 )
-from engcore.pde.cases import PlaneStressProblem, RegionMaterial  # noqa: F401
+from engcore.pde.cases import PlaneStressProblem, RegionMaterial, ThermoelasticPlaneStressProblem  # noqa: F401
 from engcore.scientific.units.quantity import Quantity
 
 ADAPTER = ("forge_calculix", "0.1")
@@ -122,6 +122,58 @@ def parse_dat(text: str, nodes: int, cells: int) -> tuple[np.ndarray, np.ndarray
     return u, sig
 
 
+def _restraint_nodes(mesh, group: str) -> list[int]:
+    return sorted({int(n) for f in _facet_nodes(mesh, group) for n in f})
+
+
+def generate_thermoelastic_deck(problem: ThermoelasticPlaneStressProblem, identity_tag: str) -> str:
+    """CPS3 deck: isotropic elastic + ``*EXPANSION, ZERO=T_ref`` per region, restraints as node sets, nodal ``*TEMPERATURE``.  No traction."""
+    mesh = problem.mesh
+    if getattr(mesh.cell_type, "value", str(mesh.cell_type)) != "triangle":
+        raise ProviderRefusal("this adapter generates CPS3 decks for triangle meshes only")
+    xy = np.asarray(mesh.coordinates, dtype=float)
+    cells = np.asarray(mesh.cells, dtype=int).copy()
+    a, b, c = xy[cells[:, 0]], xy[cells[:, 1]], xy[cells[:, 2]]
+    flip = ((b[:, 0] - a[:, 0]) * (c[:, 1] - a[:, 1]) - (b[:, 1] - a[:, 1]) * (c[:, 0] - a[:, 0])) < 0
+    cells[flip] = cells[flip][:, [0, 2, 1]]
+    t = float(problem.thickness.to("m").magnitude)
+    tref = float(problem.reference_temperature.to("K").magnitude)
+    temps = problem.temperature_K()
+    lines = ["*HEADING", f"Forge execution {identity_tag}", "*NODE"]
+    lines += [f"{i + 1}, {float(x)!r}, {float(y)!r}, 0.0" for i, (x, y) in enumerate(xy)]
+    region_of: dict[int, str] = {}
+    for m in problem.materials:
+        for ci in np.asarray(mesh.cell_indices(mesh.region(m.region)), dtype=int):
+            if int(ci) in region_of:
+                raise ProviderRefusal("a cell belongs to two material regions")
+            region_of[int(ci)] = m.region
+    if len(region_of) != len(cells):
+        raise ProviderRefusal(f"{len(cells) - len(region_of)} cells have no material; nothing is defaulted")
+    for m in problem.materials:
+        ids = [ci for ci, r in sorted(region_of.items()) if r == m.region]
+        lines.append(f"*ELEMENT, TYPE=CPS3, ELSET=E_{m.region}")
+        lines += [f"{ci + 1}, {cells[ci, 0] + 1}, {cells[ci, 1] + 1}, {cells[ci, 2] + 1}" for ci in ids]
+    exp = {e.region: e for e in problem.expansions}
+    for m in problem.materials:
+        E = float(m.youngs_modulus.to("Pa").magnitude)
+        nu = float(m.poisson_ratio.to("dimensionless").magnitude)
+        alpha = float(exp[m.region].coefficient.to("1/K").magnitude)
+        lines += [f"*MATERIAL, NAME=M_{m.region}", "*ELASTIC", f"{E!r}, {nu!r}", f"*EXPANSION, ZERO={tref!r}", f"{alpha!r}",
+                  f"*SOLID SECTION, ELSET=E_{m.region}, MATERIAL=M_{m.region}", f"{t!r}"]
+    for i, r in enumerate(problem.restraints):
+        lines.append(f"*NSET, NSET=N_RESTRAINT_{i}")
+        lines += [f"{n + 1}," for n in _restraint_nodes(mesh, r.group)]
+    lines += ["*NSET, NSET=N_ALL", *(f"{i + 1}," for i in range(len(xy))), "*ELSET, ELSET=E_ALL", *(f"E_{m.region}," for m in problem.materials),
+              "*INITIAL CONDITIONS, TYPE=TEMPERATURE", f"N_ALL, {tref!r}", "*STEP", "*STATIC", "*BOUNDARY"]
+    for i, r in enumerate(problem.restraints):
+        lo, hi = min(r.components) + 1, max(r.components) + 1
+        lines.append(f"N_RESTRAINT_{i}, {lo}, {hi}, 0.0")
+    lines.append("*TEMPERATURE")
+    lines += [f"{i + 1}, {float(v)!r}" for i, v in enumerate(temps)]
+    lines += ["*NODE PRINT, NSET=N_ALL", "U", "*EL PRINT, ELSET=E_ALL", "S", "*END STEP", ""]
+    return "\n".join(lines)
+
+
 class CalculixProvider:
     def __init__(self, registry, *, timeout_s: float = 600.0, workspace_root: str | None = None) -> None:
         self.status = registry.require("calculix")
@@ -161,3 +213,31 @@ class CalculixProvider:
                                        artifacts={"job.inp": deck}, process_digest=rec.digest,
                                        metrics={"generate_s": t1 - t0, "process_s": t2 - t1, "parse_s": t3 - t2,
                                                 "nodes": problem.mesh.node_count, "elements": len(problem.mesh.cells)})
+
+    def execute_thermoelastic(self, problem: ThermoelasticPlaneStressProblem, *, preexisting: dict | None = None) -> ProviderExecutionRecord:
+        configuration = {"element": "CPS3", "procedure": "*STATIC linear", "thermal_load": "nodal *TEMPERATURE with *EXPANSION ZERO=T_ref (isotropic)",
+                         "solver": "ccx default (SPOOLES/PaStiX as built)", "stress": "CPS3 element stress at its single integration point"}
+        base = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem.to_dict(),
+                                                      configuration=configuration, output_request=("displacement", "stress"))
+        t0 = time.perf_counter()
+        deck = generate_thermoelastic_deck(problem, base.digest)
+        identity = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem.to_dict(),
+                                                          configuration=configuration, inputs={"job.inp": deck}, output_request=("displacement", "stress"))
+        invocation = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("-i", "job"),
+                                       (GeneratedFile("job.inp", deck.encode()),), minimal_environment(self.status.location), self.timeout_s, ("job.dat",))
+        ws = ProcessWorkspace(self.workspace_root, preexisting=preexisting)
+        try:
+            t1 = time.perf_counter()
+            rec = ws.run(invocation)
+            t2 = time.perf_counter()
+            if not rec.completed:
+                return failed(identity, f"ccx did not complete (exit {rec.exit_code}, timed out {rec.timed_out}, missing {list(rec.missing_outputs)}): "
+                                        f"{rec.stdout_tail[-400:]}", process_digest=rec.digest, artifacts={"job.inp": deck})
+            text = ws.read_output("job.dat").decode("utf-8", "replace")
+            u, sig = parse_dat(text, problem.mesh.node_count, len(problem.mesh.cells))
+            t3 = time.perf_counter()
+        finally:
+            ws.cleanup()
+        return ProviderExecutionRecord(identity, True, "", arrays={"displacement": ("m", u), "stress": ("Pa", sig)}, artifacts={"job.inp": deck},
+                                       process_digest=rec.digest, metrics={"generate_s": t1 - t0, "process_s": t2 - t1, "parse_s": t3 - t2,
+                                                                           "nodes": problem.mesh.node_count, "elements": len(problem.mesh.cells)})

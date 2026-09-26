@@ -150,7 +150,7 @@ def coupled_kit(*, soc_lower: float = 0.05, soc_upper: float = 0.95, initial_soc
         cell_log, tespy_records = [], []
         live.update(cell_log=cell_log, tespy=tespy_records)
         r_contact = call.value("r_contact").to("K/W").magnitude
-        cell = cell_participant(REG, cell_spec, parameter_set_name="Chen2020", model="SPM", initial_soc=soc0, current_at=current_at, log=cell_log)
+        cell = cell_participant(REG, cell_spec, parameter_set_name="Chen2020", model="SPM", initial_soc=soc0, capacity_fade=0.0, current_at=current_at, log=cell_log)
         tespy = TESPyProvider(REG)
         store = InMemoryBulkStore()
 

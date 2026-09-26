@@ -75,7 +75,7 @@ def test_proof_f_pybamm_and_tespy_couple_through_the_big9_runtime():
     cool_spec = _spec("coolant", [scalar_port("heat", "input", "heat_rate", "W"), scalar_port("cell_temperature", "output", "temperature", "K")],
                       "tespy", REG.status("tespy").version)
     current_at = lambda start: env.timeline.history("load").value_at(p(start.magnitude_in("s"))).value.value  # noqa: E731
-    cell = cell_participant(REG, cell_spec, parameter_set_name="Chen2020", model="SPM", initial_soc=0.9, current_at=current_at, log=cell_log)
+    cell = cell_participant(REG, cell_spec, parameter_set_name="Chen2020", model="SPM", initial_soc=0.9, capacity_fade=0.0, current_at=current_at, log=cell_log)
     tespy = TESPyProvider(REG)
 
     def coolant_solve(inputs, start, end, uq, state):

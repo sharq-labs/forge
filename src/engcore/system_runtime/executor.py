@@ -286,7 +286,7 @@ class SystemExecutor:
             self.cache.hits += 1
             cache_meta = {"cache_hit": True, "original_receipt_digest": original}
         else:
-            call = NodeCall(node, values, state, run_id, plan.digest, request.digest, attempt, self.context)
+            call = NodeCall(node, values, state, run_id, plan.digest, request.digest, attempt, self.context, identity)
             try:
                 outcome = authority.execute(call)
             except Exception as exc:  # an exception is a failed execution and exposes nothing

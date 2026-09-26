@@ -25,6 +25,8 @@ from engcore.scenarios.timeline import TimeWindow
 from engcore.scientific.units.quantity import Quantity
 
 ADAPTER = ("forge_cantera", "0.1")
+#: elements of the mechanisms this adapter reports elemental mass fractions for (GRI-Mech 3.0: H, C, O, N, Ar); a mechanism lacking one is refused
+_ELEMENTS = ("H", "C", "O", "N", "Ar")
 
 
 @dataclass(frozen=True)
@@ -86,7 +88,7 @@ class CanteraProvider:
         if constraint not in ("TP", "HP"):
             raise ProviderRefusal("equilibrium constraint is TP or HP")
         T, P = temperature.to("K").magnitude, pressure.to("Pa").magnitude
-        outputs = ("temperature", "pressure", "density") + tuple(f"X_{s}" for s in species)
+        outputs = ("temperature", "pressure", "density", "h_mass", "h_mole", "mean_molecular_weight", "h_mass_initial", "h_mole_initial", "thermo_T_min", "thermo_T_max") + tuple(f"elem_Y0_{e}" for e in _ELEMENTS) + tuple(f"elem_Y_{e}" for e in _ELEMENTS) + tuple(f"X_{s}" for s in species)
         problem = {"mechanism": mechanism.to_dict(), "composition": sorted([k, repr(float(v))] for k, v in composition.items()),
                    "T_K": repr(T), "P_Pa": repr(P), "constraint": constraint}
         ident = self._identity(mechanism, problem, {"solver": "equilibrate", "constraint": constraint}, outputs)
@@ -94,6 +96,8 @@ class CanteraProvider:
         try:
             gas = self._solution(mechanism)
             gas.TPX = T, P, self._composition(gas, composition)
+            initial = {"h_mass_initial": gas.enthalpy_mass, "h_mole_initial": gas.enthalpy_mole,
+                       **{f"elem_Y0_{e}": gas.elemental_mass_fraction(e) for e in gas.element_names}}
             t1 = time.perf_counter()
             gas.equilibrate(constraint)
             t2 = time.perf_counter()
@@ -104,7 +108,16 @@ class CanteraProvider:
         missing = sorted(set(species) - set(gas.species_names))
         if missing:
             raise ProviderRefusal(f"requested species {missing} are not in the mechanism")
-        scalars = {"temperature": Quantity(gas.T, "K"), "pressure": Quantity(gas.P, "Pa"), "density": Quantity(gas.density, "kg/m^3")}
+        scalars = {"temperature": Quantity(gas.T, "K"), "pressure": Quantity(gas.P, "Pa"), "density": Quantity(gas.density, "kg/m^3"),
+                   "h_mass": Quantity(gas.enthalpy_mass, "J/kg"), "h_mole": Quantity(gas.enthalpy_mole, "J/kmol"),
+                   "mean_molecular_weight": Quantity(gas.mean_molecular_weight, "kg/kmol"),
+                   "h_mass_initial": Quantity(initial["h_mass_initial"], "J/kg"), "h_mole_initial": Quantity(initial["h_mole_initial"], "J/kmol"),
+                   "thermo_T_min": Quantity(float(gas.min_temp), "K"), "thermo_T_max": Quantity(float(gas.max_temp), "K")}
+        if set(gas.element_names) != set(_ELEMENTS):
+            raise ProviderRefusal(f"the mechanism's elements {sorted(gas.element_names)} differ from the adapter's reported set {sorted(_ELEMENTS)}")
+        for e in gas.element_names:
+            scalars[f"elem_Y0_{e}"] = Quantity(float(initial[f"elem_Y0_{e}"]), "dimensionless")
+            scalars[f"elem_Y_{e}"] = Quantity(float(gas.elemental_mass_fraction(e)), "dimensionless")
         scalars.update({f"X_{s}": Quantity(float(gas[s].X[0]), "dimensionless") for s in species})
         if not all(math.isfinite(float(q.magnitude)) for q in scalars.values()):
             return failed(ident, "Cantera returned a non-finite equilibrium state")

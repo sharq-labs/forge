@@ -273,6 +273,9 @@ class NodeCall:
     request_digest: str
     attempt: int
     context: "RuntimeContext"
+    #: this execution's run-independent identity (the same value a consumer sees as ``InputValue.producer_identity``);
+    #: lets an authority bind side data (a field kept in a bulk store) to exactly this execution
+    execution_identity: str = ""
 
     def value(self, name: str) -> Quantity:
         return self.inputs[name].value
