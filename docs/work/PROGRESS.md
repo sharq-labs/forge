@@ -11,6 +11,28 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
+## 2026-09-26 Strategic decision — mechanism-aware discovery
+
+Recorded a post-hardening strategic direction for Forge: future discovery work
+must represent **dependency -> mechanism -> state transition -> observable**
+explicitly, while keeping dependency, mechanism and causal claims scientifically
+separate. The goal is for Forge to explain model-conditioned *how/why*, support
+typed interventions/counterfactuals, competing hypotheses, UQ/sensitivity/
+identifiability, experiment design and multi-fidelity design discovery without
+turning solver output, sensitivity, optimization, correlation or LLM proposals
+into evidence.
+
+- Added `docs/architecture/mechanistic_discovery.md` with the authority boundary,
+  cross-domain mechanism model, discovery-capability table and proposed staged
+  implementation.
+- Updated `docs/project/FORGE_MASTER_PLAN.md` with the strategic rule and future
+  P19-P23 phases.
+- Updated `docs/architecture/README.md` and `docs/work/ACTIVE_PLAN.md` to link
+  the direction and explicitly keep it **after** BIG 14/15.
+- No production code changed. Tests: **NOT RUN** (documentation-only change).
+- BIG 14 remains the next active engineering phase; this strategic addition does
+  not authorize skipping review/hardening.
+
 ## 2026-09-26 BIG 13 — Flagship Engineering Demonstrations (BUILD phase; read this first)
 
 Branch `feat/big-13-flagship-demonstrations`, base `6054ac44811cec26e074ad5be275396cccfd3b13` (the BIG 12 HEAD), worktree `D:/forge-b13`. Reports: `docs/flagships/`
