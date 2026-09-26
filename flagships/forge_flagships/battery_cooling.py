@@ -707,7 +707,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
         entries.append(LevelEntry(2, LevelStatus.REACHED, tuple(EvidenceLink.of_record("conservation_assessment", c.to_dict(), "conservation_residual", "met",
                                                                                      f"{c.balance_id}: residual {c.residual.magnitude:.2e} {c.residual.units}") for c in closed),
                                   "INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty "
-                                  "(tolerance declared before the run). It would fail on a solver or unit error; it cannot detect a wrong heat model"))
+                                  "(tolerance pre-registered). It would fail on a solver or unit error; it cannot detect a wrong heat model"))
     else:
         entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(
             f"{c.balance_id}: {c.status}" for c in conservation) or "no balance could be assessed"))
@@ -718,7 +718,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
         ref = first_law_reference()
         worst, mean_T, used = first_law_check(tables["day-fresh"])
         crit = PredeclaredCriterion("first_law_delta_T", "delta_T_relative_difference", "max_relative", Quantity(FIRST_LAW_REL_TOL, "dimensionless"),
-                                    "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (fixed before the first run)")
+                                    "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (pre-registered)")
         cmp_ = compare_to_reference(ref, crit, {"pressure": Quantity(PRESSURE, "Pa"), "mean_temperature": Quantity(mean_T, "K")},
                                     value=Quantity(worst, "dimensionless"), compared_identity=digest_of(sorted(r.execution_identity_digest for r in
                                                                                                              result.receipt("day_fresh").provider_records)),
@@ -735,7 +735,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
                                   (EvidenceLink.of_record("window_refinement", study, "discretisation_convergence", "met" if study["met"] else "not_met",
                                                         f"coupling windows {study['windows_s']} s (three separate BIG 12 requests, digests {study['digest']}): {q}; observed orders {study['orders']}"),),
                                   "the fresh-cell coupled day at three coupling-window sizes, each a separate BIG 12 request (evidence from OTHER requests than this run's). Criteria: finest-pair "
-                                  "differences within 0.05 K / 2 mV / 2 % of peak heat (fixed before the first run, two-level version) AND monotonically decreasing successive differences "
+                                  f"differences within {REFINEMENT_TOL['peak_cell_temperature'].magnitude:g} K / {1e3 * REFINEMENT_TOL['voltage_end_of_discharge'].magnitude:g} mV / {100 * REFINEMENT_PEAK_HEAT_REL:g} % of peak heat (pre-registered, two-level version) AND monotonically decreasing successive differences "
                                   "(added after the review, with the third level; the two-level result had already met the tolerances). Only the coupling window is refined: the cell model's own "
                                   "solver tolerances and points-per-window are not varied"))
     else:
@@ -750,7 +750,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
                                                              f"the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is {applic.status.upper()} ({'; '.join(applic.reasons)}); no comparison was made and none is claimed")]
     if not any(e.level == 3 for e in entries):
         entries.append(LevelEntry(3, LevelStatus.NOT_ATTEMPTED, (), "the coupled day produced no result to check against the first-law relation"))
-    run.ladder = VerificationLadder.of(**{f"l{e.level}": e for e in entries})
+    run.ladder = VerificationLadder(tuple(entries))
     run.comparisons, run.references = tuple(comparisons), tuple(references)
     unknown_inputs = ("coolant inlet profile (declared)", "cell current profile (declared)", "initial state of charge (declared)", "contact resistance (ASSUMED)",
                       "cells-in-module multiplicity (declared)", "fade-law constants (declared)", "PyBaMM Chen2020 parameters (provider-bundled literature data)")

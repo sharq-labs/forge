@@ -23,7 +23,7 @@ CONSERVATION
   thermal_energy: incomplete (missing: heat_in (heat_in: refused), heat_out (heat_out: refused))
 VERIFICATION
   L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['thermal:property_range']; REFUSED on the solved state: ['thermal'] (the request was admissible; the solved state was not)
-  L2 attempted not reached: thermal_energy: incomplete
+  L2 attempted not reached: thermal_energy: incomplete; axial-force diagnostic NOT MET or not read (relative spread {'fenicsx': None, 'calculix': None, 'code_aster': None}, mean force over the thermal scale {'fenicsx': None, 'calculix': None, 'code_aster': None}; needs spread <= 0.001 and mean force >= 0.1)
   L3 not attempted: exact-limit verification requests were not run in this call
   L4 not attempted: mesh study not run in this call
   L5 not attempted: no provider comparison was produced

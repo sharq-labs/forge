@@ -53,7 +53,7 @@
   ],
   [
    "result",
-   "bc4565052d2d45f5e6ec3d73f09053511757933a4a41c62fabd5e0d444e0a634"
+   "f946e977a5e32e69cdd5a0590378e5bcf3b9791944b2f166b93359e8cdabf3e8"
   ]
  ],
  "key_outputs": [
@@ -198,7 +198,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "a49bbb17b3e1cc2943b90a2a517a95fbda0c357ee40f5fff1ff8f1c18b523200",
+      "digest": "3fde4710c3b30edf72507c7054c81ff4527980e115e4665e86ac0348563a0301",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run failed",
       "outcome": "met",
@@ -246,7 +246,8 @@
        "request_digest": "c5c320bb58d7fcd64ce1c54f590e00e838f0343c5a12f026d4d5adeadd5174e2",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
-      }
+      },
+      "record_digest": "a49bbb17b3e1cc2943b90a2a517a95fbda0c357ee40f5fff1ff8f1c18b523200"
      }
     ],
     "level": 1,

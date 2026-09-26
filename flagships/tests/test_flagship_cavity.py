@@ -78,6 +78,10 @@ def test_flow_diagnostics_are_reported_and_the_codes_agree_on_the_vortex_positio
     assert abs(o(run, f"vortex_x_openfoam_{n}") - o(run, f"vortex_x_su2_{n}")) <= dx + 1e-9
     assert abs(o(run, f"vortex_y_openfoam_{n}") - o(run, f"vortex_y_su2_{n}")) <= 2 * dx + 1e-9
     assert o(run, f"u_flux_residual_openfoam_{n}") < cf.FLUX_TOL
+    # the flux constraint is bound for EACH code on the unsigned residual: OpenFOAM satisfies it and SU2 does not, and the summary says so
+    status = {c.binding_id: c.status for c in run.constraints}
+    assert status == {"b_flux_openfoam": "satisfied", "b_flux_su2": "violated"}
+    assert run.l2_failing == ("su2",) and run.ladder.entry(2).status is LevelStatus.ATTEMPTED_NOT_REACHED
     assert run.summary.scientific_status == "insufficient_evidence"
 
 

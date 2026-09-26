@@ -80,7 +80,8 @@ def load_ghia() -> tuple[ReferenceRecord, dict]:
         d["reference_id"], d["title"], d["authors"], d["publication"], d["access_urls"][0], d["license_status"], OracleKind.BENCHMARK_DATASET,
         (ReferenceCondition("reynolds", 100.0, "dimensionless"), ReferenceCondition("cavity_aspect_ratio", 1.0, "dimensionless")), (("y", "dimensionless"), ("u", "dimensionless"), ("x", "dimensionless"), ("v", "dimensionless")),
         (("y", y), ("u", u), ("x", x), ("v", v)), sha(sd["table_I_transcription_sha256"] + sd["table_II_transcription_sha256"]),
-        "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second independent transcription; "
+        "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second public transcription (retyped in the same session: a different web page, not a different typist); "
+        "the numbers were NOT checked against the printed paper; "
         f"transcription sha256: {sd['table_I_transcription_sha256'][:16]}.. / {sd['table_II_transcription_sha256'][:16]}..; excerpt file sha256 {hashlib.sha256(raw).hexdigest()[:16]}..; "
         "a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment; the applicability envelope (Re 99-101, square cavity) is AUTHORED by this flagship from the paper's stated case, "
         "not a machine-readable statement of the source, and covers Re and aspect ratio only (boundary conditions, steadiness and dimensionality are not enforced)",
@@ -316,7 +317,7 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             near_lid = np.flatnonzero(cy > 0.9 * SIDE)
             worst = int(np.argmax(np.abs(np.asarray(a["cells_xy"]) - cell_from_nodes(b["nodes_xy"], n)).max(axis=1)))
             outs = {"whole_field_max_difference": OutputValue(Quantity(whole.max_absolute / u_lid, "dimensionless"), UNKNOWN, "compare_providers, of lid speed"),
-                    "whole_field_within_tolerance": OutputValue(Quantity(1.0 if whole.within_tolerance else 0.0, "dimensionless"), UNKNOWN, "criterion fixed before the run"),
+                    "whole_field_within_tolerance": OutputValue(Quantity(1.0 if whole.within_tolerance else 0.0, "dimensionless"), UNKNOWN, "criterion pre-registered"),
                     "lower_half_max_difference_post_hoc": OutputValue(Quantity(lower.max_absolute / u_lid, "dimensionless"), UNKNOWN, "POST HOC region"),
                     "max_difference_cell_y": OutputValue(Quantity(float(cy[worst] / SIDE), "dimensionless"), UNKNOWN, "where the two codes differ most, in y/L"),
                     "rms_difference": OutputValue(Quantity(float(np.sqrt((diff**2).mean()) / u_lid), "dimensionless"), UNKNOWN, "of lid speed")}
@@ -426,7 +427,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     ref = cv.reference
     finest = levels[-1]
     entries = [contract_integrity_entry(report, result)]
-    # ---- level 2: mass conservation of the sampled mid-plane profiles, criterion FLUX_TOL fixed before the run
+    # ---- level 2: mass conservation of the sampled mid-plane profiles, criterion FLUX_TOL pre-registered
     flux = {p: max(abs(x) if x is not None else math.inf for x in (_obs(result, f"u_flux_residual_{p}_{finest}"), _obs(result, f"v_flux_residual_{p}_{finest}"))) for p in ("openfoam", "su2")}
     l2_ok = all(v <= FLUX_TOL for v in flux.values())
     l2_failing = sorted(p for p, v in flux.items() if not v <= FLUX_TOL)
@@ -435,10 +436,10 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     entries.append(LevelEntry(2, LevelStatus.REACHED if l2_ok else LevelStatus.ATTEMPTED_NOT_REACHED,
                               (EvidenceLink.of_record("midplane_flux", {"mesh": f"{finest}x{finest}", "max_abs_net_flux_over_UL": flux_record, "criterion": FLUX_TOL},
                                                       "conservation_residual", "met" if l2_ok else "not_met", f"net flux / (U L) at {finest}x{finest}: {flux_record}"),),
-                              f"net flux through each mid-plane relative to U L (criterion {FLUX_TOL:g}, fixed before the run): {flux}"
+                              f"net flux through each mid-plane relative to U L (criterion {FLUX_TOL:g}, pre-registered): {flux}"
                               + ("" if l2_ok else f". NOT MET by {l2_failing} (its sampled profile is not mass-conserving to the criterion; cause not investigated)")))
     entries.append(LevelEntry(3, LevelStatus.NOT_AVAILABLE, (), "there is no closed-form solution of the cavity at Re = 100 to compare with"))
-    # ---- level 4: PREDECLARED criterion = error against the benchmark decreases monotonically under refinement (fixed before the first run).
+    # ---- level 4: PREDECLARED criterion = error against the benchmark decreases monotonically under refinement (pre-registered).
     # That criterion is BENCHMARK-RELATIVE: it mixes each code's discretisation error with the benchmark's own truncation error, so it is a weak stand-in for convergence.
     decs = {f"{q}_{p}": _obs(result, f"{q}_{p}_decreasing") for p in ("of", "su2") for q in ("ghia_u_max_error", "ghia_v_max_error")}
     if all(v is not None for v in decs.values()):
@@ -466,7 +467,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
         if not ok:       # post-hoc readings sit beside a level that is NOT reached; they can never be attached to a reached one
             links += [EvidenceLink.of_provider_comparison(cv.exchange.comparisons[f"lower_{n}"], f"POST HOC lower half {n}x{n}") for n in levels]
         entries.append(LevelEntry(5, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links),
-                                  "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): "
+                                  "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): "
                                   + ("MET at every level" if ok else "NOT MET - the codes disagree, most near the lid; the disagreement is the result")
                                   + ". The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only"))
     else:
@@ -481,7 +482,7 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
         if eu is None or ev is None:
             continue
         crit = PredeclaredCriterion(f"ghia_{prov}_{finest}", "centerline_velocity_over_lid_speed", "max_absolute_error", Quantity(GHIA_TOL, "dimensionless"),
-                                    "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)")
+                                    "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (pre-registered)")
         cmp_ = compare_to_reference(ref, crit, conditions, value=Quantity(max(eu, ev), "dimensionless"), compared_identity=result.receipt(f"{prov}_{finest}").execution_identity_digest,
                                     note=f"{prov} {finest}x{finest}: max |u - Ghia| = {eu:.4f}, max |v - Ghia| = {ev:.4f} (of lid speed)")
         comparisons.append(cmp_)
@@ -493,12 +494,12 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     elif comparisons:
         ok = all(finest_ok.values()) and len(finest_ok) == 2
         entries.append(LevelEntry(6, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links6),
-                                  f"Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance {GHIA_TOL:g} of lid speed fixed before the run: {finest_ok}. "
+                                  f"Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance {GHIA_TOL:g} of lid speed pre-registered: {finest_ok}. "
                                   "Agreement would support this configuration's numerics only; it is not experimental validation"))
     else:
         entries.append(LevelEntry(6, LevelStatus.NOT_ATTEMPTED, (), "no provider produced centerline data"))
     entries.append(LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no experimental data for this cavity was integrated"))
-    run.ladder = VerificationLadder.of(**{f"l{e.level}": e for e in entries})
+    run.ladder = VerificationLadder(tuple(entries))
     run.comparisons, run.references = tuple(comparisons), tuple(dict.fromkeys(references))
     run.uncertainty = UncertaintyStatement(
         (), ("fluid state (declared 20 degC, 1 atm)", "lid speed and cavity size (declared)", "water density and viscosity: CoolProp equation-of-state values, uncertainty not propagated"),
@@ -515,7 +516,6 @@ def run_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, reg
     outputs += [(f"OpenFOAM u(0.5,0.5)/U {finest}x{finest}", f"u_center_openfoam_{finest}"), (f"SU2 u(0.5,0.5)/U {finest}x{finest}", f"u_center_su2_{finest}"),
                 (f"OpenFOAM vortex centre x/L {finest}x{finest}", f"vortex_x_openfoam_{finest}"), (f"OpenFOAM vortex centre y/L {finest}x{finest}", f"vortex_y_openfoam_{finest}"),
                 (f"SU2 vortex centre x/L {finest}x{finest}", f"vortex_x_su2_{finest}"), (f"SU2 vortex centre y/L {finest}x{finest}", f"vortex_y_su2_{finest}")]
-    outputs = [(l, o) for l, o in outputs if not result.observable(o).availability.value == "unavailable"]
     trace_id = f"ghia_u_max_error_openfoam_{finest}" if _obs(result, f"ghia_u_max_error_openfoam_{finest}") is not None else "density"
     run.summary = build_summary(f"Lid-driven cavity, Re = {reynolds:g}, water 20 degC, {ladder_levels} cells ({tag})", cv.request, result, outputs=outputs, constraints=constraints,
                                 ladder=run.ladder, comparisons=comparisons, references=run.references, uncertainty=run.uncertainty, trace_observable=trace_id,

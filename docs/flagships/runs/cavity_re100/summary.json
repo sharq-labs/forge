@@ -20,15 +20,15 @@
  "identities": [
   [
    "request",
-   "573e9a4cdf8b5081708b80bfe697730877b2e01840906caf051eca9d0985d7b2"
+   "c3da5a4871d87b736734e8154ddea9340fe03dc79a816acdafeb56c97624754d"
   ],
   [
    "plan",
-   "3956b33a45b6dd55c6b48f765e5b9009aaecb48bea4f5f59b86751e680705b59"
+   "3102df25564e3590dc3304ff9347abe6828f9552aab11ecd1ae17e4d5e4ea10b"
   ],
   [
    "result",
-   "4e9c9b64d727f45859e31e209b4f4f1d20ce9c15f955895e0cc9fa1d656c3ee5"
+   "812856296838ab4ac3822b85870d5d8139bc1f415d73029bf87ac4197ee8f8bf"
   ]
  ],
  "key_outputs": [
@@ -291,10 +291,28 @@
     "status": "within"
    },
    "classification": "numerical_benchmark_comparison_not_validation_grant",
-   "compared_identity": "f0982ac02859f32dc424f8ceb5290fcedbcba516c820bfbf10399e445de970e7",
+   "compared_identity": "09b49430821940415869346ae2bbf6d51d5ac0c3b9b18ee1fe15fd76f92d3279",
+   "conditions": [
+    [
+     "cavity_aspect_ratio",
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ],
+    [
+     "reynolds",
+     {
+      "magnitude": 100.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "ghia_openfoam_80",
-    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (pre-registered)",
     "metric": "max_absolute_error",
     "post_hoc": false,
     "quantity": "centerline_velocity_over_lid_speed",
@@ -304,10 +322,10 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "ca4ae65b4ca29d1aeefd999308e06e77f3fe074a8e39bdbf51ec467b7c15514c",
+   "criterion_digest": "25afe1385a0e7571f070b24563184b0b43cdfebcb5939a39a725bc01f0b94ca8",
    "note": "openfoam 80x80: max |u - Ghia| = 0.0044, max |v - Ghia| = 0.0090 (of lid speed)",
    "outcome": "met",
-   "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+   "reference_digest": "d5604d64179f0077a10ce4450626e2c8da3b66423c5c24c47d2928a9e02ef77c",
    "reference_kind": "benchmark_dataset",
    "value": {
     "magnitude": 0.00902753705942319,
@@ -324,10 +342,28 @@
     "status": "within"
    },
    "classification": "numerical_benchmark_comparison_not_validation_grant",
-   "compared_identity": "0cd0e345bb13fabac0de939105cb1323c341abd8ae5b0720847d62ac3c2eab31",
+   "compared_identity": "d9cbd40fb74da8cc1bb7f34db97bd65eec9b8ac00cd72c0c7efcf87953cf1225",
+   "conditions": [
+    [
+     "cavity_aspect_ratio",
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ],
+    [
+     "reynolds",
+     {
+      "magnitude": 100.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "ghia_su2_80",
-    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (pre-registered)",
     "metric": "max_absolute_error",
     "post_hoc": false,
     "quantity": "centerline_velocity_over_lid_speed",
@@ -337,10 +373,10 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "c76b1af4d90e955068b7728e34f683e51a6e20fc0ce0a77a51917551d9ed738f",
+   "criterion_digest": "6ace93f70cc6155e7308a2e38867194f473e8de075217bd17751dbb38d93a277",
    "note": "su2 80x80: max |u - Ghia| = 0.0112, max |v - Ghia| = 0.0070 (of lid speed)",
    "outcome": "met",
-   "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+   "reference_digest": "d5604d64179f0077a10ce4450626e2c8da3b66423c5c24c47d2928a9e02ef77c",
    "reference_kind": "benchmark_dataset",
    "value": {
     "magnitude": 0.011210356165600205,
@@ -354,7 +390,7 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Lid-driven cavity, Re = 100, water 20 degC, ['20x20', '40x40', '80x80'] cells (re100)",
- "text_sha256": "59d9da44e63a121e2a2babfc65a88da383787b066a046b0ea62a2e5ad6ec2109",
+ "text_sha256": "c46b090d4e77d62828fb063392b90132e2bf43eecd775ad64e58a48c130a7fa0",
  "trace": {
   "complete": true,
   "gaps": []
@@ -381,7 +417,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "ab9dd0621ff14ad82acb5fdca1f9236169008058efebff48f49a2c2a1217ceda",
+      "digest": "d3ae0e002a2789ca3feec20546a043fc0baa0dbd0f30ef940567ce7307345503",
       "kind": "preflight_and_identity",
       "note": "preflight ready; run succeeded",
       "outcome": "met",
@@ -426,11 +462,12 @@
          "node_id": "su2_80"
         }
        ],
-       "plan_digest": "3956b33a45b6dd55c6b48f765e5b9009aaecb48bea4f5f59b86751e680705b59",
-       "request_digest": "573e9a4cdf8b5081708b80bfe697730877b2e01840906caf051eca9d0985d7b2",
+       "plan_digest": "3102df25564e3590dc3304ff9347abe6828f9552aab11ecd1ae17e4d5e4ea10b",
+       "request_digest": "c3da5a4871d87b736734e8154ddea9340fe03dc79a816acdafeb56c97624754d",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "ready"
-      }
+      },
+      "record_digest": "da45ffafcd4cd5de36009795e4bd0ab4f61750730000c78a221211440c53e320"
      }
     ],
     "level": 1,
@@ -442,7 +479,7 @@
     "evidence": [
      {
       "classification": "conservation_residual",
-      "digest": "18911080f38a1769999c69f00a823d8d023390902f5ecc52435b649c3313da9c",
+      "digest": "724f9dbef0512615a1954cf90c176d49fee88401e39193e50b69710f198544b8",
       "kind": "midplane_flux",
       "note": "net flux / (U L) at 80x80: {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}",
       "outcome": "not_met",
@@ -453,12 +490,13 @@
         "su2": 0.006249425270081174
        },
        "mesh": "80x80"
-      }
+      },
+      "record_digest": "18911080f38a1769999c69f00a823d8d023390902f5ecc52435b649c3313da9c"
      }
     ],
     "level": 2,
     "name": "conservation_residual",
-    "note": "net flux through each mid-plane relative to U L (criterion 0.001, fixed before the run): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)",
+    "note": "net flux through each mid-plane relative to U L (criterion 0.001, pre-registered): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)",
     "status": "attempted_not_reached"
    },
    {
@@ -472,7 +510,7 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "0f1bf9b2e7f6406ef0a69531cb22cc41ce684cac3863aac49631e9f422235126",
+      "digest": "5658d7c2013b4fc76c96a62ee525bc5955ecb354350356cbb7bdf92f9306d556",
       "kind": "grid_study",
       "note": "monotone decrease flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}",
       "outcome": "not_met",
@@ -488,11 +526,12 @@
         "ghia_v_max_error_of": 0.0,
         "ghia_v_max_error_su2": 1.0
        }
-      }
+      },
+      "record_digest": "0f1bf9b2e7f6406ef0a69531cb22cc41ce684cac3863aac49631e9f422235126"
      },
      {
       "classification": "post_hoc_discretisation_convergence",
-      "digest": "45059bd77cce2fa19c6bfb01428638d31afc5ce17532508b8ee69af3b9192ec8",
+      "digest": "8dfa9b2f490e91d393ae8b1c745767ccd655d6fb8ae8c79113d9ffa04083c343",
       "kind": "grid_study_intrinsic_post_hoc",
       "note": "POST HOC intrinsic reading (added after seeing the outcome): u(0.5, 0.5)/U over [20, 40, 80]: {'of': [-0.19428748498834672, -0.2051639758407611, -0.20813086543242224], 'su2': [-0.15544785287080942, -0.18182255800289523, -0.19517436670576793]}, observed orders {'of': 1.8741900210906075, 'su2': 0.9821197748033897}",
       "outcome": "met",
@@ -513,7 +552,8 @@
          -0.19517436670576793
         ]
        }
-      }
+      },
+      "record_digest": "45059bd77cce2fa19c6bfb01428638d31afc5ce17532508b8ee69af3b9192ec8"
      }
     ],
     "level": 4,
@@ -525,7 +565,7 @@
     "evidence": [
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "dc0ed2f62d39f353c4255b6ac71d75587d3a582e6858ab21fd1af9185c3c4fa8",
+      "digest": "2a627f5a6f3af37b2f9e6fc7a8c7053c2e064baefa843b9663b2a45be61dab56",
       "kind": "provider_comparison",
       "note": "whole field 20x20: max difference 0.2603 of lid speed at y/L=0.975",
       "outcome": "not_met",
@@ -560,11 +600,12 @@
        "provider_comparison_digest": "d71023463841d374e8640d626cf91056b2846a5fd05c2b98e47998ce76b707b6",
        "values_digest": "fb03f47cd80d591a228a083b499c35a763b14f3af97c315792ca230f40327e22",
        "within_tolerance": false
-      }
+      },
+      "record_digest": "dc0ed2f62d39f353c4255b6ac71d75587d3a582e6858ab21fd1af9185c3c4fa8"
      },
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "edfae0ac1f3453cb99a8484143b8dd2384fcfddcb96c8239e3d85f9c323a6194",
+      "digest": "f0c6fa9fce31913f84ac12a1c1c8278c0febe892b439f8f5c67bf4a133cb99e1",
       "kind": "provider_comparison",
       "note": "whole field 40x40: max difference 0.2446 of lid speed at y/L=0.988",
       "outcome": "not_met",
@@ -599,11 +640,12 @@
        "provider_comparison_digest": "074aeb77b09436f1508dd7016792fa3648e5cf3b1096dadf8117b25cf19cda7e",
        "values_digest": "b88c82d937c15e021d216b2549ec08a101348ef18c434ef93d1c562a844c725c",
        "within_tolerance": false
-      }
+      },
+      "record_digest": "edfae0ac1f3453cb99a8484143b8dd2384fcfddcb96c8239e3d85f9c323a6194"
      },
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "62cf8fcb7303750db122e836a92647448bf97d8f8530672b940ccb38a358fcf4",
+      "digest": "dd029c61750d022a23b8f303dfe44a7c1086f21f6ae840cfa370a73d9fcaf46c",
       "kind": "provider_comparison",
       "note": "whole field 80x80: max difference 0.2393 of lid speed at y/L=0.994",
       "outcome": "not_met",
@@ -638,11 +680,12 @@
        "provider_comparison_digest": "ddf05356a1aa9a3950ab4369a52bbd9912956a6b773fa93a850f474253ef4fce",
        "values_digest": "74c94e4fd3b17f1b9c59b93680970879cb7d68cde6d343f084f44419b05959c3",
        "within_tolerance": false
-      }
+      },
+      "record_digest": "62cf8fcb7303750db122e836a92647448bf97d8f8530672b940ccb38a358fcf4"
      },
      {
       "classification": "post_hoc_solver_corroboration_not_validation",
-      "digest": "8e8757bffd5368defbc7ed576876b1754e5b533bdedb09aff8a41cc7d94d7557",
+      "digest": "a8f841966071fe5e0bcc3b2d05290d799a6b166a173b6a96c913183bf441bbd4",
       "kind": "provider_comparison",
       "note": "POST HOC lower half 20x20",
       "outcome": "not_met",
@@ -677,11 +720,12 @@
        "provider_comparison_digest": "fe53bd4d8d218abd136edb9df5367729de4e6a62d4a70e5ff114dfbe9f9ebb47",
        "values_digest": "b337ab38c1a4496f0e345eece07907751f7122aadeb169d90db3084834cbf59c",
        "within_tolerance": false
-      }
+      },
+      "record_digest": "8e8757bffd5368defbc7ed576876b1754e5b533bdedb09aff8a41cc7d94d7557"
      },
      {
       "classification": "post_hoc_solver_corroboration_not_validation",
-      "digest": "222758f9606e750b46af75265e1778577782b1b75f692f449c78171716376623",
+      "digest": "f22f79ebc7218769c9b482863bb03bb769442b2ef58f259cefbb1bb2168965f9",
       "kind": "provider_comparison",
       "note": "POST HOC lower half 40x40",
       "outcome": "met",
@@ -716,11 +760,12 @@
        "provider_comparison_digest": "25b1a6d362c219057942bb1b36aa9703c3f91f559c3976ae8ec53481014728ba",
        "values_digest": "d944725861b59e6cf8d8e50248e94cc8785a23129e594c0c8d93a218f989e12b",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "222758f9606e750b46af75265e1778577782b1b75f692f449c78171716376623"
      },
      {
       "classification": "post_hoc_solver_corroboration_not_validation",
-      "digest": "7eaf5c007dae08cfbd2ad096d5d99dbdddf07ab76e8e74999f020687b3b73c2c",
+      "digest": "d8e93dd3bb2bc9ff32aa21462ba216b2f085a60a5e5e59d587bb330ac7f08251",
       "kind": "provider_comparison",
       "note": "POST HOC lower half 80x80",
       "outcome": "met",
@@ -755,19 +800,20 @@
        "provider_comparison_digest": "06cc4c8500d6e2c45aae8c06169f21f9af92f18190e8dd703abd63914ba93db2",
        "values_digest": "96914565dc9aac5df26339b83b402b28528d604ab60bc251f36b8ed5e8f48c32",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "7eaf5c007dae08cfbd2ad096d5d99dbdddf07ab76e8e74999f020687b3b73c2c"
      }
     ],
     "level": 5,
     "name": "independent_provider_corroboration",
-    "note": "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only",
+    "note": "OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only",
     "status": "attempted_not_reached"
    },
    {
     "evidence": [
      {
       "classification": "numerical_benchmark_comparison_not_validation_grant",
-      "digest": "83584c171bf8e306d41234b23d9bf58a5c78b69071fad1a5827c079f667ee979",
+      "digest": "b09f32b9c7d112b3c6d20f8129f41d6d9d01339b8defb475fb046fb8d6e6ea58",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -779,10 +825,28 @@
         "status": "within"
        },
        "classification": "numerical_benchmark_comparison_not_validation_grant",
-       "compared_identity": "f0982ac02859f32dc424f8ceb5290fcedbcba516c820bfbf10399e445de970e7",
+       "compared_identity": "09b49430821940415869346ae2bbf6d51d5ac0c3b9b18ee1fe15fd76f92d3279",
+       "conditions": [
+        [
+         "cavity_aspect_ratio",
+         {
+          "magnitude": 1.0,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ],
+        [
+         "reynolds",
+         {
+          "magnitude": 100.0,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "ghia_openfoam_80",
-        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (pre-registered)",
         "metric": "max_absolute_error",
         "post_hoc": false,
         "quantity": "centerline_velocity_over_lid_speed",
@@ -792,10 +856,10 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "ca4ae65b4ca29d1aeefd999308e06e77f3fe074a8e39bdbf51ec467b7c15514c",
+       "criterion_digest": "25afe1385a0e7571f070b24563184b0b43cdfebcb5939a39a725bc01f0b94ca8",
        "note": "openfoam 80x80: max |u - Ghia| = 0.0044, max |v - Ghia| = 0.0090 (of lid speed)",
        "outcome": "met",
-       "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+       "reference_digest": "d5604d64179f0077a10ce4450626e2c8da3b66423c5c24c47d2928a9e02ef77c",
        "reference_kind": "benchmark_dataset",
        "value": {
         "magnitude": 0.00902753705942319,
@@ -803,11 +867,12 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "eee4841f1a1d059e7a654ad36fde127dfb448ae1ab60623133bf24837a901539"
      },
      {
       "classification": "numerical_benchmark_comparison_not_validation_grant",
-      "digest": "fb74b2cb1e4ddf4da3e232661324ea874a35387e9e97b3b766b3b3afa0991038",
+      "digest": "57c0e00106248a8b3601d37eef4ad4b06d65d2cca8f2964196cda7a70828aff9",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -819,10 +884,28 @@
         "status": "within"
        },
        "classification": "numerical_benchmark_comparison_not_validation_grant",
-       "compared_identity": "0cd0e345bb13fabac0de939105cb1323c341abd8ae5b0720847d62ac3c2eab31",
+       "compared_identity": "d9cbd40fb74da8cc1bb7f34db97bd65eec9b8ac00cd72c0c7efcf87953cf1225",
+       "conditions": [
+        [
+         "cavity_aspect_ratio",
+         {
+          "magnitude": 1.0,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ],
+        [
+         "reynolds",
+         {
+          "magnitude": 100.0,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "ghia_su2_80",
-        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/cavity_cfd.py:GHIA_TOL (pre-registered)",
         "metric": "max_absolute_error",
         "post_hoc": false,
         "quantity": "centerline_velocity_over_lid_speed",
@@ -832,10 +915,10 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "c76b1af4d90e955068b7728e34f683e51a6e20fc0ce0a77a51917551d9ed738f",
+       "criterion_digest": "6ace93f70cc6155e7308a2e38867194f473e8de075217bd17751dbb38d93a277",
        "note": "su2 80x80: max |u - Ghia| = 0.0112, max |v - Ghia| = 0.0070 (of lid speed)",
        "outcome": "met",
-       "reference_digest": "7536d69f7aac6e49e79b29069a235141edf68b5802f94fb98678dabbace951d5",
+       "reference_digest": "d5604d64179f0077a10ce4450626e2c8da3b66423c5c24c47d2928a9e02ef77c",
        "reference_kind": "benchmark_dataset",
        "value": {
         "magnitude": 0.011210356165600205,
@@ -843,12 +926,13 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "995554af8e84e0c60d60e1bbae17c727504c407bc62dd67ea5261b499439be53"
      }
     ],
     "level": 6,
     "name": "published_numerical_benchmark",
-    "note": "Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed fixed before the run: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation",
+    "note": "Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed pre-registered: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation",
     "status": "reached"
    },
    {

@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "e6f14258f7488983666300a3729959aeb9c8d848cfeff2fa1d167acc07b02652"
+   "caa6522575ae323da778c4a9d1aaf2ac44fbec615b5201abef69bf99aacd1752"
   ]
  ],
  "key_outputs": [
@@ -149,7 +149,7 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Heated aluminium plate, constrained, 40x8 P1 mesh (over_range)",
- "text_sha256": "881efdc3cbb262794dd631dfabcaa1228bf9fc79167593cccf5c58806ef23109",
+ "text_sha256": "5848e338e52159cc2e8044901f190855e1c299afaacdfecd7e5e100bce79e2f2",
  "trace": {
   "complete": false,
   "gaps": [
@@ -179,7 +179,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "3d0d8c684d6c3bc2058c8e2d623467e5f41ee16df68b486790c440893f35c553",
+      "digest": "6cd3c906dce723dc66bb621058bf6f232ba88071095bcc869b9d3640e83a483f",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run failed",
       "outcome": "met",
@@ -216,7 +216,8 @@
        "request_digest": "46811a0ca20fabda4b0926b8a74f9817567b3a77eb94f21a6e575ddb933a562d",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
-      }
+      },
+      "record_digest": "3d0d8c684d6c3bc2058c8e2d623467e5f41ee16df68b486790c440893f35c553"
      }
     ],
     "level": 1,
@@ -225,10 +226,35 @@
     "status": "reached"
    },
    {
-    "evidence": [],
+    "evidence": [
+     {
+      "classification": "conservation_residual",
+      "digest": "f1828d17f14222e052a235f15560eb8a1abf46dcf874b92f24d30bcf2a711ec2",
+      "kind": "conservation_assessment",
+      "note": "thermal_energy: incomplete",
+      "outcome": "not_met",
+      "record": {
+       "balance_id": "thermal_energy",
+       "classification": "conservation_diagnostic_not_validation",
+       "missing_terms": [
+        "heat_in (heat_in: refused)",
+        "heat_out (heat_out: refused)"
+       ],
+       "reason": "a term was not computed, so the balance cannot be closed; no term is assumed zero",
+       "residual": null,
+       "status": "incomplete",
+       "tolerance": {
+        "magnitude": 1e-09,
+        "schema": "quantity/1",
+        "units": "watt"
+       }
+      },
+      "record_digest": "74b8fe98d615720b53b5f6b619da33c2ec26ce957bff176e7ee2c82676a05288"
+     }
+    ],
     "level": 2,
     "name": "conservation_residual",
-    "note": "thermal_energy: incomplete",
+    "note": "thermal_energy: incomplete; axial-force diagnostic NOT MET or not read (relative spread {'fenicsx': None, 'calculix': None, 'code_aster': None}, mean force over the thermal scale {'fenicsx': None, 'calculix': None, 'code_aster': None}; needs spread <= 0.001 and mean force >= 0.1)",
     "status": "attempted_not_reached"
    },
    {

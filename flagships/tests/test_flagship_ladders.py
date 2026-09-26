@@ -98,3 +98,39 @@ def test_every_flagship_criterion_binds_to_a_quantity_its_reference_declares_com
     assert "mid_section_stress_error_relative" in bar.comparable_quantities and "delta_T_relative_difference" in first_law.comparable_quantities
     # the NASA reference is considered, never compared: it declares nothing comparable
     assert bc.nasa_reference().comparable_quantities == ()
+
+
+# ------------------------------------------------------------------------------------------------------------- B: level 2 builder (round 3, M4)
+class _Assessment:
+    """A stand-in for a ConservationAssessment (the builder reads status, balance_id, residual and to_dict)."""
+
+    def __init__(self, status: str, residual: float | None = 1e-11):
+        self.status, self.balance_id = status, "thermal_energy"
+        self.residual = None if residual is None else Quantity(residual, "W")
+
+    def to_dict(self) -> dict:
+        return {"balance_id": self.balance_id, "status": self.status, "residual": None if self.residual is None else self.residual.to_dict()}
+
+
+PROVIDERS = ("fenicsx", "calculix", "code_aster")
+
+
+def test_level_two_of_the_structure_flagship_records_a_failing_reading_instead_of_dropping_it():
+    ok_spread = {p: 1e-9 for p in PROVIDERS}
+    ok_ratio = {p: 0.71 for p in PROVIDERS}
+    reached = tm.level2_entry((_Assessment("closed"),), ok_spread, ok_ratio)
+    assert reached.status is LevelStatus.REACHED and {e.kind for e in reached.evidence} == {"conservation_assessment", "equilibrium_diagnostic"}
+    # a solver that ignored the load: the balance closes, the spread is zero, the mean force is zero -> NOT reached, and the failing reading is IN the evidence
+    blind = tm.level2_entry((_Assessment("closed"),), {p: 0.0 for p in PROVIDERS}, {p: 0.0 for p in PROVIDERS})
+    assert blind.status is LevelStatus.ATTEMPTED_NOT_REACHED and "axial-force diagnostic NOT MET" in blind.note
+    diag = next(e for e in blind.evidence if e.kind == "equilibrium_diagnostic")
+    assert diag.outcome == "not_met" and diag.record["mean_force_over_scale"] == {p: 0.0 for p in PROVIDERS}
+    # a balance that did not close keeps its assessment as a not_met link
+    open_balance = tm.level2_entry((_Assessment("open", residual=3.0),), ok_spread, ok_ratio)
+    assert open_balance.status is LevelStatus.ATTEMPTED_NOT_REACHED and any(e.outcome == "not_met" and e.kind == "conservation_assessment" for e in open_balance.evidence)
+    # a provider with no reading is not a pass
+    missing = tm.level2_entry((_Assessment("closed"),), {**ok_spread, "calculix": None}, {**ok_ratio, "calculix": None})
+    assert missing.status is LevelStatus.ATTEMPTED_NOT_REACHED
+    # nothing assessable at all
+    nothing = tm.level2_entry((), {p: None for p in PROVIDERS}, {p: None for p in PROVIDERS})
+    assert nothing.status is LevelStatus.NOT_ATTEMPTED and not nothing.evidence

@@ -2,7 +2,7 @@
 
 Statement labels: **FACT** a checkable statement about the run artifacts - **REFERENCE DATA** taken from an external source with provenance - **ASSUMPTION** declared, not evidenced - **MODEL OUTPUT** a provider's computed value - **CORROBORATION** independent solvers agreeing (never validation) - **VALIDATION** comparison with a reference or measurement, stated with its scope (a numerical benchmark is not an experiment).
 
-`request 573e9a4cdf8b5081  plan 3956b33a45b6dd55  result 4e9c9b64d727f458`
+`request c3da5a4871d87b73  plan 3102df25564e3590  result 812856296838ab4a`
 
 ## 1. Engineering question
 
@@ -30,7 +30,7 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 
 ## 7. Execution
 
-[FACT] SUCCEEDED; provider wall times (operational): OpenFOAM 2.2 s, 4.2 s, 15.9 s; SU2 2.0 s, 2.5 s, 11.8 s for N = [20, 40, 80]. 8 recorded provider executions.
+[FACT] SUCCEEDED; provider wall times (operational): OpenFOAM 2.0 s, 4.2 s, 16.9 s; SU2 1.9 s, 2.4 s, 12.6 s for N = [20, 40, 80]. 8 recorded provider executions.
 
 ## 8. Results
 
@@ -41,16 +41,16 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 [FACT] Verification pyramid position:
 
 - **L1 reached** - units, material-record digests, provider bindings and identities checked by BIG 12 preflight
-- **L2 attempted not reached** - net flux through each mid-plane relative to U L (criterion 0.001, fixed before the run): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)
+- **L2 attempted not reached** - net flux through each mid-plane relative to U L (criterion 0.001, pre-registered): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)
 - **L3 not available** - there is no closed-form solution of the cavity at Re = 100 to compare with
 - **L4 attempted not reached** - [20, 40, 80] cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place
-- **L5 attempted not reached** - OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only
-- **L6 reached** - Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed fixed before the run: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation
+- **L5 attempted not reached** - OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only
+- **L6 reached** - Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed pre-registered: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation
 - **L7 not available** - no experimental data for this cavity was integrated
 
 ## 10. Cross-provider results
 
-[CORROBORATION] NOT achieved. The pre-declared whole-field criterion (3 % of lid speed, the BIG 11 criterion, not loosened) is NOT MET at any mesh:
+[CORROBORATION] NOT achieved. The pre-registered whole-field criterion (3 % of lid speed, the BIG 11 criterion, not loosened) is NOT MET at 20x20, 40x40, 80x80:
 
 | mesh | whole-field max diff (of U) | at y/L | POST-HOC lower-half max diff | OpenFOAM err u | OpenFOAM err v | SU2 err u | SU2 err v |
 |---|---|---|---|---|---|---|---|
@@ -58,19 +58,19 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 | 40x40 | 0.2446 | 0.9875 | 0.0268 | 0.0027 | 0.0086 | 0.0246 | 0.0187 |
 | 80x80 | 0.2393 | 0.9937 | 0.0144 | 0.0044 | 0.0090 | 0.0112 | 0.0070 |
 
-The largest differences are always in the cell layer next to the moving lid (y/L > 0.97) and they do NOT shrink with refinement (26 %, 24 %, 24 % of lid speed). The lower-half region was chosen AFTER the whole-field result and is labelled post hoc; it can never count as corroboration. **Interpretation, not established:** part of the disagreement is likely an artifact of the declared mapping (the 4-corner mean of SU2 nodal values includes the lid nodes at U, while OpenFOAM's cell-centre value sits half a cell below the lid in a steep boundary layer); this was not tested. The disagreement is reported as the result.
+The largest whole-field differences sit at y/L = 0.9750, 0.9875, 0.9937 (the cell layer next to the moving lid, y/L > 0.97); the whole-field maximum difference over the meshes is 26 %, 24 %, 24 % of lid speed, which does not shrink materially with refinement. The lower-half region was chosen AFTER the whole-field result and is labelled post hoc; it can never count as corroboration. **Interpretation, not established:** part of the disagreement is likely an artifact of the declared mapping (the 4-corner mean of SU2 nodal values includes the lid nodes at U, while OpenFOAM's cell-centre value sits half a cell below the lid in a steep boundary layer); this was not tested. The disagreement is reported as the result.
 
 ## 11. Reference comparison
 
-[MODEL OUTPUT] Comparison with a NUMERICAL benchmark (not an experiment); scope: the Re = 100 centerlines, finest mesh, criterion 0.02 of lid speed fixed before the run: ghia_openfoam_80 MET (0.0090); ghia_su2_80 MET (0.0112). [VALIDATION] None: this is not an experimental comparison. It supports the numerics of these codes at Re = 100 for this configuration only and says nothing outside it. The reference envelope covers Re and the square-cavity aspect ratio; geometry details and boundary conditions are described in the record, not enforced by it.
+[MODEL OUTPUT] Comparison with a NUMERICAL benchmark (not an experiment); scope: the Re = 100 centerlines, finest mesh, criterion 0.02 of lid speed, pre-registered: ghia_openfoam_80 MET (0.0090); ghia_su2_80 MET (0.0112). [VALIDATION] None: this is not an experimental comparison. It supports the numerics of these codes at Re = 100 for this configuration only and says nothing outside it. The reference envelope covers Re and the square-cavity aspect ratio; geometry details and boundary conditions are described in the record, not enforced by it.
 
 ## 12. Uncertainty
 
-[FACT] Known input uncertainty: none. UNKNOWN (never zero): fluid state (declared 20 degC, 1 atm); lid speed and cavity size (declared); water density and viscosity: CoolProp equation-of-state values, uncertainty not propagated. Model discrepancy: NOT QUANTIFIED: incompressible laminar model, 2-D idealisation, no discretisation-error bound (only a grid study), each code's own scheme error. The benchmark itself carries its own discretisation error (129 x 129), so an error against it cannot be expected to fall to zero: the OpenFOAM error against Ghia is 0.0127, 0.0027, 0.0044 (u line) - not monotone, and the pre-declared monotonicity criterion is reported NOT MET.
+[FACT] Known input uncertainty: none. UNKNOWN (never zero): fluid state (declared 20 degC, 1 atm); lid speed and cavity size (declared); water density and viscosity: CoolProp equation-of-state values, uncertainty not propagated. Model discrepancy: NOT QUANTIFIED: incompressible laminar model, 2-D idealisation, no discretisation-error bound (only a grid study), each code's own scheme error. The benchmark itself carries its own discretisation error (129 x 129), so an error against it cannot be expected to fall to zero: the OpenFOAM error against Ghia is 0.0127, 0.0027, 0.0044 (u line) - not monotone, and the pre-registered monotonicity criterion is reported NOT MET.
 
 ## 13. Constraint and conservation checks
 
-[FACT] `b_flux_openfoam` (max_midplane_flux) **SATISFIED** (margin 0.0008573 dimensionless); `b_flux_su2` (max_midplane_flux) **VIOLATED** (margin -0.005249 dimensionless) (the flux constraint is bound to the finest mesh of EACH code, on the unsigned maximum over both mid-planes). [MODEL OUTPUT] Net mid-plane flux relative to U L at 80x80: OpenFOAM 1.43e-04, SU2 6.25e-03 (criterion 0.001 fixed before the run; level 2 reads attempted not reached; NOT met by su2).
+[FACT] `b_flux_openfoam` (max_midplane_flux) **SATISFIED** (margin 0.0008573 dimensionless); `b_flux_su2` (max_midplane_flux) **VIOLATED** (margin -0.005249 dimensionless) (the flux constraint is bound to the finest mesh of EACH code, on the unsigned maximum over both mid-planes). [MODEL OUTPUT] Net mid-plane flux relative to U L at 80x80: OpenFOAM 1.43e-04, SU2 6.25e-03 (criterion 0.001 pre-registered; level 2 reads attempted not reached; NOT met by su2).
 
 ## 14. Negative control
 
@@ -124,11 +124,11 @@ CONSTRAINTS
   b_flux_su2 (max_midplane_flux): VIOLATED  (margin -0.005249 dimensionless)
 VERIFICATION
   L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight
-  L2 attempted not reached: net flux through each mid-plane relative to U L (criterion 0.001, fixed before the run): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)
+  L2 attempted not reached: net flux through each mid-plane relative to U L (criterion 0.001, pre-registered): {'openfoam': 0.00014267869136348632, 'su2': 0.006249425270081174}. NOT MET by ['su2'] (its sampled profile is not mass-conserving to the criterion; cause not investigated)
   L3 not available: there is no closed-form solution of the cavity at Re = 100 to compare with
   L4 attempted not reached: [20, 40, 80] cells per side. Predeclared criterion (max centerline error against the BENCHMARK decreases monotonically for both codes and both lines): NOT MET - flags {'ghia_u_max_error_of': 0.0, 'ghia_v_max_error_of': 0.0, 'ghia_u_max_error_su2': 1.0, 'ghia_v_max_error_su2': 1.0}. It is benchmark-relative, so it also folds in the benchmark's own truncation error; an intrinsic reading (successive changes of a fixed quantity) is recorded beside it as post hoc, never in its place
-  L5 attempted not reached: OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed fixed before any run (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only
-  L6 reached: Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed fixed before the run: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation
+  L5 attempted not reached: OpenFOAM vs SU2 on identical declared inputs, whole field, 3 % of lid speed pre-registered (the BIG 11 criterion, not loosened): NOT MET - the codes disagree, most near the lid; the disagreement is the result. The lower-half comparisons were chosen after seeing this and are recorded as post hoc observations only
+  L6 reached: Ghia et al. (1982) Re = 100 centerlines, a NUMERICAL benchmark, at the finest mesh, tolerance 0.02 of lid speed pre-registered: {'openfoam': True, 'su2': True}. Agreement would support this configuration's numerics only; it is not experimental validation
   L7 not available: no experimental data for this cavity was integrated
 REFERENCE COMPARISONS
   numerical_benchmark_comparison_not_validation_grant: ghia_openfoam_80 MET (0.009028 dimensionless; tolerance 0.02 dimensionless)

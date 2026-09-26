@@ -54,6 +54,7 @@ def _identity(run) -> str:
 # ==================================================================================================== A
 def battery_report(runs: dict) -> tuple[str, str]:
     n, h, ov, ow = runs["normal"], runs["hot"], runs["overload"], runs["outside_window"]
+    per_case = "; ".join(c + " " + r.summary.scientific_status + " (run " + r.result.status.value + ")" for c, r in runs.items())
     from . import battery_cooling as bc
     r = n.result
     row = lambda label, oid, fmt="{:.5g}": f"| {label} | {_q(n, oid, fmt)} | {_q(h, oid, fmt)} |"  # noqa: E731
@@ -117,14 +118,14 @@ def battery_report(runs: dict) -> tuple[str, str]:
             + ". Every reported output carries an UNKNOWN uncertainty record."),
         "Constraint and conservation checks": (
             f"[FACT] Normal case: {_constraints(n.constraints)}. Hot case: {_constraints(h.constraints)}. [MODEL OUTPUT] Heat balance (cell heat generated vs heat absorbed by the coolant, m dh), fresh / aged / control: "
-            + "; ".join(f"{c.balance_id} residual {c.residual.magnitude:.1e} {c.residual.units}" for c in n.conservation) + f" (tolerance {bc.HEAT_BALANCE_TOL_WH:g} W h, fixed before the run)."),
+            + "; ".join(f"{c.balance_id} residual {c.residual.magnitude:.1e} {c.residual.units}" for c in n.conservation) + f" (tolerance {bc.HEAT_BALANCE_TOL_WH:g} W h, pre-registered)."),
         "Negative control": (
             f"[FACT] Overload ({bc.CASES['overload'].description}): `day_fresh` {ov.result.receipt('day_fresh').status.value.upper()} - {ov.result.receipt('day_fresh').reason}; `aging` "
             f"{ov.result.receipt('aging').status.value.upper()}, `shift` {ov.result.receipt('shift').status.value.upper()}; final fade is {_q(ov, 'final_fade')}; no state was committed; every constraint is UNAVAILABLE. "
             f"Outside-window ({bc.CASES['outside_window'].description}): `day_fresh` {ow.result.receipt('day_fresh').status.value.upper()} ({ow.result.receipt('day_fresh').reason[:300]}), aging BLOCKED, no state committed. "
             "The hot case above is the third: it succeeds and its constraints read VIOLATED."),
         "Scientific status": (
-            f"[FACT] Credibility verdict (existing authority): **{n.summary.scientific_status}** for every case. Execution succeeded; the runtime supplies no validity record and no validation check. "
+            f"[FACT] Credibility verdict (existing authority): **{n.summary.scientific_status}** for the normal case; per case: {per_case}. The runtime supplies no validity record and no validation check. "
             "Verification level reached: " + f"{n.ladder.verification_reached} of 4 (L1-L4); corroboration: none; reference level: {n.ladder.reference_level_reached}. "
             "Verification ladder (from the run): " + _ladder_status(n.ladder) + "; " + (
                 (f"the coupling-window study: tolerances met = {n.study['tolerances_met']}, monotone decrease of successive differences met = {n.study['monotone_met']}; "
@@ -177,14 +178,14 @@ def structure_report(run, over) -> tuple[str, str]:
             "(the peak is NOT claimed converged - see Verification). Heat in " + _q(run, "heat_in") + ", heat out " + _q(run, "heat_out") + ". Fields (temperature, displacement, von Mises) are exported as VTU files in the run bundle "
             "(presentation artifacts, not evidence)."),
         "Verification": ("[FACT] Verification pyramid position:\n\n" + _ladder_lines(run.ladder)
-                         + f"\n\n[FACT] Exact uniform-temperature limits (each through BIG 12): free growth u = alpha dT (x, y) max relative error by provider {v['free']['errors']}; fully restrained sigma_xx = -E alpha dT {v['constrained']['errors']} (criterion {tm.ANALYTIC_REL_TOL:g}, fixed before the run).\n\n"
+                         + f"\n\n[FACT] Exact uniform-temperature limits (each through BIG 12): free growth u = alpha dT (x, y) max relative error by provider {v['free']['errors']}; fully restrained sigma_xx = -E alpha dT {v['constrained']['errors']} (criterion {tm.ANALYTIC_REL_TOL:g}, pre-registered).\n\n"
                          f"[MODEL OUTPUT] Mesh study through BIG 12 (mid-length displacement, mid-plate stress, peak von Mises):\n\n| mesh | nodes | ux_mid FEniCSx | ux_mid CalculiX | ux_mid Code_Aster | sxx_mid FEniCSx (MPa) | vm_max FEniCSx (MPa) |\n|---|---|---|---|---|---|---|\n{rows}\n\n"
-                         f"Observed orders: {orders}. **Predeclared criterion (monotone, order >= 0.9 for mid-plate displacement AND stress, every provider): "
+                         f"Observed orders: {orders}. **Pre-registered criterion (monotone, order >= 0.9 for mid-plate displacement AND stress, every provider): "
                          f"{'MET' if st['predeclared_criterion_met'] else 'NOT MET'}** - failing: {st['predeclared_failing']}. Reason: the last relative change of the mid-plate stress over the finest two meshes is {max(abs(st['levels'][-1][k] - st['levels'][-2][k]) / abs(st['levels'][-1][k]) for k in st['levels'][-1] if k.startswith('sxx_mid_')):.1e}, "
                          "which is at the level of solver noise, so an observed order is not defined for it. "
                          f"A post-hoc noise-aware reading (labelled post hoc, added after seeing the outcome) is {'met' if st['post_hoc_noise_aware_met'] else 'not met'}; it does not replace the predeclared outcome."),
         "Cross-provider results": (
-            "[CORROBORATION] Pairwise agreement, criteria fixed before the run (1 % of the free thermal growth scale alpha dT L for displacement, 1 % of E alpha dT for stress): "
+            "[CORROBORATION] Pairwise agreement, criteria pre-registered (1 % of the free thermal growth scale alpha dT L for displacement, 1 % of E alpha dT for stress): "
             f"FEniCSx-CalculiX max |du| {_q(run, 'max_abs_displacement_difference_fenicsx_calculix')}, FEniCSx-Code_Aster {_q(run, 'max_abs_displacement_difference_fenicsx_code_aster')}, "
             f"CalculiX-Code_Aster {_q(run, 'max_abs_displacement_difference_calculix_code_aster')}; element stress CalculiX-Code_Aster max {_q(run, 'max_abs_stress_difference_calculix_code_aster')}. "
             f"FEniCSx and Code_Aster agree to {_v(run, 'max_abs_displacement_difference_fenicsx_code_aster') / _v(run, 'disp_max_fenicsx'):.1e} of the peak displacement (they share the plane-stress P1 formulation, so this is close to one algorithm run twice); "
@@ -220,6 +221,12 @@ def structure_report(run, over) -> tuple[str, str]:
 # ==================================================================================================== C
 def cavity_report(run, neg) -> tuple[str, str]:
     from . import cavity_cfd as cf
+    whole_flags = {n: _v(run, f"whole_field_within_tolerance_{n}") for n in cf.LEVELS}
+    unmet_levels = [f"{n}x{n}" for n in cf.LEVELS if whole_flags[n] != 1.0]
+    diffs = [_v(run, f"whole_field_max_difference_{n}") for n in cf.LEVELS]
+    ys = [_v(run, f"max_difference_cell_y_{n}") for n in cf.LEVELS]
+    of_errors = [_v(run, f"ghia_u_max_error_openfoam_{n}") for n in cf.LEVELS]
+    of_monotone = all(of_errors[i + 1] < of_errors[i] for i in range(len(of_errors) - 1))
     r = run.result
     rows = []
     for n in cf.LEVELS:
@@ -248,22 +255,25 @@ def cavity_report(run, neg) -> tuple[str, str]:
                     "Pressure is NOT compared between the codes: OpenFOAM reports kinematic pressure p/rho and SU2 gauge pressure in Pa with different reference constants."),
         "Verification": ("[FACT] Verification pyramid position:\n\n" + _ladder_lines(run.ladder)),
         "Cross-provider results": (
-            "[CORROBORATION] NOT achieved. The pre-declared whole-field criterion (3 % of lid speed, the BIG 11 criterion, not loosened) is NOT MET at any mesh:\n\n"
+            "[CORROBORATION] " + ("achieved" if not unmet_levels else "NOT achieved") + ". The pre-registered whole-field criterion (3 % of lid speed, the BIG 11 criterion, not loosened) is "
+            + ("MET at every mesh" if not unmet_levels else "NOT MET at " + ", ".join(unmet_levels)) + ":\n\n"
             "| mesh | whole-field max diff (of U) | at y/L | POST-HOC lower-half max diff | OpenFOAM err u | OpenFOAM err v | SU2 err u | SU2 err v |\n|---|---|---|---|---|---|---|---|\n" + "\n".join(rows)
-            + "\n\nThe largest differences are always in the cell layer next to the moving lid (y/L > 0.97) and they do NOT shrink with refinement (" + ", ".join(f"{100*_v(run, f'whole_field_max_difference_{n}'):.0f} %" for n in cf.LEVELS) + " of lid speed). The lower-half region was chosen AFTER the whole-field result "
+            + "\n\nThe largest whole-field differences sit at y/L = " + ", ".join(f"{y:.4f}" for y in ys) + (" (the cell layer next to the moving lid, y/L > 0.97)" if all(y > 0.97 for y in ys) else "")
+            + "; the whole-field maximum difference over the meshes is " + ", ".join(f"{100 * d:.0f} %" for d in diffs) + " of lid speed, which "
+            + ("does not shrink materially with refinement" if diffs[-1] > 0.8 * diffs[0] else "shrinks with refinement") + ". The lower-half region was chosen AFTER the whole-field result "
               "and is labelled post hoc; it can never count as corroboration. **Interpretation, not established:** part of the disagreement is likely an artifact of the declared mapping (the 4-corner mean of SU2 nodal values includes the lid "
               "nodes at U, while OpenFOAM's cell-centre value sits half a cell below the lid in a steep boundary layer); this was not tested. The disagreement is reported as the result."),
         "Reference comparison": (
-            f"[MODEL OUTPUT] Comparison with a NUMERICAL benchmark (not an experiment); scope: the Re = 100 centerlines, finest mesh, criterion 0.02 of lid speed fixed before the run: "
+            f"[MODEL OUTPUT] Comparison with a NUMERICAL benchmark (not an experiment); scope: the Re = 100 centerlines, finest mesh, criterion {cf.GHIA_TOL:g} of lid speed, pre-registered: "
             + "; ".join(f"{c.criterion.criterion_id} {c.outcome.upper()} ({c.value.magnitude:.4f})" for c in run.comparisons)
             + ". [VALIDATION] None: this is not an experimental comparison. It supports the numerics of these codes at Re = 100 for this configuration only and says nothing outside it. "
               "The reference envelope covers Re and the square-cavity aspect ratio; geometry details and boundary conditions are described in the record, not enforced by it."),
         "Uncertainty": ("[FACT] Known input uncertainty: none. UNKNOWN (never zero): " + "; ".join(run.uncertainty.unknown_input_uncertainty) + ". Model discrepancy: " + run.uncertainty.model_discrepancy
                         + f". The benchmark itself carries its own discretisation error (129 x 129), so an error against it cannot be expected to fall to zero: the OpenFOAM error against Ghia is "
-                          + ", ".join(f"{_v(run, f'ghia_u_max_error_openfoam_{n}'):.4f}" for n in cf.LEVELS) + " (u line) - not monotone, and the pre-declared monotonicity criterion is reported NOT MET."),
+                          + ", ".join(f"{_v(run, f'ghia_u_max_error_openfoam_{n}'):.4f}" for n in cf.LEVELS) + " (u line) - " + ("not monotone, and the pre-registered monotonicity criterion is reported NOT MET." if not of_monotone else "monotone on the u line (the pre-registered criterion covers both codes and both lines; see Verification).")),
         "Constraint and conservation checks": (f"[FACT] {_constraints(run.constraints)} (the flux constraint is bound to the finest mesh of EACH code, on the unsigned maximum over both mid-planes). "
                                                f"[MODEL OUTPUT] Net mid-plane flux relative to U L at {finest}x{finest}: OpenFOAM {_v(run, f'flux_residual_abs_openfoam_{finest}'):.2e}, SU2 {_v(run, f'flux_residual_abs_su2_{finest}'):.2e} "
-                                               f"(criterion {cf.FLUX_TOL:g} fixed before the run; level 2 reads " + run.ladder.entry(2).status.value.replace('_', ' ') + "; "
+                                               f"(criterion {cf.FLUX_TOL:g} pre-registered; level 2 reads " + run.ladder.entry(2).status.value.replace('_', ' ') + "; "
                                                + (f"NOT met by {', '.join(run.l2_failing)}" if run.l2_failing else "met by both") + ")."),
         "Negative control": (f"[FACT] Unsupported regime: Re = 1500 -> OpenFOAM {neg['unsupported_regime']['openfoam'].upper()} ({neg['unsupported_regime']['reason']}), SU2 {neg['unsupported_regime']['su2'].upper()}, no benchmark quantity available. "
                              f"Incompatible benchmark: the same Ghia data applied to a Re = 10 case is `{neg['benchmark_not_applicable']['outcome']}` ({neg['benchmark_not_applicable']['applicability']['reasons'][0]}); a perfect number would not rescue it."),
@@ -300,7 +310,7 @@ def chemistry_report(run, neg) -> tuple[str, str]:
                     f"at {ct.T_EXHAUST_OUT:g} K the equilibrium CO falls to {_v(run, 'cooled_equilibrium__X_CO_out'):.1e}. Heat to remove {_q(run, 'heat_duty__Q_duty', '{:.1f}')} ({_v(run, 'heat_duty__q_specific')/1e6:.4f} MJ/kg of reactants); cooling water {ct.T_WATER_IN} K -> {_q(run, 'coolant_loop__T_water_out', '{:.2f}')} "
                     f"(+{_v(run, 'coolant_loop__water_rise'):.2f} K). Kinetic reactor from {ct.T_KINETIC_START:g} K: ignition delay {_v(run, 'kinetic_2__ignition_delay')*1e3:.3f} ms (discrete maximum of dT/dt), end temperature {_q(run, 'kinetic_2__T_final', '{:.3f}')}, fuel remaining {_v(run, 'kinetic_2__fuel_remaining'):.2e}."),
         "Verification": ("[FACT] Verification pyramid position:\n\n" + _ladder_lines(run.ladder)),
-        "Cross-provider results": ("[CORROBORATION] Cantera and TESPy agree on the energy balance: the heat Cantera says must be removed and the heat TESPy's water absorbs (m dh) differ by "
+        "Cross-provider results": ("[FACT] Cantera and TESPy agree on the energy balance: the heat Cantera says must be removed and the heat TESPy's water absorbs (m dh) differ by "
                                    f"{_v(run, 'energy_balance__residual'):.1e} W ({_v(run, 'energy_balance__relative_residual'):.1e} of the duty). This is a consistency check of an interface that is defined by that balance; it is NOT independent corroboration of the chemistry "
                                    "(there is no second chemistry provider)."),
         "Reference comparison": (f"[REFERENCE DATA] Hess's law with evaluated NIST-JANAF / CODATA data gives a lower heating value of methane of {hess.values('lower_heating_value')[0]:.3f} kJ/mol (Chase 1998) and {hess.values('lower_heating_value')[1]:.3f} kJ/mol (CODATA with Manion 2002). "

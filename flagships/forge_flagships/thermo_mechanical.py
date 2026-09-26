@@ -443,7 +443,7 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
             cmp_u = compare_providers(decl, ra, out_name(ra), rb, out_name(rb))
             ex.comparisons[f"{a}~{b}"] = cmp_u
             outs = {"max_abs_displacement_difference": OutputValue(Quantity(cmp_u.max_absolute, "m"), UNKNOWN, "compare_providers"),
-                    "displacement_within_tolerance": OutputValue(Quantity(1.0 if cmp_u.within_tolerance else 0.0, "dimensionless"), UNKNOWN, "declared before the run")}
+                    "displacement_within_tolerance": OutputValue(Quantity(1.0 if cmp_u.within_tolerance else 0.0, "dimensionless"), UNKNOWN, "pre-registered")}
             if sa["native"] is not None and sb["native"] is not None:
                 sdecl = ComparisonDeclaration(f"element stress components (sxx, syy, sxy), all elements ({a} vs {b})", "Pa", "identity: same triangles", STRESS_AGREEMENT_TOL, 0.0,
                                               f"plate {case.nx}x{case.ny}")
@@ -611,6 +611,38 @@ def mesh_study(levels=((20, 4), (40, 8), (80, 16), (160, 32)), registry=None) ->
     return table
 
 
+def level2_entry(conservation, spreads: dict, ratios: dict) -> LevelEntry:
+    """Level 2 from the thermal balance assessment(s) and the axial-force equilibrium diagnostic per provider.
+
+    Reached only if every balance closed AND the diagnostic was read (an axial force exists) and met for every provider; any failing or
+    missing reading is recorded as an evidence link with outcome not_met, never dropped."""
+    providers = ("fenicsx", "calculix", "code_aster")
+    closed = [c for c in conservation if c.status == "closed"]
+    eq_ok = all(equilibrium_read(spreads.get(p), ratios.get(p)) for p in providers)
+    balance_ok = bool(conservation) and len(closed) == len(conservation)
+    links = [EvidenceLink.of_record("conservation_assessment", c.to_dict(), "conservation_residual", "met" if c.status == "closed" else "not_met",
+                                    f"{c.balance_id}: {c.status}" + ("" if getattr(c, "residual", None) is None else f", residual {c.residual.magnitude:.2e} {c.residual.units}"))
+             for c in conservation]
+    read_any = any(v is not None for v in list(spreads.values()) + list(ratios.values()))
+    if read_any:
+        links.append(EvidenceLink.of_record(
+            "equilibrium_diagnostic", {"relative_spread": dict(spreads), "mean_force_over_scale": dict(ratios), "spread_tolerance": EQUILIBRIUM_SPREAD_TOL, "force_floor_ratio": FORCE_FLOOR_RATIO},
+            "conservation_residual", "met" if eq_ok else "not_met",
+            f"axial section force by solver: relative spread {dict(spreads)}, mean force over the thermal scale {dict(ratios)} (met needs spread <= {EQUILIBRIUM_SPREAD_TOL:g} and mean force >= {FORCE_FLOOR_RATIO:g} of the scale)"))
+    if balance_ok and eq_ok:
+        return LevelEntry(2, LevelStatus.REACHED, tuple(links),
+                          "heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative "
+                          f"spread of {max(spreads.values()):.1e} for all three solvers (criterion {EQUILIBRIUM_SPREAD_TOL:g}, pre-registered; read only where the mean force is at least "
+                          f"{FORCE_FLOOR_RATIO:g} of the thermal force scale, observed {min(ratios.values()):.2f}) - the more informative diagnostic")
+    if not (conservation or links):
+        return LevelEntry(2, LevelStatus.NOT_ATTEMPTED, (), "not assessable")
+    unmet = [] if balance_ok else [f"{c.balance_id}: {c.status}" for c in conservation if c.status != "closed"] or ["no balance closed"]
+    if not eq_ok:
+        unmet.append(f"axial-force diagnostic NOT MET or not read (relative spread {dict(spreads)}, mean force over the thermal scale {dict(ratios)}; needs spread <= "
+                     f"{EQUILIBRIUM_SPREAD_TOL:g} and mean force >= {FORCE_FLOOR_RATIO:g})")
+    return LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links), "; ".join(unmet))
+
+
 def run_structure(case_name: str, registry=None, *, verification: bool = False, study: bool = False) -> StructureRun:
     from engcore.system_runtime import BalanceSpec, TermSource, assess_conservation, assess_constraints
     case = STRUCT_CASES[case_name]
@@ -624,42 +656,32 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
     entries, comparisons, references = [], [], []
     entries.append(contract_integrity_entry(report, result))
     ran = result.status.value == "succeeded"           # evidence from OTHER requests (limits, mesh study) is attached only to a run that itself succeeded
-    closed = [c for c in conservation if c.status == "closed"]
-    equil = [result.observable(f"section_force_spread_{p}") for p in ("fenicsx", "calculix", "code_aster")]
-    ratio = [result.observable(f"section_force_ratio_{p}") for p in ("fenicsx", "calculix", "code_aster")]
-    # the diagnostic means something only where there IS an axial force: a solve that ignored the thermal load has zero force and a zero spread
-    eq_ok = all(equilibrium_read(None if s.value is None else s.value.value.magnitude, None if r.value is None else r.value.value.magnitude) for s, r in zip(equil, ratio))
-    if closed and eq_ok:
-        spreads = {p: o.value.value.magnitude for p, o in zip(("fenicsx", "calculix", "code_aster"), equil)}
-        ratios = {p: o.value.value.magnitude for p, o in zip(("fenicsx", "calculix", "code_aster"), ratio)}
-        entries.append(LevelEntry(2, LevelStatus.REACHED, (EvidenceLink.of_record("conservation_assessment", closed[0].to_dict(), "conservation_residual", "met",
-                                                                                  f"thermal energy: residual {closed[0].residual.magnitude:.2e} W"),
-                                                            EvidenceLink.of_record("equilibrium_diagnostic", {"relative_spread": spreads, "mean_force_over_scale": ratios,
-                                                                                                              "spread_tolerance": EQUILIBRIUM_SPREAD_TOL, "force_floor_ratio": FORCE_FLOOR_RATIO},
-                                                                                   "conservation_residual", "met",
-                                                                                   f"axial section force constant along the plate for all three solvers (relative spread <= {EQUILIBRIUM_SPREAD_TOL:g}, mean force >= {FORCE_FLOOR_RATIO:g} of the thermal force scale)")),
-                                  "heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative "
-                                  f"spread of {max(spreads.values()):.1e} for all three solvers (criterion {EQUILIBRIUM_SPREAD_TOL:g}, fixed before the run; read only where the mean force is at least "
-                                  f"{FORCE_FLOOR_RATIO:g} of the thermal force scale, observed {min(ratios.values()):.2f}) - the more informative diagnostic"))
-    else:
-        entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(
-            f"{c.balance_id}: {c.status}" for c in conservation) or "not assessable"))
+    providers3 = ("fenicsx", "calculix", "code_aster")
+
+    def _val(name: str, p: str):
+        o = result.observable(f"{name}_{p}")
+        return None if o.value is None else o.value.value.magnitude
+    entries.append(level2_entry(conservation, {p: _val("section_force_spread", p) for p in providers3}, {p: _val("section_force_ratio", p) for p in providers3}))
     if verification and ran:
         free = exact_limit_check("free", registry)
         cons = exact_limit_check("constrained", registry)
         run.verification = {"free": free, "constrained": cons}
-    if verification and ran and run.verification["free"]["status"] == "succeeded" and run.verification["constrained"]["status"] == "succeeded":
+    if verification and ran:
         conds = {"temperature_rise": Quantity(40.0, "K"), "thermal_strain": Quantity(ALPHA * 40.0, "dimensionless")}
         links = []
         missing_limits: list[str] = []
         for kind, ref in (("free", free_ref), ("constrained", constrained_ref)):
             v = run.verification[kind]
-            if not all(e is not None and math.isfinite(e) for e in v["errors"].values()):
-                missing_limits.append(kind)                       # a provider produced no error for this limit: nothing is compared, and the level is not reached
+            if v["status"] != "succeeded" or not all(e is not None and math.isfinite(e) for e in v["errors"].values()):
+                # the limit request failed or a provider produced no error: nothing is compared, the level is not reached, and the failure is RECORDED
+                missing_limits.append(kind)
+                links.append(EvidenceLink.of_record("exact_limit_request", {"case": v["case"], "status": v["status"], "request": v["request"], "errors": v["errors"]},
+                                                    "analytic_limit_comparison_verifies_implementation_only", "not_met",
+                                                    f"{kind} limit: request {v['status']}; errors by provider {v['errors']}"))
                 continue
             worst = max(v["errors"].values())
             crit = PredeclaredCriterion(f"uniform_{kind}_exact", ref.quantities[0][0], "max_relative_error", Quantity(ANALYTIC_REL_TOL, "dimensionless"),
-                                        "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)")
+                                        "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (pre-registered)")
             cmp_ = compare_to_reference(ref, crit, conds, value=Quantity(worst, "dimensionless"), compared_identity=v["result"],
                                         note=f"{kind}: errors by provider {v['errors']}")
             comparisons.append(cmp_)
@@ -671,7 +693,7 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
             s_exact = uniform_constrained_stress(tmean_exact)
             bar_value = max(abs(result.observable(f"sxx_mid_{p}").value.value.magnitude - s_exact) / abs(s_exact) for p in ("fenicsx", "calculix", "code_aster"))
             crit = PredeclaredCriterion("bar_theory_mid_plate", "mid_section_stress_error_relative", "max_relative_error", Quantity(BAR_THEORY_REL_TOL, "dimensionless"),
-                                        "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (fixed before the first run)")
+                                        "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (pre-registered)")
             cmp_b = compare_to_reference(bar_ref, crit, {"aspect_ratio": Quantity(LENGTH / (2 * HALF_WIDTH), "dimensionless"), "section_position": Quantity(0.5, "dimensionless")},
                                          value=Quantity(bar_value, "dimensionless"), compared_identity=result.digest, note="mid-plate sigma_xx, three providers")
             comparisons.append(cmp_b)
@@ -680,7 +702,7 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
         all_met = not missing_limits and len(comparisons) == 3 and all(c.outcome == "met" for c in comparisons)      # the exact limits AND bar theory: a missing one is not a pass
         parts = [f"{c.criterion.criterion_id} {c.outcome.upper()} ({c.value.magnitude:.1e} vs {c.criterion.tolerance.magnitude:g})" for c in comparisons]
         if missing_limits:
-            parts.append(f"NO COMPARISON for the {missing_limits} limit(s): a provider produced no error")
+            parts.append(f"NO COMPARISON for the {missing_limits} limit(s): the limit request failed or a provider produced no error (recorded in the evidence)")
         if len(comparisons) < 3 and not missing_limits:
             parts.append("bar theory: NOT compared (no mid-plate stress from the run)")
         entries.append(LevelEntry(3, LevelStatus.REACHED if all_met else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links),
@@ -691,7 +713,7 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
     if study and ran:
         run.study = mesh_study(registry=registry)
         ok_q = ("ux_mid", "sxx_mid")
-        # PREDECLARED criterion (fixed before the first run): every provider's mid-plate displacement and stress converge monotonically at observed order >= 0.9
+        # PRE-REGISTERED criterion: every provider's mid-plate displacement and stress converge monotonically at observed order >= 0.9
         good = all(run.study["monotone"].get(f"{q}_{p}") and (run.study["orders"].get(f"{q}_{p}") or 0) >= CONVERGENCE_ORDER_MIN
                    for q in ok_q for p in ("fenicsx", "calculix", "code_aster"))
         failing = sorted(f"{q}_{p}" for q in ok_q for p in ("fenicsx", "calculix", "code_aster")
@@ -729,29 +751,36 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
     else:
         entries.append(LevelEntry(4, LevelStatus.NOT_ATTEMPTED, (), "mesh study not run in this call"))
     pair_flags = [result.observable(f"displacement_within_tolerance_{a}_{b}") for a, b in (("fenicsx", "calculix"), ("fenicsx", "code_aster"), ("calculix", "code_aster"))]
-    if all(o.value is not None and o.value.value.magnitude == 1.0 for o in pair_flags):
+    if any(o.value is not None for o in pair_flags) or st.exchange.comparisons:
         links = [EvidenceLink.of_provider_comparison(cmp_, k) for k, cmp_ in sorted(st.exchange.comparisons.items())]
-        dmax = max(result.observable(f"disp_max_{p}").value.value.magnitude for p in ("fenicsx", "calculix", "code_aster"))
-        worst = max(result.observable(f"max_abs_displacement_difference_{a}_{b}").value.value.magnitude for a, b in (("fenicsx", "calculix"), ("fenicsx", "code_aster"), ("calculix", "code_aster")))
-        entries.append(LevelEntry(5, LevelStatus.REACHED, tuple(links),
-                                  "three structural implementations agree on displacement (and CalculiX/Code_Aster on element stress) within tolerances declared before the run: CORROBORATION, not validation. "
-                                  f"Scale of the criterion: displacement tolerance {DISP_AGREEMENT_TOL.magnitude:.2e} m = {100 * DISP_AGREEMENT_TOL.magnitude / dmax:.1f} % of the peak displacement (it was set from the free-growth scale, "
-                                  f"which is larger than this restrained plate's response); observed worst difference {worst:.2e} m ({100 * worst / dmax:.3f} %). All three solve the same P1 plane-stress discretisation on one mesh "
-                                  "from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation"))
-    elif any(o.value is not None for o in pair_flags):
-        entries.append(LevelEntry(5, LevelStatus.ATTEMPTED_NOT_REACHED, (), "at least one provider pair disagreed beyond its declared tolerance; see the comparison nodes"))
+        unmet = [link.note for link in links if link.outcome != "met"]
+        flags_ok = all(o.value is not None and o.value.value.magnitude == 1.0 for o in pair_flags)
+        reached = flags_ok and bool(links) and not unmet
+        disp_parts = [result.observable(f"disp_max_{p}") for p in ("fenicsx", "calculix", "code_aster")]
+        diffs = [result.observable(f"max_abs_displacement_difference_{a}_{b}") for a, b in (("fenicsx", "calculix"), ("fenicsx", "code_aster"), ("calculix", "code_aster"))]
+        if reached and all(o.value is not None for o in disp_parts + diffs):
+            dmax = max(o.value.value.magnitude for o in disp_parts)
+            worst = max(o.value.value.magnitude for o in diffs)
+            note = ("three structural implementations agree on displacement and CalculiX/Code_Aster on element stress within tolerances pre-registered: CORROBORATION, not validation. "
+                    f"Scale of the criterion: displacement tolerance {DISP_AGREEMENT_TOL.magnitude:.2e} m = {100 * DISP_AGREEMENT_TOL.magnitude / dmax:.1f} % of the peak displacement (it was set from the free-growth scale, "
+                    f"which is larger than this restrained plate's response); observed worst difference {worst:.2e} m ({100 * worst / dmax:.3f} %). All three solve the same P1 plane-stress discretisation on one mesh "
+                    "from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation")
+        else:
+            note = ("at least one provider comparison is missing or disagreed beyond its pre-registered tolerance"
+                    + (f" (not met: {unmet})" if unmet else "") + "; see the comparison nodes and the evidence records")
+        entries.append(LevelEntry(5, LevelStatus.REACHED if reached else LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links), note))
     else:
         entries.append(LevelEntry(5, LevelStatus.NOT_ATTEMPTED, (), "no provider comparison was produced"))
     entries += [LevelEntry(6, LevelStatus.NOT_AVAILABLE, (), "no published thermo-structural numerical benchmark was integrated for this problem"),
                 LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no measured deformation or stress data for this plate exists")]
-    run.ladder = VerificationLadder.of(**{f"l{e.level}": e for e in entries})
+    run.ladder = VerificationLadder(tuple(entries))
     run.comparisons, run.references = tuple(comparisons), tuple(references)
     run.uncertainty = UncertaintyStatement(
         (), ("heat flux and sink temperature (declared)", "stress-free temperature (declared)", "E, nu, alpha, k (ASSUMED illustrative records)", "plate thickness and geometry (declared)"),
         "NOT QUANTIFIED: linear small-strain plane-stress idealisation, isotropic constant properties, 2-D symmetric-half model (unknown, not zero)",
         (f"E {mat_digest(st, 'youngs')[:12]}.. nu {mat_digest(st, 'poisson')[:12]}.. alpha {mat_digest(st, 'expansion')[:12]}.. k {mat_digest(st, 'conductivity')[:12]}.. (all ASSUMED)",),
         f"thermal solution checked against the declared property range {list(PROPERTY_RANGE_K)} K on every run; small strain and linear elasticity are assumed (the peak thermal strain is reported)",
-        ("exact analytic limits and a bar-theory estimate were used; both are analytic references, not numerical benchmarks and not experiments" if comparisons
+        (f"analytic references only ({', '.join(sorted(c.criterion.criterion_id for c in comparisons))}); analytic references are not numerical benchmarks and not experiments" if comparisons
          else "no reference comparison was made in this run (the exact-limit and mesh-study requests were not run here, or this run did not succeed); no numerical benchmark and no experiment exists for this plate"))
     run.summary = build_summary(
         f"Heated aluminium plate, {case.support}, {case.nx}x{case.ny} P1 mesh ({case.name})", st.request, result,

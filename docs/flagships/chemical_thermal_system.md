@@ -2,7 +2,7 @@
 
 Statement labels: **FACT** a checkable statement about the run artifacts - **REFERENCE DATA** taken from an external source with provenance - **ASSUMPTION** declared, not evidenced - **MODEL OUTPUT** a provider's computed value - **CORROBORATION** independent solvers agreeing (never validation) - **VALIDATION** comparison with a reference or measurement, stated with its scope (a numerical benchmark is not an experiment).
 
-`request d685c1dea0e61f55  plan 3569744110d25b78  result b87c4555760914b0`
+`request d685c1dea0e61f55  plan 3569744110d25b78  result 103fb147d26b1811`
 
 ## 1. Engineering question
 
@@ -30,7 +30,7 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 
 ## 7. Execution
 
-[FACT] SUCCEEDED; 9 recorded provider executions; total node wall time 4.4 s (operational).
+[FACT] SUCCEEDED; 9 recorded provider executions; total node wall time 4.6 s (operational).
 
 ## 8. Results
 
@@ -41,7 +41,7 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 [FACT] Verification pyramid position:
 
 - **L1 reached** - units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['adiabatic_equilibrium:thermo_range', 'coolant_loop:water_liquid_range', 'cooled_equilibrium:thermo_range', 'equilibrium_limit:thermo_range', 'heat_of_combustion:thermo_range']
-- **L2 reached** - elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria fixed before the run
+- **L2 reached** - elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered
 - **L3 reached** - heating value of methane vs Hess's law with evaluated NIST data: MET; the kinetic reactor converges to the equilibrium it must approach (thermodynamic consistency of mechanism and integrator): MET
 - **L4 attempted not reached** - three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it
 - **L5 not available** - no second, independent chemistry provider exists in the ecosystem; the two chemistry solvers would share the mechanism and thermodynamic data
@@ -50,7 +50,7 @@ Statement labels: **FACT** a checkable statement about the run artifacts - **REF
 
 ## 10. Cross-provider results
 
-[CORROBORATION] Cantera and TESPy agree on the energy balance: the heat Cantera says must be removed and the heat TESPy's water absorbs (m dh) differ by -3.6e-12 W (1.4e-16 of the duty). This is a consistency check of an interface that is defined by that balance; it is NOT independent corroboration of the chemistry (there is no second chemistry provider).
+[FACT] Cantera and TESPy agree on the energy balance: the heat Cantera says must be removed and the heat TESPy's water absorbs (m dh) differ by -3.6e-12 W (1.4e-16 of the duty). This is a consistency check of an interface that is defined by that balance; it is NOT independent corroboration of the chemistry (there is no second chemistry provider).
 
 ## 11. Reference comparison
 
@@ -112,7 +112,7 @@ CONSERVATION
   heat_duty: closed residual 3.638e-12 watt (tolerance 2.648e-02)
 VERIFICATION
   L1 reached: units, material-record digests, provider bindings and identities checked by BIG 12 preflight; deferred to the solved state: ['adiabatic_equilibrium:thermo_range', 'coolant_loop:water_liquid_range', 'cooled_equilibrium:thermo_range', 'equilibrium_limit:thermo_range', 'heat_of_combustion:thermo_range']
-  L2 reached: elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria fixed before the run
+  L2 reached: elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered
   L3 reached: heating value of methane vs Hess's law with evaluated NIST data: MET; the kinetic reactor converges to the equilibrium it must approach (thermodynamic consistency of mechanism and integrator): MET
   L4 attempted not reached: three integrator tolerances / output resolutions. The predeclared ignition criterion compares a discrete sample time whose spacing (0.05-0.25 ms) is itself 1.4-7.2 % of the ignition delay, so a converged solution need not satisfy a criterion tighter than that; the outcome is reported as it came out, with a post hoc refined reading beside it
   L5 not available: no second, independent chemistry provider exists in the ecosystem; the two chemistry solvers would share the mechanism and thermodynamic data
@@ -125,7 +125,7 @@ UNCERTAINTY
   UNKNOWN input uncertainty: reactant composition, temperature, pressure (declared), flows and outlet temperature (declared), GRI-Mech 3.0 rate and thermodynamic parameters (the mechanism authors' values; uncertainty not propagated), water properties (CoolProp via TESPy, uncertainty not propagated)
   model discrepancy: NOT QUANTIFIED: equilibrium and 0-D adiabatic reactor idealisations, ideal gas, no heat loss, water assumed to absorb every watt of the duty (unknown, not zero)
   model applicability: equilibrium temperatures were checked against the species thermodynamic data range stored in the mechanism and the water loop against a declared liquid range; the mechanism's KINETIC validity range is the authors' statement and is NOT established by Forge (the kinetic reactor is therefore a demonstration of execution and consistency only)
-  benchmark applicability: the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; it applies at 298.15 K, 1 atm and to gas-phase products only
+  benchmark applicability: the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)
 SCIENTIFIC STATUS
   insufficient_evidence - derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none
 TRACE

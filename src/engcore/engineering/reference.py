@@ -23,7 +23,7 @@ Rules kept here on purpose:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..scenarios.timeline import canonical_digest
@@ -71,6 +71,10 @@ class ReferenceCondition:
     def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "value": repr(self.value), "unit": self.unit}
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ReferenceCondition":
+        return cls(payload["name"], float(payload["value"]), payload["unit"])
+
 
 @dataclass(frozen=True)
 class EnvelopeBound:
@@ -89,6 +93,10 @@ class EnvelopeBound:
 
     def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "low": repr(float(self.low)), "high": repr(float(self.high)), "unit": self.unit}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "EnvelopeBound":
+        return cls(payload["name"], float(payload["low"]), float(payload["high"]), payload["unit"])
 
 
 @dataclass(frozen=True)
@@ -167,6 +175,21 @@ class ReferenceRecord:
     def digest(self) -> str:
         return canonical_digest(self.to_dict())
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "ReferenceRecord":
+        """Rebuild a reference from its serialized form (re-running every guard); the result must serialize back to exactly ``payload``."""
+        if payload.get("schema") != REFERENCE_SCHEMA:
+            raise InvalidScientificProblem("not a Forge reference record")
+        record = cls(
+            payload["reference_id"], payload["title"], payload["authors"], payload["publication"], payload["access_url"], payload["license_status"],
+            OracleKind(payload["kind"]), tuple(ReferenceCondition.from_dict(c) for c in payload["conditions"]),
+            tuple((q, u) for q, u in payload["quantities"]), tuple((q, tuple(float(v) for v in values)) for q, values in payload["data"]),
+            payload["source_digest"], payload["extraction"], tuple(EnvelopeBound.from_dict(e) for e in payload["envelope"]), payload["role"],
+            tuple(payload.get("comparable_quantities", ())))
+        if canonical_digest(record.to_dict()) != canonical_digest(payload):
+            raise InvalidScientificProblem("the reference record does not serialize back to the payload it was read from")
+        return record
+
     def values(self, quantity: str) -> tuple[float, ...]:
         for q, values in self.data:
             if q == quantity:
@@ -232,51 +255,71 @@ class PredeclaredCriterion:
     def digest(self) -> str:
         return canonical_digest(self.to_dict())
 
-
-#: issued only by :func:`compare_to_reference`; a comparison built any other way carries no applicability that came from a reference
-_ISSUER = object()
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PredeclaredCriterion":
+        return cls(payload["criterion_id"], payload["quantity"], payload["metric"], Quantity.from_dict(payload["tolerance"]), payload["declared_in"],
+                   bool(payload["post_hoc"]))
 
 
 @dataclass(frozen=True)
 class ReferenceComparison:
     """One measured difference between a flagship result and a reference, judged by a criterion.
 
-    Built only by :func:`compare_to_reference` (which evaluates the reference's applicability and re-derives the tolerance
-    outcome); a hand-built instance is refused, and every field is re-checked here so an outcome cannot disagree with the value."""
+    Everything a reader relies on is DERIVED from what the caller supplies - the reference, the criterion, the conditions the flagship states
+    and the compared difference: the reference's applicability is evaluated here, the tolerance outcome is re-derived as a SPREAD, the
+    classification follows the reference's kind and role.  There is no field to set an outcome, an applicability or a kind, so none can be
+    forged, and a bundle can rebuild a comparison from its shipped reference and check the record byte for byte (``from_dict``)."""
 
-    reference_digest: str
-    reference_kind: OracleKind
-    applicability: ReferenceApplicability
+    reference: ReferenceRecord
     criterion: PredeclaredCriterion
+    #: the flagship's own statement of the conditions the reference's envelope is checked against (name, value); missing never means within
+    conditions: tuple[tuple[str, Quantity], ...]
+    #: the compared difference: a finite non-negative magnitude
+    value: Quantity
     #: what was compared with what (the predicted values' own identity, e.g. a provider record digest)
     compared_identity: str
-    value: Quantity
-    #: None when the reference does not apply: nothing was judged, so neither True nor False is stated
-    within_tolerance: bool | None
-    #: "met" | "not_met" | "not_applicable" - a reference that does not apply is never read as met OR unmet
-    outcome: str
     note: str = ""
-    role: str = "implementation_limit"
-    issued_by: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        if self.issued_by is not _ISSUER:
-            raise InvalidScientificProblem("a ReferenceComparison is issued by compare_to_reference only (it evaluates the reference's applicability and the tolerance)")
-        object.__setattr__(self, "reference_digest", _hex64(self.reference_digest, "comparison reference digest"))
-        object.__setattr__(self, "compared_identity", _text(self.compared_identity, "compared identity"))
-        if self.outcome not in ("met", "not_met", "not_applicable"):
-            raise InvalidScientificProblem("comparison outcome is met, not_met or not_applicable")
-        if (self.applicability.status != "within") != (self.outcome == "not_applicable"):
-            raise InvalidScientificProblem("a comparison is read only when the reference applies; otherwise it is not_applicable")
-        if self.outcome == "not_applicable":
-            if self.within_tolerance is not None:
-                raise InvalidScientificProblem("a comparison against a reference that does not apply judges nothing: within_tolerance is None")
-        elif (self.outcome == "met") != self.within_tolerance:
-            raise InvalidScientificProblem("comparison outcome disagrees with its tolerance check")
+        if not isinstance(self.reference, ReferenceRecord) or not isinstance(self.criterion, PredeclaredCriterion):
+            raise InvalidScientificProblem("a comparison names a ReferenceRecord and a PredeclaredCriterion")
         if not math.isfinite(self.value.magnitude) or self.value.magnitude < 0:
             raise InvalidScientificProblem("a compared difference is a finite non-negative magnitude (a signed value would read as met)")
-        if self.outcome != "not_applicable" and self.within_tolerance != _within(self.value, self.criterion):
-            raise InvalidScientificProblem("the stated tolerance outcome does not follow from the value and the criterion")
+        conditions = tuple(sorted(((str(n), q) for n, q in self.conditions), key=lambda nq: nq[0]))
+        if len({n for n, _ in conditions}) != len(conditions):
+            raise InvalidScientificProblem("a comparison states each condition once")
+        object.__setattr__(self, "conditions", conditions)
+        object.__setattr__(self, "compared_identity", _text(self.compared_identity, "compared identity"))
+        if self.criterion.quantity not in self.reference.comparable_quantities:
+            raise InvalidScientificProblem(f"criterion {self.criterion.criterion_id!r} compares {self.criterion.quantity!r}, which reference "
+                                           f"{self.reference.reference_id!r} does not declare as comparable {list(self.reference.comparable_quantities)}")
+
+    @property
+    def reference_digest(self) -> str:
+        return self.reference.digest
+
+    @property
+    def reference_kind(self) -> OracleKind:
+        return self.reference.kind
+
+    @property
+    def role(self) -> str:
+        return self.reference.role
+
+    @property
+    def applicability(self) -> ReferenceApplicability:
+        return self.reference.applicability(dict(self.conditions))
+
+    @property
+    def within_tolerance(self) -> bool | None:
+        """None when the reference does not apply: nothing was judged, so neither True nor False is stated."""
+        return _within(self.value, self.criterion) if self.applicability.status == "within" else None
+
+    @property
+    def outcome(self) -> str:
+        """"met" | "not_met" | "not_applicable" - a reference that does not apply is never read as met OR unmet."""
+        w = self.within_tolerance
+        return "not_applicable" if w is None else ("met" if w else "not_met")
 
     @property
     def classification(self) -> str:
@@ -286,14 +329,26 @@ class ReferenceComparison:
         return f"post_hoc_{base}" if self.criterion.post_hoc else base
 
     def to_dict(self) -> dict[str, Any]:
+        applicability = self.applicability
         return {"classification": self.classification, "reference_digest": self.reference_digest, "reference_kind": self.reference_kind.value,
-                "applicability": self.applicability.to_dict(), "criterion": self.criterion.to_dict(), "criterion_digest": self.criterion.digest,
-                "compared_identity": self.compared_identity, "value": self.value.to_dict(), "within_tolerance": self.within_tolerance,
-                "outcome": self.outcome, "note": self.note}
+                "applicability": applicability.to_dict(), "criterion": self.criterion.to_dict(), "criterion_digest": self.criterion.digest,
+                "conditions": [[n, q.to_dict()] for n, q in self.conditions], "compared_identity": self.compared_identity,
+                "value": self.value.to_dict(), "within_tolerance": self.within_tolerance, "outcome": self.outcome, "note": self.note}
 
     @property
     def digest(self) -> str:
         return canonical_digest(self.to_dict())
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any], reference: ReferenceRecord) -> "ReferenceComparison":
+        """Rebuild a comparison from its record and the reference it names; every derived field must come out exactly as recorded."""
+        comparison = cls(reference, PredeclaredCriterion.from_dict(payload["criterion"]),
+                         tuple((n, Quantity.from_dict(q)) for n, q in payload["conditions"]), Quantity.from_dict(payload["value"]),
+                         payload["compared_identity"], payload.get("note", ""))
+        if canonical_digest(comparison.to_dict()) != canonical_digest(payload):
+            raise InvalidScientificProblem(f"comparison {payload.get('criterion', {}).get('criterion_id')!r} is not what its reference, criterion, "
+                                           "conditions and value derive (a stated outcome, applicability, kind or classification was edited)")
+        return comparison
 
 
 def _within(value: Quantity, criterion: PredeclaredCriterion) -> bool:
@@ -304,13 +359,4 @@ def _within(value: Quantity, criterion: PredeclaredCriterion) -> bool:
 def compare_to_reference(reference: ReferenceRecord, criterion: PredeclaredCriterion, conditions: Mapping[str, Quantity], *,
                          value: Quantity, compared_identity: str, note: str = "") -> ReferenceComparison:
     """Judge one already-computed difference ``value`` by a criterion, only if the reference applies to ``conditions``."""
-    if not math.isfinite(value.magnitude) or value.magnitude < 0:
-        raise InvalidScientificProblem("a compared difference is a finite non-negative magnitude (take the absolute value first)")
-    if criterion.quantity not in reference.comparable_quantities:
-        raise InvalidScientificProblem(f"criterion {criterion.criterion_id!r} compares {criterion.quantity!r}, which reference {reference.reference_id!r} "
-                                       f"does not declare as comparable {list(reference.comparable_quantities)}")
-    applicability = reference.applicability(conditions)
-    if applicability.status != "within":
-        return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, None, "not_applicable", note, reference.role, _ISSUER)
-    ok = _within(value, criterion)
-    return ReferenceComparison(reference.digest, reference.kind, applicability, criterion, compared_identity, value, ok, "met" if ok else "not_met", note, reference.role, _ISSUER)
+    return ReferenceComparison(reference, criterion, tuple(conditions.items()), value, compared_identity, note)

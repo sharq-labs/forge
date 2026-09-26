@@ -89,18 +89,25 @@ class EvidenceLink:
             raise InvalidScientificProblem("a provider-comparison link must state the classification and tolerance outcome of the comparison it carries")
 
     @property
-    def digest(self) -> str:
+    def record_digest(self) -> str:
+        """The digest of the record alone (what a summary's comparison list is matched against)."""
         return canonical_digest(self.record)
 
+    @property
+    def digest(self) -> str:
+        """The digest of what the link CLAIMS: its kind, classification and outcome as well as the record, so editing the outcome text alone
+        of a stored link changes its digest."""
+        return canonical_digest({"kind": self.kind, "classification": self.classification, "outcome": self.outcome, "record": self.record})
+
     def to_dict(self) -> dict[str, Any]:
-        return {"kind": self.kind, "digest": self.digest, "classification": self.classification, "outcome": self.outcome, "note": self.note,
-                "record": self.record}
+        return {"kind": self.kind, "digest": self.digest, "record_digest": self.record_digest, "classification": self.classification,
+                "outcome": self.outcome, "note": self.note, "record": self.record}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EvidenceLink":
         link = cls(payload["kind"], payload["classification"], payload["outcome"], payload["record"], payload.get("note", ""))
-        if payload.get("digest") != link.digest:
-            raise InvalidScientificProblem(f"evidence link {payload.get('kind')!r} does not have the digest of the record it carries")
+        if payload.get("digest") != link.digest or payload.get("record_digest") != link.record_digest:
+            raise InvalidScientificProblem(f"evidence link {payload.get('kind')!r} does not have the digest of the kind, classification, outcome and record it carries")
         return link
 
     @classmethod
@@ -153,6 +160,11 @@ class LevelEntry:
             raise InvalidScientificProblem(f"a post-hoc reading cannot reach level {self.level}; it may be recorded beside a level that is not reached")
         if self.status is LevelStatus.REACHED and self.level in _LEVEL_CLASSES and c not in _LEVEL_CLASSES[self.level]:
             raise InvalidScientificProblem(f"level {self.level} ({NAMES[self.level]}) does not accept evidence of class {link.classification!r}")
+        if self.status is LevelStatus.REACHED and self.level in (5, 6, 7):
+            # the class string is not enough: the link must BE the kind of record that class names (a provider comparison; a reference comparison)
+            need = "provider_comparison" if self.level == 5 else "reference_comparison"
+            if link.kind != need:
+                raise InvalidScientificProblem(f"level {self.level} is reached only by a {need.replace('_', ' ')} link (got kind {link.kind!r})")
         if self.level == 5 and self.status is LevelStatus.REACHED:
             if not c.startswith("solver_corroboration"):
                 raise InvalidScientificProblem("level 5 accepts solver corroboration evidence only")

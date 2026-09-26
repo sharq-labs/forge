@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "b87c4555760914b0bff28e5533006d3efb18f5044aad653a1d15a8630aeac8e8"
+   "103fb147d26b1811c2aeb6ea1e53f0f61a31a17dcacfe74e37e878bfb3cacfd4"
   ]
  ],
  "key_outputs": [
@@ -221,9 +221,27 @@
    },
    "classification": "reference_data_consistency_check_not_validation",
    "compared_identity": "96148d6ee4ec115c0a00d912543431a12991139625b1242d69c053b68a7ed4b5",
+   "conditions": [
+    [
+     "pressure",
+     {
+      "magnitude": 101325.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    ],
+    [
+     "temperature",
+     {
+      "magnitude": 300.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "lhv_hess_law",
-    "declared_in": "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (pre-registered)",
     "metric": "absolute_difference",
     "post_hoc": false,
     "quantity": "lower_heating_value",
@@ -233,7 +251,7 @@
      "units": "kilojoule / mole"
     }
    },
-   "criterion_digest": "8a54aef4a59b1a984058b87e3b3e3f8252c1057736b46955b1899f337641de59",
+   "criterion_digest": "1f68fc58a09b79b26baecc9b4cd61d58dde7c8f76d377eac7983eb61d2cc61d0",
    "note": "Cantera/GRI-Mech 3.0 thermo at 300 K 802.539 kJ/mol vs Hess's law at 298.15 K 802.310 (Chase 1998) / 802.562 (CODATA with Manion 2002); the 1.85 K offset is bounded by 0.018 kJ/mol from the same thermodynamic data",
    "outcome": "met",
    "reference_digest": "6333b1640b1061b2c528591efea0898d4724974badb16a866ace327f86217717",
@@ -250,13 +268,13 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Jacketed stoichiometric methane/air reactor with a water cooling loop (nominal)",
- "text_sha256": "0fee1b2ad68771c41fe5a560e2809f1d887579f5ab1f6e10da7e3d2417eb54fc",
+ "text_sha256": "1539d32d54de85980d27c27853c7c3fe42f3cd6902a39d47576745d4ac78133f",
  "trace": {
   "complete": true,
   "gaps": []
  },
  "uncertainty": {
-  "benchmark_applicability": "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; it applies at 298.15 K, 1 atm and to gas-phase products only",
+  "benchmark_applicability": "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)",
   "known_input_uncertainty": [],
   "material_provenance": [
    "mechanism: GRI-Mech 3.0 bytes bound by digest (provider-bundled with Cantera); no property records for the gas"
@@ -278,7 +296,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "edd155cccda78a1af8c38ed7cb8bbb3323bb482642766dba5873a7bad5babdee",
+      "digest": "a747439c469b876ef2535845865077ee8dfb23294a5398971e061fea2553a884",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run succeeded",
       "outcome": "met",
@@ -316,7 +334,8 @@
        "request_digest": "d685c1dea0e61f5502771716e948853d8bb7d34475f425448f686f04dbf24cc2",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
-      }
+      },
+      "record_digest": "edd155cccda78a1af8c38ed7cb8bbb3323bb482642766dba5873a7bad5babdee"
      }
     ],
     "level": 1,
@@ -328,7 +347,7 @@
     "evidence": [
      {
       "classification": "conservation_residual",
-      "digest": "19d9ea9931731cac827868bab643499d3396e6f14d3f7d0275ef721f463dd75d",
+      "digest": "2c33cd648f047f2aef9263e49313e8bb6fe3eb3280a3088e6bbf7d0ca5c38d1b",
       "kind": "element_balance",
       "note": "max relative change of C, H, O, N mass fractions 1.76e-11 (criterion 1e-09)",
       "outcome": "met",
@@ -338,11 +357,12 @@
         "adiabatic_equilibrium": 1.7644787698679372e-11,
         "cooled_equilibrium": 3.3588646346378156e-16
        }
-      }
+      },
+      "record_digest": "19d9ea9931731cac827868bab643499d3396e6f14d3f7d0275ef721f463dd75d"
      },
      {
       "classification": "conservation_residual",
-      "digest": "2d22239acf644b12d8aadc971a53d3c6bac7cb26faf15f2c830295f31625b83e",
+      "digest": "b4edcda05699bd0b0b8da2a40a9008844088e60c51681cfbeb5e78f6e7a5077b",
       "kind": "conservation_assessment",
       "note": "heat duty: Cantera vs TESPy residual 3.64e-12 W",
       "outcome": "met",
@@ -362,19 +382,20 @@
         "schema": "quantity/1",
         "units": "watt"
        }
-      }
+      },
+      "record_digest": "2d22239acf644b12d8aadc971a53d3c6bac7cb26faf15f2c830295f31625b83e"
      }
     ],
     "level": 2,
     "name": "conservation_residual",
-    "note": "elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria fixed before the run",
+    "note": "elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered",
     "status": "reached"
    },
    {
     "evidence": [
      {
       "classification": "reference_data_consistency_check_not_validation",
-      "digest": "5d3a43a025318ca8d41359a0d3ce9379eb1e46c749be98904436f1aad88ff183",
+      "digest": "1d89076827fa77324e424066fe6e8676e9a4b233379c8256c6c5e97df9dbfc9d",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -387,9 +408,27 @@
        },
        "classification": "reference_data_consistency_check_not_validation",
        "compared_identity": "96148d6ee4ec115c0a00d912543431a12991139625b1242d69c053b68a7ed4b5",
+       "conditions": [
+        [
+         "pressure",
+         {
+          "magnitude": 101325.0,
+          "schema": "quantity/1",
+          "units": "pascal"
+         }
+        ],
+        [
+         "temperature",
+         {
+          "magnitude": 300.0,
+          "schema": "quantity/1",
+          "units": "kelvin"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "lhv_hess_law",
-        "declared_in": "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (pre-registered)",
         "metric": "absolute_difference",
         "post_hoc": false,
         "quantity": "lower_heating_value",
@@ -399,7 +438,7 @@
          "units": "kilojoule / mole"
         }
        },
-       "criterion_digest": "8a54aef4a59b1a984058b87e3b3e3f8252c1057736b46955b1899f337641de59",
+       "criterion_digest": "1f68fc58a09b79b26baecc9b4cd61d58dde7c8f76d377eac7983eb61d2cc61d0",
        "note": "Cantera/GRI-Mech 3.0 thermo at 300 K 802.539 kJ/mol vs Hess's law at 298.15 K 802.310 (Chase 1998) / 802.562 (CODATA with Manion 2002); the 1.85 K offset is bounded by 0.018 kJ/mol from the same thermodynamic data",
        "outcome": "met",
        "reference_digest": "6333b1640b1061b2c528591efea0898d4724974badb16a866ace327f86217717",
@@ -410,18 +449,20 @@
         "units": "kilojoule / mole"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "cb3682b9bb678e5c291eb805fa54819f945364fb8a875aa4e3d8ca2765a230cc"
      },
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "a6c44383ec46f980523973e52552d084681c5ff27a31d2e7fdf7bc3b4d07f32e",
+      "digest": "5469002bd0be571b971d55f245b53d294063ca1a11edd3c187576b7a2e8da66f",
       "kind": "equilibrium_limit",
       "note": "kinetic end state vs HP equilibrium of the same initial state: relative gap 3.40e-12 (criterion 0.01)",
       "outcome": "met",
       "record": {
        "criterion": 0.01,
        "relative_gap": 3.395751165423358e-12
-      }
+      },
+      "record_digest": "a6c44383ec46f980523973e52552d084681c5ff27a31d2e7fdf7bc3b4d07f32e"
      }
     ],
     "level": 3,
@@ -433,7 +474,7 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "dd1c5f3cded6598f5d2ccfe39fef8cfdbc5a797f27836c6e3a4d7efd5ad1f750",
+      "digest": "d24fc0c5e2a3fbe70262d91e63d2fd48225d30cf47882c0a5c3ec34ac19ce9f3",
       "kind": "integrator_study",
       "note": "ignition delay (discrete maximum of dT/dt) changed 1.449% between the two finest settings (criterion 1%); final temperature changed 1.46e-08 K (criterion 0.1 K)",
       "outcome": "not_met",
@@ -444,18 +485,20 @@
        },
        "final_temperature_change_K": 1.4618308341596276e-08,
        "ignition_relative_change": 0.014492753623188442
-      }
+      },
+      "record_digest": "dd1c5f3cded6598f5d2ccfe39fef8cfdbc5a797f27836c6e3a4d7efd5ad1f750"
      },
      {
       "classification": "post_hoc_discretisation_convergence",
-      "digest": "f0024a1828c9ad7ce6ce2ea6de8e6fcaab41c9b2b9a23a83c7dffbd1e0906360",
+      "digest": "c48ae6fec19b7cd959e086e083b0476212b15ea99a8b7f94ed450d57fc2c55ee",
       "kind": "integrator_study_post_hoc",
       "note": "POST HOC: with the ignition time refined by a parabola through the three samples around the maximum the change is 0.633%",
       "outcome": "met",
       "record": {
        "criterion": 0.01,
        "refined_ignition_relative_change": 0.006333695609669082
-      }
+      },
+      "record_digest": "f0024a1828c9ad7ce6ce2ea6de8e6fcaab41c9b2b9a23a83c7dffbd1e0906360"
      }
     ],
     "level": 4,

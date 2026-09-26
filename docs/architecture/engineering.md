@@ -17,30 +17,51 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
 | Need | Reused | Added here |
 |---|---|---|
 | scientific status | `credibility.CredibilityVerdict` via `trust_handoff` | nothing: the summary prints the existing verdict |
-| reference kinds | `scientific.oracles.OracleKind` (analytic / benchmark / experimental) | `ReferenceRecord`: provenance, applicability envelope, `role`, content identity |
-| tolerance comparison | - | `PredeclaredCriterion`, `compare_to_reference`; a comparison against a reference that does not apply is `not_applicable` (judges nothing) |
+| reference kinds | `scientific.oracles.OracleKind` (analytic / benchmark / experimental) | `ReferenceRecord`: provenance, applicability envelope, `role`, comparable quantities, content identity |
+| tolerance comparison | - | `PredeclaredCriterion`, `ReferenceComparison` (DERIVED from reference + criterion + stated conditions + value), `compare_to_reference`; a comparison against a reference that does not apply is `not_applicable` (judges nothing) |
 | provider comparison | `providers.compare_providers` (`solver_corroboration_not_validation`) | `EvidenceLink.of_provider_comparison` |
 | run identity | BIG 12 request / plan / result digests | `write_bundle` / `verify_bundle` |
 | fields | BIG 7 `SpatialMesh` / `SpatialField` | `write_vtu` (presentation artifact, not evidence) |
 
 ## Rules enforced in code
 
+* "Pre-registered" means: listed in `flagships/forge_flagships/data/predeclared_criteria.json` and pinned by a test. Git cannot show that a
+  criterion preceded the first run of a flagship (the first commit was made after it); that ordering rests on `docs/work/PROGRESS.md`.
 * A ladder level is REACHED only by evidence links whose outcome is `met`, that are not post hoc, and whose class fits the level
   (1 contract integrity, 2 conservation residual, 3 analytic-limit or reference-data-consistency comparison, 4 convergence,
-  5 solver corroboration, 6 numerical-benchmark comparison, 7 experimental comparison). Solver agreement cannot reach 6 or 7; a
+  5 solver corroboration, 6 numerical-benchmark comparison, 7 experimental comparison). Levels 5, 6 and 7 additionally need a link OF
+  the matching kind (a provider comparison; a reference comparison), not only the class string. Solver agreement cannot reach 6 or 7; a
   numerical benchmark cannot reach 7. A post-hoc reading may be recorded beside a level that is NOT reached and never on one that is.
-  The ladder cannot verify that a link's digest belongs to a real record; flagships build links from real records.
-* Level 1 (`contract_integrity_entry`) is reached only if neither the preflight nor the run was REFUSED, and it names the checks that
-  were deferred to the solved state.
+* Every evidence link carries the record it names, and its digest covers the link's kind, classification and outcome as well as the
+  record. A ladder is rebuilt from its serialized form with every guard running again.
+* A `ReferenceComparison` has no settable outcome, applicability, kind or classification: they are derived from the reference, the
+  criterion, the conditions the flagship states and the compared difference (a difference is converted as a SPREAD, so a 5 K difference
+  against a 1 degC tolerance is not met). A comparison rebuilds from its bundled reference; a criterion may only bind to a quantity the
+  reference declares comparable.
+* `build_summary` requires every ladder link that claims to be a reference comparison to BE one of the supplied comparisons, every
+  supplied comparison to be cited by the ladder (a not-met comparison cannot be shipped and left out), and every comparison's reference
+  to be supplied.
+* Level 1 (`contract_integrity_entry`) is reached only if neither the preflight nor the run was REFUSED; it names the checks deferred
+  to the solved state and any node REFUSED on the solved state.
 * A reference's applicability is `within` only if every declared envelope condition is known and inside; a missing condition or a
-  missing envelope is `unknown`.
-* A compared difference is a non-negative magnitude; a signed value would read as `met`.
+  missing envelope is `unknown`. The envelopes of the reference records in this repository are AUTHORED by the flagships (stated in each
+  record), not read from the sources.
 * An `UncertaintyStatement` states model discrepancy as UNKNOWN / NOT QUANTIFIED (there is no quantified-discrepancy record in this
   layer), and must name the UNKNOWN inputs whenever any output's uncertainty is UNKNOWN.
-* A run bundle contains only artifacts a SUCCEEDED node's receipt references (name and sha256); `verify_bundle` re-hashes every file,
-  re-derives the result identity, and re-checks the summary, every reference and every artifact against it, so a regenerated manifest
-  cannot launder an edited file. The manifest is unkeyed: this detects accidental and casual edits, not an adversary who rebuilds the
-  whole bundle consistently.
+* A run bundle contains only artifacts a SUCCEEDED node's receipt references (name and sha256). `verify_bundle` re-hashes every file and
+  RE-DERIVES: the result and request (their own digests), the plan, the scientific status (`trust_handoff`), `summary.txt` (re-rendered
+  from `summary.json`), the summary's key outputs / execution / providers against the result, level 1 (from the result's own preflight),
+  every reference comparison (rebuilt from its bundled reference), and the ladder (every guard; every link digest).
+
+## What the bundle check does NOT establish
+
+* Evidence for levels 2-4 that is not a comparison (a conservation residual, a mesh or window study, an equilibrium diagnostic) and the
+  constraint and conservation lines are JUDGMENTS the flagship recorded with their records; they cannot be re-derived from the bundle.
+* The manifest is unkeyed. Someone who consistently rewrites `summary.json`, `summary.txt` and the manifest together produces a bundle
+  that verifies. Authenticity needs the `bundle_digest` recorded somewhere its author cannot edit (a commit, a signed report).
+* A reference no comparison cites is bound only by the manifest.
+* The exact-limit, mesh-study and window-study requests behind levels 3 and 4 are separate BIG 12 requests; their records are inside the
+  summary but their provider bindings are not compared with the main request's.
 
 ## BIG 12 generalizations BIG 13 needed (each minimal, each tested in `tests/test_system_runtime_big13_additions.py`)
 

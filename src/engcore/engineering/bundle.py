@@ -7,16 +7,24 @@ Contents (nothing is re-derived by a viewer; everything is a file with a recorde
     artifacts/<name>          bulk files (fields, series); NEVER inlined in the JSON above
     manifest.json             every file's sha256, the request / plan / result / summary identities
 
-``verify_bundle`` re-hashes every file, re-loads ``result.json`` and ``request.json`` through their own ``from_dict`` (each re-derives its
-digest), compares ``plan.json`` with the result's plan, re-derives the scientific status with the existing credibility authority and
-compares it with ``summary.json``, rebuilds the summary's verification ladder (every guard runs again, every evidence link re-derives its
-digest from the record it carries), requires every reference comparison to name a bundled reference, and checks ``summary.txt`` against the
-hash the summary states.  An edit to a value, a receipt, a request, a plan, the status, an evidence record or the text is therefore refused
-even if the manifest is regenerated to match.
+``verify_bundle`` re-hashes every file and then RE-DERIVES what the bundle already holds, so that an edit is refused even when the manifest
+and every digest it states are regenerated to match:
 
-What this does NOT do: the manifest is unkeyed, so an adversary who rebuilds EVERY file and the manifest consistently produces a bundle
-that verifies.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a signed report).
-A bundle is a record of a run; it is not evidence and it cannot raise a scientific status.
+* ``result.json`` and ``request.json`` through their own ``from_dict`` (each re-derives its digest); ``plan.json`` against the result's plan;
+* the scientific status, by the existing credibility authority (``trust_handoff``), compared with ``summary.json``;
+* ``summary.txt``, re-rendered from ``summary.json`` and compared byte for byte (and against the hash the summary states);
+* key outputs, execution status and provider list of the summary against the result;
+* level 1 of the ladder, re-derived from the result's own preflight report;
+* every reference comparison, REBUILT from its shipped reference, criterion, conditions and value (applicability, tolerance outcome, kind
+  and classification are derived, never read), and every ladder link that claims to be a comparison must be one of them, and every
+  comparison must be cited by the ladder;
+* the ladder itself, rebuilt with every guard, each evidence link's digest re-derived from the kind, classification, outcome and record it carries.
+
+What this does NOT do: levels 2-4 evidence that is not a comparison (a conservation residual, a mesh or window study, an equilibrium
+diagnostic) is a JUDGMENT the flagship recorded with its record; it cannot be re-derived from the bundle, and neither can the constraint and
+conservation lines. And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest together
+produces a bundle that verifies.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a
+signed report).  A bundle is a record of a run; it is not evidence and it cannot raise a scientific status.
 Files are written as bytes with LF line endings so digests are stable across platforms.
 """
 
@@ -31,9 +39,9 @@ from typing import Any, Mapping, Sequence
 from ..scientific.errors import InvalidScientificProblem
 from ..scenarios.timeline import canonical_digest
 from ..system_runtime import NodeStatus, RunStatus, SystemRunRequest, SystemRunResult, trust_handoff
-from .ladder import VerificationLadder
-from .reference import ReferenceRecord
-from .summary import EngineeringSummary
+from .ladder import VerificationLadder, contract_integrity_entry
+from .reference import ReferenceComparison, ReferenceRecord
+from .summary import EngineeringSummary, _uncertainty_text, render_summary_text
 
 MANIFEST_SCHEMA = "engcore.engineering.bundle/1"
 
@@ -160,8 +168,11 @@ def verify_bundle(directory: str) -> BundleManifest:
 
 
 def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result: SystemRunResult, request: SystemRunRequest) -> BundleManifest:
-    with open(os.path.join(directory, "summary.json"), "rb") as fh:
-        summary = json.loads(fh.read().decode("utf-8"))
+    def read(rel: str) -> bytes:
+        with open(os.path.join(directory, *rel.split("/")), "rb") as fh:
+            return fh.read()
+
+    summary = json.loads(read("summary.json").decode("utf-8"))
     if canonical_digest(summary) != payload["summary_digest"] or dict(map(tuple, summary["identities"])).get("result") != result.digest:
         raise BundleRefused("summary.json is not the summary the manifest names, or it describes another run")
     identities = dict(map(tuple, summary["identities"]))
@@ -173,34 +184,67 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
         raise BundleRefused(f"the scientific status cannot be re-derived from the bundled request and result: {exc}") from exc
     if summary["scientific_status"] != verdict:
         raise BundleRefused(f"summary.json states scientific status {summary['scientific_status']!r} but the existing credibility authority derives {verdict!r}")
-    with open(os.path.join(directory, "summary.txt"), "rb") as fh:
-        if _sha(fh.read()) != summary.get("text_sha256"):
-            raise BundleRefused("summary.txt is not the text the summary states")
+    # the text is rendered from the record: the two cannot disagree, and neither can be edited alone
+    text = read("summary.txt")
+    core = {k: v for k, v in summary.items() if k != "text_sha256"}
+    if text != render_summary_text(core).encode("utf-8") or _sha(text) != summary.get("text_sha256"):
+        raise BundleRefused("summary.txt is not the text rendered from summary.json")
+    # what the summary states about the run must be what the result says
+    if summary["execution"] != result.status.value:
+        raise BundleRefused("summary.json states another execution status than the result")
+    if sorted(summary["providers"]) != sorted({f"{p.provider_id} {p.provider_version}" for p in result.provider_records}):
+        raise BundleRefused("summary.json lists other providers than the result executed")
+    if sorted(payload["provider_identities"]) != sorted({p.execution_identity_digest for p in result.provider_records}):
+        raise BundleRefused("the manifest lists other provider identities than the result recorded")
+    for key in summary["key_outputs"]:
+        observed = result.observable(key["observable_id"])
+        if observed.availability.value == "available":
+            if key["availability"] != "available" or key["value"] != json.loads(json.dumps(observed.value.value.to_dict())) or key["uncertainty"] != _uncertainty_text(observed.value):
+                raise BundleRefused(f"key output {key['observable_id']!r} is not the value the result recorded")
+        elif key["availability"] != observed.availability.value or key["value"] is not None:
+            raise BundleRefused(f"key output {key['observable_id']!r} states a value for an output the result did not make available")
+    # the ladder: every guard re-runs, every link re-derives its digest, level 1 is re-derived from the result's own preflight
     try:
-        VerificationLadder.from_dict(summary["verification"])
+        ladder = VerificationLadder.from_dict(summary["verification"])
     except (InvalidScientificProblem, KeyError, ValueError, TypeError) as exc:
         raise BundleRefused(f"the summary's verification ladder does not re-validate: {exc}") from exc
-    bundled_refs = {digest for _, digest in payload["reference_digests"]}
-    cmp_digests = set()
-    for cmp_record in summary["reference_comparisons"]:
-        cmp_digests.add(canonical_digest(cmp_record))
-        if cmp_record["reference_digest"] not in bundled_refs:
-            raise BundleRefused(f"comparison {cmp_record['criterion']['criterion_id']!r} names a reference that is not in the bundle")
-    for level in summary["verification"]["levels"]:
-        for link in level["evidence"]:
-            if link["kind"] == "reference_comparison" and link["digest"] not in cmp_digests:
-                raise BundleRefused(f"level {level['level']} cites a reference comparison that is not among the summary's comparisons")
+    expected_l1 = json.loads(json.dumps(contract_integrity_entry(result.preflight, result).to_dict()))
+    if canonical_digest(summary["verification"]["levels"][0]) != canonical_digest(expected_l1):
+        raise BundleRefused("level 1 is not what the result's own preflight report and status derive")
+    # references and comparisons: rebuilt from what is shipped
+    references: dict[str, ReferenceRecord] = {}
     for ref_id, digest in payload["reference_digests"]:
-        with open(os.path.join(directory, "references", f"{ref_id}.json"), "rb") as fh:
-            record = json.loads(fh.read().decode("utf-8"))
+        record = json.loads(read(f"references/{ref_id}.json").decode("utf-8"))
         if canonical_digest(record) != digest or record.get("reference_id") != ref_id:
             raise BundleRefused(f"reference {ref_id!r} does not have the digest the manifest names")
+        try:
+            references[digest] = ReferenceRecord.from_dict(record)
+        except (InvalidScientificProblem, KeyError, ValueError, TypeError) as exc:
+            raise BundleRefused(f"reference {ref_id!r} does not re-validate: {exc}") from exc
+    rebuilt: set[str] = set()
+    for cmp_record in summary["reference_comparisons"]:
+        reference = references.get(cmp_record["reference_digest"])
+        if reference is None:
+            raise BundleRefused(f"comparison {cmp_record['criterion']['criterion_id']!r} names a reference that is not in the bundle")
+        try:
+            ReferenceComparison.from_dict(cmp_record, reference)
+        except (InvalidScientificProblem, KeyError, ValueError, TypeError) as exc:
+            raise BundleRefused(f"comparison {cmp_record['criterion']['criterion_id']!r} is not what its bundled reference and stated inputs derive: {exc}") from exc
+        rebuilt.add(canonical_digest(cmp_record))
+    cited: set[str] = set()
+    for entry in ladder.entries:
+        for link in entry.evidence:
+            if link.kind == "reference_comparison":
+                if link.record_digest not in rebuilt:
+                    raise BundleRefused(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
+                cited.add(link.record_digest)
+    if rebuilt - cited:
+        raise BundleRefused("a reference comparison is reported but no ladder level cites it")
     allowed = {(a.name, a.digest) for r in result.node_receipts if r.status is NodeStatus.SUCCEEDED for a in r.artifacts}
     for rel in files:
         if rel.startswith("artifacts/"):
-            with open(os.path.join(directory, *rel.split("/")), "rb") as fh:
-                if (rel.split("/", 1)[1], _sha(fh.read())) not in allowed:
-                    raise BundleRefused(f"{rel} is not an artifact referenced (name and sha256) by a SUCCEEDED node of the result")
+            if (rel.split("/", 1)[1], _sha(read(rel))) not in allowed:
+                raise BundleRefused(f"{rel} is not an artifact referenced (name and sha256) by a SUCCEEDED node of the result")
     return BundleManifest(payload["name"], tuple(tuple(f) for f in payload["files"]), payload["request_digest"], payload["plan_digest"],
                           payload["result_digest"], payload["summary_digest"], tuple(tuple(r) for r in payload["reference_digests"]),
                           tuple(payload["provider_identities"]))

@@ -53,7 +53,7 @@
   ],
   [
    "result",
-   "b242c47a606082aa12c7e9ab139c5e6f868a96c74cee18b135c7c2780f794c41"
+   "e8097b8b8130198d988e460fb5d03b05c52bff454876a22d1331a0a634219751"
   ]
  ],
  "key_outputs": [
@@ -220,9 +220,27 @@
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
    "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+   "conditions": [
+    [
+     "mean_temperature",
+     {
+      "magnitude": 297.3574378438702,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    ],
+    [
+     "pressure",
+     {
+      "magnitude": 200000.0,
+      "schema": "quantity/1",
+      "units": "pascal"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "first_law_delta_T",
-    "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (pre-registered)",
     "metric": "max_relative",
     "post_hoc": false,
     "quantity": "delta_T_relative_difference",
@@ -232,7 +250,7 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "3c91759768984b0e735e0e0fe4ca472137566a36655300a374d181e7312fe84f",
+   "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
    "note": "2 heat-carrying windows of the fresh day",
    "outcome": "met",
    "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
@@ -249,7 +267,7 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (normal)",
- "text_sha256": "bcca87e9eb3bab1d4c51c057660932f047f73ca5275fdbda293f2f4c1804cc3e",
+ "text_sha256": "f02b074645b5daf77b1132f061804e7bd4e93cbc142d7fd046e139ba045aba1b",
  "trace": {
   "complete": true,
   "gaps": []
@@ -281,7 +299,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "0a453efad7c6cc37940f7bcd136f41fa41673bc2ed428e01bed48e067962c4c1",
+      "digest": "f029d605cb584bac3e71e3aaadefdbae20e8acf999da0254b3fa363ca4be41f8",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run succeeded",
       "outcome": "met",
@@ -329,7 +347,8 @@
        "request_digest": "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
-      }
+      },
+      "record_digest": "0a453efad7c6cc37940f7bcd136f41fa41673bc2ed428e01bed48e067962c4c1"
      }
     ],
     "level": 1,
@@ -341,7 +360,7 @@
     "evidence": [
      {
       "classification": "conservation_residual",
-      "digest": "ae7842734d4541ec33fffc29889607ced20e8b49e436788c58a606c8f85b80d4",
+      "digest": "45df96fdc52c53fe7f3882557bf3466f89c33cf0f1448264be3086a3e8b1a2ef",
       "kind": "conservation_assessment",
       "note": "module_heat_fresh: residual 7.27e-12 hour * watt",
       "outcome": "met",
@@ -361,11 +380,12 @@
         "schema": "quantity/1",
         "units": "hour * watt"
        }
-      }
+      },
+      "record_digest": "ae7842734d4541ec33fffc29889607ced20e8b49e436788c58a606c8f85b80d4"
      },
      {
       "classification": "conservation_residual",
-      "digest": "84a0f62450e5d6f572fc6dc54db75f572407e755bae08a492181c95cd0087cab",
+      "digest": "b4a2ee08c4ebfef1c90ef03458729bfc6b31dba30f6efddd2997f7cc473863f8",
       "kind": "conservation_assessment",
       "note": "module_heat_aged: residual 2.02e-12 hour * watt",
       "outcome": "met",
@@ -385,11 +405,12 @@
         "schema": "quantity/1",
         "units": "hour * watt"
        }
-      }
+      },
+      "record_digest": "84a0f62450e5d6f572fc6dc54db75f572407e755bae08a492181c95cd0087cab"
      },
      {
       "classification": "conservation_residual",
-      "digest": "29e617ea2856195b8c309d02650b5b7a510730932be25b8b5fb79dc5721e9f3b",
+      "digest": "6215bf4a7c57414182e7c4186422e908beabd1e6158edd5e929c77cfba4c27bf",
       "kind": "conservation_assessment",
       "note": "module_heat_control: residual 1.37e-12 hour * watt",
       "outcome": "met",
@@ -409,19 +430,20 @@
         "schema": "quantity/1",
         "units": "hour * watt"
        }
-      }
+      },
+      "record_digest": "29e617ea2856195b8c309d02650b5b7a510730932be25b8b5fb79dc5721e9f3b"
      }
     ],
     "level": 2,
     "name": "conservation_residual",
-    "note": "INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty (tolerance declared before the run). It would fail on a solver or unit error; it cannot detect a wrong heat model",
+    "note": "INTERFACE consistency, not an independent conservation law: TESPy is handed the cell heat as its heat duty, so closure of generated heat against m dh shows the solver honoured the duty (tolerance pre-registered). It would fail on a solver or unit error; it cannot detect a wrong heat model",
     "status": "reached"
    },
    {
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "dc187f70c3f8c782a10e598166251eda2b449f220153cbade3f2d3e42cebe859",
+      "digest": "048c5e83c8f3a5970536a8470cc15de01216f650654e0b863123ab04b0897e9c",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -434,9 +456,27 @@
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
        "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+       "conditions": [
+        [
+         "mean_temperature",
+         {
+          "magnitude": 297.3574378438702,
+          "schema": "quantity/1",
+          "units": "kelvin"
+         }
+        ],
+        [
+         "pressure",
+         {
+          "magnitude": 200000.0,
+          "schema": "quantity/1",
+          "units": "pascal"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "first_law_delta_T",
-        "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/battery_cooling.py:FIRST_LAW_REL_TOL (pre-registered)",
         "metric": "max_relative",
         "post_hoc": false,
         "quantity": "delta_T_relative_difference",
@@ -446,7 +486,7 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "3c91759768984b0e735e0e0fe4ca472137566a36655300a374d181e7312fe84f",
+       "criterion_digest": "28935f12a008249c170712de92ad45940e46dc9eb3f78673873c0e5e68aabf29",
        "note": "2 heat-carrying windows of the fresh day",
        "outcome": "met",
        "reference_digest": "79183ece7a59c31e40d887f15545cfdc64210dcd68354fa444f2c26f92c921c8",
@@ -457,7 +497,8 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "ddb990fdcec3d8181a824b147e7a722fb9b9efc1c69167f61048e027f297d06e"
      }
     ],
     "level": 3,
@@ -469,15 +510,15 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "e4daebefd20b2ac70cf2bd470e6d88ece3f23fa09fa8bf5aa7fad7480d63d428",
+      "digest": "e93cee9043b3fa204dd9f46953beac81c11d1eb8fc4dab1de4863bba91a6467f",
       "kind": "window_refinement",
-      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '589d5454b52e98e6', '1800': '53844b945687fe06', '900': '64cd67c3e02b1bce'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
+      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '94ea63f73ea893dc', '1800': 'a70229e20b09ad29', '900': '435d33ada8c944d2'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
       "outcome": "not_met",
       "record": {
        "digest": {
-        "1800": "53844b945687fe06",
-        "3600": "589d5454b52e98e6",
-        "900": "64cd67c3e02b1bce"
+        "1800": "a70229e20b09ad29",
+        "3600": "94ea63f73ea893dc",
+        "900": "435d33ada8c944d2"
        },
        "met": false,
        "monotone_met": false,
@@ -520,12 +561,13 @@
         1800,
         900
        ]
-      }
+      },
+      "record_digest": "956db599d13c888987c4fca1b0403026203bf06cf612c4e0c1fda3ad6227d238"
      }
     ],
     "level": 4,
     "name": "discretisation_convergence",
-    "note": "the fresh-cell coupled day at three coupling-window sizes, each a separate BIG 12 request (evidence from OTHER requests than this run's). Criteria: finest-pair differences within 0.05 K / 2 mV / 2 % of peak heat (fixed before the first run, two-level version) AND monotonically decreasing successive differences (added after the review, with the third level; the two-level result had already met the tolerances). Only the coupling window is refined: the cell model's own solver tolerances and points-per-window are not varied",
+    "note": "the fresh-cell coupled day at three coupling-window sizes, each a separate BIG 12 request (evidence from OTHER requests than this run's). Criteria: finest-pair differences within 0.05 K / 2 mV / 2 % of peak heat (pre-registered, two-level version) AND monotonically decreasing successive differences (added after the review, with the third level; the two-level result had already met the tolerances). Only the coupling window is refined: the cell model's own solver tolerances and points-per-window are not varied",
     "status": "attempted_not_reached"
    },
    {

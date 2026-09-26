@@ -120,7 +120,7 @@
    "unit": "dimensionless"
   }
  ],
- "extraction": "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second independent transcription; transcription sha256: 51b65a487eb5b424.. / 9589dde451862382..; excerpt file sha256 a01ab55c9ada0f75..; a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment; the applicability envelope (Re 99-101, square cavity) is AUTHORED by this flagship from the paper's stated case, not a machine-readable statement of the source, and covers Re and aspect ratio only (boundary conditions, steadiness and dimensionality are not enforced)",
+ "extraction": "Re=100 columns of Tables I and II typed from a public transcription and cross-checked against a second public transcription (retyped in the same session: a different web page, not a different typist); the numbers were NOT checked against the printed paper; transcription sha256: 51b65a487eb5b424.. / 9589dde451862382..; excerpt file sha256 a01ab55c9ada0f75..; a NUMERICAL benchmark (129 x 129 multigrid finite difference), not an experiment; the applicability envelope (Re 99-101, square cavity) is AUTHORED by this flagship from the paper's stated case, not a machine-readable statement of the source, and covers Re and aspect ratio only (boundary conditions, steadiness and dimensionality are not enforced)",
  "kind": "benchmark_dataset",
  "license_status": "the tabulated numbers of one Reynolds number (17 points per line) are quoted with full attribution; the paper and the transcription files are NOT copied",
  "publication": "Journal of Computational Physics 48(3), 387-411 (1982), Tables I and II, Re = 100 column",

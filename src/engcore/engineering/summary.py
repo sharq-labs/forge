@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from ..credibility.evidence import CredibilityVerdict
 from ..scenarios.timeline import canonical_digest
@@ -102,44 +102,54 @@ class EngineeringSummary:
     trace_gaps: tuple[str, ...]
     notes: tuple[str, ...] = ()
 
-    def to_dict(self) -> dict[str, Any]:
+    def _core_dict(self) -> dict[str, Any]:
         return {"schema": SUMMARY_SCHEMA, "system": self.system, "execution": self.execution,
                 "key_outputs": [k.to_dict() for k in self.key_outputs], "constraints": [c.to_dict() for c in self.constraints],
                 "conservation": list(self.conservation), "verification": self.ladder.to_dict(),
                 "reference_comparisons": [c.to_dict() for c in self.comparisons], "uncertainty": self.uncertainty.to_dict(),
                 "scientific_status": self.scientific_status, "scientific_status_basis": self.scientific_status_basis,
                 "identities": [list(i) for i in self.identities], "providers": list(self.providers),
-                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "notes": list(self.notes),
-                #: the sha256 of ``summary.txt`` (the rendering of everything above), so the text a bundle ships cannot be edited apart from this record
-                "text_sha256": hashlib.sha256(self.render_text().encode("utf-8")).hexdigest()}
+                "trace": {"complete": self.trace_complete, "gaps": list(self.trace_gaps)}, "notes": list(self.notes)}
+
+    def to_dict(self) -> dict[str, Any]:
+        core = self._core_dict()
+        #: the sha256 of ``summary.txt``, which is rendered from ``core`` alone: the text a bundle ships cannot be edited apart from this record
+        core["text_sha256"] = hashlib.sha256(render_summary_text(core).encode("utf-8")).hexdigest()
+        return core
 
     @property
     def digest(self) -> str:
         return canonical_digest(self.to_dict())
 
     def render_text(self) -> str:
-        out = [f"SYSTEM\n  {self.system}", f"EXECUTION\n  {self.execution.upper()}", "KEY OUTPUTS"]
-        for k in self.key_outputs:
-            shown = f"{k.value.magnitude:.6g} {k.value.units}" if k.value is not None else f"{k.availability.upper()}: {k.reason}"
-            out.append(f"  {k.label}: {shown}   [uncertainty {k.uncertainty}]")
-        out.append("CONSTRAINTS")
-        out += [f"  {c.binding_id} ({c.constraint_id}): {c.status.upper()}{'  (' + c.margin + ')' if c.margin else ''}" for c in self.constraints] or ["  none declared"]
-        if self.conservation:
-            out.append("CONSERVATION")
-            out += [f"  {line}" for line in self.conservation]
-        out.append("VERIFICATION")
-        for e in self.ladder.entries:
-            out.append(f"  L{e.level} {e.status.value.replace('_', ' ')}: {e.note}")
-        out.append("REFERENCE COMPARISONS")
-        out += [f"  {c.classification}: {c.criterion.criterion_id} {c.outcome.upper()} ({c.value.magnitude:.4g} {c.value.units}; tolerance "
-                f"{c.criterion.tolerance.magnitude:.4g} {c.criterion.tolerance.units})" for c in self.comparisons] or ["  NOT AVAILABLE"]
-        u = self.uncertainty
-        out += ["UNCERTAINTY", f"  known input uncertainty: {', '.join(u.known_input_uncertainty) or 'none stated'}",
-                f"  UNKNOWN input uncertainty: {', '.join(u.unknown_input_uncertainty) or 'none'}", f"  model discrepancy: {u.model_discrepancy}",
-                f"  model applicability: {u.model_applicability}", f"  benchmark applicability: {u.benchmark_applicability}",
-                f"SCIENTIFIC STATUS\n  {self.scientific_status} - {self.scientific_status_basis}",
-                f"TRACE\n  {'complete' if self.trace_complete else 'GAPS: ' + '; '.join(self.trace_gaps)}"]
-        return "\n".join(out) + "\n"
+        return render_summary_text(self._core_dict())
+
+
+def render_summary_text(payload: Mapping[str, Any]) -> str:
+    """The engineer-readable text of a summary, rendered from its dict form (the same function renders it when a bundle is verified)."""
+    out = [f"SYSTEM\n  {payload['system']}", f"EXECUTION\n  {str(payload['execution']).upper()}", "KEY OUTPUTS"]
+    for k in payload["key_outputs"]:
+        v = k["value"]
+        shown = f"{v['magnitude']:.6g} {v['units']}" if v is not None else f"{str(k['availability']).upper()}: {k['reason']}"
+        out.append(f"  {k['label']}: {shown}   [uncertainty {k['uncertainty']}]")
+    out.append("CONSTRAINTS")
+    out += [f"  {c['binding_id']} ({c['constraint_id']}): {str(c['status']).upper()}{'  (' + c['margin'] + ')' if c['margin'] else ''}" for c in payload["constraints"]] or ["  none declared"]
+    if payload["conservation"]:
+        out.append("CONSERVATION")
+        out += [f"  {line}" for line in payload["conservation"]]
+    out.append("VERIFICATION")
+    for e in payload["verification"]["levels"]:
+        out.append(f"  L{e['level']} {str(e['status']).replace('_', ' ')}: {e['note']}")
+    out.append("REFERENCE COMPARISONS")
+    out += [f"  {c['classification']}: {c['criterion']['criterion_id']} {str(c['outcome']).upper()} ({c['value']['magnitude']:.4g} {c['value']['units']}; tolerance "
+            f"{c['criterion']['tolerance']['magnitude']:.4g} {c['criterion']['tolerance']['units']})" for c in payload["reference_comparisons"]] or ["  NOT AVAILABLE"]
+    u = payload["uncertainty"]
+    out += ["UNCERTAINTY", f"  known input uncertainty: {', '.join(u['known_input_uncertainty']) or 'none stated'}",
+            f"  UNKNOWN input uncertainty: {', '.join(u['unknown_input_uncertainty']) or 'none'}", f"  model discrepancy: {u['model_discrepancy']}",
+            f"  model applicability: {u['model_applicability']}", f"  benchmark applicability: {u['benchmark_applicability']}",
+            f"SCIENTIFIC STATUS\n  {payload['scientific_status']} - {payload['scientific_status_basis']}",
+            f"TRACE\n  {'complete' if payload['trace']['complete'] else 'GAPS: ' + '; '.join(payload['trace']['gaps'])}"]
+    return "\n".join(out) + "\n"
 
 
 def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult, *, outputs: Sequence[tuple[str, str]],
@@ -157,10 +167,15 @@ def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult
         if c.reference_digest not in supplied_refs:
             raise InvalidScientificProblem(f"comparison {c.criterion.criterion_id!r} names a reference that is not supplied with the summary (it cannot be bundled)")
     supplied_cmps = {canonical_digest(c.to_dict()) for c in comparisons}
+    cited: set[str] = set()
     for entry in ladder.entries:
         for link in entry.evidence:
-            if link.kind == "reference_comparison" and link.digest not in supplied_cmps:
-                raise InvalidScientificProblem(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
+            if link.kind == "reference_comparison":
+                if link.record_digest not in supplied_cmps:
+                    raise InvalidScientificProblem(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
+                cited.add(link.record_digest)
+    if supplied_cmps - cited:
+        raise InvalidScientificProblem("a reference comparison is reported but no ladder level cites it (a not-met comparison must not be omitted from the ladder)")
     if result.trust_inputs.unknown_uncertainty_outputs and not uncertainty.unknown_input_uncertainty:
         raise InvalidScientificProblem("outputs with UNKNOWN uncertainty exist, so the statement must name the UNKNOWN input uncertainty (an empty list would read as none)")
     key: list[KeyOutput] = []

@@ -30,7 +30,7 @@
   ],
   [
    "result",
-   "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640"
+   "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e"
   ]
  ],
  "key_outputs": [
@@ -209,10 +209,28 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "5970051ab7c58a49b0f578f45136d52872ba774774612f69e19888227d90810e",
+   "compared_identity": "a88681cabf1ef9fc7b5565793726ccb56bf378b451830ee49f57d5edce6754c5",
+   "conditions": [
+    [
+     "temperature_rise",
+     {
+      "magnitude": 40.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    ],
+    [
+     "thermal_strain",
+     {
+      "magnitude": 0.0009440000000000001,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "uniform_free_exact",
-    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (pre-registered)",
     "metric": "max_relative_error",
     "post_hoc": false,
     "quantity": "max_displacement_error_relative",
@@ -222,7 +240,7 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "5dda8dee4643340e1952b7f5c9f536e2909549f9e9b46a2de9864774be0c51ad",
+   "criterion_digest": "a430b6f6a2f2d76121c48b0a64fdba8c5a35035578a5e5fb7e53723db9937a6e",
    "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
    "outcome": "met",
    "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
@@ -242,10 +260,28 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "4329dabd7b223c880ea82ee4e24ffc79736a1ca6af6edaa24c8235d395c47897",
+   "compared_identity": "6cb356e7e95c0a5d76813a446f3aef5bdf52c68c469e22e8755aed80d81d977e",
+   "conditions": [
+    [
+     "temperature_rise",
+     {
+      "magnitude": 40.0,
+      "schema": "quantity/1",
+      "units": "kelvin"
+     }
+    ],
+    [
+     "thermal_strain",
+     {
+      "magnitude": 0.0009440000000000001,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "uniform_constrained_exact",
-    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (pre-registered)",
     "metric": "max_relative_error",
     "post_hoc": false,
     "quantity": "axial_stress_error_relative",
@@ -255,7 +291,7 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "7130410b762889950e1b86c3323c6c29104ca5dd818cbc35f571f968aa51717b",
+   "criterion_digest": "1c0271eb50ffda0cf99d666abc67ac30d3b07e722f8659a092f03e34651574ca",
    "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
    "outcome": "met",
    "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
@@ -275,10 +311,28 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640",
+   "compared_identity": "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e",
+   "conditions": [
+    [
+     "aspect_ratio",
+     {
+      "magnitude": 5.0,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ],
+    [
+     "section_position",
+     {
+      "magnitude": 0.5,
+      "schema": "quantity/1",
+      "units": "dimensionless"
+     }
+    ]
+   ],
    "criterion": {
     "criterion_id": "bar_theory_mid_plate",
-    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (fixed before the first run)",
+    "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (pre-registered)",
     "metric": "max_relative_error",
     "post_hoc": false,
     "quantity": "mid_section_stress_error_relative",
@@ -288,7 +342,7 @@
      "units": "dimensionless"
     }
    },
-   "criterion_digest": "e079855e3020d6d0205a936c684bf6f96a06c6b3c1dd4cbf028056c556b244c7",
+   "criterion_digest": "c0b9432b67405290a9f432a7c607ebceb56baa3fe20709e0662aa4aa4e9165c0",
    "note": "mid-plate sigma_xx, three providers",
    "outcome": "met",
    "reference_digest": "f5fa8a36ef0b75cf24f3f6405dd183a3942549d12b4be20619ba9e0313d3cc78",
@@ -305,13 +359,13 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Heated aluminium plate, constrained, 80x16 P1 mesh (flagship)",
- "text_sha256": "5ab36cf60545b4107aa282301955a1e6b77338ce07be9e8047d1d91ab9ce8ad2",
+ "text_sha256": "e6e0677dbe5fe0ffd889d8f6b1234f7550920766f725653ee098c2bdaa9e952d",
  "trace": {
   "complete": true,
   "gaps": []
  },
  "uncertainty": {
-  "benchmark_applicability": "exact analytic limits and a bar-theory estimate were used; both are analytic references, not numerical benchmarks and not experiments",
+  "benchmark_applicability": "analytic references only (bar_theory_mid_plate, uniform_constrained_exact, uniform_free_exact); analytic references are not numerical benchmarks and not experiments",
   "known_input_uncertainty": [],
   "material_provenance": [
    "E 4ccd88c72c40.. nu 440aa52136f3.. alpha ab866da9cdda.. k af0acef476c8.. (all ASSUMED)"
@@ -333,7 +387,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "9aa6171e1945da509364e1df44fa1e73a61f8c3d59c88f7bf013c0e2f348633f",
+      "digest": "b51fdb7b186e97c8b6ea1daffe6471409838f8b1922af63daf551bfe49ee89ca",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run succeeded",
       "outcome": "met",
@@ -370,7 +424,8 @@
        "request_digest": "9ced744352e29c36352739e6d331b369dd2709eaef8ccc2e96093b14f58a1f3c",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
-      }
+      },
+      "record_digest": "9aa6171e1945da509364e1df44fa1e73a61f8c3d59c88f7bf013c0e2f348633f"
      }
     ],
     "level": 1,
@@ -382,9 +437,9 @@
     "evidence": [
      {
       "classification": "conservation_residual",
-      "digest": "d4dfda4f6af78e841114e2f3da57fed86243483526cfccf45986b4cb57a14ddd",
+      "digest": "6fba8c4a7dfa7f667a99fc9dbdfa793247fd67becbba186e486768ac4fb471f2",
       "kind": "conservation_assessment",
-      "note": "thermal energy: residual 6.82e-11 W",
+      "note": "thermal_energy: closed, residual 6.82e-11 watt",
       "outcome": "met",
       "record": {
        "balance_id": "thermal_energy",
@@ -402,13 +457,14 @@
         "schema": "quantity/1",
         "units": "watt"
        }
-      }
+      },
+      "record_digest": "d4dfda4f6af78e841114e2f3da57fed86243483526cfccf45986b4cb57a14ddd"
      },
      {
       "classification": "conservation_residual",
-      "digest": "92cc445e3874ab669408cb7a6d434f6ccf908c05c746c6934216f9ad67782ef6",
+      "digest": "6312abc402aaf6962e8254a644a23f71f559896c4fabb9df4cef75d883f2e95e",
       "kind": "equilibrium_diagnostic",
-      "note": "axial section force constant along the plate for all three solvers (relative spread <= 0.001, mean force >= 0.1 of the thermal force scale)",
+      "note": "axial section force by solver: relative spread {'fenicsx': 2.191058644559568e-14, 'calculix': 2.8302332990654243e-09, 'code_aster': 2.0427915182360042e-14}, mean force over the thermal scale {'fenicsx': 0.7087500000053523, 'calculix': 0.708749996208356, 'code_aster': 0.7087500000053466} (met needs spread <= 0.001 and mean force >= 0.1 of the scale)",
       "outcome": "met",
       "record": {
        "force_floor_ratio": 0.1,
@@ -423,19 +479,20 @@
         "fenicsx": 2.191058644559568e-14
        },
        "spread_tolerance": 0.001
-      }
+      },
+      "record_digest": "92cc445e3874ab669408cb7a6d434f6ccf908c05c746c6934216f9ad67782ef6"
      }
     ],
     "level": 2,
     "name": "conservation_residual",
-    "note": "heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, fixed before the run; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic",
+    "note": "heat in = heat out (exact for a linear profile, so a weak check on its own); the axial force through three sections is constant to within a relative spread of 2.8e-09 for all three solvers (criterion 0.001, pre-registered; read only where the mean force is at least 0.1 of the thermal force scale, observed 0.71) - the more informative diagnostic",
     "status": "reached"
    },
    {
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "2f8c823003b32e1b5775792ceade058595da8bcc9c0d0fd368a957d3276b6431",
+      "digest": "a722d6e397e496d53f168639724d0f36dced8658779f2ab0aff80e7655b32cc5",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -447,10 +504,28 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "5970051ab7c58a49b0f578f45136d52872ba774774612f69e19888227d90810e",
+       "compared_identity": "a88681cabf1ef9fc7b5565793726ccb56bf378b451830ee49f57d5edce6754c5",
+       "conditions": [
+        [
+         "temperature_rise",
+         {
+          "magnitude": 40.0,
+          "schema": "quantity/1",
+          "units": "kelvin"
+         }
+        ],
+        [
+         "thermal_strain",
+         {
+          "magnitude": 0.0009440000000000001,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "uniform_free_exact",
-        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (pre-registered)",
         "metric": "max_relative_error",
         "post_hoc": false,
         "quantity": "max_displacement_error_relative",
@@ -460,7 +535,7 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "5dda8dee4643340e1952b7f5c9f536e2909549f9e9b46a2de9864774be0c51ad",
+       "criterion_digest": "a430b6f6a2f2d76121c48b0a64fdba8c5a35035578a5e5fb7e53723db9937a6e",
        "note": "free: errors by provider {'fenicsx': 2.571247472088901e-13, 'calculix': 1.4356490631428816e-16, 'code_aster': 2.0127799865263202e-13}",
        "outcome": "met",
        "reference_digest": "f598510e1f93830707d9eb24b3eec166f08854eb5c82fabdd702beff834f3f1b",
@@ -471,11 +546,12 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "56faf14b6316b5f19fb1321733dda2dd9dc4372817a5bc4c9a150dccdbcc126e"
      },
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "08bb7fd088516843fd4904b06555086c57f324548a23c5964329db4ce0627ccd",
+      "digest": "3a03f3a224d2bdbb3e52d4086d30f4de659b3d24f9004ca8a3d7e6cc068abf3a",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -487,10 +563,28 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "4329dabd7b223c880ea82ee4e24ffc79736a1ca6af6edaa24c8235d395c47897",
+       "compared_identity": "6cb356e7e95c0a5d76813a446f3aef5bdf52c68c469e22e8755aed80d81d977e",
+       "conditions": [
+        [
+         "temperature_rise",
+         {
+          "magnitude": 40.0,
+          "schema": "quantity/1",
+          "units": "kelvin"
+         }
+        ],
+        [
+         "thermal_strain",
+         {
+          "magnitude": 0.0009440000000000001,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "uniform_constrained_exact",
-        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:ANALYTIC_REL_TOL (pre-registered)",
         "metric": "max_relative_error",
         "post_hoc": false,
         "quantity": "axial_stress_error_relative",
@@ -500,7 +594,7 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "7130410b762889950e1b86c3323c6c29104ca5dd818cbc35f571f968aa51717b",
+       "criterion_digest": "1c0271eb50ffda0cf99d666abc67ac30d3b07e722f8659a092f03e34651574ca",
        "note": "constrained: errors by provider {'fenicsx': 2.443372920290787e-13, 'calculix': 0.0, 'code_aster': 2.4445184303331175e-13}",
        "outcome": "met",
        "reference_digest": "5780ce440376fbd7682bd118c99725c38190d774f1d40b60daf032525404d298",
@@ -511,11 +605,12 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "043b7ebaa3a12c8bedba8d38c19057e9a2a688d4b43e78849cd6cedf3dd234e8"
      },
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "854d3a8ce837f70a7926c138ddf408a593b485b155d5bc4e9f1a4c6c9cd9ce01",
+      "digest": "e6e6509a10137d8e20e879ff5275d75031e50de00f391269e6dd4082a7ad2a33",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -527,10 +622,28 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "eda78ed1e89898af91602f9045785dab895160922b5d14d333f5137f775e6640",
+       "compared_identity": "133e3b622039343213131d419d76533769231893fdfac02c3118d52a9b15d65e",
+       "conditions": [
+        [
+         "aspect_ratio",
+         {
+          "magnitude": 5.0,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ],
+        [
+         "section_position",
+         {
+          "magnitude": 0.5,
+          "schema": "quantity/1",
+          "units": "dimensionless"
+         }
+        ]
+       ],
        "criterion": {
         "criterion_id": "bar_theory_mid_plate",
-        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (fixed before the first run)",
+        "declared_in": "flagships/forge_flagships/thermo_mechanical.py:BAR_THEORY_REL_TOL (pre-registered)",
         "metric": "max_relative_error",
         "post_hoc": false,
         "quantity": "mid_section_stress_error_relative",
@@ -540,7 +653,7 @@
          "units": "dimensionless"
         }
        },
-       "criterion_digest": "e079855e3020d6d0205a936c684bf6f96a06c6b3c1dd4cbf028056c556b244c7",
+       "criterion_digest": "c0b9432b67405290a9f432a7c607ebceb56baa3fe20709e0662aa4aa4e9165c0",
        "note": "mid-plate sigma_xx, three providers",
        "outcome": "met",
        "reference_digest": "f5fa8a36ef0b75cf24f3f6405dd183a3942549d12b4be20619ba9e0313d3cc78",
@@ -551,7 +664,8 @@
         "units": "dimensionless"
        },
        "within_tolerance": true
-      }
+      },
+      "record_digest": "44f7aa8084c2803f78b00f2fd622f969892125d8c327ee4f4ba4d840d7ae77b7"
      }
     ],
     "level": 3,
@@ -563,7 +677,7 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "db9d7ff8a95578d161ec5d4cc97cfd11dc7b79fba1ec6861625f93cd03e2e113",
+      "digest": "57b56e99b11a6a80c9fb380cd33ff0b84b43bef8fe1a6d629d21092d9c043bc3",
       "kind": "mesh_study",
       "note": "predeclared criterion; failing: ['sxx_mid_code_aster', 'sxx_mid_fenicsx']",
       "outcome": "not_met",
@@ -573,7 +687,7 @@
          "nodes": 105,
          "nx": 20,
          "ny": 4,
-         "result": "f1acc4deba34ba1ed3ea449b07274f9a8d575c08502a81c55a08f42587c99c4d",
+         "result": "92026b1cfe5e21ddfe117d1b5ccb19d4fd77e94098a38abe1a6a6fa255345439",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.62500001,
          "sxx_mid_code_aster": -55207465.86827721,
@@ -592,7 +706,7 @@
          "nodes": 369,
          "nx": 40,
          "ny": 8,
-         "result": "a051da80a6db7fdc4060398d4eee72b319682bf6ae3e6f6d9f2cd13eaa5dc3f2",
+         "result": "09c5e4732d96423e4e1ebdefdcb690018595ce029f49d33adde6f933439c30a2",
          "status": "succeeded",
          "sxx_mid_calculix": -55207466.01562499,
          "sxx_mid_code_aster": -55207465.86835872,
@@ -611,7 +725,7 @@
          "nodes": 1377,
          "nx": 80,
          "ny": 16,
-         "result": "b9235894c1f7a62b51d4f6c53155a301a9cd895872fa1fadf3f92abd96ec4b84",
+         "result": "924b80ce4e88b7aeaa0a54eae4cf304e388aa2995b6e6734c97daf46a1a7f66f",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.72265625,
          "sxx_mid_code_aster": -55207465.86867988,
@@ -630,7 +744,7 @@
          "nodes": 5313,
          "nx": 160,
          "ny": 32,
-         "result": "8b35c2800efbac8b2946c5d55354294c92c441cb473f239d6697d1cf98e127b3",
+         "result": "12d16ae7e9e4fba7b0662132dce477086c78800858609b5789d27db9afd69ff7",
          "status": "succeeded",
          "sxx_mid_calculix": -55207465.810546875,
          "sxx_mid_code_aster": -55207465.87033043,
@@ -680,11 +794,12 @@
         "sxx_mid_code_aster",
         "sxx_mid_fenicsx"
        ]
-      }
+      },
+      "record_digest": "2509d670fb3b3889a703454eefd32b5a04daade4426b146eef2fb4f8c78c0ca3"
      },
      {
       "classification": "post_hoc_discretisation_convergence",
-      "digest": "fbefb0739ce6eea1992ac2b56384431fb879fd697df9dd7678d0e43517ca17ea",
+      "digest": "356bbc277e68984a5807e1ba3e73c7a4041b3e2ca1f0a9977a1e4e945a65ceeb",
       "kind": "mesh_study_post_hoc",
       "note": "added after seeing the outcome: quantities already converged to solver noise (last change < 1e-06 relative) are not judged by an observed order",
       "outcome": "met",
@@ -692,8 +807,9 @@
        "met": true,
        "reading": "noise_aware",
        "relative_change_threshold": 1e-06,
-       "study_digest": "db9d7ff8a95578d161ec5d4cc97cfd11dc7b79fba1ec6861625f93cd03e2e113"
-      }
+       "study_digest": "2509d670fb3b3889a703454eefd32b5a04daade4426b146eef2fb4f8c78c0ca3"
+      },
+      "record_digest": "8e52b644e663b9c1e43ebe7dd7502fc73eb2bf6005a12aaa0dd031d057a58b7f"
      }
     ],
     "level": 4,
@@ -705,7 +821,7 @@
     "evidence": [
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "c6307a071f93277dcf6c02857ee178b3358da0ee1674c8b67a34860d20039497",
+      "digest": "f485c5270d325afa47dca2b7beb112dfcd5062bbd9cefbb924b33a20ff3c3316",
       "kind": "provider_comparison",
       "note": "calculix~code_aster",
       "outcome": "met",
@@ -740,11 +856,12 @@
        "provider_comparison_digest": "28c26d4b344077ea85060a5f20f38d8bff88d89e7d9c332dd4da2de53e512d73",
        "values_digest": "44d401c8339d63eb4dbafe7fa6bb734a54fae5461d2812e689fd99eb60fc5d14",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "c6307a071f93277dcf6c02857ee178b3358da0ee1674c8b67a34860d20039497"
      },
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "394f495fde05c5c225b8aba09827e12706bf18146309a4a102ca7511272b0789",
+      "digest": "147bcc53646ead76e1571a244ee85ce32b8044be74dddc597704a34539bb9301",
       "kind": "provider_comparison",
       "note": "calculix~code_aster:stress",
       "outcome": "met",
@@ -779,11 +896,12 @@
        "provider_comparison_digest": "7fd92b3f1e37dd069bc8a4d29be47b95b92db5b540561ace0c9a55cec1f21317",
        "values_digest": "f991d0059b4ebadeae2e0d8950013bc720c5215249322cfd186095f382af5d22",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "394f495fde05c5c225b8aba09827e12706bf18146309a4a102ca7511272b0789"
      },
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "23dbd7235ecb4c6c2b0e5176d636205e67c87e7c12077e3aacb3f930f279a85e",
+      "digest": "e0aaf0b106af1829db5e78f7d5b0c4d38a972791921529d05cd6c7fe6ac0e491",
       "kind": "provider_comparison",
       "note": "fenicsx~calculix",
       "outcome": "met",
@@ -818,11 +936,12 @@
        "provider_comparison_digest": "f89f313970a4f7b116e50f2a03e16077f652fb8e7013a09657e35b666f0a8615",
        "values_digest": "3a33acbf1703f95b140c43ea62c0cf08806778e98a782a39252128ae82f226a2",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "23dbd7235ecb4c6c2b0e5176d636205e67c87e7c12077e3aacb3f930f279a85e"
      },
      {
       "classification": "solver_corroboration_not_validation",
-      "digest": "91c5882fd063d6ac4940061c4bb8e11eb092d0f99d4b191a2013a36f4dde6739",
+      "digest": "e80d601db0c08d8a124b906deba03dadc7480bb37f0e25dac00fd96a1e867081",
       "kind": "provider_comparison",
       "note": "fenicsx~code_aster",
       "outcome": "met",
@@ -857,12 +976,13 @@
        "provider_comparison_digest": "fb11a14cb76c644b4d98b948f4c0c2f37fcda3ec7d354244063e5f974b433e18",
        "values_digest": "75cb0273e608348ea68ba45c94741e807019f279e0676aae6ba09de0026a87cd",
        "within_tolerance": true
-      }
+      },
+      "record_digest": "91c5882fd063d6ac4940061c4bb8e11eb092d0f99d4b191a2013a36f4dde6739"
      }
     ],
     "level": 5,
     "name": "independent_provider_corroboration",
-    "note": "three structural implementations agree on displacement (and CalculiX/Code_Aster on element stress) within tolerances declared before the run: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation",
+    "note": "three structural implementations agree on displacement and CalculiX/Code_Aster on element stress within tolerances pre-registered: CORROBORATION, not validation. Scale of the criterion: displacement tolerance 2.26e-06 m = 6.2 % of the peak displacement (it was set from the free-growth scale, which is larger than this restrained plate's response); observed worst difference 8.41e-09 m (0.023 %). All three solve the same P1 plane-stress discretisation on one mesh from ONE shared FEniCSx temperature field, so this corroborates the implementations, not the discretisation or the thermal solution, and FEniCSx/Code_Aster share one formulation",
     "status": "reached"
    },
    {

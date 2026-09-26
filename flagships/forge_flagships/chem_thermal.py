@@ -280,7 +280,7 @@ def build_chemistry(registry=None, *, variant: str = "nominal") -> Chemistry:
         a, b = call.value("ignition_b").magnitude_in("s"), call.value("ignition_c").magnitude_in("s")
         ra, rb = call.value("refined_b").magnitude_in("s"), call.value("refined_c").magnitude_in("s")
         return NodeOutcome("succeeded", {
-            "ignition_relative_change": OutputValue(Quantity(abs(b - a) / b, "dimensionless"), UNKNOWN, "two finest integrator settings, discrete maximum (criterion fixed before the run)"),
+            "ignition_relative_change": OutputValue(Quantity(abs(b - a) / b, "dimensionless"), UNKNOWN, "two finest integrator settings, discrete maximum (criterion pre-registered)"),
             "ignition_relative_change_refined_post_hoc": OutputValue(Quantity(abs(rb - ra) / rb, "dimensionless"), UNKNOWN, "POST HOC: parabola-refined ignition time"),
             "final_temperature_change": OutputValue(Quantity(abs(call.value("T_c").magnitude_in("K") - call.value("T_b").magnitude_in("K")), "K"), UNKNOWN, "two finest integrator settings")})
 
@@ -442,14 +442,14 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
     entries = [contract_integrity_entry(report, result)]
     el = [_v(result, n, "element_residual") for n in ("adiabatic_equilibrium", "cooled_equilibrium")]
     closed = [c for c in conservation if c.status == "closed"]
-    if all(x is not None for x in el) and closed:
+    if all(x is not None for x in el) and conservation and len(closed) == len(conservation):
         ok = max(el) <= ELEMENT_TOL
         entries.append(LevelEntry(2, LevelStatus.REACHED if ok else LevelStatus.ATTEMPTED_NOT_REACHED,
                                   (EvidenceLink.of_record("element_balance", {"max_relative_change_by_node": dict(zip(("adiabatic_equilibrium", "cooled_equilibrium"), el)), "criterion": ELEMENT_TOL},
                                                           "conservation_residual", "met" if ok else "not_met", f"max relative change of C, H, O, N mass fractions {max(el):.2e} (criterion {ELEMENT_TOL:g})"),
                                    EvidenceLink.of_record("conservation_assessment", closed[0].to_dict(), "conservation_residual", "met", f"heat duty: Cantera vs TESPy residual {closed[0].residual.magnitude:.2e} W")),
                                   "elemental mass conserved through both equilibrations (a genuine conservation check: the solver could violate it); the heat the chemistry says must be removed equals the heat "
-                                  "the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria fixed before the run"))
+                                  "the water absorbs - an INTERFACE consistency (TESPy is handed that duty as its heat input, so closure cannot fail unless the solver or a unit is wrong). Criteria pre-registered"))
     else:
         entries.append(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED if conservation else LevelStatus.NOT_ATTEMPTED, (), "; ".join(f"{c.balance_id}: {c.status}" for c in conservation) or "not assessable"))
     hess, _ = load_hess()
@@ -458,7 +458,7 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
     lhv_cmp = None
     if lhv is not None:
         crit = PredeclaredCriterion("lhv_hess_law", "lower_heating_value", "absolute_difference", Quantity(LHV_TOL_KJ_PER_MOL, "kJ/mol"),
-                                    "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (fixed before the first run)")
+                                    "flagships/forge_flagships/chem_thermal.py:LHV_TOL_KJ_PER_MOL (pre-registered)")
         bound = _v(result, "heat_of_combustion", "temperature_offset_bound")
         lhv_cmp = compare_to_reference(hess, crit, {"temperature": Quantity(300.0, "K"), "pressure": Quantity(P_ATM, "Pa")}, value=Quantity(abs(lhv - hess.values("lower_heating_value")[0]), "kJ/mol"),
                                        compared_identity=result.receipt("heat_of_combustion").execution_identity_digest,
@@ -491,7 +491,7 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
     entries += [LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent chemistry provider exists in the ecosystem; the two chemistry solvers would share the mechanism and thermodynamic data"),
                 LevelEntry(6, LevelStatus.NOT_AVAILABLE, (), "no published numerical benchmark for this system was integrated"),
                 LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no measured data (ignition delays, flame temperature, exhaust composition) were integrated; GRI-Mech 3.0 was optimised against experiments by its AUTHORS, which is their claim, not a Forge result")]
-    run.ladder = VerificationLadder.of(**{f"l{e.level}": e for e in entries})
+    run.ladder = VerificationLadder(tuple(entries))
     run.comparisons, run.references = tuple(comparisons), tuple(references)
     run.uncertainty = UncertaintyStatement(
         (), ("reactant composition, temperature, pressure (declared)", "flows and outlet temperature (declared)", "GRI-Mech 3.0 rate and thermodynamic parameters (the mechanism authors' values; uncertainty not propagated)",
@@ -500,7 +500,7 @@ def run_chemistry(registry=None, *, variant: str = "nominal") -> ChemistryRun:
         ("mechanism: GRI-Mech 3.0 bytes bound by digest (provider-bundled with Cantera); no property records for the gas",),
         "equilibrium temperatures were checked against the species thermodynamic data range stored in the mechanism and the water loop against a declared liquid range; the mechanism's "
         "KINETIC validity range is the authors' statement and is NOT established by Forge (the kinetic reactor is therefore a demonstration of execution and consistency only)",
-        "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; it applies at 298.15 K, 1 atm and to gas-phase products only")
+        "the NIST-JANAF based Hess's-law value is an analytic reference built from evaluated data; the reference applies near 298.15 K, 1 atm and to gas-phase products only, and the comparison is evaluated at 300 K (the mechanism's lowest stored temperature; the offset is bounded in the record)")
     run.summary = build_summary(
         f"Jacketed stoichiometric methane/air reactor with a water cooling loop ({variant})", ch.request, result, references=tuple(dict.fromkeys(references)),
         outputs=[("Adiabatic flame temperature", "adiabatic_equilibrium__T_adiabatic"), ("CO2 mole fraction (adiabatic equilibrium)", "adiabatic_equilibrium__X_CO2"),

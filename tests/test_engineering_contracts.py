@@ -20,7 +20,10 @@ from engcore.engineering import (
     UncertaintyStatement, VerificationLadder, build_summary, compare_to_reference, verify_bundle, write_bundle, write_vtu,
 )
 from engcore.engineering.bundle import _json_bytes, _sha
-from engcore.engineering.reference import _ISSUER, ReferenceComparison
+from engcore.engineering import contract_integrity_entry
+from engcore.engineering.reference import ReferenceComparison
+from engcore.engineering.summary import render_summary_text
+from engcore.scenarios.timeline import canonical_digest
 from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.oracles import OracleKind
 from engcore.scientific.units.quantity import Quantity
@@ -97,7 +100,7 @@ def test_the_ladder_cannot_claim_a_level_without_evidence_or_with_the_wrong_kind
         LevelEntry(3, LevelStatus.REACHED)
     corroboration = _provider_link()
     LevelEntry(5, LevelStatus.REACHED, (corroboration,))
-    with pytest.raises(InvalidScientificProblem, match="numerical-benchmark comparison only"):
+    with pytest.raises(InvalidScientificProblem, match="reference comparison link|numerical-benchmark comparison only"):
         LevelEntry(6, LevelStatus.REACHED, (corroboration,))                             # solver agreement is never a reference level
     benchmark_met = EvidenceLink.of_comparison(_cmp(OracleKind.BENCHMARK_DATASET, 0.004))
     benchmark_unmet = EvidenceLink.of_comparison(_cmp(OracleKind.BENCHMARK_DATASET, 0.4))
@@ -110,6 +113,17 @@ def test_the_ladder_cannot_claim_a_level_without_evidence_or_with_the_wrong_kind
     assert LevelEntry(6, LevelStatus.REACHED, (benchmark_met,)).status is LevelStatus.REACHED
     assert LevelEntry(6, LevelStatus.ATTEMPTED_NOT_REACHED, (benchmark_unmet,)).evidence          # a failed attempt keeps its evidence
     assert LevelEntry(7, LevelStatus.REACHED, (EvidenceLink.of_comparison(_cmp(OracleKind.EXPERIMENTAL_DATASET, 0.004)),)).status is LevelStatus.REACHED
+
+
+def test_levels_five_to_seven_need_the_kind_of_record_their_class_names_not_only_the_class_string():
+    fake_experiment = EvidenceLink.of_record("external_dataset", {"x": 1}, "experimental_comparison_within_dataset_scope_not_validation_grant", "met")
+    with pytest.raises(InvalidScientificProblem, match="reference comparison link"):
+        LevelEntry(7, LevelStatus.REACHED, (fake_experiment,))                            # a caller-chosen kind with the right class string is not a comparison
+    with pytest.raises(InvalidScientificProblem, match="reference comparison link"):
+        LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_record("study", {"x": 1}, "numerical_benchmark_comparison_not_validation_grant", "met"),))
+    with pytest.raises(InvalidScientificProblem, match="provider comparison link"):
+        LevelEntry(5, LevelStatus.REACHED, (EvidenceLink.of_record("study", {"x": 1}, "solver_corroboration_not_validation", "met"),))
+    LevelEntry(7, LevelStatus.ATTEMPTED_NOT_REACHED, (fake_experiment,))                  # a level that is not reached may carry any reading
 
 
 def test_ladder_reports_where_evidence_stops():
@@ -132,8 +146,9 @@ def _run():
     return request, context, result
 
 
-def _summary(request, context, result, ladder=None, **kw):
-    ladder = ladder or VerificationLadder.of(a=LevelEntry(1, LevelStatus.REACHED, (_link("contract_integrity", kind="preflight_and_identity"),), "units and identities checked"))
+def _summary(request, context, result, entries=(), **kw):
+    """Level 1 is the real one derived from the result's own preflight (a bundle re-derives it); ``entries`` are the other levels."""
+    ladder = VerificationLadder.of(l1=contract_integrity_entry(result.preflight, result), **{f"e{n}": e for n, e in enumerate(entries)})
     stmt = kw.pop("uncertainty", UncertaintyStatement(("none",), ("all node outputs",), "NOT QUANTIFIED (unknown, not zero)", ("fixture",), "declared fixture range",
                                                      "no benchmark used"))
     return build_summary("fixture system", request, result, outputs=[("Peak temperature", "peak_temperature")],
@@ -286,20 +301,36 @@ def test_a_comparison_value_is_a_non_negative_magnitude_and_a_reference_that_doe
     with pytest.raises(InvalidScientificProblem, match="non-negative"):
         _cmp(value=-0.5)
     off = _cmp(value=0.0, conditions={"reynolds": Quantity(10, "dimensionless")})
-    assert off.to_dict()["within_tolerance"] is None and off.outcome == "not_applicable"
-    with pytest.raises(InvalidScientificProblem, match="judges nothing"):
-        ReferenceComparison(off.reference_digest, off.reference_kind, off.applicability, _crit(), sha("r"), Quantity(0.0, DIMLESS), False, "not_applicable", issued_by=_ISSUER)
+    assert off.to_dict()["within_tolerance"] is None and off.outcome == "not_applicable" and off.applicability.status == "outside"
 
 
-def test_a_comparison_cannot_be_built_by_hand_and_its_outcome_cannot_disagree_with_its_value():
+def test_a_comparison_is_derived_from_its_inputs_and_cannot_be_given_an_outcome_an_applicability_or_a_kind():
     good = _cmp()
-    with pytest.raises(InvalidScientificProblem, match="issued by compare_to_reference"):
-        ReferenceComparison(good.reference_digest, good.reference_kind, good.applicability, good.criterion, sha("r"), good.value, True, "met")       # fabricated: no issuer
-    # a forged 'met' for a value beyond the tolerance is refused by the re-derivation, even with the issuer token
-    with pytest.raises(InvalidScientificProblem, match="does not follow from the value"):
-        ReferenceComparison(good.reference_digest, good.reference_kind, good.applicability, _crit(0.01), sha("r"), Quantity(0.4, DIMLESS), True, "met", issued_by=_ISSUER)
-    with pytest.raises(InvalidScientificProblem, match="SHA-256"):
-        ReferenceComparison("not-a-digest", good.reference_kind, good.applicability, _crit(), sha("r"), good.value, True, "met", issued_by=_ISSUER)
+    # there is no field to set: the outcome, applicability, kind and classification are derived
+    with pytest.raises(TypeError):
+        ReferenceComparison(_ref(), _crit(), (), Quantity(0.4, DIMLESS), sha("r"), outcome="met")
+    with pytest.raises(TypeError):
+        ReferenceComparison(_ref(), _crit(), (), Quantity(0.4, DIMLESS), sha("r"), applicability="within")
+    # copying a comparison with another value re-derives the outcome (dataclasses.replace cannot smuggle a 'met' through)
+    from dataclasses import replace
+    assert replace(good, value=Quantity(0.4, DIMLESS)).outcome == "not_met"
+    assert replace(good, conditions=(("reynolds", Quantity(10, DIMLESS)),)).outcome == "not_applicable"      # and a condition outside the envelope voids the judgement
+    assert replace(good, conditions=()).applicability.status == "unknown" and replace(good, conditions=()).outcome == "not_applicable"   # a missing condition is never 'within'
+    # a serialized comparison rebuilds from its reference and stated inputs; an edited outcome, kind or applicability is refused
+    rebuilt = ReferenceComparison.from_dict(json.loads(json.dumps(good.to_dict())), _ref())
+    assert rebuilt.digest == good.digest
+    for path, value in (("outcome", "not_met"), ("reference_kind", "experimental_dataset"), ("classification", "experimental_comparison_within_dataset_scope_not_validation_grant"),
+                        ("within_tolerance", False)):
+        wire = json.loads(json.dumps(good.to_dict()))
+        wire[path] = value
+        with pytest.raises(InvalidScientificProblem, match="not what its reference"):
+            ReferenceComparison.from_dict(wire, _ref())
+    wire = json.loads(json.dumps(good.to_dict()))
+    wire["applicability"] = {"status": "within", "reasons": ["edited"]}
+    with pytest.raises(InvalidScientificProblem):
+        ReferenceComparison.from_dict(wire, _ref())
+    with pytest.raises(InvalidScientificProblem):
+        ReferenceComparison.from_dict(json.loads(json.dumps(good.to_dict())), _ref(kind=OracleKind.EXPERIMENTAL_DATASET))          # another reference than the one it was made against
 
 
 def test_a_tolerance_on_an_offset_unit_reads_a_difference_as_a_spread_not_an_absolute_temperature():
@@ -376,37 +407,52 @@ def test_a_ladder_read_back_from_a_summary_re_validates_every_guard():
         VerificationLadder.from_dict(lied)
 
 
-def test_a_summary_refuses_a_ladder_that_cites_a_comparison_it_does_not_contain_and_a_comparison_whose_reference_is_not_supplied():
+def test_a_summary_refuses_a_ladder_that_cites_a_comparison_it_does_not_contain_a_comparison_the_ladder_omits_and_a_reference_that_is_not_supplied():
     request, context, result = _run()
     cmp_ = _cmp()
-    ladder = VerificationLadder.of(a=LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_comparison(cmp_),)))
+    l6 = LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_comparison(cmp_),))
     with pytest.raises(InvalidScientificProblem, match="not among the summary's comparisons"):
-        _summary(request, context, result, ladder=ladder, comparisons=(), references=(_ref(),))
+        _summary(request, context, result, entries=(l6,), comparisons=(), references=(_ref(),))
     with pytest.raises(InvalidScientificProblem, match="not supplied with the summary"):
-        _summary(request, context, result, ladder=ladder, comparisons=(cmp_,), references=())
-    ok = _summary(request, context, result, ladder=ladder, comparisons=(cmp_,), references=(_ref(),))
+        _summary(request, context, result, entries=(l6,), comparisons=(cmp_,), references=())
+    with pytest.raises(InvalidScientificProblem, match="no ladder level cites it"):
+        _summary(request, context, result, entries=(), comparisons=(_cmp(value=0.4),), references=(_ref(),))     # a not-met comparison cannot be shipped and left out of the ladder
+    ok = _summary(request, context, result, entries=(l6,), comparisons=(cmp_,), references=(_ref(),))
     assert ok.scientific_status == "insufficient_evidence" and ok.ladder.reference_level_reached == "published_numerical_benchmark"    # the ladder never moves the credibility verdict
 
 
 # --------------------------------------------------------------------------------------------------------------- bundle re-manifest attacks
+def _rewrite_summary(d, mutate, *, refresh_text=True):
+    """An editor who understands the bundle: change summary.json, re-render summary.txt from it, refresh every digest the manifest states."""
+    wire = json.loads(open(os.path.join(d, "summary.json"), "rb").read())
+    mutate(wire)
+    core = {k: v for k, v in wire.items() if k != "text_sha256"}
+    text = render_summary_text(core).encode("utf-8")
+    wire["text_sha256"] = _sha(text)
+    open(os.path.join(d, "summary.json"), "wb").write(_json_bytes(wire))
+    if refresh_text:
+        open(os.path.join(d, "summary.txt"), "wb").write(text)
+    _remanifest(d)
+
+
 def _remanifest(d, **changes):
-    """What an editor who understands the manifest would do: re-hash every file, refresh the digests the manifest states, re-derive its own digest."""
+    """Re-hash every file, refresh the digests the manifest states (summary, references), re-derive the manifest's own digest."""
     mpath = os.path.join(d, "manifest.json")
     m = json.loads(open(mpath, "rb").read())
     m["files"] = [[f, _sha(open(os.path.join(d, *f.split("/")), "rb").read())] for f, _ in m["files"]]
-    from engcore.scenarios.timeline import canonical_digest
     m["summary_digest"] = canonical_digest(json.loads(open(os.path.join(d, "summary.json"), "rb").read()))
+    m["reference_digests"] = [[rid, canonical_digest(json.loads(open(os.path.join(d, "references", f"{rid}.json"), "rb").read()))] for rid, _ in m["reference_digests"]]
     m.update(changes)
     m.pop("bundle_digest")
     m["bundle_digest"] = _sha(_json_bytes(m))
     open(mpath, "wb").write(_json_bytes(m))
 
 
-def _write(tmp_path, name, *, ladder=None, comparisons=(), references=(), **kw):
+def _write(tmp_path, name, *, entries=(), comparisons=(), references=()):
     request, context, result = _run_with_artifact()
-    s = _summary(request, context, result, ladder=ladder, comparisons=comparisons, references=references)
+    s = _summary(request, context, result, entries=entries, comparisons=comparisons, references=references)
     d = str(tmp_path / name)
-    write_bundle(d, name="fixture", request=request, result=result, summary=s, references=[_ref()] if not references else references, artifacts={"field.vtu": b"<fake/>"}, **kw)
+    write_bundle(d, name="fixture", request=request, result=result, summary=s, references=list(references) or [_ref()], artifacts={"field.vtu": b"<fake/>"})
     return d, request, result, s
 
 
@@ -426,13 +472,6 @@ def test_a_regenerated_manifest_cannot_launder_an_edited_summary_reference_or_ar
     open(os.path.join(d, "summary.json"), "wb").write(_json_bytes(wire))
     with pytest.raises(BundleRefused, match="summary.json"):
         verify_bundle(d)                                                                             # the manifest was not touched
-    d = fresh("reference")
-    wire = json.loads(open(os.path.join(d, "references", "ghia-like.json"), "rb").read())
-    wire["title"] = "a different benchmark"
-    open(os.path.join(d, "references", "ghia-like.json"), "wb").write(_json_bytes(wire))
-    _remanifest(d)
-    with pytest.raises(BundleRefused, match="reference 'ghia-like'"):
-        verify_bundle(d)
     d = fresh("artifact")
     open(os.path.join(d, "artifacts", "field.vtu"), "wb").write(b"<edited/>")
     _remanifest(d)
@@ -450,37 +489,35 @@ def test_a_regenerated_manifest_cannot_launder_an_edited_summary_reference_or_ar
         verify_bundle(d)
 
 
-def test_a_fully_regenerated_manifest_still_cannot_launder_an_edited_status_request_plan_text_or_evidence(tmp_path):
-    """Review finding H-B: the manifest is regenerated AND the digests it states are refreshed; the bundle must still be refused."""
+def test_a_fully_regenerated_manifest_still_cannot_launder_an_edited_status_request_plan_text_key_output_or_level_one(tmp_path):
+    """Review findings H-B and round-3 H1: the manifest AND every digest it states are regenerated, summary.txt is re-rendered; the bundle must still be refused."""
     d, request, result, s = _write(tmp_path, "ok")
     verify_bundle(d)
 
-    # 1. the scientific status edited, summary digest refreshed
-    d, *_ = _write(tmp_path, "status")
-    wire = json.loads(open(os.path.join(d, "summary.json"), "rb").read())
-    wire["scientific_status"] = "supported"
-    open(os.path.join(d, "summary.json"), "wb").write(_json_bytes(wire))
-    _remanifest(d)
+    d, *_ = _write(tmp_path, "status")                                                                # 1. the scientific status
+    _rewrite_summary(d, lambda w: w.update(scientific_status="supported"))
     with pytest.raises(BundleRefused, match="scientific status"):
-        verify_bundle(d)                                                                             # re-derived by the existing credibility authority
+        verify_bundle(d)
 
-    # 2. summary.txt edited (text no longer the text the summary states)
-    d, *_ = _write(tmp_path, "text")
+    d, *_ = _write(tmp_path, "text")                                                                  # 2. summary.txt edited alone
     open(os.path.join(d, "summary.txt"), "ab").write(b"  L7 reached: experimental validation\n")
     _remanifest(d)
     with pytest.raises(BundleRefused, match="summary.txt"):
         verify_bundle(d)
 
-    # 3. request.json replaced by another VALID request, the manifest's request digest refreshed with it
-    d, *_ = _write(tmp_path, "request")
+    d, *_ = _write(tmp_path, "text2")                                                                 # 2b. summary.json edited but summary.txt NOT re-rendered
+    _rewrite_summary(d, lambda w: w["verification"]["levels"][1].update(note="edited"), refresh_text=False)
+    with pytest.raises(BundleRefused, match="summary.txt"):
+        verify_bundle(d)
+
+    d, *_ = _write(tmp_path, "request")                                                               # 3. request.json replaced by another VALID request
     other = build(conductivity=99.0)[0]
     open(os.path.join(d, "request.json"), "wb").write(_json_bytes(other.to_dict()))
     _remanifest(d, request_digest=other.digest)
     with pytest.raises(BundleRefused, match="identities the manifest states|request.json"):
         verify_bundle(d)
 
-    # 4. plan.json edited
-    d, *_ = _write(tmp_path, "plan")
+    d, *_ = _write(tmp_path, "plan")                                                                  # 4. plan.json edited
     plan = json.loads(open(os.path.join(d, "plan.json"), "rb").read())
     plan["tampered"] = True
     open(os.path.join(d, "plan.json"), "wb").write(_json_bytes(plan))
@@ -488,34 +525,100 @@ def test_a_fully_regenerated_manifest_still_cannot_launder_an_edited_status_requ
     with pytest.raises(BundleRefused, match="plan.json"):
         verify_bundle(d)
 
-    # 5. an evidence record edited inside summary.json (the level still says REACHED): the link no longer has the digest of the record it carries
-    ladder = VerificationLadder.of(a=LevelEntry(2, LevelStatus.REACHED, (_link("conservation_residual", n=1),), "balance closed"))
-    d, *_ = _write(tmp_path, "evidence", ladder=ladder)
+    d, *_ = _write(tmp_path, "keyout")                                                                # 5. a headline number edited
+    _rewrite_summary(d, lambda w: w["key_outputs"][0]["value"].update(magnitude=w["key_outputs"][0]["value"]["magnitude"] + 1.0))
+    with pytest.raises(BundleRefused, match="key output"):
+        verify_bundle(d)
+
+    d, *_ = _write(tmp_path, "level1")                                                                # 6. level 1 rewritten consistently (note, digests, text)
+    def rewrite_l1(w):
+        link = w["verification"]["levels"][0]["evidence"][0]
+        link["outcome"] = "not_met"
+        fresh_link = EvidenceLink(link["kind"], link["classification"], "not_met", link["record"], link["note"])
+        link["digest"], link["record_digest"] = fresh_link.digest, fresh_link.record_digest
+        w["verification"]["levels"][0]["status"] = "attempted_not_reached"
+        w["verification"]["verification_reached"] = 0
+    _rewrite_summary(d, rewrite_l1)
+    with pytest.raises(BundleRefused, match="level 1"):
+        verify_bundle(d)
+
+    d, *_ = _write(tmp_path, "provider")                                                              # 7. provider list
+    _remanifest(d, provider_identities=["0" * 64])
+    with pytest.raises(BundleRefused, match="provider identities"):
+        verify_bundle(d)
+
+
+def test_a_comparison_level_cannot_be_promoted_by_editing_the_summary_even_with_every_digest_and_the_text_refreshed(tmp_path):
+    """Round-3 H1: the L6 outcome and its record are flipped consistently; the comparison re-derives from its bundled reference and refuses."""
+    unmet = _cmp(value=0.4)
+    entries = (LevelEntry(6, LevelStatus.ATTEMPTED_NOT_REACHED, (EvidenceLink.of_comparison(unmet),), "criterion not met"),)
+    d, *_ = _write(tmp_path, "honest", entries=entries, comparisons=(unmet,), references=(_ref(),))
+    verify_bundle(d)                                                                                  # the honest bundle, with its NOT MET comparison, verifies
+
+    def promote(w):
+        rec = w["reference_comparisons"][0]
+        rec["outcome"], rec["within_tolerance"] = "met", True
+        level = w["verification"]["levels"][5]
+        link = level["evidence"][0]
+        link["record"], link["outcome"] = rec, "met"
+        fresh_link = EvidenceLink("reference_comparison", link["classification"], "met", rec, link["note"])
+        link["digest"], link["record_digest"] = fresh_link.digest, fresh_link.record_digest
+        level["status"] = "reached"
+        w["verification"]["reference_level_reached"] = "published_numerical_benchmark"
+    d, *_ = _write(tmp_path, "promoted", entries=entries, comparisons=(unmet,), references=(_ref(),))
+    _rewrite_summary(d, promote)
+    with pytest.raises(BundleRefused, match="not what its bundled reference and stated inputs derive"):
+        verify_bundle(d)
+
+    def other_kind(w):                                                                                # the reference's kind edited to reach level 7
+        rec = w["reference_comparisons"][0]
+        rec["reference_kind"] = "experimental_dataset"
+        rec["classification"] = "experimental_comparison_within_dataset_scope_not_validation_grant"
+        level = w["verification"]["levels"][5]
+        link = level["evidence"][0]
+        link["record"], link["classification"] = rec, rec["classification"]
+        fresh_link = EvidenceLink("reference_comparison", link["classification"], link["outcome"], rec, link["note"])
+        link["digest"], link["record_digest"] = fresh_link.digest, fresh_link.record_digest
+    d, *_ = _write(tmp_path, "kind", entries=entries, comparisons=(unmet,), references=(_ref(),))
+    _rewrite_summary(d, other_kind)
+    with pytest.raises(BundleRefused, match="not what its bundled reference and stated inputs derive"):
+        verify_bundle(d)
+
+
+def test_an_evidence_record_edited_inside_the_summary_is_refused_and_a_cited_reference_cannot_be_edited(tmp_path):
+    entries = (LevelEntry(2, LevelStatus.REACHED, (_link("conservation_residual", n=1),), "balance closed"),)
+    d, *_ = _write(tmp_path, "evidence", entries=entries)
     wire = json.loads(open(os.path.join(d, "summary.json"), "rb").read())
     wire["verification"]["levels"][1]["evidence"][0]["record"]["n"] = 2
     open(os.path.join(d, "summary.json"), "wb").write(_json_bytes(wire))
     _remanifest(d)
     with pytest.raises(BundleRefused, match="ladder does not re-validate"):
         verify_bundle(d)
-
-    # 6. a level promoted in summary.json (status flipped to REACHED with a not-met link): every guard runs again on read-back
-    ladder = VerificationLadder.of(a=LevelEntry(6, LevelStatus.ATTEMPTED_NOT_REACHED, (EvidenceLink.of_comparison(_cmp(value=0.4)),), "criterion not met"))
-    d, *_ = _write(tmp_path, "promoted", ladder=ladder, comparisons=(_cmp(value=0.4),), references=(_ref(),))
-    verify_bundle(d)                                                                                 # the honest bundle verifies
+    # the outcome text of a link changed without refreshing its digest is refused too (the digest covers kind, classification and outcome)
+    d, *_ = _write(tmp_path, "outcome", entries=(LevelEntry(2, LevelStatus.ATTEMPTED_NOT_REACHED, (_link("conservation_residual", "not_met", n=1),), "balance not closed"),))
     wire = json.loads(open(os.path.join(d, "summary.json"), "rb").read())
-    level6 = wire["verification"]["levels"][5]
-    level6["status"] = "reached"
-    wire["verification"]["reference_level_reached"] = "published_numerical_benchmark"
+    wire["verification"]["levels"][1]["evidence"][0]["outcome"] = "met"
     open(os.path.join(d, "summary.json"), "wb").write(_json_bytes(wire))
     _remanifest(d)
     with pytest.raises(BundleRefused, match="ladder does not re-validate"):
+        verify_bundle(d)
+    # a reference that a comparison cites cannot be edited (with its digest refreshed) without breaking that comparison
+    cmp_ = _cmp()
+    d, *_ = _write(tmp_path, "reference", entries=(LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_comparison(cmp_),)),), comparisons=(cmp_,), references=(_ref(),))
+    verify_bundle(d)
+    ref_path = os.path.join(d, "references", "ghia-like.json")
+    wire = json.loads(open(ref_path, "rb").read())
+    wire["title"] = "a different benchmark"
+    open(ref_path, "wb").write(_json_bytes(wire))
+    _remanifest(d)
+    with pytest.raises(BundleRefused, match="names a reference that is not in the bundle"):
         verify_bundle(d)
 
 
 def test_a_bundle_needs_the_reference_of_every_comparison_it_reports(tmp_path):
     request, context, result = _run_with_artifact()
     cmp_ = _cmp()
-    s = _summary(request, context, result, ladder=VerificationLadder.of(a=LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_comparison(cmp_),))), comparisons=(cmp_,), references=(_ref(),))
+    s = _summary(request, context, result, entries=(LevelEntry(6, LevelStatus.REACHED, (EvidenceLink.of_comparison(cmp_),)),), comparisons=(cmp_,), references=(_ref(),))
     with pytest.raises(BundleRefused, match="references that are not supplied"):
         write_bundle(str(tmp_path / "noref"), name="f", request=request, result=result, summary=s, references=[], artifacts={"field.vtu": b"<fake/>"})
     d = str(tmp_path / "ok")

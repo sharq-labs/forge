@@ -113,7 +113,7 @@ def test_gate_h_a_flagship_result_cannot_be_promoted_by_its_own_ladder():
                                        "numerical_benchmark_comparison_not_validation_grant", "met")
     LevelEntry(5, LevelStatus.REACHED, (agreement,))                                                                                      # the links themselves are valid ...
     LevelEntry(6, LevelStatus.REACHED, (benchmark,))
-    with pytest.raises(InvalidScientificProblem, match="numerical-benchmark comparison only"):
+    with pytest.raises(InvalidScientificProblem, match="reference comparison link|numerical-benchmark comparison only"):
         LevelEntry(6, LevelStatus.REACHED, (agreement,))                                                                                  # ... agreement is not a benchmark
     with pytest.raises(InvalidScientificProblem, match="experimental-data comparison only"):
         LevelEntry(7, LevelStatus.REACHED, (benchmark,))                                                                                  # a benchmark is not an experiment
@@ -162,6 +162,14 @@ def test_the_committed_run_bundles_verify_and_each_report_was_generated_from_its
     assert f"`request {manifest.request_digest[:16]}  plan {manifest.plan_digest[:16]}  result {manifest.result_digest[:16]}`" in report
     summary = json.loads(open(os.path.join(DOCS, "runs", bundle, "summary.json"), "rb").read())
     assert summary["scientific_status"] == "insufficient_evidence"
+
+
+def test_the_committed_hot_case_bundle_verifies_and_reports_its_violated_constraints():
+    """The hot case has no report of its own (its numbers are the second column of the battery report); its bundle is still re-verified."""
+    from engcore.engineering import verify_bundle
+    verify_bundle(os.path.join(DOCS, "runs", "battery_hot"))
+    summary = json.loads(open(os.path.join(DOCS, "runs", "battery_hot", "summary.json"), "rb").read())
+    assert summary["scientific_status"] == "insufficient_evidence" and any(c["status"] == "violated" for c in summary["constraints"])
 
 
 def test_the_committed_negative_control_bundles_are_refusals_or_failures_and_carry_no_side_files():
