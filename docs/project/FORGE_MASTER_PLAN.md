@@ -60,13 +60,16 @@ The long-term differentiator is the combination of:
 6. degradation and lifecycle state;
 7. solver/data neutrality;
 8. scientific trust, evidence, uncertainty and refusal;
-9. mechanism-aware reasoning: explicit laws/mechanisms, state transitions, interventions, competing explanations and discovery without confusing model dependency with causal proof.
+9. mechanism-aware reasoning: explicit laws/mechanisms, state transitions, interventions, competing explanations and discovery without confusing model dependency with causal proof;
+10. engineering design synthesis: requirements, parametric geometry, assembly, standard-component selection, joints/interfaces, manufacturability and high-throughput design discovery.
 
 ## 3. Explicit non-goals
 
 Forge must **not** become an inferior rewrite of mature tools.
 
-Do not build a new CFD, FEM, CAS, battery electrochemistry, chemical kinetics, mesh generator or HPC linear-solver stack merely because Forge needs those capabilities.
+Do not build a new CFD, FEM, CAS, battery electrochemistry, chemical kinetics, mesh generator, CAD kernel, multibody engine, optimizer or HPC linear-solver stack merely because Forge needs those capabilities.
+
+Do not recreate mature standard-component catalogs or engineering standards by hand when a reliable open-source or standards-backed source can be integrated with explicit provenance.
 
 Prefer adapters/providers around mature open-source projects where scientifically appropriate.
 
@@ -318,6 +321,44 @@ Strategic discovery capabilities built on this layer include:
 The detailed architecture, authority boundaries and proposed implementation order
 are in `docs/architecture/mechanistic_discovery.md`.
 
+## 4.11 Engineering design synthesis and assembly
+
+Forge's long-term target is not only to analyze an existing system. It must be
+able to turn engineering requirements into **buildable candidate designs**.
+
+Target flow:
+
+```text
+requirements
+  -> system architecture
+  -> design space / topology
+  -> parametric geometry / CAD
+  -> assembly synthesis
+  -> standard-component selection + custom parts
+  -> joints / interfaces / fits / routing
+  -> solver planning
+  -> multi-fidelity design campaign
+  -> reliability / lifecycle / manufacturing / cost
+  -> candidate design
+  -> experiment / evidence update
+```
+
+A mesh is not a product design, and a collection of solids is not an assembly.
+
+Assembly engineering is first-class. Forge must eventually reason about fasteners,
+nuts, washers, pins, shafts, bearings, bushings, keys/splines, gears, belts,
+chains, couplings, springs, seals, welds, bonded joints, press-fits, connectors,
+cables/hoses/pipes, lubrication, mechanical stops, tolerances, assembly sequence,
+tool access and serviceability.
+
+Prefer standard/catalog components when suitable; generate custom parts only where
+the design requires them. Missing ratings, tolerances, lifecycle, availability or
+cost remain UNKNOWN rather than being invented.
+
+The detailed architecture is in
+`docs/architecture/design_synthesis.md`.
+
+
 ## 5. Multi-timescale execution
 
 Forge must eventually coordinate phenomena whose natural time scales differ by many orders of magnitude.
@@ -344,21 +385,32 @@ A new domain must enter through generic extension contracts.
 
 **Failure condition:** adding a new domain requires sprinkling domain-specific names or branches throughout Scientific Core.
 
-Preferred shape:
+Preferred reusable scientific shape:
 
 ```text
-DomainPack
-├── Models
+CapabilityPack / DomainPack
+├── Models / Governing Laws
+├── Mechanisms
 ├── Realizations
 ├── Solver Providers
 ├── State Schema
 ├── Ports
 ├── Coupling Semantics
-├── Applicability
+├── Applicability / Regimes
 ├── Conservation
+├── Uncertainty / Model Discrepancy
+├── Design Variables / Constraints
+├── Geometry Requirements
 ├── Validation Routes
 └── Result Adapters
 ```
+
+Products such as a motor, robotic arm, HVAC unit, drone, vehicle or aircraft should
+normally be composed as a `SystemPack` / `ProductTemplate` from reusable capabilities
+rather than becoming new Scientific Core branches.
+
+A SystemPack may additionally bind parametric geometry, assembly topology, standard
+components, interfaces, manufacturing assumptions and product-level requirements.
 
 The strongest extensibility test is an external package that can be installed and enabled without modifying Forge Core.
 
@@ -421,11 +473,21 @@ the active slice requires them.
 | **P16** | Flagship systems | HVAC, battery pack, drone and vehicle subsystem demonstrate the architecture |
 | **P17** | HPC/scale | distributed/remote execution with documented scale and replay |
 | **P18** | Commercial data/funding expansion | paid data/providers only where technically justified |
-| **P19** | Mechanism semantics | provider-neutral dependency/mechanism/state-transition/explanation contracts proven on existing flagships without granting causal authority |
-| **P20** | Intervention + counterfactual runtime | typed controllable variables and replayable interventions/counterfactuals with model-conditioned conclusions |
-| **P21** | UQ + sensitivity + identifiability | quantified uncertainty only from admitted information; model discrepancy, sensitivity and identifiability compose across systems |
-| **P22** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and experimental evidence registry |
-| **P23** | Mechanism-aware design discovery | multi-fidelity, robust/MDO search and trust-bounded surrogates produce candidate designs without turning optimization scores into evidence |
+| **P19** | Architecture boundary cleanup | Core, CapabilityPack/DomainPack, Provider and SystemPack/ProductTemplate responsibilities are explicit and product-specific logic does not leak into frozen Core |
+| **P20** | OSS provider capability matrix | every integrated provider has capability/applicability/maturity coverage; provider availability is not confused with full solver capability |
+| **P21** | Mechanism semantics | provider-neutral dependency/mechanism/state-transition/explanation contracts proven on existing flagships without granting causal authority |
+| **P22** | UQ + model discrepancy + sensitivity | quantified uncertainty only from admitted information; model discrepancy, sensitivity and identifiability compose across systems |
+| **P23** | Engineering requirements + design space | objectives, constraints, operating envelope, controllable variables, topology choices and forbidden regions are explicit and identity-bound |
+| **P24** | Parametric geometry / CAD / topology | candidate geometry/topology is reproducible, provider-neutral at the contract boundary and can feed analysis meshes without losing design identity |
+| **P25** | Assembly + standard-component synthesis | buildable assembly graph; standard/catalog component selection; custom parts only where needed; exact component/source identities |
+| **P26** | Joints / interfaces / fits / routing | fasteners, bearings, shafts, gears, couplings, fits, tolerances, connectors, routing, assembly access and serviceability are represented and checked |
+| **P27** | Capability-based solver planning | model realization, fidelity, primary provider and independent verification route are selected from declared capability/applicability rather than solver name or LLM preference |
+| **P28** | Intervention + counterfactual runtime | typed controllable variables and replayable interventions/counterfactuals with model-conditioned conclusions |
+| **P29** | High-throughput multi-fidelity design discovery | large candidate campaigns use cheap filters, parallel execution, fidelity escalation, caching/early stopping, trust-bounded surrogates and Pareto/MDO search |
+| **P30** | Reliability + lifecycle + manufacturability + cost | candidate designs include degradation, fatigue/wear where supported, manufacturing variation/tolerances, process constraints, serviceability and cost status |
+| **P31** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and experimental evidence registry |
+| **P32** | Closed-loop experimental validation | calibration and holdout validation remain separate; physical measurements update evidence/model discrepancy without turning calibration into validation |
+| **P33** | Validated design discovery | requirements -> design -> assembly -> multi-physics analysis -> uncertainty/reliability -> experiment, with improvement claims limited to admitted evidence |
 
 Do not skip prerequisite phases merely to increase the number of domains.
 
