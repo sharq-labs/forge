@@ -252,6 +252,7 @@ The owner said "do the three". The three were: `reads_owners`; undeclared applic
 
 ### Executed
 - `pytest tests/test_system_runtime_*.py tests/test_engineering_*.py tests/claims flagships/tests -n 4` -> **889 passed, 39 skipped** (final tree).
+- WSL `battery` env on `4ed62b12`: `pytest providers/pybamm/tests/test_system_runtime_battery.py providers/pybamm/tests/test_pybamm_provider.py flagships/tests/test_flagship_battery.py` -> **28 passed**, exit 0.
 - Full FAST tier `pytest -m "not expensive" -n 4` on the pre-M1 tree -> 10 failed, 9021 passed, 118 skipped.
   - Two of the ten (`test_the_tree_is_core_freeze_v1`, the V3 supersession check) failed only because the tree was dirty during the run. On the committed tree `b07a58f1` both **pass**.
   - The other 8 are baseline classes: 2 stale-certificate failures (class 6, need recertification) and 6 Python-3.14-only failures (class 7).
