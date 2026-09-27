@@ -132,6 +132,36 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   - move flagship A's cell model from SPM to DFN;
   - re-register the identification with a wider bound, because the positive factor hit its bound.
 
+### Check `big14-a-cell-energy-check` (BIG 13 review M5)
+- Pre-registered at `b0814b83`; record `41cc1822` (`docs/flagships/big14/cell_energy_check.json`). Numerical verification of the model's heat bookkeeping, not validation.
+- C1 MET at both temperatures: the cell's total heating equals I*(U_surface - V) + reversible heating to 2.9e-10 (300 K) and 4.5e-10 (313.15 K) relative.
+- Reported, not judged: the heat of mixing PyBaMM leaves out by design is 83 % (300 K) and 128 % (313.15 K) of the heat it counts.
+- The reversible heat is 0 because Chen2020 carries no entropic coefficient. That channel is ABSENT from the model, so its size is UNKNOWN; it is not a measured zero.
+
+### Test `big14-a-heat-of-mixing` (hypothesis Hc)
+- Hc: the low calibrated h (3.555 W/m2K) compensates for the omitted heat of mixing. Post-hoc hypothesis from the two results above, first registered test at `70d4d996`; record `c3c0f4b9`.
+- Hc SUPPORTED as registered: P1 h recalibrates to 10.741 W/m2K (+202 %, bar +20 %); P2 held-out mean |peak-rise error| 2.13 -> 1.92 K.
+- Not uniform, recorded so the mean does not hide it:
+  - the calibration curve (cell02 1C) fits worse: temperature RMSE 0.47 -> 1.70 K;
+  - C/2, the flagship's rate: peak-rise error worse on all three cells (cell02 -0.81 -> -2.52 K, cell03 +0.37 -> -1.32, cell04 -1.58 -> -3.26);
+  - 1.5C: better on cell02 (-4.19 -> +0.40) and cell04 (-7.68 -> -3.05), worse on cell03 (-1.74 -> +3.04).
+- Reading: with the heat of mixing the fitted h is near Chen2020's generic 10 W/m2K default. That makes h a compensating parameter in the baseline; it is not evidence that 10 W/m2K is right for the rig.
+- Nothing here validates the thermal model; the reversible heat stays absent.
+
+### Study `big14-a-window-study` (diagnosis of BIG 13 criterion 1)
+- Pre-registered at `c2195c0b`; run 2026-09-28 at `c3c0f4b9`, WSL `battery` env, `python -m forge_flagships.window_study --out /mnt/d/forge-b14-logs/big14a/window` (exit 0, 5 runs, 12-33 s each).
+  Record `docs/flagships/big14/window_study.json`. Numerical diagnosis of the same model; not validation.
+- The BIG 13 differences reproduce: peak T 0.0032 K (3600->1800) then 0.0080 K (1800->900).
+- H1 SUPPORTED as registered (pre-asymptotic quantity definition, not a coupling defect):
+  - P1 met for all three quantities: the differences peak at 1800->900 and then fall; ratio of the last two 1.66 (peak T), 1.64 (end voltage), 1.57 (peak heat); bar 1.5.
+    Peak T: 0.0032, 0.0080, 0.0060, 0.0036 K.
+  - P2 met: the gap to the dense in-hour maximum heat (0.16987 W) shrinks monotonically: 9.4, 9.2, 6.3, 4.0, 2.6 mW.
+- Limits:
+  - the ratios (~1.6, not 2) show the approach is slower than first order; one extra halving would test that, and it was not registered;
+  - H0 was not tested directly; P1/P2 are only consistent with H1;
+  - BIG 13 criterion 1 stays NOT MET as registered then; this study does not re-judge it;
+  - the largest difference (0.008 K) is under the flagship's own 0.05 K refinement tolerance, but the published 3600 s window under-reads the resolved peak heat by 5.5 % (0.1605 against 0.1699 W).
+
 ## 2026-09-27 BIG 14 — 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
 
 - PR #110 (commits up to `86fa1896`) was MERGED at 17:26 UTC by the sharq-labs account while `recertification-gate` was red. Cause of the red:
