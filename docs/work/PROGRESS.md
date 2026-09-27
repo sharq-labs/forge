@@ -1701,3 +1701,34 @@ works.
 - Continue reducing the remaining flat claim modules only after PR #65 is
   verified.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
+
+
+## 2026-09-28 strategic decision — motion systems and electromechanical product behaviour
+
+The post-hardening design roadmap now treats machine motion as first-class
+engineering behaviour, not as an incidental property of CAD assemblies.
+
+Strategic additions:
+
+- restored the design-synthesis / buildable-assembly architecture on a current
+  branch from `main`;
+- added `docs/architecture/motion_systems.md`;
+- future product synthesis explicitly includes kinematics and multibody
+  dynamics, mechanism topology, joint limits, trajectories and inverse
+  dynamics;
+- springs, dampers, bushings, flexures, suspension elements, friction,
+  backlash, compliance, vibration and contact are explicit future capability
+  families;
+- actuation includes electric, hydraulic, pneumatic and cable/tendon options
+  where supported, plus transmissions and actuator sizing;
+- electromechanical coupling includes motor electrical behaviour, losses,
+  temperature feedback, sensing and control;
+- wiring/harness design includes conductor/wire type, gauge/cross-section,
+  insulation/rating, voltage drop, heating, connectors/protection, bend radius,
+  routing, strain relief and provenance where data is available;
+- robot arms, suspensions, grippers and machines are to be evaluated as dynamic
+  assembled systems rather than collections of ideal hinges;
+- the strategic Master Plan is extended through P35, while BIG 14/15 remain the
+  active hardening/UQ work and are not displaced.
+
+Tests: **NOT RUN** — documentation/strategic architecture changes only.
