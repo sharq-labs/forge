@@ -270,6 +270,10 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
             if definition is None:
                 add("INVALID_CONSTRAINT_BINDING", node.node_id, f"constraint definition {node.arg('constraint_id')!r} was not supplied")
             else:
+                if definition.name != node.arg("constraint_id"):
+                    # the pinned definition must be the constraint the observation names, not another declared one of the same dimension
+                    add("INVALID_CONSTRAINT_BINDING", node.node_id,
+                        f"the pinned definition is constraint {definition.name!r}, not the constraint {node.arg('constraint_id')!r} this node assesses")
                 try:
                     if definition.bound.dimensionality != _dim(node.inputs[0].unit):
                         add("INVALID_CONSTRAINT_BINDING", node.node_id, "constraint bound and observable differ in dimension")

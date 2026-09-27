@@ -165,6 +165,13 @@ def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = No
     """
     if request is not None and request.digest != result.request_digest:
         raise InvalidScientificProblem("the request is not the one this result was produced for; model selections cannot be read from it")
+    if validity:
+        # provenance.models comes from the request's model selections, which are caller labels: no authority reports the model
+        # it executed.  A validity record would attach to the label, and the executed model would be invisible to
+        # unassessed_models, so no validity record is accepted until selections are bound to what executed.
+        raise InvalidScientificProblem(
+            "validity records are refused: model selections are request labels not bound to the model an authority executed, "
+            "so a validity record could be attributed to a model that did not run")
     unavailable = [o for o in result.observables if o.availability is not Availability.AVAILABLE]
     if result.status is not RunStatus.SUCCEEDED and not allow_partial:
         raise InvalidScientificProblem(
@@ -174,15 +181,19 @@ def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = No
     uncertainty = {o.observable_id: o.value.uncertainty for o in result.observables if o.availability is Availability.AVAILABLE}
     solvers = sorted({(p.provider_id, p.provider_version) for p in result.provider_records}
                      | {(n.authority.authority_id, n.authority.identity_digest[:12]) for n in result.plan.nodes if not n.derived})
-    models = tuple(sorted((s.model_id, s.model_version) for s in (request.model_selections if request is not None else ())))
+    # model selections are request labels no authority reports executing: they are kept as what was REQUESTED, never as executed models
+    requested = sorted(f"{s.instance_id}={s.model_id}@{s.model_version}" for s in (request.model_selections if request is not None else ()))
     provenance = ProvenanceRecord(
-        run_id=result.run_id, models=models, solvers=tuple(solvers),
+        run_id=result.run_id, models=(), solvers=tuple(solvers),
         metadata={"request_digest": result.request_digest, "plan_digest": result.plan_digest, "result_digest": result.digest,
-                  "execution_status": result.status.value, "classification": result.classification})
+                  "execution_status": result.status.value, "classification": result.classification,
+                  "requested_model_selections": "; ".join(requested)})
     return CredibilityEvidenceReport(
         run_id=result.run_id, values=values, provenance=provenance, validity=tuple(validity), validation=tuple(validation),
         required_levels=tuple(required_levels), uncertainty=uncertainty,
         notes=("assembled by the system runtime from execution facts; the runtime supplies no validity record and no validation check"
+               + "; the models that executed are NOT reported (provenance.models is empty and requested_model_selections are labels), so an empty "
+                 "unassessed_models means nothing is known about them, not that every model was assessed"
                + ("" if request is not None else "; no request was supplied, so model selections are absent from the provenance (nothing is assumed)")
                + ("" if not result.trust_inputs.waived_applicability
                   else "; nodes that committed state under a stated applicability WAIVER (a caller statement, not evidence): " + ", ".join(result.trust_inputs.waived_applicability))

@@ -204,7 +204,8 @@ class MultiscaleAuthority(_Base):
                  providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None) -> None:
         self._init(authority_id, "multiscale", {
             "runtime": dict(sorted(runtime.identities().items())), "outputs": sorted(extractors), "until": None if until is None else str(until.seconds),
-            "stages": {k: {"until": None if v.get("until") is None else str(v["until"].seconds), "resume": bool(v.get("resume"))}
+            "stages": {k: {"until": None if v.get("until") is None else str(v["until"].seconds), "resume": bool(v.get("resume")),
+                           **({"from": str(v["from"])} if v.get("from") is not None else {})}
                        for k, v in sorted((stages or {}).items())},
             "initial_slow": digest_of([v.to_dict() for m in initial_slow_state.values() for v in m.values()]),
             "state_owners": dict(sorted((slow_state_owners or {}).items())), "config": dict(config or {})})
@@ -215,10 +216,49 @@ class MultiscaleAuthority(_Base):
         self.stateless = False
         self.supports_checkpoint = True
         self._last_checkpoint: Mapping[str, Any] | None = None       # from a COMMITTED stage only
+        self._last_origin: str | None = None                         # the node whose committed stage produced _last_checkpoint
         self._pending_checkpoint: Mapping[str, Any] | None = None    # from the stage being executed; promoted in committed()
 
     def committed(self, call: NodeCall, outcome: NodeOutcome) -> None:
         self._last_checkpoint = self._pending_checkpoint
+        self._last_origin = call.node.node_id if self._pending_checkpoint is not None else None
+
+    def preflight_findings(self, node: Any, context: Any) -> tuple[tuple[str, str], ...]:
+        stage = self._stages.get(node.node_id)
+        if not stage or not stage.get("resume"):
+            return ()
+        origin = stage.get("from")
+        if origin is None:
+            return (("INVALID_STAGE", f"resume stage {node.node_id!r} does not name the stage it continues ('from'); an unnamed source could be "
+                                      "another run's checkpoint held by this authority instance"),)
+        if origin not in node.depends_on:
+            return (("INVALID_STAGE", f"resume stage {node.node_id!r} continues {origin!r} but does not depend on it, so it could run before that "
+                                      "stage or after it was blocked"),)
+        return ()
+
+    def _state_mismatch(self, call: NodeCall, start: Mapping[str, Mapping[str, Any]]) -> str:
+        """Why the committed system state is not the slow state ``start`` this run begins from ('' when it is).
+
+        ``start`` is the authority's declared initial slow state for a fresh stage, and the macro checkpoint's slow state for a resume."""
+        import math
+        for domain, owner_id in sorted(self._owners.items()):
+            declared = start.get(domain)
+            if declared is None:
+                return f"the authority declares no initial slow state for domain {domain!r}"
+            try:
+                current = _values_of(call.state.owner(owner_id))
+            except KeyError:
+                return f"system state has no owner {owner_id!r}"
+            if set(current) != set(declared):
+                return f"owner {owner_id!r} holds {sorted(current)}, the authority starts from {sorted(declared)}"
+            for variable_id, initial in declared.items():
+                try:
+                    held = current[variable_id].value.to(initial.value.units).magnitude
+                except Exception as exc:
+                    return f"{owner_id}.{variable_id} is not comparable with the authority's initial value ({exc})"
+                if not math.isclose(float(held), float(initial.value.magnitude), rel_tol=1e-12, abs_tol=0.0):
+                    return f"{owner_id}.{variable_id} is {held} in the committed state but the authority's run starts from {initial.value.magnitude}"
+        return ""
 
     def execute(self, call: NodeCall) -> NodeOutcome:
         from ..multiscale import MacroCheckpoint
@@ -228,10 +268,24 @@ class MultiscaleAuthority(_Base):
         if stage.get("resume"):
             if self._last_checkpoint is None:
                 return NodeOutcome.failed("this stage resumes from a macro checkpoint but none is held (it is never regenerated)")
+            if stage.get("from") is None or self._last_origin != stage.get("from"):
+                return NodeOutcome.failed(f"the held macro checkpoint comes from {self._last_origin!r}, not from the stage {stage.get('from')!r} "
+                                          "this stage declares it continues")
+            checkpoint = MacroCheckpoint.deserialize(self._last_checkpoint)
+            mismatch = self._state_mismatch(call, checkpoint.slow_state)
+            if mismatch:
+                # another node changed the owner after the stage this one continues: resuming would commit over a state it never read
+                return NodeOutcome.failed(f"the committed state is not the slow state the macro checkpoint continues from: {mismatch}")
             self.runtime.set_declared_fast_state(self._fast or {})
-            record = self.runtime.resume(MacroCheckpoint.deserialize(self._last_checkpoint), until=stage.get("until"))
+            record = self.runtime.resume(checkpoint, until=stage.get("until"))
         else:
             self._last_checkpoint = None      # a fresh run never inherits a checkpoint from an earlier run
+            self._last_origin = None
+            mismatch = self._state_mismatch(call, self._slow)
+            if mismatch:
+                # the run starts from the authority's own initial slow state; committing its end over a different state would
+                # record a transition that was not derived from the state it claims to advance
+                return NodeOutcome.failed(f"the committed state is not the state this multi-timescale run starts from: {mismatch}")
             record = self.runtime.run(initial_slow_state=self._slow, initial_fast_state=self._fast, until=stage.get("until"))
         wall = time.perf_counter() - t0
         if record.status not in ("completed", "paused"):
@@ -265,3 +319,8 @@ class MultiscaleAuthority(_Base):
 
     def restore(self, payload: Mapping[str, Any]) -> None:
         self._last_checkpoint = dict(payload)
+        self._last_origin = None           # set by restored_from(); a payload of unknown origin is never resumed
+
+    def restored_from(self, node_id: str) -> None:
+        """The executor names the checkpointed node whose payload it just restored."""
+        self._last_origin = node_id

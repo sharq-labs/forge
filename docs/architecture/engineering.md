@@ -51,9 +51,10 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
 * A run bundle contains only artifacts a SUCCEEDED node's receipt references (name and sha256). `verify_bundle` re-hashes every file and
   RE-DERIVES: the result and request (their own digests), the plan, the scientific status (`trust_handoff`), `summary.txt` (re-rendered
   from `summary.json`), the summary's key outputs / execution / providers against the result, level 1 (from the result's own preflight),
-  every reference comparison (rebuilt from its bundled reference), every provider comparison (two different providers, executions the result recorded, a post-hoc flag
-  that matches its classification, an outcome that follows from its maximum difference for a purely absolute tolerance), the uncertainty statement, the trace, and the ladder
-  (every guard; every link digest).
+  every reference comparison (rebuilt from its bundled reference), every provider comparison (two executions the result recorded under two
+  different provider ids, labels naming those providers, a boolean post-hoc flag that matches its classification, an outcome that follows
+  from its maximum difference for a purely absolute tolerance), the uncertainty statement (no blank entry; no "none"-like entry in the UNKNOWN list), the constant status
+  basis, the summary's field set, the trace (of a key output), and the ladder (every guard; every link digest).
 
 ## What the bundle check does NOT establish
 
@@ -63,6 +64,14 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
   that verifies. Authenticity needs the `bundle_digest` recorded somewhere its author cannot edit (a commit, a signed report).
 * The INPUTS of a reference comparison (compared difference, stated conditions, tolerance, `compared_identity`) are stated by the flagship; the bundle re-derives
   what follows from them, not the inputs. A relative-tolerance provider comparison cannot be re-derived from its aggregate and is refused.
+* The INPUTS of a provider comparison (its maximum difference, its output selections, and whether both executions solved the same declared
+  problem) are stated by the flagship; the bundle checks the outcome that follows from them and the recorded providers, not the inputs.
+* The SET of provider comparisons: a consistent rewrite that drops a failing comparison or re-classifies a post-hoc one as pre-registered
+  verifies (the comparison records are flagship records, not run artifacts). Nor are the named UNKNOWN inputs checked to be all of them, or
+  the key-output list checked to be unpruned.
+* The committed bundles in `docs/flagships/runs/` are anchored by their full `bundle_digest` / `summary_digest`, pinned in
+  `flagships/tests/test_flagship_portfolio.py` (git history is the record the author cannot silently edit). A bundle from elsewhere is only
+  self-consistent.
 * The free-text notes and the level notes are recorded prose, bound to the record only through the re-rendered text.
 * A reference no comparison cites is bound only by the manifest.
 * The exact-limit, mesh-study and window-study requests behind levels 3 and 4 are separate BIG 12 requests; their records are inside the

@@ -164,6 +164,34 @@ def test_the_committed_run_bundles_verify_and_each_report_was_generated_from_its
     assert summary["scientific_status"] == "insufficient_evidence"
 
 
+#: The full identity of every committed bundle (round-5 F4).  The manifest is unkeyed: a consistent rewrite of summary.json, summary.txt and the
+#: manifest re-verifies, so the committed bundles are anchored HERE, in a file whose history git records.  Regenerating a bundle changes
+#: these digests, which is deliberate: the change then shows in review instead of passing silently.
+BUNDLE_DIGESTS = {
+    "battery_hot": ("24274cc0ccd550f374e6d81915cca955f60f09ccb201adbd2bbd59017dc96266", "e09de12d519878c57a2e8818824944c25a41a763de69c8b4d3338b85a5772895"),
+    "battery_normal": ("14379e2db1cb774141ff9cce1f65c2def0aa1e3dda1e4ea2f6404498801d1dd8", "9ea30a88c867edaa04a99e88cbb0627f64eee87de7244883fab3f257d799be11"),
+    "battery_outside_window": ("27d730500ea84b1405d23b0e569bc53ff797c133b40ee57e3d17218745e78df4", "33137684bf89e479474ff870b478b9a5cf4d079028e42ec6b338a3e11f77a670"),
+    "battery_overload": ("623af12c6c945b5cfe52a77e5d858167c796fac3066d97b6f1a3cfc210efa481", "b8b5a01c5a7b0a737fe2a3fd3d3a654a0edfa4c322491fb2920a7b0d539785fa"),
+    "cavity_re100": ("a44dd5f09a524034c93c15636e78b23542229c0f26b97abdfcec372f1fd91b26", "6933a820e32894cfcca2f2037900b5e16536b365f740c9034743ec28e0d3c838"),
+    "chemistry_nominal": ("82c0e096371e91acafef903c469a89bbb0e6b0a3382288971a497b61c203e2da", "ddfb8aa0a953406b4681d151d50ff8913d0c22f8c731a1a7146620e84983640b"),
+    "structure_flagship": ("1b40d7935aadcebdbe6d39d041cb820b3f41208d6cdac789e6d501a729d78538", "761dc50e85f218f72a4e7de098a93fbaba37242ed125305792ad5aaa927a4c43"),
+    "structure_over_range": ("34ec5af5fc9a2b1b4cb1ba9a88a58c61e68b8f0e6730efb255aa1c05b4941c6c", "e6fd809e031fdbbbb833795c38c8d706f1fda2a5e890cba06e5d13d7f7d8555b"),
+}
+
+
+@pytest.mark.parametrize("bundle", sorted(BUNDLE_DIGESTS))
+def test_every_committed_bundle_is_the_one_its_full_digests_pin(bundle):
+    from engcore.engineering import verify_bundle
+    verify_bundle(os.path.join(DOCS, "runs", bundle))
+    manifest = json.loads(open(os.path.join(DOCS, "runs", bundle, "manifest.json"), "rb").read())
+    assert (manifest["bundle_digest"], manifest["summary_digest"]) == BUNDLE_DIGESTS[bundle]
+
+
+def test_every_committed_bundle_directory_has_a_pin():
+    runs = os.path.join(DOCS, "runs")
+    assert sorted(n for n in os.listdir(runs) if os.path.isdir(os.path.join(runs, n))) == sorted(BUNDLE_DIGESTS)
+
+
 def test_the_committed_hot_case_bundle_verifies_and_reports_its_violated_constraints():
     """The hot case has no report of its own (its numbers are the second column of the battery report); its bundle is still re-verified."""
     from engcore.engineering import verify_bundle

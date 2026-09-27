@@ -12,6 +12,7 @@ data is labelled ``post_hoc`` and classified as such.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -38,6 +39,34 @@ class OutputSelection:
     rows: tuple[int, ...] | None = None
     component: int | None = None
     weights: tuple[tuple[tuple[int, float], ...], ...] | None = None
+
+    def __post_init__(self) -> None:
+        # A selection decides what is compared, so it cannot shrink or erase the difference: each weighted point is an AFFINE
+        # combination (finite weights >= 0 summing to 1, distinct indices).  Zero or scaled weights would make any two records agree,
+        # and weights that do not sum to 1 would convert an offset unit (degC) wrongly.
+        def index(i: Any, label: str) -> int:
+            if isinstance(i, bool) or not isinstance(i, (int, np.integer)) or i < 0:
+                raise InvalidScientificProblem(f"an output selection {label} must be a non-negative integer index, got {i!r}")
+            return int(i)
+
+        if self.weights is not None:
+            if not self.weights or any(not terms for terms in self.weights):
+                raise InvalidScientificProblem("an output selection's weights need at least one point and one term per point")
+            for terms in self.weights:
+                idx = [index(i, "weight index") for i, _ in terms]
+                if len(set(idx)) != len(idx):
+                    raise InvalidScientificProblem("an output selection point repeats an index")
+                ws = [w for _, w in terms]
+                if any(isinstance(w, bool) or not isinstance(w, (int, float, np.floating)) or not math.isfinite(w) or w < 0 for w in ws):
+                    raise InvalidScientificProblem("an output selection's weights must be finite numbers >= 0")
+                if not math.isclose(math.fsum(ws), 1.0, rel_tol=0.0, abs_tol=1e-12):
+                    raise InvalidScientificProblem(f"an output selection point's weights sum to {math.fsum(ws)!r}, not 1 (an affine combination)")
+        if self.rows is not None:
+            rows = [index(i, "row") for i in self.rows]
+            if not rows or len(set(rows)) != len(rows):
+                raise InvalidScientificProblem("an output selection's rows must be non-empty and distinct")
+        if self.component is not None:
+            index(self.component, "component")
 
     def apply(self, values) -> np.ndarray:
         x = np.asarray(values, dtype=float)

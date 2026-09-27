@@ -7,8 +7,8 @@ Contents (nothing is re-derived by a viewer; everything is a file with a recorde
     artifacts/<name>          bulk files (fields, series); NEVER inlined in the JSON above
     manifest.json             every file's sha256, the request / plan / result / summary identities
 
-``verify_bundle`` re-hashes every file and then RE-DERIVES what the bundle already holds, so that an edit is refused even when the manifest
-and every digest it states are regenerated to match:
+``verify_bundle`` re-hashes every file and then RE-DERIVES what the bundle already holds, so that an edit to anything listed below is refused
+even when the manifest and every digest it states are regenerated to match (what it cannot re-derive is listed after):
 
 * ``result.json`` and ``request.json`` through their own ``from_dict`` (each re-derives its digest); ``plan.json`` against the result's plan;
 * the scientific status, by the existing credibility authority (``trust_handoff``), compared with ``summary.json``;
@@ -18,17 +18,22 @@ and every digest it states are regenerated to match:
 * every reference comparison, REBUILT from its shipped reference, criterion, conditions and value (applicability, tolerance outcome, kind
   and classification are derived, never read), and every ladder link that claims to be a comparison must be one of them, and every
   comparison must be cited by the ladder;
-* every provider comparison (level 5): it must name two different providers whose executions the result recorded, carry a post-hoc flag that matches its
-  classification and, for a purely absolute tolerance, an outcome that follows from its own maximum difference (a relative tolerance is judged per point and is refused);
-* the uncertainty statement (its guards re-run; it may not be emptied while outputs are UNKNOWN) and the trace (re-derived from the result);
+* every provider comparison (level 5): its two executions must be recorded by the result under two DIFFERENT provider ids, its labels must
+  name those providers, its post-hoc flag must be a boolean matching its classification and, for a purely absolute tolerance, its outcome must
+  follow from its own maximum difference (a relative tolerance is judged per point and is refused);
+* the uncertainty statement (its guards re-run; no entry may be blank, no UNKNOWN entry may say "none"; it may not be emptied while outputs are UNKNOWN), the
+  status basis (a constant), the summary's field set, and the trace (re-derived from the result, for an observable that is a key output);
 * the ladder itself, rebuilt with every guard, each evidence link's digest re-derived from the kind, classification, outcome and record it carries.
 
 What this does NOT do: levels 2-4 evidence that is not a comparison (a conservation residual, a mesh or window study, an equilibrium
 diagnostic) is a JUDGMENT the flagship recorded with its record; it cannot be re-derived from the bundle, and neither can the constraint and
 conservation lines or the free-text notes.  The INPUTS of a reference comparison (the compared difference, the conditions, the tolerance, the
 identity of what was compared) are stated by the flagship: the bundle re-derives what follows from them (outcome, applicability, kind,
-classification) but not the inputs themselves. And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest together
-produces a bundle that verifies.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a
+classification) but not the inputs themselves. The inputs of a provider comparison (its maximum difference, its output selections, whether both executions solved the same
+declared problem) are likewise stated by the flagship.  Nor can it show that the SET of provider comparisons is complete or that one was pre-registered (a consistent rewrite
+that drops a failing comparison, or re-classifies a post-hoc one, verifies), that the named UNKNOWN inputs are all of them, or that the
+key-output list was not pruned.  And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest
+together produces a bundle that verifies.  Verification is therefore SELF-CONSISTENCY, never authenticity.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a
 signed report).  A bundle is a record of a run; it is not evidence and it cannot raise a scientific status.
 Files are written as bytes with LF line endings so digests are stable across platforms.
 """
@@ -46,9 +51,11 @@ from ..scenarios.timeline import canonical_digest
 from ..system_runtime import NodeStatus, RunStatus, SystemRunRequest, SystemRunResult, trace_result, trust_handoff
 from .ladder import VerificationLadder, check_provider_comparison, contract_integrity_entry
 from .reference import ReferenceComparison, ReferenceRecord
-from .summary import SUMMARY_SCHEMA, EngineeringSummary, UncertaintyStatement, _uncertainty_text, render_summary_text
+from .summary import STATUS_BASIS, SUMMARY_SCHEMA, EngineeringSummary, UncertaintyStatement, _uncertainty_text, render_summary_text
 
 MANIFEST_SCHEMA = "engcore.engineering.bundle/1"
+_SUMMARY_KEYS = {"schema", "system", "execution", "key_outputs", "constraints", "conservation", "verification", "reference_comparisons", "uncertainty",
+                 "scientific_status", "scientific_status_basis", "identities", "providers", "trace", "trace_observable", "notes", "text_sha256"}
 
 
 def _json_bytes(payload: Any) -> bytes:
@@ -131,9 +138,12 @@ def write_bundle(directory: str, *, name: str, request: SystemRunRequest, result
 
 def verify_bundle(directory: str) -> BundleManifest:
     """Re-hash every file and re-derive the result identity; raise :class:`BundleRefused` on any difference."""
-    with open(os.path.join(directory, "manifest.json"), "rb") as fh:
-        payload = json.loads(fh.read().decode("utf-8"))
-    if payload.get("schema") != MANIFEST_SCHEMA:
+    try:
+        with open(os.path.join(directory, "manifest.json"), "rb") as fh:
+            payload = json.loads(fh.read().decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise BundleRefused(f"manifest.json cannot be read: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("schema") != MANIFEST_SCHEMA:
         raise BundleRefused("not a Forge run bundle manifest")
     if "bundle_digest" not in payload:
         raise BundleRefused("the manifest states no digest of itself")
@@ -169,9 +179,13 @@ def verify_bundle(directory: str) -> BundleManifest:
         raise BundleRefused(f"request.json does not load as a run request: {exc}") from exc
     if request.digest != payload["request_digest"] or request.digest != result.request_digest:
         raise BundleRefused("request.json is not the request this result was produced for")
-    with open(os.path.join(directory, "plan.json"), "rb") as fh:
-        if canonical_digest(json.loads(fh.read().decode("utf-8"))) != canonical_digest(result.plan.to_dict()):
-            raise BundleRefused("plan.json is not the plan of this result")
+    try:
+        with open(os.path.join(directory, "plan.json"), "rb") as fh:
+            plan_payload = json.loads(fh.read().decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise BundleRefused(f"plan.json cannot be read: {exc}") from exc
+    if canonical_digest(plan_payload) != canonical_digest(result.plan.to_dict()):
+        raise BundleRefused("plan.json is not the plan of this result")
     try:
         return _verify_rest(directory, payload, files, result, request)
     except BundleRefused:
@@ -189,6 +203,10 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
     # the summary is the parent every nested ladder / comparison record is read through: a future shape is not read as this one
     if summary.get("schema") != SUMMARY_SCHEMA:
         raise BundleRefused(f"summary.json has schema {summary.get('schema')!r}, not {SUMMARY_SCHEMA!r}")
+    if set(summary) != _SUMMARY_KEYS:
+        raise BundleRefused(f"summary.json has other fields than a summary: extra {sorted(set(summary) - _SUMMARY_KEYS)}, missing {sorted(_SUMMARY_KEYS - set(summary))}")
+    if summary["scientific_status_basis"] != STATUS_BASIS:
+        raise BundleRefused("summary.json restates the basis of its scientific status")
     if canonical_digest(summary) != payload["summary_digest"] or dict(map(tuple, summary["identities"])).get("result") != result.digest:
         raise BundleRefused("summary.json is not the summary the manifest names, or it describes another run")
     identities = dict(map(tuple, summary["identities"]))
@@ -224,12 +242,12 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
         ladder = VerificationLadder.from_dict(summary["verification"])
     except (InvalidScientificProblem, KeyError, ValueError, TypeError) as exc:
         raise BundleRefused(f"the summary's verification ladder does not re-validate: {exc}") from exc
-    recorded_identities = {p.execution_identity_digest for p in result.provider_records}
+    recorded_providers = {p.execution_identity_digest: p.provider_id for p in result.provider_records}
     for entry in ladder.entries:
         for link in entry.evidence:
             if link.kind == "provider_comparison":
                 try:
-                    check_provider_comparison(link.record, recorded_identities)
+                    check_provider_comparison(link.record, recorded_providers)
                 except InvalidScientificProblem as exc:
                     raise BundleRefused(f"level {entry.level}: {exc}") from exc
     # the uncertainty statement re-runs its own guards, and may not be emptied while outputs are UNKNOWN; the trace is re-derived
@@ -241,6 +259,8 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
         raise BundleRefused(f"the summary's uncertainty statement does not re-validate: {exc}") from exc
     if result.trust_inputs.unknown_uncertainty_outputs and not statement.unknown_input_uncertainty:
         raise BundleRefused("outputs with UNKNOWN uncertainty exist, but the summary names no UNKNOWN input uncertainty")
+    if summary["trace_observable"] not in {k["observable_id"] for k in summary["key_outputs"]}:
+        raise BundleRefused("the summary traces an observable that is not one of its key outputs")
     traced = trace_result(result, summary["trace_observable"])
     if summary["trace"] != {"complete": traced.complete, "gaps": list(traced.gaps)}:
         raise BundleRefused("the summary's trace is not the trace the result derives")

@@ -23,6 +23,7 @@ Rules kept here on purpose:
 from __future__ import annotations
 
 import math
+import numbers
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -46,6 +47,27 @@ def _text(value: Any, label: str) -> str:
     return text
 
 
+def _finite_number(value: Any, label: str) -> float:
+    """A finite number, refused BEFORE any ``float`` call could erase what it was (a bool, text, bytes or an array is not a number)."""
+    if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value):
+        raise InvalidScientificProblem(f"{label} must be a finite number, got {value!r} ({type(value).__name__})")
+    return float(value)
+
+
+def _wire_number(value: Any, label: str) -> float:
+    """A number as this module writes it: the ``repr`` text of a finite float, read back exactly (no pre-coercion: ``"1_00"``,
+    ``" 1e2 "``, ``True`` and a bare number are all refused)."""
+    if type(value) is not str:
+        raise InvalidScientificProblem(f"{label} must be the text of a number as written by to_dict, got {value!r} ({type(value).__name__})")
+    try:
+        number = float(value)
+    except ValueError:
+        raise InvalidScientificProblem(f"{label} is not a number: {value!r}") from None
+    if not math.isfinite(number) or repr(number) != value:
+        raise InvalidScientificProblem(f"{label} is not the canonical text of a finite number: {value!r}")
+    return number
+
+
 def _hex64(value: str, label: str) -> str:
     v = str(value).strip().lower()
     if len(v) != 64 or any(c not in "0123456789abcdef" for c in v):
@@ -63,9 +85,7 @@ class ReferenceCondition:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _text(self.name, "reference condition name"))
-        if isinstance(self.value, bool) or not isinstance(self.value, (int, float)) or not math.isfinite(self.value):
-            raise InvalidScientificProblem("a reference condition value is a finite number")
-        object.__setattr__(self, "value", float(self.value))
+        object.__setattr__(self, "value", _finite_number(self.value, "a reference condition value"))
         object.__setattr__(self, "unit", _text(self.unit, "reference condition unit"))
 
     def to_dict(self) -> dict[str, Any]:
@@ -73,7 +93,7 @@ class ReferenceCondition:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ReferenceCondition":
-        return cls(payload["name"], float(payload["value"]), payload["unit"])
+        return cls(payload["name"], _wire_number(payload["value"], "reference condition value"), payload["unit"])
 
 
 @dataclass(frozen=True)
@@ -87,7 +107,9 @@ class EnvelopeBound:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _text(self.name, "envelope condition"))
-        if not (math.isfinite(self.low) and math.isfinite(self.high) and self.low <= self.high):
+        object.__setattr__(self, "low", _finite_number(self.low, "an applicability bound"))
+        object.__setattr__(self, "high", _finite_number(self.high, "an applicability bound"))
+        if not self.low <= self.high:
             raise InvalidScientificProblem("an applicability bound is a finite ordered range")
         object.__setattr__(self, "unit", _text(self.unit, "envelope unit"))
 
@@ -96,7 +118,7 @@ class EnvelopeBound:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "EnvelopeBound":
-        return cls(payload["name"], float(payload["low"]), float(payload["high"]), payload["unit"])
+        return cls(payload["name"], _wire_number(payload["low"], "envelope low"), _wire_number(payload["high"], "envelope high"), payload["unit"])
 
 
 @dataclass(frozen=True)
@@ -153,11 +175,10 @@ class ReferenceRecord:
         elif self.source_digest:
             object.__setattr__(self, "source_digest", _hex64(self.source_digest, "reference source digest"))
         declared = {q for q, _ in self.quantities}
+        object.__setattr__(self, "data", tuple((q, tuple(_finite_number(v, f"reference data {q!r}") for v in values)) for q, values in self.data))
         for q, values in self.data:
             if q not in declared:
                 raise InvalidScientificProblem(f"reference data {q!r} is not a declared quantity")
-            if not all(math.isfinite(float(v)) for v in values):
-                raise InvalidScientificProblem("reference data are finite")
         if {b.name for b in self.envelope} - set(names):
             raise InvalidScientificProblem("an applicability bound names a condition the reference does not state")
         object.__setattr__(self, "comparable_quantities", tuple(_text(q, "comparable quantity") for q in self.comparable_quantities))
@@ -183,7 +204,7 @@ class ReferenceRecord:
         record = cls(
             payload["reference_id"], payload["title"], payload["authors"], payload["publication"], payload["access_url"], payload["license_status"],
             OracleKind(payload["kind"]), tuple(ReferenceCondition.from_dict(c) for c in payload["conditions"]),
-            tuple((q, u) for q, u in payload["quantities"]), tuple((q, tuple(float(v) for v in values)) for q, values in payload["data"]),
+            tuple((q, u) for q, u in payload["quantities"]), tuple((q, tuple(_wire_number(v, f"reference data {q!r}") for v in values)) for q, values in payload["data"]),
             payload["source_digest"], payload["extraction"], tuple(EnvelopeBound.from_dict(e) for e in payload["envelope"]), payload["role"],
             tuple(payload.get("comparable_quantities", ())))
         if canonical_digest(record.to_dict()) != canonical_digest(payload):
