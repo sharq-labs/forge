@@ -19,7 +19,9 @@ NEEDED = ("fenicsx", "calculix", "code_aster")
 REG = default_registry()
 # default_registry() records an adapter that fails to import or register as UNAVAILABLE with a reason
 # starting 'adapter '; for the adapters these gates need that is a defect, not a missing provider (BIG 14 N1).
-assert not [r for r in (REG.status(p).reason for p in NEEDED) if r.startswith("adapter ")], [REG.status(p).reason for p in NEEDED]
+# A reason starting 'version probe of' means the executable was found and its probe refused: also a defect (BIG 14 F3).
+assert not [r for r in (REG.status(p).reason for p in NEEDED) if r.startswith(("adapter ", "version probe of"))], \
+    [REG.status(p).reason for p in NEEDED]
 OK = all(REG.status(p).available for p in NEEDED)
 pytestmark = pytest.mark.skipif(not OK, reason="FEniCSx, CalculiX and Code_Aster are all required")
 

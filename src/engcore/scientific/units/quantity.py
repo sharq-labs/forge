@@ -957,9 +957,17 @@ def _require_the_magnitude_written_is_the_magnitude_parsed(
 
 
 def _is_numpy_bool(value: Any) -> bool:
-    """``numpy.bool_`` is not a ``bool`` subclass, so the ``isinstance`` test misses it."""
+    """A numpy truth value, text or bytes that ``float`` would read as a number.
+
+    ``numpy.bool_`` is not a ``bool`` subclass, so the ``isinstance`` test misses
+    it; a 0-d array of bool / text / bytes (``np.array(True)``) converts too.
+    Matched by the array's ``dtype.kind`` (b: bool, U: text, S: bytes).
+    """
     kind = type(value)
-    return kind.__module__ == "numpy" and kind.__name__ in ("bool", "bool_")
+    if kind.__module__ == "numpy" and kind.__name__ in ("bool", "bool_"):
+        return True
+    dtype = getattr(value, "dtype", None)
+    return kind.__module__ == "numpy" and getattr(dtype, "kind", None) in ("b", "U", "S")
 
 
 def _require_numeric(value: Any, *, role: str) -> None:
@@ -972,7 +980,7 @@ def _require_numeric(value: Any, *, role: str) -> None:
     are refused BEFORE any ``float`` call could erase what they were. Which
     numbers pass is unchanged -- anything else that ``float`` accepts.
     """
-    if isinstance(value, (bool, str, bytes, bytearray)) or _is_numpy_bool(value):
+    if isinstance(value, (bool, str, bytes, bytearray, memoryview)) or _is_numpy_bool(value):
         raise UnitCompatibilityError(
             f"{role} must be a number, got {value!r} ({type(value).__name__}); "
             f"a bool is not a measurement and text is not a magnitude "
@@ -1008,11 +1016,18 @@ class Quantity:
         # numpy's bool and raw bytes are not caught by the line above (`float(np.True_)`
         # is 1.0, `float(b"5")` is 5.0). Kept as its own statement so the bool/str
         # rule above stays exactly the rule its mutants name.
-        if isinstance(self.magnitude, (bytes, bytearray)) or _is_numpy_bool(self.magnitude):
+        if isinstance(self.magnitude, (bytes, bytearray, memoryview)) or _is_numpy_bool(self.magnitude):
             raise UnitCompatibilityError(
                 f"scientific magnitude must be a number, got "
                 f"{self.magnitude!r} ({type(self.magnitude).__name__}); "
                 f"a bool is not a measurement and bytes are not a magnitude"
+            )
+        # a number in the unit slot would normalize to "dimensionless" through `str()`:
+        # refused here; string-like unit objects keep working through normalize_unit
+        if isinstance(self.units, (bool, int, float, complex)) or type(self.units).__module__ == "numpy":
+            raise UnitCompatibilityError(
+                f"units must be a unit expression, got the number {self.units!r} "
+                f"({type(self.units).__name__}); a number is not a unit"
             )
         magnitude = float(self.magnitude)
         if not math.isfinite(magnitude):

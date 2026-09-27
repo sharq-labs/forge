@@ -400,9 +400,13 @@ This statement is scoped to the reviewed tests; the whole suite was not executed
 ## Verify later in dependent-module reviews
 
 - [ ] U-05: verify unit-registry fingerprint is bound to execution/replay provenance.
-      BIG 14 finding (2026-09-27): it is bound NOWHERE. `registry_fingerprint()` has no caller outside two existence tests, and the Core
-      `RuntimeEnvironment` replay record carries no unit field and is constructed by nothing in `src/`. Binding it needs a version decision
-      (Core replay schema, or a digest change in the BIG 11 / BIG 12 execution records); surfaced to the owner, not changed silently.
+      BIG 14 finding (2026-09-27, wording corrected after review F6): the unit-definition CONTENT is bound nowhere.
+      `registry_fingerprint()` has no caller in `src/` (tests: one existence check, one stability check). The Core `RuntimeEnvironment`
+      replay record has no unit field; nothing in `src/` builds one from the live interpreter (it is only read back by `from_dict` and
+      accepted as a caller argument). What IS bound is the Pint VERSION: the claims replay environment records it
+      (`claims/replay/bundle.py`) and exact replay compares it, and library-provider identities bind the installed distribution set.
+      Binding the fingerprint itself (naturally in the claims replay `_environment()`) moves every stored bundle's environment
+      fingerprint, so it needs a version decision; surfaced to the owner, not changed silently.
 - [ ] Decide provider-facing API status of spread/ratio/canonical-identity helpers.
 - [ ] Establish/test Pint-version compatibility policy around private backend access.
       BIG 14 evidence (2026-09-27): the units contract (352 tests) passes on Pint 0.25.3 (Windows venv) and 0.26.1 (WSL `battery` env);

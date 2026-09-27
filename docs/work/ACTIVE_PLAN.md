@@ -157,26 +157,39 @@ Then review and authority debt:
       dependency and commit-taint findings.
 - [ ] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
       every finding. Bundle self-consistency must not be called authenticity.
+      Include: `engineering/reference.py` `ReferenceCondition` / `EnvelopeBound`
+      readers pre-coerce with `float(payload[...])` (the U-01 pattern; found
+      by the 14.1 units review).
 - [ ] Run the missing second BIG 11 re-review (the focused re-review's fixes
       were never re-reviewed); resolve or disposition its findings.
 - [ ] Resolve or explicitly defer BIG 13 review M7: study/limit records ship
       inline but their provider bindings are not compared with the main
       request.
-- [ ] Fix the Units findings U-01/U-02/U-03
+- [x] Fix the Units findings U-01/U-02/U-03
       (`docs/code_audit/MODULE_BY_MODULE_REVIEW.md`) with focused adversarial
-      tests.
-- [ ] Close U-05: verify, by test, that the unit-registry fingerprint is bound
-      at the execution/replay envelope.
-- [ ] Disposition U-04 (reliance on Pint private internals with a lower-bound
-      dependency policy) and U-06 (fingerprint cannot cover context
-      transformation bodies): fix, bound, or record as accepted residual.
-- [ ] Harden provider identity failure semantics. Known defect:
+      tests (also numpy bool/arrays, bytes, memoryview, numbers as units).
+- [ ] U-05 - OWNER DECISION: verified that the unit-definition content
+      (`registry_fingerprint()`) is bound nowhere; only the Pint version is
+      (claims replay environment, provider identities). Binding it moves
+      every stored bundle's environment fingerprint: needs a version decision.
+- [ ] U-04 - OWNER DECISION on a Pint compatibility range: the units
+      contract passes on Pint 0.25.3 and 0.26.1; the declared minimum 0.23 is
+      untested and there is no upper bound.
+- [x] U-06 recorded as accepted LOW residual (runtime context mutation is
+      prohibited; the ledger states the limit).
+- [x] Harden provider identity failure semantics. Known defect:
       `executable_probe` in `src/engcore/providers/catalog.py` ignores the
       version probe's exit code, so a non-zero exit whose output parses as a
       version yields `AVAILABLE` and is cached. Also establish whether a cached
       `AVAILABLE` status can outlive a changed executable/environment before an
       execution identity is formed. A failed, non-zero or timed-out probe must
       not create or cache an execution identity.
+      Done: exit code enforced (OpenFOAM's own probe too); CalculiX declares
+      its measured 201; refresh drops the cached Python environment digest.
+- [ ] OPEN (review F2, MEDIUM): a conda package set changed after a cached
+      probe is not re-checked at launch (only the executable is re-hashed), so
+      an execution can run under a stale environment digest. Fix: recompute
+      the environment digest at launch beside the executable re-hash.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

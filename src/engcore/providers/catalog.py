@@ -222,6 +222,10 @@ def executable_probe(capability: ProviderCapability, executable: str, version_ar
     version is not enough. A tool whose version flag exits non-zero by design
     declares the measured code in its descriptor.
     """
+    codes = tuple(accepted_exit_codes)
+    if not codes or any(isinstance(c, bool) or not isinstance(c, int) or c < 0 for c in codes):
+        raise InvalidScientificProblem(f"accepted_exit_codes must be a non-empty tuple of non-negative ints, got {accepted_exit_codes!r}")
+
     def probe() -> ProviderStatus:
         try:
             path = shutil.which(executable, path=search_path)
@@ -230,9 +234,9 @@ def executable_probe(capability: ProviderCapability, executable: str, version_ar
             real = os.path.realpath(path)
             out = subprocess.run([real, *version_argv], capture_output=True, text=True, timeout=timeout,
                                  env={"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp")})
-            if out.returncode not in accepted_exit_codes:
+            if out.returncode not in codes:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
-                                      reason=f"version probe of {real} exited {out.returncode} (accepted {list(accepted_exit_codes)})")
+                                      reason=f"version probe of {real} exited {out.returncode} (accepted {list(codes)})")
             version = parse_version((out.stdout or "") + (out.stderr or ""))
             if not version:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
@@ -268,6 +272,8 @@ class ProviderRegistry:
     def status(self, provider_id: str, *, refresh: bool = False) -> ProviderStatus:
         if provider_id not in self._entries:
             raise ProviderUnavailable(f"provider {provider_id!r} is not registered")
+        if refresh:
+            _PY_ENV.clear()  # a refresh re-reads the installed distributions too, not a digest cached at first probe
         if refresh or provider_id not in self._cache:
             self._cache[provider_id] = self._entries[provider_id][1]()
         return self._cache[provider_id]

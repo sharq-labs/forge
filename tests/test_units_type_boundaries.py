@@ -17,42 +17,58 @@ import pytest
 from engcore.scientific.errors import ScientificCoreError, UnitCompatibilityError
 from engcore.scientific.units.quantity import Quantity, coerce_quantity
 
-NOT_NUMBERS = (True, False, np.True_, np.bool_(False), "5", "1e3", b"5", bytearray(b"5"))
+NOT_NUMBERS = (True, False, np.True_, np.bool_(False), "5", "1e3", b"5", bytearray(b"5"),
+               memoryview(b"5"), np.array(True), np.array("5"), np.array(b"5"))
 
 
-@pytest.mark.parametrize("value", NOT_NUMBERS, ids=repr)
+def _id(value) -> str:
+    """A test id with no memory address in it, so every xdist worker collects the same tests."""
+    if isinstance(value, memoryview):
+        return f"memoryview({bytes(value)!r})"
+    if type(value) is object:
+        return "object()"
+    return f"{type(value).__name__}:{value!r}"
+
+
+@pytest.mark.parametrize("value", NOT_NUMBERS, ids=_id)
 def test_the_wire_reader_refuses_what_the_constructor_refuses(value):
     wire = Quantity(1.0, "volt").to_dict()
     with pytest.raises(UnitCompatibilityError, match="must be a number"):
         Quantity.from_dict({**wire, "magnitude": value})
 
 
-@pytest.mark.parametrize("units", (5, None, ["volt"], b"volt"), ids=repr)
+@pytest.mark.parametrize("units", (1, 1.0, 5, None, ["volt"], b"volt"), ids=_id)
 def test_the_wire_reader_refuses_units_that_are_not_text(units):
     wire = Quantity(1.0, "volt").to_dict()
     with pytest.raises(UnitCompatibilityError, match="units must be a string"):
         Quantity.from_dict({**wire, "units": units})
 
 
-@pytest.mark.parametrize("value", NOT_NUMBERS[:4] + NOT_NUMBERS[6:], ids=repr)
+@pytest.mark.parametrize("value", NOT_NUMBERS[:4] + NOT_NUMBERS[6:], ids=_id)  # text goes through Quantity.parse
 def test_the_numeric_boundary_refuses_truth_values_and_bytes(value):
     with pytest.raises(UnitCompatibilityError, match="must be a number"):
         coerce_quantity(value, "volt")
 
 
-@pytest.mark.parametrize("value", NOT_NUMBERS, ids=repr)
+@pytest.mark.parametrize("value", NOT_NUMBERS, ids=_id)
 def test_the_constructor_refuses_every_non_number_too(value):
     with pytest.raises(UnitCompatibilityError, match="must be a number"):
         Quantity(value, "volt")
 
 
-@pytest.mark.parametrize("factor", NOT_NUMBERS + (object(),), ids=repr)
+@pytest.mark.parametrize("factor", NOT_NUMBERS + (object(),), ids=_id)
 def test_scalar_arithmetic_refuses_what_is_not_a_scale_factor(factor):
     length = Quantity(2.0, "meter")
     with pytest.raises((UnitCompatibilityError, TypeError)):
         length * factor
     with pytest.raises((UnitCompatibilityError, TypeError)):
         length / factor
+
+
+@pytest.mark.parametrize("units", (1, 1.0, True, np.float64(1.0)), ids=_id)
+def test_a_number_is_never_a_unit(units):
+    with pytest.raises(UnitCompatibilityError, match="a number is not a unit"):
+        Quantity(5.0, units)
 
 
 def test_scalar_division_by_zero_raises_and_never_returns_an_infinity():

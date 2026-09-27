@@ -24,17 +24,22 @@ def register(registry, *, provider_envs: str | None = None, **_):
         if not prefix or not os.path.isfile(exe):
             return ProviderStatus(CAPABILITY, Availability.UNAVAILABLE, reason="OpenFOAM icoFoam not found under the provider prefix")
         from . import openfoam_environment
+        from engcore.providers.catalog import _combine, conda_environment_digest
         try:
             out = subprocess.run([os.path.realpath(exe), "-help"], capture_output=True, text=True, timeout=60,
                                  env=openfoam_environment(prefix))
+            # `icoFoam -help` exits 0 (v2412, measured 2026-09-27); a failed probe is not a version,
+            # whatever its output says (BIG 14 review F1)
+            if out.returncode != 0:
+                return ProviderStatus(CAPABILITY, Availability.UNAVAILABLE, location=os.path.realpath(exe),
+                                      reason=f"version probe of {os.path.realpath(exe)} exited {out.returncode} (accepted [0])")
             m = re.search(r"OpenFOAM-(v?\d+)", out.stdout + out.stderr)
-        except Exception as exc:
+            if not m:
+                return ProviderStatus(CAPABILITY, Availability.UNAVAILABLE, reason="could not establish the OpenFOAM version")
+            env_digest, count = conda_environment_digest(prefix)
+            file_digest = _sha256_file(os.path.realpath(exe))
+        except Exception as exc:  # discovery never crashes a scientific API
             return ProviderStatus(CAPABILITY, Availability.UNAVAILABLE, reason=f"{type(exc).__name__}: {exc}")
-        if not m:
-            return ProviderStatus(CAPABILITY, Availability.UNAVAILABLE, reason="could not establish the OpenFOAM version")
-        from engcore.providers.catalog import _combine, conda_environment_digest
-        env_digest, count = conda_environment_digest(prefix)
-        file_digest = _sha256_file(os.path.realpath(exe))
         return ProviderStatus(CAPABILITY, Availability.AVAILABLE, m.group(1), _combine(file_digest, env_digest),
                               os.path.realpath(exe), dependencies=(("conda-environment", f"{count} packages", env_digest),),
                               executable_digest=file_digest)
