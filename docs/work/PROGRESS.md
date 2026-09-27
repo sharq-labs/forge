@@ -179,6 +179,36 @@ The user chose flagship A for deep closure work. The work so far is below. Every
 - Post hoc, not a registered finding: the model's rise scales more steeply with rate than the measurement (C/2 : 1C : 1.5C = 0.33 : 1 : 1.86, against 0.46 : 1 : 1.66).
   That is the signature of a heat term linear in current, which points at the absent reversible (entropic) heat. Chen2020 has no entropic data.
 
+### Flagship A switched to DFN; review; check `big14-a-cell-energy-check-dfn`
+- Switch (`ab1c8370`, owner decision): `battery_cooling.MODEL = "DFN"`, `CELL_OPTIONS = {"heat of mixing": "true"}`.
+  - The balance factors are read from the pinned `lgm50_dfn_study.json`. The decision is re-derived through `lgm50_dfn.judge` / `decision`.
+  - Level 7 is now ATTEMPTED, NOT REACHED, with the in-sample, not_met cell comparison as its evidence.
+  - `forge_pybamm.coupling.cell_participant` gained `model_options` and `balance` (`51a6513a`). A run of the pre-change `coupling.py` beside the new one gave
+    identical state identity, execution identity and heat for SPM and DFN with defaults.
+- `forge-scientific-review` of the switch: CHANGES REQUIRED.
+  - M1 (the record's decision was trusted field by field) is fixed in `0640e1af`: the record digest is pinned and its judgement and decision are re-derived, with 8 tamper tests.
+  - L1: the default execution payload is pinned.
+  - L2: the level-7 and report prose is derived from the record.
+  - L6: the band's rig context is stated.
+  - L5 led to the check below.
+  - L3: the "held-out" rows are held out from this study's identification only; they are in-sample to Chen2020. The committed record keeps its label and the runner is unchanged, so it still reproduces the record.
+  - L4: the record lacks the PyBaMM version and input digests; the new DFN energy record carries them.
+  - L8: the flagship reads `docs/flagships/big14/`, so an installed wheel fails closed.
+- `cell_energy_check.py` now names SPM explicitly: its registration and committed record are for the SPM cell.
+  The representative-day and window studies call `build_flagship`, so re-running them at HEAD runs DFN. Their records are SPM-era (commits in their entries).
+- Check `big14-a-cell-energy-check-dfn`: pre-registered at `45719e11`, runner `0640e1af`.
+  Command: `python -m forge_flagships.cell_energy_check_dfn --out /mnt/d/forge-b14-logs/edfn`, battery env, rc 0.
+  Record: `docs/flagships/big14/cell_energy_check_dfn.json`.
+  - Result: NOT MET. The bulk-OCV identity closes to 0.886 % at 300 K (met) and 1.104 % at 313.15 K (missed; the tolerance is 1 %).
+  - The surface identity misses by 36.4 / 42.4 %, which equals the heat-of-mixing share (36.3 / 42.0 %).
+  - The registration's stated limit named the expected source of a residual: U of the averaged concentration is not the average of U across a DFN electrode.
+    That is not tested here and stays an explanation, not a finding.
+  - The report states the result under Known limitations.
+- Test runs:
+  - battery env `test_pybamm_coupling_options.py`: 19 passed.
+  - the flagship's M1 tests (`-k "pinned or refused or derived_from_the_record"`): 13 passed.
+  - the full `test_flagship_battery.py` on `ab1c8370`: 11 passed, 1 failed (`test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement...`: it pins SPM's window outcome; updated after the bundles are regenerated).
+
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
 - The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.

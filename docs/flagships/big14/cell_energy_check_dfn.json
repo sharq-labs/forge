@@ -1,0 +1,37 @@
+{
+ "cell_balance": [
+  0.980038541090485,
+  0.853898705996209
+ ],
+ "cell_study_sha256": "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f",
+ "met": false,
+ "preregistration": "big14_a_cell_energy_check_dfn_preregistration.json",
+ "preregistration_sha256": "e6f2f2ecacb73da855af73af539fb4df1be243c694d3c0660d0ffe9b02b54b9c",
+ "pybamm_version": "26.8.0.0",
+ "rows": [
+  {
+   "C1_met": true,
+   "duration_s": 3600.0,
+   "heat_J": 1153.92552866804,
+   "identity_bulk_J": 1164.1458538856018,
+   "identity_surface_J": 733.971577956697,
+   "mixing_share": 0.36266317989304386,
+   "relative_mismatch_bulk": 0.008857005901723138,
+   "relative_mismatch_surface": 0.3639350549736861,
+   "reversible_share": 0.0,
+   "temperature_K": 300.0
+  },
+  {
+   "C1_met": false,
+   "duration_s": 3600.0,
+   "heat_J": 996.8060212227108,
+   "identity_bulk_J": 1007.8089159600698,
+   "identity_surface_J": 574.5531640945287,
+   "mixing_share": 0.4198736869575685,
+   "relative_mismatch_bulk": 0.011038150355334508,
+   "relative_mismatch_surface": 0.42360584520771116,
+   "reversible_share": 0.0,
+   "temperature_K": 313.15
+  }
+ ]
+}

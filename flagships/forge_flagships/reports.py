@@ -10,6 +10,7 @@ ASSUMPTION, MODEL OUTPUT, CORROBORATION, VALIDATION); the section list is enforc
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import warnings
@@ -52,6 +53,16 @@ def _identity(run) -> str:
 
 
 # ==================================================================================================== A
+def _cell_energy_text() -> str:
+    """The pre-registered energy check of the DFN + heat-of-mixing cell (big14-a-cell-energy-check-dfn), read from its committed record."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "docs", "flagships", "big14", "cell_energy_check_dfn.json")
+    rec = json.loads(open(path, "rb").read().decode("utf-8"))
+    rows = ", ".join(f"{100 * r['relative_mismatch_bulk']:.2f} % at {r['temperature_K']:g} K" for r in rec["rows"])
+    return (f"the cell's heat closes on its own energy identity (bulk open-circuit voltage) to {rows}; the pre-registered 1 % check "
+            f"big14-a-cell-energy-check-dfn is {'MET' if rec['met'] else 'NOT MET'}, and the heat of mixing is "
+            + " / ".join(f"{100 * r['mixing_share']:.0f} %" for r in rec["rows"]) + " of the cell heat")
+
+
 def battery_report(runs: dict) -> tuple[str, str]:
     n, h, ov, ow = runs["normal"], runs["hot"], runs["overload"], runs["outside_window"]
     per_case = "; ".join(c + " " + r.summary.scientific_status + " (run " + r.result.status.value + ")" for c, r in runs.items())
@@ -138,7 +149,8 @@ def battery_report(runs: dict) -> tuple[str, str]:
                 if n.study else "the coupling-window study was not run for this report. ")
             + "This flagship demonstrates system execution, coupling, lifecycle propagation and numerical behaviour. It does not validate the battery model."),
         "Known limitations": (
-            "[FACT] Illustrative declared inputs; a single lumped cell type; the cell model's only measured comparison is in-sample (see Reference comparison); the reversible (entropic) heat is absent "
+            "[FACT] Illustrative declared inputs; a single lumped cell type; the cell model's only measured comparison is in-sample (see Reference comparison); "
+            + _cell_energy_text() + "; the reversible (entropic) heat is absent "
             "(Chen2020 has no entropic data); the fade law is a declared approximation with a loss-of-active-material mapping; 56 represented days from 4 resolved days "
             "(the representative-day approximation error was measured for the earlier SPM cell - fade under-read by 1.2-1.3 %, big14-a-representative-day - and is not re-measured for DFN); the cooling loop is a quasi-steady thermal rule; the cell current per module is uniform by assumption; SOC is a coulomb-counting definition. "
             "The aging temperature comes from the coupled day (cooling IS in the loop), which is more faithful than a lumped-air model but still unvalidated."),
