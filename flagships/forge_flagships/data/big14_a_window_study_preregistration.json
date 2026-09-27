@@ -1,0 +1,29 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-window-study",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-27, before any run of this study",
+  "question": "Why do the successive differences of flagship A's coupling-window study GROW as the window shrinks (BIG 13 criterion 1, NOT MET: 0.0032 K then 0.0080 K; 1.2e-6 V then 1.3e-5 V; 2.2e-4 W then 2.9e-3 W)?",
+  "classification": "numerical diagnosis of a discretization study of the same model; not validation. BIG 13 criterion 1 stays NOT MET as pre-registered then; this study does not re-judge it.",
+  "runs": {
+    "case": "normal",
+    "day": "the fresh-cell coupled day only (build_flagship(..., only_day=True)), unchanged except window_s",
+    "windows_s": [3600, 1800, 900, 450, 225],
+    "note": "each window divides 3600 s, so the hourly load and coolant-inlet records never change inside a window"
+  },
+  "quantities": ["peak_cell_temperature_fresh", "voltage_end_of_discharge_fresh", "peak_heat_fresh"],
+  "hypotheses": {
+    "H1_pre_asymptotic_definition": "The compared quantities are maxima of per-window MEANS under a quasi-steady thermal rule. The cell heat rises steeply at the end of the discharge hour, so smaller windows resolve more of that rise and the differences grow before the asymptotic regime; the coupling itself is converged.",
+    "H0_coupling_defect": "The growth comes from the coupling (iteration, relaxation, restart of provider state per window) rather than from the quantity definition."
+  },
+  "predictions": {
+    "P1_if_H1": "For each quantity, the successive difference |v(w/2) - v(w)| stops growing: the last difference (450 -> 225) is smaller than the largest earlier difference, and the ratio of the last two differences is at least 1.5.",
+    "P2_if_H1": "peak_heat_fresh approaches the maximum of the DENSE PyBaMM heat series inside the discharge hour of the finest run from below: the gap max_dense_heat(225) - peak_heat(w) shrinks monotonically as w shrinks.",
+    "H0_indicated_if": "P1 fails (differences keep growing through 225 s) or P2 fails, or any window fails to converge."
+  },
+  "no_change_after_seeing_results": "windows, quantities, hypotheses and predictions are fixed; any other reading is labelled post hoc",
+  "limits_stated_in_advance": [
+    "one case, the fresh-cell day only",
+    "the quasi-steady thermal rule itself (no thermal mass) is part of the model under study, not a finding of this study"
+  ]
+}
