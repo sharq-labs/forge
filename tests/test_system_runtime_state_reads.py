@@ -169,3 +169,38 @@ def test_a_read_owner_that_the_initial_state_does_not_declare_is_refused_in_pref
     request, context, _ = build()
     typo, _ = _reader(request, context, reads=("cel",))
     assert "UNKNOWN_STATE_OWNER" in preflight(typo, compile_plan(typo), context).codes()
+
+
+def test_the_view_hides_the_material_digests_and_provider_checkpoints_of_owners_it_does_not_see():
+    """Focused re-review L3: filters that had no direct test."""
+    from engcore.system_runtime import SystemState
+    from engcore.system_runtime.state import ProviderCheckpointRef, StateView
+    request, _, _ = build()
+    extra = OwnerState("cooler", "component", (InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN),))
+    spec = replace(request.initial_state, owners=request.initial_state.owners + (extra,),
+                   material_state_digests=request.initial_state.material_state_digests + (("cooler", sha("cooler-material")),))
+    s0 = SystemState.initial(spec, request_digest=request.digest, system_digest=request.system.digest, environment_digest=request.environment.digest)
+    s1 = s0.advance(time=Quantity(10, "s"), updates=(), produced_by="x",
+                    provider_checkpoints=(ProviderCheckpointRef("cooler", sha("cp-cooler"), True), ProviderCheckpointRef("cell", sha("cp-cell"), True)))
+    view = StateView(s1, ("cell",))
+    assert {o for o, _ in view.material_state_digests} == {"cell"}
+    assert [c.owner_id for c in view.provider_checkpoints] == ["cell"]
+
+
+def test_a_committer_cannot_touch_the_provider_checkpoints_of_an_owner_it_does_not_write():
+    """Focused re-review M: a committer replaced the whole checkpoint tuple, including owners it does not write."""
+    from engcore.system_runtime import StateProposal
+    from engcore.system_runtime.state import ProviderCheckpointRef
+    request, context, knobs = build()
+    thermal = next(n for n in request.nodes if n.node_id == "thermal")
+    auth = context.authorities.resolve(thermal.authority)
+    original = auth.execute
+
+    def meddling(call):
+        outcome = original(call)
+        proposal = StateProposal(outcome.state_proposal.time, outcome.state_proposal.updates,
+                                 (ProviderCheckpointRef("cooler", sha("forged"), True),))
+        return replace(outcome, state_proposal=proposal)
+    auth.execute = meddling
+    receipt = SystemExecutor(context).run(request).receipt("thermal")
+    assert receipt.status is NodeStatus.FAILED and "does not write" in receipt.reason

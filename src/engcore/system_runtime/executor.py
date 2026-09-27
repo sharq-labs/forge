@@ -380,9 +380,17 @@ class SystemExecutor:
                     return fail(NodeStatus.FAILED, f"state values {sorted(claimed_state)} claim a quantified uncertainty although an input or the value they replace is UNKNOWN"
                                                   + (f" (visible state {state_unknown[:3]})" if state_unknown else "")
                                                   + " and the authority does not declare that it accounts for it (UNKNOWN in, UNKNOWN out)", **kw)
+            checkpoints = None                  # None: the proposal leaves every provider checkpoint as it is
+            if proposal.provider_checkpoints is not None:
+                foreign = sorted({c.owner_id for c in proposal.provider_checkpoints} - set(node.writes_owners))
+                if foreign:
+                    return fail(NodeStatus.FAILED, f"state proposal carries provider checkpoints of owners {foreign} the node does not write", **kw)
+                # merged BY OWNER: the node replaces those of the owners it writes and leaves every other owner's untouched
+                kept = tuple(c for c in state.provider_checkpoints if c.owner_id not in set(node.writes_owners))
+                checkpoints = tuple(sorted(kept + tuple(proposal.provider_checkpoints), key=lambda c: (c.owner_id, c.checkpoint_digest)))
             try:
                 new_state = state.advance(time=proposal.time, updates=proposal.updates, produced_by=node.node_id,
-                                          provider_checkpoints=proposal.provider_checkpoints)
+                                          provider_checkpoints=checkpoints)
             except InvalidScientificProblem as exc:
                 return fail(NodeStatus.FAILED, f"state proposal refused: {exc}", **kw)
         elif outcome.state_proposal is not None:
