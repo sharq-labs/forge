@@ -134,6 +134,27 @@ pythonpath = [
   "tests/hybrid_uq",
   "tests/oracles",
   "tests/scientific/knowledge",
+  # The flagship package and the provider adapter distributions are separate
+  # source roots (`flagships/forge_flagships`, `providers/<name>/forge_<name>`).
+  # They are roots here so their suites COLLECT in every environment: the
+  # provider-free gates (BIG 13 pre-registration pins, reference provenance,
+  # adapter contracts) run in the core suite, and provider-bound tests skip
+  # through their own availability probes. Without these roots every CI run
+  # failed to import them, so none of those pins was enforced (BIG 14 14.0,
+  # class 1). Each adapter imports its provider lazily; nothing here installs
+  # a provider.
+  "flagships",
+  "providers/calculix",
+  "providers/cantera",
+  "providers/code_aster",
+  "providers/coolprop",
+  "providers/fenicsx",
+  "providers/openfoam",
+  "providers/openmodelica",
+  "providers/precice",
+  "providers/pybamm",
+  "providers/su2",
+  "providers/tespy",
 ]
 
 # Execution tiers. Assigned centrally in tests/conftest.py rather than with

@@ -446,6 +446,7 @@ def test_p2_node_mapping_matches_analytic_solution():
     assert np.max(np.abs(rec.field.values - exact)) < 1e-6  # a permuted vertex mapping would fail this
 
 
+@pytest.mark.skipif(not GMSH_OK, reason=f"Gmsh: {GMSH_DETAIL}")
 def test_execution_record_refuses_fabricated_fields():
     from engcore.pde import PDEDiagnostics, PDEExecutionRecord
     from engcore.spatial import Derivation, SpatialField
