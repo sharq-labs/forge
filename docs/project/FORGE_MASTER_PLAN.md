@@ -63,7 +63,8 @@ The long-term differentiator is the combination of:
 9. mechanism-aware reasoning grounded in declared laws, mechanisms, applicability and evidence;
 10. engineering design synthesis from requirements through geometry, assemblies and manufacturing constraints;
 11. motion-system reasoning: kinematics, multibody dynamics, compliant elements, contact, actuation and controls;
-12. high-throughput multi-fidelity design discovery without confusing optimization with validation.
+12. a global 3D engineering visualization runtime that can show assemblies, dimensions, cutaways, motion and evidence-bound scientific overlays;
+13. high-throughput multi-fidelity design discovery without confusing optimization with validation.
 
 ## 3. Explicit non-goals
 
@@ -366,6 +367,55 @@ Discovery may propose competing mechanisms, interventions, counterfactuals,
 scaling relationships or unexplained residuals, but stronger claims require
 the applicable evidence path and, where necessary, discriminating experiments.
 
+## 4.14 Global 3D engineering visualization runtime
+
+Forge should have one global interactive engineering viewer for complete
+products and their internal subsystems. The viewer is a presentation/runtime
+layer over authoritative Forge product, geometry, simulation and evidence
+records; it is not a new scientific authority.
+
+Target capabilities include:
+
+- whole-product and hierarchical subsystem 3D views;
+- assembly tree with exact part/component identities;
+- authoritative dimensions, tolerances, fits, labels and engineering metadata;
+- transparent / X-ray modes;
+- section and cutaway views;
+- exploded assembly views;
+- hide/show/isolate and progressive level-of-detail loading;
+- motion playback for mechanisms, multibody trajectories and flight/vehicle states;
+- time-synchronized telemetry and simulation values;
+- thermal, electrical, structural, flow, vibration and lifecycle overlays;
+- force, torque, velocity, heat-flow, current or other vectors where supported;
+- interactive inspection of limits, margins, warnings and failure-risk indicators;
+- large-system scene streaming so a vehicle, drone or machine does not require every detailed fastener/mesh to be loaded at once.
+
+A motor should eventually be viewable in normal, transparent, cutaway,
+exploded, motion, electrical, thermal and risk/limits modes. A winding
+hotspot may be highlighted only when the thermal/electrical model,
+component/material limit and applicability/evidence path support that
+interpretation. The viewer must never infer burnout, failure or safe state
+from colour or geometry alone.
+
+Preferred architecture:
+
+```text
+Forge Product / Assembly / Simulation Records
+                    ↓
+          Canonical Forge Scene IR
+                    ↓
+          VisualizationProvider
+                    ↓
+        Three.js (initial web provider)
+                    ↓
+      Interactive Engineering Viewer
+```
+
+Three.js is an initial rendering provider, not a Core dependency. Future
+Babylon.js, ParaView/VTK, WebGPU, Unity or other visualization providers may
+consume the same scene contract when justified.
+
+Detailed direction: `docs/architecture/visualization_runtime.md`.
 ## 5. Multi-timescale execution
 
 Forge must eventually coordinate phenomena whose natural time scales differ by many orders of magnitude.
@@ -487,17 +537,18 @@ the active slice requires them.
 | **P22** | Advanced UQ + model discrepancy | uncertainty, sensitivity and identifiability compose across systems using only admitted information |
 | **P23** | Engineering requirements + design space | objectives, constraints, operating envelope, controllable variables and topology choices are identity-bound |
 | **P24** | Parametric geometry / CAD / topology | candidate geometry/topology is reproducible and feeds analysis without losing design identity |
-| **P25** | Assembly + standard-component synthesis | buildable assembly graph, catalog component selection and custom parts with exact identities/provenance |
-| **P26** | Motion systems + multibody dynamics | kinematics/dynamics, mechanisms, trajectories, DOFs, mass/inertia and dynamic loads are modeled for assembled systems |
-| **P27** | Compliance + suspension + joint/contact physics | springs, dampers, bushings, flexures, friction, backlash, contact, vibration and suspension behaviour are explicit |
-| **P28** | Electromechanical actuation + controls + wiring | actuators, transmissions, sensors, control loops, electrical behaviour and harness/routing constraints compose with mechanics |
-| **P29** | Capability-based solver planning | realization, fidelity, primary provider and independent verification routes are selected from declared capability/applicability |
-| **P30** | Intervention + counterfactual runtime | controlled changes and replayable counterfactuals support root-cause and design reasoning without granting causal authority |
-| **P31** | High-throughput multi-fidelity design discovery | large campaigns use feasibility filters, parallelism, caching, early stopping, fidelity escalation, trusted surrogates and Pareto/MDO search |
-| **P32** | Reliability + lifecycle + manufacturability + cost | degradation, fatigue/wear, manufacturing variation/tolerances, serviceability and cost status constrain candidates |
-| **P33** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and negative results are first-class |
-| **P34** | Closed-loop experimental validation | calibration and independent/holdout validation remain separate; physical measurements update evidence/model discrepancy |
-| **P35** | Validated design discovery | requirements -> design -> assembly -> dynamics/multiphysics -> UQ/reliability -> experiment, with improvement claims limited to admitted evidence |
+| **P25** | Global 3D Engineering Viewer + Scene Runtime | whole products and subsystems render from a canonical scene contract with exact dimensions, hierarchy, transparency/cutaways, exploded views, progressive loading and evidence-bound simulation overlays |
+| **P26** | Assembly + standard-component synthesis | buildable assembly graph, catalog component selection and custom parts with exact identities/provenance |
+| **P27** | Motion systems + multibody dynamics | kinematics/dynamics, mechanisms, trajectories, DOFs, mass/inertia and dynamic loads are modeled for assembled systems and can drive viewer playback |
+| **P28** | Compliance + suspension + joint/contact physics | springs, dampers, bushings, flexures, friction, backlash, contact, vibration and suspension behaviour are explicit |
+| **P29** | Electromechanical actuation + controls + wiring | actuators, transmissions, sensors, control loops, electrical behaviour and harness/routing constraints compose with mechanics |
+| **P30** | Capability-based solver planning | realization, fidelity, primary provider and independent verification routes are selected from declared capability/applicability |
+| **P31** | Intervention + counterfactual runtime | controlled changes and replayable counterfactuals support root-cause and design reasoning without granting causal authority |
+| **P32** | High-throughput multi-fidelity design discovery | large campaigns use feasibility filters, parallelism, caching, early stopping, fidelity escalation, trusted surrogates and Pareto/MDO search |
+| **P33** | Reliability + lifecycle + manufacturability + cost | degradation, fatigue/wear, manufacturing variation/tolerances, serviceability and cost status constrain candidates |
+| **P34** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and negative results are first-class |
+| **P35** | Closed-loop experimental validation | calibration and independent/holdout validation remain separate; physical measurements update evidence/model discrepancy |
+| **P36** | Validated design discovery | requirements -> design -> 3D/assembly -> dynamics/multiphysics -> UQ/reliability -> experiment, with improvement claims limited to admitted evidence |
 
 Do not skip prerequisite phases merely to increase the number of domains.
 
