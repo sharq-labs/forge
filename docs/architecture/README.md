@@ -53,6 +53,11 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   ladder (a report vocabulary, not an authority), run bundles and VTU export over a BIG 12 result; it executes and solves nothing. See
   [engineering.md](engineering.md). The four flagship systems are driven from `flagships/` (a separate distribution, not part of `engcore`);
   their reports are in `docs/flagships/`.
+- **Future strategic layer — design-synthesis / assembly:** requirements, parametric geometry, buildable assembly graphs, standard-component
+  selection, joints/interfaces/fits, manufacturing/serviceability constraints and high-throughput candidate campaigns. See
+  [design_synthesis.md](design_synthesis.md).
+- **Future strategic capability — motion/electromechanical systems:** kinematics, multibody dynamics, mechanisms, springs/dampers/bushings,
+  friction/backlash/contact, actuation, controls and power/wiring/harness behaviour. See [motion_systems.md](motion_systems.md).
 
 ## Claims organization
 
