@@ -258,8 +258,9 @@ class PETScLinearProvider(NumericalProvider):
         try:
             import petsc4py  # noqa: F401
             version = petsc4py.__version__
-        except ImportError:
+        except ImportError as exc:
             version = "unavailable"
+            self.unavailable_reason = f"petsc4py cannot be imported ({type(exc).__name__}: {exc}); install the 'petsc' extra"
         self.identity = SolverIdentity("petsc4py.KSP", version, backend="PETSc")
 
     def available(self) -> bool:
@@ -301,6 +302,7 @@ class SundialsProvider(NumericalProvider):
     #: No SUNDIALS binding is wired yet, so the contract reports unavailable
     #: rather than probing for a package it would not use.
     identity = SolverIdentity("sundials", "unavailable")
+    unavailable_reason = "no SUNDIALS binding is wired yet (contract only)"
 
     def available(self) -> bool:
         return False

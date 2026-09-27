@@ -408,6 +408,9 @@ class NumericalProvider(ABC):
     identity: SolverIdentity
     kinds: frozenset[ProblemKind]
     methods: frozenset[str]
+    #: why the backend is unavailable, as observed (an import error's type and text);
+    #: carried into the refusal so a broken install is not reported as an absent one
+    unavailable_reason: str = "backend is not installed"
 
     def available(self) -> bool:
         return True
@@ -416,7 +419,7 @@ class NumericalProvider(ABC):
         if not isinstance(problem, NumericalProblem) or not isinstance(method, NumericalMethod):
             raise NumericalRefusal("execute requires a NumericalProblem and NumericalMethod")
         if not self.available():
-            raise ProviderUnavailable(f"provider {self.identity.solver_id!r} backend is not installed")
+            raise ProviderUnavailable(f"provider {self.identity.solver_id!r} is unavailable: {self.unavailable_reason}")
         if problem.kind not in self.kinds:
             raise NumericalRefusal(f"provider {self.identity.solver_id!r} does not support {problem.kind.value} problems")
         if method.method not in self.methods:

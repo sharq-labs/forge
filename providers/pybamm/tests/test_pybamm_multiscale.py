@@ -28,12 +28,10 @@ from engcore.scientific.results.uncertainty import Uncertainty
 from engcore.scientific.units.quantity import Quantity
 
 REG = ProviderRegistry()
-try:
-    from forge_pybamm import descriptor
-    descriptor.register(REG)
-    OK = REG.status("pybamm").available
-except ImportError:
-    OK = False
+# first-party imports are not guarded: a defect in them fails, it never reads as a missing provider (BIG 14 N1)
+from forge_pybamm import descriptor
+descriptor.register(REG)
+OK = REG.status("pybamm").available
 pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM unavailable")
 DAY, H = 86400, 3600
 DAYS = 56

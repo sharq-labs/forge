@@ -10,8 +10,12 @@ from engcore.system_runtime import Availability, NodeStatus, RunStatus, compare_
 # Import and registry construction are NOT guarded: a defect there must fail, not read as
 # 'provider unavailable'. Only the availability answers decide the skip (BIG 14 review finding 6).
 from engcore.providers import default_registry
+NEEDED = ("cantera", "tespy")
 REG = default_registry()
-OK = all(REG.status(p).available for p in ("cantera", "tespy"))
+# default_registry() records an adapter that fails to import or register as UNAVAILABLE with a reason
+# starting 'adapter '; for the adapters these gates need that is a defect, not a missing provider (BIG 14 N1).
+assert not [r for r in (REG.status(p).reason for p in NEEDED) if r.startswith("adapter ")], [REG.status(p).reason for p in NEEDED]
+OK = all(REG.status(p).available for p in NEEDED)
 pytestmark = pytest.mark.skipif(not OK, reason="Cantera and TESPy are both required")
 
 if OK:

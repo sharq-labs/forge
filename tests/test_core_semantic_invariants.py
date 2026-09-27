@@ -301,15 +301,32 @@ def test_the_constructor_and_the_reader_refuse_the_same_declaration(value):
 #: sub-records whose parent checks, and they emit no ``schema`` key. Derived
 #: membership is asserted below rather than assumed — an entry here that
 #: starts emitting a schema is a failure, not an exemption.
+#:
+#: Qualified by the defining file (BIG 14 re-review N6): `RouteComparison` and
+#: `ArtifactRef` also name other, schema-checking records
+#: (`scientific/verification/comparison.py`, `system_runtime/records.py`), and a
+#: bare-name exemption would silently cover a regression in either.
 _NESTED_WITHOUT_SCHEMA = frozenset({
-    "EntryClassification", "RouteComparison", "ExperimentBudget",
-    "SolverSettings", "CheckpointStore", "CalibrationState",
-    "AuthorizedSystemValidation", "AuthorizedSystemUncertainty",
-    "AuthorizedSystemVerification",
-    "ReplicateObservation", "PairedObservation", "DatasetObservation",
-    "DomainPackDependency", "BlueprintRef", "PolicyTemplateRef", "ArtifactRef",
-    "ParticipantFactoryCoverage", "CompositionDependency",
-    "ParticipantFactoryRef", "ProducerQualification",
+    ("EntryClassification", "src/engcore/design/memory.py"),
+    ("RouteComparison", "src/engcore/scientific/consensus.py"),
+    ("ExperimentBudget", "src/engcore/scientific/experiments/experiment.py"),
+    ("SolverSettings", "src/engcore/scientific/solvers/protocol.py"),
+    ("CheckpointStore", "src/engcore/sria/campaign/checkpoint.py"),
+    ("CalibrationState", "src/engcore/sria/decision/belief_snapshot.py"),
+    ("AuthorizedSystemValidation", "src/engcore/assembly/multiphysics.py"),
+    ("AuthorizedSystemUncertainty", "src/engcore/assembly/multiphysics.py"),
+    ("AuthorizedSystemVerification", "src/engcore/assembly/multiphysics.py"),
+    ("ReplicateObservation", "src/engcore/claims/aleatoric_uq.py"),
+    ("PairedObservation", "src/engcore/claims/analysis/model_discrepancy.py"),
+    ("DatasetObservation", "src/engcore/claims/measurement_dataset.py"),
+    ("DomainPackDependency", "src/engcore/compositionpacks/manifest.py"),
+    ("BlueprintRef", "src/engcore/compositionpacks/manifest.py"),
+    ("PolicyTemplateRef", "src/engcore/compositionpacks/manifest.py"),
+    ("ArtifactRef", "src/engcore/domainpacks/manifest.py"),
+    ("ParticipantFactoryCoverage", "src/engcore/execution/multiphysics/factory.py"),
+    ("CompositionDependency", "src/engcore/executionpacks/manifest.py"),
+    ("ParticipantFactoryRef", "src/engcore/executionpacks/manifest.py"),
+    ("ProducerQualification", "src/engcore/uq/model_form/qualification.py"),
 })
 #: The same exemption, qualified by the file that defines the class. Used for
 #: the BIG 9-13 records because the walk keys readers by class name and
@@ -397,8 +414,7 @@ def test_every_reader_that_writes_a_schema_also_checks_one():
     missing = _readers_missing_a_schema_check()
     unexpected = {
         name: where for (name, where) in missing
-        if name not in _NESTED_WITHOUT_SCHEMA
-        and (name, where) not in _NESTED_WITHOUT_SCHEMA_AT
+        if (name, where) not in _NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT
     }
     assert unexpected == {}, (
         "these read a serialized record without checking the schema it "
@@ -414,15 +430,15 @@ def test_the_nested_exemptions_really_are_nested():
     become a top-level record and the exemption must go.
     """
     missing = set(_readers_missing_a_schema_check())
-    stale = sorted(_NESTED_WITHOUT_SCHEMA - {name for name, _ in missing})
-    stale += sorted(
-        f"{name} ({where})" for name, where in _NESTED_WITHOUT_SCHEMA_AT - missing
+    stale = sorted(
+        f"{name} ({where})"
+        for name, where in (_NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT) - missing
     )
     assert stale == [], (
         f"these no longer need an exemption and should be removed: {stale}"
     )
     writes_a_schema = sorted(
-        name for name, where in _NESTED_WITHOUT_SCHEMA_AT
+        name for name, where in _NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT
         if _to_dict_names_a_schema(name, where)
     )
     assert writes_a_schema == [], (
@@ -451,43 +467,100 @@ _NESTED_READ_ONLY_BY = {
 }
 
 
-def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
-    """(file, enclosing "Class.method" or function) of every product ``name.from_dict(...)`` call.
+def _module_of(path: pathlib.Path) -> str:
+    """Dotted module of a product file: relative to src/, flagships/ or providers/<name>/."""
+    rel = path.relative_to(REPO_ROOT).parts
+    if rel[0] == "src":
+        rel = rel[1:]
+    elif rel[0] == "flagships":
+        rel = rel[1:]
+    elif rel[0] == "providers":
+        rel = rel[2:]
+    parts = list(rel)
+    parts[-1] = parts[-1].removesuffix(".py")
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
 
-    A file that defines its own class of the same name reads that class, not
-    the exempted one, and is skipped (``scientific/corpus/dataset.py`` has its
-    own ``ReferenceCondition``).
-    """
-    sites: set[tuple[str, str]] = set()
+
+def _product_files() -> list[pathlib.Path]:
     roots = [REPO_ROOT / "src", REPO_ROOT / "flagships" / "forge_flagships"]
     roots += sorted((REPO_ROOT / "providers").glob("*/forge_*"))
-    for root in roots:
-        for path in sorted(root.rglob("*.py")):
-            if "__pycache__" in path.parts:
-                continue
-            tree = ast.parse(path.read_bytes().decode("utf-8"))
-            where = path.relative_to(REPO_ROOT).as_posix()
-            defines = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-            exempt_file = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
-            if name in defines and where not in exempt_file:
-                continue
+    return [path for root in roots for path in sorted(root.rglob("*.py")) if "__pycache__" not in path.parts]
 
-            def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
-                # label = "Class.method" for a method (outermost function kept for
-                # nested helpers), the function name for a module-level function
-                for child in ast.iter_child_nodes(node):
-                    c, f = cls, func
-                    if isinstance(child, ast.ClassDef):
-                        c, f = child.name, None
-                    elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
-                        f = child.name
-                    if (isinstance(child, ast.Call) and getattr(child.func, "attr", None) == "from_dict"
-                            and getattr(child.func.value, "id", None) == name):
-                        label = f"{cls}.{func}" if cls and func else (func or cls or "<module>")
-                        sites.add((where, label))
-                    visit(child, c, f)
 
-            visit(tree, None, None)
+def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
+    """(file, enclosing "Class.method" or function) of every product reference to ``name.from_dict``.
+
+    Resolved through each file's own imports (BIG 14 re-review N2): a bare or
+    aliased class name imported from the defining module or a package that
+    re-exports it, a module-qualified access (``ladder.X.from_dict``), an
+    uncalled reference (``map(X.from_dict, ...)``) and
+    ``getattr(X, "from_dict")`` all count. A file that defines its own class of
+    the same name and does not import the exempted one refers to its own.
+    """
+    (exempt_file,) = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
+    target = _module_of(REPO_ROOT / exempt_file)
+    sites: set[tuple[str, str]] = set()
+    for path in _product_files():
+        tree = ast.parse(path.read_bytes().decode("utf-8"))
+        where = path.relative_to(REPO_ROOT).as_posix()
+        here = _module_of(path)
+        package = here if path.name == "__init__.py" else here.rpartition(".")[0]
+        classes: set[str] = {name} if where == exempt_file else set()
+        modules: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                base = package.split(".") if node.level else []
+                if node.level > 1:
+                    base = base[: len(base) - (node.level - 1)]
+                source = ".".join(base + ([node.module] if node.module else []))
+                for alias in node.names:
+                    bound = alias.asname or alias.name
+                    if alias.name == name and (source == target or target.startswith(source + ".")):
+                        classes.add(bound)
+                    full = f"{source}.{alias.name}" if source else alias.name
+                    if full == target or target.startswith(full + "."):
+                        modules[bound] = full
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == target or target.startswith(alias.name + "."):
+                        if alias.asname:
+                            modules[alias.asname] = alias.name
+                        else:
+                            head = alias.name.split(".")[0]
+                            modules[head] = head
+
+        def names_the_class(value: ast.AST) -> bool:
+            if isinstance(value, ast.Name):
+                return value.id in classes
+            chain: list[str] = []
+            while isinstance(value, ast.Attribute):
+                chain.insert(0, value.attr)
+                value = value.value
+            if not (isinstance(value, ast.Name) and value.id in modules and chain and chain[-1] == name):
+                return False
+            owner = ".".join([modules[value.id], *chain[:-1]])
+            return owner == target or target.startswith(owner + ".")
+
+        def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
+            # label = "Class.method" for a method (outermost function kept for nested
+            # helpers), the function name for a module-level function
+            for child in ast.iter_child_nodes(node):
+                c, f = cls, func
+                if isinstance(child, ast.ClassDef):
+                    c, f = child.name, None
+                elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
+                    f = child.name
+                hit = (isinstance(child, ast.Attribute) and child.attr == "from_dict" and names_the_class(child.value)) or (
+                    isinstance(child, ast.Call) and getattr(child.func, "id", None) == "getattr" and len(child.args) >= 2
+                    and isinstance(child.args[1], ast.Constant) and child.args[1].value == "from_dict"
+                    and names_the_class(child.args[0]))
+                if hit:
+                    sites.add((where, f"{cls}.{func}" if cls and func else (func or cls or "<module>")))
+                visit(child, c, f)
+
+        visit(tree, None, None)
     return sites
 
 

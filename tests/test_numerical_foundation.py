@@ -274,17 +274,20 @@ def test_symbolic_backend_refuses_when_sympy_is_absent(monkeypatch):
         SymbolicSystem("circle_line", ("x", "y"), ("x**2 + y**2 - 4", "x - y")).identity()
 
 
-def test_optional_backends_refuse_when_unavailable():
+def test_optional_backends_refuse_when_unavailable(monkeypatch):
+    """Unconditional (BIG 14 re-review N7): petsc4py is made unimportable, so this runs where it is installed too."""
+    import sys
+
     problem, _ = _conduction_problem()
+    monkeypatch.setitem(sys.modules, "petsc4py", None)
     petsc = PETScLinearProvider()
-    if not petsc.available():
-        with pytest.raises(ProviderUnavailable):
-            petsc.execute(problem, method("ksp_gmres", {"rtol": 1e-10}, max_iterations=100))
+    assert not petsc.available()
+    with pytest.raises(ProviderUnavailable, match=r"petsc4py cannot be imported \((ModuleNotFound|Import)Error: .*'petsc' extra"):
+        petsc.execute(problem, method("ksp_gmres", {"rtol": 1e-10}, max_iterations=100))
     sundials = SundialsProvider()
-    if not sundials.available():
-        _, rec, _ = _cooling("RK45")
-        with pytest.raises(ProviderUnavailable):
-            sundials.execute(NumericalProblem(**{**_cooling("RK45")[0].__dict__}), method("cvode_bdf", {"rtol": 1e-6, "atol": 1e-9}))
+    assert not sundials.available()
+    with pytest.raises(ProviderUnavailable, match="no SUNDIALS binding"):
+        sundials.execute(NumericalProblem(**{**_cooling("RK45")[0].__dict__}), method("cvode_bdf", {"rtol": 1e-6, "atol": 1e-9}))
 
 
 def test_linear_identity_hashes_arrays_even_when_digest_is_declared():

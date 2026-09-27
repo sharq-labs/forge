@@ -56,6 +56,27 @@ def test_default_registry_never_raises_for_missing_adapter_packages():
         assert s.available or s.reason  # unavailable always says why
 
 
+def test_a_missing_or_failing_adapter_is_registered_unavailable_with_its_error(monkeypatch):
+    """BIG 14 re-review N8: with the adapters on the pytest path, the missing-package branch is tested on purpose."""
+    import types
+
+    import engcore.providers.catalog as catalog
+
+    broken = types.ModuleType("forge_brokenadapter.descriptor")
+
+    def register(registry, **_):
+        raise NameError("simulated adapter defect")
+    broken.register = register
+    monkeypatch.setitem(sys.modules, "forge_brokenadapter", types.ModuleType("forge_brokenadapter"))
+    monkeypatch.setitem(sys.modules, "forge_brokenadapter.descriptor", broken)
+    monkeypatch.setattr(catalog, "KNOWN_ADAPTERS", ("forge_doesnotexist", "forge_brokenadapter"))
+    statuses = {s.capability.provider_id: s for s in catalog.default_registry().discover()}
+    assert set(statuses) == {"doesnotexist", "brokenadapter"}
+    missing, failing = statuses["doesnotexist"], statuses["brokenadapter"]
+    assert not missing.available and missing.reason.startswith("adapter package 'forge_doesnotexist' is not importable here (ModuleNotFoundError: ")
+    assert not failing.available and failing.reason == "adapter 'forge_brokenadapter' failed to register: NameError: simulated adapter defect"
+
+
 def test_executable_probe_binds_exact_path_version_and_digest():
     cap = ProviderCapability("python-proc", "demo", "process", "python", ("demo",))
     status = executable_probe(cap, os.path.basename(PY), ("--version",), lambda s: s.split()[-1] if "Python" in s else "",

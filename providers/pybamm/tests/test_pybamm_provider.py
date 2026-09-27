@@ -120,6 +120,30 @@ def test_a_sampled_ambient_channel_that_changes_inside_a_segment_is_refused():
             segments_from_records(sampled, "probe", "load", TimeWindow(p(0), p(7200)), 3600)
 
 
+def test_the_provider_free_never_default_refusals_run_without_pybamm():
+    """BIG 14 re-review N4: pure-Python refusals of the adapter, tested where CI can see them."""
+    with pytest.raises(ProviderRefusal, match="no gap is treated as rest"):
+        problem([seg(0, 10, 1.0), seg(20, 30, 1.0)])
+    env = _environment()
+    with pytest.raises(ProviderRefusal, match="inside a 7200 s segment"):
+        segments_from_records(env, "air", "load", TimeWindow(p(0), p(7200)), 7200)  # a start-sample would hide the 3600 s change
+    # the load history stops at 3600 s: the current there is UNKNOWN, and nothing is assumed in its place
+    basis = TimeBasis("cell", "elapsed", "test start")
+    scenario = ScenarioSpecification("cell-day", "1", Quantity(0, "s"), Quantity(7200, "s"),
+                                     segments=(ScenarioSegment("s", Quantity(0, "s"), Quantity(7200, "s")),))
+    air = QuantityHistory("air-h", "exposure", "air", "K", tuple(
+        HistoryEntry(TimeWindow(p(3600 * i), p(3600 * (i + 1))), NamedQuantity("air", Quantity(v, "K"))) for i, v in enumerate((278.15, 308.15))))
+    short = QuantityHistory("load", "usage", "cell_current", "A", (
+        HistoryEntry(TimeWindow(p(0), p(3600)), NamedQuantity("cell_current", Quantity(2.0, "A"))),))
+    tl = Timeline.from_scenario(scenario, timeline_id="cell", basis=basis, histories=(air, short))
+    ch = EnvironmentChannel("air", "ambient_temperature", "K", "declared", ReferenceContext("bench", "lab", "enu"), TimeWindow(p(0), p(7200)),
+                            ChannelRepresentation.INTERVAL_HISTORY, history_id="air-h")
+    gappy = EnvironmentTimeline("cell-env", tl, EnvironmentKindRegistry.standard(),
+                                (EnvironmentSource("declared", "design_assumption", "BIG 11 proof", hashlib.sha256(b"air").hexdigest(), "1"),), (ch,))
+    with pytest.raises(ProviderRefusal, match="UNKNOWN at 3600 s; nothing is assumed"):
+        segments_from_records(gappy, "air", "load", TimeWindow(p(0), p(7200)), 3600)
+
+
 def test_unavailable_pybamm_is_refused():
     reg = ProviderRegistry()
     reg.register_unavailable(descriptor.CAPABILITY, "simulated absence")

@@ -365,22 +365,39 @@ def test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green():
         )
 
 
-def _optional_imports_not_lazily_refused(path: pathlib.Path) -> list[str]:
-    """Optional imports in ``path`` that are not inside a function which turns absence into a refusal.
+def _optional_imports_not_lazily_refused(path: pathlib.Path, optional: frozenset[str] | None = None) -> list[str]:
+    """Optional imports in ``path`` that are not behind a refusal, and module-level uses of them.
 
-    Accepted: the import sits in a ``try`` whose handler catches ImportError
-    (or a broader class) -- an availability probe or a refusing helper; or its
-    function first calls an ``*available*`` check and raises ProviderUnavailable;
-    or it is a numerical provider's ``_execute``, which
-    ``NumericalProvider.execute`` gates on ``available()`` (checked below).
+    An optional import is accepted only inside a function, and only as one of:
+
+    * a PROBE -- the import is in a ``try`` BODY whose handler catches
+      ImportError (or broader) and either raises ProviderUnavailable or only
+      records the absence: it calls nothing but ProviderUnavailable, ``type``,
+      ``str`` or ``repr``, so a handler that runs another backend instead
+      (a silent fallback) is refused;
+    * a GATED import -- an ``if`` whose test calls an ``*available*`` check and
+      whose body raises ProviderUnavailable comes BEFORE it in the function;
+    * a numerical ``_execute`` -- in a class deriving from NumericalProvider
+      that does not override ``execute``, whose base ``execute`` refuses when
+      ``available()`` is false (checked in the base, not assumed).
+
+    A module-level statement that calls a function which imports an extra is
+    refused too: it would run the import on every bare install (BIG 14 N3).
     """
+    optional = frozenset(OPTIONAL_TOP_LEVEL_NAMES) if optional is None else optional
     tree = ast.parse(path.read_bytes().decode("utf-8"))
     parents: dict[ast.AST, ast.AST] = {}
     for node in ast.walk(tree):
         for child in ast.iter_child_nodes(node):
             parents[child] = node
-    core = (REPO_ROOT / "src/engcore/numerical/core.py").read_bytes().decode("utf-8")
-    gated_execute = "if not self.available():" in core and "raise ProviderUnavailable" in core
+    core = ast.parse((REPO_ROOT / "src/engcore/numerical/core.py").read_bytes().decode("utf-8"))
+    base = next(n for n in core.body if isinstance(n, ast.ClassDef) and n.name == "NumericalProvider")
+    base_execute = next(m for m in base.body if isinstance(m, ast.FunctionDef) and m.name == "execute")
+    gated_execute = any(
+        isinstance(s, ast.If) and any(getattr(c.func, "attr", None) == "available" for c in ast.walk(s.test) if isinstance(c, ast.Call))
+        and any(isinstance(r, ast.Raise) and getattr(getattr(r.exc, "func", None), "id", None) == "ProviderUnavailable" for r in s.body)
+        for s in base_execute.body
+    )
 
     def names_of(node: ast.AST) -> set[str]:
         if isinstance(node, ast.Import):
@@ -389,30 +406,109 @@ def _optional_imports_not_lazily_refused(path: pathlib.Path) -> list[str]:
             return {node.module.split(".")[0]}
         return set()
 
+    def call_names(node: ast.AST) -> set[str]:
+        return {getattr(c.func, "id", None) or getattr(c.func, "attr", None) for c in ast.walk(node) if isinstance(c, ast.Call)}
+
+    def probe(node: ast.AST) -> bool:
+        child, cursor = node, parents.get(node)
+        while cursor is not None and not isinstance(cursor, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(cursor, ast.Try) and child in cursor.body:
+                for handler in cursor.handlers:
+                    if not (handler.type is None or getattr(handler.type, "id", None) in {"ImportError", "ModuleNotFoundError", "Exception"}):
+                        continue
+                    raises = any(isinstance(r, ast.Raise) and getattr(getattr(r.exc, "func", None), "id", None) == "ProviderUnavailable"
+                                 for r in ast.walk(handler))
+                    if raises or call_names(handler) <= {"ProviderUnavailable", "type", "str", "repr"}:
+                        return True
+            child, cursor = cursor, parents.get(cursor)
+        return False
+
+    def gated(node: ast.AST, function: ast.AST) -> bool:
+        # names bound from an availability call before the import (`ok, detail = gmsh_available()`)
+        probed = {t.id for s in ast.walk(function)
+                  if isinstance(s, ast.Assign) and s.lineno < node.lineno and any(n and "available" in n for n in call_names(s.value))
+                  for t in ast.walk(s) if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)}
+        for stmt in ast.walk(function):
+            tested = call_names(stmt.test) if isinstance(stmt, ast.If) else set()
+            reads = {n.id for n in ast.walk(stmt.test) if isinstance(n, ast.Name)} if isinstance(stmt, ast.If) else set()
+            if (isinstance(stmt, ast.If) and stmt.lineno < node.lineno
+                    and (any(n and "available" in n for n in tested) or reads & probed)
+                    and any(isinstance(r, ast.Raise) and getattr(getattr(r.exc, "func", None), "id", None) == "ProviderUnavailable"
+                            for r in stmt.body)):
+                return True
+        return False
+
+    def numerical_execute(function: ast.AST) -> bool:
+        owner = parents.get(function)
+        if function.name != "_execute" or not isinstance(owner, ast.ClassDef) or not gated_execute:
+            return False
+        derives = any(getattr(b, "id", None) == "NumericalProvider" for b in owner.bases)
+        overrides = any(isinstance(m, ast.FunctionDef) and m.name == "execute" for m in owner.body)
+        return derives and not overrides
+
     bad: list[str] = []
+    importing_functions: set[str] = set()
     for node in ast.walk(tree):
-        if not names_of(node) & set(OPTIONAL_TOP_LEVEL_NAMES):
+        if not names_of(node) & optional:
             continue
-        guarded, function, cursor = False, None, node
+        function, cursor = None, node
         while cursor in parents:
             cursor = parents[cursor]
-            if isinstance(cursor, ast.Try) and any(
-                h.type is None or getattr(h.type, "id", None) in {"ImportError", "ModuleNotFoundError", "Exception"}
-                for h in cursor.handlers
-            ):
-                guarded = True
             if isinstance(cursor, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 function = cursor
                 break
         if function is None:
             bad.append(f"line {node.lineno}: not inside a function")
             continue
-        calls = {getattr(c.func, "id", None) or getattr(c.func, "attr", None)
-                 for c in ast.walk(function) if isinstance(c, ast.Call)}
-        checks_then_refuses = any(n and "available" in n for n in calls) and "ProviderUnavailable" in calls
-        if not (guarded or checks_then_refuses or (function.name == "_execute" and gated_execute)):
+        importing_functions.add(function.name)
+        if not (probe(node) or gated(node, function) or numerical_execute(function)):
             bad.append(f"line {node.lineno}: in {function.name}() without a refusal path")
+    for stmt in tree.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Import, ast.ImportFrom)):
+            continue
+        used = call_names(stmt) & importing_functions
+        if used:
+            bad.append(f"line {stmt.lineno}: module-level call of {sorted(used)}")
     return bad
+
+
+_LAZY_IMPORT_CASES = (
+    # (label, source, accepted)
+    ("probe that records absence",
+     "def probe():\n    try:\n        import sympy\n    except ImportError as exc:\n        return False, f'{type(exc).__name__}: {exc}'\n", True),
+    ("helper that refuses",
+     "def _s():\n    try:\n        import sympy\n    except ImportError as exc:\n        raise ProviderUnavailable('x') from exc\n    return sympy\n", True),
+    ("gated by an availability check first",
+     "def run():\n    if not sympy_available():\n        raise ProviderUnavailable('x')\n    import sympy\n", True),
+    ("gated through a probed name first",
+     "def run():\n    ok, why = sympy_available()\n    if not ok:\n        raise ProviderUnavailable(why)\n    import sympy\n", True),
+    ("probed but never refused",
+     "def run():\n    ok, why = sympy_available()\n    if not ok:\n        pass\n    import sympy\n", False),
+    ("module level", "import sympy\n", False),
+    ("module level inside try", "try:\n    import sympy\nexcept ImportError:\n    pass\n", False),
+    ("silent fallback in the handler",
+     "def solve():\n    try:\n        import sympy\n    except ImportError:\n        return _numpy_solve()\n", False),
+    ("import in the handler, not the body",
+     "def solve():\n    try:\n        pass\n    except ImportError:\n        import sympy\n", False),
+    ("availability check AFTER the import",
+     "def run():\n    import sympy\n    if not sympy_available():\n        raise ProviderUnavailable('x')\n", False),
+    ("called at module level",
+     "def _s():\n    try:\n        import sympy\n    except ImportError as exc:\n        raise ProviderUnavailable('x') from exc\n    return sympy\nSYMPY = _s()\n", False),
+    ("_execute outside a NumericalProvider",
+     "class P:\n    def _execute(self):\n        import sympy\n", False),
+    ("_execute of a provider that overrides execute",
+     "class P(NumericalProvider):\n    def execute(self):\n        return self._execute()\n    def _execute(self):\n        import sympy\n", False),
+    ("_execute of a gated NumericalProvider",
+     "class P(NumericalProvider):\n    def _execute(self):\n        import sympy\n", True),
+)
+
+
+@pytest.mark.parametrize("label, source, accepted", _LAZY_IMPORT_CASES, ids=[c[0] for c in _LAZY_IMPORT_CASES])
+def test_the_lazy_import_rule_accepts_and_refuses_what_it_states(tmp_path, label, source, accepted):
+    path = tmp_path / "module.py"
+    path.write_bytes(source.encode("utf-8"))
+    bad = _optional_imports_not_lazily_refused(path, frozenset({"sympy"}))
+    assert (bad == []) is accepted, (label, bad)
 
 
 def test_the_discovery_found_exactly_the_repository():
@@ -4805,52 +4901,89 @@ def test_every_dependency_the_tree_reaches_for_is_declared():
     )
 
 
+def _names_outside_the_wheel() -> frozenset[str]:
+    """Top-level names at every pytest root except src/ and the repository root.
+
+    Derived from pyproject's pythonpath (BIG 14 re-review N5), not from the
+    directory layout: flagships/, providers/<name>/ and the historical test
+    helper roots. None of them ships in the crafty wheel.
+    """
+    import tomllib
+
+    configured = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest"]["ini_options"]["pythonpath"]
+    names: set[str] = set()
+    for entry in configured:
+        if entry in ("src", "."):
+            continue
+        names |= _names_at_root(REPO_ROOT / entry)
+    return frozenset(names - {"tests"})
+
+
 def test_nothing_in_src_reaches_a_flagship_or_provider_adapter_package():
     """The wheel ships src/ only; flagships/ and providers/<name>/ are separate distributions above it.
 
     They are pytest roots so their suites collect in the core environment
     (BIG 14 class 1). That must not let src/ import them: the import would
     work in every pytest run and fail on a wheel install, and it would put the
-    runtime below the layer that is built on it. Statements and every string
-    constant naming one of those packages are both refused.
+    runtime below the layer that is built on it. Refused in src/: an import
+    statement of one of those names; any string (f-string parts included)
+    that names an adapter package or is the bare ``forge_`` prefix a computed
+    name would start from; and any use of ``KNOWN_ADAPTERS`` outside the
+    guarded discovery that is its one sanctioned consumer.
     """
-    outside = set(_names_at_root(REPO_ROOT / "flagships"))
-    for adapter_root in sorted((REPO_ROOT / "providers").iterdir()):
-        if adapter_root.is_dir():
-            outside |= _names_at_root(adapter_root)
-    outside -= {"tests"}
-    assert "forge_flagships" in outside and "forge_pybamm" in outside, sorted(outside)
-    # The one sanctioned mention: `KNOWN_ADAPTERS`, the data tuple BIG 11's
-    # discovery imports inside try/except and registers UNAVAILABLE when absent.
+    outside = _names_outside_the_wheel()
+    adapters = {n for n in outside if n.startswith("forge_")}
+    assert "forge_flagships" in adapters and "forge_pybamm" in adapters, sorted(outside)
     catalog = REPO_ROOT / "src/engcore/providers/catalog.py"
     catalog_tree = ast.parse(_source_of(catalog))
     known = next(n for n in catalog_tree.body if isinstance(n, ast.AnnAssign)
                  and getattr(n.target, "id", None) == "KNOWN_ADAPTERS")
-    sanctioned = {id(c) for c in ast.walk(known.value)}
-    assert {c.value for c in ast.walk(known.value) if isinstance(c, ast.Constant)} == outside - {"forge_flagships"}
+    # the data tuple: string constants only, exactly the adapter distributions on disk
+    assert isinstance(known.value, ast.Tuple) and all(
+        isinstance(e, ast.Constant) and isinstance(e.value, str) for e in known.value.elts)
+    assert {e.value for e in known.value.elts} == adapters - {"forge_flagships"}
     discovery = next(n for n in catalog_tree.body if isinstance(n, ast.FunctionDef) and n.name == "default_registry")
-    assert any(isinstance(t, ast.Try) and any(
-        getattr(c.func, "attr", None) == "import_module" for c in ast.walk(t) if isinstance(c, ast.Call))
-        for t in ast.walk(discovery)), "adapter discovery must import inside try/except"
+    parents = {child: node for node in ast.walk(discovery) for child in ast.iter_child_nodes(node)}
+
+    def in_try_body(node: ast.AST) -> bool:
+        child, cursor = node, parents.get(node)
+        while cursor is not None:
+            if isinstance(cursor, ast.Try) and child in cursor.body:
+                return True
+            child, cursor = cursor, parents.get(cursor)
+        return False
+
+    imports = [c for c in ast.walk(discovery) if isinstance(c, ast.Call) and getattr(c.func, "attr", None) == "import_module"]
+    assert imports and all(in_try_body(c) for c in imports), "every adapter import in discovery must sit in a try body"
+    sanctioned = {id(e) for e in known.value.elts} | {id(known.target)}
+    # `module.removeprefix("forge_")` inside discovery derives a provider id; it imports nothing
+    sanctioned |= {id(a) for c in ast.walk(discovery) if isinstance(c, ast.Call) and getattr(c.func, "attr", None) == "removeprefix"
+                   for a in c.args}
+    sanctioned |= {id(n) for n in ast.walk(discovery) if isinstance(n, ast.Name) and n.id == "KNOWN_ADAPTERS"}
+
+    def names_an_adapter(text: str) -> bool:
+        return text == "forge_" or any(text == a or text.startswith(a + ".") for a in adapters)
+
     reaching: dict[str, list[str]] = {}
     for path in sorted((REPO_ROOT / "src").rglob("*.py")):
         if "__pycache__" in path.parts:
             continue
         tree = catalog_tree if path == catalog else ast.parse(_source_of(path))
+        where = path.relative_to(REPO_ROOT).as_posix()
         for node in ast.walk(tree):
             if id(node) in sanctioned:
                 continue
-            names: list[str] = []
+            found: list[str] = []
             if isinstance(node, ast.Import):
-                names = [a.name for a in node.names]
+                found = [a.name for a in node.names if a.name.split(".")[0] in outside]
             elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                names = [node.module]
-            elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-                names = [node.value]
-            for name in names:
-                if name.split(".")[0] in outside:
-                    reaching.setdefault(name.split(".")[0], []).append(
-                        f"{path.relative_to(REPO_ROOT).as_posix()}:{node.lineno}")
+                found = [node.module] if node.module.split(".")[0] in outside else []
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str) and names_an_adapter(node.value):
+                found = [node.value]
+            elif isinstance(node, ast.Name) and node.id == "KNOWN_ADAPTERS":
+                found = ["KNOWN_ADAPTERS"]
+            for name in found:
+                reaching.setdefault(name, []).append(f"{where}:{node.lineno}")
     assert reaching == {}, reaching
 
 

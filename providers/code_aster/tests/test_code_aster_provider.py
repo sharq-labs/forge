@@ -41,10 +41,7 @@ def test_code_aster_executes_and_corroborates_calculix_on_the_same_records():
     ca = CodeAsterProvider(REG).execute(problem)
     assert ca.succeeded, ca.reason
     assert "C_PLAN" in ca.artifacts["case.comm"] and "GROUP_NO" in ca.artifacts["mesh.mail"]
-    try:
-        from forge_calculix import CalculixProvider, descriptor as ccd
-    except ImportError:
-        pytest.skip("CalculiX adapter not on the path")
+    from forge_calculix import CalculixProvider, descriptor as ccd  # first-party: a defect fails (BIG 14 N1)
     reg = ProviderRegistry()
     ccd.register(reg)
     if not reg.status("calculix").available:
