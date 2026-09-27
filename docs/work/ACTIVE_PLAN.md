@@ -202,8 +202,10 @@ Then review and authority debt:
       included), and the module IN MEMORY must match (location, `__version__`,
       the discovery it was first imported under); discovery refuses a module
       that is not a file of the distribution it binds (shadowing / editable).
-      Declared dependencies are covered in memory too (per-distribution
-      pins). OPERATING RULE: a provider-environment change takes effect in a
+      Declared dependencies are covered too: per-distribution pins, their
+      `__version__` in memory, and their modules must load from the
+      distribution's own files (or, when it lists none, e.g. conda-installed
+      casadi, from its install root). OPERATING RULE: a provider-environment change takes effect in a
       new process; a same-version rebuild of an already-loaded module cannot
       be seen from inside the process. Residuals: the shared python-environment
       digest is re-read only on refresh; undeclared dependencies are unbound;

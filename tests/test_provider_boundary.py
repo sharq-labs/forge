@@ -304,7 +304,7 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
         shadow = types.ModuleType("pytest")
         shadow.__file__ = os.path.join(os.path.dirname(os.path.dirname(real.__file__)), "elsewhere", "pytest", "__init__.py")
         m.setitem(sys.modules, "pytest", shadow)
-        with pytest.raises(ProviderRefusal, match="was loaded from"):
+        with pytest.raises(ProviderRefusal, match="loaded from .*(not a file of the discovered pytest|not from the discovered)"):
             require_library_unchanged(status, "pytest")
     with monkeypatch.context() as m:
         older = types.ModuleType("pytest")
@@ -322,7 +322,7 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
     require_library_unchanged(with_dep, "pytest")
     with monkeypatch.context() as m:
         stale = types.ModuleType("pluggy")
-        stale.__version__ = "0.0.1"
+        stale.__version__, stale.__file__ = "0.0.1", sys.modules["pluggy"].__file__  # right place, older code
         m.setitem(sys.modules, "pluggy", stale)
         with pytest.raises(ProviderRefusal, match="'pluggy' in memory is version 0.0.1"):
             require_library_unchanged(with_dep, "pytest")
@@ -330,9 +330,57 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
         m.setitem(catalog._IMPORTED_UNDER, "pluggy", ("0.0.1", "0" * 64))
         with pytest.raises(ProviderRefusal, match="'pluggy' was first used in this process as 0.0.1"):
             require_library_unchanged(with_dep, "pytest")
+    # a declared dependency loaded from outside its distribution (shadow / editable), right version or not (review N-1)
+    real_pluggy = sys.modules["pluggy"]
+    with monkeypatch.context() as m:
+        shadow_dep = types.ModuleType("pluggy")
+        shadow_dep.__version__ = real_pluggy.__version__
+        shadow_dep.__file__ = os.path.join(os.path.dirname(os.path.dirname(real_pluggy.__file__)), "checkout", "pluggy", "__init__.py")
+        m.setitem(sys.modules, "pluggy", shadow_dep)
+        with pytest.raises(ProviderRefusal, match="'pluggy' would be \\(or was\\) loaded from .* not a file of the discovered pluggy"):
+            require_library_unchanged(with_dep, "pytest")
+        dep_probe = python_package_probe(ProviderCapability("pytest-dep2", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                         dependencies=("pluggy",))()
+        assert not dep_probe.available and dep_probe.found_but_refused and "dependency module 'pluggy'" in dep_probe.reason
+    # the package itself, not yet imported, must still resolve to where discovery found it (LOW-a)
+    import importlib.machinery
+    import importlib.util as iu
+    real_find = iu.find_spec
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "pytest")
+        m.setattr(catalog, "_SPEC_ORIGIN", {})  # resolved once per process: start this case unresolved
+        elsewhere = importlib.machinery.ModuleSpec("pytest", None, origin=os.path.join(os.sep, "elsewhere", "pytest", "__init__.py"))
+        m.setattr(iu, "find_spec", lambda name, *a: elsewhere if name == "pytest" else real_find(name, *a))
+        with pytest.raises(ProviderRefusal, match="would (now )?be"):
+            require_library_unchanged(status, "pytest")
+    # the same for a distribution that lists no module files (conda-style): the footprint is only its install
+    # root, so a module inside that root but not where discovery found it is refused by the location rule
+    site_root = os.path.realpath(os.path.dirname(os.path.dirname(real.__file__)))
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "pytest")
+        m.setattr(catalog, "_SPEC_ORIGIN", {})
+        m.setitem(catalog._FOOTPRINTS, "pytest", (frozenset(), site_root))
+        inside = importlib.machinery.ModuleSpec("pytest", None, origin=os.path.join(site_root, "vendored", "pytest", "__init__.py"))
+        m.setattr(iu, "find_spec", lambda name, *a: inside if name == "pytest" else real_find(name, *a))
+        with pytest.raises(ProviderRefusal, match="would now be imported from .*vendored"):
+            require_library_unchanged(status, "pytest")
+    assert sys.modules["pytest"] is real
     # discovery refuses a module that is not a file of the distribution it would bind (shadowing / editable)
     shadowed = python_package_probe(ProviderCapability("mis", "demo", "library", "pytest", ("d",)), "pytest", ("pluggy",))()
     assert not shadowed.available and shadowed.found_but_refused and "is not a file of the installed pluggy" in shadowed.reason
+
+
+def test_a_footprint_without_module_files_is_the_install_root():
+    """Conda-installed distributions often list no module files; they are then bounded by their install root."""
+    import engcore.providers.catalog as catalog
+
+    root = os.path.realpath(os.path.dirname(os.path.dirname(pytest.__file__)))
+    no_files = (frozenset(), root)
+    assert not catalog._outside(os.path.join(root, "casadi", "__init__.py"), no_files)
+    assert catalog._outside(os.path.join(os.path.dirname(root), "checkout", "casadi", "__init__.py"), no_files)
+    listed = (frozenset({os.path.realpath(pytest.__file__)}), root)
+    assert not catalog._outside(pytest.__file__, listed)
+    assert catalog._outside(os.path.join(root, "casadi", "__init__.py"), listed)  # files listed: membership, not the root
 
 
 def test_every_library_adapter_checks_its_library_where_it_forms_an_identity():

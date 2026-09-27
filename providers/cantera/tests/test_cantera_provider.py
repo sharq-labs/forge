@@ -12,6 +12,8 @@ from forge_cantera import CanteraProvider, Mechanism, descriptor
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("cantera").available
+# present but refused by discovery (e.g. a dependency loaded from outside its distribution): a defect, not a skip
+assert not REG.status("cantera").found_but_refused, REG.status("cantera").reason
 pytestmark = pytest.mark.skipif(not OK, reason="Cantera unavailable")
 STOICH_CH4_AIR = {"CH4": 1 / 10.52, "O2": 2 / 10.52, "N2": 7.52 / 10.52}
 

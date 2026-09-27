@@ -12,6 +12,8 @@ from forge_tespy import ChainProblem, HeatExchangerSpec, TESPyProvider, descript
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("tespy").available
+# present but refused by discovery (e.g. a dependency loaded from outside its distribution): a defect, not a skip
+assert not REG.status("tespy").found_but_refused, REG.status("tespy").reason
 pytestmark = pytest.mark.skipif(not OK, reason="TESPy unavailable")
 
 
