@@ -210,6 +210,7 @@ class SystemExecutor:
                 receipts[node.node_id] = self._receipt(node, plan, request, NodeStatus.REFUSED, state.digest, "", "wall-time budget exhausted before this node",
                                                       run_id=run_id)
                 failed_any = True
+                commit_tainted = commit_tainted or node.commits_state
                 continue
 
             status, receipt, outputs, new_state, cp = self._run_node(node, plan, request, state, store, run_id, attempt=1)
@@ -224,7 +225,7 @@ class SystemExecutor:
                     state = new_state
                     history.append(state)
                 if node.node_id in plan.checkpoint_after or node.node_id == stop_after:
-                    checkpoints.append(self._checkpoint(request, plan, run_id, state, history, store, authority_cps))
+                    checkpoints.append(self._checkpoint(request, plan, run_id, state, history, store, authority_cps, statuses))
                 if node.node_id == stop_after:
                     stopped = True
             else:
@@ -456,8 +457,14 @@ class SystemExecutor:
         return tuple(sorted(pairs))
 
     def _checkpoint(self, request: SystemRunRequest, plan: SystemExecutionPlan, run_id: str, state: SystemState, history: list[SystemState],
-                    store: dict[str, tuple[dict[str, OutputValue], NodeReceipt]], authority_cps: dict[str, AuthorityCheckpoint]) -> SystemCheckpoint:
+                    store: dict[str, tuple[dict[str, OutputValue], NodeReceipt]], authority_cps: dict[str, AuthorityCheckpoint],
+                    statuses: dict[str, NodeStatus]) -> SystemCheckpoint:
         reasons: list[str] = []
+        # a checkpoint keeps succeeded receipts only: taken after a refusal or failure, resuming it would re-run that node with no
+        # record that it was refused (removing evidence would raise assurance), so such a checkpoint is incomplete and never resumed
+        not_succeeded = sorted(n for n, st in statuses.items() if st not in (NodeStatus.SUCCEEDED, NodeStatus.PENDING))
+        if not_succeeded:
+            reasons.append(f"nodes {not_succeeded} did not succeed before this checkpoint")
         for node_id in store:
             cp = authority_cps.get(node_id)
             if cp is not None and not cp.declared_complete:
@@ -479,7 +486,10 @@ class SystemExecutor:
         for node in plan.nodes:              # plan (= execution) order, so an authority shared by several nodes ends on its LATEST checkpoint
             cp = cps.get(node.node_id) if node.node_id in store else None
             if cp is not None and cp.payload is not None:
-                self._authority(node).restore(cp.payload)
+                authority = self._authority(node)
+                authority.restore(cp.payload)
+                if hasattr(authority, "restored_from"):
+                    authority.restored_from(node.node_id)
         return checkpoint.state, list(checkpoint.state_history), store, cps
 
     # ---------------------------------------------------------------------------------------------- assembly

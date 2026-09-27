@@ -647,11 +647,11 @@ def _provider_record(*, within=True, max_absolute="0.0009", post_hoc=False, a="a
 
 def test_a_provider_comparison_must_name_executions_the_run_recorded_and_an_outcome_that_follows_from_its_own_maximum_difference():
     from engcore.engineering.ladder import check_provider_comparison
-    ids = {"a" * 64, "b" * 64}
+    ids = {"a" * 64: "openfoam", "b" * 64: "su2"}
     check_provider_comparison(_provider_record(), ids)
     with pytest.raises(InvalidScientificProblem, match="did not record"):
         check_provider_comparison(_provider_record(a="c" * 64), ids)                               # an execution that is not in the run
-    with pytest.raises(InvalidScientificProblem, match="two different providers"):
+    with pytest.raises(InvalidScientificProblem, match="provider labels"):
         check_provider_comparison(_provider_record(pb="openfoam"), ids)
     with pytest.raises(InvalidScientificProblem, match="post-hoc flag"):
         check_provider_comparison(_provider_record(post_hoc=True) | {"classification": "solver_corroboration_not_validation"}, ids)

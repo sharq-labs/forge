@@ -157,19 +157,33 @@ Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
 
 Then review and authority debt:
 
-- [ ] Re-review the final BIG 12 fix batch; resolve or explicitly disposition
+- [x] Re-review the final BIG 12 fix batch; resolve or explicitly disposition
       model-selection binding, output-node applicability, multiscale resume
-      dependency and commit-taint findings.
-- [ ] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
-      every finding. Bundle self-consistency must not be called authenticity.
+      dependency and commit-taint findings. Done 2026-09-28 on
+      `feat/big-14-reviews` (PROGRESS, "14.1 review debt"): (a) HIGH closed
+      by refusing validity records and keeping labels out of
+      `provenance.models`; R1, N1, N2, (c) and (d)-1 fixed. Deferred with
+      reasons: the executed-model binding.
+- [ ] BIG 12 R2 / (d)-2 (MEDIUM): state reads are not DAG edges. Needs a
+      declared `reads_owners` on `NodeSpec` (a design decision; it touches
+      every flagship's nodes).
+- [ ] BIG 12 (b) (MEDIUM): output-node applicability is undisclosed. Needs a
+      version decision (it moves stored result digests).
+- [x] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
+      every finding. Done 2026-09-28: F1 partial (the recorded providers are
+      bound; completeness and pre-registration are a documented limit), F2-F8
+      fixed, F4 pins the committed bundles' full digests. Bundle self-consistency must not be called authenticity.
       Include: `engineering/reference.py` `ReferenceCondition` / `EnvelopeBound`
       readers pre-coerce with `float(payload[...])` (the U-01 pattern; found
       by the 14.1 units review).
-- [ ] Run the missing second BIG 11 re-review (the focused re-review's fixes
-      were never re-reviewed); resolve or disposition its findings.
-- [ ] Resolve or explicitly defer BIG 13 review M7: study/limit records ship
+- [x] Run the missing second BIG 11 re-review (the focused re-review's fixes
+      were never re-reviewed); resolve or disposition its findings. Done
+      2026-09-28: A1 HIGH (held UNKNOWN ambient) and A2 MEDIUM (non-affine
+      selections) fixed; LOW A3-A6 recorded.
+- [x] Resolve or explicitly defer BIG 13 review M7: study/limit records ship
       inline but their provider bindings are not compared with the main
-      request.
+      request. DEFERRED to BIG 15 graph-level V&V (the study requests are not
+      shipped; stated in `engineering.md`).
 - [x] Fix the Units findings U-01/U-02/U-03
       (`docs/code_audit/MODULE_BY_MODULE_REVIEW.md`) with focused adversarial
       tests (also numpy bool/arrays, bytes, memoryview, numbers as units).
@@ -210,10 +224,11 @@ Then review and authority debt:
       files, else the conda package record's files (conda-installed casadi),
       else nothing is established and it is refused; editable installs and
       checkout egg-infos establish nothing. Adapters re-check after importing.
-- [ ] Re-review the F-1 / F-2 fix (`catalog._footprint`: parsed RECORD,
+- [x] Re-review the F-1 / F-2 fix (`catalog._footprint`: parsed RECORD,
       editable refusal, empty-module refusal). NOT re-reviewed: the review
       loop on this sub-area was closed after seven rounds; carry it into the
-      next review batch. Recorded LOW: `Mechanism.from_cantera_data` and
+      next review batch. Re-reviewed 2026-09-28: PASS (LOW B1-B4 recorded).
+      Recorded LOW: `Mechanism.from_cantera_data` and
       `forge_pybamm.parameter_set` import their library without the check
       (their outputs are content-hashed); `<pkg>.libs` dirs derive as module
       names; conda egg-info packages are refused (visible, not silent). OPERATING RULE: a provider-environment change takes effect in a

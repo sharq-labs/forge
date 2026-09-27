@@ -426,7 +426,8 @@ def level5_entry(levels, flags: dict, whole: dict, lower: dict, details: dict) -
                                                 f"whole field {n}x{n}: no comparison was produced (a provider execution failed or was refused)"))
     produced = [n for n in levels if whole.get(n) is not None]
     if not produced:
-        return LevelEntry(5, LevelStatus.NOT_ATTEMPTED, (), "no whole-field comparison was produced")
+        # the comparisons were attempted (the level was requested) and none was produced: that is recorded, not read as never attempted
+        return LevelEntry(5, LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links), f"no whole-field comparison was produced at {[f'{n}x{n}' for n in levels]}")
     unmet = [f"{n}x{n}" for n in levels if whole.get(n) is None or flags.get(n) != 1.0]
     ok = not unmet
     if not ok:

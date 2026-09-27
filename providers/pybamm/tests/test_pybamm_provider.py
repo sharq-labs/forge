@@ -122,6 +122,37 @@ def test_a_sampled_ambient_channel_that_changes_inside_a_segment_is_refused():
             segments_from_records(sampled, "probe", "load", TimeWindow(p(0), p(7200)), 3600)
 
 
+
+def _sampled(method, gap_s, points, validity=(0, 7200)):
+    from engcore.scenarios.environment import EnvironmentSample, InterpolationContract
+
+    env = _environment()
+    samples = tuple(EnvironmentSample(p(t), NamedQuantity("probe", Quantity(v, "K"))) for t, v in points)
+    ch = EnvironmentChannel("probe", "ambient_temperature", "K", "declared", ReferenceContext("bench", "lab", "enu"),
+                            TimeWindow(p(validity[0]), p(validity[1])), ChannelRepresentation.POINT_SAMPLES, samples,
+                            InterpolationContract(method, None if gap_s is None else Quantity(gap_s, "s")))
+    return EnvironmentTimeline("cell-env-s", env.timeline, EnvironmentKindRegistry.standard(), env.sources, (ch,))
+
+
+def test_a_sampled_ambient_that_is_unknown_inside_a_segment_is_not_held_as_known():
+    """BIG 14 BIG 11 second re-review A1: the segment-start value was held although the channel is UNKNOWN inside the segment."""
+    from engcore.scenarios.environment import EnvironmentInterpolation
+
+    window = TimeWindow(p(0), p(3600))
+    on_edges = ((0, 280.0), (3600, 290.0))
+    # values only at the samples: nothing is authorized between them
+    with pytest.raises(ProviderRefusal, match="inside the segment starting at 0 s"):
+        segments_from_records(_sampled(EnvironmentInterpolation.NONE, None, on_edges), "probe", "load", window, 3600)
+    # a step hold whose next sample is further away than its max_gap
+    with pytest.raises(ProviderRefusal, match="inside the segment starting at 0 s"):
+        segments_from_records(_sampled(EnvironmentInterpolation.STEP_HOLD, 60, on_edges), "probe", "load", window, 3600)
+    # one sample only: every later instant would be an extrapolation
+    with pytest.raises(ProviderRefusal, match="inside the segment"):
+        segments_from_records(_sampled(EnvironmentInterpolation.STEP_HOLD, 7200, ((0, 280.0),)), "probe", "load", window, 3600)
+    # control: a step hold with samples on the segment edges and an authorized gap is held exactly as declared
+    held = segments_from_records(_sampled(EnvironmentInterpolation.STEP_HOLD, 3600, on_edges), "probe", "load", window, 3600)
+    assert [s.ambient.magnitude for s in held] == [280.0]
+
 def test_the_provider_free_never_default_refusals_run_without_pybamm():
     """BIG 14 re-review N4: pure-Python refusals of the adapter, tested where CI can see them."""
     with pytest.raises(ProviderRefusal, match="no gap is treated as rest"):
