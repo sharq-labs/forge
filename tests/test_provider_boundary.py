@@ -84,6 +84,33 @@ def test_executable_probe_binds_exact_path_version_and_digest():
     assert status.available and status.version.startswith("3.") and status.digest == _sha256_file(PY) and status.location == PY
 
 
+def test_a_failed_or_timed_out_version_probe_yields_no_identity():
+    """BIG 14 14.1: exit code and timeout decide, not whether some text parses as a version."""
+    cap = ProviderCapability("python-proc", "demo", "process", "python", ("demo",))
+    parse = lambda s: s.split()[-1] if "Python" in s else ""  # noqa: E731
+    exe, path = os.path.basename(PY), os.path.dirname(PY)
+    lying = ("-c", "import sys; print('Python 3.99.1'); sys.exit(3)")  # prints a version, then fails
+    failed = executable_probe(cap, exe, lying, parse, search_path=path)()
+    assert not failed.available and not failed.digest and "exited 3 (accepted [0])" in failed.reason
+    base = dict(adapter_id="demo-adapter", adapter_version="1", problem={"k": 1}, configuration="deck", output_request=("x",))
+    with pytest.raises(Exception, match="AVAILABLE"):
+        ProviderExecutionIdentity.from_content(failed, **base)
+    # a tool whose version flag exits non-zero by design declares the measured code; nothing else is accepted
+    declared = executable_probe(cap, exe, lying, parse, search_path=path, accepted_exit_codes=(3,))()
+    assert declared.available and declared.version == "3.99.1" and declared.digest == _sha256_file(PY)
+    clean = executable_probe(cap, exe, ("--version",), parse, search_path=path, accepted_exit_codes=(3,))()
+    assert not clean.available and "exited 0 (accepted [3])" in clean.reason
+    hung = executable_probe(cap, exe, ("-c", "import time; print('Python 3.99.1', flush=True); time.sleep(30)"), parse,
+                            search_path=path, timeout=0.5)()
+    assert not hung.available and not hung.digest and "TimeoutExpired" in hung.reason
+    # the registry caches the failed answer as UNAVAILABLE; require() refuses it and no identity can be formed
+    reg = ProviderRegistry()
+    reg.register(cap, executable_probe(cap, exe, lying, parse, search_path=path))
+    with pytest.raises(ProviderUnavailable, match="exited 3"):
+        reg.require("python-proc")
+    assert not reg.status("python-proc").available
+
+
 # ---- content identity ---------------------------------------------------------------
 
 

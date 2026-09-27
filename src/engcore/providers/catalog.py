@@ -210,11 +210,17 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
 
 def executable_probe(capability: ProviderCapability, executable: str, version_argv: tuple[str, ...],
                      parse_version: Callable[[str], str], *, search_path: str | None = None, timeout: float = 30.0,
-                     environment_prefix: str | None = None) -> Callable[[], ProviderStatus]:
+                     environment_prefix: str | None = None, accepted_exit_codes: tuple[int, ...] = (0,)) -> Callable[[], ProviderStatus]:
     """Probe an external executable: exact resolved path, file digest, parsed version.
 
     ``search_path`` is an explicit PATH to search (e.g. a provider environment's
     ``bin``); the process environment's PATH is used only when it is None.
+
+    The probe must exit with one of ``accepted_exit_codes`` (default: 0). A
+    failed or timed-out probe is UNAVAILABLE and yields no digest, so no
+    execution identity can be formed from it -- text that merely parses as a
+    version is not enough. A tool whose version flag exits non-zero by design
+    declares the measured code in its descriptor.
     """
     def probe() -> ProviderStatus:
         try:
@@ -224,6 +230,9 @@ def executable_probe(capability: ProviderCapability, executable: str, version_ar
             real = os.path.realpath(path)
             out = subprocess.run([real, *version_argv], capture_output=True, text=True, timeout=timeout,
                                  env={"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp")})
+            if out.returncode not in accepted_exit_codes:
+                return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
+                                      reason=f"version probe of {real} exited {out.returncode} (accepted {list(accepted_exit_codes)})")
             version = parse_version((out.stdout or "") + (out.stderr or ""))
             if not version:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
