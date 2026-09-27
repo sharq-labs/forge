@@ -111,8 +111,8 @@ def judge(table: dict, prereg: dict) -> dict:
         v1 = r["v_rmse_mV"] <= 17.0
         c1 = abs(r["cap_rel_err"]) <= 0.02
         t1 = abs(r["rise_err_K"]) <= max(1.5, 0.25 * r["rise_meas_K"])
-        out[cell] = {"V1": v1, "C1": c1, "T1": t1}
-    out["met"] = all(all(v.values()) for v in out.values())
+        out[cell] = {"V1": bool(v1), "C1": bool(c1), "T1": bool(t1)}
+    out["met"] = bool(all(all(v.values()) for v in out.values()))
     return out
 
 
