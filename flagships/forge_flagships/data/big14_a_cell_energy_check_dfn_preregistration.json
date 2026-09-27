@@ -1,0 +1,24 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-cell-energy-check-dfn",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, after flagship A switched to DFN with the heat of mixing and the forge-scientific-review of that switch (finding L5: the energy check big14-a-cell-energy-check covered SPM with the heat of mixing off only); before any run of this check",
+  "question": "Is the heat flagship A's cell now hands to the coolant consistent with the cell's own energy balance, in the configuration actually used?",
+  "classification": "numerical verification of the cell model's heat bookkeeping (an energy identity of the model), not validation",
+  "conditions": "the flagship's cell exactly as its coupling path builds it: PyBaMM DFN, Chen2020 via forge_pybamm.parameter_set, the flagship's active-material balance factors, isothermal with 'calculate heat source for isothermal models' and 'heat of mixing': 'true', SOC 0.8, 2.5 A discharge for 3600 s, at 300 K and at 313.15 K, fresh cell, IDAKLU rtol 1e-8 atol 1e-10",
+  "identity": "Total heating = I * (U_bulk - V) + Reversible heating, with U_bulk PyBaMM's 'Bulk open-circuit voltage [V]': with the heat of mixing included the heat source should close on the bulk rather than the surface open-circuit voltage",
+  "acceptance": {
+    "C1": "| integral(Total heating) - integral(I*(U_bulk - V) + Reversible heating) | <= 1 % of integral(Total heating) over the discharge hour, at both temperatures",
+    "met_if": "C1 at both temperatures"
+  },
+  "reported_not_judged": [
+    "the same mismatch against the SURFACE open-circuit voltage (the identity that closed for SPM with mixing off)",
+    "the heat-of-mixing share integral(Heat of mixing) / integral(Total heating)",
+    "the reversible share"
+  ],
+  "stated_limits": [
+    "U_bulk is the open-circuit voltage of the volume-averaged particle concentration; across a DFN electrode the concentration varies with position, so the exact energy identity involves the average of U over the particles, not U of the average; a small residual from that is expected and is reported, not explained away",
+    "PyBaMM's heat source carries no electrolyte heat of mixing"
+  ],
+  "no_change_after_seeing_results": "conditions, identity and tolerance are fixed"
+}
