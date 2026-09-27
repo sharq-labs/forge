@@ -200,6 +200,59 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   - BIG 13 criterion 1 stays NOT MET as registered then; this study does not re-judge it;
   - the largest difference (0.008 K) is under the flagship's own 0.05 K refinement tolerance, but the published 3600 s window under-reads the resolved peak heat by 5.5 % (0.1605 against 0.1699 W).
 
+## 2026-09-28 BIG 14 — owner decisions carried out: state reads, applicability disclosure, main ruleset, Pint (branch `feat/big-14-reviews`)
+
+The owner said "do the three". The three were: `reads_owners`; undeclared applicability; the gates on `main`, the PR and the Pint decisions.
+
+### What was done
+- **`main` ruleset.** Ruleset "Protect main" (id 23351506) now requires `tests-gate` and `recertification-gate`.
+  - Source is GitHub Actions, app 15368.
+  - Strict up-to-date is on, merge commits only, no bypass actors.
+  - Approvals stay 0. With a single owner account, a required approval would block every merge. `docs/assurance/BRANCH_PROTECTION.md` asks for 1; this is a stated deviation.
+  - `python -m tools.certification.branch_policy --repository sharq-labs/forge` reports **OK** (bypass actors unverified).
+  - Both workflows run on every `pull_request` with no path filter, and both gates end in `if: always()`, so a required gate always reports.
+- **BIG 12 R2 / (d)-2, `246098fc`: state reads are declared edges.**
+  - `NodeSpec.reads_owners`, carried on `PlanNode`. It is omitted from the wire when empty, so no stored request, plan or result digest moved.
+  - Each node gets a `StateView` limited to the owners it reads or writes. The state clock is visible to committing nodes only; the chain fields are never visible.
+  - `compile_plan` refuses:
+    - a writer and any node that sees its owners, with no path between them;
+    - any two committing nodes with no path between them, because they share the clock.
+  - An UNKNOWN value in a visible owner is an UNKNOWN input, for both outputs and state proposals.
+  - The built-in multiphysics and multiscale authorities refuse, in preflight, mapped owners the node does not declare (`UNDECLARED_STATE_READ`).
+  - A read owner must exist in the initial state.
+  - None of the 8 committed flagship requests needed a change. Only `aging` commits state, and the multiphysics nodes map no owner.
+- **BIG 12 (b): undeclared applicability.** `undeclared_applicability(result)` is derived from the plan the result carries, and `trust_handoff` names those nodes in its notes.
+  - No stored field was added, so no stored digest moved.
+  - Mandatory declare-or-waive for output nodes is NOT enforced. It would be a request-contract change needing a regeneration.
+- **U-05, `b07a58f1`.** The claims replay environment is `claim_replay_environment/2` and binds `units.registry_fingerprint`.
+  - A `/1` bundle still VERIFIES as a record.
+  - Exact replay needs `/2`. A `/1` bundle, or one made under other unit definitions, is NOT_REPRODUCIBLE.
+  - No stored claims bundle is committed.
+- **U-04.** `pint>=0.25.3,<0.27` in `pyproject.toml` and `requirements.txt`: exactly the measured versions (0.25.3 locally, 0.26.1 in CI and the battery env).
+- **The PR.** It comes from `feat/big-14-flagship-a` after the other session merges this branch and pushes its DFN bundles. That session owns its CI, so a push does not cancel a running recertification.
+
+### Reviews
+- **Implementation review: CHANGES REQUIRED.**
+  - M1: the clock and chain fields still leaked across unordered committers of different owners.
+  - M2: an intact `/1` claims bundle read as TAMPERED.
+  - LOW: a read owner was not checked; docstring; test gaps; a recursive `upstream()`.
+  - All fixed. The M1 and M2 tests fail when their fix is reverted by hand.
+  - The m6 and d1 tests now declare `depends_on=("thermal",)`. The ordering rule makes the dependency, not the taint, what blocks. The taint stays as defense in depth.
+- **Focused re-review: CHANGES REQUIRED.** M1, M2 and the LOW fixes hold. The committer-ordering rule breaks no existing request. One latent MEDIUM:
+  a committer could rewrite the provider checkpoints of owners it does not write, because the whole tuple was replaced.
+  - Fixed, `feat/big-14-reviews` tip: foreign-owner checkpoints are refused, and checkpoints are merged BY OWNER. `None` still means unchanged.
+  - Mutation-checked: with the refusal removed, the new test fails.
+  - Two direct filter tests added.
+  - Accepted residual (LOW): a node's execution identity still hashes the whole state digest. An unordered non-committing node's identity and
+    cache key can therefore depend on the tie-break (not the values it sees). Changing it would move stored receipt identities; picked up with N3.
+
+### Executed
+- `pytest tests/test_system_runtime_*.py tests/test_engineering_*.py tests/claims flagships/tests -n 4` -> **889 passed, 39 skipped** (final tree).
+- Full FAST tier `pytest -m "not expensive" -n 4` on the pre-M1 tree -> 10 failed, 9021 passed, 118 skipped.
+  - Two of the ten (`test_the_tree_is_core_freeze_v1`, the V3 supersession check) failed only because the tree was dirty during the run. On the committed tree `b07a58f1` both **pass**.
+  - The other 8 are baseline classes: 2 stale-certificate failures (class 6, need recertification) and 6 Python-3.14-only failures (class 7).
+  - The a3f757eb baseline had 38 failures and errors.
+
 ## 2026-09-28 BIG 14 — 14.1 review debt: BIG 12 re-review, BIG 13 round 5, BIG 11 second re-review (branch `feat/big-14-reviews`)
 
 Branch `feat/big-14-reviews` in worktree `D:/forge-b14-review`, cut from `origin/feat/big-14-flagship-a` @ `814e1492`. Ownership: this line = 14.1 review debt;

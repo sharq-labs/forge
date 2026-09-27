@@ -151,8 +151,12 @@ Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
 - [ ] Class 6: run hardened recertification on 3.12 after the repairs
       (GitHub workflow; needs the owner's go-ahead to push the branch / open
       the PR, whose automatic classification runs it).
-- [ ] Owner action: configure the `main` ruleset to require `tests-gate` and
+- [x] Owner action: configure the `main` ruleset to require `tests-gate` and
       `recertification-gate` (Branch Policy currently reports NOT ENFORCED).
+      Done 2026-09-28 on the owner's instruction: ruleset "Protect main"
+      (id 23351506) requires both, source GitHub Actions (15368). Strict
+      up-to-date is on, merge only, no bypass, approvals 0 (one owner account).
+      `tools.certification.branch_policy` reports OK.
 - [x] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
 
 Then review and authority debt:
@@ -164,11 +168,16 @@ Then review and authority debt:
       by refusing validity records and keeping labels out of
       `provenance.models`; R1, N1, N2, (c) and (d)-1 fixed. Deferred with
       reasons: the executed-model binding.
-- [ ] BIG 12 R2 / (d)-2 (MEDIUM): state reads are not DAG edges. Needs a
-      declared `reads_owners` on `NodeSpec` (a design decision; it touches
-      every flagship's nodes).
-- [ ] BIG 12 (b) (MEDIUM): output-node applicability is undisclosed. Needs a
-      version decision (it moves stored result digests).
+- [x] BIG 12 R2 / (d)-2 (MEDIUM): state reads are not DAG edges. Done
+      2026-09-28 (owner decision), `246098fc`: `reads_owners` (omitted when
+      empty, so no stored digest moves), a StateView per node, and the planner
+      orders readers against writers and every two committing nodes. No
+      flagship request needed a change.
+- [x] BIG 12 (b) (MEDIUM): output-node applicability is undisclosed. Done
+      without a version bump: `undeclared_applicability(result)` is derived
+      from the plan the result carries and named in the `trust_handoff`
+      notes. Making declare-or-waive mandatory for output nodes stays a
+      request-contract change for a later regeneration.
 - [x] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
       every finding. Done 2026-09-28: F1 partial (the recorded providers are
       bound; completeness and pre-registration are a documented limit), F2-F8
@@ -187,11 +196,14 @@ Then review and authority debt:
 - [x] Fix the Units findings U-01/U-02/U-03
       (`docs/code_audit/MODULE_BY_MODULE_REVIEW.md`) with focused adversarial
       tests (also numpy bool/arrays, bytes, memoryview, numbers as units).
-- [ ] U-05 - OWNER DECISION: verified that the unit-definition content
+- [x] U-05 - OWNER DECISION (2026-09-28: bind it, `b07a58f1`;
+      `claim_replay_environment/2`; /1 still verifies and never replays
+      exactly): verified that the unit-definition content
       (`registry_fingerprint()`) is bound nowhere; only the Pint version is
       (claims replay environment, provider identities). Binding it moves
       every stored bundle's environment fingerprint: needs a version decision.
-- [ ] U-04 - OWNER DECISION on a Pint compatibility range: the units
+- [x] U-04 - OWNER DECISION (2026-09-28: `pint>=0.25.3,<0.27`, the
+      measured range) on a Pint compatibility range: the units
       contract passes on Pint 0.25.3 and 0.26.1; the declared minimum 0.23 is
       untested and there is no upper bound.
 - [x] U-06 recorded as accepted LOW residual (runtime context mutation is
