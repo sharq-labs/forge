@@ -229,6 +229,7 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   The test that pinned SPM's opposite outcome was rewritten to the observed DFN outcome, with the history kept in its docstring.
 - `flagships/tests/test_flagship_portfolio.py` (venv): 35 passed.
 - Battery env, `python -m pytest flagships/tests/test_flagship_battery.py --import-mode=importlib -q` on the regenerated tree: 22 passed (23.6 min).
+- After merging feat/big-14-reviews (`4ed62b12` and its docs follow-ups), venv: `python tools/forge_check.py --changed`: 225 passed, rc 0.
 
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
