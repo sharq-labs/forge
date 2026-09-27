@@ -56,51 +56,6 @@ def test_default_registry_never_raises_for_missing_adapter_packages():
         assert s.available or s.reason  # unavailable always says why
 
 
-def test_the_calculix_descriptor_declares_exactly_its_measured_probe_exit_code(monkeypatch):
-    """BIG 14 F3/F7: `ccx -v` exits 201 by design (CalculiX 2.23). The declaration is pinned, and the rule refuses nonsense."""
-    import forge_calculix.descriptor as ccd
-
-    seen = {}
-
-    def spy(capability, executable, version_argv, parse_version, **kwargs):
-        seen.update(executable=executable, argv=version_argv, **kwargs)
-        return lambda: ProviderStatus(capability, Availability.UNAVAILABLE, reason="spy")
-    monkeypatch.setattr(ccd, "executable_probe", spy)
-    ccd.register(ProviderRegistry(), provider_envs="/nowhere")
-    assert seen["executable"] == "ccx" and seen["argv"] == ("-v",) and seen["accepted_exit_codes"] == (201,)
-    assert ccd._version("                This is Version 2.23\n") == "2.23"
-    cap = ProviderCapability("x", "demo", "process", "x", ("demo",))
-    for bad in ((), (-9,), (True,), ("0",)):
-        with pytest.raises(Exception, match="accepted_exit_codes"):
-            executable_probe(cap, "x", (), str, accepted_exit_codes=bad)
-
-
-@pytest.mark.skipif(os.name != "posix", reason="a shell-script stand-in for icoFoam needs a POSIX host (CI is Linux)")
-@pytest.mark.parametrize("exit_code, available", ((0, True), (1, False)))
-def test_the_openfoam_probe_requires_exit_zero_whatever_its_output_says(tmp_path, exit_code, available):
-    """BIG 14 F1: OpenFOAM does not go through executable_probe, so its own probe must refuse a failed run."""
-    import json
-    import stat
-
-    import forge_openfoam.descriptor as ofd
-
-    prefix = tmp_path / "openfoam"
-    (prefix / "bin").mkdir(parents=True)
-    (prefix / "conda-meta").mkdir()
-    (prefix / "conda-meta" / "stub-1-0.json").write_text(json.dumps({"name": "stub", "version": "1", "build": "0", "sha256": "0" * 64}))
-    exe = prefix / "bin" / "icoFoam"
-    exe.write_text("\n".join(("#!/bin/sh", "echo 'Build  : OpenFOAM-v2412'", f"exit {exit_code}", "")))
-    exe.chmod(exe.stat().st_mode | stat.S_IXUSR)
-    reg = ProviderRegistry()
-    ofd.register(reg, provider_envs=str(tmp_path))
-    status = reg.status("openfoam")
-    assert status.available is available, status.reason
-    if available:
-        assert status.version == "v2412" and status.digest
-    else:
-        assert not status.digest and "exited 1 (accepted [0])" in status.reason
-
-
 def test_a_missing_or_failing_adapter_is_registered_unavailable_with_its_error(monkeypatch):
     """BIG 14 re-review N8: with the adapters on the pytest path, the missing-package branch is tested on purpose."""
     import types
