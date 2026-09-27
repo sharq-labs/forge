@@ -67,10 +67,11 @@ def digest_of(payload: Any) -> str:
     return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
-def strict_keys(payload: Mapping[str, Any], expected: set[str], label: str) -> None:
+def strict_keys(payload: Mapping[str, Any], expected: set[str], label: str, *, optional: set[str] = frozenset()) -> None:
+    """Exactly ``expected``, plus any of ``optional`` (keys written only when non-default, so older records keep their digest)."""
     if not isinstance(payload, Mapping):
         raise InvalidScientificProblem(f"{label} payload must be a mapping")
-    found = set(payload)
+    found = set(payload) - (set(optional) & set(payload))
     if found != expected:
         extra, missing = sorted(found - expected), sorted(expected - found)
         raise InvalidScientificProblem(f"{label} payload keys differ: unknown {extra}, missing {missing}")

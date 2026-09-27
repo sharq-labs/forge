@@ -39,7 +39,7 @@ from .request import SystemRunRequest
 from .result import (
     Availability, AuthorityCheckpoint, ObservableResult, RunStatus, SystemCheckpoint, SystemRunResult, TrustInputs,
 )
-from .state import OwnerState, ProviderCheckpointRef, SystemState
+from .state import OwnerState, ProviderCheckpointRef, StateView, SystemState
 
 
 # ----------------------------------------------------------------------------------------- built-in authorities
@@ -287,7 +287,7 @@ class SystemExecutor:
             self.cache.hits += 1
             cache_meta = {"cache_hit": True, "original_receipt_digest": original}
         else:
-            call = NodeCall(node, values, state, run_id, plan.digest, request.digest, attempt, self.context, identity)
+            call = NodeCall(node, values, StateView(state, node.visible_owners, clock=node.commits_state), run_id, plan.digest, request.digest, attempt, self.context, identity)
             try:
                 outcome = authority.execute(call)
             except Exception as exc:  # an exception is a failed execution and exposes nothing
@@ -317,11 +317,16 @@ class SystemExecutor:
             except Exception as exc:
                 return fail(NodeStatus.FAILED, f"output {name!r} is not expressible in {declared[name]!r} ({exc})", **kw)
             converted_outputs[name] = OutputValue(value, output.uncertainty, output.origin)
-        if any(v.uncertainty.kind is UncertaintyKind.UNKNOWN for v in values.values()) and not authority.accounts_for_input_uncertainty:
+        # the state a node sees is an input too: an UNKNOWN value in an owner it reads or writes is an UNKNOWN input
+        state_unknown = sorted(f"{o.owner_id}.{v.variable_id}" for o in state.owners if o.owner_id in node.visible_owners
+                               for v in o.values if v.uncertainty.kind is UncertaintyKind.UNKNOWN)
+        inputs_unknown = any(v.uncertainty.kind is UncertaintyKind.UNKNOWN for v in values.values()) or bool(state_unknown)
+        if inputs_unknown and not authority.accounts_for_input_uncertainty:
             claimed = sorted(n for n, o in converted_outputs.items() if o.uncertainty.kind is not UncertaintyKind.UNKNOWN)
             if claimed:
-                return fail(NodeStatus.FAILED, f"outputs {claimed} claim a quantified uncertainty although an input's uncertainty is UNKNOWN and the authority does not "
-                                              f"declare that it accounts for its inputs (UNKNOWN in, UNKNOWN out)", **kw)
+                return fail(NodeStatus.FAILED, f"outputs {claimed} claim a quantified uncertainty although an input's uncertainty is UNKNOWN"
+                                              + (f" (state {state_unknown[:3]})" if state_unknown else "")
+                                              + " and the authority does not declare that it accounts for its inputs (UNKNOWN in, UNKNOWN out)", **kw)
         problem = self._check_providers(node, request, outcome)
         if problem:
             return fail(NodeStatus.FAILED, problem, **kw)
@@ -361,7 +366,6 @@ class SystemExecutor:
             if not owners <= set(node.writes_owners):
                 return fail(NodeStatus.FAILED, f"state proposal writes {sorted(owners - set(node.writes_owners))}, which the node is not allowed to write", **kw)
             if not authority.accounts_for_input_uncertainty:
-                inputs_unknown = any(v.uncertainty.kind is UncertaintyKind.UNKNOWN for v in values.values())
                 claimed_state = []
                 for update in proposal.updates:
                     try:
@@ -373,11 +377,20 @@ class SystemExecutor:
                         if v.uncertainty.kind is not UncertaintyKind.UNKNOWN and (inputs_unknown or was_unknown):
                             claimed_state.append(f"{update.owner_id}.{v.variable_id}")
                 if claimed_state:
-                    return fail(NodeStatus.FAILED, f"state values {sorted(claimed_state)} claim a quantified uncertainty although an input or the value they replace is UNKNOWN "
-                                                  f"and the authority does not declare that it accounts for it (UNKNOWN in, UNKNOWN out)", **kw)
+                    return fail(NodeStatus.FAILED, f"state values {sorted(claimed_state)} claim a quantified uncertainty although an input or the value they replace is UNKNOWN"
+                                                  + (f" (visible state {state_unknown[:3]})" if state_unknown else "")
+                                                  + " and the authority does not declare that it accounts for it (UNKNOWN in, UNKNOWN out)", **kw)
+            checkpoints = None                  # None: the proposal leaves every provider checkpoint as it is
+            if proposal.provider_checkpoints is not None:
+                foreign = sorted({c.owner_id for c in proposal.provider_checkpoints} - set(node.writes_owners))
+                if foreign:
+                    return fail(NodeStatus.FAILED, f"state proposal carries provider checkpoints of owners {foreign} the node does not write", **kw)
+                # merged BY OWNER: the node replaces those of the owners it writes and leaves every other owner's untouched
+                kept = tuple(c for c in state.provider_checkpoints if c.owner_id not in set(node.writes_owners))
+                checkpoints = tuple(sorted(kept + tuple(proposal.provider_checkpoints), key=lambda c: (c.owner_id, c.checkpoint_digest)))
             try:
                 new_state = state.advance(time=proposal.time, updates=proposal.updates, produced_by=node.node_id,
-                                          provider_checkpoints=proposal.provider_checkpoints)
+                                          provider_checkpoints=checkpoints)
             except InvalidScientificProblem as exc:
                 return fail(NodeStatus.FAILED, f"state proposal refused: {exc}", **kw)
         elif outcome.state_proposal is not None:

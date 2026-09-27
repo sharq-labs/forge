@@ -198,14 +198,46 @@ def bundled(registry):
 
 def test_bundle_environment_carries_a_reproducibility_fingerprint(bundled) -> None:
     environment = bundled["environment"]
-    assert environment["schema"] == "claim_replay_environment/1"
+    assert environment["schema"] == "claim_replay_environment/2"
     assert len(environment["fingerprint"]) == 64
+    from engcore.scientific.units.quantity import registry_fingerprint
+    assert environment["units"] == {"registry_fingerprint": registry_fingerprint()}         # U-05: the unit definitions, not only the Pint version
     assert set(environment["distribution"]) == {"crafty", "numpy", "scipy", "pint"}
     assert set(environment["python"]) == {"version", "implementation"}
     assert set(environment["platform"]) == {"system", "release", "machine"}
     assert set(environment["git"]) == {"commit", "dirty", "tracked_diff_digest", "untracked_manifest_digest"}
     assert environment["git"]["tracked_diff_digest"] is None or len(environment["git"]["tracked_diff_digest"]) == 64
     assert environment["git"]["untracked_manifest_digest"] is None or len(environment["git"]["untracked_manifest_digest"]) == 64
+
+
+def test_other_unit_definitions_make_a_bundle_not_reproducible(bundled, registry, monkeypatch) -> None:
+    """U-05: the same Pint version with other unit definitions is another environment, never an exact replay."""
+    import engcore.claims.replay.bundle as replay_bundle_module
+    from engcore.claims.replay.bundle import BundleStatus, replay_bundle
+
+    monkeypatch.setattr(replay_bundle_module, "registry_fingerprint", lambda: "0" * 64)
+    result = replay_bundle(bundled, registry)
+    assert result.status is BundleStatus.NOT_REPRODUCIBLE
+    assert any("environment differs" in d for d in result.differences)
+
+
+def test_an_intact_bundle_with_a_v1_environment_still_verifies_but_cannot_be_an_exact_replay(bundled, registry) -> None:
+    """U-05 review M2: /1 bundles made before the unit fingerprint was bound are records, not tampering."""
+    import copy
+    from engcore.claims.replay.bundle import _ENVIRONMENT_TAG, BundleStatus, replay_bundle, verify_bundle
+    from engcore.claims.replay import bundle as module
+
+    old = copy.deepcopy(bundled)
+    env = {k: v for k, v in old["environment"].items() if k not in ("fingerprint", "units")}
+    env["schema"] = "claim_replay_environment/1"
+    env["fingerprint"] = module.tagged_digest(_ENVIRONMENT_TAG, env)
+    old["environment"] = env
+    body = {k: v for k, v in old.items() if k != "bundle_digest"}
+    old["bundle_digest"] = module.tagged_digest(module._TAG, body)                      # sealed exactly as make_bundle sealed it at /1
+    check = verify_bundle(old, registry)
+    assert check.status is BundleStatus.VERIFIED, check.problems
+    replay = replay_bundle(old, registry)
+    assert replay.status is BundleStatus.NOT_REPRODUCIBLE and any("does not bind the unit definitions" in d for d in replay.differences)
 
 def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, registry, monkeypatch) -> None:
     import engcore.claims.execution as execution

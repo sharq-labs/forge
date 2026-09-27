@@ -292,6 +292,9 @@ class NodeSpec:
     applicability_waiver: str = ""
     checkpointable: bool = False
     configuration_digest: str = ""
+    #: State owners the node READS without writing.  A node sees only the owners it reads or writes, and the planner orders it against
+    #: every writer of those owners; an undeclared read is refused, never answered with whatever state happens to be current.
+    reads_owners: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_id", identifier(self.node_id, "node id"))
@@ -331,6 +334,10 @@ class NodeSpec:
         object.__setattr__(self, "material_refs", tuple(sorted(materials)))
         object.__setattr__(self, "environment_requirements", tuple(sorted(envs, key=lambda e: e.alias)))
         object.__setattr__(self, "writes_owners", tuple(sorted({identifier(o, "written owner") for o in self.writes_owners})))
+        object.__setattr__(self, "reads_owners", tuple(sorted({identifier(o, "read owner") for o in self.reads_owners})))
+        if set(self.reads_owners) & set(self.writes_owners):
+            raise InvalidScientificProblem(f"node {self.node_id!r} declares {sorted(set(self.reads_owners) & set(self.writes_owners))} as read and written; "
+                                           "a written owner is already visible")
         object.__setattr__(self, "applicability_checks", tuple(sorted({identifier(c, "applicability check id") for c in self.applicability_checks})))
         object.__setattr__(self, "configuration_digest", hex64(self.configuration_digest, "node configuration digest", allow_empty=True))
         if not isinstance(self.commits_state, bool) or not isinstance(self.checkpointable, bool):
@@ -346,6 +353,7 @@ class NodeSpec:
             "writes_owners": list(self.writes_owners), "applicability_checks": list(self.applicability_checks),
             "applicability_waiver": self.applicability_waiver,
             "checkpointable": self.checkpointable, "configuration_digest": self.configuration_digest,
+            **({"reads_owners": list(self.reads_owners)} if self.reads_owners else {}),
         }
 
     @classmethod
@@ -353,7 +361,9 @@ class NodeSpec:
         require_schema(payload, NODE_SPEC_SCHEMA)
         strict_keys(payload, {"schema", "node_id", "kind", "authority", "outputs", "depends_on", "inputs", "literals", "provider_binding_ids",
                               "material_refs", "environment_requirements", "commits_state", "writes_owners", "applicability_checks",
-                              "applicability_waiver", "checkpointable", "configuration_digest"}, "node spec")
+                              "applicability_waiver", "checkpointable", "configuration_digest"}, "node spec", optional={"reads_owners"})
+        if "reads_owners" in payload and not payload["reads_owners"]:
+            raise InvalidScientificProblem("an empty reads_owners is written by omission, never as []")
         return cls(
             payload["node_id"], NodeKind(payload["kind"]), AuthorityRef.from_dict(payload["authority"]),
             tuple(NodeOutputSpec.from_dict(o) for o in payload["outputs"]), tuple(payload["depends_on"]),
@@ -361,7 +371,7 @@ class NodeSpec:
             tuple(payload["provider_binding_ids"]), tuple(MaterialPropertyRef.from_dict(m) for m in payload["material_refs"]),
             tuple(EnvironmentRequirement.from_dict(e) for e in payload["environment_requirements"]), payload["commits_state"],
             tuple(payload["writes_owners"]), tuple(payload["applicability_checks"]), payload["applicability_waiver"], payload["checkpointable"],
-            payload["configuration_digest"])
+            payload["configuration_digest"], tuple(payload.get("reads_owners", ())))
 
 
 @dataclass(frozen=True, order=True)

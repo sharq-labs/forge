@@ -247,3 +247,42 @@ class SystemState:
                    tuple((a, b) for a, b in payload["material_state_digests"]),
                    tuple(ProviderCheckpointRef.from_dict(c) for c in payload["provider_checkpoints"]),
                    payload["previous_digest"], payload["produced_by"])
+
+
+class StateView:
+    """The committed state as ONE node sees it: only the owners it declares it reads or writes.
+
+    Asking for any other owner is refused, never answered with whatever the state happens to hold at that point of the plan (the planner
+    orders a node only against the writers of the owners it declares)."""
+
+    #: identity of the run the state belongs to: the same for every node, so it reveals nothing about ordering
+    _IDENTITY = ("request_digest", "system_digest", "environment_digest")
+    #: the state clock: only a COMMITTING node sees it, and every two committing nodes are ordered by the planner.  The chain fields
+    #: (sequence, digest, previous_digest, produced_by) are never passed: they would tell a node which commits happened before it.
+    _CLOCK = ("time", "seconds")
+
+    def __init__(self, state: SystemState, visible: tuple[str, ...], *, clock: bool = False) -> None:
+        # name-mangled: an in-process authority can still reach it deliberately (authorities are trusted code, not a sandbox), never by accident
+        self.__state, self.__visible, self.__clock = state, frozenset(visible), bool(clock)
+
+    def owner(self, owner_id: str) -> OwnerState:
+        if owner_id not in self.__visible:
+            raise InvalidScientificProblem(f"state owner {owner_id!r} is not declared as read or written by this node (reads_owners / writes_owners)")
+        return self.__state.owner(owner_id)
+
+    @property
+    def owners(self) -> tuple[OwnerState, ...]:
+        return tuple(o for o in self.__state.owners if o.owner_id in self.__visible)
+
+    @property
+    def provider_checkpoints(self) -> tuple[ProviderCheckpointRef, ...]:
+        return tuple(c for c in self.__state.provider_checkpoints if c.owner_id in self.__visible)
+
+    @property
+    def material_state_digests(self) -> tuple[tuple[str, str], ...]:
+        return tuple(p for p in self.__state.material_state_digests if p[0] in self.__visible)
+
+    def __getattr__(self, name: str) -> Any:
+        if name in StateView._IDENTITY or (self.__clock and name in StateView._CLOCK):
+            return getattr(self.__state, name)
+        raise AttributeError(f"a node's state view has no {name!r}" + (" (the state clock is visible to committing nodes only)" if name in StateView._CLOCK else ""))
