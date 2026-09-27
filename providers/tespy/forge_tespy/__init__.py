@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass
 
 from engcore.materials import FluidIdentity
-from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed
+from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed, require_library_unchanged
 from engcore.scientific.units.quantity import Quantity
 from engcore.systems.topology import ComponentConnection
 
@@ -70,9 +70,11 @@ class TESPyProvider:
         self.status = registry.require("tespy")
 
     def solve(self, problem: ChainProblem) -> ProviderExecutionRecord:
+        require_library_unchanged(self.status, "tespy")  # the library that runs is the one discovery bound (BIG 14 N1)
         from tespy.components import SimpleHeatExchanger, Sink, Source
         from tespy.connections import Connection
         from tespy.networks import Network
+        require_library_unchanged(self.status, "tespy")  # and the modules just imported are that library (M-3)
 
         outputs = tuple(f"{c.connection_id}.{q}" for c in problem.connections() for q in ("temperature", "pressure", "enthalpy", "mass_flow"))
         configuration = {"topology": [c.to_dict() for c in problem.connections()], "mode": "design",

@@ -20,7 +20,7 @@ import time
 from dataclasses import dataclass
 from typing import Mapping
 
-from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed
+from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed, require_library_unchanged
 from engcore.scenarios.timeline import TimeWindow
 from engcore.scientific.units.quantity import Quantity
 
@@ -61,7 +61,10 @@ class CanteraProvider:
         self.status = registry.require("cantera")
 
     def _solution(self, mechanism: Mechanism):
+        require_library_unchanged(self.status, "cantera")  # the library that runs is the one discovery bound (BIG 14 N1)
         import cantera as ct
+
+        require_library_unchanged(self.status, "cantera")  # and the module that was just imported is that library (M-3)
 
         text = mechanism.content.decode("utf-8")
         import re
@@ -79,6 +82,7 @@ class CanteraProvider:
         return ", ".join(f"{k}:{repr(float(v))}" for k, v in sorted(composition.items()))
 
     def _identity(self, mechanism, problem, configuration, outputs, window=None):
+        require_library_unchanged(self.status, "cantera")  # an identity is only formed for the library discovery bound
         return ProviderExecutionIdentity.from_content(
             self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem,
             configuration=configuration, inputs={"mechanism": mechanism.content}, output_request=outputs, window=window)

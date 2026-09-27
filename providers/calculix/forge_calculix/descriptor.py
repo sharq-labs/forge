@@ -21,5 +21,7 @@ def _version(text: str) -> str:
 def register(registry, *, provider_envs: str | None = None, **_):
     envs = provider_envs or os.environ.get("FORGE_PROVIDER_ENVS", "")
     search = os.path.join(envs, "calculix", "bin") if envs else None
-    registry.register(CAPABILITY, executable_probe(CAPABILITY, "ccx", ("-v",), _version, search_path=search,
+    # `ccx -v` prints its version and exits 201 by design (CalculiX 2.23, measured 2026-09-27, stable over repeated runs);
+    # any other exit code, 0 included, is a failed probe
+    registry.register(CAPABILITY, executable_probe(CAPABILITY, "ccx", ("-v",), _version, search_path=search, accepted_exit_codes=(201,),
                                                      environment_prefix=os.path.join(envs, "calculix") if envs else None))

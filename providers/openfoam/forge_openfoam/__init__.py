@@ -28,6 +28,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed,
 )
 from engcore.providers.catalog import _sha256_file
@@ -209,8 +210,12 @@ class OpenFOAMProvider:
 
         bindir = os.path.join(self.prefix, "bin")
         exes = {name: os.path.realpath(os.path.join(bindir, name)) for name in ("blockMesh", "icoFoam", "postProcess")}
+        for name, path in exes.items():  # a symlink out of the checked environment would run unverified libraries
+            if os.path.commonpath([path, os.path.realpath(self.prefix)]) != os.path.realpath(self.prefix):
+                raise ProviderRefusal(f"{name} resolves to {path}, outside the discovered environment {self.prefix}")
+        digests = {k: _sha256_file(v) for k, v in exes.items()}  # hashed ONCE: what the identity records is what launch checks
         env = tuple(sorted(openfoam_environment(self.prefix).items()))
-        configuration = {"semantics": SEMANTICS, "executables": {k: _sha256_file(v) for k, v in exes.items()},
+        configuration = {"semantics": SEMANTICS, "executables": digests,
                          "environment": [list(x) for x in env if x[0] not in ("PATH", "LD_LIBRARY_PATH", "WM_PROJECT_DIR") and "/" not in x[1]]}
         base = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1],
                                                       problem=problem.to_dict(), configuration=configuration, output_request=("velocity", "pressure"))
@@ -221,11 +226,11 @@ class OpenFOAMProvider:
                                                           output_request=("velocity", "pressure"))
         files = tuple(GeneratedFile(k, v.encode()) for k, v in sorted(case.items()))
         end = float(problem.end_time.to("s").magnitude)
-        steps = (ProcessInvocation(exes["blockMesh"], _sha256_file(exes["blockMesh"]), self.status.version, (), files, env, self.timeout_s,
-                                   ("constant/polyMesh/points", "constant/polyMesh/owner")),
-                 ProcessInvocation(exes["icoFoam"], self.status.executable_digest, self.status.version, (), files, env, self.timeout_s, ()),
-                 ProcessInvocation(exes["postProcess"], _sha256_file(exes["postProcess"]), self.status.version,
-                                   ("-func", "writeCellCentres", "-time", f"{end:g}"), files, env, self.timeout_s, ()))
+        steps = (ProcessInvocation(exes["blockMesh"], digests["blockMesh"], self.status.version, (), files, env, self.timeout_s,
+                                   ("constant/polyMesh/points", "constant/polyMesh/owner"), conda_environment=conda_environment_of(self.status)),
+                 ProcessInvocation(exes["icoFoam"], self.status.executable_digest, self.status.version, (), files, env, self.timeout_s, (), conda_environment=conda_environment_of(self.status)),
+                 ProcessInvocation(exes["postProcess"], digests["postProcess"], self.status.version,
+                                   ("-func", "writeCellCentres", "-time", f"{end:g}"), files, env, self.timeout_s, (), conda_environment=conda_environment_of(self.status)))
         ws = ProcessWorkspace(self.workspace_root, preexisting=preexisting)
         try:
             t1 = time.perf_counter()

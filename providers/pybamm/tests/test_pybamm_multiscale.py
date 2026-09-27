@@ -32,6 +32,7 @@ REG = ProviderRegistry()
 from forge_pybamm import descriptor
 descriptor.register(REG)
 OK = REG.status("pybamm").available
+assert not [p for p in ("pybamm", "tespy") if p in {c.capability.provider_id for c in REG.discover()} and REG.status(p).found_but_refused], "a present provider was refused by discovery (a defect, not a skip)"
 pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM unavailable")
 DAY, H = 86400, 3600
 DAYS = 56

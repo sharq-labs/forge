@@ -38,7 +38,10 @@ uncertainty/model discrepancy into zero.
 - Pristine baseline worktree (never edited): `D:/forge-b14-base`, detached at
   the same SHA; baseline test runs happen there so edits cannot contaminate
   tree-walking tests.
-- PR: none opened; verify GitHub before making a current PR claim.
+- PRs: #110 (14.0 + 14.1 baseline repairs) MERGED 2026-09-27 at `86fa1896`
+  by the sharq-labs account with `recertification-gate` red (void formal
+  mutation control rounds). #111 carries the follow-up. Verify GitHub
+  before any current PR claim.
 - Never switch branches in the shared checkout; it is used by other sessions.
 
 ## Roadmap view
@@ -157,26 +160,66 @@ Then review and authority debt:
       dependency and commit-taint findings.
 - [ ] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
       every finding. Bundle self-consistency must not be called authenticity.
+      Include: `engineering/reference.py` `ReferenceCondition` / `EnvelopeBound`
+      readers pre-coerce with `float(payload[...])` (the U-01 pattern; found
+      by the 14.1 units review).
 - [ ] Run the missing second BIG 11 re-review (the focused re-review's fixes
       were never re-reviewed); resolve or disposition its findings.
 - [ ] Resolve or explicitly defer BIG 13 review M7: study/limit records ship
       inline but their provider bindings are not compared with the main
       request.
-- [ ] Fix the Units findings U-01/U-02/U-03
+- [x] Fix the Units findings U-01/U-02/U-03
       (`docs/code_audit/MODULE_BY_MODULE_REVIEW.md`) with focused adversarial
-      tests.
-- [ ] Close U-05: verify, by test, that the unit-registry fingerprint is bound
-      at the execution/replay envelope.
-- [ ] Disposition U-04 (reliance on Pint private internals with a lower-bound
-      dependency policy) and U-06 (fingerprint cannot cover context
-      transformation bodies): fix, bound, or record as accepted residual.
-- [ ] Harden provider identity failure semantics. Known defect:
+      tests (also numpy bool/arrays, bytes, memoryview, numbers as units).
+- [ ] U-05 - OWNER DECISION: verified that the unit-definition content
+      (`registry_fingerprint()`) is bound nowhere; only the Pint version is
+      (claims replay environment, provider identities). Binding it moves
+      every stored bundle's environment fingerprint: needs a version decision.
+- [ ] U-04 - OWNER DECISION on a Pint compatibility range: the units
+      contract passes on Pint 0.25.3 and 0.26.1; the declared minimum 0.23 is
+      untested and there is no upper bound.
+- [x] U-06 recorded as accepted LOW residual (runtime context mutation is
+      prohibited; the ledger states the limit).
+- [x] Harden provider identity failure semantics. Known defect:
       `executable_probe` in `src/engcore/providers/catalog.py` ignores the
       version probe's exit code, so a non-zero exit whose output parses as a
       version yields `AVAILABLE` and is cached. Also establish whether a cached
       `AVAILABLE` status can outlive a changed executable/environment before an
       execution identity is formed. A failed, non-zero or timed-out probe must
       not create or cache an execution identity.
+      Done: exit code enforced (OpenFOAM's own probe too); CalculiX declares
+      its measured 201; refresh drops the cached Python environment digest.
+- [x] Review F2 (MEDIUM): a conda package set changed after a cached probe
+      is now re-checked at launch beside the executable re-hash
+      (`ProcessInvocation.conda_environment`, `conda_environment_of`); every
+      adapter invocation declares it (static test). Residual: the digest
+      covers conda package RECORDS, not files edited in place, nor system
+      tools reached through PATH (/bin/sh, a host C toolchain).
+- [x] Re-review N1 (MEDIUM): library providers (Cantera, PyBaMM, CoolProp,
+      TESPy) now check at execution that the library they import is the one
+      discovery bound (`require_library_unchanged`, 1-3 ms per call), in
+      every function that forms an identity (PyBaMM coupling `advance`
+      included), and the module IN MEMORY must match (location, `__version__`,
+      the discovery it was first imported under); discovery refuses a module
+      that is not a file of the distribution it binds (shadowing / editable).
+      Declared dependencies are covered too: per-distribution pins, their
+      `__version__` in memory, and every module derived from a distribution's
+      own files must load from those files - the parsed RECORD's module
+      files, else the conda package record's files (conda-installed casadi),
+      else nothing is established and it is refused; editable installs and
+      checkout egg-infos establish nothing. Adapters re-check after importing.
+- [ ] Re-review the F-1 / F-2 fix (`catalog._footprint`: parsed RECORD,
+      editable refusal, empty-module refusal). NOT re-reviewed: the review
+      loop on this sub-area was closed after seven rounds; carry it into the
+      next review batch. Recorded LOW: `Mechanism.from_cantera_data` and
+      `forge_pybamm.parameter_set` import their library without the check
+      (their outputs are content-hashed); `<pkg>.libs` dirs derive as module
+      names; conda egg-info packages are refused (visible, not silent). OPERATING RULE: a provider-environment change takes effect in a
+      new process; a same-version rebuild of an already-loaded module cannot
+      be seen from inside the process. Residuals: the shared python-environment
+      digest is re-read only on refresh; undeclared dependencies are unbound;
+      `found_but_refused` reads reason prefixes; FEniCSx (distribution
+      `fenics-dolfinx`, LIBRARY mode) is not covered by this check - open.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

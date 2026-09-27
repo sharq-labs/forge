@@ -17,6 +17,7 @@ import importlib
 import importlib.metadata
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -99,6 +100,13 @@ class ProviderStatus:
     def available(self) -> bool:
         return self.availability is Availability.AVAILABLE
 
+    @property
+    def found_but_refused(self) -> bool:
+        """UNAVAILABLE although the provider is present: its adapter failed to import or register, its
+        version probe failed, or its version could not be read. A defect to report, not an absent stack
+        to skip (BIG 14 review F3). Read from the reason discovery wrote; not part of the record."""
+        return not self.available and self.reason.startswith(("adapter ", "version probe of ", "could not establish the "))
+
     def to_dict(self) -> dict[str, Any]:
         return {"capability": self.capability.to_dict(), "availability": self.availability.value, "version": self.version,
                 "digest": self.digest, "location": self.location, "reason": self.reason,
@@ -115,12 +123,142 @@ def _sha256_file(path: str) -> str:
 
 def distribution_digest(dist_name: str) -> str:
     """sha256 over the installed distribution's RECORD (or sorted file list when absent)."""
-    dist = importlib.metadata.distribution(dist_name)
+    return _record_digest_of(importlib.metadata.distribution(dist_name), dist_name)
+
+
+def _record_digest_of(dist: Any, dist_name: str) -> str:
     record = dist.read_text("RECORD")
     if record is None:
         files = sorted(str(f) for f in (dist.files or ()))
         record = "\n".join(files) or f"{dist_name}=={dist.version}"
     return hashlib.sha256(record.encode("utf-8")).hexdigest()
+
+
+#: Distributions located for the execution-time library check, by name. Locating scans sys.path
+#: (tens of milliseconds on a network or WSL mount); the files are re-read on every check, so a
+#: changed RECORD or METADATA is seen, and an upgrade -- which replaces the dist-info directory --
+#: reads as missing. Cleared by ``ProviderRegistry.status(refresh=True)``.
+_LOCATED: dict[str, Any] = {}
+
+
+_CONDA_FILES: dict[str, dict[str, tuple[str, ...]]] = {}
+
+
+def _norm(name: str) -> str:
+    return re.sub(r"[-_.]+", "_", name).lower()
+
+
+def _conda_files(prefix: str) -> dict[str, tuple[str, ...]]:
+    """The conda package records of an environment, keyed by the dist-info each one installed (once per process)."""
+    if prefix not in _CONDA_FILES:
+        import json
+
+        index: dict[str, tuple[str, ...]] = {}
+        meta = os.path.join(prefix, "conda-meta")
+        for entry in sorted(os.listdir(meta)) if os.path.isdir(meta) else ():
+            if not entry.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(meta, entry), "r", encoding="utf-8") as fh:
+                    files = tuple(json.load(fh).get("files", ()))
+            except (OSError, ValueError, AttributeError):
+                continue
+            for f in files:
+                m = re.search(r"([^/]+)-([^/]+)\.dist-info/METADATA$", f)
+                if m:
+                    index[f"{_norm(m.group(1))}=={m.group(2)}"] = files
+        _CONDA_FILES[prefix] = index
+    return _CONDA_FILES[prefix]
+
+
+def _footprint(dist: Any, name: str) -> tuple[frozenset[str], frozenset[str]]:
+    """(real paths of a distribution's own module files, the top-level modules those files provide).
+
+    From its RECORD (parsed; never the SOURCES.txt / installed-files.txt fallbacks of ``dist.files``);
+    otherwise from the conda package record that installed its metadata (conda-installed distributions
+    often have no RECORD); otherwise EMPTY. An editable install is EMPTY too. An empty footprint, or one
+    from which no module can be derived, establishes nothing and is refused (BIG 14 reviews M-2, F-1, F-2).
+    The modules are derived from the files, not from ``top_level.txt``, which only setuptools writes (M-1).
+    """
+    import csv
+    import json
+    import sys
+
+    root = os.path.realpath(str(dist.locate_file("")))
+    try:  # an editable install (PEP 660) runs a checkout its RECORD does not describe (review F-1)
+        if json.loads(dist.read_text("direct_url.json") or "{}").get("dir_info", {}).get("editable"):
+            return frozenset(), frozenset()
+    except (ValueError, AttributeError):
+        return frozenset(), frozenset()
+    # the RECORD itself, never `dist.files`' fallbacks (installed-files.txt / SOURCES.txt of a checkout egg-info: F-2)
+    record_text = dist.read_text("RECORD")
+    if record_text is not None:
+        listed = [row[0] for row in csv.reader(record_text.splitlines()) if row]
+        paths = [os.path.realpath(dist.locate_file(f)) for f in listed
+                 if not f.split("/")[0].endswith((".dist-info", ".egg-info")) and not f.endswith(".pth")]
+    else:
+        record = _conda_files(sys.prefix).get(f"{_norm(name)}=={dist.version}", ())
+        paths = [os.path.realpath(os.path.join(sys.prefix, f)) for f in record if ".dist-info/" not in f and ".egg-info/" not in f]
+    files = frozenset(paths)
+    modules: set[str] = set()
+    for path in files:
+        try:
+            rel = os.path.relpath(path, root)
+        except ValueError:  # another drive
+            continue
+        head = rel.split(os.sep)[0]
+        if head in ("..", "__pycache__") or head.endswith((".dist-info", ".egg-info", ".data", ".pth")):
+            continue
+        if os.sep in rel:
+            modules.add(head)  # a package directory
+        elif head.endswith(".py"):
+            modules.add(head[:-3])
+        elif head.endswith((".so", ".pyd")):
+            modules.add(head.split(".")[0])
+    return files, frozenset(modules)
+
+
+def _outside(path: str, files: frozenset[str]) -> bool:
+    return os.path.realpath(path) not in files  # an empty footprint establishes nothing: everything is outside
+
+
+#: Where a not-yet-imported module would be loaded from, resolved once per process AT EXECUTION (``find_spec``
+#: scans sys.path: tens of milliseconds on a WSL mount). Discovery never fills it (review M-3), and every
+#: adapter re-checks after its import, when the module is read from ``sys.modules``. Cleared by refresh.
+_SPEC_ORIGIN: dict[str, str] = {}
+_FOOTPRINTS: dict[str, tuple[frozenset[str], frozenset[str]]] = {}
+
+
+def _origin_outside(module: str, files: frozenset[str], *, cache: bool = True) -> str:
+    """'' when ``module`` (loaded, or as it would be imported) comes from ``files``; else where it comes from."""
+    import sys
+
+    loaded = sys.modules.get(module)
+    if loaded is not None:
+        where = getattr(loaded, "__file__", None)
+        if where is None:
+            return ""  # a namespace package: no code of its own (its submodules carry files)
+        return "" if not _outside(where, files) else where
+    if not cache or module not in _SPEC_ORIGIN:
+        try:
+            spec = importlib.util.find_spec(module)
+        except (ImportError, ValueError) as exc:
+            return f"<unresolvable: {type(exc).__name__}>"
+        origin = (spec.origin or "") if spec is not None else ""
+        if not cache:
+            return "" if not origin or origin == "namespace" or not _outside(origin, files) else origin
+        _SPEC_ORIGIN[module] = origin
+    origin = _SPEC_ORIGIN[module]
+    return "" if not origin or origin == "namespace" or not _outside(origin, files) else origin
+
+
+def _located(name: str) -> Any:
+    if name not in _LOCATED:
+        try:
+            _LOCATED[name] = importlib.metadata.distribution(name)
+        except importlib.metadata.PackageNotFoundError:
+            return None
+    return _LOCATED[name]
 
 
 def _has_distribution(name: str) -> bool:
@@ -196,7 +334,26 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
             for dep in dependencies:
                 if not _has_distribution(dep):
                     return ProviderStatus(capability, Availability.UNAVAILABLE, reason=f"declared dependency distribution {dep!r} is not installed")
+                dep_files, dep_modules = _footprint(importlib.metadata.distribution(dep), dep)
+                if not dep_files or not dep_modules:
+                    return ProviderStatus(capability, Availability.UNAVAILABLE,
+                                          reason=f"could not establish the files of dependency distribution {dep!r} "
+                                                 "(no RECORD module files and no conda package record)")
+                for dep_module in sorted(dep_modules):
+                    elsewhere = _origin_outside(dep_module, dep_files, cache=False)
+                    if elsewhere:  # a shadowing checkout or an editable install of a DEPENDENCY: its RECORD would not describe it
+                        return ProviderStatus(capability, Availability.UNAVAILABLE,
+                                              reason=f"could not establish the distribution of dependency module {dep_module!r}: "
+                                                     f"{elsewhere} is not a file of the installed {dep}")
                 deps.append((dep, importlib.metadata.version(dep), distribution_digest(dep)))
+            origin = os.path.realpath(importlib.util.find_spec(module).origin or "")
+            dist = importlib.metadata.distribution(dist_name)
+            main_files, main_modules = _footprint(dist, dist_name)
+            if not main_files or not main_modules or _outside(origin, main_files):
+                # a shadowing checkout or an editable install: the RECORD digest would not describe the code
+                return ProviderStatus(capability, Availability.UNAVAILABLE, location=os.path.dirname(origin),
+                                      reason=f"could not establish the distribution of module {module!r}: {origin} is not a file "
+                                             f"of the installed {dist_name} {version}")
             main = distribution_digest(dist_name)
             combined = _combine(main, *(d[2] for d in deps))
             env_digest, count = python_environment_digest()  # shared numerics (numpy, ...) are not independent
@@ -208,14 +365,120 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
     return probe
 
 
+#: Per DISTRIBUTION (the provider's package and each declared dependency): the (version, RECORD digest)
+#: under which it was first checked in this process. A module stays in memory after its files change;
+#: a refresh must not make a newer discovery describe the older code that still runs, so this is never
+#: cleared. Operating rule: a change to a provider environment takes effect in a NEW process; a
+#: same-version rebuild of a module already in memory cannot be seen from inside the process.
+_IMPORTED_UNDER: dict[str, tuple[str, str]] = {}
+
+
+def require_library_unchanged(status: ProviderStatus, package: str) -> None:
+    """Execution-time counterpart of :func:`python_package_probe` (BIG 14 reviews N1, M2).
+
+    A library adapter calls this where it imports its library, naming the
+    package it expects (the status is not trusted to say which one). Refused:
+
+    * on disk: the provider's distribution or a declared dependency no longer
+      has the version and RECORD digest discovery bound;
+    * in memory: the imported module was loaded from another location than
+      discovery found, carries another ``__version__``, or was first imported
+      under another discovery in this process.
+
+    Per execution it reads RECORD / METADATA files only; the shared
+    python-environment digest is re-read by ``ProviderRegistry.status(refresh=True)``.
+    """
+    import sys
+
+    from .records import ProviderRefusal
+
+    if not status.available or status.capability.mode is not ProviderMode.LIBRARY:
+        raise ProviderRefusal(f"{status.capability.provider_id!r} is not an available library provider")
+    if status.capability.package != package:
+        raise ProviderRefusal(f"the status describes {status.capability.package!r}, not the library {package!r} about to run")
+
+    def now(name: str) -> tuple[str, str]:
+        try:
+            dist = _located(name)
+            version = dist.version if dist is not None else None
+            if not version:  # absent, or its dist-info was replaced (an upgrade) since it was located
+                return "", ""
+            return version, _record_digest_of(dist, name)
+        except Exception:  # unreadable metadata is not a library that can be identified
+            return "", ""
+
+    found = [n for n in dict.fromkeys((package, package.lower())) if now(n)[0]]
+    if not found:
+        raise ProviderRefusal(f"library {package!r} changed since discovery: it is no longer installed as located "
+                              f"(discovered {status.version})")
+    declared = tuple(d for d in status.dependencies if d[0] != "python-environment")
+    current = tuple((n, *now(n)) for n, _, _ in declared)
+    version, main = now(found[0])
+    combined = _combine(main, *(d[2] for d in current))  # `main` is re-used for the in-memory pins below
+    if version != status.version or combined != status.digest or current != declared:
+        raise ProviderRefusal(f"library {package!r} changed since discovery (now {version}, discovered {status.version}); "
+                              "the execution identity no longer describes what would run")
+    main_dist = found[0]
+    bound = ((main_dist, package, status.version, main),) + tuple((n, n, v, d) for n, v, d in declared)
+    for dist_name, module_name, want_version, want_digest in bound:
+        # every module the distribution provides is loaded (or would be) from its own files (review N-1)
+        if dist_name not in _FOOTPRINTS:
+            _FOOTPRINTS[dist_name] = _footprint(_located(dist_name), dist_name)
+        files, modules = _FOOTPRINTS[dist_name]
+        if not files or not modules:
+            raise ProviderRefusal(f"the files of {dist_name} {want_version} cannot be established (no RECORD module files and "
+                                  "no conda package record); what would run cannot be bound")
+        for provided in sorted(modules):
+            elsewhere = _origin_outside(provided, files)
+            if elsewhere:
+                raise ProviderRefusal(f"{provided!r} would be (or was) loaded from {elsewhere}, which is not a file of the "
+                                      f"discovered {dist_name} {want_version}")
+        loaded = sys.modules.get(module_name)
+        if loaded is None:
+            if module_name == package:  # about to be imported: from where discovery found it (a later path shadow would not be)
+                if package not in _SPEC_ORIGIN:
+                    try:
+                        spec = importlib.util.find_spec(package)
+                        _SPEC_ORIGIN[package] = (spec.origin or "") if spec is not None else ""
+                    except (ImportError, ValueError):
+                        _SPEC_ORIGIN[package] = ""
+                origin = os.path.realpath(os.path.dirname(_SPEC_ORIGIN[package])) if _SPEC_ORIGIN[package] else ""
+                if origin != os.path.realpath(status.location):
+                    raise ProviderRefusal(f"library {package!r} would now be imported from {origin or 'nowhere'}, "
+                                          f"not from the discovered {status.location}")
+        else:
+            in_memory = str(getattr(loaded, "__version__", "") or "").split(" ")[0]
+            if in_memory and in_memory != want_version:
+                raise ProviderRefusal(f"{module_name!r} in memory is version {in_memory}; discovery bound {want_version}")
+            if module_name == package:
+                where = os.path.realpath(os.path.dirname(getattr(loaded, "__file__", None) or ""))
+                if where != os.path.realpath(status.location):
+                    raise ProviderRefusal(f"library {package!r} in memory was loaded from {where}, "
+                                          f"not from the discovered {status.location}")
+        pinned = _IMPORTED_UNDER.setdefault(dist_name, (want_version, want_digest))
+        if pinned != (want_version, want_digest):
+            raise ProviderRefusal(f"{dist_name!r} was first used in this process as {pinned[0]}; a refreshed status "
+                                  f"({want_version}) does not describe the code in memory -- restart after changing the environment")
+
+
 def executable_probe(capability: ProviderCapability, executable: str, version_argv: tuple[str, ...],
                      parse_version: Callable[[str], str], *, search_path: str | None = None, timeout: float = 30.0,
-                     environment_prefix: str | None = None) -> Callable[[], ProviderStatus]:
+                     environment_prefix: str | None = None, accepted_exit_codes: tuple[int, ...] = (0,)) -> Callable[[], ProviderStatus]:
     """Probe an external executable: exact resolved path, file digest, parsed version.
 
     ``search_path`` is an explicit PATH to search (e.g. a provider environment's
     ``bin``); the process environment's PATH is used only when it is None.
+
+    The probe must exit with one of ``accepted_exit_codes`` (default: 0). A
+    failed or timed-out probe is UNAVAILABLE and yields no digest, so no
+    execution identity can be formed from it -- text that merely parses as a
+    version is not enough. A tool whose version flag exits non-zero by design
+    declares the measured code in its descriptor.
     """
+    codes = tuple(accepted_exit_codes)
+    if not codes or any(isinstance(c, bool) or not isinstance(c, int) or c < 0 for c in codes):
+        raise InvalidScientificProblem(f"accepted_exit_codes must be a non-empty tuple of non-negative ints, got {accepted_exit_codes!r}")
+
     def probe() -> ProviderStatus:
         try:
             path = shutil.which(executable, path=search_path)
@@ -224,6 +487,9 @@ def executable_probe(capability: ProviderCapability, executable: str, version_ar
             real = os.path.realpath(path)
             out = subprocess.run([real, *version_argv], capture_output=True, text=True, timeout=timeout,
                                  env={"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp")})
+            if out.returncode not in codes:
+                return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
+                                      reason=f"version probe of {real} exited {out.returncode} (accepted {list(codes)})")
             version = parse_version((out.stdout or "") + (out.stderr or ""))
             if not version:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
@@ -259,6 +525,12 @@ class ProviderRegistry:
     def status(self, provider_id: str, *, refresh: bool = False) -> ProviderStatus:
         if provider_id not in self._entries:
             raise ProviderUnavailable(f"provider {provider_id!r} is not registered")
+        if refresh:
+            _PY_ENV.clear()  # a refresh re-reads the installed distributions too, not a digest cached at first probe
+            _LOCATED.clear()
+            _SPEC_ORIGIN.clear()
+            _FOOTPRINTS.clear()
+            _CONDA_FILES.clear()
         if refresh or provider_id not in self._cache:
             self._cache[provider_id] = self._entries[provider_id][1]()
         return self._cache[provider_id]

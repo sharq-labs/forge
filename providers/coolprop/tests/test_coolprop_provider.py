@@ -13,6 +13,8 @@ from forge_coolprop import CoolPropProvider, descriptor
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("coolprop").available
+# present but refused by discovery (e.g. a dependency loaded from outside its distribution): a defect, not a skip
+assert not REG.status("coolprop").found_but_refused, REG.status("coolprop").reason
 # Per test, not per module: the provider-free refusals below run without the provider.
 needs_coolprop = pytest.mark.skipif(not OK, reason="CoolProp unavailable")
 

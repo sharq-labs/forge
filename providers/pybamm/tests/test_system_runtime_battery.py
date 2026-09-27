@@ -66,6 +66,7 @@ from forge_tespy import descriptor as tpd
 pbd.register(REG)
 tpd.register(REG)
 OK = REG.status("pybamm").available and REG.status("tespy").available
+assert not [p for p in ("pybamm", "tespy") if p in {c.capability.provider_id for c in REG.discover()} and REG.status(p).found_but_refused], "a present provider was refused by discovery (a defect, not a skip)"
 pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM and TESPy are both required")
 
 UNKNOWN = Uncertainty.unknown("declared, not quantified")

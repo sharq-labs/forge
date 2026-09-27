@@ -19,7 +19,7 @@ import numpy as np
 from engcore.coupling import ParticipantStateContract, StateCompleteness
 from engcore.execution.multiphysics import AdvanceResult, CallbackParticipant, InitializationResult
 from engcore.execution.multiphysics.participant import RuntimeCheckpoint
-from engcore.providers import ProviderExecutionIdentity, ProviderRefusal
+from engcore.providers import ProviderExecutionIdentity, ProviderRefusal, require_library_unchanged
 from engcore.scientific.multiphysics.receipts import StateVariableValue
 from engcore.scientific.multiphysics.state import CheckpointRecord
 from engcore.scientific.results.uncertainty import Uncertainty
@@ -34,9 +34,11 @@ COMPLETENESS_BASIS = ("the PyBaMM Solution (full model state vector y at the win
 def cell_participant(registry, spec, *, parameter_set_name: str, model: str, initial_soc: float, capacity_fade: float,
                      current_at: Callable[[Quantity], Quantity], log: list | None = None, points: int = 11) -> CallbackParticipant:
     """``capacity_fade`` is the declared slow state (0.0 = a new cell) mapped exactly as the provider maps it: uniform loss of active material."""
+    status = registry.require("pybamm")
+    require_library_unchanged(status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 M1)
     import pybamm
 
-    status = registry.require("pybamm")
+    require_library_unchanged(status, "pybamm")  # and the module that was just imported is that library (M-3)
     if not (0.0 <= capacity_fade < 0.5):
         raise ProviderRefusal("capacity_fade outside the declared mapping's range [0, 0.5)")
     pset, pv = parameter_set(parameter_set_name)
@@ -79,6 +81,7 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
         problem = {"window_s": [repr(request.start.magnitude_in("s")), repr(request.end.magnitude_in("s"))], "inputs": {k: repr(v) for k, v in inputs.items()},
                    "start_state": digest(), "model": model, "parameter_set": pset.to_dict(), "soc_definition": SOC_DEFINITION,
                    "capacity_fade": repr(float(capacity_fade)), "fade_mapping": FADE_MAPPING}
+        require_library_unchanged(status, "pybamm")  # every window: the module in memory still matches discovery
         ident = ProviderExecutionIdentity.from_content(status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem,
                                                        configuration={"solver": "IDAKLUSolver", "rtol": "1e-6", "atol": "1e-8", "points": points,
                                                                       "model_options": options,

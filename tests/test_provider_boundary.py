@@ -84,6 +84,33 @@ def test_executable_probe_binds_exact_path_version_and_digest():
     assert status.available and status.version.startswith("3.") and status.digest == _sha256_file(PY) and status.location == PY
 
 
+def test_a_failed_or_timed_out_version_probe_yields_no_identity():
+    """BIG 14 14.1: exit code and timeout decide, not whether some text parses as a version."""
+    cap = ProviderCapability("python-proc", "demo", "process", "python", ("demo",))
+    parse = lambda s: s.split()[-1] if "Python" in s else ""  # noqa: E731
+    exe, path = os.path.basename(PY), os.path.dirname(PY)
+    lying = ("-c", "import sys; print('Python 3.99.1'); sys.exit(3)")  # prints a version, then fails
+    failed = executable_probe(cap, exe, lying, parse, search_path=path)()
+    assert not failed.available and not failed.digest and "exited 3 (accepted [0])" in failed.reason
+    base = dict(adapter_id="demo-adapter", adapter_version="1", problem={"k": 1}, configuration="deck", output_request=("x",))
+    with pytest.raises(Exception, match="AVAILABLE"):
+        ProviderExecutionIdentity.from_content(failed, **base)
+    # a tool whose version flag exits non-zero by design declares the measured code; nothing else is accepted
+    declared = executable_probe(cap, exe, lying, parse, search_path=path, accepted_exit_codes=(3,))()
+    assert declared.available and declared.version == "3.99.1" and declared.digest == _sha256_file(PY)
+    clean = executable_probe(cap, exe, ("--version",), parse, search_path=path, accepted_exit_codes=(3,))()
+    assert not clean.available and "exited 0 (accepted [3])" in clean.reason
+    hung = executable_probe(cap, exe, ("-c", "import time; print('Python 3.99.1', flush=True); time.sleep(30)"), parse,
+                            search_path=path, timeout=0.5)()
+    assert not hung.available and not hung.digest and "TimeoutExpired" in hung.reason
+    # the registry caches the failed answer as UNAVAILABLE; require() refuses it and no identity can be formed
+    reg = ProviderRegistry()
+    reg.register(cap, executable_probe(cap, exe, lying, parse, search_path=path))
+    with pytest.raises(ProviderUnavailable, match="exited 3"):
+        reg.require("python-proc")
+    assert not reg.status("python-proc").available
+
+
 # ---- content identity ---------------------------------------------------------------
 
 
@@ -127,6 +154,402 @@ def _invocation(expected=("out.txt",), args=("solver.py", "in.txt", "out.txt"), 
     return ProcessInvocation(PY, _sha256_file(PY), sys.version.split()[0], args,
                              (GeneratedFile("solver.py", SOLVER), GeneratedFile("in.txt", b"forge deck\n")) + tuple(extra_inputs),
                              minimal_environment(PY, {"SYSTEMROOT": os.environ.get("SYSTEMROOT", "")}), timeout, expected)
+
+
+def _fake_conda_env(root, packages=(("numpy", "2.5.3"), ("ccx", "2.23"))):
+    import json
+
+    meta = root / "conda-meta"
+    meta.mkdir(parents=True)
+    for name, version in packages:
+        (meta / f"{name}-{version}-0.json").write_text(json.dumps({"name": name, "version": version, "build": "0", "sha256": "1" * 64}))
+    return str(root)
+
+
+def test_a_conda_environment_changed_after_discovery_is_refused_at_launch(tmp_path):
+    """BIG 14 review F2: the executable was re-hashed at launch; the environment it loads from was not."""
+    from engcore.providers.catalog import conda_environment_digest
+
+    prefix = _fake_conda_env(tmp_path / "env")
+    discovered, _ = conda_environment_digest(prefix)
+    inv = _invocation()
+    checked = ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                                inv.timeout_s, inv.expected_outputs, conda_environment=(prefix, discovered))
+    assert checked.digest == inv.digest  # an operational check: the identity already binds the environment digest
+    (tmp_path / "ok").mkdir()
+    (tmp_path / "changed").mkdir()
+    assert ProcessWorkspace(str(tmp_path / "ok")).run(checked).completed
+    (tmp_path / "env" / "conda-meta" / "ccx-2.23-0.json").write_text('{"name": "ccx", "version": "2.24", "build": "0", "sha256": "2"}')
+    with pytest.raises(ProviderRefusal, match="changed since discovery"):
+        ProcessWorkspace(str(tmp_path / "changed")).run(checked)
+    with pytest.raises(ProviderRefusal, match="absolute prefix"):
+        ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                          inv.timeout_s, inv.expected_outputs, conda_environment=("relative", discovered))
+
+
+def test_a_sequence_refused_at_a_later_step_leaves_a_spent_workspace(tmp_path):
+    """Review L4: step 1 ran, step 2's launch check refused; the workspace must not be runnable again."""
+    from engcore.providers.catalog import conda_environment_digest
+
+    prefix = _fake_conda_env(tmp_path / "env")
+    good, _ = conda_environment_digest(prefix)
+    inv = _invocation()
+    stale = ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                              inv.timeout_s, inv.expected_outputs, conda_environment=(prefix, "f" * 64))
+    (tmp_path / "ws").mkdir()
+    ws = ProcessWorkspace(str(tmp_path / "ws"))
+    with pytest.raises(ProviderRefusal, match="changed since discovery"):
+        ws.run_sequence((inv, stale))
+    with pytest.raises(ProviderRefusal, match="exactly once"):
+        ws.run(inv)
+    assert good != "f" * 64
+
+
+def test_conda_environment_of_reads_only_what_discovery_bound(tmp_path):
+    from engcore.providers import conda_environment_of
+
+    cap = ProviderCapability("ccx", "fem", "process", "ccx", ("demo",))
+    prefix = _fake_conda_env(tmp_path / "env")
+    exe = os.path.join(prefix, "bin", "ccx")
+    bound = ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, exe, dependencies=(("conda-environment", "2 packages", "b" * 64),))
+    assert conda_environment_of(bound) == (prefix, "b" * 64)
+    assert conda_environment_of(ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, exe)) == ()
+    elsewhere = ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, str(tmp_path / "plain" / "bin" / "ccx"),
+                               dependencies=(("conda-environment", "2 packages", "b" * 64),))
+    with pytest.raises(ProviderRefusal, match="is not one"):
+        conda_environment_of(elsewhere)
+
+
+def test_a_refresh_drops_the_per_process_discovery_caches():
+    import engcore.providers.catalog as catalog
+
+    catalog.python_environment_digest()
+    catalog._located("pytest")
+    assert catalog._PY_ENV and "pytest" in catalog._LOCATED
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    reg = ProviderRegistry()
+    reg.register(cap, catalog.python_package_probe(cap, "pytest", ("pytest",)))
+    reg.status("pytest-lib", refresh=True)
+    assert "pytest" not in catalog._LOCATED  # re-located on the next check, not reused
+    assert catalog._PY_ENV  # re-read by the refreshed probe itself
+
+
+def test_found_but_refused_separates_a_defect_from_an_absent_provider():
+    cap = ProviderCapability("x", "demo", "process", "x", ("demo",))
+    for reason in ("adapter 'forge_x' failed to register: NameError: y", "version probe of /e/bin/x exited 0 (accepted [201])",
+                   "could not establish the version of /e/bin/x", "could not establish the OpenFOAM version"):
+        assert ProviderStatus(cap, Availability.UNAVAILABLE, reason=reason).found_but_refused, reason
+    for reason in ("executable 'x' not found", "python module 'x' is not installed", "OpenFOAM icoFoam not found under the provider prefix"):
+        assert not ProviderStatus(cap, Availability.UNAVAILABLE, reason=reason).found_but_refused, reason
+    assert not ProviderStatus(cap, Availability.AVAILABLE, "1", "a" * 64).found_but_refused
+    assert "found_but_refused" not in ProviderStatus(cap, Availability.UNAVAILABLE, reason="adapter x").to_dict()
+
+
+def test_a_library_changed_after_discovery_is_refused_at_execution(monkeypatch):
+    """BIG 14 re-review N1: library providers import at execution; the library must still be the one discovery bound."""
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe, require_library_unchanged
+
+    # a per-process pin: each test starts from its own empty table
+    monkeypatch.setattr(catalog, "_IMPORTED_UNDER", {})
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    status = python_package_probe(cap, "pytest", ("pytest",), dependencies=("pluggy",))()
+    assert status.available, status.reason
+    require_library_unchanged(status, "pytest")  # unchanged: passes
+    real_digest = catalog._record_digest_of
+    with monkeypatch.context() as m:
+        m.setattr(catalog, "_record_digest_of", lambda d, n: "0" * 64 if n == "pluggy" else real_digest(d, n))
+        with pytest.raises(ProviderRefusal, match="changed since discovery"):
+            require_library_unchanged(status, "pytest")  # a dependency's files changed
+
+    class Upgraded:  # what a located distribution reads like after pip replaced it with a newer one
+        version, files = "99.0", ()
+
+        @staticmethod
+        def read_text(name):
+            return "pytest/__init__.py,sha256=new,1\n" if name == "RECORD" else None
+    with monkeypatch.context() as m:
+        m.setitem(catalog._LOCATED, "pytest", Upgraded())
+        with pytest.raises(ProviderRefusal, match="now 99.0"):
+            require_library_unchanged(status, "pytest")  # the provider itself was upgraded
+
+    class Removed:  # its dist-info directory is gone
+        version, files = None, ()
+    with monkeypatch.context() as m:
+        m.setitem(catalog._LOCATED, "pytest", Removed())
+        with pytest.raises(ProviderRefusal, match="no longer installed"):
+            require_library_unchanged(status, "pytest")
+    require_library_unchanged(status, "pytest")  # unchanged again once the stand-ins are gone
+    with pytest.raises(ProviderRefusal, match="not an available library provider"):
+        require_library_unchanged(ProviderStatus(ProviderCapability("x", "demo", "process", "x", ("d",)), Availability.AVAILABLE, "1", "a" * 64), "x")
+
+
+def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch):
+    """BIG 14 re-review M2: the check covers the imported module, not only the files on disk."""
+    import types
+
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe, require_library_unchanged
+
+    # a per-process pin: each test starts from its own empty table
+    monkeypatch.setattr(catalog, "_IMPORTED_UNDER", {})
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    status = python_package_probe(cap, "pytest", ("pytest",))()
+    assert status.available, status.reason
+    require_library_unchanged(status, "pytest")
+    with pytest.raises(ProviderRefusal, match="not the library 'cantera'"):
+        require_library_unchanged(status, "cantera")  # the status is not trusted to say which library runs
+    real = sys.modules["pytest"]
+    with monkeypatch.context() as m:
+        shadow = types.ModuleType("pytest")
+        shadow.__file__ = os.path.join(os.path.dirname(os.path.dirname(real.__file__)), "elsewhere", "pytest", "__init__.py")
+        m.setitem(sys.modules, "pytest", shadow)
+        with pytest.raises(ProviderRefusal, match="loaded from .*(not a file of the discovered pytest|not from the discovered)"):
+            require_library_unchanged(status, "pytest")
+    with monkeypatch.context() as m:
+        older = types.ModuleType("pytest")
+        older.__file__, older.__version__ = real.__file__, "0.1"
+        m.setitem(sys.modules, "pytest", older)
+        with pytest.raises(ProviderRefusal, match="in memory is version 0.1"):
+            require_library_unchanged(status, "pytest")
+    with monkeypatch.context() as m:
+        m.setitem(catalog._IMPORTED_UNDER, "pytest", ("0.1", "0" * 64))  # first used under an older discovery
+        with pytest.raises(ProviderRefusal, match="first used in this process as 0.1"):
+            require_library_unchanged(status, "pytest")
+    # a declared DEPENDENCY counts too (re-review of d0294654): its module in memory and its per-process pin
+    with_dep = python_package_probe(ProviderCapability("pytest-dep", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                    dependencies=("pluggy",))()
+    require_library_unchanged(with_dep, "pytest")
+    with monkeypatch.context() as m:
+        stale = types.ModuleType("pluggy")
+        stale.__version__, stale.__file__ = "0.0.1", sys.modules["pluggy"].__file__  # right place, older code
+        m.setitem(sys.modules, "pluggy", stale)
+        with pytest.raises(ProviderRefusal, match="'pluggy' in memory is version 0.0.1"):
+            require_library_unchanged(with_dep, "pytest")
+    with monkeypatch.context() as m:
+        m.setitem(catalog._IMPORTED_UNDER, "pluggy", ("0.0.1", "0" * 64))
+        with pytest.raises(ProviderRefusal, match="'pluggy' was first used in this process as 0.0.1"):
+            require_library_unchanged(with_dep, "pytest")
+    # a declared dependency loaded from outside its distribution (shadow / editable), right version or not (review N-1)
+    real_pluggy = sys.modules["pluggy"]
+    with monkeypatch.context() as m:
+        shadow_dep = types.ModuleType("pluggy")
+        shadow_dep.__version__ = real_pluggy.__version__
+        shadow_dep.__file__ = os.path.join(os.path.dirname(os.path.dirname(real_pluggy.__file__)), "checkout", "pluggy", "__init__.py")
+        m.setitem(sys.modules, "pluggy", shadow_dep)
+        with pytest.raises(ProviderRefusal, match="'pluggy' would be \\(or was\\) loaded from .* not a file of the discovered pluggy"):
+            require_library_unchanged(with_dep, "pytest")
+        dep_probe = python_package_probe(ProviderCapability("pytest-dep2", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                         dependencies=("pluggy",))()
+        assert not dep_probe.available and dep_probe.found_but_refused and "dependency module 'pluggy'" in dep_probe.reason
+    # a distribution whose files cannot be established (no RECORD module files, no conda record) is refused at execution
+    with monkeypatch.context() as m:
+        m.setitem(catalog._FOOTPRINTS, "pluggy", (frozenset(), frozenset()))
+        with pytest.raises(ProviderRefusal, match="the files of pluggy .* cannot be established"):
+            require_library_unchanged(with_dep, "pytest")
+    # the package itself, not yet imported, must still resolve to where discovery found it (LOW-a)
+    import importlib.machinery
+    import importlib.util as iu
+    real_find = iu.find_spec
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "pytest")
+        m.setattr(catalog, "_SPEC_ORIGIN", {})  # resolved once per process: start this case unresolved
+        elsewhere = importlib.machinery.ModuleSpec("pytest", None, origin=os.path.join(os.sep, "elsewhere", "pytest", "__init__.py"))
+        m.setattr(iu, "find_spec", lambda name, *a: elsewhere if name == "pytest" else real_find(name, *a))
+        with pytest.raises(ProviderRefusal, match="would (now )?be"):
+            require_library_unchanged(status, "pytest")
+    # a module that IS one of the distribution's files but not where discovery found the package is refused by the
+    # location rule (the footprint alone would admit it)
+    site_root = os.path.realpath(os.path.dirname(os.path.dirname(real.__file__)))
+    vendored = os.path.join(site_root, "vendored", "pytest", "__init__.py")
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "pytest")
+        m.setattr(catalog, "_SPEC_ORIGIN", {})
+        m.setitem(catalog._FOOTPRINTS, "pytest", (frozenset({os.path.realpath(vendored)}), frozenset({"pytest"})))
+        inside = importlib.machinery.ModuleSpec("pytest", None, origin=vendored)
+        m.setattr(iu, "find_spec", lambda name, *a: inside if name == "pytest" else real_find(name, *a))
+        with pytest.raises(ProviderRefusal, match="would now be imported from .*vendored"):
+            require_library_unchanged(status, "pytest")
+    assert sys.modules["pytest"] is real
+    # discovery refuses a module that is not a file of the distribution it would bind (shadowing / editable)
+    shadowed = python_package_probe(ProviderCapability("mis", "demo", "library", "pytest", ("d",)), "pytest", ("pluggy",))()
+    assert not shadowed.available and shadowed.found_but_refused and "is not a file of the installed pluggy" in shadowed.reason
+
+
+def test_a_footprint_comes_from_the_record_or_the_conda_record_or_nothing(monkeypatch):
+    """BIG 14 review M-1/M-2: a distribution's own files and modules, fail-closed when neither source lists them."""
+    import engcore.providers.catalog as catalog
+
+    root = os.path.realpath(os.path.dirname(os.path.dirname(pytest.__file__)))
+
+    class NoRecord:  # e.g. conda-installed casadi: no RECORD, no file list
+        version, files = "3.7.2", None
+
+        @staticmethod
+        def locate_file(f):
+            return os.path.join(root, str(f))
+
+        @staticmethod
+        def read_text(name):
+            return None
+
+    rel_site = os.path.relpath(root, sys.prefix).replace(os.sep, "/")
+    record = (f"{rel_site}/casadi/__init__.py", f"{rel_site}/casadi/_casadi.so", f"{rel_site}/casadi-3.7.2.dist-info/METADATA")
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {"casadi==3.7.2": record})
+    files, modules = catalog._footprint(NoRecord(), "casadi")
+    assert modules == {"casadi"} and os.path.realpath(os.path.join(root, "casadi", "__init__.py")) in files
+    assert not any(".dist-info" in f for f in files)
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {})
+    assert catalog._footprint(NoRecord(), "casadi") == (frozenset(), frozenset())  # nothing establishes it: refuse
+    assert catalog._outside(os.path.join(root, "casadi", "__init__.py"), frozenset())
+    import importlib.metadata
+
+    real_files, real_modules = catalog._footprint(importlib.metadata.distribution("pytest"), "pytest")
+    assert {"pytest", "_pytest"} <= real_modules  # derived from the files: underscore modules are code too
+    assert os.path.realpath(pytest.__file__) in real_files
+
+
+def _fake_distribution(site, name, *, record=None, editable=False, egg_sources=None):
+    """A distribution on disk: dist-info (METADATA, optional RECORD, optional editable direct_url.json) or a checkout egg-info."""
+    import json
+
+    if egg_sources is not None:
+        info = site / f"{name}.egg-info"
+        info.mkdir(parents=True)
+        (info / "PKG-INFO").write_text(f"Metadata-Version: 2.1\nName: {name}\nVersion: 1.0\n")
+        (info / "SOURCES.txt").write_text("\n".join(egg_sources) + "\n")
+        return
+    info = site / f"{name}-1.0.dist-info"
+    info.mkdir(parents=True)
+    (info / "METADATA").write_text(f"Metadata-Version: 2.1\nName: {name}\nVersion: 1.0\n")
+    if record is not None:
+        (info / "RECORD").write_text("\n".join(f"{r},," for r in record) + "\n")
+    if editable:
+        (info / "direct_url.json").write_text(json.dumps({"url": "file:///checkout", "dir_info": {"editable": True}}))
+
+
+def test_an_editable_or_checkout_distribution_establishes_nothing(tmp_path, monkeypatch):
+    """BIG 14 reviews F-1 / F-2: an editable dependency, and an egg-info in a checkout, run code no RECORD describes."""
+    import importlib
+
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe
+
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {})
+    site, checkout = tmp_path / "site", tmp_path / "checkout"
+    (checkout / "forgedemo_dep").mkdir(parents=True)
+    (checkout / "forgedemo_dep" / "__init__.py").write_text("__version__ = '1.0'\n")
+    _fake_distribution(site, "forgedemo_dep", record=["__editable__.forgedemo_dep-1.0.pth", "__editable___forgedemo_dep_finder.py",
+                                             "forgedemo_dep-1.0.dist-info/METADATA"],
+                       editable=True)
+    (checkout / "forgedemo_egg").mkdir()
+    (checkout / "forgedemo_egg" / "__init__.py").write_text("")
+    _fake_distribution(checkout, "forgedemo_egg", egg_sources=["forgedemo_egg/__init__.py"])
+    monkeypatch.syspath_prepend(str(site))
+    monkeypatch.syspath_prepend(str(checkout))
+    importlib.invalidate_caches()
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("d",))
+    with_editable = python_package_probe(cap, "pytest", ("pytest",), dependencies=("forgedemo_dep",))()
+    assert not with_editable.available and with_editable.found_but_refused, with_editable.reason
+    egg = python_package_probe(ProviderCapability("egg", "demo", "library", "forgedemo_egg", ("d",)), "forgedemo_egg", ("forgedemo_egg",))()
+    assert not egg.available and egg.found_but_refused, egg.reason
+    import importlib.metadata as md
+
+    assert catalog._footprint(md.distribution("forgedemo_dep"), "forgedemo_dep") == (frozenset(), frozenset())
+    assert catalog._footprint(md.distribution("forgedemo_egg"), "forgedemo_egg") == (frozenset(), frozenset())
+
+
+def test_discovery_does_not_feed_the_execution_time_origin_cache(monkeypatch):
+    """BIG 14 review M-3: an origin resolved at discovery must not stand in for where the import really goes later."""
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe
+
+    monkeypatch.setattr(catalog, "_SPEC_ORIGIN", {})
+    monkeypatch.delitem(sys.modules, "pluggy")  # not yet imported: discovery has to resolve where it WOULD load from
+    status = python_package_probe(ProviderCapability("pytest-dep3", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                  dependencies=("pluggy",))()
+    assert status.available, status.reason
+    assert catalog._SPEC_ORIGIN == {}
+
+
+def test_every_library_adapter_checks_again_after_importing_its_library():
+    """BIG 14 review M-3: the check before the import resolves where the module WOULD come from; the check after it
+    reads the module that DID load. Every adapter function that imports its library has a check after the import."""
+    import ast
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    packages = {"cantera": "cantera", "coolprop": "CoolProp", "pybamm": "pybamm", "tespy": "tespy"}
+    missing, seen = [], 0
+    for name, package in packages.items():
+        for path in sorted((root / name / f"forge_{name}").glob("*.py")):
+            for fn in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                checks = [c.lineno for c in ast.walk(fn) if isinstance(c, ast.Call)
+                          and getattr(c.func, "id", None) == "require_library_unchanged"]
+                if not checks:
+                    continue  # functions that never check are held by the identity-forming rule above
+                imports = [n.lineno for n in ast.walk(fn) if (isinstance(n, ast.Import) and any(a.name.split(".")[0] == package for a in n.names))
+                           or (isinstance(n, ast.ImportFrom) and n.level == 0 and (n.module or "").split(".")[0] == package)]
+                if imports:
+                    seen += 1
+                    if max(checks) < max(imports):
+                        missing.append(f"{path.relative_to(root).as_posix()}:{fn.name}")
+    assert seen >= 5 and missing == [], (seen, missing)
+
+
+def test_every_library_adapter_checks_its_library_where_it_forms_an_identity():
+    """BIG 14 M1: every function that forms an execution identity in a library adapter calls the check itself,
+    naming its package. Itself, not an enclosing function: a closure such as the coupling path's per-window
+    ``advance`` runs long after its constructor's check, which then says nothing about the window."""
+    import ast
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    packages = {"cantera": "cantera", "coolprop": "CoolProp", "pybamm": "pybamm", "tespy": "tespy"}
+
+    def own_nodes(fn):  # the function's body without the bodies of functions nested in it
+        stack, out = list(fn.body), []
+        while stack:
+            node = stack.pop()
+            out.append(node)
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                stack.extend(ast.iter_child_nodes(node))
+        return out
+
+    missing, seen = [], 0
+    for name, package in packages.items():
+        for path in sorted((root / name / f"forge_{name}").glob("*.py")):
+            for fn in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                calls = [n for n in own_nodes(fn) if isinstance(n, ast.Call)]
+                if not any(getattr(c.func, "attr", None) == "from_content" for c in calls):
+                    continue
+                seen += 1
+                if not any(getattr(c.func, "id", None) == "require_library_unchanged" and len(c.args) == 2
+                           and isinstance(c.args[1], ast.Constant) and c.args[1].value == package for c in calls):
+                    missing.append(f"{path.relative_to(root).as_posix()}:{fn.name}")
+    assert seen >= 5 and missing == [], (seen, missing)
+
+
+def test_every_adapter_process_invocation_declares_its_environment_check():
+    """Static: an adapter that builds a ProcessInvocation without the check would launch unverified (BIG 14 F2)."""
+    import ast
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    calls = []
+    for path in sorted(root.glob("*/forge_*/*.py")):
+        for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "ProcessInvocation":
+                value = next((k.value for k in node.keywords if k.arg == "conda_environment"), None)
+                derived = (isinstance(value, ast.Call) and getattr(value.func, "id", None) == "conda_environment_of") or (
+                    isinstance(value, ast.Name) and value.id == "checked_environment")
+                calls.append((path.relative_to(root).as_posix(), node.lineno, derived))
+    assert len(calls) >= 9, calls
+    assert [c for c in calls if not c[2]] == [], calls
 
 
 def test_process_outputs_are_digest_bound_and_only_this_executions_files_are_admitted(tmp_path):

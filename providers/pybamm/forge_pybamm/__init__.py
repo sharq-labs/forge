@@ -31,7 +31,7 @@ from typing import Any
 
 import numpy as np
 
-from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed
+from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed, require_library_unchanged
 from engcore.scenarios.timeline import TimeWindow
 from engcore.scientific.units.quantity import Quantity
 
@@ -142,7 +142,10 @@ class PyBaMMProvider:
         self.status = registry.require("pybamm")
 
     def run(self, problem: BatteryProblem) -> ProviderExecutionRecord:
+        require_library_unchanged(self.status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 N1)
         import pybamm
+
+        require_library_unchanged(self.status, "pybamm")  # and the module that was just imported is that library (M-3)
 
         t0 = time.perf_counter()
         pset, pv = parameter_set(problem.parameter_set)

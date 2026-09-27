@@ -28,6 +28,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from .catalog import ProviderStatus, conda_environment_digest
 from .identity import content_digest
 from .records import ProviderRefusal
 
@@ -70,10 +71,18 @@ class ProcessInvocation:
     environment: tuple[tuple[str, str], ...]
     timeout_s: float
     expected_outputs: tuple[str, ...]
+    #: (prefix, sha256 of its package set at discovery) for an executable that runs from a conda
+    #: environment. Operational, not identity (the execution identity already binds the digest):
+    #: a launch recomputes it and refuses a changed environment. See :func:`conda_environment_of`.
+    conda_environment: tuple[str, str] | tuple[()] = ()
 
     def __post_init__(self) -> None:
         if not os.path.isabs(self.executable):
             raise ProviderRefusal("the executable must be an exact absolute path from provider discovery")
+        if self.conda_environment:
+            prefix, digest = self.conda_environment
+            if not os.path.isabs(prefix) or not re.fullmatch(r"[0-9a-f]{64}", str(digest)):
+                raise ProviderRefusal("a conda environment check needs an absolute prefix and its sha256 package-set digest")
         if any(not isinstance(a, str) for a in self.args):
             raise ProviderRefusal("process arguments are an argv list of strings")
         for name in self.expected_outputs:
@@ -169,7 +178,7 @@ class ProcessWorkspace:
         judged against the snapshot taken before the FIRST step, so a file only
         counts if this sequence created or changed it.
         """
-        if self.record is not None:
+        if self.record is not None or getattr(self, "_started", False):
             raise ProviderRefusal("a workspace executes exactly once")
         invocations = tuple(invocations)
         if not invocations:
@@ -184,6 +193,8 @@ class ProcessWorkspace:
             self._write(name, data)
         before = _snapshot(self.path)
         start = time.perf_counter()
+        # spent from here on: a refusal at a later step's launch check must not leave a workspace that could run again
+        self._started = True
         steps, outs, errs = [], [], []
         exit_code: int | None = 0
         timed_out = False
@@ -191,6 +202,15 @@ class ProcessWorkspace:
             with open(inv.executable, "rb") as fh:
                 if _sha(fh.read()) != inv.executable_digest:
                     raise ProviderRefusal(f"executable {inv.executable} changed since discovery; its identity no longer holds")
+            if inv.conda_environment:
+                prefix, expected = inv.conda_environment
+                try:
+                    actual, _ = conda_environment_digest(prefix)
+                except (OSError, ValueError, AttributeError) as exc:  # unreadable / non-JSON / non-object records
+                    raise ProviderRefusal(f"the environment {prefix} cannot be re-read at launch: {exc}") from exc
+                if actual != expected:
+                    raise ProviderRefusal(f"environment {prefix} changed since discovery (package set {actual[:12]} != {expected[:12]}); "
+                                          "the execution identity no longer describes what would run")
             proc = subprocess.Popen([inv.executable, *inv.args], cwd=self.path, env=dict(inv.environment), stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE, stdin=subprocess.DEVNULL, start_new_session=(os.name == "posix"))
             step_timeout = False
@@ -249,6 +269,22 @@ class ProcessWorkspace:
 
     def cleanup(self) -> None:
         shutil.rmtree(self.path, ignore_errors=True)
+
+
+def conda_environment_of(status: ProviderStatus) -> tuple[str, str] | tuple[()]:
+    """The launch-time environment check for a process provider discovered in a conda environment.
+
+    ``()`` when discovery bound no conda environment. Otherwise the prefix the
+    executable runs from (``<prefix>/bin/<exe>``) and the package-set digest
+    discovery recorded; the prefix must actually be a conda environment.
+    """
+    digests = [d for name, _, d in status.dependencies if name == "conda-environment"]
+    if not digests:
+        return ()
+    prefix = os.path.dirname(os.path.dirname(status.location))
+    if not os.path.isdir(os.path.join(prefix, "conda-meta")):
+        raise ProviderRefusal(f"{status.location} was discovered with a conda environment, but {prefix} is not one")
+    return (prefix, digests[0])
 
 
 def minimal_environment(executable: str, extra: Mapping[str, str] | None = None) -> tuple[tuple[str, str], ...]:

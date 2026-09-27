@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 
 from engcore.materials import FluidPropertyRecord, FluidState
-from engcore.providers import ProviderExecutionIdentity, ProviderRefusal
+from engcore.providers import ProviderExecutionIdentity, ProviderRefusal, require_library_unchanged
 from engcore.scientific.units.quantity import Quantity
 
 ADAPTER = ("forge_coolprop", "0.1")
@@ -70,7 +70,10 @@ class CoolPropProvider:
         identity = ProviderExecutionIdentity.from_content(
             self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1],
             problem={"state": state.to_dict(), "property": property_id}, configuration=request, output_request=(property_id,))
+        require_library_unchanged(self.status, "CoolProp")  # the library that runs is the one discovery bound (BIG 14 N1)
         import CoolProp.CoolProp as CP
+
+        require_library_unchanged(self.status, "CoolProp")  # and the module that was just imported is that library (M-3)
 
         (k1, v1, _), (k2, v2, _) = pairs
         base = dict(property_id=property_id, state_digest=state.digest, provider_execution_identity=identity.digest,
