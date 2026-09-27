@@ -97,3 +97,25 @@ def test_the_heat_of_mixing_adds_heat(model):
     _advance(_cell(log_a, model=model))
     _advance(_cell(log_b, model=model, model_options={"heat of mixing": "true"}))
     assert log_b[-1]["heat_W"] > log_a[-1]["heat_W"] * 1.05
+
+
+def test_the_default_execution_problem_and_configuration_are_the_earlier_ones(monkeypatch):
+    """Pinned against the pre-BIG-14 coupling.py: the keys of the execution problem and the full configuration handed to the
+    execution identity by a default advance.  Environment-independent (no library digest is pinned)."""
+    import forge_pybamm.coupling as coupling
+    seen = {}
+    real = coupling.ProviderExecutionIdentity.from_content
+
+    def spy(status, **kw):
+        seen.update(kw)
+        return real(status, **kw)
+    monkeypatch.setattr(coupling.ProviderExecutionIdentity, "from_content", staticmethod(spy))
+    _advance(_cell())
+    assert sorted(seen["problem"]) == sorted(["window_s", "inputs", "start_state", "model", "parameter_set", "soc_definition", "capacity_fade", "fade_mapping"])
+    assert seen["configuration"] == {"solver": "IDAKLUSolver", "rtol": "1e-6", "atol": "1e-8", "points": 11,
+                                     # PyBaMM adds "x-average side reactions" to the options dict it is given; the earlier code recorded
+                                     # that same mutated dict (checked 2026-09-28 by running the pre-change coupling.py beside this one)
+                                     "model_options": {"thermal": "isothermal", "calculate heat source for isothermal models": "true",
+                                                       "x-average side reactions": "true"},
+                                     "declared_initial_heat_iterate_W": "0.1 (seeds iteration 1 only)"}
+    assert seen["output_request"] == ("heat", "soc")

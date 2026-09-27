@@ -112,7 +112,7 @@ def battery_report(runs: dict) -> tuple[str, str]:
             "`compare_providers` refuses that pair as non-independent. [CORROBORATION] none is claimed."),
         "Reference comparison": (
             "[VALIDATION] None for this module. [FACT] The CELL MODEL alone was compared with measured constant-current discharges of three LG M50 cells (Chen 2020 data, "
-            f"pre-registered study big14-a-lgm50-dfn): NOT MET (voltage and capacity inside the criteria at C/2, surface-temperature rise missed on two of three cells); C/2 voltage RMSE {bc.band_text()}. "
+            f"pre-registered study big14-a-lgm50-dfn): {bc.cell_outcome_text()}; C/2 voltage RMSE {bc.band_text()}. "
             "Those curves are the data Chen2020 was tuned on, so the comparison is in-sample consistency, not validation, and says nothing about this cold plate or duty "
             "(level 7 ATTEMPTED, NOT REACHED). [FACT] Analytic reference used: the first-law relation Q = m cp dT for the coolant (verifies the energy-balance implementation only; cp comes from the same CoolProp backend TESPy uses): "
             + "; ".join(f"{c.criterion.criterion_id} {c.outcome.upper()} ({c.value.magnitude:.2e} against {c.criterion.tolerance.magnitude:g})" for c in n.comparisons)

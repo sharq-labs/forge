@@ -96,23 +96,47 @@ CELL_OPTIONS = {"heat of mixing": "true"}   # BIG 14: Chen2020's heat source omi
 _DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "docs", "flagships", "big14")
 CELL_STUDY = os.path.join(_DOCS, "lgm50_dfn_study.json")
 CELL_STUDY_PREREGISTRATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "big14_a_lgm50_dfn_preregistration.json")
+# the one record and registration this flagship accepts (a regenerated record is a deliberate, reviewed change of these two digests)
+CELL_STUDY_SHA256 = "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f"
+CELL_STUDY_PREREGISTRATION_SHA256 = "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2"
 
 
 def cell_model_study() -> dict:
-    """The committed big14-a-lgm50-dfn record, bound to its pre-registration by digest.  Flagship A takes its balance factors
-    from THIS record under the pre-registered decision rule; a record whose registration digest does not match is refused."""
+    """The committed big14-a-lgm50-dfn record, pinned by digest and bound to its pre-registration.  Its judgement and its decision
+    for this flagship are RE-DERIVED from the record's own table and identified factors under the registered rule
+    (``lgm50_dfn.judge`` / ``lgm50_dfn.decision``); a record that is not the pinned one, or whose stated outcome or decision does
+    not follow from its own data, is refused, never used."""
+    from . import lgm50_dfn
     raw = open(CELL_STUDY, "rb").read()
-    record = json.loads(raw.decode("utf-8"))
     prereg = hashlib.sha256(open(CELL_STUDY_PREREGISTRATION, "rb").read()).hexdigest()
+    if hashlib.sha256(raw).hexdigest() != CELL_STUDY_SHA256 or prereg != CELL_STUDY_PREREGISTRATION_SHA256:
+        raise ValueError("big14-a-lgm50-dfn record or pre-registration is not the pinned one")
+    record = json.loads(raw.decode("utf-8"))
     if record.get("preregistration_sha256") != prereg:
         raise ValueError("big14-a-lgm50-dfn record does not match its pre-registration")
-    return {"record": record, "sha256": hashlib.sha256(raw).hexdigest()}
+    factors = record["step_1"]["factors"]
+    if record["judgement"] != lgm50_dfn.judge(record["table"]):
+        raise ValueError("big14-a-lgm50-dfn judgement does not follow from its own table")
+    if record["decision_for_flagship"] != lgm50_dfn.decision(float(factors["negative"]), float(factors["positive"]), record["table"]):
+        raise ValueError("big14-a-lgm50-dfn decision does not follow from its identified factors and table under the registered rule")
+    return {"record": record, "sha256": CELL_STUDY_SHA256}
 
 
 def cell_balance() -> tuple[float, float]:
     rule = cell_model_study()["record"]["decision_for_flagship"]
-    f = rule["flagship_factors"] if rule["flagship_carries_balance"] else {"negative": 1.0, "positive": 1.0}
+    f = rule["flagship_factors"]
     return float(f["negative"]), float(f["positive"])
+
+
+def cell_outcome_text() -> str:
+    """The cell-model comparison's outcome in words, derived from the record's judgement (never written by hand)."""
+    j = cell_model_study()["record"]["judgement"]
+    cells = [c for c in j if c != "met"]
+    parts = []
+    for key, what in (("V1", "voltage RMSE"), ("C1", "capacity"), ("T1", "surface-temperature rise")):
+        missed = [c for c in cells if not j[c][key]]
+        parts.append(f"{what} {'inside the criterion on all ' + str(len(cells)) + ' cells' if not missed else 'missed on ' + ', '.join(missed)}")
+    return ("MET" if j["met"] else "NOT MET") + " (C/2: " + "; ".join(parts) + ")"
 
 
 @dataclass(frozen=True)
@@ -774,7 +798,7 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
                                                              "and compare_providers refuses that pair as non-independent"),
                 LevelEntry(6, LevelStatus.NOT_AVAILABLE, (), "no published numerical benchmark for this module/duty was integrated"),
                 LevelEntry(7, LevelStatus.ATTEMPTED_NOT_REACHED, (cell_measured_link(),),
-                           "the CELL MODEL alone was compared with measured LG M50 lab discharges (big14-a-lgm50-dfn, pre-registered): NOT MET, and in-sample "
+                           f"the CELL MODEL alone was compared with measured LG M50 lab discharges (big14-a-lgm50-dfn, pre-registered): {cell_outcome_text()}, and in-sample "
                            "(Chen2020 was tuned on those curves), so it is neither validation nor evidence about this module, cold plate or duty. "
                            "The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was also considered: "
                                                              f"the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is {applic.status.upper()} ({'; '.join(applic.reasons)}); no comparison was made and none is claimed")]
@@ -788,7 +812,9 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
     uncertainty = UncertaintyStatement(
         (), unknown_inputs, "NOT QUANTIFIED for the DFN cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day "
                             "approximation (unknown, not zero). Reported, not propagated: against LG M50 lab discharges at C/2 the cell model's voltage RMSE was "
-                            f"{band_text()} (big14-a-lgm50-dfn; in-sample, likely optimistic; its applicability to this module and duty is UNKNOWN)",
+                            f"{band_text()} (big14-a-lgm50-dfn; in-sample, likely optimistic). The rise error belongs to the lab rig (its identified heat-transfer "
+                            "coefficient, a lumped model against a surface thermocouple) and says nothing about this flagship's cell temperature, which follows the "
+                            "declared contact-resistance rule; the charge half of the duty was never compared with data; applicability to this module and duty is UNKNOWN",
         (f"contact resistance record {digest_of({'r': R_CONTACT_K_PER_W})[:12]}.. (ASSUMED)", f"PyBaMM parameter set {PARAMETER_SET} (provider-bundled literature set)"),
         f"cell temperature window {list(TEMP_WINDOW_K)} K and SOC window {list(fl.case.soc_window)} were checked on every solved day; the aging map range [0, 0.5) on the slow state. "
         "The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",

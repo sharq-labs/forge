@@ -150,18 +150,62 @@ def test_a_refused_day_cannot_reach_the_analytic_level_with_default_arguments_an
     assert run.ladder.entry(1).status is LevelStatus.REACHED                          # the request itself was admissible; only the SOLVED state left applicability
 
 
-def test_the_cell_balance_comes_only_from_the_registered_dfn_record(tmp_path, monkeypatch):
-    """BIG 14: the DFN cell's two active-material factors are read from the committed big14-a-lgm50-dfn record under its
-    pre-registered decision rule; a record that is not the one its registration names is refused, never silently used."""
-    import json
+def test_the_cell_balance_comes_only_from_the_pinned_dfn_record():
+    """BIG 14: the DFN cell's two active-material factors come from the committed big14-a-lgm50-dfn record, pinned by digest,
+    under its pre-registered decision rule; the lab heat-transfer coefficient is never carried."""
     rec = bc.cell_model_study()["record"]
     assert bc.MODEL == "DFN" and bc.CELL_OPTIONS == {"heat of mixing": "true"}
-    assert rec["decision_for_flagship"]["flagship_carries_balance"] is True
+    assert rec["decision_for_flagship"]["flagship_carries_balance"] is True and rec["decision_for_flagship"]["flagship_carries_h"] is False
     assert bc.cell_balance() == (rec["step_1"]["factors"]["negative"], rec["step_1"]["factors"]["positive"])
-    assert rec["decision_for_flagship"]["flagship_carries_h"] is False
-    forged = dict(rec, preregistration_sha256="0" * 64)
-    path = tmp_path / "forged.json"
-    path.write_bytes(json.dumps(forged).encode("utf-8"))
+    assert bc.CELL_STUDY_SHA256 == "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f"
+    assert bc.CELL_STUDY_PREREGISTRATION_SHA256 == "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2"
+
+
+def _tampered(tmp_path, monkeypatch, edit):
+    """Write an edited copy of the record and pin THAT copy's digest, so only the re-derivation can refuse it."""
+    import copy
+    import hashlib
+    import json
+    rec = copy.deepcopy(bc.cell_model_study()["record"])
+    edit(rec)
+    raw = json.dumps(rec, indent=1, sort_keys=True).encode("utf-8")
+    path = tmp_path / "record.json"
+    path.write_bytes(raw)
     monkeypatch.setattr(bc, "CELL_STUDY", str(path))
+    monkeypatch.setattr(bc, "CELL_STUDY_SHA256", hashlib.sha256(raw).hexdigest())
+
+
+def test_an_edited_record_is_refused_by_its_pinned_digest(tmp_path, monkeypatch):
+    path = tmp_path / "record.json"
+    path.write_bytes(open(bc.CELL_STUDY, "rb").read().replace(b"0.853898705996209", b"0.853898705996208"))
+    monkeypatch.setattr(bc, "CELL_STUDY", str(path))
+    with pytest.raises(ValueError, match="not the pinned one"):
+        bc.cell_balance()
+
+
+@pytest.mark.parametrize("edit", [
+    # a failed identification (factor at the registered bound) presented as carried
+    lambda r: (r["step_1"]["factors"].update(positive=0.70), r["decision_for_flagship"]["flagship_factors"].update(positive=0.70)),
+    # carried factors that are not the identified ones
+    lambda r: r["decision_for_flagship"]["flagship_factors"].update(negative=1.0),
+    # the lab heat-transfer coefficient carried into the flagship
+    lambda r: r["decision_for_flagship"].update(flagship_carries_h=True),
+    # a better model-form band than the table shows
+    lambda r: r["decision_for_flagship"]["model_form_band_C2"].update(v_rmse_mV=[1.0, 2.0]),
+    # an outcome that does not follow from the table
+    lambda r: r["judgement"].update(met=True),
+    lambda r: r["judgement"]["cell02"].update(T1=True),
+    # a table edited to pass, with the stated judgement left as NOT MET
+    lambda r: r["table"]["DFN"]["cell02"]["C/2"].update(rise_err_K=0.0),
+    # a record bound to another registration
+    lambda r: r.update(preregistration_sha256="0" * 64),
+], ids=["at-bound-carried", "factors-differ", "h-carried", "band-improved", "met-flipped", "T1-flipped", "table-edited", "other-registration"])
+def test_a_record_whose_outcome_or_decision_does_not_follow_from_its_data_is_refused(tmp_path, monkeypatch, edit):
+    _tampered(tmp_path, monkeypatch, edit)
     with pytest.raises(ValueError):
         bc.cell_balance()
+
+
+def test_the_level_7_note_and_report_text_are_derived_from_the_record():
+    text = bc.cell_outcome_text()
+    assert text.startswith("NOT MET") and "surface-temperature rise missed on cell02, cell04" in text
