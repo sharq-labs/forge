@@ -261,13 +261,17 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
       of counted heat) and reversible heat are absent from the model.
 - [x] Window study (BIG 13 criterion 1 diagnosis): H1 supported; criterion 1
       stays NOT MET as registered.
-- [ ] Representative-day approximation error (pre-registered `31c10f2d`):
-      running.
+- [x] Representative-day approximation error (pre-registered `31c10f2d`):
+      MET in both cases; the published 4-of-56-day run underestimates fade
+      by 1.2-1.3 % (first order in the macro step).
 - [x] Chen2020 against measured LG M50 cells: NOT MET (SPM 149-153 mV at C/2);
       electrode-balance correction: NOT MET (SPM 33-38 mV); heat-of-mixing Hc
       supported.
-- [ ] OWNER DECISION: move the cell model from SPM to DFN and re-register the
-      identification with a wider bound (the positive factor hit 0.85).
+- [ ] OWNER DECISION: move the cell model from SPM to DFN, enable the heat
+      of mixing, and re-register the identification with a wider bound (the
+      positive factor hit 0.85).
+- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
+      subset) for the fade model. Needs download approval.
 - [ ] Independence of the Chen 2020 validation data from the Chen2020
       parameterisation: UNCONFIRMED; needs the paper text (download needs
       the owner's approval).
@@ -284,22 +288,6 @@ to the selected flagship(s):
   verification of the Ghia transcription;
 - D: GRI-Mech applicability and absence of ignition-delay/flame experimental
   comparison.
-
-### 14.2/14.3 progress: flagship A (selected by the owner, 2026-09-28)
-
-- [x] Representative-day approximation error measured (MET, 1.2-1.3 % fade bias).
-- [x] LG M50 comparison (Chen 2020 data, pre-registered): NOT MET at C/2
-      (SPM about 150 mV, +3 % capacity). Electrode-balance follow-up NOT MET
-      (SPM 33-38 mV; DFN 15-19 mV reported).
-- [x] Cell-side energy check (MET). Heat-of-mixing hypothesis supported.
-- [ ] Coupling-window diagnosis (`big14-a-window-study`): running.
-- [ ] OWNER DECISION: switch flagship A's cell model from SPM to DFN, enable
-      the heat of mixing, and re-register the balance identification with a
-      wider bound (the positive factor hit 0.85).
-- [ ] OWNER DECISION: read the Chen 2020 paper (open-access PDF) to settle
-      whether the data is independent of the parameterisation.
-- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
-      subset) for the fade model. Needs download approval.
 
 ### 14.3 — Diagnose, quantify and admit evidence
 

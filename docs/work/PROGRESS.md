@@ -141,24 +141,9 @@ The user chose flagship A for deep closure work. The work so far is below. Every
 - Every quantity converges monotonically, and the error halves with each halving of the macro step (normal fade, x1e-6: -697, -322, -161, -54, 0). This is a first-order bias from holding the fade constant within a macro step.
 - Wall time: 75 s for the 4-day run, 639 s for the 56-day reference.
 - The representative-day approximation error is no longer UNKNOWN: it is measured for these two cases.
-
-### Check `big14-a-cell-energy-check`
-- Pre-registered at `b0814b83`. Result: MET. Record: `docs/flagships/big14/cell_energy_check.json`.
-- PyBaMM's total heat equals the integral of I*(U_surface - V) plus the reversible heat to 0.0000 %, at 300 K and at 313.15 K. The cell side of the heat interface is internally consistent, which closes BIG 13 review M5 as an implementation matter.
-- Reported:
-  - reversible heat is 0 %, because Chen2020 carries no entropic data;
-  - the heat of mixing, integral(I*(U_bulk - U_surface)), is 83 % (300 K) and 128 % (313 K) of the counted heat. PyBaMM's heat source omits it by design.
-
-### Test `big14-a-heat-of-mixing`
-- Pre-registered at `70d4d996`. Result: Hc SUPPORTED. Record: `docs/flagships/big14/heat_of_mixing_test.json`.
-- Hc: the low calibrated h compensates for omitted heat.
-  - P1 met: with PyBaMM's `heat of mixing` on, the recalibrated h rises from 3.555 to 10.741 W/m2K.
-  - P2 met: the held-out mean |peak-rise error| falls from 2.12 to 1.92 K.
-- It is not a clean improvement:
-  - the calibration-curve fit worsens (0.47 to 1.70 K);
-  - C/2 worsens (-2.5 / -1.3 / -3.3 K against -0.8 / +0.4 / -1.6 K);
-  - 1.5C improves strongly.
-- Flagship A's heat therefore carries a model-form uncertainty of about 2-3 K on cell temperature at C/2: omitted mixing heat, absent reversible heat, lumped against surface.
+- Caveat (found by the parallel session): in the hot case peak_cell_temperature_aged is 323.950001 K in every run. It occurs at rest (0 A) and
+  equals the coolant-inlet peak, so it is set by the environment and does not test the approximation there.
+- The cell-energy check and the heat-of-mixing test are recorded below (entries `big14-a-cell-energy-check` and `big14-a-heat-of-mixing`).
 
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
