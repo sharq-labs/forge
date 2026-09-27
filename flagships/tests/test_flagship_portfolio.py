@@ -168,10 +168,10 @@ def test_the_committed_run_bundles_verify_and_each_report_was_generated_from_its
 #: manifest re-verifies, so the committed bundles are anchored HERE, in a file whose history git records.  Regenerating a bundle changes
 #: these digests, which is deliberate: the change then shows in review instead of passing silently.
 BUNDLE_DIGESTS = {
-    "battery_hot": ("24274cc0ccd550f374e6d81915cca955f60f09ccb201adbd2bbd59017dc96266", "e09de12d519878c57a2e8818824944c25a41a763de69c8b4d3338b85a5772895"),
-    "battery_normal": ("14379e2db1cb774141ff9cce1f65c2def0aa1e3dda1e4ea2f6404498801d1dd8", "9ea30a88c867edaa04a99e88cbb0627f64eee87de7244883fab3f257d799be11"),
-    "battery_outside_window": ("27d730500ea84b1405d23b0e569bc53ff797c133b40ee57e3d17218745e78df4", "33137684bf89e479474ff870b478b9a5cf4d079028e42ec6b338a3e11f77a670"),
-    "battery_overload": ("623af12c6c945b5cfe52a77e5d858167c796fac3066d97b6f1a3cfc210efa481", "b8b5a01c5a7b0a737fe2a3fd3d3a654a0edfa4c322491fb2920a7b0d539785fa"),
+    "battery_hot": ("284356a17e4ce74dc1e41e157cfde24e0529e13d93599372c0f439e627855c18", "95060ca4aa18fa4866c25dbf63e82e6412832604888156f76f55ce1e2b7c7711"),
+    "battery_normal": ("aaaacb9ed458b0778b0dd0eb6ce2927560db892703b92da7a509e49d01546eea", "e38cf35e90b1335973f8f02aa9d4def1e288b2dc81837945c2906076cf50d038"),
+    "battery_outside_window": ("bc9b697224883de3f065e94d918ca4ece14a9c97c7fbb227845406cf130f1dd7", "f32ecdadf468488b28808f880b41e035fbd3c86cef66600e93a30b6f0573f208"),
+    "battery_overload": ("7f005b1058dd60f3321b31e11cfbb0540930da8c5013a8979b2d9c6da6c19933", "7d63ee2fe0a3f2dfbfd82fcb35f798387e8c23c17ce92b45513eb462472d5bc8"),
     "cavity_re100": ("a44dd5f09a524034c93c15636e78b23542229c0f26b97abdfcec372f1fd91b26", "6933a820e32894cfcca2f2037900b5e16536b365f740c9034743ec28e0d3c838"),
     "chemistry_nominal": ("82c0e096371e91acafef903c469a89bbb0e6b0a3382288971a497b61c203e2da", "ddfb8aa0a953406b4681d151d50ff8913d0c22f8c731a1a7146620e84983640b"),
     "structure_flagship": ("1b40d7935aadcebdbe6d39d041cb820b3f41208d6cdac789e6d501a729d78538", "761dc50e85f218f72a4e7de098a93fbaba37242ed125305792ad5aaa927a4c43"),

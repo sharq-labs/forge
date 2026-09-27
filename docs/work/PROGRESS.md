@@ -209,6 +209,27 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   - the flagship's M1 tests (`-k "pinned or refused or derived_from_the_record"`): 13 passed.
   - the full `test_flagship_battery.py` on `ab1c8370`: 11 passed, 1 failed (`test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement...`: it pins SPM's window outcome; updated after the bundles are regenerated).
 
+### Flagship A regenerated on DFN
+- `python -m forge_flagships.reports battery --docs docs/flagships --bundles docs/flagships/runs`, battery env, on `4b3141ca` + the review fixes (rc 0, 15 min, every bundle re-verified).
+  The four battery bundles, `battery_cooling_lifecycle.md` and BUNDLE_DIGESTS were updated together.
+- Normal / hot, SPM before -> DFN now (model outputs; every uncertainty UNKNOWN):
+
+  | Quantity | normal | hot |
+  |---|---|---|
+  | degradation voltage shift | -33.7 -> -36.2 mV | -73.7 -> -76.8 mV |
+  | fresh-day module heat removed | 28.8 -> 69.0 Wh | 15.0 -> 55.6 Wh |
+  | fresh end-of-discharge voltage | 3.4948 -> 3.4009 V | not listed |
+  | peak cell temperature, fresh | 301.28 -> 301.82 K | not listed |
+  | fade | 0.0518 -> 0.0519 | 0.1118 -> 0.1120 |
+
+- The degradation shift is now about 2x the cell model's in-sample C/2 voltage error (13.6-16.9 mV). Under SPM it was about equal to the error (33-38 mV).
+  The comparison is in-sample, so this is a necessary condition only.
+- Window refinement under DFN: successive differences decrease (monotone met), but the finest-pair peak-heat difference (13.3 mW) is outside its 2 % tolerance.
+  Level 4 stays ATTEMPTED, NOT REACHED; the cause is not investigated.
+  The test that pinned SPM's opposite outcome was rewritten to the observed DFN outcome, with the history kept in its docstring.
+- `flagships/tests/test_flagship_portfolio.py` (venv): 35 passed.
+- Battery env, `python -m pytest flagships/tests/test_flagship_battery.py --import-mode=importlib -q` on the regenerated tree: 22 passed (23.6 min).
+
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
 - The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.

@@ -57,12 +57,14 @@ def test_conservation_and_the_first_law_check_close(normal):
     assert all(c.outcome == "met" for c in normal.comparisons) and normal.comparisons[0].reference_kind.value == "analytic_reference"
 
 
-def test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement_so_level_4_is_not_reached(normal):
-    """Negative result kept: the finest-pair differences are inside the tolerances, but they GROW as the coupling window shrinks
-    (successive differences are not decreasing), so the study does not demonstrate convergence and level 4 is NOT reached.  Cause not investigated."""
+def test_window_refinement_decreases_monotonically_but_misses_the_peak_heat_tolerance_so_level_4_is_not_reached(normal):
+    """Negative result kept.  With the DFN + heat-of-mixing cell (BIG 14) the successive differences now DECREASE, but the finest-pair
+    peak-heat difference is outside its pre-registered 2 % tolerance, so the study does not meet its criteria and level 4 is NOT reached.
+    History: with the earlier SPM cell the opposite held (tolerances met, differences growing; diagnosed in big14-a-window-study as a
+    pre-asymptotic quantity definition).  The cause of the DFN peak-heat difference is not investigated here."""
     study = normal.study
     assert study["windows_s"] == [3600, 1800, 900]
-    assert study["tolerances_met"] is True and study["monotone_met"] is False and study["met"] is False
+    assert study["monotone_met"] is True and study["tolerances_met"] is False and study["met"] is False
     l4 = normal.ladder.entry(4)
     assert l4.status is LevelStatus.ATTEMPTED_NOT_REACHED and l4.evidence[0].outcome == "not_met"
     assert normal.ladder.verification_reached == 3
@@ -70,7 +72,7 @@ def test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement
     assert q["peak_cell_temperature"]["abs_difference_fine_pair"] < bc.REFINEMENT_TOL["peak_cell_temperature"].magnitude
     assert q["voltage_end_of_discharge"]["abs_difference_fine_pair"] < bc.REFINEMENT_TOL["voltage_end_of_discharge"].magnitude
     for name in ("peak_cell_temperature", "voltage_end_of_discharge", "peak_heat"):
-        assert q[name]["abs_difference_fine_pair"] > q[name]["abs_difference_coarse_pair"]      # the differences grow with refinement
+        assert q[name]["abs_difference_fine_pair"] < q[name]["abs_difference_coarse_pair"]      # the differences shrink with refinement
     assert "evidence from OTHER requests" in l4.note
 
 

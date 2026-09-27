@@ -38,7 +38,7 @@ The providers run in WSL conda environments (see `docs/work/PROGRESS.md`, BIG 11
 `FORGE_PROVIDER_ENVS`, `PYTHONPATH` and the environment `PATH` (`FORGE_PY_ENV` chooses the Python environment).
 
 ```bash
-# A (env: battery)     ~1.5 min per case; --extras adds the window-refinement study (three more coupled days)
+# A (env: battery)     DFN cell since BIG 14: ~3 min per case; --extras adds the window-refinement study (three more coupled days); the report run is ~15 min
 MSYS_NO_PATHCONV=1 wsl -d Ubuntu -- bash -c 'export FORGE_PY_ENV=battery; source /mnt/d/forge-b13/tools/wsl_env.sh; cd /mnt/d/forge-b13 && python -m forge_flagships battery normal --out /mnt/d/ftmp/battery_normal --extras'
 # B (env: fenicsx)     ~20 s
 MSYS_NO_PATHCONV=1 wsl -d Ubuntu -- bash -c 'export FORGE_PY_ENV=fenicsx; source /mnt/d/forge-b13/tools/wsl_env.sh; cd /mnt/d/forge-b13 && python -m forge_flagships structure flagship --out /mnt/d/ftmp/structure --extras'

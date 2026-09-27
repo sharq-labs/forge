@@ -294,7 +294,7 @@
    "applicability_waiver": "",
    "authority": {
     "authority_id": "cell-cooling-day-control",
-    "identity_digest": "271df5e210640be8f3a2a67f9679bbd0693fbdbabbaeca5cb5954397c140ba3f",
+    "identity_digest": "ba64b556fd048d87b1e22fc27ab8493b3b3bdd9d6d1f4d845a5884b881cd9b30",
     "kind": "multiphysics",
     "schema": "forge.system_runtime.authority_ref/1"
    },
@@ -449,7 +449,7 @@
    "applicability_waiver": "",
    "authority": {
     "authority_id": "cell-cooling-day-fresh",
-    "identity_digest": "1468e3ba1b451f6c941cbdf47c4f3161058b6ef84c3a717f033056954415a6b1",
+    "identity_digest": "c2101d1584f6d9f6f1fec4b7983767605916eaeddf8fd7e23753aeebfd407657",
     "kind": "multiphysics",
     "schema": "forge.system_runtime.authority_ref/1"
    },
@@ -603,7 +603,7 @@
    "applicability_waiver": "",
    "authority": {
     "authority_id": "cell-cooling-aging",
-    "identity_digest": "c75d3b27c1db9d445e561b9ec72cb55497a0fe42a1413843e0ad2a386a03667e",
+    "identity_digest": "a24a272d59d6835a1e16842ea312f643b6bfe5ae61e619e1704dd1ead4422921",
     "kind": "multiscale",
     "schema": "forge.system_runtime.authority_ref/1"
    },
@@ -812,7 +812,7 @@
    "applicability_waiver": "",
    "authority": {
     "authority_id": "cell-cooling-day-aged",
-    "identity_digest": "ea6d8e9ba34caea9ccb9b7d3b1e89a016e3156e2c3ad72587d170682605cd673",
+    "identity_digest": "faf1a126a43f68921e62ecd294dec2960cd8a735a0a2887618470af2864ef277",
     "kind": "multiphysics",
     "schema": "forge.system_runtime.authority_ref/1"
    },
@@ -1477,7 +1477,7 @@
    "unit": "V"
   }
  ],
- "request_digest": "73ca1fd523d3eb5f14fac0f338a3c8d089749686ec3f62299b49ca3dbbab5773",
+ "request_digest": "b55361883fb0086e93df2b842ce245ff807faa86a39a1dd69e0fe1d43644623f",
  "requested_modes": [
   "lifecycle",
   "multiphysics",

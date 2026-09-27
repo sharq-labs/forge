@@ -294,14 +294,24 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
 - [x] Chen2020 against measured LG M50 cells: NOT MET (SPM 149-153 mV at C/2);
       electrode-balance correction: NOT MET (SPM 33-38 mV); heat-of-mixing Hc
       supported.
-- [ ] OWNER DECISION: move the cell model from SPM to DFN, enable the heat
-      of mixing, and re-register the identification with a wider bound (the
-      positive factor hit 0.85).
+- [x] OWNER DECISION carried out (2026-09-28): the cell model moved from SPM
+      to DFN with the heat of mixing. Study `big14-a-lgm50-dfn`:
+      NOT MET (V1 and C1 met at 13.6-16.9 mV; T1 missed on 2 of 3 cells).
+      The balance factors are interior (0.980 / 0.854) and carried into the flagship.
+- [x] Independence of the Chen 2020 data: NOT independent. The C/2-1.5C curves are
+      Chen2020's tuning data (paper read; `chen2020_independence.json`).
+- [x] DFN energy check (`big14-a-cell-energy-check-dfn`, review L5): NOT MET,
+      1.10 % at 313 K against 1 %.
+- [x] Flagship A regenerated on DFN; four battery bundles and the report re-pinned.
+  - Degradation voltage shift: -36.2 mV (normal).
+  - Fresh-day module heat: 69.0 Wh (was 28.8 Wh on SPM).
+  - Window refinement: differences now monotone, but the peak-heat tolerance is
+    missed. Level 4 still NOT reached.
 - [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
       subset) for the fade model. Needs download approval.
-- [ ] Independence of the Chen 2020 validation data from the Chen2020
-      parameterisation: UNCONFIRMED; needs the paper text (download needs
-      the owner's approval).
+- [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
+      untouched curves in hand are C/10. An independent dataset is needed for
+      any validation claim about the cell model.
 
 The triage must cover these known questions, but deep implementation is limited
 to the selected flagship(s):
