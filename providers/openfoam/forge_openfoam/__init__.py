@@ -28,6 +28,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed,
 )
 from engcore.providers.catalog import _sha256_file
@@ -222,10 +223,10 @@ class OpenFOAMProvider:
         files = tuple(GeneratedFile(k, v.encode()) for k, v in sorted(case.items()))
         end = float(problem.end_time.to("s").magnitude)
         steps = (ProcessInvocation(exes["blockMesh"], _sha256_file(exes["blockMesh"]), self.status.version, (), files, env, self.timeout_s,
-                                   ("constant/polyMesh/points", "constant/polyMesh/owner")),
-                 ProcessInvocation(exes["icoFoam"], self.status.executable_digest, self.status.version, (), files, env, self.timeout_s, ()),
+                                   ("constant/polyMesh/points", "constant/polyMesh/owner"), conda_environment=conda_environment_of(self.status)),
+                 ProcessInvocation(exes["icoFoam"], self.status.executable_digest, self.status.version, (), files, env, self.timeout_s, (), conda_environment=conda_environment_of(self.status)),
                  ProcessInvocation(exes["postProcess"], _sha256_file(exes["postProcess"]), self.status.version,
-                                   ("-func", "writeCellCentres", "-time", f"{end:g}"), files, env, self.timeout_s, ()))
+                                   ("-func", "writeCellCentres", "-time", f"{end:g}"), files, env, self.timeout_s, (), conda_environment=conda_environment_of(self.status)))
         ws = ProcessWorkspace(self.workspace_root, preexisting=preexisting)
         try:
             t1 = time.perf_counter()

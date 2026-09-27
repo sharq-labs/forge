@@ -201,6 +201,68 @@ def _invocation(expected=("out.txt",), args=("solver.py", "in.txt", "out.txt"), 
                              minimal_environment(PY, {"SYSTEMROOT": os.environ.get("SYSTEMROOT", "")}), timeout, expected)
 
 
+def _fake_conda_env(root, packages=(("numpy", "2.5.3"), ("ccx", "2.23"))):
+    import json
+
+    meta = root / "conda-meta"
+    meta.mkdir(parents=True)
+    for name, version in packages:
+        (meta / f"{name}-{version}-0.json").write_text(json.dumps({"name": name, "version": version, "build": "0", "sha256": "1" * 64}))
+    return str(root)
+
+
+def test_a_conda_environment_changed_after_discovery_is_refused_at_launch(tmp_path):
+    """BIG 14 review F2: the executable was re-hashed at launch; the environment it loads from was not."""
+    from engcore.providers.catalog import conda_environment_digest
+
+    prefix = _fake_conda_env(tmp_path / "env")
+    discovered, _ = conda_environment_digest(prefix)
+    inv = _invocation()
+    checked = ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                                inv.timeout_s, inv.expected_outputs, conda_environment=(prefix, discovered))
+    assert checked.digest == inv.digest  # an operational check: the identity already binds the environment digest
+    (tmp_path / "ok").mkdir()
+    (tmp_path / "changed").mkdir()
+    assert ProcessWorkspace(str(tmp_path / "ok")).run(checked).completed
+    (tmp_path / "env" / "conda-meta" / "ccx-2.23-0.json").write_text('{"name": "ccx", "version": "2.24", "build": "0", "sha256": "2"}')
+    with pytest.raises(ProviderRefusal, match="changed since discovery"):
+        ProcessWorkspace(str(tmp_path / "changed")).run(checked)
+    with pytest.raises(ProviderRefusal, match="absolute prefix"):
+        ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                          inv.timeout_s, inv.expected_outputs, conda_environment=("relative", discovered))
+
+
+def test_conda_environment_of_reads_only_what_discovery_bound(tmp_path):
+    from engcore.providers import conda_environment_of
+
+    cap = ProviderCapability("ccx", "fem", "process", "ccx", ("demo",))
+    prefix = _fake_conda_env(tmp_path / "env")
+    exe = os.path.join(prefix, "bin", "ccx")
+    bound = ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, exe, dependencies=(("conda-environment", "2 packages", "b" * 64),))
+    assert conda_environment_of(bound) == (prefix, "b" * 64)
+    assert conda_environment_of(ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, exe)) == ()
+    elsewhere = ProviderStatus(cap, Availability.AVAILABLE, "2.23", "a" * 64, str(tmp_path / "plain" / "bin" / "ccx"),
+                               dependencies=(("conda-environment", "2 packages", "b" * 64),))
+    with pytest.raises(ProviderRefusal, match="is not one"):
+        conda_environment_of(elsewhere)
+
+
+def test_every_adapter_process_invocation_declares_its_environment_check():
+    """Static: an adapter that builds a ProcessInvocation without the check would launch unverified (BIG 14 F2)."""
+    import ast
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    calls = []
+    for path in sorted(root.glob("*/forge_*/*.py")):
+        for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "ProcessInvocation":
+                calls.append((path.relative_to(root).as_posix(), node.lineno,
+                              any(k.arg == "conda_environment" for k in node.keywords)))
+    assert len(calls) >= 9, calls
+    assert [c for c in calls if not c[2]] == [], calls
+
+
 def test_process_outputs_are_digest_bound_and_only_this_executions_files_are_admitted(tmp_path):
     ws = ProcessWorkspace(str(tmp_path))
     rec = ws.run(_invocation())

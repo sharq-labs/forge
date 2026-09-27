@@ -38,7 +38,10 @@ uncertainty/model discrepancy into zero.
 - Pristine baseline worktree (never edited): `D:/forge-b14-base`, detached at
   the same SHA; baseline test runs happen there so edits cannot contaminate
   tree-walking tests.
-- PR: none opened; verify GitHub before making a current PR claim.
+- PRs: #110 (14.0 + 14.1 baseline repairs) MERGED 2026-09-27 at `86fa1896`
+  by the sharq-labs account with `recertification-gate` red (void formal
+  mutation control rounds). #111 carries the follow-up. Verify GitHub
+  before any current PR claim.
 - Never switch branches in the shared checkout; it is used by other sessions.
 
 ## Roadmap view
@@ -186,10 +189,11 @@ Then review and authority debt:
       not create or cache an execution identity.
       Done: exit code enforced (OpenFOAM's own probe too); CalculiX declares
       its measured 201; refresh drops the cached Python environment digest.
-- [ ] OPEN (review F2, MEDIUM): a conda package set changed after a cached
-      probe is not re-checked at launch (only the executable is re-hashed), so
-      an execution can run under a stale environment digest. Fix: recompute
-      the environment digest at launch beside the executable re-hash.
+- [x] Review F2 (MEDIUM): a conda package set changed after a cached probe
+      is now re-checked at launch beside the executable re-hash
+      (`ProcessInvocation.conda_environment`, `conda_environment_of`); every
+      adapter invocation declares it (static test). Residual: the digest
+      covers conda package RECORDS, not files edited in place.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

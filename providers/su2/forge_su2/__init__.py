@@ -24,6 +24,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed,
     minimal_environment,
 )
@@ -133,7 +134,7 @@ class SU2Provider:
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("cavity.cfg",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted(files.items())),
                                 minimal_environment(self.status.location, {"LD_LIBRARY_PATH": f"{prefix}/lib"}), self.timeout_s,
-                                ("restart.csv", "history.csv"))
+                                ("restart.csv", "history.csv"), conda_environment=conda_environment_of(self.status))
         ws = ProcessWorkspace(self.workspace_root)
         try:
             t1 = time.perf_counter()

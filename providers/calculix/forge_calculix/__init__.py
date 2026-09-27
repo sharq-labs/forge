@@ -23,6 +23,7 @@ import time
 import numpy as np
 
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal,
     failed, minimal_environment,
 )
@@ -194,7 +195,7 @@ class CalculixProvider:
                                                           inputs={"job.inp": deck}, output_request=("displacement", "stress"))
         invocation = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("-i", "job"),
                                        (GeneratedFile("job.inp", deck.encode()),), minimal_environment(self.status.location),
-                                       self.timeout_s, ("job.dat",))
+                                       self.timeout_s, ("job.dat",), conda_environment=conda_environment_of(self.status))
         ws = ProcessWorkspace(self.workspace_root, preexisting=preexisting)
         try:
             t1 = time.perf_counter()
@@ -224,7 +225,7 @@ class CalculixProvider:
         identity = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem.to_dict(),
                                                           configuration=configuration, inputs={"job.inp": deck}, output_request=("displacement", "stress"))
         invocation = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("-i", "job"),
-                                       (GeneratedFile("job.inp", deck.encode()),), minimal_environment(self.status.location), self.timeout_s, ("job.dat",))
+                                       (GeneratedFile("job.inp", deck.encode()),), minimal_environment(self.status.location), self.timeout_s, ("job.dat",), conda_environment=conda_environment_of(self.status))
         ws = ProcessWorkspace(self.workspace_root, preexisting=preexisting)
         try:
             t1 = time.perf_counter()

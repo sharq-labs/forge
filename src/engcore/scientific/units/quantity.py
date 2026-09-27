@@ -1024,7 +1024,8 @@ class Quantity:
             )
         # a number in the unit slot would normalize to "dimensionless" through `str()`:
         # refused here; string-like unit objects keep working through normalize_unit
-        if isinstance(self.units, (bool, int, float, complex)) or type(self.units).__module__ == "numpy":
+        if isinstance(self.units, (bool, int, float, complex)) or (
+                type(self.units).__module__ == "numpy" and not isinstance(self.units, str)):
             raise UnitCompatibilityError(
                 f"units must be a unit expression, got the number {self.units!r} "
                 f"({type(self.units).__name__}); a number is not a unit"

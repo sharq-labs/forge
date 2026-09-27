@@ -23,7 +23,10 @@ from .catalog import (
 )
 from .compare import ComparisonDeclaration, ExecutionRef, OutputSelection, ProviderComparison, compare_providers, shared_dependencies
 from .identity import ProviderExecutionIdentity, canonical_json, content_digest
-from .process import GeneratedFile, ProcessExecutionRecord, ProcessInvocation, ProcessWorkspace, minimal_environment, safe_relative
+from .process import (
+    GeneratedFile, ProcessExecutionRecord, ProcessInvocation, ProcessWorkspace, conda_environment_of, minimal_environment,
+    safe_relative,
+)
 from .records import ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed
 
 __all__ = [
@@ -31,6 +34,6 @@ __all__ = [
     "default_registry", "distribution_digest", "executable_probe", "python_package_probe",
     "ComparisonDeclaration", "ExecutionRef", "OutputSelection", "ProviderComparison", "compare_providers", "shared_dependencies",
     "ProviderExecutionIdentity", "canonical_json", "content_digest",
-    "GeneratedFile", "ProcessExecutionRecord", "ProcessInvocation", "ProcessWorkspace", "minimal_environment", "safe_relative",
+    "GeneratedFile", "ProcessExecutionRecord", "ProcessInvocation", "ProcessWorkspace", "conda_environment_of", "minimal_environment", "safe_relative",
     "ProviderExecutionRecord", "ProviderRefusal", "QuantitySeries", "failed",
 ]

@@ -17,6 +17,7 @@ import time
 from dataclasses import dataclass
 
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries,
     failed, minimal_environment,
 )
@@ -79,7 +80,7 @@ class OpenModelicaProvider:
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("run.mos",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted(files.items())),
                                 minimal_environment(self.status.location, {"PATH": f"{prefix}/bin:/usr/bin:/bin", "OPENMODELICAHOME": prefix}),
-                                self.timeout_s, ("ForgeLumpedThermal_res.csv",))
+                                self.timeout_s, ("ForgeLumpedThermal_res.csv",), conda_environment=conda_environment_of(self.status))
         ws = ProcessWorkspace(self.workspace_root)
         t0 = time.perf_counter()
         try:

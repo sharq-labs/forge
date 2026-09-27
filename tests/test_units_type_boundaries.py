@@ -71,6 +71,12 @@ def test_a_number_is_never_a_unit(units):
         Quantity(5.0, units)
 
 
+def test_numpy_text_is_still_a_unit_expression():
+    assert Quantity(5.0, np.str_("volt")) == Quantity(5.0, "volt")
+    with pytest.raises(UnitCompatibilityError, match="a number is not a unit"):
+        Quantity(5.0, np.int32(1))
+
+
 def test_scalar_division_by_zero_raises_and_never_returns_an_infinity():
     with pytest.raises(ZeroDivisionError):
         Quantity(2.0, "meter") / 0

@@ -24,6 +24,7 @@ import numpy as np
 
 from engcore.pde.cases import PlaneStressProblem, ThermoelasticPlaneStressProblem
 from engcore.providers import (
+    conda_environment_of,
     GeneratedFile, ProcessInvocation, ProcessWorkspace, ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, failed,
 )
 
@@ -192,7 +193,7 @@ class CodeAsterProvider:
         env = (("HOME", "/tmp"), ("LC_ALL", "C"), ("OMP_NUM_THREADS", "1"), ("PATH", f"{prefix}/bin:/usr/bin:/bin"))
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
-                                env, self.timeout_s, ("result.resu", "message"))
+                                env, self.timeout_s, ("result.resu", "message"), conda_environment=conda_environment_of(self.status))
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)
@@ -224,7 +225,7 @@ class CodeAsterProvider:
         env = (("HOME", "/tmp"), ("LC_ALL", "C"), ("OMP_NUM_THREADS", "1"), ("PATH", f"{prefix}/bin:/usr/bin:/bin"))
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
-                                env, self.timeout_s, ("result.resu", "stress.resu", "message"))
+                                env, self.timeout_s, ("result.resu", "stress.resu", "message"), conda_environment=conda_environment_of(self.status))
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)
