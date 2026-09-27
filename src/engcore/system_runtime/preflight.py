@@ -184,6 +184,9 @@ def preflight(request: SystemRunRequest, plan: SystemExecutionPlan, context: Run
             for owner in node.writes_owners:
                 if owner not in {o.owner_id for o in request.initial_state.owners}:
                     add("UNKNOWN_STATE_OWNER", node.node_id, f"node writes owner {owner!r}, which the initial state does not declare")
+            for owner in node.reads_owners:
+                if owner not in {o.owner_id for o in request.initial_state.owners}:
+                    add("UNKNOWN_STATE_OWNER", node.node_id, f"node reads owner {owner!r}, which the initial state does not declare")
 
     # 4. providers: explicit, available, exactly this version (and build, if pinned); never a substitute
     used = {b for n in plan.nodes for b in n.provider_binding_ids}

@@ -132,6 +132,11 @@ class MultiphysicsAuthority(_Base):
         self.deterministic = False
         self.stateless = True
 
+    def preflight_findings(self, node: Any, context: Any) -> tuple[tuple[str, str], ...]:
+        missing = sorted(set(self._owners.values()) - set(node.visible_owners))
+        return () if not missing else (("UNDECLARED_STATE_READ", f"the authority reads state owners {missing} that node {node.node_id!r} does not declare "
+                                                                  "in reads_owners or writes_owners"),)
+
     def _initial_state(self, call: NodeCall) -> dict[str, dict[str, InitialStateValue]]:
         out: dict[str, dict[str, InitialStateValue]] = {}
         for participant, owner_id in sorted(self._owners.items()):
@@ -224,6 +229,10 @@ class MultiscaleAuthority(_Base):
         self._last_origin = call.node.node_id if self._pending_checkpoint is not None else None
 
     def preflight_findings(self, node: Any, context: Any) -> tuple[tuple[str, str], ...]:
+        missing = sorted(set(self._owners.values()) - set(node.visible_owners))
+        if missing:
+            return (("UNDECLARED_STATE_READ", f"the authority reads state owners {missing} that node {node.node_id!r} does not declare "
+                                              "in reads_owners or writes_owners"),)
         stage = self._stages.get(node.node_id)
         if not stage or not stage.get("resume"):
             return ()
