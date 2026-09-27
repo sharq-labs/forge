@@ -358,9 +358,23 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
         with pytest.raises(ProviderRefusal, match="in memory is version 0.1"):
             require_library_unchanged(status, "pytest")
     with monkeypatch.context() as m:
-        m.setitem(catalog._IMPORTED_UNDER, "pytest", ("0.1", "0" * 64))  # first imported under an older discovery
-        with pytest.raises(ProviderRefusal, match="imported under another discovery"):
+        m.setitem(catalog._IMPORTED_UNDER, "pytest", ("0.1", "0" * 64))  # first used under an older discovery
+        with pytest.raises(ProviderRefusal, match="first used in this process as 0.1"):
             require_library_unchanged(status, "pytest")
+    # a declared DEPENDENCY counts too (re-review of d0294654): its module in memory and its per-process pin
+    with_dep = python_package_probe(ProviderCapability("pytest-dep", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                    dependencies=("pluggy",))()
+    require_library_unchanged(with_dep, "pytest")
+    with monkeypatch.context() as m:
+        stale = types.ModuleType("pluggy")
+        stale.__version__ = "0.0.1"
+        m.setitem(sys.modules, "pluggy", stale)
+        with pytest.raises(ProviderRefusal, match="'pluggy' in memory is version 0.0.1"):
+            require_library_unchanged(with_dep, "pytest")
+    with monkeypatch.context() as m:
+        m.setitem(catalog._IMPORTED_UNDER, "pluggy", ("0.0.1", "0" * 64))
+        with pytest.raises(ProviderRefusal, match="'pluggy' was first used in this process as 0.0.1"):
+            require_library_unchanged(with_dep, "pytest")
     # discovery refuses a module that is not a file of the distribution it would bind (shadowing / editable)
     shadowed = python_package_probe(ProviderCapability("mis", "demo", "library", "pytest", ("d",)), "pytest", ("pluggy",))()
     assert not shadowed.available and shadowed.found_but_refused and "is not a file of the installed pluggy" in shadowed.reason

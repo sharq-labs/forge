@@ -202,10 +202,13 @@ Then review and authority debt:
       included), and the module IN MEMORY must match (location, `__version__`,
       the discovery it was first imported under); discovery refuses a module
       that is not a file of the distribution it binds (shadowing / editable).
-      Residuals: the shared python-environment digest (numpy, ...) is re-read
-      only on `status(refresh=True)`; undeclared dependencies first imported at
-      execution are unbound; `found_but_refused` reads reason prefixes, so a
-      probe exception after the module was found still reads as absent.
+      Declared dependencies are covered in memory too (per-distribution
+      pins). OPERATING RULE: a provider-environment change takes effect in a
+      new process; a same-version rebuild of an already-loaded module cannot
+      be seen from inside the process. Residuals: the shared python-environment
+      digest is re-read only on refresh; undeclared dependencies are unbound;
+      `found_but_refused` reads reason prefixes; FEniCSx (distribution
+      `fenics-dolfinx`, LIBRARY mode) is not covered by this check - open.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

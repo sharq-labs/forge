@@ -241,9 +241,11 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
     return probe
 
 
-#: The (version, digest) of the discovery under which each library module was first imported in this
-#: process. A module stays in memory after its files change; a refresh must not make a newer discovery
-#: describe the older code that still runs, so this is never cleared.
+#: Per DISTRIBUTION (the provider's package and each declared dependency): the (version, RECORD digest)
+#: under which it was first checked in this process. A module stays in memory after its files change;
+#: a refresh must not make a newer discovery describe the older code that still runs, so this is never
+#: cleared. Operating rule: a change to a provider environment takes effect in a NEW process; a
+#: same-version rebuild of a module already in memory cannot be seen from inside the process.
 _IMPORTED_UNDER: dict[str, tuple[str, str]] = {}
 
 
@@ -288,24 +290,34 @@ def require_library_unchanged(status: ProviderStatus, package: str) -> None:
     declared = tuple(d for d in status.dependencies if d[0] != "python-environment")
     current = tuple((n, *now(n)) for n, _, _ in declared)
     version, main = now(found[0])
-    combined = _combine(main, *(d[2] for d in current))
+    combined = _combine(main, *(d[2] for d in current))  # `main` is re-used for the in-memory pins below
     if version != status.version or combined != status.digest or current != declared:
         raise ProviderRefusal(f"library {package!r} changed since discovery (now {version}, discovered {status.version}); "
                               "the execution identity no longer describes what would run")
-    loaded = sys.modules.get(package)
-    if loaded is None:
-        _IMPORTED_UNDER[package] = (status.version, status.digest)  # the adapter imports it next
-        return
-    where = os.path.realpath(os.path.dirname(getattr(loaded, "__file__", None) or ""))
-    if where != os.path.realpath(status.location):
-        raise ProviderRefusal(f"library {package!r} in memory was loaded from {where}, not from the discovered {status.location}")
-    in_memory = str(getattr(loaded, "__version__", "") or "").split(" ")[0]
-    if in_memory and in_memory != status.version:
-        raise ProviderRefusal(f"library {package!r} in memory is version {in_memory}; discovery bound {status.version}")
-    pinned = _IMPORTED_UNDER.setdefault(package, (status.version, status.digest))
-    if pinned != (status.version, status.digest):
-        raise ProviderRefusal(f"library {package!r} in memory was imported under another discovery ({pinned[0]}); "
-                              "a refreshed status does not describe the code that still runs")
+    main_dist = found[0]
+    bound = ((main_dist, package, status.version, main),) + tuple((n, n, v, d) for n, v, d in declared)
+    for dist_name, module_name, want_version, want_digest in bound:
+        loaded = sys.modules.get(module_name)
+        if loaded is None:
+            if module_name == package:  # about to be imported: from where discovery found it (a later path shadow would not be)
+                spec = importlib.util.find_spec(package)
+                origin = os.path.realpath(os.path.dirname(spec.origin)) if spec is not None and spec.origin else ""
+                if origin != os.path.realpath(status.location):
+                    raise ProviderRefusal(f"library {package!r} would now be imported from {origin or 'nowhere'}, "
+                                          f"not from the discovered {status.location}")
+        else:
+            in_memory = str(getattr(loaded, "__version__", "") or "").split(" ")[0]
+            if in_memory and in_memory != want_version:
+                raise ProviderRefusal(f"{module_name!r} in memory is version {in_memory}; discovery bound {want_version}")
+            if module_name == package:
+                where = os.path.realpath(os.path.dirname(getattr(loaded, "__file__", None) or ""))
+                if where != os.path.realpath(status.location):
+                    raise ProviderRefusal(f"library {package!r} in memory was loaded from {where}, "
+                                          f"not from the discovered {status.location}")
+        pinned = _IMPORTED_UNDER.setdefault(dist_name, (want_version, want_digest))
+        if pinned != (want_version, want_digest):
+            raise ProviderRefusal(f"{dist_name!r} was first used in this process as {pinned[0]}; a refreshed status "
+                                  f"({want_version}) does not describe the code in memory -- restart after changing the environment")
 
 
 def executable_probe(capability: ProviderCapability, executable: str, version_argv: tuple[str, ...],
