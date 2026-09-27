@@ -185,8 +185,7 @@ def test_every_adapter_is_unavailable_not_an_import_error_without_its_stack(monk
     import importlib
     import pathlib
     root = pathlib.Path(__file__).resolve().parent.parent
-    for name in ("pybamm", "cantera", "coolprop", "tespy", "calculix", "openfoam", "su2", "code_aster", "openmodelica"):
-        monkeypatch.syspath_prepend(str(root / "providers" / name))
+    # the adapter roots are on the pytest path (pyproject pythonpath), so every adapter must IMPORT here
     monkeypatch.setenv("FORGE_PROVIDER_ENVS", str(root / "no-provider-envs-here"))
     reg = default_registry()
     by_id = {s.capability.provider_id: s for s in reg.discover()}
@@ -195,6 +194,8 @@ def test_every_adapter_is_unavailable_not_an_import_error_without_its_stack(monk
         status = by_id[pid]
         if not status.available:  # this core venv has none of the heavy stacks
             assert status.reason
+            # an adapter that fails to import or register is a defect, not a missing stack (BIG 14 round-3 L1)
+            assert not status.reason.startswith("adapter "), status.reason
             with pytest.raises(ProviderUnavailable):
                 reg.require(pid)
     adapters = {"forge_pybamm": "PyBaMMProvider", "forge_cantera": "CanteraProvider", "forge_coolprop": "CoolPropProvider",

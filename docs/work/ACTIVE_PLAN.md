@@ -129,22 +129,26 @@ reviewer for every claim/evidence/UQ/assurance change.
 
 Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
 
-- [ ] Class 1: make the provider-free flagship suite run in the core CI
+- [x] Class 1: make the provider-free flagship suite run in the core CI
       environment, and make provider suites skip (not error) outside their
       provider environments. The BIG 13 pre-registration pins must execute.
-- [ ] Class 2: every one of the 12 schema-less `from_dict` readers either
+- [x] Class 2: every one of the 12 schema-less `from_dict` readers either
       checks its schema or is proven nested-only (exemption with a test).
-- [ ] Class 3: classify the nine BIG 5-13 non-Core packages in
+- [x] Class 3: classify the nine BIG 5-13 non-Core packages in
       `docs/CORE_FREEZE_POLICY.md`.
-- [ ] Class 4: add `corrosion` and `hygrothermal` to the derived domain list
+- [x] Class 4: add `corrosion` and `hygrothermal` to the derived domain list
       after checking they are real domain packages.
-- [ ] Class 5: restore the bare-install boundary (optional extras imported
+- [x] Class 5: restore the bare-install boundary (optional extras imported
       lazily and named in the guard; tests skip when an extra is absent).
+- [x] Independent scientific review of the class 1-5 repairs: round 1 and
+      round 2 CHANGES REQUIRED (all fixed), round 3 PASS; LOW residuals L2-L5
+      recorded in PROGRESS (BIG 14 14.1).
 - [ ] Class 6: run hardened recertification on 3.12 after the repairs
-      (GitHub workflow; needs the owner's go-ahead to dispatch).
+      (GitHub workflow; needs the owner's go-ahead to push the branch / open
+      the PR, whose automatic classification runs it).
 - [ ] Owner action: configure the `main` ruleset to require `tests-gate` and
       `recertification-gate` (Branch Policy currently reports NOT ENFORCED).
-- [ ] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
+- [x] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
 
 Then review and authority debt:
 
