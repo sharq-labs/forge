@@ -205,11 +205,15 @@ The user chose flagship A for deep closure work. The work so far is below. Every
 The owner said "do the three". The three were: `reads_owners`; undeclared applicability; the gates on `main`, the PR and the Pint decisions.
 
 ### What was done
-- **`main` ruleset.** Ruleset "Protect main" (id 23351506) now requires `tests-gate` and `recertification-gate`.
+- **`main` ruleset: CONFIGURED, NOT ENFORCED (corrected the same day).** Ruleset "Protect main" (id 23351506) was set to require
+  `tests-gate` and `recertification-gate`, and at that moment `branch_policy` reported OK. The repository was later made PRIVATE on a free plan,
+  and GitHub disables rulesets for that case. Re-checked as sharq-labs: `private: true`; `GET /rulesets` and `/rules/branches/main` return 403
+  "Upgrade to GitHub Pro or make this repository public"; `branch_policy` fails with the same 403. **A red gate cannot block a merge now.**
+  Owner decision: make it public, or upgrade. The configuration below is what takes effect when rulesets are available again.
   - Source is GitHub Actions, app 15368.
   - Strict up-to-date is on, merge commits only, no bypass actors.
   - Approvals stay 0. With a single owner account, a required approval would block every merge. `docs/assurance/BRANCH_PROTECTION.md` asks for 1; this is a stated deviation.
-  - `python -m tools.certification.branch_policy --repository sharq-labs/forge` reports **OK** (bypass actors unverified).
+  - `python -m tools.certification.branch_policy --repository sharq-labs/forge` reported **OK** at configuration time (bypass actors unverified). It now FAILS with the 403 above.
   - Both workflows run on every `pull_request` with no path filter, and both gates end in `if: always()`, so a required gate always reports.
 - **BIG 12 R2 / (d)-2, `246098fc`: state reads are declared edges.**
   - `NodeSpec.reads_owners`, carried on `PlanNode`. It is omitted from the wire when empty, so no stored request, plan or result digest moved.
