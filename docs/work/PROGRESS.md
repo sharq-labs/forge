@@ -200,6 +200,107 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   - BIG 13 criterion 1 stays NOT MET as registered then; this study does not re-judge it;
   - the largest difference (0.008 K) is under the flagship's own 0.05 K refinement tolerance, but the published 3600 s window under-reads the resolved peak heat by 5.5 % (0.1605 against 0.1699 W).
 
+## 2026-09-28 BIG 14 — 14.1 review debt: BIG 12 re-review, BIG 13 round 5, BIG 11 second re-review (branch `feat/big-14-reviews`)
+
+Branch `feat/big-14-reviews` in worktree `D:/forge-b14-review`, cut from `origin/feat/big-14-flagship-a` @ `814e1492`. Ownership: this line = 14.1 review debt;
+the flagship A science line is the other session's, on `feat/big-14-flagship-a` in `D:/forge-b14`, which merges this branch.
+Four read-only `forge-scientific-reviewer` runs, static reading only (the reviewers ran no tests). After them, a review of this fix batch and a focused re-review of its second round.
+
+### Reviews and verdicts
+- **BIG 12 final fix batch (`21a2c75c`): CHANGES REQUIRED.** 1 HIGH, 7 MEDIUM, 7 LOW.
+- **BIG 13 round 5 (`ac600555`): CHANGES REQUIRED.** 1 HIGH, 3 MEDIUM, 4 LOW.
+  - F6 wording: no occurrence called a bundle "authenticated". Some sentences over-claimed what `verify_bundle` re-derives.
+- **BIG 11 second re-review: CHANGES REQUIRED.** 1 HIGH, 1 MEDIUM, 4 LOW.
+- **F-1 / F-2 `catalog._footprint` re-review: PASS.** LOW B1-B4 only.
+- **Review of this fix batch: CHANGES REQUIRED.** 2 MEDIUM, 5 LOW; no guard was removed. All were fixed.
+- **Focused re-review of those fixes: CHANGES REQUIRED.** One new MEDIUM, introduced by this batch: the `_state_mismatch` inner loop shadowed
+  its `start` argument, so a second slow-owner domain raised (it failed closed: every two-domain run was falsely refused). Fixed, with a
+  two-domain test on the fresh and resume paths. Its LOW notes (empty `unassessed_models`, in-memory reference data) were fixed too. The
+  prefix rule and the wall-budget taint were confirmed; the N1-residual deferral was accepted on the conditions stated under "Deferred".
+
+### Fixed (each with an adversarial test that fails on the unfixed code; the counts were checked by stashing the source change)
+
+BIG 12, in `src/engcore/system_runtime`:
+- **(a) HIGH, model selections.** A model selection was a request label, and it became `provenance.models`, the list the credibility layer reads as "what executed".
+  - `trust_handoff` now refuses every `validity` record. No caller passes one.
+  - `provenance.models` is now `()`. The labels move to `metadata["requested_model_selections"]`.
+  - `trust_handoff` notes that executed models are unreported, so an empty `unassessed_models` means unknown, not "all assessed".
+  - The real binding (authorities report the models they executed) is DEFERRED; see "Deferred" below.
+- **R1, constraint binding.** Preflight now checks that the pinned definition's name is the constraint the node assesses. Before, a second declared constraint of the same dimension stood in for it.
+- **N1, checkpoint after a failure.**
+  - A checkpoint taken after a node did not succeed is now incomplete.
+  - `verify_checkpoint` refuses any checkpoint whose completed set is not a prefix of the plan. The completeness flag alone is editable.
+- **N2, MultiscaleAuthority ignored the committed state.**
+  - A fresh stage refuses when the committed slow owner differs from `initial_slow_state`.
+  - A resume stage refuses when it differs from the slow state of the macro checkpoint it continues.
+- **(c), resume stages.**
+  - A resume stage must name its `from` stage and depend on it.
+  - The held checkpoint must come from that stage; `restore()` clears the origin until `restored_from()` names it.
+  - `"from"` enters the authority identity only when present, so existing identities do not move.
+- **(d)-1.** A committing node refused by the wall budget now taints later commits.
+- **LOW.**
+  - The authority checkpoint completeness flag is a strict boolean on `NodeOutcome` and `NodeReceipt.from_dict`.
+  - An authority that cannot be resolved now fails `verify_checkpoint`; it was skipped before.
+
+BIG 13 round 5, in `src/engcore/engineering`:
+- **F1 HIGH, provider comparisons (partial).** A level-5 comparison must name two executions that the result recorded under two DIFFERENT provider ids, with labels that name those providers.
+  - This refuses two OpenFOAM meshes relabelled "openfoam"/"su2". The test is a consistent rewrite of the committed `cavity_re100` bundle.
+  - `post_hoc` and `within_tolerance` must be booleans, the relative tolerance numeric zero, and `max_absolute` canonical finite non-negative text.
+- **F2.** No blank entry in any uncertainty list. No "none"-like entry in the UNKNOWN list ("none" in the KNOWN list is honest and stays).
+- **F3.** The traced observable must be a key output.
+- **F4.** The full `bundle_digest` and `summary_digest` of all 8 committed bundles are pinned in `flagships/tests/test_flagship_portfolio.py`. Regenerating a bundle must update the pin.
+- **F5.** Reference readers take only the exact `repr` text `to_dict` writes. In memory, a number must be `numbers.Real` and not a bool.
+- **F7.** Cavity level 5 with every comparison missing is ATTEMPTED_NOT_REACHED with the missing links.
+- **F8.**
+  - The status basis is a constant.
+  - The summary has a strict key set.
+  - A malformed manifest or plan is `BundleRefused`.
+- **F6 wording.** `bundle.py`, `engineering.md`, `docs/flagships/README.md`, and `__main__.py` ("self-consistent (unkeyed manifest; not authenticated)").
+
+BIG 11, second re-review:
+- **A1 HIGH.** `forge_pybamm.segments_from_records` held a segment-start ambient as known when the channel was UNKNOWN inside the segment: NONE interpolation, a gap past `max_gap`, extrapolation, validity ending, or a discontinuity. It now also requires both records to be KNOWN 1 ms before each segment ends. Flagship A's INTERVAL_HISTORY channel was not affected.
+- **A2 MEDIUM.** `OutputSelection` must be an affine combination: finite weights >= 0 summing to 1, and distinct non-negative indices. A zero map made any two records agree.
+
+### Deferred, with reasons (not fixed; do not read as closed)
+- **BIG 12 (a), binding.** Authorities do not report the models they executed. Until they do, no validity record is accepted through `trust_handoff`.
+- **BIG 12 R2 / (d)-2, state reads (MEDIUM).** State reads are not DAG edges. A non-committing node can read an UNKNOWN or stale state and output a quantified value. The fix is a declared `reads_owners` on `NodeSpec`, with the planner ordering readers after writers. That changes how every flagship builds its nodes, so it needs a design decision. It is the next BIG 12 item.
+- **BIG 12 (b), applicability (MEDIUM).** Output-only nodes need no applicability declaration, and none is disclosed. The fix is a re-derived `TrustInputs.undeclared_applicability`. It moves stored result digests, so it needs a version decision.
+- **BIG 12, recorded LOW.**
+  - (d)-3 `blocked_by` holds sentences.
+  - (d)-4 derived-node cache reuse has no trace link.
+  - (e) the waiver text and the `within` evidence digest are only format-checked.
+  - R5: a loaded result does not tie `state_history` to its receipts.
+  - N3 and the N1 residual: a complete checkpoint taken BEFORE a refusal can be resumed and re-roll the refused node, and a forger can
+    truncate an incomplete checkpoint's tail to a consistent earlier prefix. Either way the result records no resumed-from link. This gives
+    no more power than a fresh rerun, but the traceability gap is real. The resumed-from checkpoint digest on the result is the first item
+    to pick up with N3. Until then, nothing downstream may treat a resumed result as an uninterrupted one.
+- **BIG 13 F1(b), provider comparisons (documented limit).** Completeness and pre-registration are flagship records, not run artifacts, so a consistent rewrite that drops a failing comparison or re-classifies a post-hoc one verifies. The same holds for the comparison inputs (maximum difference, selections, same declared problem). The committed bundles are anchored by the F4 pins.
+- **BIG 13, recorded limits.**
+  - F2: the UNKNOWN list is not derived from the request.
+  - Key outputs can be pruned.
+- **BIG 13 M7.** The study and limit requests are not shipped, so their provider bindings are not compared with the main request. Already stated in `engineering.md`. DEFERRED to BIG 15 graph-level V&V.
+- **BIG 11, LOW.**
+  - A3: a hand-built `ProviderExecutionRecord` is still accepted by `ProviderAuthority`. It cannot become support while validity is refused.
+  - A4: the library environment digest differs from the conda digest of the same prefix.
+  - A5: values and unit can come from different entries.
+  - A6: CalculiX region-name case collisions.
+  - B1-B4 of the footprint review.
+
+### Executed (this session; Windows core venv 3.14.2; `TMPDIR=D:/ftmp14r`, `PYTHONPATH='D:\forge-b14-review\src;D:\forge-b14-review'` plus `flagships` and `providers\pybamm` where needed)
+- New regression files; every one of these tests fails with the source change stashed:
+  - `tests/test_system_runtime_rereview_fixes.py` 13 passed (all fail with `src/engcore/system_runtime` stashed; the two-domain test fails on the shadowed loop);
+  - `tests/test_engineering_round5_fixes.py` and the ladder test: 28 of the new cases fail unfixed (the other 12 were already refused);
+  - `tests/test_big11_second_rereview_fixes.py` 15 passed / 15 fail unfixed;
+  - the A1 test in `providers/pybamm/tests/test_pybamm_provider.py` DID NOT RAISE unfixed.
+- `pytest tests/test_system_runtime_*.py tests/test_engineering_*.py tests/test_big11_*.py tests/test_provider_boundary.py tests/test_core_semantic_invariants.py tests/test_core_guards.py tests/test_core_api_layering.py tests/test_repository_architecture.py flagships/tests providers/pybamm/tests/test_pybamm_provider.py -n 4`
+  -> **695 passed, 45 skipped, 0 failed** on the final tree (the skips are provider suites outside their environments).
+- `python tools/forge_check.py --regression --workers 4` -> **225 passed**, exit 0.
+- `python tools/forge_check.py --changed` -> 40 passed (architecture pack only), exit 0.
+- WSL `battery` env from `D:/forge-b14-review`, `pytest providers/pybamm/tests/test_system_runtime_battery.py flagships/tests/test_flagship_battery.py`: **19 passed**, exit 0.
+  - Some engineering edits landed during this run, so it was repeated on the final tree with
+    `providers/pybamm/tests/test_pybamm_provider.py` added: **28 passed**, exit 0.
+- NOT RUN: full FAST, full SCIENTIFIC, mutation populations, hardened recertification, and the other provider suites (OpenFOAM, SU2, CalculiX, Code_Aster, Cantera, FEniCSx).
+
 ## 2026-09-27 BIG 14 — 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
 
 - PR #110 (commits up to `86fa1896`) was MERGED at 17:26 UTC by the sharq-labs account while `recertification-gate` was red. Cause of the red:
