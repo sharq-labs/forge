@@ -285,6 +285,22 @@ to the selected flagship(s):
 - D: GRI-Mech applicability and absence of ignition-delay/flame experimental
   comparison.
 
+### 14.2/14.3 progress: flagship A (selected by the owner, 2026-09-28)
+
+- [x] Representative-day approximation error measured (MET, 1.2-1.3 % fade bias).
+- [x] LG M50 comparison (Chen 2020 data, pre-registered): NOT MET at C/2
+      (SPM about 150 mV, +3 % capacity). Electrode-balance follow-up NOT MET
+      (SPM 33-38 mV; DFN 15-19 mV reported).
+- [x] Cell-side energy check (MET). Heat-of-mixing hypothesis supported.
+- [ ] Coupling-window diagnosis (`big14-a-window-study`): running.
+- [ ] OWNER DECISION: switch flagship A's cell model from SPM to DFN, enable
+      the heat of mixing, and re-register the balance identification with a
+      wider bound (the positive factor hit 0.85).
+- [ ] OWNER DECISION: read the Chen 2020 paper (open-access PDF) to settle
+      whether the data is independent of the parameterisation.
+- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
+      subset) for the fade model. Needs download approval.
+
 ### 14.3 — Diagnose, quantify and admit evidence
 
 Owner: implementation agent. External dependencies: authoritative data,
