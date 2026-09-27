@@ -37,6 +37,8 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     status = registry.require("pybamm")
     require_library_unchanged(status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 M1)
     import pybamm
+
+    require_library_unchanged(status, "pybamm")  # and the module that was just imported is that library (M-3)
     if not (0.0 <= capacity_fade < 0.5):
         raise ProviderRefusal("capacity_fade outside the declared mapping's range [0, 0.5)")
     pset, pv = parameter_set(parameter_set_name)

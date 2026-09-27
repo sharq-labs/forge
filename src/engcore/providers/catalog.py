@@ -17,6 +17,7 @@ import importlib
 import importlib.metadata
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -140,61 +141,103 @@ def _record_digest_of(dist: Any, dist_name: str) -> str:
 _LOCATED: dict[str, Any] = {}
 
 
-def _footprint(dist: Any) -> tuple[frozenset[str], str]:
-    """What a distribution's own files are: (real paths of the MODULE files it lists, its install root).
+_CONDA_FILES: dict[str, dict[str, tuple[str, ...]]] = {}
 
-    A pip RECORD lists module files; a conda-installed distribution often lists none (no RECORD, or only
-    its dist-info) -- it is bound by the conda package record inside the python-environment digest, and
-    the only location fact available is its install root.
+
+def _norm(name: str) -> str:
+    return re.sub(r"[-_.]+", "_", name).lower()
+
+
+def _conda_files(prefix: str) -> dict[str, tuple[str, ...]]:
+    """The conda package records of an environment, keyed by the dist-info each one installed (once per process)."""
+    if prefix not in _CONDA_FILES:
+        import json
+
+        index: dict[str, tuple[str, ...]] = {}
+        meta = os.path.join(prefix, "conda-meta")
+        for entry in sorted(os.listdir(meta)) if os.path.isdir(meta) else ():
+            if not entry.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(meta, entry), "r", encoding="utf-8") as fh:
+                    files = tuple(json.load(fh).get("files", ()))
+            except (OSError, ValueError, AttributeError):
+                continue
+            for f in files:
+                m = re.search(r"([^/]+)-([^/]+)\.dist-info/METADATA$", f)
+                if m:
+                    index[f"{_norm(m.group(1))}=={m.group(2)}"] = files
+        _CONDA_FILES[prefix] = index
+    return _CONDA_FILES[prefix]
+
+
+def _footprint(dist: Any, name: str) -> tuple[frozenset[str], frozenset[str]]:
+    """(real paths of a distribution's own module files, the top-level modules those files provide).
+
+    From its RECORD when that lists module files; otherwise from the conda package record that installed
+    its metadata (conda-installed distributions often have no RECORD); otherwise EMPTY -- nothing about
+    where its code lives can be established, and every module of it is refused (BIG 14 review M-2).
+    The modules are derived from the files, not from ``top_level.txt``, which only setuptools writes (M-1).
     """
-    listed = frozenset(os.path.realpath(dist.locate_file(f)) for f in (dist.files or ())
-                       if not str(f).split("/")[0].endswith((".dist-info", ".egg-info")))
-    return listed, os.path.realpath(str(dist.locate_file("")))
+    import sys
+
+    root = os.path.realpath(str(dist.locate_file("")))
+    paths = [os.path.realpath(dist.locate_file(f)) for f in (dist.files or ())
+             if not str(f).split("/")[0].endswith((".dist-info", ".egg-info"))]
+    if not paths:
+        record = _conda_files(sys.prefix).get(f"{_norm(name)}=={dist.version}", ())
+        paths = [os.path.realpath(os.path.join(sys.prefix, f)) for f in record if ".dist-info/" not in f and ".egg-info/" not in f]
+    files = frozenset(paths)
+    modules: set[str] = set()
+    for path in files:
+        try:
+            rel = os.path.relpath(path, root)
+        except ValueError:  # another drive
+            continue
+        head = rel.split(os.sep)[0]
+        if head in ("..", "__pycache__") or head.endswith((".dist-info", ".egg-info", ".data", ".pth")):
+            continue
+        if os.sep in rel:
+            modules.add(head)  # a package directory
+        elif head.endswith(".py"):
+            modules.add(head[:-3])
+        elif head.endswith((".so", ".pyd")):
+            modules.add(head.split(".")[0])
+    return files, frozenset(modules)
 
 
-_MODULES: dict[str, tuple[str, ...]] = {}
+def _outside(path: str, files: frozenset[str]) -> bool:
+    return os.path.realpath(path) not in files  # an empty footprint establishes nothing: everything is outside
 
 
-def _modules_of(dist: Any, name: str) -> tuple[str, ...]:
-    """Top-level modules a distribution provides: ``top_level.txt`` when present, else its own name (once per process)."""
-    if name not in _MODULES:
-        listed = dist.read_text("top_level.txt") if dist is not None else None
-        names = tuple(line.strip() for line in (listed or "").splitlines() if line.strip() and not line.strip().startswith("_"))
-        _MODULES[name] = names or (name,)
-    return _MODULES[name]
-
-
-def _outside(path: str, footprint: tuple[frozenset[str], str]) -> bool:
-    files, root = footprint
-    real = os.path.realpath(path)
-    if files:
-        return real not in files
-    return os.path.commonpath([real, root]) != root  # no module files listed: at least its own install root
-
-
-#: Where a not-yet-imported module would be loaded from, resolved once per process (``find_spec`` scans
-#: sys.path: tens of milliseconds on a WSL mount). Consistent with the operating rule: a path change
-#: takes effect in a new process. Cleared by ``ProviderRegistry.status(refresh=True)``.
+#: Where a not-yet-imported module would be loaded from, resolved once per process AT EXECUTION (``find_spec``
+#: scans sys.path: tens of milliseconds on a WSL mount). Discovery never fills it (review M-3), and every
+#: adapter re-checks after its import, when the module is read from ``sys.modules``. Cleared by refresh.
 _SPEC_ORIGIN: dict[str, str] = {}
-_FOOTPRINTS: dict[str, tuple[frozenset[str], str]] = {}
+_FOOTPRINTS: dict[str, tuple[frozenset[str], frozenset[str]]] = {}
 
 
-def _origin_outside(module: str, footprint: tuple[frozenset[str], str]) -> str:
-    """'' when ``module`` (loaded, or as it would be imported) comes from the footprint; else where it comes from."""
+def _origin_outside(module: str, files: frozenset[str], *, cache: bool = True) -> str:
+    """'' when ``module`` (loaded, or as it would be imported) comes from ``files``; else where it comes from."""
     import sys
 
     loaded = sys.modules.get(module)
     if loaded is not None:
         where = getattr(loaded, "__file__", None)
-        return "" if where and not _outside(where, footprint) else (where or "<no file>")
-    if module not in _SPEC_ORIGIN:
+        if where is None:
+            return ""  # a namespace package: no code of its own (its submodules carry files)
+        return "" if not _outside(where, files) else where
+    if not cache or module not in _SPEC_ORIGIN:
         try:
             spec = importlib.util.find_spec(module)
-            _SPEC_ORIGIN[module] = (spec.origin or "") if spec is not None else ""
         except (ImportError, ValueError) as exc:
             return f"<unresolvable: {type(exc).__name__}>"
+        origin = (spec.origin or "") if spec is not None else ""
+        if not cache:
+            return "" if not origin or origin == "namespace" or not _outside(origin, files) else origin
+        _SPEC_ORIGIN[module] = origin
     origin = _SPEC_ORIGIN[module]
-    return "" if not origin or not _outside(origin, footprint) else origin
+    return "" if not origin or origin == "namespace" or not _outside(origin, files) else origin
 
 
 def _located(name: str) -> Any:
@@ -279,9 +322,13 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
             for dep in dependencies:
                 if not _has_distribution(dep):
                     return ProviderStatus(capability, Availability.UNAVAILABLE, reason=f"declared dependency distribution {dep!r} is not installed")
-                dep_dist = importlib.metadata.distribution(dep)
-                for dep_module in _modules_of(dep_dist, dep):
-                    elsewhere = _origin_outside(dep_module, _footprint(dep_dist))
+                dep_files, dep_modules = _footprint(importlib.metadata.distribution(dep), dep)
+                if not dep_files:
+                    return ProviderStatus(capability, Availability.UNAVAILABLE,
+                                          reason=f"could not establish the files of dependency distribution {dep!r} "
+                                                 "(no RECORD module files and no conda package record)")
+                for dep_module in sorted(dep_modules):
+                    elsewhere = _origin_outside(dep_module, dep_files, cache=False)
                     if elsewhere:  # a shadowing checkout or an editable install of a DEPENDENCY: its RECORD would not describe it
                         return ProviderStatus(capability, Availability.UNAVAILABLE,
                                               reason=f"could not establish the distribution of dependency module {dep_module!r}: "
@@ -289,7 +336,7 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
                 deps.append((dep, importlib.metadata.version(dep), distribution_digest(dep)))
             origin = os.path.realpath(importlib.util.find_spec(module).origin or "")
             dist = importlib.metadata.distribution(dist_name)
-            if _outside(origin, _footprint(dist)):
+            if _outside(origin, _footprint(dist, dist_name)[0]):
                 # a shadowing checkout or an editable install: the RECORD digest would not describe the code
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=os.path.dirname(origin),
                                       reason=f"could not establish the distribution of module {module!r}: {origin} is not a file "
@@ -362,11 +409,14 @@ def require_library_unchanged(status: ProviderStatus, package: str) -> None:
     bound = ((main_dist, package, status.version, main),) + tuple((n, n, v, d) for n, v, d in declared)
     for dist_name, module_name, want_version, want_digest in bound:
         # every module the distribution provides is loaded (or would be) from its own files (review N-1)
-        dist = _located(dist_name)
         if dist_name not in _FOOTPRINTS:
-            _FOOTPRINTS[dist_name] = _footprint(dist)
-        for provided in dict.fromkeys((module_name,) + _modules_of(dist, dist_name)):
-            elsewhere = _origin_outside(provided, _FOOTPRINTS[dist_name])
+            _FOOTPRINTS[dist_name] = _footprint(_located(dist_name), dist_name)
+        files, modules = _FOOTPRINTS[dist_name]
+        if not files:
+            raise ProviderRefusal(f"the files of {dist_name} {want_version} cannot be established (no RECORD module files and "
+                                  "no conda package record); what would run cannot be bound")
+        for provided in sorted(modules):
+            elsewhere = _origin_outside(provided, files)
             if elsewhere:
                 raise ProviderRefusal(f"{provided!r} would be (or was) loaded from {elsewhere}, which is not a file of the "
                                       f"discovered {dist_name} {want_version}")
@@ -467,7 +517,7 @@ class ProviderRegistry:
             _LOCATED.clear()
             _SPEC_ORIGIN.clear()
             _FOOTPRINTS.clear()
-            _MODULES.clear()
+            _CONDA_FILES.clear()
         if refresh or provider_id not in self._cache:
             self._cache[provider_id] = self._entries[provider_id][1]()
         return self._cache[provider_id]

@@ -145,6 +145,8 @@ class PyBaMMProvider:
         require_library_unchanged(self.status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 N1)
         import pybamm
 
+        require_library_unchanged(self.status, "pybamm")  # and the module that was just imported is that library (M-3)
+
         t0 = time.perf_counter()
         pset, pv = parameter_set(problem.parameter_set)
         c_nominal = float(pv["Nominal cell capacity [A.h]"])

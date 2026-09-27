@@ -74,6 +74,7 @@ class TESPyProvider:
         from tespy.components import SimpleHeatExchanger, Sink, Source
         from tespy.connections import Connection
         from tespy.networks import Network
+        require_library_unchanged(self.status, "tespy")  # and the modules just imported are that library (M-3)
 
         outputs = tuple(f"{c.connection_id}.{q}" for c in problem.connections() for q in ("temperature", "pressure", "enthalpy", "mass_flow"))
         configuration = {"topology": [c.to_dict() for c in problem.connections()], "mode": "design",

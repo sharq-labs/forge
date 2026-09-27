@@ -64,6 +64,8 @@ class CanteraProvider:
         require_library_unchanged(self.status, "cantera")  # the library that runs is the one discovery bound (BIG 14 N1)
         import cantera as ct
 
+        require_library_unchanged(self.status, "cantera")  # and the module that was just imported is that library (M-3)
+
         text = mechanism.content.decode("utf-8")
         import re
         if re.search(r"[\w.-]+\.(yaml|yml|cti|xml)/", text):

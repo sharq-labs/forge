@@ -342,6 +342,11 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
         dep_probe = python_package_probe(ProviderCapability("pytest-dep2", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
                                          dependencies=("pluggy",))()
         assert not dep_probe.available and dep_probe.found_but_refused and "dependency module 'pluggy'" in dep_probe.reason
+    # a distribution whose files cannot be established (no RECORD module files, no conda record) is refused at execution
+    with monkeypatch.context() as m:
+        m.setitem(catalog._FOOTPRINTS, "pluggy", (frozenset(), frozenset()))
+        with pytest.raises(ProviderRefusal, match="the files of pluggy .* cannot be established"):
+            require_library_unchanged(with_dep, "pytest")
     # the package itself, not yet imported, must still resolve to where discovery found it (LOW-a)
     import importlib.machinery
     import importlib.util as iu
@@ -353,14 +358,15 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
         m.setattr(iu, "find_spec", lambda name, *a: elsewhere if name == "pytest" else real_find(name, *a))
         with pytest.raises(ProviderRefusal, match="would (now )?be"):
             require_library_unchanged(status, "pytest")
-    # the same for a distribution that lists no module files (conda-style): the footprint is only its install
-    # root, so a module inside that root but not where discovery found it is refused by the location rule
+    # a module that IS one of the distribution's files but not where discovery found the package is refused by the
+    # location rule (the footprint alone would admit it)
     site_root = os.path.realpath(os.path.dirname(os.path.dirname(real.__file__)))
+    vendored = os.path.join(site_root, "vendored", "pytest", "__init__.py")
     with monkeypatch.context() as m:
         m.delitem(sys.modules, "pytest")
         m.setattr(catalog, "_SPEC_ORIGIN", {})
-        m.setitem(catalog._FOOTPRINTS, "pytest", (frozenset(), site_root))
-        inside = importlib.machinery.ModuleSpec("pytest", None, origin=os.path.join(site_root, "vendored", "pytest", "__init__.py"))
+        m.setitem(catalog._FOOTPRINTS, "pytest", (frozenset({os.path.realpath(vendored)}), frozenset({"pytest"})))
+        inside = importlib.machinery.ModuleSpec("pytest", None, origin=vendored)
         m.setattr(iu, "find_spec", lambda name, *a: inside if name == "pytest" else real_find(name, *a))
         with pytest.raises(ProviderRefusal, match="would now be imported from .*vendored"):
             require_library_unchanged(status, "pytest")
@@ -370,17 +376,77 @@ def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch)
     assert not shadowed.available and shadowed.found_but_refused and "is not a file of the installed pluggy" in shadowed.reason
 
 
-def test_a_footprint_without_module_files_is_the_install_root():
-    """Conda-installed distributions often list no module files; they are then bounded by their install root."""
+def test_a_footprint_comes_from_the_record_or_the_conda_record_or_nothing(monkeypatch):
+    """BIG 14 review M-1/M-2: a distribution's own files and modules, fail-closed when neither source lists them."""
     import engcore.providers.catalog as catalog
 
     root = os.path.realpath(os.path.dirname(os.path.dirname(pytest.__file__)))
-    no_files = (frozenset(), root)
-    assert not catalog._outside(os.path.join(root, "casadi", "__init__.py"), no_files)
-    assert catalog._outside(os.path.join(os.path.dirname(root), "checkout", "casadi", "__init__.py"), no_files)
-    listed = (frozenset({os.path.realpath(pytest.__file__)}), root)
-    assert not catalog._outside(pytest.__file__, listed)
-    assert catalog._outside(os.path.join(root, "casadi", "__init__.py"), listed)  # files listed: membership, not the root
+
+    class NoRecord:  # e.g. conda-installed casadi: no RECORD, no file list
+        version, files = "3.7.2", None
+
+        @staticmethod
+        def locate_file(f):
+            return os.path.join(root, str(f))
+
+        @staticmethod
+        def read_text(name):
+            return None
+
+    rel_site = os.path.relpath(root, sys.prefix).replace(os.sep, "/")
+    record = (f"{rel_site}/casadi/__init__.py", f"{rel_site}/casadi/_casadi.so", f"{rel_site}/casadi-3.7.2.dist-info/METADATA")
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {"casadi==3.7.2": record})
+    files, modules = catalog._footprint(NoRecord(), "casadi")
+    assert modules == {"casadi"} and os.path.realpath(os.path.join(root, "casadi", "__init__.py")) in files
+    assert not any(".dist-info" in f for f in files)
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {})
+    assert catalog._footprint(NoRecord(), "casadi") == (frozenset(), frozenset())  # nothing establishes it: refuse
+    assert catalog._outside(os.path.join(root, "casadi", "__init__.py"), frozenset())
+    import importlib.metadata
+
+    real_files, real_modules = catalog._footprint(importlib.metadata.distribution("pytest"), "pytest")
+    assert {"pytest", "_pytest"} <= real_modules  # derived from the files: underscore modules are code too
+    assert os.path.realpath(pytest.__file__) in real_files
+
+
+def test_discovery_does_not_feed_the_execution_time_origin_cache(monkeypatch):
+    """BIG 14 review M-3: an origin resolved at discovery must not stand in for where the import really goes later."""
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe
+
+    monkeypatch.setattr(catalog, "_SPEC_ORIGIN", {})
+    monkeypatch.delitem(sys.modules, "pluggy")  # not yet imported: discovery has to resolve where it WOULD load from
+    status = python_package_probe(ProviderCapability("pytest-dep3", "demo", "library", "pytest", ("d",)), "pytest", ("pytest",),
+                                  dependencies=("pluggy",))()
+    assert status.available, status.reason
+    assert catalog._SPEC_ORIGIN == {}
+
+
+def test_every_library_adapter_checks_again_after_importing_its_library():
+    """BIG 14 review M-3: the check before the import resolves where the module WOULD come from; the check after it
+    reads the module that DID load. Every adapter function that imports its library has a check after the import."""
+    import ast
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    packages = {"cantera": "cantera", "coolprop": "CoolProp", "pybamm": "pybamm", "tespy": "tespy"}
+    missing, seen = [], 0
+    for name, package in packages.items():
+        for path in sorted((root / name / f"forge_{name}").glob("*.py")):
+            for fn in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                checks = [c.lineno for c in ast.walk(fn) if isinstance(c, ast.Call)
+                          and getattr(c.func, "id", None) == "require_library_unchanged"]
+                if not checks:
+                    continue  # functions that never check are held by the identity-forming rule above
+                imports = [n.lineno for n in ast.walk(fn) if (isinstance(n, ast.Import) and any(a.name.split(".")[0] == package for a in n.names))
+                           or (isinstance(n, ast.ImportFrom) and n.level == 0 and (n.module or "").split(".")[0] == package)]
+                if imports:
+                    seen += 1
+                    if max(checks) < max(imports):
+                        missing.append(f"{path.relative_to(root).as_posix()}:{fn.name}")
+    assert seen >= 5 and missing == [], (seen, missing)
 
 
 def test_every_library_adapter_checks_its_library_where_it_forms_an_identity():

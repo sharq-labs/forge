@@ -73,6 +73,8 @@ class CoolPropProvider:
         require_library_unchanged(self.status, "CoolProp")  # the library that runs is the one discovery bound (BIG 14 N1)
         import CoolProp.CoolProp as CP
 
+        require_library_unchanged(self.status, "CoolProp")  # and the module that was just imported is that library (M-3)
+
         (k1, v1, _), (k2, v2, _) = pairs
         base = dict(property_id=property_id, state_digest=state.digest, provider_execution_identity=identity.digest,
                     provider="coolprop", provider_version=self.status.version)
