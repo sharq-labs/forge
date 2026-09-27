@@ -31,6 +31,8 @@ _spec.loader.exec_module(M)
 
 GMSH_OK, GMSH_DETAIL = gmsh_available()
 needs_gmsh = pytest.mark.skipif(not GMSH_OK, reason=f"Gmsh unavailable: {GMSH_DETAIL}")
+# The `mesh` extra is optional: the bare install must stay green without it.
+needs_meshio = pytest.mark.skipif(importlib.util.find_spec("meshio") is None, reason="meshio unavailable (the 'mesh' extra)")
 FRAME = CoordinateFrame("plate-xy", 2)
 
 
@@ -199,6 +201,7 @@ def test_mapping_refuses_extrapolation_and_frame_mismatch(plate):
         SpatialField(t.definition, plate, t.values, Derivation.MAPPED)
 
 
+@needs_meshio
 def test_meshio_roundtrip_preserves_identity(plate, tmp_path):
     path = str(tmp_path / "plate.msh")
     write_meshio(plate, path)
@@ -251,6 +254,18 @@ def test_gmsh_unavailable_is_explicit(monkeypatch):
         prov.gmsh_two_region_plate(length=1, height=1, split=0.5, size=0.5)
 
 
+def test_meshio_unavailable_is_explicit(monkeypatch, tmp_path):
+    """An absent `mesh` extra is a ProviderUnavailable refusal, never a raw ModuleNotFoundError."""
+    import sys
+
+    import engcore.spatial.providers as prov
+    monkeypatch.setitem(sys.modules, "meshio", None)
+    with pytest.raises(ProviderUnavailable, match="'mesh' extra"):
+        prov.write_meshio(fixture_plate(), str(tmp_path / "x.msh"))
+    with pytest.raises(ProviderUnavailable, match="'mesh' extra"):
+        prov.read_meshio(str(tmp_path / "x.msh"), frame=FRAME)
+
+
 def test_hand_built_region_with_undeclared_tag_is_refused(plate):
     from engcore.spatial import GroupKind, SpatialRegion
     forged = SpatialRegion(plate.digest, "untagged", GroupKind.CELLS, 0)
@@ -263,7 +278,8 @@ def test_duplicate_facet_and_flattening_are_refused(tmp_path):
     with pytest.raises(SpatialRefusal, match="declared twice"):
         SpatialMesh(coordinates=base.coordinates, cells=base.cells, cell_type=CellType.TRIANGLE, frame=FRAME, cell_tags=base.cell_tags,
                     facets=[base.facets[0], base.facets[0][::-1]], facet_tags=[11, 12], groups=(PhysicalGroup("left", "facets", 11), PhysicalGroup("right", "facets", 12)))
-    import meshio
+    # The duplicate-facet refusal above needs no extra; the flattening refusal below reads a file through meshio.
+    meshio = pytest.importorskip("meshio", reason="meshio unavailable (the 'mesh' extra)")
     pts = np.column_stack([base.coordinates, np.linspace(0, 1, base.node_count)])
     path = str(tmp_path / "curved.msh")
     meshio.write(path, meshio.Mesh(pts, [("triangle", base.cells)], cell_data={"gmsh:physical": [base.cell_tags], "gmsh:geometrical": [base.cell_tags]},

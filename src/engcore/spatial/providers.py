@@ -124,9 +124,18 @@ _MESHIO_CELL = {CellType.TRIANGLE: "triangle", CellType.QUADRILATERAL: "quad", C
 _FACET_BLOCK = {CellType.TRIANGLE: "line", CellType.QUADRILATERAL: "line", CellType.TETRAHEDRON: "triangle"}
 
 
+def _meshio():
+    """meshio, or ProviderUnavailable: an absent optional backend refuses, it never crashes."""
+    try:
+        import meshio
+    except ImportError as exc:
+        raise ProviderUnavailable("meshio is not installed; install the 'mesh' extra") from exc
+    return meshio
+
+
 def write_meshio(mesh: SpatialMesh, path: str, point_data: dict[str, Any] | None = None) -> None:
     """Write coordinates, cells, cell tags and tagged facets.  Groups travel as field_data."""
-    import meshio
+    meshio = _meshio()
 
     dim = mesh.frame.dimension
     pts = mesh.coordinates if dim == 3 else np.column_stack([mesh.coordinates, np.zeros(mesh.node_count)])
@@ -145,7 +154,7 @@ def write_meshio(mesh: SpatialMesh, path: str, point_data: dict[str, Any] | None
 
 def read_meshio(path: str, *, frame: CoordinateFrame) -> SpatialMesh:
     """Read a mesh file into an exact SpatialMesh.  Tags and groups must be present."""
-    import meshio
+    meshio = _meshio()
 
     m = meshio.read(path)
     dim = frame.dimension

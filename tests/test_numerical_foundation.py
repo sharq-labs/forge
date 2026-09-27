@@ -35,6 +35,10 @@ def method(name, tolerances, **options):
     return NumericalMethod(name, SolverSettings(tolerances, options))
 
 
+# The `symbolic` extra is optional: the bare install must stay green without it.
+needs_sympy = pytest.mark.skipif(importlib.util.find_spec("sympy") is None, reason="SymPy unavailable (the 'symbolic' extra)")
+
+
 # ---- 1. linear: steady 1D conduction with a RESOLVED material conductivity ---
 
 
@@ -123,6 +127,7 @@ def _circle_line():
                             {"residual": f, "jacobian": j}, initial={"x": Quantity(1, "m"), "y": Quantity(0.5, "m")})
 
 
+@needs_sympy
 def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
     problem = _circle_line()
     tol = {"xtol": 1e-12, "residual_atol": 1e-9}
@@ -136,6 +141,7 @@ def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
     assert edited.definition_digest != problem.operator.definition_digest
 
 
+@needs_sympy
 def test_nonlinear_failure_withholds_the_last_iterate():
     system = SymbolicSystem("no_root", ("x",), ("x**2 + 1",))
     f, j = system.callables()
@@ -147,6 +153,7 @@ def test_nonlinear_failure_withholds_the_last_iterate():
         SymbolicSystem("bad", ("x",), ("x + z",)).identity()
 
 
+@needs_sympy
 def test_problem_level_refusals():
     problem = _circle_line()
     with pytest.raises(NumericalRefusal, match="initial values"):
@@ -234,6 +241,15 @@ def test_optimization_two_methods_agree():
 
 
 # ---- optional backends -------------------------------------------------------
+
+
+def test_symbolic_backend_refuses_when_sympy_is_absent(monkeypatch):
+    """An absent `symbolic` extra is a ProviderUnavailable refusal, never a raw ModuleNotFoundError."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "sympy", None)
+    with pytest.raises(ProviderUnavailable, match="'symbolic' extra"):
+        SymbolicSystem("circle_line", ("x", "y"), ("x**2 + y**2 - 4", "x - y")).identity()
 
 
 def test_optional_backends_refuse_when_unavailable():

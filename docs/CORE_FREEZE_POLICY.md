@@ -73,15 +73,21 @@ digest rather than merely labelled, so that editing the flagship study cannot
 look like a compatibility event. The day nobody believes that alarm is the day
 a real one goes unnoticed.
 
-**Non-Core packages** (`14`): `domainpacks`, `domains`, `systems`, `sria`,
+**Non-Core packages** (`23`): `domainpacks`, `domains`, `systems`, `sria`,
 `design`, `credibility`, `mcp`, `claims`, `assembly`, `compositionpacks`,
-`executionpacks`, `planning`, `product`, and `scenarios`.
+`executionpacks`, `planning`, `product`, `scenarios`, `materials`,
+`numerical`, `spatial`, `pde`, `coupling`, `providers`, `multiscale`,
+`system_runtime`, and `engineering`.
 They live under `engcore` and are not part of the frozen Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
 neither frozen nor experimental nor explicitly excluded is an accidental public
 surface. Plugin packs, planning/product orchestration, assembly and scenario
 contracts remain outside the frozen surface until an explicit freeze/version
-decision promotes them.
+decision promotes them. The same holds for the BIG 5-13 build packages -- the
+materials layer, the numerical, spatial and PDE provider foundations, the
+coupling and multi-timescale runtimes, the solver-provider registry, the
+end-to-end system runtime and the engineering/flagship reporting layer: each
+is built on the frozen Core records and none of them is a frozen promise.
 
 **Anything not exported from a canonical module.** A name reachable only by
 importing a submodule directly is internal, regardless of whether it starts

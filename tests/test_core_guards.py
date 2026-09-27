@@ -327,9 +327,18 @@ def test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green():
         if optional:
             reaching_optional[path.relative_to(root.parent).as_posix()] = optional
 
-    # The one module that does. Exact, for the reason every other count in
-    # this file is exact: a second one landing is the event worth failing on.
-    assert set(reaching_optional) == {"src/engcore/mcp/server.py"}, reaching_optional
+    # The modules that do. Exact, for the reason every other count in this
+    # file is exact: another one landing is the event worth failing on. The
+    # BIG 6/7 provider modules import their extras (`petsc`, `symbolic`,
+    # `mesh`) only inside the function that needs them and refuse with
+    # ProviderUnavailable when absent, so a bare install imports them cleanly;
+    # the loop below still forbids them from constructing a counted record.
+    assert set(reaching_optional) == {
+        "src/engcore/mcp/server.py",
+        "src/engcore/numerical/providers.py",
+        "src/engcore/numerical/symbolic.py",
+        "src/engcore/spatial/providers.py",
+    }, reaching_optional
 
     for relative in reaching_optional:
         tree = ast.parse((root.parent / relative).read_bytes().decode("utf-8"))
@@ -4112,16 +4121,21 @@ def test_the_domain_names_were_derived_from_the_packages_not_listed():
     should be looked at.
     """
     names = _core_vocabulary.derived_domain_names()
+    # `corrosion` (BIG 4 thickness-loss probe) and `hygrothermal` (BIG 5
+    # moisture-uptake probe) are domain packages under `engcore.domains`;
+    # GUARD 17 now keeps both words out of the core as well.
     assert set(names) == {
         "aerospace",
         "battery",
+        "corrosion",
         "electrical",
         "electrothermal",
+        "hygrothermal",
         "kinetics",
         "thermal",
         "thermal_models",
     }, names
-    assert len(names) == 7
+    assert len(names) == 9
 
     # Whole names, never split on `_`. Splitting `thermal_models` yields
     # `models`, which is core vocabulary in every sense, and forbidding it
