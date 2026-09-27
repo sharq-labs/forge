@@ -197,9 +197,15 @@ Then review and authority debt:
       tools reached through PATH (/bin/sh, a host C toolchain).
 - [x] Re-review N1 (MEDIUM): library providers (Cantera, PyBaMM, CoolProp,
       TESPy) now check at execution that the library they import is the one
-      discovery bound (`require_library_unchanged`, 1-3 ms per call).
-      Residual: the shared python-environment digest (numpy, ...) is re-read
-      only on `status(refresh=True)`, not per execution.
+      discovery bound (`require_library_unchanged`, 1-3 ms per call), in
+      every function that forms an identity (PyBaMM coupling `advance`
+      included), and the module IN MEMORY must match (location, `__version__`,
+      the discovery it was first imported under); discovery refuses a module
+      that is not a file of the distribution it binds (shadowing / editable).
+      Residuals: the shared python-environment digest (numpy, ...) is re-read
+      only on `status(refresh=True)`; undeclared dependencies first imported at
+      execution are unbound; `found_but_refused` reads reason prefixes, so a
+      probe exception after the module was found still reads as absent.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

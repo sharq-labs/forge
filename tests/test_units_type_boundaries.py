@@ -95,7 +95,8 @@ def test_every_number_that_passed_before_still_passes():
     wire = json.loads(json.dumps(Quantity(12.5, "volt").to_dict()))
     assert Quantity.from_dict(wire) == Quantity(12.5, "volt")
     assert Quantity.from_dict({**wire, "magnitude": 12}) == Quantity(12.0, "volt")      # a JSON integer
-    for number in (3, 3.0, np.float64(3.0), np.int32(3), np.array(3.0)[()]):
+    for number in (3, 3.0, np.float64(3.0), np.int32(3), np.array(3.0)[()], np.float16(3.0), np.longdouble(3.0),
+                   np.uint8(3), np.array(3.0), np.array(3)):
         assert coerce_quantity(number, "volt") == Quantity(3.0, "volt")
         assert (Quantity(2.0, "meter") * number).magnitude == 6.0
         assert (Quantity(6.0, "meter") / number).magnitude == 2.0

@@ -70,7 +70,7 @@ class TESPyProvider:
         self.status = registry.require("tespy")
 
     def solve(self, problem: ChainProblem) -> ProviderExecutionRecord:
-        require_library_unchanged(self.status)  # the library that runs is the one discovery bound (BIG 14 N1)
+        require_library_unchanged(self.status, "tespy")  # the library that runs is the one discovery bound (BIG 14 N1)
         from tespy.components import SimpleHeatExchanger, Sink, Source
         from tespy.connections import Connection
         from tespy.networks import Network

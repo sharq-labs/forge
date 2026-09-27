@@ -142,7 +142,7 @@ class PyBaMMProvider:
         self.status = registry.require("pybamm")
 
     def run(self, problem: BatteryProblem) -> ProviderExecutionRecord:
-        require_library_unchanged(self.status)  # the library that runs is the one discovery bound (BIG 14 N1)
+        require_library_unchanged(self.status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 N1)
         import pybamm
 
         t0 = time.perf_counter()

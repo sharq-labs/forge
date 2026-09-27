@@ -223,6 +223,13 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
                 if not _has_distribution(dep):
                     return ProviderStatus(capability, Availability.UNAVAILABLE, reason=f"declared dependency distribution {dep!r} is not installed")
                 deps.append((dep, importlib.metadata.version(dep), distribution_digest(dep)))
+            origin = os.path.realpath(importlib.util.find_spec(module).origin or "")
+            dist = importlib.metadata.distribution(dist_name)
+            if not any(os.path.realpath(dist.locate_file(f)) == origin for f in (dist.files or ())):
+                # a shadowing checkout or an editable install: the RECORD digest would not describe the code
+                return ProviderStatus(capability, Availability.UNAVAILABLE, location=os.path.dirname(origin),
+                                      reason=f"could not establish the distribution of module {module!r}: {origin} is not a file "
+                                             f"of the installed {dist_name} {version}")
             main = distribution_digest(dist_name)
             combined = _combine(main, *(d[2] for d in deps))
             env_digest, count = python_environment_digest()  # shared numerics (numpy, ...) are not independent
@@ -234,28 +241,45 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
     return probe
 
 
-def require_library_unchanged(status: ProviderStatus) -> None:
-    """Execution-time counterpart of :func:`python_package_probe` (BIG 14 review N1).
+#: The (version, digest) of the discovery under which each library module was first imported in this
+#: process. A module stays in memory after its files change; a refresh must not make a newer discovery
+#: describe the older code that still runs, so this is never cleared.
+_IMPORTED_UNDER: dict[str, tuple[str, str]] = {}
 
-    A library adapter calls this where it imports its library. The provider's
-    distribution and every declared dependency must still have the version and
-    RECORD digest discovery bound into ``status``; a difference means the
-    execution identity would describe another library than the one that runs,
-    and it is refused. Per execution it reads RECORD files only; the shared
+
+def require_library_unchanged(status: ProviderStatus, package: str) -> None:
+    """Execution-time counterpart of :func:`python_package_probe` (BIG 14 reviews N1, M2).
+
+    A library adapter calls this where it imports its library, naming the
+    package it expects (the status is not trusted to say which one). Refused:
+
+    * on disk: the provider's distribution or a declared dependency no longer
+      has the version and RECORD digest discovery bound;
+    * in memory: the imported module was loaded from another location than
+      discovery found, carries another ``__version__``, or was first imported
+      under another discovery in this process.
+
+    Per execution it reads RECORD / METADATA files only; the shared
     python-environment digest is re-read by ``ProviderRegistry.status(refresh=True)``.
     """
+    import sys
+
     from .records import ProviderRefusal
 
     if not status.available or status.capability.mode is not ProviderMode.LIBRARY:
         raise ProviderRefusal(f"{status.capability.provider_id!r} is not an available library provider")
-    package = status.capability.package
+    if status.capability.package != package:
+        raise ProviderRefusal(f"the status describes {status.capability.package!r}, not the library {package!r} about to run")
 
     def now(name: str) -> tuple[str, str]:
-        dist = _located(name)
-        version = dist.version if dist is not None else None
-        if not version:  # absent, or its dist-info was replaced (an upgrade) since it was located
+        try:
+            dist = _located(name)
+            version = dist.version if dist is not None else None
+            if not version:  # absent, or its dist-info was replaced (an upgrade) since it was located
+                return "", ""
+            return version, _record_digest_of(dist, name)
+        except Exception:  # unreadable metadata is not a library that can be identified
             return "", ""
-        return version, _record_digest_of(dist, name)
 
     found = [n for n in dict.fromkeys((package, package.lower())) if now(n)[0]]
     if not found:
@@ -268,6 +292,20 @@ def require_library_unchanged(status: ProviderStatus) -> None:
     if version != status.version or combined != status.digest or current != declared:
         raise ProviderRefusal(f"library {package!r} changed since discovery (now {version}, discovered {status.version}); "
                               "the execution identity no longer describes what would run")
+    loaded = sys.modules.get(package)
+    if loaded is None:
+        _IMPORTED_UNDER[package] = (status.version, status.digest)  # the adapter imports it next
+        return
+    where = os.path.realpath(os.path.dirname(getattr(loaded, "__file__", None) or ""))
+    if where != os.path.realpath(status.location):
+        raise ProviderRefusal(f"library {package!r} in memory was loaded from {where}, not from the discovered {status.location}")
+    in_memory = str(getattr(loaded, "__version__", "") or "").split(" ")[0]
+    if in_memory and in_memory != status.version:
+        raise ProviderRefusal(f"library {package!r} in memory is version {in_memory}; discovery bound {status.version}")
+    pinned = _IMPORTED_UNDER.setdefault(package, (status.version, status.digest))
+    if pinned != (status.version, status.digest):
+        raise ProviderRefusal(f"library {package!r} in memory was imported under another discovery ({pinned[0]}); "
+                              "a refreshed status does not describe the code that still runs")
 
 
 def executable_probe(capability: ProviderCapability, executable: str, version_argv: tuple[str, ...],

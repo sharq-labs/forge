@@ -70,7 +70,7 @@ class CoolPropProvider:
         identity = ProviderExecutionIdentity.from_content(
             self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1],
             problem={"state": state.to_dict(), "property": property_id}, configuration=request, output_request=(property_id,))
-        require_library_unchanged(self.status)  # the library that runs is the one discovery bound (BIG 14 N1)
+        require_library_unchanged(self.status, "CoolProp")  # the library that runs is the one discovery bound (BIG 14 N1)
         import CoolProp.CoolProp as CP
 
         (k1, v1, _), (k2, v2, _) = pairs

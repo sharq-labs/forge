@@ -295,15 +295,17 @@ def test_a_library_changed_after_discovery_is_refused_at_execution(monkeypatch):
     import engcore.providers.catalog as catalog
     from engcore.providers import python_package_probe, require_library_unchanged
 
+    # a per-process pin: each test starts from its own empty table
+    monkeypatch.setattr(catalog, "_IMPORTED_UNDER", {})
     cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
     status = python_package_probe(cap, "pytest", ("pytest",), dependencies=("pluggy",))()
     assert status.available, status.reason
-    require_library_unchanged(status)  # unchanged: passes
+    require_library_unchanged(status, "pytest")  # unchanged: passes
     real_digest = catalog._record_digest_of
     with monkeypatch.context() as m:
         m.setattr(catalog, "_record_digest_of", lambda d, n: "0" * 64 if n == "pluggy" else real_digest(d, n))
         with pytest.raises(ProviderRefusal, match="changed since discovery"):
-            require_library_unchanged(status)  # a dependency's files changed
+            require_library_unchanged(status, "pytest")  # a dependency's files changed
 
     class Upgraded:  # what a located distribution reads like after pip replaced it with a newer one
         version, files = "99.0", ()
@@ -314,27 +316,89 @@ def test_a_library_changed_after_discovery_is_refused_at_execution(monkeypatch):
     with monkeypatch.context() as m:
         m.setitem(catalog._LOCATED, "pytest", Upgraded())
         with pytest.raises(ProviderRefusal, match="now 99.0"):
-            require_library_unchanged(status)  # the provider itself was upgraded
+            require_library_unchanged(status, "pytest")  # the provider itself was upgraded
 
     class Removed:  # its dist-info directory is gone
         version, files = None, ()
     with monkeypatch.context() as m:
         m.setitem(catalog._LOCATED, "pytest", Removed())
         with pytest.raises(ProviderRefusal, match="no longer installed"):
-            require_library_unchanged(status)
-    require_library_unchanged(status)  # unchanged again once the stand-ins are gone
+            require_library_unchanged(status, "pytest")
+    require_library_unchanged(status, "pytest")  # unchanged again once the stand-ins are gone
     with pytest.raises(ProviderRefusal, match="not an available library provider"):
-        require_library_unchanged(ProviderStatus(ProviderCapability("x", "demo", "process", "x", ("d",)), Availability.AVAILABLE, "1", "a" * 64))
+        require_library_unchanged(ProviderStatus(ProviderCapability("x", "demo", "process", "x", ("d",)), Availability.AVAILABLE, "1", "a" * 64), "x")
 
 
-def test_every_library_adapter_checks_its_library_where_it_executes():
-    """Static pin for N1: each library adapter calls the check (FEniCSx records the loaded dolfinx version itself)."""
+def test_a_library_module_in_memory_must_be_the_one_discovery_bound(monkeypatch):
+    """BIG 14 re-review M2: the check covers the imported module, not only the files on disk."""
+    import types
+
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe, require_library_unchanged
+
+    # a per-process pin: each test starts from its own empty table
+    monkeypatch.setattr(catalog, "_IMPORTED_UNDER", {})
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    status = python_package_probe(cap, "pytest", ("pytest",))()
+    assert status.available, status.reason
+    require_library_unchanged(status, "pytest")
+    with pytest.raises(ProviderRefusal, match="not the library 'cantera'"):
+        require_library_unchanged(status, "cantera")  # the status is not trusted to say which library runs
+    real = sys.modules["pytest"]
+    with monkeypatch.context() as m:
+        shadow = types.ModuleType("pytest")
+        shadow.__file__ = os.path.join(os.path.dirname(os.path.dirname(real.__file__)), "elsewhere", "pytest", "__init__.py")
+        m.setitem(sys.modules, "pytest", shadow)
+        with pytest.raises(ProviderRefusal, match="was loaded from"):
+            require_library_unchanged(status, "pytest")
+    with monkeypatch.context() as m:
+        older = types.ModuleType("pytest")
+        older.__file__, older.__version__ = real.__file__, "0.1"
+        m.setitem(sys.modules, "pytest", older)
+        with pytest.raises(ProviderRefusal, match="in memory is version 0.1"):
+            require_library_unchanged(status, "pytest")
+    with monkeypatch.context() as m:
+        m.setitem(catalog._IMPORTED_UNDER, "pytest", ("0.1", "0" * 64))  # first imported under an older discovery
+        with pytest.raises(ProviderRefusal, match="imported under another discovery"):
+            require_library_unchanged(status, "pytest")
+    # discovery refuses a module that is not a file of the distribution it would bind (shadowing / editable)
+    shadowed = python_package_probe(ProviderCapability("mis", "demo", "library", "pytest", ("d",)), "pytest", ("pluggy",))()
+    assert not shadowed.available and shadowed.found_but_refused and "is not a file of the installed pluggy" in shadowed.reason
+
+
+def test_every_library_adapter_checks_its_library_where_it_forms_an_identity():
+    """BIG 14 M1: every function that forms an execution identity in a library adapter calls the check itself,
+    naming its package. Itself, not an enclosing function: a closure such as the coupling path's per-window
+    ``advance`` runs long after its constructor's check, which then says nothing about the window."""
+    import ast
     import pathlib
 
     root = pathlib.Path(__file__).resolve().parent.parent / "providers"
-    for name in ("cantera", "coolprop", "pybamm", "tespy"):
-        source = (root / name / f"forge_{name}" / "__init__.py").read_bytes().decode("utf-8")
-        assert source.count("require_library_unchanged(self.status)") >= 1, name
+    packages = {"cantera": "cantera", "coolprop": "CoolProp", "pybamm": "pybamm", "tespy": "tespy"}
+
+    def own_nodes(fn):  # the function's body without the bodies of functions nested in it
+        stack, out = list(fn.body), []
+        while stack:
+            node = stack.pop()
+            out.append(node)
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                stack.extend(ast.iter_child_nodes(node))
+        return out
+
+    missing, seen = [], 0
+    for name, package in packages.items():
+        for path in sorted((root / name / f"forge_{name}").glob("*.py")):
+            for fn in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                calls = [n for n in own_nodes(fn) if isinstance(n, ast.Call)]
+                if not any(getattr(c.func, "attr", None) == "from_content" for c in calls):
+                    continue
+                seen += 1
+                if not any(getattr(c.func, "id", None) == "require_library_unchanged" and len(c.args) == 2
+                           and isinstance(c.args[1], ast.Constant) and c.args[1].value == package for c in calls):
+                    missing.append(f"{path.relative_to(root).as_posix()}:{fn.name}")
+    assert seen >= 5 and missing == [], (seen, missing)
 
 
 def test_every_adapter_process_invocation_declares_its_environment_check():

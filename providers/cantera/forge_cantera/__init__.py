@@ -61,7 +61,7 @@ class CanteraProvider:
         self.status = registry.require("cantera")
 
     def _solution(self, mechanism: Mechanism):
-        require_library_unchanged(self.status)  # the library that runs is the one discovery bound (BIG 14 N1)
+        require_library_unchanged(self.status, "cantera")  # the library that runs is the one discovery bound (BIG 14 N1)
         import cantera as ct
 
         text = mechanism.content.decode("utf-8")
@@ -80,6 +80,7 @@ class CanteraProvider:
         return ", ".join(f"{k}:{repr(float(v))}" for k, v in sorted(composition.items()))
 
     def _identity(self, mechanism, problem, configuration, outputs, window=None):
+        require_library_unchanged(self.status, "cantera")  # an identity is only formed for the library discovery bound
         return ProviderExecutionIdentity.from_content(
             self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem,
             configuration=configuration, inputs={"mechanism": mechanism.content}, output_request=outputs, window=window)
