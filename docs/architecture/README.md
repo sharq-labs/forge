@@ -58,6 +58,9 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   [design_synthesis.md](design_synthesis.md).
 - **Future strategic capability — motion/electromechanical systems:** kinematics, multibody dynamics, mechanisms, springs/dampers/bushings,
   friction/backlash/contact, actuation, controls and power/wiring/harness behaviour. See [motion_systems.md](motion_systems.md).
+- **Future strategic layer — global 3D engineering visualization:** canonical Scene IR plus pluggable visualization providers for
+  whole-product/subsystem viewing, exact dimensions, transparent/cutaway/exploded modes, motion playback and evidence-bound scientific/risk
+  overlays. Three.js is the initial web-renderer target, not scientific authority. See [visualization_runtime.md](visualization_runtime.md).
 
 ## Claims organization
 
