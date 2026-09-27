@@ -17,8 +17,11 @@ System (one BIG 12 request)
 
 Every scenario input (usage current, coolant inlet profile, contact resistance, module multiplicity) is a DECLARED
 illustrative fixture - not measured.  Cell parameters are the PyBaMM-bundled Chen2020 literature set (provider data,
-content-digested).  This flagship demonstrates system execution, coupling, lifecycle propagation and numerical
-behaviour.  It does not validate the battery model: no experimental dataset applicable to this cell was integrated.
+content-digested) in the DFN model with the heat of mixing, corrected by two active-material balance factors that
+big14-a-lgm50-dfn identified on one LG M50 curve (identified, not measured).  This flagship demonstrates system
+execution, coupling, lifecycle propagation and numerical behaviour.  It does not validate the battery model: the cell
+model was compared with measured LG M50 discharges only in-sample (the curves Chen2020 was tuned on), and the
+pre-registered criteria were NOT MET (docs/flagships/big14/lgm50_dfn_study.json).
 """
 
 from __future__ import annotations
@@ -88,7 +91,28 @@ SOC_MIN_CONSTRAINT = 0.20
 FADE_K = 2e-4                        # 1/(A h)   ThroughputArrheniusFade (BIG 11 declared)
 FADE_EA = 30.0                       # kJ/mol
 PARAMETER_SET = "Chen2020"
-MODEL = "SPM"
+MODEL = "DFN"                        # BIG 14 owner decision 2026-09-28; SPM's C/2 voltage error against LG M50 was 33-38 mV
+CELL_OPTIONS = {"heat of mixing": "true"}   # BIG 14: Chen2020's heat source omits it by default (35-40 % of DFN's heat)
+_DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "docs", "flagships", "big14")
+CELL_STUDY = os.path.join(_DOCS, "lgm50_dfn_study.json")
+CELL_STUDY_PREREGISTRATION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "big14_a_lgm50_dfn_preregistration.json")
+
+
+def cell_model_study() -> dict:
+    """The committed big14-a-lgm50-dfn record, bound to its pre-registration by digest.  Flagship A takes its balance factors
+    from THIS record under the pre-registered decision rule; a record whose registration digest does not match is refused."""
+    raw = open(CELL_STUDY, "rb").read()
+    record = json.loads(raw.decode("utf-8"))
+    prereg = hashlib.sha256(open(CELL_STUDY_PREREGISTRATION, "rb").read()).hexdigest()
+    if record.get("preregistration_sha256") != prereg:
+        raise ValueError("big14-a-lgm50-dfn record does not match its pre-registration")
+    return {"record": record, "sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def cell_balance() -> tuple[float, float]:
+    rule = cell_model_study()["record"]["decision_for_flagship"]
+    f = rule["flagship_factors"] if rule["flagship_carries_balance"] else {"negative": 1.0, "positive": 1.0}
+    return float(f["negative"]), float(f["positive"])
 
 
 @dataclass(frozen=True)
@@ -184,7 +208,10 @@ class Plant:
                             RelaxationPolicy(RelaxationKind.CONSTANT, 0.8), 40, True)
 
     def configuration(self, r_contact: float) -> dict[str, Any]:
-        return {"cell_model": f"PyBaMM {MODEL} {PARAMETER_SET} isothermal at the coupled temperature", "coolant_model": "TESPy water cold plate",
+        return {"cell_model": f"PyBaMM {MODEL} {PARAMETER_SET} isothermal at the coupled temperature", "cell_model_options": dict(CELL_OPTIONS),
+                "cell_active_material_balance": {"negative": repr(cell_balance()[0]), "positive": repr(cell_balance()[1]),
+                                                 "source": f"big14-a-lgm50-dfn record sha256 {cell_model_study()['sha256'][:16]} (identified, not measured)"},
+                "coolant_model": "TESPy water cold plate",
                 "n_cells_in_module": N_CELLS, "r_contact_K_per_W": r_contact, "mass_flow_kg_s": MASS_FLOW, "pressure_Pa": PRESSURE,
                 "cell_temperature_rule": "coolant mean temperature + cell heat x contact resistance (quasi-steady, declared)",
                 "coupling": "implicit serial, relaxation 0.8, tolerances 1e-6 W / 1e-6 K, max 40 iterations",
@@ -197,7 +224,7 @@ class Plant:
         env = self.environment
         current_at = lambda start: env.timeline.history(load_history).value_at(p(start.magnitude_in("s"))).value.value  # noqa: E731
         cell = cell_participant(self.registry, self.cell_spec, parameter_set_name=PARAMETER_SET, model=MODEL, initial_soc=soc0, capacity_fade=fade,
-                                current_at=current_at, log=cell_log)
+                                current_at=current_at, log=cell_log, model_options=CELL_OPTIONS, balance=cell_balance())
         tespy = TESPyProvider(self.registry)
         store = InMemoryBulkStore()
 
@@ -349,7 +376,7 @@ class CoupledCellCoolingFastSystem(FastSystem):
 
 def build_multiscale_runtime(system: CoupledCellCoolingFastSystem, env: EnvironmentTimeline, *, macro_days: int = 14) -> MultiTimescaleRuntime:
     hierarchy = ScaleHierarchy("cell-cooling-aging", "1",
-                               (ScaleLevel("coupled_window", "fast", Quantity(1, "hour"), "SPM cell <-> cold plate coupling window"),
+                               (ScaleLevel("coupled_window", "fast", Quantity(1, "hour"), f"{MODEL} cell <-> cold plate coupling window"),
                                 ScaleLevel("duty_day", "operational", Quantity(1, "day"), "one charge/discharge duty day"),
                                 ScaleLevel("aging", "slow", Quantity(30, "day"), "throughput/temperature capacity fade")),
                                (StateOwnership("cell", "soc", "fast", "dimensionless"), StateOwnership("cell", "capacity_fade", "slow", "dimensionless")))
@@ -743,20 +770,25 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
     nasa = nasa_reference()
     applic = nasa.applicability({})
     run.references_considered = ((nasa, applic),)
-    entries += [LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider "
+    entries += [LevelEntry(5, LevelStatus.NOT_AVAILABLE, (), "no second, independent battery provider exists in the provider ecosystem; PyBaMM DFN vs SPM would be the same provider "
                                                              "and compare_providers refuses that pair as non-independent"),
                 LevelEntry(6, LevelStatus.NOT_AVAILABLE, (), "no published numerical benchmark for this module/duty was integrated"),
-                LevelEntry(7, LevelStatus.NOT_AVAILABLE, (), "no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: "
+                LevelEntry(7, LevelStatus.ATTEMPTED_NOT_REACHED, (cell_measured_link(),),
+                           "the CELL MODEL alone was compared with measured LG M50 lab discharges (big14-a-lgm50-dfn, pre-registered): NOT MET, and in-sample "
+                           "(Chen2020 was tuned on those curves), so it is neither validation nor evidence about this module, cold plate or duty. "
+                           "The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was also considered: "
                                                              f"the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is {applic.status.upper()} ({'; '.join(applic.reasons)}); no comparison was made and none is claimed")]
     if not any(e.level == 3 for e in entries):
         entries.append(LevelEntry(3, LevelStatus.NOT_ATTEMPTED, (), "the coupled day produced no result to check against the first-law relation"))
     run.ladder = VerificationLadder(tuple(entries))
     run.comparisons, run.references = tuple(comparisons), tuple(references)
     unknown_inputs = ("coolant inlet profile (declared)", "cell current profile (declared)", "initial state of charge (declared)", "contact resistance (ASSUMED)",
-                      "cells-in-module multiplicity (declared)", "fade-law constants (declared)", "PyBaMM Chen2020 parameters (provider-bundled literature data)")
+                      "cells-in-module multiplicity (declared)", "fade-law constants (declared)", "PyBaMM Chen2020 parameters (provider-bundled literature data)",
+                      "active-material balance factors (identified on one LG M50 curve, not measured)")
     uncertainty = UncertaintyStatement(
-        (), unknown_inputs, "NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day "
-                            "approximation (unknown, not zero)",
+        (), unknown_inputs, "NOT QUANTIFIED for the DFN cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day "
+                            "approximation (unknown, not zero). Reported, not propagated: against LG M50 lab discharges at C/2 the cell model's voltage RMSE was "
+                            f"{band_text()} (big14-a-lgm50-dfn; in-sample, likely optimistic; its applicability to this module and duty is UNKNOWN)",
         (f"contact resistance record {digest_of({'r': R_CONTACT_K_PER_W})[:12]}.. (ASSUMED)", f"PyBaMM parameter set {PARAMETER_SET} (provider-bundled literature set)"),
         f"cell temperature window {list(TEMP_WINDOW_K)} K and SOC window {list(fl.case.soc_window)} were checked on every solved day; the aging map range [0, 0.5) on the slow state. "
         "The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",
@@ -776,6 +808,25 @@ def run_flagship(case_name: str, registry=None, *, first_law: bool = True, refin
             notes=(f"case {fl.case.name}: {fl.case.description}", "all scenario inputs are declared illustrative fixtures, not measurements"))
     run.uncertainty = uncertainty
     return run
+
+
+def band_text() -> str:
+    b = cell_model_study()["record"]["decision_for_flagship"]["model_form_band_C2"]
+    return (f"{b['v_rmse_mV'][0]:.1f}-{b['v_rmse_mV'][1]:.1f} mV and its peak surface-rise error {b['rise_err_K'][0]:+.1f} to {b['rise_err_K'][1]:+.1f} K")
+
+
+def cell_measured_link():
+    """The level-7 evidence this flagship can state: the pre-registered cell-model comparison with LG M50 data, carried as its record."""
+    from engcore.engineering import EvidenceLink
+    study = cell_model_study()
+    rec = study["record"]
+    record = {"study": "big14-a-lgm50-dfn", "record_sha256": study["sha256"], "preregistration_sha256": rec["preregistration_sha256"],
+              "scope": "the cell model alone (PyBaMM DFN, Chen2020, heat of mixing, identified balance) against constant-current lab discharges of three LG M50 cells "
+                       "in a 25 degC chamber; not this module, its cold plate or its duty",
+              "data_classification": "in-sample: Chen2020 was tuned on the C/2, 1C and 1.5C curves (docs/flagships/big14/chen2020_independence.json)",
+              "judgement": rec["judgement"], "model_form_band_C2": rec["decision_for_flagship"]["model_form_band_C2"]}
+    return EvidenceLink.of_record("cell_model_measured_comparison", record, "cell_model_in_sample_consistency_not_validation",
+                                  "met" if rec["judgement"]["met"] else "not_met")
 
 
 def nasa_reference():

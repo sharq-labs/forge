@@ -79,10 +79,12 @@ def battery_report(runs: dict) -> tuple[str, str]:
             "Fade law: ThroughputArrheniusFade k = 2e-4 /(A h), Ea = 30 kJ/mol (declared). Every value above is a declared illustrative fixture; none is measured."),
         "Inputs and sources": (
             "[REFERENCE DATA] Cell parameters: the PyBaMM-bundled literature set `Chen2020` (provider data, content-digested, NOT Forge-sourced; its own source is the literature). "
+            f"[ASSUMPTION] Its negative / positive active-material volume fractions are multiplied by {bc.cell_balance()[0]:.4f} / {bc.cell_balance()[1]:.4f}: factors IDENTIFIED "
+            "(not measured) on one LG M50 discharge (cell02, C/10) by the pre-registered study big14-a-lgm50-dfn and carried here under that study's registered decision rule. "
             "[ASSUMPTION] Usage current, coolant inlet profile, contact resistance, multiplicity, fade constants: declared (see above). "
             "[FACT] The environment (BIG 3 channel `coolant_inlet`, source classified `design_assumption`) and usage (BIG 2 history `load`) are exact records hashed into the request."),
         "Providers and models": (
-            f"[FACT] Providers executed: {_providers(r)}. Cell model: SPM, isothermal at the coupled temperature, with heat computed by the model; coolant: TESPy `SimpleHeatExchanger` chain "
+            f"[FACT] Providers executed: {_providers(r)}. Cell model: {bc.MODEL} with the heat of mixing (BIG 14 owner decision; earlier runs used SPM), isothermal at the coupled temperature, with heat computed by the model; coolant: TESPy `SimpleHeatExchanger` chain "
             "(water, CoolProp properties inside TESPy). Coupling: implicit, relaxation 0.8, tolerances 1e-6 W / 1e-6 K, 1 h windows (BIG 9). Long horizon: BIG 10 representative day, "
             "`DECLARED_INITIAL` fast state. The cell temperature is coolant mean temperature + cell heat x contact resistance (quasi-steady, declared)."),
         "Applicability": (
@@ -106,10 +108,13 @@ def battery_report(runs: dict) -> tuple[str, str]:
               "(dense PyBaMM points; temperatures are the window values)."),
         "Verification": ("[FACT] Verification pyramid position (a report vocabulary, not a validation grant):\n\n" + _ladder_lines(n.ladder)),
         "Cross-provider results": (
-            "[FACT] There is no independent battery provider in the ecosystem, so no cross-provider comparison exists (level 5 NOT AVAILABLE). PyBaMM SPM vs SPMe would be the same provider and "
+            "[FACT] There is no independent battery provider in the ecosystem, so no cross-provider comparison exists (level 5 NOT AVAILABLE). PyBaMM DFN vs SPM would be the same provider and "
             "`compare_providers` refuses that pair as non-independent. [CORROBORATION] none is claimed."),
         "Reference comparison": (
-            "[VALIDATION] None (no comparison with measurements was made). [FACT] Analytic reference used: the first-law relation Q = m cp dT for the coolant (verifies the energy-balance implementation only; cp comes from the same CoolProp backend TESPy uses): "
+            "[VALIDATION] None for this module. [FACT] The CELL MODEL alone was compared with measured constant-current discharges of three LG M50 cells (Chen 2020 data, "
+            f"pre-registered study big14-a-lgm50-dfn): NOT MET (voltage and capacity inside the criteria at C/2, surface-temperature rise missed on two of three cells); C/2 voltage RMSE {bc.band_text()}. "
+            "Those curves are the data Chen2020 was tuned on, so the comparison is in-sample consistency, not validation, and says nothing about this cold plate or duty "
+            "(level 7 ATTEMPTED, NOT REACHED). [FACT] Analytic reference used: the first-law relation Q = m cp dT for the coolant (verifies the energy-balance implementation only; cp comes from the same CoolProp backend TESPy uses): "
             + "; ".join(f"{c.criterion.criterion_id} {c.outcome.upper()} ({c.value.magnitude:.2e} against {c.criterion.tolerance.magnitude:g})" for c in n.comparisons)
             + ". [REFERENCE DATA] The NASA PCoE Li-ion aging dataset (repository-pinned manifest identity) was CONSIDERED: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) has one envelope term (cell format, 18 mm from the '18650' name) that this flagship cannot state "
               "for its PyBaMM parameter set, so its applicability is UNKNOWN and no comparison was made."),
@@ -133,8 +138,9 @@ def battery_report(runs: dict) -> tuple[str, str]:
                 if n.study else "the coupling-window study was not run for this report. ")
             + "This flagship demonstrates system execution, coupling, lifecycle propagation and numerical behaviour. It does not validate the battery model."),
         "Known limitations": (
-            "[FACT] Illustrative declared inputs; a single lumped cell type; no experimental data; the fade law is a declared approximation with a loss-of-active-material mapping; 56 represented days from 4 resolved days "
-            "(the representative-day approximation error is UNKNOWN); the cooling loop is a quasi-steady thermal rule; the cell current per module is uniform by assumption; SOC is a coulomb-counting definition. "
+            "[FACT] Illustrative declared inputs; a single lumped cell type; the cell model's only measured comparison is in-sample (see Reference comparison); the reversible (entropic) heat is absent "
+            "(Chen2020 has no entropic data); the fade law is a declared approximation with a loss-of-active-material mapping; 56 represented days from 4 resolved days "
+            "(the representative-day approximation error was measured for the earlier SPM cell - fade under-read by 1.2-1.3 %, big14-a-representative-day - and is not re-measured for DFN); the cooling loop is a quasi-steady thermal rule; the cell current per module is uniform by assumption; SOC is a coulomb-counting definition. "
             "The aging temperature comes from the coupled day (cooling IS in the loop), which is more faithful than a lumped-air model but still unvalidated."),
         "Reproduction command": (
             "```bash\n" + WSL.format(env="battery", args="battery normal --out /mnt/d/ftmp/battery_normal --extras") + "\n```\n"

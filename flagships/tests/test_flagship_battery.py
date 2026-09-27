@@ -76,8 +76,13 @@ def test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement
 
 def test_no_false_validation_no_second_provider_no_benchmark_and_the_nasa_dataset_is_not_compared(normal):
     assert normal.summary.scientific_status == "insufficient_evidence"
-    for level in (5, 6, 7):
+    for level in (5, 6):
         assert normal.ladder.entry(level).status is LevelStatus.NOT_AVAILABLE
+    l7 = normal.ladder.entry(7)                                                        # BIG 14: the cell model met measured data, in-sample, and missed
+    assert l7.status is LevelStatus.ATTEMPTED_NOT_REACHED and len(l7.evidence) == 1
+    link = l7.evidence[0]
+    assert link.outcome == "not_met" and link.classification == "cell_model_in_sample_consistency_not_validation"
+    assert "in-sample" in link.record["data_classification"] and "not this module" in link.record["scope"]
     assert normal.ladder.reference_level_reached == "none"
     (nasa, applic), = normal.references_considered
     assert nasa.kind.value == "experimental_dataset" and applic.status == "unknown"    # a reference with no applicable envelope is never compared
@@ -143,3 +148,20 @@ def test_a_refused_day_cannot_reach_the_analytic_level_with_default_arguments_an
     with pytest.raises(BundleRefused, match="not referenced by any SUCCEEDED node"):
         write_bundle(str(tmp_path / "b"), name="x", request=run.flagship.request, result=run.result, summary=run.summary, artifacts=run.flagship.store.files)
     assert run.ladder.entry(1).status is LevelStatus.REACHED                          # the request itself was admissible; only the SOLVED state left applicability
+
+
+def test_the_cell_balance_comes_only_from_the_registered_dfn_record(tmp_path, monkeypatch):
+    """BIG 14: the DFN cell's two active-material factors are read from the committed big14-a-lgm50-dfn record under its
+    pre-registered decision rule; a record that is not the one its registration names is refused, never silently used."""
+    import json
+    rec = bc.cell_model_study()["record"]
+    assert bc.MODEL == "DFN" and bc.CELL_OPTIONS == {"heat of mixing": "true"}
+    assert rec["decision_for_flagship"]["flagship_carries_balance"] is True
+    assert bc.cell_balance() == (rec["step_1"]["factors"]["negative"], rec["step_1"]["factors"]["positive"])
+    assert rec["decision_for_flagship"]["flagship_carries_h"] is False
+    forged = dict(rec, preregistration_sha256="0" * 64)
+    path = tmp_path / "forged.json"
+    path.write_bytes(json.dumps(forged).encode("utf-8"))
+    monkeypatch.setattr(bc, "CELL_STUDY", str(path))
+    with pytest.raises(ValueError):
+        bc.cell_balance()
