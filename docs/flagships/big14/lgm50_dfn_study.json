@@ -1,0 +1,418 @@
+{
+ "classification": "C/2-1.5C: consistency with Chen2020's tuning data (in-sample), not validation",
+ "decision_for_flagship": {
+  "at_bound": {
+   "negative": false,
+   "positive": false
+  },
+  "flagship_carries_balance": true,
+  "flagship_carries_h": false,
+  "flagship_factors": {
+   "negative": 0.980038541090485,
+   "positive": 0.853898705996209
+  },
+  "model_form_band_C2": {
+   "label": "measured against Chen2020's own tuning data (in-sample); likely optimistic; out-of-sample error UNKNOWN",
+   "rise_err_K": [
+    -3.466304897785051,
+    -1.53561736830153
+   ],
+   "v_rmse_mV": [
+    13.620636194995926,
+    16.87624230887905
+   ]
+  }
+ },
+ "judgement": {
+  "cell02": {
+   "C1": true,
+   "T1": false,
+   "V1": true
+  },
+  "cell03": {
+   "C1": true,
+   "T1": true,
+   "V1": true
+  },
+  "cell04": {
+   "C1": true,
+   "T1": false,
+   "V1": true
+  },
+  "met": false
+ },
+ "preregistration": "big14_a_lgm50_dfn_preregistration.json",
+ "preregistration_sha256": "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2",
+ "step_1": {
+  "bounds": [
+   0.7,
+   1.2
+  ],
+  "evaluations": 63,
+  "factors": {
+   "negative": 0.980038541090485,
+   "positive": 0.853898705996209
+  },
+  "h_during_step_1": 3.555,
+  "objective": 9.84634662651051
+ },
+ "step_2": {
+  "T_rmse_K": 1.999252768707403,
+  "h_W_m2K": 18.123067166374824
+ },
+ "table": {
+  "DFN": {
+   "cell02": {
+    "1.5C": {
+     "T_rmse_K": 3.8868109336620713,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.9226,
+     "cap_model_Ah": 4.54370906240652,
+     "cap_rel_err": -0.07696967813624514,
+     "mixing_share_of_total_heat": 0.3972628868451408,
+     "rise_err_K": 0.4227335006204953,
+     "rise_meas_K": 26.9650315068493,
+     "rise_model_K": 27.387765007469795,
+     "samples": 104,
+     "v_max_abs_mV": 229.5853536371131,
+     "v_rmse_mV": 60.21573943770909
+    },
+    "1C": {
+     "T_rmse_K": 1.999252768707403,
+     "calibration_role": "temperature",
+     "cap_meas_Ah": 4.92974,
+     "cap_model_Ah": 4.84238746996411,
+     "cap_rel_err": -0.017719500427180734,
+     "mixing_share_of_total_heat": 0.3979099693418453,
+     "rise_err_K": -1.558271100326806,
+     "rise_meas_K": 16.272857954545486,
+     "rise_model_K": 14.71458685421868,
+     "samples": 154,
+     "v_max_abs_mV": 209.36730371530922,
+     "v_rmse_mV": 54.43851006313057
+    },
+    "C/10": {
+     "T_rmse_K": 0.4174235358905926,
+     "calibration_role": "voltage+capacity",
+     "cap_meas_Ah": 4.99776,
+     "cap_model_Ah": 5.0091780496286695,
+     "cap_rel_err": 0.002284633441515619,
+     "mixing_share_of_total_heat": 0.34841458482778104,
+     "rise_err_K": -1.4957669643264353,
+     "rise_meas_K": 1.832967106347951,
+     "rise_model_K": 0.3372001420215156,
+     "samples": 1213,
+     "v_max_abs_mV": 44.648608580053036,
+     "v_rmse_mV": 9.52967548783708
+    },
+    "C/2": {
+     "T_rmse_K": 1.3021169679781632,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92397,
+     "cap_model_Ah": 4.94143913593274,
+     "cap_rel_err": 0.003547774647843084,
+     "mixing_share_of_total_heat": 0.37417047628427846,
+     "rise_err_K": -2.7246323795317267,
+     "rise_meas_K": 7.5100028169014195,
+     "rise_model_K": 4.785370437369693,
+     "samples": 284,
+     "v_max_abs_mV": 58.95057592538278,
+     "v_rmse_mV": 16.5437124865625
+    }
+   },
+   "cell03": {
+    "1.5C": {
+     "T_rmse_K": 5.305448492174089,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93183,
+     "cap_model_Ah": 4.5437089514218565,
+     "cap_rel_err": -0.07869716688899318,
+     "mixing_share_of_total_heat": 0.39703466446030383,
+     "rise_err_K": 2.888950394082542,
+     "rise_meas_K": 24.49753581081086,
+     "rise_model_K": 27.3864862048934,
+     "samples": 104,
+     "v_max_abs_mV": 245.47731508126435,
+     "v_rmse_mV": 61.04571645017348
+    },
+    "1C": {
+     "T_rmse_K": 2.4658180226786635,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93471,
+     "cap_model_Ah": 4.842385356384661,
+     "cap_rel_err": -0.018709233899325252,
+     "mixing_share_of_total_heat": 0.3977014361936648,
+     "rise_err_K": 0.16521175190518989,
+     "rise_meas_K": 14.549513636363656,
+     "rise_model_K": 14.714725388268846,
+     "samples": 154,
+     "v_max_abs_mV": 217.21616385584096,
+     "v_rmse_mV": 56.645815822884195
+    },
+    "C/10": {
+     "T_rmse_K": 0.4493701850881158,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 5.00181,
+     "cap_model_Ah": 5.009177970611329,
+     "cap_rel_err": 0.0014730608742294156,
+     "mixing_share_of_total_heat": 0.34837088584421794,
+     "rise_err_K": -0.8941809716266675,
+     "rise_meas_K": 1.2358927512356104,
+     "rise_model_K": 0.34171177960894283,
+     "samples": 1214,
+     "v_max_abs_mV": 36.483900008737805,
+     "v_rmse_mV": 9.908438791820657
+    },
+    "C/2": {
+     "T_rmse_K": 1.0898229418340928,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92381,
+     "cap_model_Ah": 4.941443655881986,
+     "cap_rel_err": 0.003581303072617763,
+     "mixing_share_of_total_heat": 0.3740355271947766,
+     "rise_err_K": -1.53561736830153,
+     "rise_meas_K": 6.317270422535216,
+     "rise_model_K": 4.781653054233686,
+     "samples": 284,
+     "v_max_abs_mV": 60.29677026009273,
+     "v_rmse_mV": 16.87624230887905
+    }
+   },
+   "cell04": {
+    "1.5C": {
+     "T_rmse_K": 3.1956017742831992,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.923,
+     "cap_model_Ah": 4.543708321164667,
+     "cap_rel_err": -0.07704482608883467,
+     "mixing_share_of_total_heat": 0.3969685864813066,
+     "rise_err_K": -3.044320560477729,
+     "rise_meas_K": 30.438972297297198,
+     "rise_model_K": 27.39465173681947,
+     "samples": 104,
+     "v_max_abs_mV": 234.56031051078963,
+     "v_rmse_mV": 60.80908568304394
+    },
+    "1C": {
+     "T_rmse_K": 2.6167170833662317,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93121,
+     "cap_model_Ah": 4.842367402162941,
+     "cap_rel_err": -0.018016389047933366,
+     "mixing_share_of_total_heat": 0.3976488160495941,
+     "rise_err_K": -3.5897450728340914,
+     "rise_meas_K": 18.307468361581982,
+     "rise_model_K": 14.71772328874789,
+     "samples": 154,
+     "v_max_abs_mV": 218.80310056363018,
+     "v_rmse_mV": 57.359435650062125
+    },
+    "C/10": {
+     "T_rmse_K": 0.4978036208767871,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.9933,
+     "cap_model_Ah": 5.009177958250633,
+     "cap_rel_err": 0.0031798526526812345,
+     "mixing_share_of_total_heat": 0.34837194228649954,
+     "rise_err_K": -1.3788272742352206,
+     "rise_meas_K": 1.7111828382838326,
+     "rise_model_K": 0.332355564048612,
+     "samples": 1212,
+     "v_max_abs_mV": 62.11542003776272,
+     "v_rmse_mV": 9.64303270107929
+    },
+    "C/2": {
+     "T_rmse_K": 1.634469102534972,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92798,
+     "cap_model_Ah": 4.941435854904385,
+     "cap_rel_err": 0.0027305011189950154,
+     "mixing_share_of_total_heat": 0.37402225421548846,
+     "rise_err_K": -3.466304897785051,
+     "rise_meas_K": 8.280238732394366,
+     "rise_model_K": 4.8139338346093155,
+     "samples": 284,
+     "v_max_abs_mV": 45.833588139447826,
+     "v_rmse_mV": 13.620636194995926
+    }
+   }
+  },
+  "SPM": {
+   "cell02": {
+    "1.5C": {
+     "T_rmse_K": 4.049645147367386,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.9226,
+     "cap_model_Ah": 4.544267105282935,
+     "cap_rel_err": -0.07685631469488993,
+     "mixing_share_of_total_heat": 0.5648719579410589,
+     "rise_err_K": -8.203559467434559,
+     "rise_meas_K": 26.9650315068493,
+     "rise_model_K": 18.76147203941474,
+     "samples": 104,
+     "v_max_abs_mV": 151.16226717273173,
+     "v_rmse_mV": 103.94491543953461
+    },
+    "1C": {
+     "T_rmse_K": 3.2191376300062173,
+     "calibration_role": "temperature",
+     "cap_meas_Ah": 4.92974,
+     "cap_model_Ah": 4.853396259172583,
+     "cap_rel_err": -0.015486362531779931,
+     "mixing_share_of_total_heat": 0.5226245182166342,
+     "rise_err_K": -4.563838531071497,
+     "rise_meas_K": 16.272857954545486,
+     "rise_model_K": 11.70901942347399,
+     "samples": 156,
+     "v_max_abs_mV": 193.37628682207298,
+     "v_rmse_mV": 68.14849885329181
+    },
+    "C/10": {
+     "T_rmse_K": 0.4319510476158707,
+     "calibration_role": "voltage+capacity",
+     "cap_meas_Ah": 4.99776,
+     "cap_model_Ah": 5.010416595870662,
+     "cap_rel_err": 0.002532453713395986,
+     "mixing_share_of_total_heat": 0.42664361489546465,
+     "rise_err_K": -1.5222706682048397,
+     "rise_meas_K": 1.832967106347951,
+     "rise_model_K": 0.3106964381431112,
+     "samples": 1213,
+     "v_max_abs_mV": 49.969381802370535,
+     "v_rmse_mV": 12.038191548125695
+    },
+    "C/2": {
+     "T_rmse_K": 1.69061907861452,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92397,
+     "cap_model_Ah": 4.948457329178854,
+     "cap_rel_err": 0.004973086590465528,
+     "mixing_share_of_total_heat": 0.4656999438974154,
+     "rise_err_K": -3.4005081531464043,
+     "rise_meas_K": 7.5100028169014195,
+     "rise_model_K": 4.109494663755015,
+     "samples": 284,
+     "v_max_abs_mV": 84.66535698824495,
+     "v_rmse_mV": 36.596937572903315
+    }
+   },
+   "cell03": {
+    "1.5C": {
+     "T_rmse_K": 2.934620887685755,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93183,
+     "cap_model_Ah": 4.544266999754894,
+     "cap_rel_err": -0.0785840145027516,
+     "mixing_share_of_total_heat": 0.5643550990661299,
+     "rise_err_K": -5.735703267248539,
+     "rise_meas_K": 24.49753581081086,
+     "rise_model_K": 18.76183254356232,
+     "samples": 104,
+     "v_max_abs_mV": 139.1183609494413,
+     "v_rmse_mV": 94.039655957857
+    },
+    "1C": {
+     "T_rmse_K": 2.2064142388599417,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93471,
+     "cap_model_Ah": 4.853395432952038,
+     "cap_rel_err": -0.01647808423351367,
+     "mixing_share_of_total_heat": 0.5222354762437512,
+     "rise_err_K": -2.8401555218063663,
+     "rise_meas_K": 14.549513636363656,
+     "rise_model_K": 11.70935811455729,
+     "samples": 156,
+     "v_max_abs_mV": 201.35990301886818,
+     "v_rmse_mV": 64.40849968874134
+    },
+    "C/10": {
+     "T_rmse_K": 0.4300943653700829,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 5.00181,
+     "cap_model_Ah": 5.010417279313546,
+     "cap_rel_err": 0.0017208329211917488,
+     "mixing_share_of_total_heat": 0.4265733896990744,
+     "rise_err_K": -0.9184675230426933,
+     "rise_meas_K": 1.2358927512356104,
+     "rise_model_K": 0.3174252281929171,
+     "samples": 1214,
+     "v_max_abs_mV": 33.6913797074927,
+     "v_rmse_mV": 12.007994285192536
+    },
+    "C/2": {
+     "T_rmse_K": 1.0890469308479511,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92381,
+     "cap_model_Ah": 4.948458690246357,
+     "cap_rel_err": 0.005006019778658773,
+     "mixing_share_of_total_heat": 0.46547405732040725,
+     "rise_err_K": -2.215725684366305,
+     "rise_meas_K": 6.317270422535216,
+     "rise_model_K": 4.101544738168911,
+     "samples": 284,
+     "v_max_abs_mV": 85.99987793279418,
+     "v_rmse_mV": 34.96044978319685
+    }
+   },
+   "cell04": {
+    "1.5C": {
+     "T_rmse_K": 5.653436784293556,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.923,
+     "cap_model_Ah": 4.544266507494203,
+     "cap_rel_err": -0.0769314427190326,
+     "mixing_share_of_total_heat": 0.5641800525848798,
+     "rise_err_K": -11.666591057568041,
+     "rise_meas_K": 30.438972297297198,
+     "rise_model_K": 18.772381239729157,
+     "samples": 104,
+     "v_max_abs_mV": 137.25530832747168,
+     "v_rmse_mV": 92.0644142646448
+    },
+    "1C": {
+     "T_rmse_K": 4.425433318115259,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.93121,
+     "cap_model_Ah": 4.85338864506945,
+     "cap_rel_err": -0.015781391368558627,
+     "mixing_share_of_total_heat": 0.5221301044463698,
+     "rise_err_K": -6.594552401879241,
+     "rise_meas_K": 18.307468361581982,
+     "rise_model_K": 11.712915959702741,
+     "samples": 156,
+     "v_max_abs_mV": 199.29863712785556,
+     "v_rmse_mV": 63.68649305592484
+    },
+    "C/10": {
+     "T_rmse_K": 0.48513709570810337,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.9933,
+     "cap_model_Ah": 5.0104171714708805,
+     "cap_rel_err": 0.003428027851497182,
+     "mixing_share_of_total_heat": 0.4265747236784778,
+     "rise_err_K": -1.4032402830359842,
+     "rise_meas_K": 1.7111828382838326,
+     "rise_model_K": 0.3079425552478483,
+     "samples": 1212,
+     "v_max_abs_mV": 67.44267454617514,
+     "v_rmse_mV": 12.669413902132895
+    },
+    "C/2": {
+     "T_rmse_K": 2.034423450672484,
+     "calibration_role": "held-out",
+     "cap_meas_Ah": 4.92798,
+     "cap_model_Ah": 4.948451512110078,
+     "cap_rel_err": 0.004154138634912981,
+     "mixing_share_of_total_heat": 0.4654517494584159,
+     "rise_err_K": -4.146304862301179,
+     "rise_meas_K": 8.280238732394366,
+     "rise_model_K": 4.133933870093188,
+     "samples": 284,
+     "v_max_abs_mV": 71.54110167826656,
+     "v_rmse_mV": 31.647163423393195
+    }
+   }
+  }
+ },
+ "wall_s": 179.5
+}

@@ -156,6 +156,29 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   - any MET on these curves is in-sample and likely optimistic, and the out-of-sample error stays UNKNOWN;
   - the paper's licence is CC BY-NC-ND 4.0 (the dataset's CC-BY-4.0 is separate).
 
+### Study `big14-a-lgm50-dfn` (the owner's DFN decision)
+- Pre-registered at `64093638`; runner `91a0b66b`; run 2026-09-28 in the WSL battery env with a clean tree.
+  Command: `python -m forge_flagships.lgm50_dfn --out /mnt/d/forge-b14-logs/dfn_study` (exit 0, 180 s).
+  Record: `docs/flagships/big14/lgm50_dfn_study.json`.
+- Classification: C/2-1.5C are Chen2020's own tuning data, so this is in-sample consistency, not validation.
+- Result: PRIMARY NOT MET.
+  - V1 met on all three cells: DFN C/2 voltage RMSE 16.5 / 16.9 / 13.6 mV, against SPM 33-38 mV.
+  - C1 met on all three: +0.27 to +0.36 %.
+  - T1 missed on cell02 and cell04: the model rise is 4.8 K against 7.5 and 8.3 K measured. cell03 passes (6.3 K measured).
+- Identification:
+  - balance factors: negative 0.9800, positive 0.8539, both interior to [0.70, 1.20], objective 9.85, 63 evaluations;
+  - h = 18.12 W/m2K on cell02 1C (T RMSE 2.0 K). It was 3.555 for SPM without mixing: the heat of mixing is 35-40 % of DFN's heat.
+- Decision rule applied as registered:
+  - flagship A carries the two factors, labelled as identified, not measured;
+  - it does not carry h;
+  - the model-form band at C/2 is 13.6-16.9 mV voltage RMSE and -3.5 to -1.5 K peak-rise error, measured in-sample and likely optimistic.
+- Reported, not judged:
+  - 1C and 1.5C voltage RMSE 54-61 mV;
+  - 1.5C capacity -7.7 to -7.9 % (stated limit: no Arrhenius term on diffusion);
+  - C/10 cell03/cell04 9.6-9.9 mV (the calibration transfers between sibling cells).
+- Post hoc, not a registered finding: the model's rise scales more steeply with rate than the measurement (C/2 : 1C : 1.5C = 0.33 : 1 : 1.86, against 0.46 : 1 : 1.66).
+  That is the signature of a heat term linear in current, which points at the absent reversible (entropic) heat. Chen2020 has no entropic data.
+
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
 - The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.
