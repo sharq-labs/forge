@@ -4931,6 +4931,11 @@ def test_nothing_in_src_reaches_a_flagship_or_provider_adapter_package():
     name would start from; and any use of ``KNOWN_ADAPTERS`` outside the
     guarded discovery that is its one sanctioned consumer.
     """
+    if not (REPO_ROOT / "flagships").is_dir() and not (REPO_ROOT / "providers").is_dir():
+        # the formal mutation harness runs its target tests in a copy of `_COPIED` only
+        # (tests/mutation_guards.py), which holds neither tree: there is nothing to check,
+        # and asserting over the empty set would void every control round
+        pytest.skip("partial tree copy without flagships/ and providers/ (mutation harness copy)")
     outside = _names_outside_the_wheel()
     adapters = {n for n in outside if n.startswith("forge_")}
     assert "forge_flagships" in adapters and "forge_pybamm" in adapters, sorted(outside)
