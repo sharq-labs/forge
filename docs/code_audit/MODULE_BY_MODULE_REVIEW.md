@@ -399,7 +399,9 @@ This statement is scoped to the reviewed tests; the whole suite was not executed
 
 ## Verify later in dependent-module reviews
 
-- [ ] U-05: verify unit-registry fingerprint is bound to execution/replay provenance.
+- [x] U-05: verify unit-registry fingerprint is bound to execution/replay provenance.
+      DONE 2026-09-28 (owner decision): the claims replay environment is `claim_replay_environment/2` and binds
+      `units.registry_fingerprint`; exact replay across other unit definitions is NOT_REPRODUCIBLE (`tests/claims/test_impact_replay.py`).
       BIG 14 finding (2026-09-27, wording corrected after review F6): the unit-definition CONTENT is bound nowhere.
       `registry_fingerprint()` has no caller in `src/` (tests: one existence check, one stability check). The Core `RuntimeEnvironment`
       replay record has no unit field; nothing in `src/` builds one from the live interpreter (it is only read back by `from_dict` and
@@ -408,7 +410,9 @@ This statement is scoped to the reviewed tests; the whole suite was not executed
       Binding the fingerprint itself (naturally in the claims replay `_environment()`) moves every stored bundle's environment
       fingerprint, so it needs a version decision; surfaced to the owner, not changed silently.
 - [ ] Decide provider-facing API status of spread/ratio/canonical-identity helpers.
-- [ ] Establish/test Pint-version compatibility policy around private backend access.
+- [x] Establish/test Pint-version compatibility policy around private backend access.
+      DONE 2026-09-28 (owner decision U-04): `pint>=0.25.3,<0.27` in `pyproject.toml` and `requirements.txt`, exactly the measured range;
+      a wider range needs the units contract measured on it first.
       BIG 14 evidence (2026-09-27): the units contract (352 tests) passes on Pint 0.25.3 (Windows venv) and 0.26.1 (WSL `battery` env);
       the minimum declared `pint>=0.23` is untested and there is still no upper bound. Policy decision pending (U-04).
 
