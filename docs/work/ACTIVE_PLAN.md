@@ -151,12 +151,16 @@ Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
 - [ ] Class 6: run hardened recertification on 3.12 after the repairs
       (GitHub workflow; needs the owner's go-ahead to push the branch / open
       the PR, whose automatic classification runs it).
-- [x] Owner action: configure the `main` ruleset to require `tests-gate` and
+- [ ] Owner action: configure the `main` ruleset to require `tests-gate` and
       `recertification-gate` (Branch Policy currently reports NOT ENFORCED).
-      Done 2026-09-28 on the owner's instruction: ruleset "Protect main"
-      (id 23351506) requires both, source GitHub Actions (15368). Strict
-      up-to-date is on, merge only, no bypass, approvals 0 (one owner account).
-      `tools.certification.branch_policy` reports OK.
+      CONFIGURED BUT NOT ENFORCED. On 2026-09-28 the ruleset "Protect main"
+      (id 23351506) was set to require both (source GitHub Actions 15368;
+      strict up-to-date on; merge only; no bypass; approvals 0), and
+      `branch_policy` reported OK. The repository was later made PRIVATE on a
+      free plan. GitHub then disables rulesets: every rules API call returns
+      403 "Upgrade to GitHub Pro or make this repository public", and
+      `branch_policy` fails. A red gate cannot block a merge today.
+      OWNER DECISION: make the repository public, or upgrade to GitHub Pro.
 - [x] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
 
 Then review and authority debt:
