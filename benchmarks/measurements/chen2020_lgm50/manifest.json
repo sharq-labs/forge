@@ -1,0 +1,36 @@
+{
+ "schema": "forge.raw_measurement_files/1",
+ "dataset_id": "chen2020.lgm50_validation_discharges",
+ "title": "Experimental data for 'Development of Experimental Techniques for Parameterization of Multi-scale Lithium-ion Battery Models'",
+ "creators": [
+  "Chen, Chang-Hui",
+  "Brosa Planella, Ferran",
+  "O'Regan, Kieran",
+  "Gastol, Dominika",
+  "Widanage, W. Dhammika",
+  "Kendrick, Emma"
+ ],
+ "doi": "10.5281/zenodo.4032561",
+ "paper_doi": "10.1149/1945-7111/ab9050",
+ "license": "CC-BY-4.0",
+ "retrieved": "2026-09-28 from https://zenodo.org/records/4032561 (md5 of every file equals the Zenodo record)",
+ "cell": "LG M50 (INR21700 M50), 5 Ah nominal",
+ "files": {
+  "LGM50_cell02.csv": {
+   "bytes": 597715,
+   "sha256": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35",
+   "md5": "0bbf959cbfc367296ec69d7a74d2f5c1"
+  },
+  "LGM50_cell03.csv": {
+   "bytes": 590794,
+   "sha256": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb",
+   "md5": "a09cbd8eff0af55dfe9bc8728fa89908"
+  },
+  "LGM50_cell04.csv": {
+   "bytes": 595967,
+   "sha256": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e",
+   "md5": "f17615476283d2e15087165697ff9d7c"
+  }
+ },
+ "classification": "experimental measurement; the authors describe it as the validation data of the paper that produced PyBaMM's Chen2020 parameter set (independence from that parameterisation: see the BIG 14 pre-registration)"
+}

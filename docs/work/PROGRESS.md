@@ -81,6 +81,147 @@ BIG 14 = Scientific Closure & Recertification (plan: `docs/work/ACTIVE_PLAN.md`)
 Classes 1, 2 and 6 can alter evidence admission / replay identity / assurance, and the ruleset blocker means a red gate cannot stop a merge. 14.2/14.3 flagship
 evidence work stays blocked until 1, 2, 3, 4, 5 are repaired on this branch and 6 has a recertification run; the ruleset needs the owner.
 
+## 2026-09-28 BIG 14 — flagship A: first comparison against measured LG M50 cells (branch `feat/big-14-flagship-a`)
+
+The user chose flagship A for deep closure work. The work so far is below. Every study was pre-registered in a pushed commit before its first run.
+
+### NASA PCoE is not applicable to flagship A's cell
+- Flagship A runs PyBaMM's Chen2020 set, which models the LG M50 (21700, 5 Ah, NMC811/graphite-SiOx).
+- The NASA PCoE cells are 2 Ah 18650s: a different cell. Comparing them would test the wrong cell.
+
+### Data: Chen 2020 LG M50 validation discharges
+- Source: Zenodo 10.5281/zenodo.4032561, CC-BY-4.0, 1.8 MB. Downloaded with the user's approval; the md5 of every file equals Zenodo's.
+- Vendored in `benchmarks/measurements/chen2020_lgm50/` (`raw/` byte-exact with `-text`; `manifest.json` pins sha256).
+- Content: 3 cells, CC-CV to 4.2 V then CC discharge at C/10, C/2, 1C and 1.5C, with surface and chamber temperature, 30 s sampling.
+- Data-only facts, recorded before registration:
+  - capacity 4.93-5.00 Ah, agreeing within 0.2 % between cells;
+  - cell-to-cell voltage spread 0.9-5.8 mV RMS;
+  - surface-temperature spread 0.2-1.5 K;
+  - peak surface rise over the chamber up to 31 K at 1.5C.
+- Chen2020 facts found:
+  - the heat-transfer coefficient is a generic 10 W/m2K default;
+  - only the exchange-current densities carry an Arrhenius term; transport has no temperature dependence.
+
+### Study `big14-a-lgm50-validation`
+- Pre-registered at `4656f339`; runner `13a5f647`; the JSON-record crash fixed at `2d09a0b3` (no computation changed).
+- Result: NOT MET on all three cells.
+  - SPM at C/2 (the flagship's rate): voltage RMSE 149-153 mV against <= 17 mV; capacity +3.1 % against <= 2 %.
+  - Peak-rise T1 is met: -0.8, +0.4 and -1.6 K.
+  - The calibrated h is 3.555 W/m2K; the cell02 1C temperature RMSE is 0.47 K.
+- The run was repeated and was identical. Record: `docs/flagships/big14/lgm50_validation_study.json`.
+- Labelled post-hoc diagnostic (`docs/flagships/big14/diagnostic_normalized_axis.py`). On a capacity-normalised axis the error is still 44-49 mV at C/10, so it is not capacity alone:
+  - an equilibrium (electrode-balance / OCV) offset;
+  - a rate-growing SPM model-form error: 156-169 mV for SPM against 75-87 mV for DFN at 1.5C.
+- Independence of this data from the Chen2020 parameterisation stays UNCONFIRMED. It needs the paper text, and reading the PDF needs the user's approval.
+
+### Study `big14-a-lgm50-electrode-balance`
+- Pre-registered at `87c7a9ec`. Two active-material factors were calibrated on cell02 at C/10 only.
+- Calibrated factors: negative 0.9798, positive **0.8500, which is the lower bound**. The optimum may lie outside the registered range.
+- Held-out C/10 on cell03 and cell04: 11.8 mV, so the correction transfers across cells.
+- Result at C/2: NOT MET.
+  - SPM: 33-38 mV against <= 17 mV. Capacity +0.4-0.5 % meets C1.
+  - DFN, reported and not judged: 14.7-18.7 mV.
+- New at high rate: capacity is now under-predicted, -8 % at 1.5C. This is consistent with the declared missing temperature dependence of transport.
+- Record: `docs/flagships/big14/lgm50_balance_study.json`.
+
+### Study `big14-a-representative-day`
+- Pre-registered at `31c10f2d`. Result: MET in both cases.
+- Question: does the published 4-of-56-day representation reproduce a run that resolves every day?
+- Record: `docs/flagships/big14/representative_day_study.json` and `representative_day_runs.jsonl`.
+- Published run minus the 56-day reference:
+
+  | Quantity | normal | hot |
+  |---|---|---|
+  | fade | -0.00070 (-1.33 %) | -0.00132 (-1.17 %) |
+  | end-of-discharge voltage, aged | +0.48 mV | +0.91 mV |
+  | peak cell temperature, aged | -0.0002 K | 0.0000 K |
+  | min SOC, aged | +0.00039 | +0.00084 (84 % of the 0.001 tolerance) |
+  | degradation voltage shift | +0.48 mV | +0.91 mV |
+
+- Every quantity converges monotonically, and the error halves with each halving of the macro step (normal fade, x1e-6: -697, -322, -161, -54, 0). This is a first-order bias from holding the fade constant within a macro step.
+- Wall time: 75 s for the 4-day run, 639 s for the 56-day reference.
+- The representative-day approximation error is no longer UNKNOWN: it is measured for these two cases.
+- Caveat (found by the parallel session): in the hot case peak_cell_temperature_aged is 323.950001 K in every run. It occurs at rest (0 A) and
+  equals the coolant-inlet peak, so it is set by the environment and does not test the approximation there.
+- The cell-energy check and the heat-of-mixing test are recorded below (entries `big14-a-cell-energy-check` and `big14-a-heat-of-mixing`).
+
+### Data independence: the Chen 2020 paper read (`big14-a-chen2020-independence`)
+- Record: `docs/flagships/big14/chen2020_independence.json`. Read from the open-access article's HTML full text in a browser. The IOP and Birmingham PDF
+  endpoints returned bot-detection pages; they were not bypassed and nothing was downloaded.
+- Answer: NOT independent. Chen2020 tuned the diffusivities, the maximum concentrations and the positive 100 % SOC stoichiometry by trial and error
+  against the C/2, 1C and 1.5C discharges of the same three cells (1C first, then the negative diffusivity again per rate: 1.3e-14 at C/2, 6.3e-14 at 1.5C).
+  PyBaMM ships the 1C column (checked in the battery env). C/10 is not named in the tuning.
+- Consequences:
+  - the two NOT MET LG M50 results stand, and they are stronger negatives, because the model misses its own tuning data;
+  - any MET on these curves is in-sample and likely optimistic, and the out-of-sample error stays UNKNOWN;
+  - the paper's licence is CC BY-NC-ND 4.0 (the dataset's CC-BY-4.0 is separate).
+
+### Study `big14-a-lgm50-dfn` (the owner's DFN decision)
+- Pre-registered at `64093638`; runner `91a0b66b`; run 2026-09-28 in the WSL battery env with a clean tree.
+  Command: `python -m forge_flagships.lgm50_dfn --out /mnt/d/forge-b14-logs/dfn_study` (exit 0, 180 s).
+  Record: `docs/flagships/big14/lgm50_dfn_study.json`.
+- Classification: C/2-1.5C are Chen2020's own tuning data, so this is in-sample consistency, not validation.
+- Result: PRIMARY NOT MET.
+  - V1 met on all three cells: DFN C/2 voltage RMSE 16.5 / 16.9 / 13.6 mV, against SPM 33-38 mV.
+  - C1 met on all three: +0.27 to +0.36 %.
+  - T1 missed on cell02 and cell04: the model rise is 4.8 K against 7.5 and 8.3 K measured. cell03 passes (6.3 K measured).
+- Identification:
+  - balance factors: negative 0.9800, positive 0.8539, both interior to [0.70, 1.20], objective 9.85, 63 evaluations;
+  - h = 18.12 W/m2K on cell02 1C (T RMSE 2.0 K). It was 3.555 for SPM without mixing: the heat of mixing is 35-40 % of DFN's heat.
+- Decision rule applied as registered:
+  - flagship A carries the two factors, labelled as identified, not measured;
+  - it does not carry h;
+  - the model-form band at C/2 is 13.6-16.9 mV voltage RMSE and -3.5 to -1.5 K peak-rise error, measured in-sample and likely optimistic.
+- Reported, not judged:
+  - 1C and 1.5C voltage RMSE 54-61 mV;
+  - 1.5C capacity -7.7 to -7.9 % (stated limit: no Arrhenius term on diffusion);
+  - C/10 cell03/cell04 9.6-9.9 mV (the calibration transfers between sibling cells).
+- Post hoc, not a registered finding: the model's rise scales more steeply with rate than the measurement (C/2 : 1C : 1.5C = 0.33 : 1 : 1.86, against 0.46 : 1 : 1.66).
+  That is the signature of a heat term linear in current, which points at the absent reversible (entropic) heat. Chen2020 has no entropic data.
+
+### Consequence for flagship A (open decision for the owner)
+- The flagship reports a degradation voltage shift of -34 mV at C/2.
+- The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.
+- DFN with the identified balance comes close to the 17 mV bar.
+- Proposal, to be decided by the owner:
+  - move flagship A's cell model from SPM to DFN;
+  - re-register the identification with a wider bound, because the positive factor hit its bound;
+  - enable the heat of mixing;
+  - carry the measured model-form bands instead of UNKNOWN: about 35 mV voltage for SPM, about 15-19 mV for DFN after the balance correction, and 2-3 K cell temperature at C/2.
+
+### Check `big14-a-cell-energy-check` (BIG 13 review M5)
+- Pre-registered at `b0814b83`; record `41cc1822` (`docs/flagships/big14/cell_energy_check.json`). Numerical verification of the model's heat bookkeeping, not validation.
+- C1 MET at both temperatures: the cell's total heating equals I*(U_surface - V) + reversible heating to 2.9e-10 (300 K) and 4.5e-10 (313.15 K) relative.
+- Reported, not judged: the heat of mixing PyBaMM leaves out by design is 83 % (300 K) and 128 % (313.15 K) of the heat it counts.
+- The reversible heat is 0 because Chen2020 carries no entropic coefficient. That channel is ABSENT from the model, so its size is UNKNOWN; it is not a measured zero.
+
+### Test `big14-a-heat-of-mixing` (hypothesis Hc)
+- Hc: the low calibrated h (3.555 W/m2K) compensates for the omitted heat of mixing. Post-hoc hypothesis from the two results above, first registered test at `70d4d996`; record `c3c0f4b9`.
+- Hc SUPPORTED as registered: P1 h recalibrates to 10.741 W/m2K (+202 %, bar +20 %); P2 held-out mean |peak-rise error| 2.13 -> 1.92 K.
+- Not uniform, recorded so the mean does not hide it:
+  - the calibration curve (cell02 1C) fits worse: temperature RMSE 0.47 -> 1.70 K;
+  - C/2, the flagship's rate: peak-rise error worse on all three cells (cell02 -0.81 -> -2.52 K, cell03 +0.37 -> -1.32, cell04 -1.58 -> -3.26);
+  - 1.5C: better on cell02 (-4.19 -> +0.40) and cell04 (-7.68 -> -3.05), worse on cell03 (-1.74 -> +3.04).
+- Reading: with the heat of mixing the fitted h is near Chen2020's generic 10 W/m2K default. That makes h a compensating parameter in the baseline; it is not evidence that 10 W/m2K is right for the rig.
+- Nothing here validates the thermal model; the reversible heat stays absent.
+
+### Study `big14-a-window-study` (diagnosis of BIG 13 criterion 1)
+- Pre-registered at `c2195c0b`; run 2026-09-28 at `c3c0f4b9`, WSL `battery` env, `python -m forge_flagships.window_study --out /mnt/d/forge-b14-logs/big14a/window` (exit 0, 5 runs, 12-33 s each).
+  Record `docs/flagships/big14/window_study.json`. Numerical diagnosis of the same model; not validation.
+- The BIG 13 differences reproduce: peak T 0.0032 K (3600->1800) then 0.0080 K (1800->900).
+- H1 SUPPORTED as registered (pre-asymptotic quantity definition, not a coupling defect):
+  - P1 met for all three quantities: the differences peak at 1800->900 and then fall; ratio of the last two 1.66 (peak T), 1.64 (end voltage), 1.57 (peak heat); bar 1.5.
+    Peak T: 0.0032, 0.0080, 0.0060, 0.0036 K.
+  - P2 met: the gap to the dense in-hour maximum heat (0.16987 W) shrinks monotonically: 9.4, 9.2, 6.3, 4.0, 2.6 mW.
+- Limits:
+  - the ratios (~1.6, not 2) show the approach is slower than first order; one extra halving would test that, and it was not registered;
+  - H0 was not tested directly; P1/P2 are only consistent with H1;
+  - BIG 13 criterion 1 stays NOT MET as registered then; this study does not re-judge it;
+  - the largest difference (0.008 K) is under the flagship's own 0.05 K refinement tolerance, but the published 3600 s window under-reads the resolved peak heat by 5.5 % (0.1605 against 0.1699 W).
+- Independent replay (second session, 2026-09-28, same env, `python -m forge_flagships.window_study --out /mnt/d/forge-b14-logs/window_study`, exit 0, H1 supported):
+  every recorded value (three quantities, dense heat maximum, window count, verdict) is bit-identical to the committed record. Only `wall_s` and
+  `result_digest` differ; the system result digest hashes `resource_usage.wall_seconds` (`system_runtime/result.py`), so it is not a replay identity.
+
 ## 2026-09-27 BIG 14 — 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
 
 - PR #110 (commits up to `86fa1896`) was MERGED at 17:26 UTC by the sharq-labs account while `recertification-gate` was red. Cause of the red:

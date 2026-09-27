@@ -1,0 +1,648 @@
+{
+ "classification": "numerical verification of a time-scale approximation against a more resolved run of the SAME model; not validation, not a bound on the error against reality",
+ "judgement": {
+  "hot": {
+   "met": true,
+   "quantities": {
+    "final_fade": {
+     "allowed": 0.0022632712414257725,
+     "difference_14_minus_1": -0.0013205384555689398,
+     "differences_to_reference_by_macro_days": {
+      "14": -0.0013205384555689398,
+      "2": -0.00010188422374524109,
+      "4": -0.00030550049226070464,
+      "7": -0.0006105444503023694
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 0.11316356207128862,
+      "14": 0.11184302361571968,
+      "2": 0.11306167784754338,
+      "4": 0.11285806157902792,
+      "7": 0.11255301762098625
+     },
+     "tolerance": {
+      "kind": "relative",
+      "source": "REFINEMENT_PEAK_HEAT_REL = 0.02, declared in battery_cooling.py before the flagship's first run",
+      "value": 0.02
+     }
+    },
+    "min_soc_aged": {
+     "allowed": 0.001,
+     "difference_14_minus_1": 0.0008382774754690514,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.0008382774754690514,
+      "2": 6.476494430085467e-05,
+      "4": 0.00019415352477636372,
+      "7": 0.0003878835363151367
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 0.23619817745897453,
+      "14": 0.23703645493444359,
+      "2": 0.2362629424032754,
+      "4": 0.2363923309837509,
+      "7": 0.23658606099528967
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "declared here: one tenth of the 0.01 SOC resolution the flagship's constraint margins are reported at",
+      "value": 0.001
+     }
+    },
+    "peak_cell_temperature_aged": {
+     "allowed": 0.05,
+     "difference_14_minus_1": -1.1361294127709698e-09,
+     "differences_to_reference_by_macro_days": {
+      "14": -1.1361294127709698e-09,
+      "2": -7.923972589196637e-11,
+      "4": -2.5272584025515243e-10,
+      "7": -6.882032721478026e-10
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 323.95000063880326,
+      "14": 323.95000063766713,
+      "2": 323.950000638724,
+      "4": 323.95000063855053,
+      "7": 323.95000063811506
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "REFINEMENT_TOL['peak_cell_temperature'], declared before the flagship's first run",
+      "unit": "K",
+      "value": 0.05
+     }
+    },
+    "voltage_end_of_discharge_aged": {
+     "allowed": 0.002,
+     "difference_14_minus_1": 0.0009086532673183711,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.0009086532673183711,
+      "2": 7.00831899234089e-05,
+      "4": 0.0002101563351368796,
+      "7": 0.0004200327249677116
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 3.454871026976487,
+      "14": 3.4557796802438054,
+      "2": 3.4549411101664105,
+      "4": 3.455081183311624,
+      "7": 3.455291059701455
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "REFINEMENT_TOL['voltage_end_of_discharge'], declared before the flagship's first run",
+      "unit": "V",
+      "value": 0.002
+     }
+    },
+    "voltage_shift_degradation": {
+     "allowed": 0.002,
+     "difference_14_minus_1": 0.0009086532673183711,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.0009086532673183711,
+      "2": 7.00831899234089e-05,
+      "4": 0.0002101563351368796,
+      "7": 0.0004200327249677116
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": -0.07457400259279323,
+      "14": -0.07366534932547486,
+      "2": -0.07450391940286982,
+      "4": -0.07436384625765635,
+      "7": -0.07415396986782552
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "same as voltage_end_of_discharge_aged",
+      "unit": "V",
+      "value": 0.002
+     }
+    }
+   },
+   "reference_available": true
+  },
+  "met": true,
+  "normal": {
+   "met": true,
+   "quantities": {
+    "final_fade": {
+     "allowed": 0.0010499265252782546,
+     "difference_14_minus_1": -0.0006971645185263331,
+     "differences_to_reference_by_macro_days": {
+      "14": -0.0006971645185263331,
+      "2": -5.3813112754715065e-05,
+      "4": -0.0001613468001731358,
+      "7": -0.0003224159866808407
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 0.05249632626391273,
+      "14": 0.051799161745386395,
+      "2": 0.05244251315115801,
+      "4": 0.05233497946373959,
+      "7": 0.05217391027723189
+     },
+     "tolerance": {
+      "kind": "relative",
+      "source": "REFINEMENT_PEAK_HEAT_REL = 0.02, declared in battery_cooling.py before the flagship's first run",
+      "value": 0.02
+     }
+    },
+    "min_soc_aged": {
+     "allowed": 0.001,
+     "difference_14_minus_1": 0.00038799313633108845,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.00038799313633108845,
+      "2": 2.9968958363379983e-05,
+      "4": 8.984514379650754e-05,
+      "7": 0.0001795051903775713
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 0.272297560569392,
+      "14": 0.2726855537057231,
+      "2": 0.2723275295277554,
+      "4": 0.27238740571318854,
+      "7": 0.2724770657597696
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "declared here: one tenth of the 0.01 SOC resolution the flagship's constraint margins are reported at",
+      "value": 0.001
+     }
+    },
+    "peak_cell_temperature_aged": {
+     "allowed": 0.05,
+     "difference_14_minus_1": -0.00020657511828403585,
+     "differences_to_reference_by_macro_days": {
+      "14": -0.00020657511828403585,
+      "2": -1.595836079104629e-05,
+      "4": -4.784227490972626e-05,
+      "7": -9.558624418559702e-05
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 304.063222643039,
+      "14": 304.0630160679207,
+      "2": 304.0632066846782,
+      "4": 304.0631748007641,
+      "7": 304.0631270567948
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "REFINEMENT_TOL['peak_cell_temperature'], declared before the flagship's first run",
+      "unit": "K",
+      "value": 0.05
+     }
+    },
+    "voltage_end_of_discharge_aged": {
+     "allowed": 0.002,
+     "difference_14_minus_1": 0.0004845952784586771,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.0004845952784586771,
+      "2": 3.7426657711225886e-05,
+      "4": 0.00011220490602159572,
+      "7": 0.00022418463673057332
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": 3.4659530818226107,
+      "14": 3.4664376771010694,
+      "2": 3.465990508480322,
+      "4": 3.4660652867286323,
+      "7": 3.4661772664593413
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "REFINEMENT_TOL['voltage_end_of_discharge'], declared before the flagship's first run",
+      "unit": "V",
+      "value": 0.002
+     }
+    },
+    "voltage_shift_degradation": {
+     "allowed": 0.002,
+     "difference_14_minus_1": 0.0004845952784586771,
+     "differences_to_reference_by_macro_days": {
+      "14": 0.0004845952784586771,
+      "2": 3.7426657711225886e-05,
+      "4": 0.00011220490602159572,
+      "7": 0.00022418463673057332
+     },
+     "met": true,
+     "monotone_toward_reference": true,
+     "sequence": {
+      "1": -0.03422916548440735,
+      "14": -0.033744570205948676,
+      "2": -0.03419173882669613,
+      "4": -0.03411696057838576,
+      "7": -0.03400498084767678
+     },
+     "tolerance": {
+      "kind": "absolute",
+      "source": "same as voltage_end_of_discharge_aged",
+      "unit": "V",
+      "value": 0.002
+     }
+    }
+   },
+   "reference_available": true
+  }
+ },
+ "preregistration": "big14_a_representative_day_preregistration.json",
+ "preregistration_sha256": "1dd3fd1740cbf078fd4c54744a7ef1fa8dd55575f10aefe3c6dab84e98316d9c",
+ "rows": [
+  {
+   "case": "normal",
+   "macro_days": 14,
+   "request_digest": "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9",
+   "result_digest": "b6b5f5fb498e6d9c30e7ebc6a962a2d1a0a95090f2499f798647b96e495e9386",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.051799161745386395,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.2726855537057231,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 304.0630160679207,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 4.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4664376771010694,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.033744570205948676,
+     "units": "volt"
+    }
+   },
+   "wall_s": 74.8
+  },
+  {
+   "case": "normal",
+   "macro_days": 7,
+   "request_digest": "08b2261a77182c3585890ae4ba6417ca0eb2ae586858c4cf1179688b6916b6d6",
+   "result_digest": "98c49f491adcba0639cd7548727581cdfa2d2777341f8476f319353086cf4b80",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.05217391027723189,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.2724770657597696,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 304.0631270567948,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 8.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4661772664593413,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.03400498084767678,
+     "units": "volt"
+    }
+   },
+   "wall_s": 116.7
+  },
+  {
+   "case": "normal",
+   "macro_days": 4,
+   "request_digest": "2e30b853154ff121d57ebc4a2722706d4701ef39143df990aa083410f250577d",
+   "result_digest": "5b65126cb514b3dc089cc975cdf7ba966512486525c86b38a57747115efabd12",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.05233497946373959,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.27238740571318854,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 304.0631748007641,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 14.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4660652867286323,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.03411696057838576,
+     "units": "volt"
+    }
+   },
+   "wall_s": 181.4
+  },
+  {
+   "case": "normal",
+   "macro_days": 2,
+   "request_digest": "f9cee5984eb33a7182b723d2a11616c4861a5a3e02bca7c39bec58a70f550a17",
+   "result_digest": "fa9f75c10b5f5a9f36125c70a3606f853b4921558f7588d10b0854b30e383401",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.05244251315115801,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.2723275295277554,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 304.0632066846782,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 28.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.465990508480322,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.03419173882669613,
+     "units": "volt"
+    }
+   },
+   "wall_s": 329.8
+  },
+  {
+   "case": "normal",
+   "macro_days": 1,
+   "request_digest": "9e35b490c3d1a85c943187a559da69925a1b93d852cd104d06e87e0eff47e20f",
+   "result_digest": "f63a36b1ac095a23e62f1182c7e9cf5c0b1cd87258ad2313a7f48b3645541018",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.05249632626391273,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.272297560569392,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 304.063222643039,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4659530818226107,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.03422916548440735,
+     "units": "volt"
+    }
+   },
+   "wall_s": 639.4
+  },
+  {
+   "case": "hot",
+   "macro_days": 14,
+   "request_digest": "b110d4ce559e2802d90fde15c582656b32355dc1db3ad46d0bd550630438dcf3",
+   "result_digest": "574eb221368e64e40fb32652538de3696ed13a56ce9e497373c3aecc5c48d259",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.11184302361571968,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.23703645493444359,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 323.95000063766713,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 4.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4557796802438054,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.07366534932547486,
+     "units": "volt"
+    }
+   },
+   "wall_s": 72.6
+  },
+  {
+   "case": "hot",
+   "macro_days": 7,
+   "request_digest": "f90e34615d253303c929240b6100cfe24787f20639fdff90ee1b017c189112fe",
+   "result_digest": "01557d19e75b424f922344086912a6137e974b64602a297554ef5e91c6bb655b",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.11255301762098625,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.23658606099528967,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 323.95000063811506,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 8.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.455291059701455,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.07415396986782552,
+     "units": "volt"
+    }
+   },
+   "wall_s": 118.1
+  },
+  {
+   "case": "hot",
+   "macro_days": 4,
+   "request_digest": "4b547a0e0b7c91f616f9292a2f931282d68eaa393ced851e5a978ef937f67c33",
+   "result_digest": "eb86bef6b059c4ea07e40bc8b38e028371c216119d4f8122014e5871dd9670ac",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.11285806157902792,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.2363923309837509,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 323.95000063855053,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 14.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.455081183311624,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.07436384625765635,
+     "units": "volt"
+    }
+   },
+   "wall_s": 186.7
+  },
+  {
+   "case": "hot",
+   "macro_days": 2,
+   "request_digest": "38736faafb173f7f7a5085c3ccd6bd3f9cdc01ab502a2aa88bae8cf940c1d691",
+   "result_digest": "f15c2fdde684d674ea17dc48b7ac63f9a8e4351ef8365174deba4d2a7d93ddeb",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.11306167784754338,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.2362629424032754,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 323.950000638724,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 28.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.4549411101664105,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.07450391940286982,
+     "units": "volt"
+    }
+   },
+   "wall_s": 336.7
+  },
+  {
+   "case": "hot",
+   "macro_days": 1,
+   "request_digest": "578b83af857ccd1e057ccfc86948025ecea2d96d47a98e6cbfe32b2c39798183",
+   "result_digest": "75c4e646ca6c506fc407ee9a55e5f00ce13ccdd37820cc0a0c729a14255b3705",
+   "status": "succeeded",
+   "values": {
+    "final_fade": {
+     "magnitude": 0.11316356207128862,
+     "units": "dimensionless"
+    },
+    "min_soc_aged": {
+     "magnitude": 0.23619817745897453,
+     "units": "dimensionless"
+    },
+    "peak_cell_temperature_aged": {
+     "magnitude": 323.95000063880326,
+     "units": "kelvin"
+    },
+    "represented_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "resolved_days": {
+     "magnitude": 56.0,
+     "units": "day"
+    },
+    "voltage_end_of_discharge_aged": {
+     "magnitude": 3.454871026976487,
+     "units": "volt"
+    },
+    "voltage_shift_degradation": {
+     "magnitude": -0.07457400259279323,
+     "units": "volt"
+    }
+   },
+   "wall_s": 636.3
+  }
+ ]
+}

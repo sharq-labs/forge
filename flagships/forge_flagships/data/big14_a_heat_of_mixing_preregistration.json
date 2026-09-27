@@ -1,0 +1,15 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-heat-of-mixing",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, after the cell-side energy check reported that PyBaMM's heat source omits a heat of mixing of 83-128 % of the counted heat, and before any run of this test",
+  "hypothesis": "Hc: the low heat-transfer coefficient calibrated in big14-a-lgm50-validation (3.555 W/m2K) partly compensates for heat the model omits (the heat of mixing). Stated as a post-hoc hypothesis from two earlier results; this is its first registered test.",
+  "setup": "identical to big14-a-lgm50-validation (same pinned data, Chen2020 as shipped, SPM primary, lumped thermal, same calibration curve cell02 at 1C, same held-out set) except the PyBaMM option 'heat of mixing': 'true'",
+  "predictions": {
+    "P1": "the recalibrated heat-transfer coefficient is at least 20 % larger than 3.555 W/m2K",
+    "P2": "over every held-out SPM temperature curve (all except cell02 at 1C), the mean |peak-rise error| is not larger than in big14-a-lgm50-validation (read from docs/flagships/big14/lgm50_validation_study.json)"
+  },
+  "Hc_supported_if": "P1 and P2",
+  "not_claimed": "neither outcome validates the thermal model; the reversible (entropic) heat stays absent because Chen2020 carries no entropic data",
+  "no_change_after_seeing_results": "setup, predictions and thresholds are fixed"
+}

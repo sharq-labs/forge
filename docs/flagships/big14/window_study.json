@@ -1,0 +1,144 @@
+{
+ "classification": "numerical diagnosis of a discretization study of the same model; not validation. BIG 13 criterion 1 stays NOT MET as pre-registered then; this study does not re-judge it.",
+ "judgement": {
+  "H0_indicated": false,
+  "H1_supported": true,
+  "P2": {
+   "gaps": {
+    "1800": 0.009185461261558475,
+    "225": 0.002590303723366022,
+    "3600": 0.009409815892508305,
+    "450": 0.004039370383340318,
+    "900": 0.006318521301565211
+   },
+   "met": true,
+   "target_max_dense_heat_W": 0.1698715460489533
+  },
+  "all_succeeded": true,
+  "quantities": {
+   "peak_cell_temperature_fresh": {
+    "P1_last_below_max_earlier": true,
+    "P1_met": true,
+    "P1_ratio_last_two": 1.6565238816811148,
+    "successive_differences": {
+     "1800->900": 0.008025084173709729,
+     "3600->1800": 0.003158870698996452,
+     "450->225": 0.0036356243774093855,
+     "900->450": 0.006022498606000681
+    },
+    "values": {
+     "1800": 301.28034684390536,
+     "225": 301.2980300510625,
+     "3600": 301.27718797320637,
+     "450": 301.2943944266851,
+     "900": 301.2883719280791
+    }
+   },
+   "peak_heat_fresh": {
+    "P1_last_below_max_earlier": true,
+    "P1_met": true,
+    "P1_ratio_last_two": 1.572840629888842,
+    "successive_differences": {
+     "1800->900": 0.0028669399599932643,
+     "3600->1800": 0.0002243546309498301,
+     "450->225": 0.0014490666599742963,
+     "900->450": 0.0022791509182248926
+    },
+    "values": {
+     "1800": 0.16068608478739482,
+     "225": 0.16728124232558728,
+     "3600": 0.160461730156445,
+     "450": 0.16583217566561298,
+     "900": 0.1635530247473881
+    }
+   },
+   "voltage_end_of_discharge_fresh": {
+    "P1_last_below_max_earlier": true,
+    "P1_met": true,
+    "P1_ratio_last_two": 1.6430130732292076,
+    "successive_differences": {
+     "1800->900": 1.343633263406474e-05,
+     "3600->1800": 1.1599124398742333e-06,
+     "450->225": 6.491456125079509e-06,
+     "900->450": 1.0665547277799448e-05
+    },
+    "values": {
+     "1800": 3.494805058935227,
+     "225": 3.494835652271264,
+     "3600": 3.4948062188476667,
+     "450": 3.4948291608151387,
+     "900": 3.494818495267861
+    }
+   }
+  }
+ },
+ "preregistration": "big14_a_window_study_preregistration.json",
+ "preregistration_sha256": "be6910358cb9e74369a8eb1cb1d99bed0e03a585fb9ac436d8c616485d4d7944",
+ "rows": [
+  {
+   "max_dense_heat_in_discharge_W": 0.16996017996805043,
+   "result_digest": "9dcecef300a79ff93da76576d51451bee2485cef330d538cc0235fff2396f374",
+   "status": "succeeded",
+   "values": {
+    "peak_cell_temperature_fresh": 301.27718797320637,
+    "peak_heat_fresh": 0.160461730156445,
+    "voltage_end_of_discharge_fresh": 3.4948062188476667
+   },
+   "wall_s": 12.4,
+   "window_s": 3600,
+   "windows": 24
+  },
+  {
+   "max_dense_heat_in_discharge_W": 0.1699572635779694,
+   "result_digest": "23eaad99e5a27006741e4121d7bf65aef7516a6b4708542a1cc0605f73f6ee80",
+   "status": "succeeded",
+   "values": {
+    "peak_cell_temperature_fresh": 301.28034684390536,
+    "peak_heat_fresh": 0.16068608478739482,
+    "voltage_end_of_discharge_fresh": 3.494805058935227
+   },
+   "wall_s": 11.9,
+   "window_s": 1800,
+   "windows": 48
+  },
+  {
+   "max_dense_heat_in_discharge_W": 0.16991999871355287,
+   "result_digest": "eaab1afd84bacc525c95af07897dc106e12571e4717cc352e5415974e503a7fe",
+   "status": "succeeded",
+   "values": {
+    "peak_cell_temperature_fresh": 301.2883719280791,
+    "peak_heat_fresh": 0.1635530247473881,
+    "voltage_end_of_discharge_fresh": 3.494818495267861
+   },
+   "wall_s": 15.2,
+   "window_s": 900,
+   "windows": 96
+  },
+  {
+   "max_dense_heat_in_discharge_W": 0.1698903774430392,
+   "result_digest": "89ac5f2f0ebf898d25d4cb715b7a690323ac7a92c92dce56c2c21027e24e9211",
+   "status": "succeeded",
+   "values": {
+    "peak_cell_temperature_fresh": 301.2943944266851,
+    "peak_heat_fresh": 0.16583217566561298,
+    "voltage_end_of_discharge_fresh": 3.4948291608151387
+   },
+   "wall_s": 21.1,
+   "window_s": 450,
+   "windows": 192
+  },
+  {
+   "max_dense_heat_in_discharge_W": 0.1698715460489533,
+   "result_digest": "549b31e6f6982755c9e566eecb8c98ee6a3c84fc30b4f06c519627ad085a7c9b",
+   "status": "succeeded",
+   "values": {
+    "peak_cell_temperature_fresh": 301.2980300510625,
+    "peak_heat_fresh": 0.16728124232558728,
+    "voltage_end_of_discharge_fresh": 3.494835652271264
+   },
+   "wall_s": 33.0,
+   "window_s": 225,
+   "windows": 384
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-cell-energy-check",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, before any run of this check",
+  "question": "Is the heat flagship A's cell participant hands to the coolant consistent with the cell's own energy balance? The existing checks compare the coupled heat with the coolant's m*dh, i.e. the same number on both sides; no cell-side check existed (BIG 13 review M5).",
+  "classification": "numerical verification of the cell model's heat bookkeeping (an energy identity of the model), not validation",
+  "conditions": "the flagship's cell exactly as its coupling path builds it: PyBaMM SPM, Chen2020 via forge_pybamm.parameter_set, isothermal with 'calculate heat source for isothermal models', SOC 0.8, 2.5 A discharge for 3600 s (the normal case's discharge hour), at 300 K and at 313.15 K, fresh cell",
+  "identity": "Total heating = I * (U_surface - V) + Reversible heating, where U_surface is PyBaMM's 'Surface open-circuit voltage [V]' (heat of mixing from particle concentration gradients is not in PyBaMM's heat source by design)",
+  "acceptance": {
+    "C1": "| integral(Total heating) - integral(I*(U_surface - V) + Reversible heating) | <= 1 % of integral(Total heating) over the discharge hour, at both temperatures",
+    "met_if": "C1 at both temperatures"
+  },
+  "reported_not_judged": [
+    "the heat-of-mixing share integral(I*(U_bulk - U_surface)) / integral(Total heating): heat the model does not generate, a model-form limit of the flagship's heat",
+    "the reversible share integral(Reversible heating) / integral(Total heating)"
+  ],
+  "no_change_after_seeing_results": "conditions, identity and tolerance are fixed"
+}

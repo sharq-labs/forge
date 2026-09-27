@@ -1,0 +1,39 @@
+{
+ "schema": "forge.flagship.data_independence/1",
+ "id": "big14-a-chen2020-independence",
+ "question": "Is the LG M50 discharge data used in big14-a-lgm50-validation and big14-a-lgm50-electrode-balance independent of the PyBaMM Chen2020 parameter set?",
+ "answer": "NO for C/2, 1C and 1.5C: these curves are the tuning data of Chen2020. C/10 is not named in the tuning.",
+ "source": {
+  "paper": "C.-H. Chen, F. Brosa Planella, K. O'Regan, D. Gastol, W. D. Widanage, E. Kendrick, J. Electrochem. Soc. 167 (2020) 080534",
+  "doi": "10.1149/1945-7111/ab9050",
+  "license": "CC BY-NC-ND 4.0 (the earlier registrations recorded the dataset licence CC-BY-4.0; the paper's licence differs and is recorded here)",
+  "how_read": "full article text (HTML, open access) read in a browser on 2026-09-28; the PDF endpoints returned bot-detection pages and were not bypassed; nothing was downloaded or vendored",
+  "sections_read": ["Parameter validation testing", "Table VIII", "Table IX and the text around it", "Conclusions"]
+ },
+ "facts_from_the_paper": {
+  "validation_protocol": "three cells, chamber at 25 degC, C/3 CC-CV charge, CC discharge at C/2, 1C and 1.5C between 2.5 and 4.2 V, each followed by a 2 h rest; this matches the Zenodo 4032561 files",
+  "tuning": "eight parameters were adjusted by trial and error against these discharge curves: both particle diffusivities, both maximum concentrations, the positive-electrode 100 % SOC stoichiometry, and the three Bruggeman coefficients (the latter set to the theoretical 1.5 rather than tuned)",
+  "tuned_on": "the 1C discharge first; the negative-electrode diffusivity was then re-adjusted separately for C/2 and 1.5C",
+  "table_IX_measured_vs_used": {
+   "positive particle diffusivity [m2/s]": [1.48e-15, 4e-15],
+   "negative particle diffusivity [m2/s]": [1.74e-15, 3.3e-14],
+   "positive maximum concentration [mol/m3]": [51765, 63104],
+   "negative maximum concentration [mol/m3]": [29583, 33133],
+   "positive 100 % SOC stoichiometry": [0.2661, 0.27],
+   "Bruggeman pos/sep/neg": ["2.43/2.57/2.91", "1.5/1.5/1.5"]
+  },
+  "per_rate_negative_diffusivity_used_by_the_authors [m2/s]": {"C/2": 1.3e-14, "1C": 3.3e-14, "1.5C": 6.3e-14},
+  "authors_P2D_voltage_error_including_the_2h_rest [mV]": {"C/2": {"rmse": 46, "peak": 302}, "1C": {"rmse": 41, "peak": 271}, "1.5C": {"rmse": 36, "peak": 272}},
+  "C/10": "not named in the validation protocol or in the tuning"
+ },
+ "checked_against_the_installed_library": {
+  "how": "pybamm.ParameterValues('Chen2020') in the WSL battery env (PyBaMM 26.8.0.0), 2026-09-28",
+  "result": "PyBaMM ships the 1C-tuned column: negative diffusivity 3.3e-14, positive 4e-15, maximum concentrations 33133 / 63104, initial positive stoichiometry 0.26999, Bruggeman 1.5"
+ },
+ "consequences": [
+  "big14-a-lgm50-validation and big14-a-lgm50-electrode-balance: their C/2, 1C and 1.5C comparisons are consistency with the parameterisation's own tuning data, not independent validation. Their pre-registered outcomes (both NOT MET) stand; a model that misses its own tuning data is a stronger negative, not a weaker one.",
+  "any future MET on these curves is an in-sample result and likely optimistic; the out-of-sample model-form error stays UNKNOWN until independent LG M50 data is used",
+  "PyBaMM's Chen2020 negative diffusivity is the 1C value; the authors themselves needed a 2.5x smaller value at C/2, the rate flagship A runs",
+  "the C/10 curves are the only ones outside Chen2020's tuning; big14-a-lgm50-electrode-balance already used cell02 C/10 for calibration"
+ ]
+}

@@ -32,9 +32,11 @@ uncertainty/model discrepancy into zero.
 
 ## Current repository state
 
-- Branch: `feat/big-14-scientific-closure`, worktree `D:/forge-b14`
-- Base: `origin/main` @ `a3f757eb5fdbc804ef11e3c4088a757c31981870` (merge of
-  PR #109, BIG 13)
+- Branch: `feat/big-14-flagship-a` (14.2/14.3 flagship A work), worktree
+  `D:/forge-b14`, based on `a0928965` (PR #111's head, merged as `72b829f3`). No PR
+  opened yet. 14.1 work was on `feat/big-14-scientific-closure` (merged).
+- Base of BIG 14: `origin/main` @ `a3f757eb5fdbc804ef11e3c4088a757c31981870`
+  (merge of PR #109, BIG 13)
 - Pristine baseline worktree (never edited): `D:/forge-b14-base`, detached at
   the same SHA; baseline test runs happen there so edits cannot contaminate
   tree-walking tests.
@@ -233,16 +235,46 @@ or acceptance logic is added.
 - [ ] Perform a bounded triage of all four flagships using existing records:
       admissible independent data, applicability status, unresolved numerical
       residuals, execution cost and expected evidence value.
-- [ ] Select one primary flagship and at most one backup for deep closure work.
-      Record the selection rationale, exact target outputs and evidence bar.
+      NOT recorded as a written triage: the owner chose flagship A directly.
+- [x] Select one primary flagship and at most one backup for deep closure work.
+      Owner decision (2026-09-27): **flagship A** (battery + cooling +
+      lifecycle), no backup. The owner's rationale is not recorded. Facts in
+      its favour: it is the only BIG 13 flagship that overlaps a P16 system,
+      and measured LG M50 data exist (Chen 2020, Zenodo 4032561). The evidence bar and target outputs are fixed per
+      study in each pre-registration (`flagships/forge_flagships/data/big14_a_*`).
 - [ ] Pre-register the diagnostic questions, acceptance criteria and the 14.3
       timebox without changing the six BIG 13 outcomes. The pre-registration
       is committed and pushed before any new evidence-bearing execution of the
       selected flagship, and its commit SHA is recorded in PROGRESS. (BIG 13
       could not show from git that its constants preceded the first run; BIG
       14 must be able to.)
+      PARTIAL: every flagship A study so far has its own pre-registration
+      committed and pushed before its first run (SHAs in PROGRESS), but no
+      umbrella pre-registration and no 14.3 timebox were registered before
+      the first run. The timebox is still open (owner).
 - [ ] Move the non-selected flagships to explicit deferred status; retain their
       `insufficient_evidence` verdicts and recorded gaps.
+
+Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
+
+- [x] Cell-side conservation check (BIG 13 M5): met; heat of mixing (83-128 %
+      of counted heat) and reversible heat are absent from the model.
+- [x] Window study (BIG 13 criterion 1 diagnosis): H1 supported; criterion 1
+      stays NOT MET as registered.
+- [x] Representative-day approximation error (pre-registered `31c10f2d`):
+      MET in both cases; the published 4-of-56-day run underestimates fade
+      by 1.2-1.3 % (first order in the macro step).
+- [x] Chen2020 against measured LG M50 cells: NOT MET (SPM 149-153 mV at C/2);
+      electrode-balance correction: NOT MET (SPM 33-38 mV); heat-of-mixing Hc
+      supported.
+- [ ] OWNER DECISION: move the cell model from SPM to DFN, enable the heat
+      of mixing, and re-register the identification with a wider bound (the
+      positive factor hit 0.85).
+- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
+      subset) for the fade model. Needs download approval.
+- [ ] Independence of the Chen 2020 validation data from the Chen2020
+      parameterisation: UNCONFIRMED; needs the paper text (download needs
+      the owner's approval).
 
 The triage must cover these known questions, but deep implementation is limited
 to the selected flagship(s):
