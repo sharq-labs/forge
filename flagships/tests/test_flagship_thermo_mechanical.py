@@ -11,13 +11,12 @@ import pytest
 from engcore.engineering import LevelStatus, committed_artifacts, verify_bundle, write_bundle
 from engcore.system_runtime import Availability, NodeStatus, RunStatus, SystemExecutor, compare_runs, trace_result
 
-try:
-    from engcore.providers import default_registry
-    import forge_fenicsx  # noqa: F401
-    REG = default_registry()
-    OK = all(REG.status(p).available for p in ("fenicsx", "calculix", "code_aster"))
-except Exception:  # pragma: no cover
-    OK = False
+# Import and registry construction are NOT guarded: a defect there must fail, not read as
+# 'provider unavailable'. Only the availability answers decide the skip (BIG 14 review finding 6).
+from engcore.providers import default_registry
+import forge_fenicsx  # noqa: F401
+REG = default_registry()
+OK = all(REG.status(p).available for p in ("fenicsx", "calculix", "code_aster"))
 pytestmark = pytest.mark.skipif(not OK, reason="FEniCSx, CalculiX and Code_Aster are all required")
 
 if OK:

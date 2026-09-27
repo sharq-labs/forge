@@ -350,7 +350,7 @@ def _to_dict_names_a_schema(name: str, where: str) -> bool:
     raise AssertionError(f"{name} has no to_dict in {where}")
 
 
-def _readers_missing_a_schema_check() -> dict[str, str]:
+def _readers_missing_a_schema_check() -> dict[tuple[str, str], str]:
     """Classes whose ``from_dict`` calls no schema checker, walked not listed."""
     found: dict[str, str] = {}
     for path in sorted((REPO_ROOT / "src" / "engcore").rglob("*.py")):
@@ -378,7 +378,10 @@ def _readers_missing_a_schema_check() -> dict[str, str]:
                     for c in ast.walk(member)
                 )
                 if not (called & _SCHEMA_CHECKERS) and not names_the_key:
-                    found[node.name] = path.relative_to(REPO_ROOT).as_posix()
+                    # keyed by (class, file): two classes may share a name
+                    # (`ReferenceCondition`), and one must not hide the other
+                    where = path.relative_to(REPO_ROOT).as_posix()
+                    found[(node.name, where)] = where
     return found
 
 
@@ -393,7 +396,7 @@ def test_every_reader_that_writes_a_schema_also_checks_one():
     """
     missing = _readers_missing_a_schema_check()
     unexpected = {
-        name: where for name, where in missing.items()
+        name: where for (name, where) in missing
         if name not in _NESTED_WITHOUT_SCHEMA
         and (name, where) not in _NESTED_WITHOUT_SCHEMA_AT
     }
@@ -410,12 +413,10 @@ def test_the_nested_exemptions_really_are_nested():
     read through a parent that does. If one starts emitting a schema, it has
     become a top-level record and the exemption must go.
     """
-    missing = _readers_missing_a_schema_check()
-    still_missing = set(missing)
-    stale = sorted(_NESTED_WITHOUT_SCHEMA - still_missing)
+    missing = set(_readers_missing_a_schema_check())
+    stale = sorted(_NESTED_WITHOUT_SCHEMA - {name for name, _ in missing})
     stale += sorted(
-        f"{name} ({where})" for name, where in _NESTED_WITHOUT_SCHEMA_AT
-        if missing.get(name) != where
+        f"{name} ({where})" for name, where in _NESTED_WITHOUT_SCHEMA_AT - missing
     )
     assert stale == [], (
         f"these no longer need an exemption and should be removed: {stale}"
@@ -427,6 +428,80 @@ def test_the_nested_exemptions_really_are_nested():
     assert writes_a_schema == [], (
         f"these write a schema of their own, so they are top-level records "
         f"and must check it: {writes_a_schema}"
+    )
+
+
+#: Where each path-qualified exemption may be read: "Class.method" or a
+#: module-level function, inside the file named. Every product call site of
+#: ``X.from_dict`` (src/, flagships/, providers/) must be one of these, so a new
+#: direct read of an untrusted payload cannot pass unnoticed (BIG 14 review
+#: finding 4). Tests are not product paths and may read records directly.
+_NESTED_READ_ONLY_BY = {
+    "ParticipantStateContract": {("src/engcore/multiscale/checkpoint.py", "MacroCheckpoint.deserialize")},
+    "GatheredInput": {("src/engcore/scenarios/lifecycle.py", "DegradationStepRecord.from_dict")},
+    "AuthorityCheckpoint": {("src/engcore/system_runtime/result.py", "SystemCheckpoint.from_dict")},
+    "EnvelopeBound": {("src/engcore/engineering/reference.py", "ReferenceRecord.from_dict")},
+    "ReferenceCondition": {("src/engcore/engineering/reference.py", "ReferenceRecord.from_dict")},
+    "PredeclaredCriterion": {("src/engcore/engineering/reference.py", "ReferenceComparison.from_dict")},
+    "ReferenceComparison": {("src/engcore/engineering/bundle.py", "_verify_rest")},
+    "EvidenceLink": {("src/engcore/engineering/ladder.py", "LevelEntry.from_dict")},
+    "LevelEntry": {("src/engcore/engineering/ladder.py", "VerificationLadder.from_dict")},
+    "VerificationLadder": {("src/engcore/engineering/bundle.py", "_verify_rest")},
+    "RepresentativeWindow": set(),  # no reader at all
+}
+
+
+def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
+    """(file, enclosing "Class.method" or function) of every product ``name.from_dict(...)`` call.
+
+    A file that defines its own class of the same name reads that class, not
+    the exempted one, and is skipped (``scientific/corpus/dataset.py`` has its
+    own ``ReferenceCondition``).
+    """
+    sites: set[tuple[str, str]] = set()
+    roots = [REPO_ROOT / "src", REPO_ROOT / "flagships" / "forge_flagships"]
+    roots += sorted((REPO_ROOT / "providers").glob("*/forge_*"))
+    for root in roots:
+        for path in sorted(root.rglob("*.py")):
+            if "__pycache__" in path.parts:
+                continue
+            tree = ast.parse(path.read_bytes().decode("utf-8"))
+            where = path.relative_to(REPO_ROOT).as_posix()
+            defines = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
+            exempt_file = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
+            if name in defines and where not in exempt_file:
+                continue
+
+            def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
+                # label = "Class.method" for a method (outermost function kept for
+                # nested helpers), the function name for a module-level function
+                for child in ast.iter_child_nodes(node):
+                    c, f = cls, func
+                    if isinstance(child, ast.ClassDef):
+                        c, f = child.name, None
+                    elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
+                        f = child.name
+                    if (isinstance(child, ast.Call) and getattr(child.func, "attr", None) == "from_dict"
+                            and getattr(child.func.value, "id", None) == name):
+                        label = f"{cls}.{func}" if cls and func else (func or cls or "<module>")
+                        sites.add((where, label))
+                    visit(child, c, f)
+
+            visit(tree, None, None)
+    return sites
+
+
+def test_the_nested_exemptions_are_read_only_through_their_checking_parents():
+    assert set(_NESTED_READ_ONLY_BY) == {name for name, _ in _NESTED_WITHOUT_SCHEMA_AT}
+    wrong = {}
+    for name, allowed in _NESTED_READ_ONLY_BY.items():
+        sites = _from_dict_call_sites(name)
+        if sites - allowed:
+            wrong[name] = sorted(sites - allowed)
+        if allowed and not sites:
+            wrong[name] = f"no call site at all; expected {sorted(allowed)}"
+    assert wrong == {}, (
+        f"these nested records are read somewhere other than their schema-checking parent: {wrong}"
     )
 
 

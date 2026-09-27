@@ -127,8 +127,28 @@ def _circle_line():
                             {"residual": f, "jacobian": j}, initial={"x": Quantity(1, "m"), "y": Quantity(0.5, "m")})
 
 
-@needs_sympy
+def _circle_line_declared():
+    """The same system as plain callables under a DECLARED identity: needs no SymPy, so it runs on the bare install."""
+    f = lambda v: np.array([v[0] ** 2 + v[1] ** 2 - 4.0, v[0] - v[1]])  # noqa: E731
+    j = lambda v: np.array([[2.0 * v[0], 2.0 * v[1]], [1.0, -1.0]])  # noqa: E731
+    boundary = UnitBoundary((VariableSpec("x", "m"), VariableSpec("y", "m")))
+    return NumericalProblem("circle-line", ProblemKind.NONLINEAR_ROOT, OperatorIdentity("circle_line", "1", "c" * 64, "declared"), boundary,
+                            {"residual": f, "jacobian": j}, initial={"x": Quantity(1, "m"), "y": Quantity(0.5, "m")})
+
+
 def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
+    problem = _circle_line_declared()
+    tol = {"xtol": 1e-12, "residual_atol": 1e-9}
+    hybr = SciPyRootProvider().execute(problem, method("hybr", tol, max_function_evaluations=200))
+    lm = SciPyRootProvider().execute(problem, method("lm", tol, max_function_evaluations=200))
+    assert hybr.succeeded and lm.succeeded
+    assert hybr.outputs["x"].magnitude == pytest.approx(math.sqrt(2))
+    assert compare_executions(hybr, lm, rtol=1e-8, atol=1e-10).agree
+    assert problem.operator.derivation == "declared"
+
+
+@needs_sympy
+def test_symbolic_operator_identity_is_derived_and_its_jacobian_solves():
     problem = _circle_line()
     tol = {"xtol": 1e-12, "residual_atol": 1e-9}
     hybr = SciPyRootProvider().execute(problem, method("hybr", tol, max_function_evaluations=200))
@@ -141,21 +161,23 @@ def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
     assert edited.definition_digest != problem.operator.definition_digest
 
 
-@needs_sympy
 def test_nonlinear_failure_withholds_the_last_iterate():
-    system = SymbolicSystem("no_root", ("x",), ("x**2 + 1",))
-    f, j = system.callables()
-    p = NumericalProblem("no-root", ProblemKind.NONLINEAR_ROOT, system.identity(), UnitBoundary((VariableSpec("x", "m"),)),
-                         {"residual": f, "jacobian": j}, initial={"x": Quantity(0.3, "m")})
+    p = NumericalProblem("no-root", ProblemKind.NONLINEAR_ROOT, OperatorIdentity("no_root", "1", "d" * 64, "declared"),
+                         UnitBoundary((VariableSpec("x", "m"),)),
+                         {"residual": lambda v: np.array([v[0] ** 2 + 1.0]), "jacobian": lambda v: np.array([[2.0 * v[0]]])},
+                         initial={"x": Quantity(0.3, "m")})
     rec = SciPyRootProvider().execute(p, method("hybr", {"xtol": 1e-12, "residual_atol": 1e-9}, max_function_evaluations=50))
     assert not rec.succeeded and rec.outputs == {} and rec.convergence in (ConvergenceState.NOT_CONVERGED, ConvergenceState.MAX_ITERATIONS)
+
+
+@needs_sympy
+def test_symbolic_system_refuses_undeclared_symbols():
     with pytest.raises(NumericalRefusal, match="undeclared symbols"):
         SymbolicSystem("bad", ("x",), ("x + z",)).identity()
 
 
-@needs_sympy
 def test_problem_level_refusals():
-    problem = _circle_line()
+    problem = _circle_line_declared()
     with pytest.raises(NumericalRefusal, match="initial values"):
         NumericalProblem("x", ProblemKind.NONLINEAR_ROOT, problem.operator, problem.unknowns, problem.operands)
     with pytest.raises(NumericalRefusal, match="Quantity records"):

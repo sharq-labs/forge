@@ -20,7 +20,8 @@ from forge_pybamm import BatteryProblem, PyBaMMProvider, Segment, descriptor, pa
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("pybamm").available
-pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM unavailable")
+# Per test, not per module: the provider-free refusals below run without the provider.
+needs_pybamm = pytest.mark.skipif(not OK, reason="PyBaMM unavailable")
 p = lambda s: TimePoint("cell", Quantity(s, "s"))  # noqa: E731
 
 
@@ -32,6 +33,7 @@ def problem(segments, *, thermal="lumped", soc=0.9, fade=0.0, model="SPM"):
     return BatteryProblem(model, thermal, "Chen2020", soc, Quantity(298.15, "K"), fade, tuple(segments))
 
 
+@needs_pybamm
 def test_proof_a_discharge_records_voltage_current_soc_temperature():
     rec = PyBaMMProvider(REG).run(problem([seg(0, 1800, 5.0)]))  # 1C for 30 min on the 5 Ah Chen2020 cell
     assert rec.succeeded, rec.reason
@@ -43,6 +45,7 @@ def test_proof_a_discharge_records_voltage_current_soc_temperature():
     assert rec.uncertainty.kind.value == "unknown" and rec.metrics["solve_s"] < 60
 
 
+@needs_pybamm
 def test_proof_a_charge_discharge_cycle_and_infeasible_request_fails_closed():
     cycle = PyBaMMProvider(REG).run(problem([seg(0, 3600, 2.0), seg(3600, 7200, -2.0)], soc=0.7))
     assert cycle.succeeded and cycle.series_for("soc").values[-1] == pytest.approx(0.7, abs=1e-6)  # balanced coulombs
@@ -50,6 +53,7 @@ def test_proof_a_charge_discharge_cycle_and_infeasible_request_fails_closed():
     assert not over.succeeded and "infeasible" in over.reason and not over.series
 
 
+@needs_pybamm
 def test_proof_a_temperature_dependence_is_real_and_bound_to_identity():
     cold = PyBaMMProvider(REG).run(problem([seg(0, 1800, 5.0, 273.15)], thermal="isothermal"))
     warm = PyBaMMProvider(REG).run(problem([seg(0, 1800, 5.0, 318.15)], thermal="isothermal"))
@@ -57,6 +61,7 @@ def test_proof_a_temperature_dependence_is_real_and_bound_to_identity():
     assert cold.series_for("voltage").values[-1] < warm.series_for("voltage").values[-1] - 0.01  # Chen2020 Arrhenius kinetics/transport
 
 
+@needs_pybamm
 def test_capacity_fade_mapping_changes_the_cell_and_the_identity():
     fresh = PyBaMMProvider(REG).run(problem([seg(0, 1800, 5.0)]))
     aged = PyBaMMProvider(REG).run(problem([seg(0, 1800, 5.0)], fade=0.2))
@@ -83,6 +88,7 @@ def _environment():
                                (EnvironmentSource("declared", "design_assumption", "BIG 11 proof", hashlib.sha256(b"air").hexdigest(), "1"),), (ch,))
 
 
+@needs_pybamm
 def test_proof_h_ambient_and_current_come_from_exact_big3_big2_records():
     env = _environment()
     segs = segments_from_records(env, "air", "load", TimeWindow(p(0), p(7200)), 3600)

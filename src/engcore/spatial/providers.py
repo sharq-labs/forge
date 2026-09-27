@@ -129,7 +129,8 @@ def _meshio():
     try:
         import meshio
     except ImportError as exc:
-        raise ProviderUnavailable("meshio is not installed; install the 'mesh' extra") from exc
+        # the import error is carried: a broken install is not reported as an absent one
+        raise ProviderUnavailable(f"meshio cannot be imported ({type(exc).__name__}: {exc}); install the 'mesh' extra") from exc
     return meshio
 
 

@@ -353,6 +353,67 @@ def test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green():
                     f"population every sweep in this file claims to cover"
                 )
 
+    # The provider modules may name an extra only lazily (BIG 14 review
+    # finding 3): never at module or class level, and only where an absent
+    # backend becomes a ProviderUnavailable refusal rather than an import error.
+    for relative in sorted(reaching_optional):
+        if relative == "src/engcore/mcp/server.py":
+            continue
+        misplaced = _optional_imports_not_lazily_refused(root.parent / relative)
+        assert misplaced == [], (
+            f"{relative} imports an optional extra outside a refusing function: {misplaced}"
+        )
+
+
+def _optional_imports_not_lazily_refused(path: pathlib.Path) -> list[str]:
+    """Optional imports in ``path`` that are not inside a function which turns absence into a refusal.
+
+    Accepted: the import sits in a ``try`` whose handler catches ImportError
+    (or a broader class) -- an availability probe or a refusing helper; or its
+    function first calls an ``*available*`` check and raises ProviderUnavailable;
+    or it is a numerical provider's ``_execute``, which
+    ``NumericalProvider.execute`` gates on ``available()`` (checked below).
+    """
+    tree = ast.parse(path.read_bytes().decode("utf-8"))
+    parents: dict[ast.AST, ast.AST] = {}
+    for node in ast.walk(tree):
+        for child in ast.iter_child_nodes(node):
+            parents[child] = node
+    core = (REPO_ROOT / "src/engcore/numerical/core.py").read_bytes().decode("utf-8")
+    gated_execute = "if not self.available():" in core and "raise ProviderUnavailable" in core
+
+    def names_of(node: ast.AST) -> set[str]:
+        if isinstance(node, ast.Import):
+            return {a.name.split(".")[0] for a in node.names}
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            return {node.module.split(".")[0]}
+        return set()
+
+    bad: list[str] = []
+    for node in ast.walk(tree):
+        if not names_of(node) & set(OPTIONAL_TOP_LEVEL_NAMES):
+            continue
+        guarded, function, cursor = False, None, node
+        while cursor in parents:
+            cursor = parents[cursor]
+            if isinstance(cursor, ast.Try) and any(
+                h.type is None or getattr(h.type, "id", None) in {"ImportError", "ModuleNotFoundError", "Exception"}
+                for h in cursor.handlers
+            ):
+                guarded = True
+            if isinstance(cursor, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                function = cursor
+                break
+        if function is None:
+            bad.append(f"line {node.lineno}: not inside a function")
+            continue
+        calls = {getattr(c.func, "id", None) or getattr(c.func, "attr", None)
+                 for c in ast.walk(function) if isinstance(c, ast.Call)}
+        checks_then_refuses = any(n and "available" in n for n in calls) and "ProviderUnavailable" in calls
+        if not (guarded or checks_then_refuses or (function.name == "_execute" and gated_execute)):
+            bad.append(f"line {node.lineno}: in {function.name}() without a refusal path")
+    return bad
+
 
 def test_the_discovery_found_exactly_the_repository():
     """A guard over an empty set passes and proves nothing -- and so does a
@@ -4455,6 +4516,21 @@ def _pythonpath_roots() -> tuple[pathlib.Path, ...]:
     return tuple((REPO_ROOT / entry).resolve() for entry in configured)
 
 
+def _names_at_root(root: pathlib.Path) -> frozenset[str]:
+    """Top-level names that resolve at one sys.path root (same rule as below)."""
+    names: set[str] = set()
+    if not root.is_dir():
+        return frozenset(names)
+    for child in root.iterdir():
+        if child.name.startswith("."):
+            continue
+        if child.suffix == ".py":
+            names.add(child.stem)
+        elif child.is_dir() and next(child.rglob("*.py"), None) is not None:
+            names.add(child.name)
+    return frozenset(names)
+
+
 def _importable_top_level() -> frozenset[str]:
     """Every top-level name that resolves at a configured sys.path root.
 
@@ -4622,13 +4698,19 @@ def _reached_modules() -> dict[str, list[str]]:
     at runtime.
     """
     top_level = _importable_top_level()
+    # A module under src/ ships in the wheel, where only src/ is importable:
+    # the other pytest roots (the repository root, flagships/, providers/<name>/)
+    # are checkout conveniences, and a name that resolves only there is a
+    # dependency a clean install does not have (BIG 14 review finding 2).
+    src_top_level = _names_at_root(REPO_ROOT / "src")
     found: dict[str, list[str]] = {}
 
     def note(name: str, path: pathlib.Path, lineno: int, local: frozenset[str]) -> None:
         head = name.split(".")[0]
         if not head or head in sys.stdlib_module_names:
             return
-        if head in local or head in top_level:
+        first_party = src_top_level if path.is_relative_to(REPO_ROOT / "src") else top_level
+        if head in local or head in first_party:
             return
         rel = path.relative_to(REPO_ROOT).as_posix()
         found.setdefault(head, []).append(f"{rel}:{lineno}")
@@ -4721,6 +4803,55 @@ def test_every_dependency_the_tree_reaches_for_is_declared():
             for module, where in undeclared.items()
         )
     )
+
+
+def test_nothing_in_src_reaches_a_flagship_or_provider_adapter_package():
+    """The wheel ships src/ only; flagships/ and providers/<name>/ are separate distributions above it.
+
+    They are pytest roots so their suites collect in the core environment
+    (BIG 14 class 1). That must not let src/ import them: the import would
+    work in every pytest run and fail on a wheel install, and it would put the
+    runtime below the layer that is built on it. Statements and every string
+    constant naming one of those packages are both refused.
+    """
+    outside = set(_names_at_root(REPO_ROOT / "flagships"))
+    for adapter_root in sorted((REPO_ROOT / "providers").iterdir()):
+        if adapter_root.is_dir():
+            outside |= _names_at_root(adapter_root)
+    outside -= {"tests"}
+    assert "forge_flagships" in outside and "forge_pybamm" in outside, sorted(outside)
+    # The one sanctioned mention: `KNOWN_ADAPTERS`, the data tuple BIG 11's
+    # discovery imports inside try/except and registers UNAVAILABLE when absent.
+    catalog = REPO_ROOT / "src/engcore/providers/catalog.py"
+    catalog_tree = ast.parse(_source_of(catalog))
+    known = next(n for n in catalog_tree.body if isinstance(n, ast.AnnAssign)
+                 and getattr(n.target, "id", None) == "KNOWN_ADAPTERS")
+    sanctioned = {id(c) for c in ast.walk(known.value)}
+    assert {c.value for c in ast.walk(known.value) if isinstance(c, ast.Constant)} == outside - {"forge_flagships"}
+    discovery = next(n for n in catalog_tree.body if isinstance(n, ast.FunctionDef) and n.name == "default_registry")
+    assert any(isinstance(t, ast.Try) and any(
+        getattr(c.func, "attr", None) == "import_module" for c in ast.walk(t) if isinstance(c, ast.Call))
+        for t in ast.walk(discovery)), "adapter discovery must import inside try/except"
+    reaching: dict[str, list[str]] = {}
+    for path in sorted((REPO_ROOT / "src").rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        tree = catalog_tree if path == catalog else ast.parse(_source_of(path))
+        for node in ast.walk(tree):
+            if id(node) in sanctioned:
+                continue
+            names: list[str] = []
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names = [node.module]
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                names = [node.value]
+            for name in names:
+                if name.split(".")[0] in outside:
+                    reaching.setdefault(name.split(".")[0], []).append(
+                        f"{path.relative_to(REPO_ROOT).as_posix()}:{node.lineno}")
+    assert reaching == {}, reaching
 
 
 def test_the_scan_reads_the_string_forms_and_not_only_the_statements():

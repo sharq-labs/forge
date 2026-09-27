@@ -9,12 +9,11 @@ import pytest
 from engcore.engineering import BundleRefused, LevelStatus, committed_artifacts, verify_bundle, write_bundle
 from engcore.system_runtime import Availability, NodeStatus, RunStatus, SystemExecutor, compare_runs, trace_result
 
-try:
-    from forge_flagships import battery_cooling as bc
-    REG = bc.make_registry()
-    OK = REG.status("pybamm").available and REG.status("tespy").available
-except Exception:  # pragma: no cover
-    OK = False
+# Import and registry construction are NOT guarded: a defect there must fail, not read as
+# 'provider unavailable'. Only the availability answers decide the skip (BIG 14 review finding 6).
+from forge_flagships import battery_cooling as bc
+REG = bc.make_registry()
+OK = REG.status("pybamm").available and REG.status("tespy").available
 pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM and TESPy are both required")
 
 

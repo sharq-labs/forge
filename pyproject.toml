@@ -138,8 +138,10 @@ pythonpath = [
   # source roots (`flagships/forge_flagships`, `providers/<name>/forge_<name>`).
   # They are roots here so their suites COLLECT in every environment: the
   # provider-free gates (BIG 13 pre-registration pins, reference provenance,
-  # adapter contracts) run in the core suite, and provider-bound tests skip
-  # through their own availability probes. Without these roots every CI run
+  # and the adapter refusals that are skipped per test rather than per module)
+  # run in the core suite, and provider-bound tests skip through their own
+  # availability probes. src/ must never import these packages (guarded in
+  # tests/test_core_guards.py). Without these roots every CI run
   # failed to import them, so none of those pins was enforced (BIG 14 14.0,
   # class 1). Each adapter imports its provider lazily; nothing here installs
   # a provider.
