@@ -94,13 +94,14 @@ Owner: repository maintainer / implementation agent.
 - [x] Create a bounded BIG 14 branch from current `origin/main` in its own
       worktree; record branch, base SHA and worktree here and in PROGRESS
       (including the PROGRESS "Current branch / PR" header).
-- [ ] Decide the untracked `AGENTS.md`, `.agents/` and `.codex/` in the shared
-      checkout (commit deliberately, ignore, or leave outside the repository);
-      they must not enter a BIG 14 commit by accident.
-- [ ] Inventory supported Python and provider environments, including exact
+- [x] Decide the untracked `AGENTS.md`, `.agents/` and `.codex/` in the shared
+      checkout: ignored by owner decision (`.gitignore`, plus the shared
+      repository's `info/exclude` until this branch merges).
+- [x] Inventory supported Python and provider environments, including exact
       versions, optional dependencies, external executables and WSL/conda
-      requirements. Unsupported environments must be explicitly refused.
-- [ ] Measure the base SHA in the pristine worktree before changing scientific
+      requirements (PROGRESS, BIG 14 14.0). Explicit refusal of unsupported
+      environments is carried by the 14.1 support-alignment item.
+- [x] Measure the base SHA in the pristine worktree before changing scientific
       behavior, and record exact commands and results:
       `python tools/forge_check.py --regression`, `git diff --check`, and the
       FAST tier `python -m pytest -m "not expensive" -q -n 4` as a measurement
@@ -108,7 +109,7 @@ Owner: repository maintainer / implementation agent.
       only the architecture pack and is not a baseline. Save the sorted failing
       node ids; later runs are compared against that list so old drift and new
       regressions cannot hide each other.
-- [ ] Classify every baseline failure as product defect, stale test/certificate,
+- [x] Classify every baseline failure as product defect, stale test/certificate,
       unsupported environment, missing dependency or external-policy blocker;
       record the evidence for the classification. Previously recorded drift
       (Python 3.14 API-surface artifacts, stale `current_core_v2.json`) must be
@@ -125,6 +126,27 @@ proceed specifically to close those failures.
 
 Owner: implementation agent. Reviewer: independent read-only scientific
 reviewer for every claim/evidence/UQ/assurance change.
+
+Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
+
+- [ ] Class 1: make the provider-free flagship suite run in the core CI
+      environment, and make provider suites skip (not error) outside their
+      provider environments. The BIG 13 pre-registration pins must execute.
+- [ ] Class 2: every one of the 12 schema-less `from_dict` readers either
+      checks its schema or is proven nested-only (exemption with a test).
+- [ ] Class 3: classify the nine BIG 5-13 non-Core packages in
+      `docs/CORE_FREEZE_POLICY.md`.
+- [ ] Class 4: add `corrosion` and `hygrothermal` to the derived domain list
+      after checking they are real domain packages.
+- [ ] Class 5: restore the bare-install boundary (optional extras imported
+      lazily and named in the guard; tests skip when an extra is absent).
+- [ ] Class 6: run hardened recertification on 3.12 after the repairs
+      (GitHub workflow; needs the owner's go-ahead to dispatch).
+- [ ] Owner action: configure the `main` ruleset to require `tests-gate` and
+      `recertification-gate` (Branch Policy currently reports NOT ENFORCED).
+- [ ] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
+
+Then review and authority debt:
 
 - [ ] Re-review the final BIG 12 fix batch; resolve or explicitly disposition
       model-selection binding, output-node applicability, multiscale resume
