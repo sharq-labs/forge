@@ -1,0 +1,40 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-lgm50-electrode-balance",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, after the pre-registered LG M50 comparison ended NOT MET (voltage RMSE about 150 mV, capacity +3 %) and after a labelled post-hoc diagnostic; before any run of this follow-up",
+  "why_this_follow_up": "The post-hoc diagnostic located the error in (a) a model capacity about 3 % above the cells' and (b) an equilibrium voltage offset of about 45-50 mV at C/10 that remains on a capacity-normalised axis. Both are what a wrong electrode balance produces. This follow-up asks whether ONE identifiable correction of that balance, calibrated on a near-equilibrium curve only, predicts the held-out curves within the ORIGINAL criteria.",
+  "does_not_change": "the pre-registered outcome of big14-a-lgm50-validation stays NOT MET; this is a new, separately registered question",
+  "data": "the same pinned files as big14-a-lgm50-validation (benchmarks/measurements/chen2020_lgm50/manifest.json)",
+  "model": {
+    "primary": "PyBaMM SPM, Chen2020, lumped thermal, the heat-transfer coefficient calibrated in big14-a-lgm50-validation (3.555 W/m2K)",
+    "secondary_reported_not_judged": ["DFN"],
+    "calibrated_parameters": [
+      "Negative electrode active material volume fraction (Chen2020: 0.75), as a multiplicative factor in [0.85, 1.10]",
+      "Positive electrode active material volume fraction (Chen2020: 0.665), as a multiplicative factor in [0.85, 1.10]"
+    ],
+    "everything_else": "unchanged Chen2020"
+  },
+  "calibration": {
+    "curve": "cell02 at C/10 only (0.5 A, near equilibrium)",
+    "objective": "voltage RMSE over the measured samples to the earlier of the two 2.5 V ends, plus the delivered-capacity mismatch in the same units (1 % capacity counted as 10 mV), least squares",
+    "optimizer": "bounded Nelder-Mead from (1, 1), SPM"
+  },
+  "held_out": "every other curve: cell02 at C/2, 1C, 1.5C; cell03 and cell04 at all four rates",
+  "acceptance_primary": {
+    "scope": "SPM with the calibrated balance, C/2, each of the three cells (the same V1 and C1 as big14-a-lgm50-validation)",
+    "V1": "voltage RMSE <= 17 mV",
+    "C1": "|delivered-capacity error| <= 2 %",
+    "met_if": "V1 and C1 on all three cells"
+  },
+  "reported_not_judged": [
+    "all rates and cells for SPM and DFN with the calibrated balance",
+    "the calibrated factors, their calibration residual, and the C/10 held-out cells as a check of the calibration itself"
+  ],
+  "stated_limits": [
+    "two parameters from one near-equilibrium curve: the correction is identified, not measured independently",
+    "a met outcome would show the balance correction transfers across rates; it would not validate the SPM model form, whose rate-dependent error is measured separately",
+    "independence of the data from the Chen2020 parameterisation stays UNCONFIRMED"
+  ],
+  "no_change_after_seeing_results": "calibration curve, parameters, bounds, held-out set and criteria are fixed"
+}
