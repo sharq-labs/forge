@@ -1,0 +1,33 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-representative-day",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-27, before any run of this study",
+  "question": "How large is the representative-day approximation error of flagship A: the difference between the 56-day aging run that resolves 4 days (14-day macro steps, the published flagship) and the run that resolves every day (1-day macro steps)? The flagship records this error as UNKNOWN.",
+  "classification": "numerical verification of a time-scale approximation against a more resolved run of the SAME model; not validation, not a bound on the error against reality",
+  "runs": {
+    "cases": ["normal", "hot"],
+    "macro_days": [14, 7, 4, 2, 1],
+    "resolved_days_expected": {"14": 4, "7": 8, "4": 14, "2": 28, "1": 56},
+    "reference": "macro_days = 1 (every one of the 56 days resolved)",
+    "everything_else": "unchanged: the published flagship build (build_flagship) with only macro_days varied; same providers, parameter set, window size (3600 s), fade model and declared inputs"
+  },
+  "quantities_of_interest": [
+    {"observable": "final_fade", "unit": "dimensionless", "tolerance": {"kind": "relative", "value": 0.02, "source": "REFINEMENT_PEAK_HEAT_REL = 0.02, declared in battery_cooling.py before the flagship's first run"}},
+    {"observable": "voltage_end_of_discharge_aged", "unit": "V", "tolerance": {"kind": "absolute", "value": 0.002, "unit": "V", "source": "REFINEMENT_TOL['voltage_end_of_discharge'], declared before the flagship's first run"}},
+    {"observable": "peak_cell_temperature_aged", "unit": "K", "tolerance": {"kind": "absolute", "value": 0.05, "unit": "K", "source": "REFINEMENT_TOL['peak_cell_temperature'], declared before the flagship's first run"}},
+    {"observable": "min_soc_aged", "unit": "dimensionless", "tolerance": {"kind": "absolute", "value": 0.001, "source": "declared here: one tenth of the 0.01 SOC resolution the flagship's constraint margins are reported at"}},
+    {"observable": "voltage_shift_degradation", "unit": "V", "tolerance": {"kind": "absolute", "value": 0.002, "unit": "V", "source": "same as voltage_end_of_discharge_aged"}}
+  ],
+  "acceptance": {
+    "met_if": "for every case and every quantity of interest, |QoI(macro_days=14) - QoI(macro_days=1)| <= tolerance",
+    "not_met_means": "the published 4-day representation does not reproduce the fully resolved result within the flagship's own declared tolerances; the measured difference is recorded as the approximation error, not hidden",
+    "also_reported": "the whole sequence 14, 7, 4, 2, 1 per quantity (monotone or not), wall time per run, and whether any run was refused",
+    "no_change_after_seeing_results": "tolerances, cases, sequence and quantities above are fixed; any later reading is labelled post hoc beside the pre-registered outcome"
+  },
+  "limits_stated_in_advance": [
+    "the reference (macro_days = 1) still holds the fade constant within each day; its own time-discretization error is not measured by this study",
+    "the fade law, the SPM cell model, the quasi-steady cooling rule and every declared input are unchanged and unvalidated; this study measures one approximation of the SAME model",
+    "two cases only; the result does not transfer to other duty cycles or climates"
+  ]
+}
