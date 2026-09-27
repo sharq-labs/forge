@@ -50,7 +50,7 @@ def main(argv=None) -> int:
     manifest = write_bundle(args.out, name=name, request=request, result=run.result, summary=run.summary, references=unique, artifacts=committed_artifacts(run.result, files))
     verify_bundle(args.out)
     sys.stdout.write(run.summary.render_text())
-    sys.stdout.write(f"\nrun bundle {manifest.digest} verified in {os.path.abspath(args.out)}\n")
+    sys.stdout.write(f"\nrun bundle {manifest.digest} is self-consistent (unkeyed manifest; not authenticated) in {os.path.abspath(args.out)}\n")
     extra = getattr(run, "study", None) or getattr(run, "verification", None)
     if extra:
         sys.stdout.write("extras: " + json.dumps(extra, default=str)[:2000] + "\n")

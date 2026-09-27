@@ -32,6 +32,7 @@ absolute tolerance, an outcome that follows from its own maximum difference (``c
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Collection, Mapping
@@ -259,24 +260,49 @@ class VerificationLadder:
                 "classification": "report_vocabulary_not_a_validation_grant"}
 
 
-def check_provider_comparison(record: Mapping[str, Any], identities: Collection[str]) -> None:
+def _names_provider(label: Any, provider_id: str) -> bool:
+    """A comparison's provider label names the provider the run recorded: the id itself, or the id qualified by a sub-name ("fenicsx.dolfinx")."""
+    return isinstance(label, str) and (label == provider_id or label.startswith(provider_id + "."))
+
+
+def check_provider_comparison(record: Mapping[str, Any], providers: Mapping[str, str]) -> None:
     """A provider-comparison record is checked against the run it is cited by.
 
-    It must name two DIFFERENT providers whose executions (``identities``: the run's recorded provider execution identities) exist in the run;
-    its post-hoc flag must match its classification; and its tolerance outcome must follow from its own maximum difference.  Only a purely
-    ABSOLUTE tolerance can be re-derived from the aggregate: a relative tolerance is judged per point, so it is refused here."""
+    ``providers`` maps each provider execution identity the run recorded to the provider id the run recorded for it.  Both executions must
+    exist in the run and belong to two DIFFERENT recorded providers (the labels must name those providers: two executions of one provider
+    relabelled as two providers are refused); its post-hoc flag must be a boolean matching its classification; and its tolerance outcome
+    must follow from its own maximum difference.  Only a purely ABSOLUTE tolerance can be re-derived from the aggregate: a relative
+    tolerance is judged per point, so it is refused here.
+
+    NOT checked (a documented limit, not a guarantee): that the set of provider comparisons is complete, and that a comparison was
+    pre-registered.  Both are recorded by the flagship, not by the run, so a consistent rewrite that drops a failing comparison or
+    re-classifies a post-hoc one still verifies; see ``bundle.py``."""
     a, b = record.get("a_identity"), record.get("b_identity")
-    if a not in identities or b not in identities:
+    if a not in providers or b not in providers:
         raise InvalidScientificProblem("a provider comparison names an execution that the run did not record")
-    if a == b or record.get("a_provider") == record.get("b_provider"):
-        raise InvalidScientificProblem("a provider comparison compares two different providers")
+    if a == b or providers[a] == providers[b]:
+        raise InvalidScientificProblem("a provider comparison compares two executions of one recorded provider, not two providers")
+    if not _names_provider(record.get("a_provider"), providers[a]) or not _names_provider(record.get("b_provider"), providers[b]):
+        raise InvalidScientificProblem("a provider comparison's provider labels are not the providers the run recorded for its executions")
     declaration = record["declaration"]
-    if str(record["classification"]).startswith("post_hoc_") != bool(declaration["post_hoc"]):
+    if not isinstance(declaration["post_hoc"], bool):
+        raise InvalidScientificProblem("a provider comparison's post-hoc flag must be a boolean")
+    if str(record["classification"]).startswith("post_hoc_") != declaration["post_hoc"]:
         raise InvalidScientificProblem("a provider comparison's post-hoc flag does not match its classification")
-    if float(declaration["relative_tolerance"]) != 0.0:
+    rtol = declaration["relative_tolerance"]
+    if isinstance(rtol, bool) or not isinstance(rtol, (int, float)) or rtol != 0.0:
         raise InvalidScientificProblem("a provider comparison with a relative tolerance cannot be re-derived from its aggregate")
+    if not isinstance(record["within_tolerance"], bool):
+        raise InvalidScientificProblem("a provider comparison's tolerance outcome must be a boolean")
+    raw = record["max_absolute"]
+    try:
+        number = float(raw) if isinstance(raw, str) else None
+    except ValueError:
+        number = None
+    if number is None or repr(number) != raw or not math.isfinite(number) or number < 0.0:
+        raise InvalidScientificProblem("a provider comparison's maximum difference must be the canonical text of a finite non-negative number")
     atol = Quantity.from_dict(declaration["absolute_tolerance"]).magnitude_as_spread_in(declaration["unit"])
-    if bool(record["within_tolerance"]) != (float(record["max_absolute"]) <= atol):
+    if record["within_tolerance"] != (number <= atol):
         raise InvalidScientificProblem("a provider comparison's tolerance outcome does not follow from its maximum difference and tolerance")
 
 

@@ -176,7 +176,10 @@ def test_level_five_of_the_cavity_flagship_records_a_missing_or_failing_whole_fi
     assert sum(e.kind == "provider_comparison" and not e.classification.startswith("post_hoc") for e in partial.evidence) == 2
     # a level missing while the others agree is still not a pass
     assert cf.level5_entry(LEVELS3, {20: 1.0, 40: 1.0, 80: None}, _whole((1, 1, None)), lower, details).status is LevelStatus.ATTEMPTED_NOT_REACHED
-    assert cf.level5_entry(LEVELS3, {n: None for n in LEVELS3}, _whole((None, None, None)), {}, {}).status is LevelStatus.NOT_ATTEMPTED
+    # every level missing: attempted and not reached, with one not_met link per missing level (round 5 F7: never an empty 'not attempted')
+    none = cf.level5_entry(LEVELS3, {n: None for n in LEVELS3}, _whole((None, None, None)), {}, {})
+    assert none.status is LevelStatus.ATTEMPTED_NOT_REACHED
+    assert [e.kind for e in none.evidence] == ["whole_field_missing"] * 3 and all(e.outcome == "not_met" for e in none.evidence)
 
 
 # --------------------------------------------------------------------------------------------------- B: level 4 builder (round 4)

@@ -9,6 +9,8 @@ default), and an output whose uncertainty is UNKNOWN is printed as UNKNOWN, neve
 
 from __future__ import annotations
 
+import re
+
 import hashlib
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
@@ -54,6 +56,14 @@ class ConstraintLine:
         return {"binding_id": self.binding_id, "constraint_id": self.constraint_id, "status": self.status, "margin": self.margin, "note": self.note}
 
 
+#: the basis every summary states for its scientific status (checked verbatim when a bundle is verified)
+STATUS_BASIS = ("derived by the existing credibility authority; the runtime supplies no validity record and no validation check, "
+                "and this summary adds none")
+
+#: blank, or a word that says there is nothing: in an uncertainty list it would read as "no uncertainty"
+_EMPTY_WORDS = re.compile(r"(|none|n/?a|nil|null|nothing|no|zero|0|-+|\.+)")
+
+
 @dataclass(frozen=True)
 class UncertaintyStatement:
     #: every statement below is required: an absent one would read as "no uncertainty"
@@ -65,6 +75,15 @@ class UncertaintyStatement:
     benchmark_applicability: str
 
     def __post_init__(self) -> None:
+        for label, entries in (("known input uncertainty", self.known_input_uncertainty), ("UNKNOWN input uncertainty", self.unknown_input_uncertainty),
+                               ("material provenance", self.material_provenance)):
+            for entry in entries:
+                if not isinstance(entry, str) or not entry.strip():
+                    raise InvalidScientificProblem(f"a {label} entry must name something: {entry!r} would read as no statement at all")
+        # "none" is honest in the KNOWN list (no input has a quantified uncertainty); in the UNKNOWN list it reads as "nothing is unknown"
+        for entry in self.unknown_input_uncertainty:
+            if _EMPTY_WORDS.fullmatch(entry.strip().lower()):
+                raise InvalidScientificProblem(f"an UNKNOWN input uncertainty entry must name an input: {entry!r} would read as nothing unknown")
         if not str(self.model_discrepancy).strip() or not str(self.model_applicability).strip() or not str(self.benchmark_applicability).strip():
             raise InvalidScientificProblem("model discrepancy, model applicability and benchmark applicability must each be stated")
         if not any(tok in self.model_discrepancy.upper() for tok in ("NOT QUANTIFIED", "UNKNOWN")):
@@ -167,17 +186,19 @@ def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult
     reference comparison must carry exactly one of the supplied comparisons."""
     if result.request_digest != request.digest:
         raise InvalidScientificProblem("the request is not the one this result was produced for")
+    if trace_observable not in {obs_id for _, obs_id in outputs}:
+        raise InvalidScientificProblem(f"the traced observable {trace_observable!r} is not one of the key outputs")
     supplied_refs = {r.digest for r in references}
     for c in comparisons:
         if c.reference_digest not in supplied_refs:
             raise InvalidScientificProblem(f"comparison {c.criterion.criterion_id!r} names a reference that is not supplied with the summary (it cannot be bundled)")
     supplied_cmps = {canonical_digest(c.to_dict()) for c in comparisons}
     cited: set[str] = set()
-    recorded_identities = {p.execution_identity_digest for p in result.provider_records}
+    recorded_providers = {p.execution_identity_digest: p.provider_id for p in result.provider_records}
     for entry in ladder.entries:
         for link in entry.evidence:
             if link.kind == "provider_comparison":
-                check_provider_comparison(link.record, recorded_identities)
+                check_provider_comparison(link.record, recorded_providers)
             if link.kind == "reference_comparison":
                 if link.record_digest not in supplied_cmps:
                     raise InvalidScientificProblem(f"level {entry.level} cites a reference comparison that is not among the summary's comparisons")
@@ -201,8 +222,7 @@ def build_summary(title: str, request: SystemRunRequest, result: SystemRunResult
     verdict: CredibilityVerdict = report.verdict
     trace = trace_result(result, trace_observable)
     providers = tuple(sorted({f"{p.provider_id} {p.provider_version}" for p in result.provider_records}))
-    basis = ("derived by the existing credibility authority; the runtime supplies no validity record and no validation check, "
-             "and this summary adds none")
+    basis = STATUS_BASIS
     return EngineeringSummary(
         title, result.status.value, tuple(key), lines, cons, ladder, tuple(comparisons), uncertainty, verdict.value, basis,
         (("request", result.request_digest), ("plan", result.plan_digest), ("result", result.digest)), providers, trace.complete,
