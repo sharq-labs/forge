@@ -1728,7 +1728,35 @@ Strategic additions:
   routing, strain relief and provenance where data is available;
 - robot arms, suspensions, grippers and machines are to be evaluated as dynamic
   assembled systems rather than collections of ideal hinges;
-- the strategic Master Plan is extended through P35, while BIG 14/15 remain the
+- the strategic Master Plan is extended through P36, while BIG 14/15 remain the
   active hardening/UQ work and are not displaced.
+
+Tests: **NOT RUN** — documentation/strategic architecture changes only.
+
+
+## 2026-09-28 strategic decision — global 3D engineering viewer
+
+The post-hardening product/design roadmap now includes a dedicated global 3D
+engineering visualization runtime immediately after parametric CAD/topology.
+
+Recorded direction:
+
+- P25 is the Global 3D Engineering Viewer + Scene Runtime; later future phases
+  shift by one and validated design discovery becomes P36;
+- Three.js is the initial web rendering provider, behind a provider-neutral
+  Forge Scene IR rather than a Scientific Core dependency;
+- whole vehicles, drones, machines, motors and robot systems should be viewable
+  hierarchically with progressive level of detail;
+- required inspection modes include normal, transparent/X-ray, section/cutaway,
+  exploded, exact dimension/annotation, motion and scientific-overlay views;
+- a motor may combine transparent/cutaway motion playback with electrical,
+  thermal and limits/margin overlays;
+- failure/risk visualization is downstream of authoritative models, applicable
+  limits, uncertainty and evidence. A renderer cannot infer burnout/safety from
+  colours or geometry;
+- large-product scenes should stream subsystems/details rather than requiring
+  every detailed component and analysis mesh at once;
+- visualization remains downstream of authoritative product/CAD/simulation
+  records and cannot become a second source of scientific truth.
 
 Tests: **NOT RUN** — documentation/strategic architecture changes only.
