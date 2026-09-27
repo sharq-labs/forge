@@ -1,0 +1,62 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-lgm50-dfn",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, after the owner decided (same day) to move flagship A's cell model from SPM to DFN, enable the heat of mixing and re-identify the electrode balance with wider bounds; after the Chen 2020 paper was read (docs/flagships/big14/chen2020_independence.json); before any run of this study",
+  "owner_decision": "flagship A switches to PyBaMM DFN with the heat of mixing enabled, whatever this study's outcome; this study measures what that model does against the LG M50 curves and decides only whether the identified balance correction is carried into the flagship",
+  "does_not_change": "big14-a-lgm50-validation and big14-a-lgm50-electrode-balance stay NOT MET as registered",
+  "classification": {
+    "C/2, 1C, 1.5C": "consistency with the data Chen2020 was tuned on (in-sample for five Chen2020 parameters); NOT validation. A MET here is an optimistic, in-sample statement; the out-of-sample model-form error stays UNKNOWN",
+    "C/10": "outside Chen2020's tuning; cell02 C/10 is this study's calibration curve, cell03 and cell04 C/10 check only that the calibration transfers between sibling cells"
+  },
+  "data": "the same pinned files as big14-a-lgm50-validation (benchmarks/measurements/chen2020_lgm50/manifest.json), loaded and sha256-verified by the same loader",
+  "model": {
+    "primary": "PyBaMM DFN, Chen2020 as shipped with PyBaMM 26.8.0.0, options {thermal: lumped, heat of mixing: true}",
+    "secondary_reported_not_judged": "PyBaMM SPM with the same options, the same identified factors and the same heat-transfer coefficient (not re-identified for SPM)",
+    "not_done": "no per-rate negative diffusivity (the paper's own per-rate values would be fitted to the test curves); no other Chen2020 parameter is changed"
+  },
+  "identification": {
+    "step_1_balance": {
+      "parameters": [
+        "Negative electrode active material volume fraction (Chen2020: 0.75) as a multiplicative factor in [0.70, 1.20]",
+        "Positive electrode active material volume fraction (Chen2020: 0.665) as a multiplicative factor in [0.70, 1.20]"
+      ],
+      "curve": "cell02 at C/10 only",
+      "objective": "the same as big14-a-lgm50-electrode-balance: hypot(voltage RMSE in mV, 1000 x relative capacity error)",
+      "optimizer": "Nelder-Mead from (1, 1), factors clipped to the bounds, xatol 1e-4, fatol 0.01, maxiter 400, DFN",
+      "heat_transfer_coefficient_during_step_1": "3.555 W/m2K (the value identified in big14-a-lgm50-validation); declared, not iterated",
+      "at_bound": "a factor within 1e-3 of either bound is reported AT BOUND"
+    },
+    "step_2_heat_transfer": {
+      "parameter": "Total heat transfer coefficient [W.m-2.K-1] in [1, 200]",
+      "curve": "cell02 at 1C, surface temperature RMSE, bounded scalar minimisation (xatol 0.05), with the step-1 factors",
+      "no_iteration": "step 1 is not repeated with the step-2 value"
+    }
+  },
+  "held_out": "every curve except cell02 C/10 (voltage and capacity) and cell02 1C (temperature)",
+  "metrics": "identical to big14-a-lgm50-validation (window to the earlier 2.5 V end on the measured 30 s samples)",
+  "acceptance_primary": {
+    "scope": "DFN primary, C/2, each of the three cells",
+    "V1": "voltage RMSE <= 17 mV",
+    "C1": "|delivered-capacity error| <= 2 %",
+    "T1": "|peak-rise error| <= max(1.5 K, 25 % of the measured rise)",
+    "met_if": "V1, C1 and T1 on all three cells"
+  },
+  "decision_rule_for_the_flagship": {
+    "balance": "if neither factor is AT BOUND, flagship A carries both factors as a declared, identified (not measured) correction; if either is AT BOUND the identification has failed and flagship A keeps Chen2020's balance",
+    "heat_transfer": "the identified coefficient belongs to the test rig and is NOT carried into flagship A, whose cell-to-coolant path is its own declared resistance",
+    "reported_band": "flagship A reports the measured DFN C/2 voltage RMSE range and peak-rise error range as a model-form band measured against in-sample data, labelled as likely optimistic"
+  },
+  "reported_not_judged": [
+    "all rates and cells for DFN and SPM: every metric",
+    "the identified factors, AT BOUND flags, step-1 objective, identified h and its fit residual",
+    "the heat-of-mixing share of the total heat at each rate for cell02"
+  ],
+  "stated_limits": [
+    "Chen2020 has an Arrhenius term only on the exchange currents; the 1C and 1.5C curves reach about 55-58 degC, so a high-rate capacity shortfall is expected from missing temperature dependence of diffusion and is not attributed to the balance",
+    "the reversible (entropic) heat stays absent: Chen2020 carries no entropic data",
+    "lumped cell temperature against a surface thermocouple",
+    "instrument accuracy is not stated in the dataset and stays UNKNOWN"
+  ],
+  "no_change_after_seeing_results": "model, options, bounds, curves, objective, criteria and the decision rule are fixed"
+}

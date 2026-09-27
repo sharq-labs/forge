@@ -145,6 +145,17 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   equals the coolant-inlet peak, so it is set by the environment and does not test the approximation there.
 - The cell-energy check and the heat-of-mixing test are recorded below (entries `big14-a-cell-energy-check` and `big14-a-heat-of-mixing`).
 
+### Data independence: the Chen 2020 paper read (`big14-a-chen2020-independence`)
+- Record: `docs/flagships/big14/chen2020_independence.json`. Read from the open-access article's HTML full text in a browser. The IOP and Birmingham PDF
+  endpoints returned bot-detection pages; they were not bypassed and nothing was downloaded.
+- Answer: NOT independent. Chen2020 tuned the diffusivities, the maximum concentrations and the positive 100 % SOC stoichiometry by trial and error
+  against the C/2, 1C and 1.5C discharges of the same three cells (1C first, then the negative diffusivity again per rate: 1.3e-14 at C/2, 6.3e-14 at 1.5C).
+  PyBaMM ships the 1C column (checked in the battery env). C/10 is not named in the tuning.
+- Consequences:
+  - the two NOT MET LG M50 results stand, and they are stronger negatives, because the model misses its own tuning data;
+  - any MET on these curves is in-sample and likely optimistic, and the out-of-sample error stays UNKNOWN;
+  - the paper's licence is CC BY-NC-ND 4.0 (the dataset's CC-BY-4.0 is separate).
+
 ### Consequence for flagship A (open decision for the owner)
 - The flagship reports a degradation voltage shift of -34 mV at C/2.
 - The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.
