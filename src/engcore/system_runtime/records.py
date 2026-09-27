@@ -198,6 +198,17 @@ class StateProposal:
 OUTCOME_STATUSES = ("succeeded", "refused", "failed")
 
 
+def authority_checkpoint_pair(value: Any, label: str) -> tuple[str, bool] | None:
+    """``None`` or ``(payload digest, declared complete)`` with a strict boolean: ``bool("false")`` is True, so no coercion."""
+    if value is None:
+        return None
+    if not isinstance(value, (tuple, list)) or len(value) != 2:
+        raise InvalidScientificProblem(f"{label} must be a (payload digest, declared complete) pair")
+    if not isinstance(value[1], bool):
+        raise InvalidScientificProblem(f"{label}: the completeness declaration must be a boolean, not {type(value[1]).__name__}")
+    return hex64(value[0], f"{label} payload digest"), value[1]
+
+
 @dataclass(frozen=True)
 class NodeOutcome:
     """What an authority reports for one node execution.
@@ -231,6 +242,7 @@ class NodeOutcome:
         object.__setattr__(self, "artifacts", tuple(sorted(self.artifacts)))
         object.__setattr__(self, "diagnostics", {str(k): str(v) for k, v in dict(self.diagnostics).items()})
         object.__setattr__(self, "delegated_record_digest", hex64(self.delegated_record_digest, "delegated record digest", allow_empty=True))
+        object.__setattr__(self, "authority_checkpoint", authority_checkpoint_pair(self.authority_checkpoint, "authority checkpoint"))
 
     @classmethod
     def refused(cls, reason: str, **kw: Any) -> "NodeOutcome":
@@ -447,4 +459,4 @@ class NodeReceipt:
             tuple(ApplicabilityReport.from_dict(a) for a in payload["applicability"]), tuple(ArtifactRef.from_dict(a) for a in payload["artifacts"]),
             payload["state_before_digest"], payload["state_after_digest"], ResourceUsage(**payload["resource_usage"]), payload["reason"],
             tuple(payload["blocked_by"]), payload["attempt"], payload["delegated_record_digest"], payload["cache_hit"],
-            payload["original_receipt_digest"], None if cp is None else (cp[0], cp[1]), payload["stamp"])
+            payload["original_receipt_digest"], authority_checkpoint_pair(cp, "receipt authority checkpoint"), payload["stamp"])

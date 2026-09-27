@@ -360,7 +360,7 @@ def _multiscale_kit(*, staged: bool, day_nodes: bool):
     half = TimePoint(horizon_end.basis_id, Fraction(28 * DAY))
     extractors = {"final_fade": fade, "represented_days": days}
     if staged:
-        stages = {"aging_a": {"until": half, "resume": False}, "aging_b": {"until": None, "resume": True}}
+        stages = {"aging_a": {"until": half, "resume": False}, "aging_b": {"until": None, "resume": True, "from": "aging_a"}}
         authority = MultiscaleAuthority("battery-aging-staged", rt, initial_slow_state=slow, initial_fast_state=fast, extractors=extractors,
                                         slow_state_owners={"cell": "cell_slow"}, stages=stages, providers=providers,
                                         config={"fade_model": "ThroughputArrheniusFade k=2e-4/(A h) Ea=30 kJ/mol", "represented_days": 56})

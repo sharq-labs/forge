@@ -50,6 +50,13 @@ def verify_checkpoint(checkpoint: SystemCheckpoint, request: SystemRunRequest, p
                 problems.append(f"node {receipt.node_id!r} definition changed")
             if not set(node.depends_on) <= completed:
                 problems.append(f"completed node {receipt.node_id!r} has uncompleted dependencies {sorted(set(node.depends_on) - completed)}")
+        # the executor runs strictly in plan order and a checkpoint keeps succeeded nodes only: a legitimate completed set is a PREFIX of
+        # the plan.  A gap means an earlier node did not succeed, whatever the (editable) completeness flag says
+        order_ids = [n.node_id for n in plan.nodes]
+        last = max(order_ids.index(n) for n in completed) if completed else -1
+        gaps = [n for n in order_ids[:last + 1] if n not in completed]
+        if gaps:
+            problems.append(f"nodes {gaps} precede completed nodes but did not complete (a refused or failed node would be re-run with no record)")
         committed = [r for r in checkpoint.completed_receipts if r.state_after_digest]
         if committed and committed[-1].state_after_digest not in {s.digest for s in checkpoint.state_history}:
             problems.append("a committed state named by a receipt is missing from the state history")
@@ -101,13 +108,15 @@ def verify_checkpoint(checkpoint: SystemCheckpoint, request: SystemRunRequest, p
         if receipt.node_id in order and receipt.status.value == "succeeded" and receipt.node_id not in listed and not plan.node(receipt.node_id).derived:
             try:
                 authority = context.authorities.resolve(plan.node(receipt.node_id).authority)
-            except Exception:
+            except Exception as exc:
+                problems.append(f"the authority of completed node {receipt.node_id!r} cannot be resolved to check its state declaration ({exc})")
                 continue
             if not authority.stateless:
                 problems.append(f"completed node {receipt.node_id!r} runs a stateful authority but the checkpoint carries no declaration for it")
     if not isinstance(checkpoint.complete, bool):
         problems.append("the checkpoint's completeness flag is not a boolean")
-    elif checkpoint.complete != all(cp.declared_complete for cp in checkpoint.authority_checkpoints):
+    elif checkpoint.complete and not all(cp.declared_complete for cp in checkpoint.authority_checkpoints):
+        # one direction only: a checkpoint may also be incomplete for a reason no authority states (a node that did not succeed)
         problems.append("the checkpoint's completeness flag does not follow from its authority declarations")
     if problems:
         raise ResumeRefused("checkpoint refused: " + "; ".join(problems))
