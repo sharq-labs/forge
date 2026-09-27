@@ -311,7 +311,43 @@ _NESTED_WITHOUT_SCHEMA = frozenset({
     "ParticipantFactoryCoverage", "CompositionDependency",
     "ParticipantFactoryRef", "ProducerQualification",
 })
+#: The same exemption, qualified by the file that defines the class. Used for
+#: the BIG 9-13 records because the walk keys readers by class name and
+#: `ReferenceCondition` also names a Core record (`scientific/corpus/dataset.py`)
+#: whose own check a bare-name exemption would silently cover. Each one is
+#: read only through the schema-checking parent named beside it.
+_NESTED_WITHOUT_SCHEMA_AT = frozenset({
+    # MacroCheckpoint.deserialize checks CHECKPOINT_SCHEMA
+    ("ParticipantStateContract", "src/engcore/coupling/adapters.py"),
+    # DegradationStepRecord.from_dict: require_schema(STEP_RECORD_SCHEMA)
+    ("GatheredInput", "src/engcore/scenarios/lifecycle.py"),
+    # SystemCheckpoint.from_dict: require_schema(CHECKPOINT_SCHEMA)
+    ("AuthorityCheckpoint", "src/engcore/system_runtime/result.py"),
+    # ReferenceRecord.from_dict checks REFERENCE_SCHEMA
+    ("EnvelopeBound", "src/engcore/engineering/reference.py"),
+    ("ReferenceCondition", "src/engcore/engineering/reference.py"),
+    # read from summary.json, whose SUMMARY_SCHEMA verify_bundle checks
+    ("PredeclaredCriterion", "src/engcore/engineering/reference.py"),
+    ("ReferenceComparison", "src/engcore/engineering/reference.py"),
+    ("EvidenceLink", "src/engcore/engineering/ladder.py"),
+    ("LevelEntry", "src/engcore/engineering/ladder.py"),
+    ("VerificationLadder", "src/engcore/engineering/ladder.py"),
+    # written only nested inside the multiscale macro-step records and digests;
+    # nothing in the tree reads it back, so any future reader goes through a parent
+    ("RepresentativeWindow", "src/engcore/multiscale/windows.py"),
+})
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
+
+
+def _to_dict_names_a_schema(name: str, where: str) -> bool:
+    """Whether the class's ``to_dict`` writes a ``schema`` key (then it is not nested)."""
+    tree = ast.parse((REPO_ROOT / where).read_bytes().decode("utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == name:
+            for member in node.body:
+                if isinstance(member, ast.FunctionDef) and member.name == "to_dict":
+                    return any(isinstance(c, ast.Constant) and c.value == "schema" for c in ast.walk(member))
+    raise AssertionError(f"{name} has no to_dict in {where}")
 
 
 def _readers_missing_a_schema_check() -> dict[str, str]:
@@ -359,6 +395,7 @@ def test_every_reader_that_writes_a_schema_also_checks_one():
     unexpected = {
         name: where for name, where in missing.items()
         if name not in _NESTED_WITHOUT_SCHEMA
+        and (name, where) not in _NESTED_WITHOUT_SCHEMA_AT
     }
     assert unexpected == {}, (
         "these read a serialized record without checking the schema it "
@@ -373,10 +410,23 @@ def test_the_nested_exemptions_really_are_nested():
     read through a parent that does. If one starts emitting a schema, it has
     become a top-level record and the exemption must go.
     """
-    still_missing = set(_readers_missing_a_schema_check())
+    missing = _readers_missing_a_schema_check()
+    still_missing = set(missing)
     stale = sorted(_NESTED_WITHOUT_SCHEMA - still_missing)
+    stale += sorted(
+        f"{name} ({where})" for name, where in _NESTED_WITHOUT_SCHEMA_AT
+        if missing.get(name) != where
+    )
     assert stale == [], (
         f"these no longer need an exemption and should be removed: {stale}"
+    )
+    writes_a_schema = sorted(
+        name for name, where in _NESTED_WITHOUT_SCHEMA_AT
+        if _to_dict_names_a_schema(name, where)
+    )
+    assert writes_a_schema == [], (
+        f"these write a schema of their own, so they are top-level records "
+        f"and must check it: {writes_a_schema}"
     )
 
 

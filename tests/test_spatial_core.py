@@ -147,6 +147,11 @@ def test_unit_aware_temperature_field_and_core_bridge(plate):
         SpatialField(t.definition, plate, np.full(plate.node_count, np.nan), Derivation.PRESCRIBED)
     with pytest.raises(SpatialRefusal, match="different mesh"):
         SpatialField.from_dict(t.to_dict(), fixture_plate(nx=6))
+    # a future or foreign shape is not read as spatial_field/1 (BIG 14 class 2)
+    for broken in ({**t.to_dict(), "schema": "spatial_field/2"}, {k: v for k, v in t.to_dict().items() if k != "schema"},
+                   {**t.to_dict(), "classification": "evidence"}):
+        with pytest.raises(SpatialRefusal, match="not a serialized spatial field"):
+            SpatialField.from_dict(broken, plate)
     edge = SpatialField(SpatialFieldDefinition("q", "heat_flux_normal", "W/m^2", Location.FACET, Rank.SCALAR), plate,
                         np.ones(len(plate.facets)), Derivation.PRESCRIBED)
     with pytest.raises(SpatialRefusal, match="node and cell"):

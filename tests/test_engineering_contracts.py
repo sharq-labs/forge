@@ -489,6 +489,15 @@ def test_a_regenerated_manifest_cannot_launder_an_edited_summary_reference_or_ar
         verify_bundle(d)
 
 
+def test_a_summary_with_another_schema_is_refused_even_under_a_regenerated_manifest(tmp_path):
+    """BIG 14 class 2: summary.json is the parent the ladder and comparison records are read through, so its schema is checked."""
+    for name, mutate in (("future", lambda w: w.update(schema="engcore.engineering.summary/2")), ("absent", lambda w: w.pop("schema"))):
+        d, *_ = _write(tmp_path, name)
+        _rewrite_summary(d, mutate)
+        with pytest.raises(BundleRefused, match="summary.json has schema"):
+            verify_bundle(d)
+
+
 def test_a_fully_regenerated_manifest_still_cannot_launder_an_edited_status_request_plan_text_key_output_or_level_one(tmp_path):
     """Review findings H-B and round-3 H1: the manifest AND every digest it states are regenerated, summary.txt is re-rendered; the bundle must still be refused."""
     d, request, result, s = _write(tmp_path, "ok")
