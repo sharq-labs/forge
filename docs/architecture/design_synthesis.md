@@ -288,6 +288,26 @@ spring, damper and chassis interactions to be evaluated as one dynamic system.
 Detailed contracts and capability boundaries are in
 `docs/architecture/motion_systems.md`.
 
+## 10.2 Global 3D engineering view
+
+Every sufficiently detailed candidate should be projectable into the global
+visualization runtime without changing its engineering identity.
+
+The viewer should be able to move from whole-product context to subsystem,
+assembly and part context, and display:
+
+- exact authoritative dimensions/annotations;
+- transparent, cutaway and exploded views;
+- mechanism/multibody motion;
+- thermal/electrical/structural/flow overlays;
+- engineering limits and margins;
+- uncertainty/evidence status where available.
+
+Visualization is downstream of the product/assembly/simulation records and must
+not become a second source of dimensions or scientific truth.
+
+See `docs/architecture/visualization_runtime.md`.
+
 ## 11. Provider policy
 
 Forge should prefer mature open-source providers for CAD, optimization, dynamics,
