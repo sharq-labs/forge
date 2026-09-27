@@ -174,17 +174,29 @@ def _conda_files(prefix: str) -> dict[str, tuple[str, ...]]:
 def _footprint(dist: Any, name: str) -> tuple[frozenset[str], frozenset[str]]:
     """(real paths of a distribution's own module files, the top-level modules those files provide).
 
-    From its RECORD when that lists module files; otherwise from the conda package record that installed
-    its metadata (conda-installed distributions often have no RECORD); otherwise EMPTY -- nothing about
-    where its code lives can be established, and every module of it is refused (BIG 14 review M-2).
+    From its RECORD (parsed; never the SOURCES.txt / installed-files.txt fallbacks of ``dist.files``);
+    otherwise from the conda package record that installed its metadata (conda-installed distributions
+    often have no RECORD); otherwise EMPTY. An editable install is EMPTY too. An empty footprint, or one
+    from which no module can be derived, establishes nothing and is refused (BIG 14 reviews M-2, F-1, F-2).
     The modules are derived from the files, not from ``top_level.txt``, which only setuptools writes (M-1).
     """
+    import csv
+    import json
     import sys
 
     root = os.path.realpath(str(dist.locate_file("")))
-    paths = [os.path.realpath(dist.locate_file(f)) for f in (dist.files or ())
-             if not str(f).split("/")[0].endswith((".dist-info", ".egg-info"))]
-    if not paths:
+    try:  # an editable install (PEP 660) runs a checkout its RECORD does not describe (review F-1)
+        if json.loads(dist.read_text("direct_url.json") or "{}").get("dir_info", {}).get("editable"):
+            return frozenset(), frozenset()
+    except (ValueError, AttributeError):
+        return frozenset(), frozenset()
+    # the RECORD itself, never `dist.files`' fallbacks (installed-files.txt / SOURCES.txt of a checkout egg-info: F-2)
+    record_text = dist.read_text("RECORD")
+    if record_text is not None:
+        listed = [row[0] for row in csv.reader(record_text.splitlines()) if row]
+        paths = [os.path.realpath(dist.locate_file(f)) for f in listed
+                 if not f.split("/")[0].endswith((".dist-info", ".egg-info")) and not f.endswith(".pth")]
+    else:
         record = _conda_files(sys.prefix).get(f"{_norm(name)}=={dist.version}", ())
         paths = [os.path.realpath(os.path.join(sys.prefix, f)) for f in record if ".dist-info/" not in f and ".egg-info/" not in f]
     files = frozenset(paths)
@@ -323,7 +335,7 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
                 if not _has_distribution(dep):
                     return ProviderStatus(capability, Availability.UNAVAILABLE, reason=f"declared dependency distribution {dep!r} is not installed")
                 dep_files, dep_modules = _footprint(importlib.metadata.distribution(dep), dep)
-                if not dep_files:
+                if not dep_files or not dep_modules:
                     return ProviderStatus(capability, Availability.UNAVAILABLE,
                                           reason=f"could not establish the files of dependency distribution {dep!r} "
                                                  "(no RECORD module files and no conda package record)")
@@ -336,7 +348,8 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
                 deps.append((dep, importlib.metadata.version(dep), distribution_digest(dep)))
             origin = os.path.realpath(importlib.util.find_spec(module).origin or "")
             dist = importlib.metadata.distribution(dist_name)
-            if _outside(origin, _footprint(dist, dist_name)[0]):
+            main_files, main_modules = _footprint(dist, dist_name)
+            if not main_files or not main_modules or _outside(origin, main_files):
                 # a shadowing checkout or an editable install: the RECORD digest would not describe the code
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=os.path.dirname(origin),
                                       reason=f"could not establish the distribution of module {module!r}: {origin} is not a file "
@@ -412,7 +425,7 @@ def require_library_unchanged(status: ProviderStatus, package: str) -> None:
         if dist_name not in _FOOTPRINTS:
             _FOOTPRINTS[dist_name] = _footprint(_located(dist_name), dist_name)
         files, modules = _FOOTPRINTS[dist_name]
-        if not files:
+        if not files or not modules:
             raise ProviderRefusal(f"the files of {dist_name} {want_version} cannot be established (no RECORD module files and "
                                   "no conda package record); what would run cannot be bound")
         for provided in sorted(modules):

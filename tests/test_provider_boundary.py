@@ -409,6 +409,56 @@ def test_a_footprint_comes_from_the_record_or_the_conda_record_or_nothing(monkey
     assert os.path.realpath(pytest.__file__) in real_files
 
 
+def _fake_distribution(site, name, *, record=None, editable=False, egg_sources=None):
+    """A distribution on disk: dist-info (METADATA, optional RECORD, optional editable direct_url.json) or a checkout egg-info."""
+    import json
+
+    if egg_sources is not None:
+        info = site / f"{name}.egg-info"
+        info.mkdir(parents=True)
+        (info / "PKG-INFO").write_text(f"Metadata-Version: 2.1\nName: {name}\nVersion: 1.0\n")
+        (info / "SOURCES.txt").write_text("\n".join(egg_sources) + "\n")
+        return
+    info = site / f"{name}-1.0.dist-info"
+    info.mkdir(parents=True)
+    (info / "METADATA").write_text(f"Metadata-Version: 2.1\nName: {name}\nVersion: 1.0\n")
+    if record is not None:
+        (info / "RECORD").write_text("\n".join(f"{r},," for r in record) + "\n")
+    if editable:
+        (info / "direct_url.json").write_text(json.dumps({"url": "file:///checkout", "dir_info": {"editable": True}}))
+
+
+def test_an_editable_or_checkout_distribution_establishes_nothing(tmp_path, monkeypatch):
+    """BIG 14 reviews F-1 / F-2: an editable dependency, and an egg-info in a checkout, run code no RECORD describes."""
+    import importlib
+
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe
+
+    monkeypatch.setattr(catalog, "_conda_files", lambda prefix: {})
+    site, checkout = tmp_path / "site", tmp_path / "checkout"
+    (checkout / "forgedemo_dep").mkdir(parents=True)
+    (checkout / "forgedemo_dep" / "__init__.py").write_text("__version__ = '1.0'\n")
+    _fake_distribution(site, "forgedemo_dep", record=["__editable__.forgedemo_dep-1.0.pth", "__editable___forgedemo_dep_finder.py",
+                                             "forgedemo_dep-1.0.dist-info/METADATA"],
+                       editable=True)
+    (checkout / "forgedemo_egg").mkdir()
+    (checkout / "forgedemo_egg" / "__init__.py").write_text("")
+    _fake_distribution(checkout, "forgedemo_egg", egg_sources=["forgedemo_egg/__init__.py"])
+    monkeypatch.syspath_prepend(str(site))
+    monkeypatch.syspath_prepend(str(checkout))
+    importlib.invalidate_caches()
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("d",))
+    with_editable = python_package_probe(cap, "pytest", ("pytest",), dependencies=("forgedemo_dep",))()
+    assert not with_editable.available and with_editable.found_but_refused, with_editable.reason
+    egg = python_package_probe(ProviderCapability("egg", "demo", "library", "forgedemo_egg", ("d",)), "forgedemo_egg", ("forgedemo_egg",))()
+    assert not egg.available and egg.found_but_refused, egg.reason
+    import importlib.metadata as md
+
+    assert catalog._footprint(md.distribution("forgedemo_dep"), "forgedemo_dep") == (frozenset(), frozenset())
+    assert catalog._footprint(md.distribution("forgedemo_egg"), "forgedemo_egg") == (frozenset(), frozenset())
+
+
 def test_discovery_does_not_feed_the_execution_time_origin_cache(monkeypatch):
     """BIG 14 review M-3: an origin resolved at discovery must not stand in for where the import really goes later."""
     import engcore.providers.catalog as catalog

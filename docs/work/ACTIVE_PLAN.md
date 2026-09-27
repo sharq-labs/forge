@@ -204,9 +204,17 @@ Then review and authority debt:
       that is not a file of the distribution it binds (shadowing / editable).
       Declared dependencies are covered too: per-distribution pins, their
       `__version__` in memory, and every module derived from a distribution's
-      own files must load from those files - the RECORD's module files, else
-      the conda package record's files (conda-installed casadi), else nothing
-      is established and it is refused. Adapters re-check after importing. OPERATING RULE: a provider-environment change takes effect in a
+      own files must load from those files - the parsed RECORD's module
+      files, else the conda package record's files (conda-installed casadi),
+      else nothing is established and it is refused; editable installs and
+      checkout egg-infos establish nothing. Adapters re-check after importing.
+- [ ] Re-review the F-1 / F-2 fix (`catalog._footprint`: parsed RECORD,
+      editable refusal, empty-module refusal). NOT re-reviewed: the review
+      loop on this sub-area was closed after seven rounds; carry it into the
+      next review batch. Recorded LOW: `Mechanism.from_cantera_data` and
+      `forge_pybamm.parameter_set` import their library without the check
+      (their outputs are content-hashed); `<pkg>.libs` dirs derive as module
+      names; conda egg-info packages are refused (visible, not silent). OPERATING RULE: a provider-environment change takes effect in a
       new process; a same-version rebuild of an already-loaded module cannot
       be seen from inside the process. Residuals: the shared python-environment
       digest is re-read only on refresh; undeclared dependencies are unbound;
