@@ -392,16 +392,21 @@ This statement is scoped to the reviewed tests; the whole suite was not executed
 
 ## Fix now
 
-- [ ] U-01: preserve raw magnitude/unit types through `Quantity.from_dict()` and refuse invalid wire types.
-- [ ] U-02: make `coerce_quantity()` obey the same magnitude-type contract.
-- [ ] U-03: guard scalar multiplication/division against bool/string accidental coercion.
-- [ ] Add focused adversarial tests for U-01/U-02/U-03.
+- [x] U-01: preserve raw magnitude/unit types through `Quantity.from_dict()` and refuse invalid wire types. (BIG 14, 2026-09-27: no pre-coercion; units must be `str`.)
+- [x] U-02: make `coerce_quantity()` obey the same magnitude-type contract. (BIG 14: the numeric branch hands the raw value to the constructor.)
+- [x] U-03: guard scalar multiplication/division against bool/string accidental coercion. (BIG 14: `_require_numeric`; numpy bool and bytes too, also at the constructor.)
+- [x] Add focused adversarial tests for U-01/U-02/U-03. (`tests/test_units_type_boundaries.py`; apply/revert 8/8 incl. certified B26a/B26b.)
 
 ## Verify later in dependent-module reviews
 
 - [ ] U-05: verify unit-registry fingerprint is bound to execution/replay provenance.
+      BIG 14 finding (2026-09-27): it is bound NOWHERE. `registry_fingerprint()` has no caller outside two existence tests, and the Core
+      `RuntimeEnvironment` replay record carries no unit field and is constructed by nothing in `src/`. Binding it needs a version decision
+      (Core replay schema, or a digest change in the BIG 11 / BIG 12 execution records); surfaced to the owner, not changed silently.
 - [ ] Decide provider-facing API status of spread/ratio/canonical-identity helpers.
 - [ ] Establish/test Pint-version compatibility policy around private backend access.
+      BIG 14 evidence (2026-09-27): the units contract (352 tests) passes on Pint 0.25.3 (Windows venv) and 0.26.1 (WSL `battery` env);
+      the minimum declared `pint>=0.23` is untested and there is still no upper bound. Policy decision pending (U-04).
 
 ## No action required now
 
@@ -417,7 +422,7 @@ This statement is scoped to the reviewed tests; the whole suite was not executed
 
 Code inspection: **DONE**
 
-Focused tests: **NOT RUN**
+Focused tests: **RUN** (BIG 14, 2026-09-27: 352 passed on Pint 0.25.3 and on 0.26.1)
 
 Full FAST suite: **NOT RUN**
 
@@ -427,8 +432,8 @@ Mutation campaigns: **NOT RUN**
 
 Recertification: **NOT RUN**
 
-The module remains:
+The module is:
 
-`REVIEWED — FIXES PENDING`
+`REVIEWED — U-01/U-02/U-03 FIXED; U-04/U-05 DECISIONS PENDING; U-06 ACCEPTED (LOW: runtime context mutation is prohibited)`
 
-until U-01/U-02/U-03 are fixed and focused tests are executed.
+Full FAST / SCIENTIFIC / mutation / recertification status for the fix is recorded in `docs/work/PROGRESS.md` (BIG 14).
