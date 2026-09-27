@@ -13,13 +13,15 @@ from forge_coolprop import CoolPropProvider, descriptor
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("coolprop").available
-pytestmark = pytest.mark.skipif(not OK, reason="CoolProp unavailable")
+# Per test, not per module: the provider-free refusals below run without the provider.
+needs_coolprop = pytest.mark.skipif(not OK, reason="CoolProp unavailable")
 
 
 def water(t, p=Quantity(101325, "Pa")):
     return FluidState(FluidIdentity("water"), (NamedQuantity("temperature", t), NamedQuantity("pressure", p)))
 
 
+@needs_coolprop
 def test_explicit_properties_are_computed_records_bound_to_request_and_provider():
     prov = CoolPropProvider(REG)
     s = water(Quantity(25, "degC"))  # affine input converted exactly to K by Forge units
@@ -36,6 +38,7 @@ def test_explicit_properties_are_computed_records_bound_to_request_and_provider(
     assert rec["specific_heat_capacity"].provider_execution_identity != d.provider_execution_identity
 
 
+@needs_coolprop
 def test_two_phase_quality_and_refusals_are_explicit():
     prov = CoolPropProvider(REG)
     sat = FluidState(FluidIdentity("water"), (NamedQuantity("pressure", Quantity(101325, "Pa")),
@@ -59,6 +62,7 @@ def test_absent_provider_is_refused_not_substituted():
         CoolPropProvider(reg)
 
 
+@needs_coolprop
 def test_request_is_content_only_and_the_reference_state_is_pinned():
     import CoolProp.CoolProp as CP
 

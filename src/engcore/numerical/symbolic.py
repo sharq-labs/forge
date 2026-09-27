@@ -22,7 +22,8 @@ def _sympy():
     try:
         import sympy
     except ImportError as exc:  # pragma: no cover - environment dependent
-        raise ProviderUnavailable("SymPy is not installed; install the 'symbolic' extra") from exc
+        # the import error is carried: a broken install is not reported as an absent one
+        raise ProviderUnavailable(f"SymPy cannot be imported ({type(exc).__name__}: {exc}); install the 'symbolic' extra") from exc
     return sympy
 
 

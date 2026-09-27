@@ -301,20 +301,73 @@ def test_the_constructor_and_the_reader_refuse_the_same_declaration(value):
 #: sub-records whose parent checks, and they emit no ``schema`` key. Derived
 #: membership is asserted below rather than assumed — an entry here that
 #: starts emitting a schema is a failure, not an exemption.
+#:
+#: Qualified by the defining file (BIG 14 re-review N6): `RouteComparison` and
+#: `ArtifactRef` also name other, schema-checking records
+#: (`scientific/verification/comparison.py`, `system_runtime/records.py`), and a
+#: bare-name exemption would silently cover a regression in either.
 _NESTED_WITHOUT_SCHEMA = frozenset({
-    "EntryClassification", "RouteComparison", "ExperimentBudget",
-    "SolverSettings", "CheckpointStore", "CalibrationState",
-    "AuthorizedSystemValidation", "AuthorizedSystemUncertainty",
-    "AuthorizedSystemVerification",
-    "ReplicateObservation", "PairedObservation", "DatasetObservation",
-    "DomainPackDependency", "BlueprintRef", "PolicyTemplateRef", "ArtifactRef",
-    "ParticipantFactoryCoverage", "CompositionDependency",
-    "ParticipantFactoryRef", "ProducerQualification",
+    ("EntryClassification", "src/engcore/design/memory.py"),
+    ("RouteComparison", "src/engcore/scientific/consensus.py"),
+    ("ExperimentBudget", "src/engcore/scientific/experiments/experiment.py"),
+    ("SolverSettings", "src/engcore/scientific/solvers/protocol.py"),
+    ("CheckpointStore", "src/engcore/sria/campaign/checkpoint.py"),
+    ("CalibrationState", "src/engcore/sria/decision/belief_snapshot.py"),
+    ("AuthorizedSystemValidation", "src/engcore/assembly/multiphysics.py"),
+    ("AuthorizedSystemUncertainty", "src/engcore/assembly/multiphysics.py"),
+    ("AuthorizedSystemVerification", "src/engcore/assembly/multiphysics.py"),
+    ("ReplicateObservation", "src/engcore/claims/aleatoric_uq.py"),
+    ("PairedObservation", "src/engcore/claims/analysis/model_discrepancy.py"),
+    ("DatasetObservation", "src/engcore/claims/measurement_dataset.py"),
+    ("DomainPackDependency", "src/engcore/compositionpacks/manifest.py"),
+    ("BlueprintRef", "src/engcore/compositionpacks/manifest.py"),
+    ("PolicyTemplateRef", "src/engcore/compositionpacks/manifest.py"),
+    ("ArtifactRef", "src/engcore/domainpacks/manifest.py"),
+    ("ParticipantFactoryCoverage", "src/engcore/execution/multiphysics/factory.py"),
+    ("CompositionDependency", "src/engcore/executionpacks/manifest.py"),
+    ("ParticipantFactoryRef", "src/engcore/executionpacks/manifest.py"),
+    ("ProducerQualification", "src/engcore/uq/model_form/qualification.py"),
+})
+#: The same exemption, qualified by the file that defines the class. Used for
+#: the BIG 9-13 records because the walk keys readers by class name and
+#: `ReferenceCondition` also names a Core record (`scientific/corpus/dataset.py`)
+#: whose own check a bare-name exemption would silently cover. Each one is
+#: read only through the schema-checking parent named beside it.
+_NESTED_WITHOUT_SCHEMA_AT = frozenset({
+    # MacroCheckpoint.deserialize checks CHECKPOINT_SCHEMA
+    ("ParticipantStateContract", "src/engcore/coupling/adapters.py"),
+    # DegradationStepRecord.from_dict: require_schema(STEP_RECORD_SCHEMA)
+    ("GatheredInput", "src/engcore/scenarios/lifecycle.py"),
+    # SystemCheckpoint.from_dict: require_schema(CHECKPOINT_SCHEMA)
+    ("AuthorityCheckpoint", "src/engcore/system_runtime/result.py"),
+    # ReferenceRecord.from_dict checks REFERENCE_SCHEMA
+    ("EnvelopeBound", "src/engcore/engineering/reference.py"),
+    ("ReferenceCondition", "src/engcore/engineering/reference.py"),
+    # read from summary.json, whose SUMMARY_SCHEMA verify_bundle checks
+    ("PredeclaredCriterion", "src/engcore/engineering/reference.py"),
+    ("ReferenceComparison", "src/engcore/engineering/reference.py"),
+    ("EvidenceLink", "src/engcore/engineering/ladder.py"),
+    ("LevelEntry", "src/engcore/engineering/ladder.py"),
+    ("VerificationLadder", "src/engcore/engineering/ladder.py"),
+    # written only nested inside the multiscale macro-step records and digests;
+    # nothing in the tree reads it back, so any future reader goes through a parent
+    ("RepresentativeWindow", "src/engcore/multiscale/windows.py"),
 })
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
 
-def _readers_missing_a_schema_check() -> dict[str, str]:
+def _to_dict_names_a_schema(name: str, where: str) -> bool:
+    """Whether the class's ``to_dict`` writes a ``schema`` key (then it is not nested)."""
+    tree = ast.parse((REPO_ROOT / where).read_bytes().decode("utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == name:
+            for member in node.body:
+                if isinstance(member, ast.FunctionDef) and member.name == "to_dict":
+                    return any(isinstance(c, ast.Constant) and c.value == "schema" for c in ast.walk(member))
+    raise AssertionError(f"{name} has no to_dict in {where}")
+
+
+def _readers_missing_a_schema_check() -> dict[tuple[str, str], str]:
     """Classes whose ``from_dict`` calls no schema checker, walked not listed."""
     found: dict[str, str] = {}
     for path in sorted((REPO_ROOT / "src" / "engcore").rglob("*.py")):
@@ -342,7 +395,10 @@ def _readers_missing_a_schema_check() -> dict[str, str]:
                     for c in ast.walk(member)
                 )
                 if not (called & _SCHEMA_CHECKERS) and not names_the_key:
-                    found[node.name] = path.relative_to(REPO_ROOT).as_posix()
+                    # keyed by (class, file): two classes may share a name
+                    # (`ReferenceCondition`), and one must not hide the other
+                    where = path.relative_to(REPO_ROOT).as_posix()
+                    found[(node.name, where)] = where
     return found
 
 
@@ -357,8 +413,8 @@ def test_every_reader_that_writes_a_schema_also_checks_one():
     """
     missing = _readers_missing_a_schema_check()
     unexpected = {
-        name: where for name, where in missing.items()
-        if name not in _NESTED_WITHOUT_SCHEMA
+        name: where for (name, where) in missing
+        if (name, where) not in _NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT
     }
     assert unexpected == {}, (
         "these read a serialized record without checking the schema it "
@@ -373,10 +429,152 @@ def test_the_nested_exemptions_really_are_nested():
     read through a parent that does. If one starts emitting a schema, it has
     become a top-level record and the exemption must go.
     """
-    still_missing = set(_readers_missing_a_schema_check())
-    stale = sorted(_NESTED_WITHOUT_SCHEMA - still_missing)
+    missing = set(_readers_missing_a_schema_check())
+    stale = sorted(
+        f"{name} ({where})"
+        for name, where in (_NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT) - missing
+    )
     assert stale == [], (
         f"these no longer need an exemption and should be removed: {stale}"
+    )
+    writes_a_schema = sorted(
+        name for name, where in _NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT
+        if _to_dict_names_a_schema(name, where)
+    )
+    assert writes_a_schema == [], (
+        f"these write a schema of their own, so they are top-level records "
+        f"and must check it: {writes_a_schema}"
+    )
+
+
+#: Where each path-qualified exemption may be read: "Class.method" or a
+#: module-level function, inside the file named. Every product call site of
+#: ``X.from_dict`` (src/, flagships/, providers/) must be one of these, so a new
+#: direct read of an untrusted payload cannot pass unnoticed (BIG 14 review
+#: finding 4). Tests are not product paths and may read records directly.
+_NESTED_READ_ONLY_BY = {
+    "ParticipantStateContract": {("src/engcore/multiscale/checkpoint.py", "MacroCheckpoint.deserialize")},
+    "GatheredInput": {("src/engcore/scenarios/lifecycle.py", "DegradationStepRecord.from_dict")},
+    "AuthorityCheckpoint": {("src/engcore/system_runtime/result.py", "SystemCheckpoint.from_dict")},
+    "EnvelopeBound": {("src/engcore/engineering/reference.py", "ReferenceRecord.from_dict")},
+    "ReferenceCondition": {("src/engcore/engineering/reference.py", "ReferenceRecord.from_dict")},
+    "PredeclaredCriterion": {("src/engcore/engineering/reference.py", "ReferenceComparison.from_dict")},
+    "ReferenceComparison": {("src/engcore/engineering/bundle.py", "_verify_rest")},
+    "EvidenceLink": {("src/engcore/engineering/ladder.py", "LevelEntry.from_dict")},
+    "LevelEntry": {("src/engcore/engineering/ladder.py", "VerificationLadder.from_dict")},
+    "VerificationLadder": {("src/engcore/engineering/bundle.py", "_verify_rest")},
+    "RepresentativeWindow": set(),  # no reader at all
+}
+
+
+def _module_of(path: pathlib.Path) -> str:
+    """Dotted module of a product file: relative to src/, flagships/ or providers/<name>/."""
+    rel = path.relative_to(REPO_ROOT).parts
+    if rel[0] == "src":
+        rel = rel[1:]
+    elif rel[0] == "flagships":
+        rel = rel[1:]
+    elif rel[0] == "providers":
+        rel = rel[2:]
+    parts = list(rel)
+    parts[-1] = parts[-1].removesuffix(".py")
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
+def _product_files() -> list[pathlib.Path]:
+    roots = [REPO_ROOT / "src", REPO_ROOT / "flagships" / "forge_flagships"]
+    roots += sorted((REPO_ROOT / "providers").glob("*/forge_*"))
+    return [path for root in roots for path in sorted(root.rglob("*.py")) if "__pycache__" not in path.parts]
+
+
+def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
+    """(file, enclosing "Class.method" or function) of every product reference to ``name.from_dict``.
+
+    Resolved through each file's own imports (BIG 14 re-review N2): a bare or
+    aliased class name imported from the defining module or a package that
+    re-exports it, a module-qualified access (``ladder.X.from_dict``), an
+    uncalled reference (``map(X.from_dict, ...)``) and
+    ``getattr(X, "from_dict")`` all count. A file that defines its own class of
+    the same name and does not import the exempted one refers to its own.
+    """
+    (exempt_file,) = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
+    target = _module_of(REPO_ROOT / exempt_file)
+    sites: set[tuple[str, str]] = set()
+    for path in _product_files():
+        tree = ast.parse(path.read_bytes().decode("utf-8"))
+        where = path.relative_to(REPO_ROOT).as_posix()
+        here = _module_of(path)
+        package = here if path.name == "__init__.py" else here.rpartition(".")[0]
+        classes: set[str] = {name} if where == exempt_file else set()
+        modules: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                base = package.split(".") if node.level else []
+                if node.level > 1:
+                    base = base[: len(base) - (node.level - 1)]
+                source = ".".join(base + ([node.module] if node.module else []))
+                for alias in node.names:
+                    bound = alias.asname or alias.name
+                    if alias.name == name and (source == target or target.startswith(source + ".")):
+                        classes.add(bound)
+                    full = f"{source}.{alias.name}" if source else alias.name
+                    if full == target or target.startswith(full + "."):
+                        modules[bound] = full
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == target or target.startswith(alias.name + "."):
+                        if alias.asname:
+                            modules[alias.asname] = alias.name
+                        else:
+                            head = alias.name.split(".")[0]
+                            modules[head] = head
+
+        def names_the_class(value: ast.AST) -> bool:
+            if isinstance(value, ast.Name):
+                return value.id in classes
+            chain: list[str] = []
+            while isinstance(value, ast.Attribute):
+                chain.insert(0, value.attr)
+                value = value.value
+            if not (isinstance(value, ast.Name) and value.id in modules and chain and chain[-1] == name):
+                return False
+            owner = ".".join([modules[value.id], *chain[:-1]])
+            return owner == target or target.startswith(owner + ".")
+
+        def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
+            # label = "Class.method" for a method (outermost function kept for nested
+            # helpers), the function name for a module-level function
+            for child in ast.iter_child_nodes(node):
+                c, f = cls, func
+                if isinstance(child, ast.ClassDef):
+                    c, f = child.name, None
+                elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
+                    f = child.name
+                hit = (isinstance(child, ast.Attribute) and child.attr == "from_dict" and names_the_class(child.value)) or (
+                    isinstance(child, ast.Call) and getattr(child.func, "id", None) == "getattr" and len(child.args) >= 2
+                    and isinstance(child.args[1], ast.Constant) and child.args[1].value == "from_dict"
+                    and names_the_class(child.args[0]))
+                if hit:
+                    sites.add((where, f"{cls}.{func}" if cls and func else (func or cls or "<module>")))
+                visit(child, c, f)
+
+        visit(tree, None, None)
+    return sites
+
+
+def test_the_nested_exemptions_are_read_only_through_their_checking_parents():
+    assert set(_NESTED_READ_ONLY_BY) == {name for name, _ in _NESTED_WITHOUT_SCHEMA_AT}
+    wrong = {}
+    for name, allowed in _NESTED_READ_ONLY_BY.items():
+        sites = _from_dict_call_sites(name)
+        if sites - allowed:
+            wrong[name] = sorted(sites - allowed)
+        if allowed and not sites:
+            wrong[name] = f"no call site at all; expected {sorted(allowed)}"
+    assert wrong == {}, (
+        f"these nested records are read somewhere other than their schema-checking parent: {wrong}"
     )
 
 

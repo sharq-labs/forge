@@ -13,8 +13,8 @@ from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.units.quantity import Quantity
 from forge_flagships import thermo_mechanical as tm
 
-forge_calculix = pytest.importorskip("forge_calculix")
-forge_code_aster = pytest.importorskip("forge_code_aster")
+import forge_calculix  # noqa: E402  first-party adapters: a defect fails, it never skips (BIG 14 N1)
+import forge_code_aster  # noqa: E402
 
 
 def problem(temperature=None, restraints=None, nx=4, ny=2):

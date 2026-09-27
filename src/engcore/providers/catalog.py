@@ -292,7 +292,7 @@ def default_registry(extra: Mapping[str, Any] | None = None) -> ProviderRegistry
         except Exception as exc:
             registry.register_unavailable(
                 ProviderCapability(module.removeprefix("forge_"), "unknown", ProviderMode.LIBRARY, module, ()),
-                f"adapter package {module!r} is not importable here ({type(exc).__name__})")
+                f"adapter package {module!r} is not importable here ({type(exc).__name__}: {exc})")
             continue
         try:
             adapter.register(registry, **dict(extra or {}))

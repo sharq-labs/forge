@@ -22,11 +22,9 @@ from forge_calculix import CalculixProvider, PlaneStressProblem, RegionMaterial,
 REG = ProviderRegistry()
 descriptor.register(REG)
 CCX = REG.status("calculix").available
-try:
-    from forge_fenicsx import FenicsxProvider, fenicsx_available
-    FENICS = fenicsx_available()[0] and gmsh_available()[0]
-except Exception:  # FEniCSx absent: the CalculiX-only parts still run elsewhere
-    FENICS = False
+# the adapter is first-party and imports without FEniCSx; only the availability probes decide the skip (BIG 14 N1)
+from forge_fenicsx import FenicsxProvider, fenicsx_available
+FENICS = fenicsx_available()[0] and gmsh_available()[0]
 pytestmark = pytest.mark.skipif(not (CCX and FENICS), reason="CalculiX or FEniCSx/Gmsh unavailable")
 
 

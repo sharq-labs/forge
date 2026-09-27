@@ -94,6 +94,9 @@ def _sites(mesh: SpatialMesh, location: Location) -> int:
     return {Location.NODE: mesh.node_count, Location.CELL: mesh.cell_count, Location.FACET: len(mesh.facets), Location.EDGE: len(mesh.edges())}[location]
 
 
+SPATIAL_FIELD_SCHEMA = "spatial_field/1"
+
+
 class SpatialField:
     """Values of one definition on one exact mesh.  Immutable; content-addressed."""
 
@@ -124,12 +127,14 @@ class SpatialField:
                                  "derivation": self.derivation.value, "provenance": list(self.provenance)})
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": "spatial_field/1", "classification": "field_values_not_evidence", "digest": self.digest,
+        return {"schema": SPATIAL_FIELD_SCHEMA, "classification": "field_values_not_evidence", "digest": self.digest,
                 "definition": self.definition.to_dict(), "mesh_digest": self.mesh.digest, "values": self.values.tolist(),
                 "derivation": self.derivation.value, "provenance": list(self.provenance)}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any], mesh: SpatialMesh) -> "SpatialField":
+        if p.get("schema") != SPATIAL_FIELD_SCHEMA or p.get("classification") != "field_values_not_evidence":
+            raise SpatialRefusal(f"not a serialized spatial field: schema {p.get('schema')!r}, expected {SPATIAL_FIELD_SCHEMA!r}")
         if p.get("mesh_digest") != mesh.digest:
             raise SpatialRefusal("serialized field belongs to a different mesh")
         d = p["definition"]

@@ -16,7 +16,8 @@ from engcore.scientific.units.quantity import Quantity
 from forge_precice import ExchangedQuantity, ScalarTwoWayContract, execute, fixed_point_residuals, precice_available
 
 OK, VERSION = precice_available()
-pytestmark = pytest.mark.skipif(not OK, reason=f"preCICE unavailable: {VERSION}")
+# Per test, not per module: the contract, unit and fixed-point refusals are Forge-side and run without preCICE.
+needs_precice = pytest.mark.skipif(not OK, reason=f"preCICE unavailable: {VERSION}")
 
 T_AMB, R_TH = 293.15, 13.0
 CIRCUIT = dict(V=10.0, Rs_ohm=1.0, R0_ohm=10.0, T0_K=293.15, alpha_per_K=0.004)
@@ -37,6 +38,7 @@ def circuit(alpha=0.004):
     return HeaterCircuit(Quantity(10, "V"), Quantity(1, "ohm"), Quantity(10, "ohm"), Quantity(293.15, "K"), Quantity(alpha, "1/K"))
 
 
+@needs_precice
 def test_precice_two_way_coupling_really_runs_and_matches_forge_fixed_point():
     c = contract()
     rec = execute(c)
@@ -56,6 +58,7 @@ def test_config_is_generated_from_the_contract_and_changes_identity():
         contract(limit_T=0.0)
 
 
+@needs_precice
 def test_precice_iteration_limit_is_refused_even_though_precice_continues():
     rec = execute(contract(max_iterations=3, relaxation=0.2))
     assert not rec.succeeded and "max-iterations" in rec.reason and rec.to_dict()["values"] == {}

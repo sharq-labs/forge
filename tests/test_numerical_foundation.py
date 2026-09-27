@@ -35,6 +35,10 @@ def method(name, tolerances, **options):
     return NumericalMethod(name, SolverSettings(tolerances, options))
 
 
+# The `symbolic` extra is optional: the bare install must stay green without it.
+needs_sympy = pytest.mark.skipif(importlib.util.find_spec("sympy") is None, reason="SymPy unavailable (the 'symbolic' extra)")
+
+
 # ---- 1. linear: steady 1D conduction with a RESOLVED material conductivity ---
 
 
@@ -123,7 +127,28 @@ def _circle_line():
                             {"residual": f, "jacobian": j}, initial={"x": Quantity(1, "m"), "y": Quantity(0.5, "m")})
 
 
+def _circle_line_declared():
+    """The same system as plain callables under a DECLARED identity: needs no SymPy, so it runs on the bare install."""
+    f = lambda v: np.array([v[0] ** 2 + v[1] ** 2 - 4.0, v[0] - v[1]])  # noqa: E731
+    j = lambda v: np.array([[2.0 * v[0], 2.0 * v[1]], [1.0, -1.0]])  # noqa: E731
+    boundary = UnitBoundary((VariableSpec("x", "m"), VariableSpec("y", "m")))
+    return NumericalProblem("circle-line", ProblemKind.NONLINEAR_ROOT, OperatorIdentity("circle_line", "1", "c" * 64, "declared"), boundary,
+                            {"residual": f, "jacobian": j}, initial={"x": Quantity(1, "m"), "y": Quantity(0.5, "m")})
+
+
 def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
+    problem = _circle_line_declared()
+    tol = {"xtol": 1e-12, "residual_atol": 1e-9}
+    hybr = SciPyRootProvider().execute(problem, method("hybr", tol, max_function_evaluations=200))
+    lm = SciPyRootProvider().execute(problem, method("lm", tol, max_function_evaluations=200))
+    assert hybr.succeeded and lm.succeeded
+    assert hybr.outputs["x"].magnitude == pytest.approx(math.sqrt(2))
+    assert compare_executions(hybr, lm, rtol=1e-8, atol=1e-10).agree
+    assert problem.operator.derivation == "declared"
+
+
+@needs_sympy
+def test_symbolic_operator_identity_is_derived_and_its_jacobian_solves():
     problem = _circle_line()
     tol = {"xtol": 1e-12, "residual_atol": 1e-9}
     hybr = SciPyRootProvider().execute(problem, method("hybr", tol, max_function_evaluations=200))
@@ -137,18 +162,22 @@ def test_nonlinear_root_two_methods_agree_with_exact_jacobian():
 
 
 def test_nonlinear_failure_withholds_the_last_iterate():
-    system = SymbolicSystem("no_root", ("x",), ("x**2 + 1",))
-    f, j = system.callables()
-    p = NumericalProblem("no-root", ProblemKind.NONLINEAR_ROOT, system.identity(), UnitBoundary((VariableSpec("x", "m"),)),
-                         {"residual": f, "jacobian": j}, initial={"x": Quantity(0.3, "m")})
+    p = NumericalProblem("no-root", ProblemKind.NONLINEAR_ROOT, OperatorIdentity("no_root", "1", "d" * 64, "declared"),
+                         UnitBoundary((VariableSpec("x", "m"),)),
+                         {"residual": lambda v: np.array([v[0] ** 2 + 1.0]), "jacobian": lambda v: np.array([[2.0 * v[0]]])},
+                         initial={"x": Quantity(0.3, "m")})
     rec = SciPyRootProvider().execute(p, method("hybr", {"xtol": 1e-12, "residual_atol": 1e-9}, max_function_evaluations=50))
     assert not rec.succeeded and rec.outputs == {} and rec.convergence in (ConvergenceState.NOT_CONVERGED, ConvergenceState.MAX_ITERATIONS)
+
+
+@needs_sympy
+def test_symbolic_system_refuses_undeclared_symbols():
     with pytest.raises(NumericalRefusal, match="undeclared symbols"):
         SymbolicSystem("bad", ("x",), ("x + z",)).identity()
 
 
 def test_problem_level_refusals():
-    problem = _circle_line()
+    problem = _circle_line_declared()
     with pytest.raises(NumericalRefusal, match="initial values"):
         NumericalProblem("x", ProblemKind.NONLINEAR_ROOT, problem.operator, problem.unknowns, problem.operands)
     with pytest.raises(NumericalRefusal, match="Quantity records"):
@@ -236,17 +265,29 @@ def test_optimization_two_methods_agree():
 # ---- optional backends -------------------------------------------------------
 
 
-def test_optional_backends_refuse_when_unavailable():
+def test_symbolic_backend_refuses_when_sympy_is_absent(monkeypatch):
+    """An absent `symbolic` extra is a ProviderUnavailable refusal, never a raw ModuleNotFoundError."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "sympy", None)
+    with pytest.raises(ProviderUnavailable, match="'symbolic' extra"):
+        SymbolicSystem("circle_line", ("x", "y"), ("x**2 + y**2 - 4", "x - y")).identity()
+
+
+def test_optional_backends_refuse_when_unavailable(monkeypatch):
+    """Unconditional (BIG 14 re-review N7): petsc4py is made unimportable, so this runs where it is installed too."""
+    import sys
+
     problem, _ = _conduction_problem()
+    monkeypatch.setitem(sys.modules, "petsc4py", None)
     petsc = PETScLinearProvider()
-    if not petsc.available():
-        with pytest.raises(ProviderUnavailable):
-            petsc.execute(problem, method("ksp_gmres", {"rtol": 1e-10}, max_iterations=100))
+    assert not petsc.available()
+    with pytest.raises(ProviderUnavailable, match=r"petsc4py cannot be imported \((ModuleNotFound|Import)Error: .*'petsc' extra"):
+        petsc.execute(problem, method("ksp_gmres", {"rtol": 1e-10}, max_iterations=100))
     sundials = SundialsProvider()
-    if not sundials.available():
-        _, rec, _ = _cooling("RK45")
-        with pytest.raises(ProviderUnavailable):
-            sundials.execute(NumericalProblem(**{**_cooling("RK45")[0].__dict__}), method("cvode_bdf", {"rtol": 1e-6, "atol": 1e-9}))
+    assert not sundials.available()
+    with pytest.raises(ProviderUnavailable, match="no SUNDIALS binding"):
+        sundials.execute(NumericalProblem(**{**_cooling("RK45")[0].__dict__}), method("cvode_bdf", {"rtol": 1e-6, "atol": 1e-9}))
 
 
 def test_linear_identity_hashes_arrays_even_when_digest_is_declared():

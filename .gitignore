@@ -31,3 +31,9 @@ Thumbs.db
 # commits those as gitlinks, which no clone can resolve. Ignored so an
 # unrelated tool's scratch cannot enter a commit.
 /.pytest-review-temp/
+
+# Codex agent contract, skills and agent configs kept local to one checkout
+# (the Codex counterpart of CLAUDE.md / .claude). Not part of the repository.
+/AGENTS.md
+/.agents/
+/.codex/

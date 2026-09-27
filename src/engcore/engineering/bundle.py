@@ -46,7 +46,7 @@ from ..scenarios.timeline import canonical_digest
 from ..system_runtime import NodeStatus, RunStatus, SystemRunRequest, SystemRunResult, trace_result, trust_handoff
 from .ladder import VerificationLadder, check_provider_comparison, contract_integrity_entry
 from .reference import ReferenceComparison, ReferenceRecord
-from .summary import EngineeringSummary, UncertaintyStatement, _uncertainty_text, render_summary_text
+from .summary import SUMMARY_SCHEMA, EngineeringSummary, UncertaintyStatement, _uncertainty_text, render_summary_text
 
 MANIFEST_SCHEMA = "engcore.engineering.bundle/1"
 
@@ -186,6 +186,9 @@ def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result
             return fh.read()
 
     summary = json.loads(read("summary.json").decode("utf-8"))
+    # the summary is the parent every nested ladder / comparison record is read through: a future shape is not read as this one
+    if summary.get("schema") != SUMMARY_SCHEMA:
+        raise BundleRefused(f"summary.json has schema {summary.get('schema')!r}, not {SUMMARY_SCHEMA!r}")
     if canonical_digest(summary) != payload["summary_digest"] or dict(map(tuple, summary["identities"])).get("result") != result.digest:
         raise BundleRefused("summary.json is not the summary the manifest names, or it describes another run")
     identities = dict(map(tuple, summary["identities"]))

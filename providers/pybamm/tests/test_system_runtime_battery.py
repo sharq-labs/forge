@@ -60,14 +60,12 @@ def _load(name: str):
 
 
 REG = ProviderRegistry()
-try:
-    from forge_pybamm import descriptor as pbd
-    from forge_tespy import descriptor as tpd
-    pbd.register(REG)
-    tpd.register(REG)
-    OK = REG.status("pybamm").available and REG.status("tespy").available
-except ImportError:
-    OK = False
+# first-party imports are not guarded: a defect in them fails, it never reads as a missing provider (BIG 14 N1)
+from forge_pybamm import descriptor as pbd
+from forge_tespy import descriptor as tpd
+pbd.register(REG)
+tpd.register(REG)
+OK = REG.status("pybamm").available and REG.status("tespy").available
 pytestmark = pytest.mark.skipif(not OK, reason="PyBaMM and TESPy are both required")
 
 UNKNOWN = Uncertainty.unknown("declared, not quantified")
