@@ -956,6 +956,30 @@ def _require_the_magnitude_written_is_the_magnitude_parsed(
         )
 
 
+def _is_numpy_bool(value: Any) -> bool:
+    """``numpy.bool_`` is not a ``bool`` subclass, so the ``isinstance`` test misses it."""
+    kind = type(value)
+    return kind.__module__ == "numpy" and kind.__name__ in ("bool", "bool_")
+
+
+def _require_numeric(value: Any, *, role: str) -> None:
+    """The one type rule for a number entering a Quantity from outside the constructor.
+
+    Scalar ``*`` and ``/`` call ``float`` on their operand directly, so they
+    apply it themselves (Units audit U-03); ``from_dict`` and
+    ``coerce_quantity`` hand the raw value to the constructor, which applies
+    the same rule (U-01, U-02). A truth value (Python or numpy), text and bytes
+    are refused BEFORE any ``float`` call could erase what they were. Which
+    numbers pass is unchanged -- anything else that ``float`` accepts.
+    """
+    if isinstance(value, (bool, str, bytes, bytearray)) or _is_numpy_bool(value):
+        raise UnitCompatibilityError(
+            f"{role} must be a number, got {value!r} ({type(value).__name__}); "
+            f"a bool is not a measurement and text is not a magnitude "
+            f"-- use Quantity.parse for text"
+        )
+
+
 @dataclass(frozen=True)
 class Quantity:
     """A scientific value: magnitude plus unit, never one without the other."""
@@ -980,6 +1004,15 @@ class Quantity:
                 f"{self.magnitude!r} ({type(self.magnitude).__name__}); "
                 f"a bool is not a measurement and a string is not a magnitude "
                 f"-- use Quantity.parse for text"
+            )
+        # numpy's bool and raw bytes are not caught by the line above (`float(np.True_)`
+        # is 1.0, `float(b"5")` is 5.0). Kept as its own statement so the bool/str
+        # rule above stays exactly the rule its mutants name.
+        if isinstance(self.magnitude, (bytes, bytearray)) or _is_numpy_bool(self.magnitude):
+            raise UnitCompatibilityError(
+                f"scientific magnitude must be a number, got "
+                f"{self.magnitude!r} ({type(self.magnitude).__name__}); "
+                f"a bool is not a measurement and bytes are not a magnitude"
             )
         magnitude = float(self.magnitude)
         if not math.isfinite(magnitude):
@@ -1302,6 +1335,7 @@ class Quantity:
                 * registry().Quantity(other.magnitude, other.units)
             )
             return Quantity(float(product.magnitude), str(product.units))
+        _require_numeric(other, role="a scale factor")
         return Quantity(self.magnitude * float(other), self.units)
 
     def __truediv__(self, other: "Quantity | float") -> "Quantity":
@@ -1313,6 +1347,7 @@ class Quantity:
                 / registry().Quantity(other.magnitude, other.units)
             )
             return Quantity(float(ratio.magnitude), str(ratio.units))
+        _require_numeric(other, role="a divisor")
         return Quantity(self.magnitude / float(other), self.units)
 
     def compare(self, other: "Quantity") -> float:
@@ -1331,7 +1366,14 @@ class Quantity:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Quantity":
         require_schema(payload, QUANTITY_SCHEMA)
-        return cls(float(payload["magnitude"]), str(payload["units"]))
+        # no pre-coercion: `float(True)` / `str(5)` would erase what the wire said before
+        # the constructor's type rule could refuse it (Units audit U-01)
+        units = payload["units"]
+        if not isinstance(units, str):
+            raise UnitCompatibilityError(
+                f"serialized units must be a string, got {units!r} ({type(units).__name__})"
+            )
+        return cls(payload["magnitude"], units)
 
     def __str__(self) -> str:  # pragma: no cover - display only
         return f"{self.magnitude} {self.units}"
@@ -1348,7 +1390,8 @@ def coerce_quantity(value: Quantity | float | int | str, unit: str) -> Quantity:
         return value.to(unit)
     if isinstance(value, str):
         return Quantity.parse(value).to(unit)
-    return Quantity(float(value), unit)
+    # no pre-coercion: the numeric branch obeys the constructor's type rule (Units audit U-02)
+    return Quantity(value, unit)
 
 
 #: How much of a float64 is IDENTITY (I-23, R-62/R-74). A CONVENTION, and where the two
