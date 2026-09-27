@@ -99,6 +99,13 @@ class ProviderStatus:
     def available(self) -> bool:
         return self.availability is Availability.AVAILABLE
 
+    @property
+    def found_but_refused(self) -> bool:
+        """UNAVAILABLE although the provider is present: its adapter failed to import or register, its
+        version probe failed, or its version could not be read. A defect to report, not an absent stack
+        to skip (BIG 14 review F3). Read from the reason discovery wrote; not part of the record."""
+        return not self.available and self.reason.startswith(("adapter ", "version probe of ", "could not establish the "))
+
     def to_dict(self) -> dict[str, Any]:
         return {"capability": self.capability.to_dict(), "availability": self.availability.value, "version": self.version,
                 "digest": self.digest, "location": self.location, "reason": self.reason,
@@ -115,12 +122,31 @@ def _sha256_file(path: str) -> str:
 
 def distribution_digest(dist_name: str) -> str:
     """sha256 over the installed distribution's RECORD (or sorted file list when absent)."""
-    dist = importlib.metadata.distribution(dist_name)
+    return _record_digest_of(importlib.metadata.distribution(dist_name), dist_name)
+
+
+def _record_digest_of(dist: Any, dist_name: str) -> str:
     record = dist.read_text("RECORD")
     if record is None:
         files = sorted(str(f) for f in (dist.files or ()))
         record = "\n".join(files) or f"{dist_name}=={dist.version}"
     return hashlib.sha256(record.encode("utf-8")).hexdigest()
+
+
+#: Distributions located for the execution-time library check, by name. Locating scans sys.path
+#: (tens of milliseconds on a network or WSL mount); the files are re-read on every check, so a
+#: changed RECORD or METADATA is seen, and an upgrade -- which replaces the dist-info directory --
+#: reads as missing. Cleared by ``ProviderRegistry.status(refresh=True)``.
+_LOCATED: dict[str, Any] = {}
+
+
+def _located(name: str) -> Any:
+    if name not in _LOCATED:
+        try:
+            _LOCATED[name] = importlib.metadata.distribution(name)
+        except importlib.metadata.PackageNotFoundError:
+            return None
+    return _LOCATED[name]
 
 
 def _has_distribution(name: str) -> bool:
@@ -208,6 +234,42 @@ def python_package_probe(capability: ProviderCapability, module: str, dist_name:
     return probe
 
 
+def require_library_unchanged(status: ProviderStatus) -> None:
+    """Execution-time counterpart of :func:`python_package_probe` (BIG 14 review N1).
+
+    A library adapter calls this where it imports its library. The provider's
+    distribution and every declared dependency must still have the version and
+    RECORD digest discovery bound into ``status``; a difference means the
+    execution identity would describe another library than the one that runs,
+    and it is refused. Per execution it reads RECORD files only; the shared
+    python-environment digest is re-read by ``ProviderRegistry.status(refresh=True)``.
+    """
+    from .records import ProviderRefusal
+
+    if not status.available or status.capability.mode is not ProviderMode.LIBRARY:
+        raise ProviderRefusal(f"{status.capability.provider_id!r} is not an available library provider")
+    package = status.capability.package
+
+    def now(name: str) -> tuple[str, str]:
+        dist = _located(name)
+        version = dist.version if dist is not None else None
+        if not version:  # absent, or its dist-info was replaced (an upgrade) since it was located
+            return "", ""
+        return version, _record_digest_of(dist, name)
+
+    found = [n for n in dict.fromkeys((package, package.lower())) if now(n)[0]]
+    if not found:
+        raise ProviderRefusal(f"library {package!r} changed since discovery: it is no longer installed as located "
+                              f"(discovered {status.version})")
+    declared = tuple(d for d in status.dependencies if d[0] != "python-environment")
+    current = tuple((n, *now(n)) for n, _, _ in declared)
+    version, main = now(found[0])
+    combined = _combine(main, *(d[2] for d in current))
+    if version != status.version or combined != status.digest or current != declared:
+        raise ProviderRefusal(f"library {package!r} changed since discovery (now {version}, discovered {status.version}); "
+                              "the execution identity no longer describes what would run")
+
+
 def executable_probe(capability: ProviderCapability, executable: str, version_argv: tuple[str, ...],
                      parse_version: Callable[[str], str], *, search_path: str | None = None, timeout: float = 30.0,
                      environment_prefix: str | None = None, accepted_exit_codes: tuple[int, ...] = (0,)) -> Callable[[], ProviderStatus]:
@@ -274,6 +336,7 @@ class ProviderRegistry:
             raise ProviderUnavailable(f"provider {provider_id!r} is not registered")
         if refresh:
             _PY_ENV.clear()  # a refresh re-reads the installed distributions too, not a digest cached at first probe
+            _LOCATED.clear()
         if refresh or provider_id not in self._cache:
             self._cache[provider_id] = self._entries[provider_id][1]()
         return self._cache[provider_id]

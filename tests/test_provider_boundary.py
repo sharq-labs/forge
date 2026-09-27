@@ -232,6 +232,24 @@ def test_a_conda_environment_changed_after_discovery_is_refused_at_launch(tmp_pa
                           inv.timeout_s, inv.expected_outputs, conda_environment=("relative", discovered))
 
 
+def test_a_sequence_refused_at_a_later_step_leaves_a_spent_workspace(tmp_path):
+    """Review L4: step 1 ran, step 2's launch check refused; the workspace must not be runnable again."""
+    from engcore.providers.catalog import conda_environment_digest
+
+    prefix = _fake_conda_env(tmp_path / "env")
+    good, _ = conda_environment_digest(prefix)
+    inv = _invocation()
+    stale = ProcessInvocation(inv.executable, inv.executable_digest, inv.version, inv.args, inv.inputs, inv.environment,
+                              inv.timeout_s, inv.expected_outputs, conda_environment=(prefix, "f" * 64))
+    (tmp_path / "ws").mkdir()
+    ws = ProcessWorkspace(str(tmp_path / "ws"))
+    with pytest.raises(ProviderRefusal, match="changed since discovery"):
+        ws.run_sequence((inv, stale))
+    with pytest.raises(ProviderRefusal, match="exactly once"):
+        ws.run(inv)
+    assert good != "f" * 64
+
+
 def test_conda_environment_of_reads_only_what_discovery_bound(tmp_path):
     from engcore.providers import conda_environment_of
 
@@ -247,6 +265,78 @@ def test_conda_environment_of_reads_only_what_discovery_bound(tmp_path):
         conda_environment_of(elsewhere)
 
 
+def test_a_refresh_drops_the_per_process_discovery_caches():
+    import engcore.providers.catalog as catalog
+
+    catalog.python_environment_digest()
+    catalog._located("pytest")
+    assert catalog._PY_ENV and "pytest" in catalog._LOCATED
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    reg = ProviderRegistry()
+    reg.register(cap, catalog.python_package_probe(cap, "pytest", ("pytest",)))
+    reg.status("pytest-lib", refresh=True)
+    assert "pytest" not in catalog._LOCATED  # re-located on the next check, not reused
+    assert catalog._PY_ENV  # re-read by the refreshed probe itself
+
+
+def test_found_but_refused_separates_a_defect_from_an_absent_provider():
+    cap = ProviderCapability("x", "demo", "process", "x", ("demo",))
+    for reason in ("adapter 'forge_x' failed to register: NameError: y", "version probe of /e/bin/x exited 0 (accepted [201])",
+                   "could not establish the version of /e/bin/x", "could not establish the OpenFOAM version"):
+        assert ProviderStatus(cap, Availability.UNAVAILABLE, reason=reason).found_but_refused, reason
+    for reason in ("executable 'x' not found", "python module 'x' is not installed", "OpenFOAM icoFoam not found under the provider prefix"):
+        assert not ProviderStatus(cap, Availability.UNAVAILABLE, reason=reason).found_but_refused, reason
+    assert not ProviderStatus(cap, Availability.AVAILABLE, "1", "a" * 64).found_but_refused
+    assert "found_but_refused" not in ProviderStatus(cap, Availability.UNAVAILABLE, reason="adapter x").to_dict()
+
+
+def test_a_library_changed_after_discovery_is_refused_at_execution(monkeypatch):
+    """BIG 14 re-review N1: library providers import at execution; the library must still be the one discovery bound."""
+    import engcore.providers.catalog as catalog
+    from engcore.providers import python_package_probe, require_library_unchanged
+
+    cap = ProviderCapability("pytest-lib", "demo", "library", "pytest", ("demo",))
+    status = python_package_probe(cap, "pytest", ("pytest",), dependencies=("pluggy",))()
+    assert status.available, status.reason
+    require_library_unchanged(status)  # unchanged: passes
+    real_digest = catalog._record_digest_of
+    with monkeypatch.context() as m:
+        m.setattr(catalog, "_record_digest_of", lambda d, n: "0" * 64 if n == "pluggy" else real_digest(d, n))
+        with pytest.raises(ProviderRefusal, match="changed since discovery"):
+            require_library_unchanged(status)  # a dependency's files changed
+
+    class Upgraded:  # what a located distribution reads like after pip replaced it with a newer one
+        version, files = "99.0", ()
+
+        @staticmethod
+        def read_text(name):
+            return "pytest/__init__.py,sha256=new,1\n" if name == "RECORD" else None
+    with monkeypatch.context() as m:
+        m.setitem(catalog._LOCATED, "pytest", Upgraded())
+        with pytest.raises(ProviderRefusal, match="now 99.0"):
+            require_library_unchanged(status)  # the provider itself was upgraded
+
+    class Removed:  # its dist-info directory is gone
+        version, files = None, ()
+    with monkeypatch.context() as m:
+        m.setitem(catalog._LOCATED, "pytest", Removed())
+        with pytest.raises(ProviderRefusal, match="no longer installed"):
+            require_library_unchanged(status)
+    require_library_unchanged(status)  # unchanged again once the stand-ins are gone
+    with pytest.raises(ProviderRefusal, match="not an available library provider"):
+        require_library_unchanged(ProviderStatus(ProviderCapability("x", "demo", "process", "x", ("d",)), Availability.AVAILABLE, "1", "a" * 64))
+
+
+def test_every_library_adapter_checks_its_library_where_it_executes():
+    """Static pin for N1: each library adapter calls the check (FEniCSx records the loaded dolfinx version itself)."""
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "providers"
+    for name in ("cantera", "coolprop", "pybamm", "tespy"):
+        source = (root / name / f"forge_{name}" / "__init__.py").read_bytes().decode("utf-8")
+        assert source.count("require_library_unchanged(self.status)") >= 1, name
+
+
 def test_every_adapter_process_invocation_declares_its_environment_check():
     """Static: an adapter that builds a ProcessInvocation without the check would launch unverified (BIG 14 F2)."""
     import ast
@@ -257,8 +347,10 @@ def test_every_adapter_process_invocation_declares_its_environment_check():
     for path in sorted(root.glob("*/forge_*/*.py")):
         for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
             if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "ProcessInvocation":
-                calls.append((path.relative_to(root).as_posix(), node.lineno,
-                              any(k.arg == "conda_environment" for k in node.keywords)))
+                value = next((k.value for k in node.keywords if k.arg == "conda_environment"), None)
+                derived = (isinstance(value, ast.Call) and getattr(value.func, "id", None) == "conda_environment_of") or (
+                    isinstance(value, ast.Name) and value.id == "checked_environment")
+                calls.append((path.relative_to(root).as_posix(), node.lineno, derived))
     assert len(calls) >= 9, calls
     assert [c for c in calls if not c[2]] == [], calls
 

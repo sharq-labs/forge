@@ -15,6 +15,8 @@ from forge_openmodelica import LumpedThermalProblem, OpenModelicaProvider, descr
 REG = ProviderRegistry()
 descriptor.register(REG)
 OK = REG.status("openmodelica").available
+# omc found but its probe refused or its version unreadable: a defect, not an absent provider (BIG 14 F3)
+assert not REG.status("openmodelica").found_but_refused, REG.status("openmodelica").reason
 pytestmark = pytest.mark.skipif(not OK, reason="OpenModelica unavailable")
 W = TimeWindow(TimePoint("lab", Quantity(0, "s")), TimePoint("lab", Quantity(1000, "s")))
 

@@ -182,6 +182,7 @@ class CodeAsterProvider:
         base = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem.to_dict(),
                                                       configuration=configuration, output_request=("displacement",))
         t0 = time.perf_counter()
+        checked_environment = conda_environment_of(self.status)  # may refuse: before any workspace exists
         ws = ProcessWorkspace(self.workspace_root)
         files = {"case.comm": generate_comm(problem, base.digest), "mesh.mail": generate_mesh(problem)}
         # workspace-relative paths (run_aster runs with cwd = the workspace): the .export is content, not a temp path
@@ -193,7 +194,7 @@ class CodeAsterProvider:
         env = (("HOME", "/tmp"), ("LC_ALL", "C"), ("OMP_NUM_THREADS", "1"), ("PATH", f"{prefix}/bin:/usr/bin:/bin"))
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
-                                env, self.timeout_s, ("result.resu", "message"), conda_environment=conda_environment_of(self.status))
+                                env, self.timeout_s, ("result.resu", "message"), conda_environment=checked_environment)
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)
@@ -215,6 +216,7 @@ class CodeAsterProvider:
         base = ProviderExecutionIdentity.from_content(self.status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem.to_dict(),
                                                       configuration=configuration, output_request=("displacement", "stress"))
         t0 = time.perf_counter()
+        checked_environment = conda_environment_of(self.status)  # may refuse: before any workspace exists
         ws = ProcessWorkspace(self.workspace_root)
         files = {"case.comm": generate_thermoelastic_comm(problem, base.digest), "mesh.mail": generate_thermoelastic_mesh(problem)}
         export = "\n".join(["P time_limit 600", "P memory_limit 2048", "P ncpus 1", "P mpi_nbcpu 1", "P mode interactif",
@@ -225,7 +227,7 @@ class CodeAsterProvider:
         env = (("HOME", "/tmp"), ("LC_ALL", "C"), ("OMP_NUM_THREADS", "1"), ("PATH", f"{prefix}/bin:/usr/bin:/bin"))
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
-                                env, self.timeout_s, ("result.resu", "stress.resu", "message"), conda_environment=conda_environment_of(self.status))
+                                env, self.timeout_s, ("result.resu", "stress.resu", "message"), conda_environment=checked_environment)
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)

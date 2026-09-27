@@ -193,7 +193,13 @@ Then review and authority debt:
       is now re-checked at launch beside the executable re-hash
       (`ProcessInvocation.conda_environment`, `conda_environment_of`); every
       adapter invocation declares it (static test). Residual: the digest
-      covers conda package RECORDS, not files edited in place.
+      covers conda package RECORDS, not files edited in place, nor system
+      tools reached through PATH (/bin/sh, a host C toolchain).
+- [x] Re-review N1 (MEDIUM): library providers (Cantera, PyBaMM, CoolProp,
+      TESPy) now check at execution that the library they import is the one
+      discovery bound (`require_library_unchanged`, 1-3 ms per call).
+      Residual: the shared python-environment digest (numpy, ...) is re-read
+      only on `status(refresh=True)`, not per execution.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
 - [ ] Re-run the affected regression packs after each bounded fix and append

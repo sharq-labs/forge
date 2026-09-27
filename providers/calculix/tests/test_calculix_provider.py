@@ -23,7 +23,7 @@ REG = ProviderRegistry()
 descriptor.register(REG)
 CCX = REG.status("calculix").available
 # executable found but its version probe refused (e.g. a changed exit-code declaration): a defect, not an absent provider
-assert not REG.status("calculix").reason.startswith("version probe of"), REG.status("calculix").reason
+assert not REG.status("calculix").found_but_refused, REG.status("calculix").reason
 # the adapter is first-party and imports without FEniCSx; only the availability probes decide the skip (BIG 14 N1)
 from forge_fenicsx import FenicsxProvider, fenicsx_available
 FENICS = fenicsx_available()[0] and gmsh_available()[0]

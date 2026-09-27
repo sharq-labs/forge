@@ -178,7 +178,7 @@ class ProcessWorkspace:
         judged against the snapshot taken before the FIRST step, so a file only
         counts if this sequence created or changed it.
         """
-        if self.record is not None:
+        if self.record is not None or getattr(self, "_started", False):
             raise ProviderRefusal("a workspace executes exactly once")
         invocations = tuple(invocations)
         if not invocations:
@@ -193,6 +193,8 @@ class ProcessWorkspace:
             self._write(name, data)
         before = _snapshot(self.path)
         start = time.perf_counter()
+        # spent from here on: a refusal at a later step's launch check must not leave a workspace that could run again
+        self._started = True
         steps, outs, errs = [], [], []
         exit_code: int | None = 0
         timed_out = False
@@ -204,7 +206,7 @@ class ProcessWorkspace:
                 prefix, expected = inv.conda_environment
                 try:
                     actual, _ = conda_environment_digest(prefix)
-                except OSError as exc:
+                except (OSError, ValueError, AttributeError) as exc:  # unreadable / non-JSON / non-object records
                     raise ProviderRefusal(f"the environment {prefix} cannot be re-read at launch: {exc}") from exc
                 if actual != expected:
                     raise ProviderRefusal(f"environment {prefix} changed since discovery (package set {actual[:12]} != {expected[:12]}); "

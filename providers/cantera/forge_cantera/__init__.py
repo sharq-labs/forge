@@ -20,7 +20,7 @@ import time
 from dataclasses import dataclass
 from typing import Mapping
 
-from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed
+from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed, require_library_unchanged
 from engcore.scenarios.timeline import TimeWindow
 from engcore.scientific.units.quantity import Quantity
 
@@ -61,6 +61,7 @@ class CanteraProvider:
         self.status = registry.require("cantera")
 
     def _solution(self, mechanism: Mechanism):
+        require_library_unchanged(self.status)  # the library that runs is the one discovery bound (BIG 14 N1)
         import cantera as ct
 
         text = mechanism.content.decode("utf-8")

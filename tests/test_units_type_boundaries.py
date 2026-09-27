@@ -9,7 +9,11 @@ raw bytes slip past an ``isinstance(x, bool/str)`` test the same way.
 
 from __future__ import annotations
 
+import array
 import json
+
+from decimal import Decimal
+from fractions import Fraction
 
 import numpy as np
 import pytest
@@ -18,7 +22,8 @@ from engcore.scientific.errors import ScientificCoreError, UnitCompatibilityErro
 from engcore.scientific.units.quantity import Quantity, coerce_quantity
 
 NOT_NUMBERS = (True, False, np.True_, np.bool_(False), "5", "1e3", b"5", bytearray(b"5"),
-               memoryview(b"5"), np.array(True), np.array("5"), np.array(b"5"))
+               memoryview(b"5"), np.array(True), np.array("5"), np.array(b"5"),
+               np.complex128(1 + 2j), np.array(True, dtype=object), np.timedelta64(5, "s"), array.array("b", b"5"))
 
 
 def _id(value) -> str:
@@ -27,6 +32,8 @@ def _id(value) -> str:
         return f"memoryview({bytes(value)!r})"
     if type(value) is object:
         return "object()"
+    if isinstance(value, array.array):
+        return f"array.array({value.typecode!r}, {value.tobytes()!r})"
     return f"{type(value).__name__}:{value!r}"
 
 
@@ -65,7 +72,7 @@ def test_scalar_arithmetic_refuses_what_is_not_a_scale_factor(factor):
         length / factor
 
 
-@pytest.mark.parametrize("units", (1, 1.0, True, np.float64(1.0)), ids=_id)
+@pytest.mark.parametrize("units", (1, 1.0, True, np.float64(1.0), Decimal(1), Fraction(1), 1j), ids=_id)
 def test_a_number_is_never_a_unit(units):
     with pytest.raises(UnitCompatibilityError, match="a number is not a unit"):
         Quantity(5.0, units)

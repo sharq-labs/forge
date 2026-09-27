@@ -25,8 +25,10 @@ Invariants:
 
 from __future__ import annotations
 
+import array
 import hashlib
 import math
+import numbers
 import operator as _operator
 import re
 import threading
@@ -967,7 +969,9 @@ def _is_numpy_bool(value: Any) -> bool:
     if kind.__module__ == "numpy" and kind.__name__ in ("bool", "bool_"):
         return True
     dtype = getattr(value, "dtype", None)
-    return kind.__module__ == "numpy" and getattr(dtype, "kind", None) in ("b", "U", "S")
+    # a numpy value is a magnitude only if it is an integer or real number (i, u, f): bool, text and bytes are not,
+    # complex would lose its imaginary part, object arrays can hide anything, timedelta/datetime lose their unit
+    return kind.__module__ == "numpy" and getattr(dtype, "kind", None) not in ("i", "u", "f")
 
 
 def _require_numeric(value: Any, *, role: str) -> None:
@@ -980,7 +984,7 @@ def _require_numeric(value: Any, *, role: str) -> None:
     are refused BEFORE any ``float`` call could erase what they were. Which
     numbers pass is unchanged -- anything else that ``float`` accepts.
     """
-    if isinstance(value, (bool, str, bytes, bytearray, memoryview)) or _is_numpy_bool(value):
+    if isinstance(value, (bool, str, bytes, bytearray, memoryview, array.array)) or _is_numpy_bool(value):
         raise UnitCompatibilityError(
             f"{role} must be a number, got {value!r} ({type(value).__name__}); "
             f"a bool is not a measurement and text is not a magnitude "
@@ -1016,7 +1020,7 @@ class Quantity:
         # numpy's bool and raw bytes are not caught by the line above (`float(np.True_)`
         # is 1.0, `float(b"5")` is 5.0). Kept as its own statement so the bool/str
         # rule above stays exactly the rule its mutants name.
-        if isinstance(self.magnitude, (bytes, bytearray, memoryview)) or _is_numpy_bool(self.magnitude):
+        if isinstance(self.magnitude, (bytes, bytearray, memoryview, array.array)) or _is_numpy_bool(self.magnitude):
             raise UnitCompatibilityError(
                 f"scientific magnitude must be a number, got "
                 f"{self.magnitude!r} ({type(self.magnitude).__name__}); "
@@ -1024,7 +1028,7 @@ class Quantity:
             )
         # a number in the unit slot would normalize to "dimensionless" through `str()`:
         # refused here; string-like unit objects keep working through normalize_unit
-        if isinstance(self.units, (bool, int, float, complex)) or (
+        if isinstance(self.units, numbers.Number) or (
                 type(self.units).__module__ == "numpy" and not isinstance(self.units, str)):
             raise UnitCompatibilityError(
                 f"units must be a unit expression, got the number {self.units!r} "
