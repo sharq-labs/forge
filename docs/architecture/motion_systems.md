@@ -326,6 +326,20 @@ electromagnetic or coupled simulations.
 9. Solver agreement is not truth.
 10. Optimization scores are not evidence.
 
+## 13.1 Visualization and transparent/cutaway playback
+
+Motion-system results should be consumable by the global 3D engineering
+viewer. A mechanism, suspension, motor, drone or robot may therefore be shown
+with transparent housings, section/cutaway geometry, motion playback and
+time-synchronized engineering overlays.
+
+For electromechanical systems this may include current, losses, temperature,
+RPM, torque, bearing state, conductor/connector limits and other margins.
+The viewer may highlight an exceeded applicable limit, but it must never infer
+burnout/failure from appearance alone.
+
+See `docs/architecture/visualization_runtime.md`.
+
 ## 14. Definition of success
 
 This layer is usable when Forge can trace a motion-system candidate from:
