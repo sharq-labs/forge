@@ -81,6 +81,57 @@ BIG 14 = Scientific Closure & Recertification (plan: `docs/work/ACTIVE_PLAN.md`)
 Classes 1, 2 and 6 can alter evidence admission / replay identity / assurance, and the ruleset blocker means a red gate cannot stop a merge. 14.2/14.3 flagship
 evidence work stays blocked until 1, 2, 3, 4, 5 are repaired on this branch and 6 has a recertification run; the ruleset needs the owner.
 
+## 2026-09-28 BIG 14 — flagship A: first comparison against measured LG M50 cells (branch `feat/big-14-flagship-a`)
+
+The user chose flagship A for deep closure work. The work so far is below. Every study was pre-registered in a pushed commit before its first run.
+
+### NASA PCoE is not applicable to flagship A's cell
+- Flagship A runs PyBaMM's Chen2020 set, which models the LG M50 (21700, 5 Ah, NMC811/graphite-SiOx).
+- The NASA PCoE cells are 2 Ah 18650s: a different cell. Comparing them would test the wrong cell.
+
+### Data: Chen 2020 LG M50 validation discharges
+- Source: Zenodo 10.5281/zenodo.4032561, CC-BY-4.0, 1.8 MB. Downloaded with the user's approval; the md5 of every file equals Zenodo's.
+- Vendored in `benchmarks/measurements/chen2020_lgm50/` (`raw/` byte-exact with `-text`; `manifest.json` pins sha256).
+- Content: 3 cells, CC-CV to 4.2 V then CC discharge at C/10, C/2, 1C and 1.5C, with surface and chamber temperature, 30 s sampling.
+- Data-only facts, recorded before registration:
+  - capacity 4.93-5.00 Ah, agreeing within 0.2 % between cells;
+  - cell-to-cell voltage spread 0.9-5.8 mV RMS;
+  - surface-temperature spread 0.2-1.5 K;
+  - peak surface rise over the chamber up to 31 K at 1.5C.
+- Chen2020 facts found:
+  - the heat-transfer coefficient is a generic 10 W/m2K default;
+  - only the exchange-current densities carry an Arrhenius term; transport has no temperature dependence.
+
+### Study `big14-a-lgm50-validation`
+- Pre-registered at `4656f339`; runner `13a5f647`; the JSON-record crash fixed at `2d09a0b3` (no computation changed).
+- Result: NOT MET on all three cells.
+  - SPM at C/2 (the flagship's rate): voltage RMSE 149-153 mV against <= 17 mV; capacity +3.1 % against <= 2 %.
+  - Peak-rise T1 is met: -0.8, +0.4 and -1.6 K.
+  - The calibrated h is 3.555 W/m2K; the cell02 1C temperature RMSE is 0.47 K.
+- The run was repeated and was identical. Record: `docs/flagships/big14/lgm50_validation_study.json`.
+- Labelled post-hoc diagnostic (`docs/flagships/big14/diagnostic_normalized_axis.py`). On a capacity-normalised axis the error is still 44-49 mV at C/10, so it is not capacity alone:
+  - an equilibrium (electrode-balance / OCV) offset;
+  - a rate-growing SPM model-form error: 156-169 mV for SPM against 75-87 mV for DFN at 1.5C.
+- Independence of this data from the Chen2020 parameterisation stays UNCONFIRMED. It needs the paper text, and reading the PDF needs the user's approval.
+
+### Study `big14-a-lgm50-electrode-balance`
+- Pre-registered at `87c7a9ec`. Two active-material factors were calibrated on cell02 at C/10 only.
+- Calibrated factors: negative 0.9798, positive **0.8500, which is the lower bound**. The optimum may lie outside the registered range.
+- Held-out C/10 on cell03 and cell04: 11.8 mV, so the correction transfers across cells.
+- Result at C/2: NOT MET.
+  - SPM: 33-38 mV against <= 17 mV. Capacity +0.4-0.5 % meets C1.
+  - DFN, reported and not judged: 14.7-18.7 mV.
+- New at high rate: capacity is now under-predicted, -8 % at 1.5C. This is consistent with the declared missing temperature dependence of transport.
+- Record: `docs/flagships/big14/lgm50_balance_study.json`.
+
+### Consequence for flagship A (open decision for the owner)
+- The flagship reports a degradation voltage shift of -34 mV at C/2.
+- The SPM it uses has an error of 33-38 mV against the measured cells at that rate, even after the balance correction. As built, the flagship cannot support that claim.
+- DFN with the identified balance comes close to the 17 mV bar.
+- Proposal, to be decided by the owner:
+  - move flagship A's cell model from SPM to DFN;
+  - re-register the identification with a wider bound, because the positive factor hit its bound.
+
 ## 2026-09-27 BIG 14 — 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
 
 - PR #110 (commits up to `86fa1896`) was MERGED at 17:26 UTC by the sharq-labs account while `recertification-gate` was red. Cause of the red:
