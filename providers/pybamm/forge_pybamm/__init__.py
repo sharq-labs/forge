@@ -23,6 +23,7 @@ Nothing here is battery validation.
 from __future__ import annotations
 
 import hashlib
+from fractions import Fraction
 import inspect
 import math
 import time
@@ -201,6 +202,10 @@ class PyBaMMProvider:
                                                 "points": len(times)})
 
 
+#: how far before a segment's end the held records are probed (1 ms: inside every segment, after every earlier instant of it)
+HOLD_PROBE_S = Fraction(1, 1000)
+
+
 def segments_from_records(environment, ambient_channel: str, current_history: str, window: TimeWindow, step_s: int) -> tuple[Segment, ...]:
     """Segments over ``window`` read from EXACT BIG 3 / BIG 2 records.
 
@@ -208,6 +213,12 @@ def segments_from_records(environment, ambient_channel: str, current_history: st
     KNOWN).  Current: the BIG 2 USAGE history value at each segment start.  Each
     segment carries the digests of the records it was read from.  An UNKNOWN
     value refuses the problem -- never a default.
+
+    The segment-start value is HELD for the whole segment, so both records must
+    also be KNOWN just before the segment ends (``HOLD_PROBE_S`` earlier): a
+    channel that is UNKNOWN inside a segment (values only at samples, a gap past
+    its max_gap, extrapolation, validity ending, a declared discontinuity) is
+    refused rather than held as a known boundary condition.
     """
     from engcore.scenarios.timeline import TimePoint, canonical_digest
 
@@ -239,6 +250,12 @@ def segments_from_records(environment, ambient_channel: str, current_history: st
         cur = history.value_at(at)
         if amb.status.value != "known" or cur.status.value != "known":
             raise ProviderRefusal(f"ambient or current UNKNOWN at {float(t):g} s; nothing is assumed")
+        late = TimePoint(basis, t + step_s - Fraction(HOLD_PROBE_S))
+        amb_late = environment.channel_value(ambient_channel, late)
+        cur_late = history.value_at(late)
+        if amb_late.status.value != "known" or cur_late.status.value != "known":
+            raise ProviderRefusal(f"ambient or current UNKNOWN inside the segment starting at {float(t):g} s "
+                                  f"({getattr(amb_late, 'reason', '') or getattr(cur_late, 'reason', '')}); a segment-start value is not held over it")
         segments.append(Segment(TimeWindow(at, TimePoint(basis, t + step_s)), cur.value.value, amb.value.value,
                                 (("ambient", canonical_digest(amb.to_dict())), ("current", canonical_digest(cur.value.to_dict())),
                                  ("ambient_source", amb.source_id), ("ambient_classification", amb.source_classification))))
