@@ -1,0 +1,27 @@
+{
+ "met": true,
+ "preregistration": "big14_a_cell_energy_check_preregistration.json",
+ "preregistration_sha256": "6ea5e48a005417a1010efcabecfce2b3c8398b7b6a39c9e49f0fe6dee8ec5e47",
+ "rows": [
+  {
+   "C1_met": true,
+   "duration_s": 3600.0,
+   "heat_J": 478.77125780478866,
+   "identity_heat_J": 478.77125766481976,
+   "mixing_share": 0.8314038260173026,
+   "relative_mismatch": 2.923502648518438e-10,
+   "reversible_share": 0.0,
+   "temperature_K": 300.0
+  },
+  {
+   "C1_met": true,
+   "duration_s": 3600.0,
+   "heat_J": 309.7622755299081,
+   "identity_heat_J": 309.7622753899391,
+   "mixing_share": 1.285024959366251,
+   "relative_mismatch": 4.5185947020202537e-10,
+   "reversible_share": 0.0,
+   "temperature_K": 313.15
+  }
+ ]
+}
