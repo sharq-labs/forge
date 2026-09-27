@@ -1,0 +1,42 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 Sharq Labs. All rights reserved.
+
+This repository and all source code, documentation, data, models, tests,
+benchmarks, designs, schemas, specifications, assets, and other materials
+contained in it (collectively, the "Software") are proprietary and
+confidential.
+
+No license, right, title, or interest in or to the Software is granted by
+making the repository or any portion of the Software accessible.
+
+Without prior written permission from the copyright holder, you may not:
+
+- copy, reproduce, modify, adapt, translate, or create derivative works;
+- distribute, publish, sublicense, sell, rent, lease, transfer, or otherwise
+  make the Software available to any third party;
+- use the Software, in whole or in part, for commercial, research,
+  benchmarking, training, model-training, model-evaluation, competitive, or
+  production purposes;
+- reverse engineer, decompile, disassemble, extract, scrape, mirror, or
+  systematically reproduce the Software except where such restriction is
+  prohibited by applicable law;
+- remove or alter copyright, ownership, provenance, or proprietary notices.
+
+Access to the repository does not constitute permission to use the Software.
+
+Any permission or license must be granted expressly in writing by the
+copyright holder and may be subject to additional terms.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, OR FITNESS FOR A
+PARTICULAR SCIENTIFIC, ENGINEERING, SAFETY, REGULATORY, OR COMMERCIAL USE.
+
+To the maximum extent permitted by applicable law, the copyright holder shall
+not be liable for any claim, damages, losses, or other liability arising from
+or related to the Software or its use.
+
+For licensing inquiries, contact the repository owner.
+
+SPDX-License-Identifier: LicenseRef-Proprietary
