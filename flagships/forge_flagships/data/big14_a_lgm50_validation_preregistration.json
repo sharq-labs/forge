@@ -1,0 +1,68 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-lgm50-validation",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-09-28, after inspecting the data files (layout, protocol, cell-to-cell spread) and BEFORE any model run against them",
+  "question": "Does the PyBaMM Chen2020 LG M50 cell model that flagship A uses (SPM) reproduce measured LG M50 constant-current discharges - terminal voltage, delivered capacity and surface-temperature rise - at the rate the flagship runs (C/2)?",
+  "data": {
+    "source": "Chen, Brosa Planella, O'Regan, Gastol, Widanage, Kendrick: Experimental data for 'Development of Experimental Techniques for Parameterization of Multi-scale Lithium-ion Battery Models'",
+    "doi": "10.5281/zenodo.4032561",
+    "paper": "C.-H. Chen et al., J. Electrochem. Soc. 167 (2020) 080534, doi 10.1149/1945-7111/ab9050",
+    "license": "CC-BY-4.0",
+    "files": {
+      "LGM50_cell02.csv": {"md5": "0bbf959cbfc367296ec69d7a74d2f5c1", "sha256": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35", "bytes": 597715},
+      "LGM50_cell03.csv": {"md5": "a09cbd8eff0af55dfe9bc8728fa89908", "sha256": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb", "bytes": 590794},
+      "LGM50_cell04.csv": {"md5": "f17615476283d2e15087165697ff9d7c", "sha256": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e", "bytes": 595967}
+    },
+    "md5_matches_zenodo": true,
+    "protocol_as_recorded": "per cell: CC-CV charge to 4.2 V at 1.5 A, 50 mA cut-off, 2 h rest, then CC discharge to 2.5 V at 0.5 / 2.5 / 5.0 / 7.5 A (C/10, C/2, 1C, 1.5C), each preceded by the same charge and rest; chamber about 26.7 degC; 30 s sampling; surface thermocouple",
+    "data_only_facts_seen_before_registration": {
+      "delivered_capacity_Ah": {"C/10": "4.9976 +- 0.0035", "C/2": "4.9253 +- 0.0019", "1C": "4.9319 +- 0.0021", "1.5C": "4.9258 +- 0.0043"},
+      "cell_to_cell_voltage_spread_rms_mV": {"C/10": 0.9, "C/2": 1.7, "1C": 3.7, "1.5C": 5.8},
+      "cell_to_cell_surface_temperature_spread_rms_K": {"C/10": 0.23, "C/2": 0.46, "1C": 1.00, "1.5C": 1.46},
+      "peak_surface_rise_over_chamber_K": {"C/10": "1.2-1.8", "C/2": "6.5-8.4", "1C": "15.2-18.9", "1.5C": "25.4-31.4"}
+    }
+  },
+  "independence": {
+    "status": "UNCONFIRMED",
+    "known": "the dataset authors describe these curves as the validation data of the paper that produced the Chen2020 parameters; same authors, same cell type, likely the same cell batch",
+    "open": "whether any Chen2020 parameter was tuned on these curves is not yet read from the paper text; until it is, a comparison is classified 'consistency with the authors' own validation data', not independent validation",
+    "never": "no Chen2020 electrochemical parameter is changed in this study"
+  },
+  "model": {
+    "primary": "PyBaMM SPM, parameter set Chen2020 as shipped with PyBaMM 26.8.0.0 (the model flagship A uses), lumped thermal",
+    "secondary_reported_not_judged": ["SPMe", "DFN"],
+    "initial_state": "SOC 1 at the discharge start (the protocol's CC-CV to 4.2 V with 50 mA cut-off and 2 h rest); initial temperature = measured surface temperature at the discharge start",
+    "ambient": "mean measured chamber temperature over the discharge",
+    "only_calibrated_parameter": {
+      "name": "Total heat transfer coefficient [W.m-2.K-1]",
+      "why": "Chen2020 ships 10 W/m2K as a generic default, not a value for this test rig",
+      "calibration_curve": "cell02 at 1C, surface temperature only, one scalar, least squares on the measured samples",
+      "held_out": "every voltage curve (no voltage-side parameter is fitted), temperature at C/10, C/2 and 1.5C on all three cells, and temperature at 1C on cell03 and cell04"
+    },
+    "stated_limits": [
+      "Chen2020 carries an Arrhenius dependence only on the exchange-current densities (35 and 17.8 kJ/mol); electrolyte transport and particle diffusion have none, so 1C and 1.5C (surface up to 58 degC) run outside the temperature range the set was built for",
+      "the lumped thermal model gives one cell temperature; the measurement is a surface thermocouple",
+      "instrument accuracy (Maccor voltage, thermocouple) is not stated in the dataset and stays UNKNOWN, not zero"
+    ]
+  },
+  "metrics": {
+    "evaluation_window": "from the discharge start to the earlier of the measured and the modelled 2.5 V end, on the measured 30 s samples",
+    "voltage": "RMSE and max |error| over the window",
+    "capacity": "relative error of the delivered capacity to 2.5 V",
+    "temperature": "error of the peak surface-temperature rise over the chamber, and RMSE over the window"
+  },
+  "acceptance_primary": {
+    "scope": "SPM, C/2 (the flagship's normal-case rate: 2.5 A on a 5 Ah cell), each of the three cells",
+    "V1": {"criterion": "voltage RMSE <= 17 mV", "rationale": "flagship A reports a degradation voltage shift of about 34 mV at this rate; a model whose error exceeds half of that cannot resolve it"},
+    "C1": {"criterion": "|delivered-capacity error| <= 2 %"},
+    "T1": {"criterion": "|peak-rise error| <= max(1.5 K, 25 % of the measured rise) on the held-out cells (all three are held out at C/2)"},
+    "met_if": "V1, C1 and T1 hold on all three cells"
+  },
+  "reported_not_judged": [
+    "SPM, SPMe, DFN at C/10, C/2, 1C, 1.5C on all three cells: every metric above",
+    "each voltage RMSE divided by the cell-to-cell voltage spread at that rate",
+    "the calibrated heat-transfer coefficient and its fit residual"
+  ],
+  "no_change_after_seeing_results": "criteria, scope, calibration curve and held-out set are fixed; any other reading is labelled post hoc beside the pre-registered outcome"
+}
