@@ -12,7 +12,8 @@ solution from exactly that state vector through ``solver.step``.
 from __future__ import annotations
 
 import hashlib
-from typing import Callable
+import math
+from typing import Callable, Mapping
 
 import numpy as np
 
@@ -27,13 +28,22 @@ from engcore.scientific.units.quantity import Quantity
 
 from . import ADAPTER, FADE_MAPPING, SOC_DEFINITION, parameter_set
 
+FIXED_OPTIONS = {"thermal": "isothermal", "calculate heat source for isothermal models": "true"}
+BALANCE_KEYS = ("Negative electrode active material volume fraction", "Positive electrode active material volume fraction")
 COMPLETENESS_BASIS = ("the PyBaMM Solution (full model state vector y at the window end) is the continuation state; "
                       "solver.step continues from exactly it; the model/parameters are fixed per participant")
 
 
 def cell_participant(registry, spec, *, parameter_set_name: str, model: str, initial_soc: float, capacity_fade: float,
-                     current_at: Callable[[Quantity], Quantity], log: list | None = None, points: int = 11) -> CallbackParticipant:
-    """``capacity_fade`` is the declared slow state (0.0 = a new cell) mapped exactly as the provider maps it: uniform loss of active material."""
+                     current_at: Callable[[Quantity], Quantity], log: list | None = None, points: int = 11,
+                     model_options: Mapping[str, str] | None = None, balance: tuple[float, float] = (1.0, 1.0)) -> CallbackParticipant:
+    """``capacity_fade`` is the declared slow state (0.0 = a new cell) mapped exactly as the provider maps it: uniform loss of active material.
+
+    ``model_options`` adds PyBaMM model options (e.g. the heat of mixing) on top of the isothermal heat-source pair, which it
+    may not change.  ``balance`` multiplies the negative / positive active-material volume fractions before the fade mapping:
+    a declared, identified correction of the parameter set; (1, 1) is the set as shipped.  Both enter the execution identity
+    and the initial state identity whenever they differ from their defaults (defaults keep the earlier identities).
+    """
     status = registry.require("pybamm")
     require_library_unchanged(status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 M1)
     import pybamm
@@ -41,13 +51,27 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     require_library_unchanged(status, "pybamm")  # and the module that was just imported is that library (M-3)
     if not (0.0 <= capacity_fade < 0.5):
         raise ProviderRefusal("capacity_fade outside the declared mapping's range [0, 0.5)")
+    extra = dict(model_options or {})
+    if any(not isinstance(k, str) or not isinstance(v, str) for k, v in extra.items()):
+        raise ProviderRefusal("model_options must map option names to string values")
+    if set(extra) & set(FIXED_OPTIONS):
+        raise ProviderRefusal(f"model_options may not change {sorted(set(extra) & set(FIXED_OPTIONS))}: the coupled cell is isothermal by contract")
+    balance = tuple(balance)
+    if len(balance) != 2 or any(isinstance(f, bool) or not isinstance(f, (int, float)) or not math.isfinite(f) or f <= 0.0 for f in balance):
+        raise ProviderRefusal("balance must be two finite, positive active-material factors (negative, positive)")
+    balance = (float(balance[0]), float(balance[1]))
     pset, pv = parameter_set(parameter_set_name)
     c_nom = float(pv["Nominal cell capacity [A.h]"])
-    for key in ("Negative electrode active material volume fraction", "Positive electrode active material volume fraction"):
-        pv.update({key: float(pv[key]) * (1.0 - capacity_fade)})
+    for key, factor in zip(BALANCE_KEYS, balance):
+        pv.update({key: float(pv[key]) * factor * (1.0 - capacity_fade)})
     pv.update({"Current function [A]": "[input]", "Ambient temperature [K]": "[input]"})
     pv.set_initial_state(initial_soc)
-    options = {"thermal": "isothermal", "calculate heat source for isothermal models": "true"}
+    options = {**FIXED_OPTIONS, **extra}
+    declared = {}
+    if extra:
+        declared["model_options_added"] = dict(sorted(extra.items()))
+    if balance != (1.0, 1.0):
+        declared["active_material_balance"] = {"negative": repr(balance[0]), "positive": repr(balance[1])}
     sim = pybamm.Simulation(getattr(pybamm.lithium_ion, model)(options=options), parameter_values=pv,
                             solver=pybamm.IDAKLUSolver(rtol=1e-6, atol=1e-8))
     sim.build()
@@ -64,7 +88,8 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     def digest() -> str:
         sol = held["solution"]
         if sol is None:
-            return hashlib.sha256(f"initial:{pset.digest}:{initial_soc!r}:{capacity_fade!r}".encode()).hexdigest()
+            suffix = f":{sorted(declared.items())!r}" if declared else ""
+            return hashlib.sha256(f"initial:{pset.digest}:{initial_soc!r}:{capacity_fade!r}{suffix}".encode()).hexdigest()
         return hashlib.sha256(np.ascontiguousarray(np.asarray(sol.last_state.y, dtype="<f8")).tobytes()).hexdigest()
 
     def initialize(_instant, _inputs, _uq):
@@ -80,7 +105,7 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
         inputs = {"Current function [A]": float(current.to("A").magnitude), "Ambient temperature [K]": T}
         problem = {"window_s": [repr(request.start.magnitude_in("s")), repr(request.end.magnitude_in("s"))], "inputs": {k: repr(v) for k, v in inputs.items()},
                    "start_state": digest(), "model": model, "parameter_set": pset.to_dict(), "soc_definition": SOC_DEFINITION,
-                   "capacity_fade": repr(float(capacity_fade)), "fade_mapping": FADE_MAPPING}
+                   "capacity_fade": repr(float(capacity_fade)), "fade_mapping": FADE_MAPPING, **declared}
         require_library_unchanged(status, "pybamm")  # every window: the module in memory still matches discovery
         ident = ProviderExecutionIdentity.from_content(status, adapter_id=ADAPTER[0], adapter_version=ADAPTER[1], problem=problem,
                                                        configuration={"solver": "IDAKLUSolver", "rtol": "1e-6", "atol": "1e-8", "points": points,

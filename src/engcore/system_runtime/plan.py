@@ -61,9 +61,16 @@ class PlanNode:
     #: string pairs a built-in authority needs (channel id, evaluation time, ...); sorted, part of identity
     builtin_args: tuple[tuple[str, str], ...] = ()
     applicability_waiver: str = ""
+    reads_owners: tuple[str, ...] = ()
+
+    @property
+    def visible_owners(self) -> tuple[str, ...]:
+        """The state owners this node may see: those it reads and those it writes."""
+        return tuple(sorted(set(self.reads_owners) | set(self.writes_owners)))
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_id", identifier(self.node_id, "plan node id"))
+        object.__setattr__(self, "reads_owners", tuple(sorted({identifier(o, "read owner") for o in self.reads_owners})))
         if not isinstance(self.kind, NodeKind) or not isinstance(self.authority, AuthorityRef):
             raise InvalidScientificProblem("plan node needs a NodeKind and an AuthorityRef")
         object.__setattr__(self, "builtin_args", tuple(sorted((str(a), str(b)) for a, b in self.builtin_args)))
@@ -89,6 +96,7 @@ class PlanNode:
             "applicability_checks": list(self.applicability_checks), "checkpointable": self.checkpointable,
             "configuration_digest": self.configuration_digest, "derived": self.derived, "builtin_args": [list(p) for p in self.builtin_args],
             "applicability_waiver": self.applicability_waiver,
+            **({"reads_owners": list(self.reads_owners)} if self.reads_owners else {}),
         }
 
     @property
@@ -100,13 +108,15 @@ class PlanNode:
         require_schema(payload, PLAN_NODE_SCHEMA)
         strict_keys(payload, {"schema", "node_id", "kind", "authority", "depends_on", "inputs", "literals", "outputs", "provider_binding_ids",
                               "commits_state", "writes_owners", "applicability_checks", "checkpointable", "configuration_digest",
-                              "derived", "builtin_args", "applicability_waiver"}, "plan node")
+                              "derived", "builtin_args", "applicability_waiver"}, "plan node", optional={"reads_owners"})
+        if "reads_owners" in payload and not payload["reads_owners"]:
+            raise InvalidScientificProblem("an empty reads_owners is written by omission, never as []")
         return cls(payload["node_id"], NodeKind(payload["kind"]), AuthorityRef.from_dict(payload["authority"]), tuple(payload["depends_on"]),
                    tuple(NodeInput.from_dict(i) for i in payload["inputs"]), tuple(LiteralInput.from_dict(x) for x in payload["literals"]),
                    tuple(NodeOutputSpec.from_dict(o) for o in payload["outputs"]), tuple(payload["provider_binding_ids"]),
                    payload["commits_state"], tuple(payload["writes_owners"]), tuple(payload["applicability_checks"]), payload["checkpointable"],
                    hex64(payload["configuration_digest"], "configuration digest", allow_empty=True), payload["derived"],
-                   tuple((a, b) for a, b in payload["builtin_args"]), payload["applicability_waiver"])
+                   tuple((a, b) for a, b in payload["builtin_args"]), payload["applicability_waiver"], tuple(payload.get("reads_owners", ())))
 
 
 @dataclass(frozen=True)
@@ -220,7 +230,7 @@ def compile_plan(request: SystemRunRequest) -> SystemExecutionPlan:
         plan_nodes[node.node_id] = PlanNode(
             node.node_id, node.kind, node.authority, tuple(sorted(deps)), inputs, node.literals, node.outputs, node.provider_binding_ids,
             node.commits_state, node.writes_owners, node.applicability_checks, node.checkpointable, node.configuration_digest, False, (),
-            node.applicability_waiver)
+            node.applicability_waiver, node.reads_owners)
 
     observable_by_id = {o.observable_id: o for o in request.observables}
     for obs in request.constraint_observations:
@@ -232,6 +242,41 @@ def compile_plan(request: SystemRunRequest) -> SystemExecutionPlan:
             derived_id, NodeKind.CONSTRAINT_ASSESSMENT, BUILTIN_CONSTRAINT, (target.node_id,),
             (NodeInput("observed", target.node_id, target.output_name, target.unit),), (), (NodeOutputSpec("margin", spread_unit(target.unit)),), (),
             False, (), (), False, "", True, (("binding", obs.binding_id), ("constraint_digest", obs.constraint_digest), ("constraint_id", obs.constraint_id)))
+
+    # state order: a node that reads or writes an owner must be ordered against every other writer of it.  Without a path the
+    # executor's tie-break would decide whether it sees the state before or after the write (a stale or premature read)
+    ancestors: dict[str, set[str]] = {}
+
+    def upstream(node_id: str) -> set[str]:
+        if node_id not in ancestors:
+            seen: set[str] = set()
+            stack = list(plan_nodes[node_id].depends_on) if node_id in plan_nodes else []
+            while stack:
+                dep = stack.pop()
+                if dep not in seen:
+                    seen.add(dep)
+                    stack.extend(plan_nodes[dep].depends_on if dep in plan_nodes else ())
+            ancestors[node_id] = seen
+        return ancestors[node_id]
+
+    committers = sorted(n.node_id for n in plan_nodes.values() if n.commits_state)
+    for i, a in enumerate(committers):
+        for b in committers[i + 1:]:
+            if a not in upstream(b) and b not in upstream(a):
+                # every commit advances the one state clock and chain: unordered, which commit a node builds on would be decided by
+                # ordering, not by the request (even when the two write different owners)
+                raise InvalidScientificProblem(
+                    f"state-committing nodes {a!r} and {b!r} have no dependency path between them; every commit advances the one state "
+                    f"clock, so add a depends_on")
+    for writer in (n for n in plan_nodes.values() if n.writes_owners):
+        for other in plan_nodes.values():
+            if other.node_id == writer.node_id:
+                continue
+            shared = sorted(set(writer.writes_owners) & set(other.visible_owners))
+            if shared and writer.node_id not in upstream(other.node_id) and other.node_id not in upstream(writer.node_id):
+                raise InvalidScientificProblem(
+                    f"nodes {writer.node_id!r} (writes {shared}) and {other.node_id!r} (reads or writes them) have no dependency path between them, so "
+                    f"which state {other.node_id!r} sees would be decided by ordering, not by the request; add a depends_on")
 
     # wiring validation
     for node in plan_nodes.values():

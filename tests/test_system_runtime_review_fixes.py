@@ -351,11 +351,14 @@ def test_m6_after_a_refused_state_commit_a_later_committing_node_is_blocked_not_
     request = replace(request, nodes=request.nodes + (second,), profile=ExecutionProfile())
     # thermal2 needs its own 'ambient' input: give it a literal instead
     from engcore.system_runtime import LiteralInput
-    second = replace(second, literals=(LiteralInput("ambient", Quantity(293.15, "K"), UNKNOWN),))
-    request = replace(request, nodes=tuple(second if n.node_id == "thermal2" else n for n in request.nodes))
+    # every two committing nodes must be ordered (they share the state clock): thermal2 declares it follows thermal
+    second = replace(second, literals=(LiteralInput("ambient", Quantity(293.15, "K"), UNKNOWN),), writes_owners=("cooler",), depends_on=("thermal",))
+    initial = replace(request.initial_state, owners=request.initial_state.owners + (
+        OwnerState("cooler", "component", (InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN),)),))
+    request = replace(request, nodes=tuple(second if n.node_id == "thermal2" else n for n in request.nodes), initial_state=initial)
     result = SystemExecutor(context).run(request)
     assert result.receipt("thermal").status is NodeStatus.REFUSED
-    assert result.receipt("thermal2").status is NodeStatus.BLOCKED and "did not succeed" in result.receipt("thermal2").reason
+    assert result.receipt("thermal2").status is NodeStatus.BLOCKED and "thermal" in result.receipt("thermal2").reason
     assert len(result.state_history) == 1
 
 

@@ -45,15 +45,15 @@
  "identities": [
   [
    "request",
-   "73ca1fd523d3eb5f14fac0f338a3c8d089749686ec3f62299b49ca3dbbab5773"
+   "b55361883fb0086e93df2b842ce245ff807faa86a39a1dd69e0fe1d43644623f"
   ],
   [
    "plan",
-   "18d875692fdfe65e243653a3a3334422e52662c23883b97d216f8cf57b7a9cae"
+   "fce844dcdc8312b5b262624dd03bc4c2b63e3edf31bb5d9c04cbf316d7082d17"
   ],
   [
    "result",
-   "83daaa9a07a906cb2ddd0fd4fcee33a6cd904c6dd44235ee4792a1d17bd363c3"
+   "49958d9882532e7126951a6296eb40533e91586060e2e1cd3a09fd1e29466ca1"
   ]
  ],
  "key_outputs": [
@@ -164,7 +164,7 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (overload)",
- "text_sha256": "0ceefbc8d126c4783fefe9fc87b6fd6a85a2a697eb9502502f817f75ac66306c",
+ "text_sha256": "bf5f1047c5df73f11758d74fdfd4c073b530b523e89041a5c0959562c7ff0b78",
  "trace": {
   "complete": false,
   "gaps": [
@@ -180,7 +180,7 @@
    "PyBaMM parameter set Chen2020 (provider-bundled literature set)"
   ],
   "model_applicability": "cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",
-  "model_discrepancy": "NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)",
+  "model_discrepancy": "NOT QUANTIFIED for the DFN cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero). Reported, not propagated: against LG M50 lab discharges at C/2 the cell model's voltage RMSE was 13.6-16.9 mV and its peak surface-rise error -3.5 to -1.5 K (big14-a-lgm50-dfn; in-sample, likely optimistic). The rise error belongs to the lab rig (its identified heat-transfer coefficient, a lumped model against a surface thermocouple) and says nothing about this flagship's cell temperature, which follows the declared contact-resistance rule; the charge half of the duty was never compared with data; applicability to this module and duty is UNKNOWN",
   "unknown_input_uncertainty": [
    "coolant inlet profile (declared)",
    "cell current profile (declared)",
@@ -188,7 +188,8 @@
    "contact resistance (ASSUMED)",
    "cells-in-module multiplicity (declared)",
    "fade-law constants (declared)",
-   "PyBaMM Chen2020 parameters (provider-bundled literature data)"
+   "PyBaMM Chen2020 parameters (provider-bundled literature data)",
+   "active-material balance factors (identified on one LG M50 curve, not measured)"
   ]
  },
  "verification": {
@@ -199,7 +200,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "77d82b124b3efa9d61ee70ffbfc75af5d81083cb6b002d8d923864e6a7abc2d5",
+      "digest": "920a363f022729fea6fbf87164f737ee870d938bd5ee3111256568223def1501",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run failed",
       "outcome": "met",
@@ -243,12 +244,12 @@
         }
        ],
        "findings": [],
-       "plan_digest": "18d875692fdfe65e243653a3a3334422e52662c23883b97d216f8cf57b7a9cae",
-       "request_digest": "73ca1fd523d3eb5f14fac0f338a3c8d089749686ec3f62299b49ca3dbbab5773",
+       "plan_digest": "fce844dcdc8312b5b262624dd03bc4c2b63e3edf31bb5d9c04cbf316d7082d17",
+       "request_digest": "b55361883fb0086e93df2b842ce245ff807faa86a39a1dd69e0fe1d43644623f",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
       },
-      "record_digest": "ccfe62af8389f1252ab9f03a4478072a50066ccae2bf8711674f051803eb2f64"
+      "record_digest": "535bdb7524f0e76a53b8c684e798cdac56400302651a2a351e1e175df7ca45b0"
      }
     ],
     "level": 1,
@@ -281,7 +282,7 @@
     "evidence": [],
     "level": 5,
     "name": "independent_provider_corroboration",
-    "note": "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider and compare_providers refuses that pair as non-independent",
+    "note": "no second, independent battery provider exists in the provider ecosystem; PyBaMM DFN vs SPM would be the same provider and compare_providers refuses that pair as non-independent",
     "status": "not_available"
    },
    {
@@ -292,11 +293,56 @@
     "status": "not_available"
    },
    {
-    "evidence": [],
+    "evidence": [
+     {
+      "classification": "cell_model_in_sample_consistency_not_validation",
+      "digest": "2ad85a0e94f03925d541fb6d84e7998b2b4b35c7061c99c64237e6d0f39ddbfe",
+      "kind": "cell_model_measured_comparison",
+      "note": "",
+      "outcome": "not_met",
+      "record": {
+       "data_classification": "in-sample: Chen2020 was tuned on the C/2, 1C and 1.5C curves (docs/flagships/big14/chen2020_independence.json)",
+       "judgement": {
+        "cell02": {
+         "C1": true,
+         "T1": false,
+         "V1": true
+        },
+        "cell03": {
+         "C1": true,
+         "T1": true,
+         "V1": true
+        },
+        "cell04": {
+         "C1": true,
+         "T1": false,
+         "V1": true
+        },
+        "met": false
+       },
+       "model_form_band_C2": {
+        "label": "measured against Chen2020's own tuning data (in-sample); likely optimistic; out-of-sample error UNKNOWN",
+        "rise_err_K": [
+         -3.466304897785051,
+         -1.53561736830153
+        ],
+        "v_rmse_mV": [
+         13.620636194995926,
+         16.87624230887905
+        ]
+       },
+       "preregistration_sha256": "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2",
+       "record_sha256": "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f",
+       "scope": "the cell model alone (PyBaMM DFN, Chen2020, heat of mixing, identified balance) against constant-current lab discharges of three LG M50 cells in a 25 degC chamber; not this module, its cold plate or its duty",
+       "study": "big14-a-lgm50-dfn"
+      },
+      "record_digest": "61c1f7344db4f8c4f469d0709d5f10b3785a0b1a5b263367b39088a58fc09b8a"
+     }
+    ],
     "level": 7,
     "name": "experimental_validation",
-    "note": "no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed",
-    "status": "not_available"
+    "note": "the CELL MODEL alone was compared with measured LG M50 lab discharges (big14-a-lgm50-dfn, pre-registered): NOT MET (C/2: voltage RMSE inside the criterion on all 3 cells; capacity inside the criterion on all 3 cells; surface-temperature rise missed on cell02, cell04), and in-sample (Chen2020 was tuned on those curves), so it is neither validation nor evidence about this module, cold plate or duty. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was also considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed",
+    "status": "attempted_not_reached"
    }
   ],
   "reference_level_reached": "none",

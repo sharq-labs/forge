@@ -87,7 +87,7 @@ def _multiscale_on_heat(initial_temperature):
                                extractors={"power": lambda r: Quantity(1.0, "W")}, slow_state_owners={"cell": "cell"})
     request, context, _ = build(initial_temperature=initial_temperature)
     context.authorities.register(auth)
-    heat = replace(next(n for n in request.nodes if n.node_id == "heat"), authority=auth.ref, literals=())
+    heat = replace(next(n for n in request.nodes if n.node_id == "heat"), authority=auth.ref, literals=(), reads_owners=("cell",))
     request = replace(request, nodes=tuple(heat if n.node_id == "heat" else n for n in request.nodes),
                       profile=replace(request.profile, requested_modes=("multiscale",)))
     return request, context, calls
@@ -108,13 +108,13 @@ def test_n2_a_multi_timescale_run_refuses_a_committed_state_other_than_the_one_i
 def test_c_a_resume_stage_must_name_and_depend_on_the_stage_it_continues():
     runtime, _ = _stub_multiscale()
     unnamed = MultiscaleAuthority("ms-c1", runtime, initial_slow_state={}, extractors={}, stages={"b": {"until": None, "resume": True}})
-    assert [c for c, _ in unnamed.preflight_findings(SimpleNamespace(node_id="b", depends_on=("a",)), None)] == ["INVALID_STAGE"]
+    assert [c for c, _ in unnamed.preflight_findings(SimpleNamespace(node_id="b", depends_on=("a",), visible_owners=()), None)] == ["INVALID_STAGE"]
     named = MultiscaleAuthority("ms-c2", runtime, initial_slow_state={}, extractors={}, stages={"b": {"until": None, "resume": True, "from": "a"}})
     assert named.identity_digest != unnamed.identity_digest
-    assert "does not depend" in named.preflight_findings(SimpleNamespace(node_id="b", depends_on=()), None)[0][1]
-    assert named.preflight_findings(SimpleNamespace(node_id="b", depends_on=("a",)), None) == ()
+    assert "does not depend" in named.preflight_findings(SimpleNamespace(node_id="b", depends_on=(), visible_owners=()), None)[0][1]
+    assert named.preflight_findings(SimpleNamespace(node_id="b", depends_on=("a",), visible_owners=()), None) == ()
     plain = MultiscaleAuthority("ms-c3", runtime, initial_slow_state={}, extractors={}, stages={"a": {"until": None, "resume": False}})
-    assert plain.preflight_findings(SimpleNamespace(node_id="a", depends_on=()), None) == ()
+    assert plain.preflight_findings(SimpleNamespace(node_id="a", depends_on=(), visible_owners=()), None) == ()
 
 
 def test_c_a_held_checkpoint_from_another_stage_or_restored_without_its_origin_is_not_resumed():
@@ -193,12 +193,15 @@ def test_d1_a_committing_node_refused_by_the_wall_budget_taints_later_commits():
     request, context, _ = build()
     thermal = next(n for n in request.nodes if n.node_id == "thermal")
     second = replace(thermal, node_id="thermal2", inputs=(NodeInput("heat_in", "heat", "power", "W"),), material_refs=(), environment_requirements=(),
-                     literals=(LiteralInput("ambient", Quantity(293.15, "K"), UNKNOWN),))
-    request = replace(request, nodes=request.nodes + (second,),
+                     literals=(LiteralInput("ambient", Quantity(293.15, "K"), UNKNOWN),), writes_owners=("cooler",), depends_on=("thermal",))
+    from engcore.system_runtime import OwnerState
+    initial = replace(request.initial_state, owners=request.initial_state.owners + (
+        OwnerState("cooler", "component", (InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN),)),))
+    request = replace(request, nodes=request.nodes + (second,), initial_state=initial,
                       operational=replace(request.operational, resource_budget=ResourceBudget(max_wall_seconds=10.0)))
     result = SystemExecutor(context, clock=clock).run(request)
     assert result.receipt("thermal").status is NodeStatus.REFUSED and "wall-time budget" in result.receipt("thermal").reason
-    assert result.receipt("thermal2").status is NodeStatus.BLOCKED and "did not succeed" in result.receipt("thermal2").reason
+    assert result.receipt("thermal2").status is NodeStatus.BLOCKED and "thermal" in result.receipt("thermal2").reason
 
 
 def test_a_request_labels_are_kept_as_requested_selections_never_as_executed_models():

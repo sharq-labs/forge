@@ -156,6 +156,16 @@ def assess_conservation(result: SystemRunResult, specs: Sequence[BalanceSpec]) -
     return tuple(out)
 
 
+def undeclared_applicability(result: SystemRunResult) -> tuple[str, ...]:
+    """Declared (non-derived) plan nodes -- executed or not -- that declared no runtime applicability check and stated no waiver.
+
+    Derived from the plan the result carries, so it needs no stored field (no stored result digest moves): a state-committing node must
+    declare or waive (``NodeSpec``), an output-only node need not, and this names every such node instead of letting silence read as
+    "nothing to report"."""
+    return tuple(sorted(n.node_id for n in result.plan.nodes
+                        if not n.derived and not n.applicability_checks and not n.applicability_waiver))
+
+
 def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = None, *,
                   validity: tuple[Any, ...] = (), validation: tuple[Any, ...] = (), required_levels: tuple[Any, ...] = (),
                   allow_partial: bool = False) -> CredibilityEvidenceReport:
@@ -195,6 +205,9 @@ def trust_handoff(result: SystemRunResult, request: SystemRunRequest | None = No
                + "; the models that executed are NOT reported (provenance.models is empty and requested_model_selections are labels), so an empty "
                  "unassessed_models means nothing is known about them, not that every model was assessed"
                + ("" if request is not None else "; no request was supplied, so model selections are absent from the provenance (nothing is assumed)")
+               + ("" if not undeclared_applicability(result)
+                  else "; nodes that declared NEITHER an applicability check NOR a waiver (their applicability was never assessed; silence is not "
+                       "'applicable'): " + ", ".join(undeclared_applicability(result)))
                + ("" if not result.trust_inputs.waived_applicability
                   else "; nodes that committed state under a stated applicability WAIVER (a caller statement, not evidence): " + ", ".join(result.trust_inputs.waived_applicability))
                + ("" if not result.trust_inputs.unknown_uncertainty_outputs

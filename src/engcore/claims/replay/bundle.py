@@ -49,10 +49,15 @@ from ..external_evidence import (
     read_external_record,
 )
 from ..measurement_dataset import DatasetObservation
+from ...scientific.units.quantity import registry_fingerprint
 from ...uq.model_form.qualification import ProducerQualification
 
 BUNDLE_SCHEMA = schema_string("claim_assessment_bundle")
-ENVIRONMENT_SCHEMA = schema_string("claim_replay_environment")
+#: /2 (BIG 14 U-05): the environment also binds the unit-definition CONTENT (``registry_fingerprint``), not only the Pint version, so a
+#: bundle computed against other unit definitions is never an exact replay of this one.  A /1 environment still verifies as a record;
+#: its fingerprint can never equal a /2 one, so exact replay against the current environment refuses it.
+ENVIRONMENT_SCHEMA = schema_string("claim_replay_environment", 2)
+_READABLE_ENVIRONMENT_SCHEMAS = (schema_string("claim_replay_environment", 1), ENVIRONMENT_SCHEMA)
 _TAG = "crafty.claims.bundle/1"
 _ENVIRONMENT_TAG = "crafty.claims.environment/1"
 
@@ -75,13 +80,19 @@ def _distribution_version(name: str) -> str:
         return "not-installed"
 
 
+#: A timed-out probe records the source state as UNAVAILABLE (never as clean), so exact replay refuses: fail-closed, but a
+#: 2 s limit made that happen on a loaded CI runner (`git status` over the whole tree, 4 test workers) and turned the replay
+#: tests into a timing flake (PR #116 fast311, 2026-09-28).  The limit only bounds a hung git.
+GIT_PROBE_TIMEOUT_S = 30
+
+
 def _git_bytes(*args: str) -> bytes | None:
     try:
         proc = subprocess.run(
             ["git", *args],
             check=False,
             capture_output=True,
-            timeout=2,
+            timeout=GIT_PROBE_TIMEOUT_S,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -145,6 +156,7 @@ def _environment() -> dict[str, Any]:
             "scipy": _distribution_version("scipy"),
             "pint": _distribution_version("pint"),
         },
+        "units": {"registry_fingerprint": registry_fingerprint()},
         "python": {
             "version": platform.python_version(),
             "implementation": platform.python_implementation(),
@@ -198,7 +210,7 @@ class BundleCheck:
 def _environment_problem(environment: Any) -> str | None:
     if not isinstance(environment, Mapping):
         return "bundle environment is not a mapping"
-    if environment.get("schema") != ENVIRONMENT_SCHEMA:
+    if environment.get("schema") not in _READABLE_ENVIRONMENT_SCHEMAS:
         return f"bundle environment uses unexpected schema {environment.get('schema')!r}"
     body = {k: v for k, v in environment.items() if k != "fingerprint"}
     if tagged_digest(_ENVIRONMENT_TAG, body) != environment.get("fingerprint"):
@@ -207,6 +219,9 @@ def _environment_problem(environment: Any) -> str | None:
 
 
 def _environment_replay_problem(environment: Mapping[str, Any]) -> str | None:
+    if environment.get("schema") != ENVIRONMENT_SCHEMA:
+        return (f"environment schema {environment.get('schema')!r} does not bind the unit definitions "
+                f"({ENVIRONMENT_SCHEMA!r} does), so an exact replay cannot be shown")
     git = environment.get("git")
     if not isinstance(git, Mapping):
         return "source-control identity is absent from the replay environment"

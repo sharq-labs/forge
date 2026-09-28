@@ -27,7 +27,7 @@ dependencies = [
   "scikit-learn>=1.4",
   # Scientific Core units backend. Lower bound only: the platform must not
   # pin its scientific stack to one machine's resolved versions.
-  "pint>=0.23",
+  "pint>=0.25.3,<0.27",  # U-04: the versions the units contract was measured on (0.25.3, 0.26.1); widen only after measuring
 ]
 
 [project.optional-dependencies]

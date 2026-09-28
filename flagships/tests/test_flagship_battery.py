@@ -57,12 +57,14 @@ def test_conservation_and_the_first_law_check_close(normal):
     assert all(c.outcome == "met" for c in normal.comparisons) and normal.comparisons[0].reference_kind.value == "analytic_reference"
 
 
-def test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement_so_level_4_is_not_reached(normal):
-    """Negative result kept: the finest-pair differences are inside the tolerances, but they GROW as the coupling window shrinks
-    (successive differences are not decreasing), so the study does not demonstrate convergence and level 4 is NOT reached.  Cause not investigated."""
+def test_window_refinement_decreases_monotonically_but_misses_the_peak_heat_tolerance_so_level_4_is_not_reached(normal):
+    """Negative result kept.  With the DFN + heat-of-mixing cell (BIG 14) the successive differences now DECREASE, but the finest-pair
+    peak-heat difference is outside its pre-registered 2 % tolerance, so the study does not meet its criteria and level 4 is NOT reached.
+    History: with the earlier SPM cell the opposite held (tolerances met, differences growing; diagnosed in big14-a-window-study as a
+    pre-asymptotic quantity definition).  The cause of the DFN peak-heat difference is not investigated here."""
     study = normal.study
     assert study["windows_s"] == [3600, 1800, 900]
-    assert study["tolerances_met"] is True and study["monotone_met"] is False and study["met"] is False
+    assert study["monotone_met"] is True and study["tolerances_met"] is False and study["met"] is False
     l4 = normal.ladder.entry(4)
     assert l4.status is LevelStatus.ATTEMPTED_NOT_REACHED and l4.evidence[0].outcome == "not_met"
     assert normal.ladder.verification_reached == 3
@@ -70,14 +72,19 @@ def test_window_refinement_meets_the_tolerances_but_not_the_monotone_requirement
     assert q["peak_cell_temperature"]["abs_difference_fine_pair"] < bc.REFINEMENT_TOL["peak_cell_temperature"].magnitude
     assert q["voltage_end_of_discharge"]["abs_difference_fine_pair"] < bc.REFINEMENT_TOL["voltage_end_of_discharge"].magnitude
     for name in ("peak_cell_temperature", "voltage_end_of_discharge", "peak_heat"):
-        assert q[name]["abs_difference_fine_pair"] > q[name]["abs_difference_coarse_pair"]      # the differences grow with refinement
+        assert q[name]["abs_difference_fine_pair"] < q[name]["abs_difference_coarse_pair"]      # the differences shrink with refinement
     assert "evidence from OTHER requests" in l4.note
 
 
 def test_no_false_validation_no_second_provider_no_benchmark_and_the_nasa_dataset_is_not_compared(normal):
     assert normal.summary.scientific_status == "insufficient_evidence"
-    for level in (5, 6, 7):
+    for level in (5, 6):
         assert normal.ladder.entry(level).status is LevelStatus.NOT_AVAILABLE
+    l7 = normal.ladder.entry(7)                                                        # BIG 14: the cell model met measured data, in-sample, and missed
+    assert l7.status is LevelStatus.ATTEMPTED_NOT_REACHED and len(l7.evidence) == 1
+    link = l7.evidence[0]
+    assert link.outcome == "not_met" and link.classification == "cell_model_in_sample_consistency_not_validation"
+    assert "in-sample" in link.record["data_classification"] and "not this module" in link.record["scope"]
     assert normal.ladder.reference_level_reached == "none"
     (nasa, applic), = normal.references_considered
     assert nasa.kind.value == "experimental_dataset" and applic.status == "unknown"    # a reference with no applicable envelope is never compared
@@ -143,3 +150,64 @@ def test_a_refused_day_cannot_reach_the_analytic_level_with_default_arguments_an
     with pytest.raises(BundleRefused, match="not referenced by any SUCCEEDED node"):
         write_bundle(str(tmp_path / "b"), name="x", request=run.flagship.request, result=run.result, summary=run.summary, artifacts=run.flagship.store.files)
     assert run.ladder.entry(1).status is LevelStatus.REACHED                          # the request itself was admissible; only the SOLVED state left applicability
+
+
+def test_the_cell_balance_comes_only_from_the_pinned_dfn_record():
+    """BIG 14: the DFN cell's two active-material factors come from the committed big14-a-lgm50-dfn record, pinned by digest,
+    under its pre-registered decision rule; the lab heat-transfer coefficient is never carried."""
+    rec = bc.cell_model_study()["record"]
+    assert bc.MODEL == "DFN" and bc.CELL_OPTIONS == {"heat of mixing": "true"}
+    assert rec["decision_for_flagship"]["flagship_carries_balance"] is True and rec["decision_for_flagship"]["flagship_carries_h"] is False
+    assert bc.cell_balance() == (rec["step_1"]["factors"]["negative"], rec["step_1"]["factors"]["positive"])
+    assert bc.CELL_STUDY_SHA256 == "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f"
+    assert bc.CELL_STUDY_PREREGISTRATION_SHA256 == "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2"
+
+
+def _tampered(tmp_path, monkeypatch, edit):
+    """Write an edited copy of the record and pin THAT copy's digest, so only the re-derivation can refuse it."""
+    import copy
+    import hashlib
+    import json
+    rec = copy.deepcopy(bc.cell_model_study()["record"])
+    edit(rec)
+    raw = json.dumps(rec, indent=1, sort_keys=True).encode("utf-8")
+    path = tmp_path / "record.json"
+    path.write_bytes(raw)
+    monkeypatch.setattr(bc, "CELL_STUDY", str(path))
+    monkeypatch.setattr(bc, "CELL_STUDY_SHA256", hashlib.sha256(raw).hexdigest())
+
+
+def test_an_edited_record_is_refused_by_its_pinned_digest(tmp_path, monkeypatch):
+    path = tmp_path / "record.json"
+    path.write_bytes(open(bc.CELL_STUDY, "rb").read().replace(b"0.853898705996209", b"0.853898705996208"))
+    monkeypatch.setattr(bc, "CELL_STUDY", str(path))
+    with pytest.raises(ValueError, match="not the pinned one"):
+        bc.cell_balance()
+
+
+@pytest.mark.parametrize("edit", [
+    # a failed identification (factor at the registered bound) presented as carried
+    lambda r: (r["step_1"]["factors"].update(positive=0.70), r["decision_for_flagship"]["flagship_factors"].update(positive=0.70)),
+    # carried factors that are not the identified ones
+    lambda r: r["decision_for_flagship"]["flagship_factors"].update(negative=1.0),
+    # the lab heat-transfer coefficient carried into the flagship
+    lambda r: r["decision_for_flagship"].update(flagship_carries_h=True),
+    # a better model-form band than the table shows
+    lambda r: r["decision_for_flagship"]["model_form_band_C2"].update(v_rmse_mV=[1.0, 2.0]),
+    # an outcome that does not follow from the table
+    lambda r: r["judgement"].update(met=True),
+    lambda r: r["judgement"]["cell02"].update(T1=True),
+    # a table edited to pass, with the stated judgement left as NOT MET
+    lambda r: r["table"]["DFN"]["cell02"]["C/2"].update(rise_err_K=0.0),
+    # a record bound to another registration
+    lambda r: r.update(preregistration_sha256="0" * 64),
+], ids=["at-bound-carried", "factors-differ", "h-carried", "band-improved", "met-flipped", "T1-flipped", "table-edited", "other-registration"])
+def test_a_record_whose_outcome_or_decision_does_not_follow_from_its_data_is_refused(tmp_path, monkeypatch, edit):
+    _tampered(tmp_path, monkeypatch, edit)
+    with pytest.raises(ValueError):
+        bc.cell_balance()
+
+
+def test_the_level_7_note_and_report_text_are_derived_from_the_record():
+    text = bc.cell_outcome_text()
+    assert text.startswith("NOT MET") and "surface-temperature rise missed on cell02, cell04" in text

@@ -1,21 +1,21 @@
 {
  "conservation": [
-  "module_heat_fresh: closed residual 7.265e-12 hour * watt (tolerance 1.000e-06)",
-  "module_heat_aged: closed residual 2.021e-12 hour * watt (tolerance 1.000e-06)",
-  "module_heat_control: closed residual 1.371e-12 hour * watt (tolerance 1.000e-06)"
+  "module_heat_fresh: closed residual 1.648e-11 hour * watt (tolerance 1.000e-06)",
+  "module_heat_aged: closed residual 3.510e-12 hour * watt (tolerance 1.000e-06)",
+  "module_heat_control: closed residual 3.013e-12 hour * watt (tolerance 1.000e-06)"
  ],
  "constraints": [
   {
    "binding_id": "b_fade",
    "constraint_id": "max_capacity_fade",
-   "margin": "margin 0.0482 dimensionless",
+   "margin": "margin 0.04811 dimensionless",
    "note": "",
    "status": "satisfied"
   },
   {
    "binding_id": "b_soc_aged",
    "constraint_id": "min_soc",
-   "margin": "margin 0.07269 dimensionless",
+   "margin": "margin 0.07263 dimensionless",
    "note": "",
    "status": "satisfied"
   },
@@ -29,14 +29,14 @@
   {
    "binding_id": "b_tmax_aged",
    "constraint_id": "max_cell_temperature",
-   "margin": "margin 14.09 kelvin",
+   "margin": "margin 13.53 kelvin",
    "note": "",
    "status": "satisfied"
   },
   {
    "binding_id": "b_tmax_fresh",
    "constraint_id": "max_cell_temperature",
-   "margin": "margin 16.87 kelvin",
+   "margin": "margin 16.33 kelvin",
    "note": "",
    "status": "satisfied"
   }
@@ -45,15 +45,15 @@
  "identities": [
   [
    "request",
-   "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9"
+   "9158ed7ea3263b410450be84eaf13dcfa7d30fba2bbb5b11a08166ba6b00f66d"
   ],
   [
    "plan",
-   "4218ffe46734a669e019a9679e4107a9342d11e1fe18e8507d9b0da1612016d8"
+   "a41a0861327476b1540853d233bbaf07b13d232fbe39d125cefc592f4183021f"
   ],
   [
    "result",
-   "277c211c512a00b522f1d355ca0c6efe0428fb868b8697276c067a62e729842a"
+   "0967feab419839ae1cecadc0653b2518f282bf9a094841b6ab6a4377f5ca4708"
   ]
  ],
  "key_outputs": [
@@ -64,7 +64,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 301.27718797320637,
+    "magnitude": 301.8228366550663,
     "schema": "quantity/1",
     "units": "kelvin"
    }
@@ -76,7 +76,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 304.0630160679207,
+    "magnitude": 304.62295818666195,
     "schema": "quantity/1",
     "units": "kelvin"
    }
@@ -88,7 +88,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.1917849837865333,
+    "magnitude": 0.4119544038372851,
     "schema": "quantity/1",
     "units": "kelvin"
    }
@@ -100,7 +100,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 28.810749234560934,
+    "magnitude": 68.96353586031707,
     "schema": "quantity/1",
     "units": "hour * watt"
    }
@@ -112,7 +112,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 3.4948062188476667,
+    "magnitude": 3.4008500678538742,
     "schema": "quantity/1",
     "units": "volt"
    }
@@ -124,7 +124,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 3.4664376771010694,
+    "magnitude": 3.369837994850005,
     "schema": "quantity/1",
     "units": "volt"
    }
@@ -136,7 +136,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": -0.033744570205948676,
+    "magnitude": -0.03616636050291522,
     "schema": "quantity/1",
     "units": "volt"
    }
@@ -148,7 +148,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.005376028459351367,
+    "magnitude": 0.005154287499046006,
     "schema": "quantity/1",
     "units": "volt"
    }
@@ -160,7 +160,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.7999999999999882,
+    "magnitude": 0.8000000000000268,
     "schema": "quantity/1",
     "units": "dimensionless"
    }
@@ -172,7 +172,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.2726855537057231,
+    "magnitude": 0.2726335011764822,
     "schema": "quantity/1",
     "units": "dimensionless"
    }
@@ -184,7 +184,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.051799161745386395,
+    "magnitude": 0.05189275178565399,
     "schema": "quantity/1",
     "units": "dimensionless"
    }
@@ -196,7 +196,7 @@
    "reason": "",
    "uncertainty": "UNKNOWN (not quantified)",
    "value": {
-    "magnitude": 0.006571283505703601,
+    "magnitude": 0.011676005350686969,
     "schema": "quantity/1",
     "units": "watt"
    }
@@ -219,12 +219,12 @@
     "status": "within"
    },
    "classification": "analytic_limit_comparison_verifies_implementation_only",
-   "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+   "compared_identity": "67eebcf3900e27fcf3329c94a0970aea9504c2f80a058d140eb78ca654a9ab90",
    "conditions": [
     [
      "mean_temperature",
      {
-      "magnitude": 297.3574378438702,
+      "magnitude": 297.47528507331975,
       "schema": "quantity/1",
       "units": "kelvin"
      }
@@ -256,7 +256,7 @@
    "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
    "reference_kind": "analytic_reference",
    "value": {
-    "magnitude": 2.3424371463904412e-08,
+    "magnitude": 1.0735588931441202e-07,
     "schema": "quantity/1",
     "units": "dimensionless"
    },
@@ -267,7 +267,7 @@
  "scientific_status": "insufficient_evidence",
  "scientific_status_basis": "derived by the existing credibility authority; the runtime supplies no validity record and no validation check, and this summary adds none",
  "system": "Cell module with liquid cooling, 57-day declared profile (normal)",
- "text_sha256": "8254ff92567b34c95b7f80cba02fe42b1d3f64e574e8b2d2d2dd50bdb690acd2",
+ "text_sha256": "9e24f2b03683a01f8b9feb8c74131641a7554aab02155f26c8e62abbd822eb34",
  "trace": {
   "complete": true,
   "gaps": []
@@ -281,7 +281,7 @@
    "PyBaMM parameter set Chen2020 (provider-bundled literature set)"
   ],
   "model_applicability": "cell temperature window [273.15, 333.15] K and SOC window [0.15, 0.95] were checked on every solved day; the aging map range [0, 0.5) on the slow state. The applicability of the Chen2020 parameters to the temperatures and duty of this case is UNKNOWN to Forge",
-  "model_discrepancy": "NOT QUANTIFIED for the SPM cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero)",
+  "model_discrepancy": "NOT QUANTIFIED for the DFN cell model, the quasi-steady thermal rule, the loss-of-active-material fade mapping or the representative-day approximation (unknown, not zero). Reported, not propagated: against LG M50 lab discharges at C/2 the cell model's voltage RMSE was 13.6-16.9 mV and its peak surface-rise error -3.5 to -1.5 K (big14-a-lgm50-dfn; in-sample, likely optimistic). The rise error belongs to the lab rig (its identified heat-transfer coefficient, a lumped model against a surface thermocouple) and says nothing about this flagship's cell temperature, which follows the declared contact-resistance rule; the charge half of the duty was never compared with data; applicability to this module and duty is UNKNOWN",
   "unknown_input_uncertainty": [
    "coolant inlet profile (declared)",
    "cell current profile (declared)",
@@ -289,7 +289,8 @@
    "contact resistance (ASSUMED)",
    "cells-in-module multiplicity (declared)",
    "fade-law constants (declared)",
-   "PyBaMM Chen2020 parameters (provider-bundled literature data)"
+   "PyBaMM Chen2020 parameters (provider-bundled literature data)",
+   "active-material balance factors (identified on one LG M50 curve, not measured)"
   ]
  },
  "verification": {
@@ -300,7 +301,7 @@
     "evidence": [
      {
       "classification": "contract_integrity",
-      "digest": "f029d605cb584bac3e71e3aaadefdbae20e8acf999da0254b3fa363ca4be41f8",
+      "digest": "f82ff73ba0d898a83e9787656c52c715a431e05eac96530b49adaefeeda2d0f7",
       "kind": "preflight_and_identity",
       "note": "preflight deferred_checks; run succeeded",
       "outcome": "met",
@@ -344,12 +345,12 @@
         }
        ],
        "findings": [],
-       "plan_digest": "4218ffe46734a669e019a9679e4107a9342d11e1fe18e8507d9b0da1612016d8",
-       "request_digest": "3d1e739e940d7b2342750c3445acfdbf4d6404420e47d4dcd9fe2437c1ce8ae9",
+       "plan_digest": "a41a0861327476b1540853d233bbaf07b13d232fbe39d125cefc592f4183021f",
+       "request_digest": "9158ed7ea3263b410450be84eaf13dcfa7d30fba2bbb5b11a08166ba6b00f66d",
        "schema": "forge.system_runtime.preflight_report/1",
        "status": "deferred_checks"
       },
-      "record_digest": "0a453efad7c6cc37940f7bcd136f41fa41673bc2ed428e01bed48e067962c4c1"
+      "record_digest": "f8e683df9493db76a14a3cc7e68b18f03996a2d003ac233d123aeb84c05a9eee"
      }
     ],
     "level": 1,
@@ -361,9 +362,9 @@
     "evidence": [
      {
       "classification": "conservation_residual",
-      "digest": "45df96fdc52c53fe7f3882557bf3466f89c33cf0f1448264be3086a3e8b1a2ef",
+      "digest": "e8b9906602ee6ce838528c4ad8aca3db1fcf51a83efc9c9bb9ad716ffde73a45",
       "kind": "conservation_assessment",
-      "note": "module_heat_fresh: residual 7.27e-12 hour * watt",
+      "note": "module_heat_fresh: residual 1.65e-11 hour * watt",
       "outcome": "met",
       "record": {
        "balance_id": "module_heat_fresh",
@@ -371,7 +372,7 @@
        "missing_terms": [],
        "reason": "",
        "residual": {
-        "magnitude": 7.265299473147024e-12,
+        "magnitude": 1.6484591469634324e-11,
         "schema": "quantity/1",
         "units": "hour * watt"
        },
@@ -382,13 +383,13 @@
         "units": "hour * watt"
        }
       },
-      "record_digest": "ae7842734d4541ec33fffc29889607ced20e8b49e436788c58a606c8f85b80d4"
+      "record_digest": "18b67afee88741899156c8bc7624a508b10678935b916b9f743a77748ec3fd48"
      },
      {
       "classification": "conservation_residual",
-      "digest": "b4a2ee08c4ebfef1c90ef03458729bfc6b31dba30f6efddd2997f7cc473863f8",
+      "digest": "55b36f519e8bde85d53245fb129dec7d355113c996c6711898d54ea40f65e573",
       "kind": "conservation_assessment",
-      "note": "module_heat_aged: residual 2.02e-12 hour * watt",
+      "note": "module_heat_aged: residual 3.51e-12 hour * watt",
       "outcome": "met",
       "record": {
        "balance_id": "module_heat_aged",
@@ -396,7 +397,7 @@
        "missing_terms": [],
        "reason": "",
        "residual": {
-        "magnitude": 2.021494083237485e-12,
+        "magnitude": 3.510081114654895e-12,
         "schema": "quantity/1",
         "units": "hour * watt"
        },
@@ -407,13 +408,13 @@
         "units": "hour * watt"
        }
       },
-      "record_digest": "84a0f62450e5d6f572fc6dc54db75f572407e755bae08a492181c95cd0087cab"
+      "record_digest": "5387a509371e91dced73820ba6d97a5a4fd921b237c08c3e82a382c97e6ab240"
      },
      {
       "classification": "conservation_residual",
-      "digest": "6215bf4a7c57414182e7c4186422e908beabd1e6158edd5e929c77cfba4c27bf",
+      "digest": "e21edf3550f1207debeb3017590fc969655821dc19eec87cdb707b5e170939e4",
       "kind": "conservation_assessment",
-      "note": "module_heat_control: residual 1.37e-12 hour * watt",
+      "note": "module_heat_control: residual 3.01e-12 hour * watt",
       "outcome": "met",
       "record": {
        "balance_id": "module_heat_control",
@@ -421,7 +422,7 @@
        "missing_terms": [],
        "reason": "",
        "residual": {
-        "magnitude": 1.3713474800169934e-12,
+        "magnitude": 3.0127011996228248e-12,
         "schema": "quantity/1",
         "units": "hour * watt"
        },
@@ -432,7 +433,7 @@
         "units": "hour * watt"
        }
       },
-      "record_digest": "29e617ea2856195b8c309d02650b5b7a510730932be25b8b5fb79dc5721e9f3b"
+      "record_digest": "4de23cb4e7eeeaf24e138ed6fb75bb8fb153f4418a2e1057eee90b81a3fd78e2"
      }
     ],
     "level": 2,
@@ -444,7 +445,7 @@
     "evidence": [
      {
       "classification": "analytic_limit_comparison_verifies_implementation_only",
-      "digest": "8cac4259818cbd750c3942600ebe4d8f624f4cac8673b9adf961aa9d34575f2c",
+      "digest": "3606347a6a20a8a7c52e207dc537ba985f05246a26be49212e1e6e77993d58d5",
       "kind": "reference_comparison",
       "note": "",
       "outcome": "met",
@@ -456,12 +457,12 @@
         "status": "within"
        },
        "classification": "analytic_limit_comparison_verifies_implementation_only",
-       "compared_identity": "df2641eb36a6ca660b87abcd4fe2d0c45d5a571cd96af185f9756968de736977",
+       "compared_identity": "67eebcf3900e27fcf3329c94a0970aea9504c2f80a058d140eb78ca654a9ab90",
        "conditions": [
         [
          "mean_temperature",
          {
-          "magnitude": 297.3574378438702,
+          "magnitude": 297.47528507331975,
           "schema": "quantity/1",
           "units": "kelvin"
          }
@@ -493,13 +494,13 @@
        "reference_digest": "9cd5c521e120f2a8313543ce4077da4bd71fd4b208ccabbfe4a4ae3cd55c6177",
        "reference_kind": "analytic_reference",
        "value": {
-        "magnitude": 2.3424371463904412e-08,
+        "magnitude": 1.0735588931441202e-07,
         "schema": "quantity/1",
         "units": "dimensionless"
        },
        "within_tolerance": true
       },
-      "record_digest": "c7280733b8790f47ee9b74c3b7b1661e64ba5046abf4622bde3e94cded8fd5d1"
+      "record_digest": "55429226dc77153c76c4e720bab50a509d9f5bf4769004d1d3e6d8db478938b9"
      }
     ],
     "level": 3,
@@ -511,44 +512,44 @@
     "evidence": [
      {
       "classification": "discretisation_convergence",
-      "digest": "a29f32391f95a3374dfd114afc926e272df63499bcfee1a265308d6153477145",
+      "digest": "5709a2a94a64ea52d96e4a18bf2140db2c4dfb6d86350b2dfa05a68ed7827734",
       "kind": "window_refinement",
-      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '3250f33057d04523', '1800': 'b8cbf96f5b46d456', '900': '9053672164b891bf'}): {'peak_cell_temperature': {'3600': 301.27718797320637, '1800': 301.28034684390536, '900': 301.2883719280791, 'abs_difference_coarse_pair': 0.003158870698996452, 'abs_difference_fine_pair': 0.008025084173709729}, 'voltage_end_of_discharge': {'3600': 3.4948062188476667, '1800': 3.494805058935227, '900': 3.494818495267861, 'abs_difference_coarse_pair': 1.1599124398742333e-06, 'abs_difference_fine_pair': 1.343633263406474e-05}, 'peak_heat': {'3600': 0.160461730156445, '1800': 0.16068608478739482, '900': 0.1635530247473881, 'abs_difference_coarse_pair': 0.0002243546309498301, 'abs_difference_fine_pair': 0.0028669399599932643}}; observed orders {'peak_cell_temperature': -1.3451076395540797, 'voltage_end_of_discharge': -3.5340516093407266, 'peak_heat': -3.6756588233007492}",
+      "note": "coupling windows [3600, 1800, 900] s (three separate BIG 12 requests, digests {'3600': '0abace62a8cc6273', '1800': '9bbf94d34f82cd38', '900': '2b1398f7b98cd40c'}): {'peak_cell_temperature': {'3600': 301.8228366550663, '1800': 301.89730107038633, '900': 301.90096424684424, 'abs_difference_coarse_pair': 0.0744644153200511, 'abs_difference_fine_pair': 0.0036631764579055925}, 'voltage_end_of_discharge': {'3600': 3.4008500678538742, '1800': 3.4008076825726317, '900': 3.400777659401524, 'abs_difference_coarse_pair': 4.238528124256291e-05, 'abs_difference_fine_pair': 3.0023171107451674e-05}, 'peak_heat': {'3600': 0.344666105687859, '1800': 0.3663260530261596, '900': 0.37959545945987866, 'abs_difference_coarse_pair': 0.021659947338300622, 'abs_difference_fine_pair': 0.013269406433719044}}; observed orders {'peak_cell_temperature': 4.345384058893946, 'voltage_end_of_discharge': 0.4974869946097148, 'peak_heat': 0.7069258977300681}",
       "outcome": "not_met",
       "record": {
        "digest": {
-        "1800": "b8cbf96f5b46d456",
-        "3600": "3250f33057d04523",
-        "900": "9053672164b891bf"
+        "1800": "9bbf94d34f82cd38",
+        "3600": "0abace62a8cc6273",
+        "900": "2b1398f7b98cd40c"
        },
        "met": false,
-       "monotone_met": false,
+       "monotone_met": true,
        "orders": {
-        "peak_cell_temperature": -1.3451076395540797,
-        "peak_heat": -3.6756588233007492,
-        "voltage_end_of_discharge": -3.5340516093407266
+        "peak_cell_temperature": 4.345384058893946,
+        "peak_heat": 0.7069258977300681,
+        "voltage_end_of_discharge": 0.4974869946097148
        },
        "quantities": {
         "peak_cell_temperature": {
-         "1800": 301.28034684390536,
-         "3600": 301.27718797320637,
-         "900": 301.2883719280791,
-         "abs_difference_coarse_pair": 0.003158870698996452,
-         "abs_difference_fine_pair": 0.008025084173709729
+         "1800": 301.89730107038633,
+         "3600": 301.8228366550663,
+         "900": 301.90096424684424,
+         "abs_difference_coarse_pair": 0.0744644153200511,
+         "abs_difference_fine_pair": 0.0036631764579055925
         },
         "peak_heat": {
-         "1800": 0.16068608478739482,
-         "3600": 0.160461730156445,
-         "900": 0.1635530247473881,
-         "abs_difference_coarse_pair": 0.0002243546309498301,
-         "abs_difference_fine_pair": 0.0028669399599932643
+         "1800": 0.3663260530261596,
+         "3600": 0.344666105687859,
+         "900": 0.37959545945987866,
+         "abs_difference_coarse_pair": 0.021659947338300622,
+         "abs_difference_fine_pair": 0.013269406433719044
         },
         "voltage_end_of_discharge": {
-         "1800": 3.494805058935227,
-         "3600": 3.4948062188476667,
-         "900": 3.494818495267861,
-         "abs_difference_coarse_pair": 1.1599124398742333e-06,
-         "abs_difference_fine_pair": 1.343633263406474e-05
+         "1800": 3.4008076825726317,
+         "3600": 3.4008500678538742,
+         "900": 3.400777659401524,
+         "abs_difference_coarse_pair": 4.238528124256291e-05,
+         "abs_difference_fine_pair": 3.0023171107451674e-05
         }
        },
        "status": {
@@ -556,14 +557,14 @@
         "3600": "succeeded",
         "900": "succeeded"
        },
-       "tolerances_met": true,
+       "tolerances_met": false,
        "windows_s": [
         3600,
         1800,
         900
        ]
       },
-      "record_digest": "4e8a14fa6a6a89019e1f023f0719c0056e607cb6d0b33aaa222da74d93ffff76"
+      "record_digest": "88de3b49eeb9dac431af3cdd4c6cc0213a0335dac749a63d9f29bc74e60a5062"
      }
     ],
     "level": 4,
@@ -575,7 +576,7 @@
     "evidence": [],
     "level": 5,
     "name": "independent_provider_corroboration",
-    "note": "no second, independent battery provider exists in the provider ecosystem; PyBaMM SPM vs SPMe would be the same provider and compare_providers refuses that pair as non-independent",
+    "note": "no second, independent battery provider exists in the provider ecosystem; PyBaMM DFN vs SPM would be the same provider and compare_providers refuses that pair as non-independent",
     "status": "not_available"
    },
    {
@@ -586,11 +587,56 @@
     "status": "not_available"
    },
    {
-    "evidence": [],
+    "evidence": [
+     {
+      "classification": "cell_model_in_sample_consistency_not_validation",
+      "digest": "2ad85a0e94f03925d541fb6d84e7998b2b4b35c7061c99c64237e6d0f39ddbfe",
+      "kind": "cell_model_measured_comparison",
+      "note": "",
+      "outcome": "not_met",
+      "record": {
+       "data_classification": "in-sample: Chen2020 was tuned on the C/2, 1C and 1.5C curves (docs/flagships/big14/chen2020_independence.json)",
+       "judgement": {
+        "cell02": {
+         "C1": true,
+         "T1": false,
+         "V1": true
+        },
+        "cell03": {
+         "C1": true,
+         "T1": true,
+         "V1": true
+        },
+        "cell04": {
+         "C1": true,
+         "T1": false,
+         "V1": true
+        },
+        "met": false
+       },
+       "model_form_band_C2": {
+        "label": "measured against Chen2020's own tuning data (in-sample); likely optimistic; out-of-sample error UNKNOWN",
+        "rise_err_K": [
+         -3.466304897785051,
+         -1.53561736830153
+        ],
+        "v_rmse_mV": [
+         13.620636194995926,
+         16.87624230887905
+        ]
+       },
+       "preregistration_sha256": "e2fa1c2cafb86318a04996a0fea26d22fdd897c4461fe3fa3d061b1776485fe2",
+       "record_sha256": "95e3792be09be593d0876e3ef4808e970f64d2eefcb8a790eb54149a18d5378f",
+       "scope": "the cell model alone (PyBaMM DFN, Chen2020, heat of mixing, identified balance) against constant-current lab discharges of three LG M50 cells in a 25 degC chamber; not this module, its cold plate or its duty",
+       "study": "big14-a-lgm50-dfn"
+      },
+      "record_digest": "61c1f7344db4f8c4f469d0709d5f10b3785a0b1a5b263367b39088a58fc09b8a"
+     }
+    ],
     "level": 7,
     "name": "experimental_validation",
-    "note": "no experimental dataset applicable to this cell was integrated. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed",
-    "status": "not_available"
+    "note": "the CELL MODEL alone was compared with measured LG M50 lab discharges (big14-a-lgm50-dfn, pre-registered): NOT MET (C/2: voltage RMSE inside the criterion on all 3 cells; capacity inside the criterion on all 3 cells; surface-temperature rise missed on cell02, cell04), and in-sample (Chen2020 was tuned on those curves), so it is neither validation nor evidence about this module, cold plate or duty. The NASA PCoE Li-ion aging dataset (repository-pinned manifest) was also considered: the reference record Forge wrote for it (envelope authored here from the pack's description, not from the dataset's own metadata) states only the cell-format diameter (18 mm, from the '18650' name) as an envelope term and this flagship states no recorded cell format for the PyBaMM parameter set, so its applicability is UNKNOWN (condition 'cell_format_diameter' of the flagship is not stated); no comparison was made and none is claimed",
+    "status": "attempted_not_reached"
    }
   ],
   "reference_level_reached": "none",
