@@ -239,6 +239,21 @@ def test_an_intact_bundle_with_a_v1_environment_still_verifies_but_cannot_be_an_
     replay = replay_bundle(old, registry)
     assert replay.status is BundleStatus.NOT_REPRODUCIBLE and any("does not bind the unit definitions" in d for d in replay.differences)
 
+
+def test_a_slow_git_probe_is_not_cut_off_on_a_loaded_machine(monkeypatch) -> None:
+    """A 2 s probe timed out on CI and read the source state as unavailable; the probe must allow a slow git and still fail closed on a hung one."""
+    import subprocess
+    from engcore.claims.replay import bundle as module
+
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["timeout"] = kw["timeout"]
+        raise subprocess.TimeoutExpired(cmd, kw["timeout"])
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    assert module._git_bytes("status", "--porcelain") is None                    # a hung git is still UNAVAILABLE, never clean
+    assert seen["timeout"] >= 10
+
 def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, registry, monkeypatch) -> None:
     import engcore.claims.execution as execution
 

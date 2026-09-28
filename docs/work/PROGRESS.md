@@ -326,6 +326,7 @@ The owner said "do the three". The three were: `reads_owners`; undeclared applic
 
 ### Executed
 - `pytest tests/test_system_runtime_*.py tests/test_engineering_*.py tests/claims flagships/tests -n 4` -> **889 passed, 39 skipped** (final tree).
+- **CI PR #116 (`ad292325`), fast311 only:** 3 failures in `tests/claims/test_impact_replay.py`, each with the difference "stored replay environment: source-control dirty-tree state is unavailable". fast312 and scientific312 passed the same tests on the same commit. Cause: `_git_bytes` ran `git status` with a 2 s timeout, which a loaded runner exceeded. Fail-closed, but it makes a required gate flaky. Fixed: `GIT_PROBE_TIMEOUT_S = 30`, pinned by a test; a hung git still reads as UNAVAILABLE. `pytest tests/claims -n 4` -> 627 passed.
 - WSL `battery` env on `4ed62b12`: `pytest providers/pybamm/tests/test_system_runtime_battery.py providers/pybamm/tests/test_pybamm_provider.py flagships/tests/test_flagship_battery.py` -> **28 passed**, exit 0.
 - Full FAST tier `pytest -m "not expensive" -n 4` on the pre-M1 tree -> 10 failed, 9021 passed, 118 skipped.
   - Two of the ten (`test_the_tree_is_core_freeze_v1`, the V3 supersession check) failed only because the tree was dirty during the run. On the committed tree `b07a58f1` both **pass**.

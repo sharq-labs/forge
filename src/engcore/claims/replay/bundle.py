@@ -80,13 +80,19 @@ def _distribution_version(name: str) -> str:
         return "not-installed"
 
 
+#: A timed-out probe records the source state as UNAVAILABLE (never as clean), so exact replay refuses: fail-closed, but a
+#: 2 s limit made that happen on a loaded CI runner (`git status` over the whole tree, 4 test workers) and turned the replay
+#: tests into a timing flake (PR #116 fast311, 2026-09-28).  The limit only bounds a hung git.
+GIT_PROBE_TIMEOUT_S = 30
+
+
 def _git_bytes(*args: str) -> bytes | None:
     try:
         proc = subprocess.run(
             ["git", *args],
             check=False,
             capture_output=True,
-            timeout=2,
+            timeout=GIT_PROBE_TIMEOUT_S,
         )
     except (OSError, subprocess.SubprocessError):
         return None
