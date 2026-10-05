@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 import hashlib
+from io import BytesIO
 import json
 import math
 from pathlib import Path
@@ -83,8 +84,22 @@ def source_receipt(path: str | Path) -> SourceReceipt:
     return SourceReceipt(source.name, byte_count, digest.hexdigest())
 
 
-def _python_scalar(value: Any, *, where: str) -> float:
+def _numeric_array(value: Any, *, where: str) -> np.ndarray:
     array = np.asarray(value)
+    if array.dtype.kind not in "iufc":
+        raise NasaBatteryIngestionError(f"{where} must contain numeric values")
+    return array
+
+
+def _vector(value: Any, *, where: str) -> np.ndarray:
+    array = _numeric_array(value, where=where)
+    if array.ndim > 2 or (array.ndim == 2 and min(array.shape) > 1):
+        raise NasaBatteryIngestionError(f"{where} must be a vector; got shape {array.shape}")
+    return array.reshape(-1)
+
+
+def _python_scalar(value: Any, *, where: str) -> float:
+    array = _numeric_array(value, where=where)
     if array.size != 1:
         raise NasaBatteryIngestionError(
             f"{where} must be a scalar; got shape {array.shape}"
@@ -139,7 +154,8 @@ def _encode_number(value: Any, *, where: str) -> float | dict[str, float]:
 def _channel(
     value: Any, *, where: str
 ) -> list[float | dict[str, float]] | float | dict[str, float]:
-    array = np.asarray(value)
+    array = _numeric_array(value, where=where)
+    _vector(value, where=where)
     if array.ndim == 0:
         return _encode_number(array.item(), where=where)
     flattened = array.reshape(-1)
@@ -188,7 +204,7 @@ def _cycle_type(value: Any, *, where: str) -> str:
 
 
 def _matlab_date_vector(value: Any, *, where: str) -> list[float]:
-    array = np.asarray(value).reshape(-1)
+    array = _vector(value, where=where)
     if array.size != 6:
         raise NasaBatteryIngestionError(
             f"{where} must be the six-element MATLAB date vector; got {array.size}"
@@ -212,7 +228,9 @@ def _validate_operational_channels(
 
     lengths: dict[str, int] = {}
     for name in _OPERATIONAL_REQUIRED_CHANNELS:
-        array = np.asarray(data[name]).reshape(-1)
+        array = _vector(data[name], where=f"{where}.data.{name}")
+        if np.iscomplexobj(array):
+            raise NasaBatteryIngestionError(f"{where}.data.{name} must be real")
         lengths[name] = int(array.size)
         for index, item in enumerate(array):
             _encode_number(item, where=f"{where}.data.{name}[{index}]")
@@ -266,6 +284,8 @@ def _canonical_cycle(raw_cycle: Any, index: int) -> dict[str, Any]:
     started = _matlab_date_vector(cycle["time"], where=f"{where}.time")
     data = _record(cycle["data"], where=f"{where}.data")
 
+    if cycle_type == "impedance" and (not data or not any(np.asarray(value).size for value in data.values())):
+        raise NasaBatteryIngestionError(f"{where} has no impedance samples")
     if cycle_type in {"charge", "discharge"}:
         _validate_operational_channels(
             data, cycle_type=cycle_type, where=where
@@ -275,6 +295,10 @@ def _canonical_cycle(raw_cycle: Any, index: int) -> dict[str, Any]:
         str(name): _channel(value, where=f"{where}.data.{name}")
         for name, value in sorted(data.items(), key=lambda item: str(item[0]))
     }
+    if cycle_type in {"charge", "discharge"}:
+        for name in _OPERATIONAL_REQUIRED_CHANNELS:
+            channels[name] = [_python_scalar(item, where=f"{where}.data.{name}")
+                              for item in _vector(data[name], where=f"{where}.data.{name}")]
     record: dict[str, Any] = {
         "cycle_index": index,
         "cycle_type": cycle_type,
@@ -330,7 +354,11 @@ def canonicalize_loaded_mat(
     receipt: SourceReceipt,
     cell_id: str | None = None,
 ) -> dict[str, Any]:
-    """Convert ``scipy.io.loadmat(..., simplify_cells=True)`` output."""
+    """Convert parsed content using an unverified caller-supplied receipt.
+
+    This helper does not authenticate origin or bind the receipt to raw bytes.
+    Use ingest_mat_file for byte-bound ingestion; neither API admits evidence.
+    """
     selected_id, cell = _select_cell(loaded, cell_id)
     if "cycle" not in cell:
         raise NasaBatteryIngestionError(
@@ -384,9 +412,10 @@ def ingest_mat_file(
 ) -> dict[str, Any]:
     """Receipt and parse one NASA cell MAT file."""
     source = Path(path)
-    receipt = source_receipt(source)
+    raw_bytes = source.read_bytes()
+    receipt = SourceReceipt(source.name, len(raw_bytes), hashlib.sha256(raw_bytes).hexdigest())
     try:
-        loaded = loadmat(source, simplify_cells=True)
+        loaded = loadmat(BytesIO(raw_bytes), simplify_cells=True)
     except Exception as exc:
         raise NasaBatteryIngestionError(
             f"could not parse MATLAB file {source}: {exc}"

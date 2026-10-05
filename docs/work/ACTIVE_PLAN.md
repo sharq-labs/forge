@@ -5,10 +5,20 @@ pursue now. Strategic direction remains in
 `docs/project/FORGE_MASTER_PLAN.md`; completed work, failed approaches and test
 transcripts remain in `docs/work/PROGRESS.md`.
 
+## Bounded battery ingestion review — 2026-10-06
+
+Current review worktree: `C:/Users/dev_kaeem/Downloads/Compressed/forge-battery-review`,
+branch `scientific/battery-1rc-production-closure`, starting HEAD `d66c4756`.
+Scope: hostile review and defect repair of NASA raw ingestion only. Focused
+parsing/adversarial checks complete; integration tiers and review disposition
+are recorded in PROGRESS. Do not advance `real_data` or infer SOC, pulse/rest,
+sensor uncertainty, or R0/R1/C1. Acquisition/frozen source, split, identification,
+validation and UQ remain deferred under the battery preregistration.
+
 ## Current objective
 
 The architecture-first BUILD phase through **BIG 13** is complete and merged.
-Forge now enters **BIG 14 — Scientific Closure & Recertification**.
+Forge now enters **BIG 14 â€” Scientific Closure & Recertification**.
 
 BIG 14 is a stabilization, diagnosis and evidence campaign. It is not another
 breadth-expansion phase. New providers, domains and flagships remain out of
@@ -48,14 +58,14 @@ uncertainty/model discrepancy into zero.
 
 ## Roadmap view
 
-### Now — BIG 14
+### Now â€” BIG 14
 
 Close known authority/review gaps, establish a reproducible full-tree
 baseline, select a bounded flagship evidence target, diagnose its residuals,
 quantify only supportable uncertainty channels, and run the full assurance
 campaign.
 
-### Next — BIG 15
+### Next â€” BIG 15
 
 Complete graph-level UQ/V&V and evidence composition using the findings and
 contracts proven in BIG 14. Do not start while BIG 14 exit criteria remain
@@ -72,15 +82,15 @@ directional under the Master Plan. They do not displace scientific closure.
 phases. They are related but not numerically identical.
 
 The Master Plan names the P16 flagship systems as HVAC, battery pack, drone and
-vehicle subsystem (§10). BIG 13 flagships A-D are integration proofs of the
+vehicle subsystem (Â§10). BIG 13 flagships A-D are integration proofs of the
 generic runtime; only A overlaps a P16 system (battery), and none of them
 completes P16. BIG 14 does not redefine P16.
 
 | Execution milestone | Master Plan relationship | Status |
 |---|---|---|
-| BIG 2–9 | P1–P8 foundations | Built; full merged-tree campaign pending |
+| BIG 2â€“9 | P1â€“P8 foundations | Built; full merged-tree campaign pending |
 | BIG 10 | P14 multi-timescale runtime | Built; full campaign pending |
-| BIG 11 | Provider work spanning P7–P13 | Built; residual reviews recorded |
+| BIG 11 | Provider work spanning P7â€“P13 | Built; residual reviews recorded |
 | BIG 12 | Cross-phase end-to-end runtime | Built; final fix batch needs re-review |
 | BIG 13 | Integration proofs toward P16 (not the P16 systems) | Built; all results remain insufficient evidence |
 | BIG 14 | P0 closure plus bounded P15/P16 evidence work | Current |
@@ -92,7 +102,7 @@ The sections below are sequential unless a task explicitly says it may run in
 parallel. The first unchecked item in this section is the next executable task.
 Historical status later in this file is not an execution queue.
 
-### 14.0 — Establish the branch and baseline
+### 14.0 â€” Establish the branch and baseline
 
 Owner: repository maintainer / implementation agent.
 
@@ -127,7 +137,7 @@ alter scientific authority, evidence admission, applicability, uncertainty,
 replay identity or assurance. Infrastructure and authority repairs in 14.1 may
 proceed specifically to close those failures.
 
-### 14.1 — Close authority, runtime and review debt
+### 14.1 â€” Close authority, runtime and review debt
 
 Owner: implementation agent. Reviewer: independent read-only scientific
 reviewer for every claim/evidence/UQ/assurance change.
@@ -258,7 +268,7 @@ Then review and authority debt:
 - [ ] Re-run the affected regression packs after each bounded fix and append
       the exact commands/results to PROGRESS.
 
-### 14.2 — Triage and select the evidence target
+### 14.2 â€” Triage and select the evidence target
 
 Owner: repository maintainer. Selection must be recorded before new evidence
 or acceptance logic is added.
@@ -330,7 +340,7 @@ to the selected flagship(s):
 - D: GRI-Mech applicability and absence of ignition-delay/flame experimental
   comparison.
 
-### 14.3 — Diagnose, quantify and admit evidence
+### 14.3 â€” Diagnose, quantify and admit evidence
 
 Owner: implementation agent. External dependencies: authoritative data,
 provider environments and applicable licenses.
@@ -352,7 +362,7 @@ provider environments and applicable licenses.
       selected campaign as a justified refusal (missing evidence and next
       admissible step named) instead of extending scope.
 
-### 14.4 — Full verification and recertification
+### 14.4 â€” Full verification and recertification
 
 Owner: repository maintainer. External dependency: GitHub Actions and the
 repository ruleset for `main`.
@@ -377,7 +387,7 @@ repository ruleset for `main`.
 
 BIG 14 has two separate outcomes. Do not conflate them.
 
-### Scientific-closure exit — required to finish BIG 14
+### Scientific-closure exit â€” required to finish BIG 14
 
 - [ ] FAST, SCIENTIFIC, required provider suites, mutation gates and hardened
       recertification pass on the exact final source head in declared supported
@@ -396,7 +406,7 @@ BIG 14 has two separate outcomes. Do not conflate them.
 A justified refusal satisfies scientific closure because it retires ambiguity
 honestly. It does not satisfy product evidence readiness.
 
-### Product-evidence target — required before claiming readiness
+### Product-evidence target â€” required before claiming readiness
 
 - [ ] At least one bounded flagship output has quantified uncertainty, model
       discrepancy quantified or bounded by admissible evidence (a caller- or
@@ -427,7 +437,7 @@ reviews, failed approaches and exact test commands live in PROGRESS.
 | BIG 10 Multi-timescale | Built; approximation uncertainty is mostly UNKNOWN | Quantify only for selected evidence path |
 | BIG 11 Providers | Multiple real providers executed; second re-review not run | Re-review and identity/support fixes in 14.1; suites in 14.4 |
 | BIG 12 System runtime | Built; final fix batch not re-reviewed | 14.1 |
-| BIG 13 Flagships | Four built; all insufficient evidence; six criteria unmet | 14.2–14.4 |
+| BIG 13 Flagships | Four built; all insufficient evidence; six criteria unmet | 14.2â€“14.4 |
 
 ## Explicitly deferred from BIG 14
 

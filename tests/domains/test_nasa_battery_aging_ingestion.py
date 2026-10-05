@@ -159,3 +159,147 @@ def test_real_matlab_file_round_trip_uses_the_documented_cycle_shape(
     assert record["cycles"][0]["cycle_type"] == "discharge"
     assert record["cycles"][0]["sample_count"] == 3
     assert record["source"]["sha256"] == source_receipt(path).sha256
+
+
+@pytest.mark.parametrize("channel", ["Voltage_measured", "Current_measured", "Temperature_measured", "Time"])
+@pytest.mark.parametrize("bad", [[1+2j, 2+0j, 3+0j], ["1", "2", "3"], [True, False, True], np.ones((2, 2))])
+def test_malformed_operational_values_are_refused(channel, bad):
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][0]["data"][channel] = bad
+    with pytest.raises(NasaBatteryIngestionError):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), "24", True])
+def test_malformed_ambient_is_refused(bad):
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][0]["ambient_temperature"] = bad
+    with pytest.raises(NasaBatteryIngestionError):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+@pytest.mark.parametrize("data", [{}, {"Battery_impedance": []}])
+def test_empty_impedance_is_refused(data):
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][1]["data"] = data
+    with pytest.raises(NasaBatteryIngestionError, match="no impedance samples"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+def test_single_sample_matlab_cycle_survives_scipy_squeezing(tmp_path):
+    loaded = _loaded()
+    cycle = loaded["B0005"]["cycle"][0]
+    for name in ("Voltage_measured", "Current_measured", "Temperature_measured", "Time"):
+        cycle["data"][name] = np.array([cycle["data"][name][0]])
+    path = tmp_path / "singleton.mat"
+    savemat(path, {"B0005": {"cycle": cycle}})
+    record = ingest_mat_file(path)
+    assert record["cycles"][0]["sample_count"] == 1
+    assert record["cycles"][0]["channels"]["Time"] == [0.0]
+
+
+def test_receipt_and_parser_use_same_snapshot_despite_path_replacement(tmp_path, monkeypatch):
+    import hashlib
+    import tools.nasa_battery_aging as ingestion
+    path = tmp_path / "B0005.mat"
+    savemat(path, {"B0005": {"cycle": _loaded()["B0005"]["cycle"][0]}})
+    original = path.read_bytes()
+    real_loadmat = ingestion.loadmat
+    def replacing_loadmat(source, **kwargs):
+        path.write_bytes(b"changed during ingestion")
+        return real_loadmat(source, **kwargs)
+    monkeypatch.setattr(ingestion, "loadmat", replacing_loadmat)
+    record = ingest_mat_file(path)
+    assert record["source"]["sha256"] == hashlib.sha256(original).hexdigest()
+    assert record["source"]["byte_count"] == len(original)
+    assert record["cycles"][0]["channels"]["Voltage_measured"] == [4.1, 4.0, 3.9]
+
+
+def test_digest_binds_values_receipt_cell_and_cycle_order():
+    baseline = canonicalize_loaded_mat(_loaded(), receipt=_receipt())["canonical_sha256"]
+    changed = _loaded()
+    changed["B0005"]["cycle"][0]["data"]["Voltage_measured"][0] = 4.2
+    reordered = _loaded()
+    reordered["B0005"]["cycle"].reverse()
+    renamed = {"B0006": _loaded()["B0005"]}
+    for loaded, receipt in [(changed, _receipt()), (reordered, _receipt()), (renamed, _receipt()),
+                            (_loaded(), SourceReceipt("B0005.mat", 123, "b"*64))]:
+        assert canonicalize_loaded_mat(loaded, receipt=receipt)["canonical_sha256"] != baseline
+
+
+@pytest.mark.parametrize("field", ["type", "ambient_temperature", "time", "data"])
+def test_missing_cycle_metadata_is_refused(field):
+    loaded = _loaded()
+    del loaded["B0005"]["cycle"][0][field]
+    with pytest.raises(NasaBatteryIngestionError, match="missing required field"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+@pytest.mark.parametrize("channel", ["Voltage_measured", "Current_measured", "Temperature_measured", "Time", "Capacity"])
+def test_missing_operational_channel_is_refused(channel):
+    loaded = _loaded()
+    del loaded["B0005"]["cycle"][0]["data"][channel]
+    with pytest.raises(NasaBatteryIngestionError):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+@pytest.mark.parametrize("capacity", [0, -1, float("nan"), float("inf"), "1.9", True, [1, 2]])
+def test_malformed_capacity_is_refused(capacity):
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][0]["data"]["Capacity"] = capacity
+    with pytest.raises(NasaBatteryIngestionError):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+@pytest.mark.parametrize("channel", ["Voltage_measured", "Current_measured", "Temperature_measured", "Time"])
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_nonfinite_operational_sample_is_refused(channel, bad):
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][0]["data"][channel][1] = bad
+    with pytest.raises(NasaBatteryIngestionError, match="non-finite"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+def test_decreasing_time_is_refused():
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][0]["data"]["Time"] = [0, 2, 1]
+    with pytest.raises(NasaBatteryIngestionError, match="non-decreasing"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+def test_empty_operational_samples_are_refused():
+    loaded = _loaded()
+    for name in ("Voltage_measured", "Current_measured", "Temperature_measured", "Time"):
+        loaded["B0005"]["cycle"][0]["data"][name] = []
+    with pytest.raises(NasaBatteryIngestionError, match="no operational samples"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+def test_nonfinite_complex_impedance_is_refused():
+    loaded = _loaded()
+    loaded["B0005"]["cycle"][1]["data"]["Battery_impedance"] = [complex(1, float("nan"))]
+    with pytest.raises(NasaBatteryIngestionError, match="non-finite complex"):
+        canonicalize_loaded_mat(loaded, receipt=_receipt())
+
+
+def test_genuine_matlab_struct_array_preserves_cycle_order_and_channels(tmp_path):
+    cycles = _loaded()["B0005"]["cycle"]
+    structured = np.empty((1, 2), dtype=[(name, object) for name in cycles[0]])
+    for index, cycle in enumerate(cycles):
+        for name, value in cycle.items():
+            structured[name][0, index] = value
+    path = tmp_path / "B0005.mat"
+    savemat(path, {"B0005": {"cycle": structured}})
+    first = ingest_mat_file(path)
+    assert first == ingest_mat_file(path)
+    assert [cycle["cycle_type"] for cycle in first["cycles"]] == ["discharge", "impedance"]
+    assert first["cycles"][1]["channels"]["Battery_impedance"] == [
+        {"real": 0.1, "imag": 0.01}, {"real": 0.2, "imag": 0.02}]
+
+
+@pytest.mark.parametrize("shape", [(1, 3), (3, 1)])
+def test_matlab_row_and_column_operational_vectors_are_accepted(shape):
+    loaded = _loaded()
+    for name in ("Voltage_measured", "Current_measured", "Temperature_measured", "Time"):
+        loaded["B0005"]["cycle"][0]["data"][name] = np.asarray(loaded["B0005"]["cycle"][0]["data"][name]).reshape(shape)
+    assert canonicalize_loaded_mat(loaded, receipt=_receipt())["cycles"][0]["sample_count"] == 3

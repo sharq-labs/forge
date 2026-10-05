@@ -80,3 +80,18 @@ contract.
 Adding the importer does not close the capability matrix's `real_data` gate.
 That gate remains missing until raw NASA bytes are actually acquired, receipted,
 ingested, and frozen as evidence.
+
+The receipt and parser consume the same in-memory byte snapshot, so replacing
+an input path during parsing cannot attach a different file's digest. Physical
+operational channels must be finite real numeric vectors; MATLAB row/column
+vectors and squeezed singleton samples are accepted, while matrices, strings,
+logical values and complex operational measurements are refused. Impedance
+channels retain finite complex values; empty impedance records are refused.
+
+Dataset identifiers and URLs describe the intended source format. They do not
+authenticate an arbitrary local file as NASA data. The lower-level
+`canonicalize_loaded_mat` helper accepts a caller-supplied receipt for parsed
+content; it cannot verify that receipt against raw bytes. Only `ingest_mat_file`
+binds the receipt to the parsed byte snapshot. Neither API admits scientific
+evidence or assigns calibration/validation roles. Cell-level split and leakage
+controls remain a later preregistered obligation.
