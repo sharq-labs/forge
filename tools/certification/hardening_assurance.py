@@ -65,7 +65,8 @@ from tools.certification.recertification_scope import (
     match,
 )
 
-ASSURANCE_SCHEMA = "forge.core_hardening_assurance/5"
+LEGACY_ASSURANCE_SCHEMA = "forge.core_hardening_assurance/5"
+ASSURANCE_SCHEMA = "forge.core_hardening_assurance/6"
 ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
@@ -204,12 +205,15 @@ class Policy:
 @dataclass(frozen=True)
 class RunContext:
     repository: str
-    run_id: int
-    run_attempt: int
+    run_id: int | None
+    run_attempt: int | None
     pull_request: int | None
     executed_commit: str
     event: str = "pull_request"
     runner_os: str = ""
+    provenance_mode: str = "github_actions"
+    evidence_manifest_sha256: str = ""
+    evidence_file_count: int = 0
 
 
 def sha256_bytes(blob: bytes) -> str:
@@ -485,6 +489,15 @@ def build_assurance(
     if ngspice_blob is not None and not ngspice:
         problems.append("scientific312 recorded no ngspice-<version> line in its provider evidence")
 
+    if run.provenance_mode not in {"github_actions", "local"}:
+        problems.append(f"unsupported provenance mode {run.provenance_mode!r}")
+    is_local = run.provenance_mode == "local"
+    if is_local:
+        if not re.fullmatch(r"[0-9a-f]{64}", run.evidence_manifest_sha256):
+            problems.append("local provenance: evidence manifest SHA-256 is absent or malformed")
+        if run.evidence_file_count <= 0:
+            problems.append("local provenance: evidence manifest contains no files")
+
     if problems:
         raise AssuranceError(problems)
 
@@ -502,7 +515,11 @@ def build_assurance(
         "environment": {
             "schema": ENVIRONMENT_SCHEMA,
             "source_commit": source_commit,
-            "execution_model": "parallel_github_actions_jobs",
+            "execution_model": (
+                "sequential_local_gates_then_certificate"
+                if is_local else "parallel_github_actions_jobs"
+            ),
+            "provenance_mode": run.provenance_mode,
             "runner_os": run.runner_os,
             "certificate_builder_platform": platform.platform(),
             "python_3_11": python_311,
@@ -531,19 +548,39 @@ def build_assurance(
                 "exactly one parent, and it is source_commit"
             ),
             "repository": run.repository,
-            "workflow": WORKFLOW_PATH,
-            "workflow_run_id": run.run_id,
-            "workflow_run_attempt": run.run_attempt,
-            "event": run.event,
-            "pull_request": run.pull_request,
-            "certify_job": "certify",
+            "provenance_mode": run.provenance_mode,
             "source_gates": list(RECERTIFY_SOURCE_GATES),
-            "certificate_artifact": f"hardened-core-assurance-{source_commit}",
+            **(
+                {
+                    "event": "local",
+                    "runner_os": run.runner_os,
+                    "local_evidence_manifest_sha256": run.evidence_manifest_sha256,
+                    "local_evidence_file_count": run.evidence_file_count,
+                }
+                if is_local
+                else {
+                    "workflow": WORKFLOW_PATH,
+                    "workflow_run_id": run.run_id,
+                    "workflow_run_attempt": run.run_attempt,
+                    "event": run.event,
+                    "pull_request": run.pull_request,
+                    "certify_job": "certify",
+                    "certificate_artifact": f"hardened-core-assurance-{source_commit}",
+                }
+            ),
         },
         "policy": (
-            "Built by tools/certification/hardening_assurance.py from the evidence "
-            "artifacts of every source gate for this source commit, after all of "
-            "them succeeded, and embedded by the official certificate builder."
+            (
+                "Built locally by tools/certification/local_assurance.py from every "
+                "required source gate, with a frozen SHA-256 manifest of the local "
+                "evidence files, then embedded by the official certificate builder."
+            )
+            if is_local
+            else (
+                "Built by tools/certification/hardening_assurance.py from the evidence "
+                "artifacts of every source gate for this source commit, after all of "
+                "them succeeded, and embedded by the official certificate builder."
+            )
         ),
     }
 
@@ -584,8 +621,18 @@ def assurance_problems(
     says about itself is used to check itself.
     """
     problems: list[str] = []
-    if assurance.get("schema") != ASSURANCE_SCHEMA:
-        return [f"assurance schema is {assurance.get('schema')!r}; a certificate child requires {ASSURANCE_SCHEMA!r}"]
+    schema = assurance.get("schema")
+    if schema not in {LEGACY_ASSURANCE_SCHEMA, ASSURANCE_SCHEMA}:
+        return [
+            f"assurance schema is {schema!r}; a certificate child requires "
+            f"{LEGACY_ASSURANCE_SCHEMA!r} or {ASSURANCE_SCHEMA!r}"
+        ]
+    lineage = assurance.get("lineage") or {}
+    provenance_mode = (
+        lineage.get("provenance_mode", "github_actions")
+        if schema == ASSURANCE_SCHEMA
+        else "github_actions"
+    )
 
     functional = assurance.get("functional") or {}
     for label, gate, suites in FUNCTIONAL:
@@ -686,17 +733,29 @@ def assurance_problems(
         if stored.get("digest") != control.get("digest"):
             problems.append("control_plane digest disagrees with the certificate's certification_control area")
 
-    lineage = assurance.get("lineage") or {}
-    if lineage.get("workflow") != WORKFLOW_PATH or lineage.get("certify_job") != "certify":
-        problems.append("lineage does not name the recertify workflow's certify job")
-    if not isinstance(lineage.get("workflow_run_id"), int) or lineage.get("workflow_run_id", 0) <= 0:
-        problems.append("lineage.workflow_run_id is absent")
-    if not isinstance(lineage.get("workflow_run_attempt"), int) or lineage.get("workflow_run_attempt", 0) < 1:
-        problems.append("lineage.workflow_run_attempt is absent")
     if not lineage.get("repository"):
         problems.append("lineage.repository is absent")
     if list(lineage.get("source_gates") or ()) != list(RECERTIFY_SOURCE_GATES):
         problems.append("lineage.source_gates is not the gate list this verifier requires")
+    if provenance_mode == "local":
+        digest = str(lineage.get("local_evidence_manifest_sha256") or "")
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            problems.append("lineage.local_evidence_manifest_sha256 is absent or malformed")
+        if not isinstance(lineage.get("local_evidence_file_count"), int) or lineage.get("local_evidence_file_count", 0) <= 0:
+            problems.append("lineage.local_evidence_file_count is absent")
+        if lineage.get("event") != "local":
+            problems.append("lineage.event is not 'local'")
+        if not lineage.get("runner_os"):
+            problems.append("lineage.runner_os is absent")
+    elif provenance_mode == "github_actions":
+        if lineage.get("workflow") != WORKFLOW_PATH or lineage.get("certify_job") != "certify":
+            problems.append("lineage does not name the recertify workflow's certify job")
+        if not isinstance(lineage.get("workflow_run_id"), int) or lineage.get("workflow_run_id", 0) <= 0:
+            problems.append("lineage.workflow_run_id is absent")
+        if not isinstance(lineage.get("workflow_run_attempt"), int) or lineage.get("workflow_run_attempt", 0) < 1:
+            problems.append("lineage.workflow_run_attempt is absent")
+    else:
+        problems.append(f"lineage.provenance_mode {provenance_mode!r} is unsupported")
     return problems
 
 

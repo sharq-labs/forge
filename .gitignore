@@ -37,3 +37,6 @@ Thumbs.db
 /AGENTS.md
 /.agents/
 /.codex/
+
+# Local FORGE assurance environments, receipts and gate evidence
+/.forge/

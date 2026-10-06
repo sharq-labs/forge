@@ -1,119 +1,129 @@
-# Branch protection for certified merges
+# Branch protection for local-assurance merges
 
-Repository files cannot protect `main`. Every check in
-`.github/workflows/recertify-hardened-core.yml` and `.github/workflows/tests.yml`
-is advisory until GitHub is configured to require it. When this document was
-written, `main` had **no branch protection and no ruleset**. A pull request
-could merge with its recertification red, still running, or never started.
+FORGE intentionally does **not** use automatic GitHub Actions status checks as
+scientific attestation. The authoritative assurance path is local:
 
-Configuring this needs repository administration. No workflow in this
-repository changes these settings. `python -m tools.certification.branch_policy
---repository sharq-labs/forge` reports whether they are in force, and so does
-the **Branch Policy** workflow on every push to `main`. That workflow stays red
-until the ruleset below exists.
+```text
+exact source commit
+  -> local source gates (Python 3.11 + Python 3.12)
+  -> frozen evidence manifest
+  -> hardened-core assurance record
+  -> Core certificate
+  -> certificate-only child
+  -> local child/self-check verification
+  -> SAFE_TO_PUSH: YES
+```
 
-## Two facts the policy is built on
+The executable entrypoint is:
 
-1. **A skipped required check counts as passing.** Every job in both workflows
-   is conditional on how the change was classified. Requiring
-   `verify_certificate_child` or `certificate-child` directly does not protect a
-   core pull request. On its source commit those jobs are *skipped*, so the
-   pull request is mergeable even when `certify` failed. Each workflow
-   therefore ends in an unconditional aggregate gate (`if: always()`). The gate
-   knows which jobs had to succeed for the classified mode, and those two gates
-   are the checks to require.
-2. **Only merge commits preserve certificate lineage.** The certificate child
-   is verified to be the one-parent child of the measured source commit, and to
-   carry the exact bytes the certify run uploaded. A squash or rebase merge
-   writes different commits. `main` would then carry a certificate naming a
-   commit that is not in `main`'s history.
+```bash
+python -m tools.certification.local_assurance
+```
 
-## Required ruleset (Settings → Rules → Rulesets → New branch ruleset)
+See `docs/assurance/LOCAL_ASSURANCE.md` for the operator procedure.
 
-| Setting | Value |
+## What GitHub does and does not attest
+
+GitHub hosts the repository, pull requests, reviews and merge history. The
+workflows under `.github/workflows/` are manual-only reference/fallback
+workflows. There is no `pull_request`, `push` or `schedule` trigger in the
+authoritative configuration.
+
+GitHub therefore does **not** attest that FAST, SCIENTIFIC, regression or
+mutation gates ran. That claim comes from the local assurance receipt embedded
+into the certificate's assurance record and bound to the exact source commit.
+
+This is a deliberate trust model. It must not be described as independent
+third-party execution: the trust root is the controlled local workstation and
+the recorded runtime/evidence identity.
+
+## Required branch rules
+
+Repository files cannot enforce branch rules. Configure them in GitHub
+(Settings -> Rules -> Rulesets) where the repository plan supports them.
+
+| Setting | Required value |
 |---|---|
-| Ruleset name | `certified-main` |
-| Enforcement status | **Active** |
-| Bypass list | **empty** (no repository admins, no maintainers, no apps) |
-| Target branches | Include default branch (`main`) |
-| Restrict deletions | **on** |
-| Block force pushes | **on** |
-| Require a pull request before merging | **on** |
-| → Required approvals | ≥ 1 |
-| → Dismiss stale pull request approvals when new commits are pushed | on |
-| → Require review from Code Owners | recommended, with a `CODEOWNERS` entry covering the `certification_control` scope area |
-| → Require approval of the most recent reviewable push | recommended |
-| → Allowed merge methods | **Merge** only |
-| Require status checks to pass | **on** |
-| → Require branches to be up to date before merging | **on** |
-| → Status checks (source: GitHub Actions) | `recertification-gate`, `tests-gate` |
+| Target | default branch (`main`) |
+| Enforcement | active |
+| Require pull request before merging | on |
+| Required approvals | >= 1 |
+| Dismiss stale approvals | recommended |
+| Code-owner review for certification control | recommended |
+| Allowed merge methods | **merge commit only** |
+| Block force pushes | on |
+| Restrict branch deletion | on |
+| Required GitHub status checks | **none** |
 
-Add both status checks with the **GitHub Actions** app as the source. That
-stops another integration from posting a status with the same name.
+Do **not** add `tests-gate` or `recertification-gate` as FORGE-required
+checks. They are not the authority in the local-only model.
 
-As JSON, for `POST /repos/sharq-labs/forge/rulesets`:
+A minimal ruleset shape is:
 
 ```json
 {
-  "name": "certified-main",
+  "name": "forge-main",
   "target": "branch",
   "enforcement": "active",
   "bypass_actors": [],
-  "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+  "conditions": {
+    "ref_name": {
+      "include": ["~DEFAULT_BRANCH"],
+      "exclude": []
+    }
+  },
   "rules": [
     {"type": "deletion"},
     {"type": "non_fast_forward"},
-    {"type": "pull_request", "parameters": {
-      "required_approving_review_count": 1,
-      "dismiss_stale_reviews_on_push": true,
-      "require_code_owner_review": false,
-      "require_last_push_approval": false,
-      "required_review_thread_resolution": false,
-      "allowed_merge_methods": ["merge"]
-    }},
-    {"type": "required_status_checks", "parameters": {
-      "strict_required_status_checks_policy": true,
-      "required_status_checks": [
-        {"context": "recertification-gate", "integration_id": 15368},
-        {"context": "tests-gate", "integration_id": 15368}
-      ]
-    }}
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "allowed_merge_methods": ["merge"]
+      }
+    }
   ]
 }
 ```
 
-Also recommended, in Settings → General → Pull Requests: disable *Allow squash
-merging* and *Allow rebase merging*. The ruleset already restricts merge methods
-on `main`; these settings make that visible everywhere else.
+Exact GitHub ruleset fields can evolve; the normative FORGE requirements are
+the table above, not the example JSON.
 
-## What each gate requires
+## Certificate lineage still matters
 
-The logic lives in `tools/certification/recertification_scope.py`
-(`recertification_gate_problems`, `tests_gate_problems`) and is unit-tested in
-`tests/test_recertification_scope.py`.
+Local-only execution does not weaken certificate lineage. A hardened-core
+certificate is still committed as a certificate-only child:
 
-| Head classified as | `recertification-gate` passes only if | `tests-gate` passes only if |
-|---|---|---|
-| ordinary pull request | `classify` succeeded and every other job was skipped | `repo-layout`, `fast` (3.11 and 3.12), `mutations`, `scientific` succeeded |
-| core source commit | all eight source gates and `certify` succeeded | `repo-layout` succeeded and the heavy jobs were skipped (the recertification gate owns this head) |
-| certificate-only child | `verify_certificate_child` succeeded (lineage, provenance, stored certificate, self-checks, clean tree) | `certificate-child` succeeded (lineage, stored certificate, self-checks, clean tree) |
-| push to `main` | — (the workflow does not run on push) | `repo-layout`, `fast`, `mutations`, `scientific` succeeded |
+- exactly one parent;
+- parent is the measured source commit;
+- only `certification/current_core_v2.json` changes;
+- commit subject is `certification: recertify hardened core`;
+- assurance source/parent fields equal that parent;
+- local evidence manifest digest is embedded in the assurance record;
+- the final local verification runs the deferred certificate/freeze self-checks.
 
-On a core pull request the source commit is never the head that merges. When
-`certify` succeeds it pushes the certificate-only child, which becomes the head,
-and both gates run again on that child. With *require branches to be up to
-date*, the child must also sit on the current `main`. Otherwise the certify
-job's merge-preview check refuses, and recertification runs again after the
-update.
+Squash or rebase merging rewrites commits and can break this relationship, so
+merge commits remain the required merge method for certificate lineage.
 
-## What this does not cover
+## Operator rule
 
-- **A pull request can edit its own workflows.** `pull_request` workflows run
-  the YAML from the pull request's merge preview. A change that weakens a gate
-  is recertified by the weakened gate. The certificate pins the control plane,
-  so the change is visible in the certificate diff and in the
-  `certification_control` area. Only required human review of those paths
-  (Code Owners) stops it from merging.
-- **Bypass actors cannot be read by CI.** The default token can read which rules
-  apply to `main`, but not who may bypass them. The branch policy check reports
-  this as *unverified*, never as satisfied.
+A branch is not ready merely because its tests were run at some point. The
+operator must run local assurance on the exact commit that will be certified.
+After the certificate-only child is committed, the operator must run:
+
+```bash
+python -m tools.certification.local_assurance verify
+```
+
+Only the explicit terminal result:
+
+```text
+LOCAL_ASSURANCE: PASS
+SAFE_TO_PUSH: YES
+```
+
+is the FORGE local merge/push signal.

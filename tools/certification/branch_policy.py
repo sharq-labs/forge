@@ -4,22 +4,19 @@
 
 WHAT REPOSITORY FILES CANNOT DO
 -------------------------------
-Every check in the two workflows is advisory until GitHub is told to require
-it. On the day this was written ``main`` had no branch protection and no
-ruleset, so a pull request could be merged with its recertification red, still
-running, or never started. Nothing in this repository can change that; an
-administrator has to. What this module can do is state the policy exactly,
-and detect -- from CI, with the default token -- whether it is in force.
+FORGE intentionally does not use automatic GitHub status checks as scientific
+attestation. The authoritative source gates run locally through
+``tools.certification.local_assurance``, freeze their evidence against the
+exact source commit, and verify the certificate-only child before it may be
+pushed. GitHub branch rules remain useful for review and lineage controls:
+requiring pull requests, merge commits, and blocking force-push/deletion.
 
 Two facts shape the policy:
 
-* **A skipped required check passes.** Every job in both workflows is
-  conditional on the change's ownership mode, so requiring a job such as
-  ``verify_certificate_child`` lets a head through on every path where that job
-  is skipped -- including a core source commit whose certify job failed. The
-  policy therefore requires the two unconditional aggregate gates,
-  ``recertification-gate`` and ``tests-gate``, which know which jobs had to
-  succeed for the mode (``tools/certification/recertification_scope.py``).
+* **GitHub does not attest test execution.** Automatic GitHub Actions checks are
+  intentionally disabled. Scientific assurance is produced locally, bound to
+  the exact source commit by the local assurance receipt, and verified again
+  on the certificate-only child before it is pushed.
 * **Only merge commits preserve lineage.** A squash or rebase merge writes new
   commits: the certificate on ``main`` would name a commit that is not in
   ``main``'s history, and the certificate child whose lineage and provenance
@@ -41,7 +38,7 @@ import subprocess
 import sys
 from typing import Any, Mapping, Sequence
 
-REQUIRED_STATUS_CHECKS = ("recertification-gate", "tests-gate")
+REQUIRED_STATUS_CHECKS: tuple[str, ...] = ()
 GITHUB_ACTIONS_APP_ID = 15368
 
 POLICY = {
@@ -58,11 +55,11 @@ POLICY = {
             "allowed_merge_methods": ["merge"],
         },
         "required_status_checks": {
-            "strict_required_status_checks_policy": True,
-            "required_status_checks": [
-                {"context": name, "integration_id": GITHUB_ACTIONS_APP_ID}
-                for name in REQUIRED_STATUS_CHECKS
-            ],
+            "required_status_checks": [],
+            "note": (
+                "FORGE intentionally requires no GitHub status checks; local "
+                "assurance is authoritative"
+            ),
         },
         "non_fast_forward": "enabled (blocks force pushes)",
         "deletion": "enabled (blocks branch deletion)",
@@ -93,27 +90,28 @@ def policy_problems(
         else:
             problems.append("pull requests are not required before merging")
 
-    contexts: set[str] = set()
-    strict = False
-    for rule in by_type.get("required_status_checks", []):
-        parameters = rule.get("parameters") or {}
-        strict = strict or bool(parameters.get("strict_required_status_checks_policy"))
-        contexts |= {str(c.get("context")) for c in parameters.get("required_status_checks") or ()}
-    if by_type.get("required_status_checks"):
-        missing = sorted(set(REQUIRED_STATUS_CHECKS) - contexts)
-        if missing:
-            problems.append(f"required status checks do not include {missing}")
-        if not strict:
-            problems.append("branches are not required to be up to date before merging")
-    elif classic_enabled and classic_level in ("everyone", "non_admins"):
-        missing = sorted(set(REQUIRED_STATUS_CHECKS) - classic_checks)
-        if missing:
-            problems.append(f"classic protection does not require {missing}")
-        if classic_level != "everyone":
-            problems.append("classic protection lets administrators merge without the required checks")
-        unverified.append("up-to-date requirement: not exposed by the branch summary")
-    else:
-        problems.append(f"no status checks are required; {list(REQUIRED_STATUS_CHECKS)} must be")
+    if REQUIRED_STATUS_CHECKS:
+        contexts: set[str] = set()
+        strict = False
+        for rule in by_type.get("required_status_checks", []):
+            parameters = rule.get("parameters") or {}
+            strict = strict or bool(parameters.get("strict_required_status_checks_policy"))
+            contexts |= {str(c.get("context")) for c in parameters.get("required_status_checks") or ()}
+        if by_type.get("required_status_checks"):
+            missing = sorted(set(REQUIRED_STATUS_CHECKS) - contexts)
+            if missing:
+                problems.append(f"required status checks do not include {missing}")
+            if not strict:
+                problems.append("branches are not required to be up to date before merging")
+        elif classic_enabled and classic_level in ("everyone", "non_admins"):
+            missing = sorted(set(REQUIRED_STATUS_CHECKS) - classic_checks)
+            if missing:
+                problems.append(f"classic protection does not require {missing}")
+            if classic_level != "everyone":
+                problems.append("classic protection lets administrators merge without the required checks")
+            unverified.append("up-to-date requirement: not exposed by the branch summary")
+        else:
+            problems.append(f"no status checks are required; {list(REQUIRED_STATUS_CHECKS)} must be")
 
     for kind, meaning in (("non_fast_forward", "force pushes"), ("deletion", "branch deletion")):
         if kind not in by_type:
