@@ -37,3 +37,6 @@ Thumbs.db
 /AGENTS.md
 /.agents/
 /.codex/
+
+# Local execution evidence and receipts (never implicitly committed)
+/.forge/

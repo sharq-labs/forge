@@ -1,3 +1,4 @@
+# Dormant reference; all assurance executes on the controlled workstation.
 name: Trust Mutations
 
 on:
@@ -9,6 +10,7 @@ concurrency:
 
 jobs:
   trust-mutations:
+    if: false  # Reference only; execute assurance locally.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

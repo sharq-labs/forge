@@ -37,7 +37,7 @@ def test_the_state_main_was_in_is_reported_as_unprotected():
     problems, _ = policy_problems([], UNPROTECTED_BRANCH, {"allow_merge_commit": True,
                                                          "allow_squash_merge": True, "allow_rebase_merge": True})
     text = "\n".join(problems)
-    for fragment in ("pull requests are not required", "no status checks are required",
+    for fragment in ("pull requests are not required",
                      "force pushes", "branch deletion", "squash"):
         assert fragment in text, fragment
 
@@ -52,12 +52,12 @@ def test_requiring_only_the_conditional_child_jobs_is_not_enough():
     """``verify_certificate_child`` is SKIPPED on a source commit, and skipped passes."""
     rules = _ruleset(contexts=("verify_certificate_child", "certificate-child"))
     problems, _ = policy_problems(rules, UNPROTECTED_BRANCH, MERGE_ONLY)
-    assert any("recertification-gate" in p and "tests-gate" in p for p in problems)
+    assert any("must be NONE" in p for p in problems)
 
 
-def test_a_branch_that_need_not_be_up_to_date_fails():
+def test_without_remote_checks_strict_status_policy_is_not_required():
     problems, _ = policy_problems(_ruleset(strict=False), UNPROTECTED_BRANCH, MERGE_ONLY)
-    assert any("up to date" in p for p in problems)
+    assert problems == []
 
 
 def test_squash_or_rebase_merges_break_lineage():
@@ -76,9 +76,9 @@ def test_missing_force_push_or_deletion_rules_fail():
 
 def test_classic_protection_is_judged_on_what_it_exposes_and_the_rest_is_unverified():
     branch = {"protected": True, "protection": {"enabled": True, "required_status_checks": {
-        "contexts": list(REQUIRED_STATUS_CHECKS), "enforcement_level": "non_admins"}}}
+        "contexts": ["legacy-check"], "enforcement_level": "non_admins"}}}
     problems, unverified = policy_problems([], branch, MERGE_ONLY)
-    assert any("administrators" in p for p in problems)
+    assert any("must be NONE" in p for p in problems)
     assert any("force pushes" in item for item in unverified)
 
 

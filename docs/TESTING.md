@@ -493,31 +493,21 @@ measures it and argues otherwise.
 
 ---
 
-## CI
+## Local assurance
 
-`.github/workflows/tests.yml` is the only workflow. It runs the **FAST** tier on
-every push and pull request, and the **SCIENTIFIC** tier on pushes to `main`
-(with the three Windows-only ngspice tests deselected, exactly as listed above).
-The FULL tier is run manually before a freeze.
+GitHub workflow files are dormant manual references. No pull request, push,
+schedule, main or branch event runs hosted testing. Required GitHub checks are
+NONE. Scientific assurance is produced on the owner's controlled workstation,
+not in an independent third-party execution environment.
 
-Worker counts in the sections above are **local recommendations**. The workflow
-is different: it pins `-n 4 --dist loadfile` on both jobs, and that pinning is
-deliberate.
+Use `python -m tools.certification.local_assurance` with native Python 3.11 and
+3.12 environments, preferably inside Ubuntu WSL. Both FAST versions, SCIENTIFIC,
+campaign, false-confidence regression and every mutation shard remain required.
+Local parallel gates retain --dist loadfile; campaigns remain serial. Set an
+explicit worker count appropriate for workstation memory, never an unbounded
+-n auto. The local runner defaults to at most eight workers.
 
-**Do not put `-n auto` in the workflow.** It sizes itself from the runner, which
-makes the memory ceiling a property of whatever hardware the job happens to land
-on rather than of the command. Memory grows at roughly 200 MB per worker
-(measured above), so a job that is comfortable on a 4-core runner walks straight
-into the exhaustion documented in "`-n auto` is not safe here" the moment it
-lands on a larger one — and GitHub's larger runners are opt-in per label, so
-that change can be made by someone editing `runs-on` and nothing else. A pinned
-count keeps the memory ceiling in the command where it can be read.
-
-`--dist loadfile` matters more in CI than the worker count does. Without it,
-every worker that receives any test from a memoizing module re-executes that
-module's whole experiment (see "`--dist loadfile` is not optional"). The
-SCIENTIFIC job is where those modules live, so omitting it there multiplies the
-expensive work by the worker count.
-
-Every command in this document is path-independent and runs the same on Linux CI
-as locally.
+See [LOCAL_ASSURANCE.md](assurance/LOCAL_ASSURANCE.md) for receipt binding,
+certificate-only child generation and the mandatory final verify command.
+Ordinary development checks above are feedback, never a replacement for the
+complete local assurance receipt and child promotion.

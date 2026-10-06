@@ -1,14 +1,7 @@
+# Dormant reference; all assurance executes on the controlled workstation.
 name: Tests
 
-# Every pull request is classified by the repository's single assurance
-# ownership policy. Ordinary changes run the normal suite here; certified or
-# trust-sensitive changes are delegated to the recertification workflow.
-# Pushes to main run the full ordinary suite again against the merged bytes.
-
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +10,7 @@ concurrency:
 
 jobs:
   scope:
+    if: false  # Reference only; execute assurance locally.
     runs-on: ubuntu-latest
     outputs:
       mode: ${{ steps.scope.outputs.mode }}
@@ -49,6 +43,7 @@ jobs:
           fi
 
   repo-layout:
+    if: false  # Reference only; execute assurance locally.
     name: repository layout
     runs-on: ubuntu-latest
     steps:
@@ -83,8 +78,9 @@ jobs:
           PY
 
   fast:
+    if: false  # Reference only; execute assurance locally.
     needs: scope
-    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
+    # Reference if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     name: fast (py ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
@@ -112,8 +108,9 @@ jobs:
         run: python -m tools.certification.assert_clean_tree
 
   mutations:
+    if: false  # Reference only; execute assurance locally.
     needs: scope
-    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
+    # Reference if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -128,8 +125,9 @@ jobs:
         run: python -m tools.certification.assert_clean_tree
 
   scientific:
+    if: false  # Reference only; execute assurance locally.
     needs: scope
-    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
+    # Reference if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -155,8 +153,9 @@ jobs:
         run: python -m tools.certification.assert_clean_tree
 
   certificate-child:
+    if: false  # Reference only; execute assurance locally.
     needs: scope
-    if: needs.scope.outputs.mode == 'certificate_child'
+    # Reference if: needs.scope.outputs.mode == 'certificate_child'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -187,6 +186,7 @@ jobs:
         run: python -m tools.certification.assert_clean_tree
 
   tests-gate:
+    if: false  # Reference only; execute assurance locally.
     name: tests-gate
     needs:
       - scope
@@ -195,7 +195,7 @@ jobs:
       - mutations
       - scientific
       - certificate-child
-    if: always()
+    # Reference if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -215,7 +215,8 @@ jobs:
           --needs-json "$NEEDS"
 
   reproduce:
-    if: github.event_name != 'pull_request'
+    if: false  # Reference only; execute assurance locally.
+    # Reference if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -223,7 +224,8 @@ jobs:
       - run: docker run --rm crafty-repro
 
   benchmark:
-    if: github.event_name != 'pull_request'
+    if: false  # Reference only; execute assurance locally.
+    # Reference if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

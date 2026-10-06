@@ -121,16 +121,19 @@ Do not stop merely because one subtask or PR is complete if the active plan
 contains the next executable task and no scientific/architectural blocker
 exists.
 
-## CI policy
+## Local assurance policy
 
-GitHub test and hardened-core recertification workflows are part of the
-repository's scientific control plane.
+GitHub does not attest test execution. Scientific assurance is produced
+locally and bound to the exact commit by the local assurance receipt.
 
-- Pull requests must be classified automatically.
-- Ordinary changes run the normal Tests gate.
-- Certified/trust-sensitive changes run hardened-core recertification.
-- Pushes to `main` rerun the normal merged-tree checks.
-- Branch/ruleset policy is checked after updates to `main`.
-- Manual dispatch may remain as an explicit fallback, not as the only path.
+- GitHub required status checks: NONE.
+- Workflow files remain dormant manual references; no automatic PR/push/schedule events.
+- Use python -m tools.certification.local_assurance with Python 3.11 and 3.12.
+- All source gates and mutation populations remain required.
+- Local certificate children retain one measured parent and only the certificate diff.
+- Before push, local_assurance verify must report PASS and SAFE_TO_PUSH: YES.
+- Keep PR review, no force pushes/deletion of main and merge-commit lineage.
+- Local assurance is not independent third-party execution; its trust root is
+  the controlled workstation and recorded runtime identity.
 
-Do not weaken or bypass these gates merely to make a change mergeable.
+Do not weaken scientific coverage or substitute missing evidence to make a change mergeable.

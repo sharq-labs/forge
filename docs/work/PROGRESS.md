@@ -2113,3 +2113,25 @@ Recorded direction:
   records and cannot become a second source of scientific truth.
 
 Tests: **NOT RUN** — documentation/strategic architecture changes only.
+
+
+### 2026-10-06 — local-only assurance implementation and focused validation
+
+Branch ci/local-only-assurance, separate owned worktree C:/Users/dev_kaeem/Downloads/Compressed/forge-local-assurance, base origin/main 9a7dad2d0431e6a962f0a53e707810fa2e25b08a. Shared main edits and abandoned incremental classifier branch preserved; classifier optimization not reused.
+
+Implemented dormant workflow references (dispatch only, every job disabled, no workflow push), no required remote status checks, local receipt /1 and explicit local hardening assurance /6/environment /5. Old GitHub schema /5 and provenance verifier retained. Source gate list unchanged (18): Python 3.11/3.12 FAST plus dependency guards, 3.12 SCIENTIFIC/campaign/regression, four formal shards, eight V4 shards, trust mutations. Scientific/harness/runtime-dependency SCOPE definitions unchanged; certification_control expanded to local runner/tests, evidence exclusion and remaining workflow references. Static inspection: 574 certified files all trigger; 171 harness-closure files, no missing pins; populations 284 formal, 680 V4, 20 trust. Population inspection is NOT execution.
+
+Exact focused commands and results:
+- `py -3.14 -m pytest -q tests/test_local_assurance.py tests/test_branch_policy.py tests/test_recertification_scope.py tests/test_hardening_assurance.py tests/test_certificate_lineage.py tests/test_certification_control_plane.py --basetemp=.pytest-review-temp/local-control`: 208 passed, 3 failed in 207.57s. Failures: tests/test_local_assurance.py::test_surviving_mutation_transcript_is_rederived (fixture changed no bytes); tests/test_recertification_scope.py::test_non_core_paths_stay_ordinary[.github/workflows/trust-mutations.yml]; tests/test_certification_control_plane.py::test_the_control_plane_is_narrow (old control-scope expectations). Fixed fixture/expectations; no scientific-scope reduction.
+- `py -3.14 -m pytest -q tests/test_local_assurance.py --basetemp=.pytest-review-temp/local-hostile`: 22 passed, 1 failed in 55.89s; same ineffective transcript edit, subsequently fixed with assertion that bytes change.
+- `py -3.14 -m pytest -q tests/test_local_assurance.py tests/test_branch_policy.py tests/test_recertification_scope.py tests/test_hardening_assurance.py tests/test_certificate_lineage.py tests/test_certification_control_plane.py --basetemp=.pytest-review-temp/local-control-final`: 219 passed in 229.12s, intermediate tree.
+- `py -3.14 -m pytest -q tests/test_local_assurance.py tests/test_branch_policy.py tests/test_recertification_scope.py tests/test_hardening_assurance.py tests/test_certificate_lineage.py tests/test_certification_control_plane.py tests/test_agent_workflow_contract.py --basetemp=.pytest-review-temp/local-control-accepted`: 223 passed in 219.51s, final implementation.
+- `git diff --check`: exit 0.
+- `py -3.14 -m tools.certification.branch_policy --repository sharq-labs/forge --print-policy`: exit 0; required_status_checks empty. Remote protection settings NOT changed or asserted verified.
+- `py -3.14 -m tools.certification.local_assurance run`: REFUSED before execution because implementation tree was dirty, SAFE_TO_PUSH NO. This is a refusal exercise, not source assurance.
+
+Independent forge-scientific-review skill: scoped read-only PASS for supplied receipt/binding/child-verification excerpts. Two HIGH issues found and corrected: evidence modified during self-checks was not revalidated; only 3.12 was checked before self-checks. Final verifier revalidates receipt/evidence and both runtimes after execution. Hostile tests cover evidence/runtime311/runtime312/HEAD/receipt mutation during child self-checks. Reviewer did not execute tests or independently inspect full gate construction; full gate parity/end-to-end execution outside that review scope.
+
+Python 3.14.2 was used only for control-plane software tests, never as 3.11/3.12 scientific execution. Windows launcher has 3.10/3.14; Ubuntu WSL has 3.12.3 and ngspice. forge-runner WSL cannot start (missing D:/WSL disk); Ubuntu works despite missing swap path warning. Initial environment bootstrap used incorrect /home/mm and failed permission; corrected to /home/dev_kaeem. Native 3.12 venv creation refused because ensurepip/python3.12-venv absent. User-local uv 0.12.23 wheel fetched from PyPI, SHA-256 checked against index: 565c6e2874dbeae86c02f3dea97255e878fec672659a73d4930c6b93fcab2fff. Managed local Python 3.11 provisioning started; complete assurance and certificate promotion still pending. The certified V4 copier requires standalone .git directory, so the entrypoint refuses linked worktrees; run production assurance in a standalone Linux clone.
+
+No capability maturity, real_data, historical certificate or scientific scope changed. No PR, push or merge. This local checkpoint exists to enable exact-commit validation; it is not certification.

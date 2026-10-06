@@ -77,7 +77,8 @@ def test_every_certification_module_on_disk_is_in_the_control_plane():
 def test_the_control_plane_is_narrow():
     files = core_certificate.enumerate_area(REPO, _area("certification_control"))
     assert not any(f.startswith(".github/") and "workflows/" not in f for f in files)
-    assert ".github/workflows/trust-mutations.yml" not in files
+    assert {".github/workflows/trust-mutations.yml", ".github/workflows/branch-policy.yml",
+            "tools/certification/local_assurance.py", "tests/test_local_assurance.py"} <= set(files)
     assert "tests/conftest.py" not in files
     assert len(files) == len(CERTIFICATION_CONTROL_FILES)
 

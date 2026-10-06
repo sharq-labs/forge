@@ -69,9 +69,10 @@ Every change there is additive:
 - a decision over correctly bound evidence under an unbound policy records
   nothing new.
 
-The certificate was already stale before this work, so recertification runs
-through the manual Recertify Hardened Core workflow on Python 3.12. It is not
-done locally.
+Recertification is authoritative through the local assurance entry point on
+Python 3.11/3.12; see docs/assurance/LOCAL_ASSURANCE.md. GitHub workflows remain
+dormant manual references. A stale certificate requires complete local evidence
+and a verified certificate child before it can become current.
 
 ## Open
 

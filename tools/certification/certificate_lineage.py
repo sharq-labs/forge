@@ -279,6 +279,12 @@ def fetch_and_verify_provenance(
     head = _git(root, "rev-parse", "HEAD").decode().strip()
     parent = _git(root, "rev-parse", f"{head}^").decode().strip()
     certificate_bytes = _git(root, "show", f"{head}:{CERTIFICATE_PATH}")
+    certificate = json.loads(certificate_bytes)
+    if (certificate.get("assurance") or {}).get("schema") == "forge.core_hardening_assurance/6":
+        from tools.certification.local_assurance import local_provenance_problems
+        return local_provenance_problems(
+            root, certificate["assurance"], source_commit=parent, certificate=certificate
+        )
     lineage = _lookup(json.loads(certificate_bytes), "assurance.lineage") or {}
     run_id, attempt = lineage.get("workflow_run_id"), lineage.get("workflow_run_attempt")
     if not isinstance(run_id, int) or not isinstance(attempt, int):

@@ -127,6 +127,11 @@ class ScopeArea:
 #: Not self-referential: ``certification/current_core_v2.json`` is the output
 #: of this plane and is never matched by it, so no fixed point is needed.
 CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
+    ("tools/certification/local_assurance.py", "authoritative local gate execution, receipt binding and promotion; changing it changes what local PASS means"),
+    ("tests/test_local_assurance.py", "hostile local receipt and provenance refusal checks"),
+    (".github/workflows/branch-policy.yml", "dormant governance reference; automatic triggers would change the local-only execution contract"),
+    (".github/workflows/trust-mutations.yml", "dormant mutation reference; automatic triggers would change the local-only execution contract"),
+    (".gitignore", "keeps local evidence out of source commits; changing exclusions changes clean-tree accounting"),
     (".github/workflows/recertify-hardened-core.yml",
      "defines the source gates, the evidence the certify job consumes, the "
      "official-builder invocation and the certificate-child checks. Removing "
@@ -496,6 +501,10 @@ SCOPE: tuple[ScopeArea, ...] = (
         patterns=(
             ".github/workflows/recertify-hardened-core.yml",
             ".github/workflows/tests.yml",
+            ".github/workflows/branch-policy.yml",
+            ".github/workflows/trust-mutations.yml",
+            ".gitignore",
+            "tests/test_local_assurance.py",
             "benchmarks/core_freeze_v1/audit/reproduce.py",
             "src/__init__.py",
             "src/engcore/__init__.py",

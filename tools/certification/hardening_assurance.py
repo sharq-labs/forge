@@ -67,6 +67,8 @@ from tools.certification.recertification_scope import (
 
 ASSURANCE_SCHEMA = "forge.core_hardening_assurance/5"
 ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
+LOCAL_ASSURANCE_SCHEMA = "forge.core_hardening_assurance/6"
+LOCAL_ENVIRONMENT_SCHEMA = "forge.certification_environment/5"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
 DEPENDENCY_MANIFEST = "pyproject.toml"
@@ -212,6 +214,15 @@ class RunContext:
     runner_os: str = ""
 
 
+@dataclass(frozen=True)
+class LocalRunContext:
+    """Explicit workstation provenance; no synthetic GitHub run identity."""
+
+    repository: str
+    executed_commit: str
+    runner_os: str
+
+
 def sha256_bytes(blob: bytes) -> str:
     return hashlib.sha256(blob).hexdigest()
 
@@ -349,14 +360,20 @@ def build_assurance(
     *,
     source_commit: str,
     evidence_dir: pathlib.Path,
-    run: RunContext,
+    run: RunContext | LocalRunContext,
     policy: Policy = Policy(),
 ) -> dict[str, Any]:
     """The assurance record for ``source_commit``. Raises with every problem found."""
     evidence = _Evidence(evidence_dir, source_commit)
     problems = evidence.problems
     head = _git(root, "rev-parse", "HEAD").strip()
-    if head != source_commit:
+    local = isinstance(run, LocalRunContext)
+    child = False
+    if local and head != source_commit:
+        from tools.certification.recertification_scope import certificate_child_problems
+        child = (not certificate_child_problems(root, head)
+                 and _git(root, "rev-parse", f"{head}^").strip() == source_commit)
+    if head != source_commit and not child:
         problems.append(f"certify is running on {head}, not the source {source_commit}")
     problems += executed_scope_problems(root, run.executed_commit, source_commit)
 
@@ -488,8 +505,8 @@ def build_assurance(
     if problems:
         raise AssuranceError(problems)
 
-    return {
-        "schema": ASSURANCE_SCHEMA,
+    record = {
+        "schema": LOCAL_ASSURANCE_SCHEMA if local else ASSURANCE_SCHEMA,
         "source_commit": source_commit,
         "source_tree": _git(root, "rev-parse", f"{source_commit}^{{tree}}").strip(),
         "execution_model": "parallel_gates_then_certificate",
@@ -500,9 +517,9 @@ def build_assurance(
         ),
         "trust_hardening_mutations": trust_section,
         "environment": {
-            "schema": ENVIRONMENT_SCHEMA,
+            "schema": LOCAL_ENVIRONMENT_SCHEMA if local else ENVIRONMENT_SCHEMA,
             "source_commit": source_commit,
-            "execution_model": "parallel_github_actions_jobs",
+            "execution_model": "local_workstation" if local else "parallel_github_actions_jobs",
             "runner_os": run.runner_os,
             "certificate_builder_platform": platform.platform(),
             "python_3_11": python_311,
@@ -532,10 +549,12 @@ def build_assurance(
             ),
             "repository": run.repository,
             "workflow": WORKFLOW_PATH,
-            "workflow_run_id": run.run_id,
-            "workflow_run_attempt": run.run_attempt,
-            "event": run.event,
-            "pull_request": run.pull_request,
+            **({} if local else {
+                "workflow_run_id": run.run_id,
+                "workflow_run_attempt": run.run_attempt,
+                "event": run.event,
+                "pull_request": run.pull_request,
+            }),
             "certify_job": "certify",
             "source_gates": list(RECERTIFY_SOURCE_GATES),
             "certificate_artifact": f"hardened-core-assurance-{source_commit}",
@@ -546,6 +565,20 @@ def build_assurance(
             "them succeeded, and embedded by the official certificate builder."
         ),
     }
+    if local:
+        record["provenance_mode"] = "local"
+        record["execution_model"] = "local_gates_then_certificate"
+        record["lineage"] = {
+            "source_commit": source_commit, "certificate_parent": source_commit,
+            "repository": run.repository, "source_gates": list(RECERTIFY_SOURCE_GATES),
+        }
+        record["environment"].pop("workflow", None)
+        record["control_plane"].pop("executed_merge_preview_commit", None)
+        record["control_plane"]["executed_source_commit"] = source_commit
+        record["functional"]["note"] = "Local source gates; deferred self-checks must pass on the certificate-only child."
+        record["formal_guard_mutations"]["claim"] = "Local isolated mutation execution; controls, transcript verdicts and exact population coverage rederived."
+        record["trust_hardening_mutations"]["claim"] = "Local trust mutation execution; IDs and statuses checked against the measured runner."
+    return record
 
 
 def trust_result_problems(result: Mapping[str, Any], ids: Sequence[str], policy: Policy) -> list[str]:
@@ -583,6 +616,10 @@ def assurance_problems(
     Every population and digest is recomputed from the tree; nothing the record
     says about itself is used to check itself.
     """
+    if assurance.get("schema") == LOCAL_ASSURANCE_SCHEMA:
+        from tools.certification.local_assurance import local_provenance_problems
+        return local_provenance_problems(root, assurance, source_commit=source_commit,
+                                         certificate=certificate, policy=policy)
     problems: list[str] = []
     if assurance.get("schema") != ASSURANCE_SCHEMA:
         return [f"assurance schema is {assurance.get('schema')!r}; a certificate child requires {ASSURANCE_SCHEMA!r}"]

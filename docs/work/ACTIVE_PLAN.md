@@ -5,7 +5,29 @@ pursue now. Strategic direction remains in
 `docs/project/FORGE_MASTER_PLAN.md`; completed work, failed approaches and test
 transcripts remain in `docs/work/PROGRESS.md`.
 
-## Current objective
+## Current bounded task — local-only assurance
+
+Branch: `ci/local-only-assurance`, based on `origin/main` at
+`9a7dad2d0431e6a962f0a53e707810fa2e25b08a`.
+Owned worktree: `C:/Users/dev_kaeem/Downloads/Compressed/forge-local-assurance`.
+The incremental classifier optimization branch is abandoned; no changes from
+it were reused. Shared main edits and battery review worktrees are untouched.
+
+- [x] Disable automatic GitHub workflow triggers and make retained jobs dormant.
+- [x] Add explicit local receipt/provenance schema and fail-closed runner, keeping
+      all former Python 3.11/3.12 gates and mutation populations.
+- [x] Update branch governance to no required remote status checks.
+- [x] Finish hostile/control-plane checks on the final implementation (223 passed).
+- [ ] Execute complete local assurance on a clean standalone clone with both
+      required Python environments. Missing 3.11 currently blocks acceptance.
+- [ ] Obtain complete gate evidence and verify the certificate-only child.
+
+No PR, push or merge is authorized by this task. No scientific scope reduction,
+capability maturity or real_data changes. Local checkpoints may be committed
+only to enable exact-source clean-tree validation. The strategic BIG 14 state
+below remains unchanged; it does not override this bounded control-plane task.
+
+## Strategic objective
 
 The architecture-first BUILD phase through **BIG 13** is complete and merged.
 Forge now enters **BIG 14 — Scientific Closure & Recertification**.

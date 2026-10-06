@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_root_claude_contract_names_the_scientific_guardrails_and_automatic_ci():
+def test_root_claude_contract_names_scientific_guardrails_and_local_assurance():
     text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     for required in (
         "UNKNOWN never improves an answer",
@@ -13,8 +13,9 @@ def test_root_claude_contract_names_the_scientific_guardrails_and_automatic_ci()
         "python tools/forge_check.py --changed",
         "PROGRESS.md",
         "FORGE_MASTER_PLAN.md",
-        "Pull requests must be classified automatically",
-        "Manual dispatch may remain as an explicit fallback",
+        "GitHub required status checks: NONE",
+        "tools.certification.local_assurance",
+        "controlled workstation",
     ):
         assert required in text
 

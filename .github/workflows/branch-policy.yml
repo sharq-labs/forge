@@ -1,15 +1,7 @@
+# Dormant reference; all assurance executes on the controlled workstation.
 name: Branch Policy
 
-# Repository files cannot protect `main`; only GitHub's branch rules can. This
-# workflow reports, from CI and with the default token, whether the merge policy
-# the certification checks rely on is actually in force, and fails when it is
-# not. It runs after every push to main so policy drift becomes visible
-# immediately; manual dispatch remains available for explicit checks.
-# The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
-
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +9,7 @@ permissions:
 
 jobs:
   branch-policy:
+    if: false  # Reference only; execute assurance locally.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
