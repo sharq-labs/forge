@@ -204,6 +204,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/local_assurance.py",
+     "executes the authoritative local source gates, freezes their evidence "
+     "manifest, builds local provenance and performs the final certificate-child "
+     "verification before a local result may say SAFE_TO_PUSH"),
     ("tools/certification/api_surface_v4.py",
      "the V4 deep API surface (I-29, R-69): the method signatures and enum "
      "member POSITIONS the frozen snapshot never described, which is why "
