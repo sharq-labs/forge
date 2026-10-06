@@ -303,6 +303,7 @@ jobs:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     env:
       SHARD_INDEX: "0"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -356,6 +357,7 @@ jobs:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     env:
       SHARD_INDEX: "1"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -409,6 +411,7 @@ jobs:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     env:
       SHARD_INDEX: "2"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -462,6 +465,7 @@ jobs:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     env:
       SHARD_INDEX: "3"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
