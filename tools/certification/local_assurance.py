@@ -92,6 +92,14 @@ def _utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _require_linux() -> None:
+    if not sys.platform.startswith("linux"):
+        raise LocalAssuranceError(
+            "authoritative local assurance must run on Linux/WSL for parity with "
+            "the certified execution environment; native Windows/macOS is refused"
+        )
+
+
 def _require_clean(root: pathlib.Path, phase: str) -> None:
     problems = tree_problems(root)
     if problems:
@@ -458,6 +466,7 @@ def _repository_slug(root: pathlib.Path, explicit: str | None) -> str:
 
 
 def prepare(args: argparse.Namespace) -> int:
+    _require_linux()
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
     assurance_root = root / args.local_root
     env_root = assurance_root / "venvs"
@@ -481,6 +490,7 @@ def prepare(args: argparse.Namespace) -> int:
 
 
 def run(args: argparse.Namespace) -> int:
+    _require_linux()
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
     _require_clean(root, "start")
     source = _git(root, "rev-parse", "HEAD")
@@ -569,7 +579,7 @@ def run(args: argparse.Namespace) -> int:
         "runner_os": platform.platform(),
         "python_3_11": _capture([py311, "--version"], root=root),
         "python_3_12": _capture([py312, "--version"], root=root),
-        "ngspice": _capture(["ngspice", "--version"], root=root).splitlines()[-1],
+        "ngspice": _capture(["ngspice", "--version"], root=root),
         "gate_seconds": timings,
         "evidence_manifest": manifest_path.name,
         "evidence_manifest_sha256": manifest_sha,
@@ -593,6 +603,7 @@ def run(args: argparse.Namespace) -> int:
 
 
 def verify(args: argparse.Namespace) -> int:
+    _require_linux()
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
     _require_clean(root, "verify start")
     head = _git(root, "rev-parse", "HEAD")
