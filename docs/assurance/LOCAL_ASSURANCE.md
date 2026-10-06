@@ -21,7 +21,7 @@ Run:
 python -m tools.certification.local_assurance run   --python311 /path/to/venv311/bin/python   --python312 /path/to/venv312/bin/python --workers 8
 ```
 
-Each gate executes sequentially in the measured checkout. FAST/SCIENTIFIC use
+Functional gates execute sequentially in the measured checkout. Existing formal shards run concurrently with one another, followed by concurrent V4 shards, bounded by --workers; each has its own scratch tree and evidence directory. Every shard retains its serial control/mutation execution. FAST/SCIENTIFIC use
 xdist loadfile; campaign stays serial; mutation runners isolate modified copies
 outside the source repository. Source HEAD and raw-byte cleanliness are checked
 before and after every command and gate. Runtime/dependency identity is checked

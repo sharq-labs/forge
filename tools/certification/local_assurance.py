@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
@@ -165,6 +166,7 @@ def clean_environment() -> dict[str, str]:
     for key in ("PYTEST_ADDOPTS", "PYTEST_DISABLE_PLUGIN_AUTOLOAD", "PYTHONPATH", "PYTHONHOME"):
         env.pop(key, None)
     env["PYTHONUTF8"] = "1"
+    env["PYTHONUNBUFFERED"] = "1"
     env["CRAFTY_NGSPICE_ARGV"] = "ngspice"
     return env
 
@@ -375,6 +377,18 @@ def _local_provenance_problems(root: pathlib.Path, assurance: Mapping[str, Any],
     return problems
 
 
+def gate_batches(gates: Sequence[str]) -> list[list[str]]:
+    """Overlap only consecutive shards of the same isolated mutation harness."""
+    batches: list[list[str]] = []
+    for gate in gates:
+        prefix = next((p for p in ("formal_mutations_", "v4_mutations_") if gate.startswith(p)), None)
+        if prefix and batches and batches[-1][0].startswith(prefix):
+            batches[-1].append(gate)
+        else:
+            batches.append([gate])
+    return batches
+
+
 def run(root: pathlib.Path, python311: Sequence[str], python312: Sequence[str], workers: int) -> pathlib.Path:
     source = git(root, "rev-parse", "HEAD")
     assert_source(root, source)
@@ -399,7 +413,7 @@ def run(root: pathlib.Path, python311: Sequence[str], python312: Sequence[str], 
     # isolate their edits. Never overlap serial/order-dependent campaigns.
     with tempfile.TemporaryDirectory(prefix="forge-assurance-") as temporary:
         scratch = pathlib.Path(temporary)
-        for gate in rs.RECERTIFY_SOURCE_GATES:
+        def measure_gate(gate: str) -> dict[str, Any]:
             (scratch / gate).mkdir()
             assert_source(root, source)
             gate_clock = time.monotonic()
@@ -431,10 +445,15 @@ def run(root: pathlib.Path, python311: Sequence[str], python312: Sequence[str], 
                 raise Refused(f"{gate}: runtime changed during execution")
             assert_source(root, source)
             write(evidence_path(directory, source, gate, "gate"), gate_record(root, gate))
-            gates[gate] = {"result": "success", "source_commit": source, "runtime": version,
+            return {"result": "success", "source_commit": source, "runtime": version,
                            "clean_before": True, "clean_after": True, "commands": results,
                            "duration_seconds": time.monotonic() - gate_clock}
-            write(directory / "execution.json", {"gates": gates, "runtimes": runtimes})
+        for batch in gate_batches(rs.RECERTIFY_SOURCE_GATES):
+            with ThreadPoolExecutor(max_workers=min(workers, len(batch))) as pool:
+                futures = {pool.submit(measure_gate, gate): gate for gate in batch}
+                for future in as_completed(futures):
+                    gates[futures[future]] = future.result()
+                    write(directory / "execution.json", {"gates": gates, "runtimes": runtimes})
     receipt = make_receipt(root, source, directory, runtimes=runtimes, gates=gates, started=started,
                            ended=datetime.now(timezone.utc).isoformat(), duration=time.monotonic() - clock,
                            scratch=scratch, workers=workers)

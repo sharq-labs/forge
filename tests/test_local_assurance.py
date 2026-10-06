@@ -331,3 +331,11 @@ def test_self_checks_cannot_change_evidence_runtime_or_head_before_push(measured
         la.verify(root)
     assert ran[0]
     assert "3.11" in checked and "3.12" in checked
+def test_parallel_batches_preserve_gate_order_and_isolate_only_mutation_shards():
+    batches = la.gate_batches(rs.RECERTIFY_SOURCE_GATES)
+    assert [gate for batch in batches for gate in batch] == list(rs.RECERTIFY_SOURCE_GATES)
+    assert [batch for batch in batches if len(batch) > 1] == [
+        [f"formal_mutations_{i}" for i in range(4)],
+        [f"v4_mutations_{i}" for i in range(8)],
+    ]
+    assert all(len(batch) == 1 for batch in batches if not batch[0].startswith(("formal_mutations_", "v4_mutations_")))
