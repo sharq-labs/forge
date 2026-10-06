@@ -74,7 +74,6 @@ def test_every_file_the_certificate_enumerates_requires_recertification(area):
     "certification/current_core_v2.json",
     "src/engcore/execution/trusted.py",
     "benchmarks/trust_hardening/audit/mutations.py",
-    "tests/test_anything.py",
     "pyproject.toml",
     # Main audit: uq was out of scope while certified routes called its grid
     # refusal, and the SRIA admission chain had no certificate at all.
@@ -112,6 +111,8 @@ def test_every_file_a_certified_mutation_names_requires_recertification():
 @pytest.mark.parametrize("path", [
     "README.md",
     "docs/TESTING.md",
+    "tests/test_anything.py",
+    "tests/domains/test_nasa_battery_aging_ingestion.py",
     "src/engcore/domains/thermal/conduction1d/solver.py",
     "src/engcore/mcp/bundle.py",
     "src/engcore/sria/decision/utility.py",
@@ -220,6 +221,16 @@ def test_an_ordinary_pull_request_uses_the_normal_tests(repo):
     assert ownership.mode == rs.ORDINARY
     assert ownership.outputs() | {} == {**ownership.outputs(), "recertification": "not_required",
                                         "delegate_to_recertify": "false", "certificate_child": "false"}
+
+
+def test_an_out_of_scope_domain_test_change_does_not_recertify_the_hardened_core(repo):
+    root, base = repo
+    path = "tests/domains/test_nasa_battery_aging_ingestion.py"
+    ownership = _pull_request(root, base, (path, "def test_dataset_importer():\n    assert True\n"))
+    assert ownership.mode == rs.ORDINARY
+    assert path in ownership.changed
+    assert path not in ownership.reasons
+    assert ownership.outputs()["delegate_to_recertify"] == "false"
 
 
 def test_a_main_push_uses_the_normal_tests(repo):
