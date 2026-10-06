@@ -4,12 +4,12 @@
 
 WHAT REPOSITORY FILES CANNOT DO
 -------------------------------
-Every check in the two workflows is advisory until GitHub is told to require
-it. On the day this was written ``main`` had no branch protection and no
-ruleset, so a pull request could be merged with its recertification red, still
-running, or never started. Nothing in this repository can change that; an
-administrator has to. What this module can do is state the policy exactly,
-and detect -- from CI, with the default token -- whether it is in force.
+FORGE intentionally does not use automatic GitHub status checks as scientific
+attestation. The authoritative source gates run locally through
+``tools.certification.local_assurance``, freeze their evidence against the
+exact source commit, and verify the certificate-only child before it may be
+pushed. GitHub branch rules remain useful for review and lineage controls:
+requiring pull requests, merge commits, and blocking force-push/deletion.
 
 Two facts shape the policy:
 
