@@ -146,6 +146,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tests/test_core_freeze_manifest.py",
      "holds the freeze self-checks the certificate child executes, for the "
      "same reason as the certificate self-checks"),
+    ("tests/test_local_assurance.py",
+     "hostile checks for the local authority path: automatic workflows stay "
+     "disabled, dirty or moved sources are refused, required runtimes exist and "
+     "frozen evidence tampering is detected"),
     ("tests/scientific_regression/manifest.json",
      "is the fixed false-confidence regression population executed by the "
      "regression312 source gate. Changing its membership changes what that "
@@ -507,6 +511,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_core_certificate.py",
             "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
+            "tests/test_local_assurance.py",
             "tests/scientific_regression/manifest.json",
             "tools/__init__.py",
             "tools/forge_check.py",
