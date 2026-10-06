@@ -1,10 +1,8 @@
 name: Branch Policy
 
-# Repository files cannot protect `main`; only GitHub's branch rules can. This
-# workflow reports, from CI and with the default token, whether the merge policy
-# the certification checks rely on is actually in force, and fails when it is
-# not. It runs after every push to main so policy drift becomes visible
-# immediately; manual dispatch remains available for explicit checks.
+# Manual policy inspection only. FORGE intentionally has no required GitHub
+# status checks; scientific assurance is produced locally and bound to the
+# source commit. Repository branch rules still protect review/lineage controls.
 # The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
 
 on:
