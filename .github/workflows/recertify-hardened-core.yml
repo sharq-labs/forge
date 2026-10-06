@@ -1,9 +1,8 @@
 name: Recertify Hardened Core
 
-# Ownership is derived from tools/certification/recertification_scope.py.
-# Pull requests always enter this workflow; ordinary changes skip the expensive
-# source gates, while certified/trust-sensitive changes are fully recertified.
-# Manual dispatch remains available for an explicit branch recertification.
+# Manual reference/fallback workflow only. Automatic GitHub recertification is
+# intentionally disabled; tools/certification/local_assurance.py is the
+# authoritative execution path for hardened-core assurance.
 on:
   workflow_dispatch:
 
