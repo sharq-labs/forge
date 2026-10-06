@@ -340,11 +340,14 @@ def _run_source_gates(
                 root=root,
             )
             selected = [line for line in ids.read_text(encoding="utf-8").splitlines() if line]
+            scratch = evidence.parent / "scratch" / f"formal-{index}"
+            shutil.rmtree(scratch, ignore_errors=True)
             _run(
                 [py312, "-X", "utf8", "tests/mutation_guards.py",
-                 str(directory / f"scratch-{index}"), *selected],
+                 str(scratch), *selected],
                 root=root, log=log,
             )
+            shutil.rmtree(scratch, ignore_errors=True)
             _run(
                 [py312, "-m", "tools.certification.mutation_population", "record",
                  "--index", str(index), "--count", "4", "--ids", str(ids),
@@ -369,12 +372,15 @@ def _run_source_gates(
                  "--index", str(index), "--count", "8", "--out", str(ids)],
                 root=root,
             )
+            scratch = evidence.parent / "scratch" / f"v4-{index}"
+            shutil.rmtree(scratch, ignore_errors=True)
             _run(
                 [py312, "-m", "tools.certification.mutation_v4_runner",
-                 "--scratch", str(directory / f"scratch-{index}"),
+                 "--scratch", str(scratch),
                  "--ids", str(ids), "--log", str(log)],
                 root=root,
             )
+            shutil.rmtree(scratch, ignore_errors=True)
             _run(
                 [py312, "-m", "tools.certification.mutation_population", "v4-record",
                  "--index", str(index), "--count", "8", "--ids", str(ids),
@@ -490,7 +496,12 @@ def run(args: argparse.Namespace) -> int:
         raise LocalAssuranceError("ngspice is required and was not found on PATH")
 
     run_root = local_root / "assurance" / source
-    if run_root.exists() and not args.reuse:
+    if run_root.exists():
+        if not args.reuse:
+            raise LocalAssuranceError(
+                f"local assurance directory already exists for {source}; "
+                "pass --reuse to discard it and run the source gates again"
+            )
         shutil.rmtree(run_root)
     evidence = run_root / "evidence"
     evidence.mkdir(parents=True, exist_ok=True)
