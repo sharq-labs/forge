@@ -8,8 +8,6 @@ name: Branch Policy
 # The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
