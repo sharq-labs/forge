@@ -4,7 +4,7 @@ The authoritative entry point is `python -m tools.certification.local_assurance`
 It runs native processes on the owner's workstation. Prefer Linux under Ubuntu
 WSL with separate Python 3.11 and 3.12 virtual environments, each installed with
 `python -m pip install -e ".[dev,mcp,oracles]"`; install ngspice in that Linux
-environment. Use a standalone Git clone inside Linux: the certified V4
+environment. Both editable installations and engcore imports must resolve to the measured checkout. Use a standalone Git clone inside Linux: the certified V4
 mutation copier expects a .git directory and linked worktrees are refused.
 Run the entry point inside that environment and pass absolute
 venv Python paths using --python311 and --python312. There is no implicit runtime

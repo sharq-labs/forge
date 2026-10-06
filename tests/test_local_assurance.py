@@ -125,6 +125,35 @@ def test_probe_script_parses_and_requires_dependencies():
     assert "md.version" in la.PROBE
 
 
+@pytest.mark.parametrize("foreign", ["editable", "package", "none"])
+def test_runtime_probe_refuses_foreign_editable_source(tmp_path, monkeypatch, foreign, capsys):
+    import importlib.metadata
+    import importlib.util
+    from types import SimpleNamespace
+    project = tmp_path / "measured"
+    project.mkdir()
+    (project / "pyproject.toml").write_text(
+        '[project]\nname="synthetic"\ndependencies=[]\n'
+        '[project.optional-dependencies]\ndev=[]\nmcp=[]\noracles=[]\n')
+    monkeypatch.chdir(project)
+    editable = project if foreign != "editable" else tmp_path / "foreign"
+    direct = {"url": editable.as_uri(), "dir_info": {"editable": True}}
+    monkeypatch.setattr(importlib.metadata, "distribution", lambda *_: SimpleNamespace(
+        read_text=lambda *_: json.dumps(direct)))
+    origin = project / "src/engcore/__init__.py" if foreign != "package" else tmp_path / "foreign/__init__.py"
+    original_find = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a: SimpleNamespace(origin=str(origin))
+                        if name == "engcore" else original_find(name, *a))
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=0, stdout="", stderr=""))
+    monkeypatch.setattr(subprocess, "check_output", lambda *a, **kw: "synthetic==1\n")
+    if foreign == "none":
+        exec(compile(la.PROBE, "runtime-probe", "exec"), {})
+        assert json.loads(capsys.readouterr().out)["pip_freeze"] == "synthetic==1\n"
+    else:
+        with pytest.raises(RuntimeError, match="measured"):
+            exec(compile(la.PROBE, "runtime-probe", "exec"), {})
+
+
 @pytest.mark.parametrize("version", la.REQUIRED_PYTHONS)
 def test_missing_runtime_identity_in_receipt_is_refused(measured, version):
     receipt = copy.deepcopy(measured[-1])

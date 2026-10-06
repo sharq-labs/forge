@@ -111,7 +111,9 @@ def safe_file(directory: pathlib.Path, relative: str) -> pathlib.Path:
 
 
 PROBE = r'''
-import hashlib, importlib.metadata as md, json, pathlib, platform, subprocess, sys, tomllib
+import hashlib, importlib.metadata as md, importlib.util, json, pathlib, platform, subprocess, sys, tomllib
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 from packaging.requirements import Requirement
 p = subprocess.run([sys.executable, '-m', 'pip', 'check'], capture_output=True, text=True)
 if p.returncode: raise RuntimeError(p.stdout + p.stderr)
@@ -123,6 +125,16 @@ for text in requirements:
     r = Requirement(text)
     if r.marker and not r.marker.evaluate(): continue
     if md.version(r.name) not in r.specifier: raise RuntimeError('dependency version: ' + text)
+# A bare subprocess must not execute a different editable checkout while the
+# measured checkout remains clean. The former CI installed -e . in each job.
+direct = json.loads(md.distribution(project['name']).read_text('direct_url.json') or '{}')
+url = urlparse(direct.get('url', ''))
+if (url.scheme != 'file' or url.netloc or direct.get('dir_info', {}).get('editable') is not True
+    or pathlib.Path(url2pathname(url.path)).resolve() != pathlib.Path.cwd().resolve()):
+    raise RuntimeError('installed project is not the measured editable source')
+spec = importlib.util.find_spec('engcore')
+if spec is None or pathlib.Path(spec.origin or '').resolve() != pathlib.Path('src/engcore/__init__.py').resolve():
+    raise RuntimeError('engcore resolves outside the measured source')
 freeze = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'], text=True)
 freeze = chr(10).join(sorted(freeze.splitlines())) + chr(10)
 exe = pathlib.Path(sys.executable).resolve()

@@ -19,7 +19,7 @@ it were reused. Shared main edits and battery review worktrees are untouched.
 - [x] Update branch governance to no required remote status checks.
 - [x] Finish hostile/control-plane checks on the final implementation (223 passed).
 - [ ] Execute complete local assurance on a clean standalone clone with both
-      required Python environments. Missing 3.11 currently blocks acceptance.
+      required Python environments. Both Linux runtimes are now provisioned.
 - [ ] Obtain complete gate evidence and verify the certificate-only child.
 
 No PR, push or merge is authorized by this task. No scientific scope reduction,

@@ -2135,3 +2135,11 @@ Independent forge-scientific-review skill: scoped read-only PASS for supplied re
 Python 3.14.2 was used only for control-plane software tests, never as 3.11/3.12 scientific execution. Windows launcher has 3.10/3.14; Ubuntu WSL has 3.12.3 and ngspice. forge-runner WSL cannot start (missing D:/WSL disk); Ubuntu works despite missing swap path warning. Initial environment bootstrap used incorrect /home/mm and failed permission; corrected to /home/dev_kaeem. Native 3.12 venv creation refused because ensurepip/python3.12-venv absent. User-local uv 0.12.23 wheel fetched from PyPI, SHA-256 checked against index: 565c6e2874dbeae86c02f3dea97255e878fec672659a73d4930c6b93fcab2fff. Managed local Python 3.11 provisioning started; complete assurance and certificate promotion still pending. The certified V4 copier requires standalone .git directory, so the entrypoint refuses linked worktrees; run production assurance in a standalone Linux clone.
 
 No capability maturity, real_data, historical certificate or scientific scope changed. No PR, push or merge. This local checkpoint exists to enable exact-commit validation; it is not certification.
+
+### Local assurance runtime provisioning and source binding
+
+- Provisioned native Ubuntu WSL CPython 3.11.17 (uv-managed) and 3.12.3 (system), each with a separate Linux virtual environment and `python -m pip install -e ".[dev,mcp,oracles]"` from the clean standalone Linux measurement clone. ngspice 42 is available. Windows Python 3.14 results are control-plane checks only.
+- Runtime probes now refuse editable project metadata or engcore imports pointing outside the measured checkout. Scoped read-only reviewer found no concrete defect in this correction; review was limited to supplied excerpts, not independent execution.
+- Executed `py -3.14 -m pytest -q tests/test_local_assurance.py --basetemp=.pytest-review-temp/local-source-binding`: 37 passed in 80.38s.
+- Executed `py -3.14 -m tools.forge_check --changed --base origin/main` with PYTEST_ADDOPTS=--basetemp=.pytest-review-temp/local-forge-changed: 40 passed in 4.97s.
+- Complete native Linux source assurance remains pending; no receipt or certificate has been issued.
