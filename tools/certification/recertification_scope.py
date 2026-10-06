@@ -112,13 +112,6 @@ ADDITIONAL_TRIGGERS: tuple[Trigger, ...] = (
         "bytes",
     ),
     Trigger(
-        "assurance_suites",
-        ("tests/**",),
-        "every source gate's result is a claim about the suites it ran. A "
-        "changed or deleted test changes what FAST, SCIENTIFIC and each "
-        "mutation kill mean, whether or not it is pinned by the certificate",
-    ),
-    Trigger(
         "trust_hardening_population",
         ("benchmarks/trust_hardening/**",),
         "the trust-hardening mutation population and its runner, re-executed "
@@ -138,6 +131,12 @@ ADDITIONAL_TRIGGERS: tuple[Trigger, ...] = (
 #: NOT made triggers. Recorded so the next reader argues with a reason rather
 #: than rediscovers a gap.
 EVALUATED_AND_EXCLUDED: tuple[tuple[str, str], ...] = (
+    ("tests/** outside the certified harness/control scope",
+     "ordinary product/domain tests are repository assurance, not hardened-core "
+     "certificate inputs. The exact mutation harness, its target suites and "
+     "their transitive test helpers are already pinned by SCOPE; edits outside "
+     "that derived closure run the normal Tests workflow instead of rebuilding "
+     "an unchanged core certificate"),
     ("requirements.txt",
      "no gate installs from it. Every workflow installs from pyproject.toml; "
      "the Dockerfile copies it into the image and installs nothing from it"),
