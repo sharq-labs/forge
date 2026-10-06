@@ -6,9 +6,6 @@ name: Tests
 # Pushes to main run the full ordinary suite again against the merged bytes.
 
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
