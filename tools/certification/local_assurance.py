@@ -400,6 +400,7 @@ def run(root: pathlib.Path, python311: Sequence[str], python312: Sequence[str], 
     with tempfile.TemporaryDirectory(prefix="forge-assurance-") as temporary:
         scratch = pathlib.Path(temporary)
         for gate in rs.RECERTIFY_SOURCE_GATES:
+            (scratch / gate).mkdir()
             assert_source(root, source)
             gate_clock = time.monotonic()
             version = "3.11" if gate == "fast311" else "3.12"
