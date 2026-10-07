@@ -133,6 +133,10 @@ def test_local_evidence_builds_a_record_without_fake_github_provenance(source):
     lineage = record["lineage"]
     assert record["schema"] == ASSURANCE_SCHEMA
     assert lineage["provenance_mode"] == "local"
+    assert record["environment"]["execution_model"] == (
+        "sequential_functional_gates_bounded_mutation_shards_then_certificate"
+    )
+    assert "own job" not in record["functional"]["note"]
     assert lineage["local_evidence_manifest_sha256"] == "a" * 64
     assert lineage["local_evidence_file_count"] == 17
     assert "workflow_run_id" not in lineage

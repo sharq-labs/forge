@@ -27,9 +27,14 @@ import pathlib
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
+import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from typing import Any, Mapping, Sequence
 
 from tools.certification import certificate_lineage, core_certificate
@@ -47,6 +52,7 @@ from tools.certification.recertification_scope import (
     junit_problems,
 )
 
+FAILURE_SCHEMA = "forge.local_assurance_failure/1"
 RECEIPT_SCHEMA = "forge.local_assurance_receipt/1"
 EVIDENCE_MANIFEST_SCHEMA = "forge.local_assurance_evidence_manifest/1"
 DEFAULT_ROOT = pathlib.Path(".forge")
@@ -173,12 +179,37 @@ def _run(
             list(argv), cwd=root, env=dict(env) if env else None,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace", bufsize=1,
+            start_new_session=True,
         )
-        assert process.stdout is not None
-        for line in process.stdout:
-            sys.stdout.write(line)
-            handle.write(line)
-        code = process.wait()
+        try:
+            assert process.stdout is not None
+            for line in process.stdout:
+                sys.stdout.write(line)
+                handle.write(line)
+            code = process.wait()
+        except BaseException:
+            # Reap the whole mutation process group before temporary cleanup.
+            # A pytest descendant must not outlive its shard on stream failure.
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            raise
+        finally:
+            if process.stdout is not None:
+                process.stdout.close()
     if code:
         raise LocalAssuranceError(f"command failed ({code}): {shown}")
 
@@ -226,6 +257,78 @@ def _deselects(py: str, root: pathlib.Path) -> list[str]:
     return [line.strip() for line in text.splitlines() if line.strip()]
 
 
+class _GateTracker:
+    """Persist local diagnostics independently of certification evidence."""
+
+    def __init__(self, path, source, source_tree, started_at):
+        self.path = path
+        self.lock = threading.Lock()
+        self.timings = {}
+        self.failures = {}
+        self.source = source
+        self.source_tree = source_tree
+        self.started_at = started_at
+
+    def failure(self, name, exc):
+        with self.lock:
+            self.failures[name] = f"{type(exc).__name__}: {exc}"
+            self._persist()
+
+    def completed(self, name, seconds):
+        with self.lock:
+            self.timings[name] = seconds
+            if self.failures:
+                self._persist()
+
+    def _persist(self):
+        names = sorted(self.failures)
+        _write_json(self.path, {
+            "schema": FAILURE_SCHEMA, "status": "REFUSED",
+            "provenance_mode": "local", "certifying": False,
+            "safe_to_push": False, "source_commit": self.source,
+            "source_tree": self.source_tree, "started_at": self.started_at,
+            "recorded_at": _utc_now(), "failed_gate": names[0],
+            "failed_gates": dict(sorted(self.failures.items())),
+            "failure_message": self.failures[names[0]],
+            "completed_gates": sorted(self.timings),
+            "gate_seconds": dict(sorted(self.timings.items())),
+        })
+
+
+@contextmanager
+def _mutation_scratch(root, name):
+    # TMPDIR itself may be repository-local: validate before any mutation runs.
+    from tools.certification.mutation_v4_runner import require_an_isolated_tree
+
+    with tempfile.TemporaryDirectory(prefix=f"forge-{name}-") as temporary:
+        scratch = pathlib.Path(temporary) / "tree"
+        require_an_isolated_tree(root, scratch)
+        yield scratch
+
+
+def _mutation_group(jobs, workers):
+    if workers < 1:
+        raise LocalAssuranceError("mutation-workers must be at least 1")
+    if workers == 1:
+        for name, job in jobs:
+            job()
+        return
+    failures = []
+    # Wait for all running shards before returning/refusing: no late evidence writes.
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(job): name for name, job in jobs}
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as exc:
+                failures.append((futures[future], exc))
+    if failures:
+        failures.sort(key=lambda row: row[0])
+        raise LocalAssuranceError("mutation shards failed: " + "; ".join(
+            f"{name}: {type(exc).__name__}: {exc}" for name, exc in failures
+        )) from failures[0][1]
+
+
 def _run_source_gates(
     root: pathlib.Path,
     source: str,
@@ -233,17 +336,27 @@ def _run_source_gates(
     py311: str,
     py312: str,
     workers: int,
+    mutation_workers: int = 2,
+    tracker: _GateTracker | None = None,
 ) -> dict[str, float]:
-    timings: dict[str, float] = {}
+    if tracker is None:
+        tracker = _GateTracker(evidence.parent / "local-assurance-failure.json",
+                               source, _git(root, "rev-parse", "HEAD^{tree}"), _utc_now())
+    timings = tracker.timings
 
     def gate(name: str, fn) -> None:
         print(f"\n=== {name} ===", flush=True)
-        _require_head(root, source, f"before {name}")
-        _require_clean(root, f"before {name}")
-        started = time.monotonic()
-        fn()
-        _require_head(root, source, f"after {name}")
-        timings[name] = round(time.monotonic() - started, 3)
+        try:
+            _require_head(root, source, f"before {name}")
+            _require_clean(root, f"before {name}")
+            started = time.monotonic()
+            fn()
+            _require_head(root, source, f"after {name}")
+            _require_clean(root, f"after {name}")
+            tracker.completed(name, round(time.monotonic() - started, 3))
+        except BaseException as exc:
+            tracker.failure(name, exc)
+            raise
 
     def fast(py: str, gate_name: str, version: str) -> None:
         directory = _gate_dir(evidence, source, gate_name)
@@ -333,6 +446,7 @@ def _run_source_gates(
 
     gate("regression312", regression)
 
+    formal_jobs = []
     for index in range(4):
         name = f"formal_mutations_{index}"
 
@@ -348,14 +462,12 @@ def _run_source_gates(
                 root=root,
             )
             selected = [line for line in ids.read_text(encoding="utf-8").splitlines() if line]
-            scratch = evidence.parent / "scratch" / f"formal-{index}"
-            shutil.rmtree(scratch, ignore_errors=True)
-            _run(
-                [py312, "-X", "utf8", "tests/mutation_guards.py",
-                 str(scratch), *selected],
-                root=root, log=log,
-            )
-            shutil.rmtree(scratch, ignore_errors=True)
+            with _mutation_scratch(root, name) as scratch:
+                _run(
+                    [py312, "-X", "utf8", "tests/mutation_guards.py",
+                     str(scratch), *selected],
+                    root=root, log=log,
+                )
             _run(
                 [py312, "-m", "tools.certification.mutation_population", "record",
                  "--index", str(index), "--count", "4", "--ids", str(ids),
@@ -364,8 +476,10 @@ def _run_source_gates(
             )
             _clean_record(py312, name, directory / EVIDENCE[name][1]["gate"], root)
 
-        gate(name, formal)
+        formal_jobs.append((name, lambda name=name, fn=formal: gate(name, fn)))
 
+    _mutation_group(formal_jobs, mutation_workers)
+    v4_jobs = []
     for index in range(8):
         name = f"v4_mutations_{index}"
 
@@ -380,15 +494,13 @@ def _run_source_gates(
                  "--index", str(index), "--count", "8", "--out", str(ids)],
                 root=root,
             )
-            scratch = evidence.parent / "scratch" / f"v4-{index}"
-            shutil.rmtree(scratch, ignore_errors=True)
-            _run(
-                [py312, "-m", "tools.certification.mutation_v4_runner",
-                 "--scratch", str(scratch),
-                 "--ids", str(ids), "--log", str(log)],
-                root=root,
-            )
-            shutil.rmtree(scratch, ignore_errors=True)
+            with _mutation_scratch(root, name) as scratch:
+                _run(
+                    [py312, "-m", "tools.certification.mutation_v4_runner",
+                     "--scratch", str(scratch),
+                     "--ids", str(ids), "--log", str(log)],
+                    root=root,
+                )
             _run(
                 [py312, "-m", "tools.certification.mutation_population", "v4-record",
                  "--index", str(index), "--count", "8", "--ids", str(ids),
@@ -397,7 +509,9 @@ def _run_source_gates(
             )
             _clean_record(py312, name, directory / EVIDENCE[name][1]["gate"], root)
 
-        gate(name, v4)
+        v4_jobs.append((name, lambda name=name, fn=v4: gate(name, fn)))
+
+    _mutation_group(v4_jobs, mutation_workers)
 
     def trust() -> None:
         name = "trust_mutations"
@@ -491,6 +605,8 @@ def prepare(args: argparse.Namespace) -> int:
 
 def run(args: argparse.Namespace) -> int:
     _require_linux()
+    if args.mutation_workers < 1:
+        raise LocalAssuranceError("mutation-workers must be at least 1")
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
     _require_clean(root, "start")
     source = _git(root, "rev-parse", "HEAD")
@@ -518,80 +634,94 @@ def run(args: argparse.Namespace) -> int:
     started_at = _utc_now()
     started = time.monotonic()
 
-    timings = _run_source_gates(
-        root, source, evidence, py311, py312, max(1, args.workers)
-    )
-    _require_head(root, source, "after source gates")
-    _require_clean(root, "after source gates")
-
-    manifest_path, manifest_sha, manifest_count = _build_evidence_manifest(
-        root, source, evidence
-    )
-    assurance = build_assurance(
-        root,
-        source_commit=source,
-        evidence_dir=evidence,
-        run=RunContext(
-            repository=repository,
-            run_id=None,
-            run_attempt=None,
-            pull_request=None,
-            executed_commit=source,
-            event="local",
-            runner_os=platform.platform(),
-            provenance_mode="local",
-            evidence_manifest_sha256=manifest_sha,
-            evidence_file_count=manifest_count,
-        ),
-    )
-    assurance_path = run_root / "core-hardening-assurance.json"
-    assurance_sha = _write_json(assurance_path, assurance)
-
-    certificate = core_certificate.build_certificate(root, assurance=assurance)
-    certificate_path = root / CERTIFICATE_PATH
-    core_certificate.write_certificate(certificate_path, certificate)
-    certificate_sha = _sha256(certificate_path)
-
-    result = core_certificate.verify_certificate(
-        root, certificate, require_clean=False, require_commit=True, require_current_scope=True
-    )
-    if not result.ok:
-        raise LocalAssuranceError("generated certificate does not verify: " + "; ".join(result.problems))
-
-    status = _git(root, "status", "--porcelain", "--untracked-files=all")
-    expected_suffix = CERTIFICATE_PATH
-    rows = [line for line in status.splitlines() if line.strip()]
-    if len(rows) != 1 or not rows[0].endswith(expected_suffix):
-        raise LocalAssuranceError(
-            f"certificate generation changed unexpected repository paths: {rows}"
+    tracker = _GateTracker(run_root / "local-assurance-failure.json",
+                           source, source_tree, started_at)
+    phase = "source_gates"
+    try:
+        timings = _run_source_gates(
+            root, source, evidence, py311, py312, max(1, args.workers),
+            args.mutation_workers, tracker
         )
+        _require_head(root, source, "after source gates")
+        _require_clean(root, "after source gates")
 
-    finished_at = _utc_now()
-    receipt = {
-        "schema": RECEIPT_SCHEMA,
-        "status": "SOURCE_PASS",
-        "repository": repository,
-        "source_commit": source,
-        "source_tree": source_tree,
-        "started_at": started_at,
-        "finished_at": finished_at,
-        "wall_seconds": round(time.monotonic() - started, 3),
-        "runner_os": platform.platform(),
-        "python_3_11": _capture([py311, "--version"], root=root),
-        "python_3_12": _capture([py312, "--version"], root=root),
-        "ngspice": _capture(["ngspice", "--version"], root=root),
-        "gate_seconds": timings,
-        "evidence_manifest": manifest_path.name,
-        "evidence_manifest_sha256": manifest_sha,
-        "evidence_file_count": manifest_count,
-        "assurance_file": assurance_path.name,
-        "assurance_sha256": assurance_sha,
-        "certificate_path": CERTIFICATE_PATH,
-        "certificate_sha256": certificate_sha,
-        "required_certificate_child_subject": CERTIFICATE_CHILD_SUBJECT,
-    }
-    receipt_path = run_root / "local-assurance-receipt.json"
-    receipt_sha = _write_json(receipt_path, receipt)
+        phase = "evidence_manifest"
+        manifest_path, manifest_sha, manifest_count = _build_evidence_manifest(
+            root, source, evidence
+        )
+        phase = "assurance_build"
+        assurance = build_assurance(
+            root,
+            source_commit=source,
+            evidence_dir=evidence,
+            run=RunContext(
+                repository=repository,
+                run_id=None,
+                run_attempt=None,
+                pull_request=None,
+                executed_commit=source,
+                event="local",
+                runner_os=platform.platform(),
+                provenance_mode="local",
+                evidence_manifest_sha256=manifest_sha,
+                evidence_file_count=manifest_count,
+            ),
+        )
+        assurance_path = run_root / "core-hardening-assurance.json"
+        assurance_sha = _write_json(assurance_path, assurance)
+
+        phase = "certificate_generation"
+        certificate = core_certificate.build_certificate(root, assurance=assurance)
+        certificate_path = root / CERTIFICATE_PATH
+        core_certificate.write_certificate(certificate_path, certificate)
+        certificate_sha = _sha256(certificate_path)
+
+        result = core_certificate.verify_certificate(
+            root, certificate, require_clean=False, require_commit=True, require_current_scope=True
+        )
+        if not result.ok:
+            raise LocalAssuranceError("generated certificate does not verify: " + "; ".join(result.problems))
+
+        status = _git(root, "status", "--porcelain", "--untracked-files=all")
+        expected_suffix = CERTIFICATE_PATH
+        rows = [line for line in status.splitlines() if line.strip()]
+        if len(rows) != 1 or not rows[0].endswith(expected_suffix):
+            raise LocalAssuranceError(
+                f"certificate generation changed unexpected repository paths: {rows}"
+            )
+
+        finished_at = _utc_now()
+        receipt = {
+            "schema": RECEIPT_SCHEMA,
+            "status": "SOURCE_PASS",
+            "repository": repository,
+            "source_commit": source,
+            "source_tree": source_tree,
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "wall_seconds": round(time.monotonic() - started, 3),
+            "runner_os": platform.platform(),
+            "python_3_11": _capture([py311, "--version"], root=root),
+            "python_3_12": _capture([py312, "--version"], root=root),
+            "ngspice": _capture(["ngspice", "--version"], root=root),
+            "gate_seconds": timings,
+            "evidence_manifest": manifest_path.name,
+            "evidence_manifest_sha256": manifest_sha,
+            "evidence_file_count": manifest_count,
+            "assurance_file": assurance_path.name,
+            "assurance_sha256": assurance_sha,
+            "certificate_path": CERTIFICATE_PATH,
+            "certificate_sha256": certificate_sha,
+            "required_certificate_child_subject": CERTIFICATE_CHILD_SUBJECT,
+        }
+        phase = "source_receipt"
+        receipt_path = run_root / "local-assurance-receipt.json"
+        receipt_sha = _write_json(receipt_path, receipt)
+
+    except BaseException as exc:
+        if not tracker.failures:
+            tracker.failure(phase, exc)
+        raise
 
     print("\nLOCAL_ASSURANCE: SOURCE_PASS")
     print(f"SOURCE_SHA: {source}")
@@ -622,7 +752,7 @@ def verify(args: argparse.Namespace) -> int:
     if not receipt_path.is_file():
         raise LocalAssuranceError(f"local receipt not found for source {source}")
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    if receipt.get("schema") != RECEIPT_SCHEMA or receipt.get("source_commit") != source:
+    if receipt.get("schema") != RECEIPT_SCHEMA or receipt.get("status") not in {"SOURCE_PASS", "PASS"} or receipt.get("source_commit") != source:
         raise LocalAssuranceError("local receipt does not bind to the certificate parent")
 
     evidence = run_root / "evidence"
@@ -693,6 +823,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     execute.add_argument("--python312")
     execute.add_argument("--repository")
     execute.add_argument("--workers", type=int, default=4)
+    execute.add_argument("--mutation-workers", type=int, default=2)
     execute.add_argument("--reuse", action="store_true")
 
     check = sub.add_parser("verify")

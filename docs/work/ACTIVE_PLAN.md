@@ -468,3 +468,17 @@ At a new session:
 
 Historical tables and Master Plan phases are context, not alternate execution
 queues.
+
+
+## 2026-10-07 bounded override - Local Assurance optimization
+
+Current task: external temporary mutation scratch, bounded independent
+--mutation-workers (default 2), fail-closed concurrency and non-certifying
+failure diagnostics. Focused control-plane tests and independent review only;
+commit locally after checks. Resume remains design-only. Do not run full
+assurance, generate a certificate, push, open a PR or merge in this task.
+
+Optimization implementation complete: targeted Python 3.12 pack 215 passed,
+Python 3.11 local-control pack 31 passed; independent read-only review PASS.
+Next action: further control-plane review. Full assurance remains deferred
+until explicit user authorization; no certificate or external publication.

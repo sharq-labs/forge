@@ -2113,3 +2113,48 @@ Recorded direction:
   records and cannot become a second source of scientific truth.
 
 Tests: **NOT RUN** — documentation/strategic architecture changes only.
+
+
+## 2026-10-07 Local Assurance control-plane optimization
+
+Scope: WSL /home/dev_kaeem/forge-local-assurance-72bf7c4c at
+74e102a743fe7cf329353b7aa32e56b5cbc0940c. Full assurance, certification,
+mutation populations, push, PR and merge explicitly deferred by user.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 8 failed, 14 passed in 0.64s. Failure names: all eight parametrizations
+of test_shards_are_bounded_isolated_and_fail_closed. Failed approach: new owner
+assertion compared underscore gate names with established hyphenated directory
+identity; corrected assertion without changing deterministic evidence paths.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 29 passed in 1.30s.
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 213 passed in 22.36s. Synthetic/mock concurrency only; no mutation
+population or full assurance executed.
+Independent review identified logged subprocess stream exceptions leaving a
+child alive past shard cleanup and inaccurate local sequential/job wording.
+Fixing process-group termination/reaping and execution metadata; rerun required.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 214 passed in 22.87s after process-group cleanup/metadata fixes.
+Re-review found forced-kill ProcessLookupError could replace original stream
+failure during a timeout race; guarded disappearing-group kill and added mocked
+reaping/error-preservation regression.
+Command: `.forge/venvs/3.11/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 31 passed in 1.26s.
+Final independent forge-scientific-review verdict: PASS (read-only review only).
+All three reported control-plane findings addressed; no scientific/domain code
+changed. Resume design documented; resume NOT implemented.
+Failed tooling approach: Windows default text encoding corrupted existing
+PROGRESS prose during append and later refused decode. Restored original HEAD
+bytes and kept only new session entries; subsequent writes explicitly UTF-8.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 215 passed in 22.46s; 0 failed, 0 skipped.
+Command: `git diff --check`
+Result: PASS (exit 0).
+Full FAST, SCIENTIFIC, campaign, regression, Formal/V4/Trust mutation
+populations and Full Local Assurance: NOT RUN BY DESIGN.
+Official certificate generation, certificate-only child, push, PR, merge: NO.
+Final status: CONTROL_PLANE_READY_FOR_FURTHER_REVIEW.

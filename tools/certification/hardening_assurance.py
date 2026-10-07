@@ -390,7 +390,7 @@ def build_assurance(
         functional[label] = entry
     functional["deferred_self_checks"] = list(CERTIFICATE_SELF_CHECKS)
     functional["note"] = (
-        "Each functional gate ran on the source commit in its own job and proved "
+        "Each functional gate ran on the source commit and proved "
         "its checkout byte-identical to that commit afterwards. The listed "
         "self-checks read the previous certificate on a source commit, so they are "
         "deselected there and run -- and must each be reported PASSED -- on the "
@@ -516,7 +516,7 @@ def build_assurance(
             "schema": ENVIRONMENT_SCHEMA,
             "source_commit": source_commit,
             "execution_model": (
-                "sequential_local_gates_then_certificate"
+                "sequential_functional_gates_bounded_mutation_shards_then_certificate"
                 if is_local else "parallel_github_actions_jobs"
             ),
             "provenance_mode": run.provenance_mode,

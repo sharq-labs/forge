@@ -109,3 +109,276 @@ def test_frozen_evidence_manifest_detects_tampering(tmp_path):
     artifact.write_text('{"ok": false}\n', encoding="utf-8")
     with pytest.raises(LocalAssuranceError, match="changed after"):
         _verify_evidence_manifest(manifest, evidence)
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+@pytest.mark.parametrize("family,count", [("formal_mutations", 4), ("v4_mutations", 8)])
+@pytest.mark.parametrize("fail", [False, True])
+def test_shards_are_bounded_isolated_and_fail_closed(tmp_path, monkeypatch, workers, family, count, fail):
+    import threading
+    import time
+    from tools.certification import local_assurance as la
+    root = tmp_path / "repo"
+    root.mkdir()
+    evidence = root / ".forge" / "assurance" / "source" / "evidence"
+    active = 0
+    peak = 0
+    paths = []
+    owners = []
+    completed = []
+    lock = threading.Lock()
+    overlap = threading.Barrier(2) if workers == 2 else None
+
+    def job(index):
+        nonlocal active, peak
+        name = f"{family}_{index}"
+        directory = la._gate_dir(evidence, "source", name)
+        with la._mutation_scratch(root, name) as scratch:
+            with lock:
+                active += 1
+                peak = max(peak, active)
+                paths.append(scratch)
+                owners.append(directory)
+            try:
+                scratch.mkdir()
+                (scratch / "mutant").write_text(name)
+                if overlap and index < 2:
+                    overlap.wait(timeout=5)
+                time.sleep(0.01)
+                (directory / "owner").write_text(name)
+                if fail and index == 0:
+                    raise RuntimeError("synthetic shard failure")
+                completed.append(index)
+            finally:
+                with lock:
+                    active -= 1
+
+    jobs = [(f"{family}_{i}", lambda i=i: job(i)) for i in range(count)]
+    if fail:
+        with pytest.raises((la.LocalAssuranceError, RuntimeError), match="synthetic shard failure") as caught:
+            la._mutation_group(jobs, workers)
+        if workers == 2:
+            assert f"{family}_0" in str(caught.value)
+            assert isinstance(caught.value.__cause__, RuntimeError)
+    else:
+        la._mutation_group(jobs, workers)
+    assert peak == workers
+    assert active == 0
+    assert len(paths) == len(set(paths))
+    assert len(owners) == len(set(owners))
+    for path in paths:
+        assert root not in path.parents
+        assert not path.parent.exists()
+    for directory in owners:
+        assert (directory / "owner").read_text().replace("_", "-") in directory.name
+    if workers == 1:
+        assert completed == ([] if fail else list(range(count)))
+    elif fail:
+        assert 1 in completed
+
+
+def test_repository_local_tmpdir_is_refused_and_cleaned(tmp_path, monkeypatch):
+    import tempfile
+    from tools.certification import local_assurance as la
+    from tools.certification.mutation_v4_runner import MutationRoundError
+    root = tmp_path / "repo"
+    root.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(root))
+    with pytest.raises(MutationRoundError, match="inside the repository"):
+        with la._mutation_scratch(root, "v4_mutations_0"):
+            pytest.fail("repository-local scratch reached mutation execution")
+    assert list(root.iterdir()) == []
+
+
+def test_failure_diagnostics_preserve_late_completed_timings(tmp_path):
+    import json
+    from tools.certification import local_assurance as la
+    path = tmp_path / "failure.json"
+    tracker = la._GateTracker(path, "source", "tree", "started")
+    tracker.completed("fast311", 1.25)
+    tracker.failure("v4_mutations_0", ValueError("broken shard"))
+    tracker.completed("v4_mutations_1", 2.5)
+    doc = json.loads(path.read_text())
+    assert doc["schema"] == la.FAILURE_SCHEMA
+    assert doc["status"] == "REFUSED"
+    assert doc["certifying"] is False and doc["safe_to_push"] is False
+    assert doc["source_commit"] == "source" and doc["source_tree"] == "tree"
+    assert doc["started_at"] == "started"
+    assert doc["failed_gate"] == "v4_mutations_0"
+    assert doc["failure_message"] == "ValueError: broken shard"
+    assert doc["gate_seconds"] == {"fast311": 1.25, "v4_mutations_1": 2.5}
+
+
+@pytest.mark.parametrize("schema,status", [
+    ("forge.local_assurance_failure/1", "REFUSED"),
+    ("forge.local_assurance_receipt/1", "REFUSED"),
+])
+def test_verify_refuses_failure_even_at_receipt_path(tmp_path, monkeypatch, schema, status):
+    import argparse
+    from tools.certification import local_assurance as la
+    monkeypatch.setattr(la, "_require_linux", lambda: None)
+    monkeypatch.setattr(la.core_certificate, "repo_root", lambda _: tmp_path)
+    monkeypatch.setattr(la, "_require_clean", lambda *a: None)
+    monkeypatch.setattr(la, "_git", lambda root, *a: "child source" if a[0] == "rev-list" else "child")
+    monkeypatch.setattr(la, "_resolve_python", lambda *a: "python")
+    monkeypatch.setattr(la, "_version", lambda *a: None)
+    monkeypatch.setattr(la, "_run", lambda *a, **kw: pytest.fail("self-check execution authorized"))
+    receipt = tmp_path / ".forge/assurance/source/local-assurance-receipt.json"
+    la._write_json(receipt, {"schema": schema, "status": status, "source_commit": "source"})
+    with pytest.raises(la.LocalAssuranceError, match="receipt does not bind"):
+        la.verify(argparse.Namespace(local_root=".forge", python312=None))
+
+
+def test_failed_run_never_builds_certificate(tmp_path, monkeypatch):
+    import argparse
+    import json
+    from tools.certification import local_assurance as la
+    monkeypatch.setattr(la, "_require_linux", lambda: None)
+    monkeypatch.setattr(la.core_certificate, "repo_root", lambda _: tmp_path)
+    monkeypatch.setattr(la, "_require_clean", lambda *a: None)
+    monkeypatch.setattr(la, "_git", lambda root, *a: "source")
+    monkeypatch.setattr(la, "_repository_slug", lambda *a: "owner/repo")
+    monkeypatch.setattr(la, "_resolve_python", lambda *a: "python")
+    monkeypatch.setattr(la, "_version", lambda *a: None)
+    monkeypatch.setattr(la.shutil, "which", lambda *a: "ngspice")
+    def gates(*args):
+        tracker = args[-1]
+        tracker.completed("fast311", 1.5)
+        tracker.failure("formal_mutations_2", RuntimeError("failure"))
+        raise RuntimeError("failure")
+    monkeypatch.setattr(la, "_run_source_gates", gates)
+    monkeypatch.setattr(la.core_certificate, "build_certificate",
+                        lambda *a, **k: pytest.fail("certificate generation after failure"))
+    args = argparse.Namespace(local_root=".forge", repository=None, python311=None,
+                              python312=None, workers=4, mutation_workers=2, reuse=False)
+    with pytest.raises(RuntimeError, match="failure"):
+        la.run(args)
+    run_root = tmp_path / ".forge/assurance/source"
+    assert not (run_root / "local-assurance-receipt.json").exists()
+    doc = json.loads((run_root / "local-assurance-failure.json").read_text())
+    assert doc["failed_gate"] == "formal_mutations_2"
+    assert doc["gate_seconds"] == {"fast311": 1.5}
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+@pytest.mark.parametrize("fail", [None, "formal_mutations_1", "v4_mutations_3"])
+def test_source_gate_orchestration_preserves_checkout(tmp_path, monkeypatch, workers, fail):
+    import subprocess
+    import threading
+    from tools.certification import local_assurance as la
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".gitignore").write_text(".forge/\n")
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "add", ".gitignore"], cwd=root, check=True)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                    "commit", "-qm", "source"], cwd=root, check=True)
+    source = la._git(root, "rev-parse", "HEAD")
+    evidence = root / ".forge/assurance" / source / "evidence"
+    scratch_paths = []
+    lock = threading.Lock()
+    def fake_run(argv, **kw):
+        if "--out" in argv:
+            pathlib.Path(argv[argv.index("--out") + 1]).write_text("selected-id\n")
+        mutation = "--scratch" in argv or "tests/mutation_guards.py" in argv
+        if mutation:
+            scratch = pathlib.Path(argv[argv.index("--scratch") + 1] if "--scratch" in argv else argv[4])
+            assert root not in scratch.resolve().parents
+            with lock:
+                scratch_paths.append(scratch)
+            scratch.mkdir()
+            (scratch / "mutant").write_text("synthetic")
+            log = pathlib.Path(argv[argv.index("--log") + 1]) if "--log" in argv else kw["log"]
+            log.write_text(log.parent.name)
+            if fail and la.EVIDENCE[fail][0] in log.parent.name:
+                raise la.LocalAssuranceError("injected shard refusal")
+    monkeypatch.setattr(la, "_run", fake_run)
+    monkeypatch.setattr(la, "_record_runtime", lambda *a: None)
+    monkeypatch.setattr(la, "_clean_record", lambda *a: None)
+    monkeypatch.setattr(la, "_deselects", lambda *a: [])
+    monkeypatch.setattr(la, "_capture", lambda *a, **k: "runtime")
+    if fail:
+        with pytest.raises(la.LocalAssuranceError, match="injected shard refusal"):
+            la._run_source_gates(root, source, evidence, "py311", "py312", 4, workers)
+    else:
+        timings = la._run_source_gates(root, source, evidence, "py311", "py312", 4, workers)
+        assert set(timings) == set(la.EVIDENCE)
+        assert len(scratch_paths) == 12
+    assert len(scratch_paths) == len(set(scratch_paths))
+    assert all(not p.parent.exists() for p in scratch_paths)
+    la._require_head(root, source, "test end")
+    la._require_clean(root, "test end")
+    for log in evidence.rglob("*.log"):
+        assert log.read_text() == log.parent.name
+
+
+def test_mutation_workers_cli_default_and_invalid_value(monkeypatch):
+    from tools.certification import local_assurance as la
+    seen = []
+    monkeypatch.setattr(la, "run", lambda args: seen.append(args.mutation_workers) or 0)
+    assert la.main(["run"]) == 0
+    assert la.main(["run", "--mutation-workers", "1", "--workers", "7"]) == 0
+    assert seen == [2, 1]
+
+
+@pytest.mark.skipif(__import__("sys").platform != "linux", reason="Linux runner process groups")
+def test_stream_failure_reaps_mutation_process_before_scratch_cleanup(tmp_path, monkeypatch):
+    import os
+    import sys
+    import subprocess
+    from tools.certification import local_assurance as la
+    script = tmp_path / "child.py"
+    script.write_text("import time\nprint('STREAM_FAILURE_MARKER', flush=True)\ntime.sleep(60)\n")
+    processes = []
+    original_popen = subprocess.Popen
+    original_stdout = sys.stdout
+    def popen(*args, **kwargs):
+        child = original_popen(*args, **kwargs)
+        processes.append(child)
+        return child
+    class BrokenStream:
+        def write(self, line):
+            if "STREAM_FAILURE_MARKER" in line:
+                raise OSError("synthetic stream failure")
+            return original_stdout.write(line)
+        def flush(self):
+            return original_stdout.flush()
+    monkeypatch.setattr(la.subprocess, "Popen", popen)
+    with la._mutation_scratch(tmp_path, "formal_mutations_0") as scratch:
+        scratch.mkdir()
+        with monkeypatch.context() as context:
+            context.setattr(sys, "stdout", BrokenStream())
+            with pytest.raises(OSError, match="synthetic stream failure"):
+                la._run([sys.executable, str(script)], root=tmp_path, log=tmp_path / "shard.log")
+        assert processes[0].poll() is not None
+        with pytest.raises(ProcessLookupError):
+            os.killpg(processes[0].pid, 0)
+        assert scratch.exists()
+    assert not scratch.parent.exists()
+
+
+def test_child_exit_during_forced_kill_preserves_stream_error(tmp_path, monkeypatch):
+    import subprocess
+    from tools.certification import local_assurance as la
+    class BrokenPipe:
+        def __iter__(self):
+            raise OSError("original stream error")
+        def close(self):
+            pass
+    class Child:
+        pid = 123
+        stdout = BrokenPipe()
+        waits = []
+        def wait(self, timeout=None):
+            self.waits.append(timeout)
+            if timeout is not None:
+                raise subprocess.TimeoutExpired("synthetic", timeout)
+            return 0
+    child = Child()
+    monkeypatch.setattr(la.subprocess, "Popen", lambda *a, **k: child)
+    def disappeared(*args):
+        raise ProcessLookupError("already exited")
+    monkeypatch.setattr(la.os, "killpg", disappeared)
+    with pytest.raises(OSError, match="original stream error"):
+        la._run(["synthetic"], root=tmp_path, log=tmp_path / "shard.log")
+    assert child.waits == [5, None]
