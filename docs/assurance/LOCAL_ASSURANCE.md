@@ -230,8 +230,10 @@ before execution so a previous invocation cannot supply a verdict.
 
 Each concurrent shard owns its seed, worker, manifest and telemetry object.
 The existing --mutation-workers default remains 2. No shared seed, mutable
-workspace or cross-run cache is introduced. Measurements at 1 / 2 / 4 workers
-are deferred until separately authorized. Resume and partial gate/evidence reuse
+workspace or cross-run cache is introduced. A bounded Pass 10 measurement at
+1 / 2 / 4 workers (see `docs/work/PROGRESS.md`) gave identical verdicts at every
+count; 4 workers ran the Formal group in one wave with ~3.1 GB peak RSS, so
+`--mutation-workers 4` is the recommended invocation. Resume and partial gate/evidence reuse
 remain disabled: --reuse still means discard the run and start over.
 
 ## Non-authoritative performance diagnostics
@@ -316,3 +318,43 @@ checks that refuse tampering before execution. `snapshot()` builds relative name
 from directory entries instead of per-entry pathlib work; its manifest, digest,
 counters and errors are identical. See
 `docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_9.md` for the transition model.
+
+
+### Pass 12 Formal pytest-xdist (opt-in)
+
+`local_assurance run --formal-pytest-workers N` (default 1) runs Formal attempts with
+pytest-xdist inside each attempt. It is distinct from `--workers` (ordinary suite workers)
+and `--mutation-workers` (concurrent shards); V4 never uses it. With the default the
+Formal shard command and transcript are the historical ones.
+
+Plugin policy amendment to Pass 7: entry-point autoload stays disabled for every child.
+Formal attempts with N > 1 explicitly load exactly `xdist.plugin` and
+`tools.certification.formal_xdist_guard`, with `--tx N*popen//python=<shard interpreter>
+-X utf8 --dist loadfile --max-worker-restart=0`, so every worker is the shard's own
+interpreter in UTF-8 mode like the serial process, without a new PYTHON* variable.
+
+Crash semantics: under xdist a crashed worker becomes exit 1 plus a synthetic
+`FAILED <nodeid>`, which the verdict rule would credit. The guard records xdist's
+structured controller signals (worker ready/down with or without error, synthetic crash
+reports, internal errors, per-worker collections, per-process interpreter, UTF-8 mode and
+import origins) into a sentinel outside the worker tree. An xdist attempt is admissible
+only with a complete, clean sentinel; anything else raises WorkspaceError: an
+infrastructure failure, never a kill. The 0/1/2 exit-code rule still applies first.
+
+Grouping semantics: `--dist loadfile` assigns files to workers by timing, so a green xdist
+control proves only its own grouping. Therefore, in xdist mode:
+
+- a per-shard named-alone control collects TARGETS serially on the unmutated copy, selects
+  every test function whose name carries each named guard (the verdict rule's own match),
+  and runs EACH guard's set alone, serially, with no cache; every set must pass and the copy
+  must stay pristine between sets, otherwise the round is void;
+- a would-be named kill is credited only if that exact set, run with the identical command
+  in the mutated worker (still byte-identical to the pristine tree plus the exact post-edit
+  bytes of the declared file), fails with the named guard; otherwise the transcript says
+  `RED (NOT CONFIRMED SERIALLY)` and there is no credit;
+- import-refusal mutations, credited on refusal text anywhere in the output, run serially
+  exactly as before, against the historical serial control, which runs in any shard that
+  contains one.
+
+Mutations of `tools/` are refused in xdist mode because the guard is imported from the
+verified worker copy. See `docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_12.md`.

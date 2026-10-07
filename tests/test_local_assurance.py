@@ -252,7 +252,7 @@ def test_failed_run_never_builds_certificate(tmp_path, monkeypatch):
     monkeypatch.setattr(la, "_resolve_python", lambda *a: "python")
     monkeypatch.setattr(la, "_version", lambda *a: None)
     monkeypatch.setattr(la.shutil, "which", lambda *a: "ngspice")
-    def gates(*args):
+    def gates(*args, **kwargs):
         tracker = args[-1]
         tracker.completed("fast311", 1.5)
         tracker.failure("formal_mutations_2", RuntimeError("failure"))
@@ -261,7 +261,8 @@ def test_failed_run_never_builds_certificate(tmp_path, monkeypatch):
     monkeypatch.setattr(la.core_certificate, "build_certificate",
                         lambda *a, **k: pytest.fail("certificate generation after failure"))
     args = argparse.Namespace(local_root=".forge", repository=None, python311=None,
-                              python312=None, workers=4, mutation_workers=2, reuse=False)
+                              python312=None, workers=4, mutation_workers=2, reuse=False,
+                              formal_pytest_workers=1)
     with pytest.raises(RuntimeError, match="failure"):
         la.run(args)
     run_root = tmp_path / ".forge/assurance/source"
@@ -334,6 +335,23 @@ def test_mutation_workers_cli_default_and_invalid_value(monkeypatch):
     assert la.main(["run"]) == 0
     assert la.main(["run", "--mutation-workers", "1", "--workers", "7"]) == 0
     assert seen == [2, 1]
+
+
+def test_formal_pytest_workers_is_a_distinct_serial_by_default_option(monkeypatch):
+    from tools.certification import local_assurance as la
+    seen = []
+    monkeypatch.setattr(la, "run", lambda args: seen.append(
+        (args.workers, args.mutation_workers, args.formal_pytest_workers)) or 0)
+    assert la.main(["run"]) == 0
+    assert la.main(["run", "--formal-pytest-workers", "2", "--mutation-workers", "4"]) == 0
+    assert seen == [(4, 2, 1), (4, 4, 2)]
+    # One Formal pytest worker is the unchanged historical shard command.
+    assert la._formal_command("py", "/s", ["G1a"]) == ["py", "-X", "utf8", "tests/mutation_guards.py", "/s", "G1a"]
+    assert la._formal_command("py", "/s", ["G1a"], 2) == [
+        "py", "-X", "utf8", "tests/mutation_guards.py", "--pytest-workers", "2", "/s", "G1a"]
+    for bad in (0, -1, True, 1.5):
+        with pytest.raises(la.LocalAssuranceError):
+            la._formal_command("py", "/s", [], bad)
 
 
 @pytest.mark.skipif(__import__("sys").platform != "linux", reason="Linux runner process groups")

@@ -2475,3 +2475,60 @@ test_mid_walk_failure_still_reports_entries_already_scanned in tests/test_mutati
 not changed: core_certificate.py OUT_OF_SCOPE prose still says "the two self-check modules".
 Final targeted set: 444 passed, 2 failed (baseline certificate drift) in 29.97 s; new specs
 184 passed on 3.11 (2.04 s).
+
+## Pass 10 freeze and bounded concurrency measurement (2026-10-07)
+
+Pre-freeze audit of the Passes 2–9 diff: only tools/certification, mutation/assurance tests
+and docs touched; MUTATIONS/EVIDENCE/TARGETS/_COPIED AST-identical to 8d5eed3f; V4
+population and selection modules untouched; no debug code; telemetry archived outside
+evidence/. Stale "never executed"/"future execution" wording corrected. `git diff --check`: exit 0.
+Pre-commit: blocker tests 2 passed; Passes 2–9 specs 184 passed on 3.11 and 3.12; targeted
+12-module set 444 passed, 2 failed (baseline certificate drift) in 30.51 s.
+Source commit: 4f2cdf4b5c38b17bc3188967d15503d51b907bed
+"certification: optimize local mutation assurance" (local only; no certificate, push or PR).
+
+Benchmark (not certification evidence): production _mutation_group/_mutation_scratch/_run
+path at the committed source; Formal 4 shards x 1 mutation (G1a, G1d, G2f, G27b) + per-shard
+control; V4 8 shards x 2 entries (B56a B19j B11a B12a B29c N61h N57i N57c N62i N63a N61o
+B14o N57g N57p N60h B1q) + per-shard control; HEAD/clean checks around each shard.
+Order w2, w4, w1, then w4, w2. Wall: w1 1106.6 s; w2 597.0 / 602.1 s; w4 335.2 / 336.5 s.
+Formal group: 1050.7 / 563.1-568.6 / 310.8 s. V4 group: 56.0 / 33.5-33.9 / 24.4-25.6 s.
+Peak process-tree RSS: 854 / ~1550 / ~3100 MB; min MemAvailable 20.3 GB. Mean CPU busy
+6 / 12 / 22 % of 20 logical CPUs. Per-shard Formal time +4 % (w2) and +14 % (w4) vs w1.
+All five runs: identical 20 verdicts, 12/12 controls GREEN, distinct scratch, no residue,
+HEAD unchanged, tree clean. Recommendation: --mutation-workers 4 (CLI); code default left 2.
+
+## Pass 11 Formal hot-path audit (2026-10-07)
+
+Profiling only at source 4f2cdf4b (no source change; candidate via out-of-tree wrapper).
+Probe: production PersistentWorkspace + run_captured, exact Formal TARGETS command, external
+/proc sampler. Serial unmutated attempt 141.2 s (pytest 135.7 s), collect-only 6.2 s; four
+modules = 80 % of test time; 1.20 cores used per attempt (single-thread CPU bound).
+xdist controls n=2/n=4 loadfile/loadscope/load: 0 of 1140 per-nodeid outcome differences.
+Failed approach: plain xdist (also with --max-worker-restart=0) turns a SIGSEGV test into
+`FAILED <nodeid>` exit 1, which the Formal rule credits RED; serial gives exit -11 (no credit).
+Candidate = xdist loadfile + refuse on worker crash/node-down markers (demonstrated).
+Benchmark (G1a G1d G2f G27b, 4 shards, controls, mutation-workers=4, clean clone of 4f2cdf4b):
+baseline 315.1 / 308.6 s; candidate n=2 207.7 s; n=4 187.2 s; identical verdicts, controls
+GREEN, peak RSS 3.1 / 4.7 / 6.4 GB, no residue. Details:
+docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_11.md. Not adopted: needs crash-refusal spec,
+plugin-policy amendment, scientific review and an owner certification decision.
+
+## Pass 12 safe Formal pytest-xdist (2026-10-07)
+
+Opt-in --formal-pytest-workers / --pytest-workers (default 1, historical command). Details,
+design, crash table, benchmarks and failed approaches: docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_12.md.
+Commands (bytecode writes and cacheprovider off):
+- python -m pytest tests/test_formal_xdist.py tests/test_local_assurance.py tests/test_mutation_startup.py
+  tests/test_mutation_workspace.py tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared:
+  253 passed (3.12, 17.0 s; 3.11, 15.7 s).
+- Targeted 13-module control-plane set: 512 passed, 2 failed (baseline certificate drift:
+  test_core_certificate.py::test_the_certificate_describes_this_tree and
+  ::test_the_certificate_records_the_v1_relationship_truthfully) in 36.2 s.
+- Full Formal TARGETS serially (python -X utf8 -m pytest <48 TARGETS> -q -p no:randomly -p no:cacheprovider
+  --continue-on-collection-errors): 1140 passed in 132.9 s.
+- Bounded benchmarks (Formal only, mutation-workers 4): serial 1431.5 s vs xdist n=2 1116.9 s on 32
+  mutations (31 named + G1d), identical verdicts, controls GREEN, no residue.
+Failed approach: pytest.importorskip("execnet") in a new spec turned every Formal CONTROL red through
+the dependency guard; the earlier targeted set did not include test_core_guards.py.
+ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/push/PR/merge.

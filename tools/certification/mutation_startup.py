@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 import pathlib
+import shlex
 import stat
 import sys
 from types import MappingProxyType
@@ -17,6 +18,32 @@ MUTATION_ENVIRONMENT = MappingProxyType({
 })
 V4_PYTEST_FLAGS = ("-m", "pytest", "-q", "-p", "no:cacheprovider", "--runxfail")
 FORMAL_PYTEST_FLAGS = ("-X", "utf8", "-m", "pytest")
+FORMAL_XDIST_GUARD = "tools.certification.formal_xdist_guard"
+
+
+def formal_xdist_worker_spec(workers, executable):
+    """N local xdist workers on the shard's own interpreter, each started with ``-X utf8``.
+
+    Serial Formal is one ``python -X utf8`` process. ``-n N`` would start bare workers without
+    the flag; this ``--tx`` spec gives every worker the same interpreter and flag without adding
+    a PYTHON* variable to the sealed child environment.
+    """
+    if "//" in str(executable):     # execnet splits specs on "//": the python value would be lost
+        raise ValueError("the shard interpreter path cannot be expressed as an xdist --tx spec")
+    return f"{workers}*popen//python={shlex.quote(str(executable))} -X utf8"
+
+
+def formal_xdist_flags(workers, sentinel, executable):
+    """Formal-only pytest-xdist: explicit plugins, file-level distribution, no worker restarts.
+
+    Appended only when a Formal shard asks for more than one pytest worker; the default (one
+    worker) command is unchanged. The guard plugin's sentinel is the infrastructure evidence.
+    """
+    if not isinstance(workers, int) or isinstance(workers, bool) or workers < 2:
+        raise ValueError("Formal pytest-xdist needs an integer worker count of at least 2")
+    return ("-p", "xdist.plugin", "--tx", formal_xdist_worker_spec(workers, executable),
+            "--dist", "loadfile", "--max-worker-restart=0", "-p", FORMAL_XDIST_GUARD,
+            f"--forge-xdist-sentinel={sentinel}")
 
 
 def _executable_identity(path):

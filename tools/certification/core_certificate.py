@@ -240,6 +240,15 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tests/test_mutation_workspace.py",
      "hostile specifications of persistent workspace restoration, isolation, "
      "cleanup, attribution preservation and diagnostic telemetry separation"),
+    ("tools/certification/formal_xdist_guard.py",
+     "records pytest-xdist's structured worker signals for Formal attempts run "
+     "with more than one pytest worker and decides whether such an attempt is "
+     "admissible; weakening it would let a crashed or lost worker, or a worker "
+     "importing the run's own project roots from outside the mutation copy, be "
+     "credited as a kill"),
+    ("tests/test_formal_xdist.py",
+     "hostile specifications that real xdist worker crashes, lost workers and "
+     "foreign imports refuse the Formal round instead of earning credit"),
     ("tools/certification/mutation_population.py",
      "the canonical formal mutation population, the shard rule and the "
      "coverage proof; a wrong union with the right count would certify a "
@@ -530,6 +539,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_core_freeze_manifest.py",
             "tests/test_local_assurance.py",
             "tests/test_mutation_workspace.py",
+            "tests/test_formal_xdist.py",
             "tests/scientific_regression/manifest.json",
             "tools/__init__.py",
             "tools/forge_check.py",

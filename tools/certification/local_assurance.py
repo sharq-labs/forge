@@ -58,6 +58,9 @@ FAILURE_SCHEMA = "forge.local_assurance_failure/1"
 RECEIPT_SCHEMA = "forge.local_assurance_receipt/1"
 EVIDENCE_MANIFEST_SCHEMA = "forge.local_assurance_evidence_manifest/1"
 DEFAULT_MUTATION_WORKERS = 2
+#: pytest-xdist workers INSIDE one Formal mutation attempt (not --workers, not --mutation-workers).
+#: One keeps the historical serial Formal command; more must be requested explicitly.
+DEFAULT_FORMAL_PYTEST_WORKERS = 1
 DEFAULT_ROOT = pathlib.Path(".forge")
 INSTALL = ("-m", "pip", "install", "-e", ".[dev,mcp,oracles]")
 
@@ -385,6 +388,16 @@ def _mutation_scratch(root, name, performance_path=None):
             raise LocalAssuranceError(f"mutation workspace was not released: {retained}")
 
 
+def _formal_command(py, scratch, selected, formal_pytest_workers=DEFAULT_FORMAL_PYTEST_WORKERS):
+    """The Formal shard command; one pytest worker is the unchanged historical command."""
+    if not isinstance(formal_pytest_workers, int) or isinstance(formal_pytest_workers, bool) \
+            or formal_pytest_workers < 1:
+        raise LocalAssuranceError("formal-pytest-workers must be at least 1")
+    workers = (("--pytest-workers", str(formal_pytest_workers))
+               if formal_pytest_workers != 1 else ())
+    return [py, "-X", "utf8", "tests/mutation_guards.py", *workers, str(scratch), *selected]
+
+
 def _mutation_group(jobs, workers):
     jobs = tuple(jobs)
     names = [name for name, _ in jobs]
@@ -421,6 +434,7 @@ def _run_source_gates(
     workers: int,
     mutation_workers: int = DEFAULT_MUTATION_WORKERS,
     tracker: _GateTracker | None = None,
+    formal_pytest_workers: int = DEFAULT_FORMAL_PYTEST_WORKERS,
 ) -> dict[str, float]:
     if tracker is None:
         tracker = _GateTracker(evidence.parent / "local-assurance-failure.json",
@@ -554,8 +568,7 @@ def _run_source_gates(
             selected = [line for line in ids.read_text(encoding="utf-8").splitlines() if line]
             with _mutation_scratch(root, name, evidence.parent / "performance" / f"{name}.json") as scratch:
                 _run(
-                    [py312, "-X", "utf8", "tests/mutation_guards.py",
-                     str(scratch), *selected],
+                    _formal_command(py312, scratch, selected, formal_pytest_workers),
                     root=root, log=log, env={**os.environ, "FORGE_MUTATION_SHARD": name, "FORGE_SOURCE_COMMIT": source,
                        "FORGE_SOURCE_TREE": tracker.source_tree,
                        "FORGE_ASSURANCE_EXECUTION": tracker.started_at},
@@ -759,6 +772,8 @@ def run(args: argparse.Namespace) -> int:
 def _run_locked(args: argparse.Namespace) -> int:
     if args.mutation_workers < 1:
         raise LocalAssuranceError("mutation-workers must be at least 1")
+    if args.formal_pytest_workers < 1:
+        raise LocalAssuranceError("formal-pytest-workers must be at least 1")
     root = core_certificate.repo_root(pathlib.Path.cwd() / "x")
     _require_clean(root, "start")
     source = _git(root, "rev-parse", "HEAD")
@@ -795,7 +810,7 @@ def _run_locked(args: argparse.Namespace) -> int:
     try:
         timings = _run_source_gates(
             root, source, evidence, py311, py312, max(1, args.workers),
-            args.mutation_workers, tracker
+            args.mutation_workers, tracker, formal_pytest_workers=args.formal_pytest_workers,
         )
         _require_head(root, source, "after source gates")
         _require_clean(root, "after source gates")
@@ -1003,6 +1018,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     execute.add_argument("--repository")
     execute.add_argument("--workers", type=int, default=4)
     execute.add_argument("--mutation-workers", type=int, default=DEFAULT_MUTATION_WORKERS)
+    execute.add_argument("--formal-pytest-workers", type=int, default=DEFAULT_FORMAL_PYTEST_WORKERS,
+                         help="pytest-xdist workers inside one Formal mutation attempt (default 1)")
     execute.add_argument("--reuse", action="store_true")
 
     check = sub.add_parser("verify")

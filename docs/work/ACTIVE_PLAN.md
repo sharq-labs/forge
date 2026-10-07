@@ -625,3 +625,10 @@ owner decision because specs pin "refuse before execution".
 Next (needs authorization): decide whether to commit Passes 2–9, then a 1/2/4-worker
 bounded measurement or Full Local Assurance. Optional owner decision: whether the
 attempt-start seed check (A1) may move to the restore-time check.
+
+## Pass 12 — safe Formal pytest-xdist
+
+Done 2026-10-07: opt-in Formal xdist with structured crash refusal, per-set named-alone control,
+serial confirmation and serial import refusals; -22 % Formal wall on a representative bounded run.
+Next (needs authorization): Full Local Assurance with --mutation-workers 4 --formal-pytest-workers 2,
+or keep the default 1; the xdist-vs-serial verdict divergence is an owner design decision.
