@@ -19,8 +19,9 @@ thing it guards and watch it go red.
 
 What this does
 --------------
-For each entry in :data:`MUTATIONS`, copy `src`, `tests` and `pyproject.toml`
-into a throwaway directory, remove one guard from the copy **as if it had never
+Populate one private pristine seed and independent worker per shard, using
+:data:`_COPIED`. For each entry in :data:`MUTATIONS`, verify the worker,
+remove one guard from the copy **as if it had never
 been written**, and run every suite in :data:`TARGETS` against it. They must go
 red. A mutation that leaves them green names a check that is decoration.
 
@@ -2405,17 +2406,18 @@ def _validate_declarations() -> None:
 
 
 def _copy_tree(repo: pathlib.Path, work: pathlib.Path) -> None:
-    if work.exists():
-        shutil.rmtree(work)
-    work.mkdir(parents=True)
+    from tools.certification.mutation_workspace import require_isolated
+
+    require_isolated(repo, work)
+    work.mkdir(parents=True, exist_ok=False)
     for item in _COPIED:
         source, target = repo / item, work / item
         if source.is_dir():
             shutil.copytree(
-                source, target, ignore=shutil.ignore_patterns("__pycache__")
+                source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"), symlinks=True
             )
         else:
-            shutil.copy2(source, target)
+            shutil.copy2(source, target, follow_symlinks=False)
 
 
 def _apply(work: pathlib.Path, spec: str, old: str, new: str):
@@ -2428,7 +2430,9 @@ def _apply(work: pathlib.Path, spec: str, old: str, new: str):
     applying for exactly that reason.
     """
     relative, _, scope = spec.partition("::")
-    path = work / relative
+    from tools.certification.mutation_workspace import mutation_target
+
+    path = mutation_target(work, spec)
     text = path.read_bytes().decode("utf-8").replace(CRLF, LF)
     if scope:
         try:
@@ -2490,20 +2494,31 @@ def _self_test() -> None:
         raise SystemExit("file hashes collided; this test is meaningless")
 
 
-def _run(where: pathlib.Path, scratch: pathlib.Path):
+def _run(where: pathlib.Path, scratch: pathlib.Path, *, telemetry=None, workspace=None):
     """Run TARGETS in `where`. Returns ``(code, tail, failed, output)``.
 
     ``code is None`` means the harness ran out of time, which is NOT a red
     suite: nothing was observed, and a mutation whose only evidence is that
     the run did not finish is a mutation nobody checked.
     """
+    from tools.certification.mutation_workspace import WorkspaceError
+    if workspace is None or where != workspace.work or scratch != workspace.artifacts:
+        raise WorkspaceError("target requires its active owned workspace/artifact root")
+    workspace.artifact_path("pt", "bt")
     # pytest creates --basetemp with mkdir(parents=False), lazily, the first time
     # a test asks for tmp_path. Until GUARDS 29-35 no target suite did, so the
     # missing `pt` parent went unnoticed; the first suite that used tmp_path
     # made CONTROL red for a reason unrelated to any guard.
     (scratch / "pt").mkdir(parents=True, exist_ok=True)
+    from tools.certification.mutation_workspace import run_captured
+
+    from tools.certification.mutation_startup import FORMAL_PYTEST_FLAGS
     try:
-        done = subprocess.run(
+        workspace.startup.check()
+    except (OSError, RuntimeError) as exc:
+        raise WorkspaceError(str(exc)) from exc
+    try:
+        done = run_captured(
             # `--continue-on-collection-errors`, because without it ONE
             # unimportable module stops the whole run and every guard that
             # would have fired never executes. `G8a` breaks a domain module
@@ -2512,20 +2527,23 @@ def _run(where: pathlib.Path, scratch: pathlib.Path):
             # target modules import that domain transitively, pytest
             # interrupted on their errors, and zero tests ran. The mutation
             # was red on the exit code and the guard was never asked.
-            [sys.executable, "-X", "utf8", "-m", "pytest", *TARGETS, "-q",
+            [workspace.startup.executable, *FORMAL_PYTEST_FLAGS, *TARGETS, "-q",
              "-p", "no:randomly", "--continue-on-collection-errors",
              "--basetemp", str(scratch / "pt" / "bt")],
-            cwd=where, capture_output=True, text=True, timeout=TEST_TIMEOUT,
+            cwd=where, timeout=TEST_TIMEOUT, telemetry=telemetry,
+            inherited=workspace.startup.environment,
         )
     except subprocess.TimeoutExpired:
         return None, f"HARNESS TIMEOUT after {TEST_TIMEOUT}s", [], ""
+    if done.returncode not in (0, 1, 2):
+        raise WorkspaceError(f"pytest infrastructure exit {done.returncode}")
     lines = [l for l in done.stdout.splitlines() if l.strip()]
     failed = [l.split("::")[-1].split()[0]
               for l in done.stdout.splitlines() if l.startswith("FAILED")]
     return done.returncode, (lines[-1] if lines else "?"), failed, done.stdout
 
 
-def _control(repo: pathlib.Path, scratch: pathlib.Path) -> None:
+def _control(repo: pathlib.Path, scratch: pathlib.Path, *, workspace=None) -> None:
     """TARGETS, on an unmutated copy, before any mutation is believed.
 
     THE CHECK THIS HARNESS DID NOT HAVE, and the one its own docstring twice
@@ -2538,10 +2556,17 @@ def _control(repo: pathlib.Path, scratch: pathlib.Path) -> None:
     A red control does not fail one mutation. It makes the whole round
     unreadable, so it stops here.
     """
-    work = scratch / "control"
-    _copy_tree(repo, work)
+    from tools.certification.mutation_workspace import PersistentWorkspace
+
+    if workspace is None:
+        with PersistentWorkspace(repo, scratch, _copy_tree) as owned:
+            return _control(repo, scratch, workspace=owned)
+    scratch = workspace.artifacts
     started = time.monotonic()
-    code, tail, failed, _out = _run(work, scratch)
+    with workspace.attempt(mutation_id="CONTROL") as work:
+        workspace.artifact_path("pt", "bt")
+        with workspace.telemetry.measure("control"):
+            code, tail, failed, _out = _run(work, scratch, telemetry=workspace.telemetry, workspace=workspace)
     took = time.monotonic() - started
     if code == 0:
         print(f"{'CONTROL':6} {'GREEN':20} unmutated copy, {took:.0f}s -- "
@@ -2569,7 +2594,12 @@ def main(argv: list[str]) -> int:
     _self_test()
     _validate_declarations()
     repo = pathlib.Path(__file__).resolve().parent.parent
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    from tools.certification.mutation_workspace import PersistentWorkspace, require_isolated
+
     scratch = pathlib.Path(argv[0]).resolve()
+    require_isolated(repo, scratch)
     scratch.mkdir(parents=True, exist_ok=True)
     only = set(argv[1:])
     selected = [m for m in MUTATIONS if not only or m[0] in only]
@@ -2577,67 +2607,73 @@ def main(argv: list[str]) -> int:
     if unknown:
         raise SystemExit(f"no such mutation: {unknown}")
 
-    _control(repo, scratch)
+    with PersistentWorkspace(repo, scratch, _copy_tree) as workspace:
+        scratch = workspace.artifacts
+        _control(repo, scratch, workspace=workspace)
 
-    results: dict[str, str] = {}
-    for mid, spec, old, new, what in selected:
-        mechanism, expect = EVIDENCE[mid]
-        work = scratch / f"mut_{mid}"
-        _copy_tree(repo, work)
+        results: dict[str, str] = {}
+        for mid, spec, old, new, what in selected:
+            mechanism, expect = EVIDENCE[mid]
+            with workspace.attempt(mutation_id=mid, intended=[spec]) as work:
+                workspace.telemetry.stage("mutation_application_started")
+                with workspace.telemetry.measure("mutation_application"):
+                    applied = _apply(work, spec, old, new)
+                if isinstance(applied, str):
+                    workspace.telemetry.failure(RuntimeError(applied), category="mutation_not_applied")
+                    print(f"{mid:5} {applied} -- {what}")
+                    results[mid] = "DID_NOT_APPLY"
+                    continue
+                before, after = applied
+                workspace.telemetry.stage("mutation_applied")
 
-        applied = _apply(work, spec, old, new)
-        if isinstance(applied, str):
-            # Not a fact about the guard. Reported as loudly as a green
-            # result, and never counted as one.
-            print(f"{mid:5} {applied} -- {what}")
-            results[mid] = "DID_NOT_APPLY"
-            continue
-        before, after = applied
+                started = time.monotonic()
+                workspace.artifact_path("pt", "bt")
+                with workspace.telemetry.measure("test_execution"):
+                    code, tail, failed, output = _run(work, scratch, telemetry=workspace.telemetry, workspace=workspace)
+                took = time.monotonic() - started
 
-        started = time.monotonic()
-        code, tail, failed, output = _run(work, scratch)
-        took = time.monotonic() - started
-
-        if code is None:
-            verdict, results[mid] = "HARNESS TIMEOUT", "TIMEOUT"
-        elif code == 0:
-            verdict, results[mid] = "GREEN -- DECORATION", "GREEN"
-        elif expect == REFUSED_AT_IMPORT:
-            # The core REFUSED while a module was being imported. With the
-            # original six target suites that stopped collection and no test
-            # ran. Since GUARDS 29-35 some target suites import the refusing
-            # domain lazily, inside a test, so the SAME refusal also surfaces
-            # as failed tests. Either way it is evidence only when the refusal
-            # is raised by the core and nothing broke the language; a failure
-            # list without a core refusal in it is not this mechanism.
-            raised = "\n".join(
-                l for l in output.splitlines() if l.startswith("E   ")
-            )
-            broke = next((n for n in _NOT_A_REFUSAL if n in raised), None)
-            if broke:
-                verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
-            elif not _CORE_REFUSAL.search(raised):
-                verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
+            if code is None:
+                verdict, results[mid] = "HARNESS TIMEOUT", "TIMEOUT"
+            elif code == 0:
+                verdict, results[mid] = "GREEN -- DECORATION", "GREEN"
+            elif expect == REFUSED_AT_IMPORT:
+                # The core REFUSED while a module was being imported. With the
+                # original six target suites that stopped collection and no test
+                # ran. Since GUARDS 29-35 some target suites import the refusing
+                # domain lazily, inside a test, so the SAME refusal also surfaces
+                # as failed tests. Either way it is evidence only when the refusal
+                # is raised by the core and nothing broke the language; a failure
+                # list without a core refusal in it is not this mechanism.
+                raised = "\n".join(
+                    l for l in output.splitlines() if l.startswith("E   ")
+                )
+                broke = next((n for n in _NOT_A_REFUSAL if n in raised), None)
+                if broke:
+                    verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
+                elif not _CORE_REFUSAL.search(raised):
+                    verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
+                else:
+                    verdict, results[mid] = "RED (refused at import)", "RED"
+            elif code == 2:
+                verdict, results[mid] = "COLLECTION INTERRUPTED", "UNRELATED"
+            elif not failed:
+                # Nothing was collected, and the mutation does not claim a refusal:
+                # a stopped suite is not the guard it names.
+                verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
+            elif any(expect in name for name in failed):
+                verdict, results[mid] = "RED", "RED"
             else:
-                verdict, results[mid] = "RED (refused at import)", "RED"
-        elif not failed:
-            # Nothing was collected, and the mutation does not claim a refusal:
-            # a stopped suite is not the guard it names.
-            verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
-        elif any(expect in name for name in failed):
-            verdict, results[mid] = "RED", "RED"
-        else:
-            verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
+                verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
 
-        print(f"{mid:5} {verdict:20} {what}")
-        print(f"{'':26} code {before} -> {after}   {mechanism}   {took:.0f}s")
-        print(f"{'':26} {tail}")
-        if results[mid] == "UNRELATED":
-            print(f"{'':26} expected {expect!r} among the failures")
-        if failed:
-            shown = sorted(set(failed))
-            print(f"{'':26} {', '.join(shown[:3])}"
-                  + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else ""))
+            print(f"{mid:5} {verdict:20} {what}")
+            print(f"{'':26} code {before} -> {after}   {mechanism}   {took:.0f}s")
+            print(f"{'':26} {tail}")
+            if results[mid] == "UNRELATED":
+                print(f"{'':26} expected {expect!r} among the failures")
+            if failed:
+                shown = sorted(set(failed))
+                print(f"{'':26} {', '.join(shown[:3])}"
+                      + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else ""))
 
     print()
     missing = sorted({m[0] for m in selected} - set(results))

@@ -223,6 +223,23 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "requires the V3 supersession to be the named refusal rather than any "
      "exception, and re-derives every figure an assurance record asserts. The "
      "audited checks compared the live surface with the live surface"),
+    ("tools/certification/mutation_workspace.py",
+     "owns pristine seed/worker isolation, complete byte/mode manifests, "
+     "restore refusal and target subprocess lifecycle; weakening it allows "
+     "contaminated mutation evidence to be credited"),
+    ("tools/certification/performance_telemetry.py",
+     "diagnostic timing helper imported by the local runner and mutation "
+     "workspace; timing has no authority, but imported executable helpers "
+     "must remain bound to the certified control-plane implementation"),
+    ("tools/certification/mutation_startup.py",
+     "controls the sealed Python/pytest startup of certified mutation "
+     "execution: the interpreter identity check, the forced plugin-autoload "
+     "and bytecode policy, and the Formal and V4 pytest invocation flags; "
+     "weakening it would let host plugins, startup variables or stale "
+     "bytecode shape a mutation verdict"),
+    ("tests/test_mutation_workspace.py",
+     "hostile specifications of persistent workspace restoration, isolation, "
+     "cleanup, attribution preservation and diagnostic telemetry separation"),
     ("tools/certification/mutation_population.py",
      "the canonical formal mutation population, the shard rule and the "
      "coverage proof; a wrong union with the right count would certify a "
@@ -512,6 +529,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
             "tests/test_local_assurance.py",
+            "tests/test_mutation_workspace.py",
             "tests/scientific_regression/manifest.json",
             "tools/__init__.py",
             "tools/forge_check.py",

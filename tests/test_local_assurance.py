@@ -168,7 +168,11 @@ def test_shards_are_bounded_isolated_and_fail_closed(tmp_path, monkeypatch, work
     assert len(owners) == len(set(owners))
     for path in paths:
         assert root not in path.parents
-        assert not path.parent.exists()
+        failed_path = fail and (path / "mutant").exists() and (path / "mutant").read_text() == f"{family}_0"
+        assert path.parent.exists() == bool(failed_path)
+        if failed_path:
+            import shutil
+            shutil.rmtree(path.parent)
     for directory in owners:
         assert (directory / "owner").read_text().replace("_", "-") in directory.name
     if workers == 1:
@@ -177,17 +181,20 @@ def test_shards_are_bounded_isolated_and_fail_closed(tmp_path, monkeypatch, work
         assert 1 in completed
 
 
-def test_repository_local_tmpdir_is_refused_and_cleaned(tmp_path, monkeypatch):
+def test_repository_local_tmpdir_is_refused_and_retained(tmp_path, monkeypatch):
     import tempfile
     from tools.certification import local_assurance as la
-    from tools.certification.mutation_v4_runner import MutationRoundError
+    from tools.certification.mutation_workspace import WorkspaceError
     root = tmp_path / "repo"
     root.mkdir()
     monkeypatch.setattr(tempfile, "tempdir", str(root))
-    with pytest.raises(MutationRoundError, match="inside the repository"):
+    with pytest.raises(WorkspaceError, match="must not overlap source"):
         with la._mutation_scratch(root, "v4_mutations_0"):
             pytest.fail("repository-local scratch reached mutation execution")
-    assert list(root.iterdir()) == []
+    retained = list(root.iterdir())
+    assert len(retained) == 1 and retained[0].is_dir()
+    import shutil
+    shutil.rmtree(retained[0])
 
 
 def test_failure_diagnostics_preserve_late_completed_timings(tmp_path):
@@ -217,6 +224,8 @@ def test_verify_refuses_failure_even_at_receipt_path(tmp_path, monkeypatch, sche
     import argparse
     from tools.certification import local_assurance as la
     monkeypatch.setattr(la, "_require_linux", lambda: None)
+    from contextlib import nullcontext
+    monkeypatch.setattr(la, "_assurance_lock", lambda root: nullcontext())
     monkeypatch.setattr(la.core_certificate, "repo_root", lambda _: tmp_path)
     monkeypatch.setattr(la, "_require_clean", lambda *a: None)
     monkeypatch.setattr(la, "_git", lambda root, *a: "child source" if a[0] == "rev-list" else "child")
@@ -234,6 +243,8 @@ def test_failed_run_never_builds_certificate(tmp_path, monkeypatch):
     import json
     from tools.certification import local_assurance as la
     monkeypatch.setattr(la, "_require_linux", lambda: None)
+    from contextlib import nullcontext
+    monkeypatch.setattr(la, "_assurance_lock", lambda root: nullcontext())
     monkeypatch.setattr(la.core_certificate, "repo_root", lambda _: tmp_path)
     monkeypatch.setattr(la, "_require_clean", lambda *a: None)
     monkeypatch.setattr(la, "_git", lambda root, *a: "source")
@@ -305,7 +316,11 @@ def test_source_gate_orchestration_preserves_checkout(tmp_path, monkeypatch, wor
         assert set(timings) == set(la.EVIDENCE)
         assert len(scratch_paths) == 12
     assert len(scratch_paths) == len(set(scratch_paths))
-    assert all(not p.parent.exists() for p in scratch_paths)
+    retained = [p.parent for p in scratch_paths if p.parent.exists()]
+    assert len(retained) == (1 if fail else 0)
+    import shutil
+    for parent in retained:
+        shutil.rmtree(parent)
     la._require_head(root, source, "test end")
     la._require_clean(root, "test end")
     for log in evidence.rglob("*.log"):
@@ -369,6 +384,10 @@ def test_child_exit_during_forced_kill_preserves_stream_error(tmp_path, monkeypa
         pid = 123
         stdout = BrokenPipe()
         waits = []
+        def terminate(self):
+            raise ProcessLookupError("already exited")
+        def kill(self):
+            raise ProcessLookupError("already exited")
         def wait(self, timeout=None):
             self.waits.append(timeout)
             if timeout is not None:
@@ -376,9 +395,106 @@ def test_child_exit_during_forced_kill_preserves_stream_error(tmp_path, monkeypa
             return 0
     child = Child()
     monkeypatch.setattr(la.subprocess, "Popen", lambda *a, **k: child)
-    def disappeared(*args):
-        raise ProcessLookupError("already exited")
-    monkeypatch.setattr(la.os, "killpg", disappeared)
+    monkeypatch.setattr(la.os, "killpg", lambda *a: pytest.fail("numeric group kill is not ownership"))
     with pytest.raises(OSError, match="original stream error"):
         la._run(["synthetic"], root=tmp_path, log=tmp_path / "shard.log")
     assert child.waits == [5, None]
+
+
+@pytest.mark.parametrize("relative", ["../outside", "/absolute", "a/../b", "", "C:/outside", "a\\b"])
+def test_manifest_refuses_unsafe_paths(tmp_path, relative):
+    from tools.certification import local_assurance as la
+    with pytest.raises(la.LocalAssuranceError, match="unsafe evidence path"):
+        la._evidence_file(tmp_path, relative)
+
+
+@pytest.mark.skipif(__import__("sys").platform != "linux", reason="Linux authoritative lock")
+def test_repository_invocation_lock_refuses_concurrent_owner(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    for key in list(__import__("os").environ):
+        if key.startswith("GIT_"):
+            monkeypatch.delenv(key)
+    with la._assurance_lock(tmp_path):
+        with pytest.raises(la.LocalAssuranceError, match="another local assurance"):
+            with la._assurance_lock(tmp_path):
+                pytest.fail("second owner admitted")
+    with la._assurance_lock(tmp_path):
+        pass
+
+
+def test_failure_persistence_error_preserves_refusal(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    monkeypatch.setattr(la, "_write_json", lambda *args: (_ for _ in ()).throw(OSError("disk full")))
+    tracker = la._GateTracker(tmp_path / "failure.json", "source", "tree", "execution")
+    tracker.failure("gate", RuntimeError("original refusal"))
+    assert "original refusal" in tracker.failures["gate"]
+
+
+@pytest.mark.parametrize("problem", ["extra", "duplicate", "source"])
+def test_manifest_closure_and_identity_refusals(tmp_path, monkeypatch, problem):
+    import json
+    from tools.certification import local_assurance as la
+    evidence = tmp_path / "evidence"
+    evidence.mkdir()
+    (evidence / "gate.json").write_text("{}")
+    monkeypatch.setattr(la, "_git", lambda *args: "tree")
+    path, _, _ = la._build_evidence_manifest(tmp_path, "source", evidence)
+    document = json.loads(path.read_text())
+    if problem == "extra":
+        (evidence / "performance.json").write_text("{}")
+    elif problem == "duplicate":
+        document["files"] *= 2
+        document["file_count"] = 2
+    else:
+        document["source_commit"] = "another"
+    la._write_json(path, document)
+    with pytest.raises(la.LocalAssuranceError):
+        la._verify_evidence_manifest(path, evidence, source="source", source_tree="tree")
+
+
+def test_atomic_json_replace_failure_preserves_previous_document(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    path = tmp_path / "receipt.json"
+    la._write_json(path, {"status": "REFUSED"})
+    previous = path.read_bytes()
+    def fail(*args):
+        raise OSError("replace failed")
+    monkeypatch.setattr(la.os, "replace", fail)
+    with pytest.raises(OSError, match="replace failed"):
+        la._write_json(path, {"status": "PASS"})
+    assert path.read_bytes() == previous
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_source_identity_guard_refuses_clean_head_movement(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    monkeypatch.setattr(la, "_git", lambda *args: "new-source")
+    with pytest.raises(la.LocalAssuranceError, match="HEAD moved"):
+        la._require_head(tmp_path, "original-source", "after gates")
+
+
+@pytest.mark.skipif(__import__("sys").platform != "linux", reason="Linux authoritative lock")
+def test_lock_refuses_linked_forge_before_outside_creation(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".forge").symlink_to(outside, target_is_directory=True)
+    for key in list(__import__("os").environ):
+        if key.startswith("GIT_"):
+            monkeypatch.delenv(key)
+    with pytest.raises(la.LocalAssuranceError, match="linked assurance"):
+        with la._assurance_lock(root):
+            pytest.fail("linked root admitted")
+    assert list(outside.iterdir()) == []
+
+
+@pytest.mark.skipif(__import__("sys").platform != "linux", reason="Linux authoritative lock")
+def test_assurance_admission_refuses_inherited_git_identity(tmp_path, monkeypatch):
+    from tools.certification import local_assurance as la
+    monkeypatch.setenv("GIT_DIR", "/another/repository")
+    with pytest.raises(la.LocalAssuranceError, match="inherited Git overrides"):
+        with la._assurance_lock(tmp_path):
+            pytest.fail("redirected source admitted")
+    assert not (tmp_path / ".forge").exists()
