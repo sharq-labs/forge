@@ -20,7 +20,7 @@ import pathlib
 import subprocess
 from typing import Any, Callable, Mapping, Sequence
 
-from tools.certification import core_certificate, mutation_population
+from tools.certification import core_certificate, mutation_population, skip_admission
 from tools.certification.assert_clean_tree import gate_record
 from tools.certification.core_certificate import ScopeArea
 from tools.certification.hardening_assurance import (
@@ -42,6 +42,11 @@ POLICY = Policy(expected_formal_population=len(FORMAL_IDS), shard_count=4,
                 expected_trust_population=len(TRUST_IDS),
                 expected_v4_population=len(V4_IDS), v4_shard_count=4)
 RUN = dict(repository="owner/repo", run_id=4242, run_attempt=1, pull_request=7)
+#: The synthetic harnesses' kill suites: a skip in any of them is never admissible.
+FORMAL_TARGETS = ("tests/test_formal_guard.py",)
+TRUST_TESTS = ("tests/test_trust_guard.py",)
+#: The interpreter line each functional gate records, and its availability probe repeats.
+GATE_PYTHON = {"fast311": "Python 3.11.9", "fast312": "Python 3.12.9", "scientific312": "Python 3.12.9"}
 
 CONTROL_REASONS = (
     (".github/workflows/recertify-hardened-core.yml", "runs the gates and the builder"),
@@ -100,7 +105,7 @@ def make_repo(root: pathlib.Path) -> str:
     write(root, "tests/mutation_guards.py", "MUTATIONS = (\n" + "".join(
         f"    ({mid!r}, 'src/engcore/scientific/record.py', 'VALUE = 1', 'VALUE = 2', 'mutation {mid}'),\n"
         for mid in FORMAL_IDS
-    ) + ")\n")
+    ) + ")\n" + f"TARGETS = {FORMAL_TARGETS!r}\n")
     write(root, "tests/mutation_population_v4.py", (
         "NOT_MUTATED = 'NOT_MUTATED'\n"
         "POPULATION_V4 = (\n"
@@ -121,6 +126,7 @@ def make_repo(root: pathlib.Path) -> str:
         "MUTATIONS = (\n"
         + "".join(f"    Mutation({mid!r}, 'guards something'),\n" for mid in TRUST_IDS)
         + ")\n"
+        + f"TESTS = {TRUST_TESTS!r}\n"
     ))
     git(root, "init", "-q")
     return commit(root, "synthetic source")
@@ -180,7 +186,58 @@ def trust_result(ids: Sequence[str] = TRUST_IDS, status: Callable[[str], str] = 
     }
 
 
-def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path) -> pathlib.Path:
+def facet_observation(facet: Any, status: str, detail: str | None = None) -> dict[str, Any]:
+    """One facet row in the probe's format whose raw observation means ``status``."""
+    sa = skip_admission
+    row: dict[str, Any] = {"kind": facet.kind, "target": facet.target}
+    if facet.kind == "registry":
+        default = {sa.AVAILABLE: "1.0", sa.UNAVAILABLE: f"python module '{facet.target}' is not installed",
+                   sa.UNKNOWN: f"adapter 'forge_{facet.target}' failed to register: RuntimeError: broken"}[status]
+        row.update(available=status == sa.AVAILABLE, found_but_refused=status == sa.UNKNOWN,
+                   version="1.0" if status == sa.AVAILABLE else "")
+    else:
+        default = "present" if status == sa.AVAILABLE else f"ModuleNotFoundError: No module named '{facet.target}'"
+        value = status == sa.AVAILABLE
+        if facet.kind == "executable":
+            row["path"] = f"/usr/bin/{facet.target}" if value else ""
+        else:
+            row[{"callable": "ok", "module_spec": "present", "module_import": "imported"}[facet.kind]] = value
+        if status == sa.UNKNOWN:
+            row["error"] = "RuntimeError: probe failed"
+    row["detail"] = default if detail is None else detail
+    row["status"] = sa.facet_status(row)
+    return row
+
+
+def availability_document(
+    python: str,
+    policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY,
+    *,
+    status: Callable[[str], str] = lambda _: skip_admission.UNAVAILABLE,
+    detail: Callable[[str], str | None] = lambda _: None,
+) -> dict[str, Any]:
+    """A provider availability record in the probe's format, every facet observing ``status``.
+
+    ``detail`` sets the detail of each provider's rendering facet; the other facets carry the
+    canonical observation for their kind.
+    """
+    providers = {}
+    for provider in policy.providers:
+        facets = [facet_observation(facet, status(provider.provider_id),
+                                    detail(provider.provider_id) if index == provider.detail_facet else None)
+                  for index, facet in enumerate(provider.facets)]
+        providers[provider.provider_id] = {
+            "classification": provider.classification,
+            "status": skip_admission.aggregate(facets),
+            "detail": facets[provider.detail_facet]["detail"],
+            "facets": facets,
+        }
+    return {"schema": skip_admission.AVAILABILITY_SCHEMA, "python": python,
+            "policy_sha256": policy.digest(), "providers": providers}
+
+
+def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path,
+                   skip_policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY) -> pathlib.Path:
     """Every artifact certify downloads, for ``source`` checked out at ``root``."""
     def put(gate: str, key: str, blob: bytes) -> None:
         prefix, files = EVIDENCE[gate]
@@ -206,6 +263,8 @@ def write_evidence(root: pathlib.Path, source: str, directory: pathlib.Path) -> 
     put("regression312", "python", b"Python 3.12.9\n")
     put("regression312", "pip_freeze", shared_312_freeze)
     put("regression312", "junit_regression", JUNIT_OK)
+    for gate, python in GATE_PYTHON.items():
+        put(gate, "provider_availability", json.dumps(availability_document(python, skip_policy)).encode())
     population = mutation_population.canonical_population(root)
     for index in range(POLICY.shard_count):
         gate = f"formal_mutations_{index}"

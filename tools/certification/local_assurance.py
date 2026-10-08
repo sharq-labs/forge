@@ -32,6 +32,7 @@ import sys
 import time
 import threading
 import tempfile
+import traceback
 import stat
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
@@ -43,9 +44,12 @@ from tools.certification.mutation_population import SHARD_COUNT, V4_SHARD_COUNT
 from tools.certification.assert_clean_tree import tree_problems
 from tools.certification.hardening_assurance import (
     EVIDENCE,
+    AssuranceError,
     RunContext,
+    _Evidence,
     assurance_problems,
     build_assurance,
+    skip_admission_section,
 )
 from tools.certification.recertification_scope import (
     CERTIFICATE_PATH,
@@ -285,6 +289,11 @@ def _record_runtime(py: str, version_path: pathlib.Path, freeze_path: pathlib.Pa
     freeze_path.write_text("\n".join(sorted(freeze)) + "\n", encoding="utf-8")
 
 
+def _probe_providers(py: str, target: pathlib.Path, root: pathlib.Path) -> None:
+    """Optional provider availability, asked in the gate's own interpreter right after its suite."""
+    _run([py, "-m", "tools.certification.skip_admission", "probe", "--out", str(target)], root=root)
+
+
 def _clean_record(py: str, gate: str, target: pathlib.Path, root: pathlib.Path) -> None:
     _run(
         [py, "-m", "tools.certification.assert_clean_tree", "--gate", gate, "--record", str(target)],
@@ -316,8 +325,12 @@ class _GateTracker:
     def failure(self, name, exc):
         with self.lock:
             self.failures[name] = f"{type(exc).__name__}: {exc}"
-            self.failure_context[name] = {"shard": getattr(exc, "shard", None),
-                                          "retained_storage": getattr(exc, "retained_storage", None)}
+            context = {"shard": getattr(exc, "shard", None),
+                       "retained_storage": getattr(exc, "retained_storage", None)}
+            details = getattr(exc, "details", None)
+            if isinstance(details, dict) and details:
+                context["details"] = details
+            self.failure_context[name] = context
             self._persist()
 
     def completed(self, name, seconds):
@@ -479,6 +492,7 @@ def _run_source_gates(
             "--junitxml", str(directory / files["junit_fast"]),
         ]
         _run(args, root=root)
+        _probe_providers(py, directory / files["provider_availability"], root)
         _record_runtime(
             py, directory / files["python"], directory / files["pip_freeze"], root
         )
@@ -506,6 +520,7 @@ def _run_source_gates(
             "--junitxml", str(directory / files["junit_scientific"]),
         ]
         _run(args, root=root, env=env)
+        _probe_providers(py312, directory / files["provider_availability"], root)
         _record_runtime(
             py312, directory / files["python"], directory / files["pip_freeze"], root
         )
@@ -888,6 +903,11 @@ def _run_locked(args: argparse.Namespace) -> int:
             "certificate_path": CERTIFICATE_PATH,
             "certificate_sha256": certificate_sha,
             "required_certificate_child_subject": CERTIFICATE_CHILD_SUBJECT,
+            "skip_admission": {
+                "claim": assurance["skip_admission"]["claim"],
+                "totals": assurance["skip_admission"]["totals"],
+                "unavailable_optional_providers": assurance["skip_admission"]["unavailable_optional_providers"],
+            },
         }
         phase = "source_receipt"
         receipt_path = run_root / "local-assurance-receipt.json"
@@ -898,10 +918,18 @@ def _run_locked(args: argparse.Namespace) -> int:
     except BaseException as exc:
         if not tracker.failures:
             tracker.failure(phase, exc)
+        try:
+            exc.failure_record = str(tracker.path)
+        except AttributeError:
+            pass
         raise
 
+    skips = receipt["skip_admission"]
     print("\nLOCAL_ASSURANCE: SOURCE_PASS")
     print(f"SOURCE_SHA: {source}")
+    print(f"SKIP_ADMISSION: skipped {skips['totals']['skipped']}, accepted {skips['totals']['accepted']}, "
+          f"unexpected {skips['totals']['unexpected']}")
+    print(f"CLAIM: {skips['claim']}")
     print(f"RECEIPT_SHA256: {receipt_sha}")
     print("READY_TO_COMMIT_CERTIFICATE: YES")
     print(f'NEXT: git add {CERTIFICATE_PATH} && git commit -m "{CERTIFICATE_CHILD_SUBJECT}"')
@@ -972,6 +1000,18 @@ def _verify_locked(args: argparse.Namespace) -> int:
     )
     if problems:
         raise LocalAssuranceError("assurance revalidation failed: " + "; ".join(problems))
+    # The skip inventory is re-derived from the frozen JUnit and provider-availability evidence,
+    # not read from the certificate: a hand-built or stale admission section cannot verify.
+    frozen = _Evidence(evidence, source)
+    derived, skip_problems = skip_admission_section(root, frozen)
+    skip_problems = frozen.problems + skip_problems
+    if skip_problems:
+        raise LocalAssuranceError("skip admission re-derivation failed: " + "; ".join(skip_problems[:20]))
+    for block in derived["gates"].values():
+        for suite in block["suites"].values():
+            suite.pop("unexpected_skips", None)
+    if derived != assurance.get("skip_admission"):
+        raise LocalAssuranceError("the certificate's skip admission is not the one the frozen evidence yields")
 
     _require_head(root, head, "before self checks")
     self_check = run_root / "certificate-self-checks.xml"
@@ -1032,9 +1072,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "run":
             return run(args)
         return verify(args)
-    except (LocalAssuranceError, core_certificate.CertificationError) as exc:
-        print(f"LOCAL_ASSURANCE: REFUSED\n{exc}\nSAFE_TO_PUSH: NO", file=sys.stderr)
+    except (LocalAssuranceError, core_certificate.CertificationError, AssuranceError) as exc:
+        # An expected refusal: the evidence, tree or environment does not support assurance.
+        lines = ["", "LOCAL_ASSURANCE: REFUSED", "REFUSAL_KIND: EXPECTED_ASSURANCE_REFUSAL",
+                 f"REFUSED_BY: {type(exc).__name__}", str(exc), *_failure_record_lines(exc),
+                 "SAFE_TO_PUSH: NO"]
+        print("\n".join(lines), file=sys.stderr, flush=True)
         return 1
+    except Exception as exc:
+        # A defect in the runner itself. Never swallowed and never SAFE_TO_PUSH: the traceback is
+        # printed and the exit code differs from a refusal's so that the two cannot be confused.
+        print("\nLOCAL_ASSURANCE: INTERNAL_ERROR\nREFUSAL_KIND: UNEXPECTED_INTERNAL_ERROR",
+              file=sys.stderr, flush=True)
+        traceback.print_exc()
+        print("\n".join([*_failure_record_lines(exc), "SAFE_TO_PUSH: NO"]), file=sys.stderr, flush=True)
+        return 2
+
+
+def _failure_record_lines(exc: BaseException) -> list[str]:
+    """The failure record's path and digest, when the run wrote one."""
+    path = getattr(exc, "failure_record", None)
+    if not path:
+        return []
+    target = pathlib.Path(path)
+    try:
+        return [f"FAILURE_RECORD: {target}", f"FAILURE_RECORD_SHA256: {_sha256(target)}"]
+    except OSError:
+        return [f"FAILURE_RECORD: {target} (not readable)"]
 
 
 if __name__ == "__main__":  # pragma: no cover

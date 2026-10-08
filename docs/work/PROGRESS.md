@@ -2532,3 +2532,58 @@ Commands (bytecode writes and cacheprovider off):
 Failed approach: pytest.importorskip("execnet") in a new spec turned every Formal CONTROL red through
 the dependency guard; the earlier targeted set did not include test_core_guards.py.
 ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/push/PR/merge.
+
+## Pass 13 semantic skip admission (2026-10-08)
+
+Previous refusal: full `local_assurance run --workers 4 --mutation-workers 4 --formal-pytest-workers 2`
+at d5d886f9 (2h42m) passed every execution gate, then `build_assurance` raised AssuranceError:
+FAST 3.11/3.12 and SCIENTIFIC each 142 skipped vs SKIP_CEILING FAST 19 / SCIENTIFIC 5; the runner
+printed a traceback (exit 1) while writing the right failure record. Prior evidence kept in
+.forge/assurance/d5d886f9.../ (failure record sha256 949d5aa2..., manifest 24f80976...).
+
+Skip audit of the d5d886f9 JUnit (identical skip universe in FAST 3.11, FAST 3.12 and SCIENTIFIC):
+142 = 133 optional provider (130 provider/flagship modules + 3 core tests needing Gmsh), 5 optional
+extras (SymPy 2, meshio 2, psutil 1), 4 conditional (reason-truth U00048/U01031, exact-freeze domain
+digest, blind-challenge dynamic import guard); 0 platform-specific; 0 unexplained.
+
+Change: tools/certification/skip_admission.py (committed rules + providers, availability probe in
+the gate's interpreter, JUnit skip parsing, per-skip admission, re-admission); assurance schema
+/7 with a `skip_admission` section; /5 and /6 revalidate against LEGACY_SKIP_CEILING (telemetry);
+probe step + evidence file in each FAST/SCIENTIFIC gate (local runner and recertify workflow);
+`local_assurance verify` re-derives the section from frozen evidence; refusal UX
+(REFUSED + FAILURE_RECORD + SAFE_TO_PUSH: NO, exit 1; INTERNAL_ERROR + traceback, exit 2).
+
+Review (forge-scientific-review, one round, CHANGES REQUIRED, all addressed):
+- HIGH registry "unavailable" for present-but-broken providers -> exact absence-reason allowlist,
+  independent module/executable facet per registry provider, facet status re-derived from raw fields.
+- HIGH Core PDE refusals only ran with Gmsh -> new provider-free tests on a hand-built mesh
+  (tests/test_pde_contracts.py); the Gmsh-gated originals stay as they were.
+- MEDIUM reason-truth skip covered two causes -> distinct reasons; rule admits only NOT_REPAIRABLE.
+- MEDIUM blind-challenge import guard skipped in every gate -> runs in a fresh interpreter; rule removed.
+- LOW freeze test skipped on any non-exact mode -> skips only on DESCENDANT, asserts EXACT otherwise.
+- LOW stored facets believed on the child -> status re-derived; block interpreter checked against
+  the environment section; docstrings corrected. LOW combined claim; protected entries must be files.
+- Recorded, not changed: a module-scoped rule admits a new test in the same module only with the
+  module's own pytestmark reason and an unavailable provider (by design); per-rule counts are
+  telemetry, not pinned.
+
+Failed approach: creating the synthetic harness kill-suite files inside certification_fixtures.make_repo
+made the certificate builder refuse ("harness area does not pin ... modules the certified suites
+import") in 47 control-plane tests; the files now live only in tests/test_skip_admission.py's fixture.
+Failed approach: a long bash heredoc patch script for hardening_assurance.py wrote nothing (quote EOF).
+
+Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
+- Dry-run audit of d5d886f9 JUnit with fresh probes: 3.11 / 3.12 FAST 142 accepted, 0 unexpected
+  (inventory c8cae527...); SCIENTIFIC 142 / 0 (first policy version, before the review fixes).
+- pytest tests/test_skip_admission.py test_hardening_assurance.py test_local_assurance.py
+  test_certificate_lineage.py test_recertification_scope.py test_certification_control_plane.py
+  test_core_certificate.py test_mutation_workspace.py test_formal_xdist.py test_mutation_population_v4.py
+  test_forge_check.py (self-checks deselected): 560 passed on 3.12, 560 passed on 3.11.
+- Full Formal TARGETS serially (python -X utf8 -m pytest <48 TARGETS> -q -p no:randomly
+  --continue-on-collection-errors): 1140 passed in 141.1 s.
+- pytest tests/test_provider_boundary.py providers/ flagships/tests: 93 passed, 130 skipped (3.12 and 3.11).
+- tools/forge_check.py --changed: 225 passed.
+- FAST preflight on the uncommitted tree (gate command, 3.12 and 3.11): 9365 passed, 141 skipped,
+  1 failed each = tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+  on tree.clean only (uncommitted changes); audit 141 accepted / 0 unexpected, inventory 14370d2c...
+  identical on 3.11 and 3.12 (3 conditional, 5 extra, 133 provider).

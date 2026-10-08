@@ -632,3 +632,13 @@ Done 2026-10-07: opt-in Formal xdist with structured crash refusal, per-set name
 serial confirmation and serial import refusals; -22 % Formal wall on a representative bounded run.
 Next (needs authorization): Full Local Assurance with --mutation-workers 4 --formal-pytest-workers 2,
 or keep the default 1; the xdist-vs-serial verdict divergence is an owner design decision.
+
+## Pass 13 — semantic skip admission + final recertification
+
+Done 2026-10-08 (source change): scalar skip ceilings replaced by per-skip admission
+(tools/certification/skip_admission.py, assurance /7); refusal UX hardened; review round fixed.
+Next: one source commit, then a fresh Full Local Assurance from zero
+(`run --workers 4 --mutation-workers 4 --formal-pytest-workers 2`); on SOURCE_PASS only, the
+certificate-only child and `local_assurance verify`. No push, PR or merge without the owner.
+Open (not this pass): provider qualification runs for the 11 optional providers are a separate
+activity; the admitted provider skips do not claim them.

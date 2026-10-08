@@ -203,11 +203,13 @@ def test_a_gate_that_did_not_prove_a_clean_checkout_is_refused(source):
     ("junit_fast", b'<testsuites><testsuite tests="0" failures="0" errors="0" skipped="0"/></testsuites>', "needs tests"),
     ("junit_dependency_guard", b"<testsuites", "not a JUnit report"),
     # Main audit CERT-07: a gate needed only tests and no failures, so a trust
-    # test that started skipping was accepted like a passing one.
+    # test that started skipping was accepted like a passing one. Since assurance /7
+    # a skip is admitted one by one; a declared skip count with no skipped testcase
+    # to admit is malformed evidence, not a smaller number of skips.
     ("junit_fast", b'<testsuites><testsuite tests="9" failures="0" errors="0" skipped="20"/></testsuites>',
-     "above the declared ceiling"),
+     "declares 20 skipped but carries 0"),
     ("junit_dependency_guard", b'<testsuites><testsuite tests="1" failures="0" errors="0" skipped="1"/></testsuites>',
-     "above the declared ceiling"),
+     "declares 1 skipped but carries 0"),
 ])
 def test_a_functional_suite_without_a_clean_report_is_refused(source, suite, xml, fragment):
     root, head, evidence = source
@@ -229,7 +231,7 @@ def test_certification_refuses_skipped_campaign_or_regression_evidence(source, g
         b'</testsuite></testsuites>'
     )
     _file(evidence, head, gate, suite).write_bytes(skipped)
-    _refused(root, head, evidence, "above the declared ceiling of 0")
+    _refused(root, head, evidence, "UNEXPECTED_SKIP")
 
 
 def test_a_source_gate_with_different_resolved_dependencies_is_refused(source):

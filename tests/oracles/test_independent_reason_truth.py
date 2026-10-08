@@ -335,11 +335,13 @@ def test_every_repair_moves_the_condition_it_targets(case_id):
     payload = case(case_id)["payload"]
     base = truth.evaluate(case_id, payload)
     checked = 0
+    no_counterfactual = []
     for name in base.violated:
         if name in reason.NOT_REPAIRABLE:
             continue
         repaired = reason.apply_repair(payload, name, base.values.get(name))
         if repaired is None:
+            no_counterfactual.append(name)
             continue
         after = truth.evaluate(case_id, repaired)
         assert name not in after.violated, (
@@ -348,6 +350,13 @@ def test_every_repair_moves_the_condition_it_targets(case_id):
         )
         checked += 1
     if base.violated and not checked:
+        # Two different facts, two different reasons: a case whose violated
+        # conditions are all NOT_REPAIRABLE has nothing to check; a repairable
+        # condition whose counterfactual cannot be built is a result worth
+        # seeing by name, not the same skip.
+        if no_counterfactual:
+            pytest.skip(f"{case_id} has repairable conditions with no buildable "
+                        f"counterfactual: {sorted(no_counterfactual)}")
         pytest.skip(f"{case_id} has only conditions with no defined repair")
 
 

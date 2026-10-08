@@ -58,6 +58,7 @@ from typing import Any, Mapping, Sequence
 
 from tools.certification import core_certificate
 from tools.certification import mutation_population as formal
+from tools.certification import skip_admission
 from tools.certification.assert_clean_tree import GATE_RECORD_SCHEMA
 from tools.certification.recertification_scope import (
     CERTIFICATE_SELF_CHECKS,
@@ -66,7 +67,12 @@ from tools.certification.recertification_scope import (
 )
 
 LEGACY_ASSURANCE_SCHEMA = "forge.core_hardening_assurance/5"
-ASSURANCE_SCHEMA = "forge.core_hardening_assurance/6"
+#: Version 6 bounded skips by a per-suite count; version 7 admits every skip semantically
+#: (:mod:`tools.certification.skip_admission`). A /5 or /6 record keeps the meaning it was
+#: written with and is revalidated against the ceilings it was built under.
+COUNTED_SKIP_ASSURANCE_SCHEMA = "forge.core_hardening_assurance/6"
+ASSURANCE_SCHEMA = "forge.core_hardening_assurance/7"
+LEGACY_SCHEMAS = (LEGACY_ASSURANCE_SCHEMA, COUNTED_SKIP_ASSURANCE_SCHEMA)
 ENVIRONMENT_SCHEMA = "forge.certification_environment/4"
 WORKFLOW_PATH = ".github/workflows/recertify-hardened-core.yml"
 CONTROL_AREA = "certification_control"
@@ -93,6 +99,7 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         "pip_freeze": "pip-freeze-3.11.txt",
         "junit_dependency_guard": "junit-dependency-guard-3.11.xml",
         "junit_fast": "junit-fast-3.11.xml",
+        "provider_availability": "provider-availability-3.11.json",
         "gate": "gate-fast311.json",
     }),
     "fast312": ("core-fast-312", {
@@ -100,6 +107,7 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         "pip_freeze": "pip-freeze-3.12.txt",
         "junit_dependency_guard": "junit-dependency-guard-3.12.xml",
         "junit_fast": "junit-fast-3.12.xml",
+        "provider_availability": "provider-availability-3.12.json",
         "gate": "gate-fast312.json",
     }),
     "scientific312": ("core-scientific", {
@@ -107,6 +115,7 @@ EVIDENCE: dict[str, tuple[str, dict[str, str]]] = {
         "pip_freeze": "pip-freeze-scientific-3.12.txt",
         "ngspice": "ngspice-version.txt",
         "junit_scientific": "junit-scientific-3.12.xml",
+        "provider_availability": "provider-availability-scientific-3.12.json",
         "gate": "gate-scientific312.json",
     }),
     "campaign312": ("core-campaign", {
@@ -153,14 +162,16 @@ FUNCTIONAL = (
     ("false_confidence_regression_python_3_12", "regression312", ("junit_regression",)),
 )
 
-#: The most skipped tests each functional suite may report and still count as a
-#: gate. A gate used to require only "tests > 0, no failures, no errors", so a
-#: trust test that started skipping -- a missing optional dependency, a new
-#: skipif -- was accepted as silently as a passing one. These are the counts the
-#: last certificate measured (FAST 19, SCIENTIFIC 5, dependency guard 0).
-#: Raising one is a recorded decision in the same recertified change, never a
-#: side effect.
-SKIP_CEILING: Mapping[str, int] = {
+#: HISTORICAL. The most skipped tests each functional suite could report under
+#: assurance schemas /5 and /6 -- the counts the last of those certificates
+#: measured (FAST 19, SCIENTIFIC 5, dependency guard 0). A count cannot say WHICH
+#: test skipped or why: it admitted a newly skipping trust test as long as some
+#: provider test stopped skipping, and it refused the first complete local run
+#: (d5d886f9, 142 explained provider skips per suite). Since /7 the authority is
+#: per-skip admission (:mod:`tools.certification.skip_admission`) with zero
+#: unexpected skips; these numbers only revalidate /5 and /6 records and are
+#: reported as telemetry.
+LEGACY_SKIP_CEILING: Mapping[str, int] = {
     "junit_dependency_guard": 0,
     "junit_fast": 19,
     "junit_scientific": 5,
@@ -169,9 +180,9 @@ SKIP_CEILING: Mapping[str, int] = {
 }
 
 
-def skip_problem(suite: str, counts: Mapping[str, Any]) -> str | None:
-    """Why ``counts`` skips more than ``suite`` may, or ``None``."""
-    ceiling = SKIP_CEILING.get(suite)
+def legacy_skip_problem(suite: str, counts: Mapping[str, Any]) -> str | None:
+    """Why ``counts`` skips more than a /5 or /6 record of ``suite`` could, or ``None``."""
+    ceiling = LEGACY_SKIP_CEILING.get(suite)
     if ceiling is None:
         return f"{suite}: no skip ceiling is declared; refusing to accept an unbounded skip count"
     skipped = int(counts.get("skipped") or 0)
@@ -186,8 +197,10 @@ def skip_problem(suite: str, counts: Mapping[str, Any]) -> str | None:
 class AssuranceError(RuntimeError):
     """The evidence does not support an assurance record. Every reason is listed."""
 
-    def __init__(self, problems: Sequence[str]):
+    def __init__(self, problems: Sequence[str], details: Mapping[str, Any] | None = None):
         self.problems = list(problems)
+        #: structured diagnostics for the failure record (e.g. the unexpected skips); no authority
+        self.details = dict(details or {})
         super().__init__("\n".join(f"- {p}" for p in self.problems))
 
 
@@ -348,6 +361,110 @@ def _first_line(blob: bytes | None) -> str:
     return blob.decode("utf-8", "replace").strip().splitlines()[0].strip() if blob and blob.strip() else ""
 
 
+def skip_admission_section(
+    root: pathlib.Path,
+    evidence: "_Evidence",
+    skip_policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY,
+) -> tuple[dict[str, Any], list[str]]:
+    """Every skip of every functional suite, admitted one by one, and why any is not.
+
+    Derived only from the JUnit reports and the provider availability each gate recorded under
+    its own interpreter. ``local_assurance verify`` re-derives it from the frozen evidence and
+    :func:`stored_skip_admission_problems` re-admits the stored rows on the certificate child;
+    nothing here is read back from an earlier record.
+    """
+    problems: list[str] = []
+    reports: dict[tuple[str, str], bytes] = {}
+    for _, gate, suites in FUNCTIONAL:
+        for suite in suites:
+            target = evidence.path(gate, suite)
+            if target.is_file():
+                reports[(gate, suite)] = target.read_bytes()
+    any_skip = False
+    for blob in reports.values():
+        skips, issues = skip_admission.junit_skips(blob)
+        any_skip |= bool(skips or issues)
+    protected: tuple[frozenset[str], frozenset[str]] | None = None
+    if any_skip:
+        policy_issues = skip_admission.policy_problems(skip_policy, root, trust_script=TRUST_SCRIPT)
+        problems += [f"skip policy: {issue}" for issue in policy_issues]
+        if not policy_issues:
+            try:
+                protected = skip_admission.protected_tests(root, trust_script=TRUST_SCRIPT)
+            except skip_admission.SkipPolicyError as exc:
+                problems.append(f"skip policy: {exc}")
+    gates: dict[str, Any] = {}
+    all_rows: list[dict[str, Any]] = []
+    totals = {"skipped": 0, "accepted": 0, "unexpected": 0}
+    for _, gate, suites in FUNCTIONAL:
+        _, files = EVIDENCE[gate]
+        python_path = evidence.path(gate, "python")
+        python = _first_line(python_path.read_bytes()) if python_path.is_file() else ""
+        block: dict[str, Any] = {"python": python, "provider_availability_sha256": None,
+                                 "providers": {}, "suites": {}}
+        statuses = {pid: {"status": skip_admission.UNKNOWN, "detail": ""} for pid in skip_policy.provider_ids}
+        if "provider_availability" in files:
+            blob = evidence.read(gate, "provider_availability")
+            if blob is not None:
+                try:
+                    document = json.loads(blob)
+                except ValueError:
+                    document = None
+                statuses, issues = skip_admission.availability_statuses(document, skip_policy)
+                problems += [f"{gate}: {issue}" for issue in issues]
+                if isinstance(document, Mapping) and document.get("python") != python:
+                    problems.append(f"{gate}: provider availability was probed under "
+                                    f"{document.get('python')!r}, not the gate's {python!r}")
+                    statuses = {pid: {"status": skip_admission.UNKNOWN, "detail": ""}
+                                for pid in skip_policy.provider_ids}
+                if not issues and isinstance(document, Mapping):
+                    block["providers"] = document["providers"]
+                block["provider_availability_sha256"] = sha256_bytes(blob)
+        for suite in suites:
+            blob = reports.get((gate, suite))
+            if blob is None:
+                continue
+            admitted = skip_admission.admit_suite(blob, suite=suite, statuses=statuses,
+                                                  protected=protected, policy=skip_policy)
+            problems += [f"{gate}: {suite}: {issue}" for issue in admitted["report_problems"]]
+            accepted = [{**row, "gate": gate, "python": python} for row in admitted["rows"] if row["admitted"]]
+            rejected = [{**row, "gate": gate, "python": python} for row in admitted["rows"] if not row["admitted"]]
+            for row in rejected:
+                problems.append(f"{gate}: {suite}: UNEXPECTED_SKIP {row['nodeid']}: {row['refused_because']}")
+            block["suites"][suite] = {
+                "skipped": admitted["skipped"], "accepted": admitted["accepted"],
+                "unexpected": admitted["unexpected"], "inventory_sha256": admitted["inventory_sha256"],
+                "accepted_skips": accepted, "unexpected_skips": rejected,
+            }
+            all_rows += accepted
+            for key in totals:
+                totals[key] += admitted[key]
+        gates[gate] = block
+    unavailable = sorted({pid for row in all_rows for pid, state in (row.get("providers") or {}).items()
+                          if state == skip_admission.UNAVAILABLE})
+    section = {
+        "schema": skip_admission.SKIP_ADMISSION_SCHEMA,
+        "authority": (
+            "every observed skip is admitted, one by one, by the committed policy in "
+            "tools/certification/skip_admission.py, and unexpected == 0; counts are telemetry"
+        ),
+        "policy_sha256": skip_policy.digest(),
+        "claim": skip_admission.claim(all_rows),
+        "does_not_prove": list(skip_admission.DOES_NOT_PROVE),
+        "unavailable_optional_providers": unavailable,
+        "totals": totals,
+        "gates": gates,
+        "telemetry": {
+            "legacy_skip_ceiling": dict(LEGACY_SKIP_CEILING),
+            "observed_skipped": {f"{gate}.{suite}": block["suites"][suite]["skipped"]
+                                 for gate, block in gates.items() for suite in block["suites"]},
+            "summary": skip_admission.summarize(all_rows),
+            "note": "historical ceilings and observed counts are diagnostics, never admission authority",
+        },
+    }
+    return section, problems
+
+
 def build_assurance(
     root: pathlib.Path,
     *,
@@ -355,6 +472,7 @@ def build_assurance(
     evidence_dir: pathlib.Path,
     run: RunContext,
     policy: Policy = Policy(),
+    skip_policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY,
 ) -> dict[str, Any]:
     """The assurance record for ``source_commit``. Raises with every problem found."""
     evidence = _Evidence(evidence_dir, source_commit)
@@ -383,11 +501,20 @@ def build_assurance(
                 continue
             if counts["tests"] <= 0 or counts["failures"] or counts["errors"]:
                 problems.append(f"{gate}: {suite} reports {counts}; a gate needs tests and no failures or errors")
-            skipped = skip_problem(suite, counts)
-            if skipped:
-                problems.append(f"{gate}: {skipped}")
             entry["suites"][suite.removeprefix("junit_")] = {**counts, "junit_sha256": sha256_bytes(blob)}
         functional[label] = entry
+    skip_section, skip_problems = skip_admission_section(root, evidence, skip_policy)
+    problems += skip_problems
+    for label, gate, suites in FUNCTIONAL:
+        for suite in suites:
+            counted = functional[label]["suites"].get(suite.removeprefix("junit_"))
+            admitted = ((skip_section["gates"].get(gate) or {}).get("suites") or {}).get(suite)
+            if counted is None or admitted is None:
+                continue
+            counted["skips"] = {k: admitted[k] for k in ("skipped", "accepted", "unexpected", "inventory_sha256")}
+            if admitted["skipped"] != counted["skipped"]:
+                problems.append(f"{gate}: {suite} counts {counted['skipped']} skipped but carries "
+                                f"{admitted['skipped']} skipped testcases")
     functional["deferred_self_checks"] = list(CERTIFICATE_SELF_CHECKS)
     functional["note"] = (
         "Each functional gate ran on the source commit and proved "
@@ -499,7 +626,20 @@ def build_assurance(
             problems.append("local provenance: evidence manifest contains no files")
 
     if problems:
-        raise AssuranceError(problems)
+        unexpected = [
+            row
+            for block in skip_section["gates"].values()
+            for suite in block["suites"].values()
+            for row in suite.get("unexpected_skips", ())
+        ]
+        raise AssuranceError(problems, details={
+            "unexpected_skip_count": len(unexpected),
+            "unexpected_skips": unexpected[:200],
+            "skip_totals": skip_section["totals"],
+        })
+    for block in skip_section["gates"].values():
+        for suite in block["suites"].values():
+            suite.pop("unexpected_skips", None)
 
     return {
         "schema": ASSURANCE_SCHEMA,
@@ -507,6 +647,7 @@ def build_assurance(
         "source_tree": _git(root, "rev-parse", f"{source_commit}^{{tree}}").strip(),
         "execution_model": "parallel_gates_then_certificate",
         "functional": functional,
+        "skip_admission": skip_section,
         "formal_guard_mutations": formal.assurance_section(population, records, shard_count=policy.shard_count),
         "v4_guard_mutations": formal.v4_assurance_section(
             v4_population, v4_records, shard_count=policy.v4_shard_count
@@ -614,6 +755,7 @@ def assurance_problems(
     source_commit: str,
     certificate: Mapping[str, Any] | None = None,
     policy: Policy = Policy(),
+    skip_policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY,
 ) -> list[str]:
     """Why a stored assurance record does not support its certificate at ``root``.
 
@@ -622,15 +764,15 @@ def assurance_problems(
     """
     problems: list[str] = []
     schema = assurance.get("schema")
-    if schema not in {LEGACY_ASSURANCE_SCHEMA, ASSURANCE_SCHEMA}:
+    if schema not in {*LEGACY_SCHEMAS, ASSURANCE_SCHEMA}:
         return [
-            f"assurance schema is {schema!r}; a certificate child requires "
-            f"{LEGACY_ASSURANCE_SCHEMA!r} or {ASSURANCE_SCHEMA!r}"
+            f"assurance schema is {schema!r}; a certificate child requires one of "
+            f"{[*LEGACY_SCHEMAS, ASSURANCE_SCHEMA]!r}"
         ]
     lineage = assurance.get("lineage") or {}
     provenance_mode = (
         lineage.get("provenance_mode", "github_actions")
-        if schema == ASSURANCE_SCHEMA
+        if schema != LEGACY_ASSURANCE_SCHEMA
         else "github_actions"
     )
 
@@ -645,10 +787,12 @@ def assurance_problems(
             counts = (entry.get("suites") or {}).get(suite.removeprefix("junit_")) or {}
             if not counts.get("tests") or counts.get("failures") != 0 or counts.get("errors") != 0:
                 problems.append(f"functional.{label}.{suite}: {counts or 'absent'}")
-            elif skip_problem(suite, counts):
-                problems.append(f"functional.{label}.{skip_problem(suite, counts)}")
+            elif schema in LEGACY_SCHEMAS and legacy_skip_problem(suite, counts):
+                problems.append(f"functional.{label}.{legacy_skip_problem(suite, counts)}")
     if list(functional.get("deferred_self_checks") or ()) != list(CERTIFICATE_SELF_CHECKS):
         problems.append("functional.deferred_self_checks is not the self-check list this verifier runs")
+    if schema == ASSURANCE_SCHEMA:
+        problems += stored_skip_admission_problems(root, assurance, skip_policy=skip_policy)
 
     section = assurance.get("formal_guard_mutations") or {}
     population = formal.canonical_population(root)
@@ -756,6 +900,105 @@ def assurance_problems(
             problems.append("lineage.workflow_run_attempt is absent")
     else:
         problems.append(f"lineage.provenance_mode {provenance_mode!r} is unsupported")
+    return problems
+
+
+def stored_skip_admission_problems(
+    root: pathlib.Path,
+    assurance: Mapping[str, Any],
+    *,
+    skip_policy: skip_admission.SkipPolicy = skip_admission.DEFAULT_POLICY,
+) -> list[str]:
+    """Why a /7 record's skip admission would not be granted again by the policy in this tree.
+
+    Every stored row is re-admitted against the committed rules, this tree's protected tests and
+    the provider statuses re-derived from each recorded facet observation; counts, inventory
+    digests, totals and the claim are recomputed from the rows, and each gate's interpreter must
+    be the one the environment section records. What this cannot detect is a facet observation
+    edited consistently by hand: ``local_assurance verify`` closes that by re-deriving the whole
+    section from the frozen evidence the gates wrote.
+    """
+    section = assurance.get("skip_admission")
+    if not isinstance(section, Mapping) or section.get("schema") != skip_admission.SKIP_ADMISSION_SCHEMA:
+        return ["skip_admission: absent or with the wrong schema"]
+    problems: list[str] = []
+    if section.get("policy_sha256") != skip_policy.digest():
+        problems.append("skip_admission: admitted under a different skip policy than this tree's")
+    gates = section.get("gates")
+    if not isinstance(gates, Mapping) or set(gates) != {gate for _, gate, _ in FUNCTIONAL}:
+        return problems + ["skip_admission: does not cover exactly the functional gates"]
+    functional = assurance.get("functional") or {}
+    rows_present = any(
+        isinstance(block, Mapping) and isinstance(suite, Mapping) and suite.get("accepted_skips")
+        for block in gates.values()
+        for suite in ((block.get("suites") or {}).values() if isinstance(block, Mapping) else ())
+    )
+    protected = None
+    if rows_present:
+        issues = skip_admission.policy_problems(skip_policy, root, trust_script=TRUST_SCRIPT)
+        problems += [f"skip_admission: policy: {issue}" for issue in issues]
+        try:
+            protected = skip_admission.protected_tests(root, trust_script=TRUST_SCRIPT)
+        except skip_admission.SkipPolicyError as exc:
+            problems.append(f"skip_admission: {exc}")
+    environment = assurance.get("environment") or {}
+    source_gates = environment.get("python_3_12_source_gates") or {}
+    interpreters = {
+        "fast311": environment.get("python_3_11"),
+        "fast312": environment.get("python_3_12"),
+        **{gate: (source_gates.get(gate) or {}).get("python") for gate in ("scientific312", "campaign312", "regression312")},
+    }
+    all_rows: list[Mapping[str, Any]] = []
+    totals = {"skipped": 0, "accepted": 0, "unexpected": 0}
+    for label, gate, suites in FUNCTIONAL:
+        block = gates[gate]
+        if not isinstance(block, Mapping):
+            problems.append(f"skip_admission.{gate}: not an object")
+            continue
+        if not block.get("python") or block.get("python") != interpreters.get(gate):
+            problems.append(f"skip_admission.{gate}: interpreter {block.get('python')!r} is not the "
+                            f"environment's {interpreters.get(gate)!r}")
+        providers = block.get("providers") or {}
+        if providers:
+            statuses, issues = skip_admission.availability_statuses(
+                {"schema": skip_admission.AVAILABILITY_SCHEMA, "policy_sha256": skip_policy.digest(),
+                 "providers": providers}, skip_policy)
+            problems += [f"skip_admission.{gate}: {issue}" for issue in issues]
+        else:
+            statuses = {pid: {"status": skip_admission.UNKNOWN, "detail": ""} for pid in skip_policy.provider_ids}
+        stored_suites = block.get("suites") or {}
+        if not isinstance(stored_suites, Mapping) or set(stored_suites) != set(suites):
+            problems.append(f"skip_admission.{gate}: does not record exactly the suites {list(suites)}")
+            continue
+        for suite in suites:
+            stored = stored_suites.get(suite) or {}
+            rows = list(stored.get("accepted_skips") or ())
+            counts = ((functional.get(label) or {}).get("suites") or {}).get(suite.removeprefix("junit_")) or {}
+            figures = (stored.get("skipped"), stored.get("accepted"), stored.get("unexpected"))
+            if figures != (len(rows), len(rows), 0) or counts.get("skipped") != len(rows):
+                problems.append(f"skip_admission.{gate}.{suite}: skipped/accepted/unexpected {figures} with "
+                                f"{len(rows)} admitted rows and {counts.get('skipped')} JUnit skips")
+            if counts.get("skips") != {k: stored.get(k) for k in ("skipped", "accepted", "unexpected", "inventory_sha256")}:
+                problems.append(f"functional.{label}.{suite}.skips disagrees with skip_admission")
+            if skip_admission.inventory_digest(rows) != stored.get("inventory_sha256"):
+                problems.append(f"skip_admission.{gate}.{suite}: the inventory digest is not its rows'")
+            if any(not isinstance(r, Mapping) or r.get("gate") != gate or r.get("python") != block.get("python")
+                   or r.get("suite") != suite for r in rows):
+                problems.append(f"skip_admission.{gate}.{suite}: a row is not bound to this gate and runtime")
+                continue
+            problems += [f"skip_admission.{gate}.{issue}" for issue in skip_admission.readmission_problems(
+                rows, suite=suite, statuses=statuses, protected=protected, policy=skip_policy)]
+            all_rows += rows
+            totals["skipped"] += len(rows)
+            totals["accepted"] += len(rows)
+    if section.get("totals") != totals:
+        problems.append(f"skip_admission.totals {section.get('totals')} are not the rows' {totals}")
+    if section.get("claim") != skip_admission.claim(all_rows):
+        problems.append("skip_admission.claim does not follow from the admitted rows")
+    unavailable = sorted({pid for row in all_rows for pid, state in (row.get("providers") or {}).items()
+                          if state == skip_admission.UNAVAILABLE})
+    if list(section.get("unavailable_optional_providers") or ()) != unavailable:
+        problems.append("skip_admission.unavailable_optional_providers does not follow from the rows")
     return problems
 
 

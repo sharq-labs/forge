@@ -208,6 +208,15 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/skip_admission.py",
+     "the committed skip policy and the provider availability probe: it decides, "
+     "skip by skip, whether a test that did not run may still count toward a gate. "
+     "A broader rule, a weaker probe or a dropped protected-test source would let "
+     "a skipped trust test pass as an explained optional-provider skip"),
+    ("tests/test_skip_admission.py",
+     "hostile specifications that a wrong reason, an available or unknown provider, "
+     "an unapproved scope, malformed metadata, a skipped trust test or tampered "
+     "skip evidence refuses assurance instead of being admitted"),
     ("tools/certification/local_assurance.py",
      "executes the authoritative local source gates, freezes their evidence "
      "manifest, builds local provenance and performs the final certificate-child "
@@ -538,6 +547,7 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
             "tests/test_local_assurance.py",
+            "tests/test_skip_admission.py",
             "tests/test_mutation_workspace.py",
             "tests/test_formal_xdist.py",
             "tests/scientific_regression/manifest.json",

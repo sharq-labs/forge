@@ -73,7 +73,9 @@ It runs:
 - all four formal mutation shards;
 - all eight V4 mutation shards;
 - trust-hardening mutations;
-- a clean-tree proof after every gate.
+- a clean-tree proof after every gate;
+- an optional-provider availability probe in each FAST/SCIENTIFIC gate, and semantic
+  admission of every skipped test (see "Skipped tests" below).
 
 The official gate evidence is stored under:
 
@@ -89,6 +91,10 @@ A successful source run ends with:
 
 ```text
 LOCAL_ASSURANCE: SOURCE_PASS
+SOURCE_SHA: <sha>
+SKIP_ADMISSION: skipped <n>, accepted <n>, unexpected 0
+CLAIM: CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS UNAVAILABLE ...
+RECEIPT_SHA256: <sha256>
 READY_TO_COMMIT_CERTIFICATE: YES
 SAFE_TO_PUSH: NO
 ```
@@ -136,14 +142,25 @@ RECEIPT_SHA256: <sha256>
 SAFE_TO_PUSH: YES
 ```
 
-Any partial run, missing runtime, test failure, mutation survivor, missing
-evidence, modified evidence, dirty tree, changed source commit or failed child
-check ends with:
+Any partial run, missing runtime, test failure, mutation survivor, unexpected
+skip, missing evidence, modified evidence, dirty tree, changed source commit or
+failed child check ends, with exit code 1 and no traceback, with:
 
 ```text
 LOCAL_ASSURANCE: REFUSED
+REFUSAL_KIND: EXPECTED_ASSURANCE_REFUSAL
+REFUSED_BY: <LocalAssuranceError | AssuranceError | CertificationError>
+<every reason>
+FAILURE_RECORD: .forge/assurance/<SOURCE_SHA>/local-assurance-failure.json
+FAILURE_RECORD_SHA256: <sha256>
 SAFE_TO_PUSH: NO
 ```
+
+(`FAILURE_RECORD` lines appear when a `run` wrote one.) A defect in the runner
+itself is not a refusal and is never swallowed: it prints
+`LOCAL_ASSURANCE: INTERNAL_ERROR` / `REFUSAL_KIND: UNEXPECTED_INTERNAL_ERROR`,
+the full traceback and `SAFE_TO_PUSH: NO`, and exits 2. Neither path can print
+`SAFE_TO_PUSH: YES`.
 
 ## Re-running a source
 
@@ -168,6 +185,92 @@ The receipt records the source identity, runtime identities, gate durations,
 evidence-manifest digest and certificate digest. For high-stakes releases,
 independent reproduction can still be added as a separate scientific or
 release-level assurance activity without making GitHub CI authoritative again.
+
+## Skipped tests: semantic admission (Pass 13)
+
+### Why the skip ceilings were invalid
+
+Assurance schemas /5 and /6 accepted a functional suite with at most FAST 19 and
+SCIENTIFIC 5 skips (dependency guard, campaign and regression 0) — the counts the
+last certificate measured. A count cannot say *which* test skipped or why. It
+would admit a newly skipping trust test whenever some provider test stopped
+skipping, and it refused the first complete local run (source d5d886f9,
+2026-10-08): every execution gate passed (FAST 3.11/3.12 9275 passed, SCIENTIFIC
+9826 passed, Formal 284/284, V4 666 killed + 12 declared survivors + 2
+NOT_MUTATED, trust 20/20), then `build_assurance` raised on 142 skips per suite.
+The extra skips were BIG 12/13 provider and flagship tests whose external solvers
+the assurance runtime does not install.
+
+### The policy
+
+`tools/certification/skip_admission.py` (certification control plane) holds the
+committed rules and providers. Assurance /7 admits **each** observed skip, and the
+authority is `unexpected == 0` in every functional suite. A skip is admitted only
+when all of these hold:
+
+1. its node id is in a rule's exact file and — unless the module's own top-level
+   `pytestmark` skips every test in it on exactly that reason — among the rule's
+   exact test names (no wildcard, no directory scope; a module-scoped rule is
+   refused unless the file really carries that `pytestmark`);
+2. JUnit records it as `pytest.skip`, raised in the test's own module;
+3. its reason equals the rule's reason **rendered from the provider probe's own
+   detail** (e.g. `FEniCSx: {fenicsx}; Gmsh: {gmsh}`), not from the test's words;
+4. for a provider rule, at least one declared provider is `UNAVAILABLE` and none is
+   `UNKNOWN` in the availability record the same gate wrote, under the same
+   interpreter, immediately after its suite
+   (`python -m tools.certification.skip_admission probe`);
+5. the test is not a Formal TARGET, a V4 target test, a trust-mutation test, a
+   certificate self-check or the dependency guard — those are refused even if a
+   rule names them, and a rule naming one makes the policy invalid;
+6. the suite is FAST or SCIENTIFIC. A skip in the dependency guard, campaign or
+   regression suite is always unexpected.
+
+Provider availability reuses the existing authority — `engcore.providers.default_registry()`
+and the adapters' own `fenicsx_available` / `precice_available` /
+`engcore.spatial.gmsh_available` — run with pytest's import roots. Every registry
+answer is corroborated by an independent facet (the module spec or the executable
+the adapter looks for). Only an exact registry absence reason (`python module '…'
+is not installed`, `executable '…' not found`, the OpenFOAM prefix message) counts
+as absent; present-but-refused, broken, timed-out, raising or disagreeing probes
+are `UNKNOWN`, and `UNKNOWN` never admits.
+
+Admitted classes:
+
+- `OPTIONAL_PROVIDER_UNAVAILABLE` — an external solver adapter or Gmsh;
+- `OPTIONAL_EXTRA_UNAVAILABLE` — a declared optional-dependency group that
+  `pip install -e ".[dev,mcp,oracles]"` does not install (symbolic, mesh, benchmarks);
+- `DECLARED_CONDITIONAL_SKIP` — an exact node id whose skip is a stated property of
+  the tree (two reason-truth cases whose violated conditions are all
+  NOT_REPAIRABLE; the exact-freeze domain-digest check, which skips only in
+  DESCENDANT mode).
+
+Anything else is `UNEXPECTED_SKIP` and refuses assurance; the failure record lists
+every unexpected skip with the reason it was refused.
+
+### What an admitted skip means — and does not
+
+The assurance record's `skip_admission` section lists every admitted skip per
+gate (node id, reason, location, classification, rule, provider statuses, gate,
+interpreter), the probe facets, the inventory digest per suite, and a claim such
+as `CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS UNAVAILABLE`. An admitted
+skip is a test that **did not execute**. Nothing bound to an unavailable provider
+was tested, and **provider qualification remains a separate activity from Core
+assurance**; the record never says "all providers tested". The historical counts
+(19, 5, 142) are kept only as telemetry.
+
+Revalidation: on the certificate child every stored row is re-admitted against the
+committed policy, the protected tests of the tree and the statuses re-derived from
+each recorded facet observation; `local_assurance verify` additionally re-derives
+the whole section from the frozen JUnit and availability evidence and requires
+equality. A /5 or /6 record keeps its old meaning and is revalidated against the
+historical ceilings.
+
+Pass 13 review fixes that changed tests rather than the policy: the blind-challenge
+dynamic import guard now runs in a fresh interpreter (it had skipped in every gate);
+the PDE contract refusals (missing boundary condition, missing coefficient, unit and
+role refusals, fabricated-field refusal) now also run on a hand-built mesh, so they
+no longer depend on Gmsh; the reason-truth repair test names its two skip causes
+separately.
 
 
 ## Persistent isolated mutation workspaces (optimization passes 2–5)

@@ -313,16 +313,15 @@ def test_importing_the_truth_layer_loads_no_runtime_module() -> None:
     The AST audits are static. This one runs the modules. If any of them
     reached the runtime at import time -- through a lazy import, an exec, or a
     path the parser cannot see -- ``sys.modules`` says so.
-    """
-    for name in list(sys.modules):
-        if name.split(".")[0] in ("engcore", "src"):
-            pytest.skip(
-                "the runtime is already imported in this process (another test "
-                "in the same worker imported it), so this check cannot "
-                "distinguish its own imports from theirs")
-    import importlib
 
-    for dotted in (
+    It runs in a fresh interpreter. In-process, it skipped whenever its pytest
+    worker had already imported the runtime -- which under ``-n 4 --dist
+    loadfile`` was every hardened-core gate (Local Assurance Pass 13 found it
+    skipped in all three functional suites), so the dynamic half never ran.
+    """
+    import subprocess
+
+    modules = (
         "benchmarks.blind.generate", "benchmarks.blind.build_truth",
         "benchmarks.blind.families", "benchmarks.blind.bound_registry",
         "benchmarks.blind.oracles.electrothermal",
@@ -330,10 +329,21 @@ def test_importing_the_truth_layer_loads_no_runtime_module() -> None:
         "benchmarks.blind.oracles.kinetics",
         "benchmarks.blind.oracles.conduction",
         "benchmarks.blind.oracles.spice",
-    ):
-        importlib.import_module(dotted)
-    leaked = sorted(name for name in sys.modules
-                    if name.split(".")[0] in ("engcore", "crafty"))
+    )
+    runtime = ("engcore", "crafty", "src")
+    probe = (
+        "import importlib, sys\n"
+        f"before = sorted(n for n in sys.modules if n.split('.')[0] in {runtime!r})\n"
+        f"for dotted in {modules!r}:\n"
+        "    importlib.import_module(dotted)\n"
+        f"after = sorted(n for n in sys.modules if n.split('.')[0] in {runtime!r})\n"
+        "print(repr((before, after)))\n"
+    )
+    done = subprocess.run([sys.executable, "-c", probe], cwd=REPO, capture_output=True,
+                          text=True, encoding="utf-8", timeout=300)
+    assert done.returncode == 0, done.stderr[-2000:]
+    before, leaked = ast.literal_eval(done.stdout.strip().splitlines()[-1])
+    assert before == [], f"the fresh interpreter had the runtime before any import: {before}"
     assert not leaked, (
         f"importing the truth layer pulled in {leaked}; the oracle reached the "
         f"runtime at import time")
