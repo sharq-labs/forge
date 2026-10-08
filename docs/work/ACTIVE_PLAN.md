@@ -468,3 +468,177 @@ At a new session:
 
 Historical tables and Master Plan phases are context, not alternate execution
 queues.
+
+
+## 2026-10-07 bounded override - Local Assurance optimization
+
+Current task: external temporary mutation scratch, bounded independent
+--mutation-workers (default 2), fail-closed concurrency and non-certifying
+failure diagnostics. Focused control-plane tests and independent review only;
+commit locally after checks. Resume remains design-only. Do not run full
+assurance, generate a certificate, push, open a PR or merge in this task.
+
+Optimization implementation complete: targeted Python 3.12 pack 215 passed,
+Python 3.11 local-control pack 31 passed; independent read-only review PASS.
+Next action: further control-plane review. Full assurance remains deferred
+until explicit user authorization; no certificate or external publication.
+
+
+## 2026-10-07 bounded override - Optimization pass 2 (static only)
+
+Base: 8d5eed3f47a0490d481b7ff5c9927f2f944096db in WSL
+/home/dev_kaeem/forge-local-assurance-72bf7c4c.
+Implement per-shard persistent isolated seed/worker storage for V4 then Formal,
+complete byte/mode manifests, incremental repair and fail-closed ownership.
+Add non-authoritative performance telemetry outside official evidence.
+Default mutation-workers stays 2. Resume and prior evidence reuse stay disabled.
+
+Absolute restriction: implementation and static review only. TESTS_RUN: 0.
+Do not execute project code, tests, assurance, benchmarks, measurements or any
+certification path in this slice. Do not push, open a PR or merge. Keep edits
+available for review; no local commit is required for this slice.
+FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+
+Implementation complete with independent source-only review disposition;
+execution remains unverified. Next bounded action is further static optimization
+review of restore/hash I/O and failure telemetry completeness. Do not execute
+project code or tests without a later explicit change to the restriction.
+CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## 2026-10-07 bounded override — Optimization pass 3 (static only)
+
+Supersedes earlier execution/local-commit permissions for this slice. Optimize
+persistent workspace indexing, sparse restoration, descendant ownership and
+non-authoritative lifecycle diagnostics. Keep full worker SHA-256 verification,
+independent .git copies, unchanged populations/default workers and no resume.
+No tests, project execution, assurance, benchmarks, certificates, commit, push,
+PR or merge. TESTS_RUN: 0; ASSURANCE_RUN: NO;
+FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+
+Implementation and independent hostile static review are the completion gates.
+Future tests remain specifications until explicitly authorized. Static cost and
+remaining memory/ownership risks: LOCAL_ASSURANCE_OPTIMIZATION_PASS_3.md.
+
+Pass 3 implementation complete; independent hostile static reviewer PASS after
+Git case-normalization correction. Execution remains unverified. Next bounded
+work: pass 4 static memory/Git-sealing/ownership review; testing and measurements
+require explicit authorization. CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## 2026-10-07 bounded override — Optimization pass 4 (static only)
+
+Replace full pristine byte cache with streamed seed-backed restoration and full
+seed identity checks; seal inherited Git/config/import/pytest/temp redirects;
+enforce detectable dedicated-process assumptions and explicit handle lifecycle.
+Retain independent Git storage, full worker SHA, populations/verdicts/control
+ordering/default workers and no resume. No tests/imports/project execution,
+assurance, benchmarks, certificates, commit, push, PR or merge. TESTS_RUN: 0;
+ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Implementation and independent hostile accumulated Pass 2–4 static review are
+completion gates. Contract: LOCAL_ASSURANCE_OPTIMIZATION_PASS_4.md.
+
+Pass 4 complete with final independent hostile static review PASS after Git
+section-grammar correction. No execution verification. Next bounded action:
+Pass 5 static Git/config/environment, cleanup and specification review. Explicit
+authorization is required to change the execution restriction. No publication.
+CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## 2026-10-07 bounded override — Optimization pass 5 (static only)
+
+Audit full Git inputs/closure, owned cleanup, reaper transitions, scan/read model,
+restoration I/O, telemetry and bounded concurrency. No tests/imports/project
+execution, assurance, benchmarks, certificates, commit, push, PR or merge.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Implemented fresh owned artifacts/tokens, atomic diagnostics, Git lazy-fetch/
+format refusal, ceiling/host attributes sealing, candidate SHA skip, parent
+abnormal retention and non-destructive old-run quarantine. Default workers 2;
+all populations/expectations/attribution/control order unchanged; no resume.
+Fresh reviewer found arbitrary target absolute-path access is outside this
+control plane: OS sandbox vs controlled target/toolchain contract clarification
+pending. Do not issue unqualified PASS for an unenforced OS isolation claim.
+Contract and cost tables: LOCAL_ASSURANCE_OPTIMIZATION_PASS_5.md.
+
+Pass 5 source corrections complete; fresh independent review BLOCKER for literal
+arbitrary-target OS isolation. Controlled-input findings corrected, cost P2 fixed.
+Await user contract disposition; no OS sandbox/provider restrictions invented.
+Do not claim PASS/ready while that demonstrated access capability remains in scope.
+CONTROL_PLANE_NOT_READY. All execution/publication restrictions remain active.
+
+User contract decision received: "Controlled targets and toolchain; seal inherited
+inputs and runner-owned paths." This explicitly resolves the prior scope blocker;
+no OS isolation guarantee claimed. Final reviewer confirmation requested under
+that accepted contract. Execution/publication prohibitions remain unchanged.
+
+Final fresh independent reviewer PASS under the explicitly accepted controlled-
+target/toolchain contract; previous scope blocker and cost P2 resolved. No OS
+sandbox claim, no source execution or tests. Final git diff --check exit 0;
+git diff --stat/status inspected, changes remain uncommitted, HEAD unchanged.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+No scientific/domain change, certificate, commit, push, PR or merge.
+Recommended Pass 6: statically audit specification/contract compatibility and
+owned filesystem operations; first runtime validation requires explicit change
+of execution authorization. CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## Local Assurance Pass 6 — static stabilization
+
+Complete accumulated tracked/untracked audit recorded in
+LOCAL_ASSURANCE_OPTIMIZATION_PASS_6.md. Implementation repairs and unexecuted
+specifications cover collisions, safe canonical evidence closure, atomic JSON,
+source identity, exit-code authority and failure retention. Independent static
+review is the freeze condition. Tests and all runtime probes remain prohibited.
+Next executable performance work requires separate authorization for runtime
+validation; do not alter workspace trust semantics for startup optimization.
+TESTS_RUN: 0. ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+
+Final independent static review returned PASS. Workspace architecture is ready
+to freeze under the controlled-target/toolchain contract; runtime compatibility
+remains unestablished. Pass 6 complete; await authorized runtime validation.
+
+
+## Pass 7 — fresh-process startup optimization
+
+Implemented deterministic mutation plugin policy, immutable startup inputs,
+interpreter identity checks and no shared bytecode. Preserved the frozen workspace
+and attribution contracts. Static target model: 284 Formal + four controls and
+678 eligible V4 + eight controls = up to 974 fresh pytest launches. Specifications
+written but NOT RUN. Next Pass 8 requires explicit runtime-validation authorization;
+no persistent interpreter, fork optimization or workspace redesign is scheduled.
+
+Pass 7 complete: independent final static review PASS; FRESH_PROCESS_OPTIMIZED.
+Pass 8 recommendation is bounded runtime validation/measurement only after explicit
+authorization. Existing execution ban remains in force.
+
+
+## Pass 8 — bounded runtime validation
+
+Done 2026-10-07: runtime control plane behaved as specified; blocked only by the
+certification_control registration of mutation_startup.py / test_mutation_workspace.py.
+
+## Pass 9 — certification scope fix and V4 verification cost
+
+Done 2026-10-07: registration fixed; snapshot() implementation made ~2.5-3x faster with
+an identical manifest. No verification pass removed; removing attempt-start S/W is an
+owner decision because specs pin "refuse before execution".
+Next (needs authorization): decide whether to commit Passes 2–9, then a 1/2/4-worker
+bounded measurement or Full Local Assurance. Optional owner decision: whether the
+attempt-start seed check (A1) may move to the restore-time check.
+
+## Pass 12 — safe Formal pytest-xdist
+
+Done 2026-10-07: opt-in Formal xdist with structured crash refusal, per-set named-alone control,
+serial confirmation and serial import refusals; -22 % Formal wall on a representative bounded run.
+Next (needs authorization): Full Local Assurance with --mutation-workers 4 --formal-pytest-workers 2,
+or keep the default 1; the xdist-vs-serial verdict divergence is an owner design decision.
+
+## Pass 13 — semantic skip admission + final recertification
+
+Done 2026-10-08 (source change): scalar skip ceilings replaced by per-skip admission
+(tools/certification/skip_admission.py, assurance /7); refusal UX hardened; review round fixed.
+Next: one source commit, then a fresh Full Local Assurance from zero
+(`run --workers 4 --mutation-workers 4 --formal-pytest-workers 2`); on SOURCE_PASS only, the
+certificate-only child and `local_assurance verify`. No push, PR or merge without the owner.
+Open (not this pass): provider qualification runs for the 11 optional providers are a separate
+activity; the admitted provider skips do not claim them.

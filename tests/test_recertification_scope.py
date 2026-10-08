@@ -398,14 +398,15 @@ def _needs_of(block: str) -> list[str]:
     return re.findall(r"- ([A-Za-z0-9_-]+)", listed.group(1)) if listed else []
 
 
-def test_recertification_has_no_path_filter_and_both_workflows_call_the_classifier():
+def test_recertification_is_manual_only_and_both_workflows_call_the_classifier():
     recertify = (WORKFLOWS / "recertify-hardened-core.yml").read_text(encoding="utf-8")
     trigger = recertify.split("\npermissions:", 1)[0]
     assert "paths" not in trigger
-    # Recertification now enters automatically on every pull request; the
-    # classifier decides whether expensive source gates run. Manual dispatch is
-    # retained only as an explicit fallback.
-    assert "pull_request:" in trigger and "workflow_dispatch:" in trigger
+    # GitHub workflows are manual references; local assurance owns source gates.
+    assert "workflow_dispatch:" in trigger
+    assert "\n  pull_request:" not in trigger
+    assert "\n  push:" not in trigger
+    assert "\n  schedule:" not in trigger
     tests = (WORKFLOWS / "tests.yml").read_text(encoding="utf-8")
     classifier = "tools.certification.recertification_scope classify"
     assert classifier in recertify
@@ -452,7 +453,7 @@ def test_the_tests_topology_matches_the_python_it_is_judged_by():
         assert "tools.certification.assert_clean_tree" in jobs[job], job
 
 
-def test_the_gate_names_are_the_checks_branch_policy_requires():
+def test_manual_workflow_gates_are_not_required_github_status_checks():
     names = set()
     for workflow in ("recertify-hardened-core.yml", "tests.yml"):
         for block in _jobs(workflow).values():
@@ -460,7 +461,8 @@ def test_the_gate_names_are_the_checks_branch_policy_requires():
             if found and found.group(1).endswith("-gate"):
                 assert "    if: always()" in block
                 names.add(found.group(1))
-    assert names == set(REQUIRED_STATUS_CHECKS)
+    assert names == {"tests-gate", "recertification-gate"}
+    assert REQUIRED_STATUS_CHECKS == ()
 
 
 def test_no_workflow_erases_evidence_before_the_clean_tree_check():

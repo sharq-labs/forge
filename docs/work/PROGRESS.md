@@ -2113,3 +2113,477 @@ Recorded direction:
   records and cannot become a second source of scientific truth.
 
 Tests: **NOT RUN** — documentation/strategic architecture changes only.
+
+
+## 2026-10-07 Local Assurance control-plane optimization
+
+Scope: WSL /home/dev_kaeem/forge-local-assurance-72bf7c4c at
+74e102a743fe7cf329353b7aa32e56b5cbc0940c. Full assurance, certification,
+mutation populations, push, PR and merge explicitly deferred by user.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 8 failed, 14 passed in 0.64s. Failure names: all eight parametrizations
+of test_shards_are_bounded_isolated_and_fail_closed. Failed approach: new owner
+assertion compared underscore gate names with established hyphenated directory
+identity; corrected assertion without changing deterministic evidence paths.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 29 passed in 1.30s.
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 213 passed in 22.36s. Synthetic/mock concurrency only; no mutation
+population or full assurance executed.
+Independent review identified logged subprocess stream exceptions leaving a
+child alive past shard cleanup and inaccurate local sequential/job wording.
+Fixing process-group termination/reaping and execution metadata; rerun required.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 214 passed in 22.87s after process-group cleanup/metadata fixes.
+Re-review found forced-kill ProcessLookupError could replace original stream
+failure during a timeout race; guarded disappearing-group kill and added mocked
+reaping/error-preservation regression.
+Command: `.forge/venvs/3.11/bin/python -m pytest tests/test_local_assurance.py -q`
+Result: 31 passed in 1.26s.
+Final independent forge-scientific-review verdict: PASS (read-only review only).
+All three reported control-plane findings addressed; no scientific/domain code
+changed. Resume design documented; resume NOT implemented.
+Failed tooling approach: Windows default text encoding corrupted existing
+PROGRESS prose during append and later refused decode. Restored original HEAD
+bytes and kept only new session entries; subsequent writes explicitly UTF-8.
+
+Command: `.forge/venvs/3.12/bin/python -m pytest tests/test_local_assurance.py tests/test_mutation_population_v4.py tests/test_hardening_assurance.py tests/test_recertification_scope.py tests/test_branch_policy.py tests/test_certificate_lineage.py -q`
+Result: 215 passed in 22.46s; 0 failed, 0 skipped.
+Command: `git diff --check`
+Result: PASS (exit 0).
+Full FAST, SCIENTIFIC, campaign, regression, Formal/V4/Trust mutation
+populations and Full Local Assurance: NOT RUN BY DESIGN.
+Official certificate generation, certificate-only child, push, PR, merge: NO.
+Final status: CONTROL_PLANE_READY_FOR_FURTHER_REVIEW.
+
+
+## 2026-10-07 Local Assurance optimization pass 2 - implementation/static review
+
+Base: 8d5eed3f47a0490d481b7ff5c9927f2f944096db; clean WSL checkout on arrival.
+User forbids all test/project execution, smoke checks, assurance, benchmarking,
+performance measurements and certification. TESTS_RUN: 0. All added test
+specifications: NOT RUN. Prior pass results do not apply to these changes.
+
+Implemented per-shard independent pristine seed + persistent worker, complete
+SHA-256 byte/path/type/mode manifest, incremental restoration and poisoning on
+failed restoration. V4 retains .git and original JUnit attribution; Formal
+retains _COPIED, control-first order and guard mechanism attribution. No
+population/expectation/shard changes. Helpers and future specifications are
+registered in certification_control; no certificate is regenerated.
+
+Performance schema forge.local_assurance_performance/1 denies certification
+and SAFE_TO_PUSH authority. Local metadata resides in sibling performance/,
+outside official evidence/ and its manifest. No real timings were collected.
+
+Static review found that signaling a process group did not confirm descendant
+termination and could miss setsid escape. Failed approach: group kill + leader
+wait was insufficient for persistent reuse. Replaced it with Linux subreaper
+ownership, exclusive per-shard target execution, kernel child enumeration and
+confirmed reaping; inability to drain poisons the round and retains external
+storage. The local parent respects retained workspaces instead of blindly
+removing them. These changes are unverified by execution; lifecycle test
+specifications are written only. Independent static re-review pending.
+
+No scientific/domain code, thresholds, solver behavior or mutation definitions
+changed. Resume: NOT implemented. Full Local Assurance: NOT_RUN_BY_DESIGN.
+Certificate generation, push, PR and merge: NO. Changes remain uncommitted for
+further review under this implementation-only request.
+
+Independent static re-review: no remaining actionable findings in scope;
+source-only verdict PASS under dedicated sequential Linux shard ownership.
+Not test execution or scientific validation. Review and residual assumptions
+recorded in docs/work/LOCAL_ASSURANCE_WORKSPACE_STATIC_REVIEW.md.
+Builder static review additionally refuses external Git config includes so
+copied .git cannot redirect worktree/storage through an external config.
+Proposed Git-config regression cases added, NOT RUN.
+
+Only file reads/searches/edits and Git diff/status source inspection performed.
+No modified project imports, compilation, pytest, smoke, benchmarks, runtime
+measurements, assurance or certification executed. All test commands: NOT RUN.
+TESTS_RUN: 0. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Status: CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS (static-only readiness).
+
+Final static deltas: unavailable /proc children listing is a refusal, never
+empty-scope proof; Git external include/worktree configuration is refused.
+Independent reviewer inspected both deltas and retained source-only verdict
+with no remaining actionable findings. Their new test specifications: NOT RUN.
+
+
+## 2026-10-07 — Local Assurance optimization pass 3, source only
+
+Built one immutable pristine index with cached restoration bytes per shard;
+removed repeated seed SHA computations while retaining full seed byte checks.
+Added independent structural dirty detection and sparse repair followed by full
+worker SHA checks, with an additional verified repair for hidden same-size byte
+changes. Seed permissions are read-only after worker initialization. Kept .git
+independent because same-UID modes cannot seal shared storage.
+
+Strengthened constructor-interruption drain handling and main-thread ownership;
+added lifecycle stage/category/shard/mutation/retention/quiescence diagnostics.
+Added test specifications only. Static inspection found that checking only the
+last path component could follow an ancestor symlink during repair chmod; replaced
+that approach with component-by-component lstat checks before deletion, creation,
+file restoration and mode reset. Invalid dirty hints now poison the workspace.
+
+All test/assurance/benchmark commands: NOT RUN by explicit user restriction.
+TESTS_RUN: 0. ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+No project imports/execution, certificates, commit, push, PR or merge.
+Independent hostile review pending; no executed verification claim.
+
+Independent hostile review identified a P1 Git admission gap: ConfigParser uses
+case-sensitive section names while Git accepts mixed-case Core. Refusal now
+casefolds section names; uppercase/mixed-case Core test specifications added.
+Additional source-only specifications cover sparse ancestor symlink chmod and
+invalid-hint poisoning. Index construction refuses size changes during reading.
+Review reinspection requested. No tests executed after these corrections.
+
+Static whitespace inspection: `git diff --check` executed in the WSL checkout,
+exit 0, no output. This is source inspection only, not test execution. Gate
+performance diagnostics now also name the shard/gate and record gate failure.
+
+Final independent reviewer disposition: PASS, static review only. Reviewer
+explicitly resolved prior Git Core finding; no remaining actionable finding
+within documented Linux dedicated-process assumptions. Review recorded in
+LOCAL_ASSURANCE_WORKSPACE_STATIC_REVIEW.md. Final source inspection commands:
+`git diff --check` exit 0, no output; `git rev-parse HEAD` returned
+8d5eed3f47a0490d481b7ff5c9927f2f944096db; `git branch --show-current`
+returned local/local-only-assurance-validation. No project validation executed.
+TESTS_RUN: 0; ASSURANCE_RUN: NO;
+FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/commit/push/PR/merge.
+CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## 2026-10-07 — Local Assurance optimization pass 4, implementation only
+
+Removed all retained pristine content bytes. Index retains metadata/digests;
+complete seed SHA scans run before attempts and before any repair. Restoration
+streams selected seed files in 1 MiB chunks, checks metadata and hashes copied
+bytes; no worker fallback or optional cache. This intentionally supersedes the
+Pass 3 zero-repeat-seed-hash design to preserve a bounded content buffer and seed
+filesystem authority. Normal snapshots remain five; two seed/two worker hash
+passes plus hashes of restored seed files. No measured improvement claim.
+
+Static environment investigation found synthetic Git repositories in target
+fixtures, so rejected the approach of binding GIT_DIR/GIT_WORK_TREE to the worker.
+Instead remove host GIT injections, null global/system config, inert hooks, empty
+owned templates and retain cwd discovery. Refuse dangerous seed Git config,
+alternates/worktree/history rewrite pointers. Neutralize host import/pytest
+injections and put temporary directories under owned external storage; retain
+scientific/provider settings and installed plugin/toolchain semantics.
+
+Enforce Linux main thread + exactly one kernel task, default/unblocked SIGCHLD,
+no children and no pre-existing subreaper. Ambiguous setup/drain/release poisons
+and retains workspace. Explicit close_fds/pass_fds and context-managed file/pipe
+lifetimes. Builder static inspection moved SIGTERM drain-handler setup inside the
+fail-closed drain try and added runtime inode/type substitution checks.
+
+Added source-only adversarial specifications and non-authoritative work counters.
+`git diff --check` executed: exit 0, no output (source whitespace inspection only).
+All project test/assurance/benchmark/validation commands: NOT RUN by instruction.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Independent accumulated-diff review pending. No certificate/commit/push/PR/merge.
+
+Independent review found P1 Git section grammar gaps: [core ]/[extensions ] and
+deprecated [filter.driver]/[diff.driver] forms could bypass ConfigParser matching.
+Added conservative canonical-section grammar admission and refusal specifications.
+ConfigParser is explicitly treated as a limited supported parser; unfamiliar
+forms refuse. Future real descendant specification now launches a dedicated
+interpreter instead of borrowing the pytest process ownership context. NOT RUN.
+
+Final accumulated Pass 2–4 independent reviewer: PASS, static review only.
+Prior Git grammar finding explicitly resolved; no remaining actionable finding
+within the dedicated Linux process/controlled-toolchain assumptions. Review
+recorded in LOCAL_ASSURANCE_WORKSPACE_STATIC_REVIEW.md. Execution remains
+unverified. Final static whitespace command `git diff --check`: exit 0, no output.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+No certificate, commit, push, PR or merge. HEAD remains
+8d5eed3f47a0490d481b7ff5c9927f2f944096db. Changes remain uncommitted.
+CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## 2026-10-07 — Local Assurance optimization pass 5, source-only audit
+
+Fresh independent reviewer found concrete P1 paths: Formal population deleted
+arbitrary preexisting destination; pytest artifacts lived in caller scratch;
+linked diagnostic files could overwrite external data; partial-clone promisor
+state could lazily fetch missing Git objects; parent killpg after reaping risked
+PGID reuse and never proved nested-session ownership. Corrected statically:
+fresh-only population, generated owned artifacts + in-memory root/ancestor inode
+tokens, atomic diagnostic replacement, partialclone/promisor/unknown-extension
+refusal, direct Popen termination and all-abnormal parent scratch retention.
+Mixed-case format admission correction included. Existing evidence --reuse now
+quarantines bytes instead of recursively deleting a caller-selected prior root.
+
+Seal Git ancestor discovery ceiling and host default attributes/ignore inputs
+without changing HOME/XDG or provider semantics. Refuse duplicate shard/CLI IDs.
+Recheck thread/SIGCHLD/subreaper state during drain. Dirty candidates with matching
+SHA skip copying (mode-only fix permitted only independent inode); already-known
+hidden file digest reused. Remove unused index name tuples/imports; retain exact
+B55d legacy isolation guard because it is a live mutation target. Physical copies
+remain two per shard; five snapshots are scans, not copies. Full hash passes
+remain required absent authenticated OS immutability. Added specs NOT RUN.
+
+Reviewer established arbitrary same-UID target code can access checkout/shard
+absolute paths. This is not an OS sandbox; requested contract clarification
+asynchronously, while completing the authorized source audit. Do not silently
+scope a literal isolation request down or claim an unqualified PASS.
+`git diff --check` executed exit 0, no output (source whitespace only).
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+No project imports/execution, runtime measurements, certificate/commit/push/PR/merge.
+Final independent review and isolation-contract disposition pending.
+
+Final fresh reviewer verdict: BLOCKER, literal arbitrary-target isolation.
+Demonstrated same-UID absolute-file and explicit Git override access remains;
+controlled-path production findings corrected. Reviewer P2 corrected in cost model:
+Formal copies no .git (G=0); V4 copies two. Contract clarification remains pending.
+No project validation run. Final `git diff --check`: exit 0, no output; `git diff
+--stat` and `git status --short` inspected; untracked source/doc files remain
+unstaged and are listed separately by status. HEAD unchanged at
+8d5eed3f47a0490d481b7ff5c9927f2f944096db.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+SCIENTIFIC_DOMAIN_CODE_CHANGED: NO; CERTIFICATE_GENERATED: NO;
+COMMIT: NO; PUSH: NO; PR: NO; MERGE: NO. CONTROL_PLANE_NOT_READY.
+
+User explicitly accepted controlled-target/toolchain isolation and inherited-input/
+owned-path sealing, resolving the earlier literal-OS-isolation scope blocker.
+No production code changed to resolve it, and no OS sandbox guarantee is claimed.
+Requested final fresh reviewer disposition under that accepted contract. Tests,
+assurance, benchmarks and publication remain prohibited and NOT RUN.
+
+Final fresh independent reviewer PASS under the explicitly accepted controlled-
+target/toolchain contract; previous scope blocker and cost P2 resolved. No OS
+sandbox claim, no source execution or tests. Final git diff --check exit 0;
+git diff --stat/status inspected, changes remain uncommitted, HEAD unchanged.
+TESTS_RUN: 0; ASSURANCE_RUN: NO; FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+No scientific/domain change, certificate, commit, push, PR or merge.
+Recommended Pass 6: statically audit specification/contract compatibility and
+owned filesystem operations; first runtime validation requires explicit change
+of execution authorization. CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
+
+
+## Pass 6 static integration milestone
+
+Repaired invocation collisions, manifest closure/path admission, atomic JSON writes,
+source identity boundaries, pytest infrastructure attribution and failure context.
+Corrected failed-scratch retention specifications; added manifest/lock/diagnostic specs.
+Failed approach: prior broad evidence enumeration and unguarded pytest exits could
+admit unexpected files or infrastructure failures; replaced with explicit admission.
+Static command: `git diff --check` in the task checkout, exit 0 (source whitespace only).
+TESTS_RUN: 0. ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Tests, mutation, subprocess/Git/import probes, profiling and certification: NOT RUN.
+No scientific/domain change; no certificate, commit, push, PR or merge.
+Independent final static review remains pending; detailed audit in Pass 6 document.
+
+Final independent complete Pass 2–6 hostile static review: PASS; all reported
+static findings repaired and reinspected. Second pre-final source-only
+`git diff --check`: exit 0. No runtime operation followed the final review.
+READY_TO_FREEZE_WORKSPACE_ARCHITECTURE under the accepted controlled-target/toolchain
+boundary. Runtime lifecycle, installed imports and specs remain NOT RUN.
+
+
+## Pass 7 static startup milestone
+
+Implemented immutable shard startup snapshot and command flags, executable metadata
+checks, deterministic external-plugin autoload refusal, Python startup sealing and
+no bytecode writes/shared caches. Formal excludes legacy .pyc. Hostile static review
+found inherited Python flags and permissive JUnit XML decoding; repaired both and
+added adversarial specifications. No scientific/domain logic changed.
+Static source literal inspection: 284 Formal, 680 V4 (two NOT_MUTATED), 590 V4
+nodeids/120 modules; eligible subset 588 nodeids. Maximum full-shard pytest starts
+974 including controls, not measured. Initial source-analysis script failed to
+handle AnnAssign and raised TypeError; corrected AST handling, no project execution.
+TESTS_RUN: 0. ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+Tests/probes/benchmarks/certification: NOT RUN. No certificate/commit/push/PR/merge.
+
+Static checks before final review: `py -3 -` with stdlib AST parsing of the five
+Pass 7 Python source files, exit 0; no project imports or execution. Exact shell
+whitespace command: `wsl.exe -e sh -c 'cd /home/dev_kaeem/forge-local-assurance-72bf7c4c && git diff --check'`, exit 0.
+Final independent hostile review of implementation/specs/docs: PASS after repairs.
+No runtime command followed review. FRESH_PROCESS_OPTIMIZED. Unexecuted specs,
+controlled installed-toolchain compatibility and Linux lifecycle remain open for
+explicitly authorized Pass 8 validation. TESTS_RUN: 0. ASSURANCE_RUN: NO.
+FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
+
+
+## Pass 8 bounded runtime validation (2026-10-07)
+
+Takeover recovered the work in the WSL clone `/home/dev_kaeem/forge-local-assurance-72bf7c4c`
+(not a phyx worktree), HEAD 8d5eed3f, Passes 2–7 uncommitted; diff and untracked files were
+backed up before execution. All probes ran in WSL with `.forge/venvs/3.12`, outputs outside
+the repository (`$HOME/forge-pass8`; WSL `/tmp` does not survive between `wsl` invocations).
+
+Commands and results (bytecode writes and cacheprovider disabled):
+- `python -m pytest -p no:cacheprovider -q tests/test_mutation_startup.py tests/test_mutation_workspace.py tests/test_local_assurance.py`: 182 passed (3.12, 2.45 s; 3.11, 2.10 s).
+- Same set plus test_mutation_population_v4, test_mutation_harness, test_hardening_assurance,
+  test_recertification_scope, test_certification_control_plane, test_certification_clean_tree,
+  test_core_certificate, test_certification_mutation_population, test_certificate_lineage:
+  440 passed, 4 failed in 29.36 s. New failures: test_certification_control_plane.py::
+  test_every_control_plane_file_has_its_own_reason_and_the_real_build_accepts_them and
+  ::test_the_certificate_is_never_inside_its_own_scope (mutation_startup.py had no reason;
+  tests/test_mutation_workspace.py had a reason but no pattern). Baseline drift (also at a
+  pristine 8d5eed3f clone, 291 passed / 2 failed): test_core_certificate.py::
+  test_the_certificate_describes_this_tree and ::test_the_certificate_records_the_v1_relationship_truthfully.
+- Failed approach: running tests/test_mutation_harness.py alone fails to collect
+  (`import mutation_guards` needs tests/ on sys.path, inserted by test_mutation_population_v4.py);
+  pre-existing order dependence, run that module first.
+- Runtime probes (production PersistentWorkspace/run_captured/mutation_environment paths):
+  pytest startup (builtins, conftest, fixtures, markers, importlib mode, JUnit, --runxfail)
+  PASS; 16 hostile PYTHON*/PYTEST*/GIT_* parent values sealed, no .pyc; fake pytest11 plugin
+  loads only with autoload re-enabled; 17 restoration/refusal cases PASS; 22 hostile .git
+  states refused, hooks/global/system config/GIT_DIR sealed, ceiling holds; 14 process
+  ownership cases PASS, no orphan/zombie; real `local_assurance run` with synthetic gate
+  commands in a throwaway overlay clone: workers=1 peak 1, workers=2 peak 2, shard failure
+  refuses the group, SAFE_TO_PUSH NO, no receipt/manifest/certificate.
+- Formal micro-run (production shard path) G1a G1d G2f G27b: 4/4 killed by the named guard,
+  control GREEN (1139 passed, 1 skipped), 676 s. V4 micro-run B56a B19j B11a B12a B29c:
+  5/5 declared verdicts, control GREEN, 29.6 s (concurrent with the Formal shard).
+- Residual, pre-existing: a target-launched Python subprocess imports engcore from the
+  checkout via the editable .pth (only one target does this and it pins its own src);
+  Formal shard stdout is block-buffered until exit.
+Verdict: RUNTIME_VALIDATION_BLOCKED (certificate control registration).
+
+## Pass 9 certification scope fix and V4 verification cost (2026-10-07)
+
+core_certificate.py (authorized): mutation_startup.py reason added;
+tests/test_mutation_workspace.py added to certification_control patterns.
+- Blocker tests: the two test_certification_control_plane.py nodeids above: 2 passed in 1.09 s.
+- Targeted set (12 modules, as Pass 8): 442 passed, 2 failed in 30.16 s; the 2 are the
+  baseline certificate-drift failures above.
+State-transition model (docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_9.md): every full
+per-attempt pass is REQUIRED or SPEC-PINNED; seed-sealing hypothesis rejected (same-uid
+targets can chmod the seed). Profile on a V4-shaped tree (8,354 files, 88.8 MB): full
+snapshot 0.430 s vs 0.082 s floor (scandir + SHA-256 of every byte); metadata walk 0.273 s
+vs 0.016 s; per-entry pathlib dominated. snapshot() now builds relative names from scandir
+names; rows, manifest digests, telemetry counters and error shapes proven identical to the
+previous implementation on the real V4 tree, real Formal tree and a hostile tree.
+- After the change: 182 new specs pass on 3.11 and 3.12; targeted set 442 passed / same 2
+  drift failures in 29.85 s; 17 restoration cases unchanged.
+- Like-for-like V4 micro-run (same five entries + control, nothing else running): wall
+  28.98 s -> 18.40 s; seed verify 13 passes 5.51 s -> 2.13 s; worker full 13 passes
+  5.48 s -> 2.09 s; delta 6 scans 1.70 s -> 0.26 s; same verdicts, same bytes hashed,
+  same 306,290 restoration bytes. Formal semantics unchanged.
+ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/commit/push/PR/merge.
+
+Independent read-only review (forge-scientific-reviewer) of the snapshot() rewrite and the
+scope registration: PASS. LOW finding (no test pinned the equivalence claim) fixed with
+test_string_path_snapshot_equals_the_pathlib_manifest_and_counters and
+test_mid_walk_failure_still_reports_entries_already_scanned in tests/test_mutation_workspace.py
+(pass on 3.11/3.12 and against the pre-Pass-9 implementation). LOW pre-existing finding recorded,
+not changed: core_certificate.py OUT_OF_SCOPE prose still says "the two self-check modules".
+Final targeted set: 444 passed, 2 failed (baseline certificate drift) in 29.97 s; new specs
+184 passed on 3.11 (2.04 s).
+
+## Pass 10 freeze and bounded concurrency measurement (2026-10-07)
+
+Pre-freeze audit of the Passes 2–9 diff: only tools/certification, mutation/assurance tests
+and docs touched; MUTATIONS/EVIDENCE/TARGETS/_COPIED AST-identical to 8d5eed3f; V4
+population and selection modules untouched; no debug code; telemetry archived outside
+evidence/. Stale "never executed"/"future execution" wording corrected. `git diff --check`: exit 0.
+Pre-commit: blocker tests 2 passed; Passes 2–9 specs 184 passed on 3.11 and 3.12; targeted
+12-module set 444 passed, 2 failed (baseline certificate drift) in 30.51 s.
+Source commit: 4f2cdf4b5c38b17bc3188967d15503d51b907bed
+"certification: optimize local mutation assurance" (local only; no certificate, push or PR).
+
+Benchmark (not certification evidence): production _mutation_group/_mutation_scratch/_run
+path at the committed source; Formal 4 shards x 1 mutation (G1a, G1d, G2f, G27b) + per-shard
+control; V4 8 shards x 2 entries (B56a B19j B11a B12a B29c N61h N57i N57c N62i N63a N61o
+B14o N57g N57p N60h B1q) + per-shard control; HEAD/clean checks around each shard.
+Order w2, w4, w1, then w4, w2. Wall: w1 1106.6 s; w2 597.0 / 602.1 s; w4 335.2 / 336.5 s.
+Formal group: 1050.7 / 563.1-568.6 / 310.8 s. V4 group: 56.0 / 33.5-33.9 / 24.4-25.6 s.
+Peak process-tree RSS: 854 / ~1550 / ~3100 MB; min MemAvailable 20.3 GB. Mean CPU busy
+6 / 12 / 22 % of 20 logical CPUs. Per-shard Formal time +4 % (w2) and +14 % (w4) vs w1.
+All five runs: identical 20 verdicts, 12/12 controls GREEN, distinct scratch, no residue,
+HEAD unchanged, tree clean. Recommendation: --mutation-workers 4 (CLI); code default left 2.
+
+## Pass 11 Formal hot-path audit (2026-10-07)
+
+Profiling only at source 4f2cdf4b (no source change; candidate via out-of-tree wrapper).
+Probe: production PersistentWorkspace + run_captured, exact Formal TARGETS command, external
+/proc sampler. Serial unmutated attempt 141.2 s (pytest 135.7 s), collect-only 6.2 s; four
+modules = 80 % of test time; 1.20 cores used per attempt (single-thread CPU bound).
+xdist controls n=2/n=4 loadfile/loadscope/load: 0 of 1140 per-nodeid outcome differences.
+Failed approach: plain xdist (also with --max-worker-restart=0) turns a SIGSEGV test into
+`FAILED <nodeid>` exit 1, which the Formal rule credits RED; serial gives exit -11 (no credit).
+Candidate = xdist loadfile + refuse on worker crash/node-down markers (demonstrated).
+Benchmark (G1a G1d G2f G27b, 4 shards, controls, mutation-workers=4, clean clone of 4f2cdf4b):
+baseline 315.1 / 308.6 s; candidate n=2 207.7 s; n=4 187.2 s; identical verdicts, controls
+GREEN, peak RSS 3.1 / 4.7 / 6.4 GB, no residue. Details:
+docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_11.md. Not adopted: needs crash-refusal spec,
+plugin-policy amendment, scientific review and an owner certification decision.
+
+## Pass 12 safe Formal pytest-xdist (2026-10-07)
+
+Opt-in --formal-pytest-workers / --pytest-workers (default 1, historical command). Details,
+design, crash table, benchmarks and failed approaches: docs/work/LOCAL_ASSURANCE_OPTIMIZATION_PASS_12.md.
+Commands (bytecode writes and cacheprovider off):
+- python -m pytest tests/test_formal_xdist.py tests/test_local_assurance.py tests/test_mutation_startup.py
+  tests/test_mutation_workspace.py tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared:
+  253 passed (3.12, 17.0 s; 3.11, 15.7 s).
+- Targeted 13-module control-plane set: 512 passed, 2 failed (baseline certificate drift:
+  test_core_certificate.py::test_the_certificate_describes_this_tree and
+  ::test_the_certificate_records_the_v1_relationship_truthfully) in 36.2 s.
+- Full Formal TARGETS serially (python -X utf8 -m pytest <48 TARGETS> -q -p no:randomly -p no:cacheprovider
+  --continue-on-collection-errors): 1140 passed in 132.9 s.
+- Bounded benchmarks (Formal only, mutation-workers 4): serial 1431.5 s vs xdist n=2 1116.9 s on 32
+  mutations (31 named + G1d), identical verdicts, controls GREEN, no residue.
+Failed approach: pytest.importorskip("execnet") in a new spec turned every Formal CONTROL red through
+the dependency guard; the earlier targeted set did not include test_core_guards.py.
+ASSURANCE_RUN: NO. FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/push/PR/merge.
+
+## Pass 13 semantic skip admission (2026-10-08)
+
+Previous refusal: full `local_assurance run --workers 4 --mutation-workers 4 --formal-pytest-workers 2`
+at d5d886f9 (2h42m) passed every execution gate, then `build_assurance` raised AssuranceError:
+FAST 3.11/3.12 and SCIENTIFIC each 142 skipped vs SKIP_CEILING FAST 19 / SCIENTIFIC 5; the runner
+printed a traceback (exit 1) while writing the right failure record. Prior evidence kept in
+.forge/assurance/d5d886f9.../ (failure record sha256 949d5aa2..., manifest 24f80976...).
+
+Skip audit of the d5d886f9 JUnit (identical skip universe in FAST 3.11, FAST 3.12 and SCIENTIFIC):
+142 = 133 optional provider (130 provider/flagship modules + 3 core tests needing Gmsh), 5 optional
+extras (SymPy 2, meshio 2, psutil 1), 4 conditional (reason-truth U00048/U01031, exact-freeze domain
+digest, blind-challenge dynamic import guard); 0 platform-specific; 0 unexplained.
+
+Change: tools/certification/skip_admission.py (committed rules + providers, availability probe in
+the gate's interpreter, JUnit skip parsing, per-skip admission, re-admission); assurance schema
+/7 with a `skip_admission` section; /5 and /6 revalidate against LEGACY_SKIP_CEILING (telemetry);
+probe step + evidence file in each FAST/SCIENTIFIC gate (local runner and recertify workflow);
+`local_assurance verify` re-derives the section from frozen evidence; refusal UX
+(REFUSED + FAILURE_RECORD + SAFE_TO_PUSH: NO, exit 1; INTERNAL_ERROR + traceback, exit 2).
+
+Review (forge-scientific-review, one round, CHANGES REQUIRED, all addressed):
+- HIGH registry "unavailable" for present-but-broken providers -> exact absence-reason allowlist,
+  independent module/executable facet per registry provider, facet status re-derived from raw fields.
+- HIGH Core PDE refusals only ran with Gmsh -> new provider-free tests on a hand-built mesh
+  (tests/test_pde_contracts.py); the Gmsh-gated originals stay as they were.
+- MEDIUM reason-truth skip covered two causes -> distinct reasons; rule admits only NOT_REPAIRABLE.
+- MEDIUM blind-challenge import guard skipped in every gate -> runs in a fresh interpreter; rule removed.
+- LOW freeze test skipped on any non-exact mode -> skips only on DESCENDANT, asserts EXACT otherwise.
+- LOW stored facets believed on the child -> status re-derived; block interpreter checked against
+  the environment section; docstrings corrected. LOW combined claim; protected entries must be files.
+- Recorded, not changed: a module-scoped rule admits a new test in the same module only with the
+  module's own pytestmark reason and an unavailable provider (by design); per-rule counts are
+  telemetry, not pinned.
+
+Failed approach: creating the synthetic harness kill-suite files inside certification_fixtures.make_repo
+made the certificate builder refuse ("harness area does not pin ... modules the certified suites
+import") in 47 control-plane tests; the files now live only in tests/test_skip_admission.py's fixture.
+Failed approach: a long bash heredoc patch script for hardening_assurance.py wrote nothing (quote EOF).
+
+Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
+- Dry-run audit of d5d886f9 JUnit with fresh probes: 3.11 / 3.12 FAST 142 accepted, 0 unexpected
+  (inventory c8cae527...); SCIENTIFIC 142 / 0 (first policy version, before the review fixes).
+- pytest tests/test_skip_admission.py test_hardening_assurance.py test_local_assurance.py
+  test_certificate_lineage.py test_recertification_scope.py test_certification_control_plane.py
+  test_core_certificate.py test_mutation_workspace.py test_formal_xdist.py test_mutation_population_v4.py
+  test_forge_check.py (self-checks deselected): 560 passed on 3.12, 560 passed on 3.11.
+- Full Formal TARGETS serially (python -X utf8 -m pytest <48 TARGETS> -q -p no:randomly
+  --continue-on-collection-errors): 1140 passed in 141.1 s.
+- pytest tests/test_provider_boundary.py providers/ flagships/tests: 93 passed, 130 skipped (3.12 and 3.11).
+- tools/forge_check.py --changed: 225 passed.
+- FAST preflight on the uncommitted tree (gate command, 3.12 and 3.11): 9365 passed, 141 skipped,
+  1 failed each = tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+  on tree.clean only (uncommitted changes); audit 141 accepted / 0 unexpected, inventory 14370d2c...
+  identical on 3.11 and 3.12 (3 conditional, 5 extra, 133 provider).
