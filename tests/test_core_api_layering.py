@@ -318,6 +318,10 @@ NON_CORE_PACKAGES = {
         "engineering output layer over system_runtime (BIG 13): reference provenance, verification ladder, engineering summary, "
         "run bundle, viewable fields; adds no execution, no solver and no trust vocabulary"
     ),
+    "blindfold": (
+        "FORGE Blindfold (Roadmap V2): the adversarial discovery benchmark -- synthetic universes behind an escrow "
+        "protocol, isolated evaluation roles and baselines; measures discovery from outside, holds no scientific authority"
+    ),
 }
 
 
