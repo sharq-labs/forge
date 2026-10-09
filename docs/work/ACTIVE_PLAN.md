@@ -253,8 +253,21 @@ Then review and authority debt:
       digest is re-read only on refresh; undeclared dependencies are unbound;
       `found_but_refused` reads reason prefixes; FEniCSx (distribution
       `fenics-dolfinx`, LIBRARY mode) is not covered by this check - open.
+- [x] Project review 2026-10-05 (`docs/work/PROJECT_REVIEW_2026-10-05.md`),
+      re-read against `origin/main` @ `16c87f40` on 2026-10-09:
+      R1 (HIGH, bundle export path containment) FIXED on
+      `fix/big-14-review-r1-r4`; R4 (MEDIUM, non-finite replay tolerance)
+      FIXED on the same branch; R2 (failed version probe) and R3 (RECORD vs
+      installed bytes) were already covered by the provider-identity items
+      above (`returncode` refusal, `catalog._footprint`); R5 (provider and
+      flagship collection in CI) is carried by the Pass 13 per-skip admission
+      rules, and the provider suites still run in their own environments
+      under 14.4.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
+      OWNER DECISION: `pyproject.toml` says `requires-python = ">=3.11"`;
+      CI runs 3.11/3.12 only; the local venv is 3.14 and the provider env is
+      3.13 (PyBOP caps below 3.14).
 - [ ] Re-run the affected regression packs after each bounded fix and append
       the exact commands/results to PROGRESS.
 

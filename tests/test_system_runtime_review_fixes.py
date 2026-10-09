@@ -392,7 +392,7 @@ def test_low_replay_compares_execution_identity_not_just_the_request_digest():
     first = SystemExecutor(context).run(request)
     knobs.volts = knobs.volts + 1.0                              # same request, different computation behind an unchanged authority identity
     second = SystemExecutor(context).run(request)
-    cmp = compare_runs(first, second, rel_tol=1.0)
+    cmp = compare_runs(first, second, rel_tol=0.5)
     assert "request digest" not in cmp.identity_differences and not cmp.identity_replay
     assert any("execution identity" in d for d in cmp.identity_differences)
 

@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import math
+import numbers
 from dataclasses import dataclass
 from typing import Any
 
@@ -58,9 +60,20 @@ class RunComparison:
 
 def compare_runs(a: SystemRunResult, b: SystemRunResult, *, rel_tol: float, abs_tol: float = 0.0,
                  non_deterministic_nodes: tuple[str, ...] = ()) -> RunComparison:
-    """Compare two runs of the same request.  Tolerances are declared by the caller, never defaulted."""
-    if rel_tol < 0 or abs_tol < 0:
-        raise InvalidScientificProblem("tolerances must be non-negative and declared")
+    """Compare two runs of the same request.  Tolerances are declared by the caller, never defaulted.
+
+    A tolerance is a finite, non-negative real number: an infinite one would report any drift as reproduced, a NaN one has no
+    meaning, and a boolean is not a declared tolerance.  A relative tolerance is also below 1: the relative difference of two
+    same-signed values is always below 1, so ``rel_tol >= 1`` cannot tell 1 m from 1,000,000 m."""
+    for label, tol in (("rel_tol", rel_tol), ("abs_tol", abs_tol)):
+        try:
+            finite = not isinstance(tol, bool) and isinstance(tol, numbers.Real) and math.isfinite(tol)
+        except OverflowError:                      # an int too large for a float
+            finite = False
+        if not finite or tol < 0:
+            raise InvalidScientificProblem(f"{label} must be a finite, non-negative number and declared; got {tol!r}")
+    if rel_tol >= 1:
+        raise InvalidScientificProblem(f"rel_tol must be below 1; a relative tolerance of {rel_tol!r} accepts any drift between same-signed values")
     ids: list[str] = []
     if a.request_digest != b.request_digest:
         ids.append("request digest")
