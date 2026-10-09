@@ -184,6 +184,10 @@ def test_variant_identity_binds_template_values_and_result():
     assert other.geometry_digest != variant.geometry_digest and other.variant_id != variant.variant_id
     assert variant.receipt.input_digests["template"] == tpl.digest
     assert variant.verify(tpl, reg).digest == model.digest
+    import dataclasses
+
+    with pytest.raises(GeometryRefusal, match="shape_digest"):  # a stored shape identity that the replay does not give
+        dataclasses.replace(variant, shape_digest="0" * 64).verify(tpl, reg)
     assert [v.name for v in tpl.design_variables("slab.")] == ["slab.length", "slab.thickness", "slab.width"]
 
 

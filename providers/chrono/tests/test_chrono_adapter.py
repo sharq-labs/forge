@@ -12,7 +12,7 @@ from engcore.providers import Availability, ProviderRefusal, ProviderStatus, ass
 from engcore.providers.health import ProviderHealth
 from engcore.scientific.units.quantity import Quantity
 from engcore.spatial.geometry import Transform
-from engcore.systems.assembly import AssemblyRefusal, ConnectionPoint
+from engcore.systems.assembly import AssemblyRefusal, ConnectionPoint, JointDeclaration, JointKind
 from engcore.systems.multibody import GravityDeclaration, MassProperties, MultibodyModel, MultibodyRequest
 
 
@@ -104,6 +104,21 @@ def test_joint_points_limits_and_definition_binding_fail_closed():
     limited = dataclasses.replace(asm, joints=(dataclasses.replace(asm.joints[0], lower=Quantity(-1, "rad"), upper=Quantity(1, "rad")),))
     with pytest.raises(ProviderRefusal, match="limits"):
         translation_plan(request(MultibodyModel(limited, "frame", model.mass_properties, model.gravity)))
+    # a joint loop is refused even when each child has a single parent (A->B, B->A)
+    loop_points = asm.points + (ConnectionPoint("bob.back", "bob"), ConnectionPoint("frame.back", "frame"))
+    with pytest.raises(AssemblyRefusal, match="closed kinematic loop"):
+        dataclasses.replace(asm, points=loop_points, joints=asm.joints + (JointDeclaration("back", JointKind.FIXED, "bob.back", "frame.back"),))
+    # the principal moments are the eigenvalues: a positive diagonal is not enough
+    k = Quantity(1, "kg*m^2")
+    with pytest.raises(AssemblyRefusal, match="not a physical inertia"):
+        MassProperties("bob", Quantity(1, "kg"), (m(0),) * 3, ((k, Quantity(2, "kg*m^2"), Quantity(0, "kg*m^2")),
+                                                               (Quantity(2, "kg*m^2"), k, Quantity(0, "kg*m^2")),
+                                                               (Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2"), k)), "src", ("bob", "1"))
+    # joint outputs are refused at translation, not turned into a failed run
+    joint_out = MultibodyRequest(model, Quantity(2.0, "s"), Quantity(1, "ms"), ("joint:hinge.coordinate",),
+                                 {"timestepper": "euler_implicit_linearized", "solver": "sparse_qr"})
+    with pytest.raises(ProviderRefusal, match="not translated by this adapter version"):
+        translation_plan(joint_out)
     wrong = dataclasses.replace(model.mass_properties[0], definition=("bob", "2"))
     with pytest.raises(AssemblyRefusal, match="brings its own mass properties"):
         MultibodyModel(asm, "frame", (wrong,), model.gravity)

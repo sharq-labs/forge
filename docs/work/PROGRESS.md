@@ -1807,9 +1807,10 @@ fast-forwarded.
   - `$HOME/mm/root/envs/chrono/bin/python -m pytest -q providers/chrono/tests tests/foundations/test_provider_qualification.py`
     (rootdir/config = repo): 17 passed (both pendulum reference routes executed against Chrono 10.0.0).
   - `$HOME/mm/root/envs/chrono/bin/python tools/provider_routes.py chrono --out <ledger.json>`: rc 0;
-    `chrono.pendulum_period.euler_implicit_linearized+sparse_qr` PASSED, relative error 1.3846e-07 (tolerance 1e-5) run
-    `75ab3a90…`; `…+sparse_lu` PASSED, 1.3846e-07, run `8c49eb09…`; provider 10.0.0 digest `201e5097…`; adapter
-    `0.3.0+src.7883f603b5b053cb`; ledger head `1b9c3a20…`. A route run is a check of one translation, not a qualification;
+    `chrono.pendulum_period.euler_implicit_linearized+sparse_qr` PASSED, relative error 1.3846e-07 (tolerance 1e-5);
+    `…+sparse_lu` PASSED, 1.3846e-07; provider 10.0.0 digest `201e5097…`. Re-run after the Codex fixes changed the adapter
+    source: adapter `0.3.0+src.209ff35ec371409e`, runs `621ee840…` / `22044e33…`, ledger head `daa2e259…` (the earlier
+    adapter `…7883f603…` runs `75ab3a90…` / `8c49eb09…` do not transfer to it, by design). A route run is a check of one translation, not a qualification;
     no qualification was issued.
   - `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests
     providers/calculix/tests flagships/tests/test_geometry_slice.py tests/foundations`: 133 passed (FEniCSx suite, CalculiX
@@ -1838,3 +1839,9 @@ fast-forwarded.
   only `scientific`); they now live in `engcore.claims`, and SRIA gained only a generic `RECORD_CHAIN_ANCHORED` primitive.
   A 2 s pendulum window with step-quantised crossings gave a single crossing interval and a 1e-3 tolerance with no margin;
   replaced by 10 s, interpolated crossings, 1e-5 from a stated error budget.
+- PR #124 Codex review (4 threads on the first program's commit), all verified real and fixed: joint graphs with a cycle where
+  each child has one parent (A->B, B->A) are refused; inertia is checked on its eigenvalues (a positive diagonal admitted
+  `[[1,2,0],[2,1,0],[0,0,1]]`); Chrono joint outputs are refused at translation instead of failing the run;
+  `GeometryVariant.verify` compares the whole replayed variant (shape digest, builder, receipt), not only the geometry digest.
+  `pytest tests/foundations providers/chrono/tests tests/mcp/test_foundations_tools.py flagships/tests/test_geometry_slice.py`:
+  119 passed, 2 skipped (provider-gated); chrono env `providers/chrono/tests`: 12 passed.

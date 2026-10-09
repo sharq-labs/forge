@@ -222,6 +222,9 @@ class GeometryVariant:
         model, again = template.instantiate({k: Quantity(v, template_param_unit(template, k)) for k, v in self.parameter_values.items()}, registry)
         if again.geometry_digest != self.geometry_digest:
             raise GeometryRefusal("rebuilding the variant produced a different geometry; the builder changed without a version bump")
+        if again.to_dict() != self.to_dict():  # shape digest, builder identity and receipt are identity too, not only the geometry
+            drift = sorted(k for k, v in again.to_dict().items() if self.to_dict().get(k) != v)
+            raise GeometryRefusal(f"the stored variant does not match its replay in {drift}")
         return model
 
 

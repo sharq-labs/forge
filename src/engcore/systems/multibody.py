@@ -75,9 +75,13 @@ class MassProperties:
         j = tuple(tuple(_q(v, "kg*m^2", "inertia") for v in r) for r in rows)
         if any(abs(j[a][b] - j[b][a]) > 1e-12 * max(1.0, abs(j[a][b])) for a in range(3) for b in range(3)):
             raise AssemblyRefusal(f"{self.instance_id}: inertia tensor is not symmetric")
-        d = (j[0][0], j[1][1], j[2][2])
-        if any(v <= 0 for v in d) or d[0] + d[1] < d[2] or d[1] + d[2] < d[0] or d[0] + d[2] < d[1]:
-            raise AssemblyRefusal(f"{self.instance_id}: principal moments violate positivity/triangle inequality; not a physical inertia")
+        import numpy as np
+
+        # the PRINCIPAL moments are the eigenvalues; the diagonal alone admits e.g. [[1,2,0],[2,1,0],[0,0,1]] (eigenvalue -1)
+        d = tuple(float(v) for v in np.linalg.eigvalsh(np.array(j, dtype=float)))
+        tol = 1e-12 * max(1.0, max(abs(v) for v in d))
+        if any(v <= 0 for v in d) or d[0] + d[1] < d[2] - tol or d[1] + d[2] < d[0] - tol or d[0] + d[2] < d[1] - tol:
+            raise AssemblyRefusal(f"{self.instance_id}: principal moments {d} violate positivity/triangle inequality; not a physical inertia")
         object.__setattr__(self, "source_ref", _ref(self.source_ref, f"{self.instance_id} mass properties"))
         d = tuple(str(x).strip() for x in self.definition)
         if len(d) != 2 or not all(d):

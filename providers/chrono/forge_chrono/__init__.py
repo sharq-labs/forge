@@ -140,6 +140,10 @@ def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
                        "lower": None if j.lower is None else j.lower.magnitude, "upper": None if j.upper is None else j.upper.magnitude})
     if model.actuators:
         raise ProviderRefusal("actuated Chrono runs are not translated by this adapter version; passive dynamics only")
+    joint_outputs = sorted(o for o in request.outputs if not o.startswith("body:"))
+    if joint_outputs:
+        raise ProviderRefusal(f"outputs {joint_outputs} are not translated by this adapter version (body position/velocity only); "
+                              "refused before execution rather than failing the run")
     jmap = {j.joint_id: j for j in asm.joints}
     actuators = [{"actuator_id": a.actuator_id, "joint_id": a.joint_id, "kind": a.kind.value, "profile": a.canonical(jmap[a.joint_id].kind)}
                  for a in model.actuators]

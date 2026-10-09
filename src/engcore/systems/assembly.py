@@ -377,6 +377,15 @@ class AssemblyTopology:
                 raise AssemblyRefusal(f"instance {b!r} is the child of joints {child_of[b]!r} and {j.joint_id!r}; "
                                       "closed kinematic loops are not represented by this foundation")
             child_of[b] = j.joint_id
+        parent_of = {pmap[j.child_point].instance_id: pmap[j.parent_point].instance_id for j in joints}
+        for start in parent_of:  # one parent per child is not enough: A->B, B->A is a loop too
+            seen, node = {start}, start
+            while node in parent_of:
+                node = parent_of[node]
+                if node in seen:
+                    raise AssemblyRefusal(f"the joints form a closed kinematic loop through {node!r}; closed loops are not "
+                                          "represented by this foundation")
+                seen.add(node)
         interfaces = _uniq("interfaces", self.interfaces, InterfaceDeclaration, lambda x: x.interface_id)
         for itf in interfaces:
             for pt in (itf.point_a, itf.point_b):
