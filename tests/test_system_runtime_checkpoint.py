@@ -264,6 +264,28 @@ def test_an_unbounded_or_undeclared_tolerance_cannot_report_any_drift_as_reprodu
         compare_runs(a, b, rel_tol=0.0, abs_tol=bad)
 
 
+@pytest.mark.parametrize("wide", [1.0, 2.0, 10**400])
+def test_a_relative_tolerance_of_one_or_more_is_refused_because_it_accepts_any_same_signed_drift(wide):
+    # review round 2: relative = |a-b| / max(|a|,|b|) < 1 for same-signed values, so rel_tol=1.0 read 1 m vs 1e6 m as reproduced
+    a = SystemExecutor(build()[1]).run(build()[0])
+    request, context, _ = build(knobs=Knobs(thermal_gain=5.0))
+    b = SystemExecutor(context).run(request)
+    with pytest.raises(InvalidScientificProblem, match="below 1|finite, non-negative"):
+        compare_runs(a, b, rel_tol=wide)
+
+
+def test_ordinary_numeric_tolerance_types_are_still_accepted():
+    import numpy as np
+    from fractions import Fraction
+    r1, c1, _ = build()
+    r2, c2, _ = build()
+    a, b = SystemExecutor(c1).run(r1), SystemExecutor(c2).run(r2)
+    for tol in (0, 1e-6, np.float64(1e-6), np.int64(0), Fraction(1, 10**6)):
+        assert compare_runs(a, b, rel_tol=tol, abs_tol=tol).numerical_reproducibility
+    with pytest.raises(InvalidScientificProblem, match="finite, non-negative"):
+        compare_runs(a, b, rel_tol=0.0, abs_tol=10**400)          # an int too large for a float is refused, not a raw OverflowError
+
+
 def test_a_run_comparison_can_never_claim_validation():
     from engcore.system_runtime import RunComparison
     with pytest.raises(InvalidScientificProblem, match="never assesses validation"):

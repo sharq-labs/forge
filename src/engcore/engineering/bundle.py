@@ -43,6 +43,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -70,34 +71,57 @@ class BundleRefused(InvalidScientificProblem):
     """A bundle does not verify."""
 
 
-_WINDOWS_DEVICE_NAMES = frozenset({"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))})
+_WINDOWS_DEVICE_NAMES = frozenset({"con", "prn", "aux", "nul", "conin$", "conout$", "clock$", *(f"com{i}" for i in range(10)),
+                                   *(f"lpt{i}" for i in range(10))})
 
 
 def _plain_segment(name: Any, what: str) -> str:
     """One path segment that names the same single file on every platform.
 
-    Separators of either platform, a drive or stream colon, traversal, a leading or trailing dot or space (Windows strips the trailing
-    ones, so two names would collide), control characters, wildcard characters and device names are refused."""
-    if (not isinstance(name, str) or not name or name != name.strip() or name.startswith(".") or name.endswith(".")
-            or any(c in name for c in '/\\:*?"<>|') or any(ord(c) < 32 for c in name)
+    Only printable ASCII without spaces is admitted (so no two Unicode spellings can name one file), and separators of either
+    platform, a drive or stream colon, traversal, a leading or trailing dot (Windows strips trailing dots, so two names would
+    collide), ``~`` (a Windows 8.3 short name aliases a long one), wildcard characters and device names are refused."""
+    if (not isinstance(name, str) or not name or name.startswith(".") or name.endswith(".")
+            or any(c in name for c in '/\\:*?"<>|~') or not all(32 < ord(c) < 127 for c in name)
             or name.split(".")[0].rstrip().lower() in _WINDOWS_DEVICE_NAMES):
         raise BundleRefused(f"{what} {name!r} must be a plain file name (no separator, drive, traversal, leading or trailing dot, or device name)")
     return name
 
 
 def _contained(directory: str, rel: str) -> str:
-    """The file ``rel`` (``/``-separated) inside ``directory``; refused if any segment is not plain, or if the path resolves -- through an
-    existing link or junction too -- anywhere outside the directory."""
+    """The file ``rel`` (``/``-separated) inside ``directory``; refused if any segment is not plain, or if any existing component
+    below the directory -- the file itself included -- is a link or junction (so nothing can redirect it, even to another file of the
+    same bundle)."""
     if not isinstance(rel, str):
         raise BundleRefused(f"bundle path {rel!r} is not a path")
     parts = rel.split("/")
     for part in parts:
         _plain_segment(part, "bundle path segment")
     root = os.path.realpath(directory)
-    path = os.path.realpath(os.path.join(root, *parts))
-    if os.path.normcase(os.path.commonpath([root, path])) != os.path.normcase(root) or os.path.normcase(path) == os.path.normcase(root):
-        raise BundleRefused(f"bundle path {rel!r} resolves outside the bundle directory")
+    path = os.path.join(root, *parts)
+    if os.path.normcase(os.path.realpath(path)) != os.path.normcase(path):
+        raise BundleRefused(f"bundle path {rel!r} passes through a link; it could resolve outside the bundle directory")
     return path
+
+
+def _write_contained(path: str, data: bytes) -> None:
+    """Write ``data`` at a path already checked by :func:`_contained`: into a fresh file created exclusively beside it, then renamed
+    over it, so a link or a hard link already at the destination is replaced as a directory entry and never written through."""
+    parent = os.path.dirname(path)
+    os.makedirs(parent, exist_ok=True)
+    if os.path.normcase(os.path.realpath(parent)) != os.path.normcase(parent):     # a link created under us since the check
+        raise BundleRefused(f"bundle directory {parent!r} became a link while the bundle was written")
+    fd, tmp = tempfile.mkstemp(dir=parent, prefix=".bundle-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 @dataclass(frozen=True)
@@ -150,30 +174,27 @@ def write_bundle(directory: str, *, name: str, request: SystemRunRequest, result
         files[f"references/{_plain_segment(ref.reference_id, 'reference id')}.json"] = _json_bytes(ref.to_dict())
     for artifact_name, data in sorted((artifacts or {}).items()):
         files[f"artifacts/{_plain_segment(artifact_name, 'artifact name')}"] = bytes(data)
-    folded = [rel.casefold() for rel in files]
+    folded = [rel.casefold() for rel in [*files, "manifest.json"]]
     if len(set(folded)) != len(folded):              # on a case-insensitive file system two of them would be one file
         raise BundleRefused("two bundle files differ only in letter case")
     os.makedirs(directory, exist_ok=True)
-    destinations = {rel: _contained(directory, rel) for rel in files}     # every destination is checked before anything is written
+    # every destination, the manifest's too, is checked before anything is written
+    destinations = {rel: _contained(directory, rel) for rel in [*files, "manifest.json"]}
+    if len({os.path.normcase(p) for p in destinations.values()}) != len(destinations):
+        raise BundleRefused("two bundle files resolve to one destination")
     for rel, data in files.items():
-        path = destinations[rel]
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        if os.path.normcase(os.path.realpath(path)) != os.path.normcase(path):   # a link created under us since the check
-            raise BundleRefused(f"bundle path {rel!r} resolves outside the bundle directory")
-        with open(path, "wb") as fh:
-            fh.write(data)
+        _write_contained(destinations[rel], data)
     manifest = BundleManifest(name, tuple(sorted((rel, _sha(data)) for rel, data in files.items())), request.digest, result.plan_digest, result.digest,
                               summary.digest, tuple(sorted((r.reference_id, r.digest) for r in references)),
                               tuple(sorted({p.execution_identity_digest for p in result.provider_records})))
-    with open(os.path.join(directory, "manifest.json"), "wb") as fh:
-        fh.write(_json_bytes(manifest.to_dict()))
+    _write_contained(destinations["manifest.json"], _json_bytes(manifest.to_dict()))
     return manifest
 
 
 def verify_bundle(directory: str) -> BundleManifest:
     """Re-hash every file and re-derive the result identity; raise :class:`BundleRefused` on any difference."""
     try:
-        with open(os.path.join(directory, "manifest.json"), "rb") as fh:
+        with open(_contained(directory, "manifest.json"), "rb") as fh:
             payload = json.loads(fh.read().decode("utf-8"))
     except (OSError, ValueError) as exc:
         raise BundleRefused(f"manifest.json cannot be read: {exc}") from exc
@@ -186,6 +207,9 @@ def verify_bundle(directory: str) -> BundleManifest:
         raise BundleRefused("the manifest does not match its own digest")
     files = {rel: digest for rel, digest in payload["files"]}
     for rel, digest in sorted(files.items()):
+        parts = rel.split("/") if isinstance(rel, str) else []
+        if not (len(parts) == 1 or (len(parts) == 2 and parts[0] in ("references", "artifacts"))):
+            raise BundleRefused(f"{rel!r} is not a bundle file path (a top-level file, references/<id>.json or artifacts/<name>)")
         try:
             with open(_contained(directory, rel), "rb") as fh:
                 data = fh.read()

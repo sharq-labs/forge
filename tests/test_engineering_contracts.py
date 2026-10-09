@@ -726,7 +726,9 @@ def test_the_summary_text_covers_the_notes_and_the_material_provenance_so_they_a
 
 # --------------------------------------------------------------------------------------------------------------- bundle containment (review R1)
 _ESCAPES = ["..\\..\\outside", "../outside", "..", "C:\\outside", "C:outside", "\\\\server\\share\\outside", "/abs/outside", ".hidden",
-            "trailing.", "con", "NUL", "aux.data", "lpt1", "a:stream", "tab\there", "wild*card"]
+            "trailing.", "con", "NUL", "aux.data", "lpt1", "a:stream", "tab\there", "wild*card",
+            # review round 2: Unicode spellings, 8.3 short names, spaces and the device names first missed
+            "\u00e9", "e\u0301", "a b", "AVERYL~1", "COM0", "lpt0", "CONIN$", "conout$.txt", "com\u00b9"]
 
 
 @pytest.mark.parametrize("bad", _ESCAPES)
@@ -804,7 +806,7 @@ def test_verify_refuses_a_manifest_that_names_a_file_outside_the_bundle(tmp_path
     m.pop("bundle_digest")
     m["bundle_digest"] = _sha(_json_bytes(m))
     open(mpath, "wb").write(_json_bytes(m))
-    with pytest.raises(BundleRefused, match="plain file name"):
+    with pytest.raises(BundleRefused, match="not a bundle file path|plain file name"):
         verify_bundle(d)
 
 
@@ -813,3 +815,70 @@ def test_the_plain_name_rule_admits_the_names_the_flagships_use():
     for ok in ("ghia-1982-lid-driven-cavity-re100-centerlines", "nist-webbook-formation-enthalpies-hess-lhv-ch4", "field.vtu", "ghia-like.json",
                "console", "nul-hypothesis", "com10"):
         assert _plain_segment(ok, "name") == ok
+
+
+# --------------------------------------------------------------------------------------------------------------- bundle containment, round 2
+def _link_file(link, target):
+    try:
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        pytest.skip("this platform cannot create a file symlink here")
+
+
+def test_a_link_planted_at_the_manifest_or_a_top_level_file_is_refused_before_anything_is_written(tmp_path):
+    request, context, result = _run()
+    for planted in ("manifest.json", "result.json"):
+        victim = tmp_path / f"victim-{planted}"
+        victim.write_bytes(b"precious")
+        d = tmp_path / f"b-{planted}"
+        d.mkdir()
+        _link_file(d / planted, victim)
+        with pytest.raises(BundleRefused, match="passes through a link"):
+            write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result))
+        assert victim.read_bytes() == b"precious" and not (d / "request.json").exists()
+
+
+def test_a_hard_link_already_at_a_destination_is_replaced_never_written_through(tmp_path):
+    request, context, result = _run()
+    victim = tmp_path / "victim.json"
+    victim.write_bytes(b"precious")
+    d = tmp_path / "b"
+    d.mkdir()
+    try:
+        os.link(victim, d / "request.json")
+    except (OSError, NotImplementedError):
+        pytest.skip("this platform cannot create a hard link here")
+    write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result))
+    assert victim.read_bytes() == b"precious"                       # the outside inode is untouched
+    verify_bundle(str(d))
+    assert not [n for n in os.listdir(d) if n.startswith(".bundle-")]   # no temporary file is left behind
+
+
+def test_a_link_from_an_artifact_to_another_file_of_the_bundle_is_refused_not_silently_overwritten(tmp_path):
+    request, context, result = _run_with_artifact()
+    d = tmp_path / "b"
+    (d / "artifacts").mkdir(parents=True)
+    _link_file(d / "artifacts" / "field.vtu", d / "result.json")
+    with pytest.raises(BundleRefused, match="passes through a link"):
+        write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result), artifacts={"field.vtu": b"<fake/>"})
+
+
+def test_verify_refuses_a_manifest_that_is_a_link_and_nested_names_that_write_would_refuse(tmp_path):
+    d, *_ = _write(tmp_path, "nested")
+    mpath = os.path.join(d, "manifest.json")
+    m = json.loads(open(mpath, "rb").read())
+    os.makedirs(os.path.join(d, "artifacts", "sub"))
+    open(os.path.join(d, "artifacts", "sub", "x"), "wb").write(b"x")
+    m["files"].append(["artifacts/sub/x", _sha(b"x")])
+    m.pop("bundle_digest")
+    m["bundle_digest"] = _sha(_json_bytes(m))
+    open(mpath, "wb").write(_json_bytes(m))
+    with pytest.raises(BundleRefused, match="not a bundle file path"):
+        verify_bundle(d)
+    d2, *_ = _write(tmp_path, "linkedmanifest")
+    outside = tmp_path / "manifest-outside.json"
+    outside.write_bytes(open(os.path.join(d2, "manifest.json"), "rb").read())
+    os.remove(os.path.join(d2, "manifest.json"))
+    _link_file(os.path.join(d2, "manifest.json"), outside)
+    with pytest.raises(BundleRefused, match="passes through a link"):
+        verify_bundle(d2)
