@@ -1750,3 +1750,40 @@ fast-forwarded.
   every path changed against main: ordinary. The committed study record is byte-identical to
   `D:/forge-data/kirkaldy2024/study/kirkaldy_fade_study.json`; the study was not re-run and nothing was re-downloaded.
   Local Assurance / recertification: NOT RUN (no protected path changed).
+
+## 2026-10-09 Big Rocks expansion program — platform foundations (branch `claude/adoring-cray-jj367z`)
+
+- Owner-directed breadth program alongside BIG 14 (BIG 14 tasks unchanged). Base `origin/main` @
+  `446370651bc1630daf55b9dc0e7db9189946f0fa`; final source SHA `d8b99d45` (this PROGRESS entry is a docs-only commit after it).
+  Cloud container, Linux, CPython 3.12.13 (`.venv`), Gmsh 4.15.2 available; OpenVSP, OpenRadioss, Project Chrono, FEniCSx,
+  CalculiX, Code_Aster, SU2, OpenFOAM, PyBaMM, Cantera, CoolProp, TESPy NOT available. Not pushed; no PR (owner instruction).
+- Built (map and invariants: `docs/architecture/big_rocks_foundations.md`): provider-neutral geometry + parametric variants +
+  general Gmsh adapter (`spatial/`); assembly topology, multibody declarations, Scientific Twin revisions, product templates for
+  drone/vehicle/motor/HVAC (`systems/`); provider health/qualification (`providers/health.py`); discovery grammar,
+  multi-fidelity, history, hierarchy, search (`design/`); Scene IR (`engineering/scene.py`); MCP describe/plan/run tools
+  (`mcp/foundations.py`); fail-closed adapters `providers/{openvsp,openradioss,chrono}` (translations UNVERIFIED); the geometry
+  vertical slice (`flagships/forge_flagships/geometry_slice.py`, verdict insufficient_evidence by construction).
+- forge-scientific-review, four rounds, all CHANGES REQUIRED, all findings fixed or recorded (commit messages 129a4690,
+  6fe3b6fe, 040a93ab, b6a8a9eb list each finding): geometry/provider identity (H1-H4, M1-M8), twin/evidence (H1-H3, M4-M6),
+  discovery authority (H1-H3, M4-M9), integrated slice/products/MCP/scene (H1-H2, M3-M8). Deferred: twin vocabulary overlap
+  (round 2 LOW-8) and the items in the DEFERRED_HARDENING ledger.
+- Commands and results (final source `d8b99d45`, same container):
+  - `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider`: 15 failed, 9546 passed, 134 skipped. The same 15 node ids
+    run on the pristine base worktree (`git worktree add --detach <dir> 44637065`): 13 fail there too (freeze-manifest /
+    core-freeze v3-v4 / batch56 / mutation-workspace tests: environment drift in this container, git-override refusals);
+    `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` fails only on the branch (certified files changed:
+    recertification required, see below); `tests/test_formal_xdist.py::test_real_xdist_infrastructure_failure_never_earns_credit[worker_lost_before_target-reasons1]`
+    failed once under load and passed in the two earlier FAST runs and 7/7 in isolation (timing-sensitive; not caused by this change).
+  - Skip admission audit of that FAST JUnit: skipped 134, accepted 134, unexpected 0 (new: chrono 1, openvsp 1, openradioss 1).
+  - `python tools/forge_check.py --changed`: 108 passed. `python tools/forge_check.py --regression`: 225 passed. `git diff --check`: clean.
+  - Targeted: `pytest tests/foundations providers/{chrono,openvsp,openradioss}/tests flagships/tests/test_geometry_slice.py
+    tests/mcp/test_foundations_tools.py`: all passed, 3 skipped (provider-gated real runs).
+  - `recertification_scope classify --event pull_request --base 44637065 --head HEAD`: recertify_source (tests/**, pyproject.toml,
+    tools/certification/skip_admission.py, src/engcore/mcp/server.py).
+  - Hardened-core recertification / Local Assurance: NOT RUN. It writes `certification/current_core_v2.json`, which the owner
+    instructed not to touch while the Trust Repair certification is in flight, and this container fails the freeze-manifest
+    tests on the pristine base. SCIENTIFIC tier (`-m "not campaign"`): NOT RUN.
+- Failed approaches / dead ends: `pip download pychrono` fetched an unrelated PyPI timing library of the same name (the Chrono
+  probe now refuses it by API identity); openvsp.org is blocked by the egress policy; the OpenRadioss release API returned 403.
+  A `ruff --fix` over `src/engcore/design` edited three pre-existing modules; they were restored byte-for-byte (0a0cb89f) —
+  autofix is run only on files this program owns.
