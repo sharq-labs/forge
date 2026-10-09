@@ -16,6 +16,8 @@ from ..scientific.ir.values import (
     CategoricalValue,
     IntegerValue,
     ScientificValue,
+    decode_value,
+    encode_value,
     require_scientific_value,
 )
 from ..scientific.ir.variables import ScientificVariable, VariableKind, VariableRole

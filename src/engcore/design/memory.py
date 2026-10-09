@@ -22,6 +22,7 @@ from .candidate import DesignCandidate, DesignCandidateReference
 from .evaluation import (
     DesignEvaluation,
     DesignEvaluationReference,
+    ProjectedObjective,
     ResultBinding,
     SelectionEligibility,
     project_objectives,
