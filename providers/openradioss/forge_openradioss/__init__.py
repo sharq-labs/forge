@@ -77,15 +77,21 @@ class ElasticPlasticMaterial:
 
 @dataclass(frozen=True)
 class RigidWall:
+    """A planar rigid wall.  The friction coefficient is declared (0 is a declaration, not a default)."""
+
     point: tuple[Quantity, Quantity, Quantity]
     normal: tuple[float, float, float]
+    friction: Quantity
 
-    def canonical(self) -> dict[str, list[float]]:
+    def canonical(self) -> dict[str, Any]:
         n = tuple(float(v) for v in self.normal)
         norm = math.sqrt(sum(v * v for v in n))
         if len(n) != 3 or abs(norm - 1.0) > 1e-9:
             raise ProviderRefusal("rigid wall normal must be a unit 3-vector")
-        return {"point_m": [_v(q, "m", "wall point") for q in self.point], "normal": list(n)}
+        mu = _v(self.friction, "dimensionless", "wall friction coefficient")
+        if mu < 0:
+            raise ProviderRefusal("wall friction coefficient must be >= 0")
+        return {"point_m": [_v(q, "m", "wall point") for q in self.point], "normal": list(n), "friction": mu}
 
 
 @dataclass(frozen=True)
@@ -150,8 +156,9 @@ def starter_deck(case: ExplicitImpactCase) -> str:
     vx, vy, vz = c["initial_velocity_m_s"]
     lines += ["/INIVEL/TRA/1", "initial_velocity", _f(vx) + _f(vy) + _f(vz) + _i(1)]
     p, n = c["wall"]["point_m"], c["wall"]["normal"]
-    lines += ["/RWALL/PLANE/1", "wall", _i(0) + _i(0) + _i(1), _f(p[0]) + _f(p[1]) + _f(p[2]),
-              _f(p[0] + n[0]) + _f(p[1] + n[1]) + _f(p[2] + n[2])]
+    slide = 0 if c["wall"]["friction"] == 0.0 else 2  # 0: sliding (no friction), 2: sliding with friction
+    lines += ["/RWALL/PLANE/1", "wall", _i(0) + _i(slide) + _i(1) + _i(0), _f(0.0) + _f(c["wall"]["friction"]),
+              _f(p[0]) + _f(p[1]) + _f(p[2]), _f(p[0] + n[0]) + _f(p[1] + n[1]) + _f(p[2] + n[2])]
     lines += ["/TH/PART/1", "energies", "DEF", _i(1), "/END"]
     return "\n".join(lines) + "\n"
 
@@ -160,7 +167,7 @@ def engine_deck(case: ExplicitImpactCase) -> str:
     c = case.canonical()
     return "\n".join([
         f"/RUN/{case.case_id}/1", _f(c["end_time_s"]), "/TFILE/0", _f(c["output_interval_s"]),
-        "/DT/NODA/CST/0", _f(float(c["solver_options"]["timestep_scale_factor"])) + _f(0.0), "/ANIM/DT", _f(0.0) + _f(c["end_time_s"]),
+        "/DT", _f(float(c["solver_options"]["timestep_scale_factor"])) + _f(0.0), "/ANIM/DT", _f(0.0) + _f(c["end_time_s"]),
         "/END/ENGINE"]) + "\n"
 
 

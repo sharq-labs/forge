@@ -156,21 +156,30 @@ def _status(**kw):
 
 
 def test_installed_is_not_qualified():
-    q = ProviderQualification("demo", "2.1", DIGEST, ("linear_static",), ("bench:nafems-le1",), "nafems-le-suite", "qa-team")
+    q = ProviderQualification("demo", "2.1", DIGEST, "forge_demo", "1", ("linear_static",), ("bench:nafems-le1",), "nafems-le-suite", "qa-team")
+    A = ("forge_demo", "1")
     assert assess_health(_status()).health is ProviderHealth.AVAILABLE
-    assert assess_health(_status(), scope=("linear_static",)).health is ProviderHealth.UNQUALIFIED
-    assert assess_health(_status(), qualifications=(q,), scope=("linear_static",)).health is ProviderHealth.QUALIFIED
-    assert assess_health(_status(), qualifications=(q,), scope=("explicit_dynamics",)).health is ProviderHealth.UNQUALIFIED
-    other_build = assess_health(_status(digest="b" * 64), qualifications=(q,), scope=("linear_static",))
+    assert assess_health(_status(), scope=("linear_static",), adapter=A).health is ProviderHealth.UNQUALIFIED
+    assert assess_health(_status(), qualifications=(q,), scope=("linear_static",), adapter=A).health is ProviderHealth.QUALIFIED
+    assert assess_health(_status(), qualifications=(q,), scope=("explicit_dynamics",), adapter=A).health is ProviderHealth.UNQUALIFIED
+    other_build = assess_health(_status(digest="b" * 64), qualifications=(q,), scope=("linear_static",), adapter=A)
     assert other_build.health is ProviderHealth.UNQUALIFIED and "does not transfer" in other_build.reason
+    other_adapter = assess_health(_status(), qualifications=(q,), scope=("linear_static",), adapter=("forge_demo", "2"))
+    assert other_adapter.health is ProviderHealth.UNQUALIFIED and "does not transfer" in other_adapter.reason
+    with pytest.raises(InvalidScientificProblem, match="names the adapter"):
+        assess_health(_status(), qualifications=(q,), scope=("linear_static",))
+    # fail closed: only an exact nothing-found reason is NOT_INSTALLED
+    for reason in ("python module 'x' has no distribution", "ValueError: boom", "no installed distribution metadata among ('x',)"):
+        s = _status(availability=Availability.UNAVAILABLE, version="", digest="", location="", reason=reason)
+        assert assess_health(s).health is ProviderHealth.BROKEN, reason
     assert assess_health(_status(availability=Availability.UNAVAILABLE, version="", digest="", location="",
                                  reason="executable 'demo' not found")).health is ProviderHealth.NOT_INSTALLED
     broken = _status(availability=Availability.UNAVAILABLE, version="", digest="", reason="version probe of /opt/demo exited 3")
     assert assess_health(broken).health is ProviderHealth.BROKEN and not assess_health(broken).executable
     with pytest.raises(InvalidScientificProblem, match="assertion"):
-        ProviderQualification("demo", "2.1", DIGEST, ("x",), (), "route", "me")
+        ProviderQualification("demo", "2.1", DIGEST, "a", "1", ("x",), (), "route", "me")
     with pytest.raises(InvalidScientificProblem, match="scope"):
-        ProviderQualification("demo", "2.1", DIGEST, (), ("ref",), "route", "me")
+        ProviderQualification("demo", "2.1", DIGEST, "a", "1", (), ("ref",), "route", "me")
 
 
 def _script(tmp_path, name, body, mode=0o755):
@@ -194,6 +203,7 @@ def test_probe_receipt_records_everything_and_gates_solver_identity(tmp_path):
     d2.mkdir()
     bad = probe_executable("demo", ("--version",), parse, search_path=_script(d2, "demo", 'echo "Demo 2.1"; exit 3'))
     assert not bad.succeeded and bad.failure == "exit_code_3"
+    assert assess_health(status, probe=bad).health is ProviderHealth.BROKEN  # an AVAILABLE status contradicted by its probe
     assert assess_health(status_from_probe(CAP, bad)).health is ProviderHealth.BROKEN
     with pytest.raises(InvalidScientificProblem, match="valid probe"):
         solver_identity_from_probe(bad, "demo")

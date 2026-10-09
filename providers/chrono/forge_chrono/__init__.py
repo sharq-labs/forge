@@ -75,6 +75,9 @@ def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
     pmap = {p.point_id: p for p in asm.points}
     joints = []
     for j in asm.joints:
+        if j.lower is not None or j.upper is not None:
+            raise ProviderRefusal(f"joint {j.joint_id!r} declares limits; this adapter version does not translate joint limits, "
+                                  "and a limited joint is never run as an unlimited one")
         frame = asm.point_world(j.parent_point)
         axis = frame.rotate(j.axis) if j.axis is not None else (0.0, 0.0, 1.0)
         joints.append({"joint_id": j.joint_id, "kind": j.kind.value, "parent": pmap[j.parent_point].instance_id,

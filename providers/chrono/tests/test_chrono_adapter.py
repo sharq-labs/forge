@@ -39,7 +39,7 @@ def pendulum(length=1.0, mass=2.0, amplitude_deg=5.0):
     small = Quantity(1e-6, "kg*m^2")
     mp = MassProperties("bob", Quantity(mass, "kg"), (m(0), m(0), m(0)), ((small, Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2")),
                                                                          (Quantity(0, "kg*m^2"), small, Quantity(0, "kg*m^2")),
-                                                                         (Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2"), small)), "fixture:point-mass")
+                                                                         (Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2"), small)), "fixture:point-mass", ("bob", "1"))
     g = GravityDeclaration((Quantity(0, "m/s^2"), Quantity(0, "m/s^2"), Quantity(-9.81, "m/s^2")), "scenario:lab-gravity")
     return MultibodyModel(asm, "frame", (mp,), g)
 
@@ -75,13 +75,32 @@ def test_multibody_declarations_fail_closed():
     with pytest.raises(AssemblyRefusal, match="not a physical inertia"):
         MassProperties("bob", Quantity(1, "kg"), (m(0),) * 3, ((Quantity(1, "kg*m^2"), Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2")),
                                                                (Quantity(0, "kg*m^2"), Quantity(1, "kg*m^2"), Quantity(0, "kg*m^2")),
-                                                               (Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2"), Quantity(3, "kg*m^2"))), "src")
+                                                               (Quantity(0, "kg*m^2"), Quantity(0, "kg*m^2"), Quantity(3, "kg*m^2"))), "src", ("bob", "1"))
     with pytest.raises(AssemblyRefusal, match="the ground does not move"):
         MultibodyModel(model.assembly, "bob", model.mass_properties, model.gravity)
     with pytest.raises(AssemblyRefusal, match="integer number of steps"):
         MultibodyRequest(model, Quantity(1.0, "s"), Quantity(0.3, "s"), ("body:bob.position_x",))
     with pytest.raises(AssemblyRefusal, match="unknown output"):
         MultibodyRequest(model, Quantity(1.0, "s"), Quantity(0.1, "s"), ("body:frame.position_x",))
+
+
+def test_joint_points_limits_and_definition_binding_fail_closed():
+    import dataclasses
+
+    from forge_chrono import translation_plan
+
+    model = pendulum()
+    asm = model.assembly
+    frame_pivot = next(p for p in asm.points if p.point_id == "frame.pivot")
+    moved = dataclasses.replace(asm, points=(frame_pivot, ConnectionPoint("bob.pivot", "bob", Transform.from_quantities((m(0), m(0), m(0.5))))))
+    with pytest.raises(AssemblyRefusal, match="never at one of them"):
+        MultibodyModel(moved, "frame", model.mass_properties, model.gravity)
+    limited = dataclasses.replace(asm, joints=(dataclasses.replace(asm.joints[0], lower=Quantity(-1, "rad"), upper=Quantity(1, "rad")),))
+    with pytest.raises(ProviderRefusal, match="limits"):
+        translation_plan(request(MultibodyModel(limited, "frame", model.mass_properties, model.gravity)))
+    wrong = dataclasses.replace(model.mass_properties[0], definition=("bob", "2"))
+    with pytest.raises(AssemblyRefusal, match="brings its own mass properties"):
+        MultibodyModel(asm, "frame", (wrong,), model.gravity)
 
 
 def test_a_same_named_package_is_not_project_chrono(monkeypatch):

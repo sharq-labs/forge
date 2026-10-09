@@ -118,7 +118,8 @@ def probe_executable(command: str, version_argv: tuple[str, ...], parse_version:
     real = os.path.realpath(path)
     env = {"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp"), "LC_ALL": "C"}
     env.update(dict(environment or {}))
-    env_digest = content_digest(sorted(env.items()))
+    # PATH and HOME are install/host locations: their NAMES are identity, their values are operational
+    env_digest = content_digest(sorted((k, "<location>" if k in ("PATH", "HOME") else v) for k, v in env.items()))
     try:
         with open(real, "rb") as fh:
             exe_digest = _sha(fh.read())
@@ -180,6 +181,8 @@ class ProviderQualification:
     provider_id: str
     provider_version: str
     provider_digest: str
+    adapter_id: str
+    adapter_version: str
     scope: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     route: str
@@ -187,7 +190,7 @@ class ProviderQualification:
     notes: str = ""
 
     def __post_init__(self) -> None:
-        for label in ("provider_id", "provider_version", "route", "issuer"):
+        for label in ("provider_id", "provider_version", "adapter_id", "adapter_version", "route", "issuer"):
             if not str(getattr(self, label) or "").strip():
                 raise InvalidScientificProblem(f"a qualification requires {label}")
         if not re.fullmatch(r"[0-9a-f]{64}", str(self.provider_digest)):
@@ -201,13 +204,16 @@ class ProviderQualification:
         object.__setattr__(self, "scope", scope)
         object.__setattr__(self, "evidence_refs", refs)
 
-    def covers(self, status: ProviderStatus, scope: tuple[str, ...]) -> bool:
+    def covers(self, status: ProviderStatus, scope: tuple[str, ...], adapter: tuple[str, str]) -> bool:
+        """Exact provider build AND exact adapter (translation) version AND the requested scope."""
         return (status.available and status.capability.provider_id == self.provider_id and status.version == self.provider_version
-                and status.digest == self.provider_digest and set(scope) <= set(self.scope))
+                and status.digest == self.provider_digest and tuple(adapter) == (self.adapter_id, self.adapter_version)
+                and set(scope) <= set(self.scope))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": QUALIFICATION_SCHEMA, "classification": "qualification_reference_not_evidence", "provider_id": self.provider_id,
-                "provider_version": self.provider_version, "provider_digest": self.provider_digest, "scope": list(self.scope),
+                "provider_version": self.provider_version, "provider_digest": self.provider_digest, "adapter_id": self.adapter_id,
+                "adapter_version": self.adapter_version, "scope": list(self.scope),
                 "evidence_refs": list(self.evidence_refs), "route": self.route, "issuer": self.issuer}
 
     @property
@@ -236,25 +242,52 @@ class ProviderHealthReport:
                 "qualification_digest": self.qualification_digest, "probe_digest": self.probe_digest}
 
 
+#: The ONLY reasons read as "nothing is installed".  Anything else unavailable is BROKEN (fail closed).
+_NOT_FOUND = (re.compile(r"^executable '[^']*' not found$"), re.compile(r"^python module '[^']*' is not installed$"),
+              re.compile(r"^adapter package '[^']*' is not importable here \(ModuleNotFoundError: No module named '[^']*'\)$"))
+
+
+def _nothing_found(status: ProviderStatus, probe: ProbeReceipt | None) -> bool:
+    if status.location or (probe is not None and probe.failure != "not_found"):
+        return False
+    return any(p.match(status.reason or "") for p in _NOT_FOUND)
+
+
 def assess_health(status: ProviderStatus, *, qualifications: tuple[ProviderQualification, ...] = (),
-                  scope: tuple[str, ...] = (), probe: ProbeReceipt | None = None) -> ProviderHealthReport:
-    """Classify one provider status.  With a ``scope``, the answer is QUALIFIED or UNQUALIFIED, never AVAILABLE."""
+                  scope: tuple[str, ...] = (), adapter: tuple[str, str] | None = None,
+                  probe: ProbeReceipt | None = None) -> ProviderHealthReport:
+    """Classify one provider status.  With a ``scope``, the answer is QUALIFIED or UNQUALIFIED, never AVAILABLE.
+
+    Fail-closed: an unavailable provider is NOT_INSTALLED only for an exact
+    nothing-found reason; every other unavailable status is BROKEN.  A probe
+    that disagrees with the status makes the provider BROKEN.  Qualification
+    needs the exact provider build and the exact adapter (translation)
+    version, because a changed adapter changes what the provider is asked.
+    """
     pid = status.capability.provider_id
-    sdigest = content_digest(status.to_dict())
+    sdigest = content_digest({k: v for k, v in status.to_dict().items() if k != "location"})
     pdig = probe.digest if probe is not None else ""
     scope = tuple(sorted({str(s).strip() for s in scope if str(s).strip()}))
+    if probe is not None:
+        disagree = probe.succeeded != status.available or (
+            status.available and status.executable_digest and probe.executable_digest != status.executable_digest)
+        if disagree:
+            return ProviderHealthReport(pid, ProviderHealth.BROKEN, "the probe receipt and the registry status disagree", sdigest, scope,
+                                        probe_digest=pdig)
     if not status.available:
-        broken = status.found_but_refused or bool(status.location) or (probe is not None and probe.failure not in ("", "not_found"))
-        return ProviderHealthReport(pid, ProviderHealth.BROKEN if broken else ProviderHealth.NOT_INSTALLED, status.reason or "unavailable",
-                                    sdigest, scope, probe_digest=pdig)
+        health = ProviderHealth.NOT_INSTALLED if _nothing_found(status, probe) else ProviderHealth.BROKEN
+        return ProviderHealthReport(pid, health, status.reason or "unavailable", sdigest, scope, probe_digest=pdig)
     if not scope:
         return ProviderHealthReport(pid, ProviderHealth.AVAILABLE, "identified and runnable; qualification not requested",
                                     sdigest, probe_digest=pdig)
+    if adapter is None or len(tuple(adapter)) != 2:
+        raise InvalidScientificProblem("a qualification question names the adapter (id, version) that would translate the request")
     for q in qualifications:
-        if q.covers(status, scope):
+        if q.covers(status, scope, tuple(adapter)):
             return ProviderHealthReport(pid, ProviderHealth.QUALIFIED, f"qualification {q.route!r} by {q.issuer} covers {list(scope)}",
                                         sdigest, scope, q.digest, pdig)
-    stale = [q for q in qualifications if q.provider_id == pid and (q.provider_version != status.version or q.provider_digest != status.digest)]
-    why = ("a qualification exists for another build; it does not transfer" if stale
+    stale = [q for q in qualifications if q.provider_id == pid and (
+        q.provider_version != status.version or q.provider_digest != status.digest or (q.adapter_id, q.adapter_version) != tuple(adapter))]
+    why = ("a qualification exists for another provider build or adapter version; it does not transfer" if stale
            else f"no qualification covers {list(scope)} for {pid} {status.version}")
     return ProviderHealthReport(pid, ProviderHealth.UNQUALIFIED, why, sdigest, scope, probe_digest=pdig)

@@ -46,6 +46,7 @@ class ParameterKind(str, Enum):
 
 _LENGTH_KINDS = {ParameterKind.LENGTH, ParameterKind.WIDTH, ParameterKind.HEIGHT, ParameterKind.RADIUS,
                  ParameterKind.THICKNESS, ParameterKind.POSITION}
+_ANGLE_UNITS = ("radian", "degree", "turn", "arcminute", "arcsecond", "milliradian")
 _POSITIVE_KINDS = {ParameterKind.LENGTH, ParameterKind.WIDTH, ParameterKind.HEIGHT, ParameterKind.RADIUS, ParameterKind.THICKNESS}
 
 
@@ -72,7 +73,7 @@ class GeometryParameter:
             q = getattr(self, label)
             if not isinstance(q, Quantity) or q.dimensionality != dimensionality(unit):
                 raise GeometryRefusal(f"parameter {self.name!r} {label} bound must be a Quantity in a {kind.value} unit")
-            if kind not in _LENGTH_KINDS and str(q.units) not in ("radian", "degree", "turn", "arcminute", "arcsecond", "milliradian"):
+            if kind not in _LENGTH_KINDS and str(q.units) not in _ANGLE_UNITS:
                 raise GeometryRefusal(f"parameter {self.name!r} {label} bound must be an angle unit, not {q.units}")
             object.__setattr__(self, label, q.to(unit))
         if not self.upper.magnitude > self.lower.magnitude:
@@ -88,6 +89,8 @@ class GeometryParameter:
         """The value in canonical units, or a refusal.  Out-of-bounds values are refused, never clipped."""
         if not isinstance(value, Quantity) or value.dimensionality != dimensionality(self.unit):
             raise GeometryRefusal(f"parameter {self.name!r} requires a {self.kind.value} Quantity")
+        if self.kind not in _LENGTH_KINDS and str(value.units) not in _ANGLE_UNITS:
+            raise GeometryRefusal(f"parameter {self.name!r} requires an angle unit, not {value.units}")
         v = value.to(self.unit)
         if not (self.lower.magnitude <= v.magnitude <= self.upper.magnitude):
             raise GeometryRefusal(f"parameter {self.name!r}={v.magnitude} {self.unit} lies outside "

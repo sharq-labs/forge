@@ -51,6 +51,8 @@ def test_operation_list_is_deterministic_unit_canonical_and_identity_bearing():
     (lambda F: F.LiftingSurface("w", q(10), q(1), q(0.5), q(80, "degree"), q(0, "degree"), q(0.1, "dimensionless"),
                                 F.Position(q(0), q(0), q(0))), "declared range"),
     (lambda F: F.BodyOfRevolution("b", 4.0, q(0.5), F.Position(q(0), q(0), q(0))), "length Quantity"),
+    (lambda F: F.LiftingSurface("fin", q(1), q(0.8), q(0.4), q(30, "degree"), q(0, "degree"), q(0.1, "dimensionless"),
+                                F.Position(q(0), q(0), q(0)), vertical=True), "mirrored onto itself"),
 ])
 def test_translation_refuses_out_of_scope_declarations(change, match):
     import forge_openvsp as F
@@ -91,5 +93,5 @@ def test_real_openvsp_build_meshes_through_the_gmsh_adapter(tmp_path):  # pragma
     assert result.source.declared_length_unit in ("m", "mm") and result.receipt.provider_id == "openvsp"
     model = GeometryModel("uav", "1", 3, (FrameDefinition("world"),), (Body("airframe", Shape.imported(result.source), "world"),),
                           (Region("airframe", ("airframe",)),))
-    meshed = mesh_geometry(model, GmshMeshRequest(size=q(0.2), frame_id="body", files={result.source.file_digest: result.step_path}))
+    meshed = mesh_geometry(model, GmshMeshRequest(size=q(0.2), files={result.source.file_digest: result.step_path}))
     assert meshed.mesh.cell_count > 0

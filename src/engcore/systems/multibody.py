@@ -47,13 +47,18 @@ def _ref(value: str, label: str) -> str:
 
 @dataclass(frozen=True)
 class MassProperties:
-    """Mass, centre of mass (instance frame) and inertia about the centre of mass (instance axes)."""
+    """Mass, centre of mass (instance frame) and inertia about the centre of mass (instance axes).
+
+    Bound to the component DEFINITION (id, version) it was sourced for: after a
+    slot swap the old component's mass properties do not describe the new one.
+    """
 
     instance_id: str
     mass: Quantity
     center_of_mass: tuple[Quantity, Quantity, Quantity]
     inertia: tuple[tuple[Quantity, ...], ...]
     source_ref: str
+    definition: tuple[str, str]
 
     def __post_init__(self) -> None:
         if not str(self.instance_id).strip():
@@ -74,13 +79,17 @@ class MassProperties:
         if any(v <= 0 for v in d) or d[0] + d[1] < d[2] or d[1] + d[2] < d[0] or d[0] + d[2] < d[1]:
             raise AssemblyRefusal(f"{self.instance_id}: principal moments violate positivity/triangle inequality; not a physical inertia")
         object.__setattr__(self, "source_ref", _ref(self.source_ref, f"{self.instance_id} mass properties"))
+        d = tuple(str(x).strip() for x in self.definition)
+        if len(d) != 2 or not all(d):
+            raise AssemblyRefusal(f"{self.instance_id}: mass properties name the component definition (id, version) they describe")
+        object.__setattr__(self, "definition", d)
         object.__setattr__(self, "_canonical", {"mass_kg": m, "com_m": list(com), "inertia_kg_m2": [list(r) for r in j]})
 
     def canonical(self) -> dict[str, Any]:
         return dict(self._canonical)  # type: ignore[attr-defined]
 
     def to_dict(self) -> dict[str, Any]:
-        return {"instance_id": self.instance_id, **self.canonical(), "source_ref": self.source_ref}
+        return {"instance_id": self.instance_id, "definition": list(self.definition), **self.canonical(), "source_ref": self.source_ref}
 
 
 @dataclass(frozen=True)
@@ -179,11 +188,26 @@ class MultibodyModel:
         for m in self.mass_properties:
             if not isinstance(m, MassProperties) or m.instance_id in mp:
                 raise AssemblyRefusal("mass properties must be unique MassProperties records")
-            self.assembly.instance(m.instance_id)
+            inst = self.assembly.instance(m.instance_id)
+            if inst.definition_key != m.definition:
+                raise AssemblyRefusal(f"mass properties of {m.instance_id!r} describe {m.definition}, but the instance is now "
+                                      f"{inst.definition_key}; a swapped component brings its own mass properties")
             mp[m.instance_id] = m
         missing = sorted(moving - set(mp))
         if missing:
             raise AssemblyRefusal(f"moving bodies {missing} have no mass properties; mass is never estimated or defaulted")
+        for j in self.assembly.joints:
+            a, b = self.assembly.point_world(j.parent_point), self.assembly.point_world(j.child_point)
+            gap = max(abs(x - y) for x, y in zip(a.translation_m, b.translation_m))
+            if gap > 1e-9 * max(1.0, max(abs(v) for v in a.translation_m)):
+                raise AssemblyRefusal(f"joint {j.joint_id!r}: parent and child points are {gap:.3e} m apart in the assembled pose; "
+                                      "a joint is placed where both its points coincide, never at one of them")
+            if j.kind is JointKind.FIXED and any(abs(x - y) > 1e-9 for ra, rb in zip(a.rotation, b.rotation) for x, y in zip(ra, rb)):
+                raise AssemblyRefusal(f"fixed joint {j.joint_id!r}: point frames are not aligned in the assembled pose")
+            if j.axis is not None:
+                aa, ab = a.rotate(j.axis), b.rotate(j.axis)
+                if max(abs(x - y) for x, y in zip(aa, ab)) > 1e-9:
+                    raise AssemblyRefusal(f"joint {j.joint_id!r}: its axis differs between the parent and child point frames")
         roots = parents - moving
         if roots - {self.ground}:
             raise AssemblyRefusal(f"kinematic chain roots {sorted(roots - {self.ground})} are not the ground; floating bases are not declared")

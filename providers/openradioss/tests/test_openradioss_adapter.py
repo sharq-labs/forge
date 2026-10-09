@@ -29,7 +29,7 @@ def case(**kw):
         material=ElasticPlasticMaterial("al6061", Quantity(2.7, "g/cm^3"), Quantity(69, "GPa"), Quantity(0.33, "dimensionless"),
                                         Quantity(276, "MPa"), Quantity(500, "MPa"), "handbook:asm-al6061-t6"),
         initial_velocity=(Quantity(0, "m/s"), Quantity(0, "m/s"), Quantity(-50, "m/s")),
-        wall=RigidWall((Quantity(0, "m"), Quantity(0, "m"), Quantity(-0.001, "m")), (0.0, 0.0, 1.0)),
+        wall=RigidWall((Quantity(0, "m"), Quantity(0, "m"), Quantity(-0.001, "m")), (0.0, 0.0, 1.0), Quantity(0.2, "dimensionless")),
         end_time=Quantity(0.1, "ms"), output_interval=Quantity(1, "us"), histories=("kinetic_energy", "internal_energy"),
         solver_options={"timestep_scale_factor": 0.67})
     base.update(kw)
@@ -126,7 +126,7 @@ def test_real_impact_run_conserves_energy_before_contact():  # pragma: no cover 
     from forge_openradioss import OpenRadiossProvider
 
     rec = OpenRadiossProvider(*_statuses()).execute(case(wall=__import__("forge_openradioss").RigidWall(
-        (Quantity(0, "m"), Quantity(0, "m"), Quantity(-1.0, "m")), (0.0, 0.0, 1.0))))
+        (Quantity(0, "m"), Quantity(0, "m"), Quantity(-1.0, "m")), (0.0, 0.0, 1.0), Quantity(0, "dimensionless"))))
     assert rec.succeeded, rec.reason
     ke = rec.series_for("kinetic_energy").values
     assert ke[-1] == pytest.approx(ke[0], rel=1e-3)  # free flight: no work done before the wall is reached

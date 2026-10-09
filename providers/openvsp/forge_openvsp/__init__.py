@@ -119,6 +119,8 @@ class LiftingSurface:
 
     def operations(self) -> list[list[Any]]:
         n = _name(self.name)
+        if self.vertical and self.symmetric:
+            raise ProviderRefusal(f"{n}: a vertical surface with planar symmetry would be mirrored onto itself; declare symmetric=False")
         span = _len(self.span, f"{n} span")
         rc, tc = _len(self.root_chord, f"{n} root chord"), _len(self.tip_chord, f"{n} tip chord")
         if tc > rc:
@@ -131,8 +133,9 @@ class LiftingSurface:
         half = span / 2 if self.symmetric else span
         ops = [["AddGeom", n, "WING"], ["SetParmVal", n, "Span", "XSec_1", half], ["SetParmVal", n, "Root_Chord", "XSec_1", rc],
                ["SetParmVal", n, "Tip_Chord", "XSec_1", tc], ["SetParmVal", n, "Sweep", "XSec_1", sweep],
-               ["SetParmVal", n, "Dihedral", "XSec_1", dih], ["SetParmVal", n, "ThickChord", "XSecCurve_0", t],
-               ["SetParmVal", n, "ThickChord", "XSecCurve_1", t], ["SetParmVal", n, "X_Rel_Location", "XForm", x],
+               ["SetParmVal", n, "Dihedral", "XSec_1", dih], ["SetParmVal", n, "Sweep_Location", "XSec_1", 0.0],
+               ["SetParmVal", n, "ThickChord", "XSecCurve_0", t], ["SetParmVal", n, "ThickChord", "XSecCurve_1", t],
+               ["SetParmVal", n, "Camber", "XSecCurve_0", 0.0], ["SetParmVal", n, "Camber", "XSecCurve_1", 0.0], ["SetParmVal", n, "X_Rel_Location", "XForm", x],
                ["SetParmVal", n, "Y_Rel_Location", "XForm", y], ["SetParmVal", n, "Z_Rel_Location", "XForm", z],
                ["SetParmVal", n, "Sym_Planar_Flag", "Sym", 2.0 if self.symmetric else 0.0]]
         if self.vertical:
@@ -189,6 +192,8 @@ class OpenVSPProvider:
         self.status = status
 
     def build(self, request: VSPModelRequest, out_dir: str | None = None) -> VSPGeometryResult:
+        """Run the operation list in a FRESH directory (under ``out_dir`` when given), check OpenVSP's error
+        manager after every call and read every parameter back; any mismatch is a refusal."""
         if not self.status.available:
             raise ProviderRefusal(f"OpenVSP is unavailable: {self.status.reason}; no geometry is synthesized")
         from engcore.providers import require_library_unchanged
@@ -197,7 +202,7 @@ class OpenVSPProvider:
         import openvsp as vsp  # pragma: no cover - requires OpenVSP
 
         ops = operations(request)  # pragma: no cover
-        out = out_dir or tempfile.mkdtemp(prefix="forge-vsp-")  # pragma: no cover
+        out = tempfile.mkdtemp(prefix="forge-vsp-", dir=out_dir)  # pragma: no cover - always empty: no stale export can be bound
         ids: dict[str, str] = {}  # pragma: no cover
         for op in ops:  # pragma: no cover
             kind = op[0]
@@ -210,10 +215,16 @@ class OpenVSPProvider:
                 vsp.SetGeomName(ids[op[1]], op[1])
             elif kind == "SetParmVal":
                 vsp.SetParmVal(ids[op[1]], op[2], op[3], float(op[4]))
+                back = vsp.GetParmVal(ids[op[1]], op[2], op[3])
+                if abs(back - float(op[4])) > 1e-9 * max(1.0, abs(float(op[4]))):
+                    raise ProviderRefusal(f"OpenVSP did not take {op[1]}.{op[3]}.{op[2]}={op[4]} (reads back {back}); wrong parameter name?")
             elif kind == "Update":
                 vsp.Update()
             elif kind == "ExportFile":
                 vsp.ExportFile(os.path.join(out, op[1]), vsp.SET_ALL, vsp.EXPORT_STEP)
+            if vsp.ErrorMgr.GetNumTotalErrors() > 0:
+                err = vsp.ErrorMgr.PopLastError()
+                raise ProviderRefusal(f"OpenVSP reported an error after {op[0]}: {err.GetErrorString()}")
         return self._result(request, os.path.join(out, "model.stp"))  # pragma: no cover
 
     def _result(self, request: VSPModelRequest, step_path: str) -> VSPGeometryResult:

@@ -928,6 +928,8 @@ class GeometryModel:
             sd = m.get("state_digest")
             if sd is not None and sd not in states:
                 raise GeometryRefusal(f"material state {sd[:12]} of region {m['region']!r} was not supplied; it is not reconstructed")
+            if sd is not None and states[sd].digest != sd:
+                raise GeometryRefusal(f"the state supplied for {sd[:12]} has another digest; it is not the state the model bound")
             mats.append(MaterialBinding(m["region"], ident, states.get(sd) if sd else None))
         model = cls(
             p["model_id"], p["version"], p["dimension"],
@@ -1059,13 +1061,30 @@ class MeshBinding:
         g = {str(k): str(v) for k, v in dict(self.groups).items()}
         if not g or len(set(g.values())) != len(g):
             raise GeometryRefusal("a mesh binding maps each canonical entity to its own physical group")
+        for entity, name in g.items():
+            canonical = entity.partition(":")[2]
+            if name != canonical:
+                raise GeometryRefusal(f"{entity!r} is bound to group {name!r}; a canonical entity is realized by the group of its "
+                                      "own name, so a swapped or renamed binding is refused")
         object.__setattr__(self, "groups", dict(sorted(g.items())))
 
-    def validate(self, model: GeometryModel, mesh: SpatialMesh) -> "MeshBinding":
+    def validate(self, model: GeometryModel, mesh: SpatialMesh, receipt: GeometryReceipt) -> "MeshBinding":
+        """Check the binding against the geometry, the mesh AND the provider receipt that produced the mesh.
+
+        The receipt is what ties THIS mesh to THIS shape: a binding that names
+        a mesh generated from another shape (same group names, other
+        dimensions) is refused because the receipt's shape digest differs.
+        """
         if model.digest != self.geometry_digest:
             raise GeometryRefusal("mesh binding belongs to another geometry")
         if mesh.digest != self.mesh_digest:
             raise GeometryRefusal("mesh binding belongs to another mesh")
+        if not isinstance(receipt, GeometryReceipt) or receipt.digest != self.receipt_digest:
+            raise GeometryRefusal("mesh binding is not backed by the receipt it names")
+        if receipt.input_digests.get("shape") != model.shape_digest:
+            raise GeometryRefusal("the receipt's mesh was generated from another shape; the binding is refused")
+        if receipt.output_digests.get("mesh") != mesh.digest or receipt.output_digests.get("entity_map") != self.entity_map_digest:
+            raise GeometryRefusal("the receipt does not record this mesh and entity map")
         groups = {grp.name: grp for grp in mesh.groups}
         declared = {r.entity_id: GroupKind.CELLS for r in model.regions}
         declared.update({b.entity_id: GroupKind.FACETS for b in model.boundaries})
@@ -1099,10 +1118,16 @@ class MeshBinding:
     def from_dict(cls, p: Mapping[str, Any]) -> "MeshBinding":
         if p.get("schema") != MESH_BINDING_SCHEMA:
             raise GeometryRefusal("unsupported mesh binding schema")
-        return cls(p["geometry_digest"], p["mesh_digest"], p["groups"], p["entity_map_digest"], p["receipt_digest"])
+        out = cls(p["geometry_digest"], p["mesh_digest"], p["groups"], p["entity_map_digest"], p["receipt_digest"])
+        if "digest" in p and p["digest"] != out.digest:
+            raise GeometryRefusal("serialized mesh binding does not match its digest")
+        return out
+
+    def serialize(self) -> dict[str, Any]:
+        return dict(self.to_dict(), digest=self.digest)
 
 
-def region_material_map(model: GeometryModel, mesh: SpatialMesh, binding: MeshBinding,
+def region_material_map(model: GeometryModel, mesh: SpatialMesh, binding: MeshBinding, receipt: GeometryReceipt,
                         states: Mapping[str, MaterialState] | None = None):
     """The BIG 5 :class:`~engcore.spatial.fields.RegionMaterialMap` implied by the geometry's material bindings.
 
@@ -1113,7 +1138,7 @@ def region_material_map(model: GeometryModel, mesh: SpatialMesh, binding: MeshBi
     """
     from .fields import RegionMaterialMap
 
-    binding.validate(model, mesh)
+    binding.validate(model, mesh, receipt)
     supplied = dict(states or {})
     pairs = []
     for m in model.materials:

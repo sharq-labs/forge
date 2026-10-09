@@ -218,7 +218,7 @@ def test_gmsh_2d_plate_maps_every_declared_entity_and_is_deterministic():
     from engcore.spatial.gmsh_adapter import GmshMeshRequest, facet_measure, mesh_geometry, mesh_measure
 
     g = plate()
-    r = mesh_geometry(g, GmshMeshRequest(size=m(0.02), frame_id="xy"))
+    r = mesh_geometry(g, GmshMeshRequest(size=m(0.02)))
     mesh = r.mesh
     assert {gr.name for gr in mesh.groups} == {"left_plate", "right_plate", "hot", "cold", "sides", "joint"}
     assert mesh_measure(mesh) == pytest.approx(0.05, rel=1e-12)
@@ -229,15 +229,15 @@ def test_gmsh_2d_plate_maps_every_declared_entity_and_is_deterministic():
     assert r.binding.geometry_digest == g.digest and r.receipt.output_digests["mesh"] == mesh.digest
     # provider tags live only in the entity map
     assert r.entity_map.provider_entities_of("feature:left/xmin") and "gmsh" not in str(g.to_dict())
-    again = mesh_geometry(g, GmshMeshRequest(size=m(0.02), frame_id="xy"))
+    again = mesh_geometry(g, GmshMeshRequest(size=m(0.02)))
     assert again.mesh.digest == mesh.digest and again.receipt.digest == r.receipt.digest
-    finer = mesh_geometry(g, GmshMeshRequest(size=m(0.01), frame_id="xy"))
+    finer = mesh_geometry(g, GmshMeshRequest(size=m(0.01)))
     assert finer.mesh.digest != mesh.digest and finer.receipt.options["size_m"] == 0.01
     # binding refuses a foreign mesh and a foreign geometry
     with pytest.raises(GeometryRefusal, match="another mesh"):
-        r.binding.validate(g, finer.mesh)
+        r.binding.validate(g, finer.mesh, r.receipt)
     with pytest.raises(GeometryRefusal, match="another geometry"):
-        r.binding.validate(plate(0.31), mesh)
+        r.binding.validate(plate(0.31), mesh, r.receipt)
     assert MeshBinding.from_dict(r.binding.to_dict()) == r.binding
 
 
@@ -252,7 +252,7 @@ def test_gmsh_3d_cutout_and_interface_measures():
                       boundaries=(Boundary("bore", (FeatureRef("hole", "side"),)), Boundary("base", (FeatureRef("block", "zmin"),)),
                                   Boundary("top", (FeatureRef("lid", "zmax"),))),
                       interfaces=(Interface("contact", "block", "lid"),))
-    r = mesh_geometry(g, GmshMeshRequest(size=m(0.01), frame_id="xyz"))
+    r = mesh_geometry(g, GmshMeshRequest(size=m(0.01)))
     M = r.mesh
     assert M.cell_type.value == "tetrahedron"
     # planar, uncurved faces are exact; curved ones are a polygonal discretization (stated, not hidden)
@@ -268,7 +268,7 @@ def test_gmsh_3d_cutout_and_interface_measures():
 def test_gmsh_refuses_rather_than_guessing():
     from engcore.spatial.gmsh_adapter import GmshMeshRequest, mesh_geometry
 
-    req = GmshMeshRequest(size=m(0.05), frame_id="xyz")
+    req = GmshMeshRequest(size=m(0.05))
     a = Body("a", Shape.box(m(1), m(1), m(1)), "world")
     b = Body("b", Shape.box(m(1), m(1), m(1)), "world", Transform.from_quantities((m(0.5), m(0), m(0))))
     with pytest.raises(GeometryRefusal, match="overlap"):
@@ -291,16 +291,16 @@ def test_region_material_map_follows_geometry_bindings():
     from engcore.spatial.gmsh_adapter import GmshMeshRequest, mesh_geometry
 
     g = plate()
-    r = mesh_geometry(g, GmshMeshRequest(size=m(0.05), frame_id="xy"))
+    r = mesh_geometry(g, GmshMeshRequest(size=m(0.05)))
     hot = MaterialState(ALU, (NamedQuantity("temperature", Quantity(350, "K")),))
     cold = MaterialState(STEEL, (NamedQuantity("temperature", Quantity(300, "K")),))
-    rmm = region_material_map(g, r.mesh, r.binding, {"left_plate": hot, "right_plate": cold})
+    rmm = region_material_map(g, r.mesh, r.binding, r.receipt, {"left_plate": hot, "right_plate": cold})
     cells = r.mesh.cell_indices(r.mesh.region("left_plate"))
     assert rmm.state_of_cell(int(cells[0])) == hot
     with pytest.raises(GeometryRefusal, match="never defaulted"):
-        region_material_map(g, r.mesh, r.binding, {"left_plate": hot})
+        region_material_map(g, r.mesh, r.binding, r.receipt, {"left_plate": hot})
     with pytest.raises(GeometryRefusal, match="another material"):
-        region_material_map(g, r.mesh, r.binding, {"left_plate": cold, "right_plate": cold})
+        region_material_map(g, r.mesh, r.binding, r.receipt, {"left_plate": cold, "right_plate": cold})
 
 
 @needs_gmsh
@@ -328,17 +328,17 @@ def test_imported_geometry_requires_and_checks_declared_units(tmp_path):
         top = FeatureSelector("top", (-1, -1, 0.0049), (1, 1, 0.0051))
         body = Body("part", Shape.imported(src, (top,)), "world")
         g = GeometryModel("imp", "1", 3, (ROOT,), (body,), (Region("solid", ("part",)),), (Boundary("top", (FeatureRef("part", "top"),)),))
-        r = mesh_geometry(g, GmshMeshRequest(size=m(0.004), frame_id="xyz", files={digest: str(tmp_path / f"box.{fmt}")}))
+        r = mesh_geometry(g, GmshMeshRequest(size=m(0.004), files={digest: str(tmp_path / f"box.{fmt}")}))
         assert mesh_measure(r.mesh) == pytest.approx(0.02 * 0.01 * 0.005, rel=1e-9)
         assert facet_measure(r.mesh, r.mesh.facet_indices(r.mesh.region("top"))) == pytest.approx(0.02 * 0.01, rel=1e-9)
         assert r.receipt.input_digests["file:part"] == digest
     wrong = ImportedSource(hashlib.sha256(step).hexdigest(), "step", "m")
     with pytest.raises(GeometryRefusal, match="the declaration says m"):
         mesh_geometry(GeometryModel("imp", "1", 3, (ROOT,), (Body("p", Shape.imported(wrong), "world"),), (Region("s", ("p",)),)),
-                      GmshMeshRequest(size=m(0.004), frame_id="xyz", files={wrong.file_digest: str(tmp_path / "box.step")}))
+                      GmshMeshRequest(size=m(0.004), files={wrong.file_digest: str(tmp_path / "box.step")}))
     with pytest.raises(GeometryRefusal, match="sha256"):
         mesh_geometry(GeometryModel("imp", "1", 3, (ROOT,), (Body("p", Shape.imported(wrong), "world"),), (Region("s", ("p",)),)),
-                      GmshMeshRequest(size=m(0.004), frame_id="xyz", files={wrong.file_digest: str(tmp_path / "box.brep")}))
+                      GmshMeshRequest(size=m(0.004), files={wrong.file_digest: str(tmp_path / "box.brep")}))
     assert step_length_unit(b"no units here") is None
 
 
@@ -347,4 +347,82 @@ def test_gmsh_unavailable_is_refused_not_synthesized(monkeypatch):
 
     monkeypatch.setattr(ga, "gmsh_available", lambda: (False, "ImportError: no gmsh"))
     with pytest.raises(ProviderUnavailable, match="no gmsh"):
-        ga.mesh_geometry(plate(), ga.GmshMeshRequest(size=m(0.02), frame_id="xy"))
+        ga.mesh_geometry(plate(), ga.GmshMeshRequest(size=m(0.02)))
+
+
+# --------------------------------------------------------------------------
+# Review round 1 (geometry/provider identity boundary) regressions
+# --------------------------------------------------------------------------
+
+
+@needs_gmsh
+def test_review_h1_swapped_or_foreign_mesh_binding_is_refused():
+    from engcore.spatial.gmsh_adapter import GmshMeshRequest, mesh_geometry
+
+    g = plate()
+    r = mesh_geometry(g, GmshMeshRequest(size=m(0.05)))
+    swapped = dict(r.binding.groups, **{"region:left_plate": "right_plate", "region:right_plate": "left_plate"})
+    with pytest.raises(GeometryRefusal, match="swapped or renamed"):
+        MeshBinding(g.digest, r.mesh.digest, swapped, r.entity_map.digest, r.receipt.digest)
+    # a binding that names the geometry G2 but a mesh produced from another shape G1 (same group names)
+    g1 = plate(0.4)
+    r1 = mesh_geometry(g1, GmshMeshRequest(size=m(0.05)))
+    forged = MeshBinding(g.digest, r1.mesh.digest, r1.binding.groups, r1.entity_map.digest, r1.receipt.digest)
+    with pytest.raises(GeometryRefusal, match="another shape"):
+        forged.validate(g, r1.mesh, r1.receipt)
+    with pytest.raises(GeometryRefusal, match="not backed by the receipt"):
+        r.binding.validate(g, r.mesh, r1.receipt)
+    tampered = r.binding.serialize()
+    tampered["entity_map_digest"] = "0" * 64
+    with pytest.raises(GeometryRefusal, match="digest"):
+        MeshBinding.from_dict(tampered)
+
+
+@needs_gmsh
+def test_review_h2_flush_faces_of_other_bodies_and_internal_faces_are_not_boundaries():
+    from engcore.spatial.gmsh_adapter import GmshMeshRequest, facet_measure, mesh_geometry
+
+    # a shaft in a clearance bore, its end flush with the housing's xmin plane
+    housing = Body("housing", Shape.box(m(0.1), m(0.1), m(0.1)), "world", cutouts=("bore",))
+    bore = Body("bore", Shape.cylinder(m(0.02), m(0.1)), "world",
+                Transform.from_quantities((m(0), m(0.05), m(0.05)), axis=(0, 1, 0), angle=Quantity(90, "degree")), void=True)
+    shaft = Body("shaft", Shape.cylinder(m(0.015), m(0.1)), "world",
+                 Transform.from_quantities((m(0), m(0.05), m(0.05)), axis=(0, 1, 0), angle=Quantity(90, "degree")))
+    g = GeometryModel("flush", "1", 3, (ROOT,), (housing, bore, shaft), (Region("housing", ("housing",)), Region("shaft", ("shaft",))),
+                      (Boundary("housing_face", (FeatureRef("housing", "xmin"),)),))
+    r = mesh_geometry(g, GmshMeshRequest(size=m(0.01)))
+    area = facet_measure(r.mesh, r.mesh.facet_indices(r.mesh.region("housing_face")))
+    assert area == pytest.approx(0.01 - math.pi * 0.02 ** 2, rel=0.02)  # the flush shaft end (pi*0.015^2) is NOT included
+    # a face shared by two meshed bodies declared as a boundary is refused
+    box = Body("block", Shape.box(m(0.1), m(0.1), m(0.05)), "world")
+    lid = Body("lid", Shape.box(m(0.1), m(0.1), m(0.01)), "world", Transform.from_quantities((m(0), m(0), m(0.05))))
+    bad = GeometryModel("blk", "1", 3, (ROOT,), (box, lid), (Region("block", ("block",)), Region("lid", ("lid",))),
+                        (Boundary("top", (FeatureRef("block", "zmax"),)),))
+    with pytest.raises(GeometryRefusal, match="declared as an Interface"):
+        mesh_geometry(bad, GmshMeshRequest(size=m(0.02)))
+
+
+@needs_gmsh
+def test_review_m1_m6_thin_bodies_and_foreign_frames_are_refused():
+    from engcore.spatial.gmsh_adapter import GmshMeshRequest, mesh_geometry
+
+    foil = GeometryModel("foil", "1", 3, (ROOT,), (Body("foil", Shape.box(m(100), m(100), Quantity(0.05, "mm")), "world"),),
+                         (Region("foil", ("foil",)),))
+    with pytest.raises(GeometryRefusal, match="aspect ratio"):
+        mesh_geometry(foil, GmshMeshRequest(size=m(10)))
+    with pytest.raises(GeometryRefusal, match="root frame"):
+        mesh_geometry(plate(), GmshMeshRequest(size=m(0.05), frame_id="body"))
+    assert mesh_geometry(plate(), GmshMeshRequest(size=m(0.05))).mesh.frame.frame_id == "world"
+
+
+def test_review_m3_m5_ambiguous_step_units_and_non_angle_parameters_are_refused():
+    from engcore.spatial.gmsh_adapter import step_length_unit
+
+    mil = (b"#1=( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );\n"
+           b"#2=LENGTH_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.0254),#1);\n"
+           b"#3=( CONVERSION_BASED_UNIT('MIL',#2) LENGTH_UNIT() NAMED_UNIT(*) );\n")
+    assert step_length_unit(mil) is None
+    p = GeometryParameter("tilt", ParameterKind.ANGLE, Quantity(0, "degree"), Quantity(45, "degree"))
+    with pytest.raises(GeometryRefusal, match="angle unit"):
+        p.admit(Quantity(0.5, "dimensionless"))
+    assert p.admit(Quantity(30, "degree")).magnitude == pytest.approx(math.radians(30))

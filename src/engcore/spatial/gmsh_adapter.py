@@ -62,7 +62,8 @@ class GmshMeshRequest:
     """
 
     size: Quantity
-    frame_id: str
+    #: Must equal the model's root frame when given: mesh coordinates ARE root-frame coordinates.
+    frame_id: str = ""
     body_sizes: Mapping[str, Quantity] = field(default_factory=dict)
     algorithm_2d: int = 6
     algorithm_3d: int = 1
@@ -130,15 +131,18 @@ _SI_PREFIX = {"$": "m", ".MILLI.": "mm", ".CENTI.": "cm", ".DECI.": "dm", ".KILO
 
 
 def step_length_unit(data: bytes) -> str | None:
-    """The length unit a STEP file declares, if exactly one is readable; None when absent or ambiguous."""
+    """The SI length unit a STEP file declares, if exactly one is readable; None when absent or ambiguous.
+
+    Only plain SI length units are recognised.  Any CONVERSION_BASED_UNIT
+    (inch, foot, mil, ...) wraps an SI unit that is NOT the file's unit, so its
+    presence makes the answer ambiguous and the file is refused upstream.
+    """
     text = data.decode("latin-1", "replace").upper()
+    if re.search(r"CONVERSION_BASED_UNIT", text):
+        return None
     found = set()
     for m in re.finditer(r"SI_UNIT\s*\(\s*(\$|\.[A-Z]+\.)\s*,\s*\.METRE\.\s*\)", text):
         found.add(_SI_PREFIX.get(m.group(1), "?" + m.group(1)))
-    for m in re.finditer(r"CONVERSION_BASED_UNIT\s*\(\s*'([A-Z]+)'", text):
-        name = m.group(1)
-        if name in ("INCH", "FOOT"):
-            found.add(name.lower())
     if len(found) != 1:
         return None
     unit = found.pop()
@@ -153,11 +157,6 @@ def step_length_unit(data: bytes) -> str | None:
 def _affine(t: Transform) -> list[float]:
     r, tr = t.rotation, t.translation_m
     return [r[0][0], r[0][1], r[0][2], tr[0], r[1][0], r[1][1], r[1][2], tr[1], r[2][0], r[2][1], r[2][2], tr[2]]
-
-
-def _sha_file(path: str) -> str:
-    with open(path, "rb") as fh:
-        return hashlib.sha256(fh.read()).hexdigest()
 
 
 class GmshGeometryProvider:
@@ -191,14 +190,21 @@ class GmshGeometryProvider:
         unknown_sizes = sorted(set(request.body_sizes) - {b.body_id for b in meshed})
         if unknown_sizes:
             raise GeometryRefusal(f"body sizes name unknown or void bodies {unknown_sizes}")
-        file_digests = {}
+        if request.frame_id and request.frame_id != model.root_frame:
+            raise GeometryRefusal(f"mesh frame {request.frame_id!r} is not the model's root frame {model.root_frame!r}; "
+                                  "coordinates are emitted in the root frame and are not relabelled")
+        file_digests: dict[str, str] = {}
+        file_bytes: dict[str, bytes] = {}
         for b in model.bodies:
             if b.shape.kind is ShapeKind.IMPORTED:
                 path = request.files.get(b.shape.source.file_digest)
                 if path is None:
                     raise GeometryRefusal(f"no file supplied for imported body {b.body_id!r}")
-                if _sha_file(path) != b.shape.source.file_digest:
+                with open(path, "rb") as fh:
+                    data = fh.read()  # read ONCE: the bytes hashed are the bytes imported
+                if hashlib.sha256(data).hexdigest() != b.shape.source.file_digest:
                     raise GeometryRefusal(f"file for {b.body_id!r} does not have the declared sha256; refusing foreign bytes")
+                file_bytes[b.shape.source.file_digest] = data
                 file_digests[f"file:{b.body_id}"] = b.shape.source.file_digest
 
         gmsh = gmsh_module()
@@ -214,7 +220,7 @@ class GmshGeometryProvider:
             gmsh.option.setNumber("Mesh.MeshSizeMax", options["size_m"])
             gmsh.model.add("forge")
             occ = gmsh.model.occ
-            tags = {b.body_id: self._create(gmsh, b, model, request) for b in model.bodies}
+            tags = {b.body_id: self._create(gmsh, b, model, file_bytes) for b in model.bodies}
             # cutouts
             for b in meshed:
                 if b.cutouts:
@@ -254,12 +260,29 @@ class GmshGeometryProvider:
             if leftovers:
                 raise GeometryRefusal(f"provider produced {dim}D entities {sorted(leftovers)} that belong to no declared body")
 
-            char = self._characteristic_length(gmsh)
-            tol = max(1e-6 * char, 1e-12)
-            boundary_entities = sorted({tuple(e) for e in gmsh.model.getEntities(dim - 1)})
-            feature_hits = self._match_features(gmsh, model, boundary_entities, tol)
             body_boundary = {bid: sorted({(abs(d), abs(t)) for d, t in gmsh.model.getBoundary(tags[bid], combined=False, oriented=False)})
                              for bid in order}
+            # a feature of body b can only be realized by b's OWN boundary; a void tool's features by the
+            # boundaries of the bodies it cuts.  Coincident faces of other bodies never qualify.
+            allowed: dict[str, set] = {bid: set(body_boundary[bid]) for bid in order}
+            for b in model.bodies:
+                if b.void:
+                    allowed[b.body_id] = {e for host in meshed if b.body_id in host.cutouts for e in body_boundary[host.body_id]}
+            tolerances = {b.body_id: self._tolerance(gmsh, b, tags.get(b.body_id, [])) for b in model.bodies}
+            feature_hits = self._match_features(gmsh, model, allowed, tolerances)
+            tol = min(tolerances.values())
+            owners_of: dict[tuple[int, int], list[str]] = {}
+            for bid in order:
+                for e in body_boundary[bid]:
+                    owners_of.setdefault(e, []).append(bid)
+            matched = {e for ents in feature_hits.values() for e in ents}
+            for b in meshed:
+                if b.shape.kind is ShapeKind.IMPORTED:
+                    continue  # selectors name only some features; unnamed faces are legitimately unmatched
+                lost = sorted(set(body_boundary[b.body_id]) - matched)
+                if lost:
+                    raise GeometryRefusal(f"boundary entities {lost} of body {b.body_id!r} match no feature of the body or its cutouts; "
+                                          "a piece of a declared face would be dropped silently")
 
             mappings: list[EntityMapping] = []
             for bid in sorted(tags):
@@ -284,6 +307,10 @@ class GmshGeometryProvider:
                     if not hit:
                         raise GeometryRefusal(f"boundary {bd.name!r}: feature {f.body_id}/{f.feature} matches no provider entity "
                                               "(consumed by a boolean, or not where declared)")
+                    for e in hit:
+                        if len(owners_of.get(e, [])) > 1:
+                            raise GeometryRefusal(f"boundary {bd.name!r}: {f.body_id}/{f.feature} includes a face shared by bodies "
+                                                  f"{owners_of[e]}; an internal face is declared as an Interface, never as a boundary")
                     ents.update(hit)
                 facet_groups.append((bd.name, tag, sorted(ents)))
                 tag += 1
@@ -363,20 +390,21 @@ class GmshGeometryProvider:
             tuple(PhysicalGroup(n, GroupKind.FACETS, t) for n, t, _ in facet_groups)
         provenance_options = dict(options, geometry_digest=model.digest)
         mesh = SpatialMesh(coordinates=xyz, cells=cells_l, cell_type=CellType.TRIANGLE if dim == 2 else CellType.TETRAHEDRON,
-                           frame=CoordinateFrame(request.frame_id, dim), cell_tags=np.concatenate(cell_tags), facets=facets_l,
+                           frame=CoordinateFrame(model.root_frame, dim), cell_tags=np.concatenate(cell_tags), facets=facets_l,
                            facet_tags=ftags, groups=groups, provenance=MeshProvenance(PROVIDER_ID, version, provenance_options))
         entity_map = ProviderEntityMap(PROVIDER_ID, version, model.digest, tuple(mappings))
         receipt = GeometryReceipt(PROVIDER_ID, version, "mesh_generation",
                                   {"geometry": model.digest, "shape": model.shape_digest, **file_digests},
-                                  {"mesh": mesh.digest, "entity_map": entity_map.digest}, options)
+                                  {"mesh": mesh.digest, "entity_map": entity_map.digest}, options,
+                                  provider_digest=_gmsh_distribution_digest())
         names = {r.entity_id: r.name for r in model.regions}
         names.update({b.entity_id: b.name for b in model.boundaries})
         names.update({i.entity_id: i.name for i in model.interfaces})
-        binding = MeshBinding(model.digest, mesh.digest, names, entity_map.digest, receipt.digest).validate(model, mesh)
+        binding = MeshBinding(model.digest, mesh.digest, names, entity_map.digest, receipt.digest).validate(model, mesh, receipt)
         return GeometryMeshResult(model, mesh, entity_map, binding, receipt)
 
     # ---- construction --------------------------------------------------------
-    def _create(self, gmsh, body: Body, model: GeometryModel, request: GmshMeshRequest) -> list[tuple[int, int]]:
+    def _create(self, gmsh, body: Body, model: GeometryModel, file_bytes: Mapping[str, bytes]) -> list[tuple[int, int]]:
         occ = gmsh.model.occ
         d = body.shape.dimensions_m
         k = body.shape.kind
@@ -390,9 +418,7 @@ class GmshGeometryProvider:
             dts = [(3, occ.addCylinder(0, 0, 0, 0, 0, d["height"], d["radius"]))]
         elif k is ShapeKind.IMPORTED:
             src = body.shape.source
-            path = request.files[src.file_digest]
-            with open(path, "rb") as fh:
-                data = fh.read()
+            data = file_bytes[src.file_digest]
             scale = src.scale_to_m
             if src.format == "step":
                 declared = Quantity(1.0, src.declared_length_unit).magnitude_in("m")
@@ -423,9 +449,23 @@ class GmshGeometryProvider:
         return dts
 
     @staticmethod
-    def _characteristic_length(gmsh) -> float:
-        x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(-1, -1)
-        return max(abs(x1 - x0), abs(y1 - y0), abs(z1 - z0), 1e-9)
+    def _tolerance(gmsh, body: Body, dimtags) -> float:
+        """Matching tolerance from the body's OWN size (never the whole model's), refused if it cannot separate the body's faces."""
+        if body.shape.kind is ShapeKind.IMPORTED:
+            ext = []
+            for d, t in dimtags:
+                x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(d, t)
+                ext.append((x1 - x0, y1 - y0, z1 - z0))
+            dims = [max(e[i] for e in ext) for i in range(body.dimension)] if ext else [1.0]
+        else:
+            d = body.shape.dimensions_m
+            dims = [2 * v if k == "radius" else v for k, v in d.items()]
+        big, small = max(dims), min(v for v in dims if v > 0) if any(v > 0 for v in dims) else 0.0
+        tol = max(1e-6 * big, 1e-12)
+        if not small > 100 * tol:
+            raise GeometryRefusal(f"body {body.body_id!r} spans {small:.3e} m to {big:.3e} m; the feature matcher cannot separate "
+                                  "its faces at this aspect ratio, so it refuses rather than guessing")
+        return tol
 
     def _samples(self, gmsh, dim: int, tag: int) -> list[tuple[float, float, float]]:
         pts = [tuple(gmsh.model.getValue(0, abs(p[1]), [])) for p in
@@ -441,19 +481,36 @@ class GmshGeometryProvider:
                 pts.append(tuple(xyz))
         return pts
 
-    def _match_features(self, gmsh, model: GeometryModel, entities, tol: float) -> dict[FeatureRef, list[tuple[int, int]]]:
+    def _match_features(self, gmsh, model: GeometryModel, allowed: Mapping[str, set],
+                        tolerances: Mapping[str, float]) -> dict[FeatureRef, list[tuple[int, int]]]:
         hits: dict[FeatureRef, list[tuple[int, int]]] = {}
         inverse = {b.body_id: model.body_to_root(b.body_id).inverse() for b in model.bodies}
-        for dim, tag in entities:
-            samples = self._samples(gmsh, dim, tag)
-            if not samples:
-                continue
-            for b in model.bodies:
-                local = [inverse[b.body_id].apply(p) for p in samples]
-                for feat in b.shape.features:
-                    if all(_on_feature(b, feat, p, tol) for p in local):
-                        hits.setdefault(FeatureRef(b.body_id, feat), []).append((dim, tag))
+        samples: dict[tuple[int, int], list] = {}
+        for b in model.bodies:
+            for dim, tag in sorted(allowed.get(b.body_id, ())):
+                if (dim, tag) not in samples:
+                    samples[(dim, tag)] = self._samples(gmsh, dim, tag)
+                pts = samples[(dim, tag)]
+                if not pts:
+                    continue
+                local = [inverse[b.body_id].apply(p) for p in pts]
+                on = [feat for feat in b.shape.features if all(_on_feature(b, feat, p, tolerances[b.body_id]) for p in local)]
+                if len(on) > 1:
+                    raise GeometryRefusal(f"provider entity {(dim, tag)} lies on features {on} of body {b.body_id!r} at once; ambiguous")
+                for feat in on:
+                    hits.setdefault(FeatureRef(b.body_id, feat), []).append((dim, tag))
         return hits
+
+
+def _gmsh_distribution_digest() -> str:
+    """sha256 of the installed gmsh distribution's RECORD (the build that ran), or '' when it cannot be read."""
+    try:
+        import importlib.metadata
+
+        record = importlib.metadata.distribution("gmsh").read_text("RECORD")
+    except Exception:  # noqa: BLE001 - an unreadable record binds nothing; the version string remains
+        return ""
+    return hashlib.sha256(record.encode("utf-8")).hexdigest() if record else ""
 
 
 def mesh_geometry(model: GeometryModel, request: GmshMeshRequest) -> GeometryMeshResult:
