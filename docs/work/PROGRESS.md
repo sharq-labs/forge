@@ -2601,3 +2601,10 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
 - B, C and D moved to DEFERRED in `docs/flagships/README.md`; verdicts and gaps unchanged.
 - `pytest flagships/tests tests/test_agent_workflow_contract.py tests/test_repository_architecture.py` (Windows 3.14): 55 passed,
   50 skipped (provider-gated).
+- Noted BEFORE any result (data still downloading): flagship A feeds ThroughputArrheniusFade the integral of |I| (charge AND
+  discharge), while the pre-registered study throughput is discharge charge only. The study's criteria are unaffected (k_q
+  absorbs a constant factor), but a k_q carried into flagship A must be converted to the |I| definition (about one half for
+  full constant-current cycles; the drive-cycle regenerative pulses make the factor profile-dependent). The conversion will be
+  stated with the transfer, never silently applied. The dataset's processed summaries carry `Charge Throughput [A h]` and
+  `C/10 Capacity [mA h]` per RPT (example notebook, read as text only); which throughput the column measures is checked
+  against the paper/set data before use.
