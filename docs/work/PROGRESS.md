@@ -2622,16 +2622,31 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   - Calibration (Expt 5, 8 cells, 120 checkpoints): k_q 5.77e-5 per A h of discharge, activation energy AT ITS LOWER BOUND (0):
     fade is not monotone in temperature (10 degC cells fade most, ~22-27 % at the last aligned RPT; 25 degC least, ~18 %;
     40 degC ~21 %), which an Arrhenius factor cannot represent. Calibration RMSE 0.040.
-  - Holdout (Expt 4, 8 different cells, 72 checkpoints): C1 pooled RMSE 0.0353 > 0.015 NOT MET; C2 mean signed residual
-    10 degC 0.0054 (met), 25 degC 0.0243 (NOT met), 40 degC 0.0058 (met). Max |residual| 0.105.
+  - Holdout (Expt 4, 8 different cells, 64 aged checkpoints; the reference RPT is excluded from the criteria after review
+    M2, values with it in brackets): C1 pooled RMSE 0.0374 (0.0353) > 0.015 NOT MET; C2 mean signed residual 10 degC 0.0061
+    (0.0054) met, 25 degC 0.0274 (0.0243) NOT met, 40 degC 0.0065 (0.0058) met. Max |residual| 0.105.
   - Uncertainty budget: numerical not applicable (closed form); parameter (leave-one-cell-out) k_q 5.49e-5 to 5.95e-5,
-    activation energy stays at the bound in every refit; measurement UNKNOWN (no repeated capacity check of an unaged cell in
+    CONDITIONAL on the activation energy at its bound; activation energy NOT ESTABLISHED (at the bound in 8/8 refits); measurement UNKNOWN (no repeated capacity check of an unaged cell in
     the summaries); model discrepancy NOT QUANTIFIED (unknown, not zero) because the holdout failed.
   - Reported, not judged: flagship A's declared fade (k_q 2e-4 per A h of |I|, 30 kJ/mol), applied with the |I| throughput
-    flagship A feeds it, gives holdout RMSE 0.85 (mean residual +0.23 / +0.56 / +1.05 at 10 / 25 / 40 degC): an order of
-    magnitude faster fade than these LG M50T cells show. LG M50T is not flagship A's LG M50; this is an observation, not a
+    flagship A feeds it, OVERPREDICTS the fade of these cells at every temperature; 38 of 64 predictions exceed the model's
+    declared state range (fade < 0.5), so the RMSE (0.905) shows the direction, not a meaningful magnitude. Temperature is the
+    setpoint, not flagship A's mean cell temperature. LG M50T is not flagship A's LG M50; this is an observation, not a
     correction of flagship A.
   - The last RPT of every cell is skipped (the per-cycle file does not reach its throughput); measured set temperatures run
     above setpoint at 10 degC (14-24 degC) and 25 degC (27-30 degC) through self-heating; the setpoint is used as registered.
 - `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 4 passed. `recertification_scope explain` on every changed
   path: ordinary.
+- forge-scientific-review of the study, one round: CHANGES REQUIRED, none able to turn NOT MET into MET; all addressed:
+  H1 a bound-pinned activation energy carried a ~1e-12 "spread" -> NOT ESTABLISHED, k_q spread labelled conditional;
+  M1 rules not in the pre-registration -> `deviations_from_preregistration` in the record with decision times and coverage
+  (calibration 120/128, holdout 72/80 RPTs); M1a per-row alignment gaps emitted (holdout max 4.76 A h), the skip of the most
+  aged RPT noted as biasing TOWARD MET; M2 reference RPT excluded from C1/C2 (moves AWAY from MET), both values reported;
+  M3 C2 needs all three registered temperatures; M4 declared-parameter comparison relabelled (throughput as flagship A,
+  temperature = setpoint) and out-of-state-range predictions counted; M5 independence now compares rig channels from
+  experiment_metadata.xlsx (disjoint), the old key-based guard could never fire; M6 a blank RPT throughput is skipped, not
+  zeroed (one Expt 4 cycle row with both capacities blank is counted in the record); M7 tests for every refusal path and the
+  law pinned to ThroughputArrheniusFade.advance; L1 pre-registration sha256 pinned (da6ac0da..., the dd53eec7 bytes);
+  L2 classification says level 7 NOT REACHED; L3 Expt 4 'Discharge Capacity' is gross drive-cycle discharge (5.87 vs 3.17 A h
+  charge per cycle), recorded as a deviation; L4 measurement UNKNOWN stays a stated assertion.
+- `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 9 passed.

@@ -2,6 +2,11 @@
  "cells": {
   "expt4-A": {
    "cell": "A",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 11,
+    "total": 713
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 10,
@@ -19,6 +24,11 @@
   },
   "expt4-B": {
    "cell": "B",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 8,
+    "total": 712
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 10,
@@ -36,6 +46,11 @@
   },
   "expt4-C": {
    "cell": "C",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 3,
+    "total": 704
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 10,
@@ -53,6 +68,11 @@
   },
   "expt4-D": {
    "cell": "D",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 1,
+    "charge_only_unnumbered": 8,
+    "total": 705
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 25,
@@ -70,6 +90,11 @@
   },
   "expt4-E": {
    "cell": "E",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 7,
+    "total": 711
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 25,
@@ -87,6 +112,11 @@
   },
   "expt4-F": {
    "cell": "F",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 5,
+    "total": 709
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 40,
@@ -104,6 +134,11 @@
   },
   "expt4-G": {
    "cell": "G",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 9,
+    "total": 710
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 40,
@@ -121,6 +156,11 @@
   },
   "expt4-H": {
    "cell": "H",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 8,
+    "total": 709
+   },
    "expt": 4,
    "n_checkpoints": 9,
    "setpoint_C": 40,
@@ -138,6 +178,11 @@
   },
   "expt5-A": {
    "cell": "A",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 13,
+    "total": 1199
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 10,
@@ -155,6 +200,11 @@
   },
   "expt5-B": {
    "cell": "B",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 13,
+    "total": 1175
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 10,
@@ -172,6 +222,11 @@
   },
   "expt5-C": {
    "cell": "C",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 12,
+    "total": 1183
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 10,
@@ -189,6 +244,11 @@
   },
   "expt5-D": {
    "cell": "D",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 13,
+    "total": 1183
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 25,
@@ -206,6 +266,11 @@
   },
   "expt5-E": {
    "cell": "E",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 11,
+    "total": 1183
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 25,
@@ -223,6 +288,11 @@
   },
   "expt5-F": {
    "cell": "F",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 11,
+    "total": 1182
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 40,
@@ -240,6 +310,11 @@
   },
   "expt5-G": {
    "cell": "G",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 11,
+    "total": 1182
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 40,
@@ -257,6 +332,11 @@
   },
   "expt5-H": {
    "cell": "H",
+   "cycle_rows": {
+    "both_capacities_blank_read_as_zero": 0,
+    "charge_only_unnumbered": 11,
+    "total": 1182
+   },
    "expt": 5,
    "n_checkpoints": 15,
    "setpoint_C": 40,
@@ -273,7 +353,18 @@
    }
   }
  },
- "classification": "parameter calibration plus a holdout prediction test against measured data (experimental comparison of the fade model, level 7 candidate for the fade model of an LG M50T cell only); not validation of flagship A's LG M50 (Chen2020) cell model",
+ "classification": "parameter calibration plus a holdout prediction test against measured data (experimental comparison of the fade model, level 7 candidate for the fade model of an LG M50T cell only); not validation of flagship A's LG M50 (Chen2020) cell model -- level 7 NOT REACHED: the holdout was NOT MET",
+ "coverage": {
+  "criteria_exclude_the_reference_rpt": true,
+  "rpts_in_the_data": {
+   "calibration": 128,
+   "holdout": 80
+  },
+  "rpts_used_including_reference": {
+   "calibration": 120,
+   "holdout": 72
+  }
+ },
  "data": {
   "calibration_set": {
    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
@@ -288,596 +379,739 @@
    "sha256": "9148274d9dc2279e6da7893a2bbf067277fad859db8887f3b9cb42c84395cc01"
   }
  },
+ "deviations_from_preregistration": [
+  {
+   "decided": "after reading the archive structure and throughput columns of Expt 5, before any capacity value (PROGRESS, 2026-10-09); Expt 4's structure was not inspected before the run",
+   "effect": "the last RPT of every cell is skipped: the most-aged point, where a knee would show; this biases TOWARD MET",
+   "rule": "an RPT is placed on the per-cycle rows where their cumulative charge + discharge is nearest the RPT file's own 'Charge Throughput [A h]'; the discharge charge up to that row is the throughput; an RPT that does not align within 10.0 A h is skipped and never estimated",
+   "why": "the per-cycle numbering restarts per set and runs through cycler fault rows, so it cannot place an RPT"
+  },
+  {
+   "decided": "with the code, before any capacity value",
+   "effect": "none known",
+   "rule": "capacity is the 'C/10 Capacity [mA h]' column of the processed RPT summary",
+   "why": "the pre-registration names 'the discharge capacity of each RPT capacity check, as the processed summary states it' but no column; C/10 is the slow capacity check the dataset's own example notebook plots as capacity"
+  },
+  {
+   "decided": "with the code, before any capacity value",
+   "effect": "none on the criteria; guards against a local minimum",
+   "rule": "the fit is started from four activation energies (5, 30, 60, 120 kJ/mol) and the lowest cost is kept",
+   "why": "the pre-registration fixes ordinary least squares and the bounds, not the optimiser"
+  },
+  {
+   "decided": "after the first run, on review finding M2; the outcome is NOT MET either way",
+   "effect": "moves both criteria AWAY from MET",
+   "rule": "the reference RPT (RPT 0, where fade is 0 by definition and the prediction is 0 for any parameters) is excluded from C1 and C2; the values with it included are reported beside them",
+   "why": "it is the normalisation, not a prediction; including it scales RMSE by sqrt((n-k)/n) and the bias by (n-k)/n toward MET"
+  },
+  {
+   "decided": "checked after the first run, on review finding L3; recorded, not changed",
+   "effect": "the holdout throughput is gross, not net, discharge",
+   "rule": "for Expt 4 the per-cycle 'Discharge Capacity [A h]' is GROSS discharge charge of the drive cycle (it exceeds both the constant-current charge and the cell capacity per cycle, e.g. 5.87 vs 3.17 A h at cycle 0)",
+   "why": "the pre-registration says 'cumulative discharge charge'; gross discharge charge is what the column holds"
+  }
+ ],
  "fit": {
-  "activation_energy_J_per_mol": 1.5191335797472088e-12,
+  "activation_energy_J_per_mol": 8.902496270143988e-14,
   "activation_energy_at_bound": true,
-  "calibration_rmse": 0.03973582359453965,
-  "k_q_per_Ah_discharge": 5.768498939185813e-05,
-  "n_checkpoints": 120,
+  "calibration_rmse": 0.04113048500204267,
+  "k_q_per_Ah_discharge": 5.7684989476857104e-05,
+  "n_checkpoints": 112,
   "success": true
  },
  "holdout": {
-  "max_abs_residual": 0.1050625799323967,
-  "n_checkpoints": 72,
+  "max_abs_residual": 0.10506257964043192,
+  "max_alignment_gap_Ah": 4.761114710757283,
+  "n_checkpoints": 64,
   "per_temperature": {
    "10C": {
-    "max_abs_residual": 0.1050625799323967,
-    "mean_signed_residual": 0.005390343991142196,
-    "n": 27,
-    "rmse": 0.039146905509388555
+    "max_abs_residual": 0.10506257964043192,
+    "mean_signed_residual": 0.0060641371600040905,
+    "n": 24,
+    "rmse": 0.041521563552779056
    },
    "25C": {
-    "max_abs_residual": 0.085624504072882,
-    "mean_signed_residual": 0.024324857789141157,
-    "n": 18,
-    "rmse": 0.04170853418462152
+    "max_abs_residual": 0.08562450438037084,
+    "mean_signed_residual": 0.027365465185782648,
+    "n": 16,
+    "rmse": 0.04423858120787778
    },
    "40C": {
-    "max_abs_residual": 0.05012362113244512,
-    "mean_signed_residual": 0.0057932365043140595,
-    "n": 27,
-    "rmse": 0.025073635208105762
+    "max_abs_residual": 0.05012362143951399,
+    "mean_signed_residual": 0.006517391242043878,
+    "n": 24,
+    "rmse": 0.02659460635300559
    }
   },
-  "pooled_rmse": 0.035289350072277396,
+  "pooled_rmse": 0.03743000820763399,
+  "predictions_outside_model_state_range": 0,
+  "reference_rpt_included": false,
   "rows": [
    {
-    "cell": "expt4-A",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": 2.5654679176442414,
     "cell": "expt4-A",
     "measured_fade": 0.04118922667312841,
-    "predicted_fade": 0.026120250114967082,
+    "predicted_fade": 0.026120250153455336,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 452.8084409885285
    },
    {
+    "alignment_gap_Ah": -2.362646787225458,
     "cell": "expt4-A",
     "measured_fade": 0.057055949473740486,
-    "predicted_fade": 0.051961007591881894,
+    "predicted_fade": 0.051961007668446565,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 900.7717283071194
    },
    {
+    "alignment_gap_Ah": 4.42113205694659,
     "cell": "expt4-A",
     "measured_fade": 0.06910061024074421,
-    "predicted_fade": 0.078022073468404,
+    "predicted_fade": 0.07802207358336971,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1352.5541790151792
    },
    {
+    "alignment_gap_Ah": 2.066248923994408,
     "cell": "expt4-A",
     "measured_fade": 0.07904381195673338,
-    "predicted_fade": 0.10372924139565892,
+    "predicted_fade": 0.10372924154850423,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1798.2016203733524
    },
    {
+    "alignment_gap_Ah": -0.2686606373954419,
     "cell": "expt4-A",
     "measured_fade": 0.08830812738531113,
-    "predicted_fade": 0.12942311805246226,
+    "predicted_fade": 0.12942311824316755,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2243.618650482573
    },
    {
+    "alignment_gap_Ah": 2.4464657130401974,
     "cell": "expt4-A",
     "measured_fade": 0.09727193696700853,
-    "predicted_fade": 0.1553395521554638,
+    "predicted_fade": 0.155339552384357,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2692.893832401207
    },
    {
+    "alignment_gap_Ah": 3.239311698182064,
     "cell": "expt4-A",
     "measured_fade": 0.1024010208378936,
-    "predicted_fade": 0.18153538489928464,
+    "predicted_fade": 0.1815353851667775,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3147.0125384977055
    },
    {
+    "alignment_gap_Ah": 0.3944782973130714,
     "cell": "expt4-A",
     "measured_fade": 0.111119971289804,
-    "predicted_fade": 0.20666055946087342,
+    "predicted_fade": 0.20666055976538825,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3582.570815034981
    },
    {
-    "cell": "expt4-B",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -3.0749633820165627,
     "cell": "expt4-B",
     "measured_fade": 0.03798448654313036,
-    "predicted_fade": 0.025614815507139527,
+    "predicted_fade": 0.025614815544883023,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 444.0464629912006
    },
    {
+    "alignment_gap_Ah": -3.8885487683824067,
     "cell": "expt4-B",
     "measured_fade": 0.055103612292973114,
-    "predicted_fade": 0.05173509379089252,
+    "predicted_fade": 0.05173509386712431,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 896.8553923006286
    },
    {
+    "alignment_gap_Ah": 2.538892407824733,
     "cell": "expt4-B",
     "measured_fade": 0.06905360971526808,
-    "predicted_fade": 0.07778053567989525,
+    "predicted_fade": 0.07778053579450507,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1348.3669928675324
    },
    {
+    "alignment_gap_Ah": 0.21222999497376804,
     "cell": "expt4-B",
     "measured_fade": 0.08214942596343677,
-    "predicted_fade": 0.10347200366524259,
+    "predicted_fade": 0.10347200381770884,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1793.742267374795
    },
    {
+    "alignment_gap_Ah": 1.4335577154779457,
     "cell": "expt4-B",
     "measured_fade": 0.10347265667353867,
-    "predicted_fade": 0.12905437160415772,
+    "predicted_fade": 0.12905437179431967,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2237.226234497201
    },
    {
+    "alignment_gap_Ah": -1.881895962940689,
     "cell": "expt4-B",
     "measured_fade": 0.15266184513472325,
-    "predicted_fade": 0.15316816546724638,
+    "predicted_fade": 0.15316816569294006,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2655.2516882124123
    },
    {
+    "alignment_gap_Ah": 3.9644086190482994,
     "cell": "expt4-B",
     "measured_fade": 0.2033734324197356,
-    "predicted_fade": 0.17614562123375355,
+    "predicted_fade": 0.17614562149330457,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3053.578116088124
    },
    {
+    "alignment_gap_Ah": -1.0140468207737285,
     "cell": "expt4-B",
     "measured_fade": 0.26630475624468186,
-    "predicted_fade": 0.19634796505547544,
+    "predicted_fade": 0.19634796534479465,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3403.796501056282
    },
    {
-    "cell": "expt4-C",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -1.2653573734849033,
     "cell": "expt4-C",
     "measured_fade": 0.041178823370559225,
-    "predicted_fade": 0.026096544947363794,
+    "predicted_fade": 0.026096544985817118,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 452.39749928856116
    },
    {
+    "alignment_gap_Ah": -4.761114710757283,
     "cell": "expt4-C",
     "measured_fade": 0.05860883881940804,
-    "predicted_fade": 0.05225451553514392,
+    "predicted_fade": 0.052254515612141075,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 905.8598447539857
    },
    {
+    "alignment_gap_Ah": 1.7974354343573395,
     "cell": "expt4-C",
     "measured_fade": 0.07256068838352936,
-    "predicted_fade": 0.07761337436180242,
+    "predicted_fade": 0.07761337447616592,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1345.469162429231
    },
    {
+    "alignment_gap_Ah": -0.46634865329542663,
     "cell": "expt4-C",
     "measured_fade": 0.08478436850123572,
-    "predicted_fade": 0.10431641678920558,
+    "predicted_fade": 0.10431641694291609,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1808.3806184062364
    },
    {
+    "alignment_gap_Ah": 0.46481461001121716,
     "cell": "expt4-C",
     "measured_fade": 0.10383471332282401,
-    "predicted_fade": 0.130498054821983,
+    "predicted_fade": 0.13049805501427222,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2262.2532516301717
    },
    {
+    "alignment_gap_Ah": 2.3813337659012177,
     "cell": "expt4-C",
     "measured_fade": 0.14360873487110704,
-    "predicted_fade": 0.15496395178075778,
+    "predicted_fade": 0.15496395200909754,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2686.382599952943
    },
    {
+    "alignment_gap_Ah": -2.5348502403430757,
     "cell": "expt4-C",
     "measured_fade": 0.19949393340912913,
-    "predicted_fade": 0.17841383080382453,
+    "predicted_fade": 0.17841383106671774,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3092.8987364779946
    },
    {
+    "alignment_gap_Ah": -2.0063722686045367,
     "cell": "expt4-C",
     "measured_fade": 0.30320595783686877,
-    "predicted_fade": 0.19814337790447206,
+    "predicted_fade": 0.19814337819643685,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3434.920938590634
    },
    {
-    "cell": "expt4-D",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -4.704691508203837,
     "cell": "expt4-D",
     "measured_fade": 0.042613628269152604,
-    "predicted_fade": 0.026184527119691683,
+    "predicted_fade": 0.02618452715827465,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 453.92271708361386
    },
    {
+    "alignment_gap_Ah": -0.9805849619301625,
     "cell": "expt4-D",
     "measured_fade": 0.06594028591608736,
-    "predicted_fade": 0.052902642901909276,
+    "predicted_fade": 0.052902642979861456,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 917.0954776907032
    },
    {
+    "alignment_gap_Ah": -4.594372209027824,
     "cell": "expt4-D",
     "measured_fade": 0.0790639121691209,
-    "predicted_fade": 0.07715005002486156,
+    "predicted_fade": 0.07715005013854236,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1337.4371883953368
    },
    {
+    "alignment_gap_Ah": 3.0200416402894916,
     "cell": "expt4-D",
     "measured_fade": 0.08867453762995514,
-    "predicted_fade": 0.10323390713462641,
+    "predicted_fade": 0.10323390728674182,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1789.6147372646865
    },
    {
+    "alignment_gap_Ah": 0.3684146086770852,
     "cell": "expt4-D",
     "measured_fade": 0.09771875518797923,
-    "predicted_fade": 0.12890591558244227,
+    "predicted_fade": 0.12890591577238547,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2234.652670329459
    },
    {
+    "alignment_gap_Ah": -3.1153767707683073,
     "cell": "expt4-D",
     "measured_fade": 0.10760242955931865,
-    "predicted_fade": 0.15464414677500116,
+    "predicted_fade": 0.1546441470028697,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2680.8386099283603
    },
    {
+    "alignment_gap_Ah": -1.8523190956102553,
     "cell": "expt4-D",
     "measured_fade": 0.11648951999010015,
-    "predicted_fade": 0.1799851794249659,
+    "predicted_fade": 0.1799851796901745,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3120.1389013407647
    },
    {
+    "alignment_gap_Ah": 4.207270656997935,
     "cell": "expt4-D",
     "measured_fade": 0.12404108918087198,
-    "predicted_fade": 0.20593771947126138,
+    "predicted_fade": 0.20593771977471112,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3570.039999007579
    },
    {
-    "cell": "expt4-E",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -3.3607084206062154,
     "cell": "expt4-E",
     "measured_fade": 0.04779958268618234,
-    "predicted_fade": 0.027345055203272853,
+    "predicted_fade": 0.02734505524356586,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 474.04108922541354
    },
    {
+    "alignment_gap_Ah": -1.2485505990371166,
     "cell": "expt4-E",
     "measured_fade": 0.06451682531222391,
-    "predicted_fade": 0.05410610358142441,
+    "predicted_fade": 0.05410610366114989,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 937.9581092384
    },
    {
+    "alignment_gap_Ah": -3.822058172337165,
     "cell": "expt4-E",
     "measured_fade": 0.07739161599707389,
-    "predicted_fade": 0.08009487763628699,
+    "predicted_fade": 0.080094877754307,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1388.48734273308
    },
    {
+    "alignment_gap_Ah": 3.7901241357903928,
     "cell": "expt4-E",
     "measured_fade": 0.08716931660174743,
-    "predicted_fade": 0.10621666977299173,
+    "predicted_fade": 0.10621666992950225,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1841.3225154893335
    },
    {
+    "alignment_gap_Ah": 1.2266513610047696,
     "cell": "expt4-E",
     "measured_fade": 0.09683732607177897,
-    "predicted_fade": 0.13190732483491893,
+    "predicted_fade": 0.1319073250292847,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2286.683697536344
    },
    {
+    "alignment_gap_Ah": 4.071101098451436,
     "cell": "expt4-E",
     "measured_fade": 0.10632315638779122,
-    "predicted_fade": 0.1577388943626735,
+    "predicted_fade": 0.15773889459510215,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2734.4877068649917
    },
    {
+    "alignment_gap_Ah": 1.2467035790714363,
     "cell": "expt4-E",
     "measured_fade": 0.11542101221472889,
-    "predicted_fade": 0.18347291547944342,
+    "predicted_fade": 0.18347291574979122,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3180.6006625588366
    },
    {
+    "alignment_gap_Ah": -1.2996501138395615,
     "cell": "expt4-E",
     "measured_fade": 0.1230543634564445,
-    "predicted_fade": 0.2086788675293265,
+    "predicted_fade": 0.20867886783681533,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3617.5592598579933
    },
    {
-    "cell": "expt4-F",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -3.4787207201852652,
     "cell": "expt4-F",
     "measured_fade": 0.05602860173671487,
-    "predicted_fade": 0.02809825090992105,
+    "predicted_fade": 0.028098250951323893,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 487.0981377676554
    },
    {
+    "alignment_gap_Ah": -1.820287639520302,
     "cell": "expt4-F",
     "measured_fade": 0.07613541940127477,
-    "predicted_fade": 0.05523170997982009,
+    "predicted_fade": 0.055231710061204156,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 957.4710953767758
    },
    {
+    "alignment_gap_Ah": -4.492765180314109,
     "cell": "expt4-F",
     "measured_fade": 0.09261975148543178,
-    "predicted_fade": 0.08121653109761973,
+    "predicted_fade": 0.0812165312172925,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1407.9318026031037
    },
    {
+    "alignment_gap_Ah": 3.0743664655283283,
     "cell": "expt4-F",
     "measured_fade": 0.10603627935743942,
-    "predicted_fade": 0.10727347889550745,
+    "predicted_fade": 0.10727347905357519,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1859.642864225757
    },
    {
+    "alignment_gap_Ah": 0.30828663989177585,
     "cell": "expt4-F",
     "measured_fade": 0.11903931472072016,
-    "predicted_fade": 0.13273153738122315,
+    "predicted_fade": 0.1327315375768034,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2300.971860800192
    },
    {
+    "alignment_gap_Ah": 3.3096644445895436,
     "cell": "expt4-F",
     "measured_fade": 0.13241487776440686,
-    "predicted_fade": 0.1581582364692436,
+    "predicted_fade": 0.15815823670229015,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2741.7572255212485
    },
    {
+    "alignment_gap_Ah": 0.7212620672326011,
     "cell": "expt4-F",
     "measured_fade": 0.14557924426453062,
-    "predicted_fade": 0.1841312610259231,
+    "predicted_fade": 0.18413126129724094,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3192.0134330806004
    },
    {
+    "alignment_gap_Ah": 2.873805805950724,
     "cell": "expt4-F",
     "measured_fade": 0.1582702176138261,
-    "predicted_fade": 0.2083938387462712,
+    "predicted_fade": 0.20839383905334008,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3612.6181341672345
    },
    {
-    "cell": "expt4-G",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -3.4626820410633172,
     "cell": "expt4-G",
     "measured_fade": 0.057690743813512024,
-    "predicted_fade": 0.02760709937298052,
+    "predicted_fade": 0.02760709941365965,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 478.5837644078182
    },
    {
+    "alignment_gap_Ah": -0.5916419369632422,
     "cell": "expt4-G",
     "measured_fade": 0.0780878108409997,
-    "predicted_fade": 0.053990266647032464,
+    "predicted_fade": 0.05399026672658726,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 935.9500143143451
    },
    {
+    "alignment_gap_Ah": -3.244334725213321,
     "cell": "expt4-G",
     "measured_fade": 0.09458229546427843,
-    "predicted_fade": 0.07982264971777377,
+    "predicted_fade": 0.07982264983539264,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1383.7681268437614
    },
    {
+    "alignment_gap_Ah": 4.240316963753685,
     "cell": "expt4-G",
     "measured_fade": 0.10854524883827643,
-    "predicted_fade": 0.10574053380151155,
+    "predicted_fade": 0.1057405339573205,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1833.0684449503628
    },
    {
+    "alignment_gap_Ah": 1.4901780314894495,
     "cell": "expt4-G",
     "measured_fade": 0.12197205693126678,
-    "predicted_fade": 0.1309585389761706,
+    "predicted_fade": 0.13095853916913833,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2270.2359895840523
    },
    {
+    "alignment_gap_Ah": -4.5389258626946685,
     "cell": "expt4-G",
     "measured_fade": 0.13526802038710772,
-    "predicted_fade": 0.15569614606412469,
+    "predicted_fade": 0.15569614629354334,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2699.075577642391
    },
    {
+    "alignment_gap_Ah": 1.2624299004519344,
     "cell": "expt4-G",
     "measured_fade": 0.14975335492212205,
-    "predicted_fade": 0.18098931686332254,
+    "predicted_fade": 0.18098931713001076,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3137.5461583922565
    },
    {
+    "alignment_gap_Ah": 3.748983737033086,
     "cell": "expt4-G",
     "measured_fade": 0.16116284801445258,
-    "predicted_fade": 0.20499843543272944,
+    "predicted_fade": 0.20499843573479515,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3553.7570101670794
    },
    {
-    "cell": "expt4-H",
-    "measured_fade": 0.0,
-    "predicted_fade": 0.0,
-    "rpt": 0,
-    "throughput_Ah": 0.0
-   },
-   {
+    "alignment_gap_Ah": -1.660211627938338,
     "cell": "expt4-H",
     "measured_fade": 0.05690395652531566,
-    "predicted_fade": 0.028294127538695403,
+    "predicted_fade": 0.028294127580386873,
+    "prediction_outside_model_state_range": false,
     "rpt": 1,
     "throughput_Ah": 490.4937634033602
    },
    {
+    "alignment_gap_Ah": 3.2667337012578628,
     "cell": "expt4-H",
     "measured_fade": 0.07733304520305351,
-    "predicted_fade": 0.05494896918279009,
+    "predicted_fade": 0.05494896926375754,
+    "prediction_outside_model_state_range": false,
     "rpt": 2,
     "throughput_Ah": 952.5696331417856
    },
    {
+    "alignment_gap_Ah": 0.5889542860090842,
     "cell": "expt4-H",
     "measured_fade": 0.0935066695838539,
-    "predicted_fade": 0.08092303900522654,
+    "predicted_fade": 0.08092303912446684,
+    "prediction_outside_model_state_range": false,
     "rpt": 3,
     "throughput_Ah": 1402.843960939487
    },
    {
+    "alignment_gap_Ah": -1.8986862474966983,
     "cell": "expt4-H",
     "measured_fade": 0.10688666520907919,
-    "predicted_fade": 0.10664602050186496,
+    "predicted_fade": 0.10664602065900815,
+    "prediction_outside_model_state_range": false,
     "rpt": 4,
     "throughput_Ah": 1848.7655389413555
    },
    {
+    "alignment_gap_Ah": -4.52023713086146,
     "cell": "expt4-H",
     "measured_fade": 0.12006537371434767,
-    "predicted_fade": 0.13208546198255167,
+    "predicted_fade": 0.13208546217717992,
+    "prediction_outside_model_state_range": false,
     "rpt": 5,
     "throughput_Ah": 2289.7717998227577
    },
    {
+    "alignment_gap_Ah": -1.9930873575494843,
     "cell": "expt4-H",
     "measured_fade": 0.13356718129624834,
-    "predicted_fade": 0.15717585934834508,
+    "predicted_fade": 0.15717585957994412,
+    "prediction_outside_model_state_range": false,
     "rpt": 6,
     "throughput_Ah": 2724.7271951571074
    },
    {
+    "alignment_gap_Ah": -1.1473820102082755,
     "cell": "expt4-H",
     "measured_fade": 0.14723289301885767,
-    "predicted_fade": 0.18285191310266147,
+    "predicted_fade": 0.18285191337209422,
+    "prediction_outside_model_state_range": false,
     "rpt": 7,
     "throughput_Ah": 3169.8352557636053
    },
    {
+    "alignment_gap_Ah": 1.1955046580314956,
     "cell": "expt4-H",
     "measured_fade": 0.16021207534595716,
-    "predicted_fade": 0.20734810902624287,
+    "predicted_fade": 0.20734810933177084,
+    "prediction_outside_model_state_range": false,
     "rpt": 8,
     "throughput_Ah": 3594.4898527711052
    }
   ]
  },
  "id": "big14-a-kirkaldy-fade",
+ "independence": {
+  "basis": "distinct rig channels in experiment_metadata.xlsx (no cell serials exist in the dataset)",
+  "calibration_channels": {
+   "expt5-A": "2/CC4",
+   "expt5-B": "2/CC5",
+   "expt5-C": "2/CC6",
+   "expt5-D": "2/CC7",
+   "expt5-E": "2/CC8",
+   "expt5-F": "5/CE6",
+   "expt5-G": "5/CE7",
+   "expt5-H": "5/CE8"
+  },
+  "holdout_channels": {
+   "expt4-A": "2/CC1",
+   "expt4-B": "2/CC2",
+   "expt4-C": "2/CC3",
+   "expt4-D": "5/CE1",
+   "expt4-E": "5/CE2",
+   "expt4-F": "5/CE3",
+   "expt4-G": "5/CE4",
+   "expt4-H": "5/CE5"
+  },
+  "shared_channels": []
+ },
  "preregistration_sha256": "da6ac0da6c1ee88285a85f575f7ab0046b1d37563ac68d9658c3d10b19ca1c19",
  "reported_not_judged": {
   "calibration_residuals_per_temperature": {
    "10C": {
-    "max_abs_residual": 0.08552682836131917,
-    "mean_signed_residual": -0.04515492651224241,
-    "n": 45,
-    "rmse": 0.05158555919953188
+    "max_abs_residual": 0.08552682809092477,
+    "mean_signed_residual": -0.04838027822793297,
+    "n": 42,
+    "rmse": 0.05339612649811141
    },
    "25C": {
-    "max_abs_residual": 0.07950640556321442,
-    "mean_signed_residual": 0.01246303087217356,
-    "n": 30,
-    "rmse": 0.03739978965924042
+    "max_abs_residual": 0.07950640594223851,
+    "mean_signed_residual": 0.01335324756981088,
+    "n": 28,
+    "rmse": 0.038712460324211946
    },
    "40C": {
-    "max_abs_residual": 0.048526452698635314,
-    "mean_signed_residual": 0.0035583820629331692,
-    "n": 45,
-    "rmse": 0.02483805633159804
+    "max_abs_residual": 0.048526453077413545,
+    "mean_signed_residual": 0.0038125524203209576,
+    "n": 42,
+    "rmse": 0.025709830988111308
    }
   },
-  "calibration_rmse": 0.03973582359453965,
+  "calibration_rmse": 0.04113048500204267,
+  "criteria_with_the_reference_rpt_included": {
+   "per_temperature": {
+    "10C": 0.005390344142225856,
+    "25C": 0.024324857942917905,
+    "40C": 0.005793236659594558
+   },
+   "pooled_rmse": 0.03528935016464816
+  },
   "flagship_declared_parameters_on_holdout": {
    "activation_energy_J_per_mol": 30000.0,
+   "caveat": "predictions at or above fade 0.5 lie outside ThroughputArrheniusFade's declared state range; the RMSE then shows the direction (overprediction), not a meaningful magnitude",
+   "inputs": "throughput as flagship A aggregates it (integral of |I|, charge + discharge); temperature = the chamber setpoint, NOT flagship A's time-weighted mean cell temperature (the measured set temperatures run above setpoint)",
    "k_q_per_Ah_abs_current": 0.0002,
    "max_abs_residual": 2.099043135508294,
-   "n_checkpoints": 72,
+   "max_alignment_gap_Ah": 4.761114710757283,
+   "n_checkpoints": 64,
    "per_temperature": {
     "10C": {
      "max_abs_residual": 0.5571941984981744,
-     "mean_signed_residual": 0.2328145397842195,
-     "n": 27,
-     "rmse": 0.2787041515941374
+     "mean_signed_residual": 0.26191635725724693,
+     "n": 24,
+     "rmse": 0.2956103933055872
     },
     "25C": {
      "max_abs_residual": 1.1564758796217924,
-     "mean_signed_residual": 0.5616801536624698,
-     "n": 18,
-     "rmse": 0.6753514039070707
+     "mean_signed_residual": 0.6318901728702784,
+     "n": 16,
+     "rmse": 0.7163183360798172
     },
     "40C": {
      "max_abs_residual": 2.099043135508294,
-     "mean_signed_residual": 1.0471607605991673,
-     "n": 27,
-     "rmse": 1.249080304422436
+     "mean_signed_residual": 1.178055855674063,
+     "n": 24,
+     "rmse": 1.3248497302554925
     }
    },
-   "pooled_rmse": 0.8533633363458135,
-   "throughput_used": "abs_current (charge + discharge), the definition flagship A feeds the model"
+   "pooled_rmse": 0.9051285029191519,
+   "predictions_outside_model_state_range": 38,
+   "reference_rpt_included": false
   },
   "measured_set_temperature_C_per_cell": {
    "expt4-A": [
@@ -1204,47 +1438,54 @@
   "numerical": "not applicable: the model is evaluated in closed form",
   "parameter": {
    "activation_energy": {
-    "max": 1.5373567524535562e-12,
-    "min": 2.3959157195627735e-21,
-    "std": 6.249323844883039e-13
+    "status": "NOT ESTABLISHED (constraint-active at a bound in 8/8 refits)"
    },
    "k_q": {
-    "max": 5.949613032450329e-05,
-    "min": 5.4861402039882555e-05,
-    "std": 1.6715443010741038e-06
+    "conditional_on": "activation energy at its lower bound (0) in every refit",
+    "max": 5.9496130321398524e-05,
+    "min": 5.486140203765816e-05,
+    "std": 1.671544284743051e-06
    },
    "refits": {
     "expt5-A": {
-     "activation_energy_J_per_mol": 7.631258138684526e-19,
-     "k_q_per_Ah_discharge": 5.4861402039882555e-05
+     "activation_energy_J_per_mol": 2.1678274915069168e-17,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.486140203765816e-05
     },
     "expt5-B": {
-     "activation_energy_J_per_mol": 1.2377360477560049e-12,
-     "k_q_per_Ah_discharge": 5.616251273296333e-05
+     "activation_energy_J_per_mol": 4.9696091377344744e-14,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.6162512728827185e-05
     },
     "expt5-C": {
-     "activation_energy_J_per_mol": 1.5373567524535562e-12,
-     "k_q_per_Ah_discharge": 5.6429977057867154e-05
+     "activation_energy_J_per_mol": 2.2790069955477192e-14,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.642997715581735e-05
     },
     "expt5-D": {
-     "activation_energy_J_per_mol": 9.170641093209588e-14,
-     "k_q_per_Ah_discharge": 5.914024987095435e-05
+     "activation_energy_J_per_mol": 9.169554508756938e-14,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.9140249840347595e-05
     },
     "expt5-E": {
-     "activation_energy_J_per_mol": 2.3959157195627735e-21,
-     "k_q_per_Ah_discharge": 5.949613032450329e-05
+     "activation_energy_J_per_mol": 9.3750268346596e-14,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.9496130321398524e-05
     },
     "expt5-F": {
-     "activation_energy_J_per_mol": 4.690500780112035e-16,
-     "k_q_per_Ah_discharge": 5.850695285562491e-05
+     "activation_energy_J_per_mol": 3.6034818177584103e-13,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.8506952832391965e-05
     },
     "expt5-G": {
-     "activation_energy_J_per_mol": 3.345788169442331e-13,
-     "k_q_per_Ah_discharge": 5.848987804616559e-05
+     "activation_energy_J_per_mol": 3.0552367642808714e-16,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.8489878057611465e-05
     },
     "expt5-H": {
-     "activation_energy_J_per_mol": 6.844681108215341e-16,
-     "k_q_per_Ah_discharge": 5.8675593877104635e-05
+     "activation_energy_J_per_mol": 6.731837904532682e-16,
+     "activation_energy_at_bound": true,
+     "k_q_per_Ah_discharge": 5.867559385715331e-05
     }
    }
   }
@@ -1253,7 +1494,7 @@
   "C1": {
    "criterion": "holdout RMSE of fade (predicted - measured), pooled over every holdout checkpoint of every holdout cell, <= 0.015 (1.5 percentage points of beginning-of-life capacity)",
    "met": false,
-   "observed": 0.035289350072277396
+   "observed": 0.03743000820763399
   },
   "C2": {
    "criterion": "at each of the three temperatures separately, |mean signed holdout residual| <= 0.010",
@@ -1263,10 +1504,11 @@
     "25C": false,
     "40C": true
    },
+   "missing_temperatures": [],
    "observed": {
-    "10C": 0.005390343991142196,
-    "25C": 0.024324857789141157,
-    "40C": 0.0057932365043140595
+    "10C": 0.0060641371600040905,
+    "25C": 0.027365465185782648,
+    "40C": 0.006517391242043878
    }
   },
   "met_if": "C1 and C2",
