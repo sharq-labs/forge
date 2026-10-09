@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
@@ -261,4 +260,3 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
 
 __all__ = ["Adjudication", "AdmittedProposal", "BlindfoldReport", "DEFAULT_CREDIT", "EvaluatorConfig", "ProposalStore", "RoleRefused",
            "admit", "adjudicate", "run_campaign"]
-_ = math  # reserved for numeric checks in future credit rules

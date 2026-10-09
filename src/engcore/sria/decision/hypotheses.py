@@ -182,7 +182,7 @@ class VerdictReference:
 
     Binding to :attr:`Hypothesis.content_digest` means a verdict about one revision's content cannot back another's.
     Whether the verdict record itself exists and says what this reference claims is checked against the sealed
-    verdict store by the adjudicator (``engcore.design.falsifiers.verify_status``); a reference alone is not a verdict.
+    verdict store by the adjudicator (``engcore.claims.falsification.verify_status``); a reference alone is not a verdict.
     """
 
     falsifier_ref: str
