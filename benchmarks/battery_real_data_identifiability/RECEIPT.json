@@ -1,0 +1,213 @@
+{
+ "dataset_id": "jahn2024.a123_01.hyspowertest",
+ "declared_assumptions": [
+  "Units are not stated by the source; second, ampere_hour, ampere and volt are declared and verified against the tester's ampere-hour counter and the declared voltage window.",
+  "Positive source current is charge; verified by the passive step response (the voltage moves against the discharge current at every clear step). The canonical current is the negation (positive is discharge).",
+  "The recorded sample order is the measurement order. No row is reordered, deduplicated, smoothed or dropped; an unparseable row refuses the file.",
+  "Rest-current scatter of about 1 mA is kept as recorded; segmentation classifies it, it is never zeroed.",
+  "There is no temperature channel. The 25 degC chamber setpoint is source metadata and is not attached to any sample.",
+  "State of charge is not a source channel and is not stored. The tester's ampere-hour counter is SOURCE_COMPUTED, not a measurement.",
+  "Both files come from ONE physical cell (A123_01): they are two test sequences, not two cells."
+ ],
+ "files": [
+  {
+   "cell_id": "A123_01",
+   "consistency_checks": {
+    "charge_counter_integration": "trapezoidal integral of canonical current over the recorded time stamps",
+    "charge_counter_max_abs_error_ah": 9.846821208547851e-05,
+    "charge_counter_scope": "verifies the RATIO of the current and charge units together with the time unit, and that counter and current share one sign convention. It cannot detect a common scale error (a milliampere column beside a milliampere-hour counter declared as ampere and ampere_hour), and it cannot tell charge from discharge",
+    "charge_counter_span_ah": 1.00243851147015,
+    "charge_counter_tolerance_ah": 0.0100243851147015,
+    "current_sign": "verified: the voltage moves against the canonical current at all 4 clear steps",
+    "passive_step_test": {
+     "minimum_current_step_a": 0.1,
+     "minimum_voltage_step_v": 0.001,
+     "steps": 4,
+     "voltage_moves_against_canonical_current": 4
+    },
+    "voltage_inside_window": true,
+    "voltage_window_v": [
+     1.0,
+     5.0
+    ]
+   },
+   "dropped_row_count": 0,
+   "dropped_row_reasons": {},
+   "format_digest": "80d67f5f8b53e2975de219d8f3ff83e89f120f2266f3f9d58cbcf23887b4c6a3",
+   "format_id": "jahn2024.hyspowertest.dc_power",
+   "format_version": 1,
+   "group_id": "A123_01/HysPowerTest_SOC100",
+   "header": [
+    "t_dc_power",
+    "Q_dc_power",
+    "I_dc_power",
+    "U_dc_power"
+   ],
+   "line_terminator": "CRLF",
+   "lineage": [
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares ampere_hour; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check); the counter is computed by the tester, not measured",
+     "channel": "charge_counter",
+     "kind": "source_computed",
+     "normalized_unit": "ampere_hour",
+     "source_column": "Q_dc_power",
+     "source_unit": "ampere_hour",
+     "transformation": "identity"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares ampere; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check)",
+     "channel": "current",
+     "kind": "measured",
+     "normalized_unit": "ampere",
+     "source_column": "I_dc_power",
+     "source_unit": "ampere",
+     "transformation": "identity; negated: source positive current is charge, canonical positive current is discharge"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares second; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check)",
+     "channel": "time",
+     "kind": "measured",
+     "normalized_unit": "second",
+     "source_column": "t_dc_power",
+     "source_unit": "second",
+     "transformation": "identity"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares volt, and ingestion refuses any value outside the declared single-cell window",
+     "channel": "voltage",
+     "kind": "measured",
+     "normalized_unit": "volt",
+     "source_column": "U_dc_power",
+     "source_unit": "volt",
+     "transformation": "identity"
+    }
+   ],
+   "normalized_digest": "2112817cef86be31d8862cc129cf3a9e10b25e032517015cb641ff6505bf041b",
+   "normalized_record_count": 723,
+   "published_filename": "20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "raw_record_count": 723,
+   "schema": "battery_raw_file_receipt/1",
+   "snapshot": {
+    "byte_length": 47380,
+    "content_type": "text/csv",
+    "retrieved_at_utc": "2026-09-13",
+    "schema": "corpus_source_snapshot/1",
+    "snapshot_sha256": "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb",
+    "snapshot_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC100.csv?download=1",
+    "source_id": "zenodo.jahn2024.pdecm_data",
+    "source_version": "10.5281/zenodo.11958572"
+   },
+   "test_sequence_id": "20230125_HysPowerTest_A123_01_25deg_SOC100"
+  },
+  {
+   "cell_id": "A123_01",
+   "consistency_checks": {
+    "charge_counter_integration": "trapezoidal integral of canonical current over the recorded time stamps",
+    "charge_counter_max_abs_error_ah": 5.179150877296368e-05,
+    "charge_counter_scope": "verifies the RATIO of the current and charge units together with the time unit, and that counter and current share one sign convention. It cannot detect a common scale error (a milliampere column beside a milliampere-hour counter declared as ampere and ampere_hour), and it cannot tell charge from discharge",
+    "charge_counter_span_ah": 0.503140556257395,
+    "charge_counter_tolerance_ah": 0.005031405562573949,
+    "current_sign": "verified: the voltage moves against the canonical current at all 4 clear steps",
+    "passive_step_test": {
+     "minimum_current_step_a": 0.1,
+     "minimum_voltage_step_v": 0.001,
+     "steps": 4,
+     "voltage_moves_against_canonical_current": 4
+    },
+    "voltage_inside_window": true,
+    "voltage_window_v": [
+     1.0,
+     5.0
+    ]
+   },
+   "dropped_row_count": 0,
+   "dropped_row_reasons": {},
+   "format_digest": "dc3f219aa5971808a6167951571d67d4bc18a5e2d0be8dd8a3a51027eb95d05f",
+   "format_id": "jahn2024.hyspowertest.ch_power",
+   "format_version": 1,
+   "group_id": "A123_01/HysPowerTest_SOC50",
+   "header": [
+    "t_ch_power",
+    "Q_ch_power",
+    "I_ch_power",
+    "U_ch_power"
+   ],
+   "line_terminator": "CRLF",
+   "lineage": [
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares ampere_hour; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check); the counter is computed by the tester, not measured",
+     "channel": "charge_counter",
+     "kind": "source_computed",
+     "normalized_unit": "ampere_hour",
+     "source_column": "Q_ch_power",
+     "source_unit": "ampere_hour",
+     "transformation": "identity"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares ampere; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check)",
+     "channel": "current",
+     "kind": "measured",
+     "normalized_unit": "ampere",
+     "source_column": "I_ch_power",
+     "source_unit": "ampere",
+     "transformation": "identity; negated: source positive current is charge, canonical positive current is discharge"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares second; ingestion checks the time unit and the ratio of the current and charge units against the tester's own ampere-hour counter (a common scale error in both would pass that check)",
+     "channel": "time",
+     "kind": "measured",
+     "normalized_unit": "second",
+     "source_column": "t_ch_power",
+     "source_unit": "second",
+     "transformation": "identity"
+    },
+    {
+     "basis": "the Zenodo record describes the file as 'nx4 vector [t Q I U]' and states no units; Forge declares volt, and ingestion refuses any value outside the declared single-cell window",
+     "channel": "voltage",
+     "kind": "measured",
+     "normalized_unit": "volt",
+     "source_column": "U_ch_power",
+     "source_unit": "volt",
+     "transformation": "identity"
+    }
+   ],
+   "normalized_digest": "cda0eda962104d8ea71a1785d248965360f7cb1f7d9fc9b5e7edd07f8717a831",
+   "normalized_record_count": 336,
+   "published_filename": "20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "raw_record_count": 336,
+   "schema": "battery_raw_file_receipt/1",
+   "snapshot": {
+    "byte_length": 20988,
+    "content_type": "text/csv",
+    "retrieved_at_utc": "2026-09-13",
+    "schema": "corpus_source_snapshot/1",
+    "snapshot_sha256": "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3",
+    "snapshot_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC50.csv?download=1",
+    "source_id": "zenodo.jahn2024.pdecm_data",
+    "source_version": "10.5281/zenodo.11958572"
+   },
+   "test_sequence_id": "20230125_HysPowerTest_A123_01_25deg_SOC50"
+  }
+ ],
+ "identity_excludes": [
+  "local file paths",
+  "ingest wall-clock time"
+ ],
+ "normalization_version": "engcore.domains.battery.real_data.normalization/1",
+ "parser_version": "engcore.domains.battery.real_data.csv_parser/1",
+ "receipt_digest": "b22162f1237f6e7cd52873ff2d87f57cef60898233cfb9a165e87fa8aad54d5c",
+ "schema": "battery_dataset_receipt/1",
+ "source": {
+  "allowed_hosts": [
+   "zenodo.org"
+  ],
+  "authority": "Jahn, L. (University of Bayreuth): Probability distributed equivalent circuit model - Data",
+  "domain": "battery",
+  "landing_url": "https://zenodo.org/records/11958572",
+  "license_note": "CC BY 4.0. Cite 10.5281/zenodo.10852930 and doi:10.1038/s44172-024-00221-4. The four files of 10.5281/zenodo.11958572 used in this repository have the MD5 published for 10.5281/zenodo.10852930.",
+  "scale_note": "One A123 18650M1A cell at a 25 degC chamber setpoint; two HysPowerTest sequences.",
+  "schema": "corpus_reference_source/1",
+  "source_id": "zenodo.jahn2024.pdecm_data",
+  "source_version": "10.5281/zenodo.11958572"
+ }
+}

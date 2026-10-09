@@ -1,0 +1,40 @@
+{
+ "calibration_groups": [
+  "A123_01/HysPowerTest_SOC100"
+ ],
+ "calibration_raw_sha256": [
+  "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb"
+ ],
+ "dataset_id": "jahn2024.a123_01.hyspowertest",
+ "holdout_groups": [
+  "A123_01/HysPowerTest_SOC50"
+ ],
+ "holdout_raw_sha256": [
+  "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3"
+ ],
+ "independence_scope": "within-cell only: calibration and holdout are different test sequences of the SAME cell(s) ['A123_01']. The holdout can test a calibration on a sequence it did not see; it cannot support any statement about another cell",
+ "overlap": {
+  "groups": 0,
+  "raw_files": 0,
+  "unit_keys": 0
+ },
+ "policy": {
+  "calibration": [
+   "20230125_HysPowerTest_A123_01_25deg_SOC100"
+  ],
+  "holdout": [
+   "20230125_HysPowerTest_A123_01_25deg_SOC50"
+  ],
+  "holdout_role": "validation",
+  "policy_id": "jahn2024.a123_01.hyspowertest.by_test_sequence",
+  "rationale": "The dataset holds ONE physical cell, so no cell-level holdout exists and none is claimed. The unit is the test sequence (one raw file each). SOC100 is calibration because it is the only sequence with a discharge interruption at mid state of charge followed by a rest, a choice made from the current profile alone; SOC50 is held out and is read by no fit in this pass. The holdout supports within-cell statements only.",
+  "unit": "test_sequence",
+  "version": "engcore.domains.battery.real_data.split/1"
+ },
+ "receipt_digest": "b22162f1237f6e7cd52873ff2d87f57cef60898233cfb9a165e87fa8aad54d5c",
+ "schema": "battery_calibration_holdout_split/1",
+ "shared_cells": [
+  "A123_01"
+ ],
+ "split_digest": "8a7fed5c8c6b4002247a54e6a9bca104301aa89c276c4ec1a2af3fb343ba6ff9"
+}

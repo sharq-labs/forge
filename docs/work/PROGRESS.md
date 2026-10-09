@@ -2654,3 +2654,77 @@ Pre-commit smoke (2026-10-09, same venv; `forge_check --changed` log 17:10 is af
 - attack1-7 re-run: 0 offline VERIFIED; verify_bundle gave only replay_required,
   scientifically_revalidated or tampered. attack4 predates the F5 uncertainty requirement, so its
   case-shaped requests are now refused; attack5 covers case-shape parity with MCP.
+
+## Battery Practical Pass 1: real-data ingestion, receipts, split, 1RC identifiability gate (2026-10-09, branch feat/battery-real-data-identifiability from 803946af)
+
+Scope: ingestion, receipts, normalization, split contract and identifiability gate only. No calibration, no
+model-form or production UQ, no certification. Not committed, not pushed, no PR. Work note:
+`docs/work/BATTERY_PRACTICAL_PASS_1.md`; artifacts in `benchmarks/battery_real_data_identifiability/`.
+
+What changed:
+- New canonical domain package `engcore.domains.battery.real_data`:
+  - `ingest`: byte-pinned receipts, lineage, derived channels; refuses rather than cleans.
+  - `sources`: Jahn 2024 A123 HysPowerTest declarations.
+  - `quality`: segmentation and quality reports; the holdout gets a structure-only report.
+  - `split`: receipt-bound split over whole groups, reusing `scientific.corpus.DatasetSplit` and
+    `CorpusLeakageError`.
+  - `identifiability`: structural plus practical gate for `battery.thevenin_1rc`, reusing
+    `inference.calibration.IdentifiabilityStatus` and the frozen `hybrid_uq.identifiability.classify` rule.
+- Review 3 S-OCV leak fixed. `claims/empirical_uq_trust.py` is now split by cell (BATT_001 calibration,
+  BATT_002 validation). The new `claims.measurement_dataset.require_independent_split` runs at import.
+- Real-data decision: WEAKLY_IDENTIFIABLE, action REVIEW. The parameters are window-unstable, the residuals
+  are structured (lag-1 0.81) and R0 depends on resolution. Structural rank is 3 and the frozen rule says
+  IDENTIFIABLE, but the gate does not promote that.
+- The NASA archive was not ingested: no local bytes, and the download needs owner approval. PR #117's
+  `tools/nasa_battery_aging.py` was not adopted.
+
+Review: forge-scientific-review, six rounds. Rounds 1-5 returned CHANGES REQUIRED; every finding was fixed or is
+recorded below as an accepted open item. Round 6: APPROVED WITH NOTES (PASS); its three LOW notes were fixed
+(bound sliced to the true group end and tested, a shadowed name renamed, a stale bullet reworded).
+- R1: noise-scale leak, hand-built split, nested-window variance, design capping, artifact check, intervals,
+  whiteness, wording.
+- R2: forged dataset, width inflation for autocorrelation, multistart, untested caps, the 1RC-predicted step
+  check, the holdout schema.
+- R3: sign re-tested from data instead of receipt text, duplicate receipt entries, prior-current A1 residual.
+- R4: pre-record polarization bounded rather than assumed zero, bisection warm starts, A1 limit moved to the
+  check scale, a contradicted sign refused, a single implementation of the sign test.
+- R5: the two A1 bias bounds capped on their SUM (each can sit below the limit alone); the pre-record bound
+  raised to the highest recorded voltage when a record exceeds 5 V; a two-calibration-group test now runs the
+  concatenation path and the per-group clock (`group_start`).
+
+Open items, each accepted by the reviewer as recorded:
+1. (Round 4) The missing-lag-1 UNTESTED cap has no test. It is defensive only: every window block has more
+   than two samples, so it fires only on an exactly constant residual.
+2. (Round 4) No two-valley test for horizon multistart (LOW). `_horizons` refits from the full estimate and
+   every declared start.
+3. (Round 5, I-d) No two-valley test for the profile bisection warm starts (LOW); same geometry as item 2.
+4. (Round 2) No verify or replay function for gate records, and `LOCKED_HOLDOUT` is not enforced as unread.
+   Acceptable only while nothing consumes `GateDecision` or the gate JSON.
+
+Failed approaches:
+- The charge-counter check alone cannot verify the current sign. Current and counter are negated together,
+  so a misdeclared sign still balances. A passive-step test was added.
+- Taking `max(declared noise, RMS)` for every check let a larger declared noise buy CAN_CALIBRATE. Checks now
+  use `min`; widths use `max`, inflated for autocorrelation.
+- Reading "sign verified" from receipt text could be forged. The gate re-tests from the series.
+- An A1 bound from recorded current only treated pre-record polarization as zero. It is now bounded by a
+  gate-owned 5 V single-cell bound, or the highest recorded voltage in the group, whichever is larger.
+
+Commands (WSL, `~/forge-local-assurance-72bf7c4c/.forge/venvs/3.12`, `PYTHONPATH=src`,
+`TMPDIR=~/forge-battery-pass1-out/tmp`, `-p no:cacheprovider`), final tree:
+- `pytest tests/domains/battery/test_battery_real_data_ingestion.py
+  tests/domains/battery/test_battery_thevenin_identifiability.py
+  tests/domains/battery/test_battery_real_data_a123.py -n 4`: 95 passed.
+- `pytest -n 4 -m "not campaign" tests/domains/battery tests/domains/test_battery_thevenin.py tests/claims
+  tests/mcp tests/credibility tests/test_forge_diagnose.py tests/test_core_guards.py
+  tests/domains/test_evidentiary_level_audit.py tests/test_repository_architecture.py
+  tests/test_core_api_layering.py tests/test_capability_completion.py tests/test_pin_portability.py`:
+  1819 passed.
+- `tools/forge_check.py --changed`: 225 passed (exit 0).
+- Formal TARGETS (48, from `tests/mutation_guards.py`), serially, `-X utf8 -p no:randomly
+  --continue-on-collection-errors`: 1140 passed.
+- `benchmarks/battery_real_data_identifiability/audit/run_pass1.py --check`: exit 0.
+- Full suite, Local Assurance, certification: NOT RUN (out of scope for this pass).
+- Pre-commit smoke (2026-10-09, consolidation pass; only PROGRESS.md changed after the runs above): the three
+  focused files above, `-n 4`: 95 passed; `run_pass1.py --check`: exit 0; artifacts unchanged. Larger runs
+  were not repeated.

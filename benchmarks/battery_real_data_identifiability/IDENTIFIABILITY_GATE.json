@@ -1,0 +1,728 @@
+{
+ "action": "REVIEW",
+ "authority": "Identifiability diagnostic only. This record is not a calibration, not a validation and not evidence of model adequacy; it grants no ValidationLevel and supports no claim. Parameter values in it are the linearization point of a temporary diagnostic fit and must not be used as calibrated parameters; profile intervals are diagnostics of constraint, not parameter uncertainties.",
+ "calibration_groups": [
+  "A123_01/HysPowerTest_SOC100"
+ ],
+ "cells": {
+  "A123_01": {
+   "assumption_checks": [
+    "structured residuals: lag-1 autocorrelation [0.814] exceeds 0.5; the residuals are not white, so the Fisher information overstates what the data determine",
+    "R0 is resolution-dependent: 2 resolved step(s) read across brackets [0.002] s fall outside the 1RC model's own prediction at that bracket. Possible causes, none established here: dynamics faster than the interruption bracket lumped into R0, current-level nonlinearity, or onset/interruption asymmetry"
+   ],
+   "cell_id": "A123_01",
+   "decision": "WEAKLY_IDENTIFIABLE",
+   "diagnostic_fit": {
+    "at_parameter_bound": [],
+    "converged": true,
+    "linearization_point": {
+     "C1": {
+      "unit": "farad",
+      "value": 1567.081516871747
+     },
+     "R0": {
+      "unit": "ohm",
+      "value": 0.027810879119719464
+     },
+     "R1": {
+      "unit": "ohm",
+      "value": 0.03775860106119859
+     },
+     "R1*C1": {
+      "unit": "second",
+      "value": 59.17080582593824
+     }
+    },
+    "observations": 66,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "optimizer_status": 2,
+    "start_costs": [
+     6.059543931123082e-05,
+     6.059543931123219e-05,
+     6.059543931123095e-05
+    ],
+    "start_log_spread": [
+     0.0,
+     9.806384237975863e-08,
+     7.476497021485784e-08
+    ],
+    "use": "DIAGNOSTIC_ONLY_NOT_CALIBRATED"
+   },
+   "excitation": {
+    "current_transitions_in_domain": 3,
+    "discharge_current_levels_a": [
+     1.1,
+     4.4
+    ],
+    "excluded_windows": [
+     {
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "reason": "charge current: outside battery.thevenin_1rc's declared discharge/rest domain",
+      "transition": {
+       "bracket_s": 0.10866433330011205,
+       "delta_current_a": 0.053651395794147,
+       "delta_voltage_v": -0.0013361437624901384,
+       "first_sample_after": 387,
+       "kind": "charge_interruption",
+       "last_sample_before": 386,
+       "resolved_step": true,
+       "segment_after": 2,
+       "segment_before": 1,
+       "step_resistance_feature_ohm": 0.024904175235565866,
+       "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+      }
+     }
+    ],
+    "relative_to_diagnostic_tau": [
+     {
+      "bracket_over_tau": 0.0018341871787166336,
+      "history_over_tau": 27.828632313102183,
+      "rest_over_tau": 10.144017937364003,
+      "rest_samples_within_first_tau": 6,
+      "window": 0
+     }
+    ],
+    "relaxation_windows": [
+     {
+      "discharge_history_s": 1646.6425989999998,
+      "discharge_onset_observed": true,
+      "first_observed_sample": 614,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "history_start_sample": 450,
+      "initial_polarization": "zero at the observed discharge onset (assumption A1, checked against the history length)",
+      "interruption_bracket_s": 0.10853033340026741,
+      "interruption_sample": 617,
+      "loaded_current_a": 1.09999523749161,
+      "loaded_samples_observed": 3,
+      "rest_duration_s": 600.2297156666,
+      "rest_end_sample": 679,
+      "rest_samples_observed": 63
+     }
+    ],
+    "resolved_steps": [
+     {
+      "bracket_s": 0.0020056665998708922,
+      "delta_current_a": 1.1059373612398167,
+      "delta_voltage_v": -0.02405058772487978,
+      "first_sample_after": 450,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "onset",
+      "last_sample_before": 449,
+      "resolved_step": true,
+      "segment_after": 3,
+      "segment_before": 2,
+      "step_resistance_feature_ohm": 0.021746790159903582,
+      "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+     },
+     {
+      "bracket_s": 0.10853033340026741,
+      "delta_current_a": -1.0997871972797,
+      "delta_voltage_v": 0.02748638597129016,
+      "first_sample_after": 617,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "interruption",
+      "last_sample_before": 616,
+      "resolved_step": true,
+      "segment_after": 4,
+      "segment_before": 3,
+      "step_resistance_feature_ohm": 0.024992458576783897,
+      "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+     },
+     {
+      "bracket_s": 0.0020060000997546013,
+      "delta_current_a": 4.387210408305137,
+      "delta_voltage_v": -0.09562971785844976,
+      "first_sample_after": 680,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "onset",
+      "last_sample_before": 679,
+      "resolved_step": true,
+      "segment_after": 5,
+      "segment_before": 4,
+      "step_resistance_feature_ohm": 0.02179738580064897,
+      "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+     }
+    ],
+    "temperature": "no temperature channel in the calibration data: temperature variation is not observable, and any identified parameters hold only at the source's stated, unmeasured, test temperature"
+   },
+   "finite_difference_check": {
+    "agrees": true,
+    "below_resolution": [],
+    "max_relative_disagreement": 1.1359605834329308e-08,
+    "method": "central differences in log-parameter space, compared column-wise with the analytic Jacobian",
+    "output_resolution_v": 7.313044058354635e-12,
+    "per_column_relative_disagreement": {
+     "C1": 1.1359605834329308e-08,
+     "OCV_w0": 2.1339263689412746e-11,
+     "R0": 2.21682424285929e-09,
+     "R1": 5.352927069202648e-09
+    },
+    "problem": null,
+    "relative_step": 1e-06
+   },
+   "groups": [
+    "A123_01/HysPowerTest_SOC100"
+   ],
+   "horizon_stability": {
+    "horizons": [
+     {
+      "comparable": true,
+      "estimate_ratio_to_full_window": {
+       "C1": 0.6756998701013087,
+       "R0": 0.9192061969836273,
+       "R1": 0.9300050941044017
+      },
+      "fraction": 0.25,
+      "rest_duration_s": [
+       150.00048233330017
+      ],
+      "stable": false,
+      "z_score": {
+       "C1": 9.743714836928657,
+       "R0": 5.385178820492224,
+       "R1": 5.30196061137228
+      }
+     },
+     {
+      "comparable": true,
+      "estimate_ratio_to_full_window": {
+       "C1": 0.8161482759377792,
+       "R0": 0.9528595211185598,
+       "R1": 0.9783526056182404
+      },
+      "fraction": 0.5,
+      "rest_duration_s": [
+       300.0000369999998
+      ],
+      "stable": false,
+      "z_score": {
+       "C1": 9.3840531756653,
+       "R0": 4.369418020127945,
+       "R1": 3.3520270305354356
+      }
+     }
+    ],
+    "method": "the rest of every window shortened to each declared fraction, re-fitted, and each parameter's shift compared with the 95% half-width of a nested difference (|d ln theta| <= 1.96 sqrt(sd_short^2 - sd_full^2), floored at 0.1 sd_short), at the check noise scale",
+    "verdict": "UNSTABLE"
+   },
+   "initial_polarization_check": [
+    {
+     "combined_factor": 1.0329370610735345e-13,
+     "limit": 0.0027470976853091475,
+     "max_prior_recorded_current_a": 1.10004948987041,
+     "pre_record_bound_v": 5.0,
+     "pre_record_factor": 7.05490085382682e-34,
+     "recorded_history_factor": 1.0329370610735345e-13,
+     "window": 0
+    }
+   ],
+   "model_conventions": {
+    "current_hold": "the current recorded at sample k is held over (t_{k-1}, t_k]: the kernel's constant-current interval",
+    "initial_polarization": "zero at an observed discharge onset (A1), accepted only when the discharge lasts history_factor times the upper 95% tau; otherwise a free nuisance parameter"
+   },
+   "noise": {
+    "autocorrelation_width_inflation": 3.118547830775698,
+    "check_scale_v": 0.001,
+    "declared": {
+     "basis": "the stated accuracy taken as a per-sample scale; it is conservative against the 0.19 mV 16-bit quantization step observed in the record. The gate's widths use the larger of this and the residual RMS (inflated for residual autocorrelation); its stability and consistency checks use the smaller.",
+     "sigma": {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "millivolt"
+     },
+     "source": "BaSyTec CTS voltage accuracy 1 mV, distributor-transcribed technical data recorded in benchmarks/battery_flagship_b3/evidence/PROVENANCE.json"
+    },
+    "declared_noise_channel": "the declared figure is used as a per-sample random scale; an instrument accuracy figure is partly systematic, and a constant offset is absorbed by OCV_w",
+    "diagnostic_residual_rms_v": 0.0013981028541151274,
+    "residual_lag1_autocorrelation": [
+     0.8135257350181101
+    ],
+    "residual_rms_degrees_of_freedom": 62,
+    "rule": "interval widths use the larger of the declared noise and the residual RMS, inflated by sqrt((1 + r1) / (1 - r1)) for the largest positive lag-1 residual autocorrelation (conservative); stability, step-consistency and drift checks use the smaller (not enlargeable by the caller or by misfit). Neither is a measurement uncertainty",
+    "width_scale_v": 0.004360050622902042
+   },
+   "nuisance_parameters": [
+    "OCV_w0"
+   ],
+   "ocv_treatment": "OCV is not measured during the windows and no OCV curve is identified. Each relaxation window carries one unknown constant OCV_w, estimated jointly and marginalized out of the R0/R1/C1 information. OCV hysteresis is not modelled: OCV_w is the relaxed voltage the window's own rest approaches.",
+   "parameters": {
+    "C1": {
+     "basis": "C1 = tau / R1, determined once the relaxation shape (tau) and amplitude (R1) are",
+     "max_abs_correlation_with_others": 0.7167222600819388,
+     "practical_local_relative_width_95": 0.6228942383671263,
+     "practical_profile": "PARAMETERS_IDENTIFIABLE",
+     "profile_relative_width_95": 0.7257956220328003,
+     "structural": "PARAMETERS_IDENTIFIABLE"
+    },
+    "R0": {
+     "basis": "the voltage jump across the interruption, located to 0.1085 s, against tau of 59.17 s",
+     "max_abs_correlation_with_others": 0.6823815282124922,
+     "practical_local_relative_width_95": 0.461774805319237,
+     "practical_profile": "PARAMETERS_IDENTIFIABLE",
+     "profile_relative_width_95": 0.47084329309597356,
+     "structural": "PARAMETERS_IDENTIFIABLE"
+    },
+    "R1": {
+     "basis": "the relaxation amplitude, given the polarization reached during the preceding constant discharge (600.2 s rest after 1.1 A)",
+     "max_abs_correlation_with_others": 0.7167222600819386,
+     "practical_local_relative_width_95": 0.24009253878408787,
+     "practical_profile": "PARAMETERS_IDENTIFIABLE",
+     "profile_relative_width_95": 0.2472949081053747,
+     "structural": "PARAMETERS_IDENTIFIABLE"
+    },
+    "R1*C1": {
+     "basis": "the shape of the relaxation",
+     "practical_local_relative_width_95": 0.47650279130591516,
+     "structural": "PARAMETERS_IDENTIFIABLE"
+    }
+   },
+   "parameters_estimated": [
+    "R0",
+    "R1",
+    "C1"
+   ],
+   "practical_local": {
+    "collinearity_index": 2.285987809778934,
+    "correlation": [
+     [
+      1.0000000000000002,
+      -0.6823815282124922,
+      0.571999479586745
+     ],
+     [
+      -0.6823815282124921,
+      1.0,
+      -0.7167222600819386
+     ],
+     [
+      0.5719994795867451,
+      -0.7167222600819388,
+      0.9999999999999999
+     ]
+    ],
+    "correlation_condition_number": 9.117600734073497,
+    "fisher_scaled_condition_number": 17.659266862793114,
+    "frozen_rule_status": "PARAMETERS_IDENTIFIABLE",
+    "frozen_rule_why": "every parameter's 95% interval is small relative to its own value (widest 0.623, threshold 1), and neither the correlation (0.7167) nor the conditioning (9.12) reaches its threshold. Relative widths are measured against each parameter's declared zero; a parameterization with another origin can reach another verdict",
+    "log_sd": {
+     "C1": 0.15644163140447892,
+     "R0": 0.11677954934830982,
+     "R1": 0.06110305649765873,
+     "R1*C1": 0.12043746399732637
+    },
+    "marginal_log_covariance": [
+     [
+      0.01363746314599433,
+      -0.004869193035798229,
+      0.010449963291300138
+     ],
+     [
+      -0.004869193035798228,
+      0.0037335835133560746,
+      -0.006851192407871816
+     ],
+     [
+      0.01044996329130014,
+      -0.006851192407871818,
+      0.024473984036494843
+     ]
+    ],
+    "max_abs_correlation": 0.7167222600819388,
+    "projected_condition_number": 5.067578670523075,
+    "projected_singular_values": [
+     27.80681390657588,
+     11.67260322493035,
+     5.487199255202813
+    ],
+    "relative_width_95": {
+     "C1": 0.6228942383671263,
+     "R0": 0.461774805319237,
+     "R1": 0.24009253878408787,
+     "R1*C1": 0.47650279130591516
+    },
+    "sensitivity_matrix_shape": [
+     66,
+     4
+    ],
+    "sensitivity_normalization": "d y_k / d ln(theta_j) divided by the noise scale: dimensionless per unit relative change",
+    "singular": false
+   },
+   "profile_likelihood": {
+    "found_lower_minimum": [],
+    "method": "profile likelihood: each of ln R0, ln R1, ln C1 fixed in turn, every other parameter re-fitted",
+    "noise_scale_v": 0.004360050622902042,
+    "per_parameter": {
+     "C1": {
+      "bounded_above": true,
+      "bounded_below": true,
+      "diagnostic_interval_95_at_noise_scale": [
+       1104.2531167332265,
+       2241.6340210472604
+      ],
+      "interval_note": "a diagnostic of how tightly the data constrain the parameter; not a parameter uncertainty",
+      "points": [
+       {
+        "delta_chi2": 12.27218529450961,
+        "offset_log": -0.6257665256179157
+       },
+       {
+        "delta_chi2": 3.067024855963181,
+        "offset_log": -0.31288326280895784
+       },
+       {
+        "delta_chi2": 0.7627123467490283,
+        "offset_log": -0.15644163140447892
+       },
+       {
+        "delta_chi2": 0.189947638898408,
+        "offset_log": -0.07822081570223946
+       },
+       {
+        "delta_chi2": 0.1880626816898988,
+        "offset_log": 0.07822081570223946
+       },
+       {
+        "delta_chi2": 0.7476754091554573,
+        "offset_log": 0.15644163140447892
+       },
+       {
+        "delta_chi2": 2.948027224189807,
+        "offset_log": 0.31288326280895784
+       },
+       {
+        "delta_chi2": 11.361883324478244,
+        "offset_log": 0.6257665256179157
+       }
+      ],
+      "relative_width_95": 0.7257956220328003,
+      "status": "PARAMETERS_IDENTIFIABLE"
+     },
+     "R0": {
+      "bounded_above": true,
+      "bounded_below": true,
+      "diagnostic_interval_95_at_noise_scale": [
+       0.021218849007192016,
+       0.03431341491581478
+      ],
+      "interval_note": "a diagnostic of how tightly the data constrain the parameter; not a parameter uncertainty",
+      "points": [
+       {
+        "delta_chi2": 9.450728710198725,
+        "offset_log": -0.4671181973932393
+       },
+       {
+        "delta_chi2": 2.971187941537473,
+        "offset_log": -0.23355909869661964
+       },
+       {
+        "delta_chi2": 0.8366259802874842,
+        "offset_log": -0.11677954934830982
+       },
+       {
+        "delta_chi2": 0.22222644391436835,
+        "offset_log": -0.05838977467415491
+       },
+       {
+        "delta_chi2": 0.25145580361220854,
+        "offset_log": 0.05838977467415491
+       },
+       {
+        "delta_chi2": 1.0712155671692896,
+        "offset_log": 0.11677954934830982
+       },
+       {
+        "delta_chi2": 4.872213732617574,
+        "offset_log": 0.23355909869661964
+       }
+      ],
+      "relative_width_95": 0.47084329309597356,
+      "status": "PARAMETERS_IDENTIFIABLE"
+     },
+     "R1": {
+      "bounded_above": true,
+      "bounded_below": true,
+      "diagnostic_interval_95_at_noise_scale": [
+       0.0331662698959432,
+       0.04250377967555981
+      ],
+      "interval_note": "a diagnostic of how tightly the data constrain the parameter; not a parameter uncertainty",
+      "points": [
+       {
+        "delta_chi2": 12.54513162519093,
+        "offset_log": -0.24441222599063492
+       },
+       {
+        "delta_chi2": 3.430325960565138,
+        "offset_log": -0.12220611299531746
+       },
+       {
+        "delta_chi2": 0.8968647836991424,
+        "offset_log": -0.06110305649765873
+       },
+       {
+        "delta_chi2": 0.2292973737015333,
+        "offset_log": -0.030551528248829365
+       },
+       {
+        "delta_chi2": 0.2398229965675592,
+        "offset_log": 0.030551528248829365
+       },
+       {
+        "delta_chi2": 0.9811059422521143,
+        "offset_log": 0.06110305649765873
+       },
+       {
+        "delta_chi2": 4.1054552386808485,
+        "offset_log": 0.12220611299531746
+       }
+      ],
+      "relative_width_95": 0.2472949081053747,
+      "status": "PARAMETERS_IDENTIFIABLE"
+     }
+    },
+    "threshold_delta_chi2": 3.841458820694124
+   },
+   "reasons": [
+    "window-unstable: shortening the rest moves ['C1', 'R0', 'R1'] outside their own 95% intervals, so the 1RC parameters fitted here depend on the analysis window. Possible causes, none established here: more than one relaxation time constant, or OCV relaxation/hysteresis during the rest",
+    "structured residuals: lag-1 autocorrelation [0.814] exceeds 0.5; the residuals are not white, so the Fisher information overstates what the data determine",
+    "R0 is resolution-dependent: 2 resolved step(s) read across brackets [0.002] s fall outside the 1RC model's own prediction at that bracket. Possible causes, none established here: dynamics faster than the interruption bracket lumped into R0, current-level nonlinearity, or onset/interruption asymmetry"
+   ],
+   "step_resistance_consistency": {
+    "method": "every resolved in-domain step with a bracket b under bracket_to_tau_max * tau: |R_step - (R0 + R1 (1 - exp(-b / tau)))| against 1.96 sqrt(sd_R0^2 + (sqrt(2) sigma / |dI|)^2), at the check noise scale",
+    "steps": [
+     {
+      "bracket_s": 0.0020056665998708922,
+      "consistent": false,
+      "delta_current_a": 1.1059373612398167,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "onset",
+      "model_predicted_step_resistance_ohm": 0.02781215897184356,
+      "ratio_to_model_prediction": 0.781916649545962,
+      "step_resistance_feature_ohm": 0.021746790159903582,
+      "z_score": 4.098551251366468
+     },
+     {
+      "bracket_s": 0.10853033340026741,
+      "consistent": true,
+      "delta_current_a": -1.0997871972797,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "interruption",
+      "model_predicted_step_resistance_ohm": 0.027880071985939683,
+      "ratio_to_model_prediction": 0.8964273330925383,
+      "step_resistance_feature_ohm": 0.024992458576783897,
+      "z_score": 1.9431278412461679
+     },
+     {
+      "bracket_s": 0.0020060000997546013,
+      "consistent": false,
+      "delta_current_a": 4.387210408305137,
+      "group_id": "A123_01/HysPowerTest_SOC100",
+      "kind": "onset",
+      "model_predicted_step_resistance_ohm": 0.027812159184652258,
+      "ratio_to_model_prediction": 0.7837358349609025,
+      "step_resistance_feature_ohm": 0.02179738580064897,
+      "z_score": 7.410613364362528
+     }
+    ]
+   },
+   "structural": {
+    "coupling": null,
+    "method": "generic rank of the exact sensitivity matrix of the design (time grid and measured current) at seeded random log-parameter points around a reference point read from step and relaxation features, nuisance columns projected out, columns unit-normalized",
+    "mixed_rank": false,
+    "null_directions": [],
+    "per_parameter": {
+     "C1": "PARAMETERS_IDENTIFIABLE",
+     "R0": "PARAMETERS_IDENTIFIABLE",
+     "R1": "PARAMETERS_IDENTIFIABLE",
+     "R1*C1": "PARAMETERS_IDENTIFIABLE"
+    },
+    "points": [
+     {
+      "log_parameters": [
+       -3.748720038249129,
+       -3.3586902831453562,
+       8.215988538558475
+      ],
+      "normalized_singular_values": [
+       1.1691449470470947,
+       1.1577128144385804,
+       0.5411110164087855
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -4.328077226350533,
+       -2.1766990535130883,
+       7.752537946803755
+      ],
+      "normalized_singular_values": [
+       1.3671400039175978,
+       0.8494279212168895,
+       0.6398440562710123
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -2.737527201652515,
+       -3.4914740171602023,
+       7.210408383915819
+      ],
+      "normalized_singular_values": [
+       1.3010714439299904,
+       1.0608204346878527,
+       0.4264658288053127
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -2.683427037474174,
+       -2.736320179326493,
+       8.90527555178855
+      ],
+      "normalized_singular_values": [
+       1.4233275598958244,
+       0.9000128200516854,
+       0.40511181294009924
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -3.2792438153469163,
+       -3.006909835960827,
+       7.59256900083013
+      ],
+      "normalized_singular_values": [
+       1.2306522949618808,
+       1.1174373463955813,
+       0.4866504965429016
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -3.5778550018959905,
+       -2.412023993256925,
+       7.302017013919546
+      ],
+      "normalized_singular_values": [
+       1.166479462710988,
+       1.1565760738647377,
+       0.5492335099364558
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -3.457910209342444,
+       -3.5461259556057874,
+       8.3778538736341
+      ],
+      "normalized_singular_values": [
+       1.1761958497832592,
+       1.1534113151635383,
+       0.5349819258679255
+      ],
+      "rank": 3
+     },
+     {
+      "log_parameters": [
+       -2.633076324036641,
+       -2.1676938173931193,
+       7.062191720571852
+      ],
+      "normalized_singular_values": [
+       1.1671683267538664,
+       1.155336910333375,
+       0.5503768896346526
+      ],
+      "rank": 3
+     }
+    ],
+    "rank_tolerance": 1e-08,
+    "status": "PARAMETERS_IDENTIFIABLE"
+   }
+  }
+ },
+ "current_sign_retest": {
+  "A123_01/HysPowerTest_SOC100": {
+   "clear_steps": 4,
+   "voltage_against_current": 4
+  }
+ },
+ "decision": "WEAKLY_IDENTIFIABLE",
+ "design": {
+  "a1_residual_fraction": 0.1,
+  "bracket_to_tau_max": 0.1,
+  "capacitance_bounds_f": [
+   0.001,
+   100000000.0
+  ],
+  "fd_agreement_tolerance": 0.0001,
+  "fd_relative_step": 1e-06,
+  "frozen_identifiability_thresholds": {
+   "condition_threshold": 1000000.0,
+   "correlation_threshold": 0.95,
+   "width_threshold": 1.0
+  },
+  "history_factor": 5.0,
+  "horizon_fractions": [
+   0.25,
+   0.5
+  ],
+  "loaded_lookback_s": 10.0,
+  "max_residual_lag1_autocorrelation": 0.5,
+  "max_rms_to_declared_noise": 2.0,
+  "min_residual_dof": 5,
+  "min_rest_s": 60.0,
+  "min_rest_samples": 5,
+  "min_samples_in_first_tau": 3,
+  "parameterization": "natural logarithm of R0, R1 and C1; OCV_w (and an unknown initial polarization) as nuisances",
+  "perturbation_method": "analytic forward sensitivities; central finite differences as an independent check",
+  "pre_record_polarization_bound_v": 5.0,
+  "profile_far_offset": 1.0986122886681098,
+  "profile_offsets_sd": [
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0
+  ],
+  "rank_tolerance": 1e-08,
+  "resistance_bounds_ohm": [
+   1e-06,
+   100.0
+  ],
+  "segmentation": {
+   "constant_current_tolerance_fraction": 0.01,
+   "rest_band_a": 0.005,
+   "step_bracket_max_s": 0.25,
+   "version": "engcore.domains.battery.real_data.segmentation/1",
+   "voltage_rate_flag_v_per_s": 0.02,
+   "voltage_run_min_samples": 5
+  },
+  "sign_test_current_step_a": 0.1,
+  "sign_test_voltage_step_v": 0.001,
+  "structural_points": 8,
+  "structural_seed": 20261009,
+  "structural_spread": 1.0986122886681098,
+  "transient_span_factor": 3.0,
+  "version": "engcore.domains.battery.real_data.thevenin_1rc_identifiability_design/1"
+ },
+ "gate_digest": "576f3c1141bd4fd1ee05c9811e667890194a999349c1097be670dc7761e63064",
+ "holdout_groups_not_read": [
+  "A123_01/HysPowerTest_SOC50"
+ ],
+ "model_id": "battery.thevenin_1rc",
+ "reasons": [
+  "A123_01: window-unstable: shortening the rest moves ['C1', 'R0', 'R1'] outside their own 95% intervals, so the 1RC parameters fitted here depend on the analysis window. Possible causes, none established here: more than one relaxation time constant, or OCV relaxation/hysteresis during the rest",
+  "A123_01: structured residuals: lag-1 autocorrelation [0.814] exceeds 0.5; the residuals are not white, so the Fisher information overstates what the data determine",
+  "A123_01: R0 is resolution-dependent: 2 resolved step(s) read across brackets [0.002] s fall outside the 1RC model's own prediction at that bracket. Possible causes, none established here: dynamics faster than the interruption bracket lumped into R0, current-level nonlinearity, or onset/interruption asymmetry"
+ ],
+ "receipt_digest": "b22162f1237f6e7cd52873ff2d87f57cef60898233cfb9a165e87fa8aad54d5c",
+ "schema": "battery_thevenin_1rc_identifiability_gate/1",
+ "split_digest": "8a7fed5c8c6b4002247a54e6a9bca104301aa89c276c4ec1a2af3fb343ba6ff9"
+}

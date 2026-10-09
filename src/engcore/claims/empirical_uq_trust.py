@@ -19,7 +19,7 @@ from ..scientific.results.uncertainty import (
     UncertaintySource,
 )
 from ..scientific.units.quantity import Quantity
-from .measurement_dataset import DatasetObservation, DatasetSplit
+from .measurement_dataset import DatasetObservation, DatasetSplit, require_independent_split
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -173,11 +173,18 @@ def _s_ocv_observation(
 
 
 # Frozen production empirical catalog.  BATT_001 and BATT_002 are different
-# LiFePO4 cells and therefore different independence groups.  The 100% points
-# are calibration observations; 50% and 60% are held-out validation points.
-# These records satisfy model-form split/group admission, but they DO NOT by
-# themselves satisfy the 95/95 two-sided Wilks replicate count used by the
-# ALEATORIC producer: there are only two independent cells at each exact SOC.
+# LiFePO4 cells and therefore different independence groups, and the split is
+# made BY CELL: every BATT_001 point is calibration and every BATT_002 point is
+# held-out validation.  Review 3 found the earlier catalog filing the 100% SOC
+# points of BOTH cells as calibration and their 50%/60% points as validation,
+# so each cell sat on both sides of the boundary -- a within-cell SOC holdout,
+# not an independent one.  `require_independent_split` below now refuses that
+# shape at import.  With one calibration cell and one validation cell the
+# catalog cannot meet a model-form policy that asks for two groups per side;
+# that is the honest consequence, not a defect to tune away.  The records DO
+# NOT by themselves satisfy the 95/95 two-sided Wilks replicate count used by
+# the ALEATORIC producer either: there are only two independent cells at each
+# exact SOC, and the split does not change that count.
 PRODUCTION_EMPIRICAL_RECORDS = (
     _s_ocv_observation(
         cell="BATT_001",
@@ -191,14 +198,14 @@ PRODUCTION_EMPIRICAL_RECORDS = (
         soc=1.0,
         voltage_v=3.351,
         expanded_half_width_v=0.003924735022902993,
-        split=DatasetSplit.CALIBRATION,
+        split=DatasetSplit.VALIDATION,
     ),
     _s_ocv_observation(
         cell="BATT_001",
         soc=0.5,
         voltage_v=3.299,
         expanded_half_width_v=0.0008329231657241884,
-        split=DatasetSplit.VALIDATION,
+        split=DatasetSplit.CALIBRATION,
     ),
     _s_ocv_observation(
         cell="BATT_002",
@@ -212,7 +219,7 @@ PRODUCTION_EMPIRICAL_RECORDS = (
         soc=0.6,
         voltage_v=3.302,
         expanded_half_width_v=0.0021919708027252688,
-        split=DatasetSplit.VALIDATION,
+        split=DatasetSplit.CALIBRATION,
     ),
     _s_ocv_observation(
         cell="BATT_002",
@@ -223,6 +230,8 @@ PRODUCTION_EMPIRICAL_RECORDS = (
     ),
 )
 
+require_independent_split(PRODUCTION_EMPIRICAL_RECORDS)
+
 PRODUCTION_EMPIRICAL_OBSERVATIONS = EmpiricalObservationRegistry(
     tuple(
         EmpiricalObservationPin(
@@ -231,7 +240,7 @@ PRODUCTION_EMPIRICAL_OBSERVATIONS = EmpiricalObservationRegistry(
             rationale=(
                 "S-OCV published experimental observation frozen from DOI "
                 "10.21227/651q-8v82 with repository-pinned source bytes, "
-                "explicit calibration/validation role and k=2 measurement budget"
+                "explicit cell-level calibration/validation role and k=2 measurement budget"
             ),
         )
         for observation in PRODUCTION_EMPIRICAL_RECORDS

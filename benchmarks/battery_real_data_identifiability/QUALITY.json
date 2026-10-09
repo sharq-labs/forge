@@ -1,0 +1,422 @@
+{
+ "receipt_digest": "b22162f1237f6e7cd52873ff2d87f57cef60898233cfb9a165e87fa8aad54d5c",
+ "reports": [
+  {
+   "battery_thevenin_1rc_domain": {
+    "charge_samples": 386,
+    "note": "battery.thevenin_1rc is declared for discharge and rest only; charge samples are outside its domain. They stay in the series and are classified, not removed."
+   },
+   "cell_id": "A123_01",
+   "channels_absent": {
+    "temperature": "not a source channel of this format"
+   },
+   "channels_present": [
+    "charge_counter",
+    "current",
+    "time",
+    "voltage"
+   ],
+   "constant_voltage_runs": [
+    {
+     "at_record_extreme": false,
+     "classification": "identical voltage readings while the current varies: consistent with constant-voltage control or with clipping; not removed",
+     "first_sample": 319,
+     "samples": 68,
+     "segment_kind": "charge",
+     "voltage_v": 3.59995305151735
+    }
+   ],
+   "dropped_records": 0,
+   "group_id": "A123_01/HysPowerTest_SOC100",
+   "normalized_digest": "2112817cef86be31d8862cc129cf3a9e10b25e032517015cb641ff6505bf041b",
+   "ranges": {
+    "charge_counter": {
+     "max": 0.855076844645905,
+     "min": -0.147361666824245,
+     "unit": "ampere_hour"
+    },
+    "current": {
+     "max": 4.40005329970058,
+     "min": -1.10004948987041,
+     "unit": "ampere"
+    },
+    "voltage": {
+     "max": 3.60014392919771,
+     "min": 1.99276298291841,
+     "unit": "volt"
+    }
+   },
+   "raw_sha256": "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb",
+   "record_count": 723,
+   "rest_current": {
+    "band_a": 0.005,
+    "classification": "kept as recorded; the band classifies it as rest, nothing zeroes it",
+    "max_abs_in_band_a": 0.00108528569914328,
+    "samples_in_band": 127
+   },
+   "schema": "battery_time_series_quality_report/1",
+   "segmentation_policy": {
+    "constant_current_tolerance_fraction": 0.01,
+    "rest_band_a": 0.005,
+    "step_bracket_max_s": 0.25,
+    "version": "engcore.domains.battery.real_data.segmentation/1",
+    "voltage_rate_flag_v_per_s": 0.02,
+    "voltage_run_min_samples": 5
+   },
+   "segments": [
+    {
+     "constant_current": false,
+     "current_max_a": 0.00108528569914328,
+     "current_median_a": 0.00108528569914328,
+     "current_min_a": 0.00108528569914328,
+     "duration_s": 0.0,
+     "first_sample": 0,
+     "index": 0,
+     "kind": "rest",
+     "last_sample": 0,
+     "samples": 1,
+     "t_end_s": 0.0,
+     "t_start_s": 0.0
+    },
+    {
+     "constant_current": false,
+     "current_max_a": -0.0534978460841351,
+     "current_median_a": -1.09999519780443,
+     "current_min_a": -1.10004948987041,
+     "duration_s": 3837.9019073333,
+     "first_sample": 1,
+     "index": 1,
+     "kind": "charge",
+     "last_sample": 386,
+     "samples": 386,
+     "t_end_s": 3837.9039146667,
+     "t_start_s": 0.00200733339988801
+    },
+    {
+     "constant_current": false,
+     "current_max_a": 0.00108528569914328,
+     "current_median_a": 0.0,
+     "current_min_a": -0.0,
+     "duration_s": 600.2284323333997,
+     "first_sample": 387,
+     "index": 2,
+     "kind": "rest",
+     "last_sample": 449,
+     "samples": 63,
+     "t_end_s": 4438.2410113334,
+     "t_start_s": 3838.012579
+    },
+    {
+     "constant_current": true,
+     "current_max_a": 1.10702264693896,
+     "current_median_a": 1.10000428616928,
+     "current_min_a": 1.0997871972797,
+     "duration_s": 1646.6425989999998,
+     "first_sample": 450,
+     "index": 3,
+     "kind": "discharge",
+     "last_sample": 616,
+     "samples": 167,
+     "t_end_s": 6084.885616,
+     "t_start_s": 4438.243017
+    },
+    {
+     "constant_current": false,
+     "current_max_a": 0.00108528569914328,
+     "current_median_a": 0.0,
+     "current_min_a": -0.0,
+     "duration_s": 600.2297156666,
+     "first_sample": 617,
+     "index": 4,
+     "kind": "rest",
+     "last_sample": 679,
+     "samples": 63,
+     "t_end_s": 6685.223862,
+     "t_start_s": 6084.9941463334
+    },
+    {
+     "constant_current": true,
+     "current_max_a": 4.40005329970058,
+     "current_median_a": 4.39999904732178,
+     "current_min_a": 4.38829569400428,
+     "duration_s": 400.48511166660046,
+     "first_sample": 680,
+     "index": 5,
+     "kind": "discharge",
+     "last_sample": 722,
+     "samples": 43,
+     "t_end_s": 7085.7109796667,
+     "t_start_s": 6685.2258680001
+    }
+   ],
+   "test_sequence_id": "20230125_HysPowerTest_A123_01_25deg_SOC100",
+   "time": {
+    "duplicate_timestamps": 0,
+    "end_s": 7085.7109796667,
+    "sample_interval": {
+     "max_s": 10.000504333399931,
+     "median_s": 10.0,
+     "min_s": 0.0020056665998708922,
+     "most_common_ms_rounded": [
+      {
+       "count": 701,
+       "interval_s": 10.0
+      },
+      {
+       "count": 5,
+       "interval_s": 0.002
+      },
+      {
+       "count": 5,
+       "interval_s": 9.998
+      },
+      {
+       "count": 3,
+       "interval_s": 0.006
+      },
+      {
+       "count": 2,
+       "interval_s": 0.109
+      },
+      {
+       "count": 1,
+       "interval_s": 0.228
+      },
+      {
+       "count": 1,
+       "interval_s": 0.229
+      },
+      {
+       "count": 1,
+       "interval_s": 0.481
+      }
+     ]
+    },
+    "start_s": 0.0,
+    "strictly_increasing": true
+   },
+   "transitions": [
+    {
+     "bracket_s": 0.00200733339988801,
+     "delta_current_a": -1.0934561788278432,
+     "delta_voltage_v": 0.023668832364169834,
+     "first_sample_after": 1,
+     "kind": "charge_onset",
+     "last_sample_before": 0,
+     "resolved_step": true,
+     "segment_after": 1,
+     "segment_before": 0,
+     "step_resistance_feature_ohm": 0.021645890180566917,
+     "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+    },
+    {
+     "bracket_s": 0.10866433330011205,
+     "delta_current_a": 0.053651395794147,
+     "delta_voltage_v": -0.0013361437624901384,
+     "first_sample_after": 387,
+     "kind": "charge_interruption",
+     "last_sample_before": 386,
+     "resolved_step": true,
+     "segment_after": 2,
+     "segment_before": 1,
+     "step_resistance_feature_ohm": 0.024904175235565866,
+     "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+    },
+    {
+     "bracket_s": 0.0020056665998708922,
+     "delta_current_a": 1.1059373612398167,
+     "delta_voltage_v": -0.02405058772487978,
+     "first_sample_after": 450,
+     "kind": "onset",
+     "last_sample_before": 449,
+     "resolved_step": true,
+     "segment_after": 3,
+     "segment_before": 2,
+     "step_resistance_feature_ohm": 0.021746790159903582,
+     "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+    },
+    {
+     "bracket_s": 0.10853033340026741,
+     "delta_current_a": -1.0997871972797,
+     "delta_voltage_v": 0.02748638597129016,
+     "first_sample_after": 617,
+     "kind": "interruption",
+     "last_sample_before": 616,
+     "resolved_step": true,
+     "segment_after": 4,
+     "segment_before": 3,
+     "step_resistance_feature_ohm": 0.024992458576783897,
+     "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+    },
+    {
+     "bracket_s": 0.0020060000997546013,
+     "delta_current_a": 4.387210408305137,
+     "delta_voltage_v": -0.09562971785844976,
+     "first_sample_after": 680,
+     "kind": "onset",
+     "last_sample_before": 679,
+     "resolved_step": true,
+     "segment_after": 5,
+     "segment_before": 4,
+     "step_resistance_feature_ohm": 0.02179738580064897,
+     "step_resistance_note": "-dV/dI across the bracket, read from two samples; a data feature at that bracket, not a fitted or calibrated resistance"
+    }
+   ],
+   "unsupported_records": 0,
+   "voltage_quantization_step_v": 0.0001908776803496437,
+   "within_segment_voltage_rate_flags": [
+    {
+     "classification": "rapid voltage change inside one current segment (not a current step); kept as recorded",
+     "delta_voltage_v": -0.00019087768035985775,
+     "interval_s": 0.002005999999710184,
+     "rate_v_per_s": 0.09515338005355668,
+     "sample": 388,
+     "segment_kind": "rest",
+     "t_s": 3838.014585
+    },
+    {
+     "classification": "rapid voltage change inside one current segment (not a current step); kept as recorded",
+     "delta_voltage_v": -0.4371098880156299,
+     "interval_s": 10.00000033339984,
+     "rate_v_per_s": 0.04371098734423937,
+     "sample": 720,
+     "segment_kind": "discharge",
+     "t_s": 7085.2238683334
+    },
+    {
+     "classification": "rapid voltage change inside one current segment (not a current step); kept as recorded",
+     "delta_voltage_v": -0.05821769250862996,
+     "interval_s": 0.4807346666002559,
+     "rate_v_per_s": 0.121101506825676,
+     "sample": 721,
+     "segment_kind": "discharge",
+     "t_s": 7085.704603
+    },
+    {
+     "classification": "rapid voltage change inside one current segment (not a current step); kept as recorded",
+     "delta_voltage_v": -0.006871596492820098,
+     "interval_s": 0.006376666699907219,
+     "rate_v_per_s": 1.077615753842063,
+     "sample": 722,
+     "segment_kind": "discharge",
+     "t_s": 7085.7109796667
+    }
+   ]
+  },
+  {
+   "cell_id": "A123_01",
+   "group_id": "A123_01/HysPowerTest_SOC50",
+   "normalized_digest": "cda0eda962104d8ea71a1785d248965360f7cb1f7d9fc9b5e7edd07f8717a831",
+   "raw_sha256": "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3",
+   "record_count": 336,
+   "role": "held out: current structure only, no voltage-derived feature",
+   "schema": "battery_holdout_structure_report/1",
+   "segmentation_policy": {
+    "constant_current_tolerance_fraction": 0.01,
+    "rest_band_a": 0.005,
+    "step_bracket_max_s": 0.25,
+    "version": "engcore.domains.battery.real_data.segmentation/1",
+    "voltage_rate_flag_v_per_s": 0.02,
+    "voltage_run_min_samples": 5
+   },
+   "segments": [
+    {
+     "constant_current": false,
+     "current_max_a": 0.00126617987806141,
+     "current_median_a": 0.00126617987806141,
+     "current_min_a": 0.00126617987806141,
+     "duration_s": 0.0,
+     "first_sample": 0,
+     "index": 0,
+     "kind": "rest",
+     "last_sample": 0,
+     "samples": 1,
+     "t_end_s": 0.0,
+     "t_start_s": 0.0
+    },
+    {
+     "constant_current": false,
+     "current_max_a": -1.0880295915834,
+     "current_median_a": -1.09999519780443,
+     "current_min_a": -1.10004044119275,
+     "duration_s": 1646.6403299999993,
+     "first_sample": 1,
+     "index": 1,
+     "kind": "charge",
+     "last_sample": 167,
+     "samples": 167,
+     "t_end_s": 1646.642336,
+     "t_start_s": 0.00200600000061968
+    },
+    {
+     "constant_current": false,
+     "current_max_a": 0.00108528569914328,
+     "current_median_a": 0.0,
+     "current_min_a": -0.0,
+     "duration_s": 600.2272409999998,
+     "first_sample": 168,
+     "index": 2,
+     "kind": "rest",
+     "last_sample": 230,
+     "samples": 63,
+     "t_end_s": 2246.9764153333,
+     "t_start_s": 1646.7491743333
+    },
+    {
+     "constant_current": true,
+     "current_max_a": 4.4000985430889,
+     "current_median_a": 4.39998999864411,
+     "current_min_a": 4.39064723895585,
+     "duration_s": 408.1326226667002,
+     "first_sample": 231,
+     "index": 3,
+     "kind": "discharge",
+     "last_sample": 273,
+     "samples": 43,
+     "t_end_s": 2655.1110443333,
+     "t_start_s": 2246.9784216666
+    },
+    {
+     "constant_current": false,
+     "current_max_a": -0.0,
+     "current_median_a": 0.0,
+     "current_min_a": -0.0,
+     "duration_s": 600.0000063333,
+     "first_sample": 274,
+     "index": 4,
+     "kind": "rest",
+     "last_sample": 335,
+     "samples": 62,
+     "t_end_s": 3255.2180313333,
+     "t_start_s": 2655.218025
+    }
+   ],
+   "transitions": [
+    {
+     "bracket_s": 0.00200600000061968,
+     "delta_current_a": -1.0892957714614613,
+     "kind": "charge_onset",
+     "resolved_step": true
+    },
+    {
+     "bracket_s": 0.10683833330017478,
+     "delta_current_a": 1.0997871972797,
+     "kind": "charge_interruption",
+     "resolved_step": true
+    },
+    {
+     "bracket_s": 0.002006333299959806,
+     "delta_current_a": 4.389561953256707,
+     "kind": "onset",
+     "resolved_step": true
+    },
+    {
+     "bracket_s": 0.1069806667001103,
+     "delta_current_a": -4.39969151134274,
+     "kind": "interruption",
+     "resolved_step": true
+    }
+   ]
+  }
+ ]
+}

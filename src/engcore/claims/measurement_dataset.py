@@ -281,6 +281,27 @@ class DatasetObservation:
         return item
 
 
+def require_independent_split(observations) -> None:
+    """Refuse a catalog in which one independence group sits on both sides of the split.
+
+    Two observations of one cell, specimen or run are not independent, whatever
+    split each is filed under. A catalog that files the same group as both
+    calibration and validation makes the holdout a re-reading of the fit, so it
+    is refused where the catalog is built, not only where a study is scored.
+    """
+    by_group: dict[str, set[DatasetSplit]] = {}
+    for item in observations:
+        if not isinstance(item, DatasetObservation):
+            raise MeasurementDatasetError("require_independent_split reads DatasetObservation records")
+        by_group.setdefault(item.independence_group, set()).add(item.split)
+    leaked = sorted(group for group, splits in by_group.items() if len(splits) > 1)
+    if leaked:
+        raise MeasurementDatasetError(
+            f"independence groups {leaked} appear in both calibration and validation; "
+            "row-wise leakage is not held-out validation"
+        )
+
+
 def required_physical_context(declaration: CapabilityDeclaration) -> tuple[str, ...]:
     """Required non-identity, non-numerical inputs that bind a real-world comparison."""
     return tuple(sorted(
@@ -360,5 +381,6 @@ __all__ = [
     "MeasurementDatasetError",
     "MeasurementDatasetManifest",
     "observation_from_row",
+    "require_independent_split",
     "required_physical_context",
 ]
