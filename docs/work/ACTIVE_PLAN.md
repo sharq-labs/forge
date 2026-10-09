@@ -30,7 +30,85 @@ loosening a tolerance, replacing a pre-registered criterion with a post-hoc
 one, treating solver agreement as validation, or turning an unknown
 uncertainty/model discrepancy into zero.
 
-## Current repository state
+## Owner priority update — 2026-10-09
+
+This owner update narrows the immediate execution sequence while preserving the
+BIG 14 scientific-closure rules. It does **not** authorize weakening or skipping
+the running trust/certification work.
+
+### Live repository/science state
+
+- `main` = `446370651bc1630daf55b9dc0e7db9189946f0fa` (merge of PR #121).
+- PR #120 (bundle containment R1 + finite replay tolerance R4) is merged and its
+  certificate lineage was verified.
+- PR #121 is merged with the Kirkaldy fade study preserved as **NOT MET**;
+  activation energy remains NOT ESTABLISHED and model discrepancy NOT
+  QUANTIFIED.
+- Trust Repair Pass 1 exists locally at
+  `803946af905f51c76f2ea9f4c691d410c9c2ca7b`; its landing/recertification
+  work is the current trust-critical operation.
+- Battery Practical Pass 1 exists locally at
+  `7e923e75f38644d567748d2a2ec223a80762d6dc`; decision
+  **WEAKLY_IDENTIFIABLE**, so calibration is not authorized.
+- Automatic GitHub CI/status enforcement is not currently a reliable merge
+  control; local SHA-bound assurance remains authoritative until repository
+  policy/billing is resolved.
+
+### Execution order from here
+
+1. **Finish the in-flight Trust Repair Pass 1 landing/recertification.** Do not
+   edit its certification source SHA while assurance is running.
+2. In a separate worktree, a bounded correctness branch may proceed in
+   parallel with only low-resource targeted tests:
+   - B1 probabilistic-UQ sampler reproduction/fix;
+   - B2 model-form empirical round-trip `Mapping` failure;
+   - B4 ngspice version-probe non-zero-exit refusal;
+   - B5 deprecated multiphysics `warnings` import;
+   - then a small `ruff --select F` gate.
+3. After correctness, improve the MCP/product golden path:
+   - summary-first responses;
+   - typed request schemas for the principal `describe/plan/run/assess` path;
+   - resolve contradictory/negated intent extraction rather than silently
+     choosing the first value.
+4. Add runtime/provider visibility (`forge doctor` or equivalent) and a shared
+   fail-closed executable-provider probe contract.
+5. Resume Battery practical science only when the data/excitation gate permits
+   it; do not force calibration from the current WEAKLY_IDENTIFIABLE dataset.
+6. Start a **general Spatial / Geometry Foundation v0**, not a car/drone-only
+   geometry layer. First exercise: canonical geometry/region/boundary/interface
+   identity and Gmsh mapping/receipt.
+7. Provider expansion after those gates: Gmsh generalization → OpenVSP →
+   OpenRadioss; add other providers only when a real system slice requires them.
+8. Build trusted vertical slices (Drone first, then Vehicle/Car; Motor/HVAC as
+   independent system flagships according to evidence/provider readiness).
+9. Mature Scientific Twin + multi-fidelity Design Discovery only after trusted
+   bodies/systems exist. Recursive/scientific discovery remains downstream of
+   trusted physics rather than a substitute for it.
+
+### Universal architecture rule
+
+New work should follow:
+
+```text
+Core Foundations
+    ↓
+Domain Semantics
+    ↓
+Domain Models / System Composition
+    ↓
+Provider Adapters
+    ↓
+Flagships / Products
+    ↓
+Discovery
+```
+
+Core owns universal engineering concepts; domains own physics-specific meaning;
+providers own solver-specific translation; flagships own composition. Do not
+create `CarGeometry`, `DroneGeometry` or similar Core authority when a
+generic spatial/geometry contract is sufficient.
+
+## Current repository state (historical BIG 14 snapshot; retained for traceability)
 
 - Branch: `feat/big-14-flagship-a` (14.2/14.3 flagship A work), worktree
   `D:/forge-b14`, based on `a0928965` (PR #111's head, merged as `72b829f3`). No PR
