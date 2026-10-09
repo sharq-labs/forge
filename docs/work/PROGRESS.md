@@ -1848,3 +1848,32 @@ fast-forwarded.
 - Re-gate on `e5e3a81c` (after the Codex fixes): `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider
   --junitxml=…`: 14 failed, 9577 passed, 135 skipped — the same 14 node ids as above; skip admission audit: skipped 135,
   accepted 135, unexpected 0. Hardened-core recertification and the SCIENTIFIC tier: still NOT RUN.
+
+## 2026-10-09 Roadmap V2 — checkpoint 1: discovery authority + FidelityGraph (branch `feat/roadmap-v2-discovery`)
+
+- Stacked on PR #124 head `6656042099796921572d7ef81600750b4ba576fe`; PR #124 frozen except critical fixes. Owner decision:
+  no provider breadth, no product depth; build discovery + falsification authority (Roadmap V2 R1-R8).
+- DISCOVERY_AUTHORITY_MAP: `docs/architecture/discovery_authority_map.md` (source-level inventory by three read-only
+  explorers). CANONICAL_HYPOTHESIS_OWNER: `sria.decision.hypotheses.Hypothesis` (extended, M4G bytes preserved).
+  CANONICAL_EXPERIMENT_PLANNER_OWNER: `sria.decision` (ActionFamily + one UtilityEngine); external engines/LLMs only via
+  `sria.decision.external.ExternalSuggestion`; `claims.next_experiment.PLANNING_FAMILY` maps gap actions onto it.
+  DUPLICATE_TYPES_FOUND: 3 hypothesis types, 4 candidate/hypothesis status vocabularies, 2 planning vocabularies, 2
+  `FidelityRung` classes, 3 gap vocabularies (actions per type in the map). FIDELITY_GRAPH_DESIGN: `design.fidelity_graph`
+  on the existing ladder/multifidelity (measured links, policy-bound admission, elimination only through an admitted
+  in-domain quantified link, recorded stratified audit, suspension, resurrection). MIGRATION: additive only; no
+  CORE_CERTIFIED file modified.
+- HOSTILE_REVIEW_RESULTS: forge-scientific-reviewer on 17526a32 — CHANGES REQUIRED: 6 HIGH (admission settable/carried
+  over; declared domain; fabricated eliminations; gameable audit; audited false elimination stays eliminated; assertable
+  hypothesis status), 6 MEDIUM, 7 LOW. All HIGH and MEDIUM fixed in 0cf5aac3 with a regression test each; L1-L7 fixed.
+- TARGETED_TESTS (this container, `.venv`, CPython 3.12.13):
+  - `pytest tests/foundations/test_v2_discovery_authority.py tests/foundations/test_v2_fidelity_graph.py`: 9 + 25 passed
+    (with `tests/test_sria_m4_decision.py`).
+  - `pytest -n 4 tests/foundations tests/test_sria_*.py tests/claims tests/test_core_guards.py
+    tests/test_core_semantic_invariants.py tests/test_core_api_layering.py`: 1771 passed.
+  - `ruff --select F` on changed files: only pre-existing F401s in untouched `sria/decision` modules.
+- Discovery providers: conda-forge envs `discovery` (pysindy 2.1.0, botorch 0.17.2, pytorch cpu) and `dakota` (6.16.0)
+  created under `$HOME/mm/root/envs`; PySR needs Julia packages from the Julia registry (not attempted yet). No adapter yet.
+- PENDING_ROADMAP_TRACKER_SYNC: no roadmap tracker exists on this branch; `docs/performance/core-performance.md` is the
+  performance tracker and is updated in R8.
+- Failed approaches: none at this checkpoint (a first FidelityGraph draft trusted any 'admitted' audit event and a
+  caller-chosen audit seed; replaced, see review above).
