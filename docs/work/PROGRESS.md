@@ -2608,3 +2608,10 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   stated with the transfer, never silently applied. The dataset's processed summaries carry `Charge Throughput [A h]` and
   `C/10 Capacity [mA h]` per RPT (example notebook, read as text only); which throughput the column measures is checked
   against the paper/set data before use.
+- Data handling decided after reading the archive STRUCTURE and throughput columns, BEFORE any capacity value (recorded with
+  the study code `flagships/forge_flagships/kirkaldy_fade.py`): the per-cycle file's numbering restarts per ageing set and runs
+  through cycler fault rows (~1e-10 A h at -0.16 V), so RPTs are placed by charge, not by cycle number: the row where the
+  cumulative charge + discharge of the cycle rows is nearest the RPT file's own `Charge Throughput [A h]`. Expt 5: every RPT
+  but the last aligns within 4.4 A h; the last falls 37-99 A h short (the final set's cycle rows are incomplete). Rule: an RPT
+  is used only if it aligns within 10 A h (about one full cycle); otherwise it is skipped with the reason and never estimated.
+  `Charge Throughput [A h]` counts charge + discharge (about 8 A h per cycle), confirming the throughput note above.
