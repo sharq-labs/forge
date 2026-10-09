@@ -22,6 +22,7 @@ incorrect_model_family             Euler-Bernoulli for a short, deep beam (shear
 hidden_parameter_sensitivity       thickness tolerance never varied (delta ~ 1/h^3)    FALSIFIED
 unsupported_extrapolation          a surrogate fitted on L<=1 m claimed to 1.3 m       FALSIFIED (EDGE)
 insufficient_convergence           the claim's solver does not converge at high load   UNKNOWN (non-conv.)
+interior_only_violation            an amplified load band away from every corner       FALSIFIED (interior)
 =================================  ==================================================  ==================
 
 A KNOWN BLIND SPOT, ``flaw_outside_attack_space`` (the thickness flaw with ``h`` left out of the attack space), is
@@ -38,7 +39,6 @@ equal-fidelity families disagree: UNKNOWN).  A FALSIFIED control is a false alar
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
@@ -169,7 +169,9 @@ def seeded_cases() -> tuple[SeededCase, ...]:
         lo, hi = _eb(p["F"], 0.5, E0, B, H), _eb(p["F"], 1.0, E0, B, H)
         return lo + (hi - lo) * (p["L"] - 0.5) / 0.5
     span6 = _dim("L", 0.5, 1.0, "m", "fitted range of surrogate SG-1; claim states up to 1.3 m", edge_high=1.3)
-    lim6 = 1.05 * _eb(F_hi, 1.0, E0, B, H) * 1.3        # the surrogate's own linear extrapolation to 1.3 m is below this
+    # between the surrogate's own (linear) extrapolation to 1.3 m and the physics there: the fit "looks fine" to the end
+    lim6 = 0.5 * (surrogate({"F": F_hi, "L": 1.3}) + _eb(F_hi, 1.3, E0, B, H))
+    assert surrogate({"F": F_hi, "L": 1.3}) < lim6 < _eb(F_hi, 1.3, E0, B, H)
     cases.append(_case("unsupported_extrapolation", True, EnvelopeOutcome.FALSIFIED, lim6,
                        (_route("surrogate", "fit", 1, surrogate), _route("eb", "eb", 2, lambda p: _eb(p["F"], p["L"], E0, B, H)),
                         _route("fe", "fe", 3, lambda p: _fe(p["F"], p["L"], E0, B, H, 64))), "surrogate",
@@ -183,7 +185,19 @@ def seeded_cases() -> tuple[SeededCase, ...]:
                         _route("fe_ref", "fe", 3, lambda p: _fe(p["F"], p["L"], E0, B, H, 64))), "iterative",
                        (LOAD, SPAN), "the claim's evidence includes non-converged solves"))
 
-    # 8. KNOWN BLIND SPOT: the same thickness flaw as case 5, but the attack space omits h.  The red team cannot find what
+    # 8. interior-only violation: a load band where the response is amplified (a resonance-like band); no corner, edge
+    #    or centre point lies in it -- only the seeded interior sampling can find it
+    def amplified(p: Mapping[str, float], family_scale: float = 1.0) -> float:
+        amp = 5.0 if 3500.0 <= p["F"] <= 5000.0 else 1.0
+        return family_scale * amp * _eb(p["F"], p["L"], E0, B, H)
+    lim8 = 1.2 * _eb(F_hi, L_hi, E0, B, H)
+    cases.append(_case("interior_only_violation", True, EnvelopeOutcome.FALSIFIED, lim8,
+                       (_route("eb_static", "eb", 1, lambda p: _eb(p["F"], p["L"], E0, B, H)),
+                        _route("dynamic", "dynamic_eb", 2, amplified),
+                        _route("dynamic_fe", "fe", 3, lambda p: amplified(p, 1.0 - 0.8 / 64 ** 2))), "eb_static",
+                       (LOAD, SPAN), "a violation only inside the envelope, away from every corner"))
+
+    # 9. KNOWN BLIND SPOT: the same thickness flaw as case 5, but the attack space omits h.  The red team cannot find what
     #    its space does not contain; SURVIVED here is correct and its statement is limited to the declared region.
     cases.append(_case("flaw_outside_attack_space", True, EnvelopeOutcome.SURVIVED, lim5,
                        (_route("eb", "eb", 1, lambda p: _eb(p["F"], p["L"], E0, B, 0.1)),
@@ -212,10 +226,13 @@ def seeded_cases() -> tuple[SeededCase, ...]:
                         _route("fe", "fe", 3, lambda p: _fe(p["F"], p["L"], E0, B, H, 64))), "timoshenko",
                        (LOAD, span_imp), "violated only beyond plausibility", plan_kwargs={"probe_implausible": True}))
 
-    rng = random.Random(7)
+    calls: dict[str, int] = {}
 
-    def flaky(p: Mapping[str, float]) -> float:                # nondeterministic solver noise
-        return _timo(p["F"], p["L"], E0, B, H) * (1.0 + rng.choice((0.0, 0.0, 0.0, 4.0)))
+    def flaky(p: Mapping[str, float]) -> float:                # solver noise that does not reproduce: a deterministic function
+        key = f"{p['F']:.6g}:{p['L']:.6g}"                     # of the point and of how often it was asked (so a replay differs)
+        calls[key] = calls.get(key, 0) + 1
+        spike = 4.0 if (calls[key] % 2 == 1 and p["F"] >= 7999.0) else 0.0      # first ask spikes, its replay does not
+        return _timo(p["F"], p["L"], E0, B, H) * (1.0 + spike)
     lim_flaky = 1.3 * _timo(F_hi, L_hi, E0, B, H)
     cases.append(_case("flaky_trap", False, EnvelopeOutcome.UNKNOWN, lim_flaky,
                        (_route("flaky", "timoshenko", 2, flaky), _route("fe", "fe", 3, lambda p: _fe(p["F"], p["L"], E0, B, H, 64))),
@@ -232,8 +249,9 @@ def seeded_cases() -> tuple[SeededCase, ...]:
 
 
 def detected(case: SeededCase, env: TrustEnvelope) -> bool:
-    if case.expected is EnvelopeOutcome.UNKNOWN and case.flawed:
-        return env.outcome is EnvelopeOutcome.UNKNOWN and "converge" in env.reason
+    if case.expected is EnvelopeOutcome.UNKNOWN and case.flawed:      # the convergence flaw: UNKNOWN for non-convergence
+        return env.outcome is EnvelopeOutcome.UNKNOWN and not env.candidates and env.points_covered > 0 \
+            and env.reason.endswith("evaluations did not converge")
     return env.outcome is case.expected
 
 
@@ -246,6 +264,7 @@ def run_suite(budget: int = 600) -> dict[str, Any]:
                      "outcome": env.outcome.value,
                      "as_expected": detected(case, env), "evaluations": env.evaluations,
                      "evaluations_to_first_candidate": env.evaluations_to_first_candidate,
+                     "evaluations_to_falsification": env.evaluations if env.outcome is EnvelopeOutcome.FALSIFIED else None,
                      "counterexample_plausibility": None if env.counterexample is None else env.counterexample.plausibility.value,
                      "cross_family_confirmed": None if env.counterexample is None else env.counterexample.cross_family_confirmed,
                      "candidate_classes": sorted({c.classification.value for c in env.candidates}), "reason": env.reason,
@@ -253,13 +272,14 @@ def run_suite(budget: int = 600) -> dict[str, Any]:
     flawed = [r for r in rows if r["flawed"] and not r["blind_spot"]]
     controls = [r for r in rows if not r["flawed"]]
     falsified = [r for r in rows if r["outcome"] == "falsified"]
-    to_first = [r["evaluations_to_first_candidate"] for r in falsified if r["evaluations_to_first_candidate"] is not None]
+    to_first = [r["evaluations_to_falsification"] for r in falsified]
     return {
         "cases": rows,
         "detection_rate": sum(r["as_expected"] for r in flawed) / len(flawed),
         "false_alarm_rate": sum(r["outcome"] == "falsified" for r in controls) / len(controls),
         "controls_as_expected": sum(r["as_expected"] for r in controls) / len(controls),
-        "evaluations_to_first_counterexample": {"min": min(to_first), "max": max(to_first),
+        # evaluations spent until a counterexample was CONFIRMED (replays and confirmations included)
+        "evaluations_to_confirmed_counterexample": {"min": min(to_first), "max": max(to_first),
                                                 "mean": sum(to_first) / len(to_first)} if to_first else None,
         "cross_family_confirmation_rate": (sum(bool(r["cross_family_confirmed"]) for r in falsified) / len(falsified))
         if falsified else None,
