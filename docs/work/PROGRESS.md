@@ -1787,3 +1787,54 @@ fast-forwarded.
   probe now refuses it by API identity); openvsp.org is blocked by the egress policy; the OpenRadioss release API returned 403.
   A `ruff --fix` over `src/engcore/design` edited three pre-existing modules; they were restored byte-for-byte (0a0cb89f) —
   autofix is run only on files this program owns.
+
+## 2026-10-09 Big Rocks — next three rocks (branch `claude/adoring-cray-jj367z`, grows PR #124)
+
+- Owner-directed: (1) provider reality + qualification path, (2) executable drone product coupling, (3) TwinRevision
+  evidence and DesignHistory in SRIA. Final source SHA `e572ea61` (this entry is a docs-only commit after it). Same cloud
+  container, CPython 3.12.13 `.venv`. Commits: db78090b, cb95139a, 0535be53, 5c03b65c, 9a9c5c98, be21e65a, e572ea61.
+- Provider environments (micromamba 2.9.0 bootstrapped from conda.anaconda.org; conda-forge only; `$HOME/mm/root/envs`,
+  the `FORGE_PROVIDER_ENVS` layout): `chrono` (python 3.12, pychrono 10.0.0 + chrono 10.0.0), `fenicsx` (fenics-dolfinx 0.11.0,
+  petsc4py, mpich, gmsh 4.15.2, meshio, scipy), `calculix` (calculix 2.23). Repo installed into the first two with
+  `pip install --no-deps -e .` plus pint/pytest. OpenVSP and OpenRadioss: not on conda-forge, PyPI 404, openvsp.org blocked,
+  GitHub releases 403 — NOT_INSTALLED, fail-closed.
+- Real-run findings (Chrono 10.0.0): `ChMatrix33d.SetItem` does not exist (orientation now a plan quaternion); the NSC
+  default solver PSOR did NOT hold the pendulum's bilateral revolute joint (4 mm length drift, no zero crossing in 2 s), while
+  SPARSE_QR / SPARSE_LU / MINRES reproduced the period — the solver is now a required declaration (direct solvers only);
+  conda-forge pychrono installs no dist-info and Chrono 10 has no `GetChronoVersion` (identity now bound to the conda
+  records, the bytes of pychrono's .py/.so and chrono's shared libraries, and the env digest).
+- Commands and results:
+  - `$HOME/mm/root/envs/chrono/bin/python -m pytest -q providers/chrono/tests tests/foundations/test_provider_qualification.py`
+    (rootdir/config = repo): 17 passed (both pendulum reference routes executed against Chrono 10.0.0).
+  - `$HOME/mm/root/envs/chrono/bin/python tools/provider_routes.py chrono --out <ledger.json>`: rc 0;
+    `chrono.pendulum_period.euler_implicit_linearized+sparse_qr` PASSED, relative error 1.3846e-07 (tolerance 1e-5) run
+    `75ab3a90…`; `…+sparse_lu` PASSED, 1.3846e-07, run `8c49eb09…`; provider 10.0.0 digest `201e5097…`; adapter
+    `0.3.0+src.7883f603b5b053cb`; ledger head `1b9c3a20…`. A route run is a check of one translation, not a qualification;
+    no qualification was issued.
+  - `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests
+    providers/calculix/tests flagships/tests/test_geometry_slice.py tests/foundations`: 133 passed (FEniCSx suite, CalculiX
+    suite incl. the FEniCSx-vs-CalculiX comparison, the slice's FEniCSx rung, foundations). Without the separate `calculix`
+    env (ccx on the fenicsx env's PATH) the comparison is refused "independence UNKNOWN: calculix declares no dependency set"
+    — correct fail-closed behaviour, recorded as a failed approach.
+  - `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider --junitxml=…` on `e572ea61`: 14 failed, 9577 passed,
+    135 skipped. The 14 are exactly the base-drift set recorded in the previous entry (13 freeze-manifest / core-freeze v3-v4 /
+    batch56 / mutation-workspace tests that also fail on the pristine base in this container) plus
+    `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (recertification required).
+  - `python -m tools.certification.skip_admission audit --suite junit_fast` on that JUnit: skipped 135, accepted 135,
+    unexpected 0, report/availability problems 0.
+  - `python tools/forge_check.py --changed`: 225 passed. `--regression`: 225 passed. `git diff --check`: clean.
+  - Targeted: `pytest -n 4 tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_core_api_layering.py
+    tests/test_repository_architecture.py tests/test_sria_*.py tests/test_audit_sria_*.py tests/foundations`: 1204 passed.
+  - `recertification_scope classify --event pull_request --base 44637065 --head HEAD`: RECERTIFY (adds
+    `src/engcore/sria/campaign/events.py`: mutation_targets). CORE_CERTIFIED `sria/campaign/runner.py` not modified.
+  - Hardened-core recertification / Local Assurance: NOT RUN (writes `certification/current_core_v2.json`, which the owner
+    instructed not to touch). SCIENTIFIC tier (`-m "not campaign"`): NOT RUN.
+- forge-scientific-review, three rounds, all CHANGES REQUIRED, all HIGH/MEDIUM fixed (commit messages list each):
+  Rock 1 (0535be53: unbacked qualifications, forged/hidden route runs, in-memory build pinning, PSOR/HHT defaults, tolerance
+  basis, file-byte identity, adapter source digest); Rock 2 (5c03b65c: infeasible duty reported as computed, unbounded winding
+  temperature, a balance that could not fail, Kv unit 2π ambiguity, runaway reason); Rock 3 (be21e65a: look-alike belief,
+  unassessed verification, model binding / omitted contradictions, anchors appended around the runner).
+- Failed approaches / dead ends: the SRIA bridges were first written under `engcore.sria` and broke GUARD 18 (SRIA may import
+  only `scientific`); they now live in `engcore.claims`, and SRIA gained only a generic `RECORD_CHAIN_ANCHORED` primitive.
+  A 2 s pendulum window with step-quantised crossings gave a single crossing interval and a 1e-3 tolerance with no margin;
+  replaced by 10 s, interpolated crossings, 1e-5 from a stated error budget.
