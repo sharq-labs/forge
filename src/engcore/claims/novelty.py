@@ -3,9 +3,15 @@
 * A :class:`PriorArtSnapshot` names its sources (the corpus manifest it was built from), its coverage criteria, the
   hypothesis KINDS it covers and its entries (canonical structure digest, source, and optionally the expression whose
   digest is part of the snapshot identity).  An empty snapshot covers nothing.
-* A :class:`NoveltyLedger` is an ordered hash chain: a snapshot is SEALED in it, and a hypothesis is RECORDED as
-  proposed in it.  A check is admissible only against a snapshot sealed BEFORE the proposal was recorded, so a snapshot
-  cannot be assembled after seeing the hypothesis (and silently omit the matching entry).
+* A :class:`NoveltyLedger` (one per campaign, issued by the campaign's
+  :class:`~engcore.claims.falsification.ExposureAuthority`, on its clock) is an ordered hash chain: a snapshot is
+  SEALED in it, and a hypothesis is RECORDED as proposed in it.  A check is admissible only against a snapshot sealed
+  BEFORE the FIRST record of the hypothesis id and of its canonical structure, so a snapshot cannot be assembled after
+  seeing the hypothesis -- not even after a cosmetic revision or a re-derived id -- and silently omit the match.
+* The canonicalizer is SELF-TESTED against every snapshot entry that carries an expression; one that does not
+  reproduce the snapshot's own digests is refused, and without any expression to test it against no POSSIBLY_NOVEL is
+  issued.  When entries carry expressions the snapshot DECLARES the numeric-equivalence method (evaluator id, probes,
+  tolerance), and the check must run with exactly that method.
 * :func:`check_novelty` derives the structure identity ITSELF from ``statement_payload["expression"]`` with the
   canonicalizer the snapshot declares, refuses a hypothesis whose stated ``structure_digest`` disagrees, and decides by
   the methods that actually ran:
@@ -17,7 +23,8 @@
     numeric comparison that could not be decided (NaN, too few usable probes).
 
 There is no NOVEL outcome: absence from a finite snapshot is "possibly novel", never "novel".  A language model's
-opinion is not a method.  :func:`apply_novelty` RE-RUNS the check; a supplied check record is never trusted.
+opinion is not a method.  :func:`apply_novelty` RE-RUNS the check; a supplied check record is never trusted, and
+:func:`verify_novelty` re-runs it to verify a recorded status (construction checks only shape).
 """
 
 from __future__ import annotations
@@ -83,6 +90,7 @@ class PriorArtSnapshot:
     sources: tuple[str, ...] = ()          # the corpus manifest the snapshot was built from
     coverage_criteria: str = ""            # how an entry got in (search terms, inclusion rules)
     canonicalizer_id: str = ""
+    equivalence: Mapping[str, Any] | None = field(default=None, hash=False)   # declared method: EquivalenceSpec.to_dict()
 
     def __post_init__(self) -> None:
         if not str(self.snapshot_id).strip() or not self.covers_kinds:
@@ -92,10 +100,13 @@ class PriorArtSnapshot:
                                  "coverage is not a self-declaration")
         if any(not e.source_ref.strip() for e in self.entries):
             raise NoveltyRefused("every prior-art entry names its source")
+        if any(e.expression is not None for e in self.entries) and not self.equivalence:
+            raise NoveltyRefused("entries carry expressions, so the snapshot declares the numeric-equivalence method to use")
 
     def to_dict(self) -> dict[str, Any]:
         return {"snapshot_id": self.snapshot_id, "covers_kinds": sorted(self.covers_kinds), "sources": sorted(self.sources),
                 "coverage_criteria": self.coverage_criteria, "canonicalizer_id": self.canonicalizer_id,
+                "equivalence": None if not self.equivalence else json.loads(json.dumps(dict(self.equivalence), sort_keys=True)),
                 "entries": sorted((e.to_dict() for e in self.entries), key=lambda x: x["entry_id"])}
 
     @property
@@ -105,22 +116,32 @@ class PriorArtSnapshot:
 
 
 class NoveltyLedger:
-    """Ordered hash chain of snapshot seals and proposal records.  Order is the only clock that matters."""
+    """Ordered hash chain of snapshot seals and proposal records, on the issuing authority's clock."""
 
-    def __init__(self) -> None:
+    def __init__(self, authority: Any, campaign_id: str, issued: Any = None) -> None:
+        if issued is None or issued is not getattr(authority, "_issued", None):
+            raise NoveltyRefused("a novelty ledger is issued by its campaign's exposure authority (ExposureAuthority.novelty_ledger)")
+        self.__authority = authority
+        self.campaign_id = campaign_id
         self._entries: list[dict[str, Any]] = []
         self._sealed: dict[str, int] = {}
-        self._proposed: dict[tuple[str, str], int] = {}
+        self._first_id: dict[str, int] = {}
+        self._first_structure: dict[str, int] = {}
 
     @property
     def head(self) -> str:
         return self._entries[-1]["digest"] if self._entries else GENESIS
 
+    @property
+    def anchor(self) -> tuple[str, str]:
+        return (self.__authority.fingerprint, self.campaign_id)
+
     def _add(self, kind: str, subject: str) -> int:
-        e = {"sequence": len(self._entries), "previous": self.head, "kind": kind, "subject": subject}
+        clock = self.__authority._tick()
+        e = {"sequence": len(self._entries), "clock": clock, "previous": self.head, "kind": kind, "subject": subject}
         e["digest"] = _digest(e)
         self._entries.append(e)
-        return e["sequence"]
+        return clock
 
     def seal(self, snapshot: PriorArtSnapshot) -> int:
         d = snapshot.digest
@@ -128,21 +149,27 @@ class NoveltyLedger:
             self._sealed[d] = self._add("snapshot_sealed", d)
         return self._sealed[d]
 
-    def record_proposal(self, hypothesis: Hypothesis) -> int:
-        key = (hypothesis.hypothesis_id, hypothesis.content_digest)
-        if key not in self._proposed:
-            self._proposed[key] = self._add("proposed", f"{key[0]}:{key[1]}")
-        return self._proposed[key]
+    def record_proposal(self, hypothesis: Hypothesis, canonicalizer: "Canonicalizer") -> int:
+        """Record a proposal.  The FIRST record of its id and of its canonical structure is what ordering uses."""
+        clock = self._add("proposed", f"{hypothesis.hypothesis_id}:{hypothesis.content_digest}")
+        self._first_id.setdefault(hypothesis.hypothesis_id, clock)
+        expression = hypothesis.statement_payload.get("expression") if hypothesis.statement_payload else None
+        if isinstance(expression, Mapping):
+            self._first_structure.setdefault(f"{canonicalizer.canonicalizer_id}:{canonicalizer.fn(expression)}", clock)
+        return clock
 
-    def ordering(self, snapshot: PriorArtSnapshot, hypothesis: Hypothesis) -> tuple[int, int]:
+    def ordering(self, snapshot: PriorArtSnapshot, hypothesis: Hypothesis, structure_key: str | None) -> tuple[int, int]:
         sealed = self._sealed.get(snapshot.digest)
-        proposed = self._proposed.get((hypothesis.hypothesis_id, hypothesis.content_digest))
+        firsts = [t for t in (self._first_id.get(hypothesis.hypothesis_id),
+                              None if structure_key is None else self._first_structure.get(structure_key)) if t is not None]
         if sealed is None:
             raise NoveltyRefused("the prior-art snapshot was never sealed (or changed after it was sealed)")
-        if proposed is None:
+        if not firsts:
             raise NoveltyRefused("the hypothesis was never recorded as proposed; its timing against the snapshot is unknown")
+        proposed = min(firsts)
         if not sealed < proposed:
-            raise NoveltyRefused("the snapshot was sealed AFTER the proposal: a snapshot assembled around a result is not prior art")
+            raise NoveltyRefused("the snapshot was sealed AFTER the hypothesis (or its structure) was first proposed: a snapshot "
+                                 "assembled around a result is not prior art")
         return sealed, proposed
 
 
@@ -210,20 +237,30 @@ class NoveltyCheck:
 def check_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: NoveltyLedger, *, canonicalizer: Canonicalizer,
                   equivalence: EquivalenceSpec | None = None) -> NoveltyCheck:
     """Check ``hypothesis`` against ``snapshot``, which must have been sealed in ``ledger`` before the proposal."""
-    sealed_at, proposed_at = ledger.ordering(snapshot, hypothesis)
+    if not isinstance(ledger, NoveltyLedger):
+        raise NoveltyRefused("novelty is checked against a campaign's novelty ledger")
     if canonicalizer.canonicalizer_id != snapshot.canonicalizer_id:
         raise NoveltyRefused("the canonicalizer is not the one the snapshot's structure digests were computed with")
+    declared = None if not snapshot.equivalence else json.loads(json.dumps(dict(snapshot.equivalence), sort_keys=True))
+    if (equivalence is None) != (declared is None) or (equivalence is not None and
+                                                       json.loads(json.dumps(equivalence.to_dict(), sort_keys=True)) != declared):
+        raise NoveltyRefused("the numeric-equivalence method must be exactly the one the snapshot declares")
+    testable = [e for e in snapshot.entries if e.expression is not None]
+    if any(canonicalizer.fn(e.expression) != e.structure_digest for e in testable):
+        raise NoveltyRefused("the canonicalizer does not reproduce the snapshot's own structure digests")
+    expression = hypothesis.statement_payload.get("expression") if hypothesis.statement_payload else None
+    derived = canonicalizer.fn(expression) if isinstance(expression, Mapping) else None
+    structure_key = None if derived is None else f"{canonicalizer.canonicalizer_id}:{derived}"
+    sealed_at, proposed_at = ledger.ordering(snapshot, hypothesis, structure_key)
     base = dict(hypothesis_id=hypothesis.hypothesis_id, hypothesis_content_digest=hypothesis.content_digest,
                 snapshot_digest=snapshot.digest, snapshot_sealed_at=sealed_at, proposal_recorded_at=proposed_at,
-                equivalence=None if equivalence is None else equivalence.to_dict())
+                equivalence=declared)
     kind = None if hypothesis.kind is None else hypothesis.kind.value
-    expression = hypothesis.statement_payload.get("expression") if hypothesis.statement_payload else None
-    if not isinstance(expression, Mapping):
+    if derived is None:
         return NoveltyCheck(**base, methods=(NoveltyMethod.NONE,), status=NoveltyStatus.NOVELTY_UNRESOLVED, matched_entry="",
                             reason="the hypothesis states no expression whose structure could be compared")
-    derived = canonicalizer.fn(expression)
-    if hypothesis.structure_digest and hypothesis.structure_digest != derived:
-        raise NoveltyRefused("the hypothesis's structure_digest is not the canonical structure of its own stated expression")
+    if hypothesis.structure_digest != derived:
+        raise NoveltyRefused("the hypothesis's structure_digest is missing or is not the canonical structure of its stated expression")
     methods = [NoveltyMethod.STRUCTURE_DIGEST]
     for e in snapshot.entries:
         if e.structure_digest == derived:
@@ -232,24 +269,25 @@ def check_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: No
     undecided = []
     if equivalence is not None:
         methods.append(NoveltyMethod.NUMERIC_EQUIVALENCE)
-        for e in snapshot.entries:
-            if e.expression is None:
-                continue
+        for e in testable:
             verdict = equivalence.compare(expression, e.expression)
             if verdict is Equivalence.EQUIVALENT:
                 return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.KNOWN_EQUIVALENT, matched_entry=e.entry_id,
                                     reason=f"numerically equivalent to {e.entry_id} on the declared probes")
             if verdict is Equivalence.UNDECIDED:
                 undecided.append(e.entry_id)
+
+    def unresolved(reason: str) -> NoveltyCheck:
+        return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.NOVELTY_UNRESOLVED, matched_entry="", reason=reason)
+
     if undecided:
-        return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.NOVELTY_UNRESOLVED, matched_entry="",
-                            reason=f"numeric equivalence could not be decided against {undecided}")
+        return unresolved(f"numeric equivalence could not be decided against {undecided}")
     if not snapshot.entries:
-        return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.NOVELTY_UNRESOLVED, matched_entry="",
-                            reason="the snapshot is empty: absence from nothing says nothing")
+        return unresolved("the snapshot is empty: absence from nothing says nothing")
+    if not testable:
+        return unresolved("no snapshot entry carries an expression, so the canonicalizer cannot be verified")
     if kind not in snapshot.covers_kinds:
-        return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.NOVELTY_UNRESOLVED, matched_entry="",
-                            reason=f"the snapshot does not cover hypotheses of kind {kind!r}")
+        return unresolved(f"the snapshot does not cover hypotheses of kind {kind!r}")
     return NoveltyCheck(**base, methods=tuple(methods), status=NoveltyStatus.POSSIBLY_NOVEL, matched_entry="",
                         reason=f"no equivalent among {len(snapshot.entries)} entries of snapshot {snapshot.snapshot_id} "
                                f"(sources: {', '.join(sorted(snapshot.sources))})")
@@ -263,5 +301,25 @@ def apply_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: No
     return revised, check
 
 
+def verify_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: NoveltyLedger, *, anchor: tuple[str, str],
+                   canonicalizer: Canonicalizer, equivalence: EquivalenceSpec | None = None) -> list[str]:
+    """Why ``hypothesis``'s recorded novelty is NOT what re-running the check against the expected campaign ledger gives
+    (empty when it is).  Consumers gate on this; a hand-built or carried-over novelty status fails it."""
+    if hypothesis.novelty_status is NoveltyStatus.NOT_CHECKED:
+        return []
+    if ledger.anchor != anchor:
+        return ["the novelty ledger is not the expected one (authority key or campaign differs)"]
+    try:
+        check = check_novelty(hypothesis, snapshot, ledger, canonicalizer=canonicalizer, equivalence=equivalence)
+    except NoveltyRefused as exc:
+        return [str(exc)]
+    problems = []
+    if check.status is not hypothesis.novelty_status:
+        problems.append(f"re-running the check gives {check.status.value}, not {hypothesis.novelty_status.value}")
+    if hypothesis.knowledge_snapshot_ref != snapshot.digest or hypothesis.novelty_basis != check.digest:
+        problems.append("the recorded snapshot or check record is not the one this content and snapshot produce")
+    return problems
+
+
 __all__ = ["Canonicalizer", "Equivalence", "EquivalenceSpec", "NoveltyCheck", "NoveltyLedger", "NoveltyMethod", "NoveltyRefused",
-           "PriorArtEntry", "PriorArtSnapshot", "apply_novelty", "check_novelty"]
+           "PriorArtEntry", "PriorArtSnapshot", "apply_novelty", "check_novelty", "verify_novelty"]

@@ -289,7 +289,8 @@ class Hypothesis:
         if any(not isinstance(b, VerdictReference) for b in self.status_basis):
             raise ValueError("status_basis holds VerdictReference records")
         if self.status in VERDICT_BACKED_STATUSES:
-            if not self.falsifier_refs or not self.status_basis:
+            refuted = self.status is HypothesisStatus.REFUTED
+            if not self.status_basis or (not self.falsifier_refs and not refuted):
                 raise ValueError(f"status {self.status.value} must name the sealed falsifiers and the verdict records that decided it; "
                                  "a status is never asserted")
             if not (str(self.statement).strip() or self.statement_payload):
@@ -298,11 +299,13 @@ class Hypothesis:
             content = self.content_digest
             falsifier_ids = {r.split("@", 1)[0] for r in self.falsifier_refs}
             for b in self.status_basis:
-                if b.content_digest != content:
+                # a refutation follows the hypothesis id across revisions; support never transfers to changed content
+                if b.content_digest != content and not refuted:
                     raise ValueError(f"verdict {b.verdict_digest[:12]} judged other content than this revision; a verdict does not "
                                      "transfer to changed content")
-                # any version of a listed falsifier: a refutation by a superseded version is never laundered away
-                if b.falsifier_ref.split("@", 1)[0] not in falsifier_ids:
+                # any version of a listed falsifier (a refutation by a superseded version, or of an earlier revision of
+                # this id, is never laundered away by changing the falsifier list)
+                if not refuted and b.falsifier_ref.split("@", 1)[0] not in falsifier_ids:
                     raise ValueError(f"verdict names falsifier {b.falsifier_ref!r}, which is not one of this hypothesis's falsifiers")
             verdicts = {b.verdict for b in self.status_basis}
             if self.status is HypothesisStatus.REFUTED and "refuted" not in verdicts:
@@ -418,9 +421,14 @@ class Hypothesis:
         content_changed = bool(set(changes) & set(self.STATUS_RESET_FIELDS))
         if content_changed and ({"status", "status_basis"} & set(changes)):
             raise ValueError("a content change and a status cannot arrive together; the new content is untested (PROPOSED)")
+        if content_changed and ({"novelty_status", "novelty_basis", "knowledge_snapshot_ref"} & set(changes)):
+            raise ValueError("a content change and a novelty status cannot arrive together; the new content is unchecked")
         if content_changed:
+            claim_changed = bool(set(changes) & set(self.CONTENT_FIELDS))
+            reset_novelty = {"novelty_status": NoveltyStatus.NOT_CHECKED, "novelty_basis": "", "knowledge_snapshot_ref": ""} \
+                if claim_changed else {}
             return replace(self, revision=self.revision + 1, **{"status": HypothesisStatus.PROPOSED, "status_basis": (),
-                                                                "status_note": "", **changes})
+                                                                "status_note": "", **reset_novelty, **changes})
         return replace(self, revision=self.revision + 1, **changes)
 
 @dataclass(frozen=True)

@@ -53,7 +53,10 @@ def test_there_is_no_true_and_a_status_is_never_asserted():
     with pytest.raises(ValueError, match="every cited verdict to be not_refuted"):
         eq_hypothesis(falsifier_refs=("f1",), status=HypothesisStatus.SURVIVING, status_basis=basis(h, "inconclusive"))
     with pytest.raises(ValueError, match="not one of this hypothesis's falsifiers"):
-        eq_hypothesis(falsifier_refs=("f1",), status=HypothesisStatus.REFUTED, status_basis=basis(h, "refuted", "f9"))
+        eq_hypothesis(falsifier_refs=("f1",), status=HypothesisStatus.SURVIVING, status_basis=basis(h, "not_refuted", "f9"))
+    # a REFUTED basis may cite any falsifier of the id's lineage: dropping a falsifier never sheds its refutation
+    assert eq_hypothesis(falsifier_refs=(), status=HypothesisStatus.REFUTED, status_basis=basis(h, "refuted", "f9")).status \
+        is HypothesisStatus.REFUTED
     with pytest.raises(ValueError, match="other content"):  # a verdict about another revision's content
         eq_hypothesis(falsifier_refs=("f1",), statement="y = a*x", status=HypothesisStatus.SURVIVING, status_basis=basis(h))
     with pytest.raises(ValueError, match="declares its kind"):
