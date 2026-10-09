@@ -722,3 +722,94 @@ def test_the_summary_text_covers_the_notes_and_the_material_provenance_so_they_a
     _remanifest(d2)
     with pytest.raises(BundleRefused, match="summary.txt"):
         verify_bundle(d2)
+
+
+# --------------------------------------------------------------------------------------------------------------- bundle containment (review R1)
+_ESCAPES = ["..\\..\\outside", "../outside", "..", "C:\\outside", "C:outside", "\\\\server\\share\\outside", "/abs/outside", ".hidden",
+            "trailing.", "con", "NUL", "aux.data", "lpt1", "a:stream", "tab\there", "wild*card"]
+
+
+@pytest.mark.parametrize("bad", _ESCAPES)
+def test_a_reference_id_that_is_not_a_plain_file_name_writes_nothing_anywhere(tmp_path, bad):
+    from dataclasses import replace
+    request, context, result = _run()
+    d = tmp_path / "inner" / "b"
+    with pytest.raises(BundleRefused, match="plain file name"):
+        write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result), references=[replace(_ref(), reference_id=bad)])
+    assert not d.exists() and sorted(p.name for p in tmp_path.rglob("*")) == []      # refused before the directory, let alone a file, exists
+
+
+def _run_with_named_artifact(name, payload=b"<fake/>"):
+    from dataclasses import replace
+    from engcore.system_runtime import ArtifactRef
+    request, context, knobs = build()
+    thermal = context.authorities._items["thermal-auth"]
+    original = thermal._fn
+    thermal._fn = lambda call: replace(original(call), artifacts=(ArtifactRef(name, "vtu", hashlib.sha256(payload).hexdigest(), "presentation"),))
+    return request, context, SystemExecutor(context).run(request)
+
+
+@pytest.mark.parametrize("bad", ["C:outside", "a:stream", "x/../../outside"])
+def test_an_artifact_admitted_by_its_receipt_still_cannot_name_a_path_outside_the_bundle(tmp_path, bad):
+    # the receipt's identifier grammar admits ':' and '/', so admission by a SUCCEEDED receipt is not containment
+    request, context, result = _run_with_named_artifact(bad)
+    assert result.receipt("thermal").status.value == "succeeded"
+    d = tmp_path / "b"
+    with pytest.raises(BundleRefused, match="plain file name"):
+        write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result), artifacts={bad: b"<fake/>"})
+    assert not d.exists()
+
+
+def test_two_references_whose_ids_differ_only_in_case_are_refused_not_collapsed_into_one_file(tmp_path):
+    from dataclasses import replace
+    request, context, result = _run()
+    with pytest.raises(BundleRefused, match="letter case"):
+        write_bundle(str(tmp_path / "b"), name="f", request=request, result=result, summary=_summary(request, context, result),
+                     references=[replace(_ref(), reference_id="Ghia"), replace(_ref(), reference_id="ghia")])
+
+
+def _link_dir(link, target):
+    """A directory link (symlink, or a junction where symlinks need privilege); skip where neither can be made."""
+    try:
+        os.symlink(target, link, target_is_directory=True)
+        return
+    except (OSError, NotImplementedError):
+        pass
+    try:
+        import _winapi
+        _winapi.CreateJunction(str(target), str(link))
+    except (ImportError, OSError, AttributeError):
+        pytest.skip("this platform cannot create a directory link here")
+
+
+def test_a_linked_subdirectory_inside_the_bundle_cannot_redirect_a_write_outside_it(tmp_path):
+    request, context, result = _run()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    d = tmp_path / "b"
+    d.mkdir()
+    _link_dir(d / "references", outside)
+    with pytest.raises(BundleRefused, match="outside the bundle directory"):
+        write_bundle(str(d), name="f", request=request, result=result, summary=_summary(request, context, result), references=[_ref()])
+    assert list(outside.iterdir()) == [] and not (d / "request.json").exists()    # every destination is checked before the first write
+
+
+def test_verify_refuses_a_manifest_that_names_a_file_outside_the_bundle(tmp_path):
+    d, *_ = _write(tmp_path, "escape")
+    planted = tmp_path / "planted.json"
+    planted.write_bytes(b"{}\n")
+    mpath = os.path.join(d, "manifest.json")
+    m = json.loads(open(mpath, "rb").read())
+    m["files"].append(["../planted.json", _sha(b"{}\n")])
+    m.pop("bundle_digest")
+    m["bundle_digest"] = _sha(_json_bytes(m))
+    open(mpath, "wb").write(_json_bytes(m))
+    with pytest.raises(BundleRefused, match="plain file name"):
+        verify_bundle(d)
+
+
+def test_the_plain_name_rule_admits_the_names_the_flagships_use():
+    from engcore.engineering.bundle import _plain_segment
+    for ok in ("ghia-1982-lid-driven-cavity-re100-centerlines", "nist-webbook-formation-enthalpies-hess-lhv-ch4", "field.vtu", "ghia-like.json",
+               "console", "nul-hypothesis", "com10"):
+        assert _plain_segment(ok, "name") == ok

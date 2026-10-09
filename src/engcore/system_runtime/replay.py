@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import math
+import numbers
 from dataclasses import dataclass
 from typing import Any
 
@@ -58,9 +60,13 @@ class RunComparison:
 
 def compare_runs(a: SystemRunResult, b: SystemRunResult, *, rel_tol: float, abs_tol: float = 0.0,
                  non_deterministic_nodes: tuple[str, ...] = ()) -> RunComparison:
-    """Compare two runs of the same request.  Tolerances are declared by the caller, never defaulted."""
-    if rel_tol < 0 or abs_tol < 0:
-        raise InvalidScientificProblem("tolerances must be non-negative and declared")
+    """Compare two runs of the same request.  Tolerances are declared by the caller, never defaulted.
+
+    A tolerance is a finite, non-negative real number: an infinite one would report any drift as reproduced, a NaN one has no
+    meaning, and a boolean is not a declared tolerance."""
+    for label, tol in (("rel_tol", rel_tol), ("abs_tol", abs_tol)):
+        if isinstance(tol, bool) or not isinstance(tol, numbers.Real) or not math.isfinite(tol) or tol < 0:
+            raise InvalidScientificProblem(f"{label} must be a finite, non-negative number and declared; got {tol!r}")
     ids: list[str] = []
     if a.request_digest != b.request_digest:
         ids.append("request digest")

@@ -70,6 +70,36 @@ class BundleRefused(InvalidScientificProblem):
     """A bundle does not verify."""
 
 
+_WINDOWS_DEVICE_NAMES = frozenset({"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))})
+
+
+def _plain_segment(name: Any, what: str) -> str:
+    """One path segment that names the same single file on every platform.
+
+    Separators of either platform, a drive or stream colon, traversal, a leading or trailing dot or space (Windows strips the trailing
+    ones, so two names would collide), control characters, wildcard characters and device names are refused."""
+    if (not isinstance(name, str) or not name or name != name.strip() or name.startswith(".") or name.endswith(".")
+            or any(c in name for c in '/\\:*?"<>|') or any(ord(c) < 32 for c in name)
+            or name.split(".")[0].rstrip().lower() in _WINDOWS_DEVICE_NAMES):
+        raise BundleRefused(f"{what} {name!r} must be a plain file name (no separator, drive, traversal, leading or trailing dot, or device name)")
+    return name
+
+
+def _contained(directory: str, rel: str) -> str:
+    """The file ``rel`` (``/``-separated) inside ``directory``; refused if any segment is not plain, or if the path resolves -- through an
+    existing link or junction too -- anywhere outside the directory."""
+    if not isinstance(rel, str):
+        raise BundleRefused(f"bundle path {rel!r} is not a path")
+    parts = rel.split("/")
+    for part in parts:
+        _plain_segment(part, "bundle path segment")
+    root = os.path.realpath(directory)
+    path = os.path.realpath(os.path.join(root, *parts))
+    if os.path.normcase(os.path.commonpath([root, path])) != os.path.normcase(root) or os.path.normcase(path) == os.path.normcase(root):
+        raise BundleRefused(f"bundle path {rel!r} resolves outside the bundle directory")
+    return path
+
+
 @dataclass(frozen=True)
 class BundleManifest:
     name: str
@@ -117,15 +147,19 @@ def write_bundle(directory: str, *, name: str, request: SystemRunRequest, result
         "summary.json": _json_bytes(summary.to_dict()), "summary.txt": summary.render_text().encode("utf-8"),
     }
     for ref in references:
-        files[f"references/{ref.reference_id}.json"] = _json_bytes(ref.to_dict())
+        files[f"references/{_plain_segment(ref.reference_id, 'reference id')}.json"] = _json_bytes(ref.to_dict())
     for artifact_name, data in sorted((artifacts or {}).items()):
-        if "/" in artifact_name or artifact_name.startswith("."):
-            raise BundleRefused(f"artifact name {artifact_name!r} must be a plain file name")
-        files[f"artifacts/{artifact_name}"] = bytes(data)
+        files[f"artifacts/{_plain_segment(artifact_name, 'artifact name')}"] = bytes(data)
+    folded = [rel.casefold() for rel in files]
+    if len(set(folded)) != len(folded):              # on a case-insensitive file system two of them would be one file
+        raise BundleRefused("two bundle files differ only in letter case")
     os.makedirs(directory, exist_ok=True)
+    destinations = {rel: _contained(directory, rel) for rel in files}     # every destination is checked before anything is written
     for rel, data in files.items():
-        path = os.path.join(directory, *rel.split("/"))
+        path = destinations[rel]
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        if os.path.normcase(os.path.realpath(path)) != os.path.normcase(path):   # a link created under us since the check
+            raise BundleRefused(f"bundle path {rel!r} resolves outside the bundle directory")
         with open(path, "wb") as fh:
             fh.write(data)
     manifest = BundleManifest(name, tuple(sorted((rel, _sha(data)) for rel, data in files.items())), request.digest, result.plan_digest, result.digest,
@@ -153,7 +187,7 @@ def verify_bundle(directory: str) -> BundleManifest:
     files = {rel: digest for rel, digest in payload["files"]}
     for rel, digest in sorted(files.items()):
         try:
-            with open(os.path.join(directory, *rel.split("/")), "rb") as fh:
+            with open(_contained(directory, rel), "rb") as fh:
                 data = fh.read()
         except OSError as exc:
             raise BundleRefused(f"{rel} is named by the manifest but cannot be read: {exc}") from exc
@@ -196,7 +230,7 @@ def verify_bundle(directory: str) -> BundleManifest:
 
 def _verify_rest(directory: str, payload: dict, files: Mapping[str, str], result: SystemRunResult, request: SystemRunRequest) -> BundleManifest:
     def read(rel: str) -> bytes:
-        with open(os.path.join(directory, *rel.split("/")), "rb") as fh:
+        with open(_contained(directory, rel), "rb") as fh:
             return fh.read()
 
     summary = json.loads(read("summary.json").decode("utf-8"))

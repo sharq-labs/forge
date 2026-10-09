@@ -251,6 +251,19 @@ def test_a_numerical_difference_is_judged_only_against_a_declared_tolerance():
         compare_runs(a, b, rel_tol=-1.0)
 
 
+@pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan"), True, False, "0.1", None])
+def test_an_unbounded_or_undeclared_tolerance_cannot_report_any_drift_as_reproduced(bad):
+    # review R4: rel_tol=inf read 1 m against 1,000,000 m as numerically reproduced
+    a = SystemExecutor(build()[1]).run(build()[0])
+    request, context, _ = build(knobs=Knobs(thermal_gain=5.0))
+    b = SystemExecutor(context).run(request)
+    assert not compare_runs(a, b, rel_tol=1e-6).numerical_reproducibility
+    with pytest.raises(InvalidScientificProblem, match="finite, non-negative"):
+        compare_runs(a, b, rel_tol=bad)
+    with pytest.raises(InvalidScientificProblem, match="finite, non-negative"):
+        compare_runs(a, b, rel_tol=0.0, abs_tol=bad)
+
+
 def test_a_run_comparison_can_never_claim_validation():
     from engcore.system_runtime import RunComparison
     with pytest.raises(InvalidScientificProblem, match="never assesses validation"):

@@ -55,6 +55,10 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
   different provider ids, labels naming those providers, a boolean post-hoc flag that matches its classification, an outcome that follows
   from its maximum difference for a purely absolute tolerance), the uncertainty statement (no blank entry; no "none"-like entry in the UNKNOWN list), the constant status
   basis, the summary's field set, the trace (of a key output), and the ladder (every guard; every link digest).
+* Every bundle file stays inside the bundle directory. A reference id or artifact name must be one plain file name on every platform (no
+  separator of either platform, drive or stream colon, traversal, leading or trailing dot, control or wildcard character, or Windows
+  device name), two names may not differ only in letter case, and each destination is resolved through existing links before anything
+  is written. `verify_bundle` reads manifest paths under the same rule. This is containment, not authenticity.
 
 ## What the bundle check does NOT establish
 
