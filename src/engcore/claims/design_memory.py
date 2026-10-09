@@ -60,7 +60,8 @@ def require_extends(history: DesignHistory, anchor: Mapping[str, Any]) -> None:
 
 
 def anchor_design_history(runner: Any, history: DesignHistory) -> CampaignEvent:
-    """Commit ``history``'s head into ``runner``'s campaign chain (an IncrementalCampaignRunner, between iterations)."""
+    """Commit ``history``'s head into ``runner``'s campaign chain (an IncrementalCampaignRunner, between iterations).
+    Save the history first (:func:`save_design_history`), then anchor it."""
     if not isinstance(history, DesignHistory):
         raise DesignMemoryRefused("only a DesignHistory is anchored as design memory")
     previous = chain_anchors(runner.events, CHAIN_KIND)
@@ -88,10 +89,17 @@ def restore_design_history(events: Iterable[CampaignEvent], payload: Mapping[str
 
 
 def save_design_history(path: str | os.PathLike[str], history: DesignHistory) -> str:
-    """Write the history atomically (temp file + replace); returns its head."""
+    """Write the history durably and atomically (temp file, fsync, replace); returns its head.
+
+    ORDER: save, THEN anchor.  A crash after saving and before anchoring leaves an unanchored tail (counted on
+    restore); anchoring first and crashing before the save leaves a stored memory shorter than its anchor, which
+    is refused -- fail-closed, but that memory is then unrecoverable."""
     target = Path(path)
     tmp = target.with_name(target.name + ".tmp")
-    tmp.write_text(json.dumps(history.to_dict(), sort_keys=True), encoding="utf-8")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(history.to_dict(), sort_keys=True))
+        fh.flush()
+        os.fsync(fh.fileno())
     os.replace(tmp, target)
     return history.head
 

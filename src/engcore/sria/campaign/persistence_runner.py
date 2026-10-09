@@ -19,6 +19,11 @@ from .persistence import (
     _copy_iteration_continuation,
 )
 from .runner import CampaignRunner
+from .state import ExecutionState
+
+
+#: Run states in which no iteration is in flight and the run has not ended.
+_ANCHOR_STATES = frozenset({ExecutionState.CREATED, ExecutionState.READY, ExecutionState.PAUSED})
 
 
 class IncrementalCampaignRunner(CampaignRunner):
@@ -111,8 +116,9 @@ class IncrementalCampaignRunner(CampaignRunner):
         """
         from .anchors import anchor_payload, require_growth
 
-        if self._plan is not None:
-            raise ValueError("a record chain is anchored between iterations, not inside one")
+        if self._plan is not None or self._run.state not in _ANCHOR_STATES:
+            raise ValueError(f"a record chain is anchored between iterations (run state {self._run.state.value}, "
+                             f"in-flight plan: {self._plan is not None}), not inside one or after the run ended")
         payload = anchor_payload(chain_kind, chain_schema, head, length)
         require_growth(self._events, payload)
         event = self._events.append(CampaignEventType.RECORD_CHAIN_ANCHORED, iteration=self._run.iteration,

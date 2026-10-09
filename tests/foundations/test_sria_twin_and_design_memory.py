@@ -190,3 +190,115 @@ def test_anchoring_never_happens_inside_an_iteration():
     r._plan = object()  # an in-flight iteration
     with pytest.raises(ValueError, match="between iterations"):
         anchor_design_history(r, history("a"))
+
+
+# ---------------------------------------------------------------- review round (Rock 3)
+
+
+def test_only_the_gateways_belief_is_admission():
+    import dataclasses
+    import types
+
+    from engcore.sria.evidence import EvidenceStatus
+
+    base = revision()
+    forged = dataclasses.replace(record("val-f", base.context_digest), status=EvidenceStatus.ACCEPTED)  # status is not identity-bound
+    rev = base.with_evidence(sria_reference(forged, EvidenceRole.VALIDATION))
+    fake = types.SimpleNamespace(active_view=lambda: {"val-f": types.SimpleNamespace(record_hash=forged.record_hash)})
+    with pytest.raises(TwinEvidenceRefused, match="look-alike"):
+        resolve_twin_evidence(rev, [forged], belief=fake)
+    with pytest.raises(TwinEvidenceRefused, match="not an active belief entry"):
+        resolve_twin_evidence(rev, [forged], belief=M1.make_gateway().belief)
+    # an invalidated record backs nothing
+    gateway = M1.make_gateway()
+    ev = admitted(record("val-i", base.context_digest), gateway)
+    with pytest.raises(TwinEvidenceRefused, match="invalid"):
+        sria_reference(ev.invalidate("instrument fault found"), EvidenceRole.VALIDATION)
+
+
+def _assessed(ev, verdict):
+    from engcore.sria.evidence import Assessment, AssessmentVerdict
+    from engcore.sria.provenance import AssessmentProvenance
+
+    return ev.with_assessment(Assessment(AssessmentVerdict(verdict), AssessmentProvenance(
+        assessment_id=f"as-{ev.evidence_id}-{verdict}", critic_id="critic.residual", critic_version="1.0")))
+
+
+def test_verification_needs_a_passing_assessment():
+    base = revision()
+    ctx = base.context_digest
+    sim = record("ver-1", ctx, source=SourceClass.SIMULATION, claim=ClaimType.QOI_VALUE)
+    with pytest.raises(TwinEvidenceRefused, match="needs"):
+        sria_reference(sim, EvidenceRole.VERIFICATION)  # unassessed
+    with pytest.raises(TwinEvidenceRefused, match="PASS assessment"):
+        sria_reference(_assessed(sim, "fail"), EvidenceRole.VERIFICATION)
+    with pytest.raises(TwinEvidenceRefused, match="PASS assessment"):
+        sria_reference(_assessed(_assessed(sim, "pass"), "inconclusive"), EvidenceRole.VERIFICATION)
+    ok = _assessed(sim, "pass")
+    bench = _assessed(record("ver-2", ctx, source=SourceClass.BENCHMARK, claim=ClaimType.QOI_VALUE), "pass")
+    rev = base.with_evidence(sria_reference(ok, EvidenceRole.VERIFICATION), sria_reference(bench, EvidenceRole.VERIFICATION))
+    resolved = resolve_twin_evidence(rev, [ok, bench])
+    assert {e["standing"] for e in resolved.entries} == {"assessed_pass"}
+
+
+def test_physical_roles_are_about_the_twins_model_and_omissions_are_listed():
+    base = revision()
+    ctx = base.context_digest
+    gateway = M1.make_gateway()
+    meas = admitted(record("m-1", ctx, claim=ClaimType.PARAMETER_VALUE), gateway)
+    cal = admitted(record("c-1", ctx, claim=ClaimType.CALIBRATION_REFERENCE), gateway)
+    support = admitted(Evidence(evidence_id="s-1", source_class=SourceClass.MEASUREMENT, claim_type=ClaimType.MODEL_SUPPORT_OR_CONTRADICTION,
+                                claim_binding=ClaimBinding(subject_kind="model", subject_ref="conduction.steady_1d"),
+                                claim_payload={"polarity": "supports", "residual": 0.4}, uncertainty=M1.make_uncertainty(),
+                                provenance_ref="lab-s-1", domain_pack_ref="thermal.lumped", context_ref=ctx), gateway)
+    contra = admitted(Evidence(evidence_id="x-1", source_class=SourceClass.MEASUREMENT, claim_type=ClaimType.MODEL_SUPPORT_OR_CONTRADICTION,
+                               claim_binding=ClaimBinding(subject_kind="model", subject_ref="conduction.steady_1d", qualifiers={"rig": "B"}),
+                               claim_payload={"polarity": "contradicts", "residual": 9.0}, uncertainty=M1.make_uncertainty(),
+                               provenance_ref="lab-x-1", domain_pack_ref="thermal.lumped", context_ref=ctx), gateway)
+    rev = base.with_evidence(sria_reference(meas, EvidenceRole.MEASUREMENT), sria_reference(cal, EvidenceRole.CALIBRATION),
+                             sria_reference(support, EvidenceRole.VALIDATION))
+    resolved = resolve_twin_evidence(rev, [meas, cal, support, contra], belief=gateway.belief)
+    assert resolved.classification == "pointer_resolution_not_a_validation_verdict"
+    assert {e["evidence_id"]: e["polarity"] for e in resolved.entries}["s-1"] == "supports"
+    assert resolved.unreferenced_active_evidence == ("x-1",)  # the omitted contradiction is visible
+    other_model = admitted(Evidence(evidence_id="o-1", source_class=SourceClass.MEASUREMENT, claim_type=ClaimType.MODEL_SUPPORT_OR_CONTRADICTION,
+                                    claim_binding=ClaimBinding(subject_kind="model", subject_ref="radiation.gray_body"),
+                                    claim_payload={"polarity": "supports"}, uncertainty=M1.make_uncertainty(), provenance_ref="lab-o-1",
+                                    domain_pack_ref="thermal.lumped", context_ref=ctx), gateway)
+    wrong = base.with_evidence(sria_reference(other_model, EvidenceRole.VALIDATION))
+    with pytest.raises(TwinEvidenceRefused, match="not one of the twin's models"):
+        resolve_twin_evidence(wrong, [other_model], belief=gateway.belief)
+
+
+def test_anchors_appended_around_the_runner_are_revalidated(tmp_path):
+    from engcore.design.history import GENESIS, HISTORY_SCHEMA
+    from engcore.sria.campaign.anchors import RECORD_CHAIN_ANCHOR_SCHEMA
+    from engcore.sria.campaign.events import derive_obligation_state
+
+    r = runner(IncrementalCheckpointStore())
+    h = history("a", "b")
+    anchor_design_history(r, h)
+    before = derive_obligation_state(r.events)
+    # the log's append is public: a shrinking anchor written around anchor_record_chain makes the anchors refused
+    r.events.append(CampaignEventType.RECORD_CHAIN_ANCHORED, iteration=0, payload={
+        "schema": RECORD_CHAIN_ANCHOR_SCHEMA, "chain_kind": CHAIN_KIND, "chain_schema": HISTORY_SCHEMA, "head": GENESIS, "length": 0})
+    with pytest.raises(AnchorRefused, match="shrank"):
+        restore_design_history(r.events, DesignHistory().to_dict())
+    r2 = runner(IncrementalCheckpointStore())
+    r2.events.append(CampaignEventType.RECORD_CHAIN_ANCHORED, iteration=0, payload={
+        "schema": RECORD_CHAIN_ANCHOR_SCHEMA, "chain_kind": CHAIN_KIND, "chain_schema": HISTORY_SCHEMA, "head": GENESIS, "length": -1})
+    with pytest.raises(AnchorRefused, match="malformed"):
+        restore_design_history(r2.events, DesignHistory().to_dict())
+    # an anchor is not assurance: obligation derivation ignores it
+    assert derive_obligation_state(r.events) == before
+
+
+def test_no_anchor_after_the_run_ended():
+    import dataclasses
+
+    from engcore.sria.campaign.state import ExecutionState
+
+    r = runner(IncrementalCheckpointStore())
+    r._run = dataclasses.replace(r._run, state=ExecutionState.COMPLETED)
+    with pytest.raises(ValueError, match="after the run ended"):
+        anchor_design_history(r, history("a"))

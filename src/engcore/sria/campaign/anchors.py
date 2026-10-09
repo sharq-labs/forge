@@ -34,29 +34,43 @@ def anchor_payload(chain_kind: str, chain_schema: str, head: str, length: int) -
     return {"schema": RECORD_CHAIN_ANCHOR_SCHEMA, "chain_kind": kind, "chain_schema": schema, "head": str(head), "length": length}
 
 
-def chain_anchors(events: Iterable[CampaignEvent], chain_kind: str) -> tuple[Mapping[str, Any], ...]:
-    """The anchors of ``chain_kind`` in the log, oldest first (each schema-checked)."""
-    out = []
-    for e in events:
-        if e.event_type is CampaignEventType.RECORD_CHAIN_ANCHORED and e.payload.get("chain_kind") == chain_kind:
-            if e.payload.get("schema") != RECORD_CHAIN_ANCHOR_SCHEMA:
-                raise AnchorRefused(f"event {e.sequence} is not a supported record-chain anchor")
-            out.append(e.payload)
-    return tuple(out)
-
-
-def require_growth(events: Iterable[CampaignEvent], payload: Mapping[str, Any]) -> None:
-    """A new anchor of a chain never shrinks it, and an unchanged length keeps the same head."""
-    previous = chain_anchors(events, payload["chain_kind"])
-    if not previous:
-        return
-    last = previous[-1]
+def _grows(last: Mapping[str, Any], payload: Mapping[str, Any]) -> None:
     if payload["chain_schema"] != last["chain_schema"]:
         raise AnchorRefused("the chain's schema changed between anchors")
     if payload["length"] < last["length"]:
         raise AnchorRefused(f"the chain shrank from {last['length']} to {payload['length']} records; an anchored chain only grows")
     if payload["length"] == last["length"] and payload["head"] != last["head"]:
         raise AnchorRefused("the chain was rewritten at the anchored length")
+
+
+def chain_anchors(events: Iterable[CampaignEvent], chain_kind: str) -> tuple[Mapping[str, Any], ...]:
+    """The anchors of ``chain_kind`` in the log, oldest first.  EVERY anchor is re-validated and the sequence
+    must grow: an anchor appended around :meth:`anchor_record_chain` (the log's ``append`` is public) that is
+    malformed or shrinks the chain makes the whole log's anchors refused, never silently the latest."""
+    out: list[Mapping[str, Any]] = []
+    for e in events:
+        if e.event_type is CampaignEventType.RECORD_CHAIN_ANCHORED and e.payload.get("chain_kind") == chain_kind:
+            p = e.payload
+            if p.get("schema") != RECORD_CHAIN_ANCHOR_SCHEMA:
+                raise AnchorRefused(f"event {e.sequence} is not a supported record-chain anchor")
+            try:
+                checked = anchor_payload(p.get("chain_kind", ""), p.get("chain_schema", ""), p.get("head", ""), p.get("length"))
+            except AnchorRefused as exc:
+                raise AnchorRefused(f"event {e.sequence} is a malformed record-chain anchor: {exc}") from exc
+            if out:
+                try:
+                    _grows(out[-1], checked)
+                except AnchorRefused as exc:
+                    raise AnchorRefused(f"event {e.sequence}: {exc}") from exc
+            out.append(checked)
+    return tuple(out)
+
+
+def require_growth(events: Iterable[CampaignEvent], payload: Mapping[str, Any]) -> None:
+    """A new anchor of a chain never shrinks it, and an unchanged length keeps the same head."""
+    previous = chain_anchors(events, payload["chain_kind"])
+    if previous:
+        _grows(previous[-1], payload)
 
 
 __all__ = ["AnchorRefused", "RECORD_CHAIN_ANCHOR_SCHEMA", "anchor_payload", "chain_anchors", "require_growth"]
