@@ -73,6 +73,29 @@ def always_insufficient(card: Mapping[str, Any], client: ObserveClient) -> dict[
     return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "baseline: blanket refusal"}
 
 
+def single_setting(card: Mapping[str, Any], client: ObserveClient) -> dict[str, Any]:
+    """A NON-DISCOVERER: spends the budget at one fixed setting and never varies an input, then classifies the universe
+    from nuisance statistics (noise level, covariate-output association).  It can earn control credit; it can never earn
+    discovery credit.  It is in the comparator set so that control credit is never mistaken for discovery."""
+    uid, out = card["universe_id"], card["output"]["name"]
+    pt = {x["name"]: math.sqrt(x["range"][0] * x["range"][1]) for x in card["inputs"]}
+    rows = []
+    for i in range(int(card["query_budget"])):
+        try:
+            rows.append(client.observe(uid, pt, query_id=f"s{i}")["observation"])
+        except EscrowRefused:
+            break
+    ys = [math.log(r[out]) for r in rows if r[out] > 0]
+    if len(ys) < 3:
+        return {"universe_id": uid, "answer": "insufficient_evidence", "rationale": "too few observations"}
+    covs = list(card.get("observed_covariates", ()))
+    if covs:
+        us = [math.log(r[covs[0]]) for r in rows if r[out] > 0]
+        if float(np.std(us)) > 0 and abs(float(np.corrcoef(ys, us)[0, 1])) > 0.5:
+            return {"universe_id": uid, "answer": "confounded", "rationale": "the output co-varies with a passive covariate at fixed inputs"}
+    return {"universe_id": uid, "answer": "insufficient_evidence", "rationale": "one setting cannot identify a law"}
+
+
 def _extrapolates(card: Mapping[str, Any]) -> bool:
     """True when the public assessment region leaves the query box (predictions will be judged where no query went)."""
     box = {x["name"]: x["range"] for x in card["inputs"]}
@@ -137,4 +160,4 @@ def careful(card: Mapping[str, Any], client: ObserveClient, *, precision: float 
             "rationale": "log-linear fit on intervened inputs, checked on own held-out queries"}
 
 
-__all__ = ["always_insufficient", "always_law", "always_refuse", "careful"]
+__all__ = ["always_insufficient", "always_law", "always_refuse", "careful", "single_setting"]

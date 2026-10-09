@@ -49,7 +49,8 @@ def _check(node: Any, depth: int, count: list[int], variables: set[str]) -> None
         raise ExpressionRefused("every expression node is a one-key object")
     (op, arg), = node.items()
     if op == "const":
-        if isinstance(arg, bool) or not isinstance(arg, (int, float)) or not math.isfinite(float(arg)):
+        if isinstance(arg, bool) or not isinstance(arg, (int, float)) or (isinstance(arg, int) and abs(arg) > 1e300) \
+                or not math.isfinite(float(arg)):
             raise ExpressionRefused("a constant is a finite number")
     elif op == "var":
         if not isinstance(arg, str) or not arg:

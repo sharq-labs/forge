@@ -14,7 +14,9 @@ from engcore.blindfold import (
     LEVELS, NOVEL_DISCOVERY_LEVELS, SECURITY_LABEL, EscrowRefused, EvaluatorConfig, InProcessTransport, ProposalStore, RoleRefused,
     SubprocessTransport, run_campaign,
 )
-from engcore.blindfold.baselines import always_insufficient, always_law, always_refuse, careful
+import dataclasses
+
+from engcore.blindfold.baselines import always_insufficient, always_law, always_refuse, careful, single_setting
 from engcore.blindfold.escrow import (
     PROTOCOL, EscrowService, ObserveClient, OperatorClient, ScoreClient, _assess, call, verify_log,
 )
@@ -32,7 +34,7 @@ ID = {"kind": "algorithm", "id": "t"}
 
 def _campaign(t, cid, mix):
     op = OperatorClient(t, t.operator_token)
-    return op, op.create(cid, mix)
+    return op, op.create(cid, mix, evaluator_config_digest=CFG.digest)
 
 
 def test_levels_and_what_counts_as_discovery():
@@ -124,17 +126,23 @@ def test_confounded_is_real_confounding_scored_on_the_interventional_truth():
     passive = mul(c(math.exp(coef[0])), *[pw(v(n), float(a)) for n, a in zip(names, coef[1:])])
     truths = [truth_at(w, p, random.Random(7)) for p in w.evaluation_points]
     assert not _assess(passive, truths, w)["passed"]            # the passive association is biased ...
-    assert _assess(w.law, truths, w)["passed"]                  # ... the interventional law is reachable (law_pass is live)
+    # the interventional truth is a passable target (the hidden law passes against it); a PASSIVE proposer cannot learn it,
+    # since only b + a/c is identifiable from observation -- so in practice CONFOUNDED is earned by refusing
+    assert _assess(w.law, truths, w)["passed"]
     assert CFG.credit_for("confounded", "law_pass") > 0 and CFG.credit_for("confounded", "confounded") > 0
     assert CONTROL_KINDS == frozenset(UniverseKind) - {UniverseKind.DISCOVERABLE}
 
 
-def test_a_proposer_cannot_reach_create_log_or_score_and_every_query_is_logged():
+def test_the_observe_client_api_sends_only_observe_and_every_query_is_logged():
     t = InProcessTransport()
     op, created = _campaign(t, "c1", {"discoverable": 1})
     card, tok = created["cards"][0], created["tokens"]
     obs = ObserveClient(t, "c1", tok["observe"])
     assert not hasattr(obs, "transport") and not hasattr(obs, "token") and not hasattr(obs, "__dict__")   # review H1
+    # ... but this is construction, NOT isolation: the closure still reaches the transport (SECURITY_BOUNDARY_NOT_PROVEN)
+    assert t in [cell.cell_contents for cell in obs._send.__closure__]
+    with pytest.raises(EscrowRefused, match="evaluator-config digest"):
+        call(t, "create", campaign_id="noconfig", mix={"discoverable": 1}, operator_token=t.operator_token)
     for token in (tok["observe"], tok["score"], "forged"):
         with pytest.raises(EscrowRefused, match="OPERATOR"):
             call(t, "create", campaign_id="mine", mix={"confounded": 5}, operator_token=token)
@@ -175,17 +183,21 @@ def test_budget_mix_bounds_and_malformed_requests_are_refused_not_fatal():
     card, tok = created["cards"][0], created["tokens"]
     obs = ObserveClient(t, "b", tok["observe"])
     pt = {x["name"]: x["range"][0] for x in card["inputs"]}
+    with pytest.raises(EscrowRefused, match="finite number"):               # float() overflow (re-review H-1)
+        obs.observe(card["universe_id"], {name: 10 ** 400 for name in pt})
+    assert op.log("b")["log"][-1]["op"] == "observe_refused"                # ... refused AND logged
     for _ in range(card["query_budget"]):
         obs.observe(card["universe_id"], pt)
     with pytest.raises(EscrowRefused, match="budget"):
         obs.observe(card["universe_id"], pt)
     with pytest.raises(EscrowRefused, match="1..256"):
-        op.create("huge", {"discoverable": 10_000})
+        op.create("huge", {"discoverable": 10_000}, evaluator_config_digest=CFG.digest)
     with pytest.raises(EscrowRefused, match="integers"):
-        op.create("float", {"discoverable": 1.5})
+        op.create("float", {"discoverable": 1.5}, evaluator_config_digest=CFG.digest)
     deep = "[" * 100_000 + "]" * 100_000
     resp = json.loads(t(f'{{"protocol": "{PROTOCOL}", "op": "observe", "settings": {deep}}}'.encode()))
     assert resp["ok"] is False                                              # RecursionError is a refusal, not a crash
+
 
 
 def test_indistinguishable_cannot_be_shotgunned_or_duplicated():
@@ -204,6 +216,21 @@ def test_indistinguishable_cannot_be_shotgunned_or_duplicated():
         sc.score(uid, {"answer": "indistinguishable", "laws": [world.law, world.alternative_law, world.law]})
     dup = sc.score(uid, {"answer": "indistinguishable", "laws": [world.law, world.law]})   # even the TRUE law, twice
     assert dup["pair"]["contains_truth"] and not dup["pair"]["hit"]
+    # re-review M1: a pair a tolerance apart is distinguishable in the box; a law that goes NaN outside is a miss
+    s_ = 0.6 * world.tolerance
+    _op, cr3 = _campaign(t, "sh3", {"indistinguishable": 2, "discoverable": 2})
+    sc3 = ScoreClient(t, "sh3", cr3["tokens"]["score"])
+    worlds3 = t._service._campaigns["sh3"].worlds
+    u_a, u_b, *rest = cr3["cards"]
+    for card3, pair in ((u_a, lambda w: [mul(c(1 + s_), w.law), mul(c(1 - s_), w.law)]),
+                        (u_b, lambda w: [w.law, mul(w.law, {"log": mul(c(-1.0), v(w.inputs[0].name))})])):
+        res3 = sc3.score(card3["universe_id"], {"answer": "indistinguishable", "laws": pair(worlds3[card3["universe_id"]])})
+        assert not res3["pair"]["hit"], res3["pair"]
+    for card3 in rest:                                                      # a box-region universe is never a hit
+        w3 = worlds3[card3["universe_id"]]
+        if w3.law is not None and not any(any(not (x.low <= p[x.name] <= x.high) for x in w3.inputs) for p in w3.evaluation_points):
+            r3 = sc3.score(card3["universe_id"], {"answer": "indistinguishable", "laws": [w3.law, w3.law]})
+            assert r3["pair"]["outside_points"] == 0 and not r3["pair"]["hit"]
     assert adjudicate(dup, CFG, sealed_config_digest=CFG.digest, proposer_digest="p").outcome == "indistinguishable_miss"
     _op, created = _campaign(t, "sh2", {"indistinguishable": 1})
     uid2 = created["cards"][0]["universe_id"]
@@ -222,7 +249,19 @@ def test_an_inadmissible_proposal_is_kept_and_costs_credit_never_a_refusal():
     def not_a_mapping(card, client):
         return 42
 
-    for proposer in (garbage, law_without_law, not_a_mapping):
+    def raises(card, client):
+        raise RuntimeError("proposer crashed")                             # re-review M2: never a non-result
+
+    def huge_const(card, client):
+        return {"answer": "law", "law": {"const": 10 ** 400}}
+
+    def deep_repr(card, client):
+        deep: list = []
+        for _ in range(100_000):
+            deep = [deep]
+        return {"answer": "no_law", "rationale": deep}
+
+    for proposer in (garbage, law_without_law, not_a_mapping, raises, huge_const, deep_repr):
         rep, store = run_campaign(InProcessTransport(), campaign_id="g", mix=MIX, proposer=proposer, proposer_identity=ID, config=CFG)
         s = rep.summary()
         assert s["inadmissible"] == s["universes"] and s["total_credit"] == -s["universes"]       # review H2
@@ -234,7 +273,8 @@ def test_an_inadmissible_proposal_is_kept_and_costs_credit_never_a_refusal():
 
 def test_credit_is_reported_over_the_best_constant_answer():
     reports = {}
-    for name, proposer in (("refuse", always_refuse), ("insufficient", always_insufficient), ("law", always_law), ("careful", careful)):
+    for name, proposer in (("refuse", always_refuse), ("insufficient", always_insufficient), ("law", always_law), ("careful", careful),
+                           ("single", single_setting)):
         reports[name], _ = run_campaign(InProcessTransport(), campaign_id=f"cmp-{name}", mix=MIX, proposer=proposer,
                                         proposer_identity={"kind": "algorithm", "id": name}, config=CFG)
     s = {k: r.summary() for k, r in reports.items()}
@@ -242,6 +282,10 @@ def test_credit_is_reported_over_the_best_constant_answer():
     assert s["refuse"]["credit_over_best_constant_answer"] <= 0.0
     assert s["law"]["total_credit"] < 0 and s["law"]["correct_refusal_rate_on_controls"] == 0.0
     assert s["careful"]["credit_over_best_constant_answer"] > 0
+    # re-review M3: a non-discoverer can earn control credit; discovery credit is reported apart and it has none
+    assert s["single"]["discovery_credit"] <= 0 and s["single"]["discovery_success_rate"] == 0.0
+    assert s["careful"]["discovery_credit"] > s["single"]["discovery_credit"]
+    assert all(r.summary()["discovery_credit"] + r.summary()["control_credit"] == r.summary()["total_credit"] for r in reports.values())
     assert s["careful"]["false_discovery_rate"] in (None, 0.0) or s["careful"]["false_discovery_rate"] < s["law"]["false_discovery_rate"]
     for r in reports.values():
         d = r.to_dict()
@@ -249,6 +293,8 @@ def test_credit_is_reported_over_the_best_constant_answer():
         assert all(a.transport == "in_process" for a in r.adjudications)
         assert d["summary"]["level_eligible_for_novel_discovery"] is True
         assert d["summary"]["counts_as_novel_discovery"] is False           # never while the boundary is unproven (review H6)
+        forged = dataclasses.replace(r, security_boundary="definitely-isolated")    # re-review M4: fails closed
+        assert forged.summary()["counts_as_novel_discovery"] is False
 
 
 def test_replay_is_complete_identity_bound_and_never_calls_the_proposer():
@@ -271,7 +317,7 @@ def test_replay_is_complete_identity_bound_and_never_calls_the_proposer():
                             mix={"discoverable": 2, "confounded": 1}, proposer=forbidden, config=CFG, store=store, **kw)
 
     rep2, _ = again(proposer_identity={"kind": "algorithm", "id": "careful"}, replay=replay, replay_of=rep)
-    assert rep2.outcome_digest == rep.outcome_digest
+    assert rep2.outcome_digest == rep.outcome_digest and rep2.replay_of == rep.outcome_digest and rep.replay_of == ""
     partial = dict(list(replay.items())[:2])
     with pytest.raises(RoleRefused, match="every universe"):                # review H7: never a silent re-generation
         again(proposer_identity={"kind": "algorithm", "id": "careful"}, replay=partial)
@@ -300,10 +346,13 @@ def test_the_subprocess_escrow_keeps_its_secrets_in_the_child():
     try:
         with pytest.raises(EscrowRefused, match="OPERATOR"):
             call(t, "create", campaign_id="sp", mix={"discoverable": 1})
-        created = OperatorClient(t, t.operator_token).create("sp", {"discoverable": 1})
+        created = OperatorClient(t, t.operator_token).create("sp", {"discoverable": 1}, evaluator_config_digest=CFG.digest)
         assert created["transport"] == "subprocess" and created["security_boundary"] == SECURITY_LABEL
         card, tok = created["cards"][0], created["tokens"]
         r = ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
         assert r["observation"]["y"] > 0
+        with pytest.raises(EscrowRefused, match="finite number"):           # re-review H-1: the child survives an overflow
+            ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: 10 ** 400 for x in card["inputs"]})
+        assert ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
     finally:
         t.close()

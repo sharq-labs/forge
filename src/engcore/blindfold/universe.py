@@ -43,6 +43,10 @@ CONFOUNDED             a latent cause drives ``u1`` (observed only, never
 Every card has the same shape (one covariate ``u1``, an assessment region), so
 neither covariate presence nor card layout reveals the kind.  An extended
 assessment region is drawn for half of the non-INDISTINGUISHABLE universes too.
+The region is still a PARTIAL tell: a box region rules INDISTINGUISHABLE out,
+and the extension follows the first group, hinting which inputs carry
+structure.  Credit is designed so that this information cannot be farmed
+(see :mod:`.roles`), not on the assumption that it is hidden.
 
 Textbook guard: the effective per-variable exponents of the power part (scale
 exponent plus group contributions) must include at least two values off the
@@ -318,7 +322,8 @@ def generate_universe(seed: str, kind: UniverseKind | str = UniverseKind.DISCOVE
     # every universe has exactly one passively observed, dimensionless covariate u1 (no layout tell)
     covariates: dict[str, dict[str, Any]] = {COVARIATE: {"role": "irrelevant", "spread": round(HIDDEN_SIGMA * rng.uniform(0.6, 1.4), 4)}}
     if kind is UniverseKind.NO_SOLUTION:
-        law = None
+        # noise drawn like INSUFFICIENT_EVIDENCE's, so the noise level alone does not separate the two controls
+        law, sigma = None, round(rng.uniform(0.6, 0.9), 3)
     elif kind is UniverseKind.INSUFFICIENT_EVIDENCE:
         # the budget is drawn from the same set every universe uses, so the card does not reveal the kind;
         # the noise makes the law unrecoverable at that budget
@@ -403,7 +408,10 @@ def observe(world: HiddenWorld, settings: Mapping[str, float], rng: random.Rando
     for name, x in known.items():
         if name not in settings:
             raise ValueError(f"the observation request does not set input {name!r}")
-        val = float(settings[name])
+        raw = settings[name]
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)) or (isinstance(raw, int) and abs(raw) > 1e300):
+            raise ValueError(f"{name} is set by a finite number")
+        val = float(raw)
         if not (math.isfinite(val) and x.low <= val <= x.high):
             raise ValueError(f"{name}={val} is outside the allowed query range [{x.low}, {x.high}]")
         point[name] = val
@@ -412,7 +420,7 @@ def observe(world: HiddenWorld, settings: Mapping[str, float], rng: random.Rando
     for name, spec in sorted(world.covariates.items()):
         out[name] = _covariate_value(spec, point, hidden, rng)
     if world.law is None:
-        y = math.exp(rng.gauss(0.0, 1.0))
+        y = math.exp(rng.gauss(0.0, world.noise_sigma))           # same noise distribution as INSUFFICIENT_EVIDENCE
     else:
         y = evaluate(world.law, out)
         a = world.confounder_effect

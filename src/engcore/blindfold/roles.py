@@ -1,7 +1,8 @@
 """Evaluator isolation: PROPOSER -> ADMISSION -> EVALUATOR -> ADJUDICATOR -> REPORTER, with the escrow outside them all.
 
-* The PROPOSER gets a public universe card and an :class:`~.escrow.ObserveClient` (no transport, no score token, no
-  operator credential, no evaluator configuration, no falsifier, no truth).  Its output is a proposal (data), stored
+* The PROPOSER gets a public universe card and an :class:`~.escrow.ObserveClient` (whose API sends only observe; it is
+  handed no score token, operator credential, evaluator configuration, falsifier or truth -- by construction, not
+  isolation: in-process introspection reaches all of them).  Its output is a proposal (data), stored
   CONTENT-ADDRESSED in a write-once :class:`ProposalStore`; a replay reads the stored proposals -- for EVERY universe,
   or it is refused -- and never calls the proposer (or a language model) again.
 * ADMISSION checks the proposal against the card and the expression grammar only (no truth involved).  An inadmissible
@@ -9,8 +10,10 @@
 * The EVALUATOR holds the :class:`~.escrow.ScoreClient` and submits the stored proposal, by digest, once.
 * The ADJUDICATOR applies a sealed :class:`EvaluatorConfig` (credit table + version) whose digest is fixed before the
   campaign; a different config at adjudication time is refused.
-* The REPORTER aggregates adjudications, verifies every score receipt against the escrow's hash chain, binds the
-  transport label, and reports credit RELATIVE TO THE BEST CONSTANT ANSWER so a blanket refusal earns nothing.
+* The REPORTER aggregates adjudications, checks that every score receipt is a member of the escrow's hash chain (the
+  chain's response digests are keyed, so this proves membership and order, not the content of a verdict), binds the
+  transport label, and reports credit RELATIVE TO THE BEST CONSTANT ANSWER so a blanket refusal earns nothing, with
+  discovery and control credit apart.
 
 Within one Python process these roles are separated by construction and by digests, not by an operating-system
 boundary: SECURITY_BOUNDARY_NOT_PROVEN (see :mod:`.escrow`).  While that holds, no report counts as novel discovery.
@@ -20,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import reprlib
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
@@ -28,6 +32,11 @@ from .escrow import ANSWERS, SECURITY_LABEL, EscrowRefused, ObserveClient, Opera
 from .expression import ExpressionRefused, validate
 
 REFUSALS = ("no_law", "insufficient_evidence", "confounded")
+#: boundary labels that count as a PROVEN escrow boundary.  Empty: no transport here has an isolation attestation, so
+#: no report can count as novel discovery.  (Allow-list -- never "anything but the unproven label".)
+PROVEN_BOUNDARY_LABELS: frozenset[str] = frozenset()
+_REPR = reprlib.Repr()
+_REPR.maxlevel, _REPR.maxstring, _REPR.maxother, _REPR.maxlist, _REPR.maxdict = 6, 400, 400, 40, 40
 
 
 def _digest(payload: Any) -> str:
@@ -61,8 +70,12 @@ class ProposalStore:
         is kept, never lost."""
         try:
             return self.put(dict(proposal))
-        except (TypeError, ValueError, RecursionError):
-            return self.put({"unserializable_proposal_repr": repr(proposal)[:4000]})
+        except Exception:  # noqa: BLE001 - whatever it was, a bounded record of it is kept
+            try:
+                text = _REPR.repr(proposal)[:4000]
+            except Exception:  # noqa: BLE001
+                text = f"<unrepresentable {type(proposal).__name__}>"
+            return self.put({"unserializable_proposal_repr": text})
 
     def get(self, digest: str) -> dict[str, Any]:
         blob = self._blobs.get(digest)
@@ -93,7 +106,7 @@ def admit(proposal: Mapping[str, Any], card: Mapping[str, Any], store: ProposalS
         return _admit(proposal, card, store)
     except RoleRefused:
         raise
-    except (KeyError, TypeError, AttributeError, ValueError, RecursionError) as exc:
+    except Exception as exc:  # noqa: BLE001 - any malformed proposal is inadmissible, never a crash
         raise RoleRefused(f"malformed proposal: {type(exc).__name__}: {str(exc)[:200]}") from exc
 
 
@@ -233,6 +246,7 @@ class BlindfoldReport:
     constant_answer_credit: Mapping[str, float]      # total credit each constant refusal would have earned on this mix
     transport: str
     security_boundary: str = SECURITY_LABEL
+    replay_of: str = ""                               # outcome digest of the report this run replayed ("" = a live run)
 
     @property
     def outcome_digest(self) -> str:
@@ -247,12 +261,17 @@ class BlindfoldReport:
         disc = by_kind.get("discoverable", [])
         total = sum(a.credit for a in self.adjudications)
         best_constant = max(self.constant_answer_credit.values()) if self.constant_answer_credit else 0.0
-        boundary_proven = self.security_boundary != SECURITY_LABEL
+        boundary_proven = self.security_boundary in PROVEN_BOUNDARY_LABELS
+        disc_credit = sum(a.credit for a in disc)
+        control_credit = sum(a.credit for a in self.adjudications if a.universe_kind != "discoverable")
         return {
             "universes": len(self.adjudications),
             "total_credit": total,
             "best_constant_answer_credit": best_constant,
             "credit_over_best_constant_answer": total - best_constant,
+            # reported apart: control credit can be earned by classifying nuisance statistics without discovering anything
+            "discovery_credit": disc_credit,
+            "control_credit": control_credit,
             "mean_credit_by_kind": {k: sum(a.credit for a in v) / len(v) for k, v in sorted(by_kind.items())},
             "discovery_success_rate": None if not disc else sum(a.outcome == "law_pass" for a in disc) / len(disc),
             "false_discovery_rate": None if not laws else sum(a.credit < 0 for a in laws) / len(laws),
@@ -276,7 +295,8 @@ class BlindfoldReport:
                 "config_digest": self.config_digest, "adjudication_digests": [a.digest for a in self.adjudications],
                 "outcome_digest": self.outcome_digest, "queries": self.queries, "escrow_log_head": self.escrow_log_head,
                 "proposer": dict(self.proposer), "constant_answer_credit": dict(sorted(self.constant_answer_credit.items())),
-                "transport": self.transport, "security_boundary": self.security_boundary, "summary": self.summary()}
+                "transport": self.transport, "security_boundary": self.security_boundary, "replay_of": self.replay_of,
+                "summary": self.summary()}
 
     @property
     def digest(self) -> str:
@@ -298,7 +318,9 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
 
     ``replay`` maps EVERY universe_id -> stored proposal digest (anything else is refused): the proposals are read from
     ``store``, their recorded proposer must be ``proposer_identity``, and the proposer is NOT called.  With
-    ``replay_of`` the replayed outcomes must equal that report's, or the replay is refused."""
+    ``replay_of`` the replayed outcomes must equal that report's, or the replay is refused, and the report says it is a
+    replay.  Replaying the same universes needs the escrow's master seed; whoever holds it can derive every hidden
+    world, so it stays with the escrow operator.  The recorded proposer is whatever the store's writer recorded."""
     store = store or ProposalStore()
     sealed = config.digest
     identity = dict(proposer_identity)
@@ -307,7 +329,7 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
     if not token:
         raise RoleRefused("the operator credential is required to create a campaign")
     operator = OperatorClient(transport, token)
-    created = operator.create(campaign_id, mix)
+    created = operator.create(campaign_id, mix, evaluator_config_digest=sealed)   # declared before any kind is revealed
     observe_client = ObserveClient(transport, campaign_id, created["tokens"]["observe"])
     score_client = ScoreClient(transport, campaign_id, created["tokens"]["score"])
     card_ids = [card["universe_id"] for card in created["cards"]]
@@ -331,17 +353,22 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
             else:
                 admit(stored, frozen_card, store)
         else:
-            raw = proposer(frozen_card, observe_client)
+            raw: Any = None
             try:
+                raw = proposer(frozen_card, observe_client)
                 proposal = dict(raw)
                 proposal.setdefault("universe_id", uid)
                 proposal["proposer"] = identity
                 stored = store.get(admit(proposal, frozen_card, store).proposal_digest)
-            except (RoleRefused, TypeError, ValueError) as exc:
+            except Exception as exc:  # noqa: BLE001 - a proposer that raises or returns garbage is scored, never a non-result
                 # kept as it was, scored as what it is: inadmissible (negative credit), never a substitute refusal
                 original = store.put_any(raw)
+                try:
+                    reason = f"{type(exc).__name__}: {str(exc)[:300]}"
+                except Exception:  # noqa: BLE001
+                    reason = type(exc).__name__
                 stored = store.get(store.put({"universe_id": uid, "answer": "inadmissible", "original_digest": original,
-                                              "reason": str(exc)[:300], "proposer": identity}))
+                                              "reason": reason, "proposer": identity}))
         try:
             score = score_client.score(uid, stored)
         except EscrowRefused as exc:
@@ -353,19 +380,27 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
     if head != log["head"]:
         raise RoleRefused("the escrow log head does not match its chain")
     chained = {e["digest"]: e for e in log["log"]}
+    if not log["log"] or log["log"][0].get("public", {}).get("evaluator_config_digest") != sealed:
+        raise RoleRefused("the escrow did not record this sealed evaluator config at campaign creation")
     for digest, receipt in receipts.items():
         if chained.get(digest) != receipt:
             raise RoleRefused("a score receipt is not in the escrow's hash chain")
+    for a in adjudications:                   # each adjudication cites a score entry of THIS chain, for its own universe
+        entry = chained.get(a.score_receipt_digest)
+        if entry is None or entry["op"] != "score" or a.score_receipt_digest not in receipts:
+            raise RoleRefused("an adjudication cites a receipt that is not a score entry of the escrow chain")
     queries = sum(1 for e in log["log"] if e["op"] == "observe")
     level = created["cards"][0]["level"] if created["cards"] else "L5"
     constant = {r: sum(config.credit_for(a.universe_kind, r) for a in adjudications) for r in REFUSALS}
     transports = {a.transport for a in adjudications}
     report = BlindfoldReport(campaign_id, level, sealed, tuple(adjudications), queries, head, identity, constant,
-                             transports.pop() if len(transports) == 1 else "mixed")
+                             transports.pop() if len(transports) == 1 else "mixed",
+                             replay_of="" if replay_of is None else replay_of.outcome_digest)
     if replay_of is not None and [a.outcome_key() for a in replay_of.adjudications] != [a.outcome_key() for a in adjudications]:
         raise RoleRefused("the replay does not reproduce the original report's outcomes")
     return report, store
 
 
-__all__ = ["Adjudication", "AdmittedProposal", "BlindfoldReport", "DEFAULT_CREDIT", "EvaluatorConfig", "ProposalStore", "REFUSALS",
+__all__ = ["Adjudication", "AdmittedProposal", "BlindfoldReport", "DEFAULT_CREDIT", "EvaluatorConfig", "PROVEN_BOUNDARY_LABELS",
+           "ProposalStore", "REFUSALS",
            "RoleRefused", "admit", "adjudicate", "run_campaign"]
