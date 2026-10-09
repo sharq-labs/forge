@@ -1618,3 +1618,41 @@ command: `git diff --check`
 result: PASS
 summary: exit 0; no whitespace errors
 commit: a3f757eb5fdbc804ef11e3c4088a757c31981870
+
+
+## 2026-10-09 BIG 14 — review 2026-10-05 R1/R4 fixes (branch `fix/big-14-review-r1-r4`, worktree `D:/forge-r1r4`)
+
+Base `origin/main` @ `16c87f40`. Commits `926836a4` (R1 + R4, review doc carried in, BUILD-phase PROGRESS archived) and
+`26d04c14` (scientific review round 1 fixes).
+
+- R1 (HIGH): `write_bundle` checked only `/` and a leading `.` in artifact names and nothing in reference ids. Counterexamples now
+  refused: reference id `..\..\outside`; an artifact admitted by a SUCCEEDED receipt as `C:outside` (the receipt `_ID` grammar
+  admits `:` and `/`). Names are one printable-ASCII segment without separators, colon, `~`, wildcards, leading/trailing dot or a
+  Windows device name; case-only collisions are refused; no existing component below the root may be a link; every destination
+  (manifest included) is checked before the first write; files are written to an exclusive temp file and renamed over the
+  destination. `verify_bundle` reads under the same rule and refuses nested paths that write cannot make.
+- R4 (MEDIUM): `compare_runs` tolerances must be finite, non-negative real numbers (not bool), and `rel_tol < 1`.
+- R2/R3 were already covered on `origin/main` (version-probe `returncode` refusal; `catalog._footprint`). R5 is carried by the
+  Pass 13 skip admission.
+- forge-scientific-review, one round: CHANGES REQUIRED — HIGH-1 manifest.json written uncontained; MEDIUM-1 hard link / sibling
+  link / check-then-open race; MEDIUM-2 `rel_tol >= 1` still accepts any same-signed drift; LOW-1 Unicode/8.3/device names; LOW-2
+  manifest read and nested names in verify; LOW-3 overflow and missing acceptance tests. All fixed in `26d04c14`; no finding was
+  dispositioned as not applicable. `abs_tol` being read in run `a`'s unit is pre-existing and out of scope (recorded, not changed).
+
+Commands (Windows, Python 3.14 venv, `TMPDIR=D:/ftmp`, `-p no:cacheprovider`):
+- `pytest tests/test_engineering_contracts.py tests/test_system_runtime_checkpoint.py tests/test_system_runtime_review_fixes.py
+  tests/mcp/test_bundle.py tests/test_agent_workflow_contract.py tests/test_core_semantic_invariants.py tests/test_pin_portability.py
+  flagships/tests providers/pybamm/tests/test_system_runtime_battery.py -n 4` on `926836a4`: 337 passed, 58 skipped.
+- New tests against the pre-fix source (src stashed): round 1, 29 of 32 selected failed; round 2 (WSL 3.12), 17 failed, 18 passed.
+- `python tools/forge_check.py --changed` on `926836a4`: 225 passed.
+- FAST `pytest -m "not expensive" -q -n 4` on `926836a4` (Windows 3.14, a measurement, not the gate environment): 117 failed,
+  9258 passed, 166 skipped, 19 errors. The same 8 files at pristine `16c87f40` (`D:/forge-review-main`): 117 failed, 19 errors;
+  failures only on the fix branch: NONE. They are POSIX-only certification/mutation-workspace tests and clean-tree/freeze checks.
+- `26d04c14`: `pytest tests/test_engineering_contracts.py tests/test_system_runtime_checkpoint.py tests/test_system_runtime_review_fixes.py`
+  Windows 3.14: 125 passed, 3 skipped (file symlinks need privilege); WSL 3.12 (`/mnt/d/forge-r1r4b`, engcore imported from the
+  worktree): 128 passed, 0 skipped.
+- Full local assurance, mutation populations and hardened recertification: NOT RUN at the time of this entry.
+
+Failed approach: a long bash heredoc patch script failed with "unexpected EOF" (nested quotes); patch scripts go through the file
+tool. Editing the worktree while FAST ran would have contaminated it; round-2 fixes were made in a second detached worktree and
+fast-forwarded.
