@@ -1845,3 +1845,6 @@ fast-forwarded.
   `GeometryVariant.verify` compares the whole replayed variant (shape digest, builder, receipt), not only the geometry digest.
   `pytest tests/foundations providers/chrono/tests tests/mcp/test_foundations_tools.py flagships/tests/test_geometry_slice.py`:
   119 passed, 2 skipped (provider-gated); chrono env `providers/chrono/tests`: 12 passed.
+- Re-gate on `e5e3a81c` (after the Codex fixes): `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider
+  --junitxml=…`: 14 failed, 9577 passed, 135 skipped — the same 14 node ids as above; skip admission audit: skipped 135,
+  accepted 135, unexpected 0. Hardened-core recertification and the SCIENTIFIC tier: still NOT RUN.
