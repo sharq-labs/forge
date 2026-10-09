@@ -180,9 +180,11 @@ class HypothesisPrediction:
 class VerdictReference:
     """Why a hypothesis has a verdict-backed status: one falsifier verdict, bound to the exact hypothesis CONTENT it judged.
 
-    Binding to :attr:`Hypothesis.content_digest` means a verdict about one revision's content cannot back another's.
-    Whether the verdict record itself exists and says what this reference claims is checked against the sealed
-    verdict store by the adjudicator (``engcore.claims.falsification.verify_status``); a reference alone is not a verdict.
+    Binding to :attr:`Hypothesis.content_digest` (the CLAIM content -- the falsifier list is not part of it, so a
+    refutation survives a falsifier revision) means a verdict about one claim cannot back another.  Construction checks
+    only the shape: whether the verdict exists in the sealed registry chain and says what this reference claims is
+    checked by ``engcore.claims.falsification.verify_status``, and every consumer of a verdict-backed status MUST gate
+    on it.  A reference alone is not a verdict.
     """
 
     falsifier_ref: str
@@ -290,12 +292,17 @@ class Hypothesis:
             if not self.falsifier_refs or not self.status_basis:
                 raise ValueError(f"status {self.status.value} must name the sealed falsifiers and the verdict records that decided it; "
                                  "a status is never asserted")
+            if not (str(self.statement).strip() or self.statement_payload):
+                raise ValueError("a verdict-backed status needs a stated claim (statement or statement_payload): a claim that "
+                                 "lives only in the narrative could change without changing what was tested")
             content = self.content_digest
+            falsifier_ids = {r.split("@", 1)[0] for r in self.falsifier_refs}
             for b in self.status_basis:
                 if b.content_digest != content:
                     raise ValueError(f"verdict {b.verdict_digest[:12]} judged other content than this revision; a verdict does not "
                                      "transfer to changed content")
-                if b.falsifier_ref not in self.falsifier_refs:
+                # any version of a listed falsifier: a refutation by a superseded version is never laundered away
+                if b.falsifier_ref.split("@", 1)[0] not in falsifier_ids:
                     raise ValueError(f"verdict names falsifier {b.falsifier_ref!r}, which is not one of this hypothesis's falsifiers")
             verdicts = {b.verdict for b in self.status_basis}
             if self.status is HypothesisStatus.REFUTED and "refuted" not in verdicts:
@@ -351,9 +358,12 @@ class Hypothesis:
             **self._extension(),
         }
 
-    #: what a test of the hypothesis is ABOUT; any change is new content (status, novelty and narrative excluded)
+    #: what a test of the hypothesis is ABOUT -- the claim; any change is new content.  Status, novelty, narrative and the
+    #: falsifier list are excluded: revising a falsifier must not mint "new content" that sheds an earlier refutation.
     CONTENT_FIELDS = ("hypothesis_id", "model_ref", "scope_ref", "kind", "statement", "statement_payload", "structure_digest",
-                      "predictions", "parameters", "falsifier_refs", "parents", "mechanism_basis_refs", "parameter_belief_ref")
+                      "predictions", "parameters", "parents", "mechanism_basis_refs", "parameter_belief_ref")
+    #: fields whose change resets a verdict-backed status (the claim, or the set of tests it must pass)
+    STATUS_RESET_FIELDS = CONTENT_FIELDS + ("falsifier_refs",)
 
     @property
     def content_digest(self) -> str:
@@ -405,7 +415,7 @@ class Hypothesis:
         for fixed in ("hypothesis_id", "kind", "parents", "revision"):
             if fixed in changes and changes[fixed] != getattr(self, fixed):
                 raise ValueError(f"a revision keeps its {fixed}; a different {fixed} is a new hypothesis (derive_hypothesis)")
-        content_changed = bool(set(changes) & set(self.CONTENT_FIELDS))
+        content_changed = bool(set(changes) & set(self.STATUS_RESET_FIELDS))
         if content_changed and ({"status", "status_basis"} & set(changes)):
             raise ValueError("a content change and a status cannot arrive together; the new content is untested (PROPOSED)")
         if content_changed:

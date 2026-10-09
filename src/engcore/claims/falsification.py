@@ -1,36 +1,50 @@
 """Sealed falsifiers and their verdicts: the only path to a verdict-backed hypothesis status.
 
-A :class:`Falsifier` is pre-registered against ONE hypothesis revision (its content digest): the test conditions, the
-admissible evidence source, the refutation criterion, the uncertainty it requires and a version.  It is SEALED in a
-:class:`FalsifierRegistry` -- a hash-chained ledger that also records when each piece of evidence was EXPOSED.  A verdict
-may use only evidence exposed after the falsifier was sealed: a falsifier written after seeing the data is post-hoc.
+Three parties, three records:
 
-Post-hoc modification never mutates the original: :meth:`Falsifier.revise` produces a new version that must be sealed
-again, and it can be judged only on evidence exposed after ITS seal.
+* An :class:`ExposureAuthority` is the MEASUREMENT side (an escrow, an instrument record, an experiment log).  It owns
+  the clock.  Evidence exists for a falsifier only as an :class:`EvidenceItem` the authority RELEASED: the item's
+  digest is derived from its fields, its exposure sequence is the authority's clock at release, and an HMAC binds both.
+  The proposer side cannot record or back-date an exposure; re-releasing identical data keeps its FIRST exposure.
+* A :class:`Falsifier` is pre-registered against ONE hypothesis claim (:attr:`Hypothesis.content_digest`): the test
+  conditions, an admissible :class:`EvidenceSource`, the refutation criterion and EVERYTHING it compares against --
+  the predicted value and its uncertainty, the coverage factor ``k`` (bounded by :data:`K_MAX`) and the RESOLUTION the
+  test must achieve (the largest ``k * u`` that still discriminates).  Nothing a verdict depends on is supplied at
+  judge time.
+* The :class:`FalsifierRegistry` (one per campaign, issued by the authority) is a hash chain of SEALS (stamped with the
+  authority's clock) and JUDGMENTS.  :func:`judge` records every verdict in the chain; status is derived from the chain
+  only, so a verdict cannot be forged into, or left out of, a hypothesis's record.
 
-Verdicts: REFUTED, NOT_REFUTED, INCONCLUSIVE.  If the uncertainty the criterion requires is UNKNOWN (``None``), the
-verdict is INCONCLUSIVE -- missing uncertainty never becomes zero.
+Verdicts: REFUTED, NOT_REFUTED, INCONCLUSIVE.  INCONCLUSIVE whenever an uncertainty is UNKNOWN (``None``) -- missing
+uncertainty never becomes zero -- when an observation claims zero uncertainty without the falsifier allowing exact data,
+and when the evidence is too uncertain to reach the sealed resolution.
 
-:func:`apply_verdicts` is how a hypothesis gets SURVIVING / REFUTED / UNKNOWN: from every verdict recorded for its exact
-content (a refuting verdict cannot be left out), producing typed
-:class:`~engcore.sria.decision.VerdictReference` records.  :func:`verify_status` checks a hypothesis's claimed status
-against the verdict store.
+A post-hoc change is a NEW falsifier version (:meth:`Falsifier.revise`), sealed later on the authority's clock and
+judged only on evidence released after ITS seal; a refutation by any version of a falsifier still stands.
+
+Residual (recorded as deferred hardening): a forbidden region far from anything the hypothesis predicts is vacuous;
+judging that is the preregistration reviewer's job, not this module's.  Inside one Python process the authority's key
+is protected by construction only (the same SECURITY_BOUNDARY_NOT_PROVEN caveat as the Blindfold escrow).
 """
 
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import math
+import os
 from dataclasses import dataclass, replace
 from enum import Enum
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 from ..sria.decision import Hypothesis, HypothesisStatus, VerdictReference
 
-FALSIFIER_SCHEMA = "engcore.claims.falsifier/1"
-VERDICT_SCHEMA = "engcore.claims.falsifier_verdict/1"
+FALSIFIER_SCHEMA = "engcore.claims.falsifier/2"
+VERDICT_SCHEMA = "engcore.claims.falsifier_verdict/2"
 GENESIS = "0" * 64
+#: policy ceiling on the coverage factor: a falsifier that cannot fail is not a falsifier
+K_MAX = 10.0
 
 
 def _digest(payload: Any) -> str:
@@ -43,13 +57,27 @@ class FalsificationRefused(ValueError):
 
 class CriterionKind(str, Enum):
     PREDICTION_DEVIATION = "prediction_deviation"   # refuted when |observed - predicted| > k * sqrt(u_obs^2 + u_pred^2)
-    FORBIDDEN_REGION = "forbidden_region"           # refuted when the observation lies in [low, high] beyond its uncertainty
+    FORBIDDEN_REGION = "forbidden_region"           # refuted when the observation lies in [low, high] beyond k * u_obs
+
+
+class EvidenceSource(str, Enum):
+    """Admissible evidence sources: records an exposure authority produces.  Never a caller assertion or an opinion."""
+
+    ESCROW_OBSERVATION = "escrow_observation"
+    MEASUREMENT_RECORD = "measurement_record"
+    EXPERIMENT_RECORD = "experiment_record"
 
 
 class Verdict(str, Enum):
     REFUTED = "refuted"
     NOT_REFUTED = "not_refuted"
     INCONCLUSIVE = "inconclusive"
+
+
+_REQUIRED = {CriterionKind.PREDICTION_DEVIATION: ("k", "predicted", "resolution"),
+             CriterionKind.FORBIDDEN_REGION: ("k", "low", "high", "resolution")}
+_ALLOWED = {CriterionKind.PREDICTION_DEVIATION: {"k", "predicted", "prediction_uncertainty", "resolution"},
+            CriterionKind.FORBIDDEN_REGION: {"k", "low", "high", "resolution"}}
 
 
 @dataclass(frozen=True)
@@ -60,37 +88,59 @@ class Falsifier:
     observable: str
     unit: str
     test_conditions: Mapping[str, Any]
-    evidence_source: str                 # the admissible evidence source class, e.g. "escrow:observe" or "sria:measurement"
+    evidence_source: EvidenceSource
     criterion: CriterionKind
-    parameters: Mapping[str, float]      # PREDICTION_DEVIATION: {"k": 3}; FORBIDDEN_REGION: {"low": .., "high": .., "k": ..}
+    parameters: Mapping[str, float]      # see _REQUIRED; ``prediction_uncertainty`` absent = UNKNOWN (-> INCONCLUSIVE)
     version: int = 1
-    supersedes: str = ""                 # digest of the falsifier this revision replaces
+    supersedes: str = ""                 # digest of the falsifier this revision replaces (required iff version > 1)
+    allow_exact_observation: bool = False
 
     def __post_init__(self) -> None:
-        for label in ("falsifier_id", "hypothesis_id", "observable", "unit", "evidence_source"):
+        for label in ("falsifier_id", "hypothesis_id", "observable", "unit"):
             if not str(getattr(self, label)).strip():
                 raise FalsificationRefused(f"a falsifier names its {label}")
+        if "@" in self.falsifier_id:
+            raise FalsificationRefused("a falsifier id has no '@' (references are id@vN)")
         if len(str(self.hypothesis_content_digest)) != 64:
             raise FalsificationRefused("a falsifier binds the hypothesis CONTENT digest it tests")
+        try:
+            object.__setattr__(self, "evidence_source", EvidenceSource(self.evidence_source))
+        except ValueError as exc:
+            raise FalsificationRefused(f"evidence source must be one of {[s.value for s in EvidenceSource]}") from exc
         object.__setattr__(self, "criterion", CriterionKind(self.criterion))
         params = {str(k): float(val) for k, val in dict(self.parameters).items()}
         if any(not math.isfinite(val) for val in params.values()):
             raise FalsificationRefused("criterion parameters are finite")
-        if params.get("k", 0.0) <= 0:
-            raise FalsificationRefused("the criterion's coverage factor k is positive and declared (never defaulted)")
-        if self.criterion is CriterionKind.FORBIDDEN_REGION and not ("low" in params and "high" in params and params["low"] < params["high"]):
+        missing = [k for k in _REQUIRED[self.criterion] if k not in params]
+        if missing:
+            raise FalsificationRefused(f"{self.criterion.value} seals {missing} before any evidence: never defaulted, never supplied later")
+        if set(params) - _ALLOWED[self.criterion]:
+            raise FalsificationRefused(f"unknown criterion parameters {sorted(set(params) - _ALLOWED[self.criterion])}")
+        if not 0 < params["k"] <= K_MAX:
+            raise FalsificationRefused(f"the coverage factor k is in (0, {K_MAX}]: a falsifier that cannot fail is not a falsifier")
+        if not params["resolution"] > 0:
+            raise FalsificationRefused("the resolution (largest k*u that still discriminates) is positive")
+        if params.get("prediction_uncertainty", 0.0) < 0:
+            raise FalsificationRefused("a prediction uncertainty is non-negative")
+        if self.criterion is CriterionKind.FORBIDDEN_REGION and not params["low"] < params["high"]:
             raise FalsificationRefused("a forbidden region declares low < high")
         object.__setattr__(self, "parameters", dict(sorted(params.items())))
         object.__setattr__(self, "test_conditions", json.loads(json.dumps(dict(self.test_conditions), sort_keys=True)))
-        if isinstance(self.version, bool) or self.version < 1:
-            raise FalsificationRefused("falsifier versions start at 1")
+        if isinstance(self.version, bool) or not isinstance(self.version, int) or self.version < 1:
+            raise FalsificationRefused("falsifier versions are integers starting at 1")
+        if (self.version > 1) != bool(self.supersedes):
+            raise FalsificationRefused("a version above 1 names the falsifier it supersedes, and version 1 supersedes nothing")
+
+    @property
+    def ref(self) -> str:
+        return f"{self.falsifier_id}@v{self.version}"
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": FALSIFIER_SCHEMA, "falsifier_id": self.falsifier_id, "hypothesis_id": self.hypothesis_id,
                 "hypothesis_content_digest": self.hypothesis_content_digest, "observable": self.observable, "unit": self.unit,
-                "test_conditions": dict(self.test_conditions), "evidence_source": self.evidence_source,
+                "test_conditions": dict(self.test_conditions), "evidence_source": self.evidence_source.value,
                 "criterion": self.criterion.value, "parameters": dict(self.parameters), "version": self.version,
-                "supersedes": self.supersedes}
+                "supersedes": self.supersedes, "allow_exact_observation": self.allow_exact_observation}
 
     @property
     def digest(self) -> str:
@@ -98,17 +148,117 @@ class Falsifier:
 
     def revise(self, **changes: Any) -> "Falsifier":
         """A post-hoc change is a NEW falsifier version (sealed separately); the original is never mutated."""
-        if "falsifier_id" in changes or "hypothesis_id" in changes:
-            raise FalsificationRefused("a revision keeps the falsifier and hypothesis ids")
+        for fixed in ("falsifier_id", "hypothesis_id", "version", "supersedes"):
+            if fixed in changes:
+                raise FalsificationRefused(f"a revision keeps the {fixed} chain")
         return replace(self, version=self.version + 1, supersedes=self.digest, **changes)
+
+
+# ---------------------------------------------------------------------------- evidence + the exposure authority
+
+
+def evidence_content_digest(source: EvidenceSource, observable: str, unit: str, value: float, uncertainty: float | None,
+                            conditions: Mapping[str, Any]) -> str:
+    return _digest({"source": EvidenceSource(source).value, "observable": observable, "unit": unit, "value": float(value),
+                    "uncertainty": None if uncertainty is None else float(uncertainty), "conditions": dict(conditions)})
+
+
+@dataclass(frozen=True)
+class EvidenceItem:
+    """One observation RELEASED by an exposure authority.  ``uncertainty`` None = UNKNOWN (never zero)."""
+
+    evidence_id: str
+    source: EvidenceSource
+    observable: str
+    unit: str
+    value: float
+    uncertainty: float | None
+    conditions: Mapping[str, Any]
+    authority_id: str
+    exposure_sequence: int
+    exposure_mac: str
+
+    @property
+    def content_digest(self) -> str:
+        """Derived from the fields -- a value swapped under a recorded digest no longer matches it."""
+        return evidence_content_digest(self.source, self.observable, self.unit, self.value, self.uncertainty, self.conditions)
+
+
+class _Issued:
+    """Marker: only an authority constructs a registry."""
+
+
+class ExposureAuthority:
+    """The measurement side's clock.  Only it releases evidence; it stamps seals; it issues one registry per campaign."""
+
+    def __init__(self, authority_id: str, *, key: bytes | None = None) -> None:
+        if not str(authority_id).strip():
+            raise FalsificationRefused("an exposure authority has an id")
+        self.authority_id = authority_id
+        self.__key = key if key is not None else os.urandom(32)
+        self._clock = 0
+        self._first_release: dict[str, int] = {}          # content digest -> first exposure sequence
+        self._ids: dict[str, str] = {}                    # evidence id -> content digest
+        self._registries: dict[str, FalsifierRegistry] = {}
+        self._issued = _Issued()
+
+    @property
+    def clock(self) -> int:
+        return self._clock
+
+    def _tick(self) -> int:
+        self._clock += 1
+        return self._clock
+
+    def _mac(self, evidence_id: str, content: str, seq: int) -> str:
+        return hmac.new(self.__key, f"{self.authority_id}\n{evidence_id}\n{content}\n{seq}".encode(), hashlib.sha256).hexdigest()
+
+    def release(self, *, evidence_id: str, source: EvidenceSource | str, observable: str, unit: str, value: float,
+                uncertainty: float | None, conditions: Mapping[str, Any] | None = None) -> EvidenceItem:
+        """Expose one observation to the proposer side NOW (on this authority's clock)."""
+        source = EvidenceSource(source)
+        if not str(evidence_id).strip():
+            raise FalsificationRefused("released evidence has an id")
+        if not math.isfinite(float(value)):
+            raise FalsificationRefused("an observation value is finite; a non-finite value is not evidence")
+        if uncertainty is not None and not (math.isfinite(float(uncertainty)) and float(uncertainty) >= 0):
+            raise FalsificationRefused("an observation uncertainty is finite and non-negative, or UNKNOWN (None)")
+        conds = json.loads(json.dumps(dict(conditions or {}), sort_keys=True))
+        content = evidence_content_digest(source, observable, unit, value, uncertainty, conds)
+        if evidence_id in self._ids and self._ids[evidence_id] != content:
+            raise FalsificationRefused("this evidence id was already released with other content")
+        seq = self._first_release.get(content)
+        if seq is None:                                   # identical data re-released keeps its FIRST exposure
+            seq = self._tick()
+            self._first_release[content] = seq
+        self._ids[evidence_id] = content
+        return EvidenceItem(evidence_id, source, observable, unit, float(value), None if uncertainty is None else float(uncertainty),
+                            conds, self.authority_id, seq, self._mac(evidence_id, content, seq))
+
+    def verify(self, item: EvidenceItem) -> bool:
+        return (isinstance(item, EvidenceItem) and item.authority_id == self.authority_id
+                and self._ids.get(item.evidence_id) == item.content_digest
+                and self._first_release.get(item.content_digest) == item.exposure_sequence
+                and hmac.compare_digest(item.exposure_mac, self._mac(item.evidence_id, item.content_digest, item.exposure_sequence)))
+
+    def registry(self, campaign_id: str) -> "FalsifierRegistry":
+        """THE registry of a campaign (one per campaign: a fresh registry cannot be forked to drop a refutation)."""
+        if not str(campaign_id).strip():
+            raise FalsificationRefused("a registry belongs to a campaign")
+        if campaign_id not in self._registries:
+            self._registries[campaign_id] = FalsifierRegistry(self, campaign_id, self._issued)
+        return self._registries[campaign_id]
+
+
+# ---------------------------------------------------------------------------- the registry (seals + judgments)
 
 
 @dataclass(frozen=True)
 class RegistryEntry:
     sequence: int
     previous: str
-    kind: str                     # "sealed" | "exposed"
-    subject: str                  # falsifier digest | evidence id
+    kind: str                     # "sealed" | "judged"
+    subject: str                  # falsifier digest | verdict digest
     payload_json: str
 
     @property
@@ -117,14 +267,49 @@ class RegistryEntry:
                         "payload": json.loads(self.payload_json)})
 
 
-class FalsifierRegistry:
-    """Hash-chained record of seals and evidence exposures.  Order is the only clock that matters here."""
+@dataclass(frozen=True)
+class FalsifierVerdict:
+    falsifier_digest: str
+    falsifier_ref: str
+    hypothesis_id: str
+    hypothesis_content_digest: str
+    evidence_id: str
+    evidence_content_digest: str
+    evidence_exposure_sequence: int
+    seal_clock: int
+    verdict: Verdict
+    observed: float
+    predicted: float | None
+    k: float
+    combined_uncertainty: float | None
+    reason: str
 
-    def __init__(self) -> None:
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": VERDICT_SCHEMA, "falsifier_digest": self.falsifier_digest, "falsifier_ref": self.falsifier_ref,
+                "hypothesis_id": self.hypothesis_id, "hypothesis_content_digest": self.hypothesis_content_digest,
+                "evidence_id": self.evidence_id, "evidence_content_digest": self.evidence_content_digest,
+                "evidence_exposure_sequence": self.evidence_exposure_sequence, "seal_clock": self.seal_clock,
+                "verdict": self.verdict.value, "observed": self.observed, "predicted": self.predicted, "k": self.k,
+                "combined_uncertainty": self.combined_uncertainty, "reason": self.reason}
+
+    @property
+    def digest(self) -> str:
+        return _digest(self.to_dict())
+
+
+class FalsifierRegistry:
+    """Hash-chained record of seals (stamped with the authority's clock) and judgments.  Issued by an authority."""
+
+    def __init__(self, authority: ExposureAuthority, campaign_id: str, issued: Any = None) -> None:
+        if not isinstance(authority, ExposureAuthority) or issued is not getattr(authority, "_issued", object()):
+            raise FalsificationRefused("a registry is issued by its exposure authority (ExposureAuthority.registry)")
+        self.authority = authority
+        self.campaign_id = campaign_id
         self._entries: list[RegistryEntry] = []
         self._sealed: dict[str, Falsifier] = {}
-        self._seal_seq: dict[str, int] = {}
-        self._exposed: dict[str, int] = {}
+        self._seal_clock: dict[str, int] = {}
+        self._versions: dict[tuple[str, int], str] = {}
+        self._verdicts: dict[str, FalsifierVerdict] = {}
 
     @property
     def head(self) -> str:
@@ -133,6 +318,14 @@ class FalsifierRegistry:
     @property
     def entries(self) -> tuple[RegistryEntry, ...]:
         return tuple(self._entries)
+
+    def verify_chain(self) -> str:
+        prev = GENESIS
+        for i, e in enumerate(self._entries):
+            if e.sequence != i or e.previous != prev:
+                raise FalsificationRefused(f"the falsifier registry chain is broken at entry {i}")
+            prev = e.digest
+        return prev
 
     def _add(self, kind: str, subject: str, payload: Mapping[str, Any]) -> RegistryEntry:
         e = RegistryEntry(len(self._entries), self.head, kind, subject, json.dumps(dict(payload), sort_keys=True))
@@ -145,21 +338,21 @@ class FalsifierRegistry:
         d = falsifier.digest
         if d in self._sealed:
             raise FalsificationRefused("this falsifier is already sealed")
-        if falsifier.supersedes and falsifier.supersedes not in self._sealed:
-            raise FalsificationRefused("a revision supersedes a sealed falsifier")
-        e = self._add("sealed", d, falsifier.to_dict())
+        key = (falsifier.falsifier_id, falsifier.version)
+        if key in self._versions:
+            raise FalsificationRefused(f"{falsifier.ref} is already sealed; a change is a new version")
+        if falsifier.version > 1:
+            prior = self._sealed.get(falsifier.supersedes)
+            if prior is None or prior.falsifier_id != falsifier.falsifier_id or prior.version != falsifier.version - 1 \
+                    or prior.hypothesis_id != falsifier.hypothesis_id:
+                raise FalsificationRefused("a revision supersedes the sealed previous version of the same falsifier")
+        elif any(fid == falsifier.falsifier_id for fid, _v in self._versions):
+            raise FalsificationRefused(f"falsifier {falsifier.falsifier_id!r} exists; a change is a new version, not a new v1")
+        clock = self.authority._tick()
+        e = self._add("sealed", d, {**falsifier.to_dict(), "authority_clock": clock})
         self._sealed[d] = falsifier
-        self._seal_seq[d] = e.sequence
-        return e
-
-    def expose(self, evidence_id: str, *, evidence_digest: str) -> RegistryEntry:
-        """Record that a piece of evidence became visible to the proposer side.  Re-exposure keeps the FIRST time."""
-        if not str(evidence_id).strip() or len(str(evidence_digest)) != 64:
-            raise FalsificationRefused("exposure names the evidence and its digest")
-        if evidence_id in self._exposed:
-            return self._entries[self._exposed[evidence_id]]
-        e = self._add("exposed", evidence_id, {"evidence_digest": evidence_digest})
-        self._exposed[evidence_id] = e.sequence
+        self._seal_clock[d] = clock
+        self._versions[key] = d
         return e
 
     def sealed(self, falsifier_digest: str) -> Falsifier:
@@ -168,177 +361,151 @@ class FalsifierRegistry:
             raise FalsificationRefused("the falsifier is not sealed; an unsealed falsifier decides nothing")
         return f
 
-    def seal_sequence(self, falsifier_digest: str) -> int:
+    def seal_clock(self, falsifier_digest: str) -> int:
         self.sealed(falsifier_digest)
-        return self._seal_seq[falsifier_digest]
-
-    def exposure_sequence(self, evidence_id: str) -> int | None:
-        return self._exposed.get(evidence_id)
+        return self._seal_clock[falsifier_digest]
 
     def sealed_for(self, hypothesis_id: str, content_digest: str) -> tuple[Falsifier, ...]:
+        """Every sealed version of every falsifier for this claim."""
         return tuple(f for f in self._sealed.values() if f.hypothesis_id == hypothesis_id and f.hypothesis_content_digest == content_digest)
 
+    def current_for(self, hypothesis_id: str, content_digest: str) -> tuple[Falsifier, ...]:
+        """The latest sealed version of each falsifier for this claim."""
+        latest: dict[str, Falsifier] = {}
+        for f in self.sealed_for(hypothesis_id, content_digest):
+            if f.falsifier_id not in latest or f.version > latest[f.falsifier_id].version:
+                latest[f.falsifier_id] = f
+        return tuple(latest[k] for k in sorted(latest))
 
-@dataclass(frozen=True)
-class EvidenceItem:
-    """One admissible observation offered to a falsifier.  ``uncertainty`` None = UNKNOWN (never zero)."""
-
-    evidence_id: str
-    evidence_digest: str
-    source: str
-    observable: str
-    unit: str
-    value: float
-    uncertainty: float | None
-
-
-@dataclass(frozen=True)
-class FalsifierVerdict:
-    falsifier_digest: str
-    falsifier_ref: str
-    hypothesis_id: str
-    hypothesis_content_digest: str
-    evidence_ids: tuple[str, ...]
-    verdict: Verdict
-    observed: float | None
-    predicted: float | None
-    combined_uncertainty: float | None
-    reason: str
-    registry_head: str
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"schema": VERDICT_SCHEMA, "falsifier_digest": self.falsifier_digest, "falsifier_ref": self.falsifier_ref,
-                "hypothesis_id": self.hypothesis_id, "hypothesis_content_digest": self.hypothesis_content_digest,
-                "evidence_ids": list(self.evidence_ids), "verdict": self.verdict.value, "observed": self.observed,
-                "predicted": self.predicted, "combined_uncertainty": self.combined_uncertainty, "reason": self.reason,
-                "registry_head": self.registry_head}
-
-    @property
-    def digest(self) -> str:
-        return _digest(self.to_dict())
-
-
-def judge(falsifier_digest: str, registry: FalsifierRegistry, evidence: EvidenceItem, *, predicted: float | None,
-          prediction_uncertainty: float | None) -> FalsifierVerdict:
-    """Apply a SEALED falsifier to evidence exposed after its seal."""
-    f = registry.sealed(falsifier_digest)
-    exposed = registry.exposure_sequence(evidence.evidence_id)
-    if exposed is None:
-        raise FalsificationRefused("the evidence was never exposed through the registry; its timing is unknown")
-    if exposed < registry.seal_sequence(falsifier_digest):
-        raise FalsificationRefused("the evidence was exposed BEFORE this falsifier was sealed: a post-hoc test decides nothing")
-    if evidence.source != f.evidence_source:
-        raise FalsificationRefused(f"evidence source {evidence.source!r} is not the falsifier's admissible source {f.evidence_source!r}")
-    if evidence.observable != f.observable or evidence.unit != f.unit:
-        raise FalsificationRefused("the evidence measures another observable or unit than the falsifier declared")
-    base = dict(falsifier_digest=falsifier_digest, falsifier_ref=f"{f.falsifier_id}@v{f.version}", hypothesis_id=f.hypothesis_id,
-                hypothesis_content_digest=f.hypothesis_content_digest, evidence_ids=(evidence.evidence_id,),
-                observed=float(evidence.value), registry_head=registry.head)
-    missing = []
-    if evidence.uncertainty is None:
-        missing.append("observation uncertainty")
-    if f.criterion is CriterionKind.PREDICTION_DEVIATION and predicted is None:
-        missing.append("prediction")
-    if f.criterion is CriterionKind.PREDICTION_DEVIATION and prediction_uncertainty is None:
-        missing.append("prediction uncertainty")
-    if missing:
-        return FalsifierVerdict(**base, verdict=Verdict.INCONCLUSIVE, predicted=predicted, combined_uncertainty=None,
-                                reason=f"{', '.join(missing)} UNKNOWN: inconclusive (never treated as zero)")
-    u_obs = float(evidence.uncertainty)
-    if not (math.isfinite(u_obs) and u_obs >= 0):
-        raise FalsificationRefused("an observation uncertainty is finite and non-negative")
-    k = f.parameters["k"]
-    if f.criterion is CriterionKind.PREDICTION_DEVIATION:
-        u_pred = float(prediction_uncertainty)
-        if not (math.isfinite(u_pred) and u_pred >= 0):
-            raise FalsificationRefused("a prediction uncertainty is finite and non-negative")
-        u = math.sqrt(u_obs ** 2 + u_pred ** 2)
-        dev = abs(float(evidence.value) - float(predicted))
-        refuted = dev > k * u
-        reason = f"|observed - predicted| = {dev:.6g} {'>' if refuted else '<='} k*u = {k * u:.6g}"
-        return FalsifierVerdict(**base, verdict=Verdict.REFUTED if refuted else Verdict.NOT_REFUTED, predicted=float(predicted),
-                                combined_uncertainty=u, reason=reason)
-    lo, hi = f.parameters["low"], f.parameters["high"]
-    inside = lo + k * u_obs <= evidence.value <= hi - k * u_obs          # inside the forbidden region beyond its uncertainty
-    outside = evidence.value < lo - k * u_obs or evidence.value > hi + k * u_obs
-    verdict = Verdict.REFUTED if inside else Verdict.NOT_REFUTED if outside else Verdict.INCONCLUSIVE
-    return FalsifierVerdict(**base, verdict=verdict, predicted=predicted, combined_uncertainty=u_obs,
-                            reason=f"observation {evidence.value:.6g} +- {k}*{u_obs:.3g} vs forbidden [{lo:.6g}, {hi:.6g}]")
-
-
-class VerdictStore:
-    def __init__(self) -> None:
-        self._verdicts: dict[str, FalsifierVerdict] = {}
-
-    def add(self, verdict: FalsifierVerdict) -> str:
+    def _record(self, verdict: FalsifierVerdict) -> FalsifierVerdict:
         d = verdict.digest
-        self._verdicts[d] = verdict
-        return d
+        if d not in self._verdicts:
+            self._add("judged", d, verdict.to_dict())
+            self._verdicts[d] = verdict
+        return verdict
 
-    def get(self, digest: str) -> FalsifierVerdict | None:
+    def verdict(self, digest: str) -> FalsifierVerdict | None:
         return self._verdicts.get(digest)
 
-    def for_content(self, hypothesis_id: str, content_digest: str) -> tuple[FalsifierVerdict, ...]:
+    def verdicts_for(self, hypothesis_id: str, content_digest: str) -> tuple[FalsifierVerdict, ...]:
+        """EVERY recorded verdict for this claim, every falsifier version: nothing judged can be left out."""
         return tuple(sorted((v for v in self._verdicts.values() if v.hypothesis_id == hypothesis_id
                              and v.hypothesis_content_digest == content_digest), key=lambda v: v.digest))
 
 
-def _status_from(verdicts: Iterable[FalsifierVerdict], sealed: Iterable[Falsifier]) -> HypothesisStatus:
-    verdicts = tuple(verdicts)
-    if any(v.verdict is Verdict.REFUTED for v in verdicts):
-        return HypothesisStatus.REFUTED
-    judged = {v.falsifier_digest for v in verdicts if v.verdict is Verdict.NOT_REFUTED}
-    if verdicts and all(f.digest in judged for f in sealed):
-        return HypothesisStatus.SURVIVING
-    return HypothesisStatus.UNKNOWN
+def judge(falsifier_digest: str, registry: FalsifierRegistry, evidence: EvidenceItem) -> FalsifierVerdict:
+    """Apply a SEALED falsifier to evidence its authority released AFTER the seal; the verdict is recorded in the chain.
+    Every number compared is either sealed in the falsifier or carried by the released evidence."""
+    f = registry.sealed(falsifier_digest)
+    if not registry.authority.verify(evidence):
+        raise FalsificationRefused("the evidence was not released by this registry's exposure authority (or was altered)")
+    seal_clock = registry.seal_clock(falsifier_digest)
+    if evidence.exposure_sequence <= seal_clock:
+        raise FalsificationRefused("the evidence was exposed BEFORE this falsifier was sealed: a post-hoc test decides nothing")
+    if evidence.source is not f.evidence_source:
+        raise FalsificationRefused(f"evidence source {evidence.source.value!r} is not the falsifier's admissible source "
+                                   f"{f.evidence_source.value!r}")
+    if evidence.observable != f.observable or evidence.unit != f.unit:
+        raise FalsificationRefused("the evidence measures another observable or unit than the falsifier declared")
+    p = f.parameters
+    k = p["k"]
+    base = dict(falsifier_digest=falsifier_digest, falsifier_ref=f.ref, hypothesis_id=f.hypothesis_id,
+                hypothesis_content_digest=f.hypothesis_content_digest, evidence_id=evidence.evidence_id,
+                evidence_content_digest=evidence.content_digest, evidence_exposure_sequence=evidence.exposure_sequence,
+                seal_clock=seal_clock, observed=float(evidence.value), k=k, predicted=p.get("predicted"))
+
+    def inconclusive(reason: str, u: float | None = None) -> FalsifierVerdict:
+        return registry._record(FalsifierVerdict(**base, verdict=Verdict.INCONCLUSIVE, combined_uncertainty=u, reason=reason))
+
+    if evidence.uncertainty is None:
+        return inconclusive("observation uncertainty UNKNOWN: inconclusive (never treated as zero)")
+    u_obs = float(evidence.uncertainty)
+    if u_obs == 0 and not f.allow_exact_observation:
+        return inconclusive("the observation claims zero uncertainty and the falsifier did not allow exact data")
+    if f.criterion is CriterionKind.PREDICTION_DEVIATION:
+        if "prediction_uncertainty" not in p:
+            return inconclusive("prediction uncertainty UNKNOWN: inconclusive (never treated as zero)")
+        u = math.sqrt(u_obs ** 2 + p["prediction_uncertainty"] ** 2)
+        if k * u > p["resolution"]:
+            return inconclusive(f"k*u = {k * u:.6g} exceeds the sealed resolution {p['resolution']:.6g}: the evidence cannot "
+                                "discriminate", u)
+        dev = abs(float(evidence.value) - p["predicted"])
+        refuted = dev > k * u
+        return registry._record(FalsifierVerdict(**base, verdict=Verdict.REFUTED if refuted else Verdict.NOT_REFUTED,
+                                                 combined_uncertainty=u,
+                                                 reason=f"|observed - predicted| = {dev:.6g} {'>' if refuted else '<='} k*u = {k * u:.6g}"))
+    if k * u_obs > p["resolution"]:
+        return inconclusive(f"k*u = {k * u_obs:.6g} exceeds the sealed resolution {p['resolution']:.6g}", u_obs)
+    lo, hi, val = p["low"], p["high"], float(evidence.value)
+    inside = lo + k * u_obs <= val <= hi - k * u_obs          # inside the forbidden region beyond its uncertainty
+    outside = val < lo - k * u_obs or val > hi + k * u_obs
+    verdict = Verdict.REFUTED if inside else Verdict.NOT_REFUTED if outside else Verdict.INCONCLUSIVE
+    return registry._record(FalsifierVerdict(**base, verdict=verdict, combined_uncertainty=u_obs,
+                                             reason=f"observation {val:.6g} +- {k}*{u_obs:.3g} vs forbidden [{lo:.6g}, {hi:.6g}]"))
 
 
-def apply_verdicts(hypothesis: Hypothesis, registry: FalsifierRegistry, store: VerdictStore) -> Hypothesis:
-    """The hypothesis's status from EVERY verdict recorded for its exact content.
+# ---------------------------------------------------------------------------- status from the chain
 
-    REFUTED if any sealed falsifier refuted it; SURVIVING only when every sealed falsifier for this content has a
-    NOT_REFUTED verdict; otherwise UNKNOWN (an inconclusive or missing verdict is not survival)."""
+
+def _expected(hypothesis: Hypothesis, registry: FalsifierRegistry) -> tuple[HypothesisStatus, tuple[FalsifierVerdict, ...], list[str]]:
     content = hypothesis.content_digest
-    sealed = registry.sealed_for(hypothesis.hypothesis_id, content)
-    if not sealed:
-        raise FalsificationRefused("no sealed falsifier tests this hypothesis content")
-    missing = sorted(f"{f.falsifier_id}@v{f.version}" for f in sealed if f"{f.falsifier_id}@v{f.version}" not in hypothesis.falsifier_refs)
-    if missing:
-        raise FalsificationRefused(f"the hypothesis does not list its sealed falsifiers {missing}")
-    verdicts = store.for_content(hypothesis.hypothesis_id, content)
-    status = _status_from(verdicts, sealed)
+    current = registry.current_for(hypothesis.hypothesis_id, content)
+    problems = []
+    refs = set(hypothesis.falsifier_refs)
+    current_refs = {f.ref for f in current}
+    if refs != current_refs:
+        problems.append(f"the hypothesis lists falsifiers {sorted(refs)} but this registry holds {sorted(current_refs)} for its claim "
+                        "(every listed falsifier is sealed here, every sealed one is listed, at its latest version)")
+    verdicts = registry.verdicts_for(hypothesis.hypothesis_id, content)
+    if any(v.verdict is Verdict.REFUTED for v in verdicts):                      # any version: never laundered
+        return HypothesisStatus.REFUTED, tuple(v for v in verdicts if v.verdict is Verdict.REFUTED), problems
+    passed = {v.falsifier_digest for v in verdicts if v.verdict is Verdict.NOT_REFUTED}
+    if current and not problems and all(f.digest in passed for f in current):
+        current_digests = {f.digest for f in current}
+        cited = tuple(v for v in verdicts if v.verdict is Verdict.NOT_REFUTED and v.falsifier_digest in current_digests)
+        return HypothesisStatus.SURVIVING, cited, problems
+    return HypothesisStatus.UNKNOWN, (), problems
+
+
+def apply_verdicts(hypothesis: Hypothesis, registry: FalsifierRegistry) -> Hypothesis:
+    """The hypothesis's status from EVERY verdict the registry chain holds for its claim.
+
+    REFUTED if any version of any of its falsifiers refuted it; SURVIVING only when every listed falsifier (each at its
+    latest sealed version) has a NOT_REFUTED verdict; otherwise UNKNOWN (an inconclusive or missing verdict is not
+    survival)."""
+    status, cited, problems = _expected(hypothesis, registry)
+    if problems:
+        raise FalsificationRefused("; ".join(problems))
     if status is HypothesisStatus.UNKNOWN:
         return hypothesis.revise(status=HypothesisStatus.UNKNOWN, status_basis=())
-    cited = [v for v in verdicts if (status is HypothesisStatus.REFUTED and v.verdict is Verdict.REFUTED)
-             or (status is HypothesisStatus.SURVIVING and v.verdict is Verdict.NOT_REFUTED)]
-    basis = tuple(VerdictReference(v.falsifier_ref, v.digest, v.verdict.value, content) for v in cited)
+    basis = tuple(VerdictReference(v.falsifier_ref, v.digest, v.verdict.value, hypothesis.content_digest) for v in cited)
     return hypothesis.revise(status=status, status_basis=basis)
 
 
-def verify_status(hypothesis: Hypothesis, registry: FalsifierRegistry, store: VerdictStore) -> list[str]:
-    """Why ``hypothesis``'s status is NOT what the sealed falsifiers and recorded verdicts establish (empty when it is)."""
+def verify_status(hypothesis: Hypothesis, registry: FalsifierRegistry) -> list[str]:
+    """Why ``hypothesis``'s status is NOT what its campaign's registry chain establishes (empty when it is).  Every
+    consumer of a verdict-backed status gates on this; construction alone checks only shape."""
+    try:
+        registry.verify_chain()
+    except FalsificationRefused as exc:
+        return [str(exc)]
     problems = []
     for ref in hypothesis.status_basis:
-        v = store.get(ref.verdict_digest)
+        v = registry.verdict(ref.verdict_digest)
         if v is None:
-            problems.append(f"verdict {ref.verdict_digest[:12]} is not in the verdict store")
+            problems.append(f"verdict {ref.verdict_digest[:12]} is not in the registry chain")
             continue
         if (v.falsifier_ref, v.verdict.value, v.hypothesis_content_digest) != (ref.falsifier_ref, ref.verdict, ref.content_digest):
             problems.append(f"verdict {ref.verdict_digest[:12]} does not say what the reference claims")
-        try:
-            registry.sealed(v.falsifier_digest)
-        except FalsificationRefused:
-            problems.append(f"verdict {ref.verdict_digest[:12]} used an unsealed falsifier")
-    content = hypothesis.content_digest
-    sealed = registry.sealed_for(hypothesis.hypothesis_id, content)
-    if hypothesis.status in (HypothesisStatus.SURVIVING, HypothesisStatus.REFUTED, HypothesisStatus.UNKNOWN) and sealed:
-        expected = _status_from(store.for_content(hypothesis.hypothesis_id, content), sealed)
+    if hypothesis.status in (HypothesisStatus.SURVIVING, HypothesisStatus.REFUTED) or \
+            (hypothesis.status is HypothesisStatus.UNKNOWN and hypothesis.falsifier_refs):
+        expected, _cited, why = _expected(hypothesis, registry)
+        problems.extend(why)
         if expected is not hypothesis.status:
-            problems.append(f"the recorded verdicts establish {expected.value}, not {hypothesis.status.value}")
-    elif hypothesis.status in (HypothesisStatus.SURVIVING, HypothesisStatus.REFUTED):
-        problems.append("no sealed falsifier exists for this hypothesis content")
+            problems.append(f"the registry chain establishes {expected.value}, not {hypothesis.status.value}")
     return problems
 
 
-__all__ = ["CriterionKind", "EvidenceItem", "FalsificationRefused", "Falsifier", "FalsifierRegistry", "FalsifierVerdict",
-           "RegistryEntry", "Verdict", "VerdictStore", "apply_verdicts", "judge", "verify_status"]
+__all__ = ["CriterionKind", "EvidenceItem", "EvidenceSource", "ExposureAuthority", "FalsificationRefused", "Falsifier",
+           "FalsifierRegistry", "FalsifierVerdict", "K_MAX", "RegistryEntry", "Verdict", "apply_verdicts", "evidence_content_digest",
+           "judge", "verify_status"]

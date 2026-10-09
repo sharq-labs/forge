@@ -19,7 +19,7 @@ product of powers is merged into one monomial with combined exponents, so two
 laws differing only in constants -- or only in how a power law is written --
 share a structure.  It is a canonicalization, not a proof of equivalence:
 rewrites outside the monomial algebra (e.g. ``exp(log x)``) are not merged;
-:func:`engcore.claims.novelty.numeric_equivalence` covers those numerically.
+:class:`engcore.claims.novelty.EquivalenceSpec` covers those numerically.
 """
 
 from __future__ import annotations
