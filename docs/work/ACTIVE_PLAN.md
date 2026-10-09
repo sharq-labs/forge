@@ -10,10 +10,12 @@ transcripts remain in `docs/work/PROGRESS.md`.
 The architecture-first BUILD phase through **BIG 13** is complete and merged.
 Forge now enters **BIG 14 — Scientific Closure & Recertification**.
 
-BIG 14 is a stabilization, diagnosis and evidence campaign. It is not another
-breadth-expansion phase. New providers, domains and flagships remain out of
-scope until the existing architecture has passed its declared gates and the
-current flagship evidence gaps have an honest disposition.
+BIG 14 remains the stabilization, diagnosis and evidence campaign for the
+certification/trust lane. The 2026-10-09 owner strategy additionally authorizes
+a **separate parallel Big Rocks expansion lane** for geometry, provider breadth,
+Scientific Twins and Discovery. That expansion lane must not mutate the frozen
+Trust-Repair source/certificate, and its new capabilities remain unqualified
+until the later integration/hardening campaign.
 
 Starting evidence state:
 
@@ -54,38 +56,53 @@ the running trust/certification work.
   control; local SHA-bound assurance remains authoritative until repository
   policy/billing is resolved.
 
-### Execution order from here
+### Execution order from here — Big Rocks First
 
-1. **Finish the in-flight Trust Repair Pass 1 landing/recertification.** Do not
-   edit its certification source SHA while assurance is running.
-2. In a separate worktree, a bounded correctness branch may proceed in
-   parallel with only low-resource targeted tests:
-   - B1 probabilistic-UQ sampler reproduction/fix;
-   - B2 model-form empirical round-trip `Mapping` failure;
-   - B4 ngspice version-probe non-zero-exit refusal;
-   - B5 deprecated multiphysics `warnings` import;
-   - then a small `ruff --select F` gate.
-3. After correctness, improve the MCP/product golden path:
-   - summary-first responses;
-   - typed request schemas for the principal `describe/plan/run/assess` path;
-   - resolve contradictory/negated intent extraction rather than silently
-     choosing the first value.
-4. Add runtime/provider visibility (`forge doctor` or equivalent) and a shared
-   fail-closed executable-provider probe contract.
-5. Resume Battery practical science only when the data/excitation gate permits
-   it; do not force calibration from the current WEAKLY_IDENTIFIABLE dataset.
-6. Start a **general Spatial / Geometry Foundation v0**, not a car/drone-only
-   geometry layer. First exercise: canonical geometry/region/boundary/interface
-   identity and Gmsh mapping/receipt.
-7. Provider expansion after those gates: Gmsh generalization → OpenVSP →
-   OpenRadioss; add other providers only when a real system slice requires them.
-8. Build trusted vertical slices (Drone first, then Vehicle/Car; Motor/HVAC as
-   independent system flagships according to evidence/provider readiness).
-9. Mature Scientific Twin + multi-fidelity Design Discovery only after trusted
-   bodies/systems exist. Recursive/scientific discovery remains downstream of
-   trusted physics rather than a substitute for it.
+This owner decision supersedes the earlier small-fix-first ordering for the
+**parallel expansion lane**. It does not weaken or interrupt the frozen
+Trust-Repair/recertification lane.
 
-### Universal architecture rule
+1. **Finish the in-flight Trust Repair Pass 1 landing/recertification on its
+   frozen source.** Do not modify its source SHA, certificate or assurance
+   artifacts while it is running.
+2. Run a separate **Big Rocks expansion lane**. The intended cloud working
+   branch is `feat/big-rocks-foundations`; verify the actual remote ref before
+   assuming it exists.
+3. Build the **general Spatial / Geometry Foundation** and generalized Gmsh /
+   OpenCASCADE mapping first, together with generic assembly/product topology.
+4. Expand solver/provider breadth early rather than waiting for product polish:
+   Gmsh/OpenVSP, OpenFOAM/SU2, FEniCSx/PETSc,
+   CalculiX/Code_Aster/Elmer, OpenRadioss, Project Chrono, preCICE,
+   PyBaMM/PyBOP, ngspice, Cantera, CoolProp, TESPy,
+   OpenModelica/FMI-FMU and other justified providers. Missing cloud
+   executables are recorded as `REAL_EXECUTION_DEFERRED`, not fabricated.
+5. Build the **Scientific Twin** foundation over canonical system/geometry/model/
+   evidence/state identities.
+6. Build the **Blind Scientific Discovery Runtime**:
+   hypothesis/experiment IR, multi-fidelity search, Design Memory,
+   falsification, recursive discovery and next-best-experiment selection.
+7. Build the **FORGE Genesis** benchmark: blinded historical rediscovery,
+   transformed physics, synthetic universes and no-solution/insufficient-
+   evidence challenges.
+8. Build the **Scientific Red Team / Design-Killer + Credibility Graph**
+   capability over Scientific Twins.
+9. Exercise the common architecture with vertical slices: Drone, Vehicle/Car,
+   Motor, HVAC, Battery Pack, safe Fusion-energy engineering and bounded
+   Biomedical/medical-device engineering.
+10. **Then freeze feature breadth and run one integration/hardening campaign**:
+    close authority-relevant B1/B2/B4/B5/UQ issues, run supported-environment
+    tests, qualify real providers, perform hostile scientific review, classify
+    certification scope and recertify the final source where required.
+
+During the expansion lane, use targeted/contract tests and coherent checkpoint
+commits. Do **not** serialize every Big Rock behind Full Local Assurance.
+
+A small defect interrupts expansion immediately only if it can produce wrong
+scientific numbers, false support/validation, corrupted identity/provenance/
+replay/evidence, or directly blocks the current Big Rock. Other cleanup enters
+`DEFERRED_HARDENING`.
+
+### Universal architecture rule### Universal architecture rule
 
 New work should follow:
 
