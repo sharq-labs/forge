@@ -97,3 +97,16 @@ changed.
   they are. They enter V2 only through adapters, and always as PROPOSED.
 - **Planner fidelity rungs.** `design.multifidelity.PromotionPolicy` is unchanged. FidelityGraph screening runs before
   it as the elimination gate.
+
+## Roadmap V2 R3-R8 — where each authority now lives (checkpoint 2-5 outcome)
+
+| authority | owner | notes |
+|---|---|---|
+| Blindfold benchmark (L5 universes, escrow, roles, baselines) | `engcore.blindfold` (non-Core) | all transports SECURITY_BOUNDARY_NOT_PROVEN; `counts_as_novel_discovery` allow-lists proven boundaries (none) |
+| sealed falsifiers, evidence clock, verdict chain | `engcore.claims.falsification` | ExposureAuthority, owner tickets, novel-prediction rule, claim-digest refutation lineage |
+| multiplicity | `engcore.claims.multiplicity` | ledger-sealed contexts, close()/verify_promoted |
+| novelty | `engcore.claims.novelty` | snapshots only grow, registered canonicalizers/evaluators, never NOVEL |
+| red team | `engcore.claims.redteam` (+ `redteam_suite`) | CONFIRMED_ACROSS_ROUTES (models, not physics); never SAFE |
+| credibility vectors | `engcore.claims.credibility_vector` | projection of ValidationLevel + UQ channels on the existing EvidenceGraph; registered risk policies |
+| discovery providers | `engcore.claims.discovery_providers` + `providers/discovery` runners | proposals/suggestions only; executing is not qualifying |
+| hypothesis claim identity | `sria.decision.Hypothesis.claim_digest` | id/parents/narrative excluded; `derive_hypothesis` refuses the parent's claim |
