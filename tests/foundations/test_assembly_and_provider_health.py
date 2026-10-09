@@ -160,7 +160,10 @@ def test_installed_is_not_qualified():
     A = ("forge_demo", "1")
     assert assess_health(_status()).health is ProviderHealth.AVAILABLE
     assert assess_health(_status(), scope=("linear_static",), adapter=A).health is ProviderHealth.UNQUALIFIED
-    assert assess_health(_status(), qualifications=(q,), scope=("linear_static",), adapter=A).health is ProviderHealth.QUALIFIED
+    # bare evidence strings are an assertion: no adapter-declared route and run ledger back them (the QUALIFIED path is in
+    # test_provider_qualification.py, where the runs exist)
+    bare = assess_health(_status(), qualifications=(q,), scope=("linear_static",), adapter=A)
+    assert bare.health is ProviderHealth.UNQUALIFIED and "not backed by passed route runs" in bare.reason
     assert assess_health(_status(), qualifications=(q,), scope=("explicit_dynamics",), adapter=A).health is ProviderHealth.UNQUALIFIED
     other_build = assess_health(_status(digest="b" * 64), qualifications=(q,), scope=("linear_static",), adapter=A)
     assert other_build.health is ProviderHealth.UNQUALIFIED and "does not transfer" in other_build.reason

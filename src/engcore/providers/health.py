@@ -188,6 +188,10 @@ class ProviderQualification:
     route: str
     issuer: str
     notes: str = ""
+    #: the digest of the adapter-declared ReferenceRoute and the RouteRunLedger head the cited runs are committed to
+    #: (:mod:`.qualification`).  Without both, :func:`assess_health` never admits the qualification.
+    route_digest: str = ""
+    ledger_head: str = ""
 
     def __post_init__(self) -> None:
         for label in ("provider_id", "provider_version", "adapter_id", "adapter_version", "route", "issuer"):
@@ -214,7 +218,8 @@ class ProviderQualification:
         return {"schema": QUALIFICATION_SCHEMA, "classification": "qualification_reference_not_evidence", "provider_id": self.provider_id,
                 "provider_version": self.provider_version, "provider_digest": self.provider_digest, "adapter_id": self.adapter_id,
                 "adapter_version": self.adapter_version, "scope": list(self.scope),
-                "evidence_refs": list(self.evidence_refs), "route": self.route, "issuer": self.issuer}
+                "evidence_refs": list(self.evidence_refs), "route": self.route, "issuer": self.issuer,
+                "route_digest": self.route_digest, "ledger_head": self.ledger_head}
 
     @property
     def digest(self) -> str:
@@ -255,7 +260,7 @@ def _nothing_found(status: ProviderStatus, probe: ProbeReceipt | None) -> bool:
 
 def assess_health(status: ProviderStatus, *, qualifications: tuple[ProviderQualification, ...] = (),
                   scope: tuple[str, ...] = (), adapter: tuple[str, str] | None = None,
-                  probe: ProbeReceipt | None = None) -> ProviderHealthReport:
+                  probe: ProbeReceipt | None = None, routes: tuple = (), ledger: Any = None) -> ProviderHealthReport:
     """Classify one provider status.  With a ``scope``, the answer is QUALIFIED or UNQUALIFIED, never AVAILABLE.
 
     Fail-closed: an unavailable provider is NOT_INSTALLED only for an exact
@@ -263,6 +268,10 @@ def assess_health(status: ProviderStatus, *, qualifications: tuple[ProviderQuali
     that disagrees with the status makes the provider BROKEN.  Qualification
     needs the exact provider build and the exact adapter (translation)
     version, because a changed adapter changes what the provider is asked.
+    A qualification counts only when :func:`.qualification.qualification_problems`
+    finds it backed by passed runs of an adapter-declared route (``routes``)
+    committed to the run ``ledger``; a qualification with bare evidence
+    strings is an assertion and leaves the provider UNQUALIFIED.
     """
     pid = status.capability.provider_id
     sdigest = content_digest({k: v for k, v in status.to_dict().items() if k != "location"})
@@ -282,10 +291,19 @@ def assess_health(status: ProviderStatus, *, qualifications: tuple[ProviderQuali
                                     sdigest, probe_digest=pdig)
     if adapter is None or len(tuple(adapter)) != 2:
         raise InvalidScientificProblem("a qualification question names the adapter (id, version) that would translate the request")
+    from .qualification import qualification_problems
+
+    unbacked = []
     for q in qualifications:
         if q.covers(status, scope, tuple(adapter)):
-            return ProviderHealthReport(pid, ProviderHealth.QUALIFIED, f"qualification {q.route!r} by {q.issuer} covers {list(scope)}",
-                                        sdigest, scope, q.digest, pdig)
+            problems = qualification_problems(q, tuple(routes), ledger)
+            if not problems:
+                return ProviderHealthReport(pid, ProviderHealth.QUALIFIED, f"qualification {q.route!r} by {q.issuer} covers {list(scope)}",
+                                            sdigest, scope, q.digest, pdig)
+            unbacked.append(f"{q.route!r}: {problems[0]}")
+    if unbacked:
+        return ProviderHealthReport(pid, ProviderHealth.UNQUALIFIED, "a qualification names this build but is not backed by passed "
+                                    f"route runs ({'; '.join(unbacked)})", sdigest, scope, probe_digest=pdig)
     stale = [q for q in qualifications if q.provider_id == pid and (
         q.provider_version != status.version or q.provider_digest != status.digest or (q.adapter_id, q.adapter_version) != tuple(adapter))]
     why = ("a qualification exists for another provider build or adapter version; it does not transfer" if stale

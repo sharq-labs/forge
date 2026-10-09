@@ -296,8 +296,8 @@ RULES: tuple[SkipRule, ...] = (
     SkipRule("tespy", "providers/tespy/tests/test_tespy_provider.py", "TESPy unavailable", _P, ("tespy",)),
     # --- Big Rocks: provider adapters whose real-run qualification tests need the provider ----------
     SkipRule("chrono", "providers/chrono/tests/test_chrono_adapter.py", "Project Chrono unavailable", _P, ("chrono",),
-             tests=("test_pendulum_period_matches_the_analytic_reference[euler_implicit_linearized]",
-                    "test_pendulum_period_matches_the_analytic_reference[hht]")),
+             tests=("test_pendulum_period_matches_the_analytic_reference[sparse_qr]",
+                    "test_pendulum_period_matches_the_analytic_reference[sparse_lu]")),
     SkipRule("openvsp", "providers/openvsp/tests/test_openvsp_adapter.py", "OpenVSP unavailable", _P, ("openvsp",),
              tests=("test_real_openvsp_build_meshes_through_the_gmsh_adapter",)),
     SkipRule("openradioss", "providers/openradioss/tests/test_openradioss_adapter.py", "OpenRadioss unavailable", _P,

@@ -12,22 +12,28 @@ Two stages, kept apart on purpose:
    includes the API-identity check of :mod:`.descriptor`).
 
 STATUS: stage 2 targets the Chrono 10 Python API (conda-forge ``pychrono``
-10.0.0) and was executed against it: the pendulum reference in this
-distribution's suite (period vs the finite-amplitude analytic reference,
-joint-length drift) is this adapter's qualification ROUTE.  A green run of
-that route checks the translation on that one reference; it is not a
-qualification record (see :mod:`engcore.providers.health`), and an output is
-"provider computation, not evidence".
+10.0.0).  This adapter's declared reference route (:mod:`.routes`) checks
+the translation on one point-mass pendulum; route runs and where they were
+recorded are listed in ``docs/work/PROGRESS.md``.  A passed route run is
+not a qualification by itself (see :mod:`engcore.providers.qualification`),
+and an output is "provider computation, not evidence".
 
-The constraint solver is a REQUIRED declaration.  Chrono's NSC default
-(iterative PSOR) was observed, on that reference, not to hold a bilateral
-revolute joint (4 mm length drift, no oscillation); only the direct sparse
-solvers are translated.
+Every integration setting is declared.  Chrono's NSC default solver
+(iterative PSOR) did not hold a bilateral revolute joint on the pendulum
+reference (recorded in PROGRESS.md), so only the direct sparse solvers are
+translated.  HHT is NOT translated: its alpha, Newton iteration limit,
+tolerances and step control would be Chrono's defaults.
+
+``ADAPTER_VERSION`` carries a digest of this adapter's source files: an edit
+to the translation or to the route's measurement is a new adapter version,
+so an earlier route run or qualification does not transfer to it.
 """
 
 from __future__ import annotations
 
+import hashlib
 import math
+import os
 from typing import Any
 
 from engcore.providers import ProviderExecutionIdentity, ProviderExecutionRecord, ProviderRefusal, ProviderStatus, QuantitySeries, failed
@@ -36,10 +42,21 @@ from engcore.scientific.units.quantity import Quantity
 from engcore.systems.multibody import MultibodyRequest
 
 ADAPTER_ID = "forge_chrono"
-ADAPTER_VERSION = "0.2.0"
-TRANSLATION_STATUS = "executed_against_chrono_10_reference_route"
+
+
+def _source_digest() -> str:
+    here = os.path.dirname(os.path.abspath(__file__))
+    h = hashlib.sha256()
+    for name in ("__init__.py", "routes.py"):
+        with open(os.path.join(here, name), "rb") as fh:
+            h.update(name.encode() + b"\0" + fh.read() + b"\0")
+    return h.hexdigest()
+
+
+ADAPTER_VERSION = f"0.3.0+src.{_source_digest()[:16]}"
+TRANSLATION_STATUS = "chrono10_translation_checked_only_by_its_declared_route"
 REQUIRED_SOLVER_OPTIONS = ("timestepper", "solver")
-SUPPORTED_TIMESTEPPERS = ("euler_implicit_linearized", "hht")
+SUPPORTED_TIMESTEPPERS = ("euler_implicit_linearized",)
 SUPPORTED_SOLVERS = ("sparse_qr", "sparse_lu")
 
 
@@ -87,7 +104,8 @@ def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
     if missing:
         raise ProviderRefusal(f"solver options {missing} are required; the provider's defaults are never used silently")
     if opts["timestepper"] not in SUPPORTED_TIMESTEPPERS:
-        raise ProviderRefusal(f"timestepper {opts['timestepper']!r} is not one of {SUPPORTED_TIMESTEPPERS}")
+        raise ProviderRefusal(f"timestepper {opts['timestepper']!r} is not one of {SUPPORTED_TIMESTEPPERS} (HHT is not translated: "
+                              "its parameters would be Chrono's defaults)")
     if opts["solver"] not in SUPPORTED_SOLVERS:
         raise ProviderRefusal(f"solver {opts['solver']!r} is not one of {SUPPORTED_SOLVERS} (iterative PSOR did not hold a "
                               "bilateral joint on the reference route)")
@@ -120,6 +138,8 @@ def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
                        "child": pmap[j.child_point].instance_id, "origin_m": list(frame.translation_m),
                        "frame_quaternion": list(_axis_to_quaternion(tuple(axis))),
                        "lower": None if j.lower is None else j.lower.magnitude, "upper": None if j.upper is None else j.upper.magnitude})
+    if model.actuators:
+        raise ProviderRefusal("actuated Chrono runs are not translated by this adapter version; passive dynamics only")
     jmap = {j.joint_id: j for j in asm.joints}
     actuators = [{"actuator_id": a.actuator_id, "joint_id": a.joint_id, "kind": a.kind.value, "profile": a.canonical(jmap[a.joint_id].kind)}
                  for a in model.actuators]
@@ -156,16 +176,14 @@ class ChronoProvider:
         except Exception as exc:  # noqa: BLE001 - a provider failure is a failed record, never partial outputs
             return failed(ident, f"Chrono run failed: {type(exc).__name__}: {exc}", artifacts={"plan.json": content_digest(plan)})
         return ProviderExecutionRecord(ident, True, f"integrated {plan['steps']} steps ({TRANSLATION_STATUS})", series=tuple(series),
-                                       artifacts={"plan.json": str(plan)}, metrics={"steps": plan["steps"]})
+                                       artifacts={"plan.json": content_digest(plan)}, metrics={"steps": plan["steps"]})
 
 
 def _run(chrono, plan: dict[str, Any]) -> list[QuantitySeries]:  # pragma: no cover - requires Project Chrono
     system = chrono.ChSystemNSC()
     system.SetGravitationalAcceleration(chrono.ChVector3d(*plan["gravity_m_s2"]))
-    if plan["solver_options"]["timestepper"] == "hht":
-        system.SetTimestepperType(chrono.ChTimestepper.Type_HHT)
-    else:
-        system.SetTimestepperType(chrono.ChTimestepper.Type_EULER_IMPLICIT_LINEARIZED)
+    system.SetTimestepperType({"euler_implicit_linearized": chrono.ChTimestepper.Type_EULER_IMPLICIT_LINEARIZED}[
+        plan["solver_options"]["timestepper"]])
     system.SetSolverType({"sparse_qr": chrono.ChSolver.Type_SPARSE_QR, "sparse_lu": chrono.ChSolver.Type_SPARSE_LU}[plan["solver_options"]["solver"]])
     bodies = {}
     for b in plan["bodies"]:
@@ -189,8 +207,6 @@ def _run(chrono, plan: dict[str, Any]) -> list[QuantitySeries]:  # pragma: no co
         link.Initialize(bodies[j["child"]], bodies[j["parent"]], frame)
         system.Add(link)
         links[j["joint_id"]] = (link, j)
-    if plan["actuators"]:
-        raise ProviderRefusal("actuated Chrono runs are not translated yet; passive dynamics only in this adapter version")
     out: dict[str, list[float]] = {o: [] for o in plan["outputs"]}
     times: list[float] = []
     dt = plan["step_s"]
