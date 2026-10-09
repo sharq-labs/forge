@@ -13,7 +13,9 @@ report says which can run here.  Every physical input (mass, rotor diameter,
 air density, gravity, motor and battery data) is a RequiredInput that stays
 UNKNOWN until declared with a source -- there are no hidden drone defaults.
 
-Bounded executable path: :func:`hover_screening`, the ideal actuator-disk
+Bounded executable paths: :func:`~.drone_coupled.coupled_hover_screening` (propeller ->
+motor/ESC -> battery -> winding thermal, iterated to a declared tolerance on the
+multiphysics runtime) and :func:`hover_screening`, the ideal actuator-disk
 momentum relation already in ``systems.aerospace.multirotor``.  It is an
 idealised LOWER BOUND on induced power (no profile drag, no interference, no
 motor/ESC losses), not a performance prediction and not validated.
@@ -28,7 +30,7 @@ from ...scientific.units.quantity import Quantity
 from ...spatial.geometry import Transform
 from ..aerospace.multirotor.rotor_hover import disk_loading, ideal_induced_hover_power
 from ..assembly import InterfaceDeclaration, InterfaceKind, JointDeclaration, JointKind
-from .template import AssemblyBuilder, CouplingDeclaration, PhysicsParticipant, ProductTemplate, TemplateRefusal, inputs
+from .template import AssemblyBuilder, CouplingDeclaration, CouplingStatus, PhysicsParticipant, ProductTemplate, TemplateRefusal, inputs
 
 
 
@@ -91,7 +93,17 @@ def drone_template(declared: Mapping[str, tuple[Quantity, str]] | None = None, *
         ("battery_capacity", "battery", "A*h", "rated capacity"),
         ("battery_voltage", "battery", "V", "nominal pack voltage"),
         ("motor_kv", "propulsion", "rpm/V", "motor velocity constant"),
-        ("motor_resistance", "propulsion", "ohm", "phase-to-phase winding resistance"),
+        ("motor_resistance", "propulsion", "ohm", "phase-to-phase winding resistance at the reference temperature"),
+        ("prop_thrust_coefficient", "propulsion", "dimensionless", "static thrust coefficient C_T = T / (rho n^2 D^4) (propeller data)"),
+        ("prop_power_coefficient", "propulsion", "dimensionless", "static power coefficient C_P = P / (rho n^3 D^5) (propeller data)"),
+        ("motor_no_load_current", "propulsion", "A", "motor no-load current I_0"),
+        ("motor_resistance_reference_temperature", "propulsion", "K", "temperature at which motor_resistance was measured"),
+        ("winding_temperature_coefficient", "propulsion", "1/K", "temperature coefficient of the winding resistance"),
+        ("esc_efficiency", "propulsion", "dimensionless", "ESC efficiency at the hover operating point"),
+        ("battery_open_circuit_voltage", "battery", "V", "open-circuit pack voltage at the screened state of charge"),
+        ("battery_internal_resistance", "battery", "ohm", "pack internal resistance at the screened state"),
+        ("ambient_temperature", "drone", "K", "ambient temperature of the scenario (environment record)"),
+        ("motor_thermal_resistance", "propulsion", "K/W", "winding-to-ambient thermal resistance in hover cooling, per watt of TOTAL motor loss"),
     ))
     participants = (
         PhysicsParticipant("geometry", "parametric_aerospace_geometry", ("airframe",), ("openvsp",), ("arm_length",)),
@@ -105,13 +117,27 @@ def drone_template(declared: Mapping[str, tuple[Quantity, str]] | None = None, *
         PhysicsParticipant("electrical", "dc_network", ("power", "propulsion"), ("forge.electrical_dc",), ("battery_voltage", "motor_resistance")),
         PhysicsParticipant("thermal", "transient_conduction", units, ("fenicsx",)),
         PhysicsParticipant("multibody", "rigid_multibody_dynamics", ("drone",), ("chrono",), ("takeoff_mass",)),
+        PhysicsParticipant("propeller_static", "propeller_static_coefficients", units, ("forge.drone_coupled_hover",),
+                           ("takeoff_mass", "gravity", "air_density", "rotor_count", "rotor_diameter", "prop_thrust_coefficient",
+                            "prop_power_coefficient"), "coupled hover chain: static propeller coefficients"),
+        PhysicsParticipant("motor_esc", "dc_equivalent_motor_esc", ("propulsion",), ("forge.drone_coupled_hover",),
+                           ("motor_kv", "motor_resistance", "motor_no_load_current", "motor_resistance_reference_temperature",
+                            "winding_temperature_coefficient", "esc_efficiency"), "coupled hover chain: DC-equivalent motor and ESC"),
+        PhysicsParticipant("battery_ecm", "battery_ocv_internal_resistance", ("battery",), ("forge.drone_coupled_hover",),
+                           ("battery_open_circuit_voltage", "battery_internal_resistance", "battery_capacity"),
+                           "coupled hover chain: open-circuit voltage + internal resistance"),
+        PhysicsParticipant("winding_thermal", "lumped_steady_winding_temperature", units, ("forge.drone_coupled_hover",),
+                           ("ambient_temperature", "motor_thermal_resistance"), "coupled hover chain: lumped steady winding temperature"),
     )
-    couplings = (CouplingDeclaration("hover_screening", "electrical", "shaft_power"),
-                 CouplingDeclaration("electrical", "battery", "pack_current"),
-                 CouplingDeclaration("electrical", "thermal", "winding_losses"),
+    it = CouplingStatus.ITERATIVE_EXECUTABLE
+    couplings = (CouplingDeclaration("propeller_static", "motor_esc", "shaft_torque_and_speed", CouplingStatus.ONE_WAY_EXECUTABLE),
+                 CouplingDeclaration("motor_esc", "battery_ecm", "bus_power", it),
+                 CouplingDeclaration("battery_ecm", "motor_esc", "bus_voltage", it),
+                 CouplingDeclaration("motor_esc", "winding_thermal", "motor_heat", it),
+                 CouplingDeclaration("winding_thermal", "motor_esc", "winding_temperature", it),
                  CouplingDeclaration("rotor_aerodynamics", "frame_structure", "rotor_loads"))
     template = ProductTemplate("drone", "1", b.build(), participants, req, couplings,
-                               ("composition and bounded hover screening only; coupled execution is not claimed",))
+                               ("bounded screenings only: ideal hover momentum and the coupled steady hover chain; neither is validated",))
     return template.with_inputs(declared) if declared else template
 
 

@@ -1670,9 +1670,11 @@ def build_server() -> MCPServer:
         run_product_screening,
         name="run_product_screening",
         title="Run a product's bounded screening path",
-        description=("Run the product's bounded screening model (e.g. drone ideal hover power) from declared inputs. Refused "
-                     "while any needed input is UNKNOWN or when the product has no screening path. Always ends at "
-                     "insufficient_evidence; a screening value is not a validated prediction."),
+        description=("Run one of the product's bounded screening models from declared inputs (drone: 'hover_screening', the "
+                     "ideal-momentum lower bound, default; 'coupled_hover', the propeller -> motor/ESC -> battery -> winding "
+                     "thermal chain iterated on the multiphysics runtime). Refused while any needed input is UNKNOWN, when the "
+                     "operating point is infeasible or the coupling does not converge. Always ends at insufficient_evidence; "
+                     "a screening value is not a validated prediction and its uncertainty is UNKNOWN."),
     )
     return server
 

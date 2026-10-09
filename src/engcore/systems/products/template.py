@@ -102,6 +102,7 @@ class PhysicsParticipant:
 class CouplingStatus(str, Enum):
     DECLARED_NOT_EXECUTABLE = "declared_not_executable"   # the semantics are named; no runtime executes them yet
     ONE_WAY_EXECUTABLE = "one_way_executable"             # a sequential hand-off exists in the runtime
+    ITERATIVE_EXECUTABLE = "iterative_executable"         # part of a two-way fixed point the multiphysics runtime iterates to a declared tolerance
 
 
 @dataclass(frozen=True)

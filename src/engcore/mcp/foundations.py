@@ -17,14 +17,14 @@ from ..providers.health import assess_health
 from ..scientific.units.quantity import Quantity
 from ..spatial.geometry import IMPORT_FORMATS, SHAPE_TABLE
 from ..spatial.parametric import ParameterKind
-from ..systems.products import IN_REPOSITORY, TEMPLATES, TemplateRefusal, capability_report, hover_screening
+from ..systems.products import IN_REPOSITORY, TEMPLATES, TemplateRefusal, capability_report, coupled_hover_screening, hover_screening
 
 FOUNDATIONS_SCHEMA = "mcp_engineering_foundations/1"
 PRODUCT_PLAN_SCHEMA = "mcp_product_plan/1"
 PRODUCT_SCREENING_SCHEMA = "mcp_product_screening/1"
 
-#: Bounded executable screening paths per product.  A product absent here has none, and says so.
-SCREENINGS = {"drone": ("hover_screening", hover_screening)}
+#: Bounded executable screening paths per product (the first is the default).  A product absent here has none, and says so.
+SCREENINGS = {"drone": {"hover_screening": hover_screening, "coupled_hover": coupled_hover_screening}}
 
 
 def _q(q: Quantity) -> dict[str, Any]:
@@ -48,7 +48,7 @@ def describe_engineering_platform() -> dict[str, Any]:
         "parameter_kinds": [k.value for k in ParameterKind],
         "fidelity_ladder": standard_ladder().to_dict(),
         "products": [{"product": name, "inputs": [i.to_dict() for i in t.inputs],
-                      "participants": [p.to_dict() for p in t.participants], "screening": SCREENINGS.get(name, (None,))[0]}
+                      "participants": [p.to_dict() for p in t.participants], "screenings": list(SCREENINGS.get(name, {}))}
                      for name, t in ((n, f()) for n, f in sorted(TEMPLATES.items()))],
         "providers": providers,
         "authority": ("available is not qualified; supported is not validated; search results are not evidence; "
@@ -87,20 +87,22 @@ def plan_product(product: str, inputs: dict[str, Any] | None = None) -> dict[str
                           for i in t.assembly.system.instances],
             "unknown_inputs": list(t.unknown_inputs()), "inputs": [i.to_dict() for i in t.inputs],
             "capability": [c.to_dict() for c in report], "couplings": [c.to_dict() for c in t.couplings],
-            "screening_available": product in SCREENINGS,
+            "screenings": list(SCREENINGS.get(product, {})),
             "note": "a plan is a capability statement; READY means runnable here, not qualified and not validated"}
 
 
-def run_product_screening(product: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Run the product's bounded screening path from declared inputs; refused while any needed input is UNKNOWN."""
+def run_product_screening(product: str, inputs: dict[str, Any] | None = None, screening: str | None = None) -> dict[str, Any]:
+    """Run one of the product's bounded screening paths from declared inputs; refused while any needed input is UNKNOWN."""
     try:
         t = _template(product, inputs)
         if product not in SCREENINGS:
             raise TemplateRefusal(f"{product!r} has no executable screening path yet; its capability gaps are in plan_product")
-        name, fn = SCREENINGS[product]
-        result = fn(t)
+        name = screening or next(iter(SCREENINGS[product]))
+        if name not in SCREENINGS[product]:
+            raise TemplateRefusal(f"{product!r} has no screening {name!r}; known: {list(SCREENINGS[product])}")
+        result = SCREENINGS[product][name](t)
     except Exception as exc:  # noqa: BLE001
         return {"schema": PRODUCT_SCREENING_SCHEMA, "status": "refused", "error": type(exc).__name__, "message": str(exc)}
     return {"schema": PRODUCT_SCREENING_SCHEMA, "status": "computed", "product": product, "screening": name,
-            "result": {k: (_q(v) if isinstance(v, Quantity) else v if not isinstance(v, tuple) else list(v)) for k, v in result.items()},
+            "result": {k: (_q(v) if isinstance(v, Quantity) else list(v) if isinstance(v, tuple) else v) for k, v in result.items()},
             "verdict": "insufficient_evidence", "template_digest": t.digest}
