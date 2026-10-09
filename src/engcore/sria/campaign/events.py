@@ -250,6 +250,10 @@ class CampaignEventType(str, Enum):
     #: Assurance decisions made before this run, verified as issued by the
     #: run's own Arbiter under the run's policy, and adopted (audit SRIA-06).
     PRIOR_ASSURANCE_ADOPTED = "prior_assurance_adopted"
+    #: The head + length of an append-only record chain held OUTSIDE the campaign
+    #: (e.g. a design search memory) committed into this chain between iterations
+    #: (sria.campaign.anchors). Not evidence: no assurance derivation reads it.
+    RECORD_CHAIN_ANCHORED = "record_chain_anchored"
     CAMPAIGN_PAUSED = "campaign_paused"
     CAMPAIGN_COMPLETED = "campaign_completed"
     CAMPAIGN_FAILED = "campaign_failed"

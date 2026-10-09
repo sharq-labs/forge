@@ -11,7 +11,7 @@ from typing import Any
 
 from .budget import BudgetLedger
 from .checkpoint import EffectLedger
-from .events import CampaignEvent, CampaignEventLog
+from .events import CampaignEvent, CampaignEventLog, CampaignEventType
 from .persistence import (
     IncrementalCheckpointStore,
     _copy_budget_continuation,
@@ -100,6 +100,25 @@ class IncrementalCampaignRunner(CampaignRunner):
             )
             self._snapshots[self._plan.iteration] = self._plan.snapshot
         return self._run
+
+    def anchor_record_chain(self, chain_kind: str, chain_schema: str, head: str, length: int) -> CampaignEvent:
+        """Commit the head of an external append-only record chain into this run's event chain and checkpoint.
+
+        Between iterations only (no in-flight plan). A chain's anchors only grow
+        (:func:`.anchors.require_growth`); whether a stored copy of the chain
+        really contains the anchored head is checked by the chain's owner. Not
+        evidence: nothing here touches belief, obligations or budget.
+        """
+        from .anchors import anchor_payload, require_growth
+
+        if self._plan is not None:
+            raise ValueError("a record chain is anchored between iterations, not inside one")
+        payload = anchor_payload(chain_kind, chain_schema, head, length)
+        require_growth(self._events, payload)
+        event = self._events.append(CampaignEventType.RECORD_CHAIN_ANCHORED, iteration=self._run.iteration,
+                                    payload=payload, at=self._clock())
+        self._checkpoint()
+        return event
 
     def restore_latest(self):
         """Adopt the latest committed checkpoint and replay nothing."""
