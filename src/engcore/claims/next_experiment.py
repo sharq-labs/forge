@@ -293,4 +293,31 @@ def _dominant(record: Mapping[str, Any], channel: str) -> bool:
     return widest["channel"] == channel
 
 
-__all__ = ["ExperimentAction", "ExperimentRecommendation", "NextExperimentPlan", "recommend_next"]
+#: Roadmap V2 consolidation: this module is the claim-gap remediation ADVISOR; the canonical experiment planner is
+#: ``engcore.sria.decision`` (ActionFamily + one utility engine).  Each gap action maps onto the planner's strategy
+#: vocabulary so both speak one language; ``None`` means the action is not an experiment (a restatement or a
+#: capability extension), and it is never turned into one.
+PLANNING_FAMILY = {
+    ExperimentAction.PROVIDE_INPUT: "characterize",
+    ExperimentAction.ESTABLISH_APPLICABILITY: "validate",
+    ExperimentAction.MOVE_OPERATING_POINT: "explore",
+    ExperimentAction.REFINE_DISCRETIZATION: "reduce_uncertainty",
+    ExperimentAction.DECLARE_INPUT_DISTRIBUTIONS: "reduce_uncertainty",
+    ExperimentAction.SENSITIVITY_ANALYSIS: "characterize",
+    ExperimentAction.RUN_INDEPENDENT_ROUTE: "validate",
+    ExperimentAction.TEST_AT_BENCHMARK_POINT: "validate",
+    ExperimentAction.COLLECT_MEASUREMENT: "validate",
+    ExperimentAction.OBTAIN_BENCHMARK_EVIDENCE: "validate",
+    ExperimentAction.QUANTIFY_MODEL_FORM: "reduce_uncertainty",
+    ExperimentAction.REASSESS_UNDER_PLAN: None,
+    ExperimentAction.RESTATE_CLAIM: None,
+    ExperimentAction.EXTEND_CAPABILITY: None,
+}
+
+
+def planning_family(action: ExperimentAction | str) -> str | None:
+    """The canonical planner's ActionFamily value for a gap action (``None``: not an experiment)."""
+    return PLANNING_FAMILY[ExperimentAction(action)]
+
+
+__all__ = ["ExperimentAction", "ExperimentRecommendation", "NextExperimentPlan", "PLANNING_FAMILY", "planning_family", "recommend_next"]

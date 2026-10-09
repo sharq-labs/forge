@@ -68,7 +68,10 @@ from .families import (
     ValidateGenerator,
     generate_candidates,
 )
-from .hypotheses import Hypothesis, HypothesisSet, PredictionDisagreement
+from .hypotheses import (
+    Hypothesis, HypothesisKind, HypothesisParameter, HypothesisPrediction, HypothesisSet, HypothesisStatus, NoveltyStatus,
+    ParameterProvenance, PredictionDisagreement, ProposalProvenance, ProposerKind, derive_hypothesis,
+)
 from .suppliers import (
     ApplicabilitySupport,
     CalibrationCostSupplier,
@@ -148,10 +151,19 @@ __all__ = [
     "CalibrationState",
     "FactorAvailability",
     "snapshot_from_gateway",
-    # hypotheses
+    # hypotheses (canonical hypothesis record, Roadmap V2)
     "Hypothesis",
+    "HypothesisKind",
+    "HypothesisParameter",
+    "HypothesisPrediction",
     "HypothesisSet",
+    "HypothesisStatus",
+    "NoveltyStatus",
+    "ParameterProvenance",
     "PredictionDisagreement",
+    "ProposalProvenance",
+    "ProposerKind",
+    "derive_hypothesis",
     # actions
     "ActionFamily",
     "ActionProposal",
