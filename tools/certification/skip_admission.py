@@ -303,7 +303,8 @@ RULES: tuple[SkipRule, ...] = (
              ("openradioss",), tests=("test_real_impact_run_conserves_energy_before_contact",)),
     SkipRule("geometry-slice-gmsh", "flagships/tests/test_geometry_slice.py", "Gmsh unavailable: {gmsh}", _P, ("gmsh",),
              tests=("test_slice_runs_end_to_end_and_ends_at_insufficient_evidence",
-                    "test_changing_a_dimension_changes_every_bound_identity")),
+                    "test_every_result_changing_input_moves_the_bound_identities",
+                    "test_face_temperatures_outside_the_material_data_are_out_of_domain_even_when_the_mean_is_inside")),
     # --- core suites that exercise an optional mesh provider or dependency extra --------------
     SkipRule("spatial-gmsh", "tests/test_spatial_core.py", "Gmsh unavailable: {gmsh}", _P, ("gmsh",),
              tests=("test_gmsh_plate_is_real_exact_and_replayable",)),
