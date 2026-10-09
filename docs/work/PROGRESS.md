@@ -1656,3 +1656,97 @@ Commands (Windows, Python 3.14 venv, `TMPDIR=D:/ftmp`, `-p no:cacheprovider`):
 Failed approach: a long bash heredoc patch script failed with "unexpected EOF" (nested quotes); patch scripts go through the file
 tool. Editing the worktree while FAST ran would have contaminated it; round-2 fixes were made in a second detached worktree and
 fast-forwarded.
+
+## 2026-10-09 BIG 14 — flagship A 14.3: timebox, Kirkaldy 2024 pre-registration, B/C/D deferred (branch `feat/big-14-a-kirkaldy-fade`)
+
+- Owner decisions 2026-10-09: download the Kirkaldy 2024 LG M50T subset; 14.3 timebox two weeks (2026-10-09 to 2026-10-23).
+- Pre-registration commit `dd53eec7` (pushed to `origin/feat/big-14-a-kirkaldy-fade` before any capacity value was read and while
+  the archives were still downloading): `big14_a_campaign_timebox_preregistration.json` and
+  `big14_a_kirkaldy_fade_preregistration.json` (calibrate ThroughputArrheniusFade on Expt 5, hold out Expt 4; C1 pooled holdout
+  RMSE <= 0.015, C2 per-temperature |bias| <= 0.010).
+- Data: Zenodo 10637534 (CC-BY-4.0). Expt 5 10,443,549,687 B md5 298aa767..., Expt 4 11,376,117,549 B md5 99083707..., into
+  `D:/forge-data/kirkaldy2024/raw` (not committed). A single curl stream ran at ~68 KB/s (~3.7 days); a 16-connection
+  ranged download (stdlib, resumable per 128 MB chunk) runs at ~1 MB/s.
+- B, C and D moved to DEFERRED in `docs/flagships/README.md`; verdicts and gaps unchanged.
+- `pytest flagships/tests tests/test_agent_workflow_contract.py tests/test_repository_architecture.py` (Windows 3.14): 55 passed,
+  50 skipped (provider-gated).
+- Noted BEFORE any result (data still downloading): flagship A feeds ThroughputArrheniusFade the integral of |I| (charge AND
+  discharge), while the pre-registered study throughput is discharge charge only. The study's criteria are unaffected (k_q
+  absorbs a constant factor), but a k_q carried into flagship A must be converted to the |I| definition (about one half for
+  full constant-current cycles; the drive-cycle regenerative pulses make the factor profile-dependent). The conversion will be
+  stated with the transfer, never silently applied. The dataset's processed summaries carry `Charge Throughput [A h]` and
+  `C/10 Capacity [mA h]` per RPT (example notebook, read as text only); which throughput the column measures is checked
+  against the paper/set data before use.
+- Data handling decided after reading the archive STRUCTURE and throughput columns, BEFORE any capacity value (recorded with
+  the study code `flagships/forge_flagships/kirkaldy_fade.py`): the per-cycle file's numbering restarts per ageing set and runs
+  through cycler fault rows (~1e-10 A h at -0.16 V), so RPTs are placed by charge, not by cycle number: the row where the
+  cumulative charge + discharge of the cycle rows is nearest the RPT file's own `Charge Throughput [A h]`. Expt 5: every RPT
+  but the last aligns within 4.4 A h; the last falls 37-99 A h short (the final set's cycle rows are incomplete). Rule: an RPT
+  is used only if it aligns within 10 A h (about one full cycle); otherwise it is skipped with the reason and never estimated.
+  `Charge Throughput [A h]` counts charge + discharge (about 8 A h per cycle), confirming the throughput note above.
+- Archives admitted: Expt 5 md5 298aa767e4e14acdb348f5832e0cbae9, Expt 4 md5 99083707bc7a24e72d9865abac19ce50 (both equal to
+  Zenodo; sha256 in the study record). The Expt 4 download stopped once on DNS failures (network loss) and resumed per chunk.
+- **Study `big14-a-kirkaldy-fade`: NOT MET** (`docs/flagships/big14/kirkaldy_fade_study.json`;
+  `python -m forge_flagships.kirkaldy_fade --data D:/forge-data/kirkaldy2024/raw --out D:/forge-data/kirkaldy2024/study`).
+  - Calibration (Expt 5, 8 cells, 120 checkpoints): k_q 5.77e-5 per A h of discharge, activation energy AT ITS LOWER BOUND (0):
+    fade is not monotone in temperature (10 degC cells fade most, ~22-27 % at the last aligned RPT; 25 degC least, ~18 %;
+    40 degC ~21 %), which an Arrhenius factor cannot represent. Calibration RMSE 0.040.
+  - Holdout (Expt 4, 8 different cells, 64 aged checkpoints; the reference RPT is excluded from the criteria after review
+    M2, values with it in brackets): C1 pooled RMSE 0.0374 (0.0353) > 0.015 NOT MET; C2 mean signed residual 10 degC 0.0061
+    (0.0054) met, 25 degC 0.0274 (0.0243) NOT met, 40 degC 0.0065 (0.0058) met. Max |residual| 0.105.
+  - Uncertainty budget: numerical not applicable (closed form); parameter (leave-one-cell-out) k_q 5.49e-5 to 5.95e-5,
+    CONDITIONAL on the activation energy at its bound; activation energy NOT ESTABLISHED (at the bound in 8/8 refits); measurement UNKNOWN (no repeated capacity check of an unaged cell in
+    the summaries); model discrepancy NOT QUANTIFIED (unknown, not zero) because the holdout failed.
+  - Reported, not judged: flagship A's declared fade (k_q 2e-4 per A h of |I|, 30 kJ/mol), applied with the |I| throughput
+    flagship A feeds it, OVERPREDICTS the fade of these cells at every temperature; 38 of 64 predictions exceed the model's
+    declared state range (fade < 0.5), so the RMSE (0.905) shows the direction, not a meaningful magnitude. Temperature is the
+    setpoint, not flagship A's mean cell temperature. LG M50T is not flagship A's LG M50; this is an observation, not a
+    correction of flagship A.
+  - The last RPT of every cell is skipped (the per-cycle file does not reach its throughput); measured set temperatures run
+    above setpoint at 10 degC (14-24 degC) and 25 degC (27-30 degC) through self-heating; the setpoint is used as registered.
+- `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 4 passed. `recertification_scope explain` on every changed
+  path: ordinary.
+- forge-scientific-review of the study, one round: CHANGES REQUIRED, none able to turn NOT MET into MET; all addressed:
+  H1 a bound-pinned activation energy carried a ~1e-12 "spread" -> NOT ESTABLISHED, k_q spread labelled conditional;
+  M1 rules not in the pre-registration -> `deviations_from_preregistration` in the record with decision times and coverage
+  (calibration 120/128, holdout 72/80 RPTs); M1a per-row alignment gaps emitted (holdout max 4.76 A h), the skip of the most
+  aged RPT noted as biasing TOWARD MET; M2 reference RPT excluded from C1/C2 (moves AWAY from MET), both values reported;
+  M3 C2 needs all three registered temperatures; M4 declared-parameter comparison relabelled (throughput as flagship A,
+  temperature = setpoint) and out-of-state-range predictions counted; M5 independence now compares rig channels from
+  experiment_metadata.xlsx (disjoint), the old key-based guard could never fire; M6 a blank RPT throughput is skipped, not
+  zeroed (one Expt 4 cycle row with both capacities blank is counted in the record); M7 tests for every refusal path and the
+  law pinned to ThroughputArrheniusFade.advance; L1 pre-registration sha256 pinned (da6ac0da..., the dd53eec7 bytes);
+  L2 classification says level 7 NOT REACHED; L3 Expt 4 'Discharge Capacity' is gross drive-cycle discharge (5.87 vs 3.17 A h
+  charge per cycle), recorded as a deviation; L4 measurement UNKNOWN stays a stated assertion.
+- `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 9 passed.
+
+## 2026-10-09 BIG 14 — Kirkaldy fade study closed NOT MET; branch synced with main after PR #120
+
+- PR #120 (R1/R4, certified source `3e396bc4`, certificate child `d383eed0`) merged into main as `2c0e024b` (merge commit,
+  parents `16c87f40` + `d383eed0`). `main` was merged INTO `feat/big-14-a-kirkaldy-fade` as `343b8937` (no rebase, so the
+  pre-registration commit `dd53eec7` keeps its place before the results). The only conflict was an append/append in this file,
+  resolved by keeping main's entries first and this branch's entry verbatim after them.
+- Pre-registration blob `0668576d` (sha256 `da6ac0da...`, the value pinned in the study record) is unchanged before and after the
+  merge; no file under `flagships/` or `docs/flagships/big14/` changed in this sync.
+- Closure: the throughput-Arrhenius campaign ends as a justified negative result, NOT MET under its registered criteria. No
+  threshold or split changed; the five recorded `deviations_from_preregistration` stand (one biases toward MET), and the
+  outcome is NOT MET with or without the reference RPT. Activation energy NOT ESTABLISHED (bound-pinned in 8/8 refits;
+  the refits' ~1e-13 J/mol spread is optimizer noise, not uncertainty). Model discrepancy NOT QUANTIFIED. The holdout is
+  independent of calibration in cells (disjoint rig channels) and discharge profile only; laboratory, dataset programme, RPT
+  procedure and cell type are shared, and batch independence is not claimed (pre-registration stated limit). Summary in `docs/flagships/README.md` ("BIG 14 status").
+- forge-scientific-review of this close-out prose (static, one round): CHANGES REQUIRED, no BLOCKER/HIGH, none able to turn
+  NOT MET into MET; all applied in prose: M "nothing changed" overstated (now names the five deviations); L reported-not-judged
+  comparison no longer called evidence; L measurement UNKNOWN added; L shared rigs 2 and 5 added; L non-monotone claim cites
+  `calibration_residuals_per_temperature`. Open item (not fixed, a post-result record edit is out of this pass's scope): the
+  pre-registration said the leave-one-cell-out spread would be carried as parameter uncertainty; the record instead reports
+  activation energy NOT ESTABLISHED (conservative) and does not list this among its deviations.
+- Next fade law (non-monotone temperature dependence or other): NOT STARTED. It needs a new hypothesis, pre-registration,
+  complexity control and a fresh confirmatory holdout; the observed Expt 4 holdout is exploratory evidence for it at most.
+- Commands (Windows, phyx/.venv CPython 3.14.2 -- not a CI interpreter; PYTHONPATH=<worktree>/src;<worktree>;<worktree>/flagships;
+  TMP=D:/forge-tmp-fade), final tree: `pytest flagships/tests/test_kirkaldy_fade.py`: 9 passed;
+  `pytest -n 4 flagships/tests tests/test_agent_workflow_contract.py tests/test_repository_architecture.py
+  tests/test_engineering_contracts.py tests/test_system_runtime_checkpoint.py tests/test_system_runtime_review_fixes.py`:
+  189 passed, 53 skipped (provider-gated); `tools/forge_check.py --changed`: 225 passed; `recertification_scope explain` on
+  every path changed against main: ordinary. The committed study record is byte-identical to
+  `D:/forge-data/kirkaldy2024/study/kirkaldy_fade_study.json`; the study was not re-run and nothing was re-downloaded.
+  Local Assurance / recertification: NOT RUN (no protected path changed).
