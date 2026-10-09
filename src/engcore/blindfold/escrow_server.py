@@ -5,13 +5,17 @@ Run by :class:`~.escrow.SubprocessTransport`.  Same OS account as the parent: SE
 
 from __future__ import annotations
 
+import json
 import sys
 
-from .escrow import EscrowService
+from .escrow import PROTOCOL, EscrowService
 
 
 def main() -> int:
     service = EscrowService(transport_label="subprocess")
+    # handshake: the operator credential goes to the parent that started this process, once
+    sys.stdout.buffer.write(json.dumps({"protocol": PROTOCOL, "operator_token": service.operator_token}).encode() + b"\n")
+    sys.stdout.buffer.flush()
     for line in sys.stdin.buffer:
         if not line.strip():
             continue

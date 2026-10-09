@@ -13,9 +13,13 @@ Grammar (JSON)::
     {"exp": e}  {"log": e}  {"neg": e}
     {"piecewise": {"if_below": [e_switch, {"const": t}], "then": e, "else": e}}
 
-:func:`structure_digest` is the canonical STRUCTURE identity (constants replaced
-by a placeholder, commutative operands sorted) used for de-duplication and the
-novelty check: two laws differing only in constants share a structure.
+:func:`structure_digest` is the canonical STRUCTURE identity used for
+de-duplication and the novelty check: constants are abstracted and every
+product of powers is merged into one monomial with combined exponents, so two
+laws differing only in constants -- or only in how a power law is written --
+share a structure.  It is a canonicalization, not a proof of equivalence:
+rewrites outside the monomial algebra (e.g. ``exp(log x)``) are not merged;
+:func:`engcore.claims.novelty.numeric_equivalence` covers those numerically.
 """
 
 from __future__ import annotations
@@ -125,30 +129,61 @@ def _eval(node: Mapping[str, Any], p: Mapping[str, float]) -> float:
     return _eval(arg["then"], p) if _eval(sw[0], p) < float(sw[1]["const"]) else _eval(arg["else"], p)
 
 
-def _structure(node: Mapping[str, Any]) -> Any:
+def _key(x: Any) -> str:
+    return json.dumps(x, sort_keys=True)
+
+
+def _monomial_of(node: Mapping[str, Any]) -> dict[str, float]:
+    """A node as a product of powers: canonical base -> combined exponent.  Constant factors (and negation) are dropped:
+    structure is identity UP TO CONSTANTS.  ``pow`` distributes over a product (laws here live on positive domains)."""
     (op, arg), = node.items()
     if op == "const":
-        return "c"
+        return {}
+    if op == "neg":
+        return _monomial_of(arg)
+    if op == "mul":
+        out: dict[str, float] = {}
+        for a in arg:
+            for base, k in _monomial_of(a).items():
+                out[base] = out.get(base, 0.0) + k
+        return out
+    if op == "pow":
+        k = float(arg[1]["const"])
+        return {base: e * k for base, e in _monomial_of(arg[0]).items()}
+    return {_key(_atom(node)): 1.0}
+
+
+def _atom(node: Mapping[str, Any]) -> Any:
+    (op, arg), = node.items()
     if op == "var":
         return ["v", arg]
-    if op in _NARY:
-        parts = [_structure(a) for a in arg]
-        flat = []
-        for part in parts:  # flatten nested same-operator nodes
-            if isinstance(part, list) and part and part[0] == op:
-                flat.extend(part[1:])
-            else:
-                flat.append(part)
-        return [op, *sorted(flat, key=lambda x: json.dumps(x, sort_keys=True))]
-    if op == "pow":
-        return ["pow", _structure(arg[0]), round(float(arg[1]["const"]), 3)]  # the exponent is structure, rounded
-    if op in _UNARY:
+    if op == "add":
+        terms = {_key(_structure(a)) for a in arg}             # a repeated term differs only by a constant
+        return ["add", *sorted(terms)]
+    if op in ("exp", "log"):
         return [op, _structure(arg)]
-    return ["piecewise", _structure(arg["if_below"][0]), _structure(arg["then"]), _structure(arg["else"])]
+    if op == "piecewise":
+        return ["piecewise", _structure(arg["if_below"][0]), _structure(arg["then"]), _structure(arg["else"])]
+    raise ExpressionRefused(f"no atom form for {op!r}")  # pragma: no cover - const/neg/mul/pow are monomial forms
+
+
+def _structure(node: Mapping[str, Any]) -> Any:
+    """Canonical form: every product of powers becomes ONE monomial {base: combined exponent (3 d.p.)} with constants
+    abstracted, so ``(x^a y^b)^e`` and ``x^(a e) y^(b e)`` -- or ``x^0.37 * x * 5`` and ``2 x^1.37`` -- are one structure."""
+    mono = {b: round(k, 3) for b, k in _monomial_of(node).items()}
+    mono = {b: k for b, k in mono.items() if k != 0.0}
+    if not mono:
+        return "c"
+    if len(mono) == 1:
+        (base, k), = mono.items()
+        if k == 1.0:
+            return json.loads(base)
+    return ["mono", [[b, mono[b]] for b in sorted(mono)]]
 
 
 def structure_digest(expr: Mapping[str, Any]) -> str:
-    """Canonical structure identity: constants abstracted, commutative operands sorted, exponents kept (3 d.p.)."""
+    """Canonical structure identity: constants abstracted, products of powers merged into one monomial with combined
+    exponents (3 d.p.), commutative operands sorted.  Algebraically identical power-law rewrites share a digest."""
     validate(expr)
     return hashlib.sha256(json.dumps(_structure(expr), sort_keys=True).encode()).hexdigest()
 

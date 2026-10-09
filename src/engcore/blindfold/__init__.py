@@ -26,10 +26,12 @@ LEVELS = {
 }
 NOVEL_DISCOVERY_LEVELS = frozenset({"L4", "L5", "L6"})
 
-from .escrow import EscrowRefused, EscrowService, InProcessTransport, ObserveClient, SECURITY_LABEL, ScoreClient, SubprocessTransport  # noqa: E402
+from .escrow import (  # noqa: E402
+    EscrowRefused, EscrowService, InProcessTransport, ObserveClient, OperatorClient, SECURITY_LABEL, ScoreClient, SubprocessTransport,
+)
 from .roles import BlindfoldReport, EvaluatorConfig, ProposalStore, RoleRefused, run_campaign  # noqa: E402
 from .universe import UniverseKind  # noqa: E402
 
 __all__ = ["BlindfoldReport", "EscrowRefused", "EscrowService", "EvaluatorConfig", "InProcessTransport", "LEVELS",
-           "NOVEL_DISCOVERY_LEVELS", "ObserveClient", "ProposalStore", "RoleRefused", "SECURITY_LABEL", "ScoreClient",
+           "NOVEL_DISCOVERY_LEVELS", "ObserveClient", "OperatorClient", "ProposalStore", "RoleRefused", "SECURITY_LABEL", "ScoreClient",
            "SubprocessTransport", "UniverseKind", "run_campaign"]

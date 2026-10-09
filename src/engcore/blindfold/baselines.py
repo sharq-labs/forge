@@ -3,6 +3,7 @@
 * :func:`always_refuse` -- never proposes a law (scores 0 on discoverable worlds, earns refusal credit by luck).
 * :func:`always_law` -- fits a log-linear power law to every observed variable, covariates included, and always
   proposes it.  Must perform badly on the control universes: that is what the controls are for.
+* :func:`always_insufficient` -- a blanket refusal; the report's credit over the best constant answer exposes it.
 * :func:`careful` -- fits settable inputs only (interventions, not passive covariates), estimates its own noise from
   replicate queries, checks its fit on its OWN held-out queries, and refuses when the evidence does not support a law.
 
@@ -19,6 +20,9 @@ import numpy as np
 
 from .escrow import EscrowRefused, ObserveClient
 from .expression import c, mul, pw, v
+
+
+LACK_OF_FIT_RATIO = 3.5
 
 
 def always_refuse(card: Mapping[str, Any], client: ObserveClient) -> dict[str, Any]:
@@ -65,10 +69,21 @@ def always_law(card: Mapping[str, Any], client: ObserveClient) -> dict[str, Any]
     return {"universe_id": card["universe_id"], "answer": "law", "law": _law(fit[0], names), "rationale": "baseline: always fits"}
 
 
+def always_insufficient(card: Mapping[str, Any], client: ObserveClient) -> dict[str, Any]:
+    return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "baseline: blanket refusal"}
+
+
+def _extrapolates(card: Mapping[str, Any]) -> bool:
+    """True when the public assessment region leaves the query box (predictions will be judged where no query went)."""
+    box = {x["name"]: x["range"] for x in card["inputs"]}
+    return any(lo < box[n][0] or hi > box[n][1] for n, (lo, hi) in card.get("assessment_region", {}).items())
+
+
 def careful(card: Mapping[str, Any], client: ObserveClient, *, precision: float = 0.02) -> dict[str, Any]:
     """Refuses unless the evidence pins the law down: the fit must beat a constant on held-out queries, the predicted mean
-    must be known to ``precision`` (relative), and 90% of its own held-out queries must sit within what replicate noise
-    allows.  Only intervened (settable) inputs enter the law; a passively observed covariate never does."""
+    must be known to ``precision`` (relative), and its held-out errors must be consistent with the noise it measured
+    from replicate queries.  Only intervened (settable) inputs enter the law; a passively observed covariate never does.
+    When the assessment region leaves the query box it does not extrapolate a law it could only check inside the box."""
     rng = random.Random(card["universe_id"] + "careful")
     budget = int(card["query_budget"])
     replicate = min(4, budget // 4)
@@ -76,12 +91,14 @@ def careful(card: Mapping[str, Any], client: ObserveClient, *, precision: float 
     out = card["output"]["name"]
     settable = [x["name"] for x in card["inputs"] if x["settable"]]
     uid = card["universe_id"]
-    if len(rows) < len(settable) + 6:
+    if len(rows) < len(settable) + 6 + replicate:
         return {"universe_id": uid, "answer": "insufficient_evidence", "rationale": "too few observations for the input count"}
-    reps, base = rows[-replicate:], rows[-2 * replicate:-replicate]
+    # replicates repeat the FIRST `replicate` settings; they stay out of the hold-out set
+    reps, base = rows[len(rows) - replicate:], rows[:replicate]
     diffs = [math.log(r[out]) - math.log(b[out]) for r, b in zip(reps, base) if r[out] > 0 and b[out] > 0]
     noise = float(np.std(diffs) / math.sqrt(2)) if len(diffs) >= 2 else None
-    train, hold = rows[: int(0.75 * len(rows))], rows[int(0.75 * len(rows)):]
+    fresh = rows[: len(rows) - replicate]
+    train, hold = fresh[: int(0.75 * len(fresh))], fresh[int(0.75 * len(fresh)):]
     fit = _fit(train, settable, out)
     if fit is None or len(hold) < 3:
         return {"universe_id": uid, "answer": "insufficient_evidence", "rationale": "cannot fit and hold out"}
@@ -97,21 +114,27 @@ def careful(card: Mapping[str, Any], client: ObserveClient, *, precision: float 
     if float(np.mean(np.square(err_fit))) > 0.8 * float(np.mean(np.square(err_const))):
         return {"universe_id": uid, "answer": "no_law", "rationale": "on held-out queries the inputs do not beat a constant"}
     se = resid * math.sqrt((len(settable) + 1) / len(train))          # standard error of a predicted (log) mean
-    p90 = float(np.quantile(err_fit, 0.9))
-    allowed = max(0.03, 3.0 * (noise if noise is not None else resid))
-    if se > precision or p90 > allowed:
+    scale = noise if noise is not None and noise > 0 else resid
+    rms_hold = float(np.sqrt(np.mean(np.square(err_fit))))
+    # lack of fit: training and held-out scatter against pure (replicate) error; with 2-4 replicate pairs the 99%
+    # F quantile allows a ratio of about 3.5 before the form is called wrong
+    consistent = rms_hold <= LACK_OF_FIT_RATIO * scale and resid <= LACK_OF_FIT_RATIO * scale
+    if se > precision or not consistent:
         covs = list(card.get("observed_covariates", ()))
         if covs:
             res = [math.log(r[out]) - predict(r) for r in rows if r[out] > 0]
             cv = [math.log(r[covs[0]]) for r in rows if r[out] > 0]
             if len(res) > 3 and abs(float(np.corrcoef(res, cv)[0, 1])) > 0.5:
                 return {"universe_id": uid, "answer": "confounded",
-                        "rationale": "residuals track a passively observed covariate: a hidden common cause"}
+                        "rationale": "residuals track a passively observed covariate that cannot be set: its effect is not identifiable"}
         why = (f"the predicted mean is known only to {se:.3g} (needs {precision})" if se > precision
-               else f"90% held-out error {p90:.3g} exceeds what replicate noise allows ({allowed:.3g}): wrong form")
+               else f"scatter (held-out rms {rms_hold:.3g}, fit {resid:.3g}) exceeds {LACK_OF_FIT_RATIO}x the replicate noise ({scale:.3g}): wrong form")
         return {"universe_id": uid, "answer": "insufficient_evidence", "rationale": why}
+    if _extrapolates(card):
+        return {"universe_id": uid, "answer": "insufficient_evidence",
+                "rationale": "the law is checked only inside the box; the assessment region lies outside it"}
     return {"universe_id": uid, "answer": "law", "law": _law(coef, settable),
             "rationale": "log-linear fit on intervened inputs, checked on own held-out queries"}
 
 
-__all__ = ["always_law", "always_refuse", "careful"]
+__all__ = ["always_insufficient", "always_law", "always_refuse", "careful"]
