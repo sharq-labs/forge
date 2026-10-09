@@ -22,7 +22,7 @@ motor/ESC losses), not a performance prediction and not validated.
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, Mapping
 
 from ...scientific.units.quantity import Quantity
 from ...spatial.geometry import Transform
@@ -32,10 +32,25 @@ from .template import AssemblyBuilder, CouplingDeclaration, PhysicsParticipant, 
 
 
 
-def drone_template(rotor_count: int = 4, arm_length: Quantity | None = None) -> ProductTemplate:
-    """Structure for ``rotor_count`` propulsion units.  Arm placements exist only if ``arm_length`` is declared."""
+def drone_template(declared: Mapping[str, tuple[Quantity, str]] | None = None, *, structure_rotor_count: int = 4) -> ProductTemplate:
+    """The drone template with ``declared`` inputs ``{id: (value, source_ref)}``.
+
+    ONE source of truth: the structure is built from the declared inputs.  A
+    declared ``rotor_count`` sets the number of propulsion units; while it is
+    UNKNOWN the structure is shown with ``structure_rotor_count`` units for
+    presentation and the screening path refuses (rotor_count is UNKNOWN).
+    Arm placements exist only when ``arm_length`` is declared.
+    """
+    declared = dict(declared or {})
+    rotor_count = structure_rotor_count
+    if "rotor_count" in declared:
+        n = declared["rotor_count"][0].magnitude_in("dimensionless")
+        if n != int(n):
+            raise TemplateRefusal("rotor_count must be an integer")
+        rotor_count = int(n)
     if isinstance(rotor_count, bool) or not isinstance(rotor_count, int) or rotor_count < 3:
         raise TemplateRefusal("a multirotor template needs an integer rotor count >= 3")
+    arm_length = declared["arm_length"][0] if "arm_length" in declared else None
     b = AssemblyBuilder("drone")
     b.add("drone", "drone", "system")
     # by DEFINITION the product frame is the hub frame: these identity placements are the frame convention, not a measurement
@@ -95,8 +110,9 @@ def drone_template(rotor_count: int = 4, arm_length: Quantity | None = None) -> 
                  CouplingDeclaration("electrical", "battery", "pack_current"),
                  CouplingDeclaration("electrical", "thermal", "winding_losses"),
                  CouplingDeclaration("rotor_aerodynamics", "frame_structure", "rotor_loads"))
-    return ProductTemplate("drone", "1", b.build(), participants, req, couplings,
-                           ("composition and bounded hover screening only; coupled execution is not claimed",))
+    template = ProductTemplate("drone", "1", b.build(), participants, req, couplings,
+                               ("composition and bounded hover screening only; coupled execution is not claimed",))
+    return template.with_inputs(declared) if declared else template
 
 
 def hover_screening(template: ProductTemplate) -> dict[str, Any]:
@@ -105,6 +121,12 @@ def hover_screening(template: ProductTemplate) -> dict[str, Any]:
     count = v["rotor_count"].magnitude_in("dimensionless")
     if count != int(count) or count < 3:
         raise TemplateRefusal("rotor_count must be an integer >= 3")
+    units = [i for i in template.assembly.system.instances if i.definition_id == "propulsion_unit"]
+    if len(units) != int(count):
+        raise TemplateRefusal(f"declared rotor_count {int(count)} disagrees with the {len(units)} propulsion units of the bound structure")
+    for name, unit in (("takeoff_mass", "kg"), ("rotor_diameter", "m"), ("air_density", "kg/m^3"), ("gravity", "m/s^2")):
+        if not v[name].magnitude_in(unit) > 0:
+            raise TemplateRefusal(f"{name} must be > 0 {unit} (gravity as a magnitude); a sign error is not squared away")
     thrust = Quantity(v["takeoff_mass"].magnitude_in("kg") * v["gravity"].magnitude_in("m/s^2"), "N")
     area = Quantity(count * math.pi * (v["rotor_diameter"].magnitude_in("m") / 2) ** 2, "m^2")
     power = ideal_induced_hover_power(thrust=thrust, disk_area=area, air_density=v["air_density"])

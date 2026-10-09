@@ -20,6 +20,7 @@ nothing about the product.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Iterable, Mapping
@@ -86,7 +87,7 @@ class SceneOverlay:
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", OverlayKind(self.kind))
         object.__setattr__(self, "evidence_status", EvidenceStatus(self.evidence_status))
-        if len(str(self.source_digest)) != 64:
+        if not re.fullmatch(r"[0-9a-f]{64}", str(self.source_digest)):
             raise SceneRefusal(f"overlay {self.overlay_id!r} names no source record digest; a value with no record is not shown")
         if self.kind is OverlayKind.SCALAR and not isinstance(self.value, Quantity):
             raise SceneRefusal(f"scalar overlay {self.overlay_id!r} needs a Quantity (value and unit)")
@@ -145,9 +146,31 @@ def _matrix(t) -> tuple[tuple[float, ...], ...]:
     return tuple(tuple(r[i]) + (p[i],) for i in range(3)) + ((0.0, 0.0, 0.0, 1.0),)
 
 
+#: Statuses an overlay may show only when a supplied record states them (a scene never upgrades a status).
+RECORD_BACKED = (EvidenceStatus.SUPPORTED, EvidenceStatus.VERIFIED_NUMERICS_ONLY)
+
+
+def check_overlays(overlays: Iterable[SceneOverlay], records: Mapping[str, Mapping[str, Any]]) -> None:
+    """An overlay claiming a record-backed status, and every RISK overlay, must resolve against ``records``
+    (digest -> record carrying ``evidence_status`` / ``assessment``)."""
+    for o in overlays:
+        if o.evidence_status in RECORD_BACKED:
+            rec = records.get(o.source_digest)
+            if rec is None or rec.get("evidence_status") != o.evidence_status.value:
+                raise SceneRefusal(f"overlay {o.overlay_id!r} shows {o.evidence_status.value}, which no supplied record states")
+        if o.kind is OverlayKind.RISK:
+            rec = records.get(o.assessment_ref)
+            if rec is None or rec.get("kind") != "assessment":
+                raise SceneRefusal(f"risk overlay {o.overlay_id!r}: assessment {o.assessment_ref!r} was not supplied as an assessment record")
+
+
 def scene_from_assembly(scene_id: str, assembly: AssemblyTopology, *, geometry: Iterable[GeometryModel] = (),
-                        overlays: Iterable[SceneOverlay] = (), time_states: Iterable[TimeState] = ()) -> Scene:
-    """Nodes from the assembly; geometry/material annotations from the owned geometry; UNKNOWN poses stay unknown."""
+                        overlays: Iterable[SceneOverlay] = (), time_states: Iterable[TimeState] = (),
+                        records: Mapping[str, Mapping[str, Any]] | None = None) -> Scene:
+    """Nodes from the assembly; geometry/material annotations from the owned geometry; UNKNOWN poses stay unknown.
+    Overlays are checked against ``records`` (:func:`check_overlays`)."""
+    overlays = tuple(overlays)
+    check_overlays(overlays, dict(records or {}))
     models = {g.digest: g for g in geometry}
     owned = {g.instance_id: g for g in assembly.geometry}
     mats = {m.instance_id: m.material for m in assembly.materials}

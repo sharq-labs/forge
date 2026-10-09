@@ -15,11 +15,26 @@ from .vehicle import vehicle_template
 from .motor import motor_template
 from .hvac import hvac_template
 
-#: Provider ids implemented inside Forge (not registry adapters), by product template.
+def _pure_python(module: str):
+    def probe() -> tuple[bool, str]:
+        import importlib
+
+        importlib.import_module(module)
+        return True, f"{module} (pure Python, imported)"
+    return probe
+
+
+def _gmsh_probe() -> tuple[bool, str]:
+    from ...spatial.providers import gmsh_available
+
+    return gmsh_available()
+
+
+#: Provider ids implemented inside Forge (not registry adapters) -> availability probe.  Runnable only if the probe passes.
 IN_REPOSITORY = {
-    "gmsh": "engcore.spatial.gmsh_adapter",
-    "forge.hover_momentum": "engcore.systems.aerospace.multirotor.rotor_hover",
-    "forge.electrical_dc": "engcore.domains.electrical (DC network domain)",
+    "gmsh": _gmsh_probe,
+    "forge.hover_momentum": _pure_python("engcore.systems.aerospace.multirotor.rotor_hover"),
+    "forge.electrical_dc": _pure_python("engcore.domains.electrical"),
 }
 
 TEMPLATES = {"drone": drone_template, "vehicle": vehicle_template, "motor": motor_template, "hvac": hvac_template}

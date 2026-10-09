@@ -68,7 +68,10 @@ def _declared(raw: Mapping[str, Any] | None) -> dict[str, tuple[Quantity, str]]:
 def _template(product: str, inputs: Mapping[str, Any] | None):
     if product not in TEMPLATES:
         raise TemplateRefusal(f"unknown product {product!r}; known: {sorted(TEMPLATES)}")
-    return TEMPLATES[product]().with_inputs(_declared(inputs))
+    declared = _declared(inputs)
+    if product == "drone":  # the drone's structure is built FROM its declared inputs (one source of truth)
+        return TEMPLATES[product](declared)
+    return TEMPLATES[product]().with_inputs(declared)
 
 
 def plan_product(product: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:

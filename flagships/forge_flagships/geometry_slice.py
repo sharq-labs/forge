@@ -34,8 +34,8 @@ from typing import Any, Mapping
 import numpy as np
 
 from engcore.design import (
-    DesignCandidate, DesignEvaluation, DesignSpace, FidelityObservation, FidelityOutcome, PromotionPolicy, ResultBinding,
-    SelectionEligibility, run_discovery, standard_ladder,
+    DesignCandidate, DesignEvaluation, DesignSpace, FidelityLadder, FidelityObservation, FidelityOutcome, FidelityRung, PromotionPolicy,
+    ResultBinding, SelectionEligibility, run_discovery,
 )
 from engcore.design.evaluation import RESULT_BINDING_METADATA_KEY
 from engcore.materials import ApplicabilityRange, MaterialIdentity, MaterialPropertySet, MaterialState, PropertyApplicability, PropertyDatum
@@ -145,15 +145,20 @@ PROPERTY_SETS = {STRUCTURAL.digest: _property_set(STRUCTURAL, 1.0, "slice-struct
 
 @dataclass(frozen=True)
 class SliceConditions:
-    """Boundary temperatures and the DECLARED design criteria a candidate is judged against."""
+    """Boundary temperatures and the DECLARED design criteria a candidate is judged against.  Nothing is defaulted."""
 
-    hot: Quantity = field(default_factory=lambda: Quantity(400, "K"))
-    cold: Quantity = field(default_factory=lambda: Quantity(300, "K"))
-    max_heat_flux: Quantity = field(default_factory=lambda: Quantity(25, "W/m^2"))
-    max_interface_temperature: Quantity = field(default_factory=lambda: Quantity(395, "K"))
+    hot: Quantity
+    cold: Quantity
+    max_heat_flux: Quantity
+    max_interface_temperature: Quantity
 
     def to_dict(self) -> dict[str, Any]:
         return {k: getattr(self, k).to_dict() for k in ("hot", "cold", "max_heat_flux", "max_interface_temperature")}
+
+    def boundary_values(self) -> dict[str, Quantity]:
+        """Values by the condition_ref the geometry's boundary bindings name.  An unmapped ref is refused upstream."""
+        return {"slice:hot_face_temperature": self.hot, "slice:cold_face_temperature": self.cold,
+                "slice:declared_adiabatic_edges": Quantity(0, "W/m^2")}
 
     def constraints(self) -> tuple[ConstraintDefinition, ...]:
         return (ConstraintDefinition("max-heat-flux", "heat_flux", ConstraintOperator.LESS_EQUAL, self.max_heat_flux),
@@ -199,7 +204,26 @@ def resolved_conductivities(conditions: SliceConditions) -> dict[str, Any]:
 SERIES_MODEL = ("forge.slice.series_conduction_1d", "1")
 #: The closed form is exact under the declared assumptions (adiabatic edges, perfect contact, constant k per layer);
 #: its quantitative domain is the material data's: the evaluation temperature must lie where the conductivity claims apply.
-SERIES_DOMAIN = ValidityDomain(conditions=(RangeCondition("evaluation_temperature", minimum=Quantity(250, "K"), maximum=Quantity(450, "K")),))
+#: Every face temperature (not only the mean) must lie inside the claims' temperature range.
+SERIES_DOMAIN = ValidityDomain(conditions=(
+    RangeCondition("hot_face_temperature", minimum=Quantity(250, "K"), maximum=Quantity(450, "K")),
+    RangeCondition("cold_face_temperature", minimum=Quantity(250, "K"), maximum=Quantity(450, "K")),
+))
+EXPECTED_DIMENSIONS = {"heat_flux": "W/m^2", "interface_temperature": "K", "total_thickness": "m"}
+MATERIAL_DATA_CLASSIFICATION = "illustrative_not_reference_data"
+#: Agreement required before a numerical run counts as VERIFICATION of the discretisation against the closed form
+#: (P1 on a mesh conforming to the layer joint reproduces the piecewise-linear exact solution up to solver tolerance).
+VERIFICATION_TOLERANCE_K = 1e-6
+
+
+def domain_problem(conditions: SliceConditions) -> str:
+    """'' when both face temperatures are inside the material claims' range; otherwise why the model does not apply."""
+    a = SERIES_DOMAIN.assess({"hot_face_temperature": conditions.hot, "cold_face_temperature": conditions.cold})
+    return "" if a.status.value == "in_domain" else f"closed form outside its declared domain ({a.status.value}): {list(a.violated)}"
+
+
+def material_data_digest() -> str:
+    return canonical_digest(sorted(ps.digest for ps in PROPERTY_SETS.values()))
 VALUES = ("t_structural", "t_insulation", "height")
 
 
@@ -249,11 +273,12 @@ def build_problem(values: Mapping[str, Quantity], conditions: SliceConditions, m
     mesh = meshed.mesh
     rmm = region_material_map(model, mesh, meshed.binding, meshed.receipt, conditions.states())
     k_field, _ = rmm.property_field(PROPERTY_SETS, "thermal_conductivity", K_UNIT, "k")
-    bcs = tuple(
-        BoundaryCondition(BCKind(b.condition_kind), b.boundary,
-                          _prescribed({"hot_face": conditions.hot, "cold_face": conditions.cold}.get(b.boundary, Quantity(0, "W/m^2")),
-                                      b.condition_ref))
-        for b in model.boundary_bindings if b.domain == "thermal")
+    values_by_ref = conditions.boundary_values()
+    unmapped = sorted(b.condition_ref for b in model.boundary_bindings if b.domain == "thermal" and b.condition_ref not in values_by_ref)
+    if unmapped:
+        raise ProviderUnavailable(f"boundary condition records {unmapped} have no declared value; a boundary value is never defaulted")
+    bcs = tuple(BoundaryCondition(BCKind(b.condition_kind), b.boundary, _prescribed(values_by_ref[b.condition_ref], b.condition_ref))
+                for b in model.boundary_bindings if b.domain == "thermal")
     roles = {b.name: FacetRole.EXTERNAL_BOUNDARY for b in model.boundaries}
     roles.update({i.name: FacetRole.INTERNAL_INTERFACE for i in model.interfaces})
     problem = PDEProblem("two-layer-wall", mesh, HEAT, STEADY_DIFFUSION,
@@ -312,17 +337,20 @@ def twin_for(values: Mapping[str, Quantity]) -> ScientificTwin:
 
 def analytic_result(candidate: DesignCandidate, metrics: Mapping[str, Quantity], conditions: SliceConditions) -> ScientificResult:
     binding = ResultBinding(candidate.reference, candidate.twin, candidate.design_space)
-    mean = conditions.states()["structural"].condition("temperature").value
+    dims_ok = all(metrics[k].dimensionality == Quantity(1, u).dimensionality for k, u in EXPECTED_DIMENSIONS.items())
     return ScientificResult(
-        result_id=f"slice-analytic-{candidate.candidate_id}",
+        result_id=f"slice-analytic-{candidate.candidate_id}-{conditions.digest[:12]}",
         values=dict(metrics),
         models=(SERIES_MODEL,),
-        validity={SERIES_MODEL[0]: SERIES_DOMAIN.assess({"evaluation_temperature": mean})},
+        validity={SERIES_MODEL[0]: SERIES_DOMAIN.assess({"hot_face_temperature": conditions.hot, "cold_face_temperature": conditions.cold})},
         validation=ValidationReport(checks=(ValidationCheck(
-            name="dimensional_consistency", outcome=ValidationOutcome.PASS, establishes=ValidationLevel.DIMENSIONALLY_VALID,
-            evidence=("heat flux W/m^2, temperatures K, thickness m; closed-form series resistance",)),)),
-        provenance=ProvenanceRecord(run_id=f"run-{candidate.candidate_id}", models=(SERIES_MODEL,),
-                                    metadata={RESULT_BINDING_METADATA_KEY: binding.to_dict()}),
+            name="dimensional_consistency", outcome=ValidationOutcome.PASS if dims_ok else ValidationOutcome.FAIL,
+            establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            evidence=(f"computed: every metric's dimensionality matches {EXPECTED_DIMENSIONS}",)),)),
+        provenance=ProvenanceRecord(run_id=f"run-{candidate.candidate_id}-{conditions.digest[:12]}", models=(SERIES_MODEL,),
+                                    metadata={RESULT_BINDING_METADATA_KEY: binding.to_dict(), "conditions_digest": conditions.digest,
+                                              "material_data_digest": material_data_digest(),
+                                              "material_data_classification": MATERIAL_DATA_CLASSIFICATION}),
     )
 
 
@@ -343,9 +371,12 @@ class SliceRecord:
     evaluation: DesignEvaluation
     revision: TwinRevision
     evidence_stop: Mapping[str, str]
+    conditions: Mapping[str, Any] = field(default_factory=dict)
+    mesh_size_m: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {"classification": CLASSIFICATION, "verdict": VERDICT, "values_m": dict(self.values), "geometry_digest": self.geometry_digest,
+                "conditions": dict(self.conditions), "mesh_size_m": self.mesh_size_m, "material_data_digest": material_data_digest(),
                 "variant_id": self.variant_id, "mesh_digest": self.mesh_digest, "mesh_binding_digest": self.mesh_binding_digest,
                 "mesh_receipt_digest": self.mesh_receipt_digest, "pde_problem_digest": self.pde_problem_digest,
                 "geometric_checks": dict(self.geometric_checks), "analytic": dict(self.analytic), "numerical": dict(self.numerical),
@@ -355,8 +386,7 @@ class SliceRecord:
                 "evidence_stop": dict(self.evidence_stop)}
 
 
-def run_slice(values: Mapping[str, Quantity], *, conditions: SliceConditions = SliceConditions(),
-              mesh_size: Quantity = Quantity(10, "mm")) -> SliceRecord:
+def run_slice(values: Mapping[str, Quantity], *, conditions: SliceConditions, mesh_size: Quantity) -> SliceRecord:
     """One candidate through the whole pipeline.  Raises ProviderUnavailable only if Gmsh cannot run."""
     admitted = TEMPLATE.admit(values)
     slice_ = build_problem(admitted, conditions, mesh_size)
@@ -369,11 +399,11 @@ def run_slice(values: Mapping[str, Quantity], *, conditions: SliceConditions = S
                                 metadata={"variant_id": slice_.variant.variant_id})
     result = analytic_result(candidate, metrics, conditions)
     problems = result_establishment_problems(result)
-    eligibility = SelectionEligibility.RANKED_WITHOUT_ASSESSMENT if problems else SelectionEligibility.ELIGIBLE
-    evaluation = DesignEvaluation(f"eval-{candidate.candidate_id}", candidate.reference, candidate.twin, candidate.design_space, result,
-                                  eligibility=eligibility,
-                                  eligibility_reasons=("closed-form model in its declared domain; selection eligibility, NOT validation",)
-                                  if not problems else (f"compared without assessment: {list(problems)}",))
+    # Illustrative material data never makes a result selection-ELIGIBLE: it is compared, labelled as such.
+    reasons = [f"material data is {MATERIAL_DATA_CLASSIFICATION}"] + ([f"establishment problems: {list(problems)}"] if problems else [])
+    evaluation = DesignEvaluation(f"eval-{candidate.candidate_id}-{conditions.digest[:12]}", candidate.reference, candidate.twin,
+                                  candidate.design_space, result, eligibility=SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
+                                  eligibility_reasons=tuple(reasons))
     plan_digest = canonical_digest({"rungs": ["analytic:forge.slice.series_conduction_1d", "numerical:fenicsx"],
                                     "conditions": conditions.digest, "pde_problem": slice_.problem.digest})
     revision = TwinRevision(twin, geometry_digests=(slice_.model.digest,), geometry_variant_ids=(slice_.variant.variant_id,),
@@ -381,23 +411,29 @@ def run_slice(values: Mapping[str, Quantity], *, conditions: SliceConditions = S
                             provider_plan_digest=plan_digest,
                             uncertainty=(UncertaintyReference("heat_flux", UncertaintyStatus.UNKNOWN),
                                          UncertaintyReference("interface_temperature", UncertaintyStatus.UNKNOWN)))
-    revision = revision.with_evidence(EvidenceReference(f"result:{result.result_id}", EvidenceRole.PROVIDER_RUN, revision.context_digest))
+    revision = revision.with_evidence(EvidenceReference(f"result-sha256:{canonical_digest(result.to_dict())}", EvidenceRole.PROVIDER_RUN,
+                                                        revision.context_digest))
     try:
         num, info = numerical_metrics(slice_, admitted)
         diff = abs(num["interface_temperature"].magnitude_in("K") - metrics["interface_temperature"].magnitude_in("K"))
+        verified = diff <= VERIFICATION_TOLERANCE_K
         numerical = {"status": "ran", "interface_temperature_K": num["interface_temperature"].magnitude_in("K"),
-                     "abs_difference_from_closed_form_K": diff, **info}
-        revision = revision.with_evidence(EvidenceReference(f"execution:{info['execution']}", EvidenceRole.VERIFICATION, revision.context_digest))
+                     "abs_difference_from_closed_form_K": diff, "verification_tolerance_K": VERIFICATION_TOLERANCE_K,
+                     "verification": "met" if verified else "not_met", **info}
+        role = EvidenceRole.VERIFICATION if verified else EvidenceRole.PROVIDER_RUN
+        revision = revision.with_evidence(EvidenceReference(f"execution:{info['execution']}", role, revision.context_digest))
     except ProviderUnavailable as exc:
         numerical = {"status": "provider_unavailable", "reason": str(exc)}
     stop = {"contract_integrity": "geometry, mesh binding, material resolution and PDE problem contracts all accepted",
-            "analytic_limit": ("numerical vs closed form compared" if numerical["status"] == "ran"
+            "analytic_limit": (f"numerical vs closed form: {numerical['verification']}" if numerical["status"] == "ran"
                                else "not attempted: the numerical provider is unavailable"),
+            "material_data": MATERIAL_DATA_CLASSIFICATION,
             "experimental_validation": "not available: no measurement of any physical wall",
             "uncertainty": "UNKNOWN: illustrative material values carry no uncertainty"}
     return SliceRecord({k: admitted[k].magnitude_in("m") for k in VALUES}, slice_.model.digest, slice_.variant.variant_id,
                        slice_.meshed.mesh.digest, slice_.meshed.binding.digest, slice_.meshed.receipt.digest, slice_.problem.digest,
-                       slice_.geometric_checks, {k: v.magnitude for k, v in metrics.items()}, numerical, ok, why, evaluation, revision, stop)
+                       slice_.geometric_checks, {k: v.magnitude for k, v in metrics.items()}, numerical, ok, why, evaluation, revision, stop,
+                       conditions.to_dict(), mesh_size.magnitude_in("m"))
 
 
 # ---------------------------------------------------------------------------
@@ -412,12 +448,15 @@ class AnalyticRung:
         self.conditions, self.height = conditions, height
 
     def evaluate(self, key: str, a: Mapping[str, Any]) -> FidelityObservation:
+        problem = domain_problem(self.conditions)
+        if problem:
+            return FidelityObservation(key, "analytic", 0, FidelityOutcome.REFUSED, self.provider, problem)
         values = {"t_structural": a["t_structural"], "t_insulation": a["t_insulation"], "height": self.height}
         return _observation(key, "analytic", 0, self.provider, analytic_metrics(values, self.conditions), self.conditions)
 
 
 class NumericalRung:
-    """Rung 2.  Rung 1 (reduced order) is evaluated by the closed form as well: a 1D series model IS the reduced-order model here."""
+    """Rung 2: FEniCSx on the same PDEProblem (PROVIDER_FAILED when unavailable)."""
 
     rung_id, provider = "numerical", "fenicsx"
 
@@ -426,6 +465,9 @@ class NumericalRung:
 
     def evaluate(self, key: str, a: Mapping[str, Any]) -> FidelityObservation:
         values = TEMPLATE.admit({"t_structural": a["t_structural"], "t_insulation": a["t_insulation"], "height": self.height})
+        problem = domain_problem(self.conditions)
+        if problem:
+            return FidelityObservation(key, "numerical", 2, FidelityOutcome.REFUSED, self.provider, problem)
         try:
             num, _ = numerical_metrics(build_problem(values, self.conditions, self.mesh_size), values)
         except ProviderUnavailable as exc:
@@ -433,19 +475,18 @@ class NumericalRung:
         return _observation(key, "numerical", 2, self.provider, num, self.conditions, "; uncertainty UNKNOWN (illustrative material data)")
 
 
-class ReducedOrderRung(AnalyticRung):
-    rung_id, provider = "reduced_order", "forge.slice.series_conduction_1d@1 (1D lumped network)"
+#: The slice's own ladder: the closed form IS the reduced-order model here, so there is no separate rank-1 rung --
+#: running the same model under a second label would be a fake fidelity escalation.
+SLICE_LADDER = FidelityLadder("forge.slice.two_layer_wall", "1", (
+    FidelityRung("analytic", 0, description="closed-form 1D series resistance (exact under the declared assumptions)"),
+    FidelityRung("numerical", 2, description="P1 FEM of the same PDEProblem on the Gmsh mesh"),
+    FidelityRung("experimental", 4, description="measurement of a physical wall (none exists)"),
+))
 
-    def evaluate(self, key: str, a: Mapping[str, Any]) -> FidelityObservation:
-        values = {"t_structural": a["t_structural"], "t_insulation": a["t_insulation"], "height": self.height}
-        return _observation(key, "reduced_order", 1, self.provider, analytic_metrics(values, self.conditions), self.conditions)
 
-
-def run_slice_campaign(count: int = 16, *, conditions: SliceConditions = SliceConditions(), height: Quantity = Quantity(0.2, "m"),
-                       mesh_size: Quantity = Quantity(10, "mm"), budget: int = 3):
+def run_slice_campaign(count: int, *, conditions: SliceConditions, height: Quantity, mesh_size: Quantity, budget: int):
     context = canonical_digest({"conditions": conditions.digest, "template": TEMPLATE.digest, "height_m": height.magnitude_in("m"),
-                                "materials": sorted(PROPERTY_SETS)})
-    policy = PromotionPolicy(standard_ladder(), OBJECTIVE, {"analytic": budget, "reduced_order": budget})
-    evaluators = {"analytic": AnalyticRung(conditions, height), "reduced_order": ReducedOrderRung(conditions, height),
-                  "numerical": NumericalRung(conditions, height, mesh_size)}
+                                "material_data": material_data_digest(), "mesh_size_m": mesh_size.magnitude_in("m")})
+    policy = PromotionPolicy(SLICE_LADDER, OBJECTIVE, {"analytic": budget})
+    evaluators = {"analytic": AnalyticRung(conditions, height), "numerical": NumericalRung(conditions, height, mesh_size)}
     return run_discovery(SPACE, count=count, evaluators=evaluators, policy=policy, context_digest=context)

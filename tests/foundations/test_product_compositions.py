@@ -31,17 +31,24 @@ def test_capability_report_distinguishes_no_adapter_missing_inputs_and_providers
     t = TEMPLATES["vehicle"]()
     report = {c.participant_id: c for c in capability_report(t, default_registry(), in_repository=IN_REPOSITORY)}
     assert report["drive_motor_em"].readiness is ParticipantReadiness.NO_ADAPTER
-    assert report["body_meshing"].readiness is ParticipantReadiness.READY  # in-repository Gmsh path, no inputs needed
+    from engcore.spatial.providers import gmsh_available
+
+    expected = ParticipantReadiness.READY if gmsh_available()[0] else ParticipantReadiness.BLOCKED_BY_PROVIDER
+    assert report["body_meshing"].readiness is expected  # in-repository Gmsh path: runnable only if Gmsh runs here
+    no_gmsh = {**IN_REPOSITORY, "gmsh": lambda: (False, "ImportError: gmsh")}
+    blocked = {c.participant_id: c for c in capability_report(t, default_registry(), in_repository=no_gmsh)}
+    assert blocked["body_meshing"].readiness is ParticipantReadiness.BLOCKED_BY_PROVIDER
     crash = report["crash"]
     assert crash.readiness in (ParticipantReadiness.BLOCKED_BY_PROVIDER, ParticipantReadiness.BLOCKED_BY_INPUTS)
-    assert "available is not qualified" in report["body_meshing"].reason
+    if expected is ParticipantReadiness.READY:
+        assert "available is not qualified" in report["body_meshing"].reason
 
 
 def test_drone_hover_screening_refuses_unknown_inputs_and_matches_momentum_theory():
     t = drone_template()
     with pytest.raises(TemplateRefusal, match="never defaulted"):
         hover_screening(t)
-    declared = t.with_inputs({
+    declared = drone_template({
         "takeoff_mass": (Quantity(2.0, "kg"), "spec:mass-budget-r3"), "rotor_diameter": (Quantity(10, "inch"), "catalog:prop-10x4.5"),
         "rotor_count": (Quantity(4, "dimensionless"), "template"), "air_density": (Quantity(1.225, "kg/m^3"), "env:isa-sea-level"),
         "gravity": (Quantity(9.80665, "m/s^2"), "env:standard-gravity")})
@@ -49,6 +56,14 @@ def test_drone_hover_screening_refuses_unknown_inputs_and_matches_momentum_theor
     thrust, area = 2.0 * 9.80665, 4 * math.pi * (0.254 / 2) ** 2
     assert r["ideal_induced_power"].magnitude_in("W") == pytest.approx(thrust ** 1.5 / math.sqrt(2 * 1.225 * area))
     assert r["classification"] == "ideal_momentum_theory_lower_bound_not_validated" and r["uncertainty"] == "UNKNOWN"
+    mismatched = t.with_inputs({k: (i.value, i.source_ref) for k, i in ((i.input_id, i) for i in declared.inputs) if i.known} |
+                               {"rotor_count": (Quantity(8, "dimensionless"), "spec")})
+    with pytest.raises(TemplateRefusal, match="disagrees"):
+        hover_screening(mismatched)
+    negative = drone_template({k: (i.value, i.source_ref) for k, i in ((i.input_id, i) for i in declared.inputs) if i.known} |
+                              {"rotor_diameter": (Quantity(-0.254, "m"), "typo")})
+    with pytest.raises(TemplateRefusal, match="> 0"):
+        hover_screening(negative)
     with pytest.raises(TemplateRefusal, match="source reference"):
         RequiredInput("x", "drone", "kg", "d", Quantity(1, "kg"))
     with pytest.raises(TemplateRefusal, match="undeclared"):
@@ -59,11 +74,13 @@ def test_drone_structure_placements_exist_only_when_declared():
     bare = drone_template()
     with pytest.raises(Exception, match="UNKNOWN"):
         bare.assembly.world_transform("arm_1")
-    placed = drone_template(arm_length=Quantity(0.25, "m"))
+    placed = drone_template({"arm_length": (Quantity(0.25, "m"), "spec:frame-r2")})
     assert placed.assembly.point_world("arm_2.tip").apply((0, 0, 0)) == pytest.approx((0.0, 0.25, 0.0), abs=1e-12)
     assert placed.assembly.kinematic_dof() == 4  # four rotor revolutes; everything else fixed
     with pytest.raises(TemplateRefusal):
-        drone_template(rotor_count=2)
+        drone_template({"rotor_count": (Quantity(2, "dimensionless"), "spec")})
+    eight = drone_template({"rotor_count": (Quantity(8, "dimensionless"), "spec")})
+    assert len([i for i in eight.assembly.system.instances if i.definition_id == "propulsion_unit"]) == 8
 
 
 def test_product_names_stay_out_of_generic_layers():

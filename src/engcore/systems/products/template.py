@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from ...providers.catalog import ProviderRegistry
 from ...providers.health import ProviderHealth, assess_health
@@ -201,23 +201,33 @@ class ParticipantCapability:
 
 
 def capability_report(template: ProductTemplate, registry: ProviderRegistry, *,
-                      in_repository: Mapping[str, str] | None = None) -> tuple[ParticipantCapability, ...]:
-    """Honest per-participant capability.  ``in_repository`` maps provider ids implemented inside Forge (no registry entry)
-    to a description; they count as available code paths, still unqualified."""
+                      in_repository: Mapping[str, Callable[[], tuple[bool, str]]] | None = None) -> tuple[ParticipantCapability, ...]:
+    """Honest per-participant capability.
+
+    ``in_repository`` maps provider ids implemented inside Forge to an
+    availability probe ``() -> (ok, detail)``; such a path counts as runnable
+    only when its probe succeeds here (still unqualified).  A registry entry
+    with the same id always takes precedence over the in-repository probe.
+    """
     internal = dict(in_repository or {})
+    registered = {s.capability.provider_id for s in registry.discover()}
     out = []
     for p in template.participants:
         missing = tuple(i for i in p.inputs if not template.input(i).known)
         health: dict[str, str] = {}
         for pid in p.providers:
-            if pid in internal:
-                health[pid] = "in_repository"
+            if pid not in registered and pid in internal:
+                try:
+                    ok, detail = internal[pid]()
+                except Exception as exc:  # noqa: BLE001 - a probe that raises is broken, not available
+                    ok, detail = False, f"probe raised {type(exc).__name__}"
+                health[pid] = "in_repository_available" if ok else f"in_repository_unavailable ({detail})"
                 continue
             try:
                 health[pid] = assess_health(registry.status(pid)).health.value
             except Exception as exc:  # noqa: BLE001 - an unregistered provider is reported, not raised
                 health[pid] = f"not_registered ({type(exc).__name__})"
-        runnable = [pid for pid, h in health.items() if h in (ProviderHealth.AVAILABLE.value, "in_repository")]
+        runnable = [pid for pid, h in health.items() if h in (ProviderHealth.AVAILABLE.value, "in_repository_available")]
         if not p.providers:
             readiness, why = ParticipantReadiness.NO_ADAPTER, "no provider adapter exists for this physics in Forge yet"
         elif not runnable:
