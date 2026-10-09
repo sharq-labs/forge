@@ -1,0 +1,1275 @@
+{
+ "cells": {
+  "expt4-A": {
+   "cell": "A",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-52.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell A (10degC) - Processed Data.csv": "4c63ebed483826a792408123cc695b00f98ccc8cf3ae5c2f78e7bdd1cf905634",
+    "expt 4 - cell A - cycle_data.csv": "527bbff524d1c2be96baf4e1f437e7b58bfedfc6e470a57cdcdd53ba0f0b948f"
+   }
+  },
+  "expt4-B": {
+   "cell": "B",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-38.2 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell B (10degC) - Processed Data.csv": "de79f7625dc892ecf8e090e201c454d35268b2a1b59239986d67ad6407a29503",
+    "expt 4 - cell B - cycle_data.csv": "31320d9286891f483f26f0bdcce69bddfffe1760e8c07661a921fe415e433f7a"
+   }
+  },
+  "expt4-C": {
+   "cell": "C",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-47.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell C (10degC) - Processed Data.csv": "dbb7f2a5422d4e46e8536b1ee77726df9ffcfa5ce4ef9f3135fff8fc5067fca1",
+    "expt 4 - cell C - cycle_data.csv": "637ad279f653899bb1c4848196f6e6a0439a6eb66bd8ecec612ec2c8322d4d08"
+   }
+  },
+  "expt4-D": {
+   "cell": "D",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 25,
+   "setpoint_K": 298.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-42.4 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell D (25degC) - Processed Data.csv": "6795bb53f8e3ba956229e1e29a6bb38c2b48e8e550241c9e54eb53e3b9fdc962",
+    "expt 4 - cell D - cycle_data.csv": "4a899dd7e8f54aed79efa3f810e5a3f287711e3528e65396e806c2a68ff93b83"
+   }
+  },
+  "expt4-E": {
+   "cell": "E",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 25,
+   "setpoint_K": 298.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-37.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell E (25degC) - Processed Data.csv": "86987dd68352db97ef90b826c6114284e8c5bd79a568e10b00c83984d16c2b27",
+    "expt 4 - cell E - cycle_data.csv": "78ff1e4daff3e31f340d3bc390987d3210b1d28a7afef25e89269a20ad51bae6"
+   }
+  },
+  "expt4-F": {
+   "cell": "F",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-38.3 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell F (40degC) - Processed Data.csv": "1dff15b525a05d1b2325fb4f22a08c1acb6d0b97d0c4fc3354e5a8757fd3f636",
+    "expt 4 - cell F - cycle_data.csv": "b1bb7abfcb59f793363ad49f13d39eed0ccc8b5217fcdaee4de690b8b21baacf"
+   }
+  },
+  "expt4-G": {
+   "cell": "G",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-54.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell G (40degC) - Processed Data.csv": "ae1c9926e2d5b89d44cf6c6d6007624ac178ed636ae5440973d2ddf202e53723",
+    "expt 4 - cell G - cycle_data.csv": "7716f1bdacfc12e6159863b10d33614b94c97f53fe0b0e0cd7420a180c51b358"
+   }
+  },
+  "expt4-H": {
+   "cell": "H",
+   "expt": 4,
+   "n_checkpoints": 9,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-40.1 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "sources": {
+    "Expt 4 - cell H (40degC) - Processed Data.csv": "c7dca871e6318c091384254e9d39ba234afcdd0657384f0bc70aa97306e7a7ba",
+    "expt 4 - cell H - cycle_data.csv": "1172f9490ad7bb77e7b81f7559f5ab28d388ce3242b9384d23e0c149b039f569"
+   }
+  },
+  "expt5-A": {
+   "cell": "A",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-36.8 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell A (10degC) - Processed Data.csv": "d4b20e7dc69b2825c2a73da323c200b8c6930c1dad692feb8ec00c66fa4a82b9",
+    "expt 5 - cell A - cycle_data.csv": "f6971055b4c1d0aa0f9e9cab3458bc2ef07976499f57e2113f03dfbfc94966b6"
+   }
+  },
+  "expt5-B": {
+   "cell": "B",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-99.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell B (10degC) - Processed Data.csv": "739a9ebe25b6f9da7b066f944e64ea7d2e17a0c1b8d85abcdb141f1f65cf83cf",
+    "expt 5 - cell B - cycle_data.csv": "90acb763a750b8d55d446aa4e1f8db049bd9e9179833f40d35331b400fbf3761"
+   }
+  },
+  "expt5-C": {
+   "cell": "C",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 10,
+   "setpoint_K": 283.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-51.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell C (10degC) - Processed Data.csv": "7aa1c6e3e9888bef3da857906e81b06b0a679e7e777d5c20c68be786d8e24f97",
+    "expt 5 - cell C - cycle_data.csv": "781654a3bf82fd7ea10868c1e8cd1fbed0767961db122aabdb048a02b959dcbf"
+   }
+  },
+  "expt5-D": {
+   "cell": "D",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 25,
+   "setpoint_K": 298.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-56.3 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell D (25degC) - Processed Data.csv": "436650bf1b21806f55fc41fbf9fb159b85068909d2496e2018db5f87de2522a2",
+    "expt 5 - cell D - cycle_data.csv": "0f517e8c7358f01db0e79e9b8e9978f663e03cc39cfe8d1ecd8c26a557694b28"
+   }
+  },
+  "expt5-E": {
+   "cell": "E",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 25,
+   "setpoint_K": 298.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-56.9 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell E (25degC) - Processed Data.csv": "0c8bb628f580d50f82137b6170be43a08743e060d8fded8e9fd36d50ddfa619a",
+    "expt 5 - cell E - cycle_data.csv": "911241015be147e621920063d4f5814557845e094b2066a6ce205cf2e265b371"
+   }
+  },
+  "expt5-F": {
+   "cell": "F",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-49.2 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell F (40degC) - Processed Data.csv": "3932e819faa06dd855a1f585f1a6cf4adafccac4bce4b8a3d3acfd3c4eb4e616",
+    "expt 5 - cell F - cycle_data.csv": "d1fb01d800b86e2b66dae3c68f23c8b511c34e7d68b687b5d4302de59161f31d"
+   }
+  },
+  "expt5-G": {
+   "cell": "G",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-51.6 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell G (40degC) - Processed Data.csv": "e2f23ae52250740792f3ec550f66b210530f6f15bd8254870fedf4bd341bb8b0",
+    "expt 5 - cell G - cycle_data.csv": "b14e682e10362d271e49699a927d9122da51c0050e9747c325d485c7b6de6e4b"
+   }
+  },
+  "expt5-H": {
+   "cell": "H",
+   "expt": 5,
+   "n_checkpoints": 15,
+   "setpoint_C": 40,
+   "setpoint_K": 313.15,
+   "skipped": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-48.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "sources": {
+    "Expt 5 - cell H (40degC) - Processed Data.csv": "52d212672e4938033f3754db376a6cb5e6649a9e009e7031df66eeff0528f135",
+    "expt 5 - cell H - cycle_data.csv": "19d5678267fe871fe4694d63bfed95eccf9e9c6ee7ff75828b311ae30c01c458"
+   }
+  }
+ },
+ "classification": "parameter calibration plus a holdout prediction test against measured data (experimental comparison of the fade model, level 7 candidate for the fade model of an LG M50T cell only); not validation of flagship A's LG M50 (Chen2020) cell model",
+ "data": {
+  "calibration_set": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 10443549687,
+   "md5": "298aa767e4e14acdb348f5832e0cbae9",
+   "sha256": "a6dcd085b160cfa2e695fc6d5939278867ccb0af471e9ee0de1f13b2ee06fafd"
+  },
+  "holdout_set": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11376117549,
+   "md5": "99083707bc7a24e72d9865abac19ce50",
+   "sha256": "9148274d9dc2279e6da7893a2bbf067277fad859db8887f3b9cb42c84395cc01"
+  }
+ },
+ "fit": {
+  "activation_energy_J_per_mol": 1.5191335797472088e-12,
+  "activation_energy_at_bound": true,
+  "calibration_rmse": 0.03973582359453965,
+  "k_q_per_Ah_discharge": 5.768498939185813e-05,
+  "n_checkpoints": 120,
+  "success": true
+ },
+ "holdout": {
+  "max_abs_residual": 0.1050625799323967,
+  "n_checkpoints": 72,
+  "per_temperature": {
+   "10C": {
+    "max_abs_residual": 0.1050625799323967,
+    "mean_signed_residual": 0.005390343991142196,
+    "n": 27,
+    "rmse": 0.039146905509388555
+   },
+   "25C": {
+    "max_abs_residual": 0.085624504072882,
+    "mean_signed_residual": 0.024324857789141157,
+    "n": 18,
+    "rmse": 0.04170853418462152
+   },
+   "40C": {
+    "max_abs_residual": 0.05012362113244512,
+    "mean_signed_residual": 0.0057932365043140595,
+    "n": 27,
+    "rmse": 0.025073635208105762
+   }
+  },
+  "pooled_rmse": 0.035289350072277396,
+  "rows": [
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.04118922667312841,
+    "predicted_fade": 0.026120250114967082,
+    "rpt": 1,
+    "throughput_Ah": 452.8084409885285
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.057055949473740486,
+    "predicted_fade": 0.051961007591881894,
+    "rpt": 2,
+    "throughput_Ah": 900.7717283071194
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.06910061024074421,
+    "predicted_fade": 0.078022073468404,
+    "rpt": 3,
+    "throughput_Ah": 1352.5541790151792
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.07904381195673338,
+    "predicted_fade": 0.10372924139565892,
+    "rpt": 4,
+    "throughput_Ah": 1798.2016203733524
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.08830812738531113,
+    "predicted_fade": 0.12942311805246226,
+    "rpt": 5,
+    "throughput_Ah": 2243.618650482573
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.09727193696700853,
+    "predicted_fade": 0.1553395521554638,
+    "rpt": 6,
+    "throughput_Ah": 2692.893832401207
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.1024010208378936,
+    "predicted_fade": 0.18153538489928464,
+    "rpt": 7,
+    "throughput_Ah": 3147.0125384977055
+   },
+   {
+    "cell": "expt4-A",
+    "measured_fade": 0.111119971289804,
+    "predicted_fade": 0.20666055946087342,
+    "rpt": 8,
+    "throughput_Ah": 3582.570815034981
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.03798448654313036,
+    "predicted_fade": 0.025614815507139527,
+    "rpt": 1,
+    "throughput_Ah": 444.0464629912006
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.055103612292973114,
+    "predicted_fade": 0.05173509379089252,
+    "rpt": 2,
+    "throughput_Ah": 896.8553923006286
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.06905360971526808,
+    "predicted_fade": 0.07778053567989525,
+    "rpt": 3,
+    "throughput_Ah": 1348.3669928675324
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.08214942596343677,
+    "predicted_fade": 0.10347200366524259,
+    "rpt": 4,
+    "throughput_Ah": 1793.742267374795
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.10347265667353867,
+    "predicted_fade": 0.12905437160415772,
+    "rpt": 5,
+    "throughput_Ah": 2237.226234497201
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.15266184513472325,
+    "predicted_fade": 0.15316816546724638,
+    "rpt": 6,
+    "throughput_Ah": 2655.2516882124123
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.2033734324197356,
+    "predicted_fade": 0.17614562123375355,
+    "rpt": 7,
+    "throughput_Ah": 3053.578116088124
+   },
+   {
+    "cell": "expt4-B",
+    "measured_fade": 0.26630475624468186,
+    "predicted_fade": 0.19634796505547544,
+    "rpt": 8,
+    "throughput_Ah": 3403.796501056282
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.041178823370559225,
+    "predicted_fade": 0.026096544947363794,
+    "rpt": 1,
+    "throughput_Ah": 452.39749928856116
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.05860883881940804,
+    "predicted_fade": 0.05225451553514392,
+    "rpt": 2,
+    "throughput_Ah": 905.8598447539857
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.07256068838352936,
+    "predicted_fade": 0.07761337436180242,
+    "rpt": 3,
+    "throughput_Ah": 1345.469162429231
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.08478436850123572,
+    "predicted_fade": 0.10431641678920558,
+    "rpt": 4,
+    "throughput_Ah": 1808.3806184062364
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.10383471332282401,
+    "predicted_fade": 0.130498054821983,
+    "rpt": 5,
+    "throughput_Ah": 2262.2532516301717
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.14360873487110704,
+    "predicted_fade": 0.15496395178075778,
+    "rpt": 6,
+    "throughput_Ah": 2686.382599952943
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.19949393340912913,
+    "predicted_fade": 0.17841383080382453,
+    "rpt": 7,
+    "throughput_Ah": 3092.8987364779946
+   },
+   {
+    "cell": "expt4-C",
+    "measured_fade": 0.30320595783686877,
+    "predicted_fade": 0.19814337790447206,
+    "rpt": 8,
+    "throughput_Ah": 3434.920938590634
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.042613628269152604,
+    "predicted_fade": 0.026184527119691683,
+    "rpt": 1,
+    "throughput_Ah": 453.92271708361386
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.06594028591608736,
+    "predicted_fade": 0.052902642901909276,
+    "rpt": 2,
+    "throughput_Ah": 917.0954776907032
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.0790639121691209,
+    "predicted_fade": 0.07715005002486156,
+    "rpt": 3,
+    "throughput_Ah": 1337.4371883953368
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.08867453762995514,
+    "predicted_fade": 0.10323390713462641,
+    "rpt": 4,
+    "throughput_Ah": 1789.6147372646865
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.09771875518797923,
+    "predicted_fade": 0.12890591558244227,
+    "rpt": 5,
+    "throughput_Ah": 2234.652670329459
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.10760242955931865,
+    "predicted_fade": 0.15464414677500116,
+    "rpt": 6,
+    "throughput_Ah": 2680.8386099283603
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.11648951999010015,
+    "predicted_fade": 0.1799851794249659,
+    "rpt": 7,
+    "throughput_Ah": 3120.1389013407647
+   },
+   {
+    "cell": "expt4-D",
+    "measured_fade": 0.12404108918087198,
+    "predicted_fade": 0.20593771947126138,
+    "rpt": 8,
+    "throughput_Ah": 3570.039999007579
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.04779958268618234,
+    "predicted_fade": 0.027345055203272853,
+    "rpt": 1,
+    "throughput_Ah": 474.04108922541354
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.06451682531222391,
+    "predicted_fade": 0.05410610358142441,
+    "rpt": 2,
+    "throughput_Ah": 937.9581092384
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.07739161599707389,
+    "predicted_fade": 0.08009487763628699,
+    "rpt": 3,
+    "throughput_Ah": 1388.48734273308
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.08716931660174743,
+    "predicted_fade": 0.10621666977299173,
+    "rpt": 4,
+    "throughput_Ah": 1841.3225154893335
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.09683732607177897,
+    "predicted_fade": 0.13190732483491893,
+    "rpt": 5,
+    "throughput_Ah": 2286.683697536344
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.10632315638779122,
+    "predicted_fade": 0.1577388943626735,
+    "rpt": 6,
+    "throughput_Ah": 2734.4877068649917
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.11542101221472889,
+    "predicted_fade": 0.18347291547944342,
+    "rpt": 7,
+    "throughput_Ah": 3180.6006625588366
+   },
+   {
+    "cell": "expt4-E",
+    "measured_fade": 0.1230543634564445,
+    "predicted_fade": 0.2086788675293265,
+    "rpt": 8,
+    "throughput_Ah": 3617.5592598579933
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.05602860173671487,
+    "predicted_fade": 0.02809825090992105,
+    "rpt": 1,
+    "throughput_Ah": 487.0981377676554
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.07613541940127477,
+    "predicted_fade": 0.05523170997982009,
+    "rpt": 2,
+    "throughput_Ah": 957.4710953767758
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.09261975148543178,
+    "predicted_fade": 0.08121653109761973,
+    "rpt": 3,
+    "throughput_Ah": 1407.9318026031037
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.10603627935743942,
+    "predicted_fade": 0.10727347889550745,
+    "rpt": 4,
+    "throughput_Ah": 1859.642864225757
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.11903931472072016,
+    "predicted_fade": 0.13273153738122315,
+    "rpt": 5,
+    "throughput_Ah": 2300.971860800192
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.13241487776440686,
+    "predicted_fade": 0.1581582364692436,
+    "rpt": 6,
+    "throughput_Ah": 2741.7572255212485
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.14557924426453062,
+    "predicted_fade": 0.1841312610259231,
+    "rpt": 7,
+    "throughput_Ah": 3192.0134330806004
+   },
+   {
+    "cell": "expt4-F",
+    "measured_fade": 0.1582702176138261,
+    "predicted_fade": 0.2083938387462712,
+    "rpt": 8,
+    "throughput_Ah": 3612.6181341672345
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.057690743813512024,
+    "predicted_fade": 0.02760709937298052,
+    "rpt": 1,
+    "throughput_Ah": 478.5837644078182
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.0780878108409997,
+    "predicted_fade": 0.053990266647032464,
+    "rpt": 2,
+    "throughput_Ah": 935.9500143143451
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.09458229546427843,
+    "predicted_fade": 0.07982264971777377,
+    "rpt": 3,
+    "throughput_Ah": 1383.7681268437614
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.10854524883827643,
+    "predicted_fade": 0.10574053380151155,
+    "rpt": 4,
+    "throughput_Ah": 1833.0684449503628
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.12197205693126678,
+    "predicted_fade": 0.1309585389761706,
+    "rpt": 5,
+    "throughput_Ah": 2270.2359895840523
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.13526802038710772,
+    "predicted_fade": 0.15569614606412469,
+    "rpt": 6,
+    "throughput_Ah": 2699.075577642391
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.14975335492212205,
+    "predicted_fade": 0.18098931686332254,
+    "rpt": 7,
+    "throughput_Ah": 3137.5461583922565
+   },
+   {
+    "cell": "expt4-G",
+    "measured_fade": 0.16116284801445258,
+    "predicted_fade": 0.20499843543272944,
+    "rpt": 8,
+    "throughput_Ah": 3553.7570101670794
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.0,
+    "predicted_fade": 0.0,
+    "rpt": 0,
+    "throughput_Ah": 0.0
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.05690395652531566,
+    "predicted_fade": 0.028294127538695403,
+    "rpt": 1,
+    "throughput_Ah": 490.4937634033602
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.07733304520305351,
+    "predicted_fade": 0.05494896918279009,
+    "rpt": 2,
+    "throughput_Ah": 952.5696331417856
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.0935066695838539,
+    "predicted_fade": 0.08092303900522654,
+    "rpt": 3,
+    "throughput_Ah": 1402.843960939487
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.10688666520907919,
+    "predicted_fade": 0.10664602050186496,
+    "rpt": 4,
+    "throughput_Ah": 1848.7655389413555
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.12006537371434767,
+    "predicted_fade": 0.13208546198255167,
+    "rpt": 5,
+    "throughput_Ah": 2289.7717998227577
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.13356718129624834,
+    "predicted_fade": 0.15717585934834508,
+    "rpt": 6,
+    "throughput_Ah": 2724.7271951571074
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.14723289301885767,
+    "predicted_fade": 0.18285191310266147,
+    "rpt": 7,
+    "throughput_Ah": 3169.8352557636053
+   },
+   {
+    "cell": "expt4-H",
+    "measured_fade": 0.16021207534595716,
+    "predicted_fade": 0.20734810902624287,
+    "rpt": 8,
+    "throughput_Ah": 3594.4898527711052
+   }
+  ]
+ },
+ "id": "big14-a-kirkaldy-fade",
+ "preregistration_sha256": "da6ac0da6c1ee88285a85f575f7ab0046b1d37563ac68d9658c3d10b19ca1c19",
+ "reported_not_judged": {
+  "calibration_residuals_per_temperature": {
+   "10C": {
+    "max_abs_residual": 0.08552682836131917,
+    "mean_signed_residual": -0.04515492651224241,
+    "n": 45,
+    "rmse": 0.05158555919953188
+   },
+   "25C": {
+    "max_abs_residual": 0.07950640556321442,
+    "mean_signed_residual": 0.01246303087217356,
+    "n": 30,
+    "rmse": 0.03739978965924042
+   },
+   "40C": {
+    "max_abs_residual": 0.048526452698635314,
+    "mean_signed_residual": 0.0035583820629331692,
+    "n": 45,
+    "rmse": 0.02483805633159804
+   }
+  },
+  "calibration_rmse": 0.03973582359453965,
+  "flagship_declared_parameters_on_holdout": {
+   "activation_energy_J_per_mol": 30000.0,
+   "k_q_per_Ah_abs_current": 0.0002,
+   "max_abs_residual": 2.099043135508294,
+   "n_checkpoints": 72,
+   "per_temperature": {
+    "10C": {
+     "max_abs_residual": 0.5571941984981744,
+     "mean_signed_residual": 0.2328145397842195,
+     "n": 27,
+     "rmse": 0.2787041515941374
+    },
+    "25C": {
+     "max_abs_residual": 1.1564758796217924,
+     "mean_signed_residual": 0.5616801536624698,
+     "n": 18,
+     "rmse": 0.6753514039070707
+    },
+    "40C": {
+     "max_abs_residual": 2.099043135508294,
+     "mean_signed_residual": 1.0471607605991673,
+     "n": 27,
+     "rmse": 1.249080304422436
+    }
+   },
+   "pooled_rmse": 0.8533633363458135,
+   "throughput_used": "abs_current (charge + discharge), the definition flagship A feeds the model"
+  },
+  "measured_set_temperature_C_per_cell": {
+   "expt4-A": [
+    15.575093,
+    16.00316,
+    15.982016,
+    15.994739,
+    16.235619,
+    14.5806675,
+    15.250977,
+    14.1935215
+   ],
+   "expt4-B": [
+    15.914435999999998,
+    15.561388,
+    15.556373,
+    15.422904999999998,
+    15.647109,
+    13.800076,
+    14.649417,
+    23.958118
+   ],
+   "expt4-C": [
+    16.702793,
+    16.471601,
+    16.860838,
+    17.26736,
+    16.862665,
+    16.488667,
+    16.486012,
+    16.49491
+   ],
+   "expt4-D": [
+    28.094498,
+    28.603027,
+    27.30683,
+    28.840744,
+    29.086348,
+    29.188606,
+    28.89961,
+    28.6865
+   ],
+   "expt4-E": [
+    28.934040000000003,
+    28.967003,
+    29.007675,
+    29.340103000000003,
+    29.565132,
+    29.798374,
+    29.484838,
+    29.621027
+   ],
+   "expt4-F": [
+    40.328835,
+    40.415596,
+    40.595490000000005,
+    40.800232,
+    40.995018,
+    41.168964,
+    40.589657,
+    40.715607
+   ],
+   "expt4-G": [
+    41.20661,
+    41.260506,
+    41.443993,
+    41.484978000000005,
+    41.568165,
+    41.816143,
+    41.62482,
+    41.70459
+   ],
+   "expt4-H": [
+    40.237656,
+    40.10637,
+    40.41458,
+    40.503563,
+    40.583694,
+    40.963882,
+    40.509537,
+    40.683025
+   ],
+   "expt5-A": [
+    16.950932,
+    16.869081,
+    16.87394,
+    16.841242,
+    16.411688,
+    16.634764,
+    16.500956,
+    16.350368,
+    16.50069,
+    15.771464,
+    16.072416,
+    15.804794,
+    15.829542,
+    15.07602
+   ],
+   "expt5-B": [
+    17.502016,
+    17.500326,
+    17.40034,
+    17.534578,
+    17.38102,
+    17.297655,
+    17.458752,
+    17.377539,
+    17.43803,
+    16.933899,
+    16.496012,
+    16.949379,
+    17.293098,
+    16.971258
+   ],
+   "expt5-C": [
+    16.565868,
+    16.606236,
+    16.604692,
+    16.535906,
+    16.454355,
+    16.430754,
+    16.603056,
+    16.497885,
+    16.517284,
+    16.710342,
+    15.85973,
+    16.24191,
+    16.123793,
+    15.902983
+   ],
+   "expt5-D": [
+    28.839817,
+    28.933043,
+    28.832487,
+    28.763948,
+    28.6648,
+    28.483734,
+    28.62935,
+    28.565634,
+    28.595816,
+    28.403624,
+    28.451725,
+    28.66689,
+    28.301535,
+    28.095444
+   ],
+   "expt5-E": [
+    28.479557,
+    28.52441,
+    28.405146,
+    28.363764,
+    28.107372,
+    27.900734,
+    28.109528,
+    28.07245,
+    28.104103,
+    26.871239,
+    27.808601,
+    27.751007,
+    27.3385,
+    27.119799
+   ],
+   "expt5-F": [
+    41.594803,
+    36.587116,
+    41.70883,
+    41.569138,
+    41.82841,
+    42.049553,
+    41.97663,
+    42.39966,
+    42.322056,
+    41.42816,
+    42.228252,
+    42.090782,
+    42.34756,
+    41.886314
+   ],
+   "expt5-G": [
+    42.13991,
+    42.128025,
+    42.371174,
+    42.246693,
+    42.387413,
+    42.390774,
+    42.58334,
+    42.776417,
+    42.804264,
+    42.449543,
+    41.41925,
+    42.984917,
+    42.964558,
+    42.693336
+   ],
+   "expt5-H": [
+    41.51267,
+    41.41116,
+    41.609608,
+    41.455517,
+    41.40513,
+    41.34627,
+    41.57168,
+    41.74236,
+    41.766598,
+    40.958893,
+    41.41238,
+    41.548355,
+    41.50425,
+    41.202396
+   ]
+  },
+  "skipped_checkpoints": {
+   "expt4-A": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-52.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-B": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-38.2 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-C": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-47.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-D": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-42.4 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-E": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-37.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-F": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-38.3 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-G": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-54.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt4-H": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-40.1 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 9
+    }
+   ],
+   "expt5-A": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-36.8 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-B": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-99.0 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-C": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-51.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-D": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-56.3 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-E": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-56.9 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-F": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-49.2 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-G": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-51.6 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ],
+   "expt5-H": [
+    {
+     "reason": "the cycle file does not reach this RPT's throughput (-48.7 A h at its nearest row; tolerance 10.0 A h): its discharge throughput is not measured, so it is not estimated",
+     "rpt": 15
+    }
+   ]
+  }
+ },
+ "schema": "forge.flagship.study/1",
+ "stated_limits": [
+  "the cell is an LG M50T, not the LG M50 of flagship A's Chen2020 parameter set; carrying the calibrated fade into flagship A requires an explicit applicability disclosure and does not validate flagship A's cell",
+  "calibration and holdout come from one laboratory and one protocol; the holdout is independent in cells and discharge profile, not in laboratory, batch or RPT procedure",
+  "flagship A's declared SOC window (0.15-0.95) and duty differ from both experiments; a met result applies inside the experiments' envelope only",
+  "a linear throughput model cannot represent a knee; a residual trend with throughput is reported, not explained away"
+ ],
+ "uncertainty_budget": {
+  "measurement": "UNKNOWN: the processed summaries carry no repeated capacity check of an unaged cell, so RPT repeatability is not established (never zero)",
+  "model_discrepancy": {
+   "reason": "the pre-registered holdout criteria were not met",
+   "status": "NOT QUANTIFIED (unknown, not zero)"
+  },
+  "numerical": "not applicable: the model is evaluated in closed form",
+  "parameter": {
+   "activation_energy": {
+    "max": 1.5373567524535562e-12,
+    "min": 2.3959157195627735e-21,
+    "std": 6.249323844883039e-13
+   },
+   "k_q": {
+    "max": 5.949613032450329e-05,
+    "min": 5.4861402039882555e-05,
+    "std": 1.6715443010741038e-06
+   },
+   "refits": {
+    "expt5-A": {
+     "activation_energy_J_per_mol": 7.631258138684526e-19,
+     "k_q_per_Ah_discharge": 5.4861402039882555e-05
+    },
+    "expt5-B": {
+     "activation_energy_J_per_mol": 1.2377360477560049e-12,
+     "k_q_per_Ah_discharge": 5.616251273296333e-05
+    },
+    "expt5-C": {
+     "activation_energy_J_per_mol": 1.5373567524535562e-12,
+     "k_q_per_Ah_discharge": 5.6429977057867154e-05
+    },
+    "expt5-D": {
+     "activation_energy_J_per_mol": 9.170641093209588e-14,
+     "k_q_per_Ah_discharge": 5.914024987095435e-05
+    },
+    "expt5-E": {
+     "activation_energy_J_per_mol": 2.3959157195627735e-21,
+     "k_q_per_Ah_discharge": 5.949613032450329e-05
+    },
+    "expt5-F": {
+     "activation_energy_J_per_mol": 4.690500780112035e-16,
+     "k_q_per_Ah_discharge": 5.850695285562491e-05
+    },
+    "expt5-G": {
+     "activation_energy_J_per_mol": 3.345788169442331e-13,
+     "k_q_per_Ah_discharge": 5.848987804616559e-05
+    },
+    "expt5-H": {
+     "activation_energy_J_per_mol": 6.844681108215341e-16,
+     "k_q_per_Ah_discharge": 5.8675593877104635e-05
+    }
+   }
+  }
+ },
+ "verdict": {
+  "C1": {
+   "criterion": "holdout RMSE of fade (predicted - measured), pooled over every holdout checkpoint of every holdout cell, <= 0.015 (1.5 percentage points of beginning-of-life capacity)",
+   "met": false,
+   "observed": 0.035289350072277396
+  },
+  "C2": {
+   "criterion": "at each of the three temperatures separately, |mean signed holdout residual| <= 0.010",
+   "met": false,
+   "met_per_temperature": {
+    "10C": true,
+    "25C": false,
+    "40C": true
+   },
+   "observed": {
+    "10C": 0.005390343991142196,
+    "25C": 0.024324857789141157,
+    "40C": 0.0057932365043140595
+   }
+  },
+  "met_if": "C1 and C2",
+  "outcome": "NOT MET"
+ }
+}

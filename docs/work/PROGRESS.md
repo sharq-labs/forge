@@ -2615,3 +2615,23 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   but the last aligns within 4.4 A h; the last falls 37-99 A h short (the final set's cycle rows are incomplete). Rule: an RPT
   is used only if it aligns within 10 A h (about one full cycle); otherwise it is skipped with the reason and never estimated.
   `Charge Throughput [A h]` counts charge + discharge (about 8 A h per cycle), confirming the throughput note above.
+- Archives admitted: Expt 5 md5 298aa767e4e14acdb348f5832e0cbae9, Expt 4 md5 99083707bc7a24e72d9865abac19ce50 (both equal to
+  Zenodo; sha256 in the study record). The Expt 4 download stopped once on DNS failures (network loss) and resumed per chunk.
+- **Study `big14-a-kirkaldy-fade`: NOT MET** (`docs/flagships/big14/kirkaldy_fade_study.json`;
+  `python -m forge_flagships.kirkaldy_fade --data D:/forge-data/kirkaldy2024/raw --out D:/forge-data/kirkaldy2024/study`).
+  - Calibration (Expt 5, 8 cells, 120 checkpoints): k_q 5.77e-5 per A h of discharge, activation energy AT ITS LOWER BOUND (0):
+    fade is not monotone in temperature (10 degC cells fade most, ~22-27 % at the last aligned RPT; 25 degC least, ~18 %;
+    40 degC ~21 %), which an Arrhenius factor cannot represent. Calibration RMSE 0.040.
+  - Holdout (Expt 4, 8 different cells, 72 checkpoints): C1 pooled RMSE 0.0353 > 0.015 NOT MET; C2 mean signed residual
+    10 degC 0.0054 (met), 25 degC 0.0243 (NOT met), 40 degC 0.0058 (met). Max |residual| 0.105.
+  - Uncertainty budget: numerical not applicable (closed form); parameter (leave-one-cell-out) k_q 5.49e-5 to 5.95e-5,
+    activation energy stays at the bound in every refit; measurement UNKNOWN (no repeated capacity check of an unaged cell in
+    the summaries); model discrepancy NOT QUANTIFIED (unknown, not zero) because the holdout failed.
+  - Reported, not judged: flagship A's declared fade (k_q 2e-4 per A h of |I|, 30 kJ/mol), applied with the |I| throughput
+    flagship A feeds it, gives holdout RMSE 0.85 (mean residual +0.23 / +0.56 / +1.05 at 10 / 25 / 40 degC): an order of
+    magnitude faster fade than these LG M50T cells show. LG M50T is not flagship A's LG M50; this is an observation, not a
+    correction of flagship A.
+  - The last RPT of every cell is skipped (the per-cycle file does not reach its throughput); measured set temperatures run
+    above setpoint at 10 degC (14-24 degC) and 25 degC (27-30 degC) through self-heating; the setpoint is used as registered.
+- `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 4 passed. `recertification_scope explain` on every changed
+  path: ordinary.

@@ -321,8 +321,11 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
       cycle ageing, 10.4 GB, calibration) and Expt 4 (drive-cycle ageing,
       11.4 GB, holdout) into `D:/forge-data/kirkaldy2024/raw` (not committed).
       Study `big14-a-kirkaldy-fade` pre-registered before any capacity value
-      was read; next: admit both archives by md5, extract the RPT capacities,
-      run the study.
+      was read (`dd53eec7`). RUN 2026-10-09: **NOT MET** (holdout RMSE 0.035
+      against 0.015; 25 degC bias 0.024 against 0.010; activation energy at
+      its lower bound: the fade is not Arrhenius in temperature). Model
+      discrepancy NOT QUANTIFIED. Flagship A's declared fade parameters
+      overpredict this cell's fade by an order of magnitude (reported only).
 - [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
       untouched curves in hand are C/10. An independent dataset is needed for
       any validation claim about the cell model.
