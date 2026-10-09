@@ -32,6 +32,18 @@ solver noise; C the whole-field OpenFOAM/SU2 comparison, the monotone benchmark-
 sampling spacing exceeds its tolerance). Each report states the pre-registered outcome, and where a later
 reading was added it is labelled **post hoc** and sits beside, never in place of, the original outcome.
 
+## BIG 14 status
+
+The owner selected flagship A for BIG 14 closure work on 2026-09-27, with no backup. **B, C and D are DEFERRED** (recorded
+2026-10-09): their BIG 13 bundles, reports, verdicts (`insufficient_evidence`) and recorded gaps stay exactly as above, and no
+new evidence-bearing work is done on them in BIG 14. Their open questions, carried unchanged into the deferral:
+
+- B: peak-stress convergence, the CalculiX difference, and no independent thermo-structural numerical benchmark;
+- C: near-lid mapping/discretisation effects, SU2's mid-plane flux miss, and authoritative verification of the Ghia transcription;
+- D: GRI-Mech applicability, and no ignition-delay or flame experimental comparison.
+
+Deferral is not a disposition of those questions; reopening any of them needs a new pre-registration.
+
 ## Reproducing a flagship
 
 The providers run in WSL conda environments (see `docs/work/PROGRESS.md`, BIG 11 "Provider environments"); `tools/wsl_env.sh` sets

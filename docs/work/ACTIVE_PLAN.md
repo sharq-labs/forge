@@ -286,8 +286,10 @@ or acceptance logic is added.
       2026-10-09 to 2026-10-23, pre-registered in
       `big14_a_campaign_timebox_preregistration.json` for every 14.3 study
       registered from that date (the earlier studies keep their outcomes).
-- [ ] Move the non-selected flagships to explicit deferred status; retain their
-      `insufficient_evidence` verdicts and recorded gaps.
+- [x] Move the non-selected flagships to explicit deferred status; retain their
+      `insufficient_evidence` verdicts and recorded gaps. Done 2026-10-09:
+      B, C and D DEFERRED in `docs/flagships/README.md` ("BIG 14 status"),
+      with their open questions carried unchanged.
 
 Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
 

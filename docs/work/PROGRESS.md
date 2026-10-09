@@ -2587,3 +2587,17 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   1 failed each = tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
   on tree.clean only (uncommitted changes); audit 141 accepted / 0 unexpected, inventory 14370d2c...
   identical on 3.11 and 3.12 (3 conditional, 5 extra, 133 provider).
+
+## 2026-10-09 BIG 14 — flagship A 14.3: timebox, Kirkaldy 2024 pre-registration, B/C/D deferred (branch `feat/big-14-a-kirkaldy-fade`)
+
+- Owner decisions 2026-10-09: download the Kirkaldy 2024 LG M50T subset; 14.3 timebox two weeks (2026-10-09 to 2026-10-23).
+- Pre-registration commit `dd53eec7` (pushed to `origin/feat/big-14-a-kirkaldy-fade` before any capacity value was read and while
+  the archives were still downloading): `big14_a_campaign_timebox_preregistration.json` and
+  `big14_a_kirkaldy_fade_preregistration.json` (calibrate ThroughputArrheniusFade on Expt 5, hold out Expt 4; C1 pooled holdout
+  RMSE <= 0.015, C2 per-temperature |bias| <= 0.010).
+- Data: Zenodo 10637534 (CC-BY-4.0). Expt 5 10,443,549,687 B md5 298aa767..., Expt 4 11,376,117,549 B md5 99083707..., into
+  `D:/forge-data/kirkaldy2024/raw` (not committed). A single curl stream ran at ~68 KB/s (~3.7 days); a 16-connection
+  ranged download (stdlib, resumable per 128 MB chunk) runs at ~1 MB/s.
+- B, C and D moved to DEFERRED in `docs/flagships/README.md`; verdicts and gaps unchanged.
+- `pytest flagships/tests tests/test_agent_workflow_contract.py tests/test_repository_architecture.py` (Windows 3.14): 55 passed,
+  50 skipped (provider-gated).
