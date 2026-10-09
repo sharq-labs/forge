@@ -44,6 +44,35 @@ new evidence-bearing work is done on them in BIG 14. Their open questions, carri
 
 Deferral is not a disposition of those questions; reopening any of them needs a new pre-registration.
 
+Flagship A's fade law was tested against LG M50T ageing data (Kirkaldy 2024) in the pre-registered study
+`big14-a-kirkaldy-fade` (`flagships/forge_flagships/data/big14_a_kirkaldy_fade_preregistration.json`, record
+`docs/flagships/big14/kirkaldy_fade_study.json`). Outcome **NOT MET**, closed as a justified negative result:
+
+- C1 pooled holdout RMSE 0.037 > 0.015, NOT MET. C2 |mean signed residual| <= 0.010 per temperature: 10 degC 0.006 met,
+  25 degC 0.027 NOT MET, 40 degC 0.007 met. `met_if` is C1 and C2, so the study is NOT MET.
+- Activation energy NOT ESTABLISHED: the fit sits at its lower bound (0) in all eight leave-one-cell-out refits. The ~1e-13
+  J/mol spread of those refits is optimizer noise at the bound, not a parameter uncertainty.
+- Model discrepancy NOT QUANTIFIED (unknown, not zero): the pre-registration allowed it only if C1 and C2 were met.
+  Measurement uncertainty UNKNOWN (no repeated capacity check of an unaged cell in the summaries; not zero).
+- No threshold or split changed after the results. Five deviations are recorded in the study record's
+  `deviations_from_preregistration` (one, skipping each cell's last RPT, biases toward MET), and the outcome is NOT MET with
+  or without the reference RPT. The bound-pinned activation-energy spread is not carried as parameter uncertainty, under the
+  pre-registration's "a fit at the bound is reported as at the bound"; that departure from its uncertainty rule is stated
+  here and is not yet in the record's deviations list.
+- Independence of the holdout: different cells on disjoint rig channels (`experiment_metadata.xlsx`; the dataset carries no
+  serials) and a different discharge profile (drive cycle vs constant current). Shared with calibration: laboratory, dataset
+  programme, the same two test rigs (2 and 5, on disjoint channels), RPT procedure and cell type; the pre-registration claims
+  no batch independence either. This is not
+  independent-laboratory validation.
+- Flagship A's declared fade parameters on the same holdout are reported, not judged: they overpredict at every temperature
+  and 38 of 64 predictions fall outside the model's declared state range. Kirkaldy measured LG M50T; flagship A uses the LG M50
+  (Chen2020) parameter set. The study neither validates nor invalidates flagship A's battery model, and its parameters are not
+  "corrected" from it. The registered NOT MET is evidence against this throughput-Arrhenius law for LG M50T fade under these
+  conditions; the declared-parameter comparison is an observation only (temperature = setpoint, not flagship A's mean cell
+  temperature), and carrying this law or parameterization to another cell still needs an applicability argument.
+- A non-monotone or otherwise new temperature law would be a separate, newly pre-registered study with a fresh confirmatory
+  holdout. It is not started.
+
 ## Reproducing a flagship
 
 The providers run in WSL conda environments (see `docs/work/PROGRESS.md`, BIG 11 "Provider environments"); `tools/wsl_env.sh` sets

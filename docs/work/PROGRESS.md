@@ -1719,3 +1719,34 @@ fast-forwarded.
   L2 classification says level 7 NOT REACHED; L3 Expt 4 'Discharge Capacity' is gross drive-cycle discharge (5.87 vs 3.17 A h
   charge per cycle), recorded as a deviation; L4 measurement UNKNOWN stays a stated assertion.
 - `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 9 passed.
+
+## 2026-10-09 BIG 14 — Kirkaldy fade study closed NOT MET; branch synced with main after PR #120
+
+- PR #120 (R1/R4, certified source `3e396bc4`, certificate child `d383eed0`) merged into main as `2c0e024b` (merge commit,
+  parents `16c87f40` + `d383eed0`). `main` was merged INTO `feat/big-14-a-kirkaldy-fade` as `343b8937` (no rebase, so the
+  pre-registration commit `dd53eec7` keeps its place before the results). The only conflict was an append/append in this file,
+  resolved by keeping main's entries first and this branch's entry verbatim after them.
+- Pre-registration blob `0668576d` (sha256 `da6ac0da...`, the value pinned in the study record) is unchanged before and after the
+  merge; no file under `flagships/` or `docs/flagships/big14/` changed in this sync.
+- Closure: the throughput-Arrhenius campaign ends as a justified negative result, NOT MET under its registered criteria. No
+  threshold or split changed; the five recorded `deviations_from_preregistration` stand (one biases toward MET), and the
+  outcome is NOT MET with or without the reference RPT. Activation energy NOT ESTABLISHED (bound-pinned in 8/8 refits;
+  the refits' ~1e-13 J/mol spread is optimizer noise, not uncertainty). Model discrepancy NOT QUANTIFIED. The holdout is
+  independent of calibration in cells (disjoint rig channels) and discharge profile only; laboratory, dataset programme, RPT
+  procedure and cell type are shared, and batch independence is not claimed (pre-registration stated limit). Summary in `docs/flagships/README.md` ("BIG 14 status").
+- forge-scientific-review of this close-out prose (static, one round): CHANGES REQUIRED, no BLOCKER/HIGH, none able to turn
+  NOT MET into MET; all applied in prose: M "nothing changed" overstated (now names the five deviations); L reported-not-judged
+  comparison no longer called evidence; L measurement UNKNOWN added; L shared rigs 2 and 5 added; L non-monotone claim cites
+  `calibration_residuals_per_temperature`. Open item (not fixed, a post-result record edit is out of this pass's scope): the
+  pre-registration said the leave-one-cell-out spread would be carried as parameter uncertainty; the record instead reports
+  activation energy NOT ESTABLISHED (conservative) and does not list this among its deviations.
+- Next fade law (non-monotone temperature dependence or other): NOT STARTED. It needs a new hypothesis, pre-registration,
+  complexity control and a fresh confirmatory holdout; the observed Expt 4 holdout is exploratory evidence for it at most.
+- Commands (Windows, phyx/.venv CPython 3.14.2 -- not a CI interpreter; PYTHONPATH=<worktree>/src;<worktree>;<worktree>/flagships;
+  TMP=D:/forge-tmp-fade), final tree: `pytest flagships/tests/test_kirkaldy_fade.py`: 9 passed;
+  `pytest -n 4 flagships/tests tests/test_agent_workflow_contract.py tests/test_repository_architecture.py
+  tests/test_engineering_contracts.py tests/test_system_runtime_checkpoint.py tests/test_system_runtime_review_fixes.py`:
+  189 passed, 53 skipped (provider-gated); `tools/forge_check.py --changed`: 225 passed; `recertification_scope explain` on
+  every path changed against main: ordinary. The committed study record is byte-identical to
+  `D:/forge-data/kirkaldy2024/study/kirkaldy_fade_study.json`; the study was not re-run and nothing was re-downloaded.
+  Local Assurance / recertification: NOT RUN (no protected path changed).

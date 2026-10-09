@@ -329,18 +329,34 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
   - Fresh-day module heat: 69.0 Wh (was 28.8 Wh on SPM).
   - Window refinement: differences now monotone, but the peak-heat tolerance is
     missed. Level 4 still NOT reached.
-- [ ] LG M50T ageing data (Kirkaldy 2024, Zenodo 10637534, CC-BY-4.0) for the
+- [x] LG M50T ageing data (Kirkaldy 2024, Zenodo 10637534, CC-BY-4.0) for the
       fade model. Download approved by the owner 2026-10-09: Expt 5 (standard
       cycle ageing, 10.4 GB, calibration) and Expt 4 (drive-cycle ageing,
       11.4 GB, holdout) into `D:/forge-data/kirkaldy2024/raw` (not committed).
       Study `big14-a-kirkaldy-fade` pre-registered before any capacity value
       was read (`dd53eec7`). RUN 2026-10-09: **NOT MET** (holdout RMSE 0.037
-      against 0.015; 25 degC bias 0.027 against 0.010; activation energy at
-      its lower bound in every refit: the fade is not Arrhenius in
-      temperature). Model discrepancy NOT QUANTIFIED. Flagship A's declared
-      fade parameters overpredict this cell's fade, mostly outside the
-      model's state range (reported only). Next admissible step: a fade law
-      with a non-monotone temperature dependence, pre-registered anew.
+      against 0.015; 25 degC bias 0.027 against 0.010; 10 and 40 degC bias
+      met; activation energy at its lower bound in every refit, so NOT
+      ESTABLISHED: the calibration fade is not monotone in temperature, per
+      the PROGRESS fade levels and the record's
+      `calibration_residuals_per_temperature` (10 degC -0.048, 25 degC
+      +0.013, 40 degC +0.004), and a monotonic Arrhenius factor cannot
+      represent it). Model discrepancy NOT
+      QUANTIFIED. Flagship A's declared fade parameters overpredict this
+      cell's fade, 38 of 64 predictions outside the model's state range
+      (reported, not judged; LG M50T is not flagship A's LG M50).
+      CLOSED 2026-10-09 as a justified negative result: the throughput-Arrhenius
+      campaign is NOT MET. No threshold or split changed; five recorded
+      deviations (`deviations_from_preregistration`) and the activation-energy
+      spread not carried as uncertainty (bound-pinned) are stated in
+      `docs/flagships/README.md`; none can turn NOT MET into MET.
+- [ ] (NOT STARTED; not part of this campaign) A temperature-dependent or
+      non-monotone fade law is a NEW study: its own model hypothesis, a new
+      pre-registration, explicit complexity control, calibration/selection
+      data, and a fresh confirmatory holdout not used to choose the law. The
+      Kirkaldy Expt 4 holdout has been observed; it may serve exploratory or
+      model-development work but must not be relabelled as unseen
+      confirmatory evidence for the new law.
 - [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
       untouched curves in hand are C/10. An independent dataset is needed for
       any validation claim about the cell model.
