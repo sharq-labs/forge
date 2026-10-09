@@ -253,8 +253,21 @@ Then review and authority debt:
       digest is re-read only on refresh; undeclared dependencies are unbound;
       `found_but_refused` reads reason prefixes; FEniCSx (distribution
       `fenics-dolfinx`, LIBRARY mode) is not covered by this check - open.
+- [x] Project review 2026-10-05 (`docs/work/PROJECT_REVIEW_2026-10-05.md`),
+      re-read against `origin/main` @ `16c87f40` on 2026-10-09:
+      R1 (HIGH, bundle export path containment) FIXED on
+      `fix/big-14-review-r1-r4`; R4 (MEDIUM, non-finite replay tolerance)
+      FIXED on the same branch; R2 (failed version probe) and R3 (RECORD vs
+      installed bytes) were already covered by the provider-identity items
+      above (`returncode` refusal, `catalog._footprint`); R5 (provider and
+      flagship collection in CI) is carried by the Pass 13 per-skip admission
+      rules, and the provider suites still run in their own environments
+      under 14.4.
 - [ ] Align advertised Python/optional-dependency support with the environments
       actually tested; either support an environment or refuse it explicitly.
+      OWNER DECISION: `pyproject.toml` says `requires-python = ">=3.11"`;
+      CI runs 3.11/3.12 only; the local venv is 3.14 and the provider env is
+      3.13 (PyBOP caps below 3.14).
 - [ ] Re-run the affected regression packs after each bounded fix and append
       the exact commands/results to PROGRESS.
 
@@ -282,9 +295,14 @@ or acceptance logic is added.
       PARTIAL: every flagship A study so far has its own pre-registration
       committed and pushed before its first run (SHAs in PROGRESS), but no
       umbrella pre-registration and no 14.3 timebox were registered before
-      the first run. The timebox is still open (owner).
-- [ ] Move the non-selected flagships to explicit deferred status; retain their
-      `insufficient_evidence` verdicts and recorded gaps.
+      the first run. TIMEBOX: owner decision 2026-10-09, two weeks,
+      2026-10-09 to 2026-10-23, pre-registered in
+      `big14_a_campaign_timebox_preregistration.json` for every 14.3 study
+      registered from that date (the earlier studies keep their outcomes).
+- [x] Move the non-selected flagships to explicit deferred status; retain their
+      `insufficient_evidence` verdicts and recorded gaps. Done 2026-10-09:
+      B, C and D DEFERRED in `docs/flagships/README.md` ("BIG 14 status"),
+      with their open questions carried unchanged.
 
 Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
 
@@ -311,8 +329,34 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
   - Fresh-day module heat: 69.0 Wh (was 28.8 Wh on SPM).
   - Window refinement: differences now monotone, but the peak-heat tolerance is
     missed. Level 4 still NOT reached.
-- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
-      subset) for the fade model. Needs download approval.
+- [x] LG M50T ageing data (Kirkaldy 2024, Zenodo 10637534, CC-BY-4.0) for the
+      fade model. Download approved by the owner 2026-10-09: Expt 5 (standard
+      cycle ageing, 10.4 GB, calibration) and Expt 4 (drive-cycle ageing,
+      11.4 GB, holdout) into `D:/forge-data/kirkaldy2024/raw` (not committed).
+      Study `big14-a-kirkaldy-fade` pre-registered before any capacity value
+      was read (`dd53eec7`). RUN 2026-10-09: **NOT MET** (holdout RMSE 0.037
+      against 0.015; 25 degC bias 0.027 against 0.010; 10 and 40 degC bias
+      met; activation energy at its lower bound in every refit, so NOT
+      ESTABLISHED: the calibration fade is not monotone in temperature, per
+      the PROGRESS fade levels and the record's
+      `calibration_residuals_per_temperature` (10 degC -0.048, 25 degC
+      +0.013, 40 degC +0.004), and a monotonic Arrhenius factor cannot
+      represent it). Model discrepancy NOT
+      QUANTIFIED. Flagship A's declared fade parameters overpredict this
+      cell's fade, 38 of 64 predictions outside the model's state range
+      (reported, not judged; LG M50T is not flagship A's LG M50).
+      CLOSED 2026-10-09 as a justified negative result: the throughput-Arrhenius
+      campaign is NOT MET. No threshold or split changed; five recorded
+      deviations (`deviations_from_preregistration`) and the activation-energy
+      spread not carried as uncertainty (bound-pinned) are stated in
+      `docs/flagships/README.md`; none can turn NOT MET into MET.
+- [ ] (NOT STARTED; not part of this campaign) A temperature-dependent or
+      non-monotone fade law is a NEW study: its own model hypothesis, a new
+      pre-registration, explicit complexity control, calibration/selection
+      data, and a fresh confirmatory holdout not used to choose the law. The
+      Kirkaldy Expt 4 holdout has been observed; it may serve exploratory or
+      model-development work but must not be relabelled as unseen
+      confirmatory evidence for the new law.
 - [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
       untouched curves in hand are C/10. An independent dataset is needed for
       any validation claim about the cell model.

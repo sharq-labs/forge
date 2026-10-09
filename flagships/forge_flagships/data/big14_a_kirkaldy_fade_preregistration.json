@@ -1,0 +1,51 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-kirkaldy-fade",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-10-09, before any capacity value of the dataset below was read; only the Zenodo record metadata (titles, sizes, md5, the experiment table) and experiment_metadata.xlsx's existence were seen. The two archives were still downloading when this file was committed.",
+  "question": "Can the throughput-Arrhenius linear capacity-fade model flagship A uses (engcore.domains.battery.throughput_fade.ThroughputArrheniusFade, parameters k_q and activation_energy, reference temperature 298.15 K) be calibrated on constant-current cycle-ageing data of a commercial 21700 NMC811 / graphite-SiOx cell and then predict the fade of DIFFERENT cells of the same type aged with a drive-cycle discharge at the same temperatures?",
+  "classification": "parameter calibration plus a holdout prediction test against measured data (experimental comparison of the fade model, level 7 candidate for the fade model of an LG M50T cell only); not validation of flagship A's LG M50 (Chen2020) cell model",
+  "data": {
+    "source": "Kirkaldy N., Samieian M.A., Offer G.J., Marinescu M., Patel Y. (2024), Data from: 'Lithium-ion battery degradation: comprehensive cycle ageing data and analysis for commercial 21700 cells', Zenodo, https://doi.org/10.5281/zenodo.10637534; publication J. Power Sources 603 (2024) 234185",
+    "license": "cc-by-4.0",
+    "cell": "LG M50T (LG GBM50T2170), 21700, NMC811 cathode, graphite-SiOx anode",
+    "calibration_set": {"archive": "Expt 5 - Standard Cycle Aging (Control).zip", "zenodo_md5": "298aa767e4e14acdb348f5832e0cbae9",
+                        "conditions": "0-100 % SOC, 0.3C charge / 1C constant-current discharge, 10, 25 and 40 degC, every cell of the experiment"},
+    "holdout_set": {"archive": "Expt 4 - Drive Cycle Aging (Control).zip", "zenodo_md5": "99083707bc7a24e72d9865abac19ce50",
+                    "conditions": "0-100 % SOC, 0.3C charge / drive-cycle discharge, 10, 25 and 40 degC, every cell of the experiment"},
+    "not_used": "Expt 1, 2,2 and 3 (partial SOC windows) are not downloaded and play no part in this study",
+    "admission": "each archive is admitted only if its md5 equals the Zenodo md5 above; its sha256 is recorded when admitted; nothing from the archives is committed except derived per-checkpoint tables with their source digests"
+  },
+  "definitions": {
+    "capacity": "the discharge capacity of each reference performance test (RPT) capacity check, as the dataset's own processed RPT summary states it; if no processed summary exists, the integral of current over the RPT capacity-check discharge. Chosen before seeing either.",
+    "fade": "1 - capacity / capacity at the cell's first RPT (beginning of life), per cell",
+    "throughput": "cumulative discharge charge in A h from the start of ageing to each RPT, excluding the RPTs themselves",
+    "temperature": "the ageing chamber setpoint (283.15, 298.15, 313.15 K) is the model's mean_cell_temperature; the measured surface temperature, where the data carry it, is reported, not used",
+    "fit": "ordinary least squares of predicted vs measured fade over every calibration checkpoint of every calibration cell, all temperatures jointly; parameters k_q > 0 and activation_energy in [0, 200] kJ/mol; a fit at the bound is reported as at the bound"
+  },
+  "acceptance": {
+    "C1": "holdout RMSE of fade (predicted - measured), pooled over every holdout checkpoint of every holdout cell, <= 0.015 (1.5 percentage points of beginning-of-life capacity)",
+    "C2": "at each of the three temperatures separately, |mean signed holdout residual| <= 0.010",
+    "met_if": "C1 and C2"
+  },
+  "uncertainty_budget": {
+    "numerical": "the model is closed form; numerical uncertainty is stated as not applicable, with the reason",
+    "parameter": "cell-to-cell: refit leaving out one calibration cell at a time; the spread of k_q and activation_energy over those refits is reported and carried as the parameter uncertainty",
+    "measurement": "RPT capacity repeatability where the data repeat a check on an unaged cell; otherwise UNKNOWN, never zero",
+    "model_discrepancy": "quantified from the holdout residuals ONLY if met_if holds, and only inside the calibration/holdout envelope (0-100 % SOC, the three temperatures, these C-rates, the throughput range observed); otherwise NOT QUANTIFIED (unknown, not zero)"
+  },
+  "reported_not_judged": [
+    "the fitted k_q and activation_energy and the leave-one-cell-out spread",
+    "calibration RMSE",
+    "residuals against throughput per temperature (a knee or curvature the linear model cannot represent)",
+    "the same holdout comparison for the model with flagship A's current declared parameters (k_q 2e-4 /(A h), activation_energy 30 kJ/mol)"
+  ],
+  "stated_limits": [
+    "the cell is an LG M50T, not the LG M50 of flagship A's Chen2020 parameter set; carrying the calibrated fade into flagship A requires an explicit applicability disclosure and does not validate flagship A's cell",
+    "calibration and holdout come from one laboratory and one protocol; the holdout is independent in cells and discharge profile, not in laboratory, batch or RPT procedure",
+    "flagship A's declared SOC window (0.15-0.95) and duty differ from both experiments; a met result applies inside the experiments' envelope only",
+    "a linear throughput model cannot represent a knee; a residual trend with throughput is reported, not explained away"
+  ],
+  "timebox": "this study is part of the 14.3 campaign bounded by big14-a-campaign-timebox (ends 2026-10-23); if the data cannot be admitted or the study cannot be run inside it, it closes as a justified refusal",
+  "no_change_after_seeing_results": "the data split, definitions, fit, criteria and their tolerances are fixed; a failed criterion stays failed under its label"
+}

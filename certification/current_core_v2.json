@@ -4,7 +4,7 @@
       "area": "certification_control",
       "digest": "73a3f6cdca9b5e16515559123ed28b5876c6f1930918317841ac0135e6981987",
       "executed_certified_bytes_match_source": true,
-      "executed_merge_preview_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+      "executed_merge_preview_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
       "file_count": 37
     },
     "environment": {
@@ -16,28 +16,28 @@
       "execution_model": "sequential_functional_gates_bounded_mutation_shards_then_certificate",
       "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
       "ngspice": "ngspice-42 : Circuit level simulation program",
-      "pip_freeze_3_11_sha256": "d021594324095d56caef6325108b2415b7fb82c0789b5d353f7ee1f60be869f5",
-      "pip_freeze_3_12_sha256": "51a843b138f907e95da5bfeb2c215baaeeb04126b56b257977bb1fb14485fbb2",
+      "pip_freeze_3_11_sha256": "99fb5f3e54252e1bf3ba5c65f2b3b7c4527dafbb5da0e0c42707bd5b8a0f2dd5",
+      "pip_freeze_3_12_sha256": "21d3d74a3fdc73f86ee5efda432d4904a9184038017c89ef3fcd9b239e16c256",
       "provenance_mode": "local",
       "python_3_11": "Python 3.11.17",
       "python_3_12": "Python 3.12.3",
       "python_3_12_source_gates": {
         "campaign312": {
-          "pip_freeze_sha256": "51a843b138f907e95da5bfeb2c215baaeeb04126b56b257977bb1fb14485fbb2",
+          "pip_freeze_sha256": "21d3d74a3fdc73f86ee5efda432d4904a9184038017c89ef3fcd9b239e16c256",
           "python": "Python 3.12.3"
         },
         "regression312": {
-          "pip_freeze_sha256": "51a843b138f907e95da5bfeb2c215baaeeb04126b56b257977bb1fb14485fbb2",
+          "pip_freeze_sha256": "21d3d74a3fdc73f86ee5efda432d4904a9184038017c89ef3fcd9b239e16c256",
           "python": "Python 3.12.3"
         },
         "scientific312": {
-          "pip_freeze_sha256": "51a843b138f907e95da5bfeb2c215baaeeb04126b56b257977bb1fb14485fbb2",
+          "pip_freeze_sha256": "21d3d74a3fdc73f86ee5efda432d4904a9184038017c89ef3fcd9b239e16c256",
           "python": "Python 3.12.3"
         }
       },
       "runner_os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
       "schema": "forge.certification_environment/4",
-      "source_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+      "source_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
@@ -346,7 +346,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "151b27c91cf696a89e6c5721b60fe00315b105da35f0d045ecaa8ba4d0797801",
+          "execution_log_sha256": "4b31d52601710459e93133f88fbef62aba7f73facae261201c809fa10d6ccd94",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -426,7 +426,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "d379f4443592776d5ec39a6995682ac021ca5d7be86c470486c443cf0f75a106",
+          "execution_log_sha256": "539a67a512a15fdf46e1b61e9877c660a10b81b5b250420f64e4645826eeb63b",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -506,7 +506,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "0238594a6d5285d066aaed7f25650792bc7fdfdb077182ddaac823c605c9e21a",
+          "execution_log_sha256": "8305267cee19bd96f20819c8aa0d88c91848e8205ee84dd2e35821742a11589a",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -586,7 +586,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "c7f5ddb5a7cc04204c7cf795530ba7786c11a6aff8bbde77fb2e94a5cc2f2369",
+          "execution_log_sha256": "910431dc925f7adc93ad8f315f3c25e647a81bf95d9fccdbb277e330407cd163",
           "killed_count": 71,
           "selected_count": 71,
           "selected_ids": [
@@ -670,14 +670,14 @@
       "campaign_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "campaign312",
-        "gate_record_sha256": "1d1174da585310a5a5f2c6999df4298567bb605311a15bea93198165eace69a7",
-        "head_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+        "gate_record_sha256": "6ba6800eac88b15c4450e69e6ef7dcd88be248a20314efe1cb72ed4c35c10405",
+        "head_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
         "result": "success",
         "suites": {
           "campaign": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "f0fbf4bae92b867763e4e1351b8660c68c99574c6c430798bbf9ac7341612c88",
+            "junit_sha256": "f06caaedb7442a2a61d66a64c0d5db9bd8c5b88426010adfaf3720eb2c46d0e9",
             "skipped": 0,
             "skips": {
               "accepted": 0,
@@ -716,14 +716,14 @@
       "false_confidence_regression_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "regression312",
-        "gate_record_sha256": "fe3c5f7a1a813501659a34d38a3b7694993c61f4567658580a0a678e64cc8bf0",
-        "head_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+        "gate_record_sha256": "57fbd6a051dbed5a158ca41e69e65fd4fb955033bc89a88745fa990e00035704",
+        "head_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
         "result": "success",
         "suites": {
           "regression": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "58c6fad0e13a0a21b2a4638091f945ff351925ebfb2277ab5ed1108f4fdca714",
+            "junit_sha256": "9a179ffc86c699fc93e4fd4826d1e0f2e71937c74f8874bebd11697df2717fb0",
             "skipped": 0,
             "skips": {
               "accepted": 0,
@@ -738,14 +738,14 @@
       "fast_python_3_11": {
         "clean_tree_after_gate": true,
         "gate": "fast311",
-        "gate_record_sha256": "261621b61c6f02a1c24d1feda1a9d629183ba2bf7ecfb7a034f701e2f67e2cef",
-        "head_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+        "gate_record_sha256": "671e7658e6119d5db7fe1c7dad7cf7fcd365588a5adbd87de3943a14e813b74b",
+        "head_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "3ab352caf9c904923027a1917ff3ea53057f1918eb52369db09857d03e530616",
+            "junit_sha256": "4294a5097a62914f48ab5dd4e9cba5053902ec0bb074d0e6a84915829203fdaf",
             "skipped": 0,
             "skips": {
               "accepted": 0,
@@ -758,7 +758,7 @@
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "8ebd864236d1cf488322dd2b8f1c66d0d7ae636fb6d357bbe1e94184bf6caddd",
+            "junit_sha256": "7768d23f6f5bf3e581c51d4ad3fc5c15a0064afbe2fd0c0bca49aa97287ed11b",
             "skipped": 141,
             "skips": {
               "accepted": 141,
@@ -766,21 +766,21 @@
               "skipped": 141,
               "unexpected": 0
             },
-            "tests": 9507
+            "tests": 9554
           }
         }
       },
       "fast_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "fast312",
-        "gate_record_sha256": "3e22c9e8bbe8582316042f63bf6ce1c012e3504ebf92b59478ff1f9b0e83c534",
-        "head_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+        "gate_record_sha256": "eae5528c55c7fa82ded335a2a44985e745ca6fca366a6a43db16f64fe1bc1d4b",
+        "head_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "51982e9acdd3fccc281aa0b12b9779103715da511d14eb5001877205dd142560",
+            "junit_sha256": "b41675416ed2d7011873104675b01d5fd236457dfe3af3a2ca1bfbd20c7a28a3",
             "skipped": 0,
             "skips": {
               "accepted": 0,
@@ -793,7 +793,7 @@
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "f7550d00cdda9f62dbbc51ed20a6ca2da697aa7996b809ed9b4ebc3cd6a020b7",
+            "junit_sha256": "c7f02c95e0430f8a1d5da51f8aa1afcbac8218e2a2bd79cc5f64281d7331c9cc",
             "skipped": 141,
             "skips": {
               "accepted": 141,
@@ -801,7 +801,7 @@
               "skipped": 141,
               "unexpected": 0
             },
-            "tests": 9507
+            "tests": 9554
           }
         }
       },
@@ -809,14 +809,14 @@
       "scientific_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "scientific312",
-        "gate_record_sha256": "3645f0208b79e41b1002db3cb26d78c98278ef8063e47f18c2bc95ec7bb440a7",
-        "head_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+        "gate_record_sha256": "36ba37352507ba3f55747b435ee2db43ea9b59c592ccf6a596322237708cb212",
+        "head_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
         "result": "success",
         "suites": {
           "scientific": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "b4629e39cf3be3e0b93b893a0c227b8a8a7bfc2a5f4d25ffc78e321d136ef317",
+            "junit_sha256": "45a2acb40ce94796a249965c68cb699aa53384724b13321c2fc94048675a5e05",
             "skipped": 141,
             "skips": {
               "accepted": 141,
@@ -824,21 +824,21 @@
               "skipped": 141,
               "unexpected": 0
             },
-            "tests": 10058
+            "tests": 10105
           }
         }
       }
     },
     "lineage": {
-      "certificate_parent": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+      "certificate_parent": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
       "event": "local",
       "local_evidence_file_count": 76,
-      "local_evidence_manifest_sha256": "edd05c10144fb934c3739262943a96ed568353aa2c2e9fe620f9a888dfd7c1c7",
+      "local_evidence_manifest_sha256": "7e7afdac208e434edbe7f04ae1deb02b0afb7da7c8b165589e590ed992fb26b2",
       "provenance_mode": "local",
       "repository": "sharq-labs/forge",
       "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
       "runner_os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
-      "source_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+      "source_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
       "source_gates": [
         "fast311",
         "fast312",
@@ -8314,8 +8314,8 @@
         "tespy"
       ]
     },
-    "source_commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
-    "source_tree": "79663c7d3e6505efbaf46b7e6d8bb1c693d9b8b1",
+    "source_commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
+    "source_tree": "9d2d64d40fe764a228ae62a589c3218c9a5bba0d",
     "trust_hardening_mutations": {
       "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
       "expected_population": 20,
@@ -8346,7 +8346,7 @@
       "population": 20,
       "population_sha256": "2f2a4d233851ae7ca0ac36b58d400da3c692f6cf44a3626fb553b062a91d0bad",
       "result_schema": "forge.trust_mutation_assurance/1",
-      "result_sha256": "2c2d0b1df9d34a530d795cb4eb7c2b797c499dffe9de3e0a315a2a972924b93c",
+      "result_sha256": "0b157b6575e7e93e3622d0b79ba701b5046f38182c1412e1fe83254c0674a0e1",
       "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     },
@@ -9050,7 +9050,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "6a80b7840715f2707cc7d1a5f2df9b1f981afbf997dd6573036a09a52a4afe34",
+          "execution_log_sha256": "190af5881c1457c8ea69b882df3f10c3f82a793b94d74037504c51b96398414a",
           "selected_count": 85,
           "selected_ids": [
             "B10a",
@@ -9144,7 +9144,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "d9adb407754023c1b9336c4ca5ef24b671db573fd59d32b0215a021dc517fcf3",
+          "execution_log_sha256": "75f8a7d484117a6fb16fdac36a2e18e68a7e6654cbc365161f8f89757f8c6550",
           "selected_count": 85,
           "selected_ids": [
             "B10b",
@@ -9238,7 +9238,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "fa77d7257f3c13712605fb17da1f21c692bde6d4a516de4bf77e23e771ae2f1e",
+          "execution_log_sha256": "5f4a55bb71a051e6701040842a9a83a40d9c4da5ddb755003028050e49581433",
           "selected_count": 85,
           "selected_ids": [
             "B10c",
@@ -9332,7 +9332,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "bbe33649a86df1d24a0a7e3ab88e8572374395b1ceff2dfe4f218d5a9ce66ce0",
+          "execution_log_sha256": "c08b1736a46d5a25bee13f5fb5a2d8e22493dcaa7332a97f9adc7006e642f3a0",
           "selected_count": 85,
           "selected_ids": [
             "B10d",
@@ -9426,7 +9426,7 @@
         },
         "4": {
           "control": "GREEN",
-          "execution_log_sha256": "3c0646e880aa3108347b06cb35d107a7b095482946588313bc4d871baaae6bb7",
+          "execution_log_sha256": "7287732781f9f0f5f3d4a949937f197af9c0e42a4260dc6c00412fd380bafb42",
           "selected_count": 85,
           "selected_ids": [
             "B10e",
@@ -9520,7 +9520,7 @@
         },
         "5": {
           "control": "GREEN",
-          "execution_log_sha256": "115fab24b129ece39347610b91d89db7383a91e395046b57ac60df58402aeb42",
+          "execution_log_sha256": "026f98c6cef1a40a1b0864bf9dcf175f09e59c7a5e7b603fb358707353ae3777",
           "selected_count": 85,
           "selected_ids": [
             "B10f",
@@ -9614,7 +9614,7 @@
         },
         "6": {
           "control": "GREEN",
-          "execution_log_sha256": "bb664e12249a4994f9602a0dd1025ad6cc2153e339e5ede3603c4fe49197c288",
+          "execution_log_sha256": "1f061d6b9ff6f324c63370be96bb510c7e6d59a4dbd3e00be6937932ee111306",
           "selected_count": 85,
           "selected_ids": [
             "B10g",
@@ -9708,7 +9708,7 @@
         },
         "7": {
           "control": "GREEN",
-          "execution_log_sha256": "a7390eebb6dd1cd7a7faaf0fc2cc36321e37bfe7dc6a7dfc24110660447f8735",
+          "execution_log_sha256": "c02cb4b771aaf2319a12053fb251fd1e867d30cf22e5ba9b0ca02c6bdbc67687",
           "selected_count": 85,
           "selected_ids": [
             "B10h",
@@ -10716,9 +10716,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "local/local-only-assurance-validation",
+    "branch": "local/r1r4-assurance",
     "clean": true,
-    "commit": "dafa87c4f36b483f45cf761e7ec844204fb3ae41",
+    "commit": "3e396bc4e0fef6b85cf13756aaabdc15226d5fe3",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
