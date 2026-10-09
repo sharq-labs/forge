@@ -51,6 +51,16 @@ GEOMETRY_MODEL_SCHEMA = "engcore.spatial.geometry_model/1"
 PROVIDER_ENTITY_MAP_SCHEMA = "engcore.spatial.provider_entity_map/1"
 MESH_BINDING_SCHEMA = "engcore.spatial.mesh_binding/1"
 GEOMETRY_RECEIPT_SCHEMA = "engcore.spatial.geometry_receipt/1"
+TRANSFORM_SCHEMA = "engcore.spatial.transform/1"
+FRAME_SCHEMA = "engcore.spatial.frame/1"
+IMPORTED_SOURCE_SCHEMA = "engcore.spatial.imported_source/1"
+SHAPE_SCHEMA = "engcore.spatial.shape/1"
+BODY_SCHEMA = "engcore.spatial.body/1"
+
+
+def _require(found: Any, schema: str) -> None:
+    if found != schema:
+        raise GeometryRefusal(f"expected a {schema} record, got {found!r}")
 
 #: The classification every provider-side geometry record carries.
 TRANSLATION_CLASSIFICATION = "provider_translation_not_evidence"
@@ -192,10 +202,11 @@ class Transform:
         return Transform(tuple(-sum(rt[i][k] * t[k] for k in range(3)) for i in range(3)), rt)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"translation_m": list(self.translation_m), "rotation": [list(row) for row in self.rotation]}
+        return {"schema": TRANSFORM_SCHEMA, "translation_m": list(self.translation_m), "rotation": [list(row) for row in self.rotation]}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "Transform":
+        _require(p.get("schema"), TRANSFORM_SCHEMA)
         return cls(tuple(p["translation_m"]), tuple(tuple(row) for row in p["rotation"]))
 
 
@@ -220,10 +231,11 @@ class FrameDefinition:
             raise GeometryRefusal("frame transform must be a Transform")
 
     def to_dict(self) -> dict[str, Any]:
-        return {"frame_id": self.frame_id, "parent_id": self.parent_id, "transform": self.transform.to_dict()}
+        return {"schema": FRAME_SCHEMA, "frame_id": self.frame_id, "parent_id": self.parent_id, "transform": self.transform.to_dict()}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "FrameDefinition":
+        _require(p.get("schema"), FRAME_SCHEMA)
         return cls(p["frame_id"], p.get("parent_id", ""), Transform.from_dict(p["transform"]), p.get("description", ""))
 
 
@@ -313,11 +325,13 @@ class ImportedSource:
         return Quantity(1.0, self.declared_length_unit).magnitude_in("m")
 
     def to_dict(self) -> dict[str, Any]:
-        return {"file_digest": self.file_digest, "format": self.format, "declared_length_unit": self.declared_length_unit,
+        return {"schema": IMPORTED_SOURCE_SCHEMA, "file_digest": self.file_digest, "format": self.format,
+                "declared_length_unit": self.declared_length_unit,
                 "scale_to_m": self.scale_to_m, "dimension": self.dimension, "import_options": dict(sorted(self.import_options.items()))}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "ImportedSource":
+        _require(p.get("schema"), IMPORTED_SOURCE_SCHEMA)
         return cls(p["file_digest"], p["format"], p["declared_length_unit"], p.get("dimension", 3), p.get("import_options", {}))
 
 
@@ -398,12 +412,13 @@ class Shape:
         return None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"kind": self.kind.value, "dimensions_m": dict(self.dimensions_m),
+        return {"schema": SHAPE_SCHEMA, "kind": self.kind.value, "dimensions_m": dict(self.dimensions_m),
                 "source": None if self.source is None else self.source.to_dict(),
                 "selectors": [s.to_dict() for s in self.selectors]}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "Shape":
+        _require(p.get("schema"), SHAPE_SCHEMA)
         src = p.get("source")
         return cls(ShapeKind(p["kind"]), p.get("dimensions_m", {}), None if src is None else ImportedSource.from_dict(src),
                    tuple(FeatureSelector(s["name"], tuple(s["lower_m"]), tuple(s["upper_m"])) for s in p.get("selectors", ())))
@@ -456,11 +471,13 @@ class Body:
         return self.shape.dimension
 
     def to_dict(self) -> dict[str, Any]:
-        return {"body_id": self.body_id, "shape": self.shape.to_dict(), "frame_id": self.frame_id, "placement": self.placement.to_dict(),
+        return {"schema": BODY_SCHEMA, "body_id": self.body_id, "shape": self.shape.to_dict(), "frame_id": self.frame_id,
+                "placement": self.placement.to_dict(),
                 "part_id": self.part_id, "void": self.void, "cutouts": list(self.cutouts)}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "Body":
+        _require(p.get("schema"), BODY_SCHEMA)
         return cls(p["body_id"], Shape.from_dict(p["shape"]), p["frame_id"], Transform.from_dict(p["placement"]),
                    p.get("part_id", ""), bool(p.get("void", False)), tuple(p.get("cutouts", ())), p.get("description", ""))
 

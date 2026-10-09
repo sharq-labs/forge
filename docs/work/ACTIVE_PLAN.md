@@ -46,6 +46,23 @@ uncertainty/model discrepancy into zero.
   before any current PR claim.
 - Never switch branches in the shared checkout; it is used by other sessions.
 
+## Big Rocks expansion program (owner-directed, 2026-10-09)
+
+The owner directed a breadth program ("big rocks first") alongside BIG 14, on its own branch
+`claude/adoring-cray-jj367z` based on `origin/main` @ `446370651bc1630daf55b9dc0e7db9189946f0fa`. It does not change
+the BIG 14 closure tasks below. Built (see `docs/architecture/big_rocks_foundations.md`): geometry + parametric
+variants + general Gmsh adapter; assembly topology; provider health/qualification; OpenVSP / OpenRadioss / Chrono
+adapters (fail-closed, unverified translations); Scientific Twin revisions; discovery grammar, multi-fidelity,
+history, hierarchy, search; the geometry vertical slice; drone/vehicle/motor/HVAC product templates; MCP
+describe/plan/run; Scene IR. Four forge-scientific-review rounds ran and their findings were fixed.
+
+Next executable tasks for this program (in order):
+
+- [ ] Integration gate on the final source SHA: FAST, SCIENTIFIC where providers exist, provider suites.
+- [ ] Hardened-core recertification of the final source SHA (tests/**, pyproject.toml, skip_admission.py changed).
+- [ ] First real runs of OpenVSP, OpenRadioss, Chrono and FEniCSx (slice numerical rung) in a provider environment.
+- [ ] Work the DEFERRED_HARDENING ledger in `docs/architecture/big_rocks_foundations.md`.
+
 ## Roadmap view
 
 ### Now — BIG 14

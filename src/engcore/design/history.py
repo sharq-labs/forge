@@ -30,6 +30,7 @@ from ..scenarios.timeline import canonical_digest
 from ..scientific.errors import InvalidScientificProblem
 
 HISTORY_ENTRY_SCHEMA = "engcore.design.history_entry/1"
+HISTORY_SCHEMA = "engcore.design.history/1"
 GENESIS = "0" * 64
 
 
@@ -159,11 +160,13 @@ class DesignHistory:
         return dict(sorted(counts.items()))
 
     def to_dict(self) -> dict[str, Any]:
-        return {"classification": "search_history_not_evidence", "head": self.head, "entries": [e.to_dict() for e in self._entries]}
+        return {"schema": HISTORY_SCHEMA, "classification": "search_history_not_evidence", "head": self.head, "entries": [e.to_dict() for e in self._entries]}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any], *, expected_head: str | None = None) -> "DesignHistory":
         """Rebuild and verify.  ``expected_head`` (e.g. a DiscoveryRun's history_head) detects a truncated tail."""
+        if payload.get("schema") != HISTORY_SCHEMA:
+            raise InvalidScientificProblem("unsupported design history schema")
         entries = []
         for p in payload["entries"]:
             a = p["attempt"]

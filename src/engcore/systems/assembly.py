@@ -38,6 +38,7 @@ from ..spatial.geometry import GeometryModel, Transform
 from .topology import ComponentDefinition, ComponentInstance, SystemDefinition
 
 ASSEMBLY_TOPOLOGY_SCHEMA = "engcore.systems.assembly_topology/1"
+JOINT_SCHEMA = "engcore.systems.joint_declaration/1"
 
 
 class AssemblyRefusal(InvalidScientificProblem):
@@ -188,13 +189,15 @@ class JointDeclaration:
         return JOINT_DOF[self.kind]
 
     def to_dict(self) -> dict[str, Any]:
-        return {"joint_id": self.joint_id, "kind": self.kind.value, "parent_point": self.parent_point, "child_point": self.child_point,
+        return {"schema": JOINT_SCHEMA, "joint_id": self.joint_id, "kind": self.kind.value, "parent_point": self.parent_point, "child_point": self.child_point,
                 "axis": None if self.axis is None else list(self.axis),
                 "lower": None if self.lower is None else self.lower.to_dict(), "upper": None if self.upper is None else self.upper.to_dict(),
                 "compliance_ref": self.compliance_ref}
 
     @classmethod
     def from_dict(cls, p: Mapping[str, Any]) -> "JointDeclaration":
+        if p.get("schema") != JOINT_SCHEMA:
+            raise AssemblyRefusal("unsupported joint declaration schema")
         return cls(p["joint_id"], JointKind(p["kind"]), p["parent_point"], p["child_point"],
                    None if p.get("axis") is None else tuple(p["axis"]),
                    None if p.get("lower") is None else Quantity.from_dict(p["lower"]),
