@@ -235,7 +235,10 @@ def test_an_intact_bundle_with_a_v1_environment_still_verifies_but_cannot_be_an_
     body = {k: v for k, v in old.items() if k != "bundle_digest"}
     old["bundle_digest"] = module.tagged_digest(module._TAG, body)                      # sealed exactly as make_bundle sealed it at /1
     check = verify_bundle(old, registry)
-    assert check.status is BundleStatus.VERIFIED, check.problems
+    # A record, not tampering. Since Trust Repair Pass 1 (R3-01) it reads REPLAY_REQUIRED rather than VERIFIED:
+    # the fixture demands a NUMERICAL channel quantified from the run's own numbers, which offline
+    # verification re-derives for consistency only.
+    assert check.status is BundleStatus.REPLAY_REQUIRED, check.problems
     replay = replay_bundle(old, registry)
     assert replay.status is BundleStatus.NOT_REPRODUCIBLE and any("does not bind the unit definitions" in d for d in replay.differences)
 
@@ -263,7 +266,11 @@ def test_a_bundle_verifies_without_execution_and_replays_identically(bundled, re
     with monkeypatch.context() as patched:
         patched.setattr(execution, "execute_plan", refuse)
         check = verify_bundle(bundled, registry)
-    assert check.status is BundleStatus.VERIFIED and check.verdict == "supported"
+    # Offline verification executes nothing, and since Trust Repair Pass 1 (R3-01) it does not call this
+    # support VERIFIED: the demanded NUMERICAL channel was quantified from the run's own numbers and only a
+    # replay re-earns it. The benchmark level itself was re-earned offline against the pinned evidence.
+    assert check.status is BundleStatus.REPLAY_REQUIRED and check.verdict == "supported"
+    assert any("uncertainty channel numerical" in p for p in check.problems), check.problems
     replay = replay_bundle(bundled, registry)
     assert replay.status is BundleStatus.VERIFIED and replay.differences == () and replay.compared_numbers > 10
 
@@ -340,7 +347,9 @@ def test_a_bundle_with_external_evidence_carries_its_trust_and_replays(registry)
     trust = TrustedExternalRegistry((TrustedPin(m.digest, SourceClass.MEASUREMENT, "c", "r"),))
     assessment = assess_claim(t3_claim(), registry, external=(m,), trust=trust)
     bundle = make_bundle(assessment, registry, trust=trust)
-    assert verify_bundle(bundle, registry, trust=trust).status is BundleStatus.VERIFIED
+    # Offline verification never says VERIFIED (Trust Repair Pass 1): the benchmark level and comparison are
+    # re-earned against the pinned evidence, and only the replay below re-executes.
+    assert verify_bundle(bundle, registry, trust=trust).status is BundleStatus.SCIENTIFICALLY_REVALIDATED
     assert replay_bundle(bundle, registry, trust=trust).status is BundleStatus.VERIFIED
     with pytest.raises(Exception):
         make_bundle(assessment, registry)  # the production registry is not the one it was judged under

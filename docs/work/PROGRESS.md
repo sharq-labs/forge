@@ -2587,3 +2587,70 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   1 failed each = tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
   on tree.clean only (uncommitted changes); audit 141 accepted / 0 unexpected, inventory 14370d2c...
   identical on 3.11 and 3.12 (3 conditional, 5 extra, 133 provider).
+
+## Trust Repair Pass 1: R3-01 + R3-02 (2026-10-08, branch fix/trust-repair-pass1 from main 16c87f40)
+
+R3-02. MCP `assess_claim` ran its own SRIA decision (report-wide levels, no comparison, no
+uncertainty, discrepancy or policy). It now delegates to canonical `engcore.claims.assess_claim`
+(`mcp/claim_assessment.py` rewritten).
+- Case-shaped requests are translated through `inputs_from_case`, and they require an explicit
+  `comparison` and `uncertainty` demand.
+- `report_index`, free-text-only requests, and routing to another capability are refused.
+- `assess_scientific_claim` shares the same helper.
+
+R3-01. `verify_assessment` / `verify_bundle` accepted consistently rewritten forgeries.
+New `claims/revalidation.py`:
+- stored oracle checks are re-run against pinned evidence reached via the plan's routes;
+- refuted checks raise `AssessmentForgeryError` (TAMPERED);
+- every other level and every demanded run-quantified channel is REPLAY_REQUIRED;
+- the verdict must be admissible and the comparison invariant over the pinned band.
+
+`verify_bundle` NEVER returns VERIFIED any more. It returns at most SCIENTIFICALLY_REVALIDATED
+(not publishable). VERIFIED comes only from `replay_bundle`, after re-execution.
+
+Review history:
+1. forge-scientific-review returned BLOCKER (F1): offline VERIFIED re-earned the level but not the
+   verdict. A runtime adversary independently forged "T > 309.795 K" at 309.7999 K → VERIFIED supported.
+   Fixed with band invariance.
+   Also fixed: F2 (binding and authority lines), F4 (unroutable oracle refuted), F3 (diagnose carries
+   the standing), F5/F6 (MCP uncertainty demand, routing guard), and the AttributeError crash.
+2. Adversary round 2: the invariance rule held over 588 values x 3,380 claims (units, ulps,
+   endpoints). New attack: a genuine 160-cell report carried under a 40-cell claim (real run
+   INSUFFICIENT) verified offline. No offline rule can tell runs apart, so offline VERIFIED was
+   removed.
+
+Failed approaches:
+- Treating offline revalidation as publishable. It verified the level and not the verdict, then
+  not the run identity.
+- Writing the F4 attack through a rerouted capability registry. CapabilityDeclaration already
+  refuses untrusted or foreign route evidence.
+
+Commands (WSL, `.forge/venvs/3.12`, TMPDIR outside repo, `-p no:cacheprovider`):
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py
+  tests/test_forge_diagnose.py`: 59 passed.
+- `pytest tests/claims tests/mcp tests/test_forge_diagnose.py tests/credibility -n 4 -m "not campaign"`:
+  1110 passed.
+- `tools/forge_check.py --changed`: 225 passed.
+- Formal TARGETS (48) + test_repository_architecture + test_core_api_layering + tests/mcp/test_bundle
+  + tests/mcp/test_server, `-n 4`: 1224 passed.
+- Adversary scripts attack1-7 on the final code: 0 offline VERIFIED.
+
+Remaining Review 3 findings, untouched: R3-03, R3-04, R3-05, R3-06, R3-07, R3-08, R3-09, R3-10,
+R3-11, R3-12, R3-13, R3-14, R3-15, R3-16.
+New notes from this pass:
+- a caller's free-text CONSTRAINED_PRIOR reference satisfies require_supported_discrepancy
+  (canonical behaviour, = R3 A2-F10);
+- replay tolerance is caller-chosen and unbounded (= R3-16);
+- a bundle with capability=None skips the carried-capability check;
+- a genuine record whose oracle check predates a change to compare() semantics would read TAMPERED
+  (no compare-algorithm version is recorded).
+Full suite and Local Assurance: NOT RUN (not required for this pass). Not pushed.
+
+Pre-commit smoke (2026-10-09, same venv; `forge_check --changed` log 17:10 is after the last source edit 17:09):
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py
+  tests/test_forge_diagnose.py`: 59 passed.
+- `pytest tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+  tests/test_repository_architecture.py tests/mcp/test_bundle.py`: 32 passed.
+- attack1-7 re-run: 0 offline VERIFIED; verify_bundle gave only replay_required,
+  scientifically_revalidated or tampered. attack4 predates the F5 uncertainty requirement, so its
+  case-shaped requests are now refused; attack5 covers case-shape parity with MCP.

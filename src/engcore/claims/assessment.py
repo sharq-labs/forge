@@ -25,8 +25,14 @@ was assessed, how it was modeled, why that model applied or not, what ran,
 which checks ran, what evidence was attained, what uncertainty is known and
 unknown, whether the evidence supports the claim, what prevents a conclusion,
 and what would repair it. :func:`verify_assessment` reads such a record back and
-re-derives all of it; a record whose verdict, value, levels, uncertainty or
-context was edited is refused.
+re-derives all of it, so a record edited inconsistently is refused. A record
+rewritten CONSISTENTLY re-derives, because every part of it is data. For that
+case the stored evidence is also revalidated (:mod:`.revalidation`):
+- an oracle-issued level is re-earned from the stored values against the
+  repository-pinned evidence, and one that is not re-earned is refused;
+- every level earned only inside the run is reported as REPLAY_REQUIRED.
+Read-back is never evidence that the computation happened; only a replay
+re-executes it.
 """
 
 from __future__ import annotations
@@ -65,6 +71,7 @@ from .planning import (
     verify_plan,
 )
 from .repair import RepairAction, RepairKind, merge_repairs
+from .revalidation import revalidate_evidence
 from .external_evidence import (
     PRODUCTION_EXTERNAL_REGISTRY,
     LiteratureRecord,
@@ -632,6 +639,10 @@ class ClaimAssessment:
     explanation: tuple[ExplanationItem, ...] = ()
     #: The public record, as canonical JSON: immutable, and a fresh copy per read.
     record_json: str = "{}"
+    #: Set only by :func:`verify_assessment`: what the stored evidence still proves offline
+    #: (:class:`~engcore.claims.revalidation.EvidenceRevalidation`). ``None`` for a live assessment,
+    #: whose evidence came from the run itself.
+    revalidation: Any = None
 
     def to_dict(self) -> dict[str, Any]:
         return json.loads(self.record_json)
@@ -734,6 +745,17 @@ def verify_assessment(
     to the plan; then evidence, assurance, comparison, verdict, repairs and the
     explanation are rebuilt and the whole record must match. Execution is not
     repeated: what the system ran is the report, and the report re-derives.
+
+    Re-derivation proves consistency, not authenticity. The returned
+    assessment's ``revalidation`` says what the stored evidence still earns
+    offline:
+    - ``SCIENTIFICALLY_REVALIDATED``: the required levels and the claim's
+      comparison were re-earned against repository-pinned evidence. That the
+      report is the planned run, and its admissibility, are not.
+    - ``REPLAY_REQUIRED``: only a replay can re-earn it.
+    Neither is publishable support; only ``replay_bundle`` re-executes. A stored
+    oracle comparison that its pinned evidence does not reproduce raises
+    :class:`AssessmentForgeryError`.
     """
     record = require_mapping(record, field="assessment", error=AssessmentForgeryError)
     if record.get("schema") != ASSESSMENT_SCHEMA:
@@ -803,6 +825,21 @@ def verify_assessment(
         raise AssessmentForgeryError(
             f"the record does not re-derive from the claim, plan and report it carries; differing: {differing}"
         )
+    # Trust Repair Pass 1 (R3-01). Re-derivation proves only that the record is consistent with itself:
+    # every field can be rewritten consistently and the unkeyed digest recomputed. Each stored oracle
+    # comparison is therefore re-run against its pinned evidence at the stored values. A level the
+    # record's own evidence no longer earns makes it a forgery. Every other level and every demanded
+    # run-quantified channel is reported as REPLAY_REQUIRED and never as re-earned.
+    revalidation = None
+    if plan is not None and report is not None and claim is not None:
+        revalidation = revalidate_evidence(
+            plan, claim, report, registry,
+            evidence=live["evidence"], bound=compiled.target, admissible=admissible(live["basis"]),
+        )
+        if revalidation.refuted:
+            raise AssessmentForgeryError(
+                "the stored evidence does not earn what the record says it earned: " + "; ".join(revalidation.refuted)
+            )
     return ClaimAssessment(
         claim=claim,
         compiled=compiled,
@@ -816,6 +853,7 @@ def verify_assessment(
         comparison=live["comparison"],
         explanation=live["items"],
         record_json=canonical_json(rebuilt),
+        revalidation=revalidation,
     )
 
 

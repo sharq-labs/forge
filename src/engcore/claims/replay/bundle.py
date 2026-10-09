@@ -18,6 +18,25 @@ standing, gap and recommendation. :func:`replay_bundle` executes the claim
 again and compares: identities must be identical, numbers equal within the
 declared tolerances, verdicts identical.
 
+**What verify_bundle does NOT establish (Trust Repair Pass 1, R3-01).** The
+digest is an unkeyed hash. It detects accidental or partial edits, not a
+consistent rewrite, because whoever rewrites the record can recompute it. So
+offline verification NEVER returns ``VERIFIED``. It reports one of these:
+
+- ``SCIENTIFICALLY_REVALIDATED``: consistent; the required levels are re-earned
+  from the stored values against repository-pinned evidence; and the claim's
+  comparison has one outcome over every value that evidence admits. It does not
+  establish that the stored report is the planned run (its numerics, its grid),
+  nor the run's own admissibility diagnostics. Not publishable support.
+- ``REPLAY_REQUIRED``: consistent, but a level, a demanded uncertainty channel
+  or the verdict itself is earned only inside a run.
+- ``TAMPERED``: inconsistent, or a stored oracle comparison that its pinned
+  evidence no longer reproduces.
+- ``REGISTRY_CHANGED``: judged under another registry.
+
+``VERIFIED`` comes only from :func:`replay_bundle`, which re-executes. It is
+the only status that is publishable support.
+
 A view, never a source: like ``engcore.mcp.bundle``, nothing in the runtime
 imports this module (``tests/mcp/test_bundle.py`` pins it), so a bundle can be
 checked against the runtime but can never influence what the runtime concludes.
@@ -49,6 +68,7 @@ from ..external_evidence import (
     read_external_record,
 )
 from ..measurement_dataset import DatasetObservation
+from ..revalidation import RevalidationStanding
 from ...scientific.units.quantity import registry_fingerprint
 from ...uq.model_form.qualification import ProducerQualification
 
@@ -71,6 +91,14 @@ class BundleStatus(str, Enum):
     TAMPERED = "tampered"
     REGISTRY_CHANGED = "registry_changed"
     NOT_REPRODUCIBLE = "not_reproducible"
+    #: Offline verification only (R3-01): the record is consistent, but the verdict rests on evidence that
+    #: only a re-execution re-earns. Not a verification of that support, and not publishable without replay.
+    REPLAY_REQUIRED = "replay_required"
+    #: Offline verification only (R3-01): consistent, and the required levels plus the claim's comparison are
+    #: re-earned against repository-pinned evidence. That the stored report is the planned run, and the run's
+    #: own admissibility diagnostics, are not re-earned. Not publishable support: only ``replay_bundle``'s
+    #: VERIFIED is.
+    SCIENTIFICALLY_REVALIDATED = "scientifically_revalidated"
 
 
 def _distribution_version(name: str) -> str:
@@ -296,9 +324,33 @@ def verify_bundle(
         rebuilt = verify_assessment(record, registry, trust=trust)
     except AssessmentForgeryError as exc:
         return BundleCheck(BundleStatus.TAMPERED, (str(exc),))
-    except (KeyError, TypeError, ValueError, ClaimLayerError) as exc:
+    except (AttributeError, KeyError, TypeError, ValueError, ClaimLayerError) as exc:
+        # A record of the wrong shape (a list or a string where an object belongs) is unreadable, not a crash.
         return BundleCheck(BundleStatus.TAMPERED, (f"unreadable: {type(exc).__name__}: {exc}",))
-    return BundleCheck(BundleStatus.VERIFIED, (), rebuilt.verdict.value)
+    # Offline verification never returns VERIFIED (R3-01, review round 2). Admissibility rests on the run's own
+    # diagnostics, and whether the stored report is the planned run (its numerics, its grid) is a property of
+    # the execution. Neither can be re-earned without re-executing. A consistent record whose stored report
+    # came from another run re-derives, so only replay_bundle's re-execution may say VERIFIED.
+    revalidation = rebuilt.revalidation
+    if revalidation is not None and revalidation.standing is RevalidationStanding.SCIENTIFICALLY_REVALIDATED:
+        return BundleCheck(
+            BundleStatus.SCIENTIFICALLY_REVALIDATED,
+            (
+                "consistent; the required levels and the claim's comparison are re-earned against repository-pinned "
+                "evidence. That the report is the planned run and that it is admissible are not; publishable support "
+                "needs replay_bundle",
+            ),
+            rebuilt.verdict.value,
+        )
+    return BundleCheck(
+        BundleStatus.REPLAY_REQUIRED,
+        (
+            "the record is consistent, but offline verification cannot re-earn what its verdict rests on; "
+            "only replay_bundle can",
+            *(() if revalidation is None else revalidation.reasons),
+        ),
+        rebuilt.verdict.value,
+    )
 
 
 @dataclass(frozen=True)
@@ -623,7 +675,9 @@ def replay_bundle(
     from ..assessment import assess_claim
 
     check = verify_bundle(bundle, registry, trust=trust)
-    if check.status is not BundleStatus.VERIFIED:
+    # A consistent record (either offline standing) is exactly what a replay exists to re-earn: proceed.
+    # Anything inconsistent, refuted or judged under another registry is not replayed.
+    if check.status not in (BundleStatus.SCIENTIFICALLY_REVALIDATED, BundleStatus.REPLAY_REQUIRED):
         return ReplayResult(check.status, check.problems, 0)
     if require_same_environment:
         current_environment = _environment()
