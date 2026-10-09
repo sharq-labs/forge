@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -27,8 +28,22 @@ from .hypotheses import ProposerKind
 EXTERNAL_SUGGESTION_SCHEMA = "engcore.sria.decision.external_suggestion/1"
 
 #: keys a suggestion may not carry: deciding these is FORGE's authority, never a proposer's
-AUTHORITY_KEYS = frozenset({"status", "verdict", "evidence_level", "validated", "applicable", "applicability", "admitted",
-                            "supported", "uncertainty_quantified", "measurement"})
+AUTHORITY_KEYS = frozenset({"status", "verdict", "verdicts", "evidence", "evidence_level", "validation", "validation_level",
+                            "validated", "applicable", "applicability", "admitted", "admission", "supported", "support",
+                            "uncertainty", "uncertainty_quantified", "measurement", "measurements", "novel", "novelty", "qualified"})
+
+
+def _keys(obj: Any) -> set[str]:
+    """Every key at any depth (a nested 'status' is still a status claim)."""
+    out: set[str] = set()
+    if isinstance(obj, Mapping):
+        for k, val in obj.items():
+            out.add(str(k).lower())
+            out |= _keys(val)
+    elif isinstance(obj, (list, tuple)):
+        for item in obj:
+            out |= _keys(item)
+    return out
 
 
 class SuggestionRefused(ValueError):
@@ -53,7 +68,9 @@ class ExternalSuggestion:
         for label in ("engine_id", "engine_version", "target_ref", "rationale"):
             if not str(getattr(self, label)).strip():
                 raise SuggestionRefused(f"an external suggestion names its {label}")
-        claimed = sorted(AUTHORITY_KEYS & {str(k).lower() for k in (*self.point, *self.extra)})
+        if self.acquisition_value is not None and not math.isfinite(float(self.acquisition_value)):
+            raise SuggestionRefused("an acquisition value is finite or absent")
+        claimed = sorted(AUTHORITY_KEYS & (_keys(dict(self.point)) | _keys(dict(self.extra))))
         if claimed:
             raise SuggestionRefused(f"a suggestion from {self.engine_id!r} carries {claimed}: a proposer suggests where to look, "
                                     "it never decides status, evidence, applicability or uncertainty")

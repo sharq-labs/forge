@@ -47,6 +47,7 @@ HYPOTHESIS_SET_SCHEMA = schema_string("sria_hypothesis_set")
 PROPOSAL_PROVENANCE_SCHEMA = schema_string("sria_hypothesis_proposal")
 HYPOTHESIS_PARAMETER_SCHEMA = schema_string("sria_hypothesis_parameter")
 HYPOTHESIS_PREDICTION_SCHEMA = schema_string("sria_hypothesis_prediction")
+VERDICT_REFERENCE_SCHEMA = schema_string("sria_hypothesis_verdict_reference")
 
 
 class HypothesisKind(str, Enum):
@@ -175,11 +176,46 @@ class HypothesisPrediction:
         return cls(payload["observable"], payload["unit"], payload["condition_ref"], payload.get("description", ""))
 
 
+@dataclass(frozen=True)
+class VerdictReference:
+    """Why a hypothesis has a verdict-backed status: one falsifier verdict, bound to the exact hypothesis CONTENT it judged.
+
+    Binding to :attr:`Hypothesis.content_digest` means a verdict about one revision's content cannot back another's.
+    Whether the verdict record itself exists and says what this reference claims is checked against the sealed
+    verdict store by the adjudicator (``engcore.design.falsifiers.verify_status``); a reference alone is not a verdict.
+    """
+
+    falsifier_ref: str
+    verdict_digest: str
+    verdict: str                       # "refuted" | "not_refuted" | "inconclusive" (as the verdict record states)
+    content_digest: str
+
+    def __post_init__(self) -> None:
+        if not str(self.falsifier_ref).strip():
+            raise ValueError("a verdict reference names its falsifier")
+        for label in ("verdict_digest", "content_digest"):
+            v = str(getattr(self, label))
+            if len(v) != 64 or any(ch not in "0123456789abcdef" for ch in v):
+                raise ValueError(f"a verdict reference binds {label} (sha256)")
+        if self.verdict not in ("refuted", "not_refuted", "inconclusive"):
+            raise ValueError("a verdict is refuted, not_refuted or inconclusive")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": VERDICT_REFERENCE_SCHEMA, "falsifier_ref": self.falsifier_ref, "verdict_digest": self.verdict_digest,
+                "verdict": self.verdict, "content_digest": self.content_digest}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "VerdictReference":
+        require_schema(payload, VERDICT_REFERENCE_SCHEMA)
+        return cls(payload["falsifier_ref"], payload["verdict_digest"], payload["verdict"], payload["content_digest"])
+
+
 #: V2 extension fields and their defaults: emitted only when set, so an M4G record keeps its bytes.
 _EXTENSION_DEFAULTS: Mapping[str, Any] = {
     "kind": None, "statement": "", "statement_payload": {}, "structure_digest": "", "predictions": (), "parameters": (),
     "complexity": None, "proposal": None, "knowledge_snapshot_ref": "", "parents": (), "novelty_status": NoveltyStatus.NOT_CHECKED,
     "falsifier_refs": (), "status": HypothesisStatus.PROPOSED, "status_basis": (), "mechanism_basis_refs": (), "revision": 0,
+    "novelty_basis": "", "status_note": "",
 }
 
 
@@ -197,7 +233,7 @@ class Hypothesis:
     # ---- Roadmap V2 extension (trailing, defaulted) -------------------------
     kind: HypothesisKind | None = None
     statement: str = ""
-    statement_payload: Mapping[str, Any] = field(default_factory=dict)  # typed statement (e.g. a canonical equation)
+    statement_payload: Mapping[str, Any] = field(default_factory=dict, hash=False)  # typed statement (e.g. a canonical equation)
     structure_digest: str = ""             # canonical structure identity (dedup / novelty), when one exists
     predictions: tuple[HypothesisPrediction, ...] = ()
     parameters: tuple[HypothesisParameter, ...] = ()
@@ -208,9 +244,11 @@ class Hypothesis:
     novelty_status: NoveltyStatus = NoveltyStatus.NOT_CHECKED
     falsifier_refs: tuple[str, ...] = ()   # sealed falsifier identities (pre-registered)
     status: HypothesisStatus = HypothesisStatus.PROPOSED
-    status_basis: tuple[str, ...] = ()     # verdict record identities that set the status
+    status_basis: tuple[VerdictReference, ...] = ()  # the falsifier verdicts that set the status, bound to this content
     mechanism_basis_refs: tuple[str, ...] = ()
     revision: int = 0
+    novelty_basis: str = ""                # the novelty-check record (required for any novelty other than NOT_CHECKED)
+    status_note: str = ""                  # OUT_OF_SCOPE / UNKNOWN: the applicability or check record behind it
 
     def __post_init__(self) -> None:
         for label in ("hypothesis_id", "model_ref"):
@@ -246,10 +284,38 @@ class Hypothesis:
         extended = self.kind is not None
         if self.status is not HypothesisStatus.PROPOSED and not extended:
             raise ValueError("a hypothesis with a scientific status declares its kind")
+        if any(not isinstance(b, VerdictReference) for b in self.status_basis):
+            raise ValueError("status_basis holds VerdictReference records")
         if self.status in VERDICT_BACKED_STATUSES:
             if not self.falsifier_refs or not self.status_basis:
                 raise ValueError(f"status {self.status.value} must name the sealed falsifiers and the verdict records that decided it; "
                                  "a status is never asserted")
+            content = self.content_digest
+            for b in self.status_basis:
+                if b.content_digest != content:
+                    raise ValueError(f"verdict {b.verdict_digest[:12]} judged other content than this revision; a verdict does not "
+                                     "transfer to changed content")
+                if b.falsifier_ref not in self.falsifier_refs:
+                    raise ValueError(f"verdict names falsifier {b.falsifier_ref!r}, which is not one of this hypothesis's falsifiers")
+            verdicts = {b.verdict for b in self.status_basis}
+            if self.status is HypothesisStatus.REFUTED and "refuted" not in verdicts:
+                raise ValueError("REFUTED needs a 'refuted' verdict")
+            if self.status is HypothesisStatus.SURVIVING and verdicts != {"not_refuted"}:
+                raise ValueError("SURVIVING needs every cited verdict to be not_refuted (a refuting or inconclusive verdict is not survival)")
+        elif self.status_basis:
+            raise ValueError(f"status {self.status.value} carries no verdict basis")
+        if self.status is HypothesisStatus.OUT_OF_SCOPE and not str(self.status_note).strip():
+            raise ValueError("OUT_OF_SCOPE names the applicability record behind it")
+        if self.novelty_status is not NoveltyStatus.NOT_CHECKED and not (str(self.knowledge_snapshot_ref).strip()
+                                                                           and str(self.novelty_basis).strip()):
+            raise ValueError("a novelty status other than NOT_CHECKED names the frozen prior-art snapshot and the check record")
+        if self.kind is HypothesisKind.MECHANISM and self.parents:
+            if not self.mechanism_basis_refs:
+                raise ValueError("a MECHANISM derived from other hypotheses names mechanism_basis_refs beyond any fit; an equation "
+                                 "that fits observations is not a mechanism")
+            fit_refs = set(self.evidence_links) | {p.source_ref for p in self.parameters if p.provenance is ParameterProvenance.FITTED}
+            if fit_refs & set(self.mechanism_basis_refs):
+                raise ValueError("the mechanism basis cannot be the fit itself")
         if self.status is HypothesisStatus.ADMITTED_FOR_TEST and not (self.predictions or self.falsifier_refs):
             raise ValueError("a hypothesis admitted for test states at least one prediction or falsifier")
 
@@ -263,7 +329,8 @@ class Hypothesis:
             "complexity": self.complexity, "proposal": None if self.proposal is None else self.proposal.to_dict(),
             "knowledge_snapshot_ref": self.knowledge_snapshot_ref, "parents": list(self.parents),
             "novelty_status": self.novelty_status.value, "falsifier_refs": list(self.falsifier_refs), "status": self.status.value,
-            "status_basis": list(self.status_basis), "mechanism_basis_refs": list(self.mechanism_basis_refs), "revision": self.revision,
+            "status_basis": [b.to_dict() for b in self.status_basis], "mechanism_basis_refs": list(self.mechanism_basis_refs),
+            "revision": self.revision, "novelty_basis": self.novelty_basis, "status_note": self.status_note,
         }
         for key, default in _EXTENSION_DEFAULTS.items():
             d = default.value if isinstance(default, Enum) else (list(default) if isinstance(default, tuple) else default)
@@ -283,6 +350,16 @@ class Hypothesis:
             "evidence_links": list(self.evidence_links),
             **self._extension(),
         }
+
+    #: what a test of the hypothesis is ABOUT; any change is new content (status, novelty and narrative excluded)
+    CONTENT_FIELDS = ("hypothesis_id", "model_ref", "scope_ref", "kind", "statement", "statement_payload", "structure_digest",
+                      "predictions", "parameters", "falsifier_refs", "parents", "mechanism_basis_refs", "parameter_belief_ref")
+
+    @property
+    def content_digest(self) -> str:
+        full = self.to_dict()
+        content = {k: full.get(k) for k in self.CONTENT_FIELDS}
+        return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
     @property
     def digest(self) -> str:
@@ -314,25 +391,27 @@ class Hypothesis:
             novelty_status=payload.get("novelty_status", "not_checked"),
             falsifier_refs=tuple(payload.get("falsifier_refs", ())),
             status=payload.get("status", "proposed"),
-            status_basis=tuple(payload.get("status_basis", ())),
+            status_basis=tuple(VerdictReference.from_dict(b) for b in payload.get("status_basis", ())),
             mechanism_basis_refs=tuple(payload.get("mechanism_basis_refs", ())),
             revision=int(payload.get("revision", 0)),
+            novelty_basis=payload.get("novelty_basis", ""),
+            status_note=payload.get("status_note", ""),
         )
 
     # ---- revisions --------------------------------------------------------------
     def revise(self, **changes: Any) -> "Hypothesis":
-        """A new revision.  The kind never changes; a changed statement, prediction, parameter or falsifier set
-        resets the status to PROPOSED (a test of the old content says nothing about the new)."""
-        if "kind" in changes and changes["kind"] != self.kind and self.kind is not None:
-            raise ValueError("a hypothesis keeps its kind; a different kind of claim is a new hypothesis (derive_hypothesis)")
-        if "hypothesis_id" in changes and changes["hypothesis_id"] != self.hypothesis_id:
-            raise ValueError("a revision keeps the hypothesis id; a new id is a new hypothesis")
-        content = {"statement", "statement_payload", "structure_digest", "predictions", "parameters", "falsifier_refs", "scope_ref"}
-        new = replace(self, revision=self.revision + 1, **changes)
-        if content & set(changes) and not ({"status", "status_basis"} & set(changes)):
-            new = replace(new, status=HypothesisStatus.PROPOSED, status_basis=())
-        return new
-
+        """A new revision.  The id, kind and parents never change.  Any content change resets the status to PROPOSED
+        and refuses a carried-over verdict basis: a test of the old content says nothing about the new."""
+        for fixed in ("hypothesis_id", "kind", "parents", "revision"):
+            if fixed in changes and changes[fixed] != getattr(self, fixed):
+                raise ValueError(f"a revision keeps its {fixed}; a different {fixed} is a new hypothesis (derive_hypothesis)")
+        content_changed = bool(set(changes) & set(self.CONTENT_FIELDS))
+        if content_changed and ({"status", "status_basis"} & set(changes)):
+            raise ValueError("a content change and a status cannot arrive together; the new content is untested (PROPOSED)")
+        if content_changed:
+            return replace(self, revision=self.revision + 1, **{"status": HypothesisStatus.PROPOSED, "status_basis": (),
+                                                                "status_note": "", **changes})
+        return replace(self, revision=self.revision + 1, **changes)
 
 @dataclass(frozen=True)
 class PredictionDisagreement:
@@ -436,14 +515,12 @@ class HypothesisSet:
 def derive_hypothesis(parent: Hypothesis, *, hypothesis_id: str, kind: HypothesisKind | str, **fields: Any) -> Hypothesis:
     """A new hypothesis derived from ``parent`` (a new id, status PROPOSED, no inherited falsifiers or verdicts).
 
-    An EQUATION that fits observations is never upgraded to a MECHANISM: deriving a MECHANISM from an EQUATION
-    parent requires ``mechanism_basis_refs`` naming support beyond the fit (e.g. intervention or structural evidence).
+    A MECHANISM derived from anything (directly or through intermediate kinds) must name ``mechanism_basis_refs``
+    beyond the fit; the constructor enforces it for every MECHANISM with parents, so a two-hop derivation
+    (EQUATION -> MODEL_STRUCTURE -> MECHANISM) or a direct construction does not bypass it.
     """
     kind = HypothesisKind(kind)
-    if parent.kind is HypothesisKind.EQUATION and kind is HypothesisKind.MECHANISM and not fields.get("mechanism_basis_refs"):
-        raise ValueError("an equation that fits observations is not a mechanism: a MECHANISM derived from an EQUATION names "
-                         "mechanism_basis_refs beyond the fit")
-    for forbidden in ("status", "status_basis", "falsifier_refs", "revision"):
+    for forbidden in ("status", "status_basis", "falsifier_refs", "revision", "novelty_status", "novelty_basis"):
         if forbidden in fields:
             raise ValueError(f"a derived hypothesis starts PROPOSED with no inherited {forbidden}")
     if hypothesis_id == parent.hypothesis_id:
@@ -451,9 +528,8 @@ def derive_hypothesis(parent: Hypothesis, *, hypothesis_id: str, kind: Hypothesi
     return Hypothesis(hypothesis_id=hypothesis_id, kind=kind, parents=tuple(sorted({*fields.pop("parents", ()), parent.hypothesis_id})),
                       **fields)
 
-
 __all__ = [
     "HYPOTHESIS_SCHEMA", "HYPOTHESIS_SET_SCHEMA", "Hypothesis", "HypothesisKind", "HypothesisParameter", "HypothesisPrediction",
     "HypothesisSet", "HypothesisStatus", "NoveltyStatus", "ParameterProvenance", "PredictionDisagreement", "ProposalProvenance",
-    "ProposerKind", "VERDICT_BACKED_STATUSES", "derive_hypothesis",
+    "ProposerKind", "VERDICT_BACKED_STATUSES", "VerdictReference", "derive_hypothesis",
 ]

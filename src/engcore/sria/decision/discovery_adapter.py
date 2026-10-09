@@ -25,6 +25,10 @@ def generated_to_sria_hypothesis(
     the status is PROPOSED whatever the legacy candidate's holdout status was: a
     holdout scored inside the search that produced the candidate is not a sealed
     falsifier verdict.
+
+    Version note (Roadmap V2): adapted records now also carry kind, statement,
+    structure_digest and proposal, so their serialized bytes and digest differ
+    from the pre-V2 adapter output.  The adapter had no callers before V2.
     """
     model_ref = (
         f"discovery-candidate:{generated.candidate_fingerprint}"

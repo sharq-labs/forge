@@ -70,7 +70,7 @@ from .families import (
 )
 from .hypotheses import (
     Hypothesis, HypothesisKind, HypothesisParameter, HypothesisPrediction, HypothesisSet, HypothesisStatus, NoveltyStatus,
-    ParameterProvenance, PredictionDisagreement, ProposalProvenance, ProposerKind, derive_hypothesis,
+    ParameterProvenance, PredictionDisagreement, ProposalProvenance, ProposerKind, VerdictReference, derive_hypothesis,
 )
 from .suppliers import (
     ApplicabilitySupport,
@@ -163,6 +163,7 @@ __all__ = [
     "PredictionDisagreement",
     "ProposalProvenance",
     "ProposerKind",
+    "VerdictReference",
     "derive_hypothesis",
     # actions
     "ActionFamily",

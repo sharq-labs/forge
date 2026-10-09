@@ -43,44 +43,55 @@ authority.
 
 ## FidelityGraph design (R2)
 
-`FidelityLink(L → H)` binds the following, all computed by `measure_link` from paired evaluations and none of it
-declared:
+`FidelityLink(L -> H)` binds the following:
 
 - the low and high node identities (rung plus model / realization / adapter);
 - the observable and its unit;
-- a `ValidityDomain` (a unit-explicit box; a missing variable counts as outside);
-- the evaluation-set digest;
-- Spearman rank correlation;
-- decision agreement at the threshold;
-- the discrepancy `H − L` (mean, std, and an envelope never narrower than observed);
-- near-threshold confusion;
+- a `ValidityDomain`: declared, but it must lie inside the measured point hull (a missing variable counts as outside);
+- a `LinkMeasurement` computed by `measure_link` from paired evaluations, never declared: the evaluation-set digest,
+  Spearman rank correlation, decision agreement at the threshold, the discrepancy `H - L` (mean, std, and an envelope
+  never narrower than observed), near-threshold confusion and the point hull;
 - the version, status (MEASURED / ADMITTED / SUSPENDED / RETIRED) and audit history.
 
-The elimination rules are:
+**Admission.** A link is admitted under a `LinkAdmissionPolicy` record with an absolute floor of 10 pairs. The policy
+also sets minimum rank correlation, minimum decision agreement and optional near-threshold confusion. The admission
+event binds the exact measurement digest, domain digest and version. Setting the status, carrying an old admission
+over, or swapping the measurement or domain makes the link refuse to construct. Re-measurement needs a new evaluation
+set.
 
-- **Hard rejections need no link.** `screen` returns REJECT_HARD only for logical or physical constraints and for
-  exact duplicates.
+**Elimination rules.**
+
+- **Hard rejections need no link.** REJECT_HARD is allowed only for a `HardRejectionBasis`: a versioned logical or
+  physical constraint judged on the candidate's inputs only, or an exact duplicate with a shared content digest.
 - **Elimination needs a standing link.** `screen` eliminates only through an ADMITTED link whose domain contains the
   point and whose discrepancy is QUANTIFIED. It eliminates only when even the optimistic envelope end fails the
   threshold. Everything else is promoted.
+- **The value must be the link's.** The screened value must come from the link's low realization and observable.
 - **A screening decision is scheduling, not evidence.** It is classified `scheduling_decision_not_evidence` and never
   becomes a multifidelity SUPPORTS or CONTRADICTS observation.
 
-Every non-promotion goes into the hash-chained `EliminationLedger` with the link id and version, the reason and the
-margin. The audit and resurrection steps then work as follows:
+**Ledger.** The `EliminationLedger` is hash-chained, and its entry payloads are immutable canonical JSON. An
+elimination is recorded only if it reproduces under the link it names. A candidate cannot be recorded twice while it
+stands, and a read-back requires an explicit expected head.
 
-1. **Sampling.** `audit_sample` takes a deterministic, seeded, margin-stratified sample of eliminations, with at least
-   one per stratum.
-2. **Scoring.** `record_audit` scores the sample at the higher fidelity. FALSE_ELIMINATION_RATE is None below
-   `min_audits` and is never read as zero.
-3. **Suspension.** If the rate exceeds the bound, the link is suspended as a new version with an audit event.
-4. **Resurrection.** `resurrection_queue` requeues, once and with trace, every elimination made under a link version
-   that no longer stands (suspended, retired, superseded or gone).
+**Audit.**
+
+1. **Draw.** `draw_audit` draws and records a margin-stratified sample of at least one per stratum. Its seed comes
+   from the ledger head and the link standing, never from the caller, and only one draw per standing may be pending.
+2. **Record.** `record_audit` must score exactly the drawn keys. Each candidate is judged against the threshold it was
+   eliminated under.
+3. **Resurrect false eliminations.** A false elimination is resurrected at once.
+4. **Rate and suspension.** FALSE_ELIMINATION_RATE is cumulative per standing, and is None below `min_audits` (never
+   zero). Above the `FalseEliminationPolicy` bound, the link is suspended.
+
+**Resurrection.** `resurrection_queue` requeues, once and with trace, every elimination whose link standing no longer
+stands (suspended, retired, re-measured or gone). It also requeues every constraint rejection whose constraint version
+changed.
 
 ## Migration and compatibility
 
 - **Byte compatibility.** `Hypothesis` keeps its M4G bytes: the new fields are trailing, defaulted, and emitted only
-  when set. All SRIA M4/M5 decision tests pass unchanged.
+  when set. Test runs are recorded in `docs/work/PROGRESS.md`.
 - **Certified code.** No CORE_CERTIFIED file is modified by R1 or R2.
 - **Legacy discovery records** (`DiscoveredEquationCandidate`, `GeneratedHypothesis`, `FalsificationRecord`) stay as
   they are. They enter V2 only through adapters, and always as PROPOSED.

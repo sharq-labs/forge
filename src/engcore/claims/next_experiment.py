@@ -299,12 +299,12 @@ def _dominant(record: Mapping[str, Any], channel: str) -> bool:
 #: capability extension), and it is never turned into one.
 PLANNING_FAMILY = {
     ExperimentAction.PROVIDE_INPUT: "characterize",
-    ExperimentAction.ESTABLISH_APPLICABILITY: "validate",
+    ExperimentAction.ESTABLISH_APPLICABILITY: "characterize",   # applicability is not validation
     ExperimentAction.MOVE_OPERATING_POINT: "explore",
     ExperimentAction.REFINE_DISCRETIZATION: "reduce_uncertainty",
     ExperimentAction.DECLARE_INPUT_DISTRIBUTIONS: "reduce_uncertainty",
     ExperimentAction.SENSITIVITY_ANALYSIS: "characterize",
-    ExperimentAction.RUN_INDEPENDENT_ROUTE: "validate",
+    ExperimentAction.RUN_INDEPENDENT_ROUTE: "reduce_uncertainty",  # solver agreement is verification, not validation
     ExperimentAction.TEST_AT_BENCHMARK_POINT: "validate",
     ExperimentAction.COLLECT_MEASUREMENT: "validate",
     ExperimentAction.OBTAIN_BENCHMARK_EVIDENCE: "validate",

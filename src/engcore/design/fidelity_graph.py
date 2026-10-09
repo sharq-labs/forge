@@ -10,10 +10,11 @@ an explicit, MEASURED relationship between two realizations:
   domain, the digest of the paired evaluation set it was measured on, and the
   measurement itself (:func:`measure_link`): rank correlation, decision
   agreement at the declared threshold, the discrepancy ``H - L`` and its
-  envelope, and near-threshold confusion.  Nothing in a measurement is
-  declared; everything is computed from the pairs.  A link must be ADMITTED (by
-  a named authority, with enough pairs and a quantified discrepancy) before it
-  can be used, and every change is a new version with an audit event.
+  envelope, near-threshold confusion and the HULL of the measured points.  The
+  measurement is computed from the pairs, never declared; the validity domain
+  is declared but must lie inside the measured hull.  A link is ADMITTED under a
+  :class:`LinkAdmissionPolicy` record, and the admission binds the exact
+  measurement, domain and version it judged: any later change un-admits it.
 
 Scientific rules enforced here:
 
@@ -208,6 +209,7 @@ class LinkMeasurement:
     sense: Sense
     envelope_k: float
     near_band: float
+    point_hull: Mapping[str, tuple[float, float]] = field(default_factory=dict)  # per-variable [min, max] of the pair points
 
     def to_dict(self) -> dict[str, Any]:
         return {"pairs": self.pairs, "evaluation_set_digest": self.evaluation_set_digest, "rank_correlation": self.rank_correlation,
@@ -215,7 +217,12 @@ class LinkMeasurement:
                 "discrepancy_mean": self.discrepancy_mean, "discrepancy_std": self.discrepancy_std,
                 "discrepancy_envelope": None if self.discrepancy_envelope is None else list(self.discrepancy_envelope),
                 "near_threshold_pairs": self.near_threshold_pairs, "near_threshold_confusion": self.near_threshold_confusion,
-                "threshold": self.threshold, "sense": self.sense.value, "envelope_k": self.envelope_k, "near_band": self.near_band}
+                "threshold": self.threshold, "sense": self.sense.value, "envelope_k": self.envelope_k, "near_band": self.near_band,
+                "point_hull": {k: list(v) for k, v in sorted(self.point_hull.items())}}
+
+    @property
+    def digest(self) -> str:
+        return _digest(self.to_dict())
 
 
 def measure_link(pairs: Iterable[PairedEvaluation], *, threshold: float, sense: Sense | str, envelope_k: float = 3.0,
@@ -234,8 +241,8 @@ def measure_link(pairs: Iterable[PairedEvaluation], *, threshold: float, sense: 
     threshold, envelope_k, near_band = float(threshold), float(envelope_k), float(near_band)
     if not (math.isfinite(threshold) and envelope_k > 0 and near_band > 0):
         raise FidelityGraphRefusal("threshold is finite; envelope_k and near_band are positive")
-    if isinstance(min_pairs_for_discrepancy, bool) or min_pairs_for_discrepancy < 2:
-        raise FidelityGraphRefusal("a discrepancy needs at least two pairs to have a spread")
+    if isinstance(min_pairs_for_discrepancy, bool) or min_pairs_for_discrepancy < MIN_PAIRS_FLOOR:
+        raise FidelityGraphRefusal(f"a discrepancy needs at least {MIN_PAIRS_FLOOR} pairs")
     low = [p.low_value for p in pairs]
     high = [p.high_value for p in pairs]
     d = [h - lo for h, lo in zip(high, low)]
@@ -252,8 +259,41 @@ def measure_link(pairs: Iterable[PairedEvaluation], *, threshold: float, sense: 
         mean = std = None
         env = None
         status = DiscrepancyStatus.UNKNOWN
+    common = set.intersection(*(set(p.point) for p in pairs))
+    hull = {k: (min(p.point[k] for p in pairs), max(p.point[k] for p in pairs)) for k in sorted(common)}
     return LinkMeasurement(len(pairs), _digest([p.to_dict() for p in pairs]), rho, agree, status, mean, std, env, len(near),
-                           confusion, threshold, sense, envelope_k, near_band)
+                           confusion, threshold, sense, envelope_k, near_band, hull)
+
+
+#: absolute floor on the pairs behind any quantified discrepancy (a policy may require more, never less)
+MIN_PAIRS_FLOOR = 10
+
+
+@dataclass(frozen=True)
+class LinkAdmissionPolicy:
+    """The floors a link must meet to be admitted for elimination.  A record, so admissions say what they were held to."""
+
+    policy_id: str
+    min_pairs: int
+    min_rank_correlation: float
+    min_decision_agreement: float
+    max_near_threshold_confusion: float | None = None   # None: no near-threshold requirement beyond the envelope
+
+    def __post_init__(self) -> None:
+        if not str(self.policy_id).strip():
+            raise FidelityGraphRefusal("an admission policy has an id")
+        if isinstance(self.min_pairs, bool) or self.min_pairs < MIN_PAIRS_FLOOR:
+            raise FidelityGraphRefusal(f"an admission policy requires at least {MIN_PAIRS_FLOOR} pairs")
+        if not (-1 <= float(self.min_rank_correlation) <= 1 and 0 <= float(self.min_decision_agreement) <= 1):
+            raise FidelityGraphRefusal("correlation floor in [-1, 1]; agreement floor in [0, 1]")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"policy_id": self.policy_id, "min_pairs": self.min_pairs, "min_rank_correlation": self.min_rank_correlation,
+                "min_decision_agreement": self.min_decision_agreement, "max_near_threshold_confusion": self.max_near_threshold_confusion}
+
+    @property
+    def digest(self) -> str:
+        return _digest(self.to_dict())
 
 
 # ---------------------------------------------------------------------------- links
@@ -266,12 +306,15 @@ class LinkStatus(str, Enum):
     RETIRED = "retired"
 
 
+_STATUS_ACTIONS = ("measured", "admitted", "suspended", "retired")
+
+
 @dataclass(frozen=True)
 class LinkAuditEvent:
     action: str                # "measured", "admitted", "audit", "suspended", "retired"
     actor: str
     reason: str
-    detail: Mapping[str, Any] = field(default_factory=dict)
+    detail: Mapping[str, Any] = field(default_factory=dict, hash=False)
 
     def to_dict(self) -> dict[str, Any]:
         return {"action": self.action, "actor": self.actor, "reason": self.reason, "detail": dict(self.detail)}
@@ -303,9 +346,24 @@ class FidelityLink:
         if isinstance(self.version, bool) or not isinstance(self.version, int) or self.version < 1:
             raise FidelityGraphRefusal("link versions start at 1")
         object.__setattr__(self, "audit", tuple(self.audit))
-        if self.status is LinkStatus.ADMITTED and self.measurement.discrepancy_status is not DiscrepancyStatus.QUANTIFIED:
-            raise FidelityGraphRefusal("an ADMITTED link has a QUANTIFIED discrepancy; UNKNOWN discrepancy never admits elimination")
-        if self.status is not LinkStatus.MEASURED and not any(e.action == "admitted" for e in self.audit):
+        hull = self.measurement.point_hull
+        for var, (lo, hi) in self.domain.bounds.items():
+            if var not in hull or lo < hull[var][0] or hi > hull[var][1]:
+                raise FidelityGraphRefusal(f"the validity domain on {var!r} [{lo}, {hi}] exceeds what the link was measured on "
+                                           f"{list(hull.get(var, ())) or '(never varied)'}; a domain is not declared wider than the data")
+        status_events = [e for e in self.audit if e.action in _STATUS_ACTIONS]
+        if self.status is LinkStatus.ADMITTED:
+            last = status_events[-1] if status_events else None
+            ok = (last is not None and last.action == "admitted"
+                  and last.detail.get("measurement_digest") == self.measurement.digest
+                  and last.detail.get("domain_digest") == _digest(self.domain.to_dict())
+                  and last.detail.get("version") == self.version)
+            if not ok:
+                raise FidelityGraphRefusal("an ADMITTED link's last status event is the admission of THIS measurement, domain and "
+                                           "version; admission is not a field to set or carry over")
+            if self.measurement.discrepancy_status is not DiscrepancyStatus.QUANTIFIED:
+                raise FidelityGraphRefusal("an ADMITTED link has a QUANTIFIED discrepancy")
+        elif self.status is not LinkStatus.MEASURED and not any(e.action == "admitted" for e in status_events):
             raise FidelityGraphRefusal(f"a {self.status.value} link records its admission in the audit history")
 
     def to_dict(self) -> dict[str, Any]:
@@ -318,37 +376,58 @@ class FidelityLink:
     def digest(self) -> str:
         return _digest(self.to_dict())
 
-    def _next(self, status: LinkStatus, event: LinkAuditEvent, **changes: Any) -> "FidelityLink":
-        return replace(self, version=self.version + 1, status=status, audit=self.audit + (event,), **changes)
+    @property
+    def standing_digest(self) -> str:
+        """What an elimination stood on: link id, version, measurement and domain.  Audit notes do not change it."""
+        return _digest({"link_id": self.link_id, "version": self.version, "measurement": self.measurement.digest,
+                        "domain": _digest(self.domain.to_dict()), "low": self.low.node_id, "high": self.high.node_id})
 
-    def admit(self, *, actor: str, reason: str, min_pairs: int, min_rank_correlation: float | None = None) -> "FidelityLink":
-        """Admit the link for elimination.  Needs a named actor, enough pairs and a QUANTIFIED discrepancy."""
+    def admit(self, policy: LinkAdmissionPolicy, *, actor: str, reason: str) -> "FidelityLink":
+        """Admit the link for elimination under ``policy``.  The admission binds this measurement, domain and version."""
+        if not isinstance(policy, LinkAdmissionPolicy):
+            raise FidelityGraphRefusal("admission is held to a LinkAdmissionPolicy record")
         if not str(actor).strip() or not str(reason).strip():
             raise FidelityGraphRefusal("admission names its actor and reason")
         if self.status is not LinkStatus.MEASURED:
             raise FidelityGraphRefusal(f"only a MEASURED link is admitted (this one is {self.status.value}); re-measure to re-admit")
         m = self.measurement
-        if m.pairs < min_pairs:
-            raise FidelityGraphRefusal(f"the link was measured on {m.pairs} pairs; admission requires {min_pairs}")
+        if m.pairs < policy.min_pairs:
+            raise FidelityGraphRefusal(f"the link was measured on {m.pairs} pairs; the policy requires {policy.min_pairs}")
         if m.discrepancy_status is not DiscrepancyStatus.QUANTIFIED:
             raise FidelityGraphRefusal("the link's discrepancy is UNKNOWN; it cannot be admitted to eliminate")
-        if min_rank_correlation is not None and (m.rank_correlation is None or m.rank_correlation < min_rank_correlation):
-            raise FidelityGraphRefusal(f"rank correlation {m.rank_correlation} is below the required {min_rank_correlation}")
-        return self._next(LinkStatus.ADMITTED, LinkAuditEvent("admitted", actor, reason, {"min_pairs": min_pairs}))
+        if m.rank_correlation is None or m.rank_correlation < policy.min_rank_correlation:
+            raise FidelityGraphRefusal(f"rank correlation {m.rank_correlation} is below the policy's {policy.min_rank_correlation}")
+        if m.decision_agreement < policy.min_decision_agreement:
+            raise FidelityGraphRefusal(f"decision agreement {m.decision_agreement} is below the policy's {policy.min_decision_agreement}")
+        if policy.max_near_threshold_confusion is not None and (m.near_threshold_confusion is None
+                                                               or m.near_threshold_confusion > policy.max_near_threshold_confusion):
+            raise FidelityGraphRefusal("near-threshold confusion is unmeasured or above the policy's bound")
+        detail = {"measurement_digest": m.digest, "domain_digest": _digest(self.domain.to_dict()), "version": self.version + 1,
+                  "policy": policy.to_dict(), "policy_digest": policy.digest}
+        return replace(self, version=self.version + 1, status=LinkStatus.ADMITTED,
+                       audit=self.audit + (LinkAuditEvent("admitted", actor, reason, detail),))
 
     def suspend(self, *, actor: str, reason: str, detail: Mapping[str, Any] | None = None) -> "FidelityLink":
         if self.status is not LinkStatus.ADMITTED:
             raise FidelityGraphRefusal("only an ADMITTED link is suspended")
-        return self._next(LinkStatus.SUSPENDED, LinkAuditEvent("suspended", actor, reason, dict(detail or {})))
+        return replace(self, version=self.version + 1, status=LinkStatus.SUSPENDED,
+                       audit=self.audit + (LinkAuditEvent("suspended", actor, reason, dict(detail or {})),))
 
     def retire(self, *, actor: str, reason: str) -> "FidelityLink":
-        return self._next(LinkStatus.RETIRED, LinkAuditEvent("retired", actor, reason))
+        return replace(self, version=self.version + 1, status=LinkStatus.RETIRED,
+                       audit=self.audit + (LinkAuditEvent("retired", actor, reason),))
 
-    def remeasured(self, measurement: LinkMeasurement, *, actor: str, reason: str) -> "FidelityLink":
-        """A new version measured on a new evaluation set; it starts MEASURED (re-admission is a fresh decision)."""
-        audit = self.audit + (LinkAuditEvent("measured", actor, reason, {"evaluation_set_digest": measurement.evaluation_set_digest}),)
+    def remeasured(self, measurement: LinkMeasurement, *, actor: str, reason: str,
+                   domain: ValidityDomain | None = None) -> "FidelityLink":
+        """A new version measured on a NEW evaluation set; it starts MEASURED (re-admission is a fresh decision)."""
+        used = {self.measurement.evaluation_set_digest} | {e.detail.get("evaluation_set_digest") for e in self.audit
+                                                             if e.action == "measured"}
+        if measurement.evaluation_set_digest in used:
+            raise FidelityGraphRefusal("re-measurement needs a new evaluation set; the same pairs cannot re-admit a link they "
+                                       "already admitted or that an audit suspended")
+        event = LinkAuditEvent("measured", actor, reason, {"evaluation_set_digest": measurement.evaluation_set_digest})
         return replace(self, version=self.version + 1, status=LinkStatus.MEASURED, measurement=measurement,
-                       audit=tuple(e for e in audit))
+                       domain=domain or self.domain, audit=self.audit + (event,))
 
 
 @dataclass(frozen=True)
@@ -391,7 +470,7 @@ class FidelityGraph:
 class ScreeningOutcome(str, Enum):
     PROMOTE = "promote"
     ELIMINATE = "eliminate"        # by an admitted, in-domain, quantified link (resurrectable)
-    REJECT_HARD = "reject_hard"    # logical/physical constraint or exact duplicate: needs no link
+    REJECT_HARD = "reject_hard"    # logical/physical constraint on the INPUTS, or exact duplicate: needs no link
 
 
 class HardRejection(str, Enum):
@@ -401,58 +480,113 @@ class HardRejection(str, Enum):
 
 
 @dataclass(frozen=True)
+class HardRejectionBasis:
+    """Why a candidate is rejected without any model: a versioned constraint judged on the candidate's INPUTS only, or the
+    exact duplicate it repeats.  A constraint judged on a model output is not a hard rejection: it goes through a link."""
+
+    kind: HardRejection
+    basis_ref: str                 # "constraint_id@version" or the duplicated candidate key
+    reason: str
+    judged_on_inputs_only: bool = False
+    duplicate_digest: str = ""     # for EXACT_DUPLICATE: the content digest both candidates share
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", HardRejection(self.kind))
+        if not str(self.basis_ref).strip() or not str(self.reason).strip():
+            raise FidelityGraphRefusal("a hard rejection names its basis and reason")
+        if self.kind is HardRejection.EXACT_DUPLICATE:
+            if len(str(self.duplicate_digest)) != 64:
+                raise FidelityGraphRefusal("an exact-duplicate rejection names the shared content digest")
+        else:
+            if self.judged_on_inputs_only is not True:
+                raise FidelityGraphRefusal("a hard constraint is judged on the candidate's inputs only; a constraint judged on a "
+                                           "model output is a cheap-model elimination and needs an admitted link")
+            if "@" not in self.basis_ref:
+                raise FidelityGraphRefusal("a constraint basis is versioned: 'constraint_id@version'")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"kind": self.kind.value, "basis_ref": self.basis_ref, "reason": self.reason,
+                "judged_on_inputs_only": self.judged_on_inputs_only, "duplicate_digest": self.duplicate_digest}
+
+
+@dataclass(frozen=True)
 class ScreeningDecision:
     candidate_key: str
     outcome: ScreeningOutcome
     reason: str
     link_id: str = ""
     link_version: int = 0
+    standing_digest: str = ""
     margin: float | None = None    # distance of the optimistic bound beyond the threshold (eliminations)
-    hard_rejection: HardRejection | None = None
+    low_value: float | None = None
+    point: Mapping[str, float] = field(default_factory=dict, hash=False)
+    threshold: float | None = None
+    sense: str = ""
+    hard: HardRejectionBasis | None = None
     classification: str = "scheduling_decision_not_evidence"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "outcome", ScreeningOutcome(self.outcome))
+        if not str(self.candidate_key).strip():
+            raise FidelityGraphRefusal("a screening decision names its candidate")
+        if self.outcome is ScreeningOutcome.ELIMINATE:
+            if not (self.link_id and self.link_version >= 1 and len(self.standing_digest) == 64 and self.margin is not None
+                    and self.margin > 0 and self.low_value is not None and self.threshold is not None and self.sense):
+                raise FidelityGraphRefusal("an elimination names its link standing, low value, threshold and a positive margin")
+        if self.outcome is ScreeningOutcome.REJECT_HARD and not isinstance(self.hard, HardRejectionBasis):
+            raise FidelityGraphRefusal("a hard rejection carries its HardRejectionBasis")
 
     def to_dict(self) -> dict[str, Any]:
         return {"candidate_key": self.candidate_key, "outcome": self.outcome.value, "reason": self.reason, "link_id": self.link_id,
-                "link_version": self.link_version, "margin": self.margin,
-                "hard_rejection": None if self.hard_rejection is None else self.hard_rejection.value, "classification": self.classification}
+                "link_version": self.link_version, "standing_digest": self.standing_digest, "margin": self.margin,
+                "low_value": self.low_value, "point": dict(self.point), "threshold": self.threshold, "sense": self.sense,
+                "hard": None if self.hard is None else self.hard.to_dict(), "classification": self.classification}
 
 
 def screen(candidate_key: str, *, low_value: float | None, point: Mapping[str, float], link: FidelityLink | None,
-           hard_rejection: tuple[HardRejection | str, str] | None = None) -> ScreeningDecision:
-    """Decide PROMOTE / ELIMINATE / REJECT_HARD for one candidate screened at the low fidelity."""
+           low_node: FidelityNode | None = None, observable: str = "",
+           hard_rejection: HardRejectionBasis | None = None) -> ScreeningDecision:
+    """Decide PROMOTE / ELIMINATE / REJECT_HARD for one candidate screened at the low fidelity.
+
+    With a link, ``low_node`` and ``observable`` must be the link's: a value from another realization or another
+    observable is not what the link measured."""
+    point = {str(k): float(v) for k, v in dict(point).items()}
     if hard_rejection is not None:
-        kind, why = HardRejection(hard_rejection[0]), str(hard_rejection[1]).strip()
-        if not why:
-            raise FidelityGraphRefusal("a hard rejection states its reason")
-        return ScreeningDecision(candidate_key, ScreeningOutcome.REJECT_HARD, why, hard_rejection=kind)
+        if not isinstance(hard_rejection, HardRejectionBasis):
+            raise FidelityGraphRefusal("a hard rejection is a HardRejectionBasis")
+        return ScreeningDecision(candidate_key, ScreeningOutcome.REJECT_HARD, hard_rejection.reason, point=point, hard=hard_rejection)
     if link is None:
-        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "no fidelity link: a cheap result only prioritizes")
+        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "no fidelity link: a cheap result only prioritizes",
+                                 low_value=low_value, point=point)
+    if low_node is None or low_node.node_id != link.low.node_id or observable != link.observable:
+        raise FidelityGraphRefusal("the screened value must come from the link's low realization and observable")
+    ident = dict(link_id=link.link_id, link_version=link.version, standing_digest=link.standing_digest, point=point)
     if low_value is None or not math.isfinite(float(low_value)):
-        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "no finite low-fidelity value: promote, never eliminate",
-                                 link.link_id, link.version)
+        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "no finite low-fidelity value: promote, never eliminate", **ident)
+    low_value = float(low_value)
     if link.status is not LinkStatus.ADMITTED:
         return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, f"link is {link.status.value}, not admitted: promote",
-                                 link.link_id, link.version)
+                                 low_value=low_value, **ident)
     if not link.domain.contains(point):
         return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "outside the link's validity domain: promote",
-                                 link.link_id, link.version)
+                                 low_value=low_value, **ident)
     m = link.measurement
     if m.discrepancy_status is not DiscrepancyStatus.QUANTIFIED or m.discrepancy_envelope is None:
-        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "discrepancy UNKNOWN: promote", link.link_id, link.version)
+        return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "discrepancy UNKNOWN: promote", low_value=low_value, **ident)
     lo, hi = m.discrepancy_envelope
-    low_value = float(low_value)
     if m.sense is Sense.AT_MOST:
         optimistic = low_value + lo          # the smallest the high-fidelity value can plausibly be
         margin = optimistic - m.threshold
     else:
         optimistic = low_value + hi
         margin = m.threshold - optimistic
+    common = dict(low_value=low_value, threshold=m.threshold, sense=m.sense.value, **ident)
     if margin > 0:
         return ScreeningDecision(candidate_key, ScreeningOutcome.ELIMINATE,
                                  f"even the optimistic high-fidelity bound {optimistic:.6g} fails the threshold {m.threshold:.6g}",
-                                 link.link_id, link.version, margin)
+                                 margin=margin, **common)
     return ScreeningDecision(candidate_key, ScreeningOutcome.PROMOTE, "the discrepancy envelope admits a pass: promote",
-                             link.link_id, link.version, margin)
+                             margin=margin, **common)
 
 
 # ---------------------------------------------------------------------------- ledger, audit, resurrection
@@ -462,22 +596,32 @@ def screen(candidate_key: str, *, low_value: float | None, point: Mapping[str, f
 class LedgerEntry:
     sequence: int
     previous: str
-    kind: str                       # "eliminated" | "rejected_hard" | "resurrected" | "audited"
+    kind: str                       # "eliminated" | "rejected_hard" | "resurrected" | "audit_drawn" | "audited"
     candidate_key: str
-    payload: Mapping[str, Any]
+    payload_json: str               # canonical JSON: an entry cannot be edited in place
+
+    @property
+    def payload(self) -> dict[str, Any]:
+        return json.loads(self.payload_json)
 
     @property
     def digest(self) -> str:
         return _digest({"sequence": self.sequence, "previous": self.previous, "kind": self.kind, "candidate_key": self.candidate_key,
-                        "payload": dict(self.payload)})
+                        "payload": json.loads(self.payload_json)})
 
     def to_dict(self) -> dict[str, Any]:
         return {"sequence": self.sequence, "previous": self.previous, "kind": self.kind, "candidate_key": self.candidate_key,
-                "payload": dict(self.payload), "digest": self.digest}
+                "payload": self.payload, "digest": self.digest}
+
+
+_LEDGER_KINDS = ("eliminated", "rejected_hard", "resurrected", "audit_drawn", "audited")
 
 
 class EliminationLedger:
-    """Append-only, hash-chained record of every non-promotion and every resurrection."""
+    """Append-only, hash-chained record of every non-promotion, audit and resurrection.
+
+    A ledger is a record, not a security boundary: in-process code can always build entries by hand.  Its job is to make
+    every elimination traceable and every edit detectable when it is read back against an expected head."""
 
     def __init__(self, entries: Iterable[LedgerEntry] = ()) -> None:
         self._entries: list[LedgerEntry] = []
@@ -493,36 +637,68 @@ class EliminationLedger:
         return tuple(self._entries)
 
     def _append(self, entry: LedgerEntry) -> LedgerEntry:
+        if entry.kind not in _LEDGER_KINDS:
+            raise FidelityGraphRefusal(f"unknown ledger entry kind {entry.kind!r}")
         if entry.sequence != len(self._entries) or entry.previous != self.head:
             raise FidelityGraphRefusal("ledger entry does not extend the head; the ledger is not rewritten")
         self._entries.append(entry)
         return entry
 
     def _add(self, kind: str, key: str, payload: Mapping[str, Any]) -> LedgerEntry:
-        return self._append(LedgerEntry(len(self._entries), self.head, kind, key, json.loads(json.dumps(dict(payload), sort_keys=True))))
+        return self._append(LedgerEntry(len(self._entries), self.head, kind, key, json.dumps(dict(payload), sort_keys=True)))
 
-    def record(self, decision: ScreeningDecision) -> LedgerEntry | None:
-        """Record a non-promotion (promotions need no entry here; they continue to the next fidelity)."""
+    def standing(self) -> dict[str, LedgerEntry]:
+        """Candidate -> its standing non-promotion entry (eliminated or rejected and not resurrected)."""
+        out: dict[str, LedgerEntry] = {}
+        for e in self._entries:
+            if e.kind in ("eliminated", "rejected_hard"):
+                out[e.candidate_key] = e
+            elif e.kind == "resurrected" and out.get(e.candidate_key) is not None \
+                    and out[e.candidate_key].sequence == e.payload.get("eliminated_at"):
+                del out[e.candidate_key]
+        return out
+
+    def record(self, decision: ScreeningDecision, *, link: FidelityLink | None = None, low_node: FidelityNode | None = None) -> LedgerEntry | None:
+        """Record a non-promotion.  An elimination is RE-SCREENED against ``link`` and refused unless it reproduces exactly;
+        a candidate that already stands eliminated or rejected is not recorded twice."""
+        if not isinstance(decision, ScreeningDecision):
+            raise FidelityGraphRefusal("the ledger records ScreeningDecision records")
         if decision.outcome is ScreeningOutcome.PROMOTE:
             return None
-        kind = "eliminated" if decision.outcome is ScreeningOutcome.ELIMINATE else "rejected_hard"
-        return self._add(kind, decision.candidate_key, decision.to_dict())
+        if decision.candidate_key in self.standing():
+            raise FidelityGraphRefusal(f"{decision.candidate_key!r} already stands eliminated/rejected")
+        if decision.outcome is ScreeningOutcome.ELIMINATE:
+            if link is None:
+                raise FidelityGraphRefusal("an elimination is recorded against the link it claims")
+            again = screen(decision.candidate_key, low_value=decision.low_value, point=decision.point, link=link,
+                           low_node=low_node, observable=link.observable)
+            if again.to_dict() != decision.to_dict():
+                raise FidelityGraphRefusal("the elimination does not reproduce under the link it names; it is not recorded")
+            return self._add("eliminated", decision.candidate_key, decision.to_dict())
+        return self._add("rejected_hard", decision.candidate_key, decision.to_dict())
 
     def eliminations(self) -> tuple[LedgerEntry, ...]:
-        """Eliminations not yet resurrected."""
-        resurrected = {(e.candidate_key, e.payload.get("eliminated_at")) for e in self._entries if e.kind == "resurrected"}
-        return tuple(e for e in self._entries if e.kind == "eliminated" and (e.candidate_key, e.sequence) not in resurrected)
+        """Standing eliminations (not hard rejections), in ledger order."""
+        return tuple(sorted((e for e in self.standing().values() if e.kind == "eliminated"), key=lambda e: e.sequence))
+
+    def resurrect(self, entry: LedgerEntry, *, reason: str, actor: str) -> LedgerEntry:
+        if self.standing().get(entry.candidate_key) != entry:
+            raise FidelityGraphRefusal("only a standing elimination or rejection is resurrected")
+        return self._add("resurrected", entry.candidate_key, {"eliminated_at": entry.sequence, "reason": reason, "actor": actor,
+                                                              "link_id": entry.payload.get("link_id"),
+                                                              "link_version": entry.payload.get("link_version")})
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": LEDGER_SCHEMA, "head": self.head, "entries": [e.to_dict() for e in self._entries]}
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any], *, expected_head: str | None = None) -> "EliminationLedger":
+    def from_dict(cls, payload: Mapping[str, Any], *, expected_head: str | None) -> "EliminationLedger":
+        """Rebuild and verify.  ``expected_head`` is required (pass ``None`` only to inspect an unanchored copy)."""
         if payload.get("schema") != LEDGER_SCHEMA:
             raise FidelityGraphRefusal("not an elimination ledger")
         entries = []
         for p in payload.get("entries", ()):
-            e = LedgerEntry(p["sequence"], p["previous"], p["kind"], p["candidate_key"], p["payload"])
+            e = LedgerEntry(p["sequence"], p["previous"], p["kind"], p["candidate_key"], json.dumps(p["payload"], sort_keys=True))
             if e.digest != p["digest"]:
                 raise FidelityGraphRefusal(f"ledger entry {p['sequence']} does not match its digest")
             entries.append(e)
@@ -532,101 +708,157 @@ class EliminationLedger:
         return ledger
 
 
-def audit_sample(ledger: EliminationLedger, link: FidelityLink, *, fraction: float, seed: str, strata: int = 3) -> tuple[str, ...]:
-    """Candidates eliminated under ``link`` (any version) to re-evaluate at the higher fidelity.
+@dataclass(frozen=True)
+class FalseEliminationPolicy:
+    """The campaign's audit contract: what fraction is audited, how it is stratified, and when a link is suspended."""
 
-    Deterministic: within each margin stratum (equal-count bins, smallest margins first) the candidates are ordered by
-    ``sha256(seed, key)`` and ``ceil(fraction * n)`` are taken -- at least one per non-empty stratum, so the near-threshold
-    eliminations are always audited."""
-    fraction = float(fraction)
-    if not 0 < fraction <= 1:
-        raise FidelityGraphRefusal("the audit fraction is in (0, 1]")
-    if not str(seed).strip() or strata < 1:
-        raise FidelityGraphRefusal("the audit is seeded and stratified")
-    elim = sorted((e for e in ledger.eliminations() if e.payload.get("link_id") == link.link_id),
-                  key=lambda e: (float(e.payload.get("margin") or 0.0), e.candidate_key))
+    policy_id: str
+    fraction: float
+    strata: int
+    bound: float
+    min_audits: int
+
+    def __post_init__(self) -> None:
+        if not str(self.policy_id).strip():
+            raise FidelityGraphRefusal("an audit policy has an id")
+        if not (0 < float(self.fraction) <= 1 and 0 <= float(self.bound) < 1 and int(self.strata) >= 1 and int(self.min_audits) >= 1):
+            raise FidelityGraphRefusal("fraction in (0,1], bound in [0,1), strata >= 1, min_audits >= 1")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"policy_id": self.policy_id, "fraction": self.fraction, "strata": self.strata, "bound": self.bound,
+                "min_audits": self.min_audits}
+
+    @property
+    def digest(self) -> str:
+        return _digest(self.to_dict())
+
+
+def _pending_draw(ledger: EliminationLedger, link: FidelityLink) -> LedgerEntry | None:
+    recorded = {e.payload.get("draw") for e in ledger.entries if e.kind == "audited"}
+    draws = [e for e in ledger.entries if e.kind == "audit_drawn" and e.payload.get("standing_digest") == link.standing_digest
+             and e.sequence not in recorded]
+    return draws[-1] if draws else None
+
+
+def draw_audit(ledger: EliminationLedger, link: FidelityLink, policy: FalseEliminationPolicy) -> tuple[str, ...]:
+    """Draw (and RECORD) the audit sample for ``link``'s current standing: margin-stratified, seeded by the ledger head and the
+    link standing (no caller-chosen seed), at least one per non-empty stratum.  One pending draw per standing."""
+    if not isinstance(policy, FalseEliminationPolicy):
+        raise FidelityGraphRefusal("the audit is held to a FalseEliminationPolicy")
+    if _pending_draw(ledger, link) is not None:
+        raise FidelityGraphRefusal("an audit draw for this link standing is still pending; record it before drawing again")
+    elim = sorted((e for e in ledger.eliminations() if e.payload.get("standing_digest") == link.standing_digest),
+                  key=lambda e: (float(e.payload["margin"]), e.candidate_key))
     if not elim:
         return ()
-    bins = [elim[i * len(elim) // strata:(i + 1) * len(elim) // strata] for i in range(strata)]
+    seed = _digest({"ledger_head": ledger.head, "standing": link.standing_digest})
+    bins = [elim[i * len(elim) // policy.strata:(i + 1) * len(elim) // policy.strata] for i in range(policy.strata)]
     chosen: list[str] = []
     for b in bins:
         if not b:
             continue
         ordered = sorted(b, key=lambda e: hashlib.sha256(f"{seed}\n{e.candidate_key}".encode()).hexdigest())
-        chosen.extend(e.candidate_key for e in ordered[:max(1, math.ceil(fraction * len(b)))])
-    return tuple(sorted(set(chosen)))
+        chosen.extend(e.candidate_key for e in ordered[:max(1, math.ceil(policy.fraction * len(b)))])
+    keys = tuple(sorted(set(chosen)))
+    ledger._add("audit_drawn", "", {"standing_digest": link.standing_digest, "link_id": link.link_id, "keys": list(keys),
+                                    "seed": seed, "policy": policy.to_dict()})
+    return keys
 
 
 @dataclass(frozen=True)
 class AuditResult:
     link_id: str
     link_version: int
-    audited: int
+    audited: int                           # cumulative, for this link standing
     false_eliminations: int
     false_elimination_rate: float | None   # None when fewer than min_audits audits: never read as 0
     bound: float
     suspended: bool
+    resurrected: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {"link_id": self.link_id, "link_version": self.link_version, "audited": self.audited,
                 "false_eliminations": self.false_eliminations, "false_elimination_rate": self.false_elimination_rate,
-                "bound": self.bound, "suspended": self.suspended}
+                "bound": self.bound, "suspended": self.suspended, "resurrected": list(self.resurrected)}
 
 
-def record_audit(ledger: EliminationLedger, link: FidelityLink, high_values: Mapping[str, float], *, bound: float, min_audits: int,
+def record_audit(ledger: EliminationLedger, link: FidelityLink, high_values: Mapping[str, float], policy: FalseEliminationPolicy, *,
                  actor: str) -> tuple[FidelityLink, AuditResult]:
-    """Score audited eliminations at the higher fidelity; suspend the link when FALSE_ELIMINATION_RATE > bound.
+    """Score the PENDING draw at the higher fidelity.  ``high_values`` must cover exactly the drawn keys.
 
-    A false elimination is an eliminated candidate whose HIGH-fidelity value passes the threshold."""
-    if not 0 <= float(bound) < 1 or min_audits < 1:
-        raise FidelityGraphRefusal("the false-elimination bound is in [0, 1) and min_audits >= 1")
-    eliminated = {e.candidate_key: e for e in ledger.eliminations() if e.payload.get("link_id") == link.link_id}
-    unknown = sorted(set(high_values) - set(eliminated))
-    if unknown:
-        raise FidelityGraphRefusal(f"audited candidates {unknown} were not eliminated under link {link.link_id!r}")
-    m = link.measurement
-    false = 0
-    for key, value in sorted(high_values.items()):
+    A false elimination (the high-fidelity value passes the threshold the candidate was eliminated against) is resurrected
+    at once.  The FALSE_ELIMINATION_RATE is cumulative over every audit of this link standing; above the policy bound the
+    link is suspended (and every elimination under it becomes resurrectable)."""
+    draw = _pending_draw(ledger, link)
+    if draw is None:
+        raise FidelityGraphRefusal("no pending audit draw for this link standing; draw_audit chooses what is audited")
+    keys = set(draw.payload["keys"])
+    if set(high_values) != keys:
+        raise FidelityGraphRefusal(f"the audit must score exactly the drawn sample (missing {sorted(keys - set(high_values))}, "
+                                   f"extra {sorted(set(high_values) - keys)})")
+    values = {}
+    for key, value in high_values.items():
         value = float(value)
         if not math.isfinite(value):
             raise FidelityGraphRefusal(f"audit value for {key!r} is not finite; a failed audit run is not an audit")
-        passed = m.sense.passes(value, m.threshold)
-        false += passed
-        ledger._add("audited", key, {"link_id": link.link_id, "link_version": link.version, "high_value": value,
+        values[key] = value
+    standing = ledger.standing()
+    resurrected = []
+    for key in sorted(values):
+        entry = standing[key]
+        sense = Sense(entry.payload["sense"])
+        passed = sense.passes(values[key], float(entry.payload["threshold"]))   # the threshold it was ELIMINATED against
+        ledger._add("audited", key, {"draw": draw.sequence, "standing_digest": link.standing_digest, "high_value": values[key],
                                      "false_elimination": passed})
-    n = len(high_values)
-    rate = false / n if n >= min_audits else None
-    suspend = rate is not None and rate > float(bound) and link.status is LinkStatus.ADMITTED
-    result = AuditResult(link.link_id, link.version, n, false, rate, float(bound), suspend)
+        if passed:
+            ledger.resurrect(entry, reason="the false-elimination audit found it passing at the higher fidelity", actor=actor)
+            resurrected.append(key)
+    audited = [e for e in ledger.entries if e.kind == "audited" and e.payload.get("standing_digest") == link.standing_digest]
+    n = len(audited)
+    false = sum(1 for e in audited if e.payload.get("false_elimination"))
+    rate = false / n if n >= policy.min_audits else None
+    suspend = rate is not None and rate > policy.bound and link.status is LinkStatus.ADMITTED
+    result = AuditResult(link.link_id, link.version, n, false, rate, policy.bound, suspend, tuple(resurrected))
     if suspend:
-        link = link.suspend(actor=actor, reason=f"false-elimination rate {rate:.4g} exceeds the campaign bound {float(bound):.4g}",
-                            detail=result.to_dict())
+        link = link.suspend(actor=actor, reason=f"false-elimination rate {rate:.4g} exceeds the campaign bound {policy.bound:.4g}",
+                            detail={**result.to_dict(), "policy": policy.to_dict()})
     else:
-        link = replace(link, audit=link.audit + (LinkAuditEvent("audit", actor, "false-elimination audit", result.to_dict()),))
+        link = replace(link, audit=link.audit + (LinkAuditEvent("audit", actor, "false-elimination audit",
+                                                                {**result.to_dict(), "policy": policy.to_dict()}),))
     return link, result
 
 
-def resurrection_queue(ledger: EliminationLedger, graph: FidelityGraph, *, actor: str) -> tuple[str, ...]:
-    """Requeue every elimination made under a link version that no longer stands (suspended, retired, superseded or
-    gone).  Appends one 'resurrected' entry per candidate; deterministic order (ledger sequence)."""
+def resurrection_queue(ledger: EliminationLedger, graph: FidelityGraph, *, actor: str,
+                       constraint_versions: Mapping[str, str] | None = None) -> tuple[str, ...]:
+    """Requeue every elimination whose link standing no longer stands (suspended, retired, re-measured or gone), and every
+    hard constraint rejection whose constraint version changed.  One 'resurrected' entry each; ledger order."""
     current = {link.link_id: link for link in graph.links}
+    versions = dict(constraint_versions or {})
     out = []
-    for e in ledger.eliminations():
-        link = current.get(e.payload.get("link_id"))
-        stands = link is not None and link.status is LinkStatus.ADMITTED and link.version == e.payload.get("link_version")
-        if stands:
-            continue
-        why = "link gone" if link is None else (f"link {link.status.value}" if link.status is not LinkStatus.ADMITTED
-                                                else f"link superseded (v{e.payload.get('link_version')} -> v{link.version})")
-        ledger._add("resurrected", e.candidate_key, {"eliminated_at": e.sequence, "link_id": e.payload.get("link_id"),
-                                                     "link_version": e.payload.get("link_version"), "reason": why, "actor": actor})
-        out.append(e.candidate_key)
+    for key, e in sorted(ledger.standing().items(), key=lambda kv: kv[1].sequence):
+        p = e.payload
+        if e.kind == "eliminated":
+            link = current.get(p.get("link_id"))
+            if link is not None and link.status is LinkStatus.ADMITTED and link.standing_digest == p.get("standing_digest"):
+                continue
+            why = "link gone" if link is None else (f"link {link.status.value}" if link.status is not LinkStatus.ADMITTED
+                                                    else "link re-measured / re-admitted under another standing")
+        else:
+            hard = p.get("hard") or {}
+            if hard.get("kind") == HardRejection.EXACT_DUPLICATE.value:
+                continue
+            cid, _, ver = str(hard.get("basis_ref", "")).partition("@")
+            if cid not in versions or versions[cid] == ver:
+                continue
+            why = f"constraint {cid} changed from version {ver} to {versions[cid]}"
+        ledger.resurrect(e, reason=why, actor=actor)
+        out.append(key)
     return tuple(out)
 
 
 __all__ = [
-    "AuditResult", "DiscrepancyStatus", "EliminationLedger", "FidelityGraph", "FidelityGraphRefusal", "FidelityLink", "FidelityNode",
-    "HardRejection", "LINK_SCHEMA", "LedgerEntry", "LinkAuditEvent", "LinkMeasurement", "LinkStatus", "PairedEvaluation",
-    "ScreeningDecision", "ScreeningOutcome", "Sense", "ValidityDomain", "audit_sample", "measure_link", "record_audit",
-    "resurrection_queue", "screen",
+    "AuditResult", "DiscrepancyStatus", "EliminationLedger", "FalseEliminationPolicy", "FidelityGraph", "FidelityGraphRefusal",
+    "FidelityLink", "FidelityNode", "HardRejection", "HardRejectionBasis", "LINK_SCHEMA", "LedgerEntry", "LinkAdmissionPolicy",
+    "LinkAuditEvent", "LinkMeasurement", "LinkStatus", "MIN_PAIRS_FLOOR", "PairedEvaluation", "ScreeningDecision",
+    "ScreeningOutcome", "Sense", "ValidityDomain", "draw_audit", "measure_link", "record_audit", "resurrection_queue", "screen",
 ]
