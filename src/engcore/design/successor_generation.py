@@ -11,11 +11,10 @@ validated and assessed before they can become parents themselves.
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
-from typing import Any, Mapping, Protocol, Sequence, runtime_checkable
+from typing import Mapping, Protocol, Sequence, runtime_checkable
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.ir.values import (
@@ -23,7 +22,6 @@ from ..scientific.ir.values import (
     CategoricalValue,
     IntegerValue,
     ScientificValue,
-    encode_value,
     require_scientific_value,
 )
 from ..scientific.ir.variables import VariableKind
