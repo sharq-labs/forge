@@ -374,6 +374,19 @@ class Hypothesis:
         content = {k: full.get(k) for k in self.CONTENT_FIELDS}
         return hashlib.sha256(json.dumps(content, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
+    #: what is CLAIMED, independent of who claims it: id, parents, model label and narrative excluded.  Two hypotheses
+    #: with one claim digest make one scientific claim (a refutation of one is a refutation of the other).
+    CLAIM_FIELDS = ("kind", "structure_digest", "statement_payload", "predictions", "parameters", "scope_ref")
+
+    @property
+    def claim_digest(self) -> str:
+        full = self.to_dict()
+        claim = {k: full.get(k) for k in self.CLAIM_FIELDS}
+        if claim.get("structure_digest"):          # a canonical structure identifies the claim up to constants
+            claim.pop("statement_payload", None)
+        claim["parameters"] = sorted((p.get("name"), p.get("unit")) for p in (claim.get("parameters") or []))
+        return hashlib.sha256(json.dumps(claim, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
     @property
     def digest(self) -> str:
         """Content identity of this revision (status and basis included)."""
@@ -543,8 +556,12 @@ def derive_hypothesis(parent: Hypothesis, *, hypothesis_id: str, kind: Hypothesi
             raise ValueError(f"a derived hypothesis starts PROPOSED with no inherited {forbidden}")
     if hypothesis_id == parent.hypothesis_id:
         raise ValueError("a derived hypothesis has its own id")
-    return Hypothesis(hypothesis_id=hypothesis_id, kind=kind, parents=tuple(sorted({*fields.pop("parents", ()), parent.hypothesis_id})),
-                      **fields)
+    child = Hypothesis(hypothesis_id=hypothesis_id, kind=kind, parents=tuple(sorted({*fields.pop("parents", ()), parent.hypothesis_id})),
+                       **fields)
+    if child.claim_digest == parent.claim_digest:
+        raise ValueError("a derived hypothesis makes a different claim than its parent; the same claim under a new id is the "
+                         "same hypothesis (and inherits any refutation)")
+    return child
 
 __all__ = [
     "HYPOTHESIS_SCHEMA", "HYPOTHESIS_SET_SCHEMA", "Hypothesis", "HypothesisKind", "HypothesisParameter", "HypothesisPrediction",

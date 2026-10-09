@@ -62,7 +62,7 @@ class MultiplicityLedger:
             raise MultiplicityRefused(f"campaign {campaign_id!r} already opened a ledger; a second one would restart its count")
         _OPENED.add(campaign_id)
         self._closed: "MultiplicityContext | None" = None
-        self.campaign_id = campaign_id
+        self.__campaign_id = campaign_id
         self._counts = {k: 0 for k in COUNTERS}
         self._per_fidelity: dict[str, int] = {}
         self._compute: dict[str, float] = {}
@@ -70,6 +70,10 @@ class MultiplicityLedger:
         self._strategies: set[str] = set()
         self._tested: set[str] = set()
         self._promoted: set[str] = set()
+
+    @property
+    def campaign_id(self) -> str:
+        return self.__campaign_id
 
     def _open(self) -> None:
         if self._closed is not None:
@@ -88,21 +92,25 @@ class MultiplicityLedger:
         self._tested.add(hypothesis_id)
 
     def evaluated(self, rung_id: str, n: int = 1) -> None:
+        self._open()
         if not str(rung_id).strip():
             raise MultiplicityRefused("evaluations are counted per named rung")
         self._per_fidelity[rung_id] = self._per_fidelity.get(rung_id, 0) + _nonneg_int(n)
 
     def compute(self, unit: str, amount: float) -> None:
+        self._open()
         if not str(unit).strip() or not (math.isfinite(float(amount)) and float(amount) >= 0):
             raise MultiplicityRefused("compute is a finite non-negative amount in a named unit")
         self._compute[unit] = self._compute.get(unit, 0.0) + float(amount)
 
     def seed(self, seed: str) -> None:
+        self._open()
         if not str(seed).strip():
             raise MultiplicityRefused("a seed is named")
         self._seeds.add(str(seed))
 
     def strategy(self, strategy_id: str, version: str) -> None:
+        self._open()
         if not (str(strategy_id).strip() and str(version).strip()):
             raise MultiplicityRefused("a strategy is named and versioned")
         self._strategies.add(f"{strategy_id}@{version}")
@@ -236,10 +244,17 @@ class PromotedResult:
         return PromotedResult(self.result_id, self.hypothesis_id, ctx, ctx.digest)
 
 
-def verify_promoted(result: PromotedResult, ledger: MultiplicityLedger) -> list[str]:
-    """Why ``result`` does not carry its campaign's FINAL multiplicity (empty when it does)."""
-    if ledger.campaign_id != result.multiplicity.campaign_id:
-        return ["the result belongs to another campaign's ledger"]
+def verify_promoted(result: PromotedResult, ledger: MultiplicityLedger, *, campaign_id: str, registry: Any = None) -> list[str]:
+    """Why ``result`` does not carry the EXPECTED campaign's FINAL multiplicity (empty when it does).  With the
+    campaign's falsifier ``registry``, the tested family must cover every hypothesis id registered there."""
+    if ledger.campaign_id != campaign_id or result.multiplicity.campaign_id != campaign_id:
+        return ["the result or ledger belongs to another campaign than the expected one"]
+    if registry is not None:
+        if getattr(registry, "campaign_id", None) != campaign_id:
+            return ["the registry belongs to another campaign"]
+        missing = sorted(set(registry.registered_ids()) - set(result.multiplicity.tested_ids))
+        if missing:
+            return [f"the campaign registered {len(missing)} hypotheses the multiplicity family omits (e.g. {missing[:3]})"]
     if ledger.final is None:
         return ["the campaign's ledger is not closed: the family the result was selected from is not final"]
     if result.multiplicity_digest != ledger.final.digest:

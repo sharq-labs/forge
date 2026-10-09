@@ -5,10 +5,12 @@
   digest is part of the snapshot identity).  An empty snapshot covers nothing.
 * A :class:`NoveltyLedger` (one per campaign, issued by the campaign's
   :class:`~engcore.claims.falsification.ExposureAuthority`, on its clock) is an ordered hash chain: a snapshot is
-  SEALED in it, and a hypothesis is RECORDED as proposed in it.  A check is admissible only against a snapshot sealed
-  BEFORE the FIRST record of the hypothesis id and of its canonical structure, so a snapshot cannot be assembled after
-  seeing the hypothesis -- not even after a cosmetic revision or a re-derived id -- and silently omit the match.
-* The canonicalizer is SELF-TESTED against every snapshot entry that carries an expression; one that does not
+  SEALED in it, and a hypothesis is RECORDED as proposed in it.  A check is admissible only against the LATEST snapshot
+  sealed BEFORE the hypothesis id, its claim or its structure was first seen anywhere on the authority's clock (a
+  falsifier-registry registration counts), and snapshots only grow -- so a snapshot cannot be assembled after seeing the
+  hypothesis, chosen among several, or trimmed, to omit the match.
+* Canonicalizers and evaluators are REGISTERED by id (trusted setup, once); a caller cannot pass another function under
+  a known id.  The canonicalizer is also SELF-TESTED against every snapshot entry that carries an expression; one that does not
   reproduce the snapshot's own digests is refused, and without any expression to test it against no POSSIBLY_NOVEL is
   issued.  When entries carry expressions the snapshot DECLARES the numeric-equivalence method (evaluator id, probes,
   tolerance), and the check must run with exactly that method.
@@ -62,12 +64,44 @@ class Equivalence(str, Enum):
     UNDECIDED = "undecided"
 
 
+_CANONICALIZERS: dict[str, Callable[[Mapping[str, Any]], str]] = {}
+_EVALUATORS: dict[str, Callable[[Mapping[str, Any], Mapping[str, float]], float]] = {}
+
+
+def register_canonicalizer(canonicalizer_id: str, fn: Callable[[Mapping[str, Any]], str]) -> None:
+    """Trusted setup: bind a canonicalizer id to its function, once.  A different function under a known id is refused."""
+    _register(_CANONICALIZERS, canonicalizer_id, fn, "canonicalizer")
+
+
+def register_evaluator(evaluator_id: str, fn: Callable[[Mapping[str, Any], Mapping[str, float]], float]) -> None:
+    """Trusted setup: bind an evaluator id to its function, once."""
+    _register(_EVALUATORS, evaluator_id, fn, "evaluator")
+
+
+def _register(table: dict, key: str, fn: Callable, what: str) -> None:
+    if not str(key).strip() or not callable(fn):
+        raise NoveltyRefused(f"a {what} is registered under an id with a callable")
+    if key in table and table[key] is not fn:
+        raise NoveltyRefused(f"{what} {key!r} is already bound to another function")
+    table[key] = fn
+
+
 @dataclass(frozen=True)
 class Canonicalizer:
-    """A declared structure-identity function (e.g. :func:`engcore.blindfold.expression.structure_digest`)."""
+    """A REGISTERED structure-identity function, resolved by id (a caller cannot pass another function under an id)."""
 
     canonicalizer_id: str
     fn: Callable[[Mapping[str, Any]], str] = field(compare=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if _CANONICALIZERS.get(self.canonicalizer_id) is not self.fn:
+            raise NoveltyRefused(f"canonicalizer {self.canonicalizer_id!r} is not registered with this function")
+
+    @classmethod
+    def resolve(cls, canonicalizer_id: str) -> "Canonicalizer":
+        if canonicalizer_id not in _CANONICALIZERS:
+            raise NoveltyRefused(f"no registered canonicalizer {canonicalizer_id!r}")
+        return cls(canonicalizer_id, _CANONICALIZERS[canonicalizer_id])
 
 
 @dataclass(frozen=True)
@@ -116,17 +150,25 @@ class PriorArtSnapshot:
 
 
 class NoveltyLedger:
-    """Ordered hash chain of snapshot seals and proposal records, on the issuing authority's clock."""
+    """Ordered hash chain of snapshot seals and proposal records, on the issuing authority's clock.
+
+    Snapshots only GROW: a later snapshot must contain every entry of the earlier ones (removing prior art never raises
+    novelty), and a check must use the LATEST snapshot sealed before the proposal.  The proposal time is the earliest
+    sighting of the hypothesis id, its claim or its structure anywhere on the authority's clock (a falsifier registry
+    registration counts), so delaying the novelty record proves nothing."""
 
     def __init__(self, authority: Any, campaign_id: str, issued: Any = None) -> None:
         if issued is None or issued is not getattr(authority, "_issued", None):
             raise NoveltyRefused("a novelty ledger is issued by its campaign's exposure authority (ExposureAuthority.novelty_ledger)")
         self.__authority = authority
-        self.campaign_id = campaign_id
+        self.__campaign_id = campaign_id
         self._entries: list[dict[str, Any]] = []
         self._sealed: dict[str, int] = {}
-        self._first_id: dict[str, int] = {}
-        self._first_structure: dict[str, int] = {}
+        self._snapshots: list[tuple[int, PriorArtSnapshot]] = []
+
+    @property
+    def campaign_id(self) -> str:
+        return self.__campaign_id
 
     @property
     def head(self) -> str:
@@ -134,10 +176,14 @@ class NoveltyLedger:
 
     @property
     def anchor(self) -> tuple[str, str]:
-        return (self.__authority.fingerprint, self.campaign_id)
+        return (self.__authority.fingerprint, self.__campaign_id)
 
-    def _add(self, kind: str, subject: str) -> int:
-        clock = self.__authority._tick()
+    @property
+    def issued(self) -> bool:
+        return getattr(self.__authority, "_novelty_ledgers", {}).get(self.__campaign_id) is self
+
+    def _add(self, kind: str, subject: str, clock: int | None = None) -> int:
+        clock = self.__authority._tick() if clock is None else clock
         e = {"sequence": len(self._entries), "clock": clock, "previous": self.head, "kind": kind, "subject": subject}
         e["digest"] = _digest(e)
         self._entries.append(e)
@@ -145,31 +191,39 @@ class NoveltyLedger:
 
     def seal(self, snapshot: PriorArtSnapshot) -> int:
         d = snapshot.digest
-        if d not in self._sealed:
-            self._sealed[d] = self._add("snapshot_sealed", d)
-        return self._sealed[d]
-
-    def record_proposal(self, hypothesis: Hypothesis, canonicalizer: "Canonicalizer") -> int:
-        """Record a proposal.  The FIRST record of its id and of its canonical structure is what ordering uses."""
-        clock = self._add("proposed", f"{hypothesis.hypothesis_id}:{hypothesis.content_digest}")
-        self._first_id.setdefault(hypothesis.hypothesis_id, clock)
-        expression = hypothesis.statement_payload.get("expression") if hypothesis.statement_payload else None
-        if isinstance(expression, Mapping):
-            self._first_structure.setdefault(f"{canonicalizer.canonicalizer_id}:{canonicalizer.fn(expression)}", clock)
+        if d in self._sealed:
+            return self._sealed[d]
+        if self._snapshots:
+            previous = {(e.entry_id, e.structure_digest) for e in self._snapshots[-1][1].entries}
+            if not previous <= {(e.entry_id, e.structure_digest) for e in snapshot.entries}:
+                raise NoveltyRefused("a later prior-art snapshot contains every entry of the earlier one: prior art is never removed")
+        clock = self._add("snapshot_sealed", d)
+        self._sealed[d] = clock
+        self._snapshots.append((clock, snapshot))
         return clock
+
+    def record_proposal(self, hypothesis: Hypothesis) -> int:
+        """Record a proposal on the authority's clock (its id, claim and declared structure are marked as seen)."""
+        keys = [f"id:{hypothesis.hypothesis_id}", f"claim:{hypothesis.claim_digest}"] + (
+            [f"structure:{hypothesis.structure_digest}"] if hypothesis.structure_digest else [])
+        clock = self.__authority._see(*keys)
+        return self._add("proposed", f"{hypothesis.hypothesis_id}:{hypothesis.content_digest}", clock)
 
     def ordering(self, snapshot: PriorArtSnapshot, hypothesis: Hypothesis, structure_key: str | None) -> tuple[int, int]:
         sealed = self._sealed.get(snapshot.digest)
-        firsts = [t for t in (self._first_id.get(hypothesis.hypothesis_id),
-                              None if structure_key is None else self._first_structure.get(structure_key)) if t is not None]
         if sealed is None:
             raise NoveltyRefused("the prior-art snapshot was never sealed (or changed after it was sealed)")
-        if not firsts:
+        keys = [f"id:{hypothesis.hypothesis_id}", f"claim:{hypothesis.claim_digest}"] + ([f"structure:{structure_key}"]
+                                                                                         if structure_key else [])
+        proposed = self.__authority.first_seen(*keys)
+        if proposed is None:
             raise NoveltyRefused("the hypothesis was never recorded as proposed; its timing against the snapshot is unknown")
-        proposed = min(firsts)
         if not sealed < proposed:
-            raise NoveltyRefused("the snapshot was sealed AFTER the hypothesis (or its structure) was first proposed: a snapshot "
-                                 "assembled around a result is not prior art")
+            raise NoveltyRefused("the snapshot was sealed AFTER the hypothesis (or its claim or structure) was first seen: a "
+                                 "snapshot assembled around a result is not prior art")
+        latest = max((c for c, _s in self._snapshots if c < proposed), default=None)
+        if latest != sealed:
+            raise NoveltyRefused("a check uses the LATEST snapshot sealed before the proposal (it contains every earlier one)")
         return sealed, proposed
 
 
@@ -184,6 +238,8 @@ class EquivalenceSpec:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "probes", tuple(dict(p) for p in self.probes))
+        if _EVALUATORS.get(self.evaluator_id) is not self.evaluate:
+            raise NoveltyRefused(f"evaluator {self.evaluator_id!r} is not registered with this function")
         if not str(self.evaluator_id).strip() or len(self.probes) < 2 or not (math.isfinite(self.rel_tol) and self.rel_tol > 0):
             raise NoveltyRefused("numeric equivalence names its evaluator and declares >= 2 probe points and a positive tolerance")
 
@@ -237,8 +293,10 @@ class NoveltyCheck:
 def check_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: NoveltyLedger, *, canonicalizer: Canonicalizer,
                   equivalence: EquivalenceSpec | None = None) -> NoveltyCheck:
     """Check ``hypothesis`` against ``snapshot``, which must have been sealed in ``ledger`` before the proposal."""
-    if not isinstance(ledger, NoveltyLedger):
-        raise NoveltyRefused("novelty is checked against a campaign's novelty ledger")
+    if not isinstance(ledger, NoveltyLedger) or not ledger.issued:
+        raise NoveltyRefused("novelty is checked against the novelty ledger its authority issued for the campaign")
+    if _CANONICALIZERS.get(canonicalizer.canonicalizer_id) is not canonicalizer.fn:
+        raise NoveltyRefused("the canonicalizer is not the registered one for its id")
     if canonicalizer.canonicalizer_id != snapshot.canonicalizer_id:
         raise NoveltyRefused("the canonicalizer is not the one the snapshot's structure digests were computed with")
     declared = None if not snapshot.equivalence else json.loads(json.dumps(dict(snapshot.equivalence), sort_keys=True))
@@ -250,8 +308,7 @@ def check_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: No
         raise NoveltyRefused("the canonicalizer does not reproduce the snapshot's own structure digests")
     expression = hypothesis.statement_payload.get("expression") if hypothesis.statement_payload else None
     derived = canonicalizer.fn(expression) if isinstance(expression, Mapping) else None
-    structure_key = None if derived is None else f"{canonicalizer.canonicalizer_id}:{derived}"
-    sealed_at, proposed_at = ledger.ordering(snapshot, hypothesis, structure_key)
+    sealed_at, proposed_at = ledger.ordering(snapshot, hypothesis, derived)
     base = dict(hypothesis_id=hypothesis.hypothesis_id, hypothesis_content_digest=hypothesis.content_digest,
                 snapshot_digest=snapshot.digest, snapshot_sealed_at=sealed_at, proposal_recorded_at=proposed_at,
                 equivalence=declared)
@@ -322,4 +379,5 @@ def verify_novelty(hypothesis: Hypothesis, snapshot: PriorArtSnapshot, ledger: N
 
 
 __all__ = ["Canonicalizer", "Equivalence", "EquivalenceSpec", "NoveltyCheck", "NoveltyLedger", "NoveltyMethod", "NoveltyRefused",
-           "PriorArtEntry", "PriorArtSnapshot", "apply_novelty", "check_novelty", "verify_novelty"]
+           "PriorArtEntry", "PriorArtSnapshot", "apply_novelty", "check_novelty", "register_canonicalizer", "register_evaluator",
+           "verify_novelty"]
