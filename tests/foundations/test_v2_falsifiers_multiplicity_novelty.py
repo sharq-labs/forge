@@ -289,7 +289,7 @@ def test_multiplicity_records_ids_checks_the_stage_chain_and_binds_the_final_con
             late()
     with pytest.raises(AttributeError):                                                    # re-review 3 H5
         led.campaign_id = "other"
-    del led
+    led = None                                                                             # dropping a ledger does not free its id
     with pytest.raises(MultiplicityRefused, match="already opened"):
         MultiplicityLedger(cid)
     # re-review 3 M5: a family that omits hypotheses the campaign registered is not verified
