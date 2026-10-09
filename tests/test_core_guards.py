@@ -4289,10 +4289,13 @@ def test_the_domain_names_were_derived_from_the_packages_not_listed():
         "electrothermal",
         "hygrothermal",
         "kinetics",
+        "products",
         "thermal",
         "thermal_models",
     }, names
-    assert len(names) == 9
+    # `products` (Big Rocks P-R: drone/vehicle/motor/HVAC compositions under engcore.systems) joins the
+    # list; GUARD 17 keeps the word out of the core like every other system package name.
+    assert len(names) == 10
 
     # Whole names, never split on `_`. Splitting `thermal_models` yields
     # `models`, which is core vocabulary in every sense, and forbidding it

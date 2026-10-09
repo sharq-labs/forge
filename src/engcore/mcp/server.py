@@ -1648,6 +1648,32 @@ def build_server() -> MCPServer:
         ),
     )
     _audit_tools(server)
+    from .foundations import describe_engineering_platform, plan_product, run_product_screening
+
+    server.add_tool(
+        describe_engineering_platform,
+        name="describe_engineering_platform",
+        title="Describe geometry, products, fidelity and provider health",
+        description=("Read-only: geometry shapes and features, parameter kinds, the fidelity ladder, the product templates "
+                     "(drone, vehicle, motor, HVAC) with every required input and physics participant, and each provider's "
+                     "health. Available is not qualified."),
+    )
+    server.add_tool(
+        plan_product,
+        name="plan_product",
+        title="Plan a product: structure, unknown inputs, capability",
+        description=("Given a product name and optional declared inputs ({id: {magnitude, unit, source_ref}}), return the "
+                     "product structure, which inputs remain UNKNOWN and per-participant readiness. A declared input is a "
+                     "caller assertion with its source, never evidence; nothing is defaulted."),
+    )
+    server.add_tool(
+        run_product_screening,
+        name="run_product_screening",
+        title="Run a product's bounded screening path",
+        description=("Run the product's bounded screening model (e.g. drone ideal hover power) from declared inputs. Refused "
+                     "while any needed input is UNKNOWN or when the product has no screening path. Always ends at "
+                     "insufficient_evidence; a screening value is not a validated prediction."),
+    )
     return server
 
 
