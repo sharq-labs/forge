@@ -56,12 +56,19 @@ adapters (fail-closed, unverified translations); Scientific Twin revisions; disc
 history, hierarchy, search; the geometry vertical slice; drone/vehicle/motor/HVAC product templates; MCP
 describe/plan/run; Scene IR. Four forge-scientific-review rounds ran and their findings were fixed.
 
+Second program ("next three rocks", same branch, grows PR #124), built and reviewed (three
+forge-scientific-review rounds, findings fixed): provider reality + qualification routes (Chrono 10, FEniCSx 0.11,
+CalculiX 2.23 executed in conda-forge provider envs; OpenVSP/OpenRadioss not installable here); the executable
+coupled drone hover chain on `MultiphysicsRuntime`; twin evidence resolved against SRIA records + belief and design
+memory anchored in the campaign event chain.
+
 Next executable tasks for this program (in order):
 
-- [ ] Integration gate on the final source SHA: FAST, SCIENTIFIC where providers exist, provider suites.
-- [ ] Hardened-core recertification of the final source SHA (tests/**, pyproject.toml, skip_admission.py changed).
-- [ ] First real runs of OpenVSP, OpenRadioss, Chrono and FEniCSx (slice numerical rung) in a provider environment.
-- [ ] Work the DEFERRED_HARDENING ledger in `docs/architecture/big_rocks_foundations.md`.
+- [ ] Hardened-core recertification of the final source SHA (tests/**, pyproject.toml, skip_admission.py,
+      mcp/server.py changed) -- owner-run: it writes certification/current_core_v2.json.
+- [ ] First real runs of OpenVSP and OpenRadioss in an environment where they can be installed.
+- [ ] A second Chrono route that exercises rotated bodies and real inertia (DEFERRED_HARDENING 1).
+- [ ] Work the rest of the DEFERRED_HARDENING ledger in `docs/architecture/big_rocks_foundations.md`.
 
 ## Roadmap view
 
