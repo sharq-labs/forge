@@ -11,11 +11,18 @@ Two stages, kept apart on purpose:
    integrates it.  It runs only when the registry status is AVAILABLE (which
    includes the API-identity check of :mod:`.descriptor`).
 
-STATUS: the PyChrono calls in stage 2 follow the Chrono 9 Python API and have
-NOT been executed in the environment that built this adapter (no Project
-Chrono there).  Until the pendulum reference test in this distribution's
-suite runs green against a real install, every output is
-UNVERIFIED-TRANSLATION as well as "provider computation, not evidence".
+STATUS: stage 2 targets the Chrono 10 Python API (conda-forge ``pychrono``
+10.0.0) and was executed against it: the pendulum reference in this
+distribution's suite (period vs the finite-amplitude analytic reference,
+joint-length drift) is this adapter's qualification ROUTE.  A green run of
+that route checks the translation on that one reference; it is not a
+qualification record (see :mod:`engcore.providers.health`), and an output is
+"provider computation, not evidence".
+
+The constraint solver is a REQUIRED declaration.  Chrono's NSC default
+(iterative PSOR) was observed, on that reference, not to hold a bilateral
+revolute joint (4 mm length drift, no oscillation); only the direct sparse
+solvers are translated.
 """
 
 from __future__ import annotations
@@ -29,10 +36,11 @@ from engcore.scientific.units.quantity import Quantity
 from engcore.systems.multibody import MultibodyRequest
 
 ADAPTER_ID = "forge_chrono"
-ADAPTER_VERSION = "0.1.0"
-TRANSLATION_STATUS = "unverified_against_running_provider"
-REQUIRED_SOLVER_OPTIONS = ("timestepper",)
+ADAPTER_VERSION = "0.2.0"
+TRANSLATION_STATUS = "executed_against_chrono_10_reference_route"
+REQUIRED_SOLVER_OPTIONS = ("timestepper", "solver")
 SUPPORTED_TIMESTEPPERS = ("euler_implicit_linearized", "hht")
+SUPPORTED_SOLVERS = ("sparse_qr", "sparse_lu")
 
 
 def _axis_to_quaternion(axis: tuple[float, float, float]) -> tuple[float, float, float, float]:
@@ -49,6 +57,27 @@ def _axis_to_quaternion(axis: tuple[float, float, float]) -> tuple[float, float,
     return (w / n, cx / n, cy / n, cz / n)
 
 
+def _rotation_to_quaternion(r) -> tuple[float, float, float, float]:
+    """Unit quaternion (w, x, y, z) of a proper rotation matrix (Shepperd's method; sign fixed to w >= 0)."""
+    m = [[float(v) for v in row] for row in r]
+    tr = m[0][0] + m[1][1] + m[2][2]
+    if tr > 0:
+        s = 2.0 * math.sqrt(1.0 + tr)
+        q = (0.25 * s, (m[2][1] - m[1][2]) / s, (m[0][2] - m[2][0]) / s, (m[1][0] - m[0][1]) / s)
+    elif m[0][0] > m[1][1] and m[0][0] > m[2][2]:
+        s = 2.0 * math.sqrt(1.0 + m[0][0] - m[1][1] - m[2][2])
+        q = ((m[2][1] - m[1][2]) / s, 0.25 * s, (m[0][1] + m[1][0]) / s, (m[0][2] + m[2][0]) / s)
+    elif m[1][1] > m[2][2]:
+        s = 2.0 * math.sqrt(1.0 + m[1][1] - m[0][0] - m[2][2])
+        q = ((m[0][2] - m[2][0]) / s, (m[0][1] + m[1][0]) / s, 0.25 * s, (m[1][2] + m[2][1]) / s)
+    else:
+        s = 2.0 * math.sqrt(1.0 + m[2][2] - m[0][0] - m[1][1])
+        q = ((m[1][0] - m[0][1]) / s, (m[0][2] + m[2][0]) / s, (m[1][2] + m[2][1]) / s, 0.25 * s)
+    n = math.sqrt(sum(c * c for c in q))
+    q = tuple(c / n for c in q)
+    return q if q[0] >= 0 else tuple(-c for c in q)
+
+
 def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
     """The canonical plan a Chrono run executes.  Refuses undeclared integration settings."""
     if not isinstance(request, MultibodyRequest):
@@ -59,13 +88,20 @@ def translation_plan(request: MultibodyRequest) -> dict[str, Any]:
         raise ProviderRefusal(f"solver options {missing} are required; the provider's defaults are never used silently")
     if opts["timestepper"] not in SUPPORTED_TIMESTEPPERS:
         raise ProviderRefusal(f"timestepper {opts['timestepper']!r} is not one of {SUPPORTED_TIMESTEPPERS}")
+    if opts["solver"] not in SUPPORTED_SOLVERS:
+        raise ProviderRefusal(f"solver {opts['solver']!r} is not one of {SUPPORTED_SOLVERS} (iterative PSOR did not hold a "
+                              "bilateral joint on the reference route)")
+    unknown = sorted(set(opts) - set(REQUIRED_SOLVER_OPTIONS))
+    if unknown:
+        raise ProviderRefusal(f"solver options {unknown} are not translated by this adapter version; an option is never dropped silently")
     model = request.model
     asm = model.assembly
     mp = {m.instance_id: m for m in model.mass_properties}
     bodies = []
     for iid in sorted({model.ground, *model.moving_instances()}):
         pose = asm.world_transform(iid)
-        entry: dict[str, Any] = {"instance_id": iid, "fixed": iid == model.ground, "rotation": [list(r) for r in pose.rotation]}
+        entry: dict[str, Any] = {"instance_id": iid, "fixed": iid == model.ground, "rotation": [list(r) for r in pose.rotation],
+                                 "quaternion": list(_rotation_to_quaternion(pose.rotation))}
         if iid in mp:
             c = mp[iid].canonical()
             entry.update(position_m=list(pose.apply(c["com_m"])), mass_kg=c["mass_kg"], inertia_kg_m2=c["inertia_kg_m2"])
@@ -108,16 +144,11 @@ class ChronoProvider:
     def execute(self, request: MultibodyRequest) -> ProviderExecutionRecord:
         if not self.status.available:
             raise ProviderRefusal(f"Project Chrono is unavailable: {self.status.reason}; no trajectory is synthesized")
-        from engcore.providers import require_library_unchanged
+        from .descriptor import require_unchanged
 
-        require_library_unchanged(self.status, "pychrono")
+        require_unchanged(self.status)
         import pychrono as chrono
 
-        from .descriptor import identity_problem
-
-        problem = identity_problem(chrono)
-        if problem:
-            raise ProviderRefusal(problem)
         plan = translation_plan(request)
         ident = self.identity(request)
         try:
@@ -135,17 +166,13 @@ def _run(chrono, plan: dict[str, Any]) -> list[QuantitySeries]:  # pragma: no co
         system.SetTimestepperType(chrono.ChTimestepper.Type_HHT)
     else:
         system.SetTimestepperType(chrono.ChTimestepper.Type_EULER_IMPLICIT_LINEARIZED)
+    system.SetSolverType({"sparse_qr": chrono.ChSolver.Type_SPARSE_QR, "sparse_lu": chrono.ChSolver.Type_SPARSE_LU}[plan["solver_options"]["solver"]])
     bodies = {}
     for b in plan["bodies"]:
         body = chrono.ChBody()
         body.SetFixed(bool(b["fixed"]))
         body.SetPos(chrono.ChVector3d(*b["position_m"]))
-        r = b["rotation"]
-        m33 = chrono.ChMatrix33d()
-        for i in range(3):
-            for k in range(3):
-                m33.SetItem(i, k, r[i][k])
-        body.SetRot(m33.GetQuaternion())
+        body.SetRot(chrono.ChQuaterniond(*b["quaternion"]))
         if not b["fixed"]:
             body.SetMass(b["mass_kg"])
             j = b["inertia_kg_m2"]
@@ -187,12 +214,20 @@ def _run(chrono, plan: dict[str, Any]) -> list[QuantitySeries]:  # pragma: no co
     return [QuantitySeries(o, unit[o.rpartition(".")[2].partition("_")[0]], tuple(times), tuple(v)) for o, v in out.items()]
 
 
-def reference_pendulum_period(length: Quantity, gravity: Quantity) -> Quantity:
-    """Small-amplitude period of a point-mass pendulum, 2*pi*sqrt(L/g): the qualification route's analytic reference."""
+def reference_pendulum_period(length: Quantity, gravity: Quantity, amplitude: Quantity | None = None) -> Quantity:
+    """Period of a point-mass pendulum: 2*pi*sqrt(L/g), times the finite-amplitude series
+    1 + a^2/16 + 11 a^4/3072 when ``amplitude`` is given (truncation < 1e-7 relative below 10 deg).
+    The qualification route's analytic reference."""
     L, g = length.magnitude_in("m"), gravity.magnitude_in("m/s^2")
     if not (L > 0 and g > 0):
         raise ProviderRefusal("pendulum reference needs positive length and gravity")
-    return Quantity(2 * math.pi * math.sqrt(L / g), "s")
+    factor = 1.0
+    if amplitude is not None:
+        a = amplitude.magnitude_in("rad")
+        if not 0 < abs(a) <= math.radians(10):
+            raise ProviderRefusal("the series reference is used only for 0 < amplitude <= 10 deg")
+        factor = 1 + a * a / 16 + 11 * a ** 4 / 3072
+    return Quantity(2 * math.pi * math.sqrt(L / g) * factor, "s")
 
 
 __all__ = ["ADAPTER_ID", "ADAPTER_VERSION", "ChronoProvider", "TRANSLATION_STATUS", "reference_pendulum_period", "translation_plan"]
