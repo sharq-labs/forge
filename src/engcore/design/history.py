@@ -137,18 +137,20 @@ class DesignHistory:
         return tuple(e.attempt for e in self._entries if e.attempt.candidate_key == candidate_key
                      and (rung_id is None or e.attempt.rung_id == rung_id))
 
-    def should_skip(self, candidate_key: str, rung_id: str, context_digest: str, *, provider: str = "") -> tuple[bool, str]:
-        """(skip?, why).  Skips a known deterministic negative, or a provider failure under the SAME provider identity."""
-        for a in self.attempts_of(candidate_key, rung_id):
-            if a.context_digest != context_digest:
-                continue
-            if a.outcome.deterministic_negative:
-                return True, f"already {a.outcome.value} at {rung_id!r} in this context: {a.reason}"
-            if a.outcome is AttemptOutcome.SUCCEEDED:
-                return True, f"already evaluated at {rung_id!r} in this context"
-            if a.outcome is AttemptOutcome.PROVIDER_FAILED and provider and a.provider == provider:
-                return True, f"provider {provider} already failed on this candidate; retry only under another provider identity"
-        return False, ""
+    def known_negative(self, candidate_key: str, rung_id: str, context_digest: str, provider: str) -> DesignAttempt | None:
+        """The recorded DETERMINISTIC negative (refused / constraint violated / contradicted) for this candidate, rung,
+        context AND provider, if any.  Successes and provider failures are never skipped: a success may need a fresh
+        observation for promotion, and a provider failure may be transient.  Another provider is never blocked."""
+        for a in reversed(self.attempts_of(candidate_key, rung_id)):
+            if a.context_digest == context_digest and a.provider == provider and a.outcome.deterministic_negative:
+                return a
+        return None
+
+    def should_skip(self, candidate_key: str, rung_id: str, context_digest: str, *, provider: str) -> tuple[bool, str]:
+        a = self.known_negative(candidate_key, rung_id, context_digest, provider)
+        if a is None:
+            return False, ""
+        return True, f"already {a.outcome.value} at {rung_id!r} by {provider} in this context: {a.reason}"
 
     def outcome_counts(self) -> dict[str, int]:
         counts: dict[str, int] = {}
@@ -160,7 +162,8 @@ class DesignHistory:
         return {"classification": "search_history_not_evidence", "head": self.head, "entries": [e.to_dict() for e in self._entries]}
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "DesignHistory":
+    def from_dict(cls, payload: Mapping[str, Any], *, expected_head: str | None = None) -> "DesignHistory":
+        """Rebuild and verify.  ``expected_head`` (e.g. a DiscoveryRun's history_head) detects a truncated tail."""
         entries = []
         for p in payload["entries"]:
             a = p["attempt"]
@@ -174,4 +177,6 @@ class DesignHistory:
         history = cls(entries)
         if history.head != payload["head"]:
             raise InvalidScientificProblem("history head does not match its entries")
+        if expected_head is not None and history.head != expected_head:
+            raise InvalidScientificProblem("history head is not the anchored head; entries were removed or added")
         return history

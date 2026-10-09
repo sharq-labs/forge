@@ -22,6 +22,15 @@ from engcore.scientific.units.quantity import Quantity
 
 CTX = "c" * 64
 MASS = ObjectiveDefinition("min-mass", "mass", ObjectiveDirection.MINIMIZE, "kg")
+LADDER = standard_ladder()
+MASS_LIMIT = ConstraintDefinition("max-mass", "mass", ConstraintOperator.LESS_EQUAL, Quantity(1000, "kg"))
+
+
+def Ledger(key, *obs_):
+    led = FidelityLedger(key, LADDER)
+    for o in obs_:
+        led = led.add(o)
+    return led
 
 
 def space(space_id="enclosure"):
@@ -39,9 +48,11 @@ def grammar():
 
 
 def obs(key, rung, outcome, mass=None, **kw):
-    rank = standard_ladder().rung(rung).rank
+    rank = kw.pop("rank", LADDER.rung(rung).rank)
     metrics = {} if mass is None else {"mass": Quantity(mass, "kg")}
-    reason = kw.pop("reason", "declared criteria; uncertainty UNKNOWN")
+    reason = kw.pop("reason", "declared criteria")
+    if outcome is FidelityOutcome.SUPPORTS and "constraints" not in kw:
+        kw["constraints"] = evaluate_constraints((MASS_LIMIT,), {"mass": Quantity(mass if mass is not None else 1.0, "kg")})
     return FidelityObservation(key, rung, rank, outcome, kw.pop("provider", "test-model"), reason, metrics, **kw)
 
 
@@ -70,6 +81,11 @@ def test_constraints_are_three_valued_and_missing_metrics_are_unknown():
     assert e2.feasible is False and e2.violated == ("max-mass",)
     e3 = evaluate_constraints((limit,), {"temperature": Quantity(20, "degC")})
     assert e3.feasible is True and e3.outcomes[0].status is ConstraintStatus.SATISFIED
+    assert evaluate_constraints((), {}).feasible is None  # nothing checked is nothing feasible
+    with pytest.raises(InvalidScientificProblem, match="INCONCLUSIVE"):
+        FidelityObservation("k", "analytic", 0, FidelityOutcome.SUPPORTS, "m", "ok", constraints=e)
+    with pytest.raises(InvalidScientificProblem, match="INCONCLUSIVE"):
+        FidelityObservation("k", "analytic", 0, FidelityOutcome.SUPPORTS, "m", "ok")
 
 
 # --------------------------------------------------------------------------
@@ -78,29 +94,50 @@ def test_constraints_are_three_valued_and_missing_metrics_are_unknown():
 
 
 def test_cheap_support_never_overwrites_a_higher_fidelity_contradiction():
-    led = FidelityLedger("k").add(obs("k", "analytic", FidelityOutcome.SUPPORTS, 1.0))
+    led = Ledger("k", obs("k", "analytic", FidelityOutcome.SUPPORTS, 1.0))
     assert led.standing()[0] is Standing.SUPPORTED
     led = led.add(obs("k", "numerical", FidelityOutcome.CONTRADICTS))
     led = led.add(obs("k", "analytic", FidelityOutcome.SUPPORTS, 0.9))
     standing, rank, why = led.standing()
     assert standing is Standing.CONTRADICTED and rank == 2 and "overrides" in why
-    split = FidelityLedger("k").add(obs("k", "numerical", FidelityOutcome.SUPPORTS, 1.0)).add(obs("k", "numerical", FidelityOutcome.CONTRADICTS))
+    split = Ledger("k", obs("k", "numerical", FidelityOutcome.SUPPORTS, 1.0), obs("k", "numerical", FidelityOutcome.CONTRADICTS))
     assert split.standing()[0] is Standing.CONFLICTED
-    assert FidelityLedger("k").add(obs("k", "analytic", FidelityOutcome.PROVIDER_FAILED, provider="p")).standing()[0] is Standing.UNDECIDED
-    with pytest.raises(InvalidScientificProblem, match="UNKNOWN uncertainty"):
-        obs("k", "numerical", FidelityOutcome.SUPPORTS, 1.0, reason="looks fine")
+    assert Ledger("k", obs("k", "analytic", FidelityOutcome.PROVIDER_FAILED, provider="p")).standing()[0] is Standing.UNDECIDED
+    assert "uncertainty UNKNOWN" in Ledger("k", obs("k", "numerical", FidelityOutcome.SUPPORTS, 1.0)).standing()[2]
     with pytest.raises(InvalidScientificProblem, match="exposes no metrics"):
         obs("k", "analytic", FidelityOutcome.REFUSED, 1.0)
 
 
+def test_higher_rung_refusal_is_not_outvoted_and_mislabelled_ranks_are_refused():
+    led = Ledger("k", obs("k", "analytic", FidelityOutcome.SUPPORTS, 1.0), obs("k", "high_fidelity", FidelityOutcome.REFUSED,
+                                                                                 reason="outside the solver's applicability"))
+    standing, _, why = led.standing()
+    assert standing is Standing.UNDECIDED and "does not outvote" in why
+    failed = Ledger("k", obs("k", "analytic", FidelityOutcome.SUPPORTS, 1.0), obs("k", "numerical", FidelityOutcome.PROVIDER_FAILED))
+    assert failed.standing()[0] is Standing.SUPPORTED and "decided nothing" in failed.standing()[2]
+    with pytest.raises(InvalidScientificProblem, match="does not match rung"):
+        Ledger("k", obs("k", "analytic", FidelityOutcome.SUPPORTS, 1.0, rank=9))
+
+
+def test_the_evidence_rung_decides_only_with_admitted_evidence():
+    contradicted = obs("k", "high_fidelity", FidelityOutcome.CONTRADICTS)
+    asserted = obs("k", "experimental", FidelityOutcome.SUPPORTS, 1.0, provider="llm", evaluation_ref="exp:42")
+    led = Ledger("k", contradicted, asserted)
+    standing, rank, why = led.standing()
+    assert standing is Standing.CONTRADICTED and rank == 3 and "not backed by admitted evidence" in why
+    assert led.standing(frozenset({"exp:42"}))[0] is Standing.SUPPORTED
+
+
 def test_promotion_is_budgeted_explained_and_never_promotes_contradiction_or_unknown():
     policy = PromotionPolicy(standard_ladder(), MASS, {"analytic": 2})
-    ledgers = [FidelityLedger("a").add(obs("a", "analytic", FidelityOutcome.SUPPORTS, 3.0)),
-               FidelityLedger("b").add(obs("b", "analytic", FidelityOutcome.SUPPORTS, 1.0)),
-               FidelityLedger("c").add(obs("c", "analytic", FidelityOutcome.SUPPORTS, 2.0)),
-               FidelityLedger("d").add(obs("d", "analytic", FidelityOutcome.CONTRADICTS)),
-               FidelityLedger("e").add(obs("e", "analytic", FidelityOutcome.SUPPORTS)),
-               FidelityLedger("f")]
+    no_metric = FidelityObservation("e", "analytic", 0, FidelityOutcome.SUPPORTS, "test-model", "declared criteria",
+                                    constraints=evaluate_constraints((MASS_LIMIT,), {"mass": Quantity(1, "kg")}))
+    ledgers = [Ledger("a", obs("a", "analytic", FidelityOutcome.SUPPORTS, 3.0)),
+               Ledger("b", obs("b", "analytic", FidelityOutcome.SUPPORTS, 1.0)),
+               Ledger("c", obs("c", "analytic", FidelityOutcome.SUPPORTS, 2.0)),
+               Ledger("d", obs("d", "analytic", FidelityOutcome.CONTRADICTS)),
+               Ledger("e", no_metric),
+               Ledger("f")]
     decisions = {d.candidate_key: d for d in policy.decide(ledgers, "analytic")}
     assert {k for k, d in decisions.items() if d.promoted} == {"b", "c"}
     assert "budget" in decisions["a"].reason and "contradicted" in decisions["d"].reason
@@ -119,12 +156,16 @@ def test_history_is_append_only_tamper_evident_and_skips_deterministic_negatives
     h = DesignHistory()
     h.record(DesignAttempt("k1", "analytic", CTX, AttemptOutcome.CONSTRAINT_VIOLATED, "too hot", violated_constraints=("max-temp",)))
     h.record(DesignAttempt("k2", "analytic", CTX, AttemptOutcome.PROVIDER_FAILED, "solver crashed", provider="ccx-2.23"))
-    assert h.should_skip("k1", "analytic", CTX)[0]
-    assert not h.should_skip("k1", "analytic", "d" * 64)[0]  # another evaluation context is another question
-    assert h.should_skip("k2", "analytic", CTX, provider="ccx-2.23")[0]
-    assert not h.should_skip("k2", "analytic", CTX, provider="code_aster-17")[0]
+    h.record(DesignAttempt("k1", "analytic", CTX, AttemptOutcome.SUCCEEDED, "fine", provider="other-model"))
+    assert h.should_skip("k1", "analytic", CTX, provider="")[0]
+    assert not h.should_skip("k1", "analytic", "d" * 64, provider="")[0]  # another evaluation context is another question
+    assert not h.should_skip("k1", "analytic", CTX, provider="other-model")[0]  # another provider is never blocked
+    assert not h.should_skip("k2", "analytic", CTX, provider="ccx-2.23")[0]  # a provider failure may be transient
     payload = h.to_dict()
-    assert DesignHistory.from_dict(payload).head == h.head
+    assert DesignHistory.from_dict(payload, expected_head=h.head).head == h.head
+    truncated = dict(payload, entries=payload["entries"][:-1], head=payload["entries"][-2]["digest"])
+    with pytest.raises(InvalidScientificProblem, match="anchored head"):
+        DesignHistory.from_dict(truncated, expected_head=h.head)
     payload["entries"][0]["attempt"]["reason"] = "fine actually"
     with pytest.raises(InvalidScientificProblem, match="digest"):
         DesignHistory.from_dict(payload)
@@ -166,6 +207,15 @@ def test_component_owned_variables_replacement_and_recomposition_lineage():
     with pytest.raises(InvalidScientificProblem):
         HierarchicalCandidate(hs, {("drone",): d0, ("drone", "prop1", "motor"): _cand(motor, "m-x", "mx", {"turns": Quantity(99, "dimensionless"),
                                                                                                                "arm_length": Quantity(0.015, "m")})})
+    # same labels, different values: a second, unrecorded change is detected
+    d0_moved = _cand(drone, "drone-twin", "d0", {"arm_length": Quantity(0.45, "m")})
+    sneaky = HierarchicalCandidate(hs, {("drone",): d0_moved, ("drone", "prop1", "motor"): m1}, root.candidate_id, child.lineage, child.assembly_digest)
+    assert sneaky.candidate_id != child.candidate_id
+    with pytest.raises(InvalidScientificProblem, match="not only the recorded owner"):
+        verify_component_lineage(sneaky, {root.candidate_id: root})
+    forged = HierarchicalCandidate(hs, {("drone",): d0, ("drone", "prop1", "motor"): stray}, root.candidate_id, child.lineage)
+    with pytest.raises(InvalidScientificProblem, match="match the components"):
+        verify_component_lineage(forged, {root.candidate_id: root})
 
 
 # --------------------------------------------------------------------------
@@ -182,7 +232,8 @@ class Analytic:
         if a["cooling"].value == "none" and wall < 0.002:
             return FidelityObservation(key, "analytic", 0, FidelityOutcome.CONTRADICTS, self.provider, "thin uncooled wall overheats")
         return FidelityObservation(key, "analytic", 0, FidelityOutcome.SUPPORTS, self.provider, "meets screening criteria",
-                                   {"mass": Quantity(mass, "kg")}, uncertainty="not_applicable")
+                                   {"mass": Quantity(mass, "kg")}, uncertainty="not_applicable",
+                                   constraints=evaluate_constraints((MASS_LIMIT,), {"mass": Quantity(mass, "kg")}))
 
 
 class Lumped:
@@ -198,7 +249,7 @@ class Lumped:
         if len(self.calls) == 1:
             raise RuntimeError("license server unreachable")
         return FidelityObservation(key, "reduced_order", 1, FidelityOutcome.SUPPORTS, self.provider, "meets lumped criteria",
-                                   {"mass": Quantity(1.0, "kg")})
+                                   {"mass": Quantity(1.0, "kg")}, constraints=evaluate_constraints((MASS_LIMIT,), {"mass": Quantity(1.0, "kg")}))
 
 
 def test_discovery_loop_is_deterministic_records_everything_and_claims_no_validation():
@@ -220,11 +271,37 @@ def test_discovery_loop_is_deterministic_records_everything_and_claims_no_valida
         assert standings[key][0] == "supported"
 
 
-def test_rerun_with_shared_history_skips_known_outcomes():
+def test_rerun_with_shared_history_replays_known_negatives_and_reevaluates_successes():
     policy = PromotionPolicy(standard_ladder(), MASS, {"analytic": 2})
     history = DesignHistory()
     first = run_discovery(space(), count=10, evaluators={"analytic": Analytic()}, policy=policy, context_digest=CTX, history=history)
     second = run_discovery(space(), count=10, evaluators={"analytic": Analytic()}, policy=policy, context_digest=CTX, history=history)
-    assert len(second.skipped) == len(first.assignments)
-    assert all(not led.observations for led in second.ledgers.values())
-    assert history.outcome_counts().get("succeeded", 0) + history.outcome_counts().get("contradicted", 0) == len(first.assignments)
+    contradicted = {k for k, (s, _, _) in first.standings().items() if s == "contradicted"}
+    assert contradicted and set(k.split("@")[0] for k in second.skipped) == contradicted
+    assert second.standings() == first.standings() or all(second.standings()[k][0] == first.standings()[k][0] for k in first.standings())
+    # a new rung added later is reached, because successes are re-observed rather than skipped
+    third = run_discovery(space(), count=10, evaluators={"analytic": Analytic(), "reduced_order": Lumped()}, policy=policy,
+                          context_digest=CTX, history=history)
+    assert any(d.promoted for d in third.promotions)
+
+
+class NumericalStub(Lumped):
+    rung_id, provider = "numerical", "fem-stub"
+
+
+class Liar(Analytic):
+    def evaluate(self, key, a):
+        o = super().evaluate(key, a)
+        return FidelityObservation(key, o.rung_id, o.rank, o.outcome, "someone-else", o.reason, o.metrics, uncertainty=o.uncertainty,
+                                   constraints=o.constraints)
+
+
+def test_provider_identity_is_not_relabelled_and_rung_gaps_are_refused_before_any_evaluation():
+    policy = PromotionPolicy(standard_ladder(), MASS, {"analytic": 2})
+    with pytest.raises(InvalidScientificProblem, match="not relabelled"):
+        run_discovery(space(), count=4, evaluators={"analytic": Liar()}, policy=policy, context_digest=CTX)
+    history = DesignHistory()
+    with pytest.raises(InvalidScientificProblem, match="consecutive"):
+        run_discovery(space(), count=4, evaluators={"analytic": Analytic(), "numerical": NumericalStub()}, policy=policy, context_digest=CTX,
+                      history=history)
+    assert len(history) == 0

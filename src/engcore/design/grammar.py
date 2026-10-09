@@ -95,9 +95,12 @@ class DesignGrammar:
                     raise InvalidScientificProblem(f"rule {r.rule_id!r} names undeclared variable {name!r}")
                 if vmap[name].kind.value == "continuous":
                     raise InvalidScientificProblem(f"rule {r.rule_id!r} ranges over continuous {name!r}; express that as a constraint")
-            v = vmap[r.variable]
-            if v.kind.value == "categorical" and set(r.values) - set(v.categories):
-                raise InvalidScientificProblem(f"rule {r.rule_id!r} names categories that {r.variable!r} does not declare")
+            for name, vals in ((r.variable, r.values), (r.other, r.other_values)):
+                v = vmap[name]
+                if v.kind.value == "categorical" and set(vals) - set(v.categories):
+                    raise InvalidScientificProblem(f"rule {r.rule_id!r} names categories that {name!r} does not declare")
+                if v.kind.value == "boolean" and set(vals) - {True, False}:
+                    raise InvalidScientificProblem(f"rule {r.rule_id!r} names non-boolean values for {name!r}")
         object.__setattr__(self, "rules", rules)
 
     @property
@@ -145,7 +148,12 @@ class ConstraintEvaluation:
 
     @property
     def feasible(self) -> bool | None:
-        """True only if every constraint is SATISFIED; False if any is VIOLATED; None (undetermined) otherwise."""
+        """True only if every constraint is SATISFIED; False if any is VIOLATED; None (undetermined) otherwise.
+
+        An evaluation of NO constraints is undetermined (None): nothing was checked, so nothing is feasible.
+        """
+        if not self.outcomes:
+            return None
         states = {o.status for o in self.outcomes}
         if ConstraintStatus.VIOLATED in states:
             return False

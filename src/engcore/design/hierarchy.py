@@ -99,6 +99,13 @@ class HierarchicalDesignSpace:
         return canonical_digest(self.to_dict())
 
 
+def component_identity(candidate: DesignCandidate) -> str:
+    from .generation import assignment_digest
+
+    return canonical_digest({"candidate_id": candidate.candidate_id, "space": list(candidate.design_space.key),
+                             "assignments": assignment_digest(candidate.assignments), "twin": list(candidate.twin.key)})
+
+
 @dataclass(frozen=True)
 class ComponentLineage:
     owner: OwnerPath
@@ -140,8 +147,9 @@ class HierarchicalCandidate:
 
     @property
     def candidate_id(self) -> str:
+        """Recomposed identity over every component's CONTENT (space, assignments, Twin), not only its labels."""
         return canonical_digest({"schema": HIERARCHICAL_CANDIDATE_SCHEMA, "space": self.space.digest,
-                                 "components": {"/".join(o): [c.candidate_id, list(c.twin.key)] for o, c in self.components.items()},
+                                 "components": {"/".join(o): component_identity(c) for o, c in self.components.items()},
                                  "assembly_digest": self.assembly_digest})
 
     def component(self, owner: Iterable[str]) -> DesignCandidate:
@@ -175,19 +183,37 @@ class HierarchicalCandidate:
 
 
 def verify_component_lineage(candidate: HierarchicalCandidate, ancestors: Mapping[str, HierarchicalCandidate]) -> tuple[str, ...]:
-    """Parent identities from the root to ``candidate``; each step must replace exactly the recorded component."""
+    """Parent identities from the root to ``candidate``.
+
+    Each step must: name an ancestor that exists and matches its id; keep the
+    same hierarchical space; extend the ancestor's lineage by exactly one
+    record; change exactly the recorded owner's component (by content); and
+    the new component must be the recorded one and declare the replaced one as
+    its parent.  Cycles are refused.
+    """
     chain = [candidate.candidate_id]
+    seen = {candidate.candidate_id}
     cur = candidate
     while cur.parent_candidate:
         prev = ancestors.get(cur.parent_candidate)
         if prev is None or prev.candidate_id != cur.parent_candidate:
             raise InvalidScientificProblem("an ancestor candidate is missing or does not match its id")
-        step = cur.lineage[-1] if cur.lineage else None
-        if step is None or prev.components[step.owner].candidate_id != step.previous_candidate:
-            raise InvalidScientificProblem("recorded lineage does not match the ancestor's component")
-        changed = {o for o in cur.components if cur.components[o].candidate_id != prev.components[o].candidate_id}
+        if prev.candidate_id in seen:
+            raise InvalidScientificProblem("component lineage contains a cycle")
+        if prev.space.digest != cur.space.digest:
+            raise InvalidScientificProblem("a recomposition changed the hierarchical design space")
+        if not cur.lineage or cur.lineage[:-1] != prev.lineage:
+            raise InvalidScientificProblem("lineage does not extend the ancestor's lineage by exactly one step")
+        step = cur.lineage[-1]
+        old, new = prev.components[step.owner], cur.components[step.owner]
+        if old.candidate_id != step.previous_candidate or new.candidate_id != step.new_candidate:
+            raise InvalidScientificProblem("recorded lineage does not match the components it names")
+        if old.candidate_id not in {p.candidate_id for p in new.parents}:
+            raise InvalidScientificProblem("the replacement does not declare the replaced component as its parent")
+        changed = {o for o in cur.components if component_identity(cur.components[o]) != component_identity(prev.components[o])}
         if changed != {step.owner}:
             raise InvalidScientificProblem(f"recomposition changed {sorted('/'.join(o) for o in changed)}, not only the recorded owner")
+        seen.add(prev.candidate_id)
         chain.append(prev.candidate_id)
         cur = prev
     return tuple(reversed(chain))
