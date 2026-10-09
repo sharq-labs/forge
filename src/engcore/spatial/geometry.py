@@ -13,7 +13,7 @@ A :class:`SpatialMesh` says which cells carry which tag; a
 * material assignment (an exact :class:`~engcore.materials.MaterialIdentity`)
   and solver-boundary assignment (a condition REFERENCE, never a value).
 
-What this module refuses to know: what a car, drone, wing, motor or duct is.
+What this module refuses to know: what any particular product, part or component is.
 Shapes are geometric primitives (rectangle, disk, box, cylinder) or an
 imported provider file; anything product-shaped is built from them by a
 higher layer or by an external CAD provider.
