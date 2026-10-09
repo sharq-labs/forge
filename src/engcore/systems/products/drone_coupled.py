@@ -49,6 +49,7 @@ from ...scientific.multiphysics.state import CheckpointRecord
 from ...scientific.results.uncertainty import Uncertainty
 from ...scenarios.timeline import canonical_digest
 from ...scientific.composition.conversion import EnergyConversion
+from ...scientific.errors import InvalidScientificProblem
 from ...scientific.units.quantity import Quantity
 from .template import ProductTemplate, TemplateRefusal
 
@@ -63,12 +64,28 @@ COUPLED_INPUTS = (
     "motor_kv", "motor_resistance", "motor_no_load_current", "motor_resistance_reference_temperature",
     "winding_temperature_coefficient", "esc_efficiency",
     "battery_open_circuit_voltage", "battery_internal_resistance", "battery_capacity",
-    "ambient_temperature", "motor_thermal_resistance",
+    "ambient_temperature", "motor_thermal_resistance", "winding_temperature_limit",
 )
+
+#: Kv must be declared in a unit that NAMES its angle: in pint the radian is dimensionless, so "Hz/V" (rev/s per V)
+#: would otherwise be read 1:1 as rad/s/V -- a silent factor of 2*pi.
+_ANGLE_TOKENS = ("revolutions_per_minute", "revolutions_per_second", "radian", "turn", "revolution", "degree")
+
+#: Runtime participants carry the TEMPLATE participant ids, so the template's coupling declarations name graph edges.
+PARTICIPANTS = ("propeller_static", "motor_esc", "battery_ecm", "winding_thermal")
+#: (template coupling source, target, quantity) -> the executed graph edge id
+EDGE_OF_COUPLING = {("propeller_static", "motor_esc", "shaft_torque_and_speed"): ("shaft_power", "speed"),
+                    ("motor_esc", "battery_ecm", "bus_current"): ("bus_current",),
+                    ("battery_ecm", "motor_esc", "bus_voltage"): ("bus_voltage",),
+                    ("motor_esc", "winding_thermal", "motor_heat"): ("motor_heat",),
+                    ("winding_thermal", "motor_esc", "winding_temperature"): ("winding_temperature",)}
 
 OMITTED = ("propeller coefficients' dependence on speed and inflow (static values used)", "rotor interference",
            "ESC losses' dependence on duty and current", "motor iron loss beyond the no-load current", "battery voltage sag over discharge",
-           "battery and ESC temperature", "transient warm-up (steady winding temperature)", "manufacturing scatter")
+           "battery and ESC temperature", "transient warm-up (steady winding temperature)", "manufacturing scatter",
+           "a split of motor loss between winding, iron and bearings (motor_thermal_resistance must be per watt of TOTAL loss; a "
+           "datasheet value per watt of copper loss is a different quantity and would be misused here)",
+           "linear R(T) beyond the declared winding_temperature_limit (such states are refused)")
 
 #: Convergence tolerances of the coupled fixed point (numerical settings, part of the plan's identity).
 TEMPERATURE_TOLERANCE = Quantity(1e-6, "K")
@@ -92,7 +109,8 @@ def _port(port_id: str, direction: str, quantity: str, unit: str) -> PortDefinit
 def _spec(participant_id: str, model: str, ports: tuple[PortDefinition, ...]) -> ParticipantSpec:
     return ParticipantSpec(participant_id, model, "1", model, "1", "forge.closed_form", "1", ADAPTER_ID, ADAPTER_VERSION, ports,
                            transient=True, checkpointable=True, deterministic_restore=True,
-                           description="steady algebraic participant; the window is a coupling window, not time marching")
+                           description=("steady algebraic participant run in the runtime's transient interface: the one 1 s "
+                                        "window is a coupling window, not a time interval, and no state advances"))
 
 
 def _stateless(spec: ParticipantSpec, fn: Callable[[Mapping[str, Quantity]], dict[str, Quantity]],
@@ -118,11 +136,16 @@ def _declared(template: ProductTemplate) -> dict[str, float]:
              "prop_thrust_coefficient": "dimensionless", "prop_power_coefficient": "dimensionless", "motor_kv": "rad/s/V",
              "motor_resistance": "ohm", "motor_no_load_current": "A", "motor_resistance_reference_temperature": "K",
              "winding_temperature_coefficient": "1/K", "esc_efficiency": "dimensionless", "battery_open_circuit_voltage": "V",
-             "battery_internal_resistance": "ohm", "battery_capacity": "A*h", "ambient_temperature": "K", "motor_thermal_resistance": "K/W"}
+             "battery_internal_resistance": "ohm", "battery_capacity": "A*h", "ambient_temperature": "K", "motor_thermal_resistance": "K/W",
+             "winding_temperature_limit": "K"}
+    kv_unit = str(v["motor_kv"].units)
+    if not any(tok in kv_unit for tok in _ANGLE_TOKENS):
+        raise TemplateRefusal(f"motor_kv is declared in {kv_unit!r}, which names no angle (rpm/V, rad/s/V, turn/s/V ...): "
+                              "rev/s and rad/s are both 1/s in the unit system, and guessing which one is meant is a factor of 2*pi")
     x = {k: v[k].magnitude_in(u) for k, u in units.items()}
     positive = ("takeoff_mass", "gravity", "air_density", "rotor_diameter", "prop_thrust_coefficient", "prop_power_coefficient", "motor_kv",
                 "motor_resistance", "battery_open_circuit_voltage", "battery_internal_resistance", "battery_capacity",
-                "motor_resistance_reference_temperature", "ambient_temperature", "motor_thermal_resistance")
+                "motor_resistance_reference_temperature", "ambient_temperature", "motor_thermal_resistance", "winding_temperature_limit")
     for name in positive:
         if not (math.isfinite(x[name]) and x[name] > 0):
             raise TemplateRefusal(f"{name} must be finite and > 0 in {units[name]}")
@@ -154,6 +177,16 @@ def build_runtime(template: ProductTemplate) -> tuple[MultiphysicsRuntime, dict[
 
     kv = x["motor_kv"]  # rad/s/V
     kt = 1.0 / kv       # N*m/A (SI motor constant equality)
+    if x["winding_temperature_limit"] <= x["ambient_temperature"]:
+        raise TemplateRefusal("winding_temperature_limit must exceed ambient_temperature")
+    # the motor current does not depend on temperature, so a steady winding temperature exists iff
+    # R_th * I^2 * R_ref * alpha < 1 -- decided here, before any iteration, with the reason named
+    shaft = propeller({})
+    current0 = shaft["shaft_power"].magnitude_in("W") / shaft["shaft_speed"].magnitude_in("rad/s") / kt + x["motor_no_load_current"]
+    gain = x["motor_thermal_resistance"] * current0 ** 2 * x["motor_resistance"] * x["winding_temperature_coefficient"]
+    if gain >= 1:
+        raise TemplateRefusal(f"thermal runaway: R_th I^2 R_ref alpha = {gain:.4g} >= 1, so no steady winding temperature exists "
+                              "at this operating point")
 
     def electrical(i):
         w = i["shaft_speed"].magnitude_in("rad/s")
@@ -188,44 +221,44 @@ def build_runtime(template: ProductTemplate) -> tuple[MultiphysicsRuntime, dict[
         return {"winding_temperature": Quantity(x["ambient_temperature"] + x["motor_thermal_resistance"] * i["motor_heat"].magnitude_in("W"), "K")}
 
     specs = {
-        "propeller": _spec("propeller", "forge.propeller_static_coefficients",
+        "propeller_static": _spec("propeller_static", "forge.propeller_static_coefficients",
                            (_port("shaft_power", "output", "power", "W"), _port("shaft_speed", "output", "angular_velocity", "rad/s"))),
-        "electrical": _spec("electrical", "forge.dc_equivalent_motor_esc", (
+        "motor_esc": _spec("motor_esc", "forge.dc_equivalent_motor_esc", (
             _port("shaft_power", "input", "power", "W"), _port("shaft_speed", "input", "angular_velocity", "rad/s"),
             _port("winding_temperature", "input", "temperature", "K"), _port("bus_voltage", "input", "voltage", "V"),
             _port("bus_current", "output", "current", "A"), _port("bus_power", "output", "power", "W"), _port("motor_heat", "output", "power", "W"),
             _port("motor_current", "output", "current", "A"), _port("motor_voltage", "output", "voltage", "V"),
             _port("duty", "output", "ratio", "dimensionless"))),
-        "battery": _spec("battery", "forge.battery_ocv_internal_resistance", (
+        "battery_ecm": _spec("battery_ecm", "forge.battery_ocv_internal_resistance", (
             _port("bus_current", "input", "current", "A"), _port("bus_voltage", "output", "voltage", "V"),
             _port("pack_current", "output", "current", "A"), _port("battery_heat", "output", "power", "W"))),
-        "thermal": _spec("thermal", "forge.lumped_steady_winding", (
+        "winding_thermal": _spec("winding_thermal", "forge.lumped_steady_winding", (
             _port("motor_heat", "input", "power", "W"), _port("winding_temperature", "output", "temperature", "K"))),
     }
     seeds = {"winding_temperature": Quantity(x["ambient_temperature"], "K"), "bus_voltage": Quantity(voc, "V")}
     zero = {"bus_current": Quantity(0, "A"), "bus_power": Quantity(0, "W"), "motor_heat": Quantity(0, "W"), "motor_current": Quantity(0, "A"),
             "motor_voltage": Quantity(0, "V"), "duty": Quantity(0, "dimensionless")}
     participants = {
-        "propeller": _stateless(specs["propeller"], propeller, propeller({})),
-        "electrical": _stateless(specs["electrical"], electrical, zero),
-        "battery": _stateless(specs["battery"], battery, {"bus_voltage": seeds["bus_voltage"], "pack_current": Quantity(0, "A"),
+        "propeller_static": _stateless(specs["propeller_static"], propeller, propeller({})),
+        "motor_esc": _stateless(specs["motor_esc"], electrical, zero),
+        "battery_ecm": _stateless(specs["battery_ecm"], battery, {"bus_voltage": seeds["bus_voltage"], "pack_current": Quantity(0, "A"),
                                                           "battery_heat": Quantity(0, "W")}),
-        "thermal": _stateless(specs["thermal"], thermal, {"winding_temperature": seeds["winding_temperature"]}),
+        "winding_thermal": _stateless(specs["winding_thermal"], thermal, {"winding_temperature": seeds["winding_temperature"]}),
     }
     edges = (
-        CouplingEdge("shaft_power", PortRef("propeller", "shaft_power"), PortRef("electrical", "shaft_power"), conversion=SHAFT,
+        CouplingEdge("shaft_power", PortRef("propeller_static", "shaft_power"), PortRef("motor_esc", "shaft_power"), conversion=SHAFT,
                      description="shaft power per rotor"),
-        CouplingEdge("speed", PortRef("propeller", "shaft_speed"), PortRef("electrical", "shaft_speed"), description="shaft speed"),
-        CouplingEdge("bus_current", PortRef("electrical", "bus_current"), PortRef("battery", "bus_current"), description="DC bus current of all units"),
-        CouplingEdge("bus_voltage", PortRef("battery", "bus_voltage"), PortRef("electrical", "bus_voltage"), description="battery terminal voltage"),
-        CouplingEdge("motor_heat", PortRef("electrical", "motor_heat"), PortRef("thermal", "motor_heat"), conversion=LOSS_TO_HEAT,
+        CouplingEdge("speed", PortRef("propeller_static", "shaft_speed"), PortRef("motor_esc", "shaft_speed"), description="shaft speed"),
+        CouplingEdge("bus_current", PortRef("motor_esc", "bus_current"), PortRef("battery_ecm", "bus_current"), description="DC bus current of all units"),
+        CouplingEdge("bus_voltage", PortRef("battery_ecm", "bus_voltage"), PortRef("motor_esc", "bus_voltage"), description="battery terminal voltage"),
+        CouplingEdge("motor_heat", PortRef("motor_esc", "motor_heat"), PortRef("winding_thermal", "motor_heat"), conversion=LOSS_TO_HEAT,
                      description="per-motor heat"),
-        CouplingEdge("winding_temperature", PortRef("thermal", "winding_temperature"), PortRef("electrical", "winding_temperature"),
+        CouplingEdge("winding_temperature", PortRef("winding_thermal", "winding_temperature"), PortRef("motor_esc", "winding_temperature"),
                      description="winding temperature feeding R(T)"),
     )
     plan = CouplingPlan("drone-coupled-hover", CouplingScheme.IMPLICIT, IterationSemantics.SERIAL,
                         TimePolicy(Quantity(0, "s"), Quantity(1, "s"), Quantity(1, "s")),
-                        ("propeller", "electrical", "battery", "thermal"),
+                        PARTICIPANTS,
                         (ConvergenceCriterion("winding_temperature", 0.0, TEMPERATURE_TOLERANCE),
                          ConvergenceCriterion("bus_voltage", 0.0, VOLTAGE_TOLERANCE),
                          ConvergenceCriterion("bus_current", 0.0, CURRENT_TOLERANCE)),
@@ -248,11 +281,10 @@ def coupled_hover_screening(template: ProductTemplate) -> dict[str, Any]:
     try:
         run = runtime.run("drone-coupled-hover", external_inputs={}, initial_coupling_values=initial,
                           initial_coupling_uncertainty={k: _UNKNOWN for k in initial})
-    except MultiphysicsExecutionError as exc:
-        cause = exc.__cause__ if isinstance(exc.__cause__, TemplateRefusal) else None
-        raise TemplateRefusal(f"coupled hover refused: {cause or exc}") from exc
-    except TemplateRefusal as exc:
+    except TemplateRefusal as exc:  # raised by a participant (the runtime does not wrap it)
         raise TemplateRefusal(f"coupled hover refused: {exc}") from exc
+    except (MultiphysicsExecutionError, InvalidScientificProblem) as exc:
+        raise TemplateRefusal(f"coupled hover refused: the coupled fixed point was not reached or not admitted ({exc})") from exc
     window = run.windows[0]
     if window.outcome.value != "converged":
         raise TemplateRefusal(f"the coupled fixed point was not reached ({window.outcome.value}); no hover state is reported")
@@ -261,33 +293,56 @@ def coupled_hover_screening(template: ProductTemplate) -> dict[str, Any]:
     def q(key: str, unit: str) -> Quantity:
         return Quantity(out[key]["magnitude"], unit)
 
+    balances = coupling_balances(out, x)
+    duty = q("motor_esc.duty", "dimensionless").magnitude_in("dimensionless")
+    if not duty < 1.0:
+        raise TemplateRefusal(f"infeasible: the motor needs {q('motor_esc.motor_voltage', 'V').magnitude_in('V'):.4g} V but the bus "
+                              f"supplies {q('battery_ecm.bus_voltage', 'V').magnitude_in('V'):.4g} V (duty {duty:.4g} >= 1); "
+                              "the declared drone cannot reach hover speed on this pack")
+    tw = q("winding_thermal.winding_temperature", "K")
+    if tw.magnitude_in("K") > x["winding_temperature_limit"]:
+        raise TemplateRefusal(f"the converged winding temperature {tw.magnitude_in('K'):.5g} K exceeds the declared winding_temperature_limit "
+                              f"{x['winding_temperature_limit']:.5g} K: outside the linear R(T) model, so no hover state is reported")
+    voc, rint = x["battery_open_circuit_voltage"], x["battery_internal_resistance"]
+    if voc * voc - 4 * rint * q("motor_esc.bus_power", "W").magnitude_in("W") <= 0:
+        raise TemplateRefusal("the converged bus power is at or above the battery's maximum deliverable power; no fixed point exists")
     n_rot = int(x["rotor_count"])
-    shaft, speed = q("propeller.shaft_power", "W"), q("propeller.shaft_speed", "rad/s")
-    bus, pack = q("electrical.bus_power", "W"), q("battery.pack_current", "A")
-    shaft_total = n_rot * shaft.magnitude_in("W")
-    heat = q("electrical.motor_heat", "W").magnitude_in("W")
-    esc_loss = bus.magnitude_in("W") * (1 - x["esc_efficiency"])
-    balance = bus.magnitude_in("W") - (shaft_total + n_rot * heat + esc_loss)
-    duty = q("electrical.duty", "dimensionless").magnitude_in("dimensionless")
+    shaft, speed = q("propeller_static.shaft_power", "W"), q("propeller_static.shaft_speed", "rad/s")
+    bus, pack = q("motor_esc.bus_power", "W"), q("battery_ecm.pack_current", "A")
     return {
         "classification": CLASSIFICATION, "model": f"{ADAPTER_ID} v{ADAPTER_VERSION} on MultiphysicsRuntime (implicit, serial)",
         "run_id": run.run_id, "run_digest": canonical_digest(run.to_dict()), "graph_fingerprint": run.graph_fingerprint,
         "plan_fingerprint": run.plan_fingerprint, "iterations": len(window.iterations),
-        "shaft_speed": speed, "shaft_torque": Quantity(shaft.magnitude_in("W") / speed.magnitude_in("rad/s"), "N*m"), "shaft_power_total": Quantity(shaft_total, "W"),
-        "motor_current": q("electrical.motor_current", "A"), "motor_voltage": q("electrical.motor_voltage", "V"),
-        "duty": Quantity(duty, "dimensionless"), "bus_power": bus, "pack_current": pack, "bus_voltage": q("battery.bus_voltage", "V"),
-        "winding_temperature": q("thermal.winding_temperature", "K"), "motor_heat": Quantity(heat, "W"),
-        "battery_heat": q("battery.battery_heat", "W"),
+        "shaft_speed": speed, "shaft_torque": Quantity(shaft.magnitude_in("W") / speed.magnitude_in("rad/s"), "N*m"),
+        "shaft_power_total": Quantity(n_rot * shaft.magnitude_in("W"), "W"),
+        "motor_current": q("motor_esc.motor_current", "A"), "motor_voltage": q("motor_esc.motor_voltage", "V"),
+        "duty": Quantity(duty, "dimensionless"), "bus_power": bus, "pack_current": pack, "bus_voltage": q("battery_ecm.bus_voltage", "V"),
+        "winding_temperature": tw, "motor_heat": q("motor_esc.motor_heat", "W"), "battery_heat": q("battery_ecm.battery_heat", "W"),
         "rated_capacity_over_current": Quantity(x["battery_capacity"] / pack.magnitude_in("A"), "h"),
-        "energy_balance_residual": Quantity(balance, "W"),
-        "motor_voltage_within_bus": duty <= 1.0,
+        "bus_power_balance_residual": balances["bus_power_balance_residual"],
+        "winding_heat_balance_residual": balances["winding_heat_balance_residual"],
         "uncertainty": "UNKNOWN",
         "omitted": OMITTED,
         "notes": ("rated_capacity_over_current is NOT an endurance prediction (no usable-capacity fraction, sag or temperature)",
-                  "motor_voltage_within_bus is a necessary condition at point values only; ESC maximum duty is not modelled",
-                  "energy_balance_residual checks the coupled solution's arithmetic (verification), not the physics"),
+                  "duty < 1 is a necessary condition at point values only; ESC maximum duty and timing are not modelled",
+                  "the balance residuals measure how well the coupled participants agree at the reported state (verification of "
+                  "the coupling), not whether the models are right"),
         "inputs": {k: template.input(k).source_ref for k in COUPLED_INPUTS},
     }
 
 
-__all__ = ["ADAPTER_ID", "ADAPTER_VERSION", "CLASSIFICATION", "COUPLED_INPUTS", "build_runtime", "coupled_hover_screening"]
+def coupling_balances(out: Mapping[str, Any], x: Mapping[str, float]) -> dict[str, Quantity]:
+    """Cross-participant balances at the reported state; each is non-zero until the two-way couplings close.
+
+    * bus power: what the battery delivers at its terminals (V_b I_pack) minus what the motors/ESCs draw;
+    * winding heat: the thermal node's temperature minus T_amb + R_th x (the heat the motor produced).
+    """
+    def m(key: str, unit: str) -> float:
+        return Quantity(out[key]["magnitude"], unit).magnitude_in(unit)
+
+    bus = m("battery_ecm.bus_voltage", "V") * m("battery_ecm.pack_current", "A") - m("motor_esc.bus_power", "W")
+    heat = m("winding_thermal.winding_temperature", "K") - (x["ambient_temperature"] + x["motor_thermal_resistance"] * m("motor_esc.motor_heat", "W"))
+    return {"bus_power_balance_residual": Quantity(bus, "W"), "winding_heat_balance_residual": Quantity(heat, "K")}
+
+
+__all__ = ["ADAPTER_ID", "ADAPTER_VERSION", "CLASSIFICATION", "COUPLED_INPUTS", "build_runtime", "coupled_hover_screening", "coupling_balances"]

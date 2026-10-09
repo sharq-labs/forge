@@ -41,7 +41,7 @@ def test_the_coupled_hover_chain_is_reachable_and_refuses_until_every_coupled_in
              "motor_resistance_reference_temperature": (293.15, "K"), "winding_temperature_coefficient": (0.00393, "1/K"),
              "esc_efficiency": (0.95, "dimensionless"), "battery_open_circuit_voltage": (16.0, "V"),
              "battery_internal_resistance": (0.02, "ohm"), "battery_capacity": (5, "A*h"), "ambient_temperature": (298.15, "K"),
-             "motor_thermal_resistance": (8, "K/W")}
+             "motor_thermal_resistance": (8, "K/W"), "winding_temperature_limit": (453.15, "K")}
     full = dict(DRONE, **{k: {"magnitude": m, "unit": u, "source_ref": "fixture:illustrative"} for k, (m, u) in extra.items()})
     ok = run_product_screening("drone", full, screening="coupled_hover")
     assert ok["status"] == "computed" and ok["verdict"] == "insufficient_evidence"

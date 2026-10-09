@@ -104,6 +104,7 @@ def drone_template(declared: Mapping[str, tuple[Quantity, str]] | None = None, *
         ("battery_internal_resistance", "battery", "ohm", "pack internal resistance at the screened state"),
         ("ambient_temperature", "drone", "K", "ambient temperature of the scenario (environment record)"),
         ("motor_thermal_resistance", "propulsion", "K/W", "winding-to-ambient thermal resistance in hover cooling, per watt of TOTAL motor loss"),
+        ("winding_temperature_limit", "propulsion", "K", "maximum winding temperature the linear R(T) model and insulation class admit"),
     ))
     participants = (
         PhysicsParticipant("geometry", "parametric_aerospace_geometry", ("airframe",), ("openvsp",), ("arm_length",)),
@@ -127,11 +128,12 @@ def drone_template(declared: Mapping[str, tuple[Quantity, str]] | None = None, *
                            ("battery_open_circuit_voltage", "battery_internal_resistance", "battery_capacity"),
                            "coupled hover chain: open-circuit voltage + internal resistance"),
         PhysicsParticipant("winding_thermal", "lumped_steady_winding_temperature", units, ("forge.drone_coupled_hover",),
-                           ("ambient_temperature", "motor_thermal_resistance"), "coupled hover chain: lumped steady winding temperature"),
+                           ("ambient_temperature", "motor_thermal_resistance", "winding_temperature_limit"),
+                           "coupled hover chain: lumped steady winding temperature"),
     )
     it = CouplingStatus.ITERATIVE_EXECUTABLE
     couplings = (CouplingDeclaration("propeller_static", "motor_esc", "shaft_torque_and_speed", CouplingStatus.ONE_WAY_EXECUTABLE),
-                 CouplingDeclaration("motor_esc", "battery_ecm", "bus_power", it),
+                 CouplingDeclaration("motor_esc", "battery_ecm", "bus_current", it),
                  CouplingDeclaration("battery_ecm", "motor_esc", "bus_voltage", it),
                  CouplingDeclaration("motor_esc", "winding_thermal", "motor_heat", it),
                  CouplingDeclaration("winding_thermal", "motor_esc", "winding_temperature", it),

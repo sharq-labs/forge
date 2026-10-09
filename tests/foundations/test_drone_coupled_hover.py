@@ -12,7 +12,8 @@ import pytest
 
 from engcore.scientific.units.quantity import Quantity as Q
 from engcore.systems.products import IN_REPOSITORY, CouplingStatus, TemplateRefusal, capability_report, coupled_hover_screening, drone_template
-from engcore.systems.products.drone_coupled import COUPLED_INPUTS, build_runtime
+from engcore.systems.products import drone_coupled
+from engcore.systems.products.drone_coupled import COUPLED_INPUTS, EDGE_OF_COUPLING, build_runtime, coupling_balances
 
 VALUES = dict(
     takeoff_mass=Q(1.5, "kg"), gravity=Q(9.80665, "m/s^2"), air_density=Q(1.225, "kg/m^3"), rotor_count=Q(4, "dimensionless"),
@@ -20,7 +21,8 @@ VALUES = dict(
     motor_kv=Q(920, "rpm/V"), motor_resistance=Q(0.1, "ohm"), motor_no_load_current=Q(0.5, "A"),
     motor_resistance_reference_temperature=Q(293.15, "K"), winding_temperature_coefficient=Q(0.00393, "1/K"),
     esc_efficiency=Q(0.95, "dimensionless"), battery_open_circuit_voltage=Q(16.0, "V"), battery_internal_resistance=Q(0.02, "ohm"),
-    battery_capacity=Q(5, "A*h"), ambient_temperature=Q(298.15, "K"), motor_thermal_resistance=Q(8, "K/W"))
+    battery_capacity=Q(5, "A*h"), ambient_temperature=Q(298.15, "K"), motor_thermal_resistance=Q(8, "K/W"),
+    winding_temperature_limit=Q(453.15, "K"))
 
 
 def template(**changes):
@@ -59,9 +61,15 @@ def test_the_coupled_chain_runs_on_the_runtime_and_matches_an_independent_solve(
     assert r["bus_voltage"].magnitude_in("V") == pytest.approx(ref["bus_voltage"], abs=1e-8)
     assert r["pack_current"].magnitude_in("A") == pytest.approx(ref["pack_current"], rel=1e-8)
     assert r["bus_power"].magnitude_in("W") == pytest.approx(ref["bus_power"], rel=1e-7)
-    assert abs(r["energy_balance_residual"].magnitude_in("W")) < 1e-9
+    assert abs(r["bus_power_balance_residual"].magnitude_in("W")) < 1e-6
+    assert abs(r["winding_heat_balance_residual"].magnitude_in("K")) < 1e-5
+    # hand-computed anchors for the fixture (independent of both code paths' unit handling):
+    # n = sqrt(3.6775 N / (0.11 * 1.225 * 0.254^4)) = 80.97 rev/s; P = 0.045 * 1.225 * n^3 * 0.254^5 = 30.94 W; I = Q K_v + I_0 = 6.359 A
+    assert r["shaft_speed"].magnitude_in("rpm") / 60 == pytest.approx(80.97, rel=1e-3)
+    assert r["shaft_power_total"].magnitude_in("W") / 4 == pytest.approx(30.94, rel=1e-3)
+    assert r["motor_current"].magnitude_in("A") == pytest.approx(6.359, rel=1e-3)
     assert set(r["inputs"]) == set(COUPLED_INPUTS) and all(s.startswith("fixture:") for s in r["inputs"].values())
-    assert "NOT an endurance prediction" in " ".join(r["notes"])
+    assert "NOT an endurance prediction" in " ".join(r["notes"]) and r["duty"].magnitude_in("dimensionless") < 1
     # deterministic: the same declared inputs give the same run record
     assert coupled_hover_screening(template())["run_digest"] == r["run_digest"]
 
@@ -84,14 +92,46 @@ def test_infeasible_operating_points_are_refused_without_a_result():
     # the battery cannot deliver the hover power through its internal resistance
     with pytest.raises(TemplateRefusal, match="battery cannot deliver"):
         coupled_hover_screening(template(battery_internal_resistance=Q(1.0, "ohm")))
-    # thermal runaway: R_th I^2 R alpha > 1 has no steady fixed point; the runtime does not converge and nothing is reported
-    with pytest.raises(TemplateRefusal, match="coupled hover refused"):
+    # thermal runaway is decided before iterating, with its reason
+    with pytest.raises(TemplateRefusal, match="thermal runaway"):
         coupled_hover_screening(template(motor_thermal_resistance=Q(100, "K/W")))
+    # a converged state above the declared winding limit (Rth = 30 K/W: loop gain 0.48, converges near 686 K) is not reported
+    with pytest.raises(TemplateRefusal, match="exceeds the declared winding_temperature_limit"):
+        coupled_hover_screening(template(motor_thermal_resistance=Q(30, "K/W")))
+    # a motor that needs more voltage than the pack supplies cannot hover: refused, not "computed" with a flag
+    with pytest.raises(TemplateRefusal, match="cannot reach hover speed"):
+        coupled_hover_screening(template(motor_kv=Q(200, "rpm/V")))
     with pytest.raises(TemplateRefusal, match="esc_efficiency"):
         coupled_hover_screening(template(esc_efficiency=Q(1.2, "dimensionless")))
     with pytest.raises(TemplateRefusal, match="rotor_count 6 disagrees with the 4 propulsion units"):
         coupled_hover_screening(drone_template().with_inputs({**{k: (v, "fixture") for k, v in VALUES.items()},
                                                              "rotor_count": (Q(6, "dimensionless"), "fixture")}))
+
+
+def test_kv_must_name_its_angle():
+    with pytest.raises(TemplateRefusal, match="names no angle"):
+        coupled_hover_screening(template(motor_kv=Q(920 / 60, "Hz/V")))  # rev/s per V or rad/s per V? never guessed
+    same = coupled_hover_screening(template(motor_kv=Q(920 / 60, "turn/s/V")))
+    assert same["bus_power"].magnitude_in("W") == pytest.approx(coupled_hover_screening(template())["bus_power"].magnitude_in("W"), rel=1e-9)
+
+
+def test_an_iteration_budget_that_does_not_close_the_coupling_is_refused(monkeypatch):
+    monkeypatch.setattr(drone_coupled, "MAX_ITERATIONS", 2)
+    with pytest.raises(TemplateRefusal, match="coupled hover refused"):
+        coupled_hover_screening(template())
+
+
+def test_the_balances_are_non_zero_until_the_coupling_closes():
+    x = {"ambient_temperature": 298.15, "motor_thermal_resistance": 8.0}
+    closed = {"battery_ecm.bus_voltage": {"magnitude": 15.0}, "battery_ecm.pack_current": {"magnitude": 10.0},
+              "motor_esc.bus_power": {"magnitude": 150.0}, "winding_thermal.winding_temperature": {"magnitude": 298.15 + 80.0},
+              "motor_esc.motor_heat": {"magnitude": 10.0}}
+    b = coupling_balances(closed, x)
+    assert b["bus_power_balance_residual"].magnitude_in("W") == 0 and b["winding_heat_balance_residual"].magnitude_in("K") == 0
+    lagging = dict(closed, **{"motor_esc.bus_power": {"magnitude": 151.0}, "motor_esc.motor_heat": {"magnitude": 10.5}})
+    b = coupling_balances(lagging, x)
+    assert b["bus_power_balance_residual"].magnitude_in("W") == pytest.approx(-1.0)
+    assert b["winding_heat_balance_residual"].magnitude_in("K") == pytest.approx(-4.0)
 
 
 def test_energy_crossings_are_declared_and_the_template_reports_the_coupling_as_iterative():
@@ -106,4 +146,15 @@ def test_energy_crossings_are_declared_and_the_template_reports_the_coupling_as_
     from engcore.providers import default_registry
 
     ready = {c.participant_id: c.readiness.value for c in capability_report(t, default_registry(), in_repository=IN_REPOSITORY)}
-    assert ready["motor_esc"] == ready["battery_ecm"] == ready["winding_thermal"] == ready["propeller_static"]
+    assert {ready[p] for p in ("motor_esc", "battery_ecm", "winding_thermal", "propeller_static")} == {"ready"}
+    # every executable coupling declaration names edges of the executed graph; iterative ones have a return path
+    edges = {e.edge_id: e for e in runtime.graph.edges}
+    for c in t.couplings:
+        key = (c.source, c.target, c.quantity)
+        if c.status is CouplingStatus.DECLARED_NOT_EXECUTABLE:
+            assert key not in EDGE_OF_COUPLING
+            continue
+        for edge_id in EDGE_OF_COUPLING[key]:
+            assert (edges[edge_id].source.participant_id, edges[edge_id].target.participant_id) == (c.source, c.target)
+        back = any(e.source.participant_id == c.target and e.target.participant_id == c.source for e in edges.values())
+        assert back == (c.status is CouplingStatus.ITERATIVE_EXECUTABLE)
