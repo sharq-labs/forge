@@ -282,7 +282,10 @@ or acceptance logic is added.
       PARTIAL: every flagship A study so far has its own pre-registration
       committed and pushed before its first run (SHAs in PROGRESS), but no
       umbrella pre-registration and no 14.3 timebox were registered before
-      the first run. The timebox is still open (owner).
+      the first run. TIMEBOX: owner decision 2026-10-09, two weeks,
+      2026-10-09 to 2026-10-23, pre-registered in
+      `big14_a_campaign_timebox_preregistration.json` for every 14.3 study
+      registered from that date (the earlier studies keep their outcomes).
 - [ ] Move the non-selected flagships to explicit deferred status; retain their
       `insufficient_evidence` verdicts and recorded gaps.
 
@@ -311,8 +314,13 @@ Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
   - Fresh-day module heat: 69.0 Wh (was 28.8 Wh on SPM).
   - Window refinement: differences now monotone, but the peak-heat tolerance is
     missed. Level 4 still NOT reached.
-- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
-      subset) for the fade model. Needs download approval.
+- [ ] LG M50T ageing data (Kirkaldy 2024, Zenodo 10637534, CC-BY-4.0) for the
+      fade model. Download approved by the owner 2026-10-09: Expt 5 (standard
+      cycle ageing, 10.4 GB, calibration) and Expt 4 (drive-cycle ageing,
+      11.4 GB, holdout) into `D:/forge-data/kirkaldy2024/raw` (not committed).
+      Study `big14-a-kirkaldy-fade` pre-registered before any capacity value
+      was read; next: admit both archives by md5, extract the RPT capacities,
+      run the study.
 - [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
       untouched curves in hand are C/10. An independent dataset is needed for
       any validation claim about the cell model.

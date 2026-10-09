@@ -1,0 +1,11 @@
+{
+  "schema": "forge.flagship.preregistration/1",
+  "id": "big14-a-campaign-timebox",
+  "flagship": "A - battery + cooling + lifecycle",
+  "written": "2026-10-09, owner decision of the same day (two weeks), before the first run of any 14.3 study registered after it",
+  "question": "How long may BIG 14.3 (diagnose, quantify and admit evidence) spend on flagship A before it must close?",
+  "timebox": {"starts": "2026-10-09", "ends": "2026-10-23", "length": "two calendar weeks"},
+  "covers": "every 14.3 study of flagship A registered on or after 2026-10-09, first big14-a-kirkaldy-fade; the studies already run and recorded before this date keep their outcomes unchanged",
+  "at_the_end": "if admissible independent data or a required provider environment is not available, or a registered study has not run, the campaign closes as a justified refusal that names the missing evidence and the next admissible step; the timebox is not extended by a later decision recorded as if it were this one",
+  "no_change_after_seeing_results": "the dates are fixed"
+}
