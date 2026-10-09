@@ -43,7 +43,7 @@ from .geometry import (
     ShapeKind, Transform,
 )
 from .mesh import CoordinateFrame, GroupKind, MeshProvenance, PhysicalGroup, SpatialMesh
-from .providers import gmsh_available
+from .providers import gmsh_available, gmsh_module
 
 PROVIDER_ID = "gmsh"
 ADAPTER_VERSION = "1"
@@ -201,8 +201,7 @@ class GmshGeometryProvider:
                     raise GeometryRefusal(f"file for {b.body_id!r} does not have the declared sha256; refusing foreign bytes")
                 file_digests[f"file:{b.body_id}"] = b.shape.source.file_digest
 
-        import gmsh
-
+        gmsh = gmsh_module()
         gmsh.initialize(readConfigFiles=False)
         try:
             version = gmsh.__version__

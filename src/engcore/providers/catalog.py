@@ -34,6 +34,7 @@ CAPABILITY_CLASSIFICATION = "descriptive_capability_not_applicability"
 KNOWN_ADAPTERS: tuple[str, ...] = (
     "forge_fenicsx", "forge_precice", "forge_pybamm", "forge_cantera", "forge_coolprop", "forge_tespy",
     "forge_calculix", "forge_openfoam", "forge_su2", "forge_code_aster", "forge_openmodelica",
+    "forge_openvsp", "forge_openradioss", "forge_chrono",
 )
 
 

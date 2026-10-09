@@ -24,7 +24,7 @@ from engcore.spatial.parametric import GeometryBuilderRegistry, GeometryParamete
 from engcore.spatial.providers import gmsh_available
 
 GMSH_OK, GMSH_DETAIL = gmsh_available()
-needs_gmsh = pytest.mark.skipif(not GMSH_OK, reason=f"Gmsh cannot run here: {GMSH_DETAIL}")
+needs_gmsh = pytest.mark.skipif(not GMSH_OK, reason=f"Gmsh unavailable: {GMSH_DETAIL}")
 
 
 def m(v):
