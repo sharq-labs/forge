@@ -1817,3 +1817,41 @@ Pre-commit smoke (2026-10-09, same venv; `forge_check --changed` log 17:10 is af
 - attack1-7 re-run: 0 offline VERIFIED; verify_bundle gave only replay_required,
   scientifically_revalidated or tampered. attack4 predates the F5 uncertainty requirement, so its
   case-shaped requests are now refused; attack5 covers case-shape parity with MCP.
+
+## 2026-10-09 Trust Repair Pass 1 landing prep: main sync, focused regression, scope (branch `fix/trust-repair-pass1`)
+
+The original Trust Repair Pass 1 commit `803946af` (tree `d93e84cd`, parent `16c87f40`) is kept unchanged. Main
+`44637065` (after PR #121) was merged into the branch as `24373be4`, a normal merge with no rebase or cherry-pick.
+- The only conflict was in this file. Both appended histories were kept: main's entries first, then the Trust Pass 1
+  entry verbatim. Main's archival removals of 782 lines carried over exactly.
+- Against `44637065`, the effective diff is the 12 Trust Pass 1 files. Eleven are blob-identical to `803946af`, and
+  PROGRESS.md gains 67 lines. `certification/current_core_v2.json` is unchanged from main (`7756e5a6`).
+- PR #120 commits (`2c0e024b`, `3e396bc4`, `d383eed0`) and PR #121 commits (`44637065`, `3f5096bb`) are ancestors.
+- Prereg blob `0668576d` is unchanged, and the Kirkaldy NOT MET record is present.
+
+Commands (WSL, the shared clone's `.forge/venvs/3.12`, `PYTHONPATH=<worktree>/src:<worktree>`, TMPDIR outside the
+repo, `-p no:cacheprovider`), all on `24373be4`:
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py tests/test_forge_diagnose.py`:
+  59 passed.
+- Adversary attack1-7 (`~/forge-pass1-adversary`, cwd = worktree): output is identical to the 2026-10-08 final logs
+  (attack4 has no stored log; its MCP/canonical parity reads `identical_records=True`). Offline VERIFIED outcomes: 0.
+  verify_bundle gave 14 replay_required, 14 scientifically_revalidated and 4 tampered.
+  - The 305 K oracle forgery is refused at construction.
+  - Numerics substitution (attack7) is at most scientifically_revalidated offline, and replay_bundle reports
+    not_reproducible.
+  - Run with the adversary directory as cwd, replay_bundle refuses earlier with "source-control commit identity is
+    unavailable", because `_git_identity` reads the cwd. This is not a regression.
+- `pytest tests/claims tests/mcp tests/test_forge_diagnose.py tests/credibility -n 4 -m "not campaign"`: 1110 passed.
+- `tools/forge_check.py --changed --base gh/main` (gh/main = `44637065`): 225 passed.
+- Formal TARGETS (48) + `tests/test_repository_architecture.py tests/test_core_api_layering.py tests/mcp/test_bundle.py
+  tests/mcp/test_server.py`, `-n 4`: 1224 passed.
+- `recertification_scope classify --event pull_request --base 44637065 --head 24373be4`: `recertify_source`.
+  - RECERTIFY: `src/engcore/mcp/server.py` (mutation_targets), and four certified-harness/assurance-suite test files.
+  - Observation: `recertification_scope explain` classifies the trust implementation paths themselves as ordinary:
+    `claims/assessment.py`, `claims/replay/bundle.py`, `claims/revalidation.py` and `mcp/claim_assessment.py`.
+    Recertification is triggered here only through `mcp/server.py` and the tests. This is a possible follow-up for
+    scope policy and is not changed in this pass.
+
+Full Local Assurance runs on the commit that adds this entry, in a dedicated clone, because the shared assurance clone
+carries worktrees, which the mutation workspace refuses as external Git storage. Its result is recorded by the certificate-only child and the PR
+body, not here, because any later edit would move the certification subject.
