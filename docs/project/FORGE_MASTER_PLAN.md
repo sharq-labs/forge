@@ -66,6 +66,49 @@ The long-term differentiator is the combination of:
 12. a global 3D engineering visualization runtime that can show assemblies, dimensions, cutaways, motion and evidence-bound scientific overlays;
 13. high-throughput multi-fidelity design discovery without confusing optimization with validation.
 
+### 2.1 Universal architecture rule
+
+Forge should generalize engineering concepts at the lowest layer where their
+meaning is truly cross-domain, then add domain meaning above that layer.
+
+Canonical ownership:
+
+```text
+Core Foundations
+    ↓
+Domain Semantics
+    ↓
+Domain Models / System Composition
+    ↓
+Provider Adapters
+    ↓
+Flagships / Products
+    ↓
+Discovery over trusted Scientific Twins
+```
+
+The rule is:
+
+> **Core owns universal engineering concepts. Domains own physics-specific
+> meaning. Providers own solver-specific translation. Flagships own application
+> composition.**
+
+Examples:
+
+- geometry, topology, regions, interfaces, frames, materials, fields, time,
+  uncertainty, evidence and replay are generic foundations;
+- `lifting_surface`, `crash_structure`, `stator_region` and
+  `battery_cooling_plate` are domain/product semantics layered on those
+  foundations;
+- Gmsh, OpenVSP, OpenFOAM, Code_Aster, CalculiX, OpenRadioss and other tools
+  translate canonical records to provider-specific syntax and back;
+- a drone, car, motor, HVAC system or battery pack composes reusable
+  capabilities rather than creating a new Scientific Core branch.
+
+A concept must not be specialized to one flagship merely because that flagship
+is the first place it is exercised. Geometry/body work in particular is a
+global Spatial/Geometry Foundation, not an automotive or aerospace subsystem.
+
 ## 3. Explicit non-goals
 
 Forge must **not** become an inferior rewrite of mature tools.
@@ -216,21 +259,48 @@ Target degradation families include:
 
 Degradation changes the future physics. Updated thickness, material properties, resistance, capacity, geometry or other state must feed back into subsequent simulation.
 
-### 4.7 Fields, geometry and mesh
+### 4.7 Spatial / Geometry Foundation, fields and mesh
 
-Generic multiphysics requires canonical support for:
+Spatial/geometry semantics are a **global Core foundation** shared by every
+applicable domain. They must not be designed around cars, drones or any other
+single flagship.
 
-- geometry/regions/boundaries;
-- meshes and mesh identity;
-- scalar fields;
-- vector fields;
-- tensor fields;
-- coordinate frames;
-- interpolation/projection;
-- conservative mappings;
-- discretization metadata.
+The canonical foundation should support, incrementally:
 
-Core semantics must remain provider-neutral.
+- `GeometryEntity`, `Body`, `Part`, `Assembly`, `Region`,
+  `Boundary`, `Interface` and topology relations;
+- coordinate frames and rigid transforms;
+- parametric dimensions/variants without turning Forge into a CAD kernel;
+- material and property bindings to bodies/regions;
+- boundary-condition and load bindings;
+- canonical provider-entity mappings;
+- geometry receipts, immutable identity and provenance;
+- mesh identity and geometry-to-mesh bindings;
+- scalar, vector and tensor fields;
+- interpolation/projection and conservative mappings where supported;
+- discretization metadata and transfer-error evidence.
+
+Provider-native identifiers such as Gmsh `(dim, tag)` values must never become
+the scientific identity of a Forge entity. A stable Forge identity maps to
+provider entities through an explicit adapter/receipt.
+
+The same geometry may carry different domain semantics simultaneously. For
+example, one surface can be an aerodynamic wall to CFD, a load-bearing boundary
+to structures and a thermal interface to heat transfer without duplicating the
+underlying geometry authority.
+
+Initial provider direction:
+
+```text
+Spatial / Geometry Foundation
+      ├── Gmsh / OpenCASCADE     → mesh / CAD translation
+      ├── OpenVSP                → aerospace parametric geometry
+      ├── OpenFOAM / SU2         → fluid-domain mapping
+      ├── Code_Aster / CalculiX  → structural mapping
+      └── future providers       → same canonical contracts
+```
+
+Core semantics remain provider-neutral.
 
 ### 4.8 Multiphysics
 
@@ -502,6 +572,96 @@ Until funding or a specific commercial need:
 5. keep calibration and validation/holdout roles explicit;
 6. do not call public data "certified" unless an appropriate authority actually certifies it;
 7. use paid data only when it unlocks a capability not reasonably achievable with open data.
+
+## 8.1 Near-term leverage priorities — 2026-10-09
+
+The next improvement cycle prioritizes **correctness and product leverage before
+breadth**. New solver count is not a success metric.
+
+### Batch A — correctness quick wins
+
+Before expanding UQ or model-form claims:
+
+1. independently reproduce and fix the probabilistic-UQ Latin-hypercube
+   dependence defect (B1); use a scientifically correct sampler with explicit
+   seed/provenance and multi-input regression tests;
+2. fix the empirical model-form round-trip `Mapping` failure (B2);
+3. make executable version probing refuse non-zero exits before a
+   `SolverIdentity` can exist (B4);
+4. fix the deprecated multiphysics path's missing `warnings` import (B5);
+5. add a small static undefined-name/import gate (initially `ruff --select F`)
+   so this class of defect is caught cheaply.
+
+These changes are bounded correctness work. They must not weaken scientific
+refusal or bypass certification ownership.
+
+### Batch B — MCP golden path
+
+Make the agent-facing product smaller and more typed before adding more public
+tools:
+
+- default discovery/description responses to a concise `summary` form with an
+  explicit full-detail path;
+- converge the golden path around roughly `describe → plan → run → assess`;
+- give the first golden-path requests explicit typed/JSON-schema contracts;
+- keep legacy tools only as compatibility surfaces while callers migrate;
+- fix contradictory/negated natural-language extraction rather than silently
+  taking the first match;
+- keep language models as proposers only; Forge remains the authority for
+  applicability, evidence, UQ and verdicts.
+
+### Batch C — runtime visibility and provider identity
+
+Add a lightweight `forge doctor`/runtime-status surface that reports:
+
+- installed runtime and supported Python qualification;
+- provider availability/version/probe status;
+- capability readiness;
+- certificate/source identity;
+- explicit scientific limitations.
+
+Consolidate executable-provider probing behind one fail-closed contract before
+duplicating probe logic across more solvers.
+
+### Batch D — general Spatial / Geometry Foundation
+
+Implement a provider-neutral Geometry v0 before vehicle/drone-specific body
+classes. Exercise it first with Gmsh, then extend provider mappings as real
+vertical slices require them.
+
+### Provider expansion order
+
+After the trust/correctness gates above, prioritize provider integrations by
+vertical-slice value rather than count:
+
+1. **Gmsh** — general geometry/mesh path (existing narrow plate path becomes a
+   broader adapter over the Spatial/Geometry Foundation);
+2. **OpenVSP** — parametric aerospace/drone geometry;
+3. **OpenRadioss** — explicit dynamics/crash for vehicle-body work;
+4. **Project Chrono / FMI-FMU / EnergyPlus / Elmer / other providers** only
+   when a flagship/system slice requires them.
+
+A provider moves through:
+
+`INTEGRATED → QUALIFIED → COUPLING_CERTIFIED → VALIDATED FLAGSHIP`.
+
+### Discovery ordering
+
+Design/Scientific Discovery remains a major destination, but it runs **over
+trusted Scientific Twins and real system slices**, not ahead of them:
+
+```text
+trusted physics/providers
+    → trusted geometry/bodies
+    → trusted coupled systems
+    → Scientific Twins
+    → multi-fidelity Design Discovery
+    → recursive component/system discovery
+    → later scientific-hypothesis discovery
+```
+
+This prevents an optimizer from learning to exploit model defects or
+unsupported regions.
 
 ## 9. Roadmap
 
