@@ -1,13 +1,9 @@
 """Roadmap V2 R8: discovery providers own algorithms, FORGE owns authority (PySINDy, BoTorch, Dakota adapters).
 
-Live runs are gated: set FORGE_DISCOVERY_CMD / FORGE_DAKOTA_CMD to a JSON list giving the provider environment's
-interpreter (e.g. ``["micromamba", "run", "-n", "discovery", "python", "-I"]``)."""
+These tests use canned provider payloads and never skip.  Live provider runs are an explicit, opt-in smoke tool outside
+the test tiers: ``python -m tools.discovery_provider_smoke --discovery-cmd '[...]' --dakota-cmd '[...]'``."""
 
 from __future__ import annotations
-
-import json
-import math
-import os
 
 import pytest
 
@@ -46,27 +42,3 @@ def test_botorch_and_dakota_outputs_carry_no_authority():
     assert "untrusted_provider_output" in d and "not evidence" in d["note"]
     with pytest.raises(ProviderRefused, match="unknown runner"):
         run_provider(["python"], "../../etc/passwd", {})
-
-
-def _cmd(var):
-    raw = os.environ.get(var)
-    return json.loads(raw) if raw else None
-
-
-@pytest.mark.skipif(_cmd("FORGE_DISCOVERY_CMD") is None, reason="provider-gated: FORGE_DISCOVERY_CMD not set")
-def test_live_pysindy_and_botorch():
-    t = [i * 0.1 for i in range(100)]
-    run = run_provider(_cmd("FORGE_DISCOVERY_CMD"), "sindy_runner.py",
-                       {"t": t, "x": [[2.0 * math.exp(-0.5 * ti)] for ti in t], "feature_names": ["u"], "threshold": 0.05})
-    (h,) = sindy_hypotheses(run, units={"u": "m"}, time_unit="s", prefix="live", condition_ref="cond:decay")
-    assert abs(h.parameters[0].value + 0.5) < 0.01 and h.status is HypothesisStatus.PROPOSED
-    bo = run_provider(_cmd("FORGE_DISCOVERY_CMD"), "botorch_runner.py",
-                      {"X": [[0.1, 0.2], [0.5, 0.5], [0.9, 0.1], [0.3, 0.8]], "Y": [0.2, 0.9, 0.4, 0.6], "bounds": [[0, 0], [1, 1]]})
-    s = botorch_suggestion(bo, names=("x1", "x2"), target_ref="design:toy")
-    assert all(0.0 <= v <= 1.0 for v in s.point.values())
-
-
-@pytest.mark.skipif(_cmd("FORGE_DAKOTA_CMD") is None, reason="provider-gated: FORGE_DAKOTA_CMD not set")
-def test_live_dakota():
-    run = run_provider(_cmd("FORGE_DAKOTA_CMD"), "dakota_runner.py", {"samples": 20, "seed": 1})
-    assert run.output["moments"]["std_dev"] > 0
