@@ -463,7 +463,10 @@ def _passport_world():
     canon = Canonicalizer.resolve("prereg-test.structure/1")
     snap = PriorArtSnapshot("laws/1", ("equation",), (PriorArtEntry("other", sd(mul(c(1.0), v("x"))), "doi:x"),), ("corpus",), "manual",
                             "prereg-test.structure/1")
-    s = Setup(snapshot=snap)
+    space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
+    plan = AttackPlan(space.digest, 50, "s")
+    s = Setup(snapshot=snap, red_team_attack_space={"space_digest": space.digest, "plan_digest": plan.digest})
+    s.plan = plan
     s.manifest = DatasetManifest("ds2", "1", "test", "one row per checkpoint", {"exploratory": ["e1", "e2"], "confirmatory": ["c1", "c2"]},
                                  row_commitments={r: commit_row("ds2", r, rows[r], bytes.fromhex(rows[r]["salt"])) for r in rows})
     register_manifest(s.camp, s.led, s.keys.signer("exposure"), "exposure", s.manifest)
@@ -473,10 +476,9 @@ def _passport_world():
     s.gate.exploratory("e2")                                     # AFTER the seal, at the falsifier's conditions: exploratory
     s.gate.confirmatory("c1", preregistration=s.prereg)
     judged = s.camp.apply_verdicts(s.hs[0])
-    space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
     subject = ClaimSubject("result", "y", "1", Sense.AT_MOST, 10.0, (Route("h1", "f", 1, lambda p: RouteResult(5.0)),
                                                                      Route("b", "g", 2, lambda p: RouteResult(5.0))), "h1")
-    env = run_red_team(subject, space, AttackPlan(space.digest, 50, "s"))
+    env = run_red_team(subject, space, plan)
     out = hashlib.sha256(b"prediction").hexdigest()
     rec = attest_receipt(s.led, s.keys.signer("exec"), "exec", receipt_for(out, node_id="pred"), context_digest=CTX)
     attest_record(s.led, s.keys.signer("rt"), "rt", env, receipt=rec, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
@@ -717,3 +719,39 @@ def _resume(s, camp):
     opened = AuthorityLedger.open(s.store, anchor=anchor)
     camp.close()
     return DurableCampaign.resume(opened, s.keys, issuer_id="exposure", campaign_id="c", expected_anchor=anchor)
+
+
+def test_an_operator_role_falsification_is_counted_and_the_plan_is_bound():                         # C5 HIGH-A, MEDIUM-B
+    import dataclasses
+
+    from engcore.claims.attestation import attest_record
+    from engcore.claims.redteam import AttackPlan, Route, RouteResult, run_red_team
+    s, camp, anchor, judged, env, cred, snap, canon = _passport_world()
+    honest = _honest(camp, judged, env, cred, anchor, canon, snap, s.prereg)
+    kw = {"hypothesis": judged, "credibility_inputs": s.cred_inputs, "envelope": env, "snapshot": snap, "canonicalizer": canon,
+          "red_team_subject": s.subject}
+    # an issuer holding EXPOSURE as well as RED_TEAM attests a FALSIFIED attack on the same claim subject: a NEGATIVE
+    camp.ledger.set_roles(s.root, "other", [Role.EXPOSURE, Role.RED_TEAM])
+    breaking = dataclasses.replace(s.subject, routes=(Route("h1", "f", 1, lambda p: RouteResult(50.0)), s.subject.routes[1]))
+    from engcore.claims.redteam import AttackDimension, AttackKind, AttackSpace
+    space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
+    falsified = dataclasses.replace(run_red_team(breaking, space, s.plan), subject_digest=env.subject_digest)
+    rec = [r for r in camp.ledger.attestations(record_kind="node_receipt") if r.issuer_id == "exec"][-1]
+    attest_record(camp.ledger, s.keys.signer("other"), "other", falsified, receipt=rec, subject_output="y", context_digest=CTX,
+                  role=Role.RED_TEAM)
+    camp2 = _resume(s, camp)
+    assert any("another attested envelope for this claim" in p
+               for p in verify_passport(honest, camp2, trust_anchor=camp2.ledger.anchor(), **kw))
+    # an envelope from ANOTHER plan than the pre-registered one is not the planned attack
+    s2, c2, a2, j2, env2, cred2, snap2, canon2 = _passport_world()
+    other_plan = run_red_team(s2.subject, space, AttackPlan(space.digest, 51, "s"))
+    rec2 = [r for r in c2.ledger.attestations(record_kind="node_receipt") if r.issuer_id == "exec"][-1]
+    attest_record(c2.ledger, s2.keys.signer("rt"), "rt", other_plan, receipt=rec2, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
+    c3 = _resume(s2, c2)
+    from engcore.claims.credibility_vector import record_digest
+    p3 = dataclasses.replace(_honest(c3, j2, env2, cred2, a2, canon2, snap2, s2.prereg),
+                             adversarial={"envelope_digest": record_digest(other_plan), "outcome": other_plan.outcome.value})
+    problems = verify_passport(p3, c3, trust_anchor=c3.ledger.anchor(), **{**kw, "hypothesis": j2, "credibility_inputs": s2.cred_inputs,
+                                                                         "envelope": other_plan, "snapshot": snap2,
+                                                                         "canonicalizer": canon2, "red_team_subject": s2.subject})
+    assert any("another attack plan" in p for p in problems)

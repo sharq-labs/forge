@@ -105,7 +105,7 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     credibility claim for hypothesis ``h`` is named ``claim:h`` and its requirement is in the campaign's context; the Red
     Team envelope's outcome and subject are read from its RED_TEAM attestation in the campaign's context, and it attacks
     a ``ClaimSubject`` whose claim route is ``h`` (a route LABEL: residual), with the pre-registered attack plan; every
-    other admissible envelope for that claim must also have survived.  The credibility claim's leaf subjects are chosen
+    other admissible envelope attacking that exact claim subject (same subject digest) must also have survived.  The credibility claim's leaf subjects are chosen
     by the verifier's inputs and bound to the hypothesis only by the claim label (residual); the decision, risk class,
     policy and claim structure are compared.  Not re-derived (stated): the manifest digest, the hypothesis claim digest,
     the screening summary and the original report digest (the re-run binds today's anchor)."""
@@ -212,14 +212,17 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     subject_dig = _subject_digest(red_team_subject)
 
     def admissible(r: Any, *, negative: bool) -> bool:
+        """``negative``: an attack outcome that could LOWER (any RED_TEAM issuer, the operator included, self-issued
+        allowed; the same record digest admitted once is admitted -- a duplicate never shadows it).  Positive support
+        is admitted only from an independent RED_TEAM issuer, never the operator or an EXPOSURE holder."""
         if r.attestation.role is not Role.RED_TEAM or r.attestation.context_digest != campaign.context_digest:
             return False
-        if r.issuer_id == campaign.issuer_id or ledger.role_at(r.issuer_id, Role.EXPOSURE, r.sequence):
-            return False                                                 # the operator never red-teams its own campaign
+        if not negative and (r.issuer_id == campaign.issuer_id or ledger.role_at(r.issuer_id, Role.EXPOSURE, r.sequence)):
+            return False
         ok, _why = verify_evidence(ledger, record_kind="trust_envelope", record_digest=r.record_digest,
                                    subject_digest=r.attestation.subject_digest, context_digest=campaign.context_digest,
                                    roles=[Role.RED_TEAM], allow_self_issued=negative)
-        return ok is not None and ok.evidence.sequence == r.sequence
+        return ok is not None and (negative or ok.evidence.sequence == r.sequence)
     same_claim = [r for r in ledger.attestations(record_kind="trust_envelope")
                   if r.attestation.record.get("subject_digest") == subject_dig and admissible(r, negative=True)]
     hidden = sorted({str(r.attestation.record.get("outcome")) if _coherent(r.attestation.record_dict()) else "incoherent"
@@ -240,7 +243,10 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
         if outcome != passport.adversarial.get("outcome"):
             out.append(f"adversarial: the passport says {passport.adversarial.get('outcome')!r}, the attested envelope says {outcome!r}")
         planned = (in_force_prereg.sections.get("red_team_attack_space") if in_force_prereg is not None else None)
-        if isinstance(planned, Mapping) and planned.get("plan_digest") and rec.get("plan_digest") != planned.get("plan_digest"):
+        if not isinstance(planned, Mapping) or not planned.get("plan_digest"):
+            out.append("adversarial: the pre-registration in force declares no attack plan digest: the attack cannot be "
+                       "checked against a plan fixed before the results")
+        elif rec.get("plan_digest") != planned.get("plan_digest"):
             out.append("adversarial: the attested envelope ran another attack plan than the pre-registered one")
     return out
 
