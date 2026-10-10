@@ -14,6 +14,7 @@ import pytest
 from engcore.blindfold.escrow import (
     PROTOCOL,
     SECURITY_LABEL,
+    EscrowIntegrityError,
     EscrowRefused,
     EscrowService,
     EscrowStorage,
@@ -37,7 +38,7 @@ def storage(tmp_path, name="escrow"):
 
 def start(tmp_path, name="escrow"):
     t = InProcessTransport(EscrowService(storage=storage(tmp_path, name)))
-    op = OperatorClient(t, t.operator_token)
+    op = OperatorClient(t, t.operator_token, escrow_public=t.escrow_public)
     created = op.create("c1", {"discoverable": 2}, evaluator_config_digest=CFG)
     return t, op, created
 
@@ -49,23 +50,23 @@ def point(card):
 def test_budgets_submissions_and_query_ids_survive_an_escrow_restart(tmp_path):
     t, op, created = start(tmp_path)
     card = created["cards"][0]
-    obs = ObserveClient(t, "c1", created["tokens"]["observe"])
+    obs = ObserveClient(t, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public)
     first = obs.observe(card["universe_id"], point(card), query_id="a1")
-    ScoreClient(t, "c1", created["tokens"]["score"]).score(created["cards"][1]["universe_id"], {"answer": "no_law"})
+    ScoreClient(t, "c1", created["tokens"]["score"], escrow_public=t.escrow_public).score(created["cards"][1]["universe_id"], {"answer": "no_law"})
     before = op.log("c1")
     # --- restart: a NEW service from the same private storage
     t2 = InProcessTransport(EscrowService(storage=EscrowStorage(tmp_path / "escrow")))
     assert t2.operator_token == t.operator_token and t2.escrow_public == t.escrow_public
-    after = OperatorClient(t2, t2.operator_token).log("c1")
+    after = OperatorClient(t2, t2.operator_token, escrow_public=t2.escrow_public).log("c1")
     assert after["spent"] == before["spent"] and after["submitted"] == before["submitted"] and after["head"] == before["head"]
     assert verify_log(after["log"]) == after["head"]
-    obs2 = ObserveClient(t2, "c1", created["tokens"]["observe"])              # the same capability works after restart
+    obs2 = ObserveClient(t2, "c1", created["tokens"]["observe"], escrow_public=t2.escrow_public)              # the same capability works after restart
     again = obs2.observe(card["universe_id"], point(card), query_id="a2")
     assert again["budget_remaining"] == first["budget_remaining"] - again["budget_consumed"]   # NOT reset
     with pytest.raises(EscrowRefused, match="already used"):
         obs2.observe(card["universe_id"], point(card), query_id="a1")        # a pre-restart query id stays used
     with pytest.raises(EscrowRefused, match="one sealed submission"):
-        ScoreClient(t2, "c1", created["tokens"]["score"]).score(created["cards"][1]["universe_id"], {"answer": "law", "law": {"c": 1.0}})
+        ScoreClient(t2, "c1", created["tokens"]["score"], escrow_public=t2.escrow_public).score(created["cards"][1]["universe_id"], {"answer": "law", "law": {"c": 1.0}})
     with pytest.raises(EscrowRefused, match="exhausted"):
         for i in range(500):                                                   # over-querying stops at the persisted budget
             obs2.observe(card["universe_id"], point(card), query_id=f"x{i}")
@@ -74,7 +75,7 @@ def test_budgets_submissions_and_query_ids_survive_an_escrow_restart(tmp_path):
 def test_a_tampered_journal_refuses_to_start_and_a_truncated_one_is_caught_by_the_client(tmp_path):
     t, op, created = start(tmp_path)
     card = created["cards"][0]
-    obs = ObserveClient(t, "c1", created["tokens"]["observe"])
+    obs = ObserveClient(t, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public)
     for i in range(3):
         obs.observe(card["universe_id"], point(card), query_id=f"q{i}")
     journal = tmp_path / "escrow" / "journal.jsonl"
@@ -98,14 +99,14 @@ def test_requests_are_capability_bound_and_never_carry_the_credential(tmp_path):
     t, op, created = start(tmp_path)
     other = op.create("c2", {"discoverable": 1}, evaluator_config_digest=CFG)
     card, card2 = created["cards"][0], other["cards"][0]
-    with pytest.raises(EscrowRefused, match="OBSERVE capability for this campaign"):          # campaign id substitution
+    with pytest.raises(EscrowRefused, match="not authenticated"):          # campaign id substitution
         call(t, "observe", token=created["tokens"]["observe"], campaign_id="c2", universe_id=card2["universe_id"], settings=point(card2))
     with pytest.raises(EscrowRefused, match="unknown universe"):                              # universe id substitution
         call(t, "observe", token=created["tokens"]["observe"], campaign_id="c1", universe_id=card2["universe_id"], settings=point(card2))
-    with pytest.raises(EscrowRefused, match="SCORE capability"):                              # the proposer's token cannot score
+    with pytest.raises(EscrowRefused, match="not authenticated"):                              # the proposer's token cannot score
         call(t, "score", token=created["tokens"]["observe"], campaign_id="c1", universe_id=card["universe_id"],
              proposal={"answer": "no_law"}, proposal_digest="0" * 64)
-    raw = mac_request({"protocol": PROTOCOL, "op": "observe", "query_id": "cap-1", "last_sequence": -1, "campaign_id": "c1",
+    raw = mac_request({"protocol": PROTOCOL, "op": "observe", "query_id": "cap-1", "last_sequence": -1, "last_head": "0" * 64, "campaign_id": "c1",
                        "universe_id": card["universe_id"], "settings": point(card)}, created["tokens"]["observe"])
     first = json.loads(t(json.dumps(raw).encode()))
     replay = json.loads(t(json.dumps(raw).encode()))                                          # credential replay
@@ -115,25 +116,25 @@ def test_requests_are_capability_bound_and_never_carry_the_credential(tmp_path):
     for junk in (b"\xff\xfe", b"[]", b'{"protocol": "x"}', json.dumps({"protocol": PROTOCOL, "op": "observe"}).encode(),
                  json.dumps({"protocol": PROTOCOL, "op": "observe", "query_id": "../../etc", "last_sequence": -1}).encode()):
         assert json.loads(t(junk))["ok"] is False                                              # malformed: refused, not fatal
-    assert OperatorClient(t, t.operator_token).log("c1")["campaign_id"] == "c1"               # still serving
+    assert OperatorClient(t, t.operator_token, escrow_public=t.escrow_public).log("c1")["campaign_id"] == "c1"               # still serving
 
 
 def test_responses_are_signed_and_bound_to_their_request(tmp_path):
     t, op, created = start(tmp_path)
     card = created["cards"][0]
-    req = mac_request({"protocol": PROTOCOL, "op": "observe", "query_id": "r1", "last_sequence": -1, "campaign_id": "c1",
+    req = mac_request({"protocol": PROTOCOL, "op": "observe", "query_id": "r1", "last_sequence": -1, "last_head": "0" * 64, "campaign_id": "c1",
                        "universe_id": card["universe_id"], "settings": point(card)}, created["tokens"]["observe"])
     resp = json.loads(t(json.dumps(req).encode()))
     verify_response(resp, escrow_public=t.escrow_public, request=req)
     assert resp["security_boundary"] == SECURITY_LABEL and resp["budget_consumed"] > 0 and isinstance(resp["sequence"], int)
     req2 = mac_request({**{k: v for k, v in req.items() if k != "mac"}, "query_id": "r2"}, created["tokens"]["observe"])
-    with pytest.raises(EscrowRefused, match="another request"):                               # a replayed OLD response
+    with pytest.raises(EscrowIntegrityError, match="another request"):                               # a replayed OLD response
         verify_response(resp, escrow_public=t.escrow_public, request=req2)
     forged = dict(resp, observation={**resp["observation"], "y": 0.0})
-    with pytest.raises(EscrowRefused, match="not signed"):
+    with pytest.raises(EscrowIntegrityError, match="not signed"):
         verify_response(forged, escrow_public=t.escrow_public, request=req)
     impostor = InProcessTransport(EscrowService(storage=storage(tmp_path, "impostor")))
-    with pytest.raises(EscrowRefused, match="not signed"):                                    # another escrow answering
+    with pytest.raises(EscrowIntegrityError, match="not signed"):                                    # another escrow answering
         ObserveClient(impostor, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], point(card))
 
 
@@ -157,15 +158,147 @@ def test_storage_is_private_and_outside_the_repository(tmp_path):
 def test_the_subprocess_escrow_resumes_its_journal_but_stays_unproven(tmp_path):
     t = SubprocessTransport(storage=tmp_path / "sub")
     try:
-        created = OperatorClient(t, t.operator_token).create("s1", {"discoverable": 1}, evaluator_config_digest=CFG)
+        created = OperatorClient(t, t.operator_token, escrow_public=t.escrow_public).create("s1", {"discoverable": 1}, evaluator_config_digest=CFG)
         card = created["cards"][0]
-        r = ObserveClient(t, "s1", created["tokens"]["observe"]).observe(card["universe_id"], point(card), query_id="s-q1")
+        r = ObserveClient(t, "s1", created["tokens"]["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], point(card), query_id="s-q1")
         assert r["security_boundary"] == SECURITY_LABEL and r["transport"] == "subprocess"
     finally:
         t.close()
     t2 = SubprocessTransport(storage=tmp_path / "sub")
     try:
-        log = OperatorClient(t2, t2.operator_token).log("s1")
+        log = OperatorClient(t2, t2.operator_token, escrow_public=t2.escrow_public).log("s1")
         assert [e["op"] for e in log["log"]] == ["create", "observe"] and t2.escrow_public == t.escrow_public
     finally:
         t2.close()
+
+
+# ---------------------------------------------------------------------------- checkpoint-B review
+
+
+def _restart(tmp_path, name="escrow"):
+    return InProcessTransport(EscrowService(storage=EscrowStorage(tmp_path / name)))
+
+
+def test_a_rolled_back_or_restored_journal_is_caught_by_a_durable_client_checkpoint(tmp_path):     # B-H1
+    from engcore.blindfold.escrow import EscrowCheckpoint
+    t, op, created = start(tmp_path)
+    journal = tmp_path / "escrow" / "journal.jsonl"
+    backup = journal.read_bytes()                                          # the operator's "backup" right after create
+    card, score_uid = created["cards"][0], created["cards"][1]["universe_id"]
+    ck = EscrowCheckpoint(tmp_path / "evaluator.checkpoint")               # the evaluator's own file, not the escrow's
+    ScoreClient(t, "c1", created["tokens"]["score"], escrow_public=t.escrow_public, checkpoint=ck).score(score_uid, {"answer": "no_law"})
+    journal.write_bytes(backup)                                            # restore the old backup: the submission "never happened"
+    t2 = _restart(tmp_path)
+    fresh_ck = EscrowCheckpoint(tmp_path / "evaluator.checkpoint")         # a RESTARTED evaluator reads its checkpoint back
+    with pytest.raises(EscrowIntegrityError, match="rolled back"):
+        ScoreClient(t2, "c1", created["tokens"]["score"], escrow_public=t2.escrow_public, checkpoint=fresh_ck).score(
+            score_uid, {"answer": "law", "law": {"c": 1.0}})
+    # residual, stated: a client WITHOUT a checkpoint cannot tell (the escrow alone cannot detect a restored backup)
+    ScoreClient(t2, "c1", created["tokens"]["score"], escrow_public=t2.escrow_public).score(score_uid, {"answer": "no_law"})
+
+
+def test_a_replaced_history_at_the_same_length_is_refused(tmp_path):                              # B-H1
+    from engcore.blindfold.escrow import EscrowCheckpoint
+    t, op, created = start(tmp_path)
+    card = created["cards"][0]
+    ck = EscrowCheckpoint(tmp_path / "proposer.checkpoint")
+    obs = ObserveClient(t, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public, checkpoint=ck)
+    journal = tmp_path / "escrow" / "journal.jsonl"
+    backup = journal.read_bytes()
+    obs.observe(card["universe_id"], point(card), query_id="h1")
+    journal.write_bytes(backup)
+    t2 = _restart(tmp_path)
+    other = ObserveClient(t2, "c1", created["tokens"]["observe"], escrow_public=t2.escrow_public)
+    other.observe(card["universe_id"], {k: v * 1.01 for k, v in point(card).items()}, query_id="h2")   # same length, other entry
+    with pytest.raises(EscrowIntegrityError, match="replaced|rolled back"):
+        ObserveClient(t2, "c1", created["tokens"]["observe"], escrow_public=t2.escrow_public,
+                      checkpoint=EscrowCheckpoint(tmp_path / "proposer.checkpoint")).observe(card["universe_id"], point(card), query_id="h3")
+
+
+def test_a_deleted_journal_refuses_to_start(tmp_path):                                              # B-H1
+    start(tmp_path)
+    (tmp_path / "escrow" / "journal.jsonl").unlink()
+    with pytest.raises(EscrowRefused, match="journal was deleted"):
+        EscrowStorage(tmp_path / "escrow", create=True)
+    (tmp_path / "escrow" / "journal.jsonl").write_text("{torn\n")
+    with pytest.raises(EscrowRefused, match="torn or edited"):
+        EscrowStorage(tmp_path / "escrow")
+
+
+def test_noise_after_a_rollback_is_not_reproduced_for_another_request(tmp_path):                  # B-H1
+    t, op, created = start(tmp_path)
+    card = created["cards"][0]
+    journal = tmp_path / "escrow" / "journal.jsonl"
+    backup = journal.read_bytes()
+    a = ObserveClient(t, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], point(card))
+    journal.write_bytes(backup)
+    t2 = _restart(tmp_path)
+    b = ObserveClient(t2, "c1", created["tokens"]["observe"], escrow_public=t2.escrow_public).observe(card["universe_id"], point(card))
+    assert a["sequence"] == b["sequence"] and a["observation"]["y"] != b["observation"]["y"]
+
+
+def test_a_replaced_universe_refuses_to_start(tmp_path, monkeypatch):                              # B-H2
+    start(tmp_path)
+    import dataclasses
+
+    import engcore.blindfold.escrow as esc
+    real = esc.generate_universe
+    monkeypatch.setattr(esc, "generate_universe", lambda seed, kind: dataclasses.replace(real(seed, kind), budget=10 ** 6))
+    with pytest.raises(EscrowRefused, match="no longer re-derive"):
+        _restart(tmp_path)
+
+
+def test_unauthenticated_requests_never_touch_a_campaign(tmp_path):                                # B-M1
+    t, op, created = start(tmp_path)
+    card = created["cards"][0]
+    head = op.log("c1")["head"]
+    replies = []
+    for cid in ("c1", "no-such-campaign"):
+        req = mac_request({"protocol": PROTOCOL, "op": "observe", "query_id": "u1", "last_sequence": -1, "last_head": "0" * 64,
+                           "campaign_id": cid, "universe_id": card["universe_id"], "settings": point(card)}, "forged")
+        replies.append(json.loads(t(json.dumps(req).encode())))
+    assert all(r["refused"] == "the request is not authenticated" for r in replies)          # known and unknown look alike
+    assert all("sequence" not in r and "head" not in r for r in replies)
+    after = op.log("c1")
+    assert after["head"] == head and after["auth_failures"] == 2
+
+
+def test_a_log_read_is_single_use_across_restarts(tmp_path):                                       # B-M2
+    t, op, created = start(tmp_path)
+    req = mac_request({"protocol": PROTOCOL, "op": "log", "query_id": "L1", "last_sequence": -1, "last_head": "0" * 64,
+                       "campaign_id": "c1"}, t.operator_token)
+    assert json.loads(t(json.dumps(req).encode()))["ok"]
+    assert "already used" in json.loads(t(json.dumps(req).encode()))["refused"]
+    t2 = _restart(tmp_path)
+    assert "already used" in json.loads(t2(json.dumps(req).encode()))["refused"]
+
+
+def test_clients_always_pin_the_escrow_key_and_integrity_is_not_a_refusal(tmp_path):              # B-M3, B-M7
+    from engcore.blindfold import EvaluatorConfig, RoleRefused
+    from engcore.blindfold.baselines import always_law
+    from engcore.blindfold.roles import run_campaign
+    t, op, created = start(tmp_path)
+    for make in (lambda: OperatorClient(t, t.operator_token, escrow_public=""),
+                 lambda: ObserveClient(t, "c1", created["tokens"]["observe"], escrow_public=None)):
+        with pytest.raises(EscrowIntegrityError, match="pins the escrow"):
+            make()
+    with pytest.raises(RoleRefused, match="pins the escrow"):
+        run_campaign(t, campaign_id="x", mix={"discoverable": 1}, proposer=always_law, proposer_identity={"id": "a"},
+                     config=EvaluatorConfig("e", "1"))
+    assert not issubclass(EscrowIntegrityError, EscrowRefused)
+    impostor = InProcessTransport(EscrowService(storage=storage(tmp_path, "impostor")))
+    card = created["cards"][0]
+    with pytest.raises(EscrowIntegrityError):              # a substituted escrow ends collection loudly, never as "budget spent"
+        always_law(card, ObserveClient(impostor, "c1", created["tokens"]["observe"], escrow_public=t.escrow_public))
+
+
+def test_the_escrow_never_asserts_a_verified_boundary_and_query_keys_are_unambiguous(tmp_path):    # B-M4, B-L2
+    with pytest.raises(EscrowRefused, match="never a flag"):
+        EscrowService(security_boundary="OS_ISOLATION_BOUNDARY_VERIFIED")
+    t, op, created = start(tmp_path)
+    card = created["cards"][0]
+    with pytest.raises(EscrowRefused, match="fresh query id"):
+        call(t, "observe", token=created["tokens"]["observe"], campaign_id="c1", universe_id=card["universe_id"], settings=point(card),
+             query_id="a:b", escrow_public=t.escrow_public)
+    with pytest.raises(EscrowRefused, match="campaign id"):
+        op.create("bad\nid", {"discoverable": 1}, evaluator_config_digest=CFG)

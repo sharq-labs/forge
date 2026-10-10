@@ -26,7 +26,9 @@ def main(argv: list[str] | None = None) -> int:
         with open(args.json, "w") as fh:
             fh.write(text + "\n")
     print(text)
-    return 0 if report["security_boundary_status"] != "SECURITY_BOUNDARY_NOT_PROVEN" or not report["isolation_available"] else 1
+    if not report["isolation_available"]:
+        return 2                                                   # nothing was proven: never a green step
+    return 0 if report["security_boundary_status"] == "OS_ISOLATION_BOUNDARY_VERIFIED" else 1
 
 
 if __name__ == "__main__":

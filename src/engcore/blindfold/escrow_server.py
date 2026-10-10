@@ -14,14 +14,15 @@ import os
 import socket
 import sys
 
-from .escrow import PROTOCOL, EscrowService, EscrowStorage
+from .escrow import PROTOCOL, SECURITY_LABEL, EscrowService, EscrowStorage
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--storage", default="")
     ap.add_argument("--fd", type=int, default=-1)
-    ap.add_argument("--boundary", default="SECURITY_BOUNDARY_NOT_PROVEN")
+    ap.add_argument("--boundary", default=SECURITY_LABEL, choices=[SECURITY_LABEL],
+                    help="what the escrow states about itself: always NOT PROVEN (a verified level is the demo's record)")
     args = ap.parse_args(argv)
     storage = EscrowStorage(args.storage, create=True) if args.storage else None
     service = EscrowService(transport_label="isolated" if args.fd >= 0 else "subprocess", storage=storage,

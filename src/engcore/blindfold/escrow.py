@@ -15,31 +15,38 @@ aggregate verdict once per universe (a sealed, single submission -- no
 adaptive probing of the hidden points), and only after it reveals the
 universe's kind.
 
-Capabilities and authentication (protocol v3).  The OPERATOR credential and each campaign's OBSERVE (proposer) and
+Capabilities and authentication (protocol v4).  The OPERATOR credential and each campaign's OBSERVE (proposer) and
 SCORE (evaluator) capabilities are DERIVED from the escrow's master secret, so they survive a restart.  A credential is
 never sent: every request carries a MAC keyed by it over every other field -- campaign id, universe id, operation, a
-single-use query id and the last log sequence the sender saw -- and the escrow refuses an unauthenticated, replayed
-(query id already used for that operation and universe) or rolled-back (the sender saw a later sequence than the
-escrow has) request.  Every response is SIGNED by the escrow's ed25519 identity and binds the request digest, the
-budget consumed, the log sequence and head: a client pinning the escrow's public key refuses a forged, substituted
-or replayed response, and an escrow whose log went backwards.
+single-use query id and the last log sequence AND head the sender saw -- and the escrow refuses an unauthenticated,
+replayed (query id already used for that operation and universe, reads included) or rolled-back / replaced (the
+sender saw a later sequence, or another head at that sequence) request.  A request is AUTHENTICATED before any
+campaign state is consulted: an unauthenticated one gets one uniform refusal, carries no sequence or head, and is
+counted service-wide (``auth_failures`` in the operator's log read), never written into a campaign's chain.  Every
+response is SIGNED by the escrow's ed25519 identity and binds the request digest, the budget consumed, the log
+sequence and head; every client PINS the escrow's public key (there is no unverified client), so a forged,
+substituted or replayed response is an :class:`EscrowIntegrityError` -- never mistaken for a refusal.
 
 Persistence.  With :class:`EscrowStorage` (an escrow-owned 0700 directory outside the repository: master secret,
 signing key, journal) every logged request is journaled BEFORE it is answered, in a chain MAC-keyed by the master
 secret, and a restart rebuilds campaigns, budgets spent, sealed submissions and used query ids from it: nothing
-resets.  An edited, reordered or spliced journal refuses to start; a truncated tail is caught by the next client
-request (rollback).
+resets.  An edited, reordered or spliced journal refuses to start; so does a missing journal next to existing keys
+(deleted), and a journal whose universes no longer re-derive to the digests journaled at creation (a generator change
+or a replaced universe).  A truncated or restored-from-backup tail is NOT detectable by the escrow alone: it is caught
+at the next request of any client holding a later signed checkpoint (:class:`EscrowCheckpoint`, which the operator
+and evaluator keep); a client without one cannot detect it.  Observation noise in a stored escrow is seeded by the
+log position AND the request digest, so a request re-asked after a rollback does not reproduce earlier noise.
 
 Log.  Every authenticated request that names a known campaign is logged -- refusals included -- with campaign, query
 id, logical order, query digest, response digest and budget consumed, in a hash chain.  Query and response digests are
 HMAC-keyed by the escrow's secret, so a log reader cannot brute-force a campaign mix or confirm a guessed answer
-against them; no credential is ever logged.
+against them; no credential is ever logged.  A log READ is not a chain entry, but its query id is spent durably.
 
 SECURITY: :class:`InProcessTransport` shares a process (and so all memory) with the proposer, and
 :class:`SubprocessTransport` keeps the secrets in a child process under the same OS account; neither is a security
-boundary, and every response says so (``security_boundary: SECURITY_BOUNDARY_NOT_PROVEN``).  The deployment that IS
-tested as a boundary -- separate uid, private namespaces, escrow-only storage -- is :mod:`.isolation`
-(OS_ISOLATION_BOUNDARY_VERIFIED; not a container or host boundary).
+boundary.  EVERY response says ``security_boundary: SECURITY_BOUNDARY_NOT_PROVEN``: the escrow cannot know its own
+deployment, and no flag can make it say more.  A verified level is a property of a deployment, stated by the
+isolation demo's record bound to this escrow's key id (:mod:`.isolation`: OS_ISOLATION_BOUNDARY_VERIFIED at most).
 """
 
 from __future__ import annotations
@@ -54,13 +61,21 @@ import re
 import secrets
 import subprocess
 import sys
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from .expression import ExpressionRefused, evaluate, structure_digest, validate
-from .universe import HiddenWorld, UniverseKind, generate_universe, observe, truth_at
+from .universe import (
+    GENERATOR_TAG,
+    HiddenWorld,
+    UniverseKind,
+    generate_universe,
+    observe,
+    truth_at,
+)
 
-PROTOCOL = "engcore.blindfold.escrow/3"
+PROTOCOL = "engcore.blindfold.escrow/4"
 SECURITY_LABEL = "SECURITY_BOUNDARY_NOT_PROVEN"
 ANSWERS = ("law", "no_law", "insufficient_evidence", "indistinguishable", "confounded")
 #: what the EVALUATOR may submit: a proposer answer, or the record that the proposal was inadmissible (no answer)
@@ -70,9 +85,11 @@ PASS_FRACTION = 0.9
 PAIR_DIFFER_FRACTION = 0.5
 _GENESIS = "0" * 64
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
-_QUERY_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+_QUERY_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")             # no ':' -- the query key is "op:universe:qid"
+_CAMPAIGN_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 _JOURNAL_TAG = b"forge.blindfold.escrow-journal/1\n"
-_RESPONSE_TAG = b"forge.blindfold.escrow-response/3\n"
+_RESPONSE_TAG = b"forge.blindfold.escrow-response/4\n"
+_UNAUTHENTICATED = "the request is not authenticated"
 #: the request fields that authentication covers: everything except the MAC itself
 _ROLE_OF_OP = {"create": "operator", "log": "operator", "observe": "observe", "score": "score"}
 
@@ -100,6 +117,16 @@ class EscrowRefused(RuntimeError):
     """The escrow refused a request (bad token, capability, budget, second submission, malformed proposal)."""
 
 
+class EscrowIntegrityError(RuntimeError):
+    """The ANSWER cannot be trusted: a response not signed by the pinned escrow, answering another request, or an
+    escrow whose log went backwards / was replaced.  Deliberately NOT an EscrowRefused: a caller that stops on a
+    refusal (an exhausted budget) must never treat a forged or rolled-back escrow as one."""
+
+
+def is_budget_refusal(exc: BaseException) -> bool:
+    return isinstance(exc, EscrowRefused) and "budget" in str(exc) and "exhausted" in str(exc)
+
+
 @dataclass
 class _Campaign:
     campaign_id: str
@@ -121,22 +148,31 @@ class EscrowStorage:
     * ``journal.jsonl`` -- every logged request, with the state change it made, in a chain MAC-keyed by the master
       secret, so the escrow detects an edited, reordered or spliced journal on restart.
 
-    The Discovery side never mounts or reads this directory (see :mod:`.isolation`).  Truncation of the journal TAIL is
-    caught by the CLIENT: every response is signed with its log sequence, and a request carrying a ``last_sequence``
-    beyond the escrow's own is refused as a rollback."""
+    The journal begins with a GENESIS record (schema, a random canary the isolation demo searches for); keys without a
+    journal refuse to start (the journal was deleted).  The Discovery side never mounts or reads this directory (see
+    :mod:`.isolation`).  Truncation of the journal TAIL or a restored backup is caught by a CLIENT holding a later
+    signed checkpoint (:class:`EscrowCheckpoint`), not by the escrow."""
 
     def __init__(self, directory: str | os.PathLike[str], *, create: bool = False) -> None:
         import pathlib
 
         from ..authority import DirectoryKeyProvider, generate_key_files
         d = pathlib.Path(directory)
-        if create and not (d / "escrow.ed25519.pem").exists():
+        fresh = create and not (d / "escrow.ed25519.pem").exists()
+        if fresh:
             generate_key_files(d, "escrow", secret=True)
         self._keys = DirectoryKeyProvider(d)                # 0700 directory, 0600 files, outside the repository
         self.directory = d.resolve()
         self.master = self._keys.secret("escrow")
         self.identity = self._keys.signer("escrow")
         self.journal_path = self.directory / "journal.jsonl"
+        self.canary = ""
+        if fresh:
+            self.append({"genesis": {"schema": "forge.blindfold.escrow-storage/1", "canary": secrets.token_hex(32)}})
+        if not self.journal_path.exists():
+            raise EscrowRefused("the escrow's keys exist but its journal does not: the journal was deleted; refusing to start "
+                                "a fresh history under the same identity")
+        self.read()
 
     def _mac(self, previous: str, record: Mapping[str, Any]) -> str:
         blob = json.dumps(record, sort_keys=True, separators=(",", ":"), default=str).encode()
@@ -147,10 +183,19 @@ class EscrowStorage:
             return []
         out, prev = [], _GENESIS
         for n, line in enumerate(ln for ln in self.journal_path.read_text(encoding="utf-8").splitlines() if ln.strip()):
-            row = json.loads(line)
-            if set(row) != {"record", "mac"} or not hmac.compare_digest(str(row["mac"]), self._mac(prev, row["record"])):
+            try:
+                row = json.loads(line)
+            except ValueError as exc:
+                raise EscrowRefused(f"escrow journal line {n} is not a record (torn or edited): refusing to start") from exc
+            if not isinstance(row, dict) or set(row) != {"record", "mac"} \
+                    or not hmac.compare_digest(str(row["mac"]), self._mac(prev, row["record"])):
                 raise EscrowRefused(f"escrow journal line {n} fails its keyed chain: the journal was edited, reordered or spliced")
-            out.append(row["record"])
+            if n == 0:
+                if not isinstance(row["record"], dict) or "genesis" not in row["record"]:
+                    raise EscrowRefused("the escrow journal does not begin with its genesis record")
+                self.canary = str(row["record"]["genesis"].get("canary", ""))
+            else:
+                out.append(row["record"])
             prev = row["mac"]
         self._head = prev
         return out
@@ -175,8 +220,8 @@ class EscrowService:
     With ``storage`` (an :class:`EscrowStorage`) the master secret and the signing identity are the storage's, and the
     whole state -- campaigns, budgets spent, sealed submissions, used query ids, the log -- is REBUILT from the journal
     on construction: a restart resets nothing.  Without it (development) the secret is random and the identity is a
-    test key; nothing survives the process.  ``security_boundary`` is what every response states about the deployment;
-    it stays ``SECURITY_BOUNDARY_NOT_PROVEN`` unless the deployment proved more (:mod:`.isolation`)."""
+    test key; nothing survives the process.  ``security_boundary`` must be ``SECURITY_BOUNDARY_NOT_PROVEN``: the escrow
+    states what it can know about itself, and a verified level is never a flag (:mod:`.isolation`)."""
 
     def __init__(self, master_seed: bytes | None = None, *, transport_label: str = "in_process", storage: EscrowStorage | None = None,
                  security_boundary: str = SECURITY_LABEL) -> None:
@@ -188,11 +233,15 @@ class EscrowService:
             from ..authority import EphemeralKeyProvider
             self._master = master_seed if master_seed is not None else os.urandom(32)
             self._identity = EphemeralKeyProvider().signer("escrow")
+        if security_boundary != SECURITY_LABEL:
+            raise EscrowRefused("an escrow states SECURITY_BOUNDARY_NOT_PROVEN about itself; a verified boundary is the "
+                                "isolation demo's record bound to this escrow's key id, never a flag")
         self._storage = storage
         self._operator = self._seed("operator")[:48]
         self._campaigns: dict[str, _Campaign] = {}
         self._transport_label = transport_label
         self._security_boundary = security_boundary
+        self.auth_failures = 0                    # service-wide, never written into a campaign's chain
         if storage is not None:
             self._restore(storage.read())
 
@@ -210,8 +259,10 @@ class EscrowService:
     def handle(self, request: bytes) -> bytes:
         req: Any = None
         camp: _Campaign | None = None
+        authed = False
         logged = False
         self._query_key = ""
+        self._request_digest = ""
         try:
             req = json.loads(request.decode("utf-8"))
             if not isinstance(req, dict) or req.get("protocol") != PROTOCOL:
@@ -221,12 +272,14 @@ class EscrowService:
                 raise EscrowRefused(f"unknown operation {op!r}")
             qid = str(req.get("query_id", ""))
             if not _QUERY_ID.match(qid):
-                raise EscrowRefused("every request carries a fresh query id ([A-Za-z0-9._:-]{1,128})")
-            last = req.get("last_sequence")
-            if isinstance(last, bool) or not isinstance(last, int) or last < -1:
-                raise EscrowRefused("every request states the last log sequence its sender saw (-1 for none)")
-            camp = self._campaigns.get(str(req.get("campaign_id"))) if op != "create" else None
-            self._authenticate(req, op, camp)
+                raise EscrowRefused("every request carries a fresh query id ([A-Za-z0-9._-]{1,128})")
+            last, last_head = req.get("last_sequence"), req.get("last_head")
+            if isinstance(last, bool) or not isinstance(last, int) or last < -1 or not _HEX64.match(str(last_head)):
+                raise EscrowRefused("every request states the last log sequence and head its sender saw (-1 and the genesis for none)")
+            named = self._campaigns.get(str(req.get("campaign_id"))) if op != "create" else None
+            self._authenticate(req, op, named)                     # BEFORE any campaign state is consulted
+            authed, camp = True, named
+            self._request_digest = request_digest(req)
             self._query_key = f"{op}:{req.get('universe_id', '')}:{qid}"      # single use per operation and universe
             if camp is not None:
                 if self._query_key in camp.query_ids:
@@ -234,22 +287,28 @@ class EscrowService:
                 if last > camp.seq - 1:
                     raise EscrowRefused(f"the sender saw log sequence {last} but the escrow is at {camp.seq - 1}: its state was "
                                         "rolled back; nothing is answered from a rolled-back escrow")
+                if last >= 0 and camp.log[last]["digest"] != last_head:
+                    raise EscrowRefused(f"the sender saw another head at log sequence {last}: the escrow's history was replaced")
             handler = {"create": self._create, "observe": self._observe, "score": self._score, "log": self._log}[op]
             resp = {"ok": True, **handler(req)}
             logged = op != "log"
         except EscrowRefused as exc:
-            resp = {"ok": False, "refused": str(exc)}
+            resp = {"ok": False, "refused": str(exc) if authed or str(exc) != _UNAUTHENTICATED else _UNAUTHENTICATED}
         except (ValueError, KeyError, TypeError, AttributeError, RecursionError, ArithmeticError, ExpressionRefused) as exc:
             resp = {"ok": False, "refused": f"malformed request: {type(exc).__name__}: {str(exc)[:200]}"}
         except Exception as exc:  # noqa: BLE001 - last resort: no request may take the escrow down
             resp = {"ok": False, "refused": f"request failed: {type(exc).__name__}"}
-        if not resp["ok"] and camp is not None:     # every AUTHENTICATED query that names a campaign is logged, refusals too
+        if not authed and isinstance(req, dict) and req.get("op") in _ROLE_OF_OP and resp.get("refused") == _UNAUTHENTICATED:
+            self.auth_failures += 1
+        if not resp["ok"] and authed and camp is not None:   # every AUTHENTICATED query that names a campaign is logged
             try:
                 self._record(camp, f"{req.get('op')}_refused", req_public(req), {"refused": resp["refused"]}, 0.0)
             except Exception:  # noqa: BLE001 - an unloggable request is still logged, as unloggable
                 self._record(camp, f"{req.get('op')}_refused", {"unloggable": True}, {"unloggable": True}, 0.0)
             logged = True
-        target = camp if camp is not None else (self._campaigns.get(str(req.get("campaign_id"))) if isinstance(req, dict) else None)
+        target = None
+        if authed:
+            target = camp if camp is not None else self._campaigns.get(str(req.get("campaign_id")))
         resp.update(protocol=PROTOCOL, security_boundary=self._security_boundary, transport=self._transport_label,
                     request_digest=request_digest(req) if isinstance(req, dict) else _digest(None),
                     escrow_key_id=hashlib.sha256(bytes.fromhex(self._identity.public_hex)).hexdigest())
@@ -273,14 +332,21 @@ class EscrowService:
             key = self._operator
         else:
             if camp is None:
-                raise EscrowRefused("unknown campaign")
+                raise EscrowRefused(_UNAUTHENTICATED)
             key = camp.tokens[role]
         if "token" in req or "operator_token" in req:
             raise EscrowRefused("a credential is never sent: the request is authenticated by its MAC")
         expected = hmac.new(key.encode(), request_digest(req).encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(str(req.get("mac", "")), expected):
-            raise EscrowRefused(f"the request is not authenticated by the {role.upper()} capability"
-                                + ("" if role == "operator" else " for this campaign"))
+            raise EscrowRefused(_UNAUTHENTICATED)                  # one text: unknown campaign and bad MAC look alike
+
+    def _world_digests(self, camp: _Campaign) -> dict[str, str]:
+        """A keyed digest of every hidden world's FULL content (law, points, budget, cost, tolerance, ...) and of the
+        generator: journaled at creation and re-checked on restore, so a replaced universe cannot pass as the same one."""
+        import dataclasses
+        return {u: hmac.new(self._master, b"forge.blindfold.world/1\n" + json.dumps(
+            {"generator": GENERATOR_TAG, "world": dataclasses.asdict(camp.worlds[u])}, sort_keys=True, separators=(",", ":"),
+            default=str).encode(), hashlib.sha256).hexdigest() for u in camp.order}
 
     def _new_campaign(self, cid: str, mix: Mapping[UniverseKind, int]) -> _Campaign:
         kinds = [k for k, n in sorted(mix.items(), key=lambda kv: kv[0].value) for _ in range(n)]
@@ -295,9 +361,9 @@ class EscrowService:
         return _Campaign(cid, worlds, order, tokens, {u: 0.0 for u in order}, {}, [], 0, set())
 
     def _create(self, req: Mapping[str, Any]) -> dict[str, Any]:
-        cid = str(req["campaign_id"]).strip()
-        if not cid or cid in self._campaigns:
-            raise EscrowRefused("a campaign id is new and non-empty")
+        cid = str(req["campaign_id"])
+        if not _CAMPAIGN_ID.match(cid) or cid in self._campaigns:
+            raise EscrowRefused("a campaign id is new and matches [A-Za-z0-9._-]{1,128}")
         raw = dict(req["mix"])
         if any(isinstance(n, bool) or not isinstance(n, int) for n in raw.values()):
             raise EscrowRefused("campaign mix counts are integers")
@@ -312,7 +378,7 @@ class EscrowService:
         cards = [camp.worlds[u].public_card() for u in camp.order]
         mix_rec = {k.value: n for k, n in mix.items()}
         self._record(camp, "create", {"campaign_id": cid, "mix": mix_rec, "query_id": req["query_id"]}, {"universes": camp.order}, 0.0,
-                     public={"evaluator_config_digest": declared}, state={"mix": mix_rec})
+                     public={"evaluator_config_digest": declared}, state={"mix": mix_rec, "worlds": self._world_digests(camp)})
         return {"campaign_id": cid, "cards": cards, "tokens": dict(camp.tokens)}
 
     def _observe(self, req: Mapping[str, Any]) -> dict[str, Any]:
@@ -325,7 +391,9 @@ class EscrowService:
             raise EscrowRefused("this universe's answer is sealed; no further observation")
         if camp.spent[uid] + world.query_cost > world.budget + 1e-9:
             raise EscrowRefused(f"query budget {world.budget} exhausted for {uid}")
-        rng = random.Random(self._seed(camp.campaign_id, uid, "obs", str(camp.seq)))
+        # a STORED escrow also seeds by the request digest: a request re-asked after a rollback gets fresh noise
+        parts = (camp.campaign_id, uid, "obs", str(camp.seq)) + ((self._request_digest,) if self._storage is not None else ())
+        rng = random.Random(self._seed(*parts))
         try:
             obs = observe(world, dict(req["settings"]), rng)
         except ValueError as exc:
@@ -391,8 +459,11 @@ class EscrowService:
         camp = self._campaigns.get(str(req.get("campaign_id")))
         if camp is None:
             raise EscrowRefused("unknown campaign")
+        if self._storage is not None:                      # a read spends its query id durably (no chain entry)
+            self._storage.append({"read": {"campaign_id": camp.campaign_id, "query_key": self._query_key}})
+        camp.query_ids.add(self._query_key)
         return {"campaign_id": camp.campaign_id, "log": list(camp.log), "head": camp.log[-1]["digest"] if camp.log else _GENESIS,
-                "spent": dict(camp.spent), "submitted": dict(camp.submitted)}
+                "spent": dict(camp.spent), "submitted": dict(camp.submitted), "auth_failures": self.auth_failures}
 
     def _record(self, camp: _Campaign, op: str, query: Mapping[str, Any], response: Mapping[str, Any], cost: float,
                 public: Mapping[str, Any] | None = None, state: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -416,12 +487,21 @@ class EscrowService:
         """Rebuild every campaign from the (keyed-chain verified) journal: worlds re-derived from the master secret,
         budgets, submissions, used query ids and the log replayed entry by entry and re-checked."""
         for n, rec in enumerate(records):
+            if "read" in rec:
+                camp = self._campaigns.get(str(rec["read"].get("campaign_id")))
+                if camp is None:
+                    raise EscrowRefused(f"journal record {n} reads campaign {rec['read'].get('campaign_id')!r} before its creation")
+                camp.query_ids.add(str(rec["read"]["query_key"]))
+                continue
             entry, state = dict(rec["entry"]), dict(rec["state"])
             cid = entry["campaign_id"]
             if entry["op"] == "create":
                 if cid in self._campaigns:
                     raise EscrowRefused(f"journal record {n} creates campaign {cid!r} twice")
                 self._campaigns[cid] = self._new_campaign(cid, {UniverseKind(k): v for k, v in state["mix"].items()})
+                if self._world_digests(self._campaigns[cid]) != state.get("worlds"):
+                    raise EscrowRefused(f"journal record {n}: campaign {cid!r}'s universes no longer re-derive to the digests "
+                                        "journaled at creation (a generator change or a replaced universe): refusing to start")
             camp = self._campaigns.get(cid)
             if camp is None:
                 raise EscrowRefused(f"journal record {n} names campaign {cid!r} before its creation")
@@ -456,7 +536,7 @@ def verify_log(log: list[Mapping[str, Any]]) -> str:
     for i, e in enumerate(log):
         body = {k: val for k, val in e.items() if k != "digest"}
         if e.get("previous") != prev or e.get("sequence") != i or _digest(body) != e.get("digest"):
-            raise EscrowRefused(f"the escrow log chain is broken at entry {i}")
+            raise EscrowIntegrityError(f"the escrow log chain is broken at entry {i}")
         prev = e["digest"]
     return prev
 
@@ -577,18 +657,20 @@ class SubprocessTransport:
 def verify_response(resp: Mapping[str, Any], *, escrow_public: str, request: Mapping[str, Any]) -> None:
     """A response is the escrow's (signature by the pinned key) answer to THIS request (its digest)."""
     from ..authority import verify_signature
-    if not verify_signature(escrow_public, str(resp.get("signature", "")), response_signed_bytes(resp)):
-        raise EscrowRefused("the response is not signed by the pinned escrow identity")
+    if not escrow_public or not verify_signature(escrow_public, str(resp.get("signature", "")), response_signed_bytes(resp)):
+        raise EscrowIntegrityError("the response is not signed by the pinned escrow identity")
     if resp.get("request_digest") != request_digest(request):
-        raise EscrowRefused("the response answers another request (a replayed or substituted response)")
+        raise EscrowIntegrityError("the response answers another request (a replayed or substituted response)")
 
 
 def call(transport: Callable[[bytes], bytes], op: str, *, token: str | None = None, operator_token: str | None = None,
-         query_id: str | None = None, last_sequence: int = -1, escrow_public: str | None = None, **fields: Any) -> dict[str, Any]:
+         query_id: str | None = None, last_sequence: int = -1, last_head: str = _GENESIS, escrow_public: str | None = None,
+         **fields: Any) -> dict[str, Any]:
     """Send one AUTHENTICATED request: the MAC is keyed by ``operator_token`` (create/log) or the campaign ``token``
-    (observe/score); the credential itself is never sent.  With ``escrow_public`` the response is verified."""
+    (observe/score); the credential itself is never sent.  With ``escrow_public`` the response is verified (the clients
+    below always pin it; a bare ``call`` without it is a low-level probe and trusts nothing it returns)."""
     req: dict[str, Any] = {"protocol": PROTOCOL, "op": op, "query_id": query_id or f"q-{secrets.token_hex(8)}",
-                           "last_sequence": last_sequence, **fields}
+                           "last_sequence": last_sequence, "last_head": last_head, **fields}
     mac_request(req, operator_token if operator_token is not None else (token or ""))
     resp = json.loads(transport(json.dumps(req, sort_keys=True).encode("utf-8")))
     if escrow_public is not None:
@@ -598,25 +680,68 @@ def call(transport: Callable[[bytes], bytes], op: str, *, token: str | None = No
     return resp
 
 
+class EscrowCheckpoint:
+    """A CLIENT's durable record of the latest SIGNED (sequence, head) it saw per campaign, in its own file (0600, never in
+    the escrow's storage).  Sessions start from it and refuse an escrow behind it or with another head at that sequence:
+    this is how a truncated journal or a restored backup is detected (the escrow cannot detect it alone)."""
+
+    def __init__(self, path: str | os.PathLike[str]) -> None:
+        import pathlib
+        self._path = pathlib.Path(path)
+        self._state: dict[str, list[Any]] = json.loads(self._path.read_text()) if self._path.exists() else {}
+
+    def get(self, campaign_id: str) -> tuple[int, str]:
+        seq, head = self._state.get(campaign_id, (-1, _GENESIS))
+        return int(seq), str(head)
+
+    def advance(self, campaign_id: str, sequence: int, head: str) -> None:
+        seq, known = self.get(campaign_id)
+        if sequence < seq or (sequence == seq and head != known):
+            raise EscrowIntegrityError(f"campaign {campaign_id!r}: the escrow is at ({sequence}, {head[:12]}) behind or beside this "
+                                       f"client's signed checkpoint ({seq}, {known[:12]}): rolled back or replaced")
+        if (sequence, head) == (seq, known):
+            return
+        self._state[campaign_id] = [sequence, head]
+        tmp = self._path.with_suffix(self._path.suffix + ".tmp")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as fh:
+            fh.write(json.dumps(self._state, sort_keys=True))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, self._path)
+
+
 class _Session:
-    """One capability's view of one campaign: authenticates requests, verifies signed responses against the pinned
-    escrow key when it has one, and refuses an escrow whose log went BACKWARDS (a rollback)."""
+    """One capability's view of one campaign: authenticates requests, verifies every signed response against the PINNED
+    escrow key, and refuses an escrow whose log went backwards or was replaced -- against the checkpoint it keeps in
+    memory and, with ``checkpoint``, durably across client restarts."""
 
-    __slots__ = ("_transport", "_key", "_public", "last_sequence")
+    __slots__ = ("_campaign", "_checkpoint", "_key", "_public", "_transport", "last_head", "last_sequence")
 
-    def __init__(self, transport: Callable[[bytes], bytes], key: str, escrow_public: str | None) -> None:
+    def __init__(self, transport: Callable[[bytes], bytes], key: str, escrow_public: str | None, *, campaign_id: str,
+                 checkpoint: EscrowCheckpoint | None = None) -> None:
+        if not escrow_public:
+            raise EscrowIntegrityError("a client pins the escrow's public key (out of band); it never trusts an unverified escrow")
         self._transport, self._key, self._public = transport, key, escrow_public
-        self.last_sequence = -1
+        self._campaign, self._checkpoint = campaign_id, checkpoint
+        self.last_sequence, self.last_head = checkpoint.get(campaign_id) if checkpoint is not None else (-1, _GENESIS)
 
     def send(self, op: str, **fields: Any) -> dict[str, Any]:
-        resp = call(self._transport, op, operator_token=self._key if op in ("create", "log") else None,
-                    token=None if op in ("create", "log") else self._key, last_sequence=self.last_sequence,
-                    escrow_public=self._public, **fields)
-        seq = resp.get("sequence")
-        if isinstance(seq, int):
-            if seq < self.last_sequence:
-                raise EscrowRefused("the escrow's log went backwards: its state was rolled back")
-            self.last_sequence = seq
+        try:
+            resp = call(self._transport, op, operator_token=self._key if op in ("create", "log") else None,
+                        token=None if op in ("create", "log") else self._key, last_sequence=self.last_sequence,
+                        last_head=self.last_head, escrow_public=self._public, **fields)
+        except EscrowRefused as exc:
+            if "rolled back" in str(exc) or "history was replaced" in str(exc):
+                raise EscrowIntegrityError(str(exc)) from exc
+            raise
+        seq, head = resp.get("sequence"), resp.get("head")
+        if isinstance(seq, int) and isinstance(head, str):
+            if seq < self.last_sequence or (seq == self.last_sequence and head != self.last_head):
+                raise EscrowIntegrityError("the escrow's log went backwards or was replaced: its state was rolled back")
+            if self._checkpoint is not None:
+                self._checkpoint.advance(self._campaign, seq, head)
+            self.last_sequence, self.last_head = seq, head
         return resp
 
 
@@ -628,8 +753,9 @@ class ObserveClient:
 
     __slots__ = ("_send", "campaign_id")
 
-    def __init__(self, transport: Callable[[bytes], bytes], campaign_id: str, token: str, *, escrow_public: str | None = None) -> None:
-        session = _Session(transport, token, escrow_public if escrow_public is not None else getattr(transport, "escrow_public", None))
+    def __init__(self, transport: Callable[[bytes], bytes], campaign_id: str, token: str, *, escrow_public: str,
+                 checkpoint: EscrowCheckpoint | None = None) -> None:
+        session = _Session(transport, token, escrow_public, campaign_id=campaign_id, checkpoint=checkpoint)
 
         def send(universe_id: str, settings: Mapping[str, float], query_id: str) -> dict[str, Any]:
             return session.send("observe", campaign_id=campaign_id, universe_id=universe_id, settings=dict(settings),
@@ -644,9 +770,10 @@ class ObserveClient:
 class ScoreClient:
     """What the evaluator holds: one sealed submission per universe."""
 
-    def __init__(self, transport: Callable[[bytes], bytes], campaign_id: str, token: str, *, escrow_public: str | None = None) -> None:
+    def __init__(self, transport: Callable[[bytes], bytes], campaign_id: str, token: str, *, escrow_public: str,
+                 checkpoint: EscrowCheckpoint | None = None) -> None:
         self.campaign_id = campaign_id
-        self._session = _Session(transport, token, escrow_public if escrow_public is not None else getattr(transport, "escrow_public", None))
+        self._session = _Session(transport, token, escrow_public, campaign_id=campaign_id, checkpoint=checkpoint)
 
     def score(self, universe_id: str, proposal: Mapping[str, Any]) -> dict[str, Any]:
         return self._session.send("score", campaign_id=self.campaign_id, universe_id=universe_id, proposal=dict(proposal),
@@ -656,14 +783,21 @@ class ScoreClient:
 class OperatorClient:
     """What the operator holds: create campaigns and read their logs."""
 
-    def __init__(self, transport: Callable[[bytes], bytes], operator_token: str, *, escrow_public: str | None = None) -> None:
+    def __init__(self, transport: Callable[[bytes], bytes], operator_token: str, *, escrow_public: str,
+                 checkpoint: EscrowCheckpoint | None = None) -> None:
+        if not escrow_public:
+            raise EscrowIntegrityError("a client pins the escrow's public key (out of band); it never trusts an unverified escrow")
         self._transport = transport
         self._token = operator_token
-        self._public = escrow_public if escrow_public is not None else getattr(transport, "escrow_public", None)
+        self._public = escrow_public
+        self._checkpoint = checkpoint
         self._sessions: dict[str, _Session] = {}
 
     def _session(self, campaign_id: str) -> _Session:
-        return self._sessions.setdefault(campaign_id, _Session(self._transport, self._token, self._public))
+        if campaign_id not in self._sessions:
+            self._sessions[campaign_id] = _Session(self._transport, self._token, self._public, campaign_id=campaign_id,
+                                                   checkpoint=self._checkpoint)
+        return self._sessions[campaign_id]
 
     def create(self, campaign_id: str, mix: Mapping[str, int], *, evaluator_config_digest: str) -> dict[str, Any]:
         return self._session(campaign_id).send("create", campaign_id=campaign_id, mix=dict(mix),
@@ -673,6 +807,26 @@ class OperatorClient:
         return self._session(campaign_id).send("log", campaign_id=campaign_id)
 
 
-__all__ = ["ANSWERS", "EscrowRefused", "EscrowService", "EscrowStorage", "InProcessTransport", "MAX_UNIVERSES", "ObserveClient",
-           "OperatorClient", "PROTOCOL", "SCORED_ANSWERS", "SECURITY_LABEL", "ScoreClient", "SubprocessTransport", "call", "mac_request",
-           "request_digest", "verify_log", "verify_response"]
+__all__ = [
+    "ANSWERS",
+    "MAX_UNIVERSES",
+    "PROTOCOL",
+    "SCORED_ANSWERS",
+    "SECURITY_LABEL",
+    "EscrowCheckpoint",
+    "EscrowIntegrityError",
+    "EscrowRefused",
+    "EscrowService",
+    "EscrowStorage",
+    "InProcessTransport",
+    "ObserveClient",
+    "OperatorClient",
+    "ScoreClient",
+    "SubprocessTransport",
+    "call",
+    "is_budget_refusal",
+    "mac_request",
+    "request_digest",
+    "verify_log",
+    "verify_response",
+]

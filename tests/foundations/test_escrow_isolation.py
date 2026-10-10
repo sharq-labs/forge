@@ -35,3 +35,17 @@ def test_the_isolated_deployment_reports_exactly_what_it_established(tmp_path):
             "accept_replayed_old_response", "over_query_beyond_budget", "malformed_requests_accepted",
             "score_with_observe_capability"} <= set(report["attacks_run"])
     assert min(report["files_scanned_by_discovery"]) > 0                  # it really looked
+    assert report["checks"]["launcher_verified_discovery_domain_run1"] and report["checks"]["launcher_verified_discovery_domain_run2"]
+    assert len(report["escrow_key_id"]) == 64 and len(report["checks_digest"]) == 64   # bound to THIS escrow, these checks
+
+
+def test_the_leak_detector_catches_a_planted_partial_copy(tmp_path):                               # checkpoint B M-5
+    """Positive control: a world-readable PARTIAL copy of the journal must be found (canary substring) and must make
+    the demo report NOT_PROVEN -- otherwise its clean result would prove nothing."""
+    ok, _why = isolation_support()
+    report = run_isolation_demo(tmp_path / "iso", leak_control=True)
+    assert report["security_boundary_status"] == "SECURITY_BOUNDARY_NOT_PROVEN"
+    if not ok:
+        return
+    assert report["checks"]["no_escrow_secret_readable"] is False
+    assert any(s.startswith("canary in /tmp/forge-leak-control-") for s in report["secrets_readable"])

@@ -153,8 +153,9 @@ def tier3(universes: int, seed: int) -> tuple[BatchRecord, int]:
     from engcore.blindfold.escrow import EscrowService
     mix = {"discoverable": universes // 2, "no_solution": universes - universes // 2}
     t0 = time.perf_counter()
-    rep, _ = run_campaign(InProcessTransport(EscrowService(bytes([seed % 256]) * 32)), campaign_id="perf", mix=mix, proposer=careful,
-                          proposer_identity={"kind": "algorithm", "id": "careful"}, config=EvaluatorConfig("perf", "1"))
+    transport = InProcessTransport(EscrowService(bytes([seed % 256]) * 32))   # dev escrow: a known seed, NOT a boundary
+    rep, _ = run_campaign(transport, campaign_id="perf", mix=mix, proposer=careful, proposer_identity={"kind": "algorithm", "id": "careful"},
+                          config=EvaluatorConfig("perf", "1"), escrow_public=transport.escrow_public)
     dt = time.perf_counter() - t0
     s = rep.summary()
     return BatchRecord("tier3_blindfold_campaign", universes, sum(a.credit > 0 for a in rep.adjudications),

@@ -153,6 +153,25 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - Responses are signed by the escrow identity and bound to the request digest.
   - An isolated deployment profile runs Discovery under a separate uid in private namespaces.
 
+  **Delivered (protocol v4, after checkpoint B):**
+  - **Authentication before state.** An unauthenticated request gets one uniform refusal with no sequence or head.
+    It is counted service-wide (`auth_failures`) and never enters a campaign chain.
+  - **Single-use query ids**, keyed `op:universe:qid` (no `:` in ids). Log reads are durable too.
+  - **Rollback and replacement.** Requests carry `last_sequence` and `last_head`. Clients keep a durable
+    `EscrowCheckpoint` (operator and evaluator in the demo). A truncated journal, a restored backup or a replaced
+    history is an `EscrowIntegrityError` for any client holding a later checkpoint.
+    - Residual: a client without a checkpoint cannot detect it, and neither can the escrow alone.
+  - **Refuses to start** on a missing journal (deleted), a torn line, or a broken keyed chain.
+  - **Universes bound at creation.** A keyed digest of every hidden world and of the generator is journaled at
+    creation; a universe that no longer re-derives refuses to start.
+  - **Observation noise** in a stored escrow is seeded by the log position and the request digest.
+  - **Clients always pin** the escrow key; an integrity failure is never an `EscrowRefused`.
+  - **Labels.** The escrow always states `SECURITY_BOUNDARY_NOT_PROVEN`; no flag can raise it. A verified level is
+    the isolation demo's record, bound to the escrow key id and to mechanism and check digests.
+  - **Demo checks.** The launcher verifies each Discovery process from outside (/proc: ids, capabilities,
+    no_new_privs, namespaces, the tmpfs over the storage). A journal canary is searched as a substring in every file
+    changed since creation, with a positive control (`leak_control=True` → NOT_PROVEN).
+
 ### Other registries
 - Risk policies: `claims/credibility_vector.py:757-790`, process-global, stricter-only.
 - Domain, oracle, route and threshold pins: source constants, certified.
