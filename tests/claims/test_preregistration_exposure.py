@@ -384,7 +384,7 @@ def test_untestable_is_not_a_choice_under_a_machine_readable_rule():            
 def _passport(run_kind, **over):
     parts = {"hypothesis": {"status": "surviving", "novelty_status": "possibly_novel"},
              "protocol": {"discipline": "CONFIRMATORY", "discipline_issues": []},
-             "credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": False},
+             "credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": False, "risk_class": "medium"},
              "adversarial": {"outcome": "survived"}, "authority_anchor": {"profile": "production"},
              "falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},)}
     parts.update(over)
@@ -400,8 +400,10 @@ def test_a_passport_counts_as_discovery_only_when_every_gate_holds_and_never_for
                  {"protocol": {"discipline": "CONFIRMATORY", "discipline_issues": ["x"]}},
                  {"protocol": {"discipline": "CONFIRMATORY"}},
                  {"hypothesis": {"status": "surviving", "novelty_status": "known_equivalent"}},
-                 {"credibility": {"requirement_met": True, "issuer_bound": False, "test_mode": False}},
-                 {"credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": True}},
+                 {"credibility": {"requirement_met": True, "issuer_bound": False, "test_mode": False, "risk_class": "medium"}},
+                 {"credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": True, "risk_class": "medium"}},
+                 # a LOW bar is met by verification alone: never a discovery (C4 M-1)
+                 {"credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": False, "risk_class": "low"}},
                  {"authority_anchor": {"profile": "test"}},
                  {"adversarial": {"outcome": "falsified"}},
                  {"falsifiers": ()},
@@ -509,7 +511,8 @@ def _honest(camp, judged, env, cred, anchor, canon, snap, prereg):
         ({"ref": f.ref, "digest": f.digest, "verdicts": sorted(v.verdict.value for v in vs),
           "confirmatory_verdicts": sorted(v.verdict.value for v in vs if v.evidence_id in d["confirmatory_evidence_ids"])},),
         credibility={"report_digest": cred.digest, "requirement_met": cred.requirement_met, "issuer_bound": cred.issuer_bound,
-                     "test_mode": cred.test_mode},
+                     "test_mode": cred.test_mode, "decision_id": cred.decision_id, "risk_class": cred.risk_class.value,
+                     "policy_digest": cred.policy_digest, "claim_structure_digest": cred.claim_structure_digest},
         multiplicity={"final_context_digest": camp.multiplicity.final.digest, "family_size": camp.multiplicity.final.family_size},
         adversarial={"envelope_digest": record_digest(env), "outcome": env.outcome.value},
         authority_anchor=anchor.to_dict(), verdict_limits=STANDARD_LIMITS)
@@ -561,6 +564,12 @@ def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():   
         hypothesis_id, content_digest, status, status_basis = judged.hypothesis_id, judged.content_digest, judged.status, judged.status_basis
     assert verify_passport(honest, camp, **{**kw, "hypothesis": LookAlikeHypothesis()})[-1].startswith("hypothesis")
     assert ClaimNode is not None
+
+    lower_bar = dataclasses.replace(honest, credibility={**honest.credibility, "risk_class": "critical"})
+    assert any(p.startswith("credibility") for p in verify_passport(lower_bar, camp, **kw))   # the bar re-assessed is named
+    unregistered = dataclasses.replace(s.hs[0], statement="another statement")           # exact type, never registered
+    bad = dataclasses.replace(honest, hypothesis={**honest.hypothesis, "content_digest": unregistered.content_digest})
+    assert verify_passport(bad, camp, **{**kw, "hypothesis": unregistered})[-1].startswith("hypothesis")
 
     class Fake:                                                     # a duck-typed campaign is never accepted (C2 M-1)
         ledger, registry, novelty = camp.ledger, camp.registry, camp.novelty
@@ -655,3 +664,56 @@ def test_under_a_machine_readable_rule_a_seal_names_its_fit():                  
                                                                              node_id="fit-seal"), context_digest=CTX)
     s2.camp.seal(f, s2.tickets["h1"], fit_receipt=rec)
     assert not any("h1-f1" in i for i in s2.discipline()["issues"])
+
+
+def test_a_survived_envelope_never_hides_another_attested_attack_on_the_same_claim():               # C4 HIGH-1, M-2
+    import dataclasses
+
+    from engcore.authority import Attestation
+    from engcore.claims.attestation import attest_record
+    from engcore.claims.redteam import (
+        AttackDimension,
+        AttackKind,
+        AttackPlan,
+        AttackSpace,
+        Route,
+        RouteResult,
+        run_red_team,
+    )
+    s, camp, anchor, judged, env, cred, snap, canon = _passport_world()
+    honest = _honest(camp, judged, env, cred, anchor, canon, snap, s.prereg)
+    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility_inputs": s.cred_inputs, "envelope": env, "snapshot": snap,
+          "canonicalizer": canon, "red_team_subject": s.subject}
+    assert verify_passport(honest, camp, **kw) == []
+    # the RED_TEAM issuer also attests a FALSIFIED attack on the SAME claim subject (a wider space)
+    wide = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
+    breaking = dataclasses.replace(s.subject, routes=(Route("h1", "f", 1, lambda p: RouteResult(50.0)), s.subject.routes[1]))
+    falsified = run_red_team(breaking, wide, AttackPlan(wide.digest, 50, "s"))
+    falsified = dataclasses.replace(falsified, subject_digest=env.subject_digest)        # an attack on THIS claim subject
+    rec = [r for r in camp.ledger.attestations(record_kind="node_receipt") if r.issuer_id == "exec"][-1]
+    rt = s.keys.signer("rt")
+    attest_record(camp.ledger, rt, "rt", falsified, receipt=rec, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
+    camp2 = _resume(s, camp)
+    problems = verify_passport(honest, camp2, **{**kw, "trust_anchor": camp2.ledger.anchor()})
+    assert any("another attested envelope for this claim" in p for p in problems)
+    # an envelope attested with no receipt, by the campaign operator, is not admitted
+    s2, c2, a2, j2, env2, cred2, snap2, canon2 = _passport_world()
+    honest2 = _honest(c2, j2, env2, cred2, a2, canon2, snap2, s2.prereg)
+    c2.ledger.set_roles(s2.root, "other", [Role.EXPOSURE, Role.RED_TEAM])
+    from engcore.claims.credibility_vector import record_digest
+    from engcore.claims.durable_campaign import DurableCampaign as _DC
+    assert _DC is type(c2)
+    lone = dataclasses.replace(env2, budget=env2.budget + 1)
+    c2.ledger.attest(s2.keys.signer("other"), "other", Attestation("trust_envelope", "x/1", lone.to_dict(), "a" * 64, CTX, Role.RED_TEAM))
+    c3 = _resume(s2, c2)
+    passport3 = dataclasses.replace(honest2, adversarial={"envelope_digest": record_digest(lone), "outcome": lone.outcome.value})
+    problems3 = verify_passport(passport3, c3, trust_anchor=c3.ledger.anchor(), hypothesis=j2, credibility_inputs=s2.cred_inputs, envelope=lone, snapshot=snap2, canonicalizer=canon2, red_team_subject=s2.subject)
+    assert any("not admitted as RED_TEAM evidence" in p for p in problems3)
+
+
+def _resume(s, camp):
+    """The verifier's view after new records: the ledger reopened against today's anchor, the campaign resumed."""
+    anchor = camp.ledger.anchor()
+    opened = AuthorityLedger.open(s.store, anchor=anchor)
+    camp.close()
+    return DurableCampaign.resume(opened, s.keys, issuer_id="exposure", campaign_id="c", expected_anchor=anchor)

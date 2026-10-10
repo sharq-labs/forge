@@ -642,7 +642,9 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
              "false_elimination_rate": None if not admitted else audit.false_elimination_rate},
             {"envelope_digest": record_digest(env), "outcome": env.outcome.value, "statement": env.statement()},
             {"report_digest": cred.digest, "requirement_met": cred.requirement_met, "issuer_bound": cred.issuer_bound,
-             "test_mode": cred.test_mode, "dominant_gap": cred.dominant_blocking_gap},
+             "test_mode": cred.test_mode, "dominant_gap": cred.dominant_blocking_gap, "decision_id": cred.decision_id,
+             "risk_class": cred.risk_class.value, "policy_digest": cred.policy_digest,
+             "claim_structure_digest": cred.claim_structure_digest},
             dict(led.anchor().to_dict()),
             STANDARD_LIMITS + ("DRY RUN on SYNTHETIC battery-like data in a TEST-profile ledger: no scientific claim of any kind.",))
     camp_anchor = camp.anchor

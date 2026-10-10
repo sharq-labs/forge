@@ -39,6 +39,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 PASSPORT_SCHEMA = "engcore.claims.discovery_passport/1"
+#: a discovery is held at least to a bar that REQUIRES validation (RISK_POLICY_V1: MEDIUM and above); a LOW bar can be met
+#: by verification alone, and verification does not become validation
+DISCOVERY_RISK_CLASSES = ("medium", "high", "critical")
 
 
 def _digest(payload: Any) -> str:
@@ -75,6 +78,7 @@ class DiscoveryPassport:
                 and bool(self.falsifiers) and all(confirmatory) and all("refuted" not in c for c in confirmatory)
                 and all("not_refuted" in c for c in confirmatory) and "refuted" not in verdicts
                 and self.credibility.get("requirement_met") is True and self.credibility.get("issuer_bound") is True
+                and self.credibility.get("risk_class") in DISCOVERY_RISK_CLASSES
                 and self.credibility.get("test_mode") is False and self.authority_anchor.get("profile") == "production"
                 and self.adversarial.get("outcome") == "survived")
 
@@ -100,8 +104,11 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     against the campaign's ledger and the operator's anchor (a report object is never taken on trust).  Bindings: the
     credibility claim for hypothesis ``h`` is named ``claim:h`` and its requirement is in the campaign's context; the Red
     Team envelope's outcome and subject are read from its RED_TEAM attestation in the campaign's context, and it attacks
-    a ``ClaimSubject`` whose claim route is ``h`` (a route LABEL: residual).  Not re-derived (stated): the manifest
-    digest, the hypothesis claim digest and the screening summary."""
+    a ``ClaimSubject`` whose claim route is ``h`` (a route LABEL: residual), with the pre-registered attack plan; every
+    other admissible envelope for that claim must also have survived.  The credibility claim's leaf subjects are chosen
+    by the verifier's inputs and bound to the hypothesis only by the claim label (residual); the decision, risk class,
+    policy and claim structure are compared.  Not re-derived (stated): the manifest digest, the hypothesis claim digest,
+    the screening summary and the original report digest (the re-run binds today's anchor)."""
     from ..authority import AuthorityLedger, Role, TrustAnchor
     from .durable_campaign import DurableCampaign
     from .exposure_dataset import verify_discipline
@@ -132,10 +139,17 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     hid, cd = passport.hypothesis.get("hypothesis_id"), passport.hypothesis.get("content_digest")
     from ..sria.decision import Hypothesis
     from .durable_campaign import OP_KIND, campaign_subject
-    registered = {Hypothesis.from_dict(r.attestation.record_dict()["args"]["hypothesis"]).content_digest
-                  for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign.campaign_id))
-                  if r.issuer_id == campaign.issuer_id and r.attestation.record.get("op") == "register"
-                  and r.attestation.record_dict()["args"]["hypothesis"].get("hypothesis_id") == hid}
+    registered: set[str] = set()
+    for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign.campaign_id)):
+        if r.issuer_id != campaign.issuer_id or r.attestation.role is not Role.EXPOSURE or r.attestation.record.get("op") != "register" \
+                or r.attestation.context_digest != campaign.context_digest or ledger.compromised_at(r.issuer_id, r.key_id, r.sequence):
+            continue
+        try:
+            h_rec = Hypothesis.from_dict(r.attestation.record_dict()["args"]["hypothesis"])
+        except Exception:                                                # noqa: BLE001 - an unreadable registration registers nothing
+            continue
+        if h_rec.hypothesis_id == hid:
+            registered.add(h_rec.content_digest)
     if type(hypothesis) is not Hypothesis or (hypothesis.hypothesis_id, hypothesis.content_digest) != (hid, cd) \
             or cd not in registered:
         return out + ["hypothesis: the record given is not the registered hypothesis the passport names"]
@@ -145,6 +159,10 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     out.extend(f"status: {p}" for p in verify_status(hypothesis, reg, anchor=RegistryAnchor(campaign.authority.fingerprint,
                                                                                                campaign.campaign_id)))
     in_force = d.get("preregistration_in_force") or {}
+    from .preregistration import frozen_revisions
+    in_force_prereg = next((p for _s, p in frozen_revisions(ledger, campaign.campaign_id, issuer_id=campaign.issuer_id,
+                                                            context_digest=campaign.context_digest)
+                            if p.digest == in_force.get("digest")), None)
     if passport.protocol.get("preregistration_digest") != in_force.get("digest"):
         out.append("protocol: the passport's pre-registration is not the revision in force at the first confirmatory release")
     final = campaign.multiplicity.final
@@ -183,24 +201,47 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
             out.append(f"credibility: the re-run claim is {report.claim_id!r} in another context, not claim:{hid} in this campaign's")
         if any(getattr(report, k) != c.get(k) for k in ("requirement_met", "issuer_bound", "test_mode")):
             out.append("credibility: the passport's credibility verdict is not what re-running the assessment gives")
+        if (report.decision_id, report.risk_class.value, report.policy_digest, report.claim_structure_digest) != (
+                c.get("decision_id"), c.get("risk_class"), c.get("policy_digest"), c.get("claim_structure_digest")):
+            out.append("credibility: the passport does not name the decision, risk class, policy and claim structure re-assessed")
+    from ..authority import verify_evidence
     from .credibility_vector import _coherent, record_digest
     from .redteam import ClaimSubject, TrustEnvelope
+    if type(red_team_subject) is not ClaimSubject or red_team_subject.claim_route != hid:
+        return out + [f"adversarial: no ClaimSubject made with this hypothesis (claim route {hid!r}) is given"]
+    subject_dig = _subject_digest(red_team_subject)
+
+    def admissible(r: Any, *, negative: bool) -> bool:
+        if r.attestation.role is not Role.RED_TEAM or r.attestation.context_digest != campaign.context_digest:
+            return False
+        if r.issuer_id == campaign.issuer_id or ledger.role_at(r.issuer_id, Role.EXPOSURE, r.sequence):
+            return False                                                 # the operator never red-teams its own campaign
+        ok, _why = verify_evidence(ledger, record_kind="trust_envelope", record_digest=r.record_digest,
+                                   subject_digest=r.attestation.subject_digest, context_digest=campaign.context_digest,
+                                   roles=[Role.RED_TEAM], allow_self_issued=negative)
+        return ok is not None and ok.evidence.sequence == r.sequence
+    same_claim = [r for r in ledger.attestations(record_kind="trust_envelope")
+                  if r.attestation.record.get("subject_digest") == subject_dig and admissible(r, negative=True)]
+    hidden = sorted({str(r.attestation.record.get("outcome")) if _coherent(r.attestation.record_dict()) else "incoherent"
+                     for r in same_claim} - {"survived"})
+    if hidden:
+        out.append(f"adversarial: another attested envelope for this claim is {hidden}: a passport never cites one survived "
+                   "attack while others stand")
     env_digest = record_digest(envelope) if type(envelope) is TrustEnvelope else None
-    attested = [r for r in ledger.attestations(record_kind="trust_envelope", record_digest=env_digest or "-")
-                if r.attestation.role is Role.RED_TEAM and ledger.role_at(r.issuer_id, Role.RED_TEAM, r.sequence)
-                and not ledger.compromised_at(r.issuer_id, r.key_id, r.sequence) and r.attestation.context_digest == campaign.context_digest]
+    cited = [r for r in same_claim if r.record_digest == env_digest and admissible(r, negative=False)]
     if env_digest is None or env_digest != passport.adversarial.get("envelope_digest"):
         out.append("adversarial: the envelope given is not (exactly) the one the passport summarizes")
-    elif not attested:
-        out.append("adversarial: the envelope is not attested in this campaign's context by a RED_TEAM issuer")
+    elif not cited:
+        out.append("adversarial: the envelope is not admitted as RED_TEAM evidence about this claim in this campaign's context "
+                   "(role, receipt, independence and context checked)")
     else:
-        rec = attested[0].attestation.record_dict()                       # what was ATTESTED, never the object's own fields
+        rec = cited[0].attestation.record_dict()                         # what was ATTESTED, never the object's own fields
         outcome = str(rec.get("outcome")) if _coherent(rec) else "incoherent"
         if outcome != passport.adversarial.get("outcome"):
             out.append(f"adversarial: the passport says {passport.adversarial.get('outcome')!r}, the attested envelope says {outcome!r}")
-        if type(red_team_subject) is not ClaimSubject or _subject_digest(red_team_subject) != rec.get("subject_digest") \
-                or red_team_subject.claim_route != hid:
-            out.append(f"adversarial: the attested envelope does not attack a claim made with this hypothesis (claim route {hid!r})")
+        planned = (in_force_prereg.sections.get("red_team_attack_space") if in_force_prereg is not None else None)
+        if isinstance(planned, Mapping) and planned.get("plan_digest") and rec.get("plan_digest") != planned.get("plan_digest"):
+            out.append("adversarial: the attested envelope ran another attack plan than the pre-registered one")
     return out
 
 
@@ -212,4 +253,4 @@ STANDARD_LIMITS = (
 )
 
 
-__all__ = ["PASSPORT_SCHEMA", "STANDARD_LIMITS", "DiscoveryPassport", "verify_passport"]
+__all__ = ["DISCOVERY_RISK_CLASSES", "PASSPORT_SCHEMA", "STANDARD_LIMITS", "DiscoveryPassport", "verify_passport"]
