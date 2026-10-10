@@ -10,10 +10,12 @@ transcripts remain in `docs/work/PROGRESS.md`.
 The architecture-first BUILD phase through **BIG 13** is complete and merged.
 Forge now enters **BIG 14 — Scientific Closure & Recertification**.
 
-BIG 14 is a stabilization, diagnosis and evidence campaign. It is not another
-breadth-expansion phase. New providers, domains and flagships remain out of
-scope until the existing architecture has passed its declared gates and the
-current flagship evidence gaps have an honest disposition.
+BIG 14 remains the stabilization, diagnosis and evidence campaign for the
+certification/trust lane. The 2026-10-09 owner strategy additionally authorizes
+a **separate parallel Big Rocks expansion lane** for geometry, provider breadth,
+Scientific Twins and Discovery. That expansion lane must not mutate the frozen
+Trust-Repair source/certificate, and its new capabilities remain unqualified
+until the later integration/hardening campaign.
 
 Starting evidence state:
 
@@ -30,7 +32,100 @@ loosening a tolerance, replacing a pre-registered criterion with a post-hoc
 one, treating solver agreement as validation, or turning an unknown
 uncertainty/model discrepancy into zero.
 
-## Current repository state
+## Owner priority update — 2026-10-09
+
+This owner update narrows the immediate execution sequence while preserving the
+BIG 14 scientific-closure rules. It does **not** authorize weakening or skipping
+the running trust/certification work.
+
+### Live repository/science state
+
+- `main` = `446370651bc1630daf55b9dc0e7db9189946f0fa` (merge of PR #121).
+- PR #120 (bundle containment R1 + finite replay tolerance R4) is merged and its
+  certificate lineage was verified.
+- PR #121 is merged with the Kirkaldy fade study preserved as **NOT MET**;
+  activation energy remains NOT ESTABLISHED and model discrepancy NOT
+  QUANTIFIED.
+- Trust Repair Pass 1 exists locally at
+  `803946af905f51c76f2ea9f4c691d410c9c2ca7b`; its landing/recertification
+  work is the current trust-critical operation.
+- Battery Practical Pass 1 exists locally at
+  `7e923e75f38644d567748d2a2ec223a80762d6dc`; decision
+  **WEAKLY_IDENTIFIABLE**, so calibration is not authorized.
+- Automatic GitHub CI/status enforcement is not currently a reliable merge
+  control; local SHA-bound assurance remains authoritative until repository
+  policy/billing is resolved.
+
+### Execution order from here — Big Rocks First
+
+This owner decision supersedes the earlier small-fix-first ordering for the
+**parallel expansion lane**. It does not weaken or interrupt the frozen
+Trust-Repair/recertification lane.
+
+1. **Finish the in-flight Trust Repair Pass 1 landing/recertification on its
+   frozen source.** Do not modify its source SHA, certificate or assurance
+   artifacts while it is running.
+2. Run a separate **Big Rocks expansion lane**. The intended cloud working
+   branch is `feat/big-rocks-foundations`; verify the actual remote ref before
+   assuming it exists.
+3. Build the **general Spatial / Geometry Foundation** and generalized Gmsh /
+   OpenCASCADE mapping first, together with generic assembly/product topology.
+4. Expand solver/provider breadth early rather than waiting for product polish:
+   Gmsh/OpenVSP, OpenFOAM/SU2, FEniCSx/PETSc,
+   CalculiX/Code_Aster/Elmer, OpenRadioss, Project Chrono, preCICE,
+   PyBaMM/PyBOP, ngspice, Cantera, CoolProp, TESPy,
+   OpenModelica/FMI-FMU and other justified providers. Missing cloud
+   executables are recorded as `REAL_EXECUTION_DEFERRED`, not fabricated.
+5. Build the **Scientific Twin** foundation over canonical system/geometry/model/
+   evidence/state identities.
+6. Build the **Blind Scientific Discovery Runtime**:
+   hypothesis/experiment IR, multi-fidelity search, Design Memory,
+   falsification, recursive discovery and next-best-experiment selection.
+7. Build the **FORGE Genesis** benchmark: blinded historical rediscovery,
+   transformed physics, synthetic universes and no-solution/insufficient-
+   evidence challenges.
+8. Build the **Scientific Red Team / Design-Killer + Credibility Graph**
+   capability over Scientific Twins.
+9. Exercise the common architecture with vertical slices: Drone, Vehicle/Car,
+   Motor, HVAC, Battery Pack, safe Fusion-energy engineering and bounded
+   Biomedical/medical-device engineering.
+10. **Then freeze feature breadth and run one integration/hardening campaign**:
+    close authority-relevant B1/B2/B4/B5/UQ issues, run supported-environment
+    tests, qualify real providers, perform hostile scientific review, classify
+    certification scope and recertify the final source where required.
+
+During the expansion lane, use targeted/contract tests and coherent checkpoint
+commits. Do **not** serialize every Big Rock behind Full Local Assurance.
+
+A small defect interrupts expansion immediately only if it can produce wrong
+scientific numbers, false support/validation, corrupted identity/provenance/
+replay/evidence, or directly blocks the current Big Rock. Other cleanup enters
+`DEFERRED_HARDENING`.
+
+### Universal architecture rule### Universal architecture rule
+
+New work should follow:
+
+```text
+Core Foundations
+    ↓
+Domain Semantics
+    ↓
+Domain Models / System Composition
+    ↓
+Provider Adapters
+    ↓
+Flagships / Products
+    ↓
+Discovery
+```
+
+Core owns universal engineering concepts; domains own physics-specific meaning;
+providers own solver-specific translation; flagships own composition. Do not
+create `CarGeometry`, `DroneGeometry` or similar Core authority when a
+generic spatial/geometry contract is sufficient.
+
+## Current repository state (historical BIG 14 snapshot; retained for traceability)
 
 - Branch: `feat/big-14-flagship-a` (14.2/14.3 flagship A work), worktree
   `D:/forge-b14`, based on `a0928965` (PR #111's head, merged as `72b829f3`). No PR

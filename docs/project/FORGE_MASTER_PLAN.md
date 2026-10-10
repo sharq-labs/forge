@@ -66,6 +66,49 @@ The long-term differentiator is the combination of:
 12. a global 3D engineering visualization runtime that can show assemblies, dimensions, cutaways, motion and evidence-bound scientific overlays;
 13. high-throughput multi-fidelity design discovery without confusing optimization with validation.
 
+### 2.1 Universal architecture rule
+
+Forge should generalize engineering concepts at the lowest layer where their
+meaning is truly cross-domain, then add domain meaning above that layer.
+
+Canonical ownership:
+
+```text
+Core Foundations
+    ↓
+Domain Semantics
+    ↓
+Domain Models / System Composition
+    ↓
+Provider Adapters
+    ↓
+Flagships / Products
+    ↓
+Discovery over trusted Scientific Twins
+```
+
+The rule is:
+
+> **Core owns universal engineering concepts. Domains own physics-specific
+> meaning. Providers own solver-specific translation. Flagships own application
+> composition.**
+
+Examples:
+
+- geometry, topology, regions, interfaces, frames, materials, fields, time,
+  uncertainty, evidence and replay are generic foundations;
+- `lifting_surface`, `crash_structure`, `stator_region` and
+  `battery_cooling_plate` are domain/product semantics layered on those
+  foundations;
+- Gmsh, OpenVSP, OpenFOAM, Code_Aster, CalculiX, OpenRadioss and other tools
+  translate canonical records to provider-specific syntax and back;
+- a drone, car, motor, HVAC system or battery pack composes reusable
+  capabilities rather than creating a new Scientific Core branch.
+
+A concept must not be specialized to one flagship merely because that flagship
+is the first place it is exercised. Geometry/body work in particular is a
+global Spatial/Geometry Foundation, not an automotive or aerospace subsystem.
+
 ## 3. Explicit non-goals
 
 Forge must **not** become an inferior rewrite of mature tools.
@@ -216,21 +259,48 @@ Target degradation families include:
 
 Degradation changes the future physics. Updated thickness, material properties, resistance, capacity, geometry or other state must feed back into subsequent simulation.
 
-### 4.7 Fields, geometry and mesh
+### 4.7 Spatial / Geometry Foundation, fields and mesh
 
-Generic multiphysics requires canonical support for:
+Spatial/geometry semantics are a **global Core foundation** shared by every
+applicable domain. They must not be designed around cars, drones or any other
+single flagship.
 
-- geometry/regions/boundaries;
-- meshes and mesh identity;
-- scalar fields;
-- vector fields;
-- tensor fields;
-- coordinate frames;
-- interpolation/projection;
-- conservative mappings;
-- discretization metadata.
+The canonical foundation should support, incrementally:
 
-Core semantics must remain provider-neutral.
+- `GeometryEntity`, `Body`, `Part`, `Assembly`, `Region`,
+  `Boundary`, `Interface` and topology relations;
+- coordinate frames and rigid transforms;
+- parametric dimensions/variants without turning Forge into a CAD kernel;
+- material and property bindings to bodies/regions;
+- boundary-condition and load bindings;
+- canonical provider-entity mappings;
+- geometry receipts, immutable identity and provenance;
+- mesh identity and geometry-to-mesh bindings;
+- scalar, vector and tensor fields;
+- interpolation/projection and conservative mappings where supported;
+- discretization metadata and transfer-error evidence.
+
+Provider-native identifiers such as Gmsh `(dim, tag)` values must never become
+the scientific identity of a Forge entity. A stable Forge identity maps to
+provider entities through an explicit adapter/receipt.
+
+The same geometry may carry different domain semantics simultaneously. For
+example, one surface can be an aerodynamic wall to CFD, a load-bearing boundary
+to structures and a thermal interface to heat transfer without duplicating the
+underlying geometry authority.
+
+Initial provider direction:
+
+```text
+Spatial / Geometry Foundation
+      ├── Gmsh / OpenCASCADE     → mesh / CAD translation
+      ├── OpenVSP                → aerospace parametric geometry
+      ├── OpenFOAM / SU2         → fluid-domain mapping
+      ├── Code_Aster / CalculiX  → structural mapping
+      └── future providers       → same canonical contracts
+```
+
+Core semantics remain provider-neutral.
 
 ### 4.8 Multiphysics
 
@@ -355,7 +425,7 @@ A motor is not an ideal torque source, and a cable is not only a CAD curve.
 Unsupported electrical or control behaviour stays explicit rather than being
 silently idealized.
 
-## 4.13 Mechanism-aware discovery
+## 4.13 Mechanism-aware and blind scientific discovery
 
 Forge's discovery direction is mechanism-aware rather than black-box search.
 
@@ -364,10 +434,215 @@ agreement, correlation, optimization score or an LLM proposal do not become
 causal/scientific evidence.
 
 Discovery may propose competing mechanisms, interventions, counterfactuals,
-scaling relationships or unexplained residuals, but stronger claims require
-the applicable evidence path and, where necessary, discriminating experiments.
+scaling relationships, candidate designs or unexplained residuals, but stronger
+claims require the applicable evidence path and, where necessary,
+discriminating experiments.
 
-## 4.14 Global 3D engineering visualization runtime
+The strategic target is **Blind Scientific Discovery**, not a library of
+domain-specific answer templates. Forge should be able to receive a bounded
+problem, an admitted knowledge universe, physical/mathematical primitives,
+available data and providers, then generate and falsify hypotheses without
+being told the expected historical answer.
+
+Canonical direction:
+
+```text
+Problem / scientific objective
+        ↓
+Admitted Knowledge Universe
+        ↓
+Hypothesis / Candidate Generation
+        ↓
+Dimensional + logical + physical constraints
+        ↓
+High-throughput cheap evaluation
+        ↓
+Multi-fidelity promotion
+        ↓
+Independent solvers / evidence
+        ↓
+Falsification + UQ + model discrepancy
+        ↓
+Surviving hypotheses / candidates
+        ↓
+Next-best experiment or explicit UNKNOWN
+        ↺
+```
+
+First-class discovery contracts should include, reusing existing authority
+where possible:
+
+- `Hypothesis` / `HypothesisIR`;
+- `Experiment` / `ExperimentIR`;
+- `DesignSpace`, `DesignVariable`, `DesignCandidate`;
+- constraints, objectives and compatibility rules;
+- fidelity rung and provider plan;
+- candidate/hypothesis lineage;
+- Design Memory for positive, negative and refused results;
+- Pareto and elite archives where optimization is applicable;
+- novelty / duplicate detection using canonical identity;
+- experiment-selection rationale and expected information gain;
+- trust/evidence state for every promoted claim.
+
+The LLM is a proposer and interpreter, not scientific authority. Numerical
+providers, admitted data, holdouts, experiments and Forge's Trust Layer remain
+the authority for what a hypothesis is allowed to claim.
+
+### 4.13.1 High-throughput multi-fidelity discovery
+
+"Millions of experiments" means millions of **virtual hypothesis/candidate
+evaluations** where the fidelity permits it, not millions of high-fidelity CFD,
+FEM or explicit-dynamics solves on one machine.
+
+The runtime should aggressively reduce the candidate population before
+expensive execution:
+
+```text
+millions of hypotheses/candidates
+        ↓
+symbolic / dimensional / hard-constraint filters
+        ↓
+vectorized algebraic / lumped models
+        ↓
+surrogates / reduced-order models
+        ↓
+medium-fidelity numerical providers
+        ↓
+small high-value set
+        ↓
+high-fidelity providers
+        ↓
+independent verification / experiment
+```
+
+Throughput is recorded by fidelity class. A cheap screening result must never
+be relabeled as high-fidelity support. A favorable surrogate must not override
+a contradictory higher-fidelity or experimental result.
+
+### 4.13.2 Blind historical rediscovery and leakage control
+
+Historical rediscovery is a benchmark, not proof of novel science. To make it
+meaningful, Forge should support a frozen knowledge cutoff: only information
+available before a chosen historical date is admitted during discovery, while
+later evidence is hidden for scoring.
+
+Because foundation models may already know famous discoveries, benchmark mode
+must reduce memorization leakage through combinations of:
+
+- anonymized entity identifiers;
+- hidden domain labels where practical;
+- transformed variables/coordinates;
+- withheld future evidence;
+- exact data/provenance cutoffs;
+- synthetic universes generated after model training and unknown to the model.
+
+A strong benchmark asks whether the system can recover a predictive mechanism
+or useful candidate from relationships and evidence, not whether it can recall
+a famous name.
+
+### 4.13.3 FORGE Genesis benchmark
+
+Create a general benchmark family spanning:
+
+- blinded known-law rediscovery;
+- transformed known physics;
+- synthetic hidden-law universes;
+- competing hypotheses requiring discriminating experiments;
+- materials/design discovery;
+- safe biomedical retrospective-discovery tasks;
+- safe energy/fusion engineering tasks;
+- adversarial/noisy/insufficient-evidence cases where refusal is correct.
+
+Each challenge binds:
+
+```text
+knowledge cutoff
+allowed primitives
+allowed tools/providers
+compute budget
+hidden target/future evidence
+scoring protocol
+```
+
+Score at minimum:
+
+- holdout prediction;
+- law/mechanism recovery where defined;
+- candidate rank and search efficiency;
+- false-discovery rate;
+- uncertainty calibration;
+- experiment efficiency;
+- compute used by fidelity class;
+- correct refusal when no stable conclusion is supportable.
+
+Forge earns credit for saying **INSUFFICIENT EVIDENCE** when that is the
+scientifically correct result.
+
+### 4.13.4 Scientific Red Team / Design-Killer search
+
+Discovery must also be able to run in the opposite direction: attempt to break
+a proposed engineering/scientific claim.
+
+Target flow:
+
+```text
+Claim / candidate
+    ↓
+Scientific Twin
+    ↓
+admissible parameter/environment/model variation
+    ↓
+multi-fidelity adversarial search
+    ↓
+counterexamples / failure regions / model disagreement
+    ↓
+Trust Envelope
+    ↓
+dominant evidence gaps
+    ↓
+next-best experiment
+```
+
+This "physics penetration testing" capability is a core strategic
+differentiator. It should find the conditions, assumptions or coupled
+subsystems that destroy a nominally attractive result before Forge permits a
+strong support claim.
+
+### 4.13.5 Credibility graph and next-best experiment
+
+For system-level decisions, Forge should represent how lower-level evidence and
+uncertainty support or weaken higher-level claims. A weak upstream material,
+model or subsystem claim must not disappear inside a confident whole-system
+summary.
+
+The discovery runtime should therefore support:
+
+- claim/evidence dependency graphs;
+- dominant uncertainty/evidence-gap tracing;
+- propagation of REVIEW/UNKNOWN states;
+- experiment ranking by expected ability to discriminate hypotheses or reduce
+  decision-relevant uncertainty;
+- immutable evidence updates that create new Scientific Twin revisions.
+
+### 4.13.6 Frontier-science verticals
+
+Discovery remains generic, but selected verticals should exercise it.
+
+**Fusion energy engineering** is a strategic frontier vertical because it
+forces coupled plasma/field, electromagnetic, thermal, structural, materials,
+cooling, controls, lifecycle and reliability reasoning. Initial work should
+focus on non-weapon energy-system/component problems, design-killer search,
+materials/lifetime uncertainty and whole-system credibility rather than
+claiming a new plasma solver.
+
+**Biomedical / medical-device engineering** is another strategic vertical.
+Initial work should focus on bounded in-silico engineering questions such as
+biomechanics, implants, hemodynamics, bioheat and retrospective therapeutic
+hypothesis ranking from frozen historical evidence. Simulation or discovery
+does not become a patient-specific diagnosis or treatment claim without the
+required clinical evidence and validation path.
+
+## 4.14 Global 3D engineering visualization runtime## 4.14 Global 3D engineering visualization runtime
 
 Forge should have one global interactive engineering viewer for complete
 products and their internal subsystems. The viewer is a presentation/runtime
@@ -503,7 +778,149 @@ Until funding or a specific commercial need:
 6. do not call public data "certified" unless an appropriate authority actually certifies it;
 7. use paid data only when it unlocks a capability not reasonably achievable with open data.
 
-## 9. Roadmap
+## 8.1 Owner strategy update — 2026-10-09: Big Rocks First
+
+The owner has explicitly changed the execution strategy from small-fix-first to
+**Big Rocks First**.
+
+Forge should build the largest reusable capability foundations and provider
+breadth first, using targeted tests while building, then perform a deliberate
+integration/hardening/qualification campaign over the resulting architecture.
+
+This does **not** weaken scientific authority. A small issue interrupts a Big
+Rock only when it:
+
+1. can make scientific numbers materially wrong;
+2. can create a false `SUPPORTED`/validated result;
+3. corrupts identity, provenance, replay or evidence;
+4. blocks the Big Rock itself.
+
+Other cleanup, product polish, lint, packaging and non-authority debt goes to a
+`DEFERRED_HARDENING` ledger.
+
+The in-flight Trust Repair/certification work remains isolated and must finish
+against its frozen source. Parallel expansion work must not mutate that source,
+certificate or assurance artifacts.
+
+### Big Rock A — General Spatial / Geometry Foundation
+
+Build provider-neutral geometry/body/part/assembly/region/boundary/interface,
+frames/transforms, parameterized variants, material/boundary bindings,
+geometry-to-mesh bindings and provider-entity receipts.
+
+First provider: generalized Gmsh/OpenCASCADE rather than one-off geometry paths.
+
+### Big Rock B — Assembly / product topology
+
+Build the reusable hierarchy and interfaces required by complete engineered
+systems:
+
+```text
+System → Subsystem → Assembly → Component → Part / Body
+```
+
+Composition owns placement, interfaces, replaceable components and state
+ownership without leaking drone/car/motor semantics into Core.
+
+### Big Rock C — Provider breadth before polish
+
+Add the broad solver/provider boundaries early. Integration means canonical
+contracts, probe/identity, input translation, output parsing, provenance,
+failure/refusal semantics and targeted tests. Real execution should be used
+where the environment provides it; unavailable executables do not block
+independent adapter work and must remain explicitly unqualified.
+
+Priority provider families:
+
+- geometry/mesh: Gmsh/OpenCASCADE, meshio, OpenVSP;
+- CFD: OpenFOAM, SU2;
+- PDE/FEM/structural: FEniCSx/PETSc, CalculiX, Code_Aster, Elmer;
+- explicit dynamics/crash: OpenRadioss;
+- multibody: Project Chrono;
+- coupling: preCICE;
+- battery: PyBaMM/PyBOP;
+- electrical: ngspice;
+- chemistry/thermo: Cantera, CoolProp;
+- system thermal/dynamics: TESPy, OpenModelica/FMI-FMU, EnergyPlus where useful;
+- additional domain providers only when they fit the same canonical boundary.
+
+Provider maturity remains explicit:
+
+`AVAILABLE → INTEGRATED → QUALIFIED → COUPLING_CERTIFIED → VALIDATED FLAGSHIP`
+
+Availability or adapter existence alone never implies qualification.
+
+### Big Rock D — Scientific Twin
+
+Create a versioned executable representation of a concrete candidate system
+that binds/references geometry, composition, materials, models, state,
+environment/scenario, evidence, uncertainty and lineage without manufacturing
+new scientific authority.
+
+### Big Rock E — Blind Discovery Runtime
+
+Build the generic hypothesis/candidate search runtime described in §4.13:
+
+- Hypothesis/Experiment IR;
+- high-throughput multi-fidelity evaluation;
+- falsification;
+- Design Memory;
+- next-best-experiment selection;
+- recursive component/system discovery;
+- blind historical rediscovery;
+- synthetic-universe benchmarks.
+
+Do not create disease-, fusion-, drone- or vehicle-answer templates and call
+them discovery.
+
+### Big Rock F — Scientific Red Team / Credibility Graph
+
+Build autonomous counterexample/design-killer search, trust envelopes and
+system-level credibility/evidence-gap graphs over Scientific Twins.
+
+### Big Rock G — Cross-domain vertical slices
+
+Exercise the generic architecture with real compositions rather than new Core
+branches:
+
+- Drone;
+- Vehicle/Car;
+- Electric Motor;
+- HVAC;
+- Battery Pack;
+- Fusion energy engineering;
+- Biomedical / medical-device engineering.
+
+### Hardening after the large structure exists
+
+Do not run Full Local Assurance after every Big Rock. During expansion, run
+bounded targeted/contract tests and checkpoint coherent work.
+
+After the achievable Big Rocks reach an architecture freeze:
+
+```text
+integration inventory
+    → deferred correctness/hardening
+    → supported-environment tests
+    → provider qualification
+    → scientific hostile review
+    → scope classification
+    → one final recertification boundary where required
+```
+
+Known B1/B2/B4/B5/UQ issues remain important. Fix immediately when they can
+invalidate discovery/trust results; otherwise integrate them into the final
+hardening campaign rather than serializing the whole program behind every
+small defect.
+
+### Cloud / local execution split
+
+Cloud development may build contracts, adapters, geometry, twins, discovery,
+safe vertical compositions and targeted tests, checkpointing to feature
+branches. Heavy provider qualification and final assurance remain bound to
+declared supported local/provider environments.
+
+## 9. Roadmap## 9. Roadmap
 
 The roadmap is ordered by dependency and the project's current strategic priority.
 **Time, environment and lifecycle are early Core concerns, not late product features.**
@@ -549,6 +966,10 @@ the active slice requires them.
 | **P34** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and negative results are first-class |
 | **P35** | Closed-loop experimental validation | calibration and independent/holdout validation remain separate; physical measurements update evidence/model discrepancy |
 | **P36** | Validated design discovery | requirements -> design -> 3D/assembly -> dynamics/multiphysics -> UQ/reliability -> experiment, with improvement claims limited to admitted evidence |
+| **P37** | Blind Scientific Discovery Runtime | generic hypotheses/experiments, frozen knowledge universes, multi-fidelity falsification and Design Memory work without answer templates |
+| **P38** | FORGE Genesis benchmark | blinded historical rediscovery, transformed physics, synthetic universes and insufficient-evidence cases measure genuine discovery rather than memorization |
+| **P39** | Scientific Red Team + Credibility Graph | candidate/claim attacks find counterexamples, design killers, trust envelopes and dominant evidence gaps across coupled systems |
+| **P40** | Frontier discovery verticals | Fusion-energy and biomedical/medical-device slices exercise the generic runtime with bounded claims, independent evidence and no domain-specific scientific-authority shortcuts |
 
 Do not skip prerequisite phases merely to increase the number of domains.
 
@@ -606,6 +1027,35 @@ Good initial scope:
 - environmental exposure;
 - corrosion/fatigue;
 - lifecycle state.
+
+### Fusion energy engineering
+
+Target use is a safe frontier engineering vertical over the generic platform,
+not a weapon-design benchmark and not a replacement plasma solver.
+
+Initial targets:
+
+- coupled thermal/structural/electromagnetic/materials system reasoning;
+- geometry/material/lifecycle candidate search;
+- cooling and power-conversion interfaces;
+- reliability/availability/maintainability/inspectability reasoning;
+- design-killer search and trust-envelope construction;
+- whole-system credibility/evidence-gap graphs;
+- next-best experiment selection where evidence is expensive.
+
+### Biomedical / medical-device engineering
+
+Initial targets are bounded engineering/scientific questions:
+
+- biomechanics and implants;
+- hemodynamics/airflow;
+- bioheat and tissue thermal models;
+- musculoskeletal/mechanical-system models;
+- retrospective, blinded therapeutic-hypothesis ranking from historically
+  frozen evidence as a Discovery benchmark.
+
+Forge must keep simulation/hypothesis support separate from clinical diagnosis,
+prescription or patient-specific treatment authority.
 
 ## 11. Progress metrics
 
