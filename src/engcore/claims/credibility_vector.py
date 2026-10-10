@@ -12,7 +12,7 @@ records of one :class:`~engcore.credibility.evidence_graph.EvidenceGraph`:
   context, has an authority admissible for that factor and level (an experiment for experimental validation; a model's
   own run never quantifies model-form uncertainty; cross-solver agreement is an independent route, never validation),
   carries trusted, fresh provenance where the level needs it (validation, quantified UQ, independent routes), backs no
-  other factor, and is not superseded by an admissible node.  A factor nobody earned is UNKNOWN, below every level and
+  other factor, and is not superseded (any SUPERSEDES edge into it or a same-content twin, whoever wrote it).  A factor nobody earned is UNKNOWN, below every level and
   never satisfying a requirement.  An admissible OUTSIDE-domain applicability finding is a defeater, not a low rung.
 * ``r(D)`` -- the required vector, ONLY from a registered, immutable, risk-monotone policy (:data:`RISK_POLICY_V1`); the
   report binds the policy digest and the row it used.  The policy sets the bar; it is never evidence.
@@ -22,8 +22,9 @@ records of one :class:`~engcore.credibility.evidence_graph.EvidenceGraph`:
   removes its contradiction -- and their closure, below) and an admissible (known authority, same context) node; when
   both ends are in the closure, either admissible end suffices; an admissible outside-domain finding (a cited
   level-0 applicability record, or a supplied ApplicabilityReport 'outside' decided on the subject); a FALSIFIED
-  red-team envelope for a subject; or an explicit typed :class:`Defeater`.  A contradiction is closed only by a
-  registry-pinned newer version of the contradicting source that is outside that closure (noted, never silent).
+  red-team envelope for a subject; or an explicit typed :class:`Defeater`.  A contradiction is closed (noted, never silent) only when
+  its counter-evidence end is OUTSIDE the closure and is superseded by a registry-pinned newer version of the same source
+  that is itself outside the closure, of other content, not superseded and not contradicted in either direction.
   Sub-bar contradictions (unknown authority, other context) are recorded as notes.
 * Supersession only ever LOWERS: any SUPERSEDES edge into a record (or a same-content twin) disqualifies it as support --
   the canonical evidence-graph rule -- whether or not the superseder is pinned or itself contradicted; an admissible
@@ -336,15 +337,17 @@ class _GraphView:
         return n is not None and n.authority is not EvidenceAuthority.UNKNOWN and n.applicability == self.context
 
     def contradicted(self, evidence_id: str) -> bool:
-        """An admissible CONTRADICTS edge into the record or any same-content twin of it."""
+        """A CONTRADICTS edge, in either direction, between the record (or a same-content twin) and an admissible node."""
         twins = self.twins(evidence_id)
-        return any(e.relation is EvidenceRelation.CONTRADICTS and e.target_id in twins and self.admissible_node(e.source_id)
+        return any(e.relation is EvidenceRelation.CONTRADICTS
+                   and ((e.target_id in twins and self.admissible_node(e.source_id))
+                        or (e.source_id in twins and self.admissible_node(e.target_id)))
                    for e in self.graph.edges)
 
     def superseders(self, evidence_id: str, protected: set[str]) -> list[str]:
         """Superseders of ``evidence_id`` that are a NEWER VERSION OF THE SAME PINNED SOURCE: trusted provenance with the
-        same source id and issuer, another version, the same authority, not themselves contradicted, and not part of the
-        protected (support) closure.  Anything else is just another record."""
+        same source id and issuer, another version, OTHER CONTENT, the same authority, not themselves superseded or
+        contradicted, and not part of the protected (support) closure.  Anything else is just another record."""
         target = self.nodes.get(evidence_id)
         out = []
         for e in self.graph.edges:
@@ -355,6 +358,8 @@ class _GraphView:
                 continue
             if not self.trusted_provenance(e.source_id) or sup.authority is not target.authority or self.contradicted(e.source_id):
                 continue
+            if sup.content_digest == target.content_digest or self.superseded_by(e.source_id):
+                continue                                         # the same finding re-issued, or itself obsolete
             if (sup.provenance.source_id, sup.provenance.issuer) != (target.provenance.source_id, target.provenance.issuer) \
                     or sup.provenance.version == target.provenance.version:
                 continue
@@ -962,10 +967,14 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
             found.append(Defeater(f"red_team:{env.claim_id}:{envelope_digest(env)[:12]}", "red_team_falsified", (), env.statement()))
         elif env.outcome.value == "falsified":
             notes.append(f"a FALSIFIED envelope for {env.claim_id!r}, which is no subject of this claim, is not evidence about it")
+    computed = {d.defeater_id for d in found}
     for d in defeaters:
         missing = [e for e in d.evidence_ids if e not in view.nodes]
         if missing:
             raise CredibilityRefused(f"defeater {d.defeater_id} cites evidence not in the graph: {missing}")
+        if d.defeater_id in computed:
+            raise CredibilityRefused(f"explicit defeater id {d.defeater_id!r} collides with a computed defeater; it may add, "
+                                     "never replace")
         found.append(d)
     order = {k: i for i, k in enumerate(DEFEATER_KINDS)}
 

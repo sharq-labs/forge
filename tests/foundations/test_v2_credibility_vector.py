@@ -721,3 +721,42 @@ def test_a_contradicted_twin_disqualifies_a_closing_superseder(world):          
     assert assess(world, leaf(), graph(world, *edges, nodes=nodes), trusted_sources=pins).requirement_met
     rep = assess(world, leaf(), graph(world, *edges, EvidenceEdge("lab", "bench_v2_copy", R.CONTRADICTS), nodes=nodes), trusted_sources=pins)
     assert any(d.evidence_ids == ("bench", "exp") for d in rep.open_defeaters)
+
+
+# ---------------------------------------------------------------------------- sixth confirmation review
+
+
+def test_a_closing_version_must_be_other_content_and_not_itself_obsolete(world):                   # M-1, L-1
+    b, d = world["nodes"]["bench"], world["nodes"]["domain_out"]
+
+    def pinned_v2(src, eid, authority, **kw):
+        n = node(eid, authority, issuer=src.provenance.issuer, source_id=src.provenance.source_id, version="2", **kw)
+        pins = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != src.provenance.source_id)
+                                     + (SourcePin(src.provenance.source_id, src.provenance.issuer, n.provenance.document_digest, "2"),))
+        return n, pins
+    # the identical finding re-issued as "v2" closes nothing
+    same, pins = pinned_v2(b, "bench_v2", A.REFERENCE_DATA, digest=b.content_digest)
+    rep = assess(world, leaf(), graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES),
+                                      nodes=dict(world["nodes"], bench_v2=same)), trusted_sources=pins)
+    assert any(x.evidence_ids == ("bench", "exp") for x in rep.open_defeaters)
+    out_same, pins_d = pinned_v2(d, "domain_out_v2", A.ANALYTICAL, digest=d.content_digest)
+    claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
+    rep = assess(world, leaf(claims), graph(world, EvidenceEdge("domain_out_v2", "domain_out", R.SUPERSEDES),
+                                            nodes=dict(world["nodes"], domain_out_v2=out_same)), trusted_sources=pins_d)
+    assert any(x.kind == "outside_domain" for x in rep.open_defeaters)
+    # a closer that is itself superseded (by anyone) or contradicts an admissible record (either direction) closes nothing
+    newer, pins = pinned_v2(b, "bench_v2", A.REFERENCE_DATA)
+    nodes = dict(world["nodes"], bench_v2=newer, lab=node("lab", A.EXPERIMENT))
+    base = (EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES))
+    assert assess(world, leaf(), graph(world, *base, nodes=nodes), trusted_sources=pins).requirement_met
+    for extra in (EvidenceEdge("rumour", "bench_v2", R.SUPERSEDES), EvidenceEdge("bench_v2", "lab", R.CONTRADICTS)):
+        rep = assess(world, leaf(), graph(world, *base, extra, nodes=nodes), trusted_sources=pins)
+        assert any(x.evidence_ids == ("bench", "exp") for x in rep.open_defeaters), extra
+
+
+def test_an_explicit_defeater_may_add_but_never_replace_a_computed_one(world):                    # L-3
+    claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
+    with pytest.raises(CredibilityRefused, match="collides"):
+        assess(world, leaf(claims), graph(world), defeaters=(Defeater("outside_domain:result", "superseded", (), "x"),))
+    rep = assess(world, leaf(), graph(world), defeaters=(Defeater("review:1", "contradiction", ("exp",), "a reviewer's finding"),))
+    assert not rep.requirement_met
