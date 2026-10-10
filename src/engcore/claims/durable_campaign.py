@@ -92,8 +92,8 @@ class DurableCampaign:
                  _token: object = None, _replay_ok: bool = False) -> None:
         if _token is not _CONSTRUCT:
             raise CampaignRefused("a durable campaign is started (DurableCampaign.start) or resumed from its journal")
-        if not isinstance(ledger, AuthorityLedger):
-            raise CampaignRefused("a durable campaign journals into an opened AuthorityLedger")
+        if type(ledger) is not AuthorityLedger:                     # a subclass could filter what is replayed
+            raise CampaignRefused("a durable campaign journals into an AuthorityLedger (exactly that type)")
         self._ledger, self._keys, self._issuer, self._campaign = ledger, keys, issuer_id, campaign_id
         self._config = dict(config)
         #: the campaign's identity is NAMESPACED by the ledger it is journaled in (id + root key): the same campaign id in
@@ -148,6 +148,10 @@ class DurableCampaign:
             raise CampaignRefused(f"no journal begun by {issuer_id!r} for campaign {campaign_id!r}")
         context = mine[0].attestation.context_digest
         journal = [r for r in mine if r.attestation.context_digest == context]
+        tainted = [r.sequence for r in journal if ledger.compromised_at(r.issuer_id, r.key_id, r.sequence)]
+        if tainted:
+            raise CampaignRefused(f"journal entries {tainted} were signed inside a declared compromise window of the campaign "
+                                  "owner's key: the campaign cannot be resumed as the same search")
         for n, r in enumerate(journal):
             rec = r.attestation.record
             if rec.get("campaign_id") != campaign_id or rec.get("index") != n:
@@ -181,6 +185,11 @@ class DurableCampaign:
     @property
     def registry(self):
         return self._registry
+
+    @property
+    def ledger(self) -> AuthorityLedger:
+        """The ONE ledger this campaign is journaled in: every gate and verifier reads this, never a ledger passed beside it."""
+        return self._ledger
 
     @property
     def issuer_id(self) -> str:
@@ -246,11 +255,13 @@ class DurableCampaign:
         self._registry.seal(falsifier, ticket)
         self._journal("seal", {"falsifier": falsifier.to_dict()})
 
-    def release(self, **kwargs: Any) -> EvidenceItem:
+    def release(self, *, opening: Mapping[str, Any] | None = None, **kwargs: Any) -> EvidenceItem:
+        """``opening``: the data authority's opening of the row's manifest commitment (row id, salt), journaled WITH the
+        release so a verifier can re-check, from the ledger alone, that the released value is the committed one."""
         self._guard()
         item = self._authority.release(**kwargs)
         args = {k: (v.value if hasattr(v, "value") else v) for k, v in kwargs.items()}
-        self._journal("release", {"release": args})
+        self._journal("release", {"release": args, **({"opening": dict(opening)} if opening is not None else {})})
         return item
 
     def judge(self, falsifier_digest: str, evidence_id: str) -> FalsifierVerdict:

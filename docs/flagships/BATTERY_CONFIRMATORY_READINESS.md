@@ -8,7 +8,7 @@ approval.**
 ## Gate record
 
 ```text
-PREREGISTRATION_DIGEST: 3f3fac274c16b63b9e2054d339c775c24510cd9bea94dc9e8ea9213bb464c575
+PREREGISTRATION_DIGEST: 320fbdb2083d3573cf44b4393813ed6b13304cb83dab470a8daf2eec6b704471
 PREREGISTRATION_STATE: DRAFT revision 1 (validated; NOT frozen in a production authority ledger); its hypothesis predictions name a placeholder condition until the owner designates the confirmatory design
 HYPOTHESIS_REGISTRY_DIGEST: 733eca50e11e7e6e9012c98b0dcaff3eca1777c74908099285f6688ab42c39a6
 FALSIFIER_ANCHOR: NONE (no real falsifier sealed; see REAL_FALSIFIERS_NOT_SEALED)
@@ -65,6 +65,11 @@ snapshot entries also carry their expressions and declare a numeric-equivalence 
   - Every condition that fails the rule is declared UNTESTABLE, with the rule's inputs, before exposure.
     `verify_discipline` recomputes the rule for each declaration and checks each sealed falsifier's criterion and k.
   - The rule has a stated blind spot: with u_obs = 0.0015, a prediction below about 0.018 cannot be tested.
+  - The real draft declares NO observation uncertainty yet (`declared_observation_uncertainty: null`). The data
+    authority declares it at designation; until then `verify_discipline` flags every sealed falsifier.
+  - A sealed resolution must equal the rule's value for its prediction (it is derived, not chosen). An abstention's
+    rule inputs must come from an EXECUTOR-attested fit receipt, not from the campaign operator.
+  - A discovery needs every falsifier judged on CONFIRMATORY rows; exploratory verdicts never count.
 
 ## Dry run (SYNTHETIC battery-like data, TEST-profile ledger; never the confirmatory holdout)
 

@@ -528,3 +528,19 @@ def test_an_attestation_subject_output_is_a_string():                           
     with pytest.raises(AuthorityRefused, match="strings"):
         Attestation("validation_check", "validation_check/1", CONV.to_dict(), RESULT, CTX, Role.NUMERICAL_VERIFICATION,
                     receipt.record_digest, ["y"])
+
+
+def test_a_retired_key_can_still_be_declared_compromised():                                         # combined review M-6
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    old_key = w.ledger.attestations(record_kind="validation_check")[0].key_id
+    stolen_from = w.ledger.attestations(record_kind="validation_check")[0].sequence
+    w.ledger.rotate_key(w.root, "ver", EphemeralKeyProvider().signer("ver2").possession(w.ledger_id, "ver"))   # no window then
+    assert verification_level(w)[0] == 1
+    w.ledger.revoke(w.root, "ver", "left")
+    w.ledger.declare_compromise(w.root, "ver", old_key, compromised_from=stolen_from, reason="theft found later")
+    assert verification_level(w)[0] == UNKNOWN
+    with pytest.raises(AuthorityRefused, match="active life"):
+        w.ledger.declare_compromise(w.root, "ver", old_key, compromised_from=w.ledger.length + 5, reason="x")
+    reopened = AuthorityLedger.open(w.store, anchor=w.ledger.anchor())       # the declaration replays from the chain
+    assert reopened.compromised_at("ver", old_key, stolen_from)

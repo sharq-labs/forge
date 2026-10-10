@@ -345,7 +345,7 @@ class AttestationRecord:
         return self.attestation.record_digest
 
 
-ADMIN_KINDS = ("register", "set_roles", "rotate", "revoke")
+ADMIN_KINDS = ("register", "set_roles", "rotate", "revoke", "compromise")
 
 
 class AuthorityLedger:
@@ -500,6 +500,12 @@ class AuthorityLedger:
             body["compromised_from"] = compromised_from
         return self._admin(root, "revoke", body)
 
+    def declare_compromise(self, root: Signer, issuer_id: str, key_id: str, *, compromised_from: int, reason: str) -> LedgerEvent:
+        """Root-signed: ``key_id`` (active OR retired, the issuer revoked or not) was compromised from ``compromised_from``
+        on.  What it signed from there stays in the chain but is not evidence (consumers check :meth:`compromised_at`)."""
+        return self._admin(root, "compromise", {"issuer_id": issuer_id, "key_id": str(key_id), "compromised_from": compromised_from,
+                                                "reason": str(reason)})
+
     def attest(self, signer: Signer, issuer_id: str, attestation: Attestation) -> AttestationRecord:
         iss = self._issuers.get(issuer_id)
         registered = iss.keys.get(signer.key_id) if iss is not None else None
@@ -623,6 +629,17 @@ class AuthorityLedger:
         iss = self._issuers.get(issuer_id)
         if iss is None:
             raise AuthorityRefused(f"event {seq}: unknown issuer {issuer_id!r}")
+        if ev.kind == "compromise":                     # allowed after revocation: discovering a theft is never too late
+            if set(b) != {"issuer_id", "key_id", "compromised_from", "reason"} or not str(b["reason"]).strip():
+                raise AuthorityRefused("malformed compromise declaration")
+            key = iss.keys.get(str(b["key_id"]))
+            start = b["compromised_from"]
+            end = key.retired_at if key is not None and key.retired_at is not None else seq
+            if key is None or isinstance(start, bool) or not isinstance(start, int) or not key.active_from <= start <= end:
+                raise AuthorityRefused(f"event {seq}: compromised_from is a sequence inside that key's active life")
+            if key.compromised_from is None or start < key.compromised_from:
+                key.compromised_from = start            # a window only ever widens
+            return
         if iss.revoked_at is not None:
             raise AuthorityRefused(f"event {seq}: issuer {issuer_id!r} is revoked; a revocation is final")
         if ev.kind == "set_roles":

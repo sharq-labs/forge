@@ -124,7 +124,7 @@ class EscrowIntegrityError(RuntimeError):
 
 
 def is_budget_refusal(exc: BaseException) -> bool:
-    return isinstance(exc, EscrowRefused) and "budget" in str(exc) and "exhausted" in str(exc)
+    return isinstance(exc, EscrowRefused) and str(exc).startswith("query budget ") and " exhausted for " in str(exc)
 
 
 @dataclass

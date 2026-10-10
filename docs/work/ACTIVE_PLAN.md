@@ -165,6 +165,34 @@ Next executable tasks for this program (in order):
 - [ ] A second Chrono route that exercises rotated bodies and real inertia (DEFERRED_HARDENING 1).
 - [ ] Work the rest of the DEFERRED_HARDENING ledger in `docs/architecture/big_rocks_foundations.md`.
 
+## Active campaign (2026-10-10): Authority Integrity → Real Escrow → Battery Blind Readiness
+
+Big Rocks (PR #124) and Roadmap V2 (PR #125) are MERGED on `main` (`4634eba2`). The active campaign runs on branch
+`feat/big-rocks-authority-escrow-battery` (from `origin/main` `4634eba2`), with one PR to `main`, not merged
+automatically. PR #123 (trust repair) is not used, cherry-picked or depended on; see
+`docs/architecture/authority_integrity_map.md` for TRUST_REPAIR_DEPENDENCY_CANDIDATEs.
+
+- [x] Rock 1: issuer-bound authority.
+  - `engcore.authority`: a signed, hash-chained, persistent ledger with key lifecycle (register / rotate / revoke /
+    compromise windows); results bind to evidence through attestations; credibility runs in issuer-bound mode.
+  - Hostile tests (commands and results in `docs/work/PROGRESS.md`); checkpoint A and its re-review were fixed.
+- [x] Rock 2: a real escrow service.
+  - Private storage, protocol v4, persistent budgets, client checkpoints.
+  - Isolation demo `OS_ISOLATION_BOUNDARY_VERIFIED` when run here (recorded in `docs/work/PROGRESS.md`); checkpoint B was fixed. Not a container or host boundary.
+- [x] Rock 3: battery blind readiness `NOT_READY` with stated blockers. Checkpoint C was fixed.
+  - Kirkaldy stays NOT MET; no confirmatory datum was exposed.
+- [x] Combined final hostile review: findings fixed (see `docs/work/PROGRESS.md`); final gates and the PR follow.
+
+Next executable tasks after this campaign (owner decisions first):
+
+- [ ] Owner: designate and digest-pin the battery confirmatory dataset; provision the production authority ledger
+      (operator-held root, OWNER issuer distinct from EXPOSURE).
+- [ ] Seal real battery falsifiers from the exploratory Kirkaldy fit (data outside this container), at a confirmatory
+      design that discriminates the hypotheses (the dry run showed the synthetic design does not).
+- [ ] Systematic prior-art search to replace the recalled snapshot.
+- [ ] Deploy the battery data authority behind the escrow / isolation route.
+- [ ] Checkpointed ledger open (verify from a trusted anchor forward) for large ledgers.
+
 ## Roadmap view
 
 ### Now — BIG 14

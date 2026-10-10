@@ -57,7 +57,7 @@ ROWS = {"e1": {"value": 2.6, "uncertainty": 0.01, "conditions": {"x": 1.0}},
 for _rid, _row in ROWS.items():
     _row["salt"] = SALT[_rid].hex()
 RULE = {"criterion": "prediction_deviation", "k": 3.0, "resolution": {"relative_cap": 0.25, "uncertainty_multiplier": 1.2,
-                                                                      "absolute_floor": 0.004}}
+                                                                      "absolute_floor": 0.004}, "declared_observation_uncertainty": 0.01}
 
 
 def hyp(hid="h1"):
@@ -88,14 +88,18 @@ def manifest(**over):
 
 
 class Setup:
-    def __init__(self, hs=None, *, owner_roles=(Role.OWNER,), **prereg_over):
+    def __init__(self, hs=None, *, owner_roles=(Role.OWNER,), snapshot=None, **prereg_over):
         self.keys = EphemeralKeyProvider()
         self.root = self.keys.signer("root")
-        self.led = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prereg", profile="test", root=self.root)
-        for issuer, roles in (("exposure", [Role.EXPOSURE]), ("owner", list(owner_roles)), ("other", [Role.EXPOSURE])):
+        self.store = MemoryLedgerStore()
+        self.led = AuthorityLedger.create(self.store, ledger_id="prereg", profile="test", root=self.root)
+        for issuer, roles in (("exposure", [Role.EXPOSURE]), ("owner", list(owner_roles)), ("other", [Role.EXPOSURE]),
+                              ("exec", [Role.EXECUTOR]), ("rt", [Role.RED_TEAM])):
             self.led.register_issuer(self.root, issuer, self.keys.signer(issuer).possession("prereg", issuer), roles=roles)
         self.camp = DurableCampaign.start(self.led, self.keys, issuer_id="exposure", campaign_id="c", authority_id="lab", context_digest=CTX)
         self.hs = hs or (hyp("h1"),)
+        if snapshot is not None:                                   # prior art is sealed BEFORE any hypothesis is seen
+            self.camp.seal_prior_art(snapshot)
         self.tickets = {h.hypothesis_id: self.camp.register(h) for h in self.hs}
         self.manifest = manifest()
         register_manifest(self.camp, self.led, self.keys.signer("exposure"), "exposure", self.manifest)
@@ -125,6 +129,15 @@ class Setup:
 
     def discipline(self):
         return verify_discipline(self.led, self.camp)
+
+    def fit(self, inputs):
+        """An EXECUTOR-attested fit receipt whose output is these abstention rule inputs."""
+        from engcore.claims.attestation import attest_receipt
+        from engcore.claims.exposure_dataset import rule_inputs_digest
+        from tests.authority_helpers import receipt_for
+        return attest_receipt(self.led, self.keys.signer("exec"), "exec",
+                              receipt_for(rule_inputs_digest(inputs), output="rule_inputs", node_id=f"fit-{len(self.led.events())}"),
+                              context_digest=CTX)
 
 
 # ---------------------------------------------------------------------------- pre-registration
@@ -340,7 +353,15 @@ def test_untestable_is_not_a_choice_under_a_machine_readable_rule():            
     with pytest.raises(ExposureRefused, match="REACHES a resolution"):
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw,
                            rule_inputs=({"predicted": 5.0, "prediction_uncertainty": 0.01, "observation_uncertainty": 0.01},))
-    declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small)
+    with pytest.raises(ExposureRefused, match="names no attested fit receipt"):      # the operator's say-so is not a fit
+        declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small)
+    with pytest.raises(ExposureRefused, match="does not output these rule inputs"):
+        declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small,
+                           fit_receipt=s.fit(({"predicted": 9.0, "prediction_uncertainty": 9.0, "observation_uncertainty": 0.01},)))
+    with pytest.raises(ExposureRefused, match="observation uncertainty other than the pre-registered"):
+        declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw,
+                           rule_inputs=({"predicted": 0.01, "prediction_uncertainty": 0.01, "observation_uncertainty": 5.0},))
+    declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small, fit_receipt=s.fit(small))
     s.camp.seal(falsifier(hs[0]), s.tickets["h1"])
     with pytest.raises(ExposureRefused, match="already has sealed falsifiers"):
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", hypothesis_id="h1",
@@ -351,7 +372,9 @@ def test_untestable_is_not_a_choice_under_a_machine_readable_rule():            
     s.camp.seal(Falsifier("h1-f2", "h1", hs[0].content_digest, "y", "m", {"x": 3.0}, EvidenceSource.MEASUREMENT_RECORD,
                           CriterionKind.PREDICTION_DEVIATION, {"k": 2.0, "predicted": 5.17, "prediction_uncertainty": 0.01,
                                                                "resolution": 0.2}), s.tickets["h1"])
-    assert any("departs from the pre-registered criterion / k" in i for i in s.discipline()["issues"])
+    issues = s.discipline()["issues"]
+    assert any("'h1-f2'" in i and "departs from the pre-registered rule: k" in i for i in issues)
+    assert any("'h1-f1'" in i and "is not the rule's" in i for i in issues)          # resolution chosen, not derived (M-1)
 
 
 # ---------------------------------------------------------------------------- passports
@@ -362,7 +385,7 @@ def _passport(run_kind, **over):
              "protocol": {"discipline": "CONFIRMATORY", "discipline_issues": []},
              "credibility": {"requirement_met": True, "issuer_bound": True, "test_mode": False},
              "adversarial": {"outcome": "survived"}, "authority_anchor": {"profile": "production"},
-             "falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"]},)}
+             "falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},)}
     parts.update(over)
     return DiscoveryPassport("p", run_kind, parts["hypothesis"], parts["protocol"], parts["falsifiers"], credibility=parts["credibility"],
                              adversarial=parts["adversarial"], authority_anchor=parts["authority_anchor"], verdict_limits=STANDARD_LIMITS)
@@ -383,7 +406,12 @@ def test_a_passport_counts_as_discovery_only_when_every_gate_holds_and_never_for
                  {"falsifiers": ()},
                  {"falsifiers": ({"ref": "f1", "verdicts": []},)},
                  {"falsifiers": ({"ref": "f1", "verdicts": ["inconclusive"]},)},
-                 {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"]}, {"ref": "f2", "verdicts": ["refuted"]})}):
+                 {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},
+                                 {"ref": "f2", "verdicts": ["refuted"], "confirmatory_verdicts": []})},
+                 # exploratory verdicts alone never make a discovery (combined review H-2)
+                 {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": []},)},
+                 {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},
+                                 {"ref": "f2", "verdicts": ["not_refuted"], "confirmatory_verdicts": []})}):
         assert not _passport("confirmatory", **over).counts_as_discovery, over
     with pytest.raises(ValueError, match="limits"):
         DiscoveryPassport("p", "confirmatory", {}, {}, verdict_limits=("-",))
@@ -391,25 +419,124 @@ def test_a_passport_counts_as_discovery_only_when_every_gate_holds_and_never_for
         DiscoveryPassport("p", "real", {}, {}, verdict_limits=STANDARD_LIMITS)
 
 
-def test_verify_passport_re_derives_what_the_passport_asserts():
+def _passport_world():
+    """A full small campaign: snapshot, proposal, seal, freeze, approval, ONE exploratory post-seal release at the
+    falsifier's conditions and one confirmatory release, the verdicts applied, a Red Team envelope attested, a credibility
+    report; then the campaign is RESUMED from the ledger reopened against the operator's anchor."""
+    from engcore.blindfold.expression import structure_digest as sd
+    from engcore.claims.attestation import attest_receipt, attest_record
+    from engcore.claims.credibility_vector import ClaimNode, DecisionRequirement, Factor, FactorClaim, RiskClass, assess_credibility
+    from engcore.claims.novelty import Canonicalizer, PriorArtEntry, PriorArtSnapshot
+    from engcore.claims.redteam import AttackDimension, AttackKind, AttackPlan, AttackSpace, ClaimSubject, Route, RouteResult, Sense, run_red_team
+    from engcore.credibility.evidence_graph import EvidenceAuthority, EvidenceGraph, EvidenceNode
+    from tests.authority_helpers import receipt_for
+    rows = {**ROWS, "e2": {"value": 5.18, "uncertainty": 0.01, "conditions": {"x": 2.0}, "salt": os.urandom(16).hex()}}
+    from engcore.claims.novelty import register_canonicalizer
+    register_canonicalizer("prereg-test.structure/1", sd)
+    canon = Canonicalizer.resolve("prereg-test.structure/1")
+    snap = PriorArtSnapshot("laws/1", ("equation",), (PriorArtEntry("other", sd(mul(c(1.0), v("x"))), "doi:x"),), ("corpus",), "manual",
+                            "prereg-test.structure/1")
+    s = Setup(snapshot=snap)
+    s.manifest = DatasetManifest("ds2", "1", "test", "one row per checkpoint", {"exploratory": ["e1", "e2"], "confirmatory": ["c1", "c2"]},
+                                 row_commitments={r: commit_row("ds2", r, rows[r], bytes.fromhex(rows[r]["salt"])) for r in rows})
+    register_manifest(s.camp, s.led, s.keys.signer("exposure"), "exposure", s.manifest)
+    s.gate = ExposureGate(s.camp, s.led, manifest=s.manifest, rows=rows.__getitem__, observable="y", unit="m")
+    s.camp.record_proposal(s.hs[0])
+    s.ready()
+    s.gate.exploratory("e2")                                     # AFTER the seal, at the falsifier's conditions: exploratory
+    s.gate.confirmatory("c1", preregistration=s.prereg)
+    judged = s.camp.apply_verdicts(s.hs[0])
+    space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
+    env = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 10.0, (Route("a", "f", 1, lambda p: RouteResult(5.0)),
+                                                                              Route("b", "g", 2, lambda p: RouteResult(5.0))), "a"),
+                       space, AttackPlan(space.digest, 50, "s"))
+    out = hashlib.sha256(b"prediction").hexdigest()
+    rec = attest_receipt(s.led, s.keys.signer("exec"), "exec", receipt_for(out, node_id="pred"), context_digest=CTX)
+    attest_record(s.led, s.keys.signer("rt"), "rt", env, receipt=rec, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
+    anchor = s.led.anchor()
+    opened = AuthorityLedger.open(s.store, anchor=anchor)
+    cred = assess_credibility(ClaimNode("c", (FactorClaim(Factor.VERIFICATION, 1, ("n0",), "numerically_converged"),), subject_id="r"),
+                              EvidenceGraph((EvidenceNode("r", EvidenceAuthority.SIMULATION, out, "s", applicability=CTX),
+                                             EvidenceNode("n0", EvidenceAuthority.SIMULATION, "1" * 64, "s2", applicability=CTX)), ()),
+                              DecisionRequirement("d", CTX, RiskClass.LOW), authority=opened, trust_anchor=anchor, allow_test_profile=True)
+    s.camp.close()
+    camp = DurableCampaign.resume(opened, s.keys, issuer_id="exposure", campaign_id="c", expected_anchor=anchor)
+    return s, camp, anchor, judged, env, cred, snap, canon
+
+
+def _honest(camp, judged, env, cred, anchor, canon, snap):
+    from engcore.claims.credibility_vector import record_digest
+    from engcore.claims.novelty import check_novelty
+    d = verify_discipline(None, camp)
+    f = camp.registry.sealed_for(judged.hypothesis_id, judged.content_digest)[0]
+    vs = [v for v in camp.registry.verdicts_for(judged.hypothesis_id, judged.content_digest) if v.falsifier_digest == f.digest]
+    return DiscoveryPassport(
+        "p", "confirmatory",
+        {"hypothesis_id": judged.hypothesis_id, "content_digest": judged.content_digest, "status": judged.status.value,
+         "novelty_status": check_novelty(judged, snap, camp.novelty, canonicalizer=canon).status.value},
+        {"discipline": d["status"], "discipline_issues": d["issues"]},
+        ({"ref": f.ref, "digest": f.digest, "verdicts": sorted(v.verdict.value for v in vs),
+          "confirmatory_verdicts": sorted(v.verdict.value for v in vs if v.evidence_id in d["confirmatory_evidence_ids"])},),
+        credibility={"report_digest": cred.digest, "requirement_met": cred.requirement_met, "issuer_bound": cred.issuer_bound,
+                     "test_mode": cred.test_mode},
+        adversarial={"envelope_digest": record_digest(env), "outcome": env.outcome.value},
+        authority_anchor=anchor.to_dict(), verdict_limits=STANDARD_LIMITS)
+
+
+def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():                      # combined review H-1, H-2
+    s, camp, anchor, judged, env, cred, snap, canon = _passport_world()
+    honest = _honest(camp, judged, env, cred, anchor, canon, snap)
+    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility": cred, "envelope": env, "snapshot": snap, "canonicalizer": canon}
+    assert verify_passport(honest, camp, **kw) == []
+    f = honest.falsifiers[0]
+    assert sorted(f["verdicts"]) == ["not_refuted", "not_refuted"] and f["confirmatory_verdicts"] == ["not_refuted"]
+    import dataclasses
+    lies = {
+        "status": dataclasses.replace(honest, hypothesis={**honest.hypothesis, "status": "refuted"}),
+        "novelty": dataclasses.replace(honest, hypothesis={**honest.hypothesis, "novelty_status": "possibly_novel"}),
+        "credibility": dataclasses.replace(honest, credibility={**honest.credibility, "requirement_met": True, "test_mode": False}),
+        "adversarial": dataclasses.replace(honest, adversarial={**honest.adversarial, "outcome": "falsified"}),
+        "falsifier": dataclasses.replace(honest, falsifiers=({**f, "confirmatory_verdicts": ["not_refuted", "not_refuted"]},)),
+        "authority anchor": dataclasses.replace(honest, authority_anchor={**anchor.to_dict(), "profile": "production"}),
+        "discipline": dataclasses.replace(honest, protocol={"discipline": "CONFIRMATORY", "discipline_issues": ["hidden"]}),
+    }
+    for name, lie in lies.items():
+        assert any(p.startswith(name) for p in verify_passport(lie, camp, **kw)), name
+    stranger = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prereg", profile="test", root=EphemeralKeyProvider().signer("r"))
+    assert verify_passport(honest, camp, **{**kw, "trust_anchor": stranger.anchor()})[0].startswith("authority")
+
+
+def test_a_released_value_is_re_checked_against_its_commitment_from_the_journal():                 # combined review H-3
     s = Setup()
     s.ready()
-    s.gate.confirmatory("c1", preregistration=s.prereg)
-    f = falsifier(s.hs[0])
-    v = s.camp.judge(f.digest, "ds/c1")
-    true_d = s.discipline()
-    honest = DiscoveryPassport("p", "confirmatory", {"hypothesis_id": "h1", "content_digest": s.hs[0].content_digest},
-                               {"discipline": true_d["status"], "discipline_issues": true_d["issues"]},
-                               ({"ref": f.ref, "digest": f.digest, "verdicts": [v.to_dict()["verdict"]]},),
-                               authority_anchor=s.led.anchor().to_dict(), verdict_limits=STANDARD_LIMITS)
-    assert verify_passport(honest, s.led, s.camp) == []
-    lying = DiscoveryPassport("p", "confirmatory", {"hypothesis_id": "h1", "content_digest": s.hs[0].content_digest},
-                              {"discipline": "CONFIRMATORY", "discipline_issues": ["hidden"]},
-                              ({"ref": f.ref, "digest": f.digest, "verdicts": ["not_refuted", "not_refuted"]},),
-                              authority_anchor={**s.led.anchor().to_dict(), "head": "0" * 64}, verdict_limits=STANDARD_LIMITS)
-    problems = verify_passport(lying, s.led, s.camp)
-    assert any(p.startswith("discipline") for p in problems) and any(p.startswith("authority anchor") for p in problems)
-    assert any(p.startswith("falsifier") for p in problems)
-    with pytest.raises(AuthorityRefused):                           # an unregistered approver never reaches the ledger
-        approve_confirmatory(s.led, EphemeralKeyProvider().signer("x"), "x", campaign_id="c", context_digest=CTX,
-                             preregistration_digest=s.prereg.digest, manifest_digest=s.manifest.digest, note="n")
+    s.release_around(partition="confirmatory")                     # around the gate: no opening of the commitment
+    assert any("carries no opening" in i for i in s.discipline()["issues"])
+    s2 = Setup()
+    s2.ready()
+    s2.camp.release(evidence_id="ds/c1", source="measurement_record", observable="y", unit="m", value=99.0, uncertainty=0.01,
+                    conditions={"x": 2.0, "partition": "confirmatory"}, opening={"dataset_id": "ds", "row_id": "c1", "salt": ROWS["c1"]["salt"]})
+    assert any("does not open its manifest commitment" in i for i in s2.discipline()["issues"])
+    s3 = Setup()
+    s3.ready()
+    s3.gate.confirmatory("c1", preregistration=s3.prereg)          # the honest path re-checks clean
+    assert s3.discipline()["issues"] == []
+
+
+def test_counts_without_n_and_compromised_or_foreign_records_are_not_trusted():                    # M-2, M-3, M-4
+    s = Setup(multiplicity_budget={"max_generated_hypotheses": 2, "max_admitted_hypotheses": 2, "confirmatory_query_budget": 4})
+    s.freeze()
+    for _ in range(5):
+        s.camp.count("count", "generated")                          # the default n is 1
+    assert any("generated 5" in i for i in s.discipline()["issues"])
+    s2 = Setup()
+    s2.freeze()
+    approval = s2.approve()
+    s2.seal_all()
+    s2.led.declare_compromise(s2.root, "owner", approval.key_id, compromised_from=approval.sequence, reason="key stolen")
+    with pytest.raises(ExposureRefused, match="OWNER approval"):   # a forged approval from a compromise window counts for nothing
+        s2.gate.confirmatory("c1", preregistration=s2.prereg)
+    other = Setup()
+    with pytest.raises(ExposureRefused, match="campaign's own authority ledger"):
+        ExposureGate(s2.camp, other.led, manifest=s2.manifest, rows=ROWS.__getitem__, observable="y", unit="m")
+    with pytest.raises(ExposureRefused, match="campaign's own authority ledger"):
+        verify_discipline(other.led, s2.camp)

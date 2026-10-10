@@ -203,7 +203,8 @@ def hypothesis_registry_digest(hs: tuple[Hypothesis, ...]) -> str:
 # ---------------------------------------------------------------------------- the real-campaign pre-registration (DRAFT)
 
 
-def _sections(hs: tuple[Hypothesis, ...], *, exploratory: Mapping[str, Any], confirmatory: Mapping[str, Any]) -> dict[str, Any]:
+def _sections(hs: tuple[Hypothesis, ...], *, exploratory: Mapping[str, Any], confirmatory: Mapping[str, Any],
+              declared_observation_uncertainty: float | None = None) -> dict[str, Any]:
     return {
         "scientific_question": "Does a non-linear-in-throughput or non-monotone-in-temperature fade law predict capacity fade of "
                                "fresh, independently tested cells better than the throughput-linear Arrhenius law that was NOT MET?",
@@ -219,6 +220,9 @@ def _sections(hs: tuple[Hypothesis, ...], *, exploratory: Mapping[str, Any], con
         "falsification_criteria": {
             "criterion": "prediction_deviation", "k": FALSIFIER_K,
             "resolution": dict(RESOLUTION_RULE),
+            # u_obs: the measurement uncertainty the DATA AUTHORITY declares for the confirmatory instrument at designation
+            # (null until then: no falsifier can be checked against the rule, verify_discipline says so)
+            "declared_observation_uncertainty": declared_observation_uncertainty,
             "rule": "resolution = min(relative_cap |predicted|, max(uncertainty_multiplier k sqrt(u_pred^2 + u_obs^2), "
                     "absolute_floor)); a falsifier is sealed only where k sqrt(u_pred^2 + u_obs^2) <= resolution, otherwise "
                     "it is declared untestable WITH the rule inputs (re-checked by verify_discipline)",
@@ -306,6 +310,7 @@ def _truth(theta: np.ndarray, q: float, T: float) -> float:
     return float(evaluate(HYPOTHESES[1][2](theta), {"q": q, "T": T}))
 
 
+SYNTH_U_OBS = 0.0015                                          # the synthetic instrument's declared measurement uncertainty
 SYNTH_TRUTH = np.array([4e-5, 6000.0, 2e-6, 9000.0])          # a two-mechanism law, unknown to every proposer
 
 
@@ -319,13 +324,13 @@ def synthetic_dataset(seed: int = 11) -> tuple[Any, dict[str, dict[str, Any]]]:
     for temp in (10.0, 25.0, 40.0):
         for q in (100.0, 200.0, 400.0, 600.0, 800.0):
             rid = f"cc-{int(temp)}C-{int(q)}Ah"
-            rows[rid] = {"value": _truth(SYNTH_TRUTH, q, temp + 273.15) + rng.gauss(0, 0.0015), "uncertainty": 0.0015,
+            rows[rid] = {"value": _truth(SYNTH_TRUTH, q, temp + 273.15) + rng.gauss(0, SYNTH_U_OBS), "uncertainty": SYNTH_U_OBS,
                          "conditions": {"profile": "constant_current", "temperature_C": temp, "throughput_Ah": q}}
             expl.append(rid)
     for temp in (15.0, 32.0):
         for q in (500.0, 900.0):
             rid = f"dc-{int(temp)}C-{int(q)}Ah"
-            rows[rid] = {"value": _truth(SYNTH_TRUTH, q, temp + 273.15) + rng.gauss(0, 0.0015), "uncertainty": 0.0015,
+            rows[rid] = {"value": _truth(SYNTH_TRUTH, q, temp + 273.15) + rng.gauss(0, SYNTH_U_OBS), "uncertainty": SYNTH_U_OBS,
                          "conditions": {"profile": "drive_cycle", "temperature_C": temp, "throughput_Ah": q}}
             conf.append(rid)
     dataset_id = "synthetic-battery-dry-run"
@@ -353,9 +358,10 @@ def _fit(build: Callable[[np.ndarray], dict], params, data: list[tuple[float, ..
     return sol.x * scale, float(np.sqrt(np.mean(r ** 2)))
 
 
-def _computation_receipt(output_digest: str, node_id: str, data: list) -> Any:
+def _computation_receipt(output_digest: str, node_id: str, data: list, *, output: str = "prediction") -> Any:
     """The dry-run harness's OWN execution record of a fit (it is the executor: an EXECUTOR-role issuer attests it).
-    Inputs are the digest of the exploratory data the fit consumed; the single output is the prediction's digest."""
+    Inputs are the digest of the exploratory data the fit consumed; the single output (``output``) is the digest of what
+    the fit produced (the prediction, or an abstention's rule inputs)."""
     from engcore.execution.orchestration.resources import ResourceUsage
     from engcore.system_runtime.records import NodeReceipt, NodeStatus
 
@@ -364,7 +370,7 @@ def _computation_receipt(output_digest: str, node_id: str, data: list) -> Any:
     inputs = h([[float(a) for a in row] for row in data])
     return NodeReceipt(node_id, NodeStatus.SUCCEEDED, h("battery-dry-run plan"), h("battery-dry-run request"), h(node_id),
                        h("battery_blind._fit/least_squares"), h([node_id, inputs]), (("exploratory_data", inputs),),
-                       (("prediction", output_digest),), (), (), (), h("state-before"), h("state-after"), ResourceUsage(), "", (), 1)
+                       ((output, output_digest),), (), (), (), h("state-before"), h("state-after"), ResourceUsage(), "", (), 1)
 
 
 def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
@@ -394,6 +400,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         approve_confirmatory,
         declare_untestable,
         register_manifest,
+        rule_inputs_digest,
         rule_resolution,
         structured_rule,
         verify_discipline,
@@ -467,7 +474,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     prereg = Preregistration("battery-blind-dry-run", 1, _sections(tuple(hs.values()), exploratory={
         "dataset": manifest.dataset_id, "partition": "exploratory", "manifest_digest": manifest.digest},
         confirmatory={"dataset": manifest.dataset_id, "partition": "confirmatory", "manifest_digest": manifest.digest,
-                      "identity": "synthetic (dry run)"}))
+                      "identity": "synthetic (dry run)"}, declared_observation_uncertainty=SYNTH_U_OBS))
     freeze(led, keys.signer("exposure"), "exposure", prereg, campaign_id=camp.campaign_id, context_digest=ctx)
     gate = ExposureGate(camp, led, manifest=manifest, rows=rows.__getitem__, observable=OBSERVABLE, unit=UNIT)
     del rows                                                       # from here on the proposer side holds no row
@@ -514,11 +521,14 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         d.candidate_key == p.candidate_key and d.outcome is ScreeningOutcome.PROMOTE for d in decisions)]
     z_best = min(promoted_z or zs, key=lambda z: fit_z(z, data))
     # --- fit every hypothesis on exploratory data; seal falsifiers at the confirmatory conditions
-    # the observation uncertainty used to size the resolution is the one RELEASED with the exploratory data (same instrument,
-    # stated in the pre-registration); confirmatory rows are never read here.  A larger confirmatory uncertainty at release
-    # makes the verdict INCONCLUSIVE, never a pass.
-    u_obs_declared = max(u for *_x, u in data)
+    # the observation uncertainty that sizes the resolution is the one the pre-registration DECLARES for the instrument
+    # (confirmatory rows are never read here); a larger uncertainty at release makes the verdict INCONCLUSIVE, never a pass
     rule = structured_rule(prereg)
+    u_obs_declared = float(rule["declared_observation_uncertainty"])
+
+    def fit_receipt(hid: str, inputs: tuple) -> Any:              # the executor attests the abstention's rule inputs
+        return attest_receipt(led, keys.signer("exec"), "exec", _computation_receipt(rule_inputs_digest(inputs), f"abstain-{hid}-"
+                              f"{len(inputs)}-{rule_inputs_digest(inputs)[:8]}", data, output="rule_inputs"), context_digest=ctx)
     fitted: dict[str, tuple[np.ndarray, float, dict]] = {}
     sealed_refs = {}
     for hid, statement, build, params, _note in HYPOTHESES:
@@ -549,7 +559,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         if refs:
             for ref, rin in dropped:                               # per-condition abstention, with the rule inputs
                 declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
-                                   falsifier_ref=ref, rule_inputs=(rin,),
+                                   falsifier_ref=ref, rule_inputs=(rin,), fit_receipt=fit_receipt(hid, (rin,)),
                                    reason="the pre-registered rule reaches no resolution at this condition")
         listed = tuple(r["ref"] for r in refs)
         if refs and listed != hs[hid].falsifier_refs:              # some planned falsifiers could not reach the resolution:
@@ -558,6 +568,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         if not refs:                                               # abstain BEFORE exposure, with the reason -- never dropped
             declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
                                rule_inputs=tuple(rin for _ref, rin in dropped),
+                               fit_receipt=fit_receipt(hid, tuple(rin for _ref, rin in dropped)),
                                reason=f"exploratory fit RMS {rms:.4g}: k*sqrt(u_pred^2+u_obs^2) exceeds every resolution the "
                                       "pre-registered rule allows at the confirmatory conditions")
     for hid in hs:
@@ -612,8 +623,12 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
             {"preregistration_digest": prereg.digest, "preregistration_revision": prereg.revision, "manifest_digest": manifest.digest,
              "discipline": discipline["status"], "discipline_issues": discipline["issues"],
              "untestable": [u for u in discipline["untestable"] if u["hypothesis_id"] == hid]},
-            tuple({**r, "verdicts": [x.to_dict()["verdict"] for x in camp.registry.verdicts_for(hid, h.content_digest)
-                                     if x.falsifier_digest == r["digest"]]} for r in sealed_refs[hid]),
+            tuple({**r, "verdicts": [x.verdict.value for x in camp.registry.verdicts_for(hid, h.content_digest)
+                                     if x.falsifier_digest == r["digest"]],
+                   "confirmatory_verdicts": [x.verdict.value for x in camp.registry.verdicts_for(hid, h.content_digest)
+                                             if x.falsifier_digest == r["digest"]
+                                             and x.evidence_id in discipline["confirmatory_evidence_ids"]]}
+                  for r in sealed_refs[hid]),
             {"final_context_digest": final.digest, "family_size": final.family_size, "selected_from": final.selected_from},
             {"link": link.link_id, "link_status": link.status.value, "screened": len(decisions),
              "eliminated": sum(d.outcome is ScreeningOutcome.ELIMINATE for d in decisions), "z_selected": z_best,

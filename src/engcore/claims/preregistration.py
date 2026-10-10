@@ -34,7 +34,8 @@ REQUIRED_SECTIONS = (
     "success_criteria", "negative_result_rule",
 )
 #: keys that would carry confirmatory TRUTH: a pre-registration names the confirmatory dataset, never its contents
-FORBIDDEN_CONFIRMATORY_KEYS = frozenset({"values", "observations", "outcomes", "data", "rows", "measurements", "results", "truth"})
+FORBIDDEN_CONFIRMATORY_KEYS = frozenset({"values", "observations", "outcomes", "data", "rows", "measurements", "results", "truth",
+                                         "value", "observation", "outcome", "measurement", "result", "holdout"})
 MULTIPLICITY_KEYS = ("max_generated_hypotheses", "max_admitted_hypotheses", "confirmatory_query_budget")
 #: the ONLY keys a confirmatory-dataset section may carry (identity and requirements, never content); values are
 #: strings, null or lists of strings -- a number under it is refused
@@ -158,7 +159,7 @@ def freeze(ledger: AuthorityLedger, signer: Signer, issuer_id: str, prereg: Prer
     if not isinstance(prereg, Preregistration):
         raise PreregistrationRefused("only a Preregistration is frozen")
     again = Preregistration.from_dict(prereg.to_dict())
-    prior = frozen_revisions(ledger, campaign_id, issuer_id=issuer_id)
+    prior = frozen_revisions(ledger, campaign_id, issuer_id=issuer_id, context_digest=context_digest)
     if prior and (again.revision != prior[-1][1].revision + 1 or again.parent_digest != prior[-1][1].digest):
         raise PreregistrationRefused("a frozen revision extends the campaign's latest frozen revision")
     if not prior and again.revision != 1:
@@ -168,12 +169,17 @@ def freeze(ledger: AuthorityLedger, signer: Signer, issuer_id: str, prereg: Prer
                                                         Role.EXPOSURE))
 
 
-def frozen_revisions(ledger: AuthorityLedger, campaign_id: str, *, issuer_id: str) -> tuple[tuple[int, Preregistration], ...]:
+def frozen_revisions(ledger: AuthorityLedger, campaign_id: str, *, issuer_id: str,
+                     context_digest: str | None = None) -> tuple[tuple[int, Preregistration], ...]:
     """Every revision the campaign's EXPOSURE issuer froze, as (ledger sequence, record), re-read and chain-checked
-    (revision n+1 names revision n's digest).  Records by any other issuer are not this campaign's pre-registration."""
+    (revision n+1 names revision n's digest).  Records by any other issuer, in another context (when given) or signed
+    inside a declared compromise window of the issuer's key are not this campaign's pre-registration."""
     out: list[tuple[int, Preregistration]] = []
     for r in ledger.attestations(record_kind=PREREG_KIND, subject_digest=campaign_subject(campaign_id)):
         if r.issuer_id != issuer_id or r.attestation.role is not Role.EXPOSURE or r.attestation.record.get("campaign_id") != campaign_id:
+            continue
+        if (context_digest is not None and r.attestation.context_digest != context_digest) \
+                or ledger.compromised_at(r.issuer_id, r.key_id, r.sequence):
             continue
         p = Preregistration.from_dict(r.attestation.record_dict()["preregistration"])
         if p.digest != r.attestation.record.get("digest"):

@@ -231,3 +231,14 @@ def test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign(tmp_path):  
                                                                         "heads": {}}, campaign_subject("bat-1"), CTX, Role.EXPOSURE))
     with pytest.raises(CampaignRefused, match="2 EXPOSURE start entries"):
         DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=led.anchor())
+
+
+def test_a_journal_signed_in_a_compromise_window_cannot_be_resumed(tmp_path):                     # combined review M-3
+    keys, led, camp, *_ = run_campaign(tmp_path)
+    anchor = camp.anchor
+    first = led.attestations(record_kind="campaign_op")[0]
+    camp.close()
+    led.declare_compromise(keys.signer("root"), "exposure", first.key_id, compromised_from=first.sequence + 3, reason="stolen")
+    with pytest.raises(CampaignRefused, match="compromise window"):
+        DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=led.anchor())
+    assert anchor is not None
