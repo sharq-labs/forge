@@ -500,9 +500,12 @@ def _measured_report():
     skips = [(row["classname"], row["name"], row["type"], row["message"],
               f"/home/runner/checkout/{row['location']}: {row['message']}") for row in measured["skips"]]
     statuses_by_pid = measured["provider_statuses"]
+    # Providers declared AFTER the d5d886f9 measurement (Big Rocks: chrono, openvsp, openradioss) have no measured
+    # status. They are UNKNOWN -- which never admits a skip -- and the historical file is not rewritten.
+    later = {"status": sa.UNKNOWN, "detail": "provider declared after the d5d886f9 measurement"}
     document = fx.availability_document(
         "Python 3.11.13", sa.DEFAULT_POLICY,
-        status=lambda pid: statuses_by_pid[pid]["status"], detail=lambda pid: statuses_by_pid[pid]["detail"])
+        status=lambda pid: statuses_by_pid.get(pid, later)["status"], detail=lambda pid: statuses_by_pid.get(pid, later)["detail"])
     statuses, problems = sa.availability_statuses(document)
     assert problems == []
     return _junit(*skips, passed=9133), statuses

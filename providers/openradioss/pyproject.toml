@@ -1,0 +1,10 @@
+[project]
+name = "forge-openradioss-provider"
+version = "0.1.0"
+description = "OpenRadioss explicit-dynamics provider for Forge (crafty), process-based. Computes; holds no scientific authority."
+requires-python = ">=3.10"
+# starter/engine executables come from an OpenRadioss release; they are not Python dependencies.
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_openradioss"]

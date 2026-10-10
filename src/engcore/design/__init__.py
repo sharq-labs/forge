@@ -47,7 +47,16 @@ from .memory import (
     reason_overlaps,
     verify_layer_a_attribution,
 )
+from .grammar import (
+    CompatibilityRule, ConstraintEvaluation, ConstraintOutcome, ConstraintStatus, DesignGrammar, RuleKind, evaluate_constraints,
+)
+from .hierarchy import ComponentDesignSpace, ComponentLineage, HierarchicalCandidate, HierarchicalDesignSpace, verify_component_lineage
+from .history import AttemptOutcome, DesignAttempt, DesignHistory, HistoryEntry
+from .multifidelity import (
+    FidelityLedger, FidelityObservation, FidelityOutcome, PromotionDecision, PromotionPolicy, Standing, standard_ladder,
+)
 from .population import DesignPopulation
+from .search import DiscoveryRun, RungEvaluator, candidate_key, run_discovery
 from .sampling import MixedVariableSampler
 from .space import DesignSpace, DesignSpaceReference
 from .successor_generation import (
@@ -63,6 +72,11 @@ from .successor_generation import (
 )
 
 __all__ = [
+    "AttemptOutcome", "CompatibilityRule", "ComponentDesignSpace", "ComponentLineage", "ConstraintEvaluation", "ConstraintOutcome",
+    "ConstraintStatus", "DesignAttempt", "DesignGrammar", "DesignHistory", "DiscoveryRun", "FidelityLedger", "FidelityObservation",
+    "FidelityOutcome", "HierarchicalCandidate", "HierarchicalDesignSpace", "HistoryEntry", "PromotionDecision", "PromotionPolicy",
+    "RuleKind", "RungEvaluator", "Standing", "candidate_key", "evaluate_constraints", "run_discovery", "standard_ladder",
+    "verify_component_lineage",
     "AssessmentContext",
     "GENERATION_BINDING_METADATA_KEY",
     "CandidateGenerationBatch",
