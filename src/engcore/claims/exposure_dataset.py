@@ -1,29 +1,43 @@
 """The dataset boundary of a confirmatory campaign: exploratory data is open, confirmatory data is RELEASED.
 
 A :class:`DatasetManifest` records a dataset's identity -- id, version, source, per-file digests (where available),
-the row/sample identity policy and the partition of row ids into ``exploratory`` and ``confirmatory`` -- and is
-registered into the authority ledger by the campaign's EXPOSURE issuer.  The confirmatory rows' VALUES are not in the
-manifest, not in a fixture and not in the proposer's reach: they live behind a ``rows`` provider held by the data
-authority, and :class:`ExposureGate` releases them one acquisition at a time, through the durable campaign's
-ExposureAuthority (so each release is on the authority clock, journaled and signed), and only when ALL hold:
+the row/sample identity policy, the partition of row ids into ``exploratory`` and ``confirmatory``, a salted
+COMMITMENT per row (:func:`commit_row`: the row's value, uncertainty and conditions under a salt the data authority
+keeps) and the public design CONDITIONS of rows (where a row will be measured -- never what was measured).  It is
+registered into the authority ledger by the campaign's owner (its EXPOSURE issuer); a later manifest may not move a
+registered row to the other partition.  The confirmatory rows' VALUES are not in the manifest, not in a fixture and
+not in the proposer's reach: they live behind a ``rows`` provider held by the data authority, and
+:class:`ExposureGate` releases them one acquisition at a time, through the durable campaign's ExposureAuthority (so
+each release is on the authority clock, journaled and signed), each one checked against its row commitment, and only
+when ALL hold:
 
 * the manifest is registered and the pre-registration is FROZEN for the campaign;
-* the OWNER (an OWNER-role issuer, not the campaign operator) has attested approval of exactly that pre-registration
-  and manifest;
-* every pre-registered hypothesis has at least one sealed falsifier, OR was declared UNTESTABLE (an EXPOSURE-signed
-  abstention, with its reason, e.g. its exploratory fit is too uncertain to reach the pre-registered resolution) --
-  before any confirmatory release; an untestable hypothesis is reported, never quietly dropped and never scored.
+* an OWNER has attested approval of exactly that pre-registration and manifest, in the campaign's context; the owner
+  is not the campaign's issuer, holds no EXPOSURE role, and is not revoked when the data is released;
+* every pre-registered hypothesis has at least one sealed falsifier, OR was declared UNTESTABLE
+  (:func:`declare_untestable`: an EXPOSURE-signed abstention with its reason and the inputs of the pre-registered
+  resolution rule, refused when the rule would in fact reach a resolution or a falsifier is already sealed) -- before
+  any confirmatory release; an untestable hypothesis is reported, never quietly dropped and never scored.
 
-:func:`verify_discipline` re-derives, from the ledger alone, whether the campaign is still CONFIRMATORY: a
-confirmatory release before freeze / approval / sealing, a pre-registration revision or a falsifier sealed after the
-first confirmatory release, or a multiplicity budget exceeded each makes it EXPLORATORY, with the reason.  Calling the
-campaign's ``release`` directly around the gate is therefore detected, not trusted.
+:func:`verify_discipline` re-derives, from the LEDGER and the registered manifests (never from labels a caller wrote
+on a release), whether the campaign is CONFIRMATORY.  It classifies every journaled release by its manifest row, then
+re-checks the gate's conditions at the first confirmatory release (the revision in force, its approval, every
+pre-registered hypothesis covered), the sealed falsifiers against the pre-registered criteria, every untestable
+declaration against the rule, late revisions / seals / abstentions, and the multiplicity budget from the journal.
+Its status is ``CONFIRMATORY`` only when a frozen protocol exists, at least one confirmatory row was released and no
+issue was found; ``NOT_FROZEN`` / ``NO_CONFIRMATORY_RELEASE`` say that nothing confirmatory happened (never a pass);
+any issue makes it ``EXPLORATORY``, with the reasons.
+
+Residuals (stated): the data authority's ``rows`` provider is trusted to hold the salts (a commitment binds the row,
+it does not prove the measurement); inside one process the wrapped objects are reachable.
 """
 
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import math
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -33,16 +47,21 @@ from typing import Any
 from ..authority import Attestation, AttestationRecord, AuthorityLedger, Role, Signer
 from .durable_campaign import OP_KIND, DurableCampaign, campaign_subject
 from .falsification import EvidenceItem, EvidenceSource
-from .preregistration import Preregistration, frozen_revisions
+from .preregistration import (
+    FORBIDDEN_CONFIRMATORY_KEYS,
+    Preregistration,
+    frozen_revisions,
+)
 
-MANIFEST_SCHEMA = "engcore.claims.dataset_manifest/1"
+MANIFEST_SCHEMA = "engcore.claims.dataset_manifest/2"
 MANIFEST_KIND = "dataset_manifest"
 APPROVAL_KIND = "confirmatory_approval"
 APPROVAL_SCHEMA = "engcore.claims.confirmatory_approval/1"
 UNTESTABLE_KIND = "untestable_declaration"
-UNTESTABLE_SCHEMA = "engcore.claims.untestable_declaration/1"
+UNTESTABLE_SCHEMA = "engcore.claims.untestable_declaration/2"
 PARTITIONS = ("exploratory", "confirmatory")
 _HEX64 = re.compile(r"[0-9a-f]{64}")
+_ROW_FIELDS = ("value", "uncertainty", "conditions")
 
 
 class ExposureRefused(ValueError):
@@ -53,6 +72,15 @@ def _digest(payload: Any) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
 
+def commit_row(dataset_id: str, row_id: str, row: Mapping[str, Any], salt: bytes) -> str:
+    """The salted commitment to one row (value, uncertainty, conditions).  The salt stays with the data authority: a
+    low-entropy value under a plain hash could be brute-forced from the manifest."""
+    if not isinstance(salt, (bytes, bytearray)) or len(salt) < 16:
+        raise ExposureRefused("a row commitment is salted with at least 16 random bytes")
+    body = json.dumps({k: row.get(k) for k in _ROW_FIELDS}, sort_keys=True, separators=(",", ":"), allow_nan=False, default=str)
+    return hmac.new(bytes(salt), f"forge.dataset.row/1\n{dataset_id}\n{row_id}\n{body}".encode(), hashlib.sha256).hexdigest()
+
+
 @dataclass(frozen=True)
 class DatasetManifest:
     dataset_id: str
@@ -61,6 +89,8 @@ class DatasetManifest:
     row_identity_policy: str
     partitions: Mapping[str, tuple[str, ...]] = field(hash=False)
     files: Mapping[str, str | None] = field(hash=False, default_factory=dict)   # name -> sha256 (None: not available)
+    row_commitments: Mapping[str, str] = field(hash=False, default_factory=dict)  # row id -> commit_row(...)
+    conditions: Mapping[str, Mapping[str, Any]] = field(hash=False, default_factory=dict)   # row id -> design conditions
 
     def __post_init__(self) -> None:
         for label in ("dataset_id", "version", "source", "row_identity_policy"):
@@ -73,16 +103,37 @@ class DatasetManifest:
             raise ExposureRefused("a row is exploratory or confirmatory, never both")
         if any(len(set(v)) != len(v) for v in parts.values()):
             raise ExposureRefused("row ids are unique")
+        rows = set(parts["exploratory"]) | set(parts["confirmatory"])
         for name, d in dict(self.files).items():
             if d is not None and not _HEX64.fullmatch(str(d)):
                 raise ExposureRefused(f"file {name!r}: a digest is sha256 hex, or None when not available")
+        commits = {str(k): str(v) for k, v in dict(self.row_commitments).items()}
+        if set(commits) - rows or not all(_HEX64.fullmatch(v) for v in commits.values()):
+            raise ExposureRefused("row commitments are sha256 hex, for rows of this manifest")
+        conds = json.loads(json.dumps({str(k): dict(v) for k, v in dict(self.conditions).items()}, sort_keys=True, allow_nan=False))
+        if set(conds) - rows:
+            raise ExposureRefused("design conditions are stated for rows of this manifest")
+        leaked = {k.casefold() for c in conds.values() for k in c} & (FORBIDDEN_CONFIRMATORY_KEYS | {"value", "uncertainty"})
+        if leaked:
+            raise ExposureRefused(f"design conditions say where a row is measured, never what was measured: {sorted(leaked)}")
         object.__setattr__(self, "partitions", MappingProxyType(parts))
         object.__setattr__(self, "files", MappingProxyType(dict(self.files)))
+        object.__setattr__(self, "row_commitments", MappingProxyType(commits))
+        object.__setattr__(self, "conditions", MappingProxyType({k: MappingProxyType(v) for k, v in conds.items()}))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": MANIFEST_SCHEMA, "dataset_id": self.dataset_id, "version": self.version, "source": self.source,
                 "row_identity_policy": self.row_identity_policy,
-                "partitions": {k: list(v) for k, v in sorted(self.partitions.items())}, "files": dict(sorted(self.files.items()))}
+                "partitions": {k: list(v) for k, v in sorted(self.partitions.items())}, "files": dict(sorted(self.files.items())),
+                "row_commitments": dict(sorted(self.row_commitments.items())),
+                "conditions": {k: dict(v) for k, v in sorted(self.conditions.items())}}
+
+    @classmethod
+    def from_dict(cls, d: Mapping[str, Any]) -> DatasetManifest:
+        if d.get("schema") != MANIFEST_SCHEMA:
+            raise ExposureRefused("not a dataset manifest record")
+        return cls(d["dataset_id"], d["version"], d["source"], d["row_identity_policy"], d["partitions"], d.get("files", {}),
+                   d.get("row_commitments", {}), d.get("conditions", {}))
 
     @property
     def digest(self) -> str:
@@ -94,9 +145,49 @@ class DatasetManifest:
                 return k
         raise ExposureRefused(f"row {row_id!r} is not in the dataset manifest")
 
+    def evidence_id(self, row_id: str) -> str:
+        return f"{self.dataset_id}/{row_id}"
+
+
+def _owner(campaign: DurableCampaign, issuer_id: str | None) -> str:
+    if issuer_id is not None and issuer_id != campaign.issuer_id:
+        raise ExposureRefused(f"campaign {campaign.campaign_id!r} is owned by {campaign.issuer_id!r}, not {issuer_id!r}")
+    return campaign.issuer_id
+
+
+def _manifests(ledger: AuthorityLedger, campaign: DurableCampaign) -> list[tuple[AttestationRecord, DatasetManifest]]:
+    out = []
+    for r in ledger.attestations(record_kind=MANIFEST_KIND, subject_digest=campaign_subject(campaign.campaign_id)):
+        if r.issuer_id != campaign.issuer_id or r.attestation.role is not Role.EXPOSURE:
+            continue
+        m = DatasetManifest.from_dict(r.attestation.record_dict()["manifest"])
+        if m.digest != r.attestation.record.get("digest"):
+            raise ExposureRefused(f"registered manifest at {r.sequence} does not rebuild to its digest")
+        out.append((r, m))
+    return out
+
+
+def _row_partitions(manifests: list[tuple[AttestationRecord | None, DatasetManifest]]) -> tuple[dict[str, tuple[str, int]], list[str]]:
+    """evidence id -> (partition, first registration sequence); conflicts are listed, never resolved quietly."""
+    rows: dict[str, tuple[str, int]] = {}
+    conflicts: list[str] = []
+    for r, m in manifests:
+        seq = r.sequence if r is not None else 1 << 62
+        for part, ids in m.partitions.items():
+            for rid in ids:
+                eid = m.evidence_id(rid)
+                if eid in rows and rows[eid][0] != part:
+                    conflicts.append(f"row {eid!r} is {rows[eid][0]} in one registered manifest and {part} in another")
+                rows.setdefault(eid, (part, seq))
+    return rows, conflicts
+
 
 def register_manifest(campaign: DurableCampaign, ledger: AuthorityLedger, signer: Signer, issuer_id: str,
                       manifest: DatasetManifest) -> AttestationRecord:
+    _owner(campaign, issuer_id)
+    _rows, conflicts = _row_partitions([*_manifests(ledger, campaign), (None, manifest)])
+    if conflicts:
+        raise ExposureRefused(f"a manifest never moves a registered row to the other partition: {conflicts[0]}")
     record = {"campaign_id": campaign.campaign_id, "manifest": manifest.to_dict(), "digest": manifest.digest}
     return ledger.attest(signer, issuer_id, Attestation(MANIFEST_KIND, MANIFEST_SCHEMA, record, campaign_subject(campaign.campaign_id),
                                                         campaign.context_digest, Role.EXPOSURE))
@@ -107,53 +198,134 @@ def approve_confirmatory(ledger: AuthorityLedger, owner: Signer, owner_issuer_id
     """The OWNER's approval to release confirmatory data for exactly this pre-registration and manifest."""
     if not str(note).strip():
         raise ExposureRefused("an approval states what was approved and why")
+    if ledger.role_at(owner_issuer_id, Role.EXPOSURE, ledger.length):
+        raise ExposureRefused("the approver holds an EXPOSURE role: a campaign operator never approves its own release")
     record = {"campaign_id": campaign_id, "preregistration_digest": preregistration_digest, "manifest_digest": manifest_digest,
               "note": str(note)}
     return ledger.attest(owner, owner_issuer_id, Attestation(APPROVAL_KIND, APPROVAL_SCHEMA, record, campaign_subject(campaign_id),
                                                              context_digest, Role.OWNER))
 
 
+def _approvals(ledger: AuthorityLedger, campaign: DurableCampaign, *, at: int) -> list[AttestationRecord]:
+    """Approvals that count at ledger sequence ``at``: OWNER-role, not the campaign's issuer, no EXPOSURE role when it
+    approved, still an unrevoked OWNER at ``at``, in the campaign's context."""
+    return [r for r in ledger.attestations(record_kind=APPROVAL_KIND, subject_digest=campaign_subject(campaign.campaign_id))
+            if r.attestation.role is Role.OWNER and r.issuer_id != campaign.issuer_id
+            and r.attestation.context_digest == campaign.context_digest and r.attestation.record.get("campaign_id") == campaign.campaign_id
+            and ledger.role_at(r.issuer_id, Role.OWNER, r.sequence) and ledger.role_at(r.issuer_id, Role.OWNER, at)
+            and not ledger.role_at(r.issuer_id, Role.EXPOSURE, r.sequence)]
+
+
+# ---------------------------------------------------------------------------- the pre-registered resolution rule
+
+
+def structured_rule(prereg: Preregistration) -> Mapping[str, Any] | None:
+    """The machine-readable falsification rule, when the pre-registration states one:
+    ``{"criterion", "k", "resolution": {"relative_cap", "uncertainty_multiplier", "absolute_floor"}}``."""
+    fc = prereg.sections.get("falsification_criteria")
+    if not isinstance(fc, Mapping) or not isinstance(fc.get("resolution"), Mapping):
+        return None
+    res = fc["resolution"]
+    if not all(isinstance(res.get(k), (int, float)) and not isinstance(res.get(k), bool)
+               for k in ("relative_cap", "uncertainty_multiplier", "absolute_floor")) or not isinstance(fc.get("k"), (int, float)):
+        return None
+    return fc
+
+
+def rule_resolution(rule: Mapping[str, Any], *, predicted: float, prediction_uncertainty: float,
+                    observation_uncertainty: float) -> tuple[float, float]:
+    """(resolution, k * combined uncertainty) under the pre-registered rule; testable iff resolution >= the second."""
+    res, k = rule["resolution"], float(rule["k"])
+    combined = math.sqrt(float(prediction_uncertainty) ** 2 + float(observation_uncertainty) ** 2)
+    resolution = min(float(res["relative_cap"]) * abs(float(predicted)),
+                     max(float(res["uncertainty_multiplier"]) * k * combined, float(res["absolute_floor"])))
+    return resolution, k * combined
+
+
+def _rule_fails_everywhere(rule: Mapping[str, Any], inputs: Any) -> tuple[bool, str]:
+    if not isinstance(inputs, (list, tuple)) or not inputs:
+        return False, "it carries no inputs of the pre-registered rule"
+    for n, x in enumerate(inputs):
+        try:
+            resolution, ku = rule_resolution(rule, predicted=x["predicted"], prediction_uncertainty=x["prediction_uncertainty"],
+                                             observation_uncertainty=x["observation_uncertainty"])
+        except (KeyError, TypeError, ValueError):
+            return False, f"rule input {n} is malformed"
+        if resolution >= ku:
+            return False, f"the pre-registered rule REACHES a resolution at input {n} ({resolution:.4g} >= {ku:.4g})"
+    return True, ""
+
+
 def declare_untestable(campaign: DurableCampaign, ledger: AuthorityLedger, signer: Signer, issuer_id: str, *, hypothesis_id: str,
-                       content_digest: str, reason: str) -> AttestationRecord:
-    """Abstain from testing one pre-registered hypothesis, with the reason, BEFORE any confirmatory release."""
+                       content_digest: str, reason: str, rule_inputs: tuple[Mapping[str, float], ...] = (),
+                       falsifier_ref: str | None = None) -> AttestationRecord:
+    """Abstain, with the reason, from testing one pre-registered hypothesis (``falsifier_ref=None``) or one of its planned
+    falsifiers -- BEFORE any confirmatory release.  Refused for a hypothesis outside the latest frozen pre-registration,
+    for one that already has a sealed falsifier (or that planned falsifier sealed), and -- when the pre-registration
+    states a machine-readable rule -- unless ``rule_inputs`` show the rule fails at every condition."""
+    _owner(campaign, issuer_id)
     if not str(reason).strip():
         raise ExposureRefused("an untestable declaration states why")
-    record = {"campaign_id": campaign.campaign_id, "hypothesis_id": hypothesis_id, "content_digest": content_digest, "reason": str(reason)}
+    revs = frozen_revisions(ledger, campaign.campaign_id, issuer_id=campaign.issuer_id)
+    if not revs:
+        raise ExposureRefused("an abstention is declared against a FROZEN pre-registration")
+    prereg = revs[-1][1]
+    if (hypothesis_id, content_digest) not in {(h["hypothesis_id"], h["content_digest"]) for h in prereg.sections["hypothesis_set"]}:
+        raise ExposureRefused(f"{hypothesis_id!r} (this content) is not a pre-registered hypothesis")
+    sealed = campaign.registry.sealed_for(hypothesis_id, content_digest)
+    if falsifier_ref is None and sealed:
+        raise ExposureRefused(f"{hypothesis_id!r} already has sealed falsifiers: it is tested, not abstained from")
+    if falsifier_ref is not None and any(f.ref == falsifier_ref for f in sealed):
+        raise ExposureRefused(f"{falsifier_ref!r} is sealed: it is tested, not abstained from")
+    rule = structured_rule(prereg)
+    inputs = [dict(x) for x in rule_inputs]
+    if rule is not None:
+        ok, why = _rule_fails_everywhere(rule, inputs)
+        if not ok:
+            raise ExposureRefused(f"untestable is not a choice: {why}")
+    record = {"campaign_id": campaign.campaign_id, "hypothesis_id": hypothesis_id, "content_digest": content_digest, "reason": str(reason),
+              "falsifier_ref": falsifier_ref, "rule_inputs": inputs, "preregistration_digest": prereg.digest}
     return ledger.attest(signer, issuer_id, Attestation(UNTESTABLE_KIND, UNTESTABLE_SCHEMA, record, campaign_subject(campaign.campaign_id),
                                                         campaign.context_digest, Role.EXPOSURE))
 
 
-def _untestable(ledger: AuthorityLedger, campaign_id: str, issuer_id: str) -> list[AttestationRecord]:
-    return [r for r in ledger.attestations(record_kind=UNTESTABLE_KIND, subject_digest=campaign_subject(campaign_id))
-            if r.issuer_id == issuer_id and r.attestation.role is Role.EXPOSURE]
+def _untestable(ledger: AuthorityLedger, campaign: DurableCampaign) -> list[AttestationRecord]:
+    return [r for r in ledger.attestations(record_kind=UNTESTABLE_KIND, subject_digest=campaign_subject(campaign.campaign_id))
+            if r.issuer_id == campaign.issuer_id and r.attestation.role is Role.EXPOSURE
+            and r.attestation.context_digest == campaign.context_digest]
 
 
-def _manifests(ledger: AuthorityLedger, campaign_id: str, issuer_id: str) -> list[AttestationRecord]:
-    return [r for r in ledger.attestations(record_kind=MANIFEST_KIND, subject_digest=campaign_subject(campaign_id))
-            if r.issuer_id == issuer_id and r.attestation.role is Role.EXPOSURE]
-
-
-def _approvals(ledger: AuthorityLedger, campaign_id: str) -> list[AttestationRecord]:
-    return [r for r in ledger.attestations(record_kind=APPROVAL_KIND, subject_digest=campaign_subject(campaign_id))
-            if r.attestation.role is Role.OWNER and ledger.role_at(r.issuer_id, Role.OWNER, r.sequence)]
+def _whole(r: AttestationRecord) -> bool:
+    return r.attestation.record.get("falsifier_ref") is None
 
 
 class ExposureGate:
     """Exploratory rows on request; confirmatory rows only under the conditions in the module docstring."""
 
-    def __init__(self, campaign: DurableCampaign, ledger: AuthorityLedger, *, issuer_id: str, manifest: DatasetManifest,
-                 rows: Callable[[str], Mapping[str, Any]], observable: str, unit: str) -> None:
-        self._campaign, self._ledger, self._issuer = campaign, ledger, issuer_id
+    def __init__(self, campaign: DurableCampaign, ledger: AuthorityLedger, *, manifest: DatasetManifest,
+                 rows: Callable[[str], Mapping[str, Any]], observable: str, unit: str, issuer_id: str | None = None) -> None:
+        _owner(campaign, issuer_id)
+        self._campaign, self._ledger = campaign, ledger
         self._manifest, self._rows = manifest, rows
         self._observable, self._unit = observable, unit
-        if not any(r.attestation.record.get("digest") == manifest.digest for r in _manifests(ledger, campaign.campaign_id, issuer_id)):
+        if not any(m.digest == manifest.digest for _r, m in _manifests(ledger, campaign)):
             raise ExposureRefused("the dataset manifest is not registered for this campaign")
 
     def _release(self, row_id: str, partition: str) -> EvidenceItem:
         row = dict(self._rows(row_id))
+        commitment = self._manifest.row_commitments.get(row_id)
+        if commitment is None and partition == "confirmatory":
+            raise ExposureRefused(f"confirmatory row {row_id!r} has no commitment in the manifest: it cannot be checked at release")
+        if commitment is not None:
+            try:
+                got = commit_row(self._manifest.dataset_id, row_id, row, bytes.fromhex(str(row.get("salt"))))
+            except (ValueError, TypeError):
+                got = ""
+            if not hmac.compare_digest(got, commitment):
+                raise ExposureRefused(f"row {row_id!r} does not match its manifest commitment (another row, or a changed value)")
         conditions = {**dict(row.get("conditions", {})), "partition": partition, "dataset": self._manifest.dataset_id,
                       "dataset_version": self._manifest.version}
-        return self._campaign.release(evidence_id=f"{self._manifest.dataset_id}/{row_id}", source=EvidenceSource.MEASUREMENT_RECORD.value,
+        return self._campaign.release(evidence_id=self._manifest.evidence_id(row_id), source=EvidenceSource.MEASUREMENT_RECORD.value,
                                       observable=self._observable, unit=self._unit, value=float(row["value"]),
                                       uncertainty=None if row.get("uncertainty") is None else float(row["uncertainty"]),
                                       conditions=conditions)
@@ -166,16 +338,19 @@ class ExposureGate:
     def confirmatory(self, row_id: str, *, preregistration: Preregistration) -> EvidenceItem:
         if self._manifest.partition_of(row_id) != "confirmatory":
             raise ExposureRefused(f"row {row_id!r} is exploratory")
-        cid = self._campaign.campaign_id
-        revs = frozen_revisions(self._ledger, cid, issuer_id=self._issuer)
+        camp = self._campaign
+        if any(d is None for d in self._manifest.files.values()):
+            raise ExposureRefused("a manifest with an unavailable file digest is not released confirmatorily")
+        revs = frozen_revisions(self._ledger, camp.campaign_id, issuer_id=camp.issuer_id)
         if not revs or revs[-1][1].digest != preregistration.digest:
             raise ExposureRefused("the campaign's latest FROZEN pre-registration is not the one given: freeze it first")
         if not any(a.attestation.record.get("preregistration_digest") == preregistration.digest
-                   and a.attestation.record.get("manifest_digest") == self._manifest.digest for a in _approvals(self._ledger, cid)):
+                   and a.attestation.record.get("manifest_digest") == self._manifest.digest
+                   for a in _approvals(self._ledger, camp, at=self._ledger.length)):
             raise ExposureRefused("no OWNER approval of this pre-registration and manifest: confirmatory data stays sealed")
-        reg = self._campaign.registry
+        reg = camp.registry
         abstained = {(r.attestation.record["hypothesis_id"], r.attestation.record["content_digest"])
-                     for r in _untestable(self._ledger, cid, self._issuer)}
+                     for r in _untestable(self._ledger, camp) if _whole(r)}
         unsealed = [h for h in preregistration.sections["hypothesis_set"]
                     if not reg.sealed_for(h["hypothesis_id"], h["content_digest"])
                     and (h["hypothesis_id"], h["content_digest"]) not in abstained]
@@ -185,50 +360,115 @@ class ExposureGate:
         return self._release(row_id, "confirmatory")
 
 
-def verify_discipline(ledger: AuthorityLedger, campaign: DurableCampaign, *, issuer_id: str) -> dict[str, Any]:
-    """Re-derive, from the ledger alone, whether the campaign is still CONFIRMATORY (see the module docstring)."""
+def verify_discipline(ledger: AuthorityLedger, campaign: DurableCampaign, *, issuer_id: str | None = None) -> dict[str, Any]:
+    """Re-derive, from the ledger and the registered manifests alone, whether the campaign is CONFIRMATORY."""
+    _owner(campaign, issuer_id)
     cid = campaign.campaign_id
     issues: list[str] = []
     journal = [r for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(cid))
-               if r.issuer_id == issuer_id and r.attestation.role is Role.EXPOSURE]
-    conf = [r.sequence for r in journal if r.attestation.record.get("op") == "release"
-            and r.attestation.record["args"]["release"].get("conditions", {}).get("partition") == "confirmatory"]
-    seals = [r.sequence for r in journal if r.attestation.record.get("op") == "seal"]
-    revs = frozen_revisions(ledger, cid, issuer_id=issuer_id)
-    approvals = _approvals(ledger, cid)
-    first = min(conf) if conf else None
+               if r.issuer_id == campaign.issuer_id and r.attestation.role is Role.EXPOSURE
+               and r.attestation.context_digest == campaign.context_digest]
+    manifests = _manifests(ledger, campaign)
+    rows, conflicts = _row_partitions(list(manifests))
+    issues.extend(conflicts)
+    conf: list[tuple[int, str]] = []
+    for r in journal:
+        if r.attestation.record.get("op") != "release":
+            continue
+        rel = r.attestation.record_dict()["args"]["release"]
+        eid = str(rel.get("evidence_id"))
+        conds = rel.get("conditions")
+        label = conds.get("partition") if isinstance(conds, Mapping) else None
+        part, since = rows.get(eid, (None, None))
+        if part is None:
+            issues.append(f"release {eid!r} (ledger {r.sequence}) is no row of a registered manifest: its partition is unknown")
+            continue
+        if since > r.sequence:
+            issues.append(f"release {eid!r} (ledger {r.sequence}) happened before its manifest was registered")
+        if label is not None and label != part:
+            issues.append(f"release {eid!r} (ledger {r.sequence}) is labelled {label!r} but is a {part} row")
+        if part == "confirmatory":
+            conf.append((r.sequence, eid))
+    seals = [(r.sequence, r.attestation.record_dict()["args"]["falsifier"]) for r in journal if r.attestation.record.get("op") == "seal"]
+    revs = frozen_revisions(ledger, cid, issuer_id=campaign.issuer_id)
+    untestable = _untestable(ledger, campaign)
+    first = min(s for s, _e in conf) if conf else None
+    in_force = None
     if first is not None:
-        if not revs or revs[0][0] > first:
+        before = [p for s, p in revs if s < first]
+        in_force = before[-1] if before else None
+        if in_force is None:
             issues.append("confirmatory data was released before any pre-registration was frozen")
-        if not any(a.sequence < first for a in approvals):
-            issues.append("confirmatory data was released before the owner's approval")
-        if not seals or min(seals) > first:
-            issues.append("confirmatory data was released before any falsifier was sealed")
+        else:
+            approvals = [a for a in _approvals(ledger, campaign, at=first) if a.sequence < first
+                         and a.attestation.record.get("preregistration_digest") == in_force.digest]
+            approved = {a.attestation.record.get("manifest_digest") for a in approvals}
+            if not approvals:
+                issues.append("confirmatory data was released without an OWNER approval of the pre-registration in force")
+            for seq, eid in conf:
+                if not any(m.digest in approved and r.sequence < first and eid in {m.evidence_id(x) for x in m.partitions["confirmatory"]}
+                           for r, m in manifests):
+                    issues.append(f"confirmatory release {eid!r} (ledger {seq}) is in no manifest the owner approved")
+            covered = {(f["hypothesis_id"], f["hypothesis_content_digest"]) for s, f in seals if s < first}
+            covered |= {(u.attestation.record["hypothesis_id"], u.attestation.record["content_digest"]) for u in untestable
+                        if u.sequence < first and _whole(u)}
+            for h in in_force.sections["hypothesis_set"]:
+                if (h["hypothesis_id"], h["content_digest"]) not in covered:
+                    issues.append(f"pre-registered hypothesis {h['hypothesis_id']!r} had neither a sealed falsifier nor an untestable "
+                                  "declaration before the first confirmatory release (dropped without a record)")
         late_revs = [s for s, _p in revs if s > first]
         if late_revs:
             issues.append(f"the pre-registration was revised after confirmatory exposure (ledger {late_revs})")
-        late_abstentions = [r.sequence for r in _untestable(ledger, cid, issuer_id) if r.sequence > first]
+        late_abstentions = [r.sequence for r in untestable if r.sequence > first]
         if late_abstentions:
             issues.append(f"hypotheses were declared untestable after confirmatory exposure (ledger {late_abstentions})")
-        late_seals = [s for s in seals if s > first]
+        late_seals = [s for s, _f in seals if s > first]
         if late_seals:
             issues.append(f"falsifiers were sealed after confirmatory exposure (ledger {late_seals}): those test nothing confirmatory")
+    rule_rev = in_force or (revs[-1][1] if revs else None)
+    rule = structured_rule(rule_rev) if rule_rev is not None else None
+    if rule is not None:
+        for s, f in seals:
+            if f.get("criterion") != rule.get("criterion") or float(f.get("parameters", {}).get("k", -1)) != float(rule["k"]):
+                issues.append(f"falsifier {f.get('falsifier_id')!r} (ledger {s}) departs from the pre-registered criterion / k")
+        for u in untestable:
+            ok, why = _rule_fails_everywhere(rule, u.attestation.record_dict().get("rule_inputs"))
+            if not ok:
+                issues.append(f"untestable declaration for {u.attestation.record['hypothesis_id']!r} (ledger {u.sequence}): {why}")
+    counts = {"generated": 0, "admitted": 0}
+    registered: set[str] = set()
+    for r in journal:
+        op = r.attestation.record.get("op")
+        if op == "multiplicity":
+            args = r.attestation.record_dict()["args"]
+            if args.get("op") == "count" and len(args.get("args", [])) == 2 and args["args"][0] in counts:
+                counts[args["args"][0]] += int(args["args"][1])
+        elif op == "register":
+            registered.add(str(r.attestation.record_dict()["args"]["hypothesis"]["hypothesis_id"]))
     if revs:
-        budget = revs[-1][1].multiplicity_budget
-        counts = campaign.multiplicity._counts
+        budget_rev = in_force or revs[-1][1]
+        budget = budget_rev.multiplicity_budget
         if counts["generated"] > budget["max_generated_hypotheses"]:
             issues.append(f"generated {counts['generated']} > pre-registered max {budget['max_generated_hypotheses']}")
         if counts["admitted"] > budget["max_admitted_hypotheses"]:
             issues.append(f"admitted {counts['admitted']} > pre-registered max {budget['max_admitted_hypotheses']}")
+        if len(registered) > budget["max_admitted_hypotheses"]:
+            issues.append(f"{len(registered)} hypotheses registered > pre-registered max {budget['max_admitted_hypotheses']}")
         if len(conf) > budget["confirmatory_query_budget"]:
             issues.append(f"{len(conf)} confirmatory releases > pre-registered budget {budget['confirmatory_query_budget']}")
-    return {"status": "CONFIRMATORY" if not issues else "EXPLORATORY", "issues": issues,
-            "confirmatory_releases": len(conf), "first_confirmatory_sequence": first,
+        outside = sorted(registered - set(budget_rev.hypothesis_ids))
+        if outside and first is not None:
+            issues.append(f"hypotheses {outside} were registered but are not in the pre-registered set")
+    status = "EXPLORATORY" if issues else "NOT_FROZEN" if not revs else "NO_CONFIRMATORY_RELEASE" if first is None else "CONFIRMATORY"
+    return {"status": status, "issues": issues, "confirmatory_releases": len(conf), "first_confirmatory_sequence": first,
+            "preregistration_in_force": None if in_force is None else {"revision": in_force.revision, "digest": in_force.digest},
             "preregistration_revisions": [{"sequence": s, "revision": p.revision, "digest": p.digest} for s, p in revs],
-            "approvals": [a.sequence for a in approvals],
-            "untestable": [{"hypothesis_id": r.attestation.record["hypothesis_id"], "reason": r.attestation.record["reason"],
-                            "sequence": r.sequence} for r in _untestable(ledger, cid, issuer_id)]}
+            "approvals": [a.sequence for a in _approvals(ledger, campaign, at=ledger.length)],
+            "multiplicity_from_journal": {**counts, "registered": sorted(registered)},
+            "untestable": [{"hypothesis_id": r.attestation.record["hypothesis_id"], "falsifier_ref": r.attestation.record.get("falsifier_ref"),
+                            "reason": r.attestation.record["reason"], "sequence": r.sequence} for r in untestable]}
 
 
 __all__ = ["APPROVAL_KIND", "MANIFEST_KIND", "PARTITIONS", "UNTESTABLE_KIND", "DatasetManifest", "ExposureGate", "ExposureRefused",
-           "approve_confirmatory", "declare_untestable", "register_manifest", "verify_discipline"]
+           "approve_confirmatory", "commit_row", "declare_untestable", "register_manifest", "rule_resolution", "structured_rule",
+           "verify_discipline"]

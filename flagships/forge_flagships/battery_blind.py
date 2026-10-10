@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import random
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -35,9 +34,11 @@ from scipy.optimize import least_squares
 from engcore.blindfold.expression import add, c, evaluate, mul, pw, v
 from engcore.claims.novelty import (
     Canonicalizer,
+    EquivalenceSpec,
     PriorArtEntry,
     PriorArtSnapshot,
     register_canonicalizer,
+    register_evaluator,
 )
 from engcore.sria.decision import (
     Hypothesis,
@@ -48,6 +49,8 @@ from engcore.sria.decision import (
 )
 
 FAMILY_CANONICALIZER = "forge.battery.fade_family/1"
+FALSIFIER_K = 3.0
+RESOLUTION_RULE = {"relative_cap": 0.25, "uncertainty_multiplier": 1.2, "absolute_floor": 0.004}
 OBSERVABLE, UNIT = "capacity_fade_fraction", "1"
 T_REF = 298.15
 
@@ -79,7 +82,13 @@ def _canon(node: Mapping[str, Any]) -> Any:
             kids.extend(k[1] if isinstance(k, list) and k[:1] == [op] else [k])
         kids = [k for k in kids if k != "C"] + (["C"] if any(k == "C" for k in kids) else [])
         return [op, sorted(kids, key=lambda x: json.dumps(x, sort_keys=True))] if len(kids) > 1 else kids[0]
-    if op in ("exp", "log", "neg"):
+    if op == "exp":
+        inner = _canon(arg)
+        if isinstance(inner, list) and inner[:1] == ["add"] and "C" in inner[1]:
+            rest = [k for k in inner[1] if k != "C"]           # exp(f + C) = C' exp(f): the offset joins the coefficient
+            inner = rest[0] if len(rest) == 1 else ["add", rest]
+        return "C" if inner == "C" else [op, inner]
+    if op in ("log", "neg"):
         inner = _canon(arg)
         return "C" if inner == "C" else [op, inner]
     if op == "piecewise":
@@ -94,6 +103,20 @@ def fade_family_digest(expr: Mapping[str, Any]) -> str:
 
 register_canonicalizer(FAMILY_CANONICALIZER, fade_family_digest)
 CANONICALIZER = Canonicalizer.resolve(FAMILY_CANONICALIZER)
+FADE_EVALUATOR = "forge.battery.fade_eval/1"
+
+
+def _fade_eval(expr: Mapping[str, Any], point: Mapping[str, float]) -> float:
+    try:
+        return float(evaluate(expr, point))
+    except (ArithmeticError, KeyError, ValueError, TypeError):
+        return float("nan")                                     # undecidable at this probe: never "not equivalent"
+
+
+register_evaluator(FADE_EVALUATOR, _fade_eval)
+#: numeric equivalence (up to a constant factor) on probes inside the applicability box; t is the calendar time [h]
+EQUIVALENCE = EquivalenceSpec(FADE_EVALUATOR, _fade_eval, ({"q": 150.0, "T": 288.15, "t": 500.0}, {"q": 600.0, "T": 303.15, "t": 2000.0},
+                                                            {"q": 950.0, "T": 313.15, "t": 4000.0}), rel_tol=1e-6)
 
 
 # ---------------------------------------------------------------------------- prior art (frozen, NOT exhaustive)
@@ -117,14 +140,14 @@ PRIOR_ART_FAMILIES: tuple[tuple[str, dict, str], ...] = (
 
 
 def prior_art_snapshot() -> PriorArtSnapshot:
-    entries = tuple(PriorArtEntry(name, fade_family_digest(expr), ref) for name, expr, ref in PRIOR_ART_FAMILIES)
+    entries = tuple(PriorArtEntry(name, fade_family_digest(expr), ref, expr) for name, expr, ref in PRIOR_ART_FAMILIES)
     return PriorArtSnapshot(
         "battery-fade-laws/2026-10", ("equation",), entries,
         sources=("campaign designer's literature recall (citations NOT verified in this environment)",),
         coverage_criteria=("capacity-fade law FAMILIES (calendar / cycle / combined; Arrhenius, power-law, sqrt, two-mechanism, "
                            "exponential) known to the designer; NOT a systematic review, NOT exhaustive -- novelty against it is "
                            "POSSIBLY_NOVEL at most and must be re-checked against a systematic search before any novelty claim"),
-        canonicalizer_id=FAMILY_CANONICALIZER)
+        canonicalizer_id=FAMILY_CANONICALIZER, equivalence=EQUIVALENCE.to_dict())
 
 
 # ---------------------------------------------------------------------------- hypotheses
@@ -193,11 +216,18 @@ def _sections(hs: tuple[Hypothesis, ...], *, exploratory: Mapping[str, Any], con
                                  "profiles": ["constant-current cycling", "drive cycle"], "chemistry": "as the exploratory cells"},
         "exploratory_data": dict(exploratory),
         "confirmatory_dataset": dict(confirmatory),
-        "falsification_criteria": {"criterion": "prediction_deviation", "k": 3.0,
-                                   "resolution_rule": "min(0.25 |predicted|, max(1.2 k sqrt(u_pred^2 + u_obs_declared^2), 0.004)); a falsifier is sealed only where k sqrt(u_pred^2 + u_obs_declared^2) <= resolution, u_obs_declared being the measurement uncertainty the dataset authority DECLARES for the partition before release",
-                                   "prediction_uncertainty": "exploratory-fit residual RMS (parameter uncertainty NOT added: "
-                                                             "declared as a deviation risk)",
-                                   "observation_uncertainty": "the data authority's stated RPT uncertainty; UNKNOWN -> INCONCLUSIVE"},
+        "falsification_criteria": {
+            "criterion": "prediction_deviation", "k": FALSIFIER_K,
+            "resolution": dict(RESOLUTION_RULE),
+            "rule": "resolution = min(relative_cap |predicted|, max(uncertainty_multiplier k sqrt(u_pred^2 + u_obs^2), "
+                    "absolute_floor)); a falsifier is sealed only where k sqrt(u_pred^2 + u_obs^2) <= resolution, otherwise "
+                    "it is declared untestable WITH the rule inputs (re-checked by verify_discipline)",
+            "prediction_uncertainty": "exploratory-fit residual RMS (parameter uncertainty NOT added: declared as a deviation risk)",
+            "observation_uncertainty": "u_obs = the uncertainty RELEASED with the exploratory data (same instrument); a larger "
+                                       "confirmatory uncertainty at release makes the verdict INCONCLUSIVE; UNKNOWN -> INCONCLUSIVE",
+            "blind_spot": "with k = 3 and u_obs = 0.0015, a hypothesis predicting |fade| below about 0.018 at a condition "
+                          "cannot reach a resolution there (0.25 |p| < k u_obs): small predictions are untestable by this rule, "
+                          "stated before any exposure"},
         "uncertainty_treatment": "missing uncertainty stays UNKNOWN (inconclusive), never zero; model discrepancy is NOT quantified "
                                  "from a failed confirmatory test",
         "multiplicity_budget": {"max_generated_hypotheses": 16, "max_admitted_hypotheses": 4, "confirmatory_query_budget": 32},
@@ -282,7 +312,7 @@ SYNTH_TRUTH = np.array([4e-5, 6000.0, 2e-6, 9000.0])          # a two-mechanism 
 def synthetic_dataset(seed: int = 11) -> tuple[Any, dict[str, dict[str, Any]]]:
     """Battery-LIKE synthetic data (never a measurement): exploratory constant-current cells at 10/25/40 C, confirmatory
     drive-cycle cells at 15/32 C.  Returns (manifest, rows); rows are held by the data authority, not the proposer."""
-    from engcore.claims.exposure_dataset import DatasetManifest
+    from engcore.claims.exposure_dataset import DatasetManifest, commit_row
     rng = random.Random(seed)
     rows: dict[str, dict[str, Any]] = {}
     expl, conf = [], []
@@ -298,8 +328,14 @@ def synthetic_dataset(seed: int = 11) -> tuple[Any, dict[str, dict[str, Any]]]:
             rows[rid] = {"value": _truth(SYNTH_TRUTH, q, temp + 273.15) + rng.gauss(0, 0.0015), "uncertainty": 0.0015,
                          "conditions": {"profile": "drive_cycle", "temperature_C": temp, "throughput_Ah": q}}
             conf.append(rid)
-    manifest = DatasetManifest("synthetic-battery-dry-run", "1", f"engcore flagship synthetic generator (seed {seed})",
-                               "one row per (profile, temperature, throughput) checkpoint", {"exploratory": expl, "confirmatory": conf})
+    dataset_id = "synthetic-battery-dry-run"
+    salts = {rid: rng.getrandbits(128).to_bytes(16, "big") for rid in rows}      # held by the data authority with the rows
+    for rid, row in rows.items():
+        row["salt"] = salts[rid].hex()
+    manifest = DatasetManifest(dataset_id, "1", f"engcore flagship synthetic generator (seed {seed})",
+                               "one row per (profile, temperature, throughput) checkpoint", {"exploratory": expl, "confirmatory": conf},
+                               row_commitments={rid: commit_row(dataset_id, rid, row, salts[rid]) for rid, row in rows.items()},
+                               conditions={rid: row["conditions"] for rid, row in rows.items()})
     return manifest, rows
 
 
@@ -358,6 +394,8 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         approve_confirmatory,
         declare_untestable,
         register_manifest,
+        rule_resolution,
+        structured_rule,
         verify_discipline,
     )
     from engcore.claims.falsification import CriterionKind, EvidenceSource, Falsifier
@@ -415,7 +453,8 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     register_manifest(camp, led, keys.signer("exposure"), "exposure", manifest)
     snapshot = prior_art_snapshot()
     camp.seal_prior_art(snapshot)
-    conf_conditions = tuple(rows[r]["conditions"] for r in manifest.partitions["confirmatory"])
+    # the confirmatory DESIGN (where rows will be measured) is public in the manifest; the rows themselves go only to the gate
+    conf_conditions = tuple(dict(manifest.conditions[r]) for r in manifest.partitions["confirmatory"])
     hs = {h.hypothesis_id: h for h in hypothesis_set(tuple({"profile": cc["profile"], "temperature_C": cc["temperature_C"],
                                                              "throughput_Ah": cc["throughput_Ah"]} for cc in conf_conditions))}
     tickets = {}
@@ -430,7 +469,8 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         confirmatory={"dataset": manifest.dataset_id, "partition": "confirmatory", "manifest_digest": manifest.digest,
                       "identity": "synthetic (dry run)"}))
     freeze(led, keys.signer("exposure"), "exposure", prereg, campaign_id=camp.campaign_id, context_digest=ctx)
-    gate = ExposureGate(camp, led, issuer_id="exposure", manifest=manifest, rows=lambda rid: rows[rid], observable=OBSERVABLE, unit=UNIT)
+    gate = ExposureGate(camp, led, manifest=manifest, rows=rows.__getitem__, observable=OBSERVABLE, unit=UNIT)
+    del rows                                                       # from here on the proposer side holds no row
     # --- exploratory data: released through the authority, then fitted
     data = []
     for rid in manifest.partitions["exploratory"]:
@@ -478,6 +518,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     # stated in the pre-registration); confirmatory rows are never read here.  A larger confirmatory uncertainty at release
     # makes the verdict INCONCLUSIVE, never a pass.
     u_obs_declared = max(u for *_x, u in data)
+    rule = structured_rule(prereg)
     fitted: dict[str, tuple[np.ndarray, float, dict]] = {}
     sealed_refs = {}
     for hid, statement, build, params, _note in HYPOTHESES:
@@ -489,27 +530,34 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
             th, rms = _fit(build, params, data)
         fitted[hid] = (th, rms, build(th))
         h = hs[hid]
-        refs = []
+        refs, dropped = [], []
         for n, cc in enumerate(conf_conditions):
             pred = float(evaluate(build(th), {"q": cc["throughput_Ah"], "T": cc["temperature_C"] + 273.15}))
-            k, u = 3.0, max(rms, 1e-6)
-            combined = math.sqrt(u ** 2 + u_obs_declared ** 2)
-            resolution = min(0.25 * abs(pred), max(1.2 * k * combined, 0.004))
-            if not resolution >= k * combined:
-                continue                                           # too uncertain to discriminate: no falsifier (stated)
+            u = max(rms, 1e-6)
+            rule_in = {"predicted": pred, "prediction_uncertainty": u, "observation_uncertainty": u_obs_declared}
+            resolution, ku = rule_resolution(rule, **rule_in)
+            if not resolution >= ku:                               # too uncertain to discriminate: recorded, never silent
+                dropped.append((h.falsifier_refs[n], {**rule_in, "condition": dict(cc)}))
+                continue
             f = Falsifier(f"{hid}-f{n + 1}", hid, h.content_digest, OBSERVABLE, UNIT,
                           {"profile": cc["profile"], "temperature_C": cc["temperature_C"], "throughput_Ah": cc["throughput_Ah"]},
                           EvidenceSource.MEASUREMENT_RECORD, CriterionKind.PREDICTION_DEVIATION,
-                          {"k": k, "predicted": pred, "prediction_uncertainty": u, "resolution": resolution})
+                          {"k": float(rule["k"]), "predicted": pred, "prediction_uncertainty": u, "resolution": resolution})
             camp.seal(f, tickets[hid])
             refs.append({"ref": f.ref, "digest": f.digest, "predicted": pred})
         sealed_refs[hid] = refs
+        if refs:
+            for ref, rin in dropped:                               # per-condition abstention, with the rule inputs
+                declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
+                                   falsifier_ref=ref, rule_inputs=(rin,),
+                                   reason="the pre-registered rule reaches no resolution at this condition")
         listed = tuple(r["ref"] for r in refs)
         if refs and listed != hs[hid].falsifier_refs:              # some planned falsifiers could not reach the resolution:
             hs[hid] = hs[hid].revise(falsifier_refs=listed)          # the record lists exactly what was sealed, BEFORE exposure
             camp.register(hs[hid], tickets[hid])
         if not refs:                                               # abstain BEFORE exposure, with the reason -- never dropped
             declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
+                               rule_inputs=tuple(rin for _ref, rin in dropped),
                                reason=f"exploratory fit RMS {rms:.4g}: k*sqrt(u_pred^2+u_obs^2) exceeds every resolution the "
                                       "pre-registered rule allows at the confirmatory conditions")
     for hid in hs:
@@ -521,7 +569,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     for rid in manifest.partitions["confirmatory"]:
         gate.confirmatory(rid, preregistration=prereg)
     judged = {hid: camp.apply_verdicts(hs[hid]) if sealed_refs[hid] else hs[hid] for hid in hs}   # untestable: not scored
-    discipline = verify_discipline(led, camp, issuer_id="exposure")
+    discipline = verify_discipline(led, camp)
     # --- novelty, Red Team and credibility for every hypothesis; one passport each
     survivors = [hid for hid, h in judged.items() if h.status.value == "surviving"]
     for hid in survivors:
@@ -530,7 +578,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     passports = {}
     space = red_team_space()
     for hid, h in judged.items():
-        nov = check_novelty(h, snapshot, camp.novelty, canonicalizer=CANONICALIZER)
+        nov = check_novelty(h, snapshot, camp.novelty, canonicalizer=CANONICALIZER, equivalence=EQUIVALENCE)
         th, rms, expr = fitted[hid]
 
         def route_of(r_hid):
@@ -561,8 +609,9 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
             f"passport:{hid}", "dry_run_synthetic",
             {"hypothesis_id": hid, "content_digest": h.content_digest, "claim_digest": h.claim_digest, "status": h.status.value,
              "novelty_status": nov.status.value, "family": fade_family_digest(expr)[:16]},
-            {"preregistration_digest": prereg.digest, "manifest_digest": manifest.digest, "discipline": discipline["status"],
-             "discipline_issues": discipline["issues"]},
+            {"preregistration_digest": prereg.digest, "preregistration_revision": prereg.revision, "manifest_digest": manifest.digest,
+             "discipline": discipline["status"], "discipline_issues": discipline["issues"],
+             "untestable": [u for u in discipline["untestable"] if u["hypothesis_id"] == hid]},
             tuple({**r, "verdicts": [x.to_dict()["verdict"] for x in camp.registry.verdicts_for(hid, h.content_digest)
                                      if x.falsifier_digest == r["digest"]]} for r in sealed_refs[hid]),
             {"final_context_digest": final.digest, "family_size": final.family_size, "selected_from": final.selected_from},
@@ -588,18 +637,42 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
 
 # ---------------------------------------------------------------------------- the owner-approval readiness record
 
-READINESS_BLOCKERS = (
-    ("CONFIRMATORY_DATASET_NOT_DESIGNATED: no confirmatory dataset is named or digest-pinned; the owner designates it "
-     "(CONFIRMATORY_REQUIREMENTS) and a DatasetManifest is registered before anything else"),
-    ("REAL_FALSIFIERS_NOT_SEALED: real predictions need the exploratory fit on the Kirkaldy archives (outside this container) at "
-     "the owner-designated confirmatory conditions; nothing real is sealed, so FALSIFIER_ANCHOR is empty"),
-    ("PRIOR_ART_NOT_SYSTEMATIC: the prior-art snapshot is the designer's recall with unverified citations; a systematic search "
-     "is required before any novelty statement beyond the dry run"),
-    ("PRODUCTION_AUTHORITY_NOT_PROVISIONED: no production-profile authority ledger, operator-held root key or OWNER issuer "
-     "exists for the real campaign (the dry run used a TEST-profile ledger with ephemeral keys)"),
-    ("DATA_AUTHORITY_ROUTE_NOT_WIRED: the confirmatory rows must be held by a data authority outside the proposer's process; the "
-     "ExposureGate is that release point, but no escrow-hosted (isolated) battery data authority is deployed yet"),
-)
+#: what the real campaign HAS -- each None is a fact the readiness record derives a blocker from (filled only by the
+#: owner's provisioning, never to make the record read READY)
+REAL_FALSIFIER_ANCHOR: Mapping[str, Any] | None = None       # anchor of the production ledger after real falsifiers are sealed
+PRODUCTION_TRUST_ANCHOR: Mapping[str, Any] | None = None     # the operator-held production authority anchor
+DATA_AUTHORITY_ROUTE: str | None = None                      # the deployed (isolated) data authority holding confirmatory rows
+
+BLOCKER_TEXT = {
+    "CONFIRMATORY_DATASET_NOT_DESIGNATED": "no confirmatory dataset is named or digest-pinned; the owner designates it "
+                                           "(CONFIRMATORY_REQUIREMENTS) and a DatasetManifest is registered before anything else",
+    "REAL_FALSIFIERS_NOT_SEALED": "real predictions need the exploratory fit on the Kirkaldy archives (outside this container) at "
+                                  "the owner-designated confirmatory conditions; nothing real is sealed, so FALSIFIER_ANCHOR is empty",
+    "PRIOR_ART_NOT_SYSTEMATIC": "the prior-art snapshot is the designer's recall with unverified citations; a systematic search "
+                                "is required before any novelty statement beyond the dry run",
+    "PRODUCTION_AUTHORITY_NOT_PROVISIONED": "no production-profile authority ledger, operator-held root key or OWNER issuer "
+                                            "exists for the real campaign (the dry run used a TEST-profile ledger with ephemeral keys)",
+    "DATA_AUTHORITY_ROUTE_NOT_WIRED": "the confirmatory rows must be held by a data authority outside the proposer's process; the "
+                                      "ExposureGate is that release point, but no escrow-hosted (isolated) battery data authority "
+                                      "is deployed yet",
+}
+
+
+def readiness_blockers() -> tuple[str, ...]:
+    """Each blocker is DERIVED from a fact about the repository / configuration, never listed by hand."""
+    snap = prior_art_snapshot()
+    found = []
+    if CONFIRMATORY_REQUIREMENTS.get("identity") is None or CONFIRMATORY_REQUIREMENTS.get("status") == "TO_BE_DESIGNATED_BY_OWNER":
+        found.append("CONFIRMATORY_DATASET_NOT_DESIGNATED")
+    if REAL_FALSIFIER_ANCHOR is None:
+        found.append("REAL_FALSIFIERS_NOT_SEALED")
+    if any("NOT verified" in src or "recall" in src for src in snap.sources) or "NOT exhaustive" in snap.coverage_criteria:
+        found.append("PRIOR_ART_NOT_SYSTEMATIC")
+    if PRODUCTION_TRUST_ANCHOR is None or PRODUCTION_TRUST_ANCHOR.get("profile") != "production":
+        found.append("PRODUCTION_AUTHORITY_NOT_PROVISIONED")
+    if not DATA_AUTHORITY_ROUTE:
+        found.append("DATA_AUTHORITY_ROUTE_NOT_WIRED")
+    return tuple(f"{k}: {BLOCKER_TEXT[k]}" for k in found)
 
 
 def readiness(dry: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -607,48 +680,56 @@ def readiness(dry: Mapping[str, Any] | None = None) -> dict[str, Any]:
     prereg = real_preregistration()
     hs = hypothesis_set()
     plan = red_team_plan()
+    blockers = readiness_blockers()
     rec: dict[str, Any] = {
         "PREREGISTRATION_DIGEST": prereg.digest,
-        "PREREGISTRATION_STATE": "DRAFT revision 1 (validated; NOT frozen in a production authority ledger)",
+        "PREREGISTRATION_STATE": "DRAFT revision 1 (validated; NOT frozen in a production authority ledger); its hypothesis "
+                                 "predictions name a placeholder condition until the owner designates the confirmatory design",
         "HYPOTHESIS_REGISTRY_DIGEST": hypothesis_registry_digest(hs),
         "HYPOTHESES": [h.hypothesis_id for h in hs],
-        "FALSIFIER_ANCHOR": "NONE (no real falsifier sealed; see REAL_FALSIFIERS_NOT_SEALED)",
+        "FALSIFIER_ANCHOR": "NONE (no real falsifier sealed; see REAL_FALSIFIERS_NOT_SEALED)" if REAL_FALSIFIER_ANCHOR is None
+                            else dict(REAL_FALSIFIER_ANCHOR),
         "PRIOR_ART_SNAPSHOT_DIGEST": prior_art_snapshot().digest,
-        "DATASET_ADAPTER_STATUS": "IMPLEMENTED (DatasetManifest + ExposureGate + verify_discipline; exercised on synthetic data); "
-                                  "confirmatory dataset NOT DESIGNATED",
-        "CONFIRMATORY_DATA_EXPOSED": "NO",
+        "DATASET_ADAPTER_STATUS": "IMPLEMENTED (DatasetManifest with salted row commitments + ExposureGate + verify_discipline; "
+                                  "exercised on synthetic data); confirmatory dataset NOT DESIGNATED",
+        "CONFIRMATORY_DATA_EXPOSED": "NO" if CONFIRMATORY_REQUIREMENTS.get("identity") is None else "UNKNOWN (re-derive from the ledger)",
         "RED_TEAM_PLAN_DIGEST": plan["plan_digest"],
         "RED_TEAM_SPACE_DIGEST": plan["space_digest"],
         "MULTIPLICITY_BUDGET": dict(prereg.multiplicity_budget),
         "BLINDFOLD_ESCROW_ROUTE": "confirmatory rows released one at a time through ExposureGate -> DurableCampaign "
-                                  "ExposureAuthority (journaled, signed, owner-approved, discipline re-derived from the ledger); "
-                                  "escrow-hosted isolated data authority: NOT WIRED for battery rows",
+                                  "ExposureAuthority (journaled, signed, owner-approved, row-commitment checked, discipline "
+                                  "re-derived from the ledger); escrow-hosted isolated data authority: "
+                                  + (DATA_AUTHORITY_ROUTE or "NOT WIRED for battery rows"),
         "KIRKALDY_2024": "NOT MET (unchanged; its observed holdout is exploratory now)",
-        "READINESS_BLOCKERS": list(READINESS_BLOCKERS),
+        "READINESS_BLOCKERS": list(blockers),
     }
     if dry is not None:
-        rec["DRY_RUN"] = {"run_kind": dry["run_kind"], "discipline": dry["discipline"]["status"], "statuses": dict(dry["statuses"]),
-                          "falsifiers_sealed": dict(dry["falsifiers_sealed"]), "fidelity_link_admitted": dry["fidelity_link_admitted"],
-                          "z_selected": dry["z_selected"], "multiplicity_family_size": dry["multiplicity"]["family_size"],
+        rec["DRY_RUN"] = {"run_kind": dry["run_kind"], "discipline": dry["discipline"]["status"] + " (synthetic dry run)",
+                          "statuses": dict(dry["statuses"]), "falsifiers_sealed": dict(dry["falsifiers_sealed"]),
+                          "fidelity_link_admitted": dry["fidelity_link_admitted"], "z_selected": dry["z_selected"],
+                          "multiplicity_family_size": dry["multiplicity"]["family_size"],
+                          "novelty": {hid: p["hypothesis"]["novelty_status"] for hid, p in dry["passports"].items()},
                           "counts_as_discovery": dict(dry["counts_as_discovery"])}
-    rec["BATTERY_READINESS"] = "NOT_READY(" + "; ".join(b.split(":")[0] for b in READINESS_BLOCKERS) + ")" if READINESS_BLOCKERS \
+    rec["BATTERY_READINESS"] = ("NOT_READY(" + "; ".join(b.split(":")[0] for b in blockers) + ")") if blockers \
         else "READY_FOR_OWNER_APPROVAL"
     return rec
 
 
 __all__ = [
+    "BLOCKER_TEXT",
     "CANONICALIZER",
     "CONFIRMATORY_REQUIREMENTS",
+    "EQUIVALENCE",
     "FAMILY_CANONICALIZER",
     "HYPOTHESES",
     "KIRKALDY_EXPLORATORY",
-    "READINESS_BLOCKERS",
     "dry_run",
     "fade_family_digest",
     "hypothesis_registry_digest",
     "hypothesis_set",
     "prior_art_snapshot",
     "readiness",
+    "readiness_blockers",
     "real_preregistration",
     "red_team_plan",
     "red_team_space",

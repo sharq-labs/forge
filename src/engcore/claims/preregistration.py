@@ -36,6 +36,10 @@ REQUIRED_SECTIONS = (
 #: keys that would carry confirmatory TRUTH: a pre-registration names the confirmatory dataset, never its contents
 FORBIDDEN_CONFIRMATORY_KEYS = frozenset({"values", "observations", "outcomes", "data", "rows", "measurements", "results", "truth"})
 MULTIPLICITY_KEYS = ("max_generated_hypotheses", "max_admitted_hypotheses", "confirmatory_query_budget")
+#: the ONLY keys a confirmatory-dataset section may carry (identity and requirements, never content); values are
+#: strings, null or lists of strings -- a number under it is refused
+CONFIRMATORY_DATASET_KEYS = frozenset({"status", "identity", "dataset", "version", "partition", "manifest_digest", "requirements",
+                                       "source", "location", "row_identity_policy"})
 
 
 class PreregistrationRefused(ValueError):
@@ -58,7 +62,16 @@ def _keys_anywhere(o: Any) -> set[str]:
 
 
 def _empty(v: Any) -> bool:
-    return v is None or (isinstance(v, (str, list, tuple, dict)) and len(v) == 0)
+    return v is None or isinstance(v, bool) or (isinstance(v, (str, list, tuple, dict)) and len(v) == 0) \
+        or (isinstance(v, str) and not v.strip())
+
+
+def _identity_only(o: Any) -> bool:
+    if o is None or isinstance(o, str):
+        return True
+    if isinstance(o, list):
+        return all(isinstance(x, str) for x in o)
+    return False
 
 
 @dataclass(frozen=True)
@@ -82,9 +95,16 @@ class Preregistration:
         unknown = sorted(set(secs) - set(REQUIRED_SECTIONS) - {"notes", "deviations_policy", "dataset_manifests"})
         if unknown:
             raise PreregistrationRefused(f"unknown sections {unknown}")
-        leaked = _keys_anywhere(secs["confirmatory_dataset"]) & FORBIDDEN_CONFIRMATORY_KEYS
+        # LEXICAL guard (it cannot read meaning): content-like keys are refused in every section, case-folded, and the
+        # confirmatory-dataset section is an allowlist of identity fields with string values
+        nested = set().union(set(), *(_keys_anywhere(v) for v in secs.values()))
+        leaked = {k.casefold() for k in nested} & FORBIDDEN_CONFIRMATORY_KEYS
         if leaked:
-            raise PreregistrationRefused(f"the confirmatory dataset is named by identity only; it carries {sorted(leaked)}")
+            raise PreregistrationRefused(f"a pre-registration names data by identity only; it carries {sorted(leaked)}")
+        cd = secs["confirmatory_dataset"]
+        if not isinstance(cd, Mapping) or set(cd) - CONFIRMATORY_DATASET_KEYS or not all(_identity_only(v) for v in cd.values()):
+            raise PreregistrationRefused(f"the confirmatory dataset is named by identity only: keys within "
+                                         f"{sorted(CONFIRMATORY_DATASET_KEYS)}, string / null / string-list values")
         mb = secs["multiplicity_budget"]
         if not isinstance(mb, Mapping) or any(isinstance(mb.get(k), bool) or not isinstance(mb.get(k), int) or mb.get(k) < 0
                                               for k in MULTIPLICITY_KEYS):
@@ -95,6 +115,9 @@ class Preregistration:
         if not isinstance(secs["hypothesis_set"], list) or not all(isinstance(h, Mapping) and h.get("hypothesis_id")
                                                                    and h.get("content_digest") for h in secs["hypothesis_set"]):
             raise PreregistrationRefused("the hypothesis set names each hypothesis by id AND content digest")
+        ids = [h["hypothesis_id"] for h in secs["hypothesis_set"]]
+        if len(set(ids)) != len(ids):
+            raise PreregistrationRefused("a hypothesis is pre-registered once")
         object.__setattr__(self, "sections", MappingProxyType(secs))
 
     def to_dict(self) -> dict[str, Any]:
@@ -163,5 +186,5 @@ def frozen_revisions(ledger: AuthorityLedger, campaign_id: str, *, issuer_id: st
     return tuple(out)
 
 
-__all__ = ["FORBIDDEN_CONFIRMATORY_KEYS", "MULTIPLICITY_KEYS", "PREREG_KIND", "PREREG_SCHEMA", "REQUIRED_SECTIONS", "Preregistration",
+__all__ = ["CONFIRMATORY_DATASET_KEYS", "FORBIDDEN_CONFIRMATORY_KEYS", "MULTIPLICITY_KEYS", "PREREG_KIND", "PREREG_SCHEMA", "REQUIRED_SECTIONS", "Preregistration",
            "PreregistrationRefused", "freeze", "frozen_revisions"]

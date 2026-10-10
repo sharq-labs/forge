@@ -183,6 +183,11 @@ class DurableCampaign:
         return self._registry
 
     @property
+    def issuer_id(self) -> str:
+        """The campaign's owner: the EXPOSURE issuer that journals it (the issuer of its single start entry)."""
+        return self._issuer
+
+    @property
     def novelty(self):
         return self._novelty
 
