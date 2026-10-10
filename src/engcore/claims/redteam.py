@@ -95,12 +95,16 @@ class AttackDimension:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", AttackKind(self.kind))
+        if self.name == "__route":
+            raise RedTeamRefused("'__route' is reserved for the swept route")
         if not str(self.name).strip() or not str(self.source).strip():
             raise RedTeamRefused("an attack dimension names itself and the SOURCE of its admissible range")
         if self.choices:
             if self.kind not in ROUTE_KINDS:
                 raise RedTeamRefused(f"{self.name}: discrete choices are route alternatives (model/solver/discretization/BC/material)")
             object.__setattr__(self, "choices", tuple(self.choices))
+            if len(set(self.choices)) != len(self.choices):
+                raise RedTeamRefused(f"{self.name}: route choices are distinct")
         else:
             if self.low is None or self.high is None or not (math.isfinite(self.low) and math.isfinite(self.high) and self.low <= self.high):
                 raise RedTeamRefused(f"{self.name}: a continuous dimension has a finite admissible range")
@@ -168,6 +172,13 @@ class Route:
     fidelity: int                          # higher = higher fidelity within the comparison
     evaluate: Callable[[Mapping[str, float]], RouteResult] = field(compare=False, hash=False)
 
+    def __post_init__(self) -> None:
+        if not str(self.route_id).strip() or not str(self.family).strip():
+            raise RedTeamRefused("a route names itself and its model family")
+        object.__setattr__(self, "family", str(self.family).strip().lower())     # 'FE' and 'fe' are one family
+        if isinstance(self.fidelity, bool) or not isinstance(self.fidelity, int):
+            raise RedTeamRefused("a route's fidelity is an integer rank")
+
 
 class Sense(str, Enum):
     AT_MOST = "at_most"
@@ -189,6 +200,10 @@ class ClaimSubject:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "sense", Sense(self.sense))
+        if not str(self.claim_id).strip() or not str(self.observable).strip() or not str(self.unit).strip():
+            raise RedTeamRefused("a claim names itself, its observable and its unit")
+        if isinstance(self.threshold, bool) or not math.isfinite(float(self.threshold)):
+            raise RedTeamRefused("a claim's threshold is a finite number (a NaN threshold can never be violated)")
         ids = [r.route_id for r in self.routes]
         if len(set(ids)) != len(ids) or self.claim_route not in ids:
             raise RedTeamRefused("routes are unique and include the claim's own route")
@@ -216,11 +231,14 @@ class AttackPlan:
     edge_interior_points: int = 4          # seeded samples INSIDE each edge band (not only its endpoints)
     probe_edges: bool = True
     probe_implausible: bool = False        # only to label what lies beyond; never a counterexample
+    replay_tol: float = 1e-9               # relative replay agreement; part of the plan (and its digest), not a call option
 
     def __post_init__(self) -> None:
         if isinstance(self.budget, bool) or self.budget < 1 or self.interior_points < 0 or self.edge_interior_points < 0 \
                 or not str(self.seed).strip():
             raise RedTeamRefused("an attack plan has a positive budget and a seed")
+        if not (math.isfinite(self.replay_tol) and 0 < self.replay_tol < 1):
+            raise RedTeamRefused("the replay tolerance is a finite relative tolerance in (0, 1)")
 
     @property
     def method(self) -> str:
@@ -232,7 +250,7 @@ class AttackPlan:
     def to_dict(self) -> dict[str, Any]:
         return {"space_digest": self.space_digest, "budget": self.budget, "seed": self.seed, "interior_points": self.interior_points,
                 "edge_interior_points": self.edge_interior_points, "probe_edges": self.probe_edges,
-                "probe_implausible": self.probe_implausible, "method": self.method}
+                "probe_implausible": self.probe_implausible, "replay_tol": self.replay_tol, "method": self.method}
 
     @property
     def digest(self) -> str:
@@ -358,14 +376,18 @@ class TrustEnvelope:
             return (f"FALSIFIED: counterexample at {dict(c.point)} ({c.plausibility.value} region) confirmed across declared "
                     f"routes {routes} -- agreement of models, not a physical measurement")
         if self.outcome is EnvelopeOutcome.SURVIVED:
+            explained = sorted({c.route_id for c in self.candidates if c.explained})
+            dismissed = (f"; violations on {explained} were dismissed as numerical artifacts removed by an attacked refined "
+                         "route of the same family") if explained else ""
             return (f"SURVIVED {self.points_covered} attacked points ({self.evaluations} evaluations; {self.method}) on routes "
-                    f"{list(self.attacked_routes)} over {dict(self.region)}; this is not a statement that the claim is safe "
-                    "outside that region, those routes, that budget or that method")
+                    f"{list(self.attacked_routes)} over {dict(self.region)}{dismissed}; this is not a statement that the claim is "
+                    "safe outside that region, those routes, that budget or that method")
         return f"UNKNOWN: {self.reason}"
 
 
 def _classify(subject: ClaimSubject, space: AttackSpace, point: Mapping[str, Any], route: Route, first: RouteResult,
-              spend: Callable[[Route, Mapping[str, Any]], RouteResult | None], replay_tol: float) -> CounterexampleCandidate:
+              spend: Callable[[Route, Mapping[str, Any]], RouteResult | None], replay_tol: float,
+              attacked: tuple[str, ...] = ()) -> CounterexampleCandidate:
     plaus = space.classify(point)
     margin = subject.margin(first.value)
     base = dict(point=dict(point), route_id=route.route_id, family=route.family, value=first.value, margin=margin, plausibility=plaus)
@@ -398,6 +420,10 @@ def _classify(subject: ClaimSubject, space: AttackSpace, point: Mapping[str, Any
     other_agree = [c for c in confirms if c[1] != route.family and c[3] > 0]
     other_dissent = [c for c in confirms if c[1] != route.family and c[3] <= 0]
     refined_dissent = [c for c in confirms if c[1] == route.family and c[3] <= 0]
+    if refined_dissent and not other_agree and not all(c[0] in attacked for c in refined_dissent):
+        return CounterexampleCandidate(**base, classification=CounterexampleClass.UNCONFIRMED,
+                                       reason=f"only an UNATTACKED refined route {sorted(c[0] for c in refined_dissent)} would explain "
+                                              "it away; an explanation must itself have been attacked over the space")
     if refined_dissent and not other_agree:
         return CounterexampleCandidate(**base, classification=CounterexampleClass.NUMERICAL_ARTIFACT, explained=True,
                                        reason="a refined route of the same family removes the violation and no other family "
@@ -419,7 +445,7 @@ def _subject_digest(subject: ClaimSubject) -> str:
                     "routes": sorted([r.route_id, r.family, r.fidelity] for r in subject.routes)})
 
 
-def run_red_team(subject: ClaimSubject, space: AttackSpace, plan: AttackPlan, *, replay_tol: float = 1e-9) -> TrustEnvelope:
+def run_red_team(subject: ClaimSubject, space: AttackSpace, plan: AttackPlan) -> TrustEnvelope:
     """Attack ``subject`` over ``space`` with ``plan``.  Without a route dimension EVERY declared route is swept at every
     point (not only the claim's own route: self-consistency is not surviving an attack)."""
     if plan.space_digest != space.digest:
@@ -429,6 +455,8 @@ def run_red_team(subject: ClaimSubject, space: AttackSpace, plan: AttackPlan, *,
     route_dim = next((d for d in space.dimensions if d.choices), None)
     if route_dim is not None and set(route_dim.choices) - {r.route_id for r in subject.routes}:
         raise RedTeamRefused("a route choice names a route the subject does not declare")
+    if route_dim is not None and subject.claim_route not in route_dim.choices:
+        raise RedTeamRefused("the claim's own route is among the attacked route choices")
     attacked = tuple(route_dim.choices) if route_dim is not None else tuple(r.route_id for r in subject.routes)
     dim_name = route_dim.name if route_dim is not None else "__route"
     used = [0]
@@ -468,7 +496,7 @@ def run_red_team(subject: ClaimSubject, space: AttackSpace, plan: AttackPlan, *,
         if subject.margin(res.value) > 0:
             if first_at is None:
                 first_at = used[0]
-            cand = _classify(subject, space, visible, route, res, spend, replay_tol)
+            cand = _classify(subject, space, visible, route, res, spend, plan.replay_tol, attacked)
             candidates.append(cand)
             if cand.classification is CounterexampleClass.CONFIRMED_ACROSS_ROUTES:
                 return TrustEnvelope(subject.claim_id, EnvelopeOutcome.FALSIFIED, evaluations=used[0], counterexample=cand,
@@ -481,7 +509,7 @@ def run_red_team(subject: ClaimSubject, space: AttackSpace, plan: AttackPlan, *,
             continue
         entry: dict[str, Any] = {"plausible": [d.low, d.high]}
         if plan.probe_edges and (d.edge_low is not None or d.edge_high is not None):
-            entry["edge_band_sampled"] = [d.edge_low if d.edge_low is not None else d.low,
+            entry["edge_band_sampled" if plan.edge_interior_points else "edge_endpoints_only"] = [d.edge_low if d.edge_low is not None else d.low,
                                           d.edge_high if d.edge_high is not None else d.high]
         region[d.name] = entry
     done = dict(evaluations=used[0], region=region, candidates=tuple(candidates), evaluations_to_first_candidate=first_at,

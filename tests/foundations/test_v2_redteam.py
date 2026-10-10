@@ -135,3 +135,28 @@ def test_the_seeded_flaw_suite():
     flaky = next(c for c in seeded_cases() if c.name == "flaky_trap")
     assert flaky.run().outcome is flaky.run().outcome is EnvelopeOutcome.UNKNOWN                        # deterministic
     assert math.isfinite(report["evaluations_to_confirmed_counterexample"]["mean"])
+
+
+def test_confirmation_review_rules():
+    space = AttackSpace("c", (X,))
+    # M-R3: with a route dimension the claim's own route must be attacked
+    only_b = AttackSpace("c", (X, AttackDimension("r", AttackKind.MODEL_FORM, "note", choices=("b",))))
+    with pytest.raises(RedTeamRefused, match="claim's own route"):
+        run_red_team(subject(route("a", "f", 1, VIOL), route("b", "g", 1, HOLD)), only_b, plan(only_b))
+    # M-R1: an explanation by an UNATTACKED refined route does not dismiss the violation
+    coarse_only = AttackSpace("c", (X, AttackDimension("r", AttackKind.DISCRETIZATION, "mesh", choices=("coarse",))))
+    env = run_red_team(subject(route("coarse", "fe", 1, VIOL), route("fake", "fe", 99, HOLD)), coarse_only, plan(coarse_only))
+    assert env.outcome is EnvelopeOutcome.UNKNOWN and env.candidates[0].classification is CounterexampleClass.UNCONFIRMED
+    # ... and an attacked explanation is disclosed in the SURVIVED statement
+    env = run_red_team(subject(route("coarse", "fe", 1, VIOL), route("fine", "fe", 3, HOLD)), space, plan(space))
+    assert env.outcome is EnvelopeOutcome.SURVIVED and "dismissed as numerical artifacts" in env.statement()
+    # M-R2: the replay tolerance is part of the plan and its digest, and bounded
+    assert AttackPlan(space.digest, 10, "t").digest != AttackPlan(space.digest, 10, "t", replay_tol=1e-3).digest
+    with pytest.raises(RedTeamRefused, match="replay tolerance"):
+        AttackPlan(space.digest, 10, "t", replay_tol=1e9)
+    # LOW: a NaN threshold can never be violated; duplicate choices; family labels normalized
+    with pytest.raises(RedTeamRefused, match="finite"):
+        ClaimSubject("c", "y", "1", Sense.AT_MOST, float("nan"), (route("a", "f", 1, HOLD),), "a")
+    with pytest.raises(RedTeamRefused, match="distinct"):
+        AttackDimension("r", AttackKind.MODEL_FORM, "note", choices=("a", "a"))
+    assert route("a", " FE ", 1, HOLD).family == "fe"

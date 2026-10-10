@@ -30,6 +30,13 @@ independent -- positively shown by distinct content digests and sources, provena
 document digests, and disjoint lineage over every relation but CONTRADICTS; missing provenance means independence is
 UNKNOWN and OR is treated like AND.
 
+Two existing authorities stand behind every strong level, re-verified on each assessment: a supplied, PASSING
+:class:`~engcore.scientific.results.validation.ValidationCheck` (re-read through ``from_dict``, so its issuer record is
+re-verified against the platform's oracle/consensus registries) whose canonical digest the backing node carries, for
+verification, validation and independent routes; and a :class:`~engcore.scientific.knowledge.trust.TrustedSourceRegistry`
+pin for any level that needs trusted provenance (a record's own pin fields are never trust).  The subject must be bound
+to the decision context.  A policy must dominate :data:`RISK_POLICY_V1` row by row.
+
 The report is OUTPUT for a reader, not a persisted authority: there is no reader that trusts a stored report; re-run
 :func:`assess_credibility` on the graph.  Residual (deferred hardening): independence is only as good as provenance; a
 graph from which a contradicting node was deleted is a different graph (its fingerprint is bound), but this module cannot
@@ -46,8 +53,11 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 from ..credibility.evidence_graph import EvidenceAuthority, EvidenceGraph, EvidenceRelation, evidence_graph_fingerprint
-from ..scientific.results.validation import ValidationLevel
+from ..scientific.errors import ScientificCoreError
+from ..scientific.knowledge.trust import TrustedSourceRegistry
+from ..scientific.results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
 from .gaps import _CHANNEL_GAP, GapClass
+from .redteam import TrustEnvelope
 
 CREDIBILITY_VECTOR_SCHEMA = "engcore.claims.credibility_vector/2"
 UNKNOWN = -1
@@ -146,7 +156,24 @@ def _admissible(factor: Factor, level: int) -> frozenset[EvidenceAuthority]:
 
 def _needs_provenance(factor: Factor, level: int) -> bool:
     return (factor is Factor.VALIDATION and level >= 1) or (factor in UQ_CHANNEL and level >= 1) \
-        or (factor is Factor.INDEPENDENT_ROUTES and level >= 1)
+        or (factor is Factor.INDEPENDENT_ROUTES and level >= 1) or (factor is Factor.APPLICABILITY and level >= 1) \
+        or factor is Factor.ADVERSARIAL
+
+
+#: the ValidationLevel(s) a backing check must establish, per factor and level
+_CHECK_LEVELS: Mapping[tuple[Factor, int], frozenset[ValidationLevel]] = MappingProxyType({
+    (Factor.VERIFICATION, 1): frozenset({ValidationLevel.NUMERICALLY_CONVERGED}),
+    (Factor.VERIFICATION, 2): frozenset({ValidationLevel.NUMERICALLY_CONVERGED, ValidationLevel.ANALYTICALLY_VERIFIED}),
+    (Factor.VALIDATION, 1): frozenset({ValidationLevel.BENCHMARK_VALIDATED}),
+    (Factor.VALIDATION, 2): frozenset({ValidationLevel.EXPERIMENTALLY_VALIDATED}),
+    (Factor.INDEPENDENT_ROUTES, 1): frozenset({ValidationLevel.CROSS_SOLVER_VALIDATED}),
+    (Factor.INDEPENDENT_ROUTES, 2): frozenset({ValidationLevel.CROSS_SOLVER_VALIDATED}),
+})
+
+
+def check_digest(check: ValidationCheck) -> str:
+    """The content digest an evidence node carries for the ValidationCheck it records."""
+    return _digest(check.to_dict())
 
 
 @dataclass(frozen=True)
@@ -209,23 +236,55 @@ class Defeater:
 
 
 class _GraphView:
-    def __init__(self, graph: EvidenceGraph, context_digest: str) -> None:
+    def __init__(self, graph: EvidenceGraph, context_digest: str, trusted: TrustedSourceRegistry | None,
+                 checks: Mapping[str, ValidationLevel]) -> None:
         self.graph = graph
         self.context = context_digest
+        self.trusted = trusted
+        self.checks = checks                                  # check digest -> level it establishes (re-verified, PASS)
         self.nodes = {n.evidence_id: n for n in graph.nodes}
         self._parents: dict[str, set[str]] = {}
         for e in graph.edges:
             if e.relation is not EvidenceRelation.CONTRADICTS:
                 self._parents.setdefault(e.source_id, set()).add(e.target_id)
+        self.subject = ""
+
+    def trusted_provenance(self, evidence_id: str) -> bool:
+        """Pinned by the TRUSTED SOURCE REGISTRY (never by the record's own pin fields) and fresh enough."""
+        node = self.nodes.get(evidence_id)
+        prov = None if node is None else node.provenance
+        if prov is None or self.trusted is None or not prov.fresh_enough:
+            return False
+        pin = self.trusted.pin_for(prov.source_id)
+        return pin is not None and (pin.issuer, pin.document_digest, pin.version) == (prov.issuer, prov.document_digest, prov.version)
 
     def admissible_node(self, evidence_id: str) -> bool:
         n = self.nodes.get(evidence_id)
         return n is not None and n.authority is not EvidenceAuthority.UNKNOWN and n.applicability == self.context
 
+    def contradicted(self, evidence_id: str) -> bool:
+        return any(e.relation is EvidenceRelation.CONTRADICTS and e.target_id == evidence_id and self.admissible_node(e.source_id)
+                   for e in self.graph.edges)
+
     def superseders(self, evidence_id: str, protected: set[str]) -> list[str]:
-        """Admissible superseders of ``evidence_id`` that are not themselves part of the protected (support) closure."""
-        return [e.source_id for e in self.graph.edges if e.relation is EvidenceRelation.SUPERSEDES and e.target_id == evidence_id
-                and self.admissible_node(e.source_id) and e.source_id not in protected]
+        """Superseders of ``evidence_id`` that are a NEWER VERSION OF THE SAME PINNED SOURCE: trusted provenance with the
+        same source id and issuer, another version, the same authority, not themselves contradicted, and not part of the
+        protected (support) closure.  Anything else is just another record."""
+        target = self.nodes.get(evidence_id)
+        out = []
+        for e in self.graph.edges:
+            if e.relation is not EvidenceRelation.SUPERSEDES or e.target_id != evidence_id or e.source_id in protected:
+                continue
+            sup = self.nodes[e.source_id]
+            if target is None or target.provenance is None or sup.provenance is None or not self.admissible_node(e.source_id):
+                continue
+            if not self.trusted_provenance(e.source_id) or sup.authority is not target.authority or self.contradicted(e.source_id):
+                continue
+            if (sup.provenance.source_id, sup.provenance.issuer) != (target.provenance.source_id, target.provenance.issuer) \
+                    or sup.provenance.version == target.provenance.version:
+                continue
+            out.append(e.source_id)
+        return out
 
     def supports_subject(self, evidence_id: str, subject: str) -> bool:
         return any(e.source_id == evidence_id and e.target_id == subject and e.relation in _SUPPORT_RELATIONS for e in self.graph.edges)
@@ -243,26 +302,37 @@ class _GraphView:
         if not self.supports_subject(evidence_id, subject):
             return f"{evidence_id} has no SUPPORTS/VALIDATES edge to the subject {subject}"
         if self.superseders(evidence_id, set()):
-            return f"{evidence_id} is superseded by admissible evidence"
-        if _needs_provenance(factor, level):
-            prov = node.provenance
-            if prov is None or not prov.trusted or not prov.fresh_enough:
-                return f"{evidence_id} needs trusted, fresh provenance for {factor.value}={LEVELS[factor][level]}"
+            return f"{evidence_id} is superseded by a newer version of its pinned source"
+        if _needs_provenance(factor, level) and not self.trusted_provenance(evidence_id):
+            return (f"{evidence_id} needs provenance pinned by the trusted source registry for {factor.value}="
+                    f"{LEVELS[factor][level]}")
+        if (factor, level) in _CHECK_LEVELS and self.checks.get(node.content_digest) not in _CHECK_LEVELS[(factor, level)]:
+            return (f"{evidence_id} does not carry the digest of a supplied, re-verified, passing ValidationCheck establishing "
+                    f"{sorted(lv.value for lv in _CHECK_LEVELS[(factor, level)])}")
+        if factor is Factor.VALIDATION:
+            subject_line = self.lineage(subject) | {subject}
+            if any(e.source_id == evidence_id and e.relation is EvidenceRelation.CALIBRATES and e.target_id in subject_line
+                   for e in self.graph.edges):
+                return f"{evidence_id} calibrated the model it would validate: calibration data is not validation"
         return None
 
     def lineage(self, evidence_id: str) -> set[str]:
+        """Ancestors through every relation but CONTRADICTS, never THROUGH the subject (everything supports it; its own
+        lineage is not shared provenance of the records that judge it)."""
         seen, todo = set(), [evidence_id]
         while todo:
             x = todo.pop()
             if x in seen:
                 continue
             seen.add(x)
-            todo.extend(self._parents.get(x, ()))
+            todo.extend(p for p in self._parents.get(x, ()) if evidence_id == self.subject or p != self.subject)
         return seen
 
     def independent(self, a: str, b: str, subject: str) -> bool:
         """POSITIVE independence: distinct records from distinct sources with distinct pinned provenance, disjoint lineage
         (the subject excluded: everything supports it).  Missing provenance -> not shown independent."""
+        if a not in self.nodes or b not in self.nodes:
+            return False
         na, nb = self.nodes[a], self.nodes[b]
         if na.content_digest == nb.content_digest or na.source == nb.source:
             return False
@@ -317,27 +387,38 @@ def _leaf_vector(subject: str, claims: tuple[FactorClaim, ...], view: _GraphView
     support: dict[Factor, tuple[str, ...]] = {}
     rejected: list[str] = []
     defeaters: list[Defeater] = []
-    used: dict[str, Factor] = {}
+    cited: dict[str, set[Factor]] = {}                     # decided over ALL citations first: order-independent and
+    for fc in claims:                                       # monotone (removing a record never frees another for reuse)
+        for e in fc.evidence_ids:
+            cited.setdefault(e, set()).add(fc.factor)
+    view.subject = subject
     for fc in sorted(claims, key=lambda c: (FACTOR_PRIORITY.index(c.factor), -c.level, c.evidence_ids)):
         label = f"{fc.factor.value}={LEVELS[fc.factor][fc.level]}"
         why = [w for w in (view.usable(eid, fc.factor, fc.level, subject) for eid in fc.evidence_ids) if w]
-        reused = [e for e in fc.evidence_ids if e in used and used[e] is not fc.factor]
-        if reused:
-            why.append(f"{reused} already back {sorted({used[e].value for e in reused})}: one record backs one factor")
+        shared = sorted(e for e in fc.evidence_ids if len(cited[e]) > 1)
+        if shared:
+            why.append(f"{shared} are cited for several factors ({sorted({f.value for e in shared for f in cited[e]})}): one "
+                       "record backs one factor, so every claim citing them is refused")
+        if fc.factor is Factor.VERIFICATION and fc.level == 2 and not why:
+            got = {view.checks.get(view.nodes[e].content_digest) for e in fc.evidence_ids}
+            if not _CHECK_LEVELS[(Factor.VERIFICATION, 2)] <= got:
+                why.append("code AND solution verification are two checks (analytically verified + numerically converged)")
         if fc.factor is Factor.INDEPENDENT_ROUTES and not why:
             ids = fc.evidence_ids
             pairs_ok = all(view.independent(a, b, subject) for i, a in enumerate(ids) for b in ids[i + 1:])
+            subject_node = view.nodes[subject]
+            pairs_ok = pairs_ok and all(view.nodes[e].content_digest != subject_node.content_digest and view.nodes[e].source != subject_node.source
+                                        and e not in view.lineage(subject) for e in ids)
             if len(ids) < fc.level or not pairs_ok:
                 why.append(f"{label} needs {fc.level} positively independent route records (distinct source, issuer, "
                            "document and lineage)")
         if fc.factor is Factor.ADVERSARIAL and not why:
-            if any(envelopes.get(view.nodes[e].content_digest) != "survived" for e in fc.evidence_ids):
-                why.append("adversarial standing cites a node that is not a SURVIVED trust envelope supplied to the assessment")
+            if any(envelopes.get(view.nodes[e].content_digest) != ("survived", subject) for e in fc.evidence_ids):
+                why.append("adversarial standing cites a node that is not a SURVIVED trust envelope, supplied to the assessment, "
+                           "for THIS subject")
         if why:
             rejected.extend(f"{label}: {w}" for w in why)
             continue
-        for e in fc.evidence_ids:
-            used[e] = fc.factor
         if fc.factor is Factor.APPLICABILITY and fc.level == 0:
             defeaters.append(Defeater(f"outside_domain:{subject}", "outside_domain", fc.evidence_ids,
                                       f"admissible evidence {list(fc.evidence_ids)} places {subject} OUTSIDE its model's domain"))
@@ -448,10 +529,11 @@ def policy_digest(policy: Mapping[RiskClass, Mapping[Factor, int]]) -> str:
 
 
 def register_risk_policy(policy_id: str, policy: Mapping[RiskClass, Mapping[Factor, int]]) -> None:
-    """Register a policy once.  Every risk class has a non-empty row of valid levels, and a higher risk class never
-    requires less than a lower one (factor by factor)."""
-    if not str(policy_id).strip() or set(policy) != set(RiskClass):
-        raise CredibilityRefused("a risk policy has an id and a row for every risk class")
+    """Register a policy once.  Every risk class has a non-empty row of valid levels, a higher risk class never requires
+    less than a lower one, and every row DOMINATES the baseline :data:`RISK_POLICY_V1` row (so applicability is always
+    required): a registered policy can raise the bar, never lower it."""
+    if not isinstance(policy_id, str) or not policy_id.strip() or policy_id != policy_id.strip() or set(policy) != set(RiskClass):
+        raise CredibilityRefused("a risk policy has a normalized id and a row for every risk class")
     frozen = {}
     for r in RiskClass:
         row = {Factor(f): lv for f, lv in dict(policy[r]).items()}
@@ -461,6 +543,12 @@ def register_risk_policy(policy_id: str, policy: Mapping[RiskClass, Mapping[Fact
     for lo, hi in zip(_RISK_ORDER, _RISK_ORDER[1:]):
         if any(frozen[hi].get(f, -1) < lv for f, lv in frozen[lo].items()):
             raise CredibilityRefused(f"risk class {hi.value} requires less than {lo.value}: a policy is monotone in risk")
+    if _POLICIES.get(RISK_POLICY_V1_ID) is not None:
+        for r in RiskClass:
+            weaker = [f.value for f, lv in _POLICIES[RISK_POLICY_V1_ID][r].items() if frozen[r].get(f, -1) < lv]
+            if weaker:
+                raise CredibilityRefused(f"risk class {r.value} would require less than {RISK_POLICY_V1_ID} on {weaker}: a "
+                                         "registered policy may only be STRICTER than the baseline")
     if policy_id in _POLICIES and policy_digest(_POLICIES[policy_id]) != policy_digest(frozen):
         raise CredibilityRefused(f"policy {policy_id!r} is already registered with other rows")
     _POLICIES[policy_id] = MappingProxyType(frozen)
@@ -572,16 +660,33 @@ def envelope_digest(envelope: Any) -> str:
 
 
 def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: DecisionRequirement, *,
+                       trusted_sources: TrustedSourceRegistry | None = None, validation_checks: tuple[ValidationCheck, ...] = (),
                        defeaters: tuple[Defeater, ...] = (), red_team: tuple[Any, ...] = ()) -> CredibilityVectorReport:
     """f(C) from the graph, r(D) from the registered policy, g = r - f, open defeaters, dominant blocking gap.
-    ``red_team``: TrustEnvelope records; a SURVIVED one can back ADVERSARIAL (through the graph node carrying its digest),
-    a FALSIFIED one is a defeater."""
-    view = _GraphView(graph, requirement.context_digest)
+    ``trusted_sources`` pins provenance; ``validation_checks`` are re-verified (``from_dict``) and only PASSING ones back
+    a level; ``red_team``: TrustEnvelope records -- a SURVIVED one for the subject can back ADVERSARIAL (through the
+    graph node carrying its digest), a FALSIFIED one is a defeater."""
+    checks: dict[str, ValidationLevel] = {}
     notes: list[str] = []
-    envelopes = {envelope_digest(env): env.outcome.value for env in red_team}
+    for chk in validation_checks:
+        try:
+            again = ValidationCheck.from_dict(chk.to_dict())          # re-verifies issuer records against the registries
+        except (ScientificCoreError, ValueError, KeyError, TypeError) as exc:
+            notes.append(f"validation check {getattr(chk, 'name', '?')!r} refused on re-read: {str(exc)[:160]}")
+            continue
+        if again.outcome is ValidationOutcome.PASS and again.establishes is not None:
+            checks[check_digest(again)] = again.establishes
+    view = _GraphView(graph, requirement.context_digest, trusted_sources, checks)
+    notes: list[str] = []
+    if any(not isinstance(env, TrustEnvelope) for env in red_team):
+        raise CredibilityRefused("red-team input is TrustEnvelope records")
+    envelopes = {envelope_digest(env): (env.outcome.value, env.claim_id) for env in red_team}
     for leaf in _leaves(claim):
-        if leaf.subject_id not in view.nodes:
+        subject = view.nodes.get(leaf.subject_id)
+        if subject is None:
             raise CredibilityRefused(f"claim {leaf.node_id}'s subject {leaf.subject_id!r} is not in the evidence graph")
+        if subject.applicability != requirement.context_digest or subject.authority is EvidenceAuthority.UNKNOWN:
+            raise CredibilityRefused(f"subject {leaf.subject_id!r} is not a known-authority result bound to the decision's context")
     vec = _vector(claim, view, notes, envelopes)
     required = requirement.required
     gaps = []
@@ -610,4 +715,4 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
 __all__ = ["ClaimNode", "Combine", "CredibilityRefused", "CredibilityVectorReport", "DEFEATER_KINDS", "Defeater", "DecisionRequirement",
            "ENVELOPE_SURVIVED", "FACTOR_GAP", "FACTOR_PRIORITY", "Factor", "FactorClaim", "FactorGap", "FactorVector", "LEVELS",
            "RISK_POLICY_V1", "RISK_POLICY_V1_ID", "RiskClass", "UNKNOWN", "UQ_CHANNEL", "VALIDATION_LEVEL_PROJECTION",
-           "assess_credibility", "envelope_digest", "policy_digest", "register_risk_policy"]
+           "assess_credibility", "check_digest", "envelope_digest", "policy_digest", "register_risk_policy"]

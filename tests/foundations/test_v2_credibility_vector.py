@@ -1,4 +1,6 @@
-"""Roadmap V2 R7: credibility vectors f(C), r(D), g = r - f on the existing evidence graph (incl. checkpoint-5 review)."""
+"""Roadmap V2 R7: credibility vectors f(C), r(D), g = r - f on the existing evidence graph (incl. the checkpoint-5 review
+and its confirmation review).  Strong levels are backed by genuinely ISSUED ValidationChecks (pinned oracles, an earned
+consensus) and provenance is pinned by a TrustedSourceRegistry -- never by a record's own fields."""
 
 from __future__ import annotations
 
@@ -7,16 +9,26 @@ import itertools
 
 import pytest
 
+import engcore.scientific.oracles as oracle_module
 from engcore.claims.credibility_vector import (
     ENVELOPE_SURVIVED, RISK_POLICY_V1, RISK_POLICY_V1_ID, UNKNOWN, VALIDATION_LEVEL_PROJECTION, ClaimNode, Combine, CredibilityRefused,
-    DecisionRequirement, Defeater, Factor, FactorClaim, RiskClass, assess_credibility, envelope_digest, register_risk_policy,
+    DecisionRequirement, Defeater, Factor, FactorClaim, RiskClass, assess_credibility, check_digest, envelope_digest,
+    register_risk_policy,
 )
 from engcore.claims.gaps import GapClass
-from engcore.claims.redteam import AttackDimension, AttackKind, AttackPlan, AttackSpace, ClaimSubject, Route, RouteResult, Sense, run_red_team
+from engcore.claims.redteam import (
+    AttackDimension, AttackKind, AttackPlan, AttackSpace, ClaimSubject, EnvelopeOutcome, Route, RouteResult, Sense, TrustEnvelope,
+    run_red_team,
+)
 from engcore.credibility.evidence_graph import (
     EvidenceAuthority as A, EvidenceEdge, EvidenceGraph, EvidenceNode, EvidenceProvenance, EvidenceRelation as R,
 )
-from engcore.scientific.results.validation import ValidationLevel as VL
+from engcore.scientific.knowledge.trust import SourcePin, TrustedSourceRegistry
+from engcore.scientific.oracles import OracleEvidenceSet, OracleKind, OracleObservation
+from engcore.scientific.results.validation import ValidationCheck, ValidationLevel as VL, ValidationOutcome
+from tests.route_declarations_for_tests import earned_consensus, route, route_declarations_for_tests  # noqa: F401 - autouse
+from engcore.scientific.units.quantity import Quantity
+from tests.test_audit_consensus_level_issuers import AT, _oracle_check
 
 CTX = hashlib.sha256(b"decision-context").hexdigest()
 OTHER = hashlib.sha256(b"other-context").hexdigest()
@@ -26,34 +38,58 @@ def _h(s):
     return hashlib.sha256(s.encode()).hexdigest()
 
 
-def node(eid, authority, ctx=CTX, *, provenance=True, issuer=None, digest=None, source=None, trusted=True):
+def _prov(eid, ctx, digest, *, issuer=None, version="1", source_id=None):
+    doc = _h("doc:" + (source_id or issuer or eid) + version)
+    return EvidenceProvenance(source_id=source_id or f"sid:{issuer or eid}", issuer=issuer or f"iss:{eid}", document_digest=doc,
+                              version=version, locator=f"loc:{eid}", published_at="", retrieved_at="", source_class="test",
+                              pin_issuer=issuer or f"iss:{eid}", pin_document_digest=doc, pin_version=version,
+                              freshness_rule_configured=False, freshness_limit_days=None, freshness_requires_timestamp=False,
+                              assessed_at="2026-10-09T00:00:00+00:00", context_digest=ctx, claim_digest=digest)
+
+
+def node(eid, authority, ctx=CTX, *, provenance=True, digest=None, source=None, **prov_kw):
     content = digest or _h(eid)
-    prov = None
-    if provenance:
-        doc = _h("doc:" + (issuer or eid))
-        prov = EvidenceProvenance(source_id=f"sid:{issuer or eid}", issuer=issuer or f"iss:{eid}", document_digest=doc, version="1",
-                                  locator=f"loc:{eid}", published_at="", retrieved_at="", source_class="test",
-                                  pin_issuer=(issuer or f"iss:{eid}") if trusted else "someone-else", pin_document_digest=doc,
-                                  pin_version="1", freshness_rule_configured=False, freshness_limit_days=None,
-                                  freshness_requires_timestamp=False, assessed_at="2026-10-09T00:00:00+00:00", context_digest=ctx,
-                                  claim_digest=content)
-    return EvidenceNode(eid, authority, content, source or f"src:{eid}", applicability=ctx, provenance=prov)
+    return EvidenceNode(eid, authority, content, source or f"src:{eid}", applicability=ctx,
+                        provenance=_prov(eid, ctx, content, **prov_kw) if provenance else None)
 
 
-BASE = {
-    "result": node("result", A.SIMULATION), "domain": node("domain", A.ANALYTICAL), "conv": node("conv", A.SIMULATION),
-    "mms": node("mms", A.ANALYTICAL), "bench": node("bench", A.REFERENCE_DATA), "exp": node("exp", A.EXPERIMENT),
-    "nuq": node("nuq", A.SIMULATION), "puq": node("puq", A.SIMULATION), "muq": node("muq", A.MEASUREMENT),
-    "mfuq": node("mfuq", A.EXPERIMENT), "route_a": node("route_a", A.SIMULATION), "route_b": node("route_b", A.ANALYTICAL),
-    "foreign": node("foreign", A.EXPERIMENT, OTHER), "rumour": node("rumour", A.UNKNOWN, provenance=False),
-    "cross": node("cross", A.SIMULATION), "domain_out": node("domain_out", A.ANALYTICAL),
-}
-SUPPORTERS = [k for k in BASE if k not in ("result", "rumour")]
+@pytest.fixture()
+def world(monkeypatch):
+    """Issued checks, the graph nodes that carry them, and the trusted-source registry that pins the provenance."""
+    def _oracle(kind):                       # one oracle identity per kind (the trust registry is keyed by id + version)
+        return OracleEvidenceSet.create(
+            oracle_id=f"lab.{kind.value}.001", version="1", kind=kind, reference=f"doi:10.example/{kind.value}",
+            observations=(OracleObservation("voltage", Quantity(3.70, "volt"), Quantity(0.05, "volt"), conditions=AT),))
+    oracles = {k: _oracle(k) for k in (OracleKind.EXPERIMENTAL_DATASET, OracleKind.BENCHMARK_DATASET, OracleKind.ANALYTIC_REFERENCE)}
+    monkeypatch.setattr(oracle_module, "_TRUSTED_ORACLE_DECLARATIONS", {
+        o.identity.key: {"kind": o.identity.kind.value, "evidence_digest": o.identity.evidence_digest,
+                         "reference": o.identity.reference} for o in oracles.values()})
+    checks = {
+        "exp": _oracle_check(oracles[OracleKind.EXPERIMENTAL_DATASET]),
+        "bench": _oracle_check(oracles[OracleKind.BENCHMARK_DATASET]),
+        "mms": _oracle_check(oracles[OracleKind.ANALYTIC_REFERENCE]),
+        "conv": ValidationCheck("conv", ValidationOutcome.PASS, establishes=VL.NUMERICALLY_CONVERGED, residual=0.001, tolerance=0.01,
+                                evidence=("richardson:3-level",)),
+    }
+    from engcore.domains.electrical import dc_consensus as dcc
+    for name, val in (("route_a", 1.0), ("route_b", 2.0)):
+        checks[name] = earned_consensus((route("a"), route("b")), {"a": {"v": val}, "b": {"v": val}}, thresholds=dcc.DC_CONSENSUS_THRESHOLDS,
+                                        tolerance_key="agreement_rel_tol", required=("v",)).to_check()
+    authority = {"exp": A.EXPERIMENT, "bench": A.REFERENCE_DATA, "mms": A.ANALYTICAL, "conv": A.SIMULATION, "route_a": A.SIMULATION,
+                 "route_b": A.ANALYTICAL}
+    nodes = {k: node(k, authority[k], digest=check_digest(c)) for k, c in checks.items()}
+    nodes.update({"result": node("result", A.SIMULATION), "domain": node("domain", A.ANALYTICAL),
+                  "nuq": node("nuq", A.SIMULATION), "puq": node("puq", A.SIMULATION), "muq": node("muq", A.MEASUREMENT),
+                  "mfuq": node("mfuq", A.EXPERIMENT), "domain_out": node("domain_out", A.ANALYTICAL),
+                  "foreign": node("foreign", A.EXPERIMENT, OTHER), "rumour": node("rumour", A.UNKNOWN, provenance=False)})
+    pins = TrustedSourceRegistry(tuple(SourcePin(n.provenance.source_id, n.provenance.issuer, n.provenance.document_digest,
+                                                 n.provenance.version) for n in nodes.values() if n.provenance is not None))
+    return {"checks": tuple(checks.values()), "nodes": nodes, "pins": pins}
 
 
-def graph(*extra_edges, nodes=None, drop=(), support=True):
-    ns = {k: v for k, v in (nodes or BASE).items() if k not in drop}
-    edges = [EvidenceEdge(k, "result", R.SUPPORTS) for k in SUPPORTERS if k in ns and support] if "result" in ns else []
+def graph(w, *extra_edges, nodes=None, drop=(), support=True):
+    ns = {k: v for k, v in (nodes or w["nodes"]).items() if k not in drop}
+    edges = [EvidenceEdge(k, "result", R.SUPPORTS) for k in ns if k not in ("result", "rumour") and support] if "result" in ns else []
     return EvidenceGraph(tuple(ns.values()), tuple(edges) + tuple(extra_edges))
 
 
@@ -74,163 +110,187 @@ def req(risk=RiskClass.HIGH):
     return DecisionRequirement("decision-1", CTX, risk)
 
 
-def test_the_projection_is_complete_and_a_fully_evidenced_claim_meets_high():
+def assess(w, claim, g, risk=RiskClass.HIGH, **kw):
+    kw.setdefault("trusted_sources", w["pins"])
+    kw.setdefault("validation_checks", w["checks"])
+    return assess_credibility(claim, g, req(risk), **kw)
+
+
+def test_the_projection_is_complete_and_a_fully_evidenced_claim_meets_high(world):
     assert set(VALIDATION_LEVEL_PROJECTION) == set(VL)
     assert VALIDATION_LEVEL_PROJECTION[VL.CROSS_SOLVER_VALIDATED][0] is Factor.INDEPENDENT_ROUTES      # R-39: not validation
-    rep = assess_credibility(leaf(), graph(), req())
+    rep = assess(world, leaf(), graph(world))
     assert rep.requirement_met and rep.dominant_blocking_gap is None, rep.notes
     d = rep.to_dict()
     assert d["policy_digest"] and d["required"] and d["context_digest"] == CTX and d["claim_structure_digest"]
     with pytest.raises(CredibilityRefused, match="never asserted"):
         FactorClaim(Factor.VALIDATION, 2, (), VL.EXPERIMENTALLY_VALIDATED.value)
     with pytest.raises(CredibilityRefused, match="does not project"):
-        FactorClaim(Factor.VALIDATION, 2, ("cross",), VL.CROSS_SOLVER_VALIDATED.value)
-    with pytest.raises(CredibilityRefused, match="channel"):
-        FactorClaim(Factor.MODEL_FORM_UQ, 1, ("x",), "numerical")
+        FactorClaim(Factor.VALIDATION, 2, ("route_a",), VL.CROSS_SOLVER_VALIDATED.value)
 
 
-def test_r_comes_only_from_a_registered_monotone_policy():
-    with pytest.raises(TypeError):                                                      # review B1: no caller override
+def test_levels_rest_on_issued_checks_and_registry_pinned_provenance(world):            # confirmation review H-C3
+    no_checks = assess(world, leaf(), graph(world), validation_checks=())
+    assert no_checks.vector.level(Factor.VALIDATION) == UNKNOWN and no_checks.vector.level(Factor.VERIFICATION) == UNKNOWN
+    no_pins = assess(world, leaf(), graph(world), trusted_sources=None)                   # self-signed pins are not trust
+    assert no_pins.vector.level(Factor.VALIDATION) == UNKNOWN and no_pins.vector.level(Factor.APPLICABILITY) == UNKNOWN
+    with pytest.raises(Exception, match="issuer"):                                        # a hand-built strong check is refused
+        ValidationCheck("x", ValidationOutcome.PASS, establishes=VL.EXPERIMENTALLY_VALIDATED, residual=0.0, tolerance=0.1,
+                        evidence=("trust me",))
+    fake_node = dict(world["nodes"], exp=node("exp", A.EXPERIMENT))                       # experiment node, but no check behind it
+    assert assess(world, leaf(), graph(world, nodes=fake_node)).vector.level(Factor.VALIDATION) == UNKNOWN
+
+
+def test_r_comes_only_from_a_registered_policy_that_is_never_weaker_than_the_baseline(world):   # B1, H-C1
+    with pytest.raises(TypeError):
         DecisionRequirement("d", CTX, RiskClass.CRITICAL, required={})
     with pytest.raises(CredibilityRefused, match="no registered risk policy"):
         DecisionRequirement("d", CTX, RiskClass.LOW, policy_id="my-lenient-policy")
-    weak = {r: dict(RISK_POLICY_V1[r]) for r in RiskClass}
-    weak[RiskClass.CRITICAL] = {Factor.VALIDATION: 0}
-    with pytest.raises(CredibilityRefused, match="monotone"):
-        register_risk_policy("weaker", weak)
-    with pytest.raises(CredibilityRefused, match="already registered"):
-        register_risk_policy(RISK_POLICY_V1_ID, {r: {Factor.APPLICABILITY: 1} for r in RiskClass})
+    with pytest.raises(CredibilityRefused, match="STRICTER"):
+        register_risk_policy("lenient", {r: {Factor.NUMERICAL_UQ: 0, Factor.APPLICABILITY: 1, Factor.VERIFICATION: 1}
+                                         if r is RiskClass.LOW else dict(RISK_POLICY_V1[RiskClass.LOW]) for r in RiskClass})
+    with pytest.raises(CredibilityRefused, match="normalized id"):
+        register_risk_policy(RISK_POLICY_V1_ID + " ", {r: dict(RISK_POLICY_V1[r]) for r in RiskClass})
+    stricter = {r: {**RISK_POLICY_V1[r], Factor.ADVERSARIAL: 1} for r in RiskClass}
+    register_risk_policy("forge.test.stricter/1", stricter)
     with pytest.raises(TypeError):
-        RISK_POLICY_V1[RiskClass.CRITICAL][Factor.VALIDATION] = 0                        # review L1: immutable
+        RISK_POLICY_V1[RiskClass.CRITICAL][Factor.VALIDATION] = 0
     with pytest.raises(CredibilityRefused, match="exactly one"):
-        ClaimNode("empty")                                                              # review M6
-    with pytest.raises(CredibilityRefused, match="does not combine"):
-        ClaimNode("x", (), Combine.AND, subject_id="result")
-    for lo, hi in zip(list(RiskClass), list(RiskClass)[1:]):                            # review L5
+        ClaimNode("empty")
+    for lo, hi in zip(list(RiskClass), list(RiskClass)[1:]):
         assert all(RISK_POLICY_V1[hi].get(f, -1) >= lv for f, lv in RISK_POLICY_V1[lo].items())
 
 
-def test_unknown_never_satisfies_and_the_policy_never_becomes_evidence():
-    rep = assess_credibility(leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability")]), graph(), req())
-    gaps = {g.factor: g for g in rep.gaps}
-    assert gaps[Factor.VALIDATION].unknown and gaps[Factor.VALIDATION].gap == 3 and not rep.requirement_met
-    low = assess_credibility(leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability")]), graph(), req(RiskClass.LOW))
-    assert low.vector.levels == rep.vector.levels
+def test_the_subject_is_bound_to_the_decision_context(world):                            # H-C5
+    moved = dict(world["nodes"], result=node("result", A.SIMULATION, OTHER))
+    with pytest.raises(CredibilityRefused, match="decision's context"):
+        assess(world, leaf(), graph(world, nodes=moved))
 
 
-def test_levels_need_support_of_the_subject_admissible_authority_context_and_trusted_provenance():
-    claims = [FactorClaim(Factor.VALIDATION, 1, ("foreign",), VL.BENCHMARK_VALIDATED.value),          # other context
-              FactorClaim(Factor.MEASUREMENT_UQ, 1, ("rumour",), "aleatoric"),                       # unknown authority
-              FactorClaim(Factor.MODEL_FORM_UQ, 1, ("conv",), "model_form"),                         # the model's own run
-              FactorClaim(Factor.VERIFICATION, 1, ("bench",), VL.NUMERICALLY_CONVERGED.value)]       # a document can't verify
-    rep = assess_credibility(leaf(claims), graph(), req())
-    assert all(rep.vector.level(f) == UNKNOWN for f in (Factor.VALIDATION, Factor.MEASUREMENT_UQ, Factor.MODEL_FORM_UQ, Factor.VERIFICATION))
-    unlinked = assess_credibility(leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)]),
-                                  graph(support=False), req())                                       # review H4: no edge to the subject
+def test_levels_need_support_of_the_subject_admissible_authority_and_context(world):
+    claims = [FactorClaim(Factor.VALIDATION, 1, ("foreign",), VL.BENCHMARK_VALIDATED.value),
+              FactorClaim(Factor.MEASUREMENT_UQ, 1, ("rumour",), "aleatoric"),
+              FactorClaim(Factor.MODEL_FORM_UQ, 1, ("conv",), "model_form")]
+    rep = assess(world, leaf(claims), graph(world))
+    assert all(rep.vector.level(f) == UNKNOWN for f in (Factor.VALIDATION, Factor.MEASUREMENT_UQ, Factor.MODEL_FORM_UQ))
+    unlinked = assess(world, leaf(), graph(world, support=False))
     assert unlinked.vector.level(Factor.VALIDATION) == UNKNOWN
-    untrusted = dict(BASE, exp=node("exp", A.EXPERIMENT, trusted=False))                             # review H5
-    rep = assess_credibility(leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)]),
-                             graph(nodes=untrusted), req())
-    assert rep.vector.level(Factor.VALIDATION) == UNKNOWN
-    one_node_many = [FactorClaim(Factor.NUMERICAL_UQ, 1, ("nuq",), "numerical"),
-                     FactorClaim(Factor.PARAMETER_UQ, 1, ("nuq",), "epistemic_parameter")]            # one record, two channels
-    rep = assess_credibility(leaf(one_node_many), graph(), req())
-    assert (rep.vector.level(Factor.NUMERICAL_UQ), rep.vector.level(Factor.PARAMETER_UQ)) == (1, UNKNOWN)
+    # M-C1: data that calibrated the model does not validate it
+    calibrated = assess(world, leaf(), graph(world, EvidenceEdge("exp", "result", R.CALIBRATES)))
+    assert calibrated.vector.level(Factor.VALIDATION) == UNKNOWN
 
 
-def test_independence_must_be_shown_positively():
+def test_one_record_one_factor_is_decided_over_all_citations_and_removal_never_helps(world):   # H-C4
+    claims = [FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability"),
+              FactorClaim(Factor.VERIFICATION, 2, ("conv", "mms"), VL.ANALYTICALLY_VERIFIED.value),
+              FactorClaim(Factor.NUMERICAL_UQ, 0, ("conv",), "numerical")]
+    with_mms = assess(world, leaf(claims), graph(world), RiskClass.LOW)
+    without = assess(world, leaf(claims), graph(world, drop=("mms",)), RiskClass.LOW)
+    assert with_mms.vector.level(Factor.NUMERICAL_UQ) == without.vector.level(Factor.NUMERICAL_UQ) == UNKNOWN
+    assert not with_mms.requirement_met and not without.requirement_met
+
+
+def test_independence_must_be_shown_positively(world):
     two = [FactorClaim(Factor.INDEPENDENT_ROUTES, 2, ("route_a", "route_b"), VL.CROSS_SOLVER_VALIDATED.value)]
-    assert assess_credibility(leaf(two), graph(), req()).vector.level(Factor.INDEPENDENT_ROUTES) == 2
-    shared_issuer = dict(BASE, route_b=node("route_b", A.ANALYTICAL, issuer="iss:route_a"))          # review H2
-    assert assess_credibility(leaf(two), graph(nodes=shared_issuer), req()).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
-    same_record = dict(BASE, route_b=node("route_b", A.SIMULATION, digest=_h("route_a"), source="src:route_a"))
-    assert assess_credibility(leaf(two), graph(nodes=same_record), req()).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
-    no_prov = dict(BASE, route_b=node("route_b", A.ANALYTICAL, provenance=False))
-    assert assess_credibility(leaf(two), graph(nodes=no_prov), req()).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
-    shared_lineage = graph(EvidenceEdge("route_a", "bench", R.VALIDATES), EvidenceEdge("route_b", "bench", R.SUPPORTS))
-    assert assess_credibility(leaf(two), shared_lineage, req()).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
+    assert assess(world, leaf(two), graph(world)).vector.level(Factor.INDEPENDENT_ROUTES) == 2
+    n = world["nodes"]
+    shared_issuer = dict(n, route_b=node("route_b", A.ANALYTICAL, digest=n["route_b"].content_digest, issuer="iss:route_a"))
+    w2 = dict(world, pins=TrustedSourceRegistry(tuple(SourcePin(x.provenance.source_id, x.provenance.issuer, x.provenance.document_digest,
+                                                                x.provenance.version) for x in shared_issuer.values() if x.provenance)))
+    assert assess(w2, leaf(two), graph(w2, nodes=shared_issuer)).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
+    shared_lineage = graph(world, EvidenceEdge("route_a", "bench", R.DERIVED_FROM), EvidenceEdge("route_b", "bench", R.DERIVED_FROM))
+    assert assess(world, leaf(two), shared_lineage).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
+    # M-C2: recording the SUBJECT's own lineage does not make the routes dependent
+    with_model = dict(n, model=node("model", A.ANALYTICAL))
+    subject_lineage = graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM), nodes=with_model)
+    assert assess(world, leaf(two), subject_lineage).vector.level(Factor.INDEPENDENT_ROUTES) == 2
 
 
-def test_defeaters_block_and_cannot_be_silenced_by_supersession_or_hidden_in_lineage():
-    contradicted = assess_credibility(leaf(), graph(EvidenceEdge("bench", "exp", R.CONTRADICTS)), req())
+def test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one(world):    # H-C2
+    contradicted = assess(world, leaf(), graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS)))
     assert not contradicted.requirement_met and contradicted.dominant_blocking_gap["kind"] == "defeater"
-    # review H1: the challenged evidence (or an UNKNOWN node) cannot supersede its contradictor
-    for sup in ("exp", "rumour"):
-        g = graph(EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge(sup, "bench", R.SUPERSEDES))
-        assert not assess_credibility(leaf(), g, req()).requirement_met, sup
-    # review M3: a contradiction of evidence the support DERIVES from still counts
-    with_raw = dict(BASE, raw=node("raw", A.MEASUREMENT))
-    g = graph(EvidenceEdge("exp", "raw", R.DERIVED_FROM), EvidenceEdge("bench", "raw", R.CONTRADICTS), nodes=with_raw)
-    assert not assess_credibility(leaf(), g, req()).requirement_met
-    # a sub-bar contradiction is a note, not silence
-    rumour = assess_credibility(leaf(), graph(EvidenceEdge("rumour", "exp", R.CONTRADICTS)), req())
-    assert rumour.requirement_met and any("sub-bar contradiction" in n for n in rumour.notes)
-    refuted = assess_credibility(leaf(), graph(), req(),
-                                 defeaters=(Defeater("f1@v1", "falsifier_refuted", ("exp",), "sealed falsifier refuted the claim"),))
-    assert not refuted.requirement_met
+    patch = dict(world["nodes"], patch=node("patch", A.SIMULATION, provenance=False))
+    g = graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("patch", "bench", R.SUPERSEDES), nodes=patch)
+    assert not assess(world, leaf(), g).requirement_met                                 # a caller-made node cannot close it
+    b = world["nodes"]["bench"]
+    newer = node("bench_v2", A.REFERENCE_DATA, issuer=b.provenance.issuer, source_id=b.provenance.source_id, version="2")
+    pins = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != b.provenance.source_id)
+                                 + (SourcePin(b.provenance.source_id, b.provenance.issuer, newer.provenance.document_digest, "2"),))
+    g2 = graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES),
+               nodes=dict(world["nodes"], bench_v2=newer))
+    closed = assess(world, leaf(), g2, trusted_sources=pins)
+    assert not any(d.kind == "contradiction" for d in closed.open_defeaters) and any("closed by" in x for x in closed.notes)
+    rumour = assess(world, leaf(), graph(world, EvidenceEdge("rumour", "exp", R.CONTRADICTS)))
+    assert rumour.requirement_met and any("sub-bar contradiction" in x for x in rumour.notes)
     with pytest.raises(CredibilityRefused, match="kind"):
         Defeater("d", "vibes", (), "x")
 
 
-def test_an_outside_domain_finding_is_a_defeater_and_dominates():
+def test_an_outside_domain_finding_is_a_defeater_and_dominates(world):
     claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
-    rep = assess_credibility(leaf(claims), graph(), req())                                # review H3: not overridden by 'inside'
+    rep = assess(world, leaf(claims), graph(world))
     assert not rep.requirement_met and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
-    assert rep.vector.level(Factor.APPLICABILITY) == 0
     gap = next(g for g in rep.gaps if g.factor is Factor.APPLICABILITY)
     assert gap.gap_class is GapClass.MODEL_OUTSIDE_DOMAIN
-    empty = assess_credibility(leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)]), graph(), req())
-    assert empty.dominant_blocking_gap["factor"] == "applicability"                       # review M1: applicability first
+    empty = assess(world, leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)]), graph(world))
+    assert empty.dominant_blocking_gap["factor"] == "applicability"
 
 
-def test_and_takes_the_weakest_and_or_takes_one_whole_independent_branch():
+def test_and_takes_the_weakest_and_or_takes_one_whole_independent_branch(world):
     weak = leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)], "weak")
     strong = leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)], "strong")
-    g = graph()
-    assert assess_credibility(ClaimNode("and", combine=Combine.AND, children=(weak, strong)), g, req()).vector.level(Factor.VALIDATION) == 1
-    assert assess_credibility(ClaimNode("or", combine=Combine.OR, children=(weak, strong)), g, req()).vector.level(Factor.VALIDATION) == 2
-    # review H3: OR never mixes factors across branches
+    g = graph(world)
+    assert assess(world, ClaimNode("and", combine=Combine.AND, children=(weak, strong)), g).vector.level(Factor.VALIDATION) == 1
+    assert assess(world, ClaimNode("or", combine=Combine.OR, children=(weak, strong)), g).vector.level(Factor.VALIDATION) == 2
     a = leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)], "a")
     b = leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability")], "b")
-    mixed = assess_credibility(ClaimNode("or", combine=Combine.OR, children=(a, b)), g, req()).vector
+    mixed = assess(world, ClaimNode("or", combine=Combine.OR, children=(a, b)), g).vector
     assert not (mixed.level(Factor.VALIDATION) == 2 and mixed.level(Factor.APPLICABILITY) == 1)
-    dependent = graph(EvidenceEdge("exp", "bench", R.DERIVED_FROM))
-    rep = assess_credibility(ClaimNode("or", combine=Combine.OR, children=(weak, strong)), dependent, req())
-    assert rep.vector.level(Factor.VALIDATION) == 1 and any("not shown independent" in n for n in rep.notes)
-    # review M2: dropping a conjunct changes the claim identity
-    one = assess_credibility(ClaimNode("x", combine=Combine.AND, children=(weak,)), g, req())
-    both = assess_credibility(ClaimNode("x", combine=Combine.AND, children=(weak, strong)), g, req())
+    dependent = graph(world, EvidenceEdge("exp", "bench", R.DERIVED_FROM))
+    rep = assess(world, ClaimNode("or", combine=Combine.OR, children=(weak, strong)), dependent)
+    assert rep.vector.level(Factor.VALIDATION) == 1 and any("not shown independent" in x for x in rep.notes)
+    one = assess(world, ClaimNode("x", combine=Combine.AND, children=(weak,)), g)
+    both = assess(world, ClaimNode("x", combine=Combine.AND, children=(weak, strong)), g)
     assert one.claim_structure_digest != both.claim_structure_digest
 
 
-def test_adversarial_standing_comes_from_the_envelope_itself():
+def test_adversarial_standing_needs_a_surviving_envelope_for_this_subject(world):          # H-C6
     x = AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1")
-    space = AttackSpace("beam", (x,))
+    space = AttackSpace("result", (x,))
     routes = (Route("a", "f", 1, lambda p: RouteResult(0.1)), Route("b", "g", 2, lambda p: RouteResult(0.1)))
-    survived = run_red_team(ClaimSubject("beam", "y", "1", Sense.AT_MOST, 1.0, routes, "a"), space, AttackPlan(space.digest, 200, "s"))
-    nodes = dict(BASE, rt=node("rt", A.SIMULATION, digest=envelope_digest(survived)))
+    survived = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, routes, "a"), space, AttackPlan(space.digest, 200, "s"))
+    nodes = dict(world["nodes"], rt=node("rt", A.SIMULATION, digest=envelope_digest(survived)))
+    pins = TrustedSourceRegistry(world["pins"].pins + (SourcePin(nodes["rt"].provenance.source_id, nodes["rt"].provenance.issuer,
+                                                                 nodes["rt"].provenance.document_digest, "1"),))
     claim = leaf(list(full_claims()) + [FactorClaim(Factor.ADVERSARIAL, 1, ("rt",), ENVELOPE_SURVIVED)])
-    SUPPORTERS.append("rt")
-    try:
-        g = graph(nodes=nodes)
-        assert assess_credibility(claim, g, req(RiskClass.CRITICAL), red_team=(survived,)).vector.level(Factor.ADVERSARIAL) == 1
-        assert assess_credibility(claim, g, req(RiskClass.CRITICAL)).vector.level(Factor.ADVERSARIAL) == UNKNOWN  # review M4
-        broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
-        falsified = run_red_team(ClaimSubject("beam", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
-        rep = assess_credibility(claim, g, req(RiskClass.CRITICAL), red_team=(survived, falsified))
-        assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
-    finally:
-        SUPPORTERS.remove("rt")
+    g = graph(world, nodes=nodes)
+    assert assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins, red_team=(survived,)).vector.level(Factor.ADVERSARIAL) == 1
+    assert assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins).vector.level(Factor.ADVERSARIAL) == UNKNOWN
+    other_space = AttackSpace("someone-else", (x,))
+    unrelated = run_red_team(ClaimSubject("someone-else", "y", "1", Sense.AT_MOST, 1.0, routes, "a"), other_space,
+                             AttackPlan(other_space.digest, 200, "s"))
+    nodes_u = dict(world["nodes"], rt=node("rt", A.SIMULATION, digest=envelope_digest(unrelated)))
+    pins_u = TrustedSourceRegistry(world["pins"].pins + (SourcePin(nodes_u["rt"].provenance.source_id, nodes_u["rt"].provenance.issuer,
+                                                                   nodes_u["rt"].provenance.document_digest, "1"),))
+    assert assess(world, claim, graph(world, nodes=nodes_u), RiskClass.CRITICAL, trusted_sources=pins_u,
+                  red_team=(unrelated,)).vector.level(Factor.ADVERSARIAL) == UNKNOWN
+    with pytest.raises(CredibilityRefused, match="TrustEnvelope"):
+        assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins, red_team=(object(),))
+    broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
+    falsified = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
+    assert falsified.outcome is EnvelopeOutcome.FALSIFIED and isinstance(falsified, TrustEnvelope)
+    rep = assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins, red_team=(survived, falsified))
+    assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
 
 
-def test_removing_evidence_never_raises_any_factor_or_meets_a_requirement():
+def test_removing_evidence_never_raises_any_factor_or_meets_a_requirement(world):
     claims = full_claims()
-    base = assess_credibility(leaf(claims), graph(), req())
+    base = assess(world, leaf(claims), graph(world))
     ids = sorted({e for c in claims for e in c.evidence_ids})
     for k in (1, 2):
         for removed in itertools.combinations(ids, k):
-            vec = assess_credibility(leaf(claims), graph(drop=removed), req()).vector
-            assert all(vec.level(f) <= base.vector.level(f) for f in Factor), removed
-    # removing a CONTRADICTION is the one removal that can raise the outcome: it is a different graph (bound fingerprint)
-    contradicted = assess_credibility(leaf(claims), graph(EvidenceEdge("bench", "exp", R.CONTRADICTS)), req())
+            rep = assess(world, leaf(claims), graph(world, drop=removed))
+            assert all(rep.vector.level(f) <= base.vector.level(f) for f in Factor), removed
+            assert not rep.requirement_met or base.requirement_met
+    contradicted = assess(world, leaf(claims), graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS)))
     assert contradicted.graph_digest != base.graph_digest and not contradicted.requirement_met
