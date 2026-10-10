@@ -270,7 +270,9 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
     inside a declared compromise window are not trusted; `resume` refuses a tainted journal. `declare_compromise`
     declares a window on ANY key of an issuer, retired ones included; a window only widens.
   - Gates and verifiers read only the campaign's own ledger (`campaign.ledger`); `verify_passport` takes the
-    operator's TrustAnchor and re-derives every passport field from the records, bound to the hypothesis and context.
+    operator's TrustAnchor and re-derives discipline, status, verdicts, novelty, credibility (re-run) and the Red Team
+    outcome (from its attestation), bound to the registered hypothesis and the campaign context. Not re-derived: the
+    manifest digest, the claim digest and the screening summary; the envelope binds to the hypothesis by route label.
   - A campaign has exactly one owner: the issuer of its single EXPOSURE start. `resume` refuses another issuer and a
     ledger holding a second start (a fork or a squat). The first start wins, so who may hold EXPOSURE is a root
     decision.

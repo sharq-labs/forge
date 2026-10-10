@@ -18,16 +18,16 @@ is not a discovery).
 
 ``counts_as_discovery`` is computed from the passport's OWN fields, so it is an assertion until re-derived: True only
 for a confirmatory run whose discipline is CONFIRMATORY with no issue, a SURVIVING, POSSIBLY_NOVEL hypothesis with at
-least one sealed falsifier, EVERY falsifier judged on at least one CONFIRMATORY row with no confirmatory REFUTED (and
+least one sealed falsifier, EVERY falsifier NOT_REFUTED on at least one CONFIRMATORY row with no confirmatory REFUTED (and
 no REFUTED anywhere), a credibility requirement met issuer-bound outside test mode, a PRODUCTION-profile authority
 anchor and a SURVIVED Red Team envelope -- never for a dry run.  Exploratory verdicts never make a discovery.
 
 :func:`verify_passport` re-derives every one of those from the records themselves -- the campaign's own ledger held to
 the operator's TrustAnchor, the discipline, the hypothesis status (``verify_status``), every falsifier's verdicts and
-confirmatory verdicts, the novelty check (re-run against the sealed snapshot), the credibility report and the Red Team
-envelope (attested in the ledger by a RED_TEAM issuer) -- and lists every disagreement.  A passport is read as a
-discovery only when ``counts_as_discovery`` holds AND that list is empty.  Residual (stated): the credibility report is
-checked for consistency with the passport and the ledger, not re-run (re-run :func:`assess_credibility` on the graph).
+confirmatory verdicts, the novelty check (re-run against the sealed snapshot), the credibility assessment (RE-RUN
+against the campaign's ledger) and the Red Team outcome (read from its RED_TEAM attestation) -- and lists every
+disagreement.  A passport is read as a discovery only when ``counts_as_discovery`` holds AND that list is empty.
+Residual (stated): the Red Team envelope is bound to the hypothesis by its claim-route label.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ class DiscoveryPassport:
                 and self.protocol.get("discipline_issues") == []
                 and self.hypothesis.get("status") == "surviving" and self.hypothesis.get("novelty_status") == "possibly_novel"
                 and bool(self.falsifiers) and all(confirmatory) and all("refuted" not in c for c in confirmatory)
-                and any("not_refuted" in c for c in confirmatory) and "refuted" not in verdicts
+                and all("not_refuted" in c for c in confirmatory) and "refuted" not in verdicts
                 and self.credibility.get("requirement_met") is True and self.credibility.get("issuer_bound") is True
                 and self.credibility.get("test_mode") is False and self.authority_anchor.get("profile") == "production"
                 and self.adversarial.get("outcome") == "survived")
@@ -90,16 +90,19 @@ class DiscoveryPassport:
         return _digest(self.to_dict())
 
 
-def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor: Any, hypothesis: Any, credibility: Any,
-                    envelope: Any, snapshot: Any, canonicalizer: Any, equivalence: Any = None,
+def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor: Any, hypothesis: Any,
+                    credibility_inputs: Mapping[str, Any], envelope: Any, snapshot: Any, canonicalizer: Any, equivalence: Any = None,
                     red_team_subject: Any = None) -> list[str]:
     """Every way the passport disagrees with the records it summarizes (empty: it says what they say).  ``campaign`` is
     the durable campaign resumed from the operator's ledger; ``trust_anchor`` the OPERATOR's anchor (configuration, never
-    the passport's own); the remaining arguments are the records themselves.  Bindings: the credibility claim for
-    hypothesis ``h`` is named ``claim:h`` and assessed in the campaign's context; the Red Team envelope attacks a
-    ``ClaimSubject`` whose claim route is ``h``, attested in the campaign's context."""
+    the passport's own); the remaining arguments are the records themselves -- exact types, never look-alikes.
+    ``credibility_inputs``: ``{"claim", "graph", "requirement", ...}`` -- the verifier RE-RUNS :func:`assess_credibility`
+    against the campaign's ledger and the operator's anchor (a report object is never taken on trust).  Bindings: the
+    credibility claim for hypothesis ``h`` is named ``claim:h`` and its requirement is in the campaign's context; the Red
+    Team envelope's outcome and subject are read from its RED_TEAM attestation in the campaign's context, and it attacks
+    a ``ClaimSubject`` whose claim route is ``h`` (a route LABEL: residual).  Not re-derived (stated): the manifest
+    digest, the hypothesis claim digest and the screening summary."""
     from ..authority import AuthorityLedger, Role, TrustAnchor
-    from .credibility_vector import record_digest
     from .durable_campaign import DurableCampaign
     from .exposure_dataset import verify_discipline
     from .falsification import RegistryAnchor, verify_status
@@ -127,8 +130,15 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     if passport.protocol.get("discipline") != d["status"] or list(passport.protocol.get("discipline_issues", [])) != d["issues"]:
         out.append(f"discipline: the passport says {passport.protocol.get('discipline')!r}, the ledger says {d['status']!r}")
     hid, cd = passport.hypothesis.get("hypothesis_id"), passport.hypothesis.get("content_digest")
-    if (getattr(hypothesis, "hypothesis_id", None), getattr(hypothesis, "content_digest", None)) != (hid, cd):
-        return out + ["hypothesis: the record given is not the hypothesis the passport names"]
+    from ..sria.decision import Hypothesis
+    from .durable_campaign import OP_KIND, campaign_subject
+    registered = {Hypothesis.from_dict(r.attestation.record_dict()["args"]["hypothesis"]).content_digest
+                  for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign.campaign_id))
+                  if r.issuer_id == campaign.issuer_id and r.attestation.record.get("op") == "register"
+                  and r.attestation.record_dict()["args"]["hypothesis"].get("hypothesis_id") == hid}
+    if type(hypothesis) is not Hypothesis or (hypothesis.hypothesis_id, hypothesis.content_digest) != (hid, cd) \
+            or cd not in registered:
+        return out + ["hypothesis: the record given is not the registered hypothesis the passport names"]
     reg = campaign.registry
     if hypothesis.status.value != passport.hypothesis.get("status"):
         out.append(f"status: the passport says {passport.hypothesis.get('status')!r}, the hypothesis is {hypothesis.status.value!r}")
@@ -159,25 +169,38 @@ def verify_passport(passport: DiscoveryPassport, campaign: Any, *, trust_anchor:
     except Exception as exc:                                             # noqa: BLE001 - an unverifiable novelty is a disagreement
         out.append(f"novelty: cannot be re-checked ({str(exc)[:120]})")
     c = passport.credibility
-    if getattr(credibility, "digest", None) != c.get("report_digest") or any(
-            getattr(credibility, k, None) != c.get(k) for k in ("requirement_met", "issuer_bound", "test_mode")):
-        out.append("credibility: the report given is not the one the passport summarizes")
-    elif credibility.context_digest != campaign.context_digest or credibility.claim_id != f"claim:{hid}":
-        out.append(f"credibility: the report is about claim {credibility.claim_id!r} in another context, not claim:{hid} in this "
-                   "campaign's context")
-    elif credibility.authority_profile != ledger.profile or credibility.authority_anchor is None \
-            or not ledger.extends(TrustAnchor.from_dict(dict(credibility.authority_anchor))):
-        out.append("credibility: the report was not assessed against this campaign's ledger")
-    env_digest = record_digest(envelope)
-    if env_digest != passport.adversarial.get("envelope_digest") or envelope.outcome.value != passport.adversarial.get("outcome"):
-        out.append("adversarial: the envelope given is not the one the passport summarizes")
-    elif red_team_subject is None or _subject_digest(red_team_subject) != envelope.subject_digest \
-            or red_team_subject.claim_route != hid:
-        out.append(f"adversarial: the envelope does not attack a claim made with this hypothesis (claim route {hid!r})")
-    elif not any(r.attestation.role is Role.RED_TEAM and ledger.role_at(r.issuer_id, Role.RED_TEAM, r.sequence)
-                 and not ledger.compromised_at(r.issuer_id, r.key_id, r.sequence) and r.attestation.context_digest == campaign.context_digest
-                 for r in ledger.attestations(record_kind="trust_envelope", record_digest=env_digest)):
+    from .credibility_vector import assess_credibility
+    try:
+        ci = dict(credibility_inputs)
+        claim, graph, requirement = ci.pop("claim"), ci.pop("graph"), ci.pop("requirement")
+        report = assess_credibility(claim, graph, requirement, authority=ledger, trust_anchor=trust_anchor,
+                                    allow_test_profile=ledger.profile == "test", **ci)
+    except Exception as exc:                                             # noqa: BLE001 - an unre-derivable credibility is a disagreement
+        report = None
+        out.append(f"credibility: cannot be re-derived ({str(exc)[:120]})")
+    if report is not None:
+        if report.claim_id != f"claim:{hid}" or report.context_digest != campaign.context_digest:
+            out.append(f"credibility: the re-run claim is {report.claim_id!r} in another context, not claim:{hid} in this campaign's")
+        if any(getattr(report, k) != c.get(k) for k in ("requirement_met", "issuer_bound", "test_mode")):
+            out.append("credibility: the passport's credibility verdict is not what re-running the assessment gives")
+    from .credibility_vector import _coherent, record_digest
+    from .redteam import ClaimSubject, TrustEnvelope
+    env_digest = record_digest(envelope) if type(envelope) is TrustEnvelope else None
+    attested = [r for r in ledger.attestations(record_kind="trust_envelope", record_digest=env_digest or "-")
+                if r.attestation.role is Role.RED_TEAM and ledger.role_at(r.issuer_id, Role.RED_TEAM, r.sequence)
+                and not ledger.compromised_at(r.issuer_id, r.key_id, r.sequence) and r.attestation.context_digest == campaign.context_digest]
+    if env_digest is None or env_digest != passport.adversarial.get("envelope_digest"):
+        out.append("adversarial: the envelope given is not (exactly) the one the passport summarizes")
+    elif not attested:
         out.append("adversarial: the envelope is not attested in this campaign's context by a RED_TEAM issuer")
+    else:
+        rec = attested[0].attestation.record_dict()                       # what was ATTESTED, never the object's own fields
+        outcome = str(rec.get("outcome")) if _coherent(rec) else "incoherent"
+        if outcome != passport.adversarial.get("outcome"):
+            out.append(f"adversarial: the passport says {passport.adversarial.get('outcome')!r}, the attested envelope says {outcome!r}")
+        if type(red_team_subject) is not ClaimSubject or _subject_digest(red_team_subject) != rec.get("subject_digest") \
+                or red_team_subject.claim_route != hid:
+            out.append(f"adversarial: the attested envelope does not attack a claim made with this hypothesis (claim route {hid!r})")
     return out
 
 

@@ -260,7 +260,8 @@ class DurableCampaign:
                                **({"fit_receipt": fit_receipt.record_digest} if fit_receipt is not None else {})})
 
     def release(self, *, opening: Mapping[str, Any] | None = None, **kwargs: Any) -> EvidenceItem:
-        """``opening``: the data authority's opening of the row's manifest commitment (row id, salt), journaled WITH the
+        """``opening``: the data authority's opening of the row's manifest commitment (manifest digest, row id, per-row key --
+        never the salt), journaled WITH the
         release so a verifier can re-check, from the ledger alone, that the released value is the committed one."""
         self._guard()
         item = self._authority.release(**kwargs)

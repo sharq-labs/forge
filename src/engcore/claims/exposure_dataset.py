@@ -365,8 +365,8 @@ def _fit_receipt_ok(ledger: AuthorityLedger, campaign: DurableCampaign, receipt_
     rec, why = verify_receipt(ledger, receipt_digest, context_digest=campaign.context_digest)
     if rec is None:
         return "; ".join(why)
-    if rec.issuer_id == campaign.issuer_id or not _trusted(ledger, rec):
-        return "the fit receipt is the campaign operator's own, or was signed inside a compromise window"
+    if rec.issuer_id == campaign.issuer_id or ledger.role_at(rec.issuer_id, Role.EXPOSURE, rec.sequence) or not _trusted(ledger, rec):
+        return "the fit receipt is a campaign operator's (an EXPOSURE holder's), or was signed inside a compromise window"
     if rec.sequence >= before:
         return "the fit receipt was attested after the record citing it"
     if receipt_outputs(rec).get(output) != expected:
@@ -512,7 +512,11 @@ def _opening_issue(manifests: list[tuple[AttestationRecord, DatasetManifest]], r
         return f"confirmatory release {eid!r} (ledger {seq}) is opened against a manifest the owner did not approve"
     if part == "confirmatory" and any(d is None for d in m.files.values()):
         return f"confirmatory release {eid!r} (ledger {seq}) comes from a manifest with an unavailable file digest"
+    first = next((x.row_commitments[rid] for r, x in manifests if r.sequence < seq and x.evidence_id(rid) == eid
+                  and rid in x.row_commitments), None)
     commitment = m.row_commitments.get(rid)
+    if first is not None and commitment != first:          # a later manifest that DROPS a commitment never unbinds the row
+        return f"release {eid!r} (ledger {seq}) is opened against a manifest without the row's first registered commitment"
     if commitment is None:
         return f"{part} release {eid!r} (ledger {seq}) has no row commitment in its manifest" if part == "confirmatory" else ""
     conds = {k: v for k, v in dict(rel.get("conditions") or {}).items() if k not in _GATE_LABELS}

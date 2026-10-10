@@ -412,7 +412,10 @@ def test_a_passport_counts_as_discovery_only_when_every_gate_holds_and_never_for
                  # exploratory verdicts alone never make a discovery (combined review H-2)
                  {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": []},)},
                  {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},
-                                 {"ref": "f2", "verdicts": ["not_refuted"], "confirmatory_verdicts": []})}):
+                                 {"ref": "f2", "verdicts": ["not_refuted"], "confirmatory_verdicts": []})},
+                 # a falsifier only INCONCLUSIVE on confirmatory rows, NOT_REFUTED only on an exploratory one (C3 M-1)
+                 {"falsifiers": ({"ref": "f1", "verdicts": ["not_refuted"], "confirmatory_verdicts": ["not_refuted"]},
+                                 {"ref": "f2", "verdicts": ["inconclusive", "not_refuted"], "confirmatory_verdicts": ["inconclusive"]})}):
         assert not _passport("confirmatory", **over).counts_as_discovery, over
     with pytest.raises(ValueError, match="limits"):
         DiscoveryPassport("p", "confirmatory", {}, {}, verdict_limits=("-",))
@@ -477,10 +480,12 @@ def _passport_world():
     attest_record(s.led, s.keys.signer("rt"), "rt", env, receipt=rec, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
     anchor = s.led.anchor()
     opened = AuthorityLedger.open(s.store, anchor=anchor)
-    cred = assess_credibility(ClaimNode("claim:h1", (FactorClaim(Factor.VERIFICATION, 1, ("n0",), "numerically_converged"),), subject_id="r"),
-                              EvidenceGraph((EvidenceNode("r", EvidenceAuthority.SIMULATION, out, "s", applicability=CTX),
+    s.cred_inputs = {"claim": ClaimNode("claim:h1", (FactorClaim(Factor.VERIFICATION, 1, ("n0",), "numerically_converged"),),
+                                        subject_id="r"),
+                     "graph": EvidenceGraph((EvidenceNode("r", EvidenceAuthority.SIMULATION, out, "s", applicability=CTX),
                                              EvidenceNode("n0", EvidenceAuthority.SIMULATION, "1" * 64, "s2", applicability=CTX)), ()),
-                              DecisionRequirement("d", CTX, RiskClass.LOW), authority=opened, trust_anchor=anchor, allow_test_profile=True)
+                     "requirement": DecisionRequirement("d", CTX, RiskClass.LOW)}
+    cred = assess_credibility(**s.cred_inputs, authority=opened, trust_anchor=anchor, allow_test_profile=True)
     s.camp.close_multiplicity()
     anchor = s.led.anchor()
     opened = AuthorityLedger.open(s.store, anchor=anchor)
@@ -513,8 +518,8 @@ def _honest(camp, judged, env, cred, anchor, canon, snap, prereg):
 def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():                      # combined review H-1, H-2
     s, camp, anchor, judged, env, cred, snap, canon = _passport_world()
     honest = _honest(camp, judged, env, cred, anchor, canon, snap, s.prereg)
-    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility": cred, "envelope": env, "snapshot": snap, "canonicalizer": canon,
-          "red_team_subject": s.subject}
+    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility_inputs": s.cred_inputs, "envelope": env, "snapshot": snap,
+          "canonicalizer": canon, "red_team_subject": s.subject}
     assert verify_passport(honest, camp, **kw) == []
     f = honest.falsifiers[0]
     assert sorted(f["verdicts"]) == ["not_refuted", "not_refuted"] and f["confirmatory_verdicts"] == ["not_refuted"]
@@ -535,12 +540,27 @@ def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():   
     # records about ANOTHER claim, subject or context never back this passport (C2 HIGH-2)
     other_subject = dataclasses.replace(s.subject, claim_route="b")
     assert any(p.startswith("adversarial") for p in verify_passport(honest, camp, **{**kw, "red_team_subject": other_subject}))
-    foreign = dataclasses.replace(cred, claim_id="claim:h9")
-    assert any(p.startswith("credibility") for p in verify_passport(dataclasses.replace(
-        honest, credibility={**honest.credibility, "report_digest": foreign.digest}), camp, **{**kw, "credibility": foreign}))
-    elsewhere = dataclasses.replace(cred, context_digest=hashlib.sha256(b"another decision").hexdigest())
-    assert any(p.startswith("credibility") for p in verify_passport(dataclasses.replace(
-        honest, credibility={**honest.credibility, "report_digest": elsewhere.digest}), camp, **{**kw, "credibility": elsewhere}))
+    from engcore.claims.credibility_vector import (
+        ClaimNode,
+        DecisionRequirement,
+        RiskClass,
+    )
+    foreign = {**s.cred_inputs, "claim": dataclasses.replace(s.cred_inputs["claim"], node_id="claim:h9")}
+    assert any(p.startswith("credibility") for p in verify_passport(honest, camp, **{**kw, "credibility_inputs": foreign}))
+    elsewhere = {**s.cred_inputs, "requirement": DecisionRequirement("d", hashlib.sha256(b"another decision").hexdigest(), RiskClass.LOW)}
+    assert any(p.startswith("credibility") for p in verify_passport(honest, camp, **{**kw, "credibility_inputs": elsewhere}))
+
+    class LookAlikeEnvelope:                                        # same digest, a SURVIVED outcome it was never attested with
+        outcome, subject_digest = env.outcome, env.subject_digest
+
+        def to_dict(self):
+            return env.to_dict()
+    assert any(p.startswith("adversarial") for p in verify_passport(honest, camp, **{**kw, "envelope": LookAlikeEnvelope()}))
+
+    class LookAlikeHypothesis:                                      # asserted ids around another expression (C3 H-2)
+        hypothesis_id, content_digest, status, status_basis = judged.hypothesis_id, judged.content_digest, judged.status, judged.status_basis
+    assert verify_passport(honest, camp, **{**kw, "hypothesis": LookAlikeHypothesis()})[-1].startswith("hypothesis")
+    assert ClaimNode is not None
 
     class Fake:                                                     # a duck-typed campaign is never accepted (C2 M-1)
         ledger, registry, novelty = camp.ledger, camp.registry, camp.novelty
@@ -581,6 +601,14 @@ def test_a_released_value_is_re_checked_against_its_commitment_from_the_journal(
                              "row_key": row_key("ds", "c1", my_salt).hex()})
     issues = s2.discipline()["issues"]
     assert any("another commitment" in i for i in issues) and any("did not approve" in i for i in issues)
+    # a later manifest that DROPS the commitment of an exploratory row never unbinds it (C3 M-2)
+    s4 = Setup()
+    bare = manifest(row_commitments={})
+    register_manifest(s4.camp, s4.led, s4.keys.signer("exposure"), "exposure", bare)
+    s4.camp.release(evidence_id="ds/e1", source="measurement_record", observable="y", unit="m", value=99.0, uncertainty=0.01,
+                    conditions={"x": 1.0, "partition": "exploratory"},
+                    opening={"dataset_id": "ds", "row_id": "e1", "manifest_digest": bare.digest, "row_key": "00" * 32})
+    assert any("first registered commitment" in i for i in s4.discipline()["issues"])
     s3 = Setup()
     s3.ready()
     s3.gate.confirmatory("c1", preregistration=s3.prereg)          # the honest path re-checks clean
