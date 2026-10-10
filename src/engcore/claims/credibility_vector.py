@@ -24,8 +24,13 @@ records of one :class:`~engcore.credibility.evidence_graph.EvidenceGraph`:
   red-team envelope for a subject; or an explicit typed :class:`Defeater`.  A contradiction is closed only by a
   registry-pinned newer version of the contradicting source that is outside that closure (noted, never silent).
   Sub-bar contradictions (unknown authority, other context) are recorded as notes.
-* Supersession only ever LOWERS: any admissible SUPERSEDES edge into a record disqualifies it as support, whether or not
-  the superseder is pinned or itself contradicted (the strict bar is for closing contradictions only).
+* Supersession only ever LOWERS: any SUPERSEDES edge into a record (or a same-content twin) disqualifies it as support --
+  the canonical evidence-graph rule -- whether or not the superseder is pinned or itself contradicted; an admissible
+  supersession of anything the SUBJECT rests on is a defeater (the result is obsolete).  The strict bar (a registry-pinned
+  newer version of the same source) is used only to CLOSE a contradiction whose source the claim does not rest on, and to
+  close an outside-domain finding -- never to lift anything else.
+* "Rests on" is a fixpoint: same-content twins, ancestors through every relation but CONTRADICTS / SUPERSEDES, and the
+  records that CALIBRATED any member.  An admissible contradiction of anything else is noted, never silently dropped.
 * The dominant blocking gap -- a defeater first, then any applicability shortfall, then the largest gap (ties by
   :data:`FACTOR_PRIORITY`), mapped onto :class:`~engcore.claims.gaps.GapClass`.
 
@@ -59,9 +64,18 @@ to the decision context.  A policy must dominate :data:`RISK_POLICY_V1` row by r
 The report is OUTPUT for a reader, not a persisted authority: there is no reader that trusts a stored report; re-run
 :func:`assess_credibility` on the graph.  Residual (deferred hardening): independence is only as good as provenance; a
 graph from which a contradicting node was deleted is a different graph (its fingerprint is bound), but this module cannot
-know a node is missing.  An ApplicabilityReport / ChannelEntry / ValidationCheck names no result value beyond what is
-stated above (the ApplicabilityReport's evidence digest); the claim's attacked statement is what the claim declares, not
-a contract record.
+know a node is missing; likewise a NEGATIVE input that is not supplied (an 'outside' / 'unknown' applicability report, a
+FALSIFIED envelope) cannot be seen -- the report binds the digest of every supplied input (``inputs_digest``) so two
+assessments over different inputs are distinguishable, and a negative finding should also be recorded in the graph (a
+CONTRADICTS edge), where omission changes the bound fingerprint.  ApplicabilityReport and ChannelEntry carry NO issuer:
+``from_dict`` re-checks their shape and rules (a KNOWN entry is quantified, a 'within' report names its evidence), not who
+made them, so applicability and UQ rest on caller-supplied in-process records plus a registry pin whose provenance must
+name the node's content (``claim_digest``) -- the pin attests the source, not the record.  ValidationCheck strong levels
+are re-verified against their issuers; NUMERICALLY_CONVERGED is not.  A ChannelEntry / ValidationCheck names no result
+value (the ApplicabilityReport's evidence digest does); the claim's attacked statement is what the claim declares, not a
+contract record.  Scientific design decision: a NOT_APPLICABLE model-form entry backs nothing (it would turn missing
+model discrepancy into zero); a NOT_APPLICABLE entry of another channel backs only 'declared', with pinned provenance and
+from an authority that could have quantified it.
 """
 
 from __future__ import annotations
@@ -74,6 +88,7 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 from ..credibility.evidence_graph import EvidenceAuthority, EvidenceGraph, EvidenceRelation, evidence_graph_fingerprint
+from ..credibility.evidence_graph.supersession import SupersessionDecision, assess_supersession
 from ..scientific.errors import ScientificCoreError
 from ..scientific.knowledge.trust import TrustedSourceRegistry
 from ..scientific.results.uncertainty import UncertaintySource
@@ -83,7 +98,7 @@ from ..system_runtime.records import ApplicabilityReport
 from .gaps import _CHANNEL_GAP, GapClass
 from .redteam import TrustEnvelope
 
-CREDIBILITY_VECTOR_SCHEMA = "engcore.claims.credibility_vector/2"
+CREDIBILITY_VECTOR_SCHEMA = "engcore.claims.credibility_vector/3"
 UNKNOWN = -1
 _HEX = set("0123456789abcdef")
 
@@ -166,6 +181,8 @@ _EXTERNAL_REFERENCE = frozenset({_A.REFERENCE_DATA, _A.STANDARD, _A.PEER_REVIEWE
 _MEASURED = frozenset({_A.MEASUREMENT, _A.EXPERIMENT})
 _KNOWN = frozenset(_A) - {_A.UNKNOWN}
 _SUPPORT_RELATIONS = (EvidenceRelation.SUPPORTS, EvidenceRelation.VALIDATES)
+_NOT_LINEAGE = frozenset({EvidenceRelation.CONTRADICTS})
+_NOT_RESTING_ON = frozenset({EvidenceRelation.CONTRADICTS, EvidenceRelation.SUPERSEDES})
 
 
 def _admissible(factor: Factor, level: int) -> frozenset[EvidenceAuthority]:
@@ -249,7 +266,7 @@ class FactorClaim:
             raise CredibilityRefused("applicability is earned with basis 'applicability'")
 
 
-DEFEATER_KINDS = ("contradiction", "outside_domain", "falsifier_refuted", "red_team_falsified")
+DEFEATER_KINDS = ("contradiction", "outside_domain", "superseded", "falsifier_refuted", "red_team_falsified")
 
 
 @dataclass(frozen=True)
@@ -281,16 +298,31 @@ class _GraphView:
         self.applicability = applicability or {}             # report digest -> re-read ApplicabilityReport
         self.uq = uq or {}                                    # entry digest -> re-read ChannelEntry
         self.nodes = {n.evidence_id: n for n in graph.nodes}
-        self._parents: dict[str, set[str]] = {}
+        self._out: dict[str, list[tuple[EvidenceRelation, str]]] = {}
+        self._calibrators: dict[str, set[str]] = {}
         for e in graph.edges:
-            if e.relation is not EvidenceRelation.CONTRADICTS:
-                self._parents.setdefault(e.source_id, set()).add(e.target_id)
+            self._out.setdefault(e.source_id, []).append((e.relation, e.target_id))
+            if e.relation is EvidenceRelation.CALIBRATES:
+                self._calibrators.setdefault(e.target_id, set()).add(e.source_id)
+        self._by_digest: dict[str, set[str]] = {}
+        for n in graph.nodes:
+            self._by_digest.setdefault(n.content_digest, set()).add(n.evidence_id)
+
+    def twins(self, evidence_id: str) -> set[str]:
+        """``evidence_id`` and every node carrying the same content (the same record under another id)."""
+        n = self.nodes.get(evidence_id)
+        return {evidence_id} | (self._by_digest.get(n.content_digest, set()) if n is not None else set())
+
+    def _parents(self, evidence_id: str, skip: frozenset[EvidenceRelation]) -> list[str]:
+        return [t for rel, t in self._out.get(evidence_id, ()) if rel not in skip]
 
     def trusted_provenance(self, evidence_id: str) -> bool:
         """Pinned by the TRUSTED SOURCE REGISTRY (never by the record's own pin fields) and fresh enough."""
         node = self.nodes.get(evidence_id)
         prov = None if node is None else node.provenance
         if prov is None or self.trusted is None or not prov.fresh_enough:
+            return False
+        if prov.claim_digest != node.content_digest:              # the provenance is about THIS content, not borrowed
             return False
         pin = self.trusted.pin_for(prov.source_id)
         return pin is not None and (pin.issuer, pin.document_digest, pin.version) == (prov.issuer, prov.document_digest, prov.version)
@@ -324,11 +356,13 @@ class _GraphView:
         return out
 
     def superseded_by(self, evidence_id: str) -> list[str]:
-        """EVERY admissible (known authority, same context) node with a SUPERSEDES edge into ``evidence_id`` -- pinned or
-        not, contradicted or not.  Supersession only lowers: less trust input or more counter-evidence never revives a
-        superseded record."""
-        return sorted({e.source_id for e in self.graph.edges if e.relation is EvidenceRelation.SUPERSEDES
-                       and e.target_id == evidence_id and self.admissible_node(e.source_id)})
+        """The canonical rule (:func:`~engcore.credibility.evidence_graph.supersession.assess_supersession`): ANY
+        SUPERSEDES edge into the record -- or into a node carrying the same content -- makes it SUPERSEDED, pinned or
+        not, contradicted or not.  Used only to DISQUALIFY support (it only lowers); never to lift a defeater."""
+        twins = self.twins(evidence_id)
+        if all(assess_supersession(self.graph, t) is SupersessionDecision.ACTIVE for t in twins if t in self.nodes):
+            return []
+        return sorted({e.source_id for e in self.graph.edges if e.relation is EvidenceRelation.SUPERSEDES and e.target_id in twins})
 
     def supports_subject(self, evidence_id: str, subject: str) -> bool:
         return any(e.source_id == evidence_id and e.target_id == subject and e.relation in _SUPPORT_RELATIONS for e in self.graph.edges)
@@ -360,6 +394,11 @@ class _GraphView:
                         f"the subject {subject} (its evidence digest): applicability is not a label")
         if factor in UQ_CHANNEL:
             channel, entry = UQ_CHANNEL[factor], self.uq.get(node.content_digest)
+            if entry is not None and entry.state is ChannelState.NOT_APPLICABLE and factor is Factor.MODEL_FORM_UQ:
+                return (f"{evidence_id}'s model_form entry is NOT_APPLICABLE: declaring that model-form discrepancy cannot "
+                        "arise would turn missing discrepancy into zero; it backs no level")
+            if entry is not None and entry.state is ChannelState.NOT_APPLICABLE and not self.trusted_provenance(evidence_id):
+                return f"{evidence_id} declares {channel!r} not applicable without provenance pinned by the trusted source registry"
             if entry is None or entry.channel.value != channel:
                 return f"{evidence_id} does not carry the digest of a supplied, re-read {channel!r} ChannelEntry: UQ is not a label"
             if entry.state is ChannelState.UNKNOWN:
@@ -374,8 +413,7 @@ class _GraphView:
                         "that could quantify the channel can")
         if factor is Factor.VALIDATION:
             subject_line = self.lineage(subject)
-            twins = [n.evidence_id for n in self.graph.nodes if n.content_digest == node.content_digest] + [evidence_id]
-            behind = set().union(*(self.lineage(t, subject) for t in twins)) - {subject}
+            behind = self._closure({evidence_id}, stop=subject, calibrators=False) - {subject}
             if any(e.source_id in behind and e.relation is EvidenceRelation.CALIBRATES and e.target_id in subject_line
                    for e in self.graph.edges):
                 return (f"{evidence_id} (a record of the same content, or its lineage) calibrated the model it would validate: "
@@ -383,9 +421,10 @@ class _GraphView:
         return None
 
     def lineage(self, evidence_id: str, stop: str | None = None) -> set[str]:
-        """``evidence_id`` and its ancestors through every relation but CONTRADICTS.  With ``stop`` (a subject), the
-        walk reaches ``stop`` but never goes THROUGH it (everything supports a subject; its own lineage is not shared
-        provenance of the records that judge it) -- unless the walk starts there."""
+        """``evidence_id`` and its ancestors through every relation but CONTRADICTS (the conservative reading used for
+        independence).  With ``stop`` (a subject), the walk reaches ``stop`` but never goes THROUGH it (everything
+        supports a subject; its own lineage is not shared provenance of the records that judge it) -- unless the walk
+        starts there."""
         seen, todo = set(), [evidence_id]
         while todo:
             x = todo.pop()
@@ -393,7 +432,25 @@ class _GraphView:
                 continue
             seen.add(x)
             if x != stop or x == evidence_id:
-                todo.extend(self._parents.get(x, ()))
+                todo.extend(self._parents(x, _NOT_LINEAGE))
+        return seen
+
+    def _closure(self, start: set[str], *, stop: str | None = None, calibrators: bool = True) -> set[str]:
+        """What ``start`` RESTS ON: same-content twins, ancestors through every relation but CONTRADICTS and SUPERSEDES
+        (a newer version does not rest on the one it replaces), and -- with ``calibrators`` -- the records that
+        CALIBRATED any member (calibration data points INTO the model).  Fixpoint; never goes through ``stop``."""
+        seen, todo = set(), list(start)
+        while todo:
+            x = todo.pop()
+            if x in seen:
+                continue
+            seen.add(x)
+            if x == stop and x not in start:
+                continue
+            todo.extend(self.twins(x))
+            todo.extend(self._parents(x, _NOT_RESTING_ON))
+            if calibrators:
+                todo.extend(self._calibrators.get(x, ()))
         return seen
 
     def independent(self, a: str, b: str, subject: str) -> bool:
@@ -410,23 +467,37 @@ class _GraphView:
         return not ((self.lineage(a, subject) - {subject}) & (self.lineage(b, subject) - {subject}))
 
     def contradictions_of(self, subjects: set[str], cited: set[str], notes: list[str]) -> list[Defeater]:
-        """Admissible contradictions of every subject, every CITED record (selected or not) and the full lineage of
-        each: what the claim rests on, independent of which alternative won and of child order."""
-        closure = set().union(set(), *(self.lineage(x) for x in subjects | cited))
+        """Admissible contradictions of what the claim RESTS ON (:meth:`_closure` of every subject and every CITED record,
+        selected or not), independent of which alternative won and of child order; and a supersession of anything the
+        SUBJECTS rest on (the result is obsolete).  Nothing is dropped silently: every other contradiction is noted."""
+        closure = self._closure(subjects | cited)
         out = []
         for e in self.graph.edges:
-            if e.relation is not EvidenceRelation.CONTRADICTS or e.target_id not in closure:
+            if e.relation is not EvidenceRelation.CONTRADICTS:
+                continue
+            if e.target_id not in closure:
+                if self.admissible_node(e.source_id):
+                    notes.append(f"contradiction of {e.target_id} by {e.source_id}: not something this claim rests on")
                 continue
             if not self.admissible_node(e.source_id):
                 notes.append(f"sub-bar contradiction of {e.target_id} by {e.source_id} (unknown authority or other context)")
                 continue
-            closed_by = self.superseders(e.source_id, closure)
+            closed_by = [] if e.source_id in closure else self.superseders(e.source_id, closure)
             if closed_by:
                 notes.append(f"contradiction {e.source_id}->{e.target_id} closed by admissible superseder(s) {closed_by}")
                 continue
             src = self.nodes[e.source_id]
             out.append(Defeater(f"contradiction:{e.source_id}->{e.target_id}", "contradiction", (e.source_id, e.target_id),
                                 f"{e.source_id} ({src.authority.value}) contradicts {e.target_id}, which the claim rests on"))
+        line = self._closure(set(subjects))
+        for e in self.graph.edges:
+            if e.relation is not EvidenceRelation.SUPERSEDES or e.target_id not in line or e.source_id in line:
+                continue
+            if not self.admissible_node(e.source_id):
+                notes.append(f"sub-bar supersession of {e.target_id} by {e.source_id} (unknown authority or other context)")
+                continue
+            out.append(Defeater(f"superseded:{e.source_id}->{e.target_id}", "superseded", (e.source_id, e.target_id),
+                                f"{e.target_id}, which the judged result rests on, is superseded by {e.source_id}"))
         return out
 
 
@@ -464,9 +535,27 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
             cited.setdefault(e, set()).add(fc.factor)
     for fc in sorted(claims, key=lambda c: (FACTOR_PRIORITY.index(c.factor), -c.level, c.evidence_ids)):
         label = f"{fc.factor.value}={LEVELS[fc.factor][fc.level]}"
+        if fc.factor is Factor.APPLICABILITY and fc.level == 0:
+            # an outside-domain finding is a DEFEATER, judged like one: it needs no support edge, provenance or backing
+            # record, is shared with nothing, and is closed only by a registry-pinned newer version of its source
+            missing = [e for e in fc.evidence_ids if e not in view.nodes]
+            if missing:
+                raise CredibilityRefused(f"outside-domain finding for {subject} cites evidence not in the graph: {missing}")
+            standing = [e for e in fc.evidence_ids if view.admissible_node(e) and not view.superseders(e, set())]
+            closed = [e for e in fc.evidence_ids if view.admissible_node(e) and view.superseders(e, set())]
+            if closed:
+                rejected.append(f"{label}: outside-domain finding(s) {closed} closed by a registry-pinned newer version")
+            if not standing:
+                rejected.append(f"{label}: no admissible standing outside-domain finding in {list(fc.evidence_ids)} (unknown "
+                                "authority, other context, or closed)")
+                continue
+            defeaters.append(Defeater(f"outside_domain:{subject}", "outside_domain", tuple(standing),
+                                      f"admissible evidence {standing} places {subject} OUTSIDE its model's domain"))
+            levels[fc.factor] = 0
+            support[fc.factor] = tuple(standing)
+            continue
         why = [w for w in (view.usable(eid, fc.factor, fc.level, subject) for eid in fc.evidence_ids) if w]
-        defeater_claim = fc.factor is Factor.APPLICABILITY and fc.level == 0
-        shared = [] if defeater_claim else sorted(e for e in fc.evidence_ids if len(cited[e]) > 1)   # a defeater stands
+        shared = sorted(e for e in fc.evidence_ids if len(cited[e]) > 1)
         if shared:
             why.append(f"{shared} are cited for several factors ({sorted({f.value for e in shared for f in cited[e]})}): one "
                        "record backs one factor, so every claim citing them is refused")
@@ -491,18 +580,32 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
         if why:
             rejected.extend(f"{label}: {w}" for w in why)
             continue
-        if fc.factor is Factor.APPLICABILITY and fc.level == 0:
-            defeaters.append(Defeater(f"outside_domain:{subject}", "outside_domain", fc.evidence_ids,
-                                      f"admissible evidence {list(fc.evidence_ids)} places {subject} OUTSIDE its model's domain"))
-            levels[fc.factor] = 0
-            support[fc.factor] = fc.evidence_ids
-            continue
         if fc.factor is Factor.APPLICABILITY and levels[fc.factor] == 0:
             rejected.append(f"{label}: an admissible outside-domain finding stands; it is not overridden by another record")
             continue
         if fc.level > levels[fc.factor]:
             levels[fc.factor] = fc.level
             support[fc.factor] = fc.evidence_ids
+    # every supplied applicability report decided on THIS subject counts, cited or not: 'outside' is a defeater and sets
+    # the factor to outside_domain; 'unknown' caps it at UNKNOWN (every check must pass; UNKNOWN never passes)
+    sd = view.nodes[subject].content_digest
+    on_subject = sorted((d, r) for d, r in view.applicability.items() if r.evidence_digest == sd)
+    outside = [(d, r) for d, r in on_subject if r.status == "outside"]
+    unknown = [(d, r) for d, r in on_subject if r.status == "unknown"]
+    for d, r in outside:
+        defeaters.append(Defeater(f"outside_domain:{subject}:{d[:12]}", "outside_domain", (),
+                                  f"applicability report {r.check_id!r} decided on {subject} places it OUTSIDE its model's "
+                                  f"domain: {r.reason}"))
+    if outside:
+        if levels[Factor.APPLICABILITY] == 1:
+            rejected.append(f"applicability=inside_domain: overridden by 'outside' report(s) {[r.check_id for _d, r in outside]}")
+        levels[Factor.APPLICABILITY] = 0
+        support.setdefault(Factor.APPLICABILITY, ())
+    elif unknown and levels[Factor.APPLICABILITY] == 1:
+        rejected.append(f"applicability=inside_domain: capped at UNKNOWN by 'unknown' report(s) {[r.check_id for _d, r in unknown]} "
+                        "decided on the subject: every applicability check must pass")
+        levels[Factor.APPLICABILITY] = UNKNOWN
+        support.pop(Factor.APPLICABILITY, None)
     return FactorVector(levels, support, tuple(sorted(rejected)), tuple(defeaters))
 
 
@@ -698,6 +801,9 @@ class CredibilityVectorReport:
     gaps: tuple[FactorGap, ...] = ()
     defeaters: tuple[Defeater, ...] = ()
     notes: tuple[str, ...] = ()
+    #: digest of EVERY supplied input beside the graph (checks, applicability reports, channel entries, envelopes,
+    #: explicit defeaters, trusted-source pins): two reports from different inputs are distinguishable
+    inputs_digest: str = ""
 
     @property
     def open_defeaters(self) -> tuple[Defeater, ...]:
@@ -721,7 +827,8 @@ class CredibilityVectorReport:
     def to_dict(self) -> dict[str, Any]:
         return {"schema": CREDIBILITY_VECTOR_SCHEMA, "decision_id": self.decision_id, "claim_id": self.claim_id,
                 "claim_structure_digest": self.claim_structure_digest, "context_digest": self.context_digest,
-                "graph_digest": self.graph_digest, "policy_id": self.policy_id, "policy_digest": self.policy_digest,
+                "graph_digest": self.graph_digest, "inputs_digest": self.inputs_digest, "policy_id": self.policy_id,
+                "policy_digest": self.policy_digest,
                 "risk_class": self.risk_class.value,
                 "required": {f.value: LEVELS[f][lv] for f, lv in sorted(self.required.items(), key=lambda kv: kv[0].value)},
                 "vector": self.vector.to_dict(), "gaps": [g.to_dict() for g in self.gaps],
@@ -731,6 +838,14 @@ class CredibilityVectorReport:
     @property
     def digest(self) -> str:
         return _digest(self.to_dict())
+
+
+def _coherent(env: TrustEnvelope) -> bool:
+    """A SURVIVED envelope that attacked nothing, or counts more coverage than evaluations or budget, backs nothing."""
+    try:
+        return 0 < int(env.points_covered) <= int(env.evaluations) <= int(env.budget) and bool(env.attacked_routes)
+    except (TypeError, ValueError):
+        return False
 
 
 def envelope_digest(envelope: Any) -> str:
@@ -774,7 +889,8 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
     view = _GraphView(graph, requirement.context_digest, trusted_sources, checks, reports, entries)
     if any(not isinstance(env, TrustEnvelope) for env in red_team):
         raise CredibilityRefused("red-team input is TrustEnvelope records")
-    envelopes = {envelope_digest(env): (env.outcome.value, env.claim_id, env.subject_digest) for env in red_team}
+    envelopes = {envelope_digest(env): (env.outcome.value if _coherent(env) else "incoherent", env.claim_id, env.subject_digest)
+                 for env in red_team}
     leaves = _leaves(claim)
     for leaf in leaves:
         subject = view.nodes.get(leaf.subject_id)
@@ -791,15 +907,12 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
             gaps.append(FactorGap(f, req, got, (req + 1) if got == UNKNOWN else max(0, req - got), got == UNKNOWN))
     subjects = {leaf.subject_id for leaf in leaves}
     found = list(vec.defeaters) + view.contradictions_of(subjects, claim.evidence(), notes)
-    for leaf in leaves:
-        sd = view.nodes[leaf.subject_id].content_digest
-        for d, ar in sorted(reports.items()):
-            if ar.evidence_digest == sd and ar.status == "outside":
-                found.append(Defeater(f"outside_domain:{leaf.subject_id}:{d[:12]}", "outside_domain", (),
-                                      f"applicability report {ar.check_id!r} decided on {leaf.subject_id} places it OUTSIDE its "
-                                      f"model's domain: {ar.reason}"))
-            elif ar.evidence_digest == sd and ar.status == "unknown":
-                notes.append(f"applicability report {ar.check_id!r} on {leaf.subject_id} is UNKNOWN; it backs nothing")
+    subject_digests = {view.nodes[s].content_digest for s in subjects}
+    for _d, ar in sorted(reports.items()):
+        if ar.status != "within" and ar.evidence_digest not in subject_digests:
+            notes.append(f"applicability report {ar.check_id!r} ({ar.status}) is decided on no subject of this claim "
+                         f"(evidence digest {ar.evidence_digest or 'EMPTY'}); a negative finding counts only when decided on "
+                         "the subject, or recorded in the graph as a CONTRADICTS edge")
     for env in red_team:
         if env.outcome.value == "falsified" and env.claim_id in subjects:
             found.append(Defeater(f"red_team:{env.claim_id}:{envelope_digest(env)[:12]}", "red_team_falsified", (), env.statement()))
@@ -811,11 +924,25 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
             raise CredibilityRefused(f"defeater {d.defeater_id} cites evidence not in the graph: {missing}")
         found.append(d)
     order = {k: i for i, k in enumerate(DEFEATER_KINDS)}
+
+    def _each(records: tuple[Any, ...]) -> list[str]:
+        out = []
+        for r in records:
+            try:
+                out.append(_digest(r.to_dict()))
+            except Exception:                                   # noqa: BLE001 - an unreadable input still changes the digest
+                out.append(_digest(repr(r)))
+        return sorted(out)
+    inputs_digest = _digest({
+        "validation_checks": _each(validation_checks), "applicability_reports": _each(applicability_reports),
+        "uncertainty_entries": _each(uncertainty_entries), "red_team": _each(red_team), "defeaters": _each(defeaters),
+        "trusted_sources": None if trusted_sources is None else sorted([p.source_id, p.issuer, p.document_digest, p.version]
+                                                                       for p in trusted_sources.pins)})
     return CredibilityVectorReport(
         requirement.decision_id, claim.node_id, _digest(claim.structure()), requirement.context_digest, evidence_graph_fingerprint(graph),
         requirement.policy_id, requirement.policy_digest, requirement.risk_class, required, vec, tuple(gaps),
         tuple(sorted({d.defeater_id: d for d in found}.values(), key=lambda d: (order[d.kind], d.defeater_id))),
-        tuple(notes) + tuple(f"rejected: {r}" for r in vec.rejected))
+        tuple(notes) + tuple(f"rejected: {r}" for r in vec.rejected), inputs_digest)
 
 
 __all__ = ["ClaimNode", "Combine", "CredibilityRefused", "CredibilityVectorReport", "DEFEATER_KINDS", "Defeater", "DecisionRequirement",
