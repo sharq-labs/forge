@@ -425,7 +425,7 @@ def test_a_passport_counts_as_discovery_only_when_every_gate_holds_and_never_for
         DiscoveryPassport("p", "real", {}, {}, verdict_limits=STANDARD_LIMITS)
 
 
-def _passport_world():
+def _passport_world(*, declare_plan: bool = True):
     """A full small campaign: snapshot, proposal, seal, freeze, approval, ONE exploratory post-seal release at the
     falsifier's conditions and one confirmatory release, the verdicts applied, a Red Team envelope attested, a credibility
     report; then the campaign is RESUMED from the ledger reopened against the operator's anchor."""
@@ -465,7 +465,7 @@ def _passport_world():
                             "prereg-test.structure/1")
     space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
     plan = AttackPlan(space.digest, 50, "s")
-    s = Setup(snapshot=snap, red_team_attack_space={"space_digest": space.digest, "plan_digest": plan.digest})
+    s = Setup(snapshot=snap, red_team_attack_space={"space_digest": space.digest, **({"plan_digest": plan.digest} if declare_plan else {})})
     s.plan = plan
     s.manifest = DatasetManifest("ds2", "1", "test", "one row per checkpoint", {"exploratory": ["e1", "e2"], "confirmatory": ["c1", "c2"]},
                                  row_commitments={r: commit_row("ds2", r, rows[r], bytes.fromhex(rows[r]["salt"])) for r in rows})
@@ -755,3 +755,11 @@ def test_an_operator_role_falsification_is_counted_and_the_plan_is_bound():     
                                                                          "envelope": other_plan, "snapshot": snap2,
                                                                          "canonicalizer": canon2, "red_team_subject": s2.subject})
     assert any("another attack plan" in p for p in problems)
+
+
+def test_a_pre_registration_without_a_plan_digest_never_verifies_an_attack():                        # C6 MEDIUM (coverage)
+    s, camp, anchor, judged, env, cred, snap, canon = _passport_world(declare_plan=False)
+    honest = _honest(camp, judged, env, cred, anchor, canon, snap, s.prereg)
+    problems = verify_passport(honest, camp, trust_anchor=anchor, hypothesis=judged, credibility_inputs=s.cred_inputs, envelope=env,
+                               snapshot=snap, canonicalizer=canon, red_team_subject=s.subject)
+    assert any("declares no attack plan digest" in p for p in problems)
