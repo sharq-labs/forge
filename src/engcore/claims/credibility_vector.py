@@ -63,8 +63,9 @@ to the decision context.  A policy must dominate :data:`RISK_POLICY_V1` row by r
 
 The report is OUTPUT for a reader, not a persisted authority: there is no reader that trusts a stored report; re-run
 :func:`assess_credibility` on the graph.  Residual (deferred hardening): independence is only as good as provenance; a
-graph from which a contradicting node was deleted is a different graph (its fingerprint is bound), but this module cannot
-know a node is missing; likewise a NEGATIVE input that is not supplied (an 'outside' / 'unknown' applicability report, a
+graph from which a contradicting node, or a lineage edge (DERIVED_FROM, CALIBRATES, SUPPORTS) through which a
+contradiction or supersession reaches the claim, was deleted is a different graph (its fingerprint is bound), but this
+module cannot know it is missing; likewise a NEGATIVE input that is not supplied (an 'outside' / 'unknown' applicability report, a
 FALSIFIED envelope) cannot be seen -- the report binds the digest of every supplied input (``inputs_digest``) so two
 assessments over different inputs are distinguishable, and a negative finding should also be recorded in the graph (a
 CONTRADICTS edge), where omission changes the bound fingerprint.  ApplicabilityReport and ChannelEntry carry NO issuer:
@@ -392,6 +393,10 @@ class _GraphView:
             if report is None or report.status != "within" or report.evidence_digest != self.nodes[subject].content_digest:
                 return (f"{evidence_id} does not carry the digest of a supplied, re-read ApplicabilityReport 'within' decided on "
                         f"the subject {subject} (its evidence digest): applicability is not a label")
+        if factor is Factor.MODEL_FORM_UQ and (node.authority not in _admissible(factor, 1) or not self.trusted_provenance(evidence_id)):
+            return (f"{evidence_id} ({node.authority.value}): a model-form statement at ANY level needs an outside reference "
+                    "(measurement, experiment, reference data) with pinned provenance; a model's own run states no "
+                    "model-form discrepancy, not even a declared one")
         if factor in UQ_CHANNEL:
             channel, entry = UQ_CHANNEL[factor], self.uq.get(node.content_digest)
             if entry is not None and entry.state is ChannelState.NOT_APPLICABLE and factor is Factor.MODEL_FORM_UQ:
@@ -412,12 +417,15 @@ class _GraphView:
                 return (f"{evidence_id} ({node.authority.value}) cannot declare {channel!r} not applicable: only an authority "
                         "that could quantify the channel can")
         if factor is Factor.VALIDATION:
-            subject_line = self.lineage(subject)
-            behind = self._closure({evidence_id}, stop=subject, calibrators=False) - {subject}
-            if any(e.source_id in behind and e.relation is EvidenceRelation.CALIBRATES and e.target_id in subject_line
-                   for e in self.graph.edges):
-                return (f"{evidence_id} (a record of the same content, or its lineage) calibrated the model it would validate: "
-                        "calibration data is not validation")
+            # refused when the validator and ANY calibration input of what the subject rests on (incl. the subject's
+            # twins) share a record: the validator itself, its twins, its ancestry or what calibrated it.  Design
+            # decision: hold-out siblings split from ONE raw dataset are refused too (over-conservative, never false
+            # support); an independent hold-out is a separate record with its own lineage.
+            validator = self._closure({evidence_id}, stop=subject) - {subject}
+            calibration = {c for x in self._closure({subject}) for c in self._calibrators.get(x, ())}
+            if any(validator & (self._closure({c}, stop=subject) - {subject}) for c in calibration):
+                return (f"{evidence_id} shares a record (itself, a same-content copy, its lineage or its calibrator) with the "
+                        "data that calibrated the model it would validate: calibration data is not validation")
         return None
 
     def lineage(self, evidence_id: str, stop: str | None = None) -> set[str]:
@@ -435,7 +443,8 @@ class _GraphView:
                 todo.extend(self._parents(x, _NOT_LINEAGE))
         return seen
 
-    def _closure(self, start: set[str], *, stop: str | None = None, calibrators: bool = True) -> set[str]:
+    def _closure(self, start: set[str], *, stop: str | None = None, calibrators: bool = True,
+                 through_supersedes: bool = False) -> set[str]:
         """What ``start`` RESTS ON: same-content twins, ancestors through every relation but CONTRADICTS and SUPERSEDES
         (a newer version does not rest on the one it replaces), and -- with ``calibrators`` -- the records that
         CALIBRATED any member (calibration data points INTO the model).  Fixpoint; never goes through ``stop``."""
@@ -448,7 +457,7 @@ class _GraphView:
             if x == stop and x not in start:
                 continue
             todo.extend(self.twins(x))
-            todo.extend(self._parents(x, _NOT_RESTING_ON))
+            todo.extend(self._parents(x, _NOT_LINEAGE if through_supersedes else _NOT_RESTING_ON))
             if calibrators:
                 todo.extend(self._calibrators.get(x, ()))
         return seen
@@ -464,7 +473,12 @@ class _GraphView:
         pa, pb = na.provenance, nb.provenance
         if pa is None or pb is None or pa.issuer == pb.issuer or pa.source_id == pb.source_id or pa.document_digest == pb.document_digest:
             return False
-        return not ((self.lineage(a, subject) - {subject}) & (self.lineage(b, subject) - {subject}))
+        return not (self.shared_basis(a, subject) & self.shared_basis(b, subject))
+
+    def shared_basis(self, evidence_id: str, subject: str) -> set[str]:
+        """Everything a record could share with another (twins, ancestry incl. superseded versions, calibration inputs),
+        the subject excluded: the conservative reading for independence."""
+        return self._closure({evidence_id}, stop=subject, through_supersedes=True) - {subject}
 
     def contradictions_of(self, subjects: set[str], cited: set[str], notes: list[str]) -> list[Defeater]:
         """Admissible contradictions of what the claim RESTS ON (:meth:`_closure` of every subject and every CITED record,
@@ -475,23 +489,28 @@ class _GraphView:
         for e in self.graph.edges:
             if e.relation is not EvidenceRelation.CONTRADICTS:
                 continue
-            if e.target_id not in closure:
-                if self.admissible_node(e.source_id):
+            # a contradiction is a CONFLICT whichever side wrote the edge: the side outside what the claim rests on is
+            # the counter-evidence, and it must be admissible
+            if e.target_id in closure:
+                inner, outer = e.target_id, e.source_id
+            elif e.source_id in closure:
+                inner, outer = e.source_id, e.target_id
+            else:
+                if self.admissible_node(e.source_id) or self.admissible_node(e.target_id):
                     notes.append(f"contradiction of {e.target_id} by {e.source_id}: not something this claim rests on")
                 continue
-            if not self.admissible_node(e.source_id):
-                notes.append(f"sub-bar contradiction of {e.target_id} by {e.source_id} (unknown authority or other context)")
+            if not self.admissible_node(outer):
+                notes.append(f"sub-bar contradiction between {inner} and {outer} (unknown authority or other context)")
                 continue
-            closed_by = [] if e.source_id in closure else self.superseders(e.source_id, closure)
+            closed_by = [] if outer in closure else self.superseders(outer, closure)
             if closed_by:
-                notes.append(f"contradiction {e.source_id}->{e.target_id} closed by admissible superseder(s) {closed_by}")
+                notes.append(f"contradiction {e.source_id}->{e.target_id} closed by admissible superseder(s) {closed_by} of {outer}")
                 continue
-            src = self.nodes[e.source_id]
             out.append(Defeater(f"contradiction:{e.source_id}->{e.target_id}", "contradiction", (e.source_id, e.target_id),
-                                f"{e.source_id} ({src.authority.value}) contradicts {e.target_id}, which the claim rests on"))
+                                f"{outer} ({self.nodes[outer].authority.value}) conflicts with {inner}, which the claim rests on"))
         line = self._closure(set(subjects))
         for e in self.graph.edges:
-            if e.relation is not EvidenceRelation.SUPERSEDES or e.target_id not in line or e.source_id in line:
+            if e.relation is not EvidenceRelation.SUPERSEDES or e.target_id not in line or e.source_id in self.twins(e.target_id):
                 continue
             if not self.admissible_node(e.source_id):
                 notes.append(f"sub-bar supersession of {e.target_id} by {e.source_id} (unknown authority or other context)")
@@ -568,7 +587,7 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
             pairs_ok = all(view.independent(a, b, subject) for i, a in enumerate(ids) for b in ids[i + 1:])
             subject_node = view.nodes[subject]
             pairs_ok = pairs_ok and all(view.nodes[e].content_digest != subject_node.content_digest and view.nodes[e].source != subject_node.source
-                                        and e not in view.lineage(subject) for e in ids)
+                                        and e not in view._closure({subject}, through_supersedes=True) for e in ids)
             if len(ids) < fc.level or not pairs_ok:
                 why.append(f"{label} needs {fc.level} positively independent route records (distinct source, issuer, "
                            "document and lineage)")
@@ -586,6 +605,12 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
         if fc.level > levels[fc.factor]:
             levels[fc.factor] = fc.level
             support[fc.factor] = fc.evidence_ids
+    if levels[Factor.ADVERSARIAL] == 1 and any(v[0] not in ("survived", "falsified") and v[1:] == (subject, leaf.attacked_subject_digest)
+                                               for v in envelopes.values()):
+        rejected.append("adversarial=survived_declared_attack: capped at UNKNOWN by an UNKNOWN or incoherent envelope for the "
+                        "same subject and attacked statement")
+        levels[Factor.ADVERSARIAL] = UNKNOWN
+        support.pop(Factor.ADVERSARIAL, None)
     # every supplied applicability report decided on THIS subject counts, cited or not: 'outside' is a defeater and sets
     # the factor to outside_domain; 'unknown' caps it at UNKNOWN (every check must pass; UNKNOWN never passes)
     sd = view.nodes[subject].content_digest
@@ -653,10 +678,16 @@ class ClaimNode:
         return out + [self.attacked_subject_digest] if self.attacked_subject_digest else out
 
 
-def _vector(node: ClaimNode, view: _GraphView, notes: list[str], envelopes: Mapping[str, tuple[str, str, str]]) -> FactorVector:
+def _meets(vec: FactorVector, required: Mapping[Factor, int]) -> tuple[bool, int]:
+    gap = sum((req + 1) if vec.level(f) == UNKNOWN else max(0, req - vec.level(f)) for f, req in required.items())
+    return (not vec.defeaters and gap == 0), gap
+
+
+def _vector(node: ClaimNode, view: _GraphView, notes: list[str], envelopes: Mapping[str, tuple[str, str, str]],
+            required: Mapping[Factor, int]) -> FactorVector:
     if not node.children:
         return _leaf_vector(node, view, envelopes)
-    kids = [_vector(ch, view, notes, envelopes) for ch in node.children]
+    kids = [_vector(ch, view, notes, envelopes, required) for ch in node.children]
     defeaters = tuple(d for k in kids for d in k.defeaters)
     rejected = tuple(sorted({r for k in kids for r in k.rejected}))
     if node.combine is Combine.OR:
@@ -665,7 +696,10 @@ def _vector(node: ClaimNode, view: _GraphView, notes: list[str], envelopes: Mapp
         independent = all(view.independent(a, b, s) for i, ea in enumerate(evid) for eb in evid[i + 1:] for a in ea for b in eb
                            for s in subjects) and all(evid)
         if independent:
-            best = max(range(len(kids)), key=lambda i: (kids[i].order_key(), -i))
+            # the branch is chosen by the REQUIREMENT first (meets it, then the smallest total gap), then the declared
+            # order: lowering one branch can never meet a requirement the OR did not already meet
+            best = max(range(len(kids)), key=lambda i: (_meets(kids[i], required)[0], -_meets(kids[i], required)[1],
+                                                        kids[i].order_key(), -i))
             notes.append(f"{node.node_id}: OR took branch {node.children[best].node_id} whole (branches shown independent)")
             return FactorVector(kids[best].levels, kids[best].support, rejected, defeaters)
         notes.append(f"{node.node_id}: OR branches not shown independent; combined as the weakest")
@@ -898,8 +932,8 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
             raise CredibilityRefused(f"claim {leaf.node_id}'s subject {leaf.subject_id!r} is not in the evidence graph")
         if subject.applicability != requirement.context_digest or subject.authority is EvidenceAuthority.UNKNOWN:
             raise CredibilityRefused(f"subject {leaf.subject_id!r} is not a known-authority result bound to the decision's context")
-    vec = _vector(claim, view, notes, envelopes)
     required = requirement.required
+    vec = _vector(claim, view, notes, envelopes, required)
     gaps = []
     for f in FACTOR_PRIORITY:
         if f in required:

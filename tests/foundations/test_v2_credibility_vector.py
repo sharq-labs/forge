@@ -579,3 +579,108 @@ def test_an_incoherent_envelope_backs_nothing(world):                           
     rep = assess(world, claim, graph(world, nodes=nodes), RiskClass.CRITICAL, trusted_sources=_pins_with(world, nodes["rt"]),
                  red_team=(hollow,))
     assert rep.vector.level(Factor.ADVERSARIAL) == UNKNOWN
+
+
+# ---------------------------------------------------------------------------- fourth confirmation review
+
+
+def test_an_obsolete_subject_is_defeated_whatever_else_links_it_to_its_replacement(world):         # finding 1
+    nodes = dict(world["nodes"], result_v2=node("result_v2", A.SIMULATION))
+    for extra in (EvidenceEdge("result", "result_v2", R.SUPPORTS), EvidenceEdge("result_v2", "result", R.CALIBRATES)):
+        rep = assess(world, leaf(), graph(world, EvidenceEdge("result_v2", "result", R.SUPERSEDES), extra, nodes=nodes))
+        assert not rep.requirement_met and any(d.kind == "superseded" for d in rep.open_defeaters), extra
+
+
+def test_or_never_meets_a_requirement_because_a_branch_lost_evidence(world):                         # finding 2
+    within_b = ApplicabilityReport("domain.check.b", "within", RESULT_DIGEST, "b")
+    conv_b = ValidationCheck("conv_b", ValidationOutcome.PASS, establishes=VL.NUMERICALLY_CONVERGED, residual=0.001, tolerance=0.01,
+                             evidence=("r:b",))
+    nodes = dict(world["nodes"], domain_b=node("domain_b", A.ANALYTICAL, digest=record_digest(within_b)),
+                 conv_b=node("conv_b", A.SIMULATION, digest=check_digest(conv_b)))
+    pins = _pins_with(world, nodes["domain_b"], nodes["conv_b"])
+    a = leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability"),
+              FactorClaim(Factor.VERIFICATION, 2, ("conv", "mms"), VL.ANALYTICALLY_VERIFIED.value)], "a")
+    b = leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain_b",), "applicability"),
+              FactorClaim(Factor.VERIFICATION, 1, ("conv_b",), VL.NUMERICALLY_CONVERGED.value),
+              FactorClaim(Factor.NUMERICAL_UQ, 0, ("nuq",), "numerical")], "b")
+    claim = ClaimNode("or", combine=Combine.OR, children=(a, b))
+    kw = dict(trusted_sources=pins, validation_checks=world["checks"] + (conv_b,), applicability_reports=(world["reports"][0], within_b))
+    g = graph(world, nodes=nodes)
+    full = assess(world, claim, g, RiskClass.LOW, **kw)
+    mms_check = world["checks"][2]
+    variants = [assess(world, claim, g, RiskClass.LOW, **dict(kw, validation_checks=tuple(c for c in kw["validation_checks"]
+                                                                                          if c is not mms_check))),
+                assess(world, claim, graph(world, EvidenceEdge("rumour", "mms", R.SUPERSEDES), nodes=nodes), RiskClass.LOW, **kw)]
+    assert full.requirement_met, full.notes                         # the branch that meets the bar is the one chosen
+    for rep in variants:
+        assert rep.requirement_met <= full.requirement_met
+
+
+def test_independence_follows_shared_calibration_and_same_content_ancestry(world):                  # finding 3
+    two = [FactorClaim(Factor.INDEPENDENT_ROUTES, 2, ("route_a", "route_b"), VL.CROSS_SOLVER_VALIDATED.value)]
+    nodes = dict(world["nodes"], cal=node("cal", A.MEASUREMENT), x=node("x", A.MEASUREMENT),
+                 x_copy=node("x_copy", A.MEASUREMENT, digest=_h("x")))
+    tuned = graph(world, EvidenceEdge("cal", "route_a", R.CALIBRATES), EvidenceEdge("cal", "route_b", R.CALIBRATES), nodes=nodes)
+    assert assess(world, leaf(two), tuned).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
+    copied = graph(world, EvidenceEdge("route_a", "x", R.DERIVED_FROM), EvidenceEdge("route_b", "x_copy", R.DERIVED_FROM), nodes=nodes)
+    assert assess(world, leaf(two), copied).vector.level(Factor.INDEPENDENT_ROUTES) == UNKNOWN
+    assert assess(world, leaf(two), graph(world, nodes=nodes)).vector.level(Factor.INDEPENDENT_ROUTES) == 2
+
+
+def test_the_calibration_guard_compares_the_validator_with_every_calibration_input(world):           # finding 4
+    nodes = dict(world["nodes"], cal_data=node("cal_data", A.MEASUREMENT), X=node("X", A.MEASUREMENT),
+                 result_copy=node("result_copy", A.SIMULATION, digest=RESULT_DIGEST))
+    for edges in ((EvidenceEdge("cal_data", "exp", R.DERIVED_FROM), EvidenceEdge("cal_data", "result", R.CALIBRATES)),
+                  (EvidenceEdge("X", "exp", R.CALIBRATES), EvidenceEdge("X", "result", R.CALIBRATES)),
+                  (EvidenceEdge("exp", "result_copy", R.CALIBRATES),)):
+        assert assess(world, leaf(), graph(world, *edges, nodes=nodes)).vector.level(Factor.VALIDATION) == UNKNOWN, edges
+    assert assess(world, leaf(), graph(world, nodes=nodes)).vector.level(Factor.VALIDATION) == 2
+
+
+def test_a_model_never_declares_its_own_model_form_discrepancy(world):                              # finding 5
+    zero = ChannelEntry(UC.MODEL_FORM, ChannelState.KNOWN, Uncertainty(kind=UncertaintyKind.STANDARD,
+                        standard_uncertainty=Quantity(0.0, "volt"), method="self", source_kind=US.MODEL_FORM), source="model")
+    claim = [FactorClaim(Factor.MODEL_FORM_UQ, 0, ("mf0",), "model_form")]
+    for prov in (False, True):
+        nodes = dict(world["nodes"], mf0=node("mf0", A.SIMULATION, digest=record_digest(zero), provenance=prov))
+        pins = _pins_with(world, nodes["mf0"]) if prov else world["pins"]
+        rep = assess(world, leaf(claim), graph(world, nodes=nodes), uncertainty_entries=(zero,), trusted_sources=pins)
+        assert rep.vector.level(Factor.MODEL_FORM_UQ) == UNKNOWN
+    nodes = dict(world["nodes"], mf0=node("mf0", A.EXPERIMENT, digest=record_digest(zero), provenance=False))
+    rep = assess(world, leaf(claim), graph(world, nodes=nodes), uncertainty_entries=(zero,))
+    assert rep.vector.level(Factor.MODEL_FORM_UQ) == UNKNOWN                     # an outside reference still needs a pin
+
+
+def test_a_contradiction_is_a_conflict_whichever_side_wrote_it(world):                              # finding 6
+    nodes = dict(world["nodes"], lab=node("lab", A.EXPERIMENT))
+    rep = assess(world, leaf(), graph(world, EvidenceEdge("result", "lab", R.CONTRADICTS), nodes=nodes))
+    assert not rep.requirement_met and any(d.evidence_ids == ("result", "lab") for d in rep.open_defeaters)
+    rumour = assess(world, leaf(), graph(world, EvidenceEdge("result", "rumour", R.CONTRADICTS)))
+    assert rumour.requirement_met and any("sub-bar contradiction" in n for n in rumour.notes)
+
+
+def test_fourth_review_lows(world):
+    # an UNKNOWN envelope for the same statement caps adversarial standing
+    x = AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1")
+    space = AttackSpace("result", (x,))
+    routes = (Route("a", "f", 1, lambda p: RouteResult(0.1)), Route("b", "g", 2, lambda p: RouteResult(0.1)))
+    survived = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, routes, "a"), space, AttackPlan(space.digest, 200, "s"))
+    import dataclasses
+    nodes = dict(world["nodes"], rt=node("rt", A.SIMULATION, digest=envelope_digest(survived)))
+    claim = ClaimNode("c", tuple(full_claims()) + (FactorClaim(Factor.ADVERSARIAL, 1, ("rt",), ENVELOPE_SURVIVED),),
+                      subject_id="result", attacked_subject_digest=survived.subject_digest)
+    kw = dict(trusted_sources=_pins_with(world, nodes["rt"]))
+    g = graph(world, nodes=nodes)
+    assert assess(world, claim, g, RiskClass.CRITICAL, red_team=(survived,), **kw).vector.level(Factor.ADVERSARIAL) == 1
+    unknown = dataclasses.replace(survived, outcome=EnvelopeOutcome.UNKNOWN, reason="budget ran out")
+    assert assess(world, claim, g, RiskClass.CRITICAL, red_team=(survived, unknown), **kw).vector.level(Factor.ADVERSARIAL) == UNKNOWN
+    # incoherent envelopes: more coverage than evaluations, or no attacked route
+    for bad in (dataclasses.replace(survived, evaluations=survived.points_covered - 1), dataclasses.replace(survived, attacked_routes=())):
+        n2 = dict(world["nodes"], rt=node("rt", A.SIMULATION, digest=envelope_digest(bad)))
+        rep = assess(world, claim, graph(world, nodes=n2), RiskClass.CRITICAL, red_team=(bad,), trusted_sources=_pins_with(world, n2["rt"]))
+        assert rep.vector.level(Factor.ADVERSARIAL) == UNKNOWN
+    # a contradiction of an ANCESTOR of calibration data reaches the claim (fixpoint)
+    deep = dict(world["nodes"], cal_data=node("cal_data", A.MEASUREMENT), raw=node("raw", A.MEASUREMENT), lab=node("lab", A.EXPERIMENT))
+    g3 = graph(world, EvidenceEdge("cal_data", "result", R.CALIBRATES), EvidenceEdge("cal_data", "raw", R.DERIVED_FROM),
+               EvidenceEdge("lab", "raw", R.CONTRADICTS), nodes=deep)
+    assert any(d.evidence_ids == ("lab", "raw") for d in assess(world, leaf(), g3).open_defeaters)
