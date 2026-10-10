@@ -250,10 +250,14 @@ class DurableCampaign:
         self._journal("register", {"hypothesis": hypothesis.to_dict()})
         return t
 
-    def seal(self, falsifier: Falsifier, ticket: HypothesisTicket) -> None:
+    def seal(self, falsifier: Falsifier, ticket: HypothesisTicket, *, fit_receipt: Any = None) -> None:
+        """``fit_receipt``: the EXECUTOR-attested fit (an AttestationRecord) whose output ``falsifier_prediction`` is the
+        digest of the predicted value and its uncertainty (``exposure_dataset.falsifier_fit_digest``); journaled with the
+        seal so a verifier can check the numbers came from the fit, not from the sealer."""
         self._guard()
         self._registry.seal(falsifier, ticket)
-        self._journal("seal", {"falsifier": falsifier.to_dict()})
+        self._journal("seal", {"falsifier": falsifier.to_dict(),
+                               **({"fit_receipt": fit_receipt.record_digest} if fit_receipt is not None else {})})
 
     def release(self, *, opening: Mapping[str, Any] | None = None, **kwargs: Any) -> EvidenceItem:
         """``opening``: the data authority's opening of the row's manifest commitment (row id, salt), journaled WITH the

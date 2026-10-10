@@ -673,7 +673,8 @@ class AuthorityLedger:
         if isinstance(start, bool) or not isinstance(start, int) or not key.active_from <= start <= seq:
             raise AuthorityRefused(f"event {seq}: compromised_from is a sequence inside the key's active life "
                                    f"[{key.active_from}, {seq}]")
-        key.compromised_from = start
+        if key.compromised_from is None or start < key.compromised_from:
+            key.compromised_from = start            # a window only ever widens, whichever event declares it
 
     def _apply_attest(self, ev: LedgerEvent, seq: int) -> None:
         b = ev.body

@@ -16,7 +16,6 @@ import pytest
 
 from engcore.authority import (
     AuthorityLedger,
-    AuthorityRefused,
     EphemeralKeyProvider,
     MemoryLedgerStore,
     Role,
@@ -130,14 +129,14 @@ class Setup:
     def discipline(self):
         return verify_discipline(self.led, self.camp)
 
-    def fit(self, inputs):
-        """An EXECUTOR-attested fit receipt whose output is these abstention rule inputs."""
+    def fit(self, inputs, h, falsifier_ref=None):
+        """An EXECUTOR-attested fit receipt whose output is these abstention rule inputs, for hypothesis ``h``."""
         from engcore.claims.attestation import attest_receipt
         from engcore.claims.exposure_dataset import rule_inputs_digest
         from tests.authority_helpers import receipt_for
+        dig = rule_inputs_digest(inputs, hypothesis_id=h.hypothesis_id, content_digest=h.content_digest, falsifier_ref=falsifier_ref)
         return attest_receipt(self.led, self.keys.signer("exec"), "exec",
-                              receipt_for(rule_inputs_digest(inputs), output="rule_inputs", node_id=f"fit-{len(self.led.events())}"),
-                              context_digest=CTX)
+                              receipt_for(dig, output="rule_inputs", node_id=f"fit-{len(self.led.events())}"), context_digest=CTX)
 
 
 # ---------------------------------------------------------------------------- pre-registration
@@ -355,13 +354,15 @@ def test_untestable_is_not_a_choice_under_a_machine_readable_rule():            
                            rule_inputs=({"predicted": 5.0, "prediction_uncertainty": 0.01, "observation_uncertainty": 0.01},))
     with pytest.raises(ExposureRefused, match="names no attested fit receipt"):      # the operator's say-so is not a fit
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small)
-    with pytest.raises(ExposureRefused, match="does not output these rule inputs"):
+    with pytest.raises(ExposureRefused, match="does not output this rule_inputs"):
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small,
-                           fit_receipt=s.fit(({"predicted": 9.0, "prediction_uncertainty": 9.0, "observation_uncertainty": 0.01},)))
+                           fit_receipt=s.fit(({"predicted": 9.0, "prediction_uncertainty": 9.0, "observation_uncertainty": 0.01},), hs[1]))
+    with pytest.raises(ExposureRefused, match="does not output this rule_inputs"):     # a fit of ANOTHER hypothesis (C2 M-3)
+        declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small, fit_receipt=s.fit(small, hs[0]))
     with pytest.raises(ExposureRefused, match="observation uncertainty other than the pre-registered"):
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw,
                            rule_inputs=({"predicted": 0.01, "prediction_uncertainty": 0.01, "observation_uncertainty": 5.0},))
-    declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small, fit_receipt=s.fit(small))
+    declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", **kw, rule_inputs=small, fit_receipt=s.fit(small, hs[1]))
     s.camp.seal(falsifier(hs[0]), s.tickets["h1"])
     with pytest.raises(ExposureRefused, match="already has sealed falsifiers"):
         declare_untestable(s.camp, s.led, s.keys.signer("exposure"), "exposure", hypothesis_id="h1",
@@ -425,10 +426,31 @@ def _passport_world():
     report; then the campaign is RESUMED from the ledger reopened against the operator's anchor."""
     from engcore.blindfold.expression import structure_digest as sd
     from engcore.claims.attestation import attest_receipt, attest_record
-    from engcore.claims.credibility_vector import ClaimNode, DecisionRequirement, Factor, FactorClaim, RiskClass, assess_credibility
+    from engcore.claims.credibility_vector import (
+        ClaimNode,
+        DecisionRequirement,
+        Factor,
+        FactorClaim,
+        RiskClass,
+        assess_credibility,
+    )
     from engcore.claims.novelty import Canonicalizer, PriorArtEntry, PriorArtSnapshot
-    from engcore.claims.redteam import AttackDimension, AttackKind, AttackPlan, AttackSpace, ClaimSubject, Route, RouteResult, Sense, run_red_team
-    from engcore.credibility.evidence_graph import EvidenceAuthority, EvidenceGraph, EvidenceNode
+    from engcore.claims.redteam import (
+        AttackDimension,
+        AttackKind,
+        AttackPlan,
+        AttackSpace,
+        ClaimSubject,
+        Route,
+        RouteResult,
+        Sense,
+        run_red_team,
+    )
+    from engcore.credibility.evidence_graph import (
+        EvidenceAuthority,
+        EvidenceGraph,
+        EvidenceNode,
+    )
     from tests.authority_helpers import receipt_for
     rows = {**ROWS, "e2": {"value": 5.18, "uncertainty": 0.01, "conditions": {"x": 2.0}, "salt": os.urandom(16).hex()}}
     from engcore.claims.novelty import register_canonicalizer
@@ -447,24 +469,28 @@ def _passport_world():
     s.gate.confirmatory("c1", preregistration=s.prereg)
     judged = s.camp.apply_verdicts(s.hs[0])
     space = AttackSpace("result", (AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1"),))
-    env = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 10.0, (Route("a", "f", 1, lambda p: RouteResult(5.0)),
-                                                                              Route("b", "g", 2, lambda p: RouteResult(5.0))), "a"),
-                       space, AttackPlan(space.digest, 50, "s"))
+    subject = ClaimSubject("result", "y", "1", Sense.AT_MOST, 10.0, (Route("h1", "f", 1, lambda p: RouteResult(5.0)),
+                                                                     Route("b", "g", 2, lambda p: RouteResult(5.0))), "h1")
+    env = run_red_team(subject, space, AttackPlan(space.digest, 50, "s"))
     out = hashlib.sha256(b"prediction").hexdigest()
     rec = attest_receipt(s.led, s.keys.signer("exec"), "exec", receipt_for(out, node_id="pred"), context_digest=CTX)
     attest_record(s.led, s.keys.signer("rt"), "rt", env, receipt=rec, subject_output="y", context_digest=CTX, role=Role.RED_TEAM)
     anchor = s.led.anchor()
     opened = AuthorityLedger.open(s.store, anchor=anchor)
-    cred = assess_credibility(ClaimNode("c", (FactorClaim(Factor.VERIFICATION, 1, ("n0",), "numerically_converged"),), subject_id="r"),
+    cred = assess_credibility(ClaimNode("claim:h1", (FactorClaim(Factor.VERIFICATION, 1, ("n0",), "numerically_converged"),), subject_id="r"),
                               EvidenceGraph((EvidenceNode("r", EvidenceAuthority.SIMULATION, out, "s", applicability=CTX),
                                              EvidenceNode("n0", EvidenceAuthority.SIMULATION, "1" * 64, "s2", applicability=CTX)), ()),
                               DecisionRequirement("d", CTX, RiskClass.LOW), authority=opened, trust_anchor=anchor, allow_test_profile=True)
+    s.camp.close_multiplicity()
+    anchor = s.led.anchor()
+    opened = AuthorityLedger.open(s.store, anchor=anchor)
     s.camp.close()
     camp = DurableCampaign.resume(opened, s.keys, issuer_id="exposure", campaign_id="c", expected_anchor=anchor)
+    s.subject = subject
     return s, camp, anchor, judged, env, cred, snap, canon
 
 
-def _honest(camp, judged, env, cred, anchor, canon, snap):
+def _honest(camp, judged, env, cred, anchor, canon, snap, prereg):
     from engcore.claims.credibility_vector import record_digest
     from engcore.claims.novelty import check_novelty
     d = verify_discipline(None, camp)
@@ -474,19 +500,21 @@ def _honest(camp, judged, env, cred, anchor, canon, snap):
         "p", "confirmatory",
         {"hypothesis_id": judged.hypothesis_id, "content_digest": judged.content_digest, "status": judged.status.value,
          "novelty_status": check_novelty(judged, snap, camp.novelty, canonicalizer=canon).status.value},
-        {"discipline": d["status"], "discipline_issues": d["issues"]},
+        {"discipline": d["status"], "discipline_issues": d["issues"], "preregistration_digest": prereg.digest},
         ({"ref": f.ref, "digest": f.digest, "verdicts": sorted(v.verdict.value for v in vs),
           "confirmatory_verdicts": sorted(v.verdict.value for v in vs if v.evidence_id in d["confirmatory_evidence_ids"])},),
         credibility={"report_digest": cred.digest, "requirement_met": cred.requirement_met, "issuer_bound": cred.issuer_bound,
                      "test_mode": cred.test_mode},
+        multiplicity={"final_context_digest": camp.multiplicity.final.digest, "family_size": camp.multiplicity.final.family_size},
         adversarial={"envelope_digest": record_digest(env), "outcome": env.outcome.value},
         authority_anchor=anchor.to_dict(), verdict_limits=STANDARD_LIMITS)
 
 
 def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():                      # combined review H-1, H-2
     s, camp, anchor, judged, env, cred, snap, canon = _passport_world()
-    honest = _honest(camp, judged, env, cred, anchor, canon, snap)
-    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility": cred, "envelope": env, "snapshot": snap, "canonicalizer": canon}
+    honest = _honest(camp, judged, env, cred, anchor, canon, snap, s.prereg)
+    kw = {"trust_anchor": anchor, "hypothesis": judged, "credibility": cred, "envelope": env, "snapshot": snap, "canonicalizer": canon,
+          "red_team_subject": s.subject}
     assert verify_passport(honest, camp, **kw) == []
     f = honest.falsifiers[0]
     assert sorted(f["verdicts"]) == ["not_refuted", "not_refuted"] and f["confirmatory_verdicts"] == ["not_refuted"]
@@ -498,10 +526,25 @@ def test_verify_passport_re_derives_every_field_counts_as_discovery_trusts():   
         "adversarial": dataclasses.replace(honest, adversarial={**honest.adversarial, "outcome": "falsified"}),
         "falsifier": dataclasses.replace(honest, falsifiers=({**f, "confirmatory_verdicts": ["not_refuted", "not_refuted"]},)),
         "authority anchor": dataclasses.replace(honest, authority_anchor={**anchor.to_dict(), "profile": "production"}),
-        "discipline": dataclasses.replace(honest, protocol={"discipline": "CONFIRMATORY", "discipline_issues": ["hidden"]}),
+        "discipline": dataclasses.replace(honest, protocol={**honest.protocol, "discipline_issues": ["hidden"]}),
+        "protocol": dataclasses.replace(honest, protocol={**honest.protocol, "preregistration_digest": "0" * 64}),
+        "multiplicity": dataclasses.replace(honest, multiplicity={**honest.multiplicity, "family_size": 1}),
     }
     for name, lie in lies.items():
         assert any(p.startswith(name) for p in verify_passport(lie, camp, **kw)), name
+    # records about ANOTHER claim, subject or context never back this passport (C2 HIGH-2)
+    other_subject = dataclasses.replace(s.subject, claim_route="b")
+    assert any(p.startswith("adversarial") for p in verify_passport(honest, camp, **{**kw, "red_team_subject": other_subject}))
+    foreign = dataclasses.replace(cred, claim_id="claim:h9")
+    assert any(p.startswith("credibility") for p in verify_passport(dataclasses.replace(
+        honest, credibility={**honest.credibility, "report_digest": foreign.digest}), camp, **{**kw, "credibility": foreign}))
+    elsewhere = dataclasses.replace(cred, context_digest=hashlib.sha256(b"another decision").hexdigest())
+    assert any(p.startswith("credibility") for p in verify_passport(dataclasses.replace(
+        honest, credibility={**honest.credibility, "report_digest": elsewhere.digest}), camp, **{**kw, "credibility": elsewhere}))
+
+    class Fake:                                                     # a duck-typed campaign is never accepted (C2 M-1)
+        ledger, registry, novelty = camp.ledger, camp.registry, camp.novelty
+    assert verify_passport(honest, Fake(), **kw)[0].startswith("campaign")
     stranger = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prereg", profile="test", root=EphemeralKeyProvider().signer("r"))
     assert verify_passport(honest, camp, **{**kw, "trust_anchor": stranger.anchor()})[0].startswith("authority")
 
@@ -513,13 +556,37 @@ def test_a_released_value_is_re_checked_against_its_commitment_from_the_journal(
     assert any("carries no opening" in i for i in s.discipline()["issues"])
     s2 = Setup()
     s2.ready()
+    from engcore.claims.exposure_dataset import row_key
+    honest_key = row_key("ds", "c1", SALT["c1"]).hex()
     s2.camp.release(evidence_id="ds/c1", source="measurement_record", observable="y", unit="m", value=99.0, uncertainty=0.01,
-                    conditions={"x": 2.0, "partition": "confirmatory"}, opening={"dataset_id": "ds", "row_id": "c1", "salt": ROWS["c1"]["salt"]})
+                    conditions={"x": 2.0, "partition": "confirmatory"},
+                    opening={"dataset_id": "ds", "row_id": "c1", "manifest_digest": s2.manifest.digest, "row_key": honest_key})
     assert any("does not open its manifest commitment" in i for i in s2.discipline()["issues"])
+    # a second manifest cannot REPLACE the commitment of a registered row (C2 HIGH-1) ...
+    my_salt = os.urandom(16)
+    forged = DatasetManifest("ds", "2", "x", "p", {"exploratory": ["e1"], "confirmatory": ["c1", "c2"]},
+                             row_commitments={"c1": commit_row("ds", "c1", {"value": 99.0, "uncertainty": 0.01, "conditions": {"x": 2.0}},
+                                                               my_salt)})
+    with pytest.raises(ExposureRefused, match="replaces its commitment"):
+        register_manifest(s2.camp, s2.led, s2.keys.signer("exposure"), "exposure", forged)
+    # ... and attested around register_manifest it is a flagged conflict, and its opening is not an approved manifest's
+    from engcore.authority import Attestation
+    from engcore.claims.durable_campaign import campaign_subject
+    from engcore.claims.exposure_dataset import MANIFEST_KIND, MANIFEST_SCHEMA
+    s2.led.attest(s2.keys.signer("exposure"), "exposure", Attestation(MANIFEST_KIND, MANIFEST_SCHEMA, {
+        "campaign_id": "c", "manifest": forged.to_dict(), "digest": forged.digest}, campaign_subject("c"), CTX, Role.EXPOSURE))
+    s2.camp.release(evidence_id="ds/c1", source="measurement_record", observable="y", unit="m", value=99.0, uncertainty=0.01,
+                    conditions={"x": 2.0, "partition": "confirmatory"},
+                    opening={"dataset_id": "ds", "row_id": "c1", "manifest_digest": forged.digest,
+                             "row_key": row_key("ds", "c1", my_salt).hex()})
+    issues = s2.discipline()["issues"]
+    assert any("another commitment" in i for i in issues) and any("did not approve" in i for i in issues)
     s3 = Setup()
     s3.ready()
     s3.gate.confirmatory("c1", preregistration=s3.prereg)          # the honest path re-checks clean
     assert s3.discipline()["issues"] == []
+    opening = [r for r in s3.led.attestations(record_kind="campaign_op") if r.attestation.record.get("op") == "release"][0]
+    assert "salt" not in opening.attestation.record_dict()["args"]["opening"]        # only the per-row key (C2 M-2)
 
 
 def test_counts_without_n_and_compromised_or_foreign_records_are_not_trusted():                    # M-2, M-3, M-4
@@ -540,3 +607,23 @@ def test_counts_without_n_and_compromised_or_foreign_records_are_not_trusted(): 
         ExposureGate(s2.camp, other.led, manifest=s2.manifest, rows=ROWS.__getitem__, observable="y", unit="m")
     with pytest.raises(ExposureRefused, match="campaign's own authority ledger"):
         verify_discipline(other.led, s2.camp)
+
+
+def test_under_a_machine_readable_rule_a_seal_names_its_fit():                                     # C2 M-3
+    from engcore.claims.attestation import attest_receipt
+    from engcore.claims.exposure_dataset import falsifier_fit_digest
+    from tests.authority_helpers import receipt_for
+    s = Setup(falsification_criteria=RULE)
+    s.freeze()
+    pred, u = 5.17, 0.01
+    res = min(0.25 * pred, max(1.2 * 3.0 * (u ** 2 + 0.01 ** 2) ** 0.5, 0.004))
+    f = Falsifier("h1-f1", "h1", s.hs[0].content_digest, "y", "m", {"x": 2.0}, EvidenceSource.MEASUREMENT_RECORD,
+                  CriterionKind.PREDICTION_DEVIATION, {"k": 3.0, "predicted": pred, "prediction_uncertainty": u, "resolution": res})
+    s.camp.seal(f, s.tickets["h1"])                                 # no fit receipt: the sealer's own numbers
+    assert any("no attested fit receipt for its falsifier_prediction" in i for i in s.discipline()["issues"])
+    s2 = Setup(falsification_criteria=RULE)
+    s2.freeze()
+    rec = attest_receipt(s2.led, s2.keys.signer("exec"), "exec", receipt_for(falsifier_fit_digest(f), output="falsifier_prediction",
+                                                                             node_id="fit-seal"), context_digest=CTX)
+    s2.camp.seal(f, s2.tickets["h1"], fit_receipt=rec)
+    assert not any("h1-f1" in i for i in s2.discipline()["issues"])

@@ -80,16 +80,26 @@ def _digest(payload: Any) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
 
-def commit_row(dataset_id: str, row_id: str, row: Mapping[str, Any], salt: bytes) -> str:
-    """The salted commitment to one row (value, uncertainty, conditions).  The salt stays with the data authority: a
-    low-entropy value under a plain hash could be brute-forced from the manifest."""
+def row_key(dataset_id: str, row_id: str, salt: bytes) -> bytes:
+    """The per-ROW commitment key derived from the data authority's salt.  A release opens its commitment with this key
+    only: the salt itself is never journaled, so a salt shared across rows cannot open (or brute-force) another row."""
     if not isinstance(salt, (bytes, bytearray)) or len(salt) < 16:
         raise ExposureRefused("a row commitment is salted with at least 16 random bytes")
+    return hmac.new(bytes(salt), f"forge.dataset.row-key/1\n{dataset_id}\n{row_id}".encode(), hashlib.sha256).digest()
+
+
+def _commit_with_key(dataset_id: str, row_id: str, row: Mapping[str, Any], key: bytes) -> str:
     norm = {"value": None if row.get("value") is None else float(row["value"]),
             "uncertainty": None if row.get("uncertainty") is None else float(row["uncertainty"]),
             "conditions": dict(row.get("conditions") or {})}
     body = json.dumps(norm, sort_keys=True, separators=(",", ":"), allow_nan=False, default=str)
-    return hmac.new(bytes(salt), f"forge.dataset.row/1\n{dataset_id}\n{row_id}\n{body}".encode(), hashlib.sha256).hexdigest()
+    return hmac.new(key, f"forge.dataset.row/2\n{dataset_id}\n{row_id}\n{body}".encode(), hashlib.sha256).hexdigest()
+
+
+def commit_row(dataset_id: str, row_id: str, row: Mapping[str, Any], salt: bytes) -> str:
+    """The salted commitment to one row (value, uncertainty, conditions), under its per-row key (:func:`row_key`).  The
+    salt stays with the data authority: a low-entropy value under a plain hash could be brute-forced from the manifest."""
+    return _commit_with_key(dataset_id, row_id, row, row_key(dataset_id, row_id, salt))
 
 
 @dataclass(frozen=True)
@@ -115,6 +125,8 @@ class DatasetManifest:
         if any(len(set(v)) != len(v) for v in parts.values()):
             raise ExposureRefused("row ids are unique")
         rows = set(parts["exploratory"]) | set(parts["confirmatory"])
+        if "/" in str(self.dataset_id) or any("/" in r for r in rows):
+            raise ExposureRefused("dataset and row ids contain no '/': the evidence id 'dataset/row' must be unambiguous")
         for name, d in dict(self.files).items():
             if d is not None and not _HEX64.fullmatch(str(d)):
                 raise ExposureRefused(f"file {name!r}: a digest is sha256 hex, or None when not available")
@@ -196,6 +208,7 @@ def _manifests(ledger: AuthorityLedger, campaign: DurableCampaign) -> list[tuple
 def _row_partitions(manifests: list[tuple[AttestationRecord | None, DatasetManifest]]) -> tuple[dict[str, tuple[str, int]], list[str]]:
     """evidence id -> (partition, first registration sequence); conflicts are listed, never resolved quietly."""
     rows: dict[str, tuple[str, int]] = {}
+    commitments: dict[str, str] = {}
     conflicts: list[str] = []
     for r, m in manifests:
         seq = r.sequence if r is not None else 1 << 62
@@ -205,6 +218,9 @@ def _row_partitions(manifests: list[tuple[AttestationRecord | None, DatasetManif
                 if eid in rows and rows[eid][0] != part:
                     conflicts.append(f"row {eid!r} is {rows[eid][0]} in one registered manifest and {part} in another")
                 rows.setdefault(eid, (part, seq))
+                c = m.row_commitments.get(rid)
+                if c is not None and commitments.setdefault(eid, c) != c:
+                    conflicts.append(f"row {eid!r} carries another commitment in a later manifest: a commitment is never replaced")
     return rows, conflicts
 
 
@@ -212,11 +228,9 @@ def register_manifest(campaign: DurableCampaign, ledger: AuthorityLedger, signer
                       manifest: DatasetManifest) -> AttestationRecord:
     _owner(campaign, issuer_id)
     ledger = _bound(campaign, ledger)
-    if any("/" in x for x in (manifest.dataset_id, *manifest.partitions["exploratory"], *manifest.partitions["confirmatory"])):
-        raise ExposureRefused("dataset and row ids contain no '/': the evidence id 'dataset/row' must be unambiguous")
     _rows, conflicts = _row_partitions([*_manifests(ledger, campaign), (None, manifest)])
     if conflicts:
-        raise ExposureRefused(f"a manifest never moves a registered row to the other partition: {conflicts[0]}")
+        raise ExposureRefused(f"a manifest never moves a registered row or replaces its commitment: {conflicts[0]}")
     record = {"campaign_id": campaign.campaign_id, "manifest": manifest.to_dict(), "digest": manifest.digest}
     return ledger.attest(signer, issuer_id, Attestation(MANIFEST_KIND, MANIFEST_SCHEMA, record, campaign_subject(campaign.campaign_id),
                                                         campaign.context_digest, Role.EXPOSURE))
@@ -287,9 +301,11 @@ def _rule_fails_everywhere(rule: Mapping[str, Any], inputs: Any) -> tuple[bool, 
     if not isinstance(inputs, (list, tuple)) or not inputs:
         return False, "it carries no inputs of the pre-registered rule"
     declared = _declared_u_obs(rule)
+    if declared is None:
+        return False, "the pre-registered rule declares no observation uncertainty: no abstention can be checked against it"
     for n, x in enumerate(inputs):
         try:
-            if declared is not None and float(x["observation_uncertainty"]) != declared:
+            if float(x["observation_uncertainty"]) != declared:
                 return False, f"rule input {n} uses an observation uncertainty other than the pre-registered {declared}"
             resolution, ku = rule_resolution(rule, predicted=x["predicted"], prediction_uncertainty=x["prediction_uncertainty"],
                                              observation_uncertainty=x["observation_uncertainty"])
@@ -323,22 +339,38 @@ def _seal_departs(rule: Mapping[str, Any], f: Mapping[str, Any]) -> str:
     return ""
 
 
-def rule_inputs_digest(inputs: Any) -> str:
-    """The digest an attested fit receipt outputs (as ``rule_inputs``) for the rule inputs of an abstention."""
-    return _digest([dict(x) for x in inputs])
+def rule_inputs_digest(inputs: Any, *, hypothesis_id: str, content_digest: str, falsifier_ref: str | None) -> str:
+    """The digest an attested fit receipt outputs (as ``rule_inputs``) for an abstention: bound to the hypothesis (id and
+    content) and the planned falsifier it abstains from, so one fit cannot be cited for another hypothesis."""
+    return _digest({"hypothesis_id": hypothesis_id, "content_digest": content_digest, "falsifier_ref": falsifier_ref,
+                    "rule_inputs": [dict(x) for x in inputs]})
 
 
-def _fit_receipt_ok(ledger: AuthorityLedger, campaign: DurableCampaign, receipt_digest: Any, inputs: Any) -> str:
-    """The rule inputs of an abstention come from an EXECUTOR-attested fit (not the campaign operator's say-so)."""
+def falsifier_fit_digest(falsifier: Any) -> str:
+    """The digest an attested fit receipt outputs (as ``falsifier_prediction``) for a sealed falsifier: hypothesis,
+    falsifier id, conditions, predicted value and prediction uncertainty -- the numbers the rule sizes the test with."""
+    d = falsifier if isinstance(falsifier, Mapping) else falsifier.to_dict()
+    p = dict(d.get("parameters", {}))
+    return _digest({"hypothesis_id": d.get("hypothesis_id"), "content_digest": d.get("hypothesis_content_digest"),
+                    "falsifier_id": d.get("falsifier_id"), "test_conditions": dict(d.get("test_conditions", {})),
+                    "predicted": p.get("predicted"), "prediction_uncertainty": p.get("prediction_uncertainty")})
+
+
+def _fit_receipt_ok(ledger: AuthorityLedger, campaign: DurableCampaign, receipt_digest: Any, output: str, expected: str,
+                    before: int) -> str:
+    """The numbers come from an EXECUTOR-attested fit (another issuer than the campaign operator, attested BEFORE the
+    record that cites it), not from the operator's say-so."""
     if not isinstance(receipt_digest, str) or not receipt_digest:
-        return "it names no attested fit receipt for its rule inputs"
+        return f"it names no attested fit receipt for its {output}"
     rec, why = verify_receipt(ledger, receipt_digest, context_digest=campaign.context_digest)
     if rec is None:
         return "; ".join(why)
     if rec.issuer_id == campaign.issuer_id or not _trusted(ledger, rec):
         return "the fit receipt is the campaign operator's own, or was signed inside a compromise window"
-    if receipt_outputs(rec).get("rule_inputs") != rule_inputs_digest(inputs):
-        return "the attested fit receipt does not output these rule inputs"
+    if rec.sequence >= before:
+        return "the fit receipt was attested after the record citing it"
+    if receipt_outputs(rec).get(output) != expected:
+        return f"the attested fit receipt does not output this {output}"
     return ""
 
 
@@ -373,7 +405,8 @@ def declare_untestable(campaign: DurableCampaign, ledger: AuthorityLedger, signe
         ok, why = _rule_fails_everywhere(rule, inputs)
         if not ok:
             raise ExposureRefused(f"untestable is not a choice: {why}")
-        bad = _fit_receipt_ok(ledger, campaign, receipt_digest, inputs)
+        bad = _fit_receipt_ok(ledger, campaign, receipt_digest, "rule_inputs", rule_inputs_digest(
+            inputs, hypothesis_id=hypothesis_id, content_digest=content_digest, falsifier_ref=falsifier_ref), ledger.length)
         if bad:
             raise ExposureRefused(f"untestable is not a choice: {bad}")
     record = {"campaign_id": campaign.campaign_id, "hypothesis_id": hypothesis_id, "content_digest": content_digest, "reason": str(reason),
@@ -419,7 +452,8 @@ class ExposureGate:
                 got = ""
             if not hmac.compare_digest(got, commitment):
                 raise ExposureRefused(f"row {row_id!r} does not match its manifest commitment (another row, or a changed value)")
-            opening = {"dataset_id": self._manifest.dataset_id, "row_id": row_id, "salt": str(row["salt"])}
+            opening = {"dataset_id": self._manifest.dataset_id, "row_id": row_id, "manifest_digest": self._manifest.digest,
+                       "row_key": row_key(self._manifest.dataset_id, row_id, bytes.fromhex(str(row["salt"]))).hex()}
         conditions = {**dict(row.get("conditions", {})), "partition": partition, "dataset": self._manifest.dataset_id,
                       "dataset_version": self._manifest.version}
         return self._campaign.release(evidence_id=self._manifest.evidence_id(row_id), source=EvidenceSource.MEASUREMENT_RECORD.value,
@@ -457,22 +491,34 @@ class ExposureGate:
         return self._release(row_id, "confirmatory")
 
 
-def _opening_issue(manifest_of: Mapping[str, DatasetManifest], rel: Mapping[str, Any], opening: Any, part: str, seq: int) -> str:
-    """Re-check, from the journal alone, that a released value is the one its manifest committed to."""
+def _opening_issue(manifests: list[tuple[AttestationRecord, DatasetManifest]], rel: Mapping[str, Any], opening: Any, part: str,
+                   seq: int, allowed: set[str] | None) -> str:
+    """Re-check, from the journal alone, that a released value is the one committed in the manifest the opening names --
+    a manifest registered BEFORE the release and, for a confirmatory row, one the owner approved (``allowed``)."""
     eid = str(rel.get("evidence_id"))
-    m = manifest_of.get(eid)
+    named = opening.get("manifest_digest") if isinstance(opening, Mapping) else None
+    found = [(r, m) for r, m in manifests if m.digest == named and r.sequence < seq]
+    holding = [m for _r, m in manifests if eid in {m.evidence_id(x) for ids in m.partitions.values() for x in ids}]
+    any_commitment = any(m.row_commitments.get(eid.split("/", 1)[-1]) for m in holding)
+    if not found:
+        if part == "confirmatory" or any_commitment:
+            return f"{part} release {eid!r} (ledger {seq}) carries no opening against a manifest registered before it"
+        return ""
+    m = found[0][1]
     rid = eid.split("/", 1)[1] if "/" in eid else ""
-    commitment = None if m is None else m.row_commitments.get(rid)
-    if commitment is None:
-        return f"{part} release {eid!r} (ledger {seq}) has no row commitment in its manifest" if part == "confirmatory" else ""
+    if m.evidence_id(rid) != eid or rid not in {x for ids in m.partitions.values() for x in ids}:
+        return f"release {eid!r} (ledger {seq}) is opened against a manifest that does not hold it"
+    if part == "confirmatory" and allowed is not None and m.digest not in allowed:
+        return f"confirmatory release {eid!r} (ledger {seq}) is opened against a manifest the owner did not approve"
     if part == "confirmatory" and any(d is None for d in m.files.values()):
         return f"confirmatory release {eid!r} (ledger {seq}) comes from a manifest with an unavailable file digest"
-    if not isinstance(opening, Mapping) or opening.get("row_id") != rid or opening.get("dataset_id") != m.dataset_id:
-        return f"release {eid!r} (ledger {seq}) carries no opening of its row commitment: the released value is unchecked"
+    commitment = m.row_commitments.get(rid)
+    if commitment is None:
+        return f"{part} release {eid!r} (ledger {seq}) has no row commitment in its manifest" if part == "confirmatory" else ""
     conds = {k: v for k, v in dict(rel.get("conditions") or {}).items() if k not in _GATE_LABELS}
     try:
-        got = commit_row(m.dataset_id, rid, {"value": rel.get("value"), "uncertainty": rel.get("uncertainty"), "conditions": conds},
-                         bytes.fromhex(str(opening.get("salt"))))
+        got = _commit_with_key(m.dataset_id, rid, {"value": rel.get("value"), "uncertainty": rel.get("uncertainty"),
+                                                   "conditions": conds}, bytes.fromhex(str(opening.get("row_key"))))
     except (ValueError, TypeError):
         got = ""
     if not hmac.compare_digest(got, commitment):
@@ -496,8 +542,8 @@ def verify_discipline(ledger: AuthorityLedger | None, campaign: DurableCampaign,
     manifests = _manifests(ledger, campaign)
     rows, conflicts = _row_partitions(list(manifests))
     issues.extend(conflicts)
-    manifest_of = {m.evidence_id(rid): m for _r, m in manifests for ids in m.partitions.values() for rid in ids}
     conf: list[tuple[int, str]] = []
+    pending_openings: list[tuple[Mapping[str, Any], Any, str, int]] = []
     for r in journal:
         if r.attestation.record.get("op") != "release":
             continue
@@ -514,17 +560,17 @@ def verify_discipline(ledger: AuthorityLedger | None, campaign: DurableCampaign,
             issues.append(f"release {eid!r} (ledger {r.sequence}) happened before its manifest was registered")
         if label is not None and label != part:
             issues.append(f"release {eid!r} (ledger {r.sequence}) is labelled {label!r} but is a {part} row")
-        bad = _opening_issue(manifest_of, rel, args.get("opening"), part, r.sequence)
-        if bad:
-            issues.append(bad)
+        pending_openings.append((rel, args.get("opening"), part, r.sequence))
         if part == "confirmatory":
             conf.append((r.sequence, eid))
-    seals = [(r.sequence, r.attestation.record_dict()["args"]["falsifier"]) for r in journal if r.attestation.record.get("op") == "seal"]
+    seal_ops = [(r.sequence, r.attestation.record_dict()["args"]) for r in journal if r.attestation.record.get("op") == "seal"]
+    seals = [(seq, a["falsifier"]) for seq, a in seal_ops]
     revs = _revisions(ledger, campaign)
     untestable = _untestable(ledger, campaign)
     first = min(s for s, _e in conf) if conf else None
     in_force = None
     approved_conf: set[str] = set()
+    approved: set[str] | None = None
     if first is not None:
         before = [p for s, p in revs if s < first]
         in_force = before[-1] if before else None
@@ -559,17 +605,26 @@ def verify_discipline(ledger: AuthorityLedger | None, campaign: DurableCampaign,
         late_seals = [s for s, _f in seals if s > first]
         if late_seals:
             issues.append(f"falsifiers were sealed after confirmatory exposure (ledger {late_seals}): those test nothing confirmatory")
+    for rel, opening, part, seq in pending_openings:
+        bad = _opening_issue(manifests, rel, opening, part, seq, approved if part == "confirmatory" else None)
+        if bad:
+            issues.append(bad)
     rule_rev = in_force or (revs[-1][1] if revs else None)
     rule = structured_rule(rule_rev) if rule_rev is not None else None
     if rule is not None:
-        for s, f in seals:
-            why = _seal_departs(rule, f)
+        for s, a in seal_ops:
+            f = a["falsifier"]
+            why = _seal_departs(rule, f) or (_fit_receipt_ok(ledger, campaign, a.get("fit_receipt"), "falsifier_prediction",
+                                                             falsifier_fit_digest(f), s)
+                                             if f.get("criterion") == "prediction_deviation" else "")
             if why:
                 issues.append(f"falsifier {f.get('falsifier_id')!r} (ledger {s}) departs from the pre-registered rule: {why}")
         for u in untestable:
             rec = u.attestation.record_dict()
             ok, why = _rule_fails_everywhere(rule, rec.get("rule_inputs"))
-            why = why or _fit_receipt_ok(ledger, campaign, rec.get("fit_receipt"), rec.get("rule_inputs") or [])
+            why = why or _fit_receipt_ok(ledger, campaign, rec.get("fit_receipt"), "rule_inputs", rule_inputs_digest(
+                rec.get("rule_inputs") or [], hypothesis_id=rec["hypothesis_id"], content_digest=rec["content_digest"],
+                falsifier_ref=rec.get("falsifier_ref")), u.sequence)
             if not ok or why:
                 issues.append(f"untestable declaration for {rec['hypothesis_id']!r} (ledger {u.sequence}): {why}")
     counts = {"generated": 0, "admitted": 0}
@@ -610,6 +665,7 @@ def verify_discipline(ledger: AuthorityLedger | None, campaign: DurableCampaign,
 
 
 __all__ = ["APPROVAL_KIND", "MANIFEST_KIND", "PARTITIONS", "UNTESTABLE_KIND", "DatasetManifest", "ExposureGate", "ExposureRefused",
-           "approve_confirmatory", "commit_row", "declare_untestable", "register_manifest", "rule_inputs_digest", "rule_resolution",
+           "approve_confirmatory", "commit_row", "declare_untestable", "falsifier_fit_digest", "register_manifest", "row_key",
+           "rule_inputs_digest", "rule_resolution",
            "structured_rule",
            "verify_discipline"]

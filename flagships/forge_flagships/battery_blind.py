@@ -400,6 +400,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         approve_confirmatory,
         declare_untestable,
         register_manifest,
+        falsifier_fit_digest,
         rule_inputs_digest,
         rule_resolution,
         structured_rule,
@@ -526,9 +527,15 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
     rule = structured_rule(prereg)
     u_obs_declared = float(rule["declared_observation_uncertainty"])
 
-    def fit_receipt(hid: str, inputs: tuple) -> Any:              # the executor attests the abstention's rule inputs
-        return attest_receipt(led, keys.signer("exec"), "exec", _computation_receipt(rule_inputs_digest(inputs), f"abstain-{hid}-"
-                              f"{len(inputs)}-{rule_inputs_digest(inputs)[:8]}", data, output="rule_inputs"), context_digest=ctx)
+    def fit_receipt(hid: str, inputs: tuple, ref: str | None) -> Any:  # the EXECUTOR attests an abstention's rule inputs
+        dig = rule_inputs_digest(inputs, hypothesis_id=hid, content_digest=hs[hid].content_digest, falsifier_ref=ref)
+        return attest_receipt(led, keys.signer("exec"), "exec", _computation_receipt(dig, f"abstain-{hid}-{dig[:8]}", data,
+                                                                                     output="rule_inputs"), context_digest=ctx)
+
+    def seal_receipt(f: Any) -> Any:                               # ... and the predicted value / uncertainty of a seal
+        dig = falsifier_fit_digest(f)
+        return attest_receipt(led, keys.signer("exec"), "exec", _computation_receipt(dig, f"seal-{f.falsifier_id}-{dig[:8]}", data,
+                                                                                     output="falsifier_prediction"), context_digest=ctx)
     fitted: dict[str, tuple[np.ndarray, float, dict]] = {}
     sealed_refs = {}
     for hid, statement, build, params, _note in HYPOTHESES:
@@ -553,13 +560,13 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
                           {"profile": cc["profile"], "temperature_C": cc["temperature_C"], "throughput_Ah": cc["throughput_Ah"]},
                           EvidenceSource.MEASUREMENT_RECORD, CriterionKind.PREDICTION_DEVIATION,
                           {"k": float(rule["k"]), "predicted": pred, "prediction_uncertainty": u, "resolution": resolution})
-            camp.seal(f, tickets[hid])
+            camp.seal(f, tickets[hid], fit_receipt=seal_receipt(f))
             refs.append({"ref": f.ref, "digest": f.digest, "predicted": pred})
         sealed_refs[hid] = refs
         if refs:
             for ref, rin in dropped:                               # per-condition abstention, with the rule inputs
                 declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
-                                   falsifier_ref=ref, rule_inputs=(rin,), fit_receipt=fit_receipt(hid, (rin,)),
+                                   falsifier_ref=ref, rule_inputs=(rin,), fit_receipt=fit_receipt(hid, (rin,), ref),
                                    reason="the pre-registered rule reaches no resolution at this condition")
         listed = tuple(r["ref"] for r in refs)
         if refs and listed != hs[hid].falsifier_refs:              # some planned falsifiers could not reach the resolution:
@@ -568,7 +575,7 @@ def dry_run(workdir: str, *, seed: int = 11) -> dict[str, Any]:
         if not refs:                                               # abstain BEFORE exposure, with the reason -- never dropped
             declare_untestable(camp, led, keys.signer("exposure"), "exposure", hypothesis_id=hid, content_digest=h.content_digest,
                                rule_inputs=tuple(rin for _ref, rin in dropped),
-                               fit_receipt=fit_receipt(hid, tuple(rin for _ref, rin in dropped)),
+                               fit_receipt=fit_receipt(hid, tuple(rin for _ref, rin in dropped), None),
                                reason=f"exploratory fit RMS {rms:.4g}: k*sqrt(u_pred^2+u_obs^2) exceeds every resolution the "
                                       "pre-registered rule allows at the confirmatory conditions")
     for hid in hs:

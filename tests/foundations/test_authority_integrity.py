@@ -544,3 +544,13 @@ def test_a_retired_key_can_still_be_declared_compromised():                     
         w.ledger.declare_compromise(w.root, "ver", old_key, compromised_from=w.ledger.length + 5, reason="x")
     reopened = AuthorityLedger.open(w.store, anchor=w.ledger.anchor())       # the declaration replays from the chain
     assert reopened.compromised_at("ver", old_key, stolen_from)
+
+
+def test_a_later_narrower_window_never_narrows_a_declared_compromise():                            # C2 LOW-1
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    key = w.ledger.attestations(record_kind="validation_check")[0].key_id
+    signed_at = w.ledger.attestations(record_kind="validation_check")[0].sequence
+    w.ledger.declare_compromise(w.root, "ver", key, compromised_from=signed_at, reason="theft")
+    w.ledger.revoke(w.root, "ver", "and revoked", compromised_from=w.ledger.length - 1)
+    assert w.ledger.compromised_at("ver", key, signed_at) and verification_level(w)[0] == UNKNOWN
