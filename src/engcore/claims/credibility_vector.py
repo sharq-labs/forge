@@ -17,9 +17,10 @@ records of one :class:`~engcore.credibility.evidence_graph.EvidenceGraph`:
 * ``r(D)`` -- the required vector, ONLY from a registered, immutable, risk-monotone policy (:data:`RISK_POLICY_V1`); the
   report binds the policy digest and the row it used.  The policy sets the bar; it is never evidence.
 * ``g = r - f`` per factor; UNKNOWN's gap is ``required + 1`` and is flagged.
-* Defeaters -- a CONTRADICTS edge from an admissible (known authority, same context) node into ANY subject, any
-  evidence the claim structure CITES (selected or not, usable or not: dropping a check or a pin from a contradicted
-  record never removes its contradiction), or the lineage of either; an admissible outside-domain finding (a cited
+* Defeaters -- a CONTRADICTS edge, in EITHER direction, between something the claim rests on (any subject, any evidence
+  the claim structure CITES -- selected or not, usable or not: dropping a check or a pin from a contradicted record never
+  removes its contradiction -- and their closure, below) and an admissible (known authority, same context) node; when
+  both ends are in the closure, either admissible end suffices; an admissible outside-domain finding (a cited
   level-0 applicability record, or a supplied ApplicabilityReport 'outside' decided on the subject); a FALSIFIED
   red-team envelope for a subject; or an explicit typed :class:`Defeater`.  A contradiction is closed only by a
   registry-pinned newer version of the contradicting source that is outside that closure (noted, never silent).
@@ -35,10 +36,12 @@ records of one :class:`~engcore.credibility.evidence_graph.EvidenceGraph`:
   :data:`FACTOR_PRIORITY`), mapped onto :class:`~engcore.claims.gaps.GapClass`.
 
 Propagation over a claim structure (:class:`ClaimNode`): AND takes the WEAKEST child per factor; OR takes ONE whole
-branch (the best by the declared lexicographic order over :data:`FACTOR_PRIORITY`) only when the branches are
-independent -- positively shown by distinct content digests and sources, provenance with distinct issuers, source ids and
-document digests, and disjoint lineage over every relation but CONTRADICTS; missing provenance means independence is
-UNKNOWN and OR is treated like AND.
+branch only when the branches are independent -- positively shown by distinct content digests and sources, provenance
+with distinct issuers, source ids and document digests, and a disjoint shared basis (twins, ancestry incl. superseded
+versions, calibration inputs); missing provenance means independence is UNKNOWN and OR is treated like AND.  The branch is
+chosen by the REQUIREMENT first (meets it with no defeater, then the smallest total gap), then the declared lexicographic
+order over :data:`FACTOR_PRIORITY`, so requirement_met is monotone; the per-factor levels are those of the chosen branch.
+Every child's defeaters are kept whichever branch is chosen.
 
 Existing records stand behind every level, re-read on each assessment (a node earns nothing by its label):
 
@@ -66,7 +69,7 @@ The report is OUTPUT for a reader, not a persisted authority: there is no reader
 graph from which a contradicting node, or a lineage edge (DERIVED_FROM, CALIBRATES, SUPPORTS) through which a
 contradiction or supersession reaches the claim, was deleted is a different graph (its fingerprint is bound), but this
 module cannot know it is missing; likewise a NEGATIVE input that is not supplied (an 'outside' / 'unknown' applicability report, a
-FALSIFIED envelope) cannot be seen -- the report binds the digest of every supplied input (``inputs_digest``) so two
+FALSIFIED, UNKNOWN or incoherent envelope) cannot be seen -- the report binds the digest of every supplied input (``inputs_digest``) so two
 assessments over different inputs are distinguishable, and a negative finding should also be recorded in the graph (a
 CONTRADICTS edge), where omission changes the bound fingerprint.  ApplicabilityReport and ChannelEntry carry NO issuer:
 ``from_dict`` re-checks their shape and rules (a KNOWN entry is quantified, a 'within' report names its evidence), not who
@@ -333,7 +336,9 @@ class _GraphView:
         return n is not None and n.authority is not EvidenceAuthority.UNKNOWN and n.applicability == self.context
 
     def contradicted(self, evidence_id: str) -> bool:
-        return any(e.relation is EvidenceRelation.CONTRADICTS and e.target_id == evidence_id and self.admissible_node(e.source_id)
+        """An admissible CONTRADICTS edge into the record or any same-content twin of it."""
+        twins = self.twins(evidence_id)
+        return any(e.relation is EvidenceRelation.CONTRADICTS and e.target_id in twins and self.admissible_node(e.source_id)
                    for e in self.graph.edges)
 
     def superseders(self, evidence_id: str, protected: set[str]) -> list[str]:
@@ -489,23 +494,28 @@ class _GraphView:
         for e in self.graph.edges:
             if e.relation is not EvidenceRelation.CONTRADICTS:
                 continue
-            # a contradiction is a CONFLICT whichever side wrote the edge: the side outside what the claim rests on is
-            # the counter-evidence, and it must be admissible
-            if e.target_id in closure:
-                inner, outer = e.target_id, e.source_id
-            elif e.source_id in closure:
-                inner, outer = e.source_id, e.target_id
-            else:
+            # a contradiction is a CONFLICT whichever side wrote the edge: for EACH end the claim rests on, the other end
+            # is counter-evidence and must be admissible; when both ends are in the closure either orientation suffices
+            sides = [(i, o) for i, o in ((e.target_id, e.source_id), (e.source_id, e.target_id)) if i in closure]
+            if not sides:
                 if self.admissible_node(e.source_id) or self.admissible_node(e.target_id):
                     notes.append(f"contradiction of {e.target_id} by {e.source_id}: not something this claim rests on")
                 continue
-            if not self.admissible_node(outer):
-                notes.append(f"sub-bar contradiction between {inner} and {outer} (unknown authority or other context)")
+            standing = None
+            for inner, outer in sides:
+                if not self.admissible_node(outer):
+                    notes.append(f"sub-bar contradiction between {inner} and {outer} (unknown authority or other context)")
+                    continue
+                closed_by = [] if outer in closure else self.superseders(outer, closure)
+                if closed_by:
+                    notes.append(f"contradiction {e.source_id}->{e.target_id} closed by admissible superseder(s) {closed_by} "
+                                 f"of {outer}")
+                    continue
+                standing = (inner, outer)
+                break
+            if standing is None:
                 continue
-            closed_by = [] if outer in closure else self.superseders(outer, closure)
-            if closed_by:
-                notes.append(f"contradiction {e.source_id}->{e.target_id} closed by admissible superseder(s) {closed_by} of {outer}")
-                continue
+            inner, outer = standing
             out.append(Defeater(f"contradiction:{e.source_id}->{e.target_id}", "contradiction", (e.source_id, e.target_id),
                                 f"{outer} ({self.nodes[outer].authority.value}) conflicts with {inner}, which the claim rests on"))
         line = self._closure(set(subjects))

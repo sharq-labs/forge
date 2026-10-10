@@ -612,8 +612,16 @@ def test_or_never_meets_a_requirement_because_a_branch_lost_evidence(world):    
                                                                                           if c is not mms_check))),
                 assess(world, claim, graph(world, EvidenceEdge("rumour", "mms", R.SUPERSEDES), nodes=nodes), RiskClass.LOW, **kw)]
     assert full.requirement_met, full.notes                         # the branch that meets the bar is the one chosen
-    for rep in variants:
-        assert rep.requirement_met <= full.requirement_met
+    for rep in variants:                                            # ... and stays chosen when the other branch loses evidence
+        assert rep.requirement_met and rep.vector.level(Factor.NUMERICAL_UQ) == full.vector.level(Factor.NUMERICAL_UQ)
+    # neither branch meets the bar: removing evidence from either never makes the OR met
+    b_short = leaf([c for c in b.claims if c.factor is not Factor.NUMERICAL_UQ], "b")
+    short = ClaimNode("or", combine=Combine.OR, children=(a, b_short))
+    base = assess(world, short, g, RiskClass.LOW, **kw)
+    assert not base.requirement_met
+    for removed in (("mms",), ("conv",), ("domain",), ("domain_b",), ("conv_b",)):
+        assert not assess(world, short, graph(world, nodes={k: v for k, v in nodes.items() if k not in removed}), RiskClass.LOW,
+                          **kw).requirement_met, removed
 
 
 def test_independence_follows_shared_calibration_and_same_content_ancestry(world):                  # finding 3
@@ -684,3 +692,32 @@ def test_fourth_review_lows(world):
     g3 = graph(world, EvidenceEdge("cal_data", "result", R.CALIBRATES), EvidenceEdge("cal_data", "raw", R.DERIVED_FROM),
                EvidenceEdge("lab", "raw", R.CONTRADICTS), nodes=deep)
     assert any(d.evidence_ids == ("lab", "raw") for d in assess(world, leaf(), g3).open_defeaters)
+
+
+# ---------------------------------------------------------------------------- fifth confirmation review
+
+
+def test_a_contradiction_inside_the_closure_needs_only_one_admissible_end(world):                  # NEW-1
+    lab_cite = FactorClaim(Factor.MEASUREMENT_UQ, 0, ("lab",), "aleatoric")       # rejected (no entry); pulls lab inside
+    for authority, prov in ((A.UNKNOWN, False), (A.ANALYTICAL, True)):
+        nodes = dict(world["nodes"], model=node("model", authority, provenance=prov), lab=node("lab", A.EXPERIMENT))
+        g = graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM), EvidenceEdge("model", "lab", R.CONTRADICTS), nodes=nodes)
+        for claims in (list(full_claims()), list(full_claims()) + [lab_cite]):
+            rep = assess(world, leaf(claims), g)
+            assert not rep.requirement_met and any(d.evidence_ids == ("model", "lab") for d in rep.open_defeaters), (authority, claims)
+        both = graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM), EvidenceEdge("result", "lab", R.DERIVED_FROM),
+                     EvidenceEdge("model", "lab", R.CONTRADICTS), nodes=nodes)
+        assert not assess(world, leaf(), both).requirement_met, authority
+
+
+def test_a_contradicted_twin_disqualifies_a_closing_superseder(world):                              # NEW-4
+    b = world["nodes"]["bench"]
+    newer = node("bench_v2", A.REFERENCE_DATA, issuer=b.provenance.issuer, source_id=b.provenance.source_id, version="2")
+    twin = node("bench_v2_copy", A.REFERENCE_DATA, digest=newer.content_digest, issuer="iss:copy")
+    pins = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != b.provenance.source_id)
+                                 + (SourcePin(b.provenance.source_id, b.provenance.issuer, newer.provenance.document_digest, "2"),))
+    nodes = dict(world["nodes"], bench_v2=newer, bench_v2_copy=twin, lab=node("lab", A.EXPERIMENT))
+    edges = (EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES))
+    assert assess(world, leaf(), graph(world, *edges, nodes=nodes), trusted_sources=pins).requirement_met
+    rep = assess(world, leaf(), graph(world, *edges, EvidenceEdge("lab", "bench_v2_copy", R.CONTRADICTS), nodes=nodes), trusted_sources=pins)
+    assert any(d.evidence_ids == ("bench", "exp") for d in rep.open_defeaters)
