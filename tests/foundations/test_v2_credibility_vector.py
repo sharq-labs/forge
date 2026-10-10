@@ -760,3 +760,30 @@ def test_an_explicit_defeater_may_add_but_never_replace_a_computed_one(world):  
         assess(world, leaf(claims), graph(world), defeaters=(Defeater("outside_domain:result", "superseded", (), "x"),))
     rep = assess(world, leaf(), graph(world), defeaters=(Defeater("review:1", "contradiction", ("exp",), "a reviewer's finding"),))
     assert not rep.requirement_met
+
+
+# ---------------------------------------------------------------------------- seventh confirmation review (post-approval LOW)
+
+
+def test_the_claim_s_own_records_never_close_its_defeaters(world):                                  # L-b
+    d, b = world["nodes"]["domain_out"], world["nodes"]["bench"]
+    # a CITED record that is a pinned newer version of the outside-domain source does not lift the outside-domain finding
+    mms = world["nodes"]["mms"]
+    mms_v2 = node("mms", A.ANALYTICAL, digest=mms.content_digest, issuer=d.provenance.issuer, source_id=d.provenance.source_id,
+                  version="2")
+    pins = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id not in (d.provenance.source_id, "sid:mms"))
+                                 + (SourcePin(d.provenance.source_id, d.provenance.issuer, mms_v2.provenance.document_digest, "2"),))
+    domain_as_analytical = dict(world["nodes"], mms=mms_v2)
+    claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
+    rep = assess(world, leaf(claims), graph(world, EvidenceEdge("mms", "domain_out", R.SUPERSEDES), nodes=domain_as_analytical),
+                 trusted_sources=pins)
+    assert any(x.kind == "outside_domain" for x in rep.open_defeaters)
+    # a CITED pinned newer version of a contradicting source does not close the contradiction either
+    newer = node("bench_v2", A.REFERENCE_DATA, issuer=b.provenance.issuer, source_id=b.provenance.source_id, version="2")
+    pins_b = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != b.provenance.source_id)
+                                   + (SourcePin(b.provenance.source_id, b.provenance.issuer, newer.provenance.document_digest, "2"),))
+    g = graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES),
+              nodes=dict(world["nodes"], bench_v2=newer))
+    cites_v2 = list(full_claims()) + [FactorClaim(Factor.VALIDATION, 1, ("bench_v2",), VL.BENCHMARK_VALIDATED.value)]
+    rep = assess(world, leaf(cites_v2), g, trusted_sources=pins_b)
+    assert any(x.evidence_ids == ("bench", "exp") for x in rep.open_defeaters)

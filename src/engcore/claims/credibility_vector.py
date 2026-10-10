@@ -358,6 +358,7 @@ class _GraphView:
                 continue
             if not self.trusted_provenance(e.source_id) or sup.authority is not target.authority or self.contradicted(e.source_id):
                 continue
+            # (defensive: a same-content closer is a twin of its superseded target, so superseded_by already holds)
             if sup.content_digest == target.content_digest or self.superseded_by(e.source_id):
                 continue                                         # the same finding re-issued, or itself obsolete
             if (sup.provenance.source_id, sup.provenance.issuer) != (target.provenance.source_id, target.provenance.issuer) \
@@ -575,8 +576,9 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
             missing = [e for e in fc.evidence_ids if e not in view.nodes]
             if missing:
                 raise CredibilityRefused(f"outside-domain finding for {subject} cites evidence not in the graph: {missing}")
-            standing = [e for e in fc.evidence_ids if view.admissible_node(e) and not view.superseders(e, set())]
-            closed = [e for e in fc.evidence_ids if view.admissible_node(e) and view.superseders(e, set())]
+            own = view._closure({subject} | set(cited))           # the claim's own records never lift its defeater
+            standing = [e for e in fc.evidence_ids if view.admissible_node(e) and not view.superseders(e, own)]
+            closed = [e for e in fc.evidence_ids if view.admissible_node(e) and view.superseders(e, own)]
             if closed:
                 rejected.append(f"{label}: outside-domain finding(s) {closed} closed by a registry-pinned newer version")
             if not standing:
