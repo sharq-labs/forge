@@ -33,6 +33,7 @@ from engcore.sria.uncertainty import UncertaintyChannel as UC
 from engcore.system_runtime.records import ApplicabilityReport
 from tests.route_declarations_for_tests import earned_consensus, route, route_declarations_for_tests  # noqa: F401 - autouse
 from engcore.scientific.units.quantity import Quantity
+from tests.authority_helpers import World as AuthorityWorld
 from tests.test_audit_consensus_level_issuers import AT, _oracle_check
 
 CTX = hashlib.sha256(b"decision-context").hexdigest()
@@ -128,11 +129,33 @@ def req(risk=RiskClass.HIGH):
     return DecisionRequirement("decision-1", CTX, risk)
 
 
+def _leaf_subjects(claim):
+    return [claim.subject_id] if not claim.children else [s for ch in claim.children for s in _leaf_subjects(ch)]
+
+
+def attested(claim, g, ctx=CTX, **records):
+    """A TEST authority ledger in which an issuer of the matching role attested every supplied record about every
+    subject's result (the issuer-bound path ``assess_credibility(authority=...)`` admits records through)."""
+    world = AuthorityWorld()
+    digests = {n.evidence_id: n.content_digest for n in g.nodes}
+    for sid in sorted(set(_leaf_subjects(claim))):
+        for group in ("validation_checks", "applicability_reports", "uncertainty_entries", "red_team"):
+            for rec in records.get(group, ()):
+                try:
+                    world.attest(rec, digests[sid], ctx)
+                except Exception:           # noqa: BLE001 - a record that cannot be attested (tampered, non-finite) stays unattested
+                    pass
+    return world.ledger
+
+
 def assess(w, claim, g, risk=RiskClass.HIGH, **kw):
     kw.setdefault("trusted_sources", w["pins"])
     kw.setdefault("validation_checks", w["checks"])
     kw.setdefault("applicability_reports", w["reports"])
     kw.setdefault("uncertainty_entries", w["entries"])
+    if "authority" not in kw:
+        kw["authority"] = attested(claim, g, **{k: kw[k] for k in ("validation_checks", "applicability_reports",
+                                                                    "uncertainty_entries", "red_team") if k in kw})
     return assess_credibility(claim, g, req(risk), **kw)
 
 

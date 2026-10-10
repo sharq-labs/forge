@@ -338,6 +338,9 @@ def test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green():
         "src/engcore/numerical/providers.py",
         "src/engcore/numerical/symbolic.py",
         "src/engcore/spatial/providers.py",
+        # engcore.authority imports `cryptography` (the [authority] extra) only inside the functions that sign or
+        # verify, and refuses with AuthorityUnavailable when it is absent; it constructs no counted record.
+        "src/engcore/authority/keys.py",
     }, reaching_optional
 
     for relative in reaching_optional:

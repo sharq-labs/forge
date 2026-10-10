@@ -54,11 +54,14 @@ def _nonneg_int(n: Any) -> int:
     return n
 
 
+_REPLAY = object()                        # only claims.durable_campaign rebuilds a ledger from its signed journal
+
+
 class MultiplicityLedger:
-    def __init__(self, campaign_id: str) -> None:
+    def __init__(self, campaign_id: str, *, _replay: object = None) -> None:
         if not str(campaign_id).strip():
             raise MultiplicityRefused("a multiplicity ledger belongs to a campaign")
-        if campaign_id in _OPENED:
+        if campaign_id in _OPENED and _replay is not _REPLAY:
             raise MultiplicityRefused(f"campaign {campaign_id!r} already opened a ledger; a second one would restart its count")
         _OPENED.add(campaign_id)
         self._closed: "MultiplicityContext | None" = None

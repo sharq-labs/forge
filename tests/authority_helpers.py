@@ -1,0 +1,83 @@
+"""Test-only helpers: a TEST-profile authority ledger with one issuer per role, and NodeReceipts for test subjects.
+
+Everything here is test key material (``EphemeralKeyProvider``): a production ledger refuses it.
+"""
+
+from __future__ import annotations
+
+import hashlib
+
+from engcore.authority import AuthorityLedger, EphemeralKeyProvider, MemoryLedgerStore, Role
+from engcore.claims.attestation import attest_receipt, attest_record, record_kind_of
+from engcore.execution.orchestration.resources import ResourceUsage
+from engcore.scientific.results.validation import ValidationLevel
+from engcore.system_runtime.records import NodeReceipt, NodeStatus
+
+ISSUERS = {
+    "exec": (Role.EXECUTOR,),
+    "ver": (Role.NUMERICAL_VERIFICATION,),
+    "val": (Role.VALIDATION,),
+    "app": (Role.APPLICABILITY,),
+    "meas": (Role.MEASUREMENT,),
+    "uq": (Role.UNCERTAINTY,),
+    "rt": (Role.RED_TEAM,),
+}
+
+
+def _h(s: str) -> str:
+    return hashlib.sha256(s.encode()).hexdigest()
+
+
+def receipt_for(subject_digest: str, *, output: str = "y", node_id: str = "solve") -> NodeReceipt:
+    """A SUCCEEDED receipt whose output ``output`` has digest ``subject_digest`` (the executor vouches for it by attesting)."""
+    return NodeReceipt(node_id, NodeStatus.SUCCEEDED, _h("plan"), _h("request"), _h("node:" + node_id), _h("authority"),
+                       _h("execution:" + subject_digest), (), ((output, subject_digest),), (), (), (), _h("state0"), _h("state1"),
+                       ResourceUsage(), "", (), 1)
+
+
+class World:
+    """One test ledger + key provider + per-role issuers."""
+
+    def __init__(self, *, ledger_id: str = "test-ledger") -> None:
+        self.keys = EphemeralKeyProvider()
+        self.root = self.keys.signer("root")
+        self.store = MemoryLedgerStore()
+        self.ledger = AuthorityLedger.create(self.store, ledger_id=ledger_id, profile="test", root=self.root)
+        for issuer, roles in ISSUERS.items():
+            self.ledger.register_issuer(self.root, issuer, self.keys.signer(issuer).public_hex, key_class="test", roles=roles)
+        self.receipts: dict[tuple[str, str], object] = {}
+
+    def signer(self, issuer: str):
+        return self.keys.signer(issuer)
+
+    def receipt(self, subject_digest: str, context: str, *, output: str = "y"):
+        key = (subject_digest, context)
+        if key not in self.receipts:
+            self.receipts[key] = attest_receipt(self.ledger, self.signer("exec"), "exec", receipt_for(subject_digest, output=output),
+                                                context_digest=context)
+        return self.receipts[key]
+
+    def attest(self, record, subject_digest: str, context: str, *, issuer: str | None = None, role: Role | None = None, output: str = "y"):
+        issuer, role = issuer or default_issuer(record), role or default_role(record)
+        return attest_record(self.ledger, self.signer(issuer), issuer, record, receipt=self.receipt(subject_digest, context, output=output),
+                             subject_output=output, context_digest=context, role=role)
+
+
+_VERIFY = {ValidationLevel.NUMERICALLY_CONVERGED, ValidationLevel.ANALYTICALLY_VERIFIED, ValidationLevel.CROSS_SOLVER_VALIDATED}
+
+
+def default_role(record) -> Role:
+    kind = record_kind_of(record)
+    if kind == "validation_check":
+        return Role.NUMERICAL_VERIFICATION if record.establishes in _VERIFY else Role.VALIDATION
+    if kind == "applicability_report":
+        return Role.APPLICABILITY
+    if kind == "trust_envelope":
+        return Role.RED_TEAM
+    channel = record.channel.value
+    return {"aleatoric": Role.MEASUREMENT, "numerical": Role.NUMERICAL_VERIFICATION}.get(channel, Role.UNCERTAINTY)
+
+
+def default_issuer(record) -> str:
+    return {Role.NUMERICAL_VERIFICATION: "ver", Role.VALIDATION: "val", Role.APPLICABILITY: "app", Role.MEASUREMENT: "meas",
+            Role.UNCERTAINTY: "uq", Role.RED_TEAM: "rt"}[default_role(record)]

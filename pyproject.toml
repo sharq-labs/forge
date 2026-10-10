@@ -36,6 +36,11 @@ dependencies = [
 symbolic = ["sympy>=1.12"]
 petsc = ["petsc4py>=3.20"]
 mesh = ["gmsh>=4.11", "meshio>=5.3"]
+# Issuer-bound scientific authority (engcore.authority): ed25519 signatures over the persistent authority ledger.
+# Optional for the same reason as the providers: without it every signing or verification REFUSES
+# (AuthorityUnavailable) -- nothing falls back to an unsigned path, and an unattested credibility report meets no
+# requirement. It is already present wherever `[mcp]` is installed (mcp -> pyjwt[crypto] -> cryptography).
+authority = ["cryptography>=42"]
 dev = [
   "pytest>=8.0",
   # Parallel test execution. Development/test only: no production code imports
