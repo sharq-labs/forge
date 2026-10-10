@@ -7,7 +7,12 @@ from __future__ import annotations
 
 import hashlib
 
-from engcore.authority import AuthorityLedger, EphemeralKeyProvider, MemoryLedgerStore, Role
+from engcore.authority import (
+    AuthorityLedger,
+    EphemeralKeyProvider,
+    MemoryLedgerStore,
+    Role,
+)
 from engcore.claims.attestation import attest_receipt, attest_record, record_kind_of
 from engcore.execution.orchestration.resources import ResourceUsage
 from engcore.scientific.results.validation import ValidationLevel

@@ -12,8 +12,20 @@ import os
 import pytest
 
 from engcore.blindfold.escrow import (
-    PROTOCOL, SECURITY_LABEL, EscrowRefused, EscrowService, EscrowStorage, InProcessTransport, ObserveClient, OperatorClient,
-    ScoreClient, SubprocessTransport, call, mac_request, verify_log, verify_response,
+    PROTOCOL,
+    SECURITY_LABEL,
+    EscrowRefused,
+    EscrowService,
+    EscrowStorage,
+    InProcessTransport,
+    ObserveClient,
+    OperatorClient,
+    ScoreClient,
+    SubprocessTransport,
+    call,
+    mac_request,
+    verify_log,
+    verify_response,
 )
 
 CFG = "a" * 64

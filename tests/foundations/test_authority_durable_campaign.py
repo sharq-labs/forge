@@ -10,13 +10,31 @@ import json
 
 import pytest
 
-from engcore.authority import AuthorityLedger, AuthorityRefused, EphemeralKeyProvider, FileLedgerStore, Role, TrustAnchor
+from engcore.authority import (
+    AuthorityLedger,
+    AuthorityRefused,
+    EphemeralKeyProvider,
+    FileLedgerStore,
+    Role,
+    TrustAnchor,
+)
 from engcore.blindfold.expression import c, mul, pw, structure_digest, v
 from engcore.claims.durable_campaign import CampaignRefused, DurableCampaign
+from engcore.claims.falsification import (
+    CriterionKind,
+    EvidenceSource,
+    Falsifier,
+    Verdict,
+    verify_status,
+)
 from engcore.claims.multiplicity import MultiplicityRefused
-from engcore.claims.falsification import CriterionKind, EvidenceSource, Falsifier, Verdict, verify_status
 from engcore.claims.novelty import PriorArtEntry, PriorArtSnapshot
-from engcore.sria.decision import Hypothesis, HypothesisKind, HypothesisPrediction, HypothesisStatus
+from engcore.sria.decision import (
+    Hypothesis,
+    HypothesisKind,
+    HypothesisPrediction,
+    HypothesisStatus,
+)
 
 CTX = hashlib.sha256(b"battery-dry-run").hexdigest()
 LAW = mul(c(2.0), pw(v("x"), 1.37))

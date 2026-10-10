@@ -17,10 +17,19 @@ The consumer side (``claims.credibility_vector`` with ``authority=``) admits a r
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
-from ..authority import Attestation, AttestationRecord, AuthorityLedger, AuthorityRefused, Role, Signer, receipt_outputs
+from ..authority import (
+    Attestation,
+    AttestationRecord,
+    AuthorityLedger,
+    AuthorityRefused,
+    Role,
+    Signer,
+    receipt_outputs,
+)
 from ..authority.evidence import RECEIPT_KIND
 
 VALIDATION_CHECK = "validation_check"

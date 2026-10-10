@@ -10,7 +10,12 @@ from __future__ import annotations
 
 import pytest
 
-from engcore.blindfold.isolation import BOUNDARY_LEVELS, IsolatedEscrow, isolation_support, run_isolation_demo
+from engcore.blindfold.isolation import (
+    BOUNDARY_LEVELS,
+    IsolatedEscrow,
+    isolation_support,
+    run_isolation_demo,
+)
 
 
 def test_the_isolated_deployment_reports_exactly_what_it_established(tmp_path):

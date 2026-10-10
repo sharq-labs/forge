@@ -66,7 +66,14 @@ def readable_file_digests() -> tuple[list[str], int]:
 
 def main() -> int:
     task = json.loads(sys.stdin.read())
-    from engcore.blindfold.escrow import PROTOCOL, EscrowRefused, ObserveClient, call, mac_request, verify_response
+    from engcore.blindfold.escrow import (
+        PROTOCOL,
+        EscrowRefused,
+        ObserveClient,
+        call,
+        mac_request,
+        verify_response,
+    )
     transport = SocketTransport(int(task["fd"]))
     cid, token, public = task["campaign_id"], task["observe_token"], task["escrow_public"]
     card = task["cards"][0]

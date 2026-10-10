@@ -16,8 +16,8 @@ Every refusal is UNKNOWN for the consumer, never a lower rung it could misread a
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .ledger import AttestationRecord, AuthorityLedger, Role
 

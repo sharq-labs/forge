@@ -29,12 +29,19 @@ import json
 import os
 import pathlib
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Iterable, Mapping
+from typing import Any
 
-from .keys import AuthorityRefused, Signer, key_id_of, verify_possession, verify_signature
+from .keys import (
+    AuthorityRefused,
+    Signer,
+    key_id_of,
+    verify_possession,
+    verify_signature,
+)
 
 EVENT_SCHEMA = "engcore.authority.ledger_event/1"
 ATTESTATION_SCHEMA = "engcore.authority.attestation/1"
@@ -94,6 +101,7 @@ class Role(str, Enum):
     RED_TEAM = "red_team"                              # trust envelopes
     EXPOSURE = "exposure"                              # exposure authority: evidence releases, sealed-falsifier campaigns
     ESCROW = "escrow"                                  # blindfold escrow identity
+    OWNER = "owner"                                    # the campaign owner: approvals (e.g. releasing confirmatory data)
 
 
 def _hex64(value: str, what: str, *, allow_empty: bool = False) -> str:
@@ -152,7 +160,7 @@ class Attestation:
                 "context_digest": self.context_digest, "role": self.role.value}
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "Attestation":
+    def from_dict(cls, payload: Mapping[str, Any]) -> Attestation:
         if payload.get("schema") != ATTESTATION_SCHEMA:
             raise AuthorityRefused("not an attestation record")
         keys = {"schema", "record_kind", "record_schema", "record", "record_digest", "subject_digest", "subject_output",
@@ -190,7 +198,7 @@ class LedgerEvent:
         return hashlib.sha256(canonical(self.to_dict()).encode()).hexdigest()
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "LedgerEvent":
+    def from_dict(cls, payload: Mapping[str, Any]) -> LedgerEvent:
         keys = {"schema", "ledger_id", "sequence", "previous", "kind", "body", "key_id", "signature"}
         if not isinstance(payload, Mapping) or set(payload) != keys or payload.get("schema") != EVENT_SCHEMA:
             raise AuthorityRefused("not a ledger event")
@@ -226,7 +234,7 @@ class TrustAnchor:
                 "sequence": self.sequence, "head": self.head}
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "TrustAnchor":
+    def from_dict(cls, payload: Mapping[str, Any]) -> TrustAnchor:
         if payload.get("schema") != ANCHOR_SCHEMA:
             raise AuthorityRefused("not a trust anchor")
         return cls(payload["ledger_id"], payload["profile"], payload["root_key_id"], payload["sequence"], payload["head"])
@@ -352,7 +360,7 @@ class AuthorityLedger:
 
     # -- construction
     @classmethod
-    def create(cls, store: Any, *, ledger_id: str, profile: str, root: Signer) -> "AuthorityLedger":
+    def create(cls, store: Any, *, ledger_id: str, profile: str, root: Signer) -> AuthorityLedger:
         if store.read():
             raise AuthorityRefused("a new ledger needs an empty store; an existing ledger is opened against its anchor")
         if profile not in PROFILES:
@@ -366,7 +374,7 @@ class AuthorityLedger:
         return led
 
     @classmethod
-    def open(cls, store: Any, *, anchor: TrustAnchor, require_profile: str | None = None) -> "AuthorityLedger":
+    def open(cls, store: Any, *, anchor: TrustAnchor, require_profile: str | None = None) -> AuthorityLedger:
         """Load and RE-VERIFY every event; the store must be the anchored ledger and extend the anchored head."""
         if require_profile is not None and anchor.profile != require_profile:
             raise AuthorityRefused(f"the anchor is a {anchor.profile} ledger; {require_profile} is required")

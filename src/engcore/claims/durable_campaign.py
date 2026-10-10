@@ -26,21 +26,29 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping
-
 import weakref
+from collections.abc import Mapping
+from typing import Any
 
 from ..authority import Attestation, AuthorityLedger, KeyProvider, Role, TrustAnchor
 from ..sria.decision import Hypothesis
 from . import multiplicity as _mult
-from .falsification import EvidenceItem, ExposureAuthority, Falsifier, FalsifierVerdict, HypothesisTicket, apply_verdicts, judge
+from .falsification import (
+    EvidenceItem,
+    ExposureAuthority,
+    Falsifier,
+    FalsifierVerdict,
+    HypothesisTicket,
+    apply_verdicts,
+    judge,
+)
 from .novelty import PriorArtEntry, PriorArtSnapshot
 
 OP_KIND = "campaign_op"
 OP_SCHEMA = "engcore.claims.durable_campaign_op/1"
 _MULT_OPS = ("count", "tested", "evaluated", "compute", "seed", "strategy")
 #: live campaigns in this process, by namespaced identity: a second live object for one campaign is refused
-_LIVE: "weakref.WeakValueDictionary[str, DurableCampaign]" = weakref.WeakValueDictionary()
+_LIVE: weakref.WeakValueDictionary[str, DurableCampaign] = weakref.WeakValueDictionary()
 
 
 class CampaignRefused(ValueError):
@@ -109,7 +117,7 @@ class DurableCampaign:
     # -- construction
     @classmethod
     def start(cls, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str, authority_id: str,
-              context_digest: str, resolution_scales: Mapping[tuple[str, str], float] | None = None) -> "DurableCampaign":
+              context_digest: str, resolution_scales: Mapping[tuple[str, str], float] | None = None) -> DurableCampaign:
         if any(r.attestation.role is Role.EXPOSURE and r.attestation.record.get("op") == "start"
                for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))):
             raise CampaignRefused(f"campaign {campaign_id!r} already has a journal in this ledger; resume it")
@@ -121,7 +129,7 @@ class DurableCampaign:
 
     @classmethod
     def resume(cls, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str,
-               expected_anchor: TrustAnchor) -> "DurableCampaign":
+               expected_anchor: TrustAnchor) -> DurableCampaign:
         """Rebuild from the journal.  ``expected_anchor`` is the anchor the OPERATOR stored after the last operation
         (:attr:`anchor`): the ledger must extend it, so an operation journaled before it cannot be dropped."""
         if not isinstance(expected_anchor, TrustAnchor) or not ledger.extends(expected_anchor):
