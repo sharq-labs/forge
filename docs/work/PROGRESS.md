@@ -1848,3 +1848,192 @@ fast-forwarded.
 - Re-gate on `e5e3a81c` (after the Codex fixes): `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider
   --junitxml=…`: 14 failed, 9577 passed, 135 skipped — the same 14 node ids as above; skip admission audit: skipped 135,
   accepted 135, unexpected 0. Hardened-core recertification and the SCIENTIFIC tier: still NOT RUN.
+
+## 2026-10-09 Roadmap V2 — checkpoint 1: discovery authority + FidelityGraph (branch `feat/roadmap-v2-discovery`)
+
+- Stacked on PR #124 head `6656042099796921572d7ef81600750b4ba576fe`; PR #124 frozen except critical fixes. Owner decision:
+  no provider breadth, no product depth; build discovery + falsification authority (Roadmap V2 R1-R8).
+- DISCOVERY_AUTHORITY_MAP: `docs/architecture/discovery_authority_map.md` (source-level inventory by three read-only
+  explorers). CANONICAL_HYPOTHESIS_OWNER: `sria.decision.hypotheses.Hypothesis` (extended, M4G bytes preserved).
+  CANONICAL_EXPERIMENT_PLANNER_OWNER: `sria.decision` (ActionFamily + one UtilityEngine); external engines/LLMs only via
+  `sria.decision.external.ExternalSuggestion`; `claims.next_experiment.PLANNING_FAMILY` maps gap actions onto it.
+  DUPLICATE_TYPES_FOUND: 3 hypothesis types, 4 candidate/hypothesis status vocabularies, 2 planning vocabularies, 2
+  `FidelityRung` classes, 3 gap vocabularies (actions per type in the map). FIDELITY_GRAPH_DESIGN: `design.fidelity_graph`
+  on the existing ladder/multifidelity (measured links, policy-bound admission, elimination only through an admitted
+  in-domain quantified link, recorded stratified audit, suspension, resurrection). MIGRATION: additive only; no
+  CORE_CERTIFIED file modified.
+- HOSTILE_REVIEW_RESULTS: forge-scientific-reviewer on 17526a32 — CHANGES REQUIRED: 6 HIGH (admission settable/carried
+  over; declared domain; fabricated eliminations; gameable audit; audited false elimination stays eliminated; assertable
+  hypothesis status), 6 MEDIUM, 7 LOW. All HIGH and MEDIUM fixed in 0cf5aac3 with a regression test each; L1-L7 fixed.
+- TARGETED_TESTS (this container, `.venv`, CPython 3.12.13):
+  - `pytest tests/foundations/test_v2_discovery_authority.py tests/foundations/test_v2_fidelity_graph.py`: 9 + 25 passed
+    (with `tests/test_sria_m4_decision.py`).
+  - `pytest -n 4 tests/foundations tests/test_sria_*.py tests/claims tests/test_core_guards.py
+    tests/test_core_semantic_invariants.py tests/test_core_api_layering.py`: 1771 passed.
+  - `ruff --select F` on changed files: only pre-existing F401s in untouched `sria/decision` modules.
+- Discovery providers: conda-forge envs `discovery` (pysindy 2.1.0, botorch 0.17.2, pytorch cpu) and `dakota` (6.16.0)
+  created under `$HOME/mm/root/envs`; PySR needs Julia packages from the Julia registry (not attempted yet). No adapter yet.
+- PENDING_ROADMAP_TRACKER_SYNC: no roadmap tracker exists on this branch; `docs/performance/core-performance.md` is the
+  performance tracker and is updated in R8.
+- Failed approaches: none at this checkpoint (a first FidelityGraph draft trusted any 'admitted' audit event and a
+  caller-chosen audit seed; replaced, see review above).
+
+## 2026-10-09 Roadmap V2 — checkpoints 2 and 3: Blindfold + escrow + isolation; falsifiers + multiplicity + novelty
+
+- R3/R4 (FORGE Blindfold, new non-Core package `engcore.blindfold`; dbb65ecc): L5 synthetic universes (invented dimensions,
+  dimensionless groups, non-textbook exponents, per-instance constants, power/exp/two-term/regime forms), controls
+  NO_SOLUTION / INSUFFICIENT_EVIDENCE / INDISTINGUISHABLE / SPURIOUS_CORRELATE / CONFOUNDED, an escrow with one bytes
+  entry point (in-process + subprocess transports, both labelled SECURITY_BOUNDARY_NOT_PROVEN), hash-chained HMAC-keyed
+  query log, budgets, one sealed submission per universe, roles proposer -> admission -> evaluator -> adjudicator -> reporter.
+- Checkpoint-2 hostile review (forge-scientific-reviewer) — CHANGES REQUIRED, 7 HIGH / 8 MEDIUM / 6 LOW; fixed in 2bd429c2
+  (operator credential; inadmissible = -1; INDISTINGUISHABLE redesigned and verified dimensionally homogeneous with in/out
+  margins; CONFOUNDED made real confounding scored on the interventional expectation; strict replay; credit over the best
+  constant answer; canonical monomial structure digest; careful baseline pairing). Re-review — CHANGES REQUIRED, 1 HIGH
+  (overflow killed the escrow) / 5 MEDIUM; fixed in b1e4714d (catch-all + guarded logging; pair hit needs mutual in-box
+  agreement within 1 sigma, outside divergence, truth contained or bracketed; proposer crashes scored inadmissible; NO_SOLUTION
+  noise like INSUFFICIENT; discovery vs control credit; allow-listed boundary labels; config digest declared at create).
+- R5 (10ab0a8e): `claims.falsification`, `claims.multiplicity`, `claims.novelty`. Checkpoint-3 review — BLOCKER (caller-
+  supplied prediction; forgeable/selective verdict store; self-reported exposure clock; unbounded k; NaN -> NOT_REFUTED; ...);
+  fixed in 601ae459 (ExposureAuthority owns the clock; prediction/k/resolution sealed; verdicts in the registry chain).
+  Re-review — BLOCKER (unjudged refuting releases; conditions unchecked) + 8 HIGH; fixed in dd289ed5 (judge-all on
+  apply; conditions required; refutation follows the hypothesis id; RegistryAnchor; seal-time vacuity guards; novelty ledger
+  on the authority clock with first-proposal ordering, canonicalizer self-test, declared equivalence, verify_novelty;
+  multiplicity close()/verify_promoted, campaign ids never reused).
+- Scientific design decisions taken (recorded so they are reviewable): (1) INDISTINGUISHABLE is by construction
+  observationally equivalent in the box to a DISCOVERABLE universe with an extended region; it measures calibrated refusal to
+  extrapolate, and a bracketing pair is credited without knowing which branch is true. (2) A refutation follows the
+  hypothesis id; a narrower or different claim is a new hypothesis (`derive_hypothesis`). (3) Identical values from two
+  acquisitions are two measurements; an acquisition re-released keeps its first exposure.
+- Baseline scan (20 master seeds, MIX 8/3/3/3/3/3, DEFAULT_CREDIT): mean total / over-best-constant / discovery / control
+  credit — always_law -14.1 / -18.6 / 0.3 / -14.4; always_refuse 3.0 / -1.5 / 0 / 3.0; always_insufficient 4.5 / 0.0 / 0 /
+  4.5; single_setting (non-discoverer) 7.25 / 2.75 / 0 / 7.25; careful 10.1 / 5.6 / 1.15 / 8.95 (discovery success 0.16).
+  Finding: careful is mostly a control classifier; in 6/20 seeds its discovery credit is not above the non-discoverer's,
+  so the test asserts only the properties that held on 20/20 seeds and uses a fixed seed.
+- TARGETED_TESTS (this container, `.venv`):
+  - `pytest -q -n 4 tests/foundations/test_v2_falsifiers_multiplicity_novelty.py tests/foundations/test_v2_discovery_authority.py
+    tests/foundations/test_v2_blindfold.py tests/foundations/test_v2_fidelity_graph.py tests/test_core_api_layering.py
+    tests/test_core_semantic_invariants.py`: 162 passed, 1 failed (`test_credit_is_reported_over_the_best_constant_answer`,
+    random master seed — fixed by seeding; re-run `pytest -n 4 tests/foundations/test_v2_blindfold.py`: 14 passed);
+    `pytest tests/foundations/test_v2_falsifiers_multiplicity_novelty.py`: 8 passed.
+- DEFERRED_HARDENING (LOW / design, recorded): Blindfold M7 SPURIOUS driver settable (weak control); L1 refusals free and
+  unbounded in the log; L5 replay identity is the store writer's record, master seed held by the operator; L6 no exogenous
+  u1 twin world, so CONFOUNDED law_pass is unreachable passively. R5 M2 no persistence/attestation of authority keys,
+  registries or ledger seals (per process); M4 falsification retries (content revisions, falsifier versions) are not counted
+  in multiplicity; forbidden-region relevance to the prediction is a preregistration-review judgment. All in-process
+  separation is construction, not isolation.
+- Failed approaches: (1) value-content de-duplication of evidence (blocked genuine repeat measurements); replaced by
+  acquisition identity. (2) A free-standing VerdictStore (forgeable/selective); replaced by the registry chain. (3) Binding
+  verdicts to a content digest that included the falsifier list (a falsifier revision minted "new content" and shed a
+  refutation). (4) An unnormalised exp(-b g) form underflowed outside the box; replaced by a saturating form. (5) The rival
+  law added as law + k law g^m exceeded the 96-node limit; written as law (1 + k g^m).
+
+## 2026-10-10 Roadmap V2 — checkpoints 4 and 5, R8, battery readiness, final gate (branch `feat/roadmap-v2-discovery`)
+
+- R6 Scientific Red Team (`claims.redteam`, `claims.redteam_suite`; cd2a16b7): declared attack space (every range has a
+  source and a unit), seeded deterministic plan (digest binds space, budget, seed, edge-interior points, replay tolerance),
+  replay of every candidate, cross-FAMILY confirmation (neither the candidate's nor the claim's route votes; skipped or
+  unconverged voters -> UNCONFIRMED), artifact dismissal only by an ATTACKED refined route of the same family, TrustEnvelope
+  `engcore.claims.trust_envelope/2` with outcomes FALSIFIED / SURVIVED / UNKNOWN (no SAFE). Seeded flaw suite: 7 flaws +
+  an interior-only violation + 1 declared blind spot + 5 controls. Checkpoint-4 review — CHANGES REQUIRED (6 HIGH, 6
+  MEDIUM); fixed in 4c67ad4a. Confirmation review — 3 MEDIUM + LOWs, fixed in a8ab8d22; second confirmation: no HIGH or
+  BLOCKER on the Red Team side.
+- SEEDED_FLAW_RESULTS (`run_suite()`, deterministic): detection_rate 1.0, false_alarm_rate 0.0, controls_as_expected 1.0,
+  cross_family_confirmation_rate 1.0, evaluations to a confirmed counterexample min 13 / max 70 / mean ~26.1;
+  blind_spots_missed = [flaw_outside_attack_space] (by design: a flaw outside the declared space is not found, and the
+  SURVIVED statement names the region it covered).
+- R7 credibility vectors (`claims.credibility_vector`; ceb99deb): f(C) projected from the existing ValidationLevel and UQ
+  channel vocabulary over one EvidenceGraph; r(D) only from a registered, immutable, risk-monotone policy that dominates
+  RISK_POLICY_V1; g = r - f with UNKNOWN below every level; defeaters; AND = weakest, OR = one whole positively independent
+  branch. Review rounds: checkpoint-5 BLOCKER (caller-declared levels, policy as evidence, ...) -> 631bcb88; confirmation
+  CHANGES REQUIRED (6 HIGH) -> a8ab8d22; second confirmation BLOCKER (subject/lineage contradictions ignored and child-order
+  dependent; contradiction scope only over the selected support; superseded records revived by removing a pin; applicability
+  and UQ as bare labels; outside-domain cancelled by a second citation; envelope bound only by claim id; calibration guard
+  bypass) -> 8c2ed4dc; third confirmation BLOCKER (an unpinned SUPERSEDES edge lifted an outside-domain finding;
+  contradicted calibration data dropped silently; same-content twins escaped contradiction / supersession; inputs not bound;
+  an 'unknown' check outranked; NOT_APPLICABLE without provenance; obsolete subject not defeated) -> fbf79417; fourth
+  confirmation CHANGES REQUIRED, no BLOCKER (1 HIGH: a linking edge exempted an obsolete subject; MEDIUM: OR branch choice
+  not monotone in the requirement, independence and the calibration guard blind to shared calibrators / twins, a model's own
+  zero model-form entry met 'declared', contradiction direction decided defeater vs note) -> f4513eb0; fifth confirmation
+  CHANGES REQUIRED, no BLOCKER (1 HIGH: with both ends of a contradiction in the closure only the source was checked, so
+  citing the contradicting record or an UNKNOWN lineage node lifted it; LOWs: no-op OR assertion, stale docstring, closing
+  superseder twins) -> 759ed9bb; sixth confirmation CHANGES REQUIRED, no BLOCKER/HIGH (MEDIUM: a closing "v2" with the
+  same content, or itself superseded, lifted a defeater; LOWs: closer contradicted only one way, explicit defeater could
+  replace a computed one, docstring) -> f320c156; seventh confirmation APPROVED (no BLOCKER/HIGH/MEDIUM). Its one
+  lifting LOW (L-b: a cited record pinned as a newer version of the applicability source could close the outside-domain
+  finding; needs a trusted pin) was fixed post-approval in 1e7cbebc (lowering-only; not re-reviewed).
+  Design decisions: applicability-inside is backed by a re-read `system_runtime.records.ApplicabilityReport`
+  'within' whose evidence digest is the subject's content digest; UQ by a re-read `sria.assurance.uncertainty_budget.ChannelEntry`
+  of that channel (quantified = KNOWN/BOUNDED with the channel's own UncertaintySource; UNKNOWN backs nothing;
+  NOT_APPLICABLE backs only 'declared', with pinned provenance, from an authority that could have quantified the channel, and
+  NEVER for model form — declaring model-form discrepancy impossible would turn missing discrepancy into zero); support
+  disqualification follows the canonical any-SUPERSEDES rule, a supersession of what the subject rests on is a 'superseded'
+  defeater; "rests on" = twins + ancestors (not through SUPERSEDES) + calibration inputs; an outside-domain finding is
+  judged like a defeater; OR chooses a branch by the requirement first (requirement_met is monotone; per-factor levels
+  are those of the chosen branch); a CONTRADICTS edge is a conflict whichever side wrote it; a model-form statement at any
+  level needs an outside authority with pinned provenance; a validator sharing any record with the data that calibrated the
+  subject is refused (hold-out siblings of one raw dataset too — over-conservative by choice); the report binds
+  `inputs_digest` (schema `engcore.claims.credibility_vector/3`); the attacked statement is declared on the claim leaf and
+  bound into the structure digest.
+- R8 (c8853038, c3bb5f91): `claims.discovery_providers` + `providers/discovery/*` runners in separate envs; PROVIDER_STATUS
+  pysindy / botorch / dakota EXECUTED_IN_PROVIDER_ENV (not qualified), ax / pysr NOT_INSTALLED. Proposers return PROPOSED
+  hypotheses / ExternalSuggestion / untrusted raw output, never a verdict. Live runs moved to `tools/discovery_provider_smoke.py`
+  (opt-in) after the skip-admission audit flagged env-gated skips; smoke run: PySINDy recovered du/dt = -0.50015 u, BoTorch
+  suggestion inside bounds, Dakota moments present. Performance: `tools/discovery_performance.py`, documented in
+  `docs/performance/core-performance.md` §9 (20k candidates, seed 7: tier 0 ~33k/s; tier 1 screen+record ~3.4k/s, trust
+  overhead ~292 us/candidate; tier 2 ~640 verdicts/s, seal O(releases); tier 3 ~33 universes/s; 50.7 useful promotions per
+  compute-hour under a DECLARED 60 s high-fidelity cost; false-elimination rate 0.0 recorded audit and ground truth).
+- Battery: `docs/architecture/battery_discovery_readiness.md` — NOT READY for a confirmatory experiment, READY to draft
+  the pre-registration; Kirkaldy 2024 stays NOT MET; nothing was run, re-fitted or pre-registered.
+- TARGETED_TESTS (this container, `.venv`, this session):
+  - `pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider` (before a8ab8d22): 14 failed, 9638 passed, 137 skipped
+    (464 s). The 14 are the known base-drift set, unchanged from the base: `test_core_certificate.py::
+    test_the_certificate_describes_this_tree`, 5 in `test_core_freeze_manifest.py`, 2 in `test_core_freeze_v3_manifest.py`,
+    3 in `test_core_freeze_v4_manifest.py`, `test_core_scientific_audit_batch56::test_r65...`, 2 in `test_mutation_workspace.py`.
+  - Foundations JUnit through the skip-admission audit after c3bb5f91: skipped 0, accepted 0, unexpected 0.
+  - After 8c2ed4dc: `pytest -q -n 4 -p no:cacheprovider tests/foundations tests/test_core_api_layering.py
+    tests/test_core_semantic_invariants.py tests/test_core_guards.py tests/claims tests/test_sria_m4_decision.py`: 1217
+    passed. `pytest tests/foundations/test_v2_credibility_vector.py`: 20 passed; the 8 new review tests FAIL against the
+    a8ab8d22 implementation (checked by swapping the module in). `python tools/forge_check.py --changed`: 225 passed.
+    `git diff --check`: clean.
+  - After fbf79417: same multi-suite command: 1224 passed. `pytest tests/foundations/test_v2_credibility_vector.py`: 27
+    passed; 8 (7 new + 1 changed) FAIL against the 8c2ed4dc module. `forge_check.py --changed`: 225 passed.
+    `ruff check --select F,E9` on both files: clean. `git diff --check`: clean.
+  - After f4513eb0: same multi-suite command: 1231 passed. `pytest tests/foundations/test_v2_credibility_vector.py`: 34
+    passed; the 7 new tests FAIL against the fbf79417 module. `forge_check.py --changed`: 225 passed. ruff F/E9 clean;
+    `git diff --check` clean.
+  - After 759ed9bb: same multi-suite command: 1233 passed. `pytest tests/foundations/test_v2_credibility_vector.py`: 36
+    passed; the 2 new tests FAIL against the f4513eb0 module. `forge_check.py --changed`: 225 passed. ruff F/E9 clean;
+    `git diff --check` clean.
+  - After f320c156: same multi-suite command: 1235 passed. `pytest tests/foundations/test_v2_credibility_vector.py`: 38
+    passed; the 2 new tests FAIL against the 759ed9bb module. `forge_check.py --changed`: 225 passed. ruff F/E9 clean;
+    `git diff --check` clean.
+  - After 1e7cbebc: same multi-suite command: 1236 passed; `pytest tests/foundations/test_v2_credibility_vector.py`: 39
+    passed (the new test FAILS against f320c156); `forge_check.py --changed`: 225 passed; `forge_check.py --regression`:
+    225 passed; `git diff --check` clean.
+  - On 1e7cbebc: `pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider --junitxml=...`: 14 failed, 9668 passed,
+    135 skipped (453 s). The 14 failures are exactly the base-drift set listed above (certificate, freeze v1/v3/v4 manifests,
+    batch56 r65, 2 mutation-workspace); no V2 test failed. 2 fewer skips than before c3bb5f91 (the live provider tests
+    moved to the opt-in smoke tool).
+  - NOT RUN: `pytest -m "not campaign"`, hardened recertification, Local Assurance.
+- CERTIFICATION_SCOPE: `recertification_scope classify --event pull_request --base 6656042 --head HEAD` -> recertify_source,
+  triggered only by test files (tests are certified harness). No CORE_CERTIFIED file, no `certification/current_core_v2.json`
+  change; recertification NOT RUN; V2 is not certified.
+- DEFERRED_HARDENING (recorded, LOW / design): Blindfold M7 / L1 / L5 / L6 and R5 M2 / M4 / forbidden-region relevance (see
+  the checkpoint 2-3 entry); FalsifierRegistry.seal is O(releases) (needs an index); in-process construction residuals
+  (registries, oracle declarations, `_POLICIES`, TrustEnvelope can be hand-built, TrustedSourceRegistry is caller-supplied);
+  red-team route families are self-declared; ValidationCheck / ChannelEntry are not bound to the result value they qualify
+  (ApplicabilityReport is, through its evidence digest); the attacked statement is what the claim leaf declares, not a
+  contract record; removing defeater-type edges (CONTRADICTS, CALIBRATES, SUPERSEDES, DERIVED_FROM) from the graph raises the
+  outcome (the graph fingerprint is bound in the report); omitting a NEGATIVE input (an 'outside' / 'unknown' applicability
+  report, a FALSIFIED / UNKNOWN / incoherent envelope) is detectable only through the bound `inputs_digest`;
+  `fresh_enough` is True when freshness is unknown and no timestamp is required. Seventh-review LOWs recorded, not
+  changed (over-conservative only): citation edits can move requirement_met within what an honest claim earns (a claimless
+  OR branch forces AND; citing a closer protects it) -- they are claim changes bound by `claim_structure_digest`; closer
+  qualification is not a lineage fixpoint and `superseders` matches the exact record, not its twins.
+- Failed approaches: (0) disqualifying superseded support by any admissible superseder AND routing the outside-domain
+  claim through the same `usable()` gate — an unpinned superseder then lifted a defeater; defeater claims now bypass it.
+  (1) lineage that skipped the subject via view state (`view.subject`) — fixed independence but hid
+  contradictions of the subject and made results child-order dependent; replaced by a `stop` parameter. (2) Reusing the strict
+  "closing" superseder bar to disqualify superseded support — removing a pin revived stale records. (3) A flaky-trap control
+  with a small, stateful spike — not detected reliably; replaced by a call-parity spike. (4) Env-gated live provider tests in
+  the certified harness — flagged by the skip-admission audit; moved to an opt-in smoke tool.
