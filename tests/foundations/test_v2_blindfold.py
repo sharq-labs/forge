@@ -140,7 +140,8 @@ def test_the_observe_client_api_sends_only_observe_and_every_query_is_logged():
     obs = ObserveClient(t, "c1", tok["observe"])
     assert not hasattr(obs, "transport") and not hasattr(obs, "token") and not hasattr(obs, "__dict__")   # review H1
     # ... but this is construction, NOT isolation: the closure still reaches the transport (SECURITY_BOUNDARY_NOT_PROVEN)
-    assert t in [cell.cell_contents for cell in obs._send.__closure__]
+    cells = [cell.cell_contents for cell in obs._send.__closure__]
+    assert t in cells + [getattr(c, "_transport", None) for c in cells]
     with pytest.raises(EscrowRefused, match="evaluator-config digest"):
         call(t, "create", campaign_id="noconfig", mix={"discoverable": 1}, operator_token=t.operator_token)
     for token in (tok["observe"], tok["score"], "forged"):
