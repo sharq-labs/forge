@@ -134,6 +134,14 @@ class DurableCampaign:
         (:attr:`anchor`): the ledger must extend it, so an operation journaled before it cannot be dropped."""
         if not isinstance(expected_anchor, TrustAnchor) or not ledger.extends(expected_anchor):
             raise CampaignRefused("the ledger does not extend the operator's anchor: journal entries were dropped or rewritten")
+        starts = [r for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))
+                  if r.attestation.role is Role.EXPOSURE and r.attestation.record.get("op") == "start"]
+        if len(starts) != 1:
+            raise CampaignRefused(f"campaign {campaign_id!r} has {len(starts)} EXPOSURE start entries in this ledger; exactly one "
+                                  "issuer owns a campaign (a second start is a fork or a squat, never a continuation)")
+        if starts[0].issuer_id != issuer_id:
+            raise CampaignRefused(f"campaign {campaign_id!r} is owned by {starts[0].issuer_id!r} (its first EXPOSURE start), "
+                                  f"not {issuer_id!r}")
         mine = [r for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))
                 if r.issuer_id == issuer_id and r.attestation.role is Role.EXPOSURE]
         if not mine or mine[0].attestation.record.get("op") != "start":
@@ -151,13 +159,17 @@ class DurableCampaign:
                 _token=_CONSTRUCT, _replay_ok=True)
         #: entries naming this campaign that its issuer did not write (another issuer, role or context): ignored, listed
         c.foreign_entries = tuple(foreign)
-        c._ops = 1
-        c._check(first["heads"], 0)
-        for n, r in enumerate(journal[1:], start=1):
-            rec = r.attestation.record_dict()
-            c._replay(rec["op"], rec["args"])
-            c._check(rec["heads"], n)
-            c._ops = n + 1
+        try:
+            c._ops = 1
+            c._check(first["heads"], 0)
+            for n, r in enumerate(journal[1:], start=1):
+                rec = r.attestation.record_dict()
+                c._replay(rec["op"], rec["args"])
+                c._check(rec["heads"], n)
+                c._ops = n + 1
+        except BaseException:
+            c.close()                                  # a half-replayed campaign is never left live
+            raise
         c._anchor = ledger.anchor()
         return c
 

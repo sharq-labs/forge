@@ -9,7 +9,11 @@ when ALL hold:
 * its subject is THIS result (``subject_digest``) in THIS decision context;
 * its ``receipt_digest`` names a NodeReceipt attestation by an EXECUTOR-role issuer, attested BEFORE the evidence,
   whose receipt lists the subject digest among its outputs (``subject_output`` names which);
-* the evidence issuer is not the executor issuer of that receipt: a result does not certify itself.
+* the evidence issuer executed neither that receipt nor any other attested receipt producing the same output digest:
+  a result does not certify itself;
+* neither the evidence nor its receipt was signed inside a root-declared compromise window of its key
+  (``AuthorityLedger.revoke`` / ``rotate_key`` with ``compromised_from``).  A revocation WITHOUT a declared window
+  leaves earlier records admitted: revoking is not, by itself, a statement that they were forged.
 
 Every refusal is UNKNOWN for the consumer, never a lower rung it could misread as support.
 """
@@ -58,6 +62,12 @@ def executors_of(ledger: AuthorityLedger, receipt_digest: str) -> frozenset[str]
                      if r.attestation.role is Role.EXECUTOR)
 
 
+def producers_of(ledger: AuthorityLedger, output_digest: str) -> frozenset[str]:
+    """EVERY issuer that attested, as executor, any receipt listing ``output_digest`` among its outputs."""
+    return frozenset(r.issuer_id for r in ledger.attestations(record_kind=RECEIPT_KIND)
+                     if r.attestation.role is Role.EXECUTOR and output_digest in receipt_outputs(r).values())
+
+
 def verify_evidence(ledger: AuthorityLedger, *, record_kind: str, record_digest: str, subject_digest: str,
                     context_digest: str, roles: Iterable[Role], allow_self_issued: bool = False) -> tuple[AdmittedEvidence | None, list[str]]:
     """``allow_self_issued`` is for NEGATIVE records only (a failure, an 'outside' finding, a falsification): those only
@@ -85,12 +95,17 @@ def verify_evidence(ledger: AuthorityLedger, *, record_kind: str, record_digest:
                 why.append(f"the attested receipt has no output {a.subject_output!r} with digest {subject_digest[:12]}")
             if receipt.sequence >= c.sequence:
                 why.append("the receipt was attested after the evidence about it")
-            if not allow_self_issued and c.issuer_id in executors_of(ledger, a.receipt_digest):
+            if not allow_self_issued and (c.issuer_id in executors_of(ledger, a.receipt_digest)
+                                          or c.issuer_id in producers_of(ledger, subject_digest)):
                 why.append(f"issuer {c.issuer_id!r} executed the result it attests: self-issued evidence is not independent")
+            if not allow_self_issued and ledger.compromised_at(receipt.issuer_id, receipt.key_id, receipt.sequence):
+                why.append("the node receipt was signed inside its executor key's declared compromise window")
+        if not allow_self_issued and ledger.compromised_at(c.issuer_id, c.key_id, c.sequence):
+            why.append(f"it was signed inside the declared compromise window of {c.issuer_id!r}'s key")
         if not why and receipt is not None:
             return AdmittedEvidence(c, receipt), []
         reasons.extend(f"attestation @{c.sequence}: {w}" for w in why)
     return None, reasons
 
 
-__all__ = ["RECEIPT_KIND", "AdmittedEvidence", "executors_of", "receipt_outputs", "verify_evidence", "verify_receipt"]
+__all__ = ["RECEIPT_KIND", "AdmittedEvidence", "executors_of", "producers_of", "receipt_outputs", "verify_evidence", "verify_receipt"]

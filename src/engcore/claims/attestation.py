@@ -88,6 +88,9 @@ def attest_record(ledger: AuthorityLedger, signer: Signer, issuer_id: str, recor
     if subject is None:
         raise AuthorityRefused(f"the attested receipt has no output {subject_output!r}")
     d = record.to_dict()
+    if kind == APPLICABILITY_REPORT and record.evidence_digest and record.evidence_digest != subject:
+        raise AuthorityRefused(f"the applicability report is decided on {record.evidence_digest[:12]}, not on the attested output "
+                               f"{subject[:12]}: it is attested about the result it names")
     att = Attestation(kind, _schema_of(d, kind), d, subject, context_digest, role, receipt.record_digest, subject_output)
     return ledger.attest(signer, issuer_id, att)
 

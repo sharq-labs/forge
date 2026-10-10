@@ -21,7 +21,6 @@ import os
 import pathlib
 import secrets as _secrets
 import stat
-from dataclasses import dataclass, field
 from typing import Protocol
 
 KEY_CLASSES = ("test", "production")
@@ -79,25 +78,48 @@ def verify_signature(public_hex: str, signature_hex: str, message: bytes) -> boo
 _PROVIDED = object()          # only a key provider mints a Signer: its key class is the PROVIDER's, never a caller's label
 
 
-@dataclass(frozen=True)
 class Signer:
     """A private signing key held by its owner.  ``public_hex`` / ``key_id`` are the verification material.
 
     Minted only by a key provider (:class:`EphemeralKeyProvider` -> ``test``, :class:`DirectoryKeyProvider` ->
-    ``production``); the class is the provider's, so a test key cannot be relabelled production.  Inside one process
-    that is construction, not isolation (the module token is reachable by introspection)."""
+    ``production``).  Immutable and not a dataclass, so ``dataclasses.replace`` / attribute assignment cannot relabel a
+    minted key's class.  What the class MEANS is limited: it is the key holder's assertion about custody (a holder can
+    sign a possession proof for either class with its raw ``sign``), checked against the ledger profile; it grants no
+    authority.  Inside one process this is construction, not isolation (the module token is reachable by introspection)."""
 
-    name: str
-    key_class: str
-    public_hex: str
-    _private: object = field(repr=False, compare=False)
-    _minted: object = field(default=None, repr=False, compare=False)
+    __slots__ = ("_private", "key_class", "name", "public_hex")
 
-    def __post_init__(self) -> None:
-        if self._minted is not _PROVIDED:
+    def __init__(self, name: str, key_class: str, public_hex: str, _private: object, _minted: object = None) -> None:
+        if _minted is not _PROVIDED:
             raise AuthorityRefused("a Signer is minted by a key provider, never constructed by hand")
-        if self.key_class not in KEY_CLASSES:
+        if key_class not in KEY_CLASSES:
             raise AuthorityRefused(f"key class is one of {KEY_CLASSES}")
+        for k, val in (("name", name), ("key_class", key_class), ("public_hex", public_hex), ("_private", _private)):
+            object.__setattr__(self, k, val)
+
+    def __setattr__(self, key: str, value: object) -> None:
+        raise AuthorityRefused("a Signer is immutable")
+
+    def __delattr__(self, key: str) -> None:
+        raise AuthorityRefused("a Signer is immutable")
+
+    def __reduce__(self):                        # no pickling / copying of private key material
+        raise AuthorityRefused("a Signer is not serialized or copied")
+
+    def __copy__(self) -> "Signer":
+        return self
+
+    def __deepcopy__(self, memo: dict) -> "Signer":
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Signer) and (self.name, self.key_class, self.public_hex) == (other.name, other.key_class, other.public_hex)
+
+    def __hash__(self) -> int:
+        return hash((self.name, self.key_class, self.public_hex))
+
+    def __repr__(self) -> str:
+        return f"Signer(name={self.name!r}, key_class={self.key_class!r}, key_id={self.key_id[:16]!r})"
 
     def possession(self, ledger_id: str, issuer_id: str) -> dict[str, str]:
         """Proof of possession for registration/rotation: this key signs (ledger, identity, its OWN key class)."""

@@ -132,7 +132,7 @@ def test_another_key_or_issuer_cannot_resume_or_extend_the_campaign(tmp_path):
     with pytest.raises(CampaignRefused, match="already live"):
         DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
     camp.close()
-    with pytest.raises(CampaignRefused, match="no journal begun by 'other'"):
+    with pytest.raises(CampaignRefused, match="owned by 'exposure'"):
         DurableCampaign.resume(led, keys, issuer_id="other", campaign_id="bat-1", expected_anchor=anchor)
     forged_keys = EphemeralKeyProvider()
     forged_keys._signers["exposure"] = keys.signer("exposure")    # the right signer, another secret: another authority
@@ -216,3 +216,18 @@ def anchor_at(path, seq):
     root = events[0]["body"]["root_public"]
     from engcore.authority import key_id_of
     return TrustAnchor(events[0]["ledger_id"], events[0]["body"]["profile"], key_id_of(root), seq, ev.digest)
+
+
+def test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign(tmp_path):                    # re-review M-4
+    keys, led, camp, *_ = run_campaign(tmp_path)
+    led.register_issuer(keys.signer("root"), "expB", keys.signer("expB").possession(led.ledger_id, "expB"), roles=[Role.EXPOSURE])
+    anchor = camp.anchor
+    camp.close()
+    with pytest.raises(CampaignRefused, match="owned by 'exposure'"):
+        DurableCampaign.resume(led, keys, issuer_id="expB", campaign_id="bat-1", expected_anchor=anchor)
+    from engcore.authority import Attestation
+    from engcore.claims.durable_campaign import OP_KIND, campaign_subject
+    led.attest(keys.signer("expB"), "expB", Attestation(OP_KIND, "x/1", {"campaign_id": "bat-1", "index": 0, "op": "start", "args": {},
+                                                                        "heads": {}}, campaign_subject("bat-1"), CTX, Role.EXPOSURE))
+    with pytest.raises(CampaignRefused, match="2 EXPOSURE start entries"):
+        DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=led.anchor())

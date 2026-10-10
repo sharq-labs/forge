@@ -95,10 +95,10 @@ def test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_el
     level, rep = verification_level(w)
     assert level == 1 and rep.issuer_bound and rep.test_mode and rep.authority_anchor["head"] == w.ledger.head
     unattested = assess(None)
-    assert not unattested.requirement_met and not unattested.issuer_bound and any("UNATTESTED" in n for n in unattested.notes)
+    assert not unattested.requirement_met_in_test_mode and not unattested.issuer_bound and any("UNATTESTED" in n for n in unattested.notes)
 
 
-def test_a_caller_minted_unanchored_or_foreign_ledger_never_meets_a_requirement():                 # checkpoint A B1
+def test_an_unopened_unanchored_or_foreign_ledger_is_refused():                 # checkpoint A B1
     w = World()
     w.attest(CONV, RESULT, CTX)
     with pytest.raises(CredibilityRefused, match="pinned TrustAnchor"):
@@ -112,7 +112,7 @@ def test_a_caller_minted_unanchored_or_foreign_ledger_never_meets_a_requirement(
         assess(None, authority=led, trust_anchor=w.ledger.anchor(), allow_test_profile=True)
     led, anchor = w.opened()
     rep = assess(None, authority=led, trust_anchor=anchor)                  # a TEST ledger without explicit test mode
-    assert rep.vector.level(Factor.VERIFICATION) == 1 and not rep.issuer_bound and not rep.requirement_met
+    assert rep.vector.level(Factor.VERIFICATION) == 1 and not rep.issuer_bound and not rep.requirement_met_in_test_mode
     assert any("TEST-PROFILE" in n for n in rep.notes) and rep.inputs_digest != assess(w).inputs_digest
 
 
@@ -218,7 +218,7 @@ def test_negative_records_cap_and_defeat_even_from_the_results_own_executor():  
     attest_record(w3.ledger, w3.signer("exec"), "exec", outside, receipt=w3.receipt(RESULT, CTX), subject_output="y", context_digest=CTX,
                   role=Role.APPLICABILITY)
     rep = assess(w3)
-    assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
 
 
 def test_an_attested_falsification_follows_the_result_not_the_node_name():                        # checkpoint A H2
@@ -241,7 +241,7 @@ def test_an_attested_falsification_follows_the_result_not_the_node_name():      
     w.attest(CONV, RESULT, CTX)
     w.attest(falsified, RESULT, CTX)
     rep = assess(w, g=graph(CONV, subject_id="result#renamed"), subject_id="result#renamed")
-    assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
 
 
 def test_attested_records_cannot_be_edited_in_memory():                                            # checkpoint A M2
@@ -360,7 +360,7 @@ def test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies(
     w.attest(outside, RESULT, CTX)
     claims = LOW + [FactorClaim(Factor.APPLICABILITY, 1, ("n1",), "applicability")]
     rep = assess(w, g=graph(CONV, WITHIN), claims=claims, applicability_reports=(WITHIN,))      # 'outside' NOT supplied
-    assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
 
 
 def test_a_copied_record_or_a_mutated_result_backs_nothing():
@@ -399,3 +399,132 @@ def test_the_authority_layer_imports_nothing_else_from_engcore():
                 assert node.level <= 1 and not (node.module or "").startswith("engcore"), (path.name, node.module, node.level)
             elif isinstance(node, ast.Import):
                 assert not any(a.name.startswith("engcore") for a in node.names), path.name
+
+
+# ---------------------------------------------------------------------------- checkpoint A re-review
+
+
+def _failed_balance():
+    from engcore.scientific.conservation import BalanceTerm, ConservationBalance
+    from engcore.scientific.units.quantity import Quantity
+    return ConservationBalance("mass", (BalanceTerm("in", Quantity(10.0, "kilogram / second"), "fm:A"),),
+                               (BalanceTerm("out", Quantity(9.0, "kilogram / second"), "fm:B"),),
+                               tolerance=Quantity(0.01, "kilogram / second")).to_validation_check()
+
+
+def test_an_attested_failed_check_without_a_level_caps_its_roles_factors():                       # re-review H-1
+    bad = _failed_balance()
+    assert bad.outcome is ValidationOutcome.FAIL and bad.establishes is None          # the real producer's shape
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    assert verification_level(w)[0] == 1
+    w.attest(bad, RESULT, CTX, issuer="ver", role=Role.NUMERICAL_VERIFICATION)         # the authorized verifier says: violated
+    level, rep = verification_level(w)
+    assert level == UNKNOWN and not rep.requirement_met_in_test_mode
+    assert any("caps ['independent_routes', 'verification']" in n for n in rep.notes)
+    w2 = World()
+    w2.attest(CONV, RESULT, CTX)
+    w2.attest(bad, RESULT, CTX, issuer="val", role=Role.VALIDATION)                    # a failed oracle comparison: no level
+    rep2 = assess(w2)
+    assert any("caps ['validation']" in n for n in rep2.notes) and rep2.vector.level(Factor.VERIFICATION) == 1
+
+
+def test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries():  # re-review H-2
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    w.attest(ApplicabilityReport("range", "outside", "", "T above the fitted range"), RESULT, CTX)
+    w.attest(ApplicabilityReport("range2", "within", RESULT, "inside"), RESULT, CTX)
+    rep = assess(w)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+    w2 = World()
+    w2.attest(CONV, RESULT, CTX)
+    w2.attest(ApplicabilityReport("range", "unknown", "", "never checked"), RESULT, CTX)
+    rep2 = assess(w2, g=graph(CONV, WITHIN), claims=LOW + [FactorClaim(Factor.APPLICABILITY, 1, ("n1",), "applicability")],
+                  applicability_reports=(WITHIN,))
+    assert rep2.vector.level(Factor.APPLICABILITY) == UNKNOWN
+    with pytest.raises(AuthorityRefused, match="attested about the result it names"):
+        w.attest(ApplicabilityReport("range3", "outside", _h("another result"), "x"), RESULT, CTX)
+
+
+def test_a_ledger_subclass_is_refused():                                                           # re-review M-1
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    led, anchor = w.opened()
+
+    class Lenient(AuthorityLedger):
+        def extends(self, anchor):
+            return True
+    fake = Lenient.__new__(Lenient)
+    fake.__dict__.update(led.__dict__)
+    with pytest.raises(CredibilityRefused, match="exactly that type"):
+        assess(None, authority=fake, trust_anchor=anchor, allow_test_profile=True)
+
+
+def test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path(tmp_path):   # re-review M-1 (pinned)
+    """issuer_bound rests on WHO chose the anchor's root key: a caller that mints its own root, opens its own ledger and
+    passes that ledger's anchor gets issuer_bound.  So the anchor must be operator configuration -- and no MCP / planner
+    path may forward ``authority`` / ``trust_anchor`` / ``allow_test_profile``."""
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    led, anchor = w.opened()
+    assert assess(None, authority=led, trust_anchor=anchor, allow_test_profile=True).issuer_bound
+    import pathlib
+    mcp = pathlib.Path(__file__).resolve().parents[2] / "src" / "engcore" / "mcp"
+    for f in mcp.rglob("*.py"):
+        text = f.read_text()
+        for token in ("trust_anchor", "allow_test_profile", "AuthorityLedger"):
+            assert token not in text, f"{f}: MCP must never carry {token}"
+
+
+def test_a_minted_signer_cannot_be_relabelled():                                                   # re-review M-2
+    import copy
+    import dataclasses
+    s = EphemeralKeyProvider().signer("r")
+    with pytest.raises(TypeError):
+        dataclasses.replace(s, key_class="production")
+    with pytest.raises(AuthorityRefused, match="immutable"):
+        s.key_class = "production"
+    with pytest.raises(AuthorityRefused, match="not serialized"):
+        __import__("pickle").dumps(s)
+    assert copy.deepcopy(s) is s and s.key_class == "test"
+
+
+def test_a_compromise_window_withdraws_what_the_key_signed_in_it():                                # re-review M-5
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    mark = w.ledger.length
+    assert verification_level(w)[0] == 1
+    w.ledger.revoke(w.root, "ver", "drill: retired, not compromised")
+    assert verification_level(w)[0] == 1                                    # a plain revocation leaves earlier records
+    w2 = World()
+    early = w2.ledger.length
+    w2.attest(CONV, RESULT, CTX)
+    w2.ledger.revoke(w2.root, "ver", "key exfiltrated", compromised_from=early)
+    level, rep = verification_level(w2)
+    assert level == UNKNOWN and any("compromise window" in n for n in rep.notes)
+    with pytest.raises(AuthorityRefused, match="compromised_from"):
+        w.ledger.revoke(w.root, "val", "x", compromised_from=mark + 99)
+    w3 = World()
+    w3.attest(CONV, RESULT, CTX)
+    keys = EphemeralKeyProvider()
+    w3.ledger.rotate_key(w3.root, "exec", keys.signer("exec2").possession(w3.ledger_id, "exec"), compromised_from=1)
+    assert verification_level(w3)[0] == UNKNOWN                              # the RECEIPT key was compromised
+    reopened = AuthorityLedger.open(w2.store, anchor=w2.ledger.anchor())
+    assert reopened.compromised_at("ver", w2.ledger.attestations(record_kind="validation_check")[0].key_id, early + 1)
+
+
+def test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued():                      # re-review L-2
+    w = World()
+    w.ledger.set_roles(w.root, "ver", [Role.NUMERICAL_VERIFICATION, Role.EXECUTOR])
+    attest_receipt(w.ledger, w.signer("ver"), "ver", receipt_for(RESULT, node_id="rerun"), context_digest=OTHER)
+    w.attest(CONV, RESULT, CTX)                                              # the verifier also produced this output
+    level, rep = verification_level(w)
+    assert level == UNKNOWN and any("self-issued" in n for n in rep.notes)
+
+
+def test_an_attestation_subject_output_is_a_string():                                              # re-review L-1
+    w = World()
+    receipt = w.receipt(RESULT, CTX)
+    with pytest.raises(AuthorityRefused, match="strings"):
+        Attestation("validation_check", "validation_check/1", CONV.to_dict(), RESULT, CTX, Role.NUMERICAL_VERIFICATION,
+                    receipt.record_digest, ["y"])

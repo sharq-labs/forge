@@ -227,6 +227,13 @@ FACTOR_ROLES: Mapping[Factor, frozenset[Role]] = MappingProxyType({
 })
 
 
+#: what a FAILED check with no projectable level caps, by the role that attested it
+_ROLE_CAPS: Mapping[Role, tuple[Factor, ...]] = MappingProxyType({
+    Role.NUMERICAL_VERIFICATION: (Factor.VERIFICATION, Factor.INDEPENDENT_ROUTES),
+    Role.VALIDATION: (Factor.VALIDATION,),
+})
+
+
 def _needs_provenance(factor: Factor, level: int) -> bool:
     return (factor is Factor.VALIDATION and level >= 1) or (factor in UQ_CHANNEL and level >= 1) \
         or (factor is Factor.INDEPENDENT_ROUTES and level >= 1) or (factor is Factor.APPLICABILITY and level >= 1) \
@@ -330,6 +337,7 @@ class _GraphView:
         self.admitted = None if admitted is None else admitted.roles
         self.caps = {} if admitted is None else admitted.caps
         self.envelope_subjects = {} if admitted is None else admitted.envelope_subjects
+        self.report_subjects = {} if admitted is None else admitted.report_subjects
         self.nodes = {n.evidence_id: n for n in graph.nodes}
         self._out: dict[str, list[tuple[EvidenceRelation, str]]] = {}
         self._calibrators: dict[str, set[str]] = {}
@@ -668,7 +676,8 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
     # every supplied applicability report decided on THIS subject counts, cited or not: 'outside' is a defeater and sets
     # the factor to outside_domain; 'unknown' caps it at UNKNOWN (every check must pass; UNKNOWN never passes)
     sd = view.nodes[subject].content_digest
-    on_subject = sorted((d, r) for d, r in view.applicability.items() if r.evidence_digest == sd)
+    on_subject = sorted((d, r) for d, r in view.applicability.items()
+                        if r.evidence_digest == sd or (r.status != "within" and subject in view.report_subjects.get(d, ())))
     outside = [(d, r) for d, r in on_subject if r.status == "outside"]
     unknown = [(d, r) for d, r in on_subject if r.status == "unknown"]
     for d, r in outside:
@@ -905,6 +914,13 @@ class CredibilityVectorReport:
 
     @property
     def requirement_met(self) -> bool:
+        """Met for a decision: issuer-bound to a PRODUCTION-profile ledger, every gap closed, no open defeater."""
+        return self.requirement_met_in_test_mode and not self.test_mode
+
+    @property
+    def requirement_met_in_test_mode(self) -> bool:
+        """The same judgement, ALSO true against an explicit TEST-profile ledger (``allow_test_profile``).  For tests and
+        dry runs only: it never counts for a decision."""
         return self.issuer_bound and bool(self.gaps) and not self.defeaters and all(g.gap <= 0 for g in self.gaps)
 
     @property
@@ -929,7 +945,8 @@ class CredibilityVectorReport:
                 "required": {f.value: LEVELS[f][lv] for f, lv in sorted(self.required.items(), key=lambda kv: kv[0].value)},
                 "vector": self.vector.to_dict(), "gaps": [g.to_dict() for g in self.gaps],
                 "open_defeaters": [d.to_dict() for d in self.defeaters], "dominant_blocking_gap": self.dominant_blocking_gap,
-                "requirement_met": self.requirement_met, "notes": list(self.notes)}
+                "requirement_met": self.requirement_met, "requirement_met_in_test_mode": self.requirement_met_in_test_mode,
+                "notes": list(self.notes)}
 
     @property
     def digest(self) -> str:
@@ -956,6 +973,7 @@ class _Admitted:
     roles: dict[tuple[str, str], frozenset[Role]]                 # (subject id, record digest) -> roles it was attested in
     caps: dict[str, dict[Factor, str]]                            # subject id -> factor -> why it is capped at UNKNOWN
     envelope_subjects: dict[str, set[str]]                        # envelope digest -> subjects whose result it is about
+    report_subjects: dict[str, set[str]] = field(default_factory=dict)   # applicability report digest -> subjects (attested)
 
 
 def _negative(kind: str, body: Mapping[str, Any]) -> bool:
@@ -974,7 +992,7 @@ def _from_authority(ledger: AuthorityLedger, subjects: Mapping[str, str], contex
     here whether or not the caller mentions them, are admitted even from the result's own executor (they only lower),
     and cap or defeat; none is dropped without a note."""
     from .attestation import APPLICABILITY_REPORT, CHANNEL_ENTRY, KIND_ROLES, TRUST_ENVELOPE, VALIDATION_CHECK
-    out = _Admitted({}, {}, {})
+    out = _Admitted({}, {}, {}, {})
     roles: dict[tuple[str, str], set[Role]] = {}
     for subject_id, sd in sorted(subjects.items()):
         for rec in ledger.attestations(subject_digest=sd, context_digest=context):
@@ -998,13 +1016,27 @@ def _from_authority(ledger: AuthorityLedger, subjects: Mapping[str, str], contex
                     else:
                         proj = VALIDATION_LEVEL_PROJECTION.get(chk.establishes) if chk.establishes is not None else None
                         if proj is not None:
-                            out.caps.setdefault(subject_id, {})[proj[0]] = (f"attested {chk.outcome.value} check {chk.name!r} "
-                                                                            f"({chk.establishes.value}) by {rec.issuer_id!r}")
+                            capped = (proj[0],)
+                        elif chk.outcome in (ValidationOutcome.FAIL, ValidationOutcome.WARNING):
+                            # a failed check that names no level (a conservation balance, a failed oracle comparison)
+                            # still says the attesting role's finding about THIS result is negative: it caps every
+                            # factor that role backs, so an authorized verifier's FAIL is never outvoted by a PASS
+                            capped = _ROLE_CAPS.get(rec.attestation.role, ())
+                        else:
+                            capped = ()
+                        for factor in capped:
+                            out.caps.setdefault(subject_id, {})[factor] = (
+                                f"attested {chk.outcome.value} check {chk.name!r} "
+                                f"({chk.establishes.value if chk.establishes is not None else 'no level'}) by {rec.issuer_id!r}")
                         notes.append(f"attested {chk.outcome.value} check {chk.name!r} about {subject_id}"
-                                     + ("" if proj else " (no level it could back; noted)"))
+                                     + (f": caps {sorted(f.value for f in capped)}" if capped else " (no level it could back; noted)"))
                 elif kind == APPLICABILITY_REPORT:
                     ar = ApplicabilityReport.from_dict(body)
                     reports[record_digest(ar)] = ar
+                    if ar.status != "within":
+                        # the ATTESTATION binds the report to this result (receipt output), whatever digest the report
+                        # itself carries: a negative report decided on the attested subject counts
+                        out.report_subjects.setdefault(record_digest(ar), set()).add(subject_id)
                 elif kind == CHANNEL_ENTRY:
                     ce = ChannelEntry.from_dict(body)
                     entries[record_digest(ce)] = ce
@@ -1049,11 +1081,13 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
     nothing.  Caller-supplied records still LOWER (defeaters, caps) but never back a level unattested.  WITHOUT it the
     report is ``issuer_bound=False`` and no requirement is met.
 
-    ``trust_anchor``: the CONSUMER's pinned anchor (configured out of band, never taken from the ledger object).  The
-    ledger must have been OPENED (``AuthorityLedger.open``) and must be that anchored ledger and extend its head; a
-    ledger the caller merely created, another root, or another ledger id is refused.  Only a ``production`` ledger
-    makes the report issuer-bound; a ``test`` ledger does so only with ``allow_test_profile=True``, which the report
-    states (``test_mode``) and binds into ``inputs_digest``."""
+    ``trust_anchor``: the anchor to hold the ledger to.  The ledger must be exactly an ``AuthorityLedger``, OPENED
+    (``AuthorityLedger.open``) against an anchor, and extend THIS anchor; another root or ledger id is refused.  A
+    ``production`` ledger makes the report issuer-bound; a ``test`` ledger does so only with ``allow_test_profile=True``,
+    which the report states (``test_mode``), binds into ``inputs_digest``, and under which ``requirement_met`` is never
+    true (``requirement_met_in_test_mode`` is).  The call cannot tell an operator-configured anchor from one the caller
+    minted with its own root: authority rests on who chose ``trust_anchor``, which must be operator configuration, never
+    planner / LLM / MCP input (docs/architecture/authority_integrity_map.md)."""
     checks: dict[str, ValidationLevel] = {}
     notes: list[str] = []
     reports: dict[str, ApplicabilityReport] = {}
@@ -1081,8 +1115,8 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
         raise CredibilityRefused("red-team input is TrustEnvelope records")
     issuer_bound = False
     if authority is not None:
-        if not isinstance(authority, AuthorityLedger):
-            raise CredibilityRefused("authority is an opened AuthorityLedger")
+        if type(authority) is not AuthorityLedger:                 # a subclass could override what is verified
+            raise CredibilityRefused("authority is an opened AuthorityLedger (exactly that type)")
         if not isinstance(trust_anchor, TrustAnchor):
             raise CredibilityRefused("an authority ledger is admitted only against the consumer's pinned TrustAnchor")
         if authority.verified_anchor is None:
@@ -1124,7 +1158,7 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
     found = list(vec.defeaters) + view.contradictions_of(subjects, claim.evidence(), notes)
     subject_digests = {view.nodes[s].content_digest for s in subjects}
     for _d, ar in sorted(reports.items()):
-        if ar.status != "within" and ar.evidence_digest not in subject_digests:
+        if ar.status != "within" and ar.evidence_digest not in subject_digests and not (view.report_subjects.get(_d, set()) & subjects):
             notes.append(f"applicability report {ar.check_id!r} ({ar.status}) is decided on no subject of this claim "
                          f"(evidence digest {ar.evidence_digest or 'EMPTY'}); a negative finding counts only when decided on "
                          "the subject, or recorded in the graph as a CONTRADICTS edge")
@@ -1167,7 +1201,8 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
         tuple(sorted({d.defeater_id: d for d in found}.values(), key=lambda d: (order[d.kind], d.defeater_id))),
         tuple(notes) + tuple(f"rejected: {r}" for r in vec.rejected), inputs_digest, issuer_bound,
         None if authority is None else MappingProxyType(authority.anchor().to_dict()),
-        None if authority is None else authority.profile, bool(allow_test_profile) and authority is not None)
+        None if authority is None else authority.profile,
+        bool(allow_test_profile) and authority is not None and authority.profile != "production")
 
 
 __all__ = ["ClaimNode", "Combine", "CredibilityRefused", "CredibilityVectorReport", "DEFEATER_KINDS", "Defeater", "DecisionRequirement",

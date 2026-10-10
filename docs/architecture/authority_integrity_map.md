@@ -78,7 +78,7 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
 - KNOWN_RESIDUAL: unbound. **Target:** admitted only when attested for the subject and context. The issuer role depends
   on the channel:
   - aleatoric (measurement) → MEASUREMENT;
-  - numerical → NUMERICAL_VERIFICATION;
+  - numerical → NUMERICAL_VERIFICATION (the consumer also accepts UNCERTAINTY for numerical UQ, see `FACTOR_ROLES`);
   - other channels → UNCERTAINTY.
 
 ### EvidenceGraph / EvidenceNode / EvidenceProvenance (`credibility/evidence_graph/*`; CORE_CERTIFIED) and TrustedSourceRegistry (`scientific/knowledge/trust.py:50-77`)
@@ -170,23 +170,40 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - A key is registered or rotated in only with a PROOF OF POSSESSION: the key signs (ledger, issuer id, its own key
     class).
   - ATTEST is signed by the issuer's key. It is admitted only if, at that sequence, the issuer exists, is not revoked,
-    holds the role, and the signing key is the issuer's active key in its registered class.
+    holds the role, and the signing key is the issuer's active key.
   - Persistence is a JSONL file, appended under an exclusive lock and only if the file still holds exactly the events
     the writer verified (no fork). A ledger object whose write may have landed is poisoned.
   - On load every signature (canonical lower-case hex), link and state transition is re-verified, and the ledger must
     extend the consumer's pinned `TrustAnchor`: ledger id, root key, profile, and a (sequence, head) it already saw.
 - **Profiles and key classes.** A ledger is created `test` or `production`. A production ledger refuses test-class keys
-  and a test root.
+  and a test root, at registration and again on load.
   - A `Signer` is minted only by a key provider: `EphemeralKeyProvider` mints `test`, `DirectoryKeyProvider` mints
-    `production`. The class is the provider's, carried into the proof of possession, so a test key cannot be relabelled.
+    `production`. A minted `Signer` is immutable and is not a dataclass, so `dataclasses.replace`, attribute assignment
+    and pickling cannot relabel it.
+  - **What a key class means is limited.** It is the key holder's ASSERTION about custody: any holder can sign a
+    possession proof for either class with its raw `sign`. It is checked against the ledger profile and grants no
+    authority.
   - Inside one process this is construction, not isolation: the minting token is reachable by introspection.
 - **Consumer pinning.** `assess_credibility(authority=, trust_anchor=)` refuses:
-  - a ledger that was only created in this process (not `open()`ed);
+  - an object that is not exactly `AuthorityLedger` (a subclass could override what is verified);
+  - a ledger that was not `open()`ed against an anchor;
   - another ledger id, root or profile;
-  - a ledger that does not extend the consumer's anchor.
+  - a ledger that does not extend the anchor passed in the call.
 
-  Only a production ledger makes a report `issuer_bound`. A test ledger does so only with an explicit
-  `allow_test_profile=True`, which the report states (`test_mode`) and binds into `inputs_digest`.
+  A production ledger makes a report `issuer_bound`; so does a test ledger with `allow_test_profile=True`, which the
+  report states (`test_mode`) and binds into `inputs_digest`. **`requirement_met` is never true in test mode**: a
+  test-mode report exposes `requirement_met_in_test_mode` instead, for tests and dry runs.
+- **What `issuer_bound=True` establishes, and what it does not.**
+  - It establishes that every backing record was signed in a ledger re-verified on open, by an issuer that the
+    ledger's root authorized for the factor's role, and that the ledger extends the TrustAnchor passed in this call.
+  - It does NOT establish that the anchor belongs to the consumer. The call cannot tell operator-configured trust from
+    a root the caller minted: `generate_key_files` + `create` + `open` is enough (pinned by
+    `test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path`).
+  - Authority therefore rests entirely on who chose the anchor's `root_key_id`. That must be operator configuration
+    outside the call path, never planner, LLM or MCP input. A guard test checks that `engcore.mcp` never carries
+    `authority`, `trust_anchor` or `allow_test_profile`.
+  - In-process Python can also forge a report or reach the minting token. This layer protects against tampered
+    persisted records and unauthorized issuers, not against code running in the consumer's process.
 - **Key material.**
   - `DirectoryKeyProvider` reads 0600 regular files (no symlinks) owned by the process user, from a 0700 directory outside
     any git checkout.
@@ -203,7 +220,11 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - a wrong result digest or a receipt that does not contain it;
   - a receipt not attested by an EXECUTOR issuer, or attested after the evidence;
   - a wrong context;
-  - **self-issuance**: an evidence issuer that attested the receipt as executor, ever.
+  - **self-issuance**: an evidence issuer that attested, as executor, this receipt or any other receipt producing the
+    same output digest;
+  - a record (or its receipt) signed inside a root-declared **compromise window** of its key
+    (`revoke(..., compromised_from=)` / `rotate_key(..., compromised_from=)`). A revocation WITHOUT a declared window
+    leaves earlier records admitted: revoking alone does not say they were forged.
 
   NEGATIVE records are the exception to the self-issuance rule: a failing check, an UNKNOWN channel entry, an 'outside' or
   'unknown' report, or a FALSIFIED or UNKNOWN envelope only ever lower, so they are admitted from the result's own
@@ -213,8 +234,12 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - measurement UQ: MEASUREMENT;
   - parameter and model-form UQ: UNCERTAINTY.
 
-  An attested failing check caps the factor its level projects to. An attested UNKNOWN entry caps its channel. An
-  attested FALSIFIED envelope about a subject's result is a defeater whatever node name or claim id it carries. The
+  An attested failing check caps the factor its level projects to. A failing check that declares NO level (a
+  conservation balance, a failed oracle comparison) caps every factor of the attesting role (NUMERICAL_VERIFICATION:
+  verification and independent routes; VALIDATION: validation). An attested UNKNOWN entry caps its channel. An
+  attested 'outside' or 'unknown' applicability report counts on the result its attestation binds, whatever digest
+  the report itself carries, and `attest_record` refuses a report naming a different result. An attested FALSIFIED
+  envelope about a subject's result is a defeater whatever node name or claim id it carries. The
   ledger itself does not narrow roles by record level (residual); the consumer does.
 - **Durable campaign** (`claims.durable_campaign`).
   - Exposure clock, falsifier registry, multiplicity and novelty are journaled as EXPOSURE attestations, with the heads
@@ -222,7 +247,11 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - The campaign identity is namespaced by ledger id and root.
   - One live object exists per identity; `start` refuses an existing journal and the multiplicity one-ledger rule
     applies.
-  - The journal is read only from the start entry's issuer, role and context; foreign entries are listed and ignored.
+  - A campaign has exactly one owner: the issuer of its single EXPOSURE start. `resume` refuses another issuer and a
+    ledger holding a second start (a fork or a squat). The first start wins, so who may hold EXPOSURE is a root
+    decision.
+  - The journal is read only from the owner's EXPOSURE entries in the start's context; foreign entries are listed and
+    ignored. A resume that fails mid-replay releases the half-built object.
   - `resume` requires the operator's stored anchor (`campaign.anchor` after the last operation), so a dropped tail is
     refused.
 

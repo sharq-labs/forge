@@ -143,6 +143,8 @@ class Attestation:
         object.__setattr__(self, "_digest", record_digest_of(rec))   # frozen at construction, never recomputed from live data
         _hex64(self.subject_digest, "subject digest")
         _hex64(self.context_digest, "context digest")
+        if not isinstance(self.receipt_digest, str) or not isinstance(self.subject_output, str):
+            raise AuthorityRefused("an attestation's receipt digest and subject output are strings")
         _hex64(self.receipt_digest, "receipt digest", allow_empty=True)
 
     @property
@@ -301,6 +303,7 @@ class _Key:
     key_class: str
     active_from: int
     retired_at: int | None = None
+    compromised_from: int | None = None          # root-declared: what this key signed from here on is not evidence
 
 
 @dataclass
@@ -321,6 +324,10 @@ class _Issuer:
     def key_valid_at(self, key_id: str, sequence: int) -> bool:
         k = self.keys.get(key_id)
         return k is not None and k.active_from <= sequence and (k.retired_at is None or sequence < k.retired_at)
+
+    def key_compromised_at(self, key_id: str, sequence: int) -> bool:
+        k = self.keys.get(key_id)
+        return k is not None and k.compromised_from is not None and sequence >= k.compromised_from
 
 
 @dataclass(frozen=True)
@@ -454,6 +461,12 @@ class AuthorityLedger:
                      and (context_digest is None or a.attestation.context_digest == context_digest)
                      and (record_digest is None or a.record_digest == record_digest))
 
+    def compromised_at(self, issuer_id: str, key_id: str, sequence: int) -> bool:
+        """True when the root declared ``key_id`` compromised from a sequence at or before ``sequence`` (``revoke`` /
+        ``rotate_key`` with ``compromised_from``): what it signed in that window stays in the chain but is not evidence."""
+        iss = self._issuers.get(issuer_id)
+        return iss is not None and iss.key_compromised_at(key_id, sequence)
+
     def role_at(self, issuer_id: str, role: Role, sequence: int) -> bool:
         iss = self._issuers.get(issuer_id)
         return iss is not None and (iss.revoked_at is None or sequence < iss.revoked_at) and Role(role) in iss.roles_at(sequence)
@@ -468,13 +481,24 @@ class AuthorityLedger:
     def set_roles(self, root: Signer, issuer_id: str, roles: Iterable[Role]) -> LedgerEvent:
         return self._admin(root, "set_roles", {"issuer_id": issuer_id, "roles": sorted(Role(r).value for r in roles)})
 
-    def rotate_key(self, root: Signer, issuer_id: str, possession: Mapping[str, str]) -> LedgerEvent:
-        return self._admin(root, "rotate", {"issuer_id": issuer_id, "possession": dict(possession)})
+    def rotate_key(self, root: Signer, issuer_id: str, possession: Mapping[str, str], *,
+                   compromised_from: int | None = None) -> LedgerEvent:
+        """``compromised_from``: the retired key was compromised from that ledger sequence on; consumers refuse what it
+        signed from there (the events stay in the chain).  Without it, a rotation retires the key from now on only."""
+        body: dict[str, Any] = {"issuer_id": issuer_id, "possession": dict(possession)}
+        if compromised_from is not None:
+            body["compromised_from"] = compromised_from
+        return self._admin(root, "rotate", body)
 
-    def revoke(self, root: Signer, issuer_id: str, reason: str) -> LedgerEvent:
+    def revoke(self, root: Signer, issuer_id: str, reason: str, *, compromised_from: int | None = None) -> LedgerEvent:
+        """``compromised_from``: as for :meth:`rotate_key`.  Without it, what the issuer attested BEFORE the revocation
+        stays admitted -- a revocation alone is not a statement that earlier records were forged."""
         if not str(reason).strip():
             raise AuthorityRefused("a revocation states its reason")
-        return self._admin(root, "revoke", {"issuer_id": issuer_id, "reason": str(reason)})
+        body: dict[str, Any] = {"issuer_id": issuer_id, "reason": str(reason)}
+        if compromised_from is not None:
+            body["compromised_from"] = compromised_from
+        return self._admin(root, "revoke", body)
 
     def attest(self, signer: Signer, issuer_id: str, attestation: Attestation) -> AttestationRecord:
         iss = self._issuers.get(issuer_id)
@@ -606,20 +630,33 @@ class AuthorityLedger:
                 raise AuthorityRefused("malformed set_roles")
             iss.roles.append((frozenset(Role(r) for r in b["roles"]), seq))
         elif ev.kind == "rotate":
-            if set(b) != {"issuer_id", "possession"}:
+            if set(b) - {"compromised_from"} != {"issuer_id", "possession"}:
                 raise AuthorityRefused("malformed rotate")
             pub, key_class = self._possessed(b["possession"], issuer_id, seq)
             kid = key_id_of(pub)
             if any(kid in i.keys for i in self._issuers.values()) or kid == self.root_key_id:
                 raise AuthorityRefused("a rotated-in key must be new")
+            self._compromise(iss, b, seq)
             iss.keys[iss.active_key].retired_at = seq
             iss.keys[kid] = _Key(pub, key_class, seq)
             iss.active_key = kid
         elif ev.kind == "revoke":
-            if set(b) != {"issuer_id", "reason"}:
+            if set(b) - {"compromised_from"} != {"issuer_id", "reason"}:
                 raise AuthorityRefused("malformed revoke")
+            self._compromise(iss, b, seq)
             iss.revoked_at = seq
             iss.keys[iss.active_key].retired_at = seq
+
+    @staticmethod
+    def _compromise(iss: _Issuer, body: Mapping[str, Any], seq: int) -> None:
+        if "compromised_from" not in body:
+            return
+        start = body["compromised_from"]
+        key = iss.keys[iss.active_key]
+        if isinstance(start, bool) or not isinstance(start, int) or not key.active_from <= start <= seq:
+            raise AuthorityRefused(f"event {seq}: compromised_from is a sequence inside the key's active life "
+                                   f"[{key.active_from}, {seq}]")
+        key.compromised_from = start
 
     def _apply_attest(self, ev: LedgerEvent, seq: int) -> None:
         b = ev.body
