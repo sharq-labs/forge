@@ -1,7 +1,8 @@
-"""Big Rock 1 -- issuer-bound scientific authority: hostile tests.
+"""Big Rock 1 -- issuer-bound scientific authority: hostile tests (incl. the checkpoint-A review).
 
-Every attack must end in REFUSE / UNKNOWN / INVALID, never in silent admission.  The ledger and keys here are TEST
-profile / TEST class (``EphemeralKeyProvider``); the production-profile checks are their own tests.
+Every attack must end in REFUSE / UNKNOWN / INVALID, never in silent admission.  The ledgers and keys here are TEST
+profile / TEST class (``EphemeralKeyProvider``) and are admitted only in explicit test mode; the production-profile
+checks are their own tests.
 """
 
 from __future__ import annotations
@@ -14,14 +15,16 @@ import pytest
 
 from engcore.authority import (
     Attestation, AuthorityLedger, AuthorityRefused, DirectoryKeyProvider, EphemeralKeyProvider, FileLedgerStore, MemoryLedgerStore,
-    Role, TrustAnchor, generate_key_files, verify_evidence,
+    Role, Signer, TrustAnchor, generate_key_files, verify_evidence,
 )
 from engcore.claims.attestation import attest_receipt, attest_record
 from engcore.claims.credibility_vector import (
-    UNKNOWN, ClaimNode, DecisionRequirement, Factor, FactorClaim, RiskClass, assess_credibility, record_digest,
+    UNKNOWN, ClaimNode, CredibilityRefused, DecisionRequirement, Factor, FactorClaim, RiskClass, assess_credibility, record_digest,
 )
 from engcore.credibility.evidence_graph import EvidenceAuthority as A, EvidenceEdge, EvidenceGraph, EvidenceNode, EvidenceRelation as R
 from engcore.scientific.results.validation import ValidationCheck, ValidationLevel as VL, ValidationOutcome
+from engcore.sria.assurance.uncertainty_budget import ChannelEntry, ChannelState
+from engcore.sria.uncertainty import UncertaintyChannel as UC
 from engcore.system_runtime.records import ApplicabilityReport
 from tests.authority_helpers import World, receipt_for
 
@@ -36,36 +39,60 @@ def _h(s):
 RESULT = _h("result")
 CONV = ValidationCheck("conv", ValidationOutcome.PASS, establishes=VL.NUMERICALLY_CONVERGED, residual=0.001, tolerance=0.01,
                        evidence=("richardson:3-level",))
+FAILED = ValidationCheck("conv-fine", ValidationOutcome.FAIL, establishes=VL.NUMERICALLY_CONVERGED, residual=0.5, tolerance=0.01,
+                         evidence=("richardson:3-level",))
 WITHIN = ApplicabilityReport("domain.check", "within", RESULT, "inside the declared envelope")
 
 
-def graph(*records, subject_digest=RESULT):
-    nodes = [EvidenceNode("result", A.SIMULATION, subject_digest, "src:result", applicability=CTX)]
+def graph(*records, subject_digest=RESULT, subject_id="result", ctx=CTX):
+    nodes = [EvidenceNode(subject_id, A.SIMULATION, subject_digest, "src:result", applicability=ctx)]
     for i, r in enumerate(records):
         nodes.append(EvidenceNode(f"n{i}", A.SIMULATION if isinstance(r, ValidationCheck) else A.ANALYTICAL, record_digest(r), f"src:n{i}",
-                                  applicability=CTX))
-    return EvidenceGraph(tuple(nodes), tuple(EvidenceEdge(f"n{i}", "result", R.SUPPORTS) for i in range(len(records))))
+                                  applicability=ctx))
+    return EvidenceGraph(tuple(nodes), tuple(EvidenceEdge(f"n{i}", subject_id, R.SUPPORTS) for i in range(len(records))))
 
 
 LOW = [FactorClaim(Factor.VERIFICATION, 1, ("n0",), VL.NUMERICALLY_CONVERGED.value)]
 
 
-def verification_level(ledger, g=None, ctx=CTX):
+def assess(w, g=None, ctx=CTX, claims=LOW, subject_id="result", **kw):
     g = g or graph(CONV)
-    rep = assess_credibility(ClaimNode("c", tuple(LOW), subject_id="result"), g, DecisionRequirement("d", ctx, RiskClass.LOW),
-                             validation_checks=(CONV,), authority=ledger)
+    kw = {**w.assess_kwargs(), **kw} if isinstance(w, World) else kw
+    return assess_credibility(ClaimNode("c", tuple(claims), subject_id=subject_id), g, DecisionRequirement("d", ctx, RiskClass.LOW),
+                              validation_checks=(CONV,), **kw)
+
+
+def verification_level(w, **kw):
+    rep = assess(w, **kw)
     return rep.vector.level(Factor.VERIFICATION), rep
 
 
 def test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else():
     w = World()
-    assert verification_level(w.ledger)[0] == UNKNOWN                       # caller-supplied, unattested: backs nothing
+    assert verification_level(w)[0] == UNKNOWN                              # caller-supplied, unattested: backs nothing
     w.attest(CONV, RESULT, CTX)
-    level, rep = verification_level(w.ledger)
-    assert level == 1 and rep.issuer_bound and rep.authority_anchor["head"] == w.ledger.head
-    unattested = assess_credibility(ClaimNode("c", tuple(LOW), subject_id="result"), graph(CONV), DecisionRequirement("d", CTX, RiskClass.LOW),
-                                    validation_checks=(CONV,))
+    level, rep = verification_level(w)
+    assert level == 1 and rep.issuer_bound and rep.test_mode and rep.authority_anchor["head"] == w.ledger.head
+    unattested = assess(None)
     assert not unattested.requirement_met and not unattested.issuer_bound and any("UNATTESTED" in n for n in unattested.notes)
+
+
+def test_a_caller_minted_unanchored_or_foreign_ledger_never_meets_a_requirement():                 # checkpoint A B1
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    with pytest.raises(CredibilityRefused, match="pinned TrustAnchor"):
+        assess(None, authority=w.opened()[0])
+    with pytest.raises(CredibilityRefused, match="not opened against an anchor"):
+        assess(None, authority=w.ledger, trust_anchor=w.ledger.anchor(), allow_test_profile=True)   # created, never opened
+    attacker = World(ledger_id="test-ledger")                               # same id, the attacker's own root and issuers
+    attacker.attest(CONV, RESULT, CTX)
+    led, _ = attacker.opened()
+    with pytest.raises(CredibilityRefused, match="not the consumer's anchored ledger"):
+        assess(None, authority=led, trust_anchor=w.ledger.anchor(), allow_test_profile=True)
+    led, anchor = w.opened()
+    rep = assess(None, authority=led, trust_anchor=anchor)                  # a TEST ledger without explicit test mode
+    assert rep.vector.level(Factor.VERIFICATION) == 1 and not rep.issuer_bound and not rep.requirement_met
+    assert any("TEST-PROFILE" in n for n in rep.notes) and rep.inputs_digest != assess(w).inputs_digest
 
 
 def test_forged_and_unknown_issuers_never_reach_the_ledger():
@@ -82,39 +109,123 @@ def test_forged_and_unknown_issuers_never_reach_the_ledger():
                            context_digest=CTX, roles=[Role.NUMERICAL_VERIFICATION])[0] is None
 
 
+def test_a_key_is_registered_only_by_its_holder_in_its_providers_class(tmp_path):                 # checkpoint A H1
+    with pytest.raises(AuthorityRefused, match="minted by a key provider"):
+        Signer("root", "production", "00" * 32, object())
+    w = World()
+    t = EphemeralKeyProvider().signer("t")
+    forged = dict(t.possession(w.ledger_id, "t"), key_class="production")         # relabel a test key
+    with pytest.raises(AuthorityRefused, match="proof of possession does not verify"):
+        w.ledger.register_issuer(w.root, "t", forged, roles=[Role.VALIDATION])
+    other_holder = EphemeralKeyProvider().signer("o").possession(w.ledger_id, "t")
+    with pytest.raises(AuthorityRefused, match="proof of possession"):             # a possession made for another identity
+        w.ledger.register_issuer(w.root, "t2", other_holder, roles=[Role.VALIDATION])
+    keydir = tmp_path / "keys"
+    for name in ("root", "exec"):
+        generate_key_files(keydir, name)
+    prov = DirectoryKeyProvider(keydir)
+    prod = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prod", profile="production", root=prov.signer("root"))
+    with pytest.raises(AuthorityRefused, match="refuses test key material"):
+        prod.register_issuer(prov.signer("root"), "t", t.possession("prod", "t"), roles=[Role.EXECUTOR])
+    prod.register_issuer(prov.signer("root"), "exec", prov.signer("exec").possession("prod", "exec"), roles=[Role.EXECUTOR])
+    with pytest.raises(AuthorityRefused, match="production ledger's root"):
+        AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prod2", profile="production", root=EphemeralKeyProvider().signer("r"))
+
+
 def test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused():
     w = World()
     with pytest.raises(AuthorityRefused, match="not authorized for role"):          # the VALIDATION issuer has no verification role
         attest_record(w.ledger, w.signer("val"), "val", CONV, receipt=w.receipt(RESULT, CTX), subject_output="y", context_digest=CTX,
                       role=Role.NUMERICAL_VERIFICATION)
-    # an issuer attests the check as VALIDATION: the ledger admits it (it holds that role) -- but it cannot back VERIFICATION
     attest_record(w.ledger, w.signer("val"), "val", CONV, receipt=w.receipt(RESULT, CTX), subject_output="y", context_digest=CTX,
-                  role=Role.VALIDATION)
-    assert verification_level(w.ledger)[0] == UNKNOWN
+                  role=Role.VALIDATION)                                            # admitted as VALIDATION -- cannot back VERIFICATION
+    assert verification_level(w)[0] == UNKNOWN
     w2 = World()
     w2.attest(CONV, _h("another result"), CTX)                                     # about another result
-    assert verification_level(w2.ledger)[0] == UNKNOWN
+    assert verification_level(w2)[0] == UNKNOWN
     w3 = World()
     w3.attest(CONV, RESULT, OTHER)                                                 # in another context
-    assert verification_level(w3.ledger)[0] == UNKNOWN
-    with pytest.raises(AuthorityRefused, match="no output"):                     # the receipt does not contain the output
+    assert verification_level(w3)[0] == UNKNOWN
+    with pytest.raises(AuthorityRefused, match="no output"):
         attest_record(w.ledger, w.signer("ver"), "ver", CONV, receipt=w.receipt(RESULT, CTX), subject_output="T", context_digest=CTX,
                       role=Role.NUMERICAL_VERIFICATION)
 
 
-def test_a_receipt_not_attested_by_an_executor_backs_nothing():
+def test_self_issued_support_is_refused_from_any_executor_of_the_receipt():                        # incl. checkpoint A L1
     w = World()
     w.ledger.set_roles(w.root, "ver", [Role.NUMERICAL_VERIFICATION, Role.EXECUTOR])
     receipt = attest_receipt(w.ledger, w.signer("ver"), "ver", receipt_for(RESULT), context_digest=CTX)
     attest_record(w.ledger, w.signer("ver"), "ver", CONV, receipt=receipt, subject_output="y", context_digest=CTX,
                   role=Role.NUMERICAL_VERIFICATION)
-    level, rep = verification_level(w.ledger)                                      # self-issued: it executed the result
+    level, rep = verification_level(w)
     assert level == UNKNOWN and any("self-issued" in n for n in rep.notes)
-    w2 = World()                                                                    # an EXECUTOR that loses the role later: history stands
+    w2 = World()                                                                    # 'exec' attests first; 'ver' re-attests as executor later
     r2 = w2.receipt(RESULT, CTX)
-    w2.ledger.set_roles(w2.root, "exec", [])
+    w2.ledger.set_roles(w2.root, "ver", [Role.NUMERICAL_VERIFICATION, Role.EXECUTOR])
+    attest_receipt(w2.ledger, w2.signer("ver"), "ver", receipt_for(RESULT), context_digest=OTHER)
     attest_record(w2.ledger, w2.signer("ver"), "ver", CONV, receipt=r2, subject_output="y", context_digest=CTX, role=Role.NUMERICAL_VERIFICATION)
-    assert verification_level(w2.ledger)[0] == 1
+    assert verification_level(w2)[0] == UNKNOWN
+    w3 = World()                                                                    # an EXECUTOR that loses the role later: history stands
+    r3 = w3.receipt(RESULT, CTX)
+    w3.ledger.set_roles(w3.root, "exec", [])
+    attest_record(w3.ledger, w3.signer("ver"), "ver", CONV, receipt=r3, subject_output="y", context_digest=CTX, role=Role.NUMERICAL_VERIFICATION)
+    assert verification_level(w3)[0] == 1
+
+
+def test_negative_records_cap_and_defeat_even_from_the_results_own_executor():                    # checkpoint A M1, L8
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    w.attest(FAILED, RESULT, CTX)                                                   # one failing check beside the passing one
+    level, rep = verification_level(w)
+    assert level == UNKNOWN and any("capped at UNKNOWN by attested fail check" in n for n in rep.notes)
+    w2 = World()
+    entry_known = ChannelEntry(UC.MODEL_FORM, ChannelState.KNOWN, __import__("engcore.scientific.results.uncertainty", fromlist=["x"]).Uncertainty(
+        kind="standard", standard_uncertainty=__import__("engcore.scientific.units.quantity", fromlist=["x"]).Quantity(0.01, "volt"),
+        method="m", source_kind="model_form"), source="t")
+    entry_unknown = ChannelEntry(UC.MODEL_FORM, ChannelState.UNKNOWN)
+    w2.attest(entry_known, RESULT, CTX)
+    w2.attest(entry_unknown, RESULT, CTX)
+    g = EvidenceGraph((EvidenceNode("result", A.SIMULATION, RESULT, "s", applicability=CTX),
+                       EvidenceNode("mf", A.EXPERIMENT, record_digest(entry_known), "s:mf", applicability=CTX)),
+                      (EvidenceEdge("mf", "result", R.SUPPORTS),))
+    rep = assess(w2, g=g, claims=[FactorClaim(Factor.MODEL_FORM_UQ, 1, ("mf",), "model_form")])
+    assert rep.vector.level(Factor.MODEL_FORM_UQ) == UNKNOWN and any("UNKNOWN model_form entry" in n for n in rep.notes)
+    w3 = World()
+    w3.attest(CONV, RESULT, CTX)
+    w3.ledger.set_roles(w3.root, "exec", [Role.EXECUTOR, Role.APPLICABILITY])
+    outside = ApplicabilityReport("own.check", "outside", RESULT, "the executor's own range check")
+    attest_record(w3.ledger, w3.signer("exec"), "exec", outside, receipt=w3.receipt(RESULT, CTX), subject_output="y", context_digest=CTX,
+                  role=Role.APPLICABILITY)
+    rep = assess(w3)
+    assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+
+
+def test_an_attested_falsification_follows_the_result_not_the_node_name():                        # checkpoint A H2
+    from engcore.claims.redteam import (AttackDimension, AttackKind, AttackPlan, AttackSpace, ClaimSubject, Route, RouteResult, Sense,
+                                         run_red_team)
+    x = AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1")
+    space = AttackSpace("result", (x,))
+    broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
+    falsified = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
+    w = World()
+    w.attest(CONV, RESULT, CTX)
+    w.attest(falsified, RESULT, CTX)
+    rep = assess(w, g=graph(CONV, subject_id="result#renamed"), subject_id="result#renamed")
+    assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
+
+
+def test_attested_records_cannot_be_edited_in_memory():                                            # checkpoint A M2
+    w = World()
+    rec = w.receipt(RESULT, CTX)
+    with pytest.raises((TypeError, AttributeError)):
+        rec.attestation.record["output_digests"].append(["z", OTHER])
+    with pytest.raises(TypeError):
+        rec.attestation.record["status"] = "failed"
+    copy = rec.attestation.record_dict()
+    copy["output_digests"].append(["z", OTHER])                                     # a copy: changes nothing attested
+    with pytest.raises(AuthorityRefused, match="no output"):
+        attest_record(w.ledger, w.signer("ver"), "ver", CONV, receipt=rec, subject_output="z", context_digest=CTX,
+                      role=Role.NUMERICAL_VERIFICATION)
 
 
 def test_revocation_rotation_and_history():
@@ -125,35 +236,41 @@ def test_revocation_rotation_and_history():
                             evidence=("richardson:3-level",))
     with pytest.raises(AuthorityRefused, match="revoked"):
         w.attest(later, RESULT, CTX)
-    assert verification_level(w.ledger)[0] == 1                                    # issued BEFORE revocation: still verifiable
+    assert verification_level(w)[0] == 1                                            # issued BEFORE revocation: still verifiable
     assert w.ledger.attestations(record_digest=first.record_digest)[0].sequence < len(w.ledger.events())
     with pytest.raises(AuthorityRefused, match="revocation is final"):
         w.ledger.set_roles(w.root, "ver", [Role.NUMERICAL_VERIFICATION])
     w2 = World()
     old_signer = w2.signer("ver")
     new_signer = w2.keys.new_signer("ver")
-    w2.ledger.rotate_key(w2.root, "ver", new_signer.public_hex, key_class="test")
+    w2.ledger.rotate_key(w2.root, "ver", new_signer.possession(w2.ledger_id, "ver"))
     receipt = w2.receipt(RESULT, CTX)
-    with pytest.raises(AuthorityRefused, match="active key"):                      # the retired key signs nothing new
+    with pytest.raises(AuthorityRefused, match="active key"):                       # the retired key signs nothing new
         attest_record(w2.ledger, old_signer, "ver", CONV, receipt=receipt, subject_output="y", context_digest=CTX,
                       role=Role.NUMERICAL_VERIFICATION)
     attest_record(w2.ledger, new_signer, "ver", CONV, receipt=receipt, subject_output="y", context_digest=CTX, role=Role.NUMERICAL_VERIFICATION)
-    assert verification_level(w2.ledger)[0] == 1
+    assert verification_level(w2)[0] == 1
 
 
-def test_persistence_restart_and_tamper_detection(tmp_path):
+def _file_ledger(tmp_path):
     keys = EphemeralKeyProvider()
     root = keys.signer("root")
     path = tmp_path / "authority.jsonl"
     led = AuthorityLedger.create(FileLedgerStore(path), ledger_id="campaign", profile="test", root=root)
     for issuer, roles in (("exec", [Role.EXECUTOR]), ("ver", [Role.NUMERICAL_VERIFICATION])):
-        led.register_issuer(root, issuer, keys.signer(issuer).public_hex, key_class="test", roles=roles)
+        led.register_issuer(root, issuer, keys.signer(issuer).possession("campaign", issuer), roles=roles)
     receipt = attest_receipt(led, keys.signer("exec"), "exec", receipt_for(RESULT), context_digest=CTX)
     attest_record(led, keys.signer("ver"), "ver", CONV, receipt=receipt, subject_output="y", context_digest=CTX, role=Role.NUMERICAL_VERIFICATION)
+    return keys, path, led
+
+
+def test_persistence_restart_and_tamper_detection(tmp_path):
+    keys, path, led = _file_ledger(tmp_path)
     anchor = led.anchor()
     saved = json.dumps(anchor.to_dict())                                           # what the consumer keeps
-    reopened = AuthorityLedger.open(FileLedgerStore(path), anchor=TrustAnchor.from_dict(json.loads(saved)))
-    assert verification_level(reopened)[0] == 1 and reopened.head == led.head
+    pinned = TrustAnchor.from_dict(json.loads(saved))
+    reopened = AuthorityLedger.open(FileLedgerStore(path), anchor=pinned)
+    assert verification_level(None, authority=reopened, trust_anchor=pinned, allow_test_profile=True)[0] == 1 and reopened.head == led.head
     lines = path.read_text().splitlines()
 
     def opened(new_lines, anchor=anchor):
@@ -165,20 +282,44 @@ def test_persistence_restart_and_tamper_detection(tmp_path):
     with pytest.raises(AuthorityRefused, match="sequence"):
         opened([lines[0], lines[2], lines[1]] + lines[3:])                          # reorder
     ev = json.loads(lines[1])
-    ev["body"]["public"] = EphemeralKeyProvider().signer("x").public_hex           # key substitution in the registry
+    ev["body"]["possession"]["public"] = EphemeralKeyProvider().signer("x").public_hex       # key substitution in the registry
     with pytest.raises(AuthorityRefused, match="root key"):
         opened([lines[0], json.dumps(ev)] + lines[2:])
     att = json.loads(lines[-1])
     att["body"]["attestation"]["subject_digest"] = _h("mutated")                   # rewrite what was attested
     with pytest.raises(AuthorityRefused):
         opened(lines[:-1] + [json.dumps(att)])
-    # another ledger under the same id (a different root), restored in place of the real one
+    up = json.loads(lines[-1])
+    up["signature"] = up["signature"].upper()                                      # a non-canonical spelling of a valid signature
+    with pytest.raises(AuthorityRefused):
+        opened(lines[:-1] + [json.dumps(up)])
+    with pytest.raises(AuthorityRefused, match="body is a mapping|valid ledger event"):
+        opened(lines[:1] + ['{"schema": "engcore.authority.ledger_event/1", "ledger_id": "campaign", "sequence": 1, "previous": "x", '
+                            '"kind": "register", "body": [], "key_id": "", "signature": ""}'])
     other = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="campaign", profile="test", root=EphemeralKeyProvider().signer("root"))
     with pytest.raises(AuthorityRefused, match="another ledger"):
         AuthorityLedger.open(other._store, anchor=TrustAnchor(anchor.ledger_id, "test", anchor.root_key_id, 0, other.head))
-    # a stale anchor still opens a longer ledger (append-only growth is fine) but an older ledger never satisfies a newer anchor
-    old_anchor = TrustAnchor(anchor.ledger_id, "test", anchor.root_key_id, 1, AuthorityLedger.open(FileLedgerStore(path), anchor=anchor).events()[1].digest)
-    assert AuthorityLedger.open(FileLedgerStore(path), anchor=old_anchor).length == len(lines)
+
+
+def test_a_second_writer_or_a_failed_append_never_forks_the_ledger(tmp_path):                     # checkpoint A M3
+    keys, path, led = _file_ledger(tmp_path)
+    a = AuthorityLedger.open(FileLedgerStore(path), anchor=led.anchor())
+    b = AuthorityLedger.open(FileLedgerStore(path), anchor=led.anchor())
+    a.set_roles(keys.signer("root"), "ver", [Role.NUMERICAL_VERIFICATION])
+    with pytest.raises(AuthorityRefused, match="another writer"):
+        b.set_roles(keys.signer("root"), "ver", [Role.NUMERICAL_VERIFICATION, Role.VALIDATION])
+    assert AuthorityLedger.open(FileLedgerStore(path), anchor=a.anchor()).length == a.length
+
+    class Failing(MemoryLedgerStore):
+        def append(self, line, *, expected_lines):
+            super().append(line, expected_lines=expected_lines)
+            raise OSError("fsync failed after the write")
+    w = World()
+    w.ledger._store = Failing(w.store.lines)
+    with pytest.raises(OSError):
+        w.ledger.set_roles(w.root, "ver", [])
+    with pytest.raises(AuthorityRefused, match="unusable after a failed append"):
+        w.ledger.set_roles(w.root, "ver", [])
 
 
 def test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies():
@@ -188,46 +329,34 @@ def test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies(
     outside = ApplicabilityReport("domain.check2", "outside", RESULT, "temperature above the fitted range")
     w.attest(outside, RESULT, CTX)
     claims = LOW + [FactorClaim(Factor.APPLICABILITY, 1, ("n1",), "applicability")]
-    rep = assess_credibility(ClaimNode("c", tuple(claims), subject_id="result"), graph(CONV, WITHIN), DecisionRequirement("d", CTX, RiskClass.LOW),
-                             validation_checks=(CONV,), applicability_reports=(WITHIN,), authority=w.ledger)   # 'outside' NOT supplied
+    rep = assess(w, g=graph(CONV, WITHIN), claims=claims, applicability_reports=(WITHIN,))      # 'outside' NOT supplied
     assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
 
 
 def test_a_copied_record_or_a_mutated_result_backs_nothing():
     w = World()
     w.attest(CONV, RESULT, CTX)
-    assert verification_level(w.ledger, g=graph(CONV, subject_digest=_h("result, mutated after issuance")))[0] == UNKNOWN
-    assert verification_level(w.ledger, ctx=OTHER, g=EvidenceGraph(
-        tuple(EvidenceNode(n.evidence_id, n.authority, n.content_digest, n.source, applicability=OTHER) for n in graph(CONV).nodes),
-        graph(CONV).edges))[0] == UNKNOWN
+    assert verification_level(w, g=graph(CONV, subject_digest=_h("result, mutated after issuance")))[0] == UNKNOWN
+    assert verification_level(w, ctx=OTHER, g=graph(CONV, ctx=OTHER))[0] == UNKNOWN
 
 
-def test_profiles_and_key_material_placement(tmp_path):
-    test_root = EphemeralKeyProvider().signer("root")
-    with pytest.raises(AuthorityRefused, match="production ledger's root"):
-        AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prod", profile="production", root=test_root)
+def test_key_material_placement(tmp_path):
     keydir = tmp_path / "keys"
-    generate_key_files(keydir, "root")
     generate_key_files(keydir, "exec")
     prov = DirectoryKeyProvider(keydir)
-    prod = AuthorityLedger.create(MemoryLedgerStore(), ledger_id="prod", profile="production", root=prov.signer("root"))
-    with pytest.raises(AuthorityRefused, match="refuses test key material"):
-        prod.register_issuer(prov.signer("root"), "t", EphemeralKeyProvider().signer("t").public_hex, key_class="test", roles=[Role.EXECUTOR])
-    prod.register_issuer(prov.signer("root"), "exec", prov.signer("exec").public_hex, key_class="production", roles=[Role.EXECUTOR])
-    with pytest.raises(AuthorityRefused, match="production is required"):
-        AuthorityLedger.open(World().store, anchor=World().ledger.anchor(), require_profile="production")
     with pytest.raises(AuthorityRefused, match="exists"):
-        generate_key_files(keydir, "root")                                           # never overwritten
+        generate_key_files(keydir, "exec")                                           # never overwritten
     os.chmod(keydir / "exec.ed25519.pem", 0o644)
     with pytest.raises(AuthorityRefused, match="group/others"):
         prov.signer("exec")
+    os.chmod(keydir / "exec.ed25519.pem", 0o600)
+    os.symlink(keydir / "exec.ed25519.pem", keydir / "alias.ed25519.pem")
+    with pytest.raises(AuthorityRefused, match="symbolic link"):
+        prov.signer("alias")
     repo_dir = os.path.join(os.path.dirname(__file__), "..", "..", "keys-must-not-live-here")
-    os.makedirs(repo_dir, mode=0o700, exist_ok=True)
-    try:
-        with pytest.raises(AuthorityRefused, match="inside the repository"):
-            DirectoryKeyProvider(repo_dir)
-    finally:
-        os.rmdir(repo_dir)
+    with pytest.raises(AuthorityRefused, match="inside the repository"):
+        generate_key_files(repo_dir, "x")                                            # refused BEFORE anything is created
+    assert not os.path.exists(repo_dir)
 
 
 def test_the_authority_layer_imports_nothing_else_from_engcore():

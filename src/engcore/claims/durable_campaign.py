@@ -28,7 +28,9 @@ import hashlib
 import json
 from typing import Any, Mapping
 
-from ..authority import Attestation, AuthorityLedger, KeyProvider, Role
+import weakref
+
+from ..authority import Attestation, AuthorityLedger, KeyProvider, Role, TrustAnchor
 from ..sria.decision import Hypothesis
 from . import multiplicity as _mult
 from .falsification import EvidenceItem, ExposureAuthority, Falsifier, FalsifierVerdict, HypothesisTicket, apply_verdicts, judge
@@ -37,6 +39,8 @@ from .novelty import PriorArtEntry, PriorArtSnapshot
 OP_KIND = "campaign_op"
 OP_SCHEMA = "engcore.claims.durable_campaign_op/1"
 _MULT_OPS = ("count", "tested", "evaluated", "compute", "seed", "strategy")
+#: live campaigns in this process, by namespaced identity: a second live object for one campaign is refused
+_LIVE: "weakref.WeakValueDictionary[str, DurableCampaign]" = weakref.WeakValueDictionary()
 
 
 class CampaignRefused(ValueError):
@@ -77,28 +81,37 @@ class DurableCampaign:
     """See the module docstring.  Use :meth:`start` or :meth:`resume`."""
 
     def __init__(self, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str, config: Mapping[str, Any],
-                 _token: object = None) -> None:
+                 _token: object = None, _replay_ok: bool = False) -> None:
         if _token is not _CONSTRUCT:
             raise CampaignRefused("a durable campaign is started (DurableCampaign.start) or resumed from its journal")
         if not isinstance(ledger, AuthorityLedger):
             raise CampaignRefused("a durable campaign journals into an opened AuthorityLedger")
         self._ledger, self._keys, self._issuer, self._campaign = ledger, keys, issuer_id, campaign_id
         self._config = dict(config)
+        #: the campaign's identity is NAMESPACED by the ledger it is journaled in (id + root key): the same campaign id in
+        #: another ledger is another, declared search -- never a continuation of this one
+        self._identity = f"{campaign_id}@{ledger.ledger_id}/{ledger.root_key_id[:16]}"
+        if self._identity in _LIVE:
+            raise CampaignRefused(f"campaign {self._identity!r} is already live in this process; close it before resuming")
         scales = {(o, u): v for o, u, v in config["resolution_scales"]}
         self._authority = ExposureAuthority(config["authority_id"], key=keys.secret(issuer_id), resolution_scales=scales,
                                             derived_tickets=True)
         self._registry = self._authority.registry(campaign_id)
         self._novelty = self._authority.novelty_ledger(campaign_id)
-        self._mult = _mult.MultiplicityLedger(campaign_id, _replay=_mult._REPLAY)
+        self._mult = _mult.MultiplicityLedger(self._identity, _replay=_mult._REPLAY if _replay_ok else None)
+        _LIVE[self._identity] = self
         self._ops = 0
         self._last_heads: dict[str, Any] = {}
         self._poisoned = ""
+        self.foreign_entries: tuple[int, ...] = ()
+        self._anchor = ledger.anchor()
 
     # -- construction
     @classmethod
     def start(cls, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str, authority_id: str,
               context_digest: str, resolution_scales: Mapping[tuple[str, str], float] | None = None) -> "DurableCampaign":
-        if ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id)):
+        if any(r.attestation.role is Role.EXPOSURE and r.attestation.record.get("op") == "start"
+               for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))):
             raise CampaignRefused(f"campaign {campaign_id!r} already has a journal in this ledger; resume it")
         config = {"authority_id": authority_id, "context_digest": context_digest,
                   "resolution_scales": sorted([o, u, float(v)] for (o, u), v in dict(resolution_scales or {}).items())}
@@ -107,26 +120,37 @@ class DurableCampaign:
         return c
 
     @classmethod
-    def resume(cls, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str) -> "DurableCampaign":
-        journal = [r for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))]
-        if not journal:
-            raise CampaignRefused(f"no journal for campaign {campaign_id!r}")
+    def resume(cls, ledger: AuthorityLedger, keys: KeyProvider, *, issuer_id: str, campaign_id: str,
+               expected_anchor: TrustAnchor) -> "DurableCampaign":
+        """Rebuild from the journal.  ``expected_anchor`` is the anchor the OPERATOR stored after the last operation
+        (:attr:`anchor`): the ledger must extend it, so an operation journaled before it cannot be dropped."""
+        if not isinstance(expected_anchor, TrustAnchor) or not ledger.extends(expected_anchor):
+            raise CampaignRefused("the ledger does not extend the operator's anchor: journal entries were dropped or rewritten")
+        mine = [r for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))
+                if r.issuer_id == issuer_id and r.attestation.role is Role.EXPOSURE]
+        if not mine or mine[0].attestation.record.get("op") != "start":
+            raise CampaignRefused(f"no journal begun by {issuer_id!r} for campaign {campaign_id!r}")
+        context = mine[0].attestation.context_digest
+        journal = [r for r in mine if r.attestation.context_digest == context]
         for n, r in enumerate(journal):
             rec = r.attestation.record
-            if r.issuer_id != issuer_id or r.attestation.role is not Role.EXPOSURE or rec.get("campaign_id") != campaign_id \
-                    or rec.get("index") != n:
-                raise CampaignRefused(f"journal entry {n} is not this campaign's (issuer, role, campaign or index differs)")
-        first = journal[0].attestation.record
-        if first["op"] != "start":
-            raise CampaignRefused("a campaign journal begins with its start")
-        c = cls(ledger, keys, issuer_id=issuer_id, campaign_id=campaign_id, config=first["args"]["config"], _token=_CONSTRUCT)
+            if rec.get("campaign_id") != campaign_id or rec.get("index") != n:
+                raise CampaignRefused(f"journal entry {n} is not this campaign's (campaign or index differs)")
+        foreign = [r.sequence for r in ledger.attestations(record_kind=OP_KIND, subject_digest=campaign_subject(campaign_id))
+                   if r not in journal]
+        first = journal[0].attestation.record_dict()
+        c = cls(ledger, keys, issuer_id=issuer_id, campaign_id=campaign_id, config=first["args"]["config"],
+                _token=_CONSTRUCT, _replay_ok=True)
+        #: entries naming this campaign that its issuer did not write (another issuer, role or context): ignored, listed
+        c.foreign_entries = tuple(foreign)
         c._ops = 1
         c._check(first["heads"], 0)
         for n, r in enumerate(journal[1:], start=1):
-            rec = r.attestation.record
+            rec = r.attestation.record_dict()
             c._replay(rec["op"], rec["args"])
             c._check(rec["heads"], n)
             c._ops = n + 1
+        c._anchor = ledger.anchor()
         return c
 
     # -- read access (the wrapped authorities; mutate ONLY through this object)
@@ -157,6 +181,16 @@ class DurableCampaign:
     @property
     def journal_length(self) -> int:
         return self._ops
+
+    @property
+    def anchor(self) -> TrustAnchor:
+        """The authority-ledger anchor after the last journaled operation: what the operator stores for :meth:`resume`."""
+        return self._anchor
+
+    def close(self) -> None:
+        """Release this live object (a resume in this process needs it gone); it accepts nothing afterwards."""
+        self._poisoned = "closed"
+        _LIVE.pop(self._identity, None)
 
     def heads(self) -> dict[str, Any]:
         m = self._mult
@@ -257,6 +291,7 @@ class DurableCampaign:
             raise
         self._ops += 1
         self._last_heads = heads
+        self._anchor = self._ledger.anchor()
 
     def _check(self, recorded: Mapping[str, Any], n: int) -> None:
         now = self.heads()
@@ -285,6 +320,8 @@ class DurableCampaign:
         elif op == "record_proposal":
             self._novelty.record_proposal(Hypothesis.from_dict(args["hypothesis"]))
         elif op == "multiplicity":
+            if args["op"] not in _MULT_OPS:
+                raise CampaignRefused(f"journaled multiplicity operation {args['op']!r} is not one of {_MULT_OPS}")
             getattr(self._mult, args["op"])(*args["args"])
         elif op == "promote":
             _mult.promote(args["result_id"], args["hypothesis_id"], self._mult)

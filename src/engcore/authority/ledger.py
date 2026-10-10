@@ -34,7 +34,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 
-from .keys import AuthorityRefused, Signer, key_id_of, verify_signature
+from .keys import AuthorityRefused, Signer, key_id_of, verify_possession, verify_signature
 
 EVENT_SCHEMA = "engcore.authority.ledger_event/1"
 ATTESTATION_SCHEMA = "engcore.authority.attestation/1"
@@ -56,6 +56,20 @@ def _jsonable(o: Any) -> Any:
     if isinstance(o, Enum):
         return o.value
     return str(o)
+
+
+def _deep_freeze(o: Any) -> Any:
+    """Read-only all the way down: what was verified cannot be edited in memory afterwards."""
+    if isinstance(o, Mapping):
+        return MappingProxyType({k: _deep_freeze(v) for k, v in o.items()})
+    if isinstance(o, (list, tuple)):
+        return tuple(_deep_freeze(v) for v in o)
+    return o
+
+
+def thaw(o: Any) -> Any:
+    """A plain, mutable, JSON-native COPY of a frozen record."""
+    return json.loads(canonical(o))
 
 
 def canonical(payload: Any) -> str:
@@ -117,18 +131,23 @@ class Attestation:
         if not str(self.record_schema).strip():
             raise AuthorityRefused("an attestation names the record's schema")
         rec = json.loads(canonical(dict(self.record)))     # JSON-native copy: what the ledger stores is what is digested
-        object.__setattr__(self, "record", MappingProxyType(rec))
+        object.__setattr__(self, "record", _deep_freeze(rec))
+        object.__setattr__(self, "_digest", record_digest_of(rec))   # frozen at construction, never recomputed from live data
         _hex64(self.subject_digest, "subject digest")
         _hex64(self.context_digest, "context digest")
         _hex64(self.receipt_digest, "receipt digest", allow_empty=True)
 
     @property
     def record_digest(self) -> str:
-        return record_digest_of(self.record)
+        return self._digest  # type: ignore[attr-defined]
+
+    def record_dict(self) -> dict[str, Any]:
+        """A mutable COPY of the attested record (editing it changes nothing attested)."""
+        return thaw(self.record)
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": ATTESTATION_SCHEMA, "record_kind": self.record_kind, "record_schema": self.record_schema,
-                "record": dict(self.record), "record_digest": self.record_digest, "subject_digest": self.subject_digest,
+                "record": thaw(self.record), "record_digest": self.record_digest, "subject_digest": self.subject_digest,
                 "subject_output": self.subject_output, "receipt_digest": self.receipt_digest,
                 "context_digest": self.context_digest, "role": self.role.value}
 
@@ -159,12 +178,12 @@ class LedgerEvent:
 
     def signed_bytes(self) -> bytes:
         return _TAG + canonical({"schema": EVENT_SCHEMA, "ledger_id": self.ledger_id, "sequence": self.sequence,
-                                 "previous": self.previous, "kind": self.kind, "body": dict(self.body),
+                                 "previous": self.previous, "kind": self.kind, "body": thaw(self.body),
                                  "key_id": self.key_id}).encode()
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": EVENT_SCHEMA, "ledger_id": self.ledger_id, "sequence": self.sequence, "previous": self.previous,
-                "kind": self.kind, "body": dict(self.body), "key_id": self.key_id, "signature": self.signature}
+                "kind": self.kind, "body": thaw(self.body), "key_id": self.key_id, "signature": self.signature}
 
     @property
     def digest(self) -> str:
@@ -178,8 +197,10 @@ class LedgerEvent:
         seq = payload["sequence"]
         if isinstance(seq, bool) or not isinstance(seq, int) or seq < 0:
             raise AuthorityRefused("a ledger event has a non-negative integer sequence")
+        if not isinstance(payload["body"], Mapping):
+            raise AuthorityRefused("a ledger event body is a mapping")
         return cls(str(payload["ledger_id"]), seq, str(payload["previous"]), str(payload["kind"]),
-                   MappingProxyType(json.loads(canonical(payload["body"]))), str(payload["key_id"]), str(payload["signature"]))
+                   _deep_freeze(json.loads(canonical(payload["body"]))), str(payload["key_id"]), str(payload["signature"]))
 
 
 @dataclass(frozen=True)
@@ -223,7 +244,9 @@ class MemoryLedgerStore:
     def read(self) -> list[str]:
         return list(self.lines)
 
-    def append(self, line: str) -> None:
+    def append(self, line: str, *, expected_lines: int) -> None:
+        if len(self.lines) != expected_lines:
+            raise AuthorityRefused("another writer appended to this ledger store; reopen it")
         self.lines.append(line)
 
 
@@ -238,15 +261,27 @@ class FileLedgerStore:
             return []
         return [ln for ln in self.path.read_text(encoding="utf-8").splitlines() if ln.strip()]
 
-    def append(self, line: str) -> None:
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+        import fcntl
         if "\n" in line:
             raise AuthorityRefused("a ledger line holds one event")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
-        with os.fdopen(fd, "a", encoding="utf-8") as fh:
-            fh.write(line + "\n")
-            fh.flush()
-            os.fsync(fh.fileno())
+        fd = os.open(self.path, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o600)
+        with os.fdopen(fd, "a+", encoding="utf-8") as fh:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+            try:
+                fh.seek(0)
+                present = sum(1 for ln in fh.read().splitlines() if ln.strip())
+                if present != expected_lines:
+                    raise AuthorityRefused(f"the ledger file holds {present} events, this writer verified {expected_lines}: "
+                                           "another writer appended; reopen it")
+                fh.write(line + "\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+            finally:
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
 # ---------------------------------------------------------------------------- state
@@ -312,6 +347,8 @@ class AuthorityLedger:
         self._ledger_id = ""
         self._profile = ""
         self._root_public = ""
+        self._verified_anchor: TrustAnchor | None = None   # set only by open(): the anchor this ledger was verified against
+        self._poisoned = ""
 
     # -- construction
     @classmethod
@@ -340,9 +377,11 @@ class AuthorityLedger:
         for n, line in enumerate(lines):
             try:
                 ev = LedgerEvent.from_dict(json.loads(line))
-            except (ValueError, TypeError) as exc:
-                raise AuthorityRefused(f"ledger line {n} is not a ledger event: {exc}") from exc
-            led._apply(ev)
+                led._apply(ev)
+            except AuthorityRefused:
+                raise
+            except (ValueError, TypeError, KeyError, AttributeError) as exc:
+                raise AuthorityRefused(f"ledger line {n} is not a valid ledger event: {type(exc).__name__}: {exc}") from exc
         if (led._ledger_id, led._profile, key_id_of(led._root_public)) != (anchor.ledger_id, anchor.profile, anchor.root_key_id):
             raise AuthorityRefused("the store is another ledger (ledger id, profile or root key differs from the anchor)")
         if anchor.sequence >= len(led._events):
@@ -350,7 +389,18 @@ class AuthorityLedger:
                                    "truncated or rolled back")
         if led._events[anchor.sequence].digest != anchor.head:
             raise AuthorityRefused(f"event {anchor.sequence} is not the anchored head: the ledger was rewritten")
+        led._verified_anchor = anchor
         return led
+
+    @property
+    def verified_anchor(self) -> TrustAnchor | None:
+        """The consumer anchor this ledger was OPENED against (None for a ledger only created in this process)."""
+        return self._verified_anchor
+
+    def extends(self, anchor: TrustAnchor) -> bool:
+        """This ledger is the anchored one (id, profile, root) and contains the anchored head at its sequence."""
+        return ((self._ledger_id, self._profile, self.root_key_id) == (anchor.ledger_id, anchor.profile, anchor.root_key_id)
+                and anchor.sequence < len(self._events) and self._events[anchor.sequence].digest == anchor.head)
 
     # -- read
     @property
@@ -401,15 +451,17 @@ class AuthorityLedger:
         return iss is not None and (iss.revoked_at is None or sequence < iss.revoked_at) and Role(role) in iss.roles_at(sequence)
 
     # -- write
-    def register_issuer(self, root: Signer, issuer_id: str, public_hex: str, *, key_class: str, roles: Iterable[Role]) -> LedgerEvent:
-        return self._admin(root, "register", {"issuer_id": _ident(issuer_id, "issuer id"), "public": public_hex,
-                                              "key_class": key_class, "roles": sorted(Role(r).value for r in roles)})
+    def register_issuer(self, root: Signer, issuer_id: str, possession: Mapping[str, str], *, roles: Iterable[Role]) -> LedgerEvent:
+        """``possession`` is ``issuer_signer.possession(ledger_id, issuer_id)``: the issuer's key signs its own identity and
+        key class, so a key is registered only by whoever holds it, in the class its provider gave it."""
+        return self._admin(root, "register", {"issuer_id": _ident(issuer_id, "issuer id"), "possession": dict(possession),
+                                              "roles": sorted(Role(r).value for r in roles)})
 
     def set_roles(self, root: Signer, issuer_id: str, roles: Iterable[Role]) -> LedgerEvent:
         return self._admin(root, "set_roles", {"issuer_id": issuer_id, "roles": sorted(Role(r).value for r in roles)})
 
-    def rotate_key(self, root: Signer, issuer_id: str, public_hex: str, *, key_class: str) -> LedgerEvent:
-        return self._admin(root, "rotate", {"issuer_id": issuer_id, "public": public_hex, "key_class": key_class})
+    def rotate_key(self, root: Signer, issuer_id: str, possession: Mapping[str, str]) -> LedgerEvent:
+        return self._admin(root, "rotate", {"issuer_id": issuer_id, "possession": dict(possession)})
 
     def revoke(self, root: Signer, issuer_id: str, reason: str) -> LedgerEvent:
         if not str(reason).strip():
@@ -417,6 +469,10 @@ class AuthorityLedger:
         return self._admin(root, "revoke", {"issuer_id": issuer_id, "reason": str(reason)})
 
     def attest(self, signer: Signer, issuer_id: str, attestation: Attestation) -> AttestationRecord:
+        iss = self._issuers.get(issuer_id)
+        registered = iss.keys.get(signer.key_id) if iss is not None else None
+        if registered is not None and registered.key_class != signer.key_class:
+            raise AuthorityRefused("the signing key's class differs from the class it was registered with")
         body = {"issuer_id": issuer_id, "attestation": attestation.to_dict()}
         self._append_signed(LedgerEvent(self._ledger_id, len(self._events), self.head, "attest", body, signer.key_id), signer)
         return self._attestations[-1]
@@ -425,13 +481,22 @@ class AuthorityLedger:
         return self._append_signed(LedgerEvent(self._ledger_id, len(self._events), self.head, kind, body, root.key_id), root)
 
     def _append_signed(self, unsigned: LedgerEvent, signer: Signer) -> LedgerEvent:
-        ev = LedgerEvent(unsigned.ledger_id, unsigned.sequence, unsigned.previous, unsigned.kind, unsigned.body,
-                         unsigned.key_id, signer.sign(unsigned.signed_bytes()))
+        if self._poisoned:
+            raise AuthorityRefused(f"this ledger object is unusable after a failed append ({self._poisoned}); reopen it")
+        if unsigned.kind == "genesis" and signer.key_class not in ("test", "production"):
+            raise AuthorityRefused("unknown key class")
+        ev = LedgerEvent(unsigned.ledger_id, unsigned.sequence, unsigned.previous, unsigned.kind,
+                         _deep_freeze(json.loads(canonical(dict(unsigned.body)))), unsigned.key_id, signer.sign(unsigned.signed_bytes()))
+        expected = len(self._events)
         self._apply(ev)                                   # the SAME checks as on load, before anything is persisted
         try:
-            self._store.append(canonical(ev.to_dict()))
-        except Exception:
+            self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+        except AuthorityRefused:
+            self._unapply()                               # refused before any write: nothing happened
+            raise
+        except Exception as exc:
             self._unapply()
+            self._poisoned = f"{type(exc).__name__}: {str(exc)[:80]}"   # the write may have landed: never append again blind
             raise
         return ev
 
@@ -487,6 +552,15 @@ class AuthorityLedger:
                 raise AuthorityRefused(f"event {seq}: unknown kind {ev.kind!r}")
         self._events.append(ev)
 
+    def _possessed(self, proof: Mapping[str, Any], issuer_id: str, seq: int) -> tuple[str, str]:
+        if not isinstance(proof, Mapping) or set(proof) != {"public", "key_class", "signature"}:
+            raise AuthorityRefused(f"event {seq}: a key is registered with its proof of possession")
+        if not verify_possession(self._ledger_id, issuer_id, dict(proof)):
+            raise AuthorityRefused(f"event {seq}: the proof of possession does not verify (the key did not sign this identity "
+                                   "and class)")
+        self._check_key_class(proof["key_class"])
+        return str(proof["public"]), str(proof["key_class"])
+
     def _check_key_class(self, key_class: str) -> None:
         if key_class not in ("test", "production"):
             raise AuthorityRefused("key class is test or production")
@@ -499,17 +573,17 @@ class AuthorityLedger:
         b = ev.body
         issuer_id = str(b.get("issuer_id", ""))
         if ev.kind == "register":
-            if set(b) != {"issuer_id", "public", "key_class", "roles"}:
+            if set(b) != {"issuer_id", "possession", "roles"}:
                 raise AuthorityRefused("malformed register")
             _ident(issuer_id, "issuer id")
             if issuer_id in self._issuers:
                 raise AuthorityRefused(f"issuer {issuer_id!r} is already registered (rotate its key instead)")
-            self._check_key_class(b["key_class"])
-            kid = key_id_of(b["public"])
+            pub, key_class = self._possessed(b["possession"], issuer_id, seq)
+            kid = key_id_of(pub)
             if any(kid in i.keys for i in self._issuers.values()) or kid == self.root_key_id:
                 raise AuthorityRefused("this key already belongs to another identity")
             iss = _Issuer(issuer_id)
-            iss.keys[kid] = _Key(b["public"], b["key_class"], seq)
+            iss.keys[kid] = _Key(pub, key_class, seq)
             iss.active_key = kid
             iss.roles.append((frozenset(Role(r) for r in b["roles"]), seq))
             self._issuers[issuer_id] = iss
@@ -524,14 +598,14 @@ class AuthorityLedger:
                 raise AuthorityRefused("malformed set_roles")
             iss.roles.append((frozenset(Role(r) for r in b["roles"]), seq))
         elif ev.kind == "rotate":
-            if set(b) != {"issuer_id", "public", "key_class"}:
+            if set(b) != {"issuer_id", "possession"}:
                 raise AuthorityRefused("malformed rotate")
-            self._check_key_class(b["key_class"])
-            kid = key_id_of(b["public"])
+            pub, key_class = self._possessed(b["possession"], issuer_id, seq)
+            kid = key_id_of(pub)
             if any(kid in i.keys for i in self._issuers.values()) or kid == self.root_key_id:
                 raise AuthorityRefused("a rotated-in key must be new")
             iss.keys[iss.active_key].retired_at = seq
-            iss.keys[kid] = _Key(b["public"], b["key_class"], seq)
+            iss.keys[kid] = _Key(pub, key_class, seq)
             iss.active_key = kid
         elif ev.kind == "revoke":
             if set(b) != {"issuer_id", "reason"}:

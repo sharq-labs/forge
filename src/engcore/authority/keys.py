@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 KEY_CLASSES = ("test", "production")
+_HEXRE = __import__("re").compile(r"[0-9a-f]+")
 
 
 class AuthorityRefused(ValueError):
@@ -62,7 +63,11 @@ def key_id_of(public_hex: str) -> str:
 
 
 def verify_signature(public_hex: str, signature_hex: str, message: bytes) -> bool:
-    """True only for a valid ed25519 signature by ``public_hex`` over ``message``.  Malformed input is False."""
+    """True only for a valid ed25519 signature by ``public_hex`` over ``message``.  Malformed input is False; so is a
+    non-canonical spelling (upper-case hex), so one signature has one byte string and one event digest."""
+    if not (isinstance(public_hex, str) and _HEXRE.fullmatch(public_hex) and len(public_hex) == 64
+            and isinstance(signature_hex, str) and _HEXRE.fullmatch(signature_hex) and len(signature_hex) == 128):
+        return False
     ed = _ed25519()
     try:
         ed.Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_hex)).verify(bytes.fromhex(signature_hex), message)
@@ -71,18 +76,33 @@ def verify_signature(public_hex: str, signature_hex: str, message: bytes) -> boo
     return True
 
 
+_PROVIDED = object()          # only a key provider mints a Signer: its key class is the PROVIDER's, never a caller's label
+
+
 @dataclass(frozen=True)
 class Signer:
-    """A private signing key held by its owner.  ``public_hex`` / ``key_id`` are the verification material."""
+    """A private signing key held by its owner.  ``public_hex`` / ``key_id`` are the verification material.
+
+    Minted only by a key provider (:class:`EphemeralKeyProvider` -> ``test``, :class:`DirectoryKeyProvider` ->
+    ``production``); the class is the provider's, so a test key cannot be relabelled production.  Inside one process
+    that is construction, not isolation (the module token is reachable by introspection)."""
 
     name: str
     key_class: str
     public_hex: str
     _private: object = field(repr=False, compare=False)
+    _minted: object = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if self._minted is not _PROVIDED:
+            raise AuthorityRefused("a Signer is minted by a key provider, never constructed by hand")
         if self.key_class not in KEY_CLASSES:
             raise AuthorityRefused(f"key class is one of {KEY_CLASSES}")
+
+    def possession(self, ledger_id: str, issuer_id: str) -> dict[str, str]:
+        """Proof of possession for registration/rotation: this key signs (ledger, identity, its OWN key class)."""
+        msg = _possession_bytes(ledger_id, issuer_id, self.public_hex, self.key_class)
+        return {"public": self.public_hex, "key_class": self.key_class, "signature": self.sign(msg)}
 
     @property
     def key_id(self) -> str:
@@ -92,10 +112,22 @@ class Signer:
         return self._private.sign(message).hex()  # type: ignore[attr-defined]
 
 
+def _possession_bytes(ledger_id: str, issuer_id: str, public_hex: str, key_class: str) -> bytes:
+    return f"forge.authority.possession/1\n{ledger_id}\n{issuer_id}\n{public_hex}\n{key_class}".encode()
+
+
+def verify_possession(ledger_id: str, issuer_id: str, proof: dict) -> bool:
+    try:
+        return verify_signature(proof["public"], proof["signature"],
+                                _possession_bytes(ledger_id, issuer_id, proof["public"], proof["key_class"]))
+    except (KeyError, TypeError):
+        return False
+
+
 def _signer_from_private(name: str, key_class: str, private: object) -> Signer:
     serialization = _crypto()[1]
     raw = private.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)  # type: ignore[attr-defined]
-    return Signer(name, key_class, raw.hex(), private)
+    return Signer(name, key_class, raw.hex(), private, _PROVIDED)
 
 
 class KeyProvider(Protocol):
@@ -131,6 +163,17 @@ class EphemeralKeyProvider:
         return self._secrets[name]
 
 
+def _refuse_repository(d: pathlib.Path) -> None:
+    """Refuse a directory inside a source checkout: this package's own, or any git working tree above ``d``."""
+    repo = _repository_root()
+    roots = [repo] if repo is not None else []
+    roots += [p for p in (d, *d.parents) if (p / ".git").exists()]
+    for root in roots:
+        if d == root or root in d.parents:
+            raise AuthorityRefused(f"key directory {d} is inside the repository checkout {root}: private key material is never "
+                                   "kept where it can be committed")
+
+
 def _repository_root() -> pathlib.Path | None:
     """The checkout this package was imported from (the directory holding ``pyproject.toml`` above ``src/engcore``)."""
     here = pathlib.Path(__file__).resolve()
@@ -141,7 +184,12 @@ def _repository_root() -> pathlib.Path | None:
 
 
 def _check_private_path(path: pathlib.Path, what: str) -> None:
-    mode = path.stat().st_mode
+    st = path.lstat()
+    if stat.S_ISLNK(st.st_mode):
+        raise AuthorityRefused(f"{what} {path} is a symbolic link; private key material is a regular file in the key directory")
+    if st.st_uid != os.geteuid():
+        raise AuthorityRefused(f"{what} {path} is not owned by this process's user")
+    mode = st.st_mode
     if mode & (stat.S_IRWXG | stat.S_IRWXO):
         raise AuthorityRefused(f"{what} {path} is readable or writable by group/others (mode {oct(mode & 0o777)}); "
                                "private key material must be owner-only")
@@ -156,17 +204,14 @@ class DirectoryKeyProvider:
         d = pathlib.Path(directory).resolve()
         if not d.is_dir():
             raise AuthorityRefused(f"key directory {d} does not exist")
-        repo = _repository_root()
-        if repo is not None and (d == repo or repo in d.parents):
-            raise AuthorityRefused(f"key directory {d} is inside the repository checkout {repo}: private key material "
-                                   "is never kept where it can be committed")
+        _refuse_repository(d)
         _check_private_path(d, "key directory")
         self._dir = d
 
     def signer(self, name: str) -> Signer:
         serialization = _crypto()[1]
         path = self._dir / f"{name}.ed25519.pem"
-        if not path.is_file():
+        if not path.is_file() and not path.is_symlink():
             raise AuthorityRefused(f"no signing key {name!r} in {self._dir}")
         _check_private_path(path, "signing key")
         private = serialization.load_pem_private_key(path.read_bytes(), password=None)
@@ -176,7 +221,7 @@ class DirectoryKeyProvider:
 
     def secret(self, name: str) -> bytes:
         path = self._dir / f"{name}.secret"
-        if not path.is_file():
+        if not path.is_file() and not path.is_symlink():
             raise AuthorityRefused(f"no secret {name!r} in {self._dir}")
         _check_private_path(path, "secret")
         data = path.read_bytes()
@@ -190,12 +235,15 @@ def generate_key_files(directory: str | os.PathLike[str], name: str, *, secret: 
     Refuses to overwrite and refuses a directory inside the repository."""
     serialization = _crypto()[1]
     d = pathlib.Path(directory).resolve()
+    _refuse_repository(d)                         # placement BEFORE anything is created or chmod-ed
+    existed = d.exists()
     d.mkdir(mode=0o700, parents=True, exist_ok=True)
-    os.chmod(d, 0o700)
+    if not existed:
+        os.chmod(d, 0o700)
     DirectoryKeyProvider(d)                       # the same placement checks the reader applies
     key_path = d / f"{name}.ed25519.pem"
-    if key_path.exists():
-        raise AuthorityRefused(f"{key_path} exists; keys are never overwritten (rotate instead)")
+    if key_path.exists() or (secret and (d / f"{name}.secret").exists()):
+        raise AuthorityRefused(f"{key_path} (or its secret) exists; keys are never overwritten (rotate instead)")
     private = _ed25519().Ed25519PrivateKey.generate()
     pem = private.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
     fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -209,4 +257,4 @@ def generate_key_files(directory: str | os.PathLike[str], name: str, *, secret: 
 
 
 __all__ = ["KEY_CLASSES", "AuthorityRefused", "AuthorityUnavailable", "DirectoryKeyProvider", "EphemeralKeyProvider", "KeyProvider",
-           "Signer", "generate_key_files", "key_id_of", "verify_signature"]
+           "Signer", "generate_key_files", "key_id_of", "verify_possession", "verify_signature"]

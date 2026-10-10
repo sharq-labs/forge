@@ -145,7 +145,7 @@ def attested(claim, g, ctx=CTX, **records):
                     world.attest(rec, digests[sid], ctx)
                 except Exception:           # noqa: BLE001 - a record that cannot be attested (tampered, non-finite) stays unattested
                     pass
-    return world.ledger
+    return world
 
 
 def assess(w, claim, g, risk=RiskClass.HIGH, **kw):
@@ -154,8 +154,8 @@ def assess(w, claim, g, risk=RiskClass.HIGH, **kw):
     kw.setdefault("applicability_reports", w["reports"])
     kw.setdefault("uncertainty_entries", w["entries"])
     if "authority" not in kw:
-        kw["authority"] = attested(claim, g, **{k: kw[k] for k in ("validation_checks", "applicability_reports",
-                                                                    "uncertainty_entries", "red_team") if k in kw})
+        kw.update(attested(claim, g, **{k: kw[k] for k in ("validation_checks", "applicability_reports",
+                                                            "uncertainty_entries", "red_team") if k in kw}).assess_kwargs())
     return assess_credibility(claim, g, req(risk), **kw)
 
 
@@ -495,8 +495,14 @@ def test_refused_records_leave_a_note_and_falsified_envelopes_of_other_claims_ar
     broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
     other = run_red_team(ClaimSubject("someone-else", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
     assert other.outcome is EnvelopeOutcome.FALSIFIED
-    rep = assess(world, leaf(), graph(world), red_team=(other,))
+    # supplied by the caller only (not attested about this result): a falsification of another claim is a note
+    rep = assess(world, leaf(), graph(world), red_team=(other,),
+                 **attested(leaf(), graph(world), validation_checks=world["checks"], applicability_reports=world["reports"],
+                            uncertainty_entries=world["entries"]).assess_kwargs())
     assert rep.requirement_met and any("no subject of this claim" in n for n in rep.notes)
+    # ... but ATTESTED by the red-team issuer about THIS result, it defeats whatever claim id it names (checkpoint A H2)
+    rep = assess(world, leaf(), graph(world), red_team=(other,))
+    assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
 
 
 # ---------------------------------------------------------------------------- third confirmation review

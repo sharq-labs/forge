@@ -43,9 +43,22 @@ class World:
         self.root = self.keys.signer("root")
         self.store = MemoryLedgerStore()
         self.ledger = AuthorityLedger.create(self.store, ledger_id=ledger_id, profile="test", root=self.root)
+        self.ledger_id = ledger_id
         for issuer, roles in ISSUERS.items():
-            self.ledger.register_issuer(self.root, issuer, self.keys.signer(issuer).public_hex, key_class="test", roles=roles)
+            self.register(issuer, roles)
         self.receipts: dict[tuple[str, str], object] = {}
+
+    def register(self, issuer: str, roles) -> None:
+        self.ledger.register_issuer(self.root, issuer, self.keys.signer(issuer).possession(self.ledger_id, issuer), roles=roles)
+
+    def opened(self):
+        """What a CONSUMER holds: the ledger re-opened from its store against the anchor it pinned, and that anchor."""
+        anchor = self.ledger.anchor()
+        return AuthorityLedger.open(self.store, anchor=anchor), anchor
+
+    def assess_kwargs(self) -> dict:
+        led, anchor = self.opened()
+        return {"authority": led, "trust_anchor": anchor, "allow_test_profile": True}
 
     def signer(self, issuer: str):
         return self.keys.signer(issuer)

@@ -161,26 +161,40 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
 ## The new authority layer (`engcore.authority`, non-core)
 
 - **Owner and dependency.** The layer is owned by `engcore.authority`, imported by `claims` and `blindfold`, and it
-  imports nothing above `engcore.authority`. It depends on the optional `[authority]` extra (`cryptography`, ed25519). It
-  does not create a second evidence model: it signs and orders DIGESTS of the existing records.
+  imports nothing above `engcore.authority`. It depends on the optional `[authority]` extra (`cryptography`, ed25519); an
+  absent extra REFUSES. It does not create a second evidence model: it signs and orders DIGESTS of the existing records,
+  with each record carried whole and deep-frozen.
 - **AuthorityLedger.** One append-only, hash-chained ledger of signed events: GENESIS, REGISTER, SET_ROLES, ROTATE,
   REVOKE and ATTEST.
   - Administrative events are signed by the root key fixed at genesis.
+  - A key is registered or rotated in only with a PROOF OF POSSESSION: the key signs (ledger, issuer id, its own key
+    class).
   - ATTEST is signed by the issuer's key. It is admitted only if, at that sequence, the issuer exists, is not revoked,
-    holds the role, and the signing key is the issuer's active key.
-  - Persistence is a JSONL file with fsync. On load every signature, link and state transition is re-verified, and the
-    ledger must extend the consumer's pinned `TrustAnchor`: ledger id, root key, profile, and a (sequence, head) it
-    already saw.
-- **Profiles.** A ledger is created `test` or `production`. A production ledger refuses test-class keys. A consumer that
-  requires `production` refuses a test ledger. No test key can become a production key.
-- **Key material.** `KeyProvider`:
-  - `EphemeralKeyProvider` is test class and in memory.
-  - `DirectoryKeyProvider` is production class. It reads 0600 PEM/secret files from a directory outside the repository
-    checkout and refuses anything group- or world-readable.
+    holds the role, and the signing key is the issuer's active key in its registered class.
+  - Persistence is a JSONL file, appended under an exclusive lock and only if the file still holds exactly the events
+    the writer verified (no fork). A ledger object whose write may have landed is poisoned.
+  - On load every signature (canonical lower-case hex), link and state transition is re-verified, and the ledger must
+    extend the consumer's pinned `TrustAnchor`: ledger id, root key, profile, and a (sequence, head) it already saw.
+- **Profiles and key classes.** A ledger is created `test` or `production`. A production ledger refuses test-class keys
+  and a test root.
+  - A `Signer` is minted only by a key provider: `EphemeralKeyProvider` mints `test`, `DirectoryKeyProvider` mints
+    `production`. The class is the provider's, carried into the proof of possession, so a test key cannot be relabelled.
+  - Inside one process this is construction, not isolation: the minting token is reachable by introspection.
+- **Consumer pinning.** `assess_credibility(authority=, trust_anchor=)` refuses:
+  - a ledger that was only created in this process (not `open()`ed);
+  - another ledger id, root or profile;
+  - a ledger that does not extend the consumer's anchor.
+
+  Only a production ledger makes a report `issuer_bound`. A test ledger does so only with an explicit
+  `allow_test_profile=True`, which the report states (`test_mode`) and binds into `inputs_digest`.
+- **Key material.**
+  - `DirectoryKeyProvider` reads 0600 regular files (no symlinks) owned by the process user, from a 0700 directory outside
+    any git checkout.
+  - `generate_key_files` checks placement BEFORE creating anything.
   - Private key material is never committed.
 - **Attestation.** An attestation binds:
   - the record kind and schema;
-  - `record_digest` and the full record dict, so that the ledger itself holds negative records;
+  - `record_digest`, frozen at construction, plus the record itself;
   - `subject_digest` and `subject_output`;
   - `receipt_digest` (the EXECUTOR attestation of the NodeReceipt that produced the subject);
   - `context_digest`, the role and the issuer.
@@ -189,7 +203,28 @@ is edited: `scientific/**`, `credibility/evidence_graph/**`, `sria/admission.py`
   - a wrong result digest or a receipt that does not contain it;
   - a receipt not attested by an EXECUTOR issuer, or attested after the evidence;
   - a wrong context;
-  - **self-issuance**: an evidence issuer that is the executor issuer of the subject's receipt.
+  - **self-issuance**: an evidence issuer that attested the receipt as executor, ever.
+
+  NEGATIVE records are the exception to the self-issuance rule: a failing check, an UNKNOWN channel entry, an 'outside' or
+  'unknown' report, or a FALSIFIED or UNKNOWN envelope only ever lower, so they are admitted from the result's own
+  executor.
+- **Consumer rules.** Positive backing needs the factor's role (`FACTOR_ROLES`):
+  - numerical UQ: NUMERICAL_VERIFICATION or UNCERTAINTY;
+  - measurement UQ: MEASUREMENT;
+  - parameter and model-form UQ: UNCERTAINTY.
+
+  An attested failing check caps the factor its level projects to. An attested UNKNOWN entry caps its channel. An
+  attested FALSIFIED envelope about a subject's result is a defeater whatever node name or claim id it carries. The
+  ledger itself does not narrow roles by record level (residual); the consumer does.
+- **Durable campaign** (`claims.durable_campaign`).
+  - Exposure clock, falsifier registry, multiplicity and novelty are journaled as EXPOSURE attestations, with the heads
+    after each operation, and are replayed on resume.
+  - The campaign identity is namespaced by ledger id and root.
+  - One live object exists per identity; `start` refuses an existing journal and the multiplicity one-ledger rule
+    applies.
+  - The journal is read only from the start entry's issuer, role and context; foreign entries are listed and ignored.
+  - `resume` requires the operator's stored anchor (`campaign.anchor` after the last operation), so a dropped tail is
+    refused.
 
 ## TRUST_REPAIR_DEPENDENCY_CANDIDATE
 

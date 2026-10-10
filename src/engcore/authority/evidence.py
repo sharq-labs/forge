@@ -52,8 +52,16 @@ def verify_receipt(ledger: AuthorityLedger, receipt_digest: str, *, context_dige
     return same_ctx[0], []
 
 
+def executors_of(ledger: AuthorityLedger, receipt_digest: str) -> frozenset[str]:
+    """EVERY issuer that ever attested this receipt as its executor (any context)."""
+    return frozenset(r.issuer_id for r in ledger.attestations(record_kind=RECEIPT_KIND, record_digest=receipt_digest)
+                     if r.attestation.role is Role.EXECUTOR)
+
+
 def verify_evidence(ledger: AuthorityLedger, *, record_kind: str, record_digest: str, subject_digest: str,
-                    context_digest: str, roles: Iterable[Role]) -> tuple[AdmittedEvidence | None, list[str]]:
+                    context_digest: str, roles: Iterable[Role], allow_self_issued: bool = False) -> tuple[AdmittedEvidence | None, list[str]]:
+    """``allow_self_issued`` is for NEGATIVE records only (a failure, an 'outside' finding, a falsification): those only
+    ever lower, so the executor reporting against its own result is admitted; positive support never is."""
     roles = frozenset(Role(r) for r in roles)
     candidates = ledger.attestations(record_kind=record_kind, record_digest=record_digest)
     if not candidates:
@@ -77,7 +85,7 @@ def verify_evidence(ledger: AuthorityLedger, *, record_kind: str, record_digest:
                 why.append(f"the attested receipt has no output {a.subject_output!r} with digest {subject_digest[:12]}")
             if receipt.sequence >= c.sequence:
                 why.append("the receipt was attested after the evidence about it")
-            if receipt.issuer_id == c.issuer_id:
+            if not allow_self_issued and c.issuer_id in executors_of(ledger, a.receipt_digest):
                 why.append(f"issuer {c.issuer_id!r} executed the result it attests: self-issued evidence is not independent")
         if not why and receipt is not None:
             return AdmittedEvidence(c, receipt), []
@@ -85,4 +93,4 @@ def verify_evidence(ledger: AuthorityLedger, *, record_kind: str, record_digest:
     return None, reasons
 
 
-__all__ = ["RECEIPT_KIND", "AdmittedEvidence", "receipt_outputs", "verify_evidence", "verify_receipt"]
+__all__ = ["RECEIPT_KIND", "AdmittedEvidence", "executors_of", "receipt_outputs", "verify_evidence", "verify_receipt"]

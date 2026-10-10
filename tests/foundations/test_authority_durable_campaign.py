@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from engcore.authority import AuthorityLedger, AuthorityRefused, EphemeralKeyProvider, FileLedgerStore, Role
+from engcore.authority import AuthorityLedger, AuthorityRefused, EphemeralKeyProvider, FileLedgerStore, Role, TrustAnchor
 from engcore.blindfold.expression import c, mul, pw, structure_digest, v
 from engcore.claims.durable_campaign import CampaignRefused, DurableCampaign
 from engcore.claims.multiplicity import MultiplicityRefused
@@ -39,8 +39,8 @@ def falsifier(h):
 def ledger(tmp_path, keys):
     root = keys.signer("root")
     led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
-    led.register_issuer(root, "exposure", keys.signer("exposure").public_hex, key_class="test", roles=[Role.EXPOSURE])
-    led.register_issuer(root, "other", keys.signer("other").public_hex, key_class="test", roles=[Role.VALIDATION])
+    led.register_issuer(root, "exposure", keys.signer("exposure").possession("battery-campaign", "exposure"), roles=[Role.EXPOSURE])
+    led.register_issuer(root, "other", keys.signer("other").possession("battery-campaign", "other"), roles=[Role.VALIDATION])
     return led
 
 
@@ -67,15 +67,17 @@ def run_campaign(tmp_path):
 def test_a_campaign_resumes_exactly_after_restart(tmp_path):
     keys, led, camp, h, ticket, item, refuted = run_campaign(tmp_path)
     assert refuted.status is HypothesisStatus.REFUTED
-    anchor, heads, final = led.anchor(), camp.heads(), camp.close_multiplicity()
+    heads, final = camp.heads(), camp.close_multiplicity()
     saved_ctx = json.loads(json.dumps(final.to_dict()))
-    anchor = led.anchor()
+    anchor = camp.anchor                                          # what the operator stores after the last operation
+    old_anchor = camp.registry.anchor
+    camp.close()                                                  # the process "ends": the live object is released
     # --- restart: a new ledger object from the file, a new campaign object from the journal
     led2 = AuthorityLedger.open(FileLedgerStore(tmp_path / "authority.jsonl"), anchor=anchor)
-    camp2 = DurableCampaign.resume(led2, keys, issuer_id="exposure", campaign_id="bat-1")
+    camp2 = DurableCampaign.resume(led2, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
     assert camp2.heads() == {**heads, "multiplicity": camp2.heads()["multiplicity"]} and camp2.journal_length == camp.journal_length + 0
     assert camp2.authority.fingerprint == camp.authority.fingerprint and camp2.authority.verify(item)       # same key, same MAC
-    assert verify_status(refuted, camp2.registry, anchor=camp.registry.anchor) == []                        # the verdict survived
+    assert verify_status(refuted, camp2.registry, anchor=old_anchor) == []                                  # the verdict survived
     assert camp2.verify_context(saved_ctx)
     camp2.register(h.revise(statement="y = a x^1.37 (revised)"), ticket)                                   # the owner ticket survived
     with pytest.raises(MultiplicityRefused, match="closed"):
@@ -84,13 +86,15 @@ def test_a_campaign_resumes_exactly_after_restart(tmp_path):
 
 def test_restart_detects_dropped_reordered_or_rewritten_operations(tmp_path):
     keys, led, camp, *_ = run_campaign(tmp_path)
-    anchor = led.anchor()
+    anchor = camp.anchor
+    camp.close()
     lines = (tmp_path / "authority.jsonl").read_text().splitlines()
 
     def resumed(new_lines, a=anchor):
         p = tmp_path / "copy.jsonl"
         p.write_text("\n".join(new_lines) + "\n")
-        return DurableCampaign.resume(AuthorityLedger.open(FileLedgerStore(p), anchor=a), keys, issuer_id="exposure", campaign_id="bat-1")
+        return DurableCampaign.resume(AuthorityLedger.open(FileLedgerStore(p), anchor=a), keys, issuer_id="exposure", campaign_id="bat-1",
+                                      expected_anchor=a)
     with pytest.raises(AuthorityRefused, match="truncated"):
         resumed(lines[:-1])                                         # the refuting release / verdict dropped
     with pytest.raises(AuthorityRefused):
@@ -106,12 +110,17 @@ def test_restart_detects_dropped_reordered_or_rewritten_operations(tmp_path):
 
 def test_another_key_or_issuer_cannot_resume_or_extend_the_campaign(tmp_path):
     keys, led, camp, h, *_ = run_campaign(tmp_path)
-    with pytest.raises(CampaignRefused, match="not this campaign"):
-        DurableCampaign.resume(led, keys, issuer_id="other", campaign_id="bat-1")
+    anchor = camp.anchor
+    with pytest.raises(CampaignRefused, match="already live"):
+        DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
+    camp.close()
+    with pytest.raises(CampaignRefused, match="no journal begun by 'other'"):
+        DurableCampaign.resume(led, keys, issuer_id="other", campaign_id="bat-1", expected_anchor=anchor)
     forged_keys = EphemeralKeyProvider()
     forged_keys._signers["exposure"] = keys.signer("exposure")    # the right signer, another secret: another authority
     with pytest.raises(CampaignRefused, match="recorded heads"):
-        DurableCampaign.resume(led, forged_keys, issuer_id="exposure", campaign_id="bat-1")
+        DurableCampaign.resume(led, forged_keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
+    camp = DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
     with pytest.raises(CampaignRefused, match="already has a journal"):
         DurableCampaign.start(led, keys, issuer_id="exposure", campaign_id="bat-1", authority_id="lab", context_digest=CTX)
     led.revoke(keys.signer("root"), "exposure", "drill")
@@ -130,6 +139,62 @@ def test_a_verdict_judged_before_restart_is_the_same_verdict_after(tmp_path):
     keys, led, camp, h, *_ = run_campaign(tmp_path)
     before = [v.to_dict() for v in camp.registry.verdicts_for(h.hypothesis_id, h.content_digest)]
     assert before and before[0]["verdict"] == Verdict.REFUTED.value
-    camp2 = DurableCampaign.resume(AuthorityLedger.open(FileLedgerStore(tmp_path / "authority.jsonl"), anchor=led.anchor()), keys,
-                                   issuer_id="exposure", campaign_id="bat-1")
+    anchor = camp.anchor
+    camp.close()
+    camp2 = DurableCampaign.resume(AuthorityLedger.open(FileLedgerStore(tmp_path / "authority.jsonl"), anchor=anchor), keys,
+                                   issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
     assert [v.to_dict() for v in camp2.registry.verdicts_for(h.hypothesis_id, h.content_digest)] == before
+
+
+def test_the_same_campaign_id_cannot_restart_its_multiplicity_count(tmp_path):                       # checkpoint A H3
+    keys, led, camp, *_ = run_campaign(tmp_path)
+    with pytest.raises(Exception, match="already"):
+        DurableCampaign.start(led, keys, issuer_id="exposure", campaign_id="bat-1", authority_id="lab", context_digest=CTX)
+    other_dir = tmp_path / "fresh"
+    other_dir.mkdir()
+    with pytest.raises(Exception, match="already live|already opened"):   # same ledger id AND root: the same campaign identity
+        DurableCampaign.start(ledger(other_dir, keys), keys, issuer_id="exposure", campaign_id="bat-1", authority_id="lab",
+                              context_digest=CTX)
+    other_keys = EphemeralKeyProvider()
+    (tmp_path / "other").mkdir()
+    fresh = ledger(tmp_path / "other", other_keys)               # another root: ANOTHER campaign identity, never a continuation
+    camp_b = DurableCampaign.start(fresh, other_keys, issuer_id="exposure", campaign_id="bat-1", authority_id="lab", context_digest=CTX)
+    assert camp_b.multiplicity.campaign_id != camp.multiplicity.campaign_id
+
+
+def test_foreign_journal_entries_cannot_squat_or_brick_a_campaign(tmp_path):                           # checkpoint A M4
+    from engcore.authority import Attestation
+    from engcore.claims.durable_campaign import campaign_subject
+    keys, led, camp, *_ = run_campaign(tmp_path)
+    led.attest(keys.signer("other"), "other", Attestation("campaign_op", "x", {"campaign_id": "bat-1", "index": 99, "op": "start"},
+                                                          campaign_subject("bat-1"), CTX, Role.VALIDATION))
+    led.attest(keys.signer("other"), "other", Attestation("campaign_op", "x", {"campaign_id": "bat-9", "index": 0, "op": "start"},
+                                                          campaign_subject("bat-9"), CTX, Role.VALIDATION))
+    anchor = led.anchor()
+    camp.close()
+    resumed = DurableCampaign.resume(led, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
+    assert resumed.foreign_entries and resumed.heads()["registry"] == camp.heads()["registry"]
+    resumed.close()
+    DurableCampaign.start(led, keys, issuer_id="exposure", campaign_id="bat-9", authority_id="lab", context_digest=CTX)
+
+
+def test_a_dropped_journal_tail_after_the_operators_anchor_is_refused(tmp_path):                       # checkpoint A M5
+    keys, led, camp, *_ = run_campaign(tmp_path)
+    anchor = camp.anchor
+    camp.close()
+    lines = (tmp_path / "authority.jsonl").read_text().splitlines()
+    p = tmp_path / "short.jsonl"
+    p.write_text("\n".join(lines[:-2]) + "\n")                    # the refuting release and verdict dropped
+    stale = AuthorityLedger.open(FileLedgerStore(p), anchor=TrustAnchor(anchor.ledger_id, "test", anchor.root_key_id, 0,
+                                                                         AuthorityLedger.open(FileLedgerStore(p), anchor=anchor_at(p, 0)).events()[0].digest))
+    with pytest.raises(CampaignRefused, match="does not extend the operator's anchor"):
+        DurableCampaign.resume(stale, keys, issuer_id="exposure", campaign_id="bat-1", expected_anchor=anchor)
+
+
+def anchor_at(path, seq):
+    events = [json.loads(ln) for ln in path.read_text().splitlines() if ln.strip()]
+    from engcore.authority import LedgerEvent
+    ev = LedgerEvent.from_dict(events[seq])
+    root = events[0]["body"]["root_public"]
+    from engcore.authority import key_id_of
+    return TrustAnchor(events[0]["ledger_id"], events[0]["body"]["profile"], key_id_of(root), seq, ev.digest)
