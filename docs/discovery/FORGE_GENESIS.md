@@ -723,7 +723,129 @@ reused reasoning strategy
 reused target answer
 ```
 
-### 8.5 Compute-efficiency and heterogeneous execution requirement
+### 8.5 Multiphysics intelligence requirements
+
+FORGE must treat multiphysics as a reasoning problem over interacting scientific subsystems, not as a bag of independent solver calls.
+
+#### Coupling Intelligence Graph
+
+The runtime should represent cross-domain influence explicitly:
+
+```text
+state / field A
+    ↓ affects
+state / field B
+    ↓ modifies
+geometry / material / boundary condition C
+    ↺ may invalidate A
+```
+
+The graph should record:
+
+- direction of influence;
+- exchanged quantities and units;
+- reference frames;
+- coupling strength where known;
+- whether the dependency is one-way, two-way or cyclic;
+- whether a changed upstream state invalidates downstream results;
+- the fidelity and evidence level at which the coupling was established.
+
+The Mind should use this graph to decide which providers must be rerun after a change and which results remain admissible.
+
+#### Conservation Ledger
+
+Every coupled boundary or exchange should declare the conservation quantities that must close, where scientifically applicable.
+
+Examples include:
+
+- mass;
+- energy;
+- charge;
+- momentum;
+- species / material balance.
+
+The runtime should maintain a conservation ledger over the coupled system and refuse or downgrade results when exchanges do not reconcile within preregistered numerical and model-error allowances.
+
+A passing solver status does not override a failed conservation check.
+
+#### Adaptive Fidelity Controller
+
+Fidelity should be chosen dynamically from the current scientific state rather than fixed globally for the whole campaign.
+
+The controller may increase fidelity when:
+
+- uncertainty is too high for the current decision;
+- competing hypotheses remain indistinguishable;
+- sensitivity concentrates in a narrow region;
+- a coupling becomes strongly nonlinear;
+- a lower-fidelity model leaves an unresolved discrepancy.
+
+It may retain lower fidelity when the cheaper model is already sufficient for the current decision.
+
+Fidelity promotion must be recorded with the reason, expected information gain and compute cost.
+
+#### Model-Discrepancy Localizer
+
+When prediction and observation disagree, FORGE should attempt to localize the likely source of discrepancy rather than reporting only a global mismatch.
+
+Candidate sources may include:
+
+- geometry;
+- boundary / initial conditions;
+- material or property models;
+- missing physics;
+- incorrect coupling;
+- numerical discretization;
+- solver configuration;
+- measurement quality;
+- applicability violation.
+
+The localizer should generate competing explanations, identify evidence that discriminates between them and feed those candidates back into the ordinary hypothesis / falsification loop.
+
+A discrepancy source must remain `UNKNOWN` when the evidence cannot distinguish it.
+
+#### Multiscale Reasoning
+
+FORGE should support explicit reasoning across spatial, temporal and organizational scales where the domain requires it.
+
+Examples:
+
+```text
+microstructure
+   ↓
+component property
+   ↓
+subsystem behavior
+   ↓
+system performance
+```
+
+and
+
+```text
+microseconds
+   ↓
+seconds
+   ↓
+hours
+   ↓
+lifecycle
+```
+
+Cross-scale transfer must record:
+
+- what quantity is passed between scales;
+- aggregation / homogenization assumptions;
+- validity envelope;
+- lost information;
+- uncertainty introduced by scale reduction;
+- whether feedback from the larger scale changes the smaller-scale model.
+
+The Mind must not silently treat a result valid at one scale as authoritative at another.
+
+At least one coupled Genesis benchmark should require FORGE to detect a cyclic dependency, enforce a conservation check, adapt fidelity in response to unresolved uncertainty, localize a deliberately introduced discrepancy, and preserve scale-specific applicability.
+
+### 8.6 Compute-efficiency and heterogeneous execution requirement
 
 Scientific correctness is necessary but not sufficient for high-throughput discovery. FORGE must also use available compute resources efficiently.
 
@@ -997,6 +1119,11 @@ Genesis v0.1 is complete only when all of the following are true:
 - [ ] repeated hypothesis failure can trigger explicit search-space adequacy checks rather than blind continued optimization;
 - [ ] conflicting evidence remains explicit until a discriminating test resolves it;
 - [ ] reusable reasoning strategies are recorded separately from domain answers;
+- [ ] coupled-domain dependencies are represented explicitly in a Coupling Intelligence Graph;
+- [ ] applicable mass/energy/charge/momentum/species exchanges are checked through a Conservation Ledger;
+- [ ] fidelity promotion is adaptive, justified and recorded rather than globally fixed;
+- [ ] model/data disagreement can trigger discrepancy localization instead of only a global failure;
+- [ ] cross-scale transfers record assumptions, lost information, applicability and introduced uncertainty;
 - [ ] intelligent-design tasks retain semantic/parametric editability and decision lineage where applicable;
 - [ ] compute campaigns record CPU/GPU/concurrency, fidelity-promotion and time-to-result metrics;
 - [ ] the graduation suite is evaluated against the five-core-domain target before any domain-general maturity claim;
