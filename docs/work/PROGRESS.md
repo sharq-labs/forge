@@ -5,9 +5,9 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/big-14-review-r1-r4` (base `origin/main` @ `16c87f40`, the PR #119 merge), worktree `D:/forge-r1r4`. Earlier BIG 14
-  branches (`feat/big-14-scientific-closure`, `feat/big-14-flagship-a`, `feat/big-14-reviews`, the local-assurance passes) are merged.
-- PR: none opened; verify GitHub before making a current PR claim.
+- As of 2026-10-11: `main` @ `4634eba`. Open PRs and the verified repository state are listed in
+  `docs/work/ACTIVE_PLAN.md` ("Verified state"); verify GitHub before making a current PR claim.
+- Previous value of this field (historical): branch `fix/big-14-review-r1-r4` (base `16c87f40`), worktree `D:/forge-r1r4`.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
@@ -2037,3 +2037,46 @@ fast-forwarded.
   "closing" superseder bar to disqualify superseded support — removing a pin revived stale records. (3) A flaky-trap control
   with a small, stateful spike — not detected reliably; replaced by a call-parity spike. (4) Env-gated live provider tests in
   the certified harness — flagged by the skip-admission audit; moved to an opt-in smoke tool.
+
+## 2026-10-11 Planning consolidation (docs only; uncommitted working tree on `main` @ `4634eba`)
+
+- Problem: conflicting execution authority — Master Plan §8.1 "Big Rocks First" + P0–P40, the Completion Policy's
+  paused-expansion epic, PERFORMANCE.md's three-rocks-then-pivot policy, an 800-line ACTIVE_PLAN mixing history with
+  tasks, and the Genesis contract present only in PR #127.
+- Done: Master Plan rewritten as Part I strategy (authority map, Now/Next/Later/Superseded, timebox framework, Trust-lane
+  circuit breaker, control-plane budget, evidence-maturity progress metric) + Part II architecture reference;
+  ACTIVE_PLAN reduced to the live queue (G0 → A1 → A2 → B1) with OWNER_DECISION_REQUIRED OD-1..OD-13; Genesis (from
+  PR #127 head `4872b10`) gained substrate inventory §4.1, baseline families §10.5, compute estimate §10.6, timebox
+  policy §18.0, Step-0 circuit breaker, Step 2B demo, evaluator-ownership rule; PERFORMANCE.md lost execution authority
+  and gained measurement labels and compute staging; Completion Policy gained the planning relationship; CLAUDE.md
+  gained a planning-authority section. Old texts archived verbatim: `docs/archive/FORGE_MASTER_PLAN_2026-10-10.md`
+  (+ PERFORMANCE appendix), `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`.
+- Verified state used: certificate binds `3e396bc4` (not `main`); rulesets API 403; open PRs #123 (conflicts), #126,
+  #127, #117 (conflicts), stale #107/#39/#24; ledger computed stages unchanged.
+- Commands (this session, scratch venv CPython 3.13, pytest only):
+  - `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
+    -> 7 passed.
+  - `python3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
+  - `git diff --check` on this session's incremental tracked diff -> no live-document whitespace findings. This is not a claim that the full planning diff against `main` is clean.
+  - FAST / SCIENTIFIC tiers, regression pack, recertification: NOT RUN (docs-only change).
+- No code, test, threshold, result, maturity state or certificate changed. Not committed or pushed.
+- Correction pass (same day, docs only): (1) authority is by scope, not a global precedence chain ("execution authority
+  does not imply semantic authority outside the document's scope"); (2) Completion Policy: no blanket Track A/B
+  exemption — A1 limited to benchmark/measurement infrastructure, A2 and new B1 foundations need the active epic changed
+  or one fully specified owner-approved exception, anti-loophole rule added; (3) circuit breaker has three states,
+  `UNCLASSIFIED` is the blocking default and `GOVERNANCE_ONLY` needs a six-question evidence record; (4) the PERFORMANCE
+  appendix in the Master Plan archive was rebuilt byte-exact inside `~~~~` fences (the first version had demoted
+  headings, so it was not verbatim). Archive check (sha256 of archive bodies vs `git show 4634eba:<path>`, per-section
+  containment, appendix blocks vs original line ranges): PASS. Cross-reference audit: no broken references.
+  `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
+  -> 7 passed; `python3 -m tools.capability_maturity` -> coherent; `git diff --check` on the incremental correction diff -> no live-document whitespace findings (not a claim about the full planning diff against `main`);
+  `recertification_reasons` for every changed path -> none (ORDINARY). FAST / recertification: NOT RUN.
+
+## 2026-10-11 Planning consolidation landing
+
+- Reconstructed the reviewed docs tree on `docs/planning-consolidation-2026-10-11` from `main` @ `4634eba`, including the B1 non-shortcut circuit breaker. No maturity, code, test, or scientific-result change.
+- `py -3 -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py` -> 7 passed.
+- `py -3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
+- `git diff --check` against the full planning diff reports exactly two archive-only trailing-whitespace findings inherited byte-exact from the historical Master Plan; no live-document whitespace findings. The incremental cleanup diff was clean where applicable. Those historical whitespace lines were not removed or normalized; archive byte integrity is intentional.
+- ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26–53 and 126–189, SHA-256 byte match).
+- FAST / Full Local Assurance: NOT RUN.

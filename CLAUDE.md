@@ -12,8 +12,21 @@ identity as part of ordinary work.
 4. `docs/CORE_FREEZE_POLICY.md` — frozen API / certification rules.
 5. `docs/scientific-core/scientific-intelligence-layer.md` — claim runtime.
 6. `docs/work/ACTIVE_PLAN.md` and `docs/work/PROGRESS.md` — current bounded work state.
+7. `docs/discovery/FORGE_GENESIS.md` — only when the task touches the Mind, Discovery, Blindfold or Genesis.
 
 Historical audits are evidence about a past tree, not current architecture truth.
+
+## Planning authority
+
+Authority is by scope, not a global precedence order. `docs/work/ACTIVE_PLAN.md` is the **only executable work
+queue**, but execution authority does not imply semantic authority outside the document's scope: the active plan may
+not override this file, Genesis science, maturity rules or measurement semantics. `FORGE_MASTER_PLAN.md` Part I owns strategy
+(Now / Next / Later); its Part II is architecture reference, not a task list. `FORGE_GENESIS.md` owns the Track A
+scientific contract, `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md` owns maturity, and
+`docs/project/PERFORMANCE.md` owns measurement policy. `docs/work/archive/`, `docs/archive/` and old PROGRESS entries
+are history: an unchecked box there is not a task. If two live documents disagree, record the conflict as
+OWNER_DECISION_REQUIRED in the active plan instead of choosing silently, unless scope already decides it. The full
+scope matrix is in the Master Plan §1.
 
 ## Scientific authority rules
 
