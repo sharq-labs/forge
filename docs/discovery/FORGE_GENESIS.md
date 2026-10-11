@@ -986,27 +986,165 @@ Claims must be tied to the highest rung actually demonstrated.
 
 ## 13. Initial execution sequence
 
-Genesis should not interrupt the current battery evidence-closure work.
+Genesis must not interrupt or weaken the current battery evidence-closure work. The implementation order below is the default handoff sequence for the next build phase.
 
-Recommended order:
+### Phase 0 — Battery evidence closure
+
+Finish the current battery path first:
+
+- real-data freeze and receipts;
+- calibration/holdout eligibility;
+- identifiability checks;
+- uncertainty and applicability closure;
+- replayable evidence bundle;
+- first defensible battery claim at the maturity level the evidence actually supports.
+
+**Exit gate:** battery evidence path is frozen and replayable. Discovery work must not use an unfinished battery claim as proof of general capability.
+
+### Phase 1 — FORGE Mind core
+
+Implement the generic cognition substrate before domain-specific Discovery features:
+
+1. World/System State Model.
+2. Hypothesis Graph.
+3. Belief State.
+4. dependency lineage for assumptions, decisions and evidence;
+5. falsification engine;
+6. next-best-experiment planner;
+7. non-linear invalidation and automatic replanning;
+8. meta-reasoner for continue / change strategy / raise fidelity / stop.
+
+**Exit gate:** a synthetic reasoning task demonstrates that a late contradiction invalidates an earlier assumption, preserves unaffected work and selects a new path without target-specific rescue logic.
+
+### Phase 2 — Advanced cognition
+
+Add the generic reasoning capabilities defined in Section 8:
+
+- causal and counterfactual reasoning;
+- Scientific Imagination Sandbox;
+- cross-domain analogy;
+- value-of-information planning;
+- unknown-unknown / search-space adequacy detection;
+- evidence-conflict resolution;
+- meta-learning of reasoning strategies.
+
+**Exit gate:** each capability has at least one bounded test proving its semantics without allowing speculative output to bypass evidence gates.
+
+### Phase 3 — Multiphysics intelligence
+
+Implement the common multiphysics reasoning layer:
+
+1. Coupling Intelligence Graph.
+2. Conservation Ledger.
+3. Adaptive Fidelity Controller.
+4. Model-Discrepancy Localizer.
+5. Multiscale Reasoning.
+
+Use existing provider adapters and product/system abstractions rather than creating domain-specific copies of the core.
+
+**Exit gate:** one coupled benchmark demonstrates dependency-aware reruns, conservation checking, fidelity escalation, discrepancy localization and scale-specific applicability.
+
+### Phase 4 — High-throughput compute runtime
+
+Make compute efficiency a first-class architecture concern:
+
+- heterogeneous CPU / GPU / HPC scheduling;
+- batched candidate screening;
+- worker-pool parallelism;
+- scientifically valid caching and reuse;
+- multi-fidelity promotion;
+- surrogate / reduced-order paths where separately qualified;
+- anytime results with provisional-vs-evidence status kept explicit;
+- stage-level telemetry for wall time, utilization, solver calls, cache rate and promotion counts.
+
+**Performance rule:** large search budgets such as 10,000 candidates must not translate into 10,000 identical high-fidelity runs.
+
+**Exit gate:** publish measured scaling results on real hardware. Performance targets remain targets until measured.
+
+### Phase 5 — Intelligent generative design
+
+Implement semantic and parametric design objects that can be revised rather than regenerated blindly:
+
+- explicit components and interfaces;
+- editable geometry parameters;
+- requirement and constraint graph;
+- reserved interfaces / design margin when justified;
+- impact analysis for requirement changes;
+- local redesign with preservation of unaffected sub-designs;
+- design-decision lineage.
+
+Start with the drone because the repository already has product composition and an executable coupled-hover chain.
+
+**Exit gate:** a requirement change causes a bounded local redesign, recomputation only of affected physics, and a replayable updated design history.
+
+### Phase 6 — Genesis v0.1
+
+Freeze the benchmark schema and event model, then implement:
+
+1. G0 search sanity.
+2. one G1 historical blind rediscovery.
+3. one G3 competing-mechanism falsification task.
+4. one G4 anonymous-primitive selection task.
+5. one G5 transformed/synthetic task.
+6. one G6 no-solution / insufficient-evidence task.
+7. one deliberate wrong-early-assumption recovery task.
+8. hostile leakage and replay review.
+
+The milestone remains:
+
+> **FORGE Genesis v0.1 — one blind rediscovery + one anonymous-primitive challenge + one transformed task + one no-solution control + one dependency-aware recovery task, all replayable.**
+
+### Phase 7 — Five-domain Genesis Graduation
+
+Run the same generic Mind and Trust architecture across the five core domains:
 
 ```text
-1. Close battery real-data evidence path.
-2. Freeze Genesis benchmark schema and event model.
-3. Implement G0 search sanity task.
-4. Implement one G1 historical rediscovery task.
-5. Add one G3 falsification task.
-6. Add one G4 anonymous-primitive selection task.
-7. Add one G5 transformed/synthetic control using anonymous primitives.
-8. Add one G6 no-solution task.
-9. Run hostile leakage and replay review.
-10. Repeat across a second independent physics family.
-11. Only then consider broader multiphysics historical benchmarks.
+1. Battery / electrochemistry
+2. Thermal / thermodynamics
+3. Mechanics + fluids
+4. Electromagnetism
+5. Therapeutics / biology
 ```
 
-The first milestone is therefore:
+For each domain, exercise as many of the four benchmark classes as scientifically meaningful:
 
-> **FORGE Genesis v0.1 — one blind rediscovery + one anonymous-primitive challenge + one transformed task + one no-solution control, all replayable.**
+```text
+Historical Blind Rediscovery
+        +
+Anonymous Primitive Selection
+        +
+Synthetic / Transformed Universe
+        +
+No-Solution / Insufficient-Evidence Control
+```
+
+No domain may introduce target-specific reasoning code into the generic Mind.
+
+**Graduation gate:** the five-domain program is replayable, leakage-audited, evidence-complete and demonstrates the same cognition semantics across independent scientific families.
+
+### Phase 8 — Strengthening domains
+
+Only after the five-domain graduation gate:
+
+6. Materials / chemistry.
+7. High-level nuclear-energy principles under the safe, non-operational benchmark contract.
+
+These strengthen the generality claim; they are not required to start external technical evaluation.
+
+### Execution rules for the implementation agent
+
+The implementation agent should follow these rules unless the owner explicitly changes the plan:
+
+- do not reopen feature breadth outside the phases above;
+- do not create a domain-specific Mind;
+- do not bypass Trust Layer semantics to make a benchmark pass;
+- do not treat LLM output as numerical or scientific authority;
+- do not replace failed evidence with looser post-hoc thresholds;
+- do not hide failed hypotheses or abandoned design branches;
+- prefer generic primitives, contracts and providers over product-specific core logic;
+- preserve the distinction between search output, solver output, validation evidence and supported claims;
+- record performance claims only after measurement;
+- stop and classify a blocker when scientific correctness, identity, provenance, replay or evidence integrity would otherwise be compromised.
 
 ## 14. Promotion gates
 
