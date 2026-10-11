@@ -388,6 +388,36 @@ These remain **rediscovery benchmarks**, not novelty claims.
 
 High-consequence topics must remain non-operational and bounded to safe scientific principles. For example, a nuclear-energy benchmark may test high-level energy-conversion reasoning but must not include reactor construction, fuel-cycle procedures, enrichment, criticality engineering, or other actionable hazardous instructions.
 
+### 7.1 Genesis graduation suite
+
+The target graduation program is deliberately bounded. FORGE should not claim domain-generality from one flagship or from many closely related tasks.
+
+The planned suite is:
+
+1. **Battery / electrochemistry** — evidence-closed flagship and electrochemical reasoning.
+2. **Thermal / thermodynamics** — independent energy/transport reasoning.
+3. **Mechanics + fluids** — geometry, continuous physics and coupled engineering behavior.
+4. **Electromagnetism** — a physically distinct field/energy-conversion family.
+5. **Therapeutics / biology** — bounded research reasoning over noisy biological evidence and mechanistic models.
+6. **Materials / chemistry** — advanced anonymous-primitive and reaction/property search.
+7. **High-level nuclear-energy principles** — advanced safe, non-operational multiphysics reasoning only.
+
+The first five are the minimum target for a **Genesis Graduation** claim. Domains six and seven are strengthening challenges, not prerequisites for beginning external evaluation.
+
+Every graduation domain should include, where scientifically meaningful:
+
+```text
+Historical Blind Rediscovery
+        +
+Anonymous Primitive Selection
+        +
+Synthetic / Transformed Universe
+        +
+No-Solution / Insufficient-Evidence Control
+```
+
+Passing requires the same generic cognition architecture across domains. Domain packs may supply domain semantics, admissible primitives, models, providers, data and safety constraints; they may not supply target-specific reasoning paths or hidden-answer logic.
+
 ## 8. Search strategy
 
 Genesis must not equate intelligence with brute force.
@@ -473,6 +503,136 @@ At least one Genesis task should inject or permit an initially plausible but inc
 5. what additional experiment or evidence justified the revised path.
 
 Target-specific rescue code is prohibited. The same generic mechanism must work across all qualified domains.
+
+### 8.2 Universal FORGE Mind
+
+FORGE Discovery must expose one **domain-general scientific cognition loop**, not separate minds for battery, engineering, therapeutics, materials or other domains.
+
+The cognition loop is:
+
+```text
+objective
+  ↓
+world / system state model
+  ↓
+competing hypotheses
+  ↓
+predictions
+  ↓
+next-best experiment / simulation
+  ↓
+provider execution
+  ↓
+falsification
+  ↓
+belief update
+  ↓
+replanning / redesign
+  ↺
+Trust Layer assessment
+```
+
+The domain changes the admissible knowledge and tools; it must not change the generic reasoning semantics.
+
+The generic Mind must support:
+
+- a world/system state model with explicit unknowns;
+- a hypothesis graph containing competing explanations or candidate designs;
+- belief state updates from new evidence;
+- next-best-experiment selection based on expected information or decision value;
+- explicit falsification attempts rather than confirmation-only search;
+- meta-reasoning over whether to continue, change strategy, increase fidelity, request new evidence or stop;
+- domain-independent dependency invalidation and replanning as specified above;
+- correct refusal when available evidence, models or budget cannot support a defensible conclusion.
+
+LLMs may participate in interpretation, hypothesis generation or planning, but they are not scientific authority. Numerical claims must be produced or checked by appropriate models, solvers, data and evidence gates.
+
+### 8.3 Intelligent generative design
+
+For engineering-design tasks, FORGE must not reduce discovery to random geometry generation followed by filtering.
+
+A generated design should be a **semantic, parametric, editable system model** whose components, interfaces, constraints and purposes are represented explicitly.
+
+Examples of required semantics include:
+
+```text
+system
+ ├─ components
+ ├─ interfaces / attachment points
+ ├─ geometry parameters
+ ├─ mass / energy / transport relationships
+ ├─ reserved design space
+ ├─ operational constraints
+ ├─ validity / uncertainty state
+ └─ decision lineage
+```
+
+When a requirement changes or a missing component is introduced, FORGE should perform impact analysis and local redesign where possible:
+
+```text
+new requirement
+      ↓
+affected dependency subgraph
+      ↓
+preserve unaffected valid sub-designs
+      ↓
+modify/recompose affected components
+      ↓
+re-run only required physics/evidence
+      ↓
+re-optimize
+      ↓
+updated evidence-backed design
+```
+
+The system should support reserved interfaces or design margin when explicitly requested or justified, so later additions do not necessarily require a complete redesign.
+
+Generated artifacts must retain lineage explaining why each major design decision exists and which evidence or requirement justified it.
+
+### 8.4 Compute-efficiency and heterogeneous execution requirement
+
+Scientific correctness is necessary but not sufficient for high-throughput discovery. FORGE must also use available compute resources efficiently.
+
+The runtime should be designed for heterogeneous execution:
+
+- **GPU**: vectorized/batched screening, surrogate inference, compatible matrix/vector kernels, optimization and accelerator-capable providers;
+- **CPU**: orchestration, branching logic, geometry/meshing paths and providers that are CPU-oriented;
+- **HPC / distributed pools**: independent candidate simulations, expensive CFD/FEA/PDE runs and multi-node execution where supported;
+- **cache / reuse**: reuse scientifically identical or still-applicable intermediate results rather than recomputing them;
+- **multi-fidelity promotion**: expensive solvers should normally be reserved for the small subset of candidates that survive cheaper valid gates.
+
+A search budget such as 10,000 candidate designs must not imply 10,000 identical high-fidelity runs. The intended pattern is:
+
+```text
+large candidate population
+        ↓
+batched cheap screening
+        ↓
+small promoted subset
+        ↓
+medium-fidelity evaluation
+        ↓
+very small finalist set
+        ↓
+high-fidelity verification
+```
+
+FORGE should behave as an **anytime system** where useful provisional results can appear before the full high-fidelity campaign is complete, while clearly distinguishing provisional search output from validated evidence.
+
+Performance targets must be benchmarked on real hardware before being advertised as achieved. At minimum, every campaign should record:
+
+- wall-clock time by stage;
+- CPU and GPU allocation/utilization where measurable;
+- worker count and concurrency;
+- solver/provider call counts;
+- candidate counts entering and leaving each fidelity level;
+- cache/reuse rate;
+- compute cost per candidate and per surviving design;
+- time to first feasible candidate;
+- time to useful shortlist;
+- time to final evidence bundle.
+
+A workflow that is scientifically correct but needlessly serial, recomputes unchanged work, or promotes excessive candidates to expensive fidelity is a performance failure to be diagnosed, not accepted as inevitable.
 
 ## 9. Evidence model
 
@@ -695,6 +855,10 @@ Genesis v0.1 is complete only when all of the following are true:
 - [ ] no target-specific hard-coded answer path exists;
 - [ ] historical names and privileged primitive labels are withheld from the discovery runtime;
 - [ ] candidate-selection efficiency, false-elimination and invalid-survivor metrics are reported;
+- [ ] one generic FORGE Mind executes across the qualified benchmark domains without target-specific reasoning code;
+- [ ] intelligent-design tasks retain semantic/parametric editability and decision lineage where applicable;
+- [ ] compute campaigns record CPU/GPU/concurrency, fidelity-promotion and time-to-result metrics;
+- [ ] the graduation suite is evaluated against the five-core-domain target before any domain-general maturity claim;
 - [ ] hostile scientific review is completed;
 - [ ] final claims use only the maturity level actually demonstrated.
 
