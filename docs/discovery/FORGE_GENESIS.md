@@ -418,6 +418,62 @@ Random search may be retained as a baseline.
 
 The benchmark should compare the discovery policy against at least one simple baseline when feasible.
 
+### 8.1 Non-linear reasoning, dependency invalidation and automatic replanning
+
+The FORGE Mind must not be implemented as a one-way pipeline in which step N permanently assumes that steps 1..N-1 were correct.
+
+Every hypothesis, design decision, inferred state and experiment plan must declare the upstream assumptions and evidence on which it depends. Later evidence may invalidate an earlier assumption. When that happens, FORGE must propagate the invalidation through the dependency graph and replan from the earliest scientifically affected state rather than patching only the latest output.
+
+Required behavior:
+
+```text
+state / assumption A
+        ↓
+decision B
+        ↓
+experiment C
+        ↓
+decision D
+        ↓
+new evidence contradicts A
+        ↓
+mark A weakened / falsified
+        ↓
+invalidate B, C, D only where dependency exists
+        ↓
+preserve unaffected evidence and sub-designs
+        ↓
+construct a new belief state
+        ↓
+choose the next-best recovery experiment or redesign
+        ↺
+```
+
+This is a **belief-revision and replanning requirement**, not an undo stack. The runtime must be able to:
+
+- trace every downstream decision to the assumptions and evidence that justified it;
+- distinguish a failed numerical execution from a falsified scientific hypothesis;
+- weaken, falsify or reopen an earlier hypothesis when later evidence requires it;
+- invalidate only dependent descendants rather than discarding unrelated valid work;
+- preserve negative evidence and failed paths in Design / Discovery Memory;
+- reuse unaffected geometry, models, evidence and solver results where their identities and applicability remain valid;
+- regenerate the active plan from the updated belief state;
+- move backward across multiple reasoning stages when necessary, including to an early architecture or primitive-selection decision;
+- move forward along a different branch without pretending the previous branch never happened;
+- stop with `INSUFFICIENT_EVIDENCE` or `REFUSED` when no admissible recovery path exists within budget.
+
+A benchmark must therefore score not only whether FORGE eventually reaches the hidden target, but whether it can **recover correctly from a deliberately wrong early assumption**.
+
+At least one Genesis task should inject or permit an initially plausible but incorrect assumption whose contradiction appears only after later simulation or evidence. Passing that task requires dependency-aware rollback/replanning, preservation of unaffected work, and a replayable record explaining:
+
+1. which earlier assumption became untenable;
+2. which downstream decisions were invalidated;
+3. which prior results remained admissible;
+4. why the replacement branch was selected;
+5. what additional experiment or evidence justified the revised path.
+
+Target-specific rescue code is prohibited. The same generic mechanism must work across all qualified domains.
+
 ## 9. Evidence model
 
 Every run must emit an immutable evidence bundle containing at least:
@@ -434,6 +490,9 @@ solver/provider versions
 hypothesis event log
 experiment event log
 candidate lineage
+dependency graph
+belief revisions
+invalidation / replanning events
 rejection reasons
 resource consumption
 final candidate
@@ -462,6 +521,8 @@ Recommended metrics:
 | Compute cost | CPU/GPU/wall-clock budget actually consumed |
 | Falsification precision | How often rejected candidates were rejected for valid reasons |
 | Search efficiency | Progress relative to a simple baseline |
+| Recovery efficiency | Cost and evidence quality required to recover from invalidated earlier assumptions |
+| Replanning correctness | Whether dependency invalidation preserves unaffected work and removes only scientifically dependent conclusions |
 | Candidate selection efficiency | Useful candidates identified per screened/executed candidate |
 | False-elimination rate | Physically viable candidates incorrectly removed during screening |
 | Invalid-survivor rate | Physically invalid candidates incorrectly retained after screening/falsification |
@@ -582,6 +643,8 @@ Do not:
 - add the hidden answer to the admissible primitives;
 - silently increase the compute budget;
 - delete failed hypotheses from the event log;
+- silently patch a downstream design after an upstream assumption was falsified;
+- discard valid unrelated evidence merely because another branch was invalidated;
 - reclassify unknown uncertainty as zero;
 - promote solver agreement to experimental validation;
 - call a historically known mechanism a novel discovery.
@@ -622,6 +685,9 @@ Genesis v0.1 is complete only when all of the following are true:
 - [ ] one G5 transformed/synthetic control with anonymous primitives runs end-to-end;
 - [ ] one G6 no-solution control runs end-to-end;
 - [ ] every hypothesis and experiment is recorded;
+- [ ] hypothesis/design dependencies are recorded;
+- [ ] at least one benchmark demonstrates dependency-aware rollback/replanning after a later contradiction invalidates an earlier assumption;
+- [ ] unaffected valid evidence survives replanning with unchanged identity;
 - [ ] invalid candidates have explicit rejection reasons;
 - [ ] evidence bundle replays successfully;
 - [ ] leakage audit is recorded;
