@@ -1,902 +1,854 @@
-# FORGE Genesis — Blind Scientific Rediscovery Benchmark
+# FORGE Genesis — Measurement-First Scientific Discovery Benchmark
 
 Status: **design / preregistration**
-Owner intent: validate the FORGE Discovery Runtime by rediscovering established physical mechanisms under controlled information constraints.
+Owner intent: validate a domain-general FORGE scientific reasoning loop under controlled, blinded and independently scoreable conditions.
 
-This document refines the `Blind Scientific Discovery Runtime` and `FORGE Genesis` roadmap already authorized in `docs/work/ACTIVE_PLAN.md`. It does not change current scientific maturity, validation status, certification state, or production readiness.
+This document defines the target architecture and benchmark for FORGE Genesis. It does **not** change current scientific maturity, validation status, certification state or production readiness.
+
+The governing rule is:
+
+> **Measure first. Build the minimum generic mechanism that improves the measurement. Keep only capabilities that survive ablation.**
+
+FORGE is not a universal solver. It is a scientific reasoning and trust layer over external providers/solvers. AI workers may propose; providers compute; the FORGE Trust Layer controls what may be admitted as evidence and what may be claimed.
+
+---
 
 ## 1. Purpose
 
-FORGE Genesis asks a deliberately narrower question than "can FORGE invent new science?":
+Genesis asks a narrower and falsifiable question than “can FORGE invent new science?”:
 
-> Given a bounded objective, a preregistered set of physical laws, constants, materials/properties, solvers and compute budget — while withholding the historical solution — can FORGE independently search, falsify and recover a mechanism that is materially equivalent to an established human discovery?
+> Given a bounded objective, a frozen admissible-knowledge contract, a fixed compute budget and no access to the hidden answer, can one generic FORGE Mind propose hypotheses, make scoreable predictions, choose informative experiments, execute them through providers, falsify wrong paths, revise belief, invalidate dependent conclusions, replan and either recover a valid mechanism or refuse correctly?
 
-The benchmark exists to test the **Discovery Engine itself**, not to claim scientific novelty.
+The benchmark exists to test the **scientific reasoning loop**, not to claim novelty.
 
-The desired progression is:
+A defensible progression is:
 
 ```text
-Battery evidence closure
+land + recertify the Trust lane
         ↓
-Blind Scientific Discovery Runtime
+Genesis-lite on Blindfold
         ↓
-FORGE Genesis historical rediscovery
+Minimal Mind loop
         ↓
-Repeated success across independent physics domains
+one justification graph
         ↓
-Only then: stronger autonomous-discovery research claims
+port-based mechanism reasoning
+        ↓
+cross-domain transfer + measured compute scaling
+        ↓
+held-out-domain graduation
+        ↓
+only then: stronger autonomous-discovery claims
 ```
 
-The battery flagship proves that FORGE can carry evidence, applicability, uncertainty, provenance and replay around a known scientific model. Genesis tests whether the system can also conduct a bounded scientific search without being handed the answer.
+Historical rediscovery is a **demonstration**. Blinded synthetic, transformed and trap-world performance is the evidence for reasoning competence.
+
+---
 
 ## 2. Core claim under test
 
-Genesis does **not** preregister the claim that FORGE can discover unknown physics.
+Genesis does **not** preregister the claim that FORGE discovers unknown laws of nature.
 
-It preregisters the weaker, falsifiable claim:
+It preregisters the weaker claim:
 
-> FORGE can recover known physical mechanisms from admissible primitives under blinded conditions, while preserving a complete record of hypotheses, experiments, failures, evidence and replay.
+> A frozen, domain-general FORGE Mind can outperform equal-budget baselines on blinded discovery and correct-refusal tasks while producing calibrated predictions, replayable evidence, dependency-correct replanning and no target-specific reasoning code.
 
-A successful benchmark run must demonstrate all of the following:
+A successful benchmark program must demonstrate:
 
-1. the historical target solution was withheld from the discovery process;
-2. the required physics were representable by the allowed model classes;
-3. hypotheses were generated and tested through the FORGE runtime;
-4. physically invalid or unsupported candidates were rejected rather than silently repaired;
-5. the final candidate satisfies preregistered success criteria;
-6. the run is replayable from frozen inputs and evidence;
-7. no stronger scientific claim is made than the evidence supports.
+1. the hidden target and evaluator material were withheld from the Mind;
+2. the benchmark representation did not encode the answer;
+3. the same generic reasoning loop operated across tasks and domains;
+4. predictions were emitted **before** observing experiment results;
+5. planner-relevant numbers were grounded in execution/surrogate records, not LLM assertions;
+6. wrong hypotheses and invalid candidates were explicitly falsified or retained as unresolved;
+7. later evidence could invalidate earlier assumptions and trigger bounded replanning;
+8. unaffected evidence/results were preserved when scientifically still applicable;
+9. correct refusal earned credit;
+10. benchmark scoring was performed outside the scientific authority being evaluated;
+11. the result beat preregistered equal-budget baselines with confidence intervals;
+12. removing a claimed cognition capability measurably reduced benchmark performance before that capability was accepted into the core.
+
+---
 
 ## 3. Non-goals
 
-Genesis v1 is **not**:
+Genesis v0.1 is **not**:
 
-- proof that FORGE can discover novel laws of nature;
-- proof that a language model has no latent memory of a historical invention;
-- a benchmark for unrestricted internet research;
-- a competition to maximize raw simulation count;
+- proof of novel science;
+- proof that a pretrained language model has no historical memory;
+- unrestricted autonomous internet research;
+- a competition to maximize raw solver-call count;
 - evidence that a simulated design will work experimentally;
-- permission to promote a candidate to `SUPPORTED` without the normal FORGE evidence gates;
-- a replacement for experiment, domain experts, safety review or engineering sign-off;
-- a route to actionable hazardous system design.
+- permission to bypass ordinary FORGE evidence gates;
+- a replacement for experiment, domain expertise, safety review or engineering sign-off;
+- a reason to build duplicate Evidence, Hypothesis, Belief, State or Coupling authorities;
+- a requirement to build GPU/HPC scheduling before a workload justifies it;
+- a requirement to implement every proposed cognition feature before the core loop is measurable.
 
-High-consequence domains may be represented only at a safe, high-level benchmark layer unless a separately reviewed scientific and safety contract authorizes more.
+High-consequence subjects remain outside the Genesis core program unless separately reviewed under an appropriate scientific and safety contract.
 
-## 4. Benchmark architecture
+---
 
-```text
-Objective
-   ↓
-Preregistered admissible knowledge
-   ↓
-Anonymous Primitive / Candidate Selector
-   ↓
-Hypothesis Generator
-   ↓
-Experiment / Simulation Planner
-   ↓
-Multiphysics Composer
-   ↓
-Provider Execution
-   ↓
-Evidence Capture
-   ↓
-Falsifier / Constraint Checker
-   ↓
-Discovery Memory
-   ↓
-Next-Best-Experiment Selection
-   ↺
-Candidate Mechanism
-   ↓
-FORGE Trust Layer
-   ↓
-Rediscovery Assessment + Evidence Bundle
-```
+## 4. Reuse existing FORGE substrate
 
-The Discovery Runtime proposes and searches.
+The Mind is an **orchestration layer over existing owners**, not a second scientific authority.
 
-The Trust Layer does not assume the proposal is correct. It attempts to establish what is supported, what remains uncertain, and what must be refused.
+Where suitable owners already exist, Genesis must reuse them rather than create parallel types or graphs.
 
-## 5. Mandatory preregistration
+Expected existing owners include, where applicable:
 
-Every Genesis benchmark must freeze a machine-readable preregistration before the search begins.
+- Trust / credibility / verdict semantics;
+- `sria.decision` hypothesis and utility concepts;
+- sealed falsification and multiplicity tracking;
+- Blindfold preregistration / escrow / synthetic controls;
+- Scientific Twin / TwinRevision / SystemState views;
+- claim impact and diagnostics;
+- design fidelity relationships;
+- PhysicsGraph / CouplingPlan / ConservationBalance;
+- provider identity and execution provenance.
 
-At minimum it records:
+New Mind code must justify why an existing owner cannot satisfy the requirement.
 
-### 5.1 Objective
+---
 
-A measurable physical objective, for example:
+## 5. Minimal FORGE Mind loop
 
-```text
-Convert an imposed temperature difference into useful work.
-```
-
-The objective must not contain the name, topology, equation set or historical label of the hidden solution.
-
-### 5.2 Allowed physics
-
-Explicitly enumerate the model families the run may use.
-
-Examples may include:
-
-- mechanics;
-- thermodynamics;
-- heat transfer;
-- fluid mechanics;
-- electromagnetism;
-- bounded chemistry / electrochemistry;
-- material-property relations.
-
-A benchmark cannot fail FORGE for not discovering a mechanism that the allowed physics cannot represent.
-
-### 5.3 Allowed knowledge
-
-Freeze:
-
-- physical constants;
-- admissible material/property tables;
-- governing equations or equation families;
-- solver/provider versions;
-- units and dimensional conventions;
-- allowed geometric primitives;
-- admissible boundary and initial conditions.
-
-Every allowed source must be hashed and versioned.
-
-### 5.4 Forbidden knowledge
-
-Freeze what the discovery process may **not** access, including:
-
-- internet search;
-- historical invention names;
-- benchmark answer descriptions;
-- target schematics;
-- target patents/papers/textbooks;
-- answer-specific templates;
-- hidden evaluator notes.
-
-### 5.5 Compute budget
-
-Preregister:
-
-- maximum candidate count;
-- maximum solver calls;
-- wall-clock or CPU/GPU budget where relevant;
-- fidelity levels;
-- stopping criteria;
-- retry policy.
-
-The benchmark is invalid if the budget is expanded after seeing results without starting a new preregistered run.
-
-### 5.6 Success criteria
-
-Define success before execution.
-
-A criterion must be based on measurable physics or functional equivalence, not visual resemblance or a language-model judgement alone.
-
-## 6. Leakage control
-
-Historical rediscovery is only meaningful if answer leakage is treated as a first-class threat.
-
-Genesis must distinguish at least three knowledge boundaries:
-
-```text
-A. Discovery runtime knowledge
-B. Evaluation-only hidden target knowledge
-C. External historical corpus
-```
-
-The discovery runtime must not receive B or C.
-
-Controls should include, where technically possible:
-
-- network-disabled execution;
-- frozen local dependency set;
-- no retrieval tools;
-- no answer-bearing prompt text;
-- no hidden-solution metadata in filenames or schemas;
-- hash-pinned benchmark packages;
-- evaluator-only answer key;
-- immutable event log of every hypothesis and experiment;
-- reproducible environment manifest.
-
-### 6.1 LLM contamination limitation
-
-A pretrained model may already contain historical knowledge in its parameters. Therefore a single historical rediscovery benchmark cannot prove genuine independent invention.
-
-Genesis must explicitly report this limitation.
-
-The strongest v1 evidence comes from combining historical targets with:
-
-- transformed-physics tasks;
-- synthetic universes;
-- renamed and permuted primitives;
-- held-out generated mechanisms;
-- no-solution tasks.
-
-Success across these classes reduces the chance that the system is merely recalling a memorized answer.
-
-### 6.2 Anonymous primitive selection
-
-For stronger rediscovery tests, Genesis must not hand the Discovery Runtime the historically correct material, isotope, component, mechanism family or other privileged primitive when the objective is to test whether the system can identify it.
-
-Instead, the runtime receives a bounded, preregistered candidate library whose entries are represented by neutral identifiers such as:
-
-```text
-PRIMITIVE_A17
-PRIMITIVE_B04
-PRIMITIVE_C91
-...
-```
-
-The discovery process may see only the physical properties and relationships explicitly authorized by the benchmark contract. Historical names, common-use labels, answer-bearing categories and target-specific hints remain evaluator-only information.
-
-The intended loop is:
-
-```text
-anonymous candidate library
-        ↓
-physics-based screening
-        ↓
-hypothesis generation
-        ↓
-simulation / experiment
-        ↓
-falsification
-        ↓
-belief update
-        ↓
-next-best candidate / experiment
-        ↺
-surviving mechanism
-```
-
-The benchmark must distinguish between:
-
-- candidates eliminated before execution by valid physical constraints;
-- candidates tested and falsified;
-- candidates surviving because evidence is genuinely supportive;
-- candidates surviving only because evidence is insufficient.
-
-A candidate must never be promoted merely because it resembles a historically familiar answer.
-
-For high-consequence domains, anonymous primitive selection remains bounded to safe, non-operational scientific properties. Genesis does not expose or optimize actionable construction, fuel-cycle, weapons-relevant or other hazardous procedures.
-
-### 6.3 Synthetic-universe anti-memorization control
-
-Historical rediscovery alone cannot rule out latent model memory. Therefore the stronger control replaces real-world names and may also transform admissible constants, scales, property values or primitive relationships while preserving a hidden solvable structure.
-
-Example evaluator view:
-
-```text
-Universe PHI-3
-PRIMITIVE_Q17
-PRIMITIVE_L82
-PRIMITIVE_R05
-...
-```
-
-The Discovery Runtime is not told which transformed primitive corresponds to any real-world material or mechanism.
-
-A valid synthetic-universe benchmark freezes:
-
-- the transformed laws/relationships;
-- the anonymous primitive library;
-- the evaluator-only latent solution;
-- the no-solution status, when applicable;
-- the same compute and evidence rules used by historical benchmarks.
-
-Success on historical rediscovery plus anonymous transformed controls is stronger evidence of search competence than historical rediscovery alone.
-
-## 7. FORGE Genesis benchmark families
-
-### G0 — Search sanity
-
-Purpose: prove the closed-loop search machinery functions.
-
-Characteristics:
-
-- small parameter space;
-- single-domain physics;
-- analytically or numerically checkable optimum;
-- cheap replay.
-
-Exit requirement: deterministic evidence capture, failure logging and replay.
-
-### G1 — Single-domain blind rediscovery
-
-Examples of target classes:
-
-- mechanical energy conversion;
-- simple heat-to-work mechanisms;
-- elementary electromagnetic conversion.
-
-The historical mechanism name and topology remain hidden.
-
-Exit requirement: recover a functionally equivalent mechanism within the preregistered budget.
-
-### G2 — Coupled multiphysics rediscovery
-
-Search must compose two or more physical domains.
-
-Examples of target classes:
-
-- thermo-mechanical conversion;
-- electro-mechanical conversion;
-- electro-thermal behavior.
-
-Exit requirement: correct coupling semantics, not merely separate successful simulations.
-
-### G3 — Competing-mechanism falsification
-
-The benchmark includes multiple plausible but wrong mechanisms.
-
-FORGE must reject candidates for explicit reasons such as:
-
-- conservation-law violation;
-- dimensional inconsistency;
-- impossible boundary conditions;
-- material/property invalidity;
-- numerical non-convergence;
-- outside applicability;
-- insufficient evidence.
-
-Exit requirement: high-quality refusal is scored positively.
-
-### G4 — Anonymous primitive selection
-
-The benchmark provides a large bounded library of neutral candidate primitives rather than the historically correct choice.
-
-The Discovery Runtime must determine which candidates merit testing from their allowed physical properties and constraints.
-
-Exit requirement:
-
-- identify a physically plausible subset without answer-bearing labels;
-- correctly eliminate invalid candidates;
-- retain potentially valid candidates when evidence is insufficient rather than falsely rejecting them;
-- recover a viable mechanism within the preregistered budget.
-
-The benchmark reports selection efficiency and false-elimination / invalid-survivor rates.
-
-### G5 — Transformed-physics / synthetic-universe tasks
-
-The evaluator changes names, constants, scales or admissible relationships while preserving a solvable latent structure.
-
-Purpose: reduce dependence on memorized historical answers and test whether primitive selection still works when familiar names and values are absent.
-
-Exit requirement: recover the latent mechanism from the transformed problem, not from historical naming cues.
-
-### G6 — No-solution / insufficient-evidence tasks
-
-Some tasks intentionally have:
-
-- no feasible mechanism inside the allowed physics;
-- an underdetermined objective;
-- insufficient measurements;
-- missing model classes.
-
-Correct output may be `REFUSED` or `INSUFFICIENT_EVIDENCE`.
-
-A system that always returns a candidate fails Genesis.
-
-### G7 — Frontier historical principles
-
-Only after G0–G6 are stable, test more demanding historical principles requiring broader physics.
-
-These remain **rediscovery benchmarks**, not novelty claims.
-
-High-consequence topics must remain non-operational and bounded to safe scientific principles. For example, a nuclear-energy benchmark may test high-level energy-conversion reasoning but must not include reactor construction, fuel-cycle procedures, enrichment, criticality engineering, or other actionable hazardous instructions.
-
-### 7.1 Genesis graduation suite
-
-The target graduation program is deliberately bounded. FORGE should not claim domain-generality from one flagship or from many closely related tasks.
-
-The planned suite is:
-
-1. **Battery / electrochemistry** — evidence-closed flagship and electrochemical reasoning.
-2. **Thermal / thermodynamics** — independent energy/transport reasoning.
-3. **Mechanics + fluids** — geometry, continuous physics and coupled engineering behavior.
-4. **Electromagnetism** — a physically distinct field/energy-conversion family.
-5. **Therapeutics / biology** — bounded research reasoning over noisy biological evidence and mechanistic models.
-6. **Materials / chemistry** — advanced anonymous-primitive and reaction/property search.
-7. **High-level nuclear-energy principles** — advanced safe, non-operational multiphysics reasoning only.
-
-The first five are the minimum target for a **Genesis Graduation** claim. Domains six and seven are strengthening challenges, not prerequisites for beginning external evaluation.
-
-Every graduation domain should include, where scientifically meaningful:
-
-```text
-Historical Blind Rediscovery
-        +
-Anonymous Primitive Selection
-        +
-Synthetic / Transformed Universe
-        +
-No-Solution / Insufficient-Evidence Control
-```
-
-Passing requires the same generic cognition architecture across domains. Domain packs may supply domain semantics, admissible primitives, models, providers, data and safety constraints; they may not supply target-specific reasoning paths or hidden-answer logic.
-
-## 8. Search strategy
-
-Genesis must not equate intelligence with brute force.
-
-The preferred loop is:
-
-```text
-propose
-→ simulate
-→ falsify
-→ update belief
-→ select next-best experiment
-→ repeat
-```
-
-The runtime should support:
-
-- active learning;
-- Bayesian or surrogate-guided optimization where appropriate;
-- multi-fidelity evaluation;
-- constraint propagation;
-- dimensional pruning;
-- symmetry/equivalence reduction;
-- design-memory reuse;
-- explicit exploration/exploitation accounting.
-
-Random search may be retained as a baseline.
-
-The benchmark should compare the discovery policy against at least one simple baseline when feasible.
-
-### 8.1 Non-linear reasoning, dependency invalidation and automatic replanning
-
-The FORGE Mind must not be implemented as a one-way pipeline in which step N permanently assumes that steps 1..N-1 were correct.
-
-Every hypothesis, design decision, inferred state and experiment plan must declare the upstream assumptions and evidence on which it depends. Later evidence may invalidate an earlier assumption. When that happens, FORGE must propagate the invalidation through the dependency graph and replan from the earliest scientifically affected state rather than patching only the latest output.
-
-Required behavior:
-
-```text
-state / assumption A
-        ↓
-decision B
-        ↓
-experiment C
-        ↓
-decision D
-        ↓
-new evidence contradicts A
-        ↓
-mark A weakened / falsified
-        ↓
-invalidate B, C, D only where dependency exists
-        ↓
-preserve unaffected evidence and sub-designs
-        ↓
-construct a new belief state
-        ↓
-choose the next-best recovery experiment or redesign
-        ↺
-```
-
-This is a **belief-revision and replanning requirement**, not an undo stack. The runtime must be able to:
-
-- trace every downstream decision to the assumptions and evidence that justified it;
-- distinguish a failed numerical execution from a falsified scientific hypothesis;
-- weaken, falsify or reopen an earlier hypothesis when later evidence requires it;
-- invalidate only dependent descendants rather than discarding unrelated valid work;
-- preserve negative evidence and failed paths in Design / Discovery Memory;
-- reuse unaffected geometry, models, evidence and solver results where their identities and applicability remain valid;
-- regenerate the active plan from the updated belief state;
-- move backward across multiple reasoning stages when necessary, including to an early architecture or primitive-selection decision;
-- move forward along a different branch without pretending the previous branch never happened;
-- stop with `INSUFFICIENT_EVIDENCE` or `REFUSED` when no admissible recovery path exists within budget.
-
-A benchmark must therefore score not only whether FORGE eventually reaches the hidden target, but whether it can **recover correctly from a deliberately wrong early assumption**.
-
-At least one Genesis task should inject or permit an initially plausible but incorrect assumption whose contradiction appears only after later simulation or evidence. Passing that task requires dependency-aware rollback/replanning, preservation of unaffected work, and a replayable record explaining:
-
-1. which earlier assumption became untenable;
-2. which downstream decisions were invalidated;
-3. which prior results remained admissible;
-4. why the replacement branch was selected;
-5. what additional experiment or evidence justified the revised path.
-
-Target-specific rescue code is prohibited. The same generic mechanism must work across all qualified domains.
-
-### 8.2 Universal FORGE Mind
-
-FORGE Discovery must expose one **domain-general scientific cognition loop**, not separate minds for battery, engineering, therapeutics, materials or other domains.
-
-The cognition loop is:
+The first real target is not “advanced cognition”. It is one measurable closed loop:
 
 ```text
 objective
   ↓
-world / system state model
+read-only scientific state view
   ↓
-competing hypotheses
+competing hypotheses / candidate mechanisms
   ↓
-predictions
+predictive distributions
   ↓
 next-best experiment / simulation
   ↓
 provider execution
   ↓
-falsification
+falsification + evidence admission
   ↓
 belief update
   ↓
-replanning / redesign
+dependency invalidation
+  ↓
+replanning / redesign / stopping
   ↺
 Trust Layer assessment
 ```
 
-The domain changes the admissible knowledge and tools; it must not change the generic reasoning semantics.
+### 5.1 Read-only scientific state view
 
-The generic Mind must support:
+Do not introduce a second world-state authority.
 
-- a world/system state model with explicit unknowns;
-- a hypothesis graph containing competing explanations or candidate designs;
-- belief state updates from new evidence;
-- next-best-experiment selection based on expected information or decision value;
-- explicit falsification attempts rather than confirmation-only search;
-- meta-reasoning over whether to continue, change strategy, increase fidelity, request new evidence or stop;
-- domain-independent dependency invalidation and replanning as specified above;
-- correct refusal when available evidence, models or budget cannot support a defensible conclusion.
+The Mind consumes a read-only view over existing Scientific Twin, TwinRevision, SystemState, ScientificBelief and relevant execution/evidence records.
 
-LLMs may participate in interpretation, hypothesis generation or planning, but they are not scientific authority. Numerical claims must be produced or checked by appropriate models, solvers, data and evidence gates.
+The view must expose:
 
-### 8.3 Intelligent generative design
+- known state;
+- explicit unknowns;
+- assumptions;
+- active hypotheses;
+- applicable evidence;
+- unresolved contradictions;
+- available actions/providers;
+- remaining budget.
 
-For engineering-design tasks, FORGE must not reduce discovery to random geometry generation followed by filtering.
+### 5.2 Competing hypotheses
 
-A generated design should be a **semantic, parametric, editable system model** whose components, interfaces, constraints and purposes are represented explicitly.
+The active set must permit rival explanations or candidate mechanisms.
 
-Examples of required semantics include:
+Each hypothesis must record:
 
-```text
-system
- ├─ components
- ├─ interfaces / attachment points
- ├─ geometry parameters
- ├─ mass / energy / transport relationships
- ├─ reserved design space
- ├─ operational constraints
- ├─ validity / uncertainty state
- └─ decision lineage
-```
+- typed proposition/mechanism;
+- parent/derivation lineage;
+- assumptions;
+- proposer kind;
+- supporting and contradicting evidence links;
+- status derived only through authoritative FORGE mechanisms;
+- pruning/deactivation reason when removed from the active set.
 
-When a requirement changes or a missing component is introduced, FORGE should perform impact analysis and local redesign where possible:
+Silent hypothesis deletion is prohibited.
 
-```text
-new requirement
-      ↓
-affected dependency subgraph
-      ↓
-preserve unaffected valid sub-designs
-      ↓
-modify/recompose affected components
-      ↓
-re-run only required physics/evidence
-      ↓
-re-optimize
-      ↓
-updated evidence-backed design
-```
+### 5.3 Predictive Outcome Model
 
-The system should support reserved interfaces or design margin when explicitly requested or justified, so later additions do not necessarily require a complete redesign.
+A next-best-experiment policy is hollow without predicted outcome distributions.
 
-Generated artifacts must retain lineage explaining why each major design decision exists and which evidence or requirement justified it.
-
-### 8.4 Advanced cognition capabilities
-
-The following capabilities are part of the planned FORGE Mind roadmap. They are not prerequisites for Genesis v0.1 unless a benchmark explicitly exercises them, but they should be implemented as generic cross-domain cognition mechanisms rather than domain-specific helpers.
-
-#### Causal and counterfactual reasoning
-
-FORGE should maintain explicit causal hypotheses where the science supports them and should be able to ask bounded counterfactual questions before paying for expensive execution.
-
-Examples:
+Before an experiment is selected, the Mind must be able to ask, for each relevant hypothesis/action pair:
 
 ```text
-What changed?
-What downstream quantities should change if this cause is real?
-What if this variable changes while the rest of the admissible state is held fixed?
-Which intervention best discriminates competing causal explanations?
+P(outcome | hypothesis, action, current evidence)
 ```
 
-Counterfactuals are hypotheses, not evidence. They become authoritative only after appropriate model or provider execution and Trust Layer assessment.
+The first production OutcomeModel may be simple and domain-bounded, but it must be:
 
-#### Scientific Imagination Sandbox
+- calibrated on generated or held-out cases;
+- explicit about uncertainty;
+- grounded in solver/surrogate execution;
+- replayable;
+- independently scoreable.
 
-FORGE may generate deliberately unconventional mechanisms, architectures or hypotheses inside an isolated speculative workspace.
+### 5.4 Probabilistic belief
 
-Every object in this workspace must be explicitly marked as speculative and must not inherit validation, support or confidence from ordinary evidence simply because it was generated by the Mind.
+Belief must distinguish:
 
-Promotion path:
+- admitted evidence;
+- hypothesis plausibility;
+- model uncertainty;
+- unresolved conflict;
+- unavailable posterior information.
 
-```text
-SPECULATIVE
-    ↓
-physically / biologically representable
-    ↓
-admissible model available
-    ↓
-simulation / evidence
-    ↓
-falsification
-    ↓
-ordinary Trust Layer
-```
+The design must not convert missing uncertainty into certainty.
 
-The sandbox exists to increase exploration breadth without contaminating evidence.
+Where probabilities are used, their provenance and update rule must be explicit and testable.
 
-#### Cross-domain analogy engine
+### 5.5 Next-best experiment / value of information
 
-FORGE may transfer abstract reasoning patterns across domains when the analogy is expressed in generic scientific structure rather than copied answers.
+The planner may use EVSI / expected information / decision value only when its inputs are grounded.
 
-Examples of transferable abstractions include:
+Candidate actions may include:
 
-- diffusion / transport;
-- feedback;
-- resonance;
-- conservation;
-- competing pathways;
-- bottlenecks;
-- stability / instability;
-- source-sink structure;
-- multi-scale separation.
+- discriminate rival hypotheses;
+- falsify a high-impact assumption;
+- reduce decision-critical uncertainty;
+- change fidelity;
+- acquire a missing measurement;
+- rerun an invalidated coupled calculation;
+- stop and refuse.
 
-An analogy is only a proposal for a new hypothesis. It must be re-expressed in the target domain's own semantics, models and admissibility rules before testing.
+The planner must distinguish **solver failure** from **scientific outcome**.
 
-#### Value-of-information planning
+### 5.6 Decision-theoretic stopping
 
-Where multiple admissible experiments or simulations are available, FORGE should prefer the action with the best expected decision value rather than the action with the highest raw predicted score.
+Stopping is part of scientific reasoning.
 
-A planning policy may consider:
+The run must preregister asymmetric losses where appropriate, including the cost of:
 
-- expected information gain;
-- expected uncertainty reduction;
-- expected falsification power;
-- compute cost;
-- wall-clock cost;
-- experimental cost;
-- risk of invalidating large dependency subgraphs;
-- fidelity required.
+- false support;
+- false refusal;
+- unnecessary compute;
+- unresolved uncertainty.
 
-The precise utility function must be benchmark-specific and preregistered when it affects scoring.
+The Mind should stop when the expected value of another admissible experiment is below its scientific/compute cost or when no admissible path remains.
 
-#### Unknown-unknown detection and search-space expansion
+---
 
-FORGE must not assume that failure of all current candidates means the objective is impossible.
+## 6. Scoreable predictions
 
-If the active hypothesis set repeatedly fails, the Mind should test whether the search representation itself is inadequate.
+Every selected scientific experiment must have a pre-result predictive record.
 
-Possible outcomes include:
+The record should include, as applicable:
 
-- missing primitive;
-- missing model class;
-- missing coupling;
-- missing measurement;
-- incorrect shared assumption;
-- insufficient resolution or fidelity;
-- genuinely infeasible objective inside the current contract.
+- predicted distribution or interval;
+- hypothesis-conditioned alternatives;
+- expected discriminating power;
+- uncertainty;
+- action cost;
+- record identities used to compute the prediction.
 
-The resulting state must distinguish between:
+After execution, score the prediction with an appropriate proper scoring rule.
 
-`SEARCH_SPACE_INADEQUATE`, `INSUFFICIENT_MODEL_CAPABILITY`, `INSUFFICIENT_EVIDENCE`, and a supported infeasibility conclusion.
+Campaign-level metrics include:
 
-The runtime may expand the search space only within preregistered or explicitly authorized bounds. It must not silently import forbidden knowledge to rescue a failed run.
+- calibration;
+- sharpness;
+- prediction score;
+- information gained per provider call;
+- information gained per unit compute;
+- decision improvement after evidence.
 
-#### Evidence-conflict resolution
+This makes “reasoning quality” measurable instead of impressionistic.
 
-When independent models, datasets, providers or measurements disagree, FORGE should not average them blindly or pick the result it prefers.
+---
 
-The Mind should:
+## 7. One justification graph
 
-1. localize the conflicting claims;
-2. identify differing assumptions, validity envelopes and uncertainty channels;
-3. generate competing explanations for the disagreement;
-4. choose an experiment, model refinement or higher-fidelity run that can discriminate between them;
-5. preserve unresolved conflict explicitly when no decisive test is available.
+FORGE should build **one** content-addressed justification/dependency graph rather than separate graphs for Mind invalidation, design impact and coupling staleness.
 
-#### Meta-learning of reasoning strategies
+Nodes should include existing content identities for:
 
-FORGE may learn which **reasoning strategies** tend to work for classes of problems without memorizing target answers.
+- assumptions;
+- hypotheses;
+- claims;
+- plans;
+- runs;
+- evidence;
+- twin revisions;
+- design decisions/components;
+- coupling results;
+- fidelity links.
 
-Reusable strategy patterns may include:
+Edges should represent typed relationships such as:
 
-- dimensional pruning before numerical search;
-- surrogate-first screening;
-- coarse-to-fine mesh/fidelity schedules;
-- which experiment classes have high falsification value;
-- which decompositions reduce a large search graph effectively.
+- depends_on;
+- supports;
+- contradicts;
+- derived_from;
+- invalidates;
+- supersedes;
+- requires_context;
+- transfers_to.
 
-Strategy reuse must never bypass domain admissibility, Trust Layer gates or benchmark isolation.
+The graph must support queries for:
 
-The benchmark record should distinguish:
+1. what becomes stale after an assumption/context/design change;
+2. what remains valid;
+3. what must be rerun;
+4. what claim confidence must be recomputed;
+5. which redesigns affect which physics;
+6. which coupled results are no longer applicable.
 
-```text
-reused reasoning strategy
-!=
-reused target answer
-```
+### 7.1 Invalidation benchmark
 
-### 8.5 Multiphysics intelligence requirements
+Genesis must inject an incorrect assumption at a random dependency depth.
 
-FORGE must treat multiphysics as a reasoning problem over interacting scientific subsystems, not as a bag of independent solver calls.
+The evaluator knows the true affected set.
 
-#### Coupling Intelligence Graph
+Score:
 
-The runtime should represent cross-domain influence explicitly:
+- invalidation precision;
+- invalidation recall;
+- preserved-unaffected-work rate;
+- recovery cost;
+- replay completeness.
 
-```text
-state / field A
-    ↓ affects
-state / field B
-    ↓ modifies
-geometry / material / boundary condition C
-    ↺ may invalidate A
-```
+“Invalidate everything” and “invalidate nothing” must both fail.
 
-The graph should record:
+---
 
-- direction of influence;
-- exchanged quantities and units;
-- reference frames;
-- coupling strength where known;
-- whether the dependency is one-way, two-way or cyclic;
-- whether a changed upstream state invalidates downstream results;
-- the fidelity and evidence level at which the coupling was established.
+## 8. AI-worker boundary
 
-The Mind should use this graph to decide which providers must be rerun after a change and which results remain admissible.
+AI workers are replaceable proposers, not scientific authorities.
 
-#### Conservation Ledger
+### 8.1 Typed proposals, not authority blocklists
 
-Every coupled boundary or exchange should declare the conservation quantities that must close, where scientifically applicable.
+LLM output must enter through typed proposal schemas.
 
-Examples include:
+Allowed examples:
 
-- mass;
-- energy;
-- charge;
-- momentum;
-- species / material balance.
+- a hypothesis statement in the mechanism grammar;
+- parameter ranges with units;
+- a proposed action family;
+- a suggested variable/measurement to test.
 
-The runtime should maintain a conservation ledger over the coupled system and refuse or downgrade results when exchanges do not reconcile within preregistered numerical and model-error allowances.
+Free text may be stored for audit but must never be parsed into planner authority.
 
-A passing solver status does not override a failed conservation check.
+### 8.2 Decisions an LLM must not control
 
-#### Adaptive Fidelity Controller
+An AI worker must not set:
 
-Fidelity should be chosen dynamically from the current scientific state rather than fixed globally for the whole campaign.
+- hypothesis status;
+- evidence admission;
+- applicability verdicts;
+- uncertainty values;
+- priors/weights that the belief updater consumes;
+- predicted divergence used to rank experiments;
+- falsification thresholds;
+- success criteria;
+- benchmark equivalence/novelty;
+- utility/cost exchange rates;
+- budget expansion;
+- stopping policy;
+- silent hypothesis pruning;
+- evaluator verdicts.
 
-The controller may increase fidelity when:
+### 8.3 Every planner number must cite execution
 
-- uncertainty is too high for the current decision;
-- competing hypotheses remain indistinguishable;
-- sensitivity concentrates in a narrow region;
-- a coupling becomes strongly nonlinear;
-- a lower-fidelity model leaves an unresolved discrepancy.
+Any numerical value used by the planner for expected outcome, divergence, cost or uncertainty must reference an execution/surrogate record.
 
-It may retain lower fidelity when the cheaper model is already sufficient for the current decision.
+A caller-supplied “confidence”, “weight” or “separation” without execution provenance is non-authoritative.
 
-Fidelity promotion must be recorded with the reason, expected information gain and compute cost.
+### 8.4 Multiplicity applies to AI proposals
 
-#### Model-Discrepancy Localizer
+Every tested AI proposal enters the multiplicity ledger.
 
-When prediction and observation disagree, FORGE should attempt to localize the likely source of discrepancy rather than reporting only a global mismatch.
+If ten hypotheses were proposed and tested, the final scientific record must not present the surviving one as if it were the only attempt.
 
-Candidate sources may include:
+### 8.5 Mandatory LLM ablation
 
-- geometry;
-- boundary / initial conditions;
-- material or property models;
-- missing physics;
-- incorrect coupling;
-- numerical discretization;
-- solver configuration;
-- measurement quality;
-- applicability violation.
+Every Genesis evaluation includes a matched arm where LLM workers are replaced by a non-LLM proposer such as:
 
-The localizer should generate competing explanations, identify evidence that discriminates between them and feed those candidates back into the ordinary hypothesis / falsification loop.
+- grammar enumeration;
+- random valid proposals;
+- a fixed heuristic;
+- BO/search-only proposals where applicable.
 
-A discrepancy source must remain `UNKNOWN` when the evidence cannot distinguish it.
+If performance is unchanged, the LLM is decoration.
 
-#### Multiscale Reasoning
+If performance holds on historical tasks but collapses on synthetic/trap worlds, the likely gain is memory rather than general reasoning.
 
-FORGE should support explicit reasoning across spatial, temporal and organizational scales where the domain requires it.
+---
 
-Examples:
+## 9. Port-based universal mechanism representation
 
-```text
-microstructure
-   ↓
-component property
-   ↓
-subsystem behavior
-   ↓
-system performance
-```
+The preferred generic mechanism grammar is a port-based representation inspired by bond graphs / port-Hamiltonian structure.
 
-and
+Domains provide:
 
-```text
-microseconds
-   ↓
-seconds
-   ↓
-hours
-   ↓
-lifecycle
-```
+- port types;
+- admissible effort/flow variables;
+- constitutive laws;
+- storage elements;
+- dissipation elements;
+- transformers/gyrators or equivalent converters;
+- conservation constraints;
+- units and applicability.
 
-Cross-scale transfer must record:
+The generic Mind searches **graph structure + admissible parameters**, not answer names.
 
-- what quantity is passed between scales;
-- aggregation / homogenization assumptions;
-- validity envelope;
-- lost information;
-- uncertainty introduced by scale reduction;
-- whether feedback from the larger scale changes the smaller-scale model.
+Expected benefits:
 
-The Mind must not silently treat a result valid at one scale as authoritative at another.
+1. a canonical mechanism digest;
+2. energy/flow conservation checks by construction where applicable;
+3. structural cross-domain analogy without LLM storytelling;
+4. a concrete definition of mechanism distance/equivalence;
+5. one representation for G1–G4 mechanism tasks;
+6. domain packs that add semantics without changing generic reasoning code.
 
-At least one coupled Genesis benchmark should require FORGE to detect a cyclic dependency, enforce a conservation check, adapt fidelity in response to unresolved uncertainty, localize a deliberately introduced discrepancy, and preserve scale-specific applicability.
+Cross-domain analogy remains a capability, but it is implemented as **structural mapping over typed mechanism graphs**, not as a standalone LLM analogy engine.
 
-### 8.6 Compute-efficiency and heterogeneous execution requirement
+---
 
-Scientific correctness is necessary but not sufficient for high-throughput discovery. FORGE must also use available compute resources efficiently.
+## 10. Genesis-lite on Blindfold
 
-The runtime should be designed for heterogeneous execution:
+Genesis-lite is the first measurement harness and comes **before** advanced cognition.
 
-- **GPU**: vectorized/batched screening, surrogate inference, compatible matrix/vector kernels, optimization and accelerator-capable providers;
-- **CPU**: orchestration, branching logic, geometry/meshing paths and providers that are CPU-oriented;
-- **HPC / distributed pools**: independent candidate simulations, expensive CFD/FEA/PDE runs and multi-node execution where supported;
-- **cache / reuse**: reuse scientifically identical or still-applicable intermediate results rather than recomputing them;
-- **multi-fidelity promotion**: expensive solvers should normally be reserved for the small subset of candidates that survive cheaper valid gates.
+It should extend/reuse Blindfold rather than build a second benchmark authority.
 
-A search budget such as 10,000 candidate designs must not imply 10,000 identical high-fidelity runs. The intended pattern is:
+### 10.1 Mandatory anti-leakage controls
 
-```text
-large candidate population
-        ↓
-batched cheap screening
-        ↓
-small promoted subset
-        ↓
-medium-fidelity evaluation
-        ↓
-very small finalist set
-        ↓
-high-fidelity verification
-```
+Every benchmark class must use, where applicable:
 
-FORGE should behave as an **anytime system** where useful provisional results can appear before the full high-fidelity campaign is complete, while clearly distinguishing provisional search output from validated evidence.
+- one shared primitive library frozen before task authoring;
+- frozen Mind code digest before hidden tasks are revealed;
+- evaluator code outside the Mind/Core authority being evaluated;
+- third-party task authoring for held-out evaluation;
+- network/search isolation;
+- frozen dependency/environment manifest;
+- hidden evaluator answer key;
+- immutable event log;
+- equal-budget baselines;
+- LLM-ablation/model-swap arms;
+- renamed/paraphrased task variants;
+- transformed/synthetic universes;
+- anti-historical trap worlds.
 
-Performance targets must be benchmarked on real hardware before being advertised as achieved. At minimum, every campaign should record:
+### 10.2 Anti-historical trap worlds
 
-- wall-clock time by stage;
-- CPU and GPU allocation/utilization where measurable;
-- worker count and concurrency;
-- solver/provider call counts;
-- candidate counts entering and leaving each fidelity level;
-- cache/reuse rate;
-- compute cost per candidate and per surviving design;
-- time to first feasible candidate;
-- time to useful shortlist;
-- time to final evidence bundle.
+A trap world preserves the high-level objective but changes admissible properties/relationships such that the familiar textbook answer is wrong.
 
-A workflow that is scientifically correct but needlessly serial, recomputes unchanged work, or promotes excessive candidates to expensive fidelity is a performance failure to be diagnosed, not accepted as inevitable.
+A system that returns the historical answer in the trap world fails the reasoning test.
 
-## 9. Evidence model
+### 10.3 Representation-circularity control
 
-Every run must emit an immutable evidence bundle containing at least:
+The benchmark author must not tailor the primitive set to each answer.
+
+A task does not count as meaningful discovery if an equal-budget enumerative/random baseline succeeds because the representation already narrows the solution to the historical mechanism.
+
+### 10.4 Statistical floor
+
+Before reporting a discovery/refusal rate:
+
+- use **at least 30 generated instances per benchmark class per domain** for a formal rate claim;
+- compare policies over **at least 20 seeds** where stochastic search is material;
+- report confidence intervals;
+- report the equal-budget baseline for every task/class, not only selected wins.
+
+Small smoke tests may exist below this floor but cannot support a maturity claim.
+
+---
+
+## 11. Benchmark families
+
+### G0 — Search sanity
+
+Small analytically/numerically checkable spaces.
+
+Goal: prove logging, execution, scoring and replay.
+
+### G1 — Mechanism recovery
+
+Recover a functionally equivalent mechanism from admissible primitives without target names/topology.
+
+Mechanism equivalence must be computed from the canonical mechanism representation, not an LLM judgement.
+
+### G2 — Coupled mechanism recovery
+
+Compose two or more physical domains with correct interface semantics.
+
+Success requires coupled verification, not merely two independent successful simulations.
+
+### G3 — Competing-mechanism falsification
+
+Include plausible but wrong rival mechanisms and require explicit falsification/refusal.
+
+### G4 — Anonymous primitive selection
+
+Select useful primitives from a bounded neutral library using allowed properties only.
+
+Report:
+
+- selection efficiency;
+- false elimination;
+- invalid survivor rate;
+- compute cost.
+
+### G5 — Synthetic / transformed universes
+
+Change names, constants, scales and/or admissible relationships while preserving a hidden solvable structure.
+
+### G6 — No-solution / insufficient-evidence
+
+Correct output may be `REFUSED` or `INSUFFICIENT_EVIDENCE`.
+
+A system that always returns a candidate fails.
+
+### Historical tasks
+
+Historical rediscovery remains useful as a demo and pipeline sanity check, but never as the primary evidence for reasoning because pretrained models and development agents may already know the answer.
+
+---
+
+## 12. Scoring
+
+Genesis reports a measurement vector, not one opaque score.
+
+| Metric | Meaning |
+|---|---|
+| Discovery success | Hidden mechanism recovered under the preregistered equivalence rule |
+| Correct refusal | No-solution / insufficient-evidence cases refused correctly |
+| Proper prediction score | Quality of pre-result predictive distributions |
+| Calibration | Stated confidence vs empirical hit rate |
+| Sharpness | Informativeness of calibrated predictions |
+| Information gain | Evidence gained per experiment/provider call |
+| Baseline lift | Improvement over equal-budget baseline |
+| LLM ablation lift | Improvement attributable to AI proposer rather than memory/decorative text |
+| Invalidation precision | Invalidated nodes that truly depended on the broken assumption |
+| Invalidation recall | True dependents that were correctly invalidated |
+| Preserved-work rate | Unaffected valid evidence/results retained |
+| Falsification quality | Wrong candidates rejected for valid scientific reasons |
+| False-elimination rate | Viable candidates incorrectly removed |
+| Invalid-survivor rate | Invalid candidates incorrectly retained |
+| Mechanism distance | Canonical structural/functional distance to hidden evaluator target |
+| Solver-call count | Provider executions |
+| Compute cost | Measured CPU/GPU/wall-clock consumption |
+| Time to first feasible | Anytime usefulness |
+| Time to shortlist | Search usefulness |
+| Replay success | Evidence bundle reproduces the assessed result |
+| Leakage audit | PASS / FAIL / UNKNOWN |
+| Evidence completeness | Required identities/provenance/receipts present |
+
+No run passes if replay or leakage control fails, even if the final answer resembles the hidden target.
+
+---
+
+## 13. Multiphysics intelligence
+
+FORGE already has execution-level coupling primitives; Genesis should extend them instead of creating a new parallel coupling authority.
+
+The generic multiphysics layer must eventually support:
+
+### 13.1 Coupling stability and strength
+
+Estimate whether partitioned coupling is likely to be stable and whether explicit, implicit, quasi-Newton or monolithic treatment is required.
+
+Relevant signals may include fixed-point spectral behavior, stiffness ratios and added-mass-like coupling strength where scientifically appropriate.
+
+### 13.2 Strong-coupling path
+
+Aitken relaxation is not sufficient for every strongly coupled problem.
+
+Provide a qualified path for stronger algorithms such as IQN-ILS and, where a provider stack supports it, a monolithic option.
+
+### 13.3 Coupled-level verification
+
+Single-physics verification does not verify the coupling.
+
+Qualification should include, where suitable:
+
+- manufactured/analytic coupled cases;
+- coupled-window convergence;
+- code-to-code comparison at the coupled level;
+- interface conservation closure.
+
+### 13.4 Error transport across interfaces
+
+Field mapping/transfer error is an uncertainty channel.
+
+It must flow into the coupled uncertainty budget rather than remain only a diagnostic.
+
+### 13.5 Consistent constitutive state
+
+Coupled domains must evaluate material/constitutive properties at a consistent thermodynamic/mechanical/compositional state.
+
+### 13.6 Instability and regime detection
+
+The Red Team / falsification space should include regime transitions such as instability, bifurcation or runaway behavior where the modeled domain permits them.
+
+### 13.7 Geometry–physics relevance
+
+A geometry or component change must invalidate only the physics whose applicability/input identity changed.
+
+This plugs into the same justification graph used by Mind replanning.
+
+### 13.8 Certified reduced-order models
+
+Adaptive fidelity should prefer ROM/surrogate paths with qualified error bounds rather than heuristic cheap models when such qualification is available.
+
+### 13.9 DAE initialization / index handling
+
+Modelica/FMU-style couplings must qualify consistent initialization and relevant index-reduction behavior.
+
+### 13.10 Coupled identifiability
+
+Calibration across coupled domains must detect when parameters are confounded across subsystems.
+
+---
+
+## 14. Compute architecture — build when measurement requires it
+
+Do not build a bespoke scheduler as a moat.
+
+The preferred execution architecture is:
+
+1. **content-addressed task graph** — provider execution identity determines scientifically valid reuse;
+2. **process workers per provider environment** — avoid GIL-bound thread-only execution;
+3. **existing schedulers** — Ray/Dask/Parsl locally where appropriate; Slurm-compatible submission on HPC;
+4. **vectorized cheap tiers** — NumPy/JAX/batched surrogate inference before GPU-specific orchestration;
+5. **telemetry as provenance** — wall time, utilization, calls, cache hits, promotions;
+6. **anytime outputs** — provisional search rankings remain explicitly non-validation evidence.
+
+### 14.1 Performance benchmark ladder
+
+| Campaign size | Primary purpose |
+|---:|---|
+| 10 | establish measured per-tier cost, variance and failure rate |
+| 100 | measure strong scaling, cache correctness and worker efficiency |
+| 1,000 | measure funnel regret, false elimination and time-to-feasible vs ground truth/equal-budget baseline |
+| 10,000 | measure authority-layer scaling, memory/ledger growth and funnel economics |
+
+GPU scheduling comes only after a real accelerator-suitable workload exists.
+
+Large CFD/PDE candidate counts should be reduced by the funnel to a small promoted subset rather than brute-forced.
+
+---
+
+## 15. Intelligent design
+
+The first intelligent-design milestone should be **catalog-constrained synthesis + bounded continuous parameters**, not free-form geometric creativity.
+
+For a drone-class example, a first version may reason over:
+
+- motor;
+- propeller;
+- battery;
+- ESC;
+- mass/balance constraints;
+- thermal/electrical/mechanical compatibility;
+- a small set of continuous design variables.
+
+Requirements:
+
+- semantic components/interfaces;
+- typed ports;
+- constraint propagation;
+- design-decision lineage;
+- reserved-interface/design margins where justified;
+- local replacement/editing;
+- impact analysis through the justification graph;
+- recompute only scientifically affected results.
+
+Free-form/parametric geometry generation becomes a later milestone after at least one geometry-driven coupled case executes and validates the relevance/invalidation path.
+
+---
+
+## 16. Lightweight cognition policy
+
+Capabilities are retained as **semantics**, not necessarily as standalone subsystems.
+
+### Scientific imagination
+
+Keep as `PROPOSED/SPECULATIVE` hypotheses generated through ordinary proposer contracts.
+
+Speculation never inherits support.
+
+### Cross-domain analogy
+
+Keep as structural proposal over port/mechanism graphs.
+
+No standalone LLM analogy engine is required.
+
+### Causal / counterfactual reasoning
+
+Use typed intervention hypotheses/actions and discriminating runs.
+
+A model-internal intervention is not automatically a world-causal claim.
+
+### Unknown-unknown detection
+
+Treat primarily as model criticism / search-space adequacy tests, not a magical detector.
+
+### Evidence conflict
+
+Contradiction should generate discriminating experiments when possible; otherwise the state remains unresolved.
+
+### Meta-learning
+
+Postpone strategy meta-learning until there is a sufficiently large campaign history (target: at least 50 comparable recorded campaigns). Before that, it is likely to learn benchmark quirks.
+
+---
+
+## 17. Graduation by reasoning structure
+
+Counting disciplines is the wrong primary axis.
+
+A domain-general claim requires the **same frozen Mind** to succeed across different reasoning structures and then transfer to a held-out domain with no generic-code change.
+
+Recommended sequence:
+
+| Reasoning structure | Suggested domain |
+|---|---|
+| Law / scaling discovery | thermal / heat transfer in transformed universes |
+| Mechanism composition | mechanics + lumped electromechanics via port networks |
+| Feedback / stability | control and dynamical systems |
+| Kinetics / networks | chemical kinetics and bounded bio-kinetics |
+| Inverse problem / identification | battery equivalent-circuit/degradation tasks |
+| Coupled multiphysics | electro-thermal or thermo-structural |
+| Held-out transfer | third-party domain chosen after Mind freeze |
+
+Requirements:
+
+- domain pack only for the held-out domain;
+- zero target-specific reasoning path;
+- zero-line diff to generic Mind code for the graduation attempt;
+- benchmark authored/revealed after Mind digest freeze.
+
+### 17.1 Therapeutics
+
+Therapeutic Hypothesis Assurance remains a possible later product, not a Genesis-core graduation requirement.
+
+Clinical/therapeutic evidence needs evidence semantics distinct from deterministic/mechanistic solver evidence. Start biology in Genesis with bounded, mechanistically checkable bio-kinetics.
+
+### 17.2 Materials / chemistry
+
+Use as a strengthening domain after the core reasoning structures are measurable.
+
+### 17.3 Nuclear
+
+Remove nuclear-energy rediscovery from the Genesis roadmap. It adds little new reasoning structure relative to thermal/transport, has maximal historical-memory contamination and widens the safety/diligence surface without a clear benchmark gain.
+
+---
+
+## 18. Implementation sequence
+
+Each step has an exit gate. Do not advance merely because code exists.
+
+### Step 0 — Land the Trust lane
+
+- merge/resolve the active Trust/authority work;
+- recertify against the intended HEAD;
+- record the battery decision honestly, whether met or not;
+- do not let a blocked battery claim freeze all Mind work indefinitely.
+
+**Gate:** certificate/authority state matches the intended code state; unresolved failures are explicitly classified.
+
+### Step 1 — Genesis-lite on Blindfold
+
+- freeze scoring;
+- freeze baseline budgets;
+- add trap-world and leakage controls;
+- place evaluator scoring outside the Mind/Core authority being evaluated;
+- run baseline seeds.
+
+**Gate:** baseline distributions are known over at least 20 seeds; benchmark identity/preregistration is frozen.
+
+### Step 2 — Minimal Mind loop
+
+Implement only what the closed loop requires:
+
+- active competing hypotheses;
+- calibrated OutcomeModel;
+- probabilistic/explicit belief;
+- proposer boundary;
+- VoI/action selection;
+- falsification;
+- stopping.
+
+**Gate:** the Mind beats the careful equal-budget baseline with confidence intervals and its predictions are calibrated by a proper scoring rule.
+
+### Step 3 — One justification graph
+
+Unify assumption/evidence/plan/run/design/coupling dependency and staleness semantics.
+
+**Gate:** injected-wrong-assumption tests meet preregistered invalidation precision/recall and preserve unaffected work.
+
+### Step 4 — Port-based mechanisms
+
+Implement canonical mechanism grammar/digest and mechanism-level benchmark classes.
+
+**Gate:** G1/G3/G4-style tasks beat equal-budget baselines and anti-historical trap worlds are not answered by historical recall.
+
+### Step 5 — Transfer + measured compute
+
+- add a distinct reasoning domain through a pack;
+- add process-worker execution;
+- content-addressed result reuse with proof;
+- telemetry;
+- measure scaling from 10 → 1,000 before larger claims.
+
+**Gate:** new domain requires no Mind-specific patch; measured scaling and cache correctness are reported.
+
+### Step 6 — Demo + graduation
+
+Run:
+
+- a narrow real engineering demo, preferably refusal/correction of an infeasible design requirement using real provider executions and stated uncertainty;
+- the reasoning-structure suite;
+- a third-party held-out domain after Mind freeze.
+
+**Gate:** held-out domain passes without modifying generic Mind code; evidence bundle is replayable and externally auditable.
+
+---
+
+## 19. Ablation gate
+
+A cognition capability is not accepted because it sounds intelligent.
+
+Before merging a capability into the required Mind core:
+
+1. preregister the benchmark slice it should improve;
+2. run the full system;
+3. run the same system with that capability removed/replaced;
+4. keep budget and task identities matched;
+5. report effect size + confidence interval.
+
+**Merge rule:** the capability becomes required only if its removal causes a meaningful preregistered degradation without creating a new leakage path or authority violation.
+
+This gate applies to:
+
+- AI proposer assistance;
+- analogy;
+- causal/intervention planning;
+- search-space adequacy checks;
+- adaptive fidelity policies;
+- discrepancy-directed testing;
+- strategy reuse;
+- any future “advanced cognition” feature.
+
+---
+
+## 20. Evidence model
+
+Every Genesis run emits an immutable evidence bundle containing at least:
 
 ```text
 benchmark_id
+mind_code_digest
+evaluator_digest
 preregistration_digest
+primitive_library_digest
 environment_digest
 allowed_knowledge_digest
 forbidden_knowledge_contract
@@ -904,368 +856,237 @@ objective
 seed / determinism settings
 solver/provider versions
 hypothesis event log
+prediction records
+proper-score records
 experiment event log
 candidate lineage
-dependency graph
+justification graph references
 belief revisions
 invalidation / replanning events
 rejection reasons
 resource consumption
-final candidate
+baseline arm identity
+LLM-ablation arm identity
+final candidate / refusal
 validation checks
 uncertainty state
 applicability state
+leakage audit
 replay receipt
-final verdict
+final benchmark verdict
 ```
 
-Unknown uncertainty is recorded as unknown. It must never be silently converted to zero.
+Unknown uncertainty remains unknown.
 
-A failed run remains evidence and must not be deleted from the benchmark history.
+Failed runs, rejected hypotheses and abandoned branches remain part of the record.
 
-## 10. Scoring
+---
 
-Genesis should report a vector of measurements rather than one opaque score.
+## 21. Evidence-preserving cache rule
 
-Recommended metrics:
+Scientifically valid reuse should be proven, not globally prohibited.
 
-| Metric | Meaning |
-|---|---|
-| Rediscovery success | Did the run satisfy the preregistered functional target? |
-| Experiment count | Number of distinct executed experiments |
-| Solver-call count | Total provider executions |
-| Compute cost | CPU/GPU/wall-clock budget actually consumed |
-| Falsification precision | How often rejected candidates were rejected for valid reasons |
-| Search efficiency | Progress relative to a simple baseline |
-| Recovery efficiency | Cost and evidence quality required to recover from invalidated earlier assumptions |
-| Replanning correctness | Whether dependency invalidation preserves unaffected work and removes only scientifically dependent conclusions |
-| Candidate selection efficiency | Useful candidates identified per screened/executed candidate |
-| False-elimination rate | Physically viable candidates incorrectly removed during screening |
-| Invalid-survivor rate | Physically invalid candidates incorrectly retained after screening/falsification |
-| Mechanism distance | Distance from the hidden reference under an evaluator-defined equivalence relation |
-| Replay success | Whether the evidence bundle reproduces the assessed result |
-| Leakage audit | PASS / FAIL / UNKNOWN |
-| Evidence completeness | Required receipts and provenance present |
-| Correct refusal rate | No-solution/insufficient-evidence cases refused correctly |
+For each provider/cacheable execution class, add a property test that:
 
-No benchmark is considered passed if replay or leakage controls fail, even when the final mechanism resembles the hidden target.
+> two executions with the same complete scientific execution identity produce equivalent results within the declared deterministic/tolerance contract.
 
-## 11. Verdict semantics
+Only then may that identity license reuse.
 
-Genesis keeps the normal FORGE discipline.
+A cache hit must preserve provenance showing which original execution produced the reused result.
 
-Possible benchmark-level outcomes include:
+---
 
-- `REDISCOVERED`
-- `PARTIAL`
-- `NOT_FOUND_WITHIN_BUDGET`
-- `REFUSED`
-- `INSUFFICIENT_EVIDENCE`
-- `INVALID_BENCHMARK`
-- `LEAKAGE_SUSPECTED`
-- `REPLAY_FAILED`
-
-`NOT_FOUND_WITHIN_BUDGET` is not proof that the target mechanism is impossible.
-
-`REDISCOVERED` is not proof of novelty.
-
-## 12. Independence ladder
-
-A credible Discovery Runtime should succeed at progressively stronger forms of independence:
-
-1. **Known target, hidden label** — weakest.
-2. **Known target, hidden topology**.
-3. **Target reconstructed from primitive laws only**.
-4. **Correct primitive hidden inside an anonymous candidate library**.
-5. **Renamed/permuted primitive universe**.
-6. **Transformed constants and scales**.
-7. **Synthetic mechanism absent from historical corpus**.
-8. **No-solution cases correctly refused**.
-
-Claims must be tied to the highest rung actually demonstrated.
-
-## 13. Initial execution sequence
-
-Genesis must not interrupt or weaken the current battery evidence-closure work. The implementation order below is the default handoff sequence for the next build phase.
-
-### Phase 0 — Battery evidence closure
-
-Finish the current battery path first:
-
-- real-data freeze and receipts;
-- calibration/holdout eligibility;
-- identifiability checks;
-- uncertainty and applicability closure;
-- replayable evidence bundle;
-- first defensible battery claim at the maturity level the evidence actually supports.
-
-**Exit gate:** battery evidence path is frozen and replayable. Discovery work must not use an unfinished battery claim as proof of general capability.
-
-### Phase 1 — FORGE Mind core
-
-Implement the generic cognition substrate before domain-specific Discovery features:
-
-1. World/System State Model.
-2. Hypothesis Graph.
-3. Belief State.
-4. dependency lineage for assumptions, decisions and evidence;
-5. falsification engine;
-6. next-best-experiment planner;
-7. non-linear invalidation and automatic replanning;
-8. meta-reasoner for continue / change strategy / raise fidelity / stop.
-
-**Exit gate:** a synthetic reasoning task demonstrates that a late contradiction invalidates an earlier assumption, preserves unaffected work and selects a new path without target-specific rescue logic.
-
-### Phase 2 — Advanced cognition
-
-Add the generic reasoning capabilities defined in Section 8:
-
-- causal and counterfactual reasoning;
-- Scientific Imagination Sandbox;
-- cross-domain analogy;
-- value-of-information planning;
-- unknown-unknown / search-space adequacy detection;
-- evidence-conflict resolution;
-- meta-learning of reasoning strategies.
-
-**Exit gate:** each capability has at least one bounded test proving its semantics without allowing speculative output to bypass evidence gates.
-
-### Phase 3 — Multiphysics intelligence
-
-Implement the common multiphysics reasoning layer:
-
-1. Coupling Intelligence Graph.
-2. Conservation Ledger.
-3. Adaptive Fidelity Controller.
-4. Model-Discrepancy Localizer.
-5. Multiscale Reasoning.
-
-Use existing provider adapters and product/system abstractions rather than creating domain-specific copies of the core.
-
-**Exit gate:** one coupled benchmark demonstrates dependency-aware reruns, conservation checking, fidelity escalation, discrepancy localization and scale-specific applicability.
-
-### Phase 4 — High-throughput compute runtime
-
-Make compute efficiency a first-class architecture concern:
-
-- heterogeneous CPU / GPU / HPC scheduling;
-- batched candidate screening;
-- worker-pool parallelism;
-- scientifically valid caching and reuse;
-- multi-fidelity promotion;
-- surrogate / reduced-order paths where separately qualified;
-- anytime results with provisional-vs-evidence status kept explicit;
-- stage-level telemetry for wall time, utilization, solver calls, cache rate and promotion counts.
-
-**Performance rule:** large search budgets such as 10,000 candidates must not translate into 10,000 identical high-fidelity runs.
-
-**Exit gate:** publish measured scaling results on real hardware. Performance targets remain targets until measured.
-
-### Phase 5 — Intelligent generative design
-
-Implement semantic and parametric design objects that can be revised rather than regenerated blindly:
-
-- explicit components and interfaces;
-- editable geometry parameters;
-- requirement and constraint graph;
-- reserved interfaces / design margin when justified;
-- impact analysis for requirement changes;
-- local redesign with preservation of unaffected sub-designs;
-- design-decision lineage.
-
-Start with the drone because the repository already has product composition and an executable coupled-hover chain.
-
-**Exit gate:** a requirement change causes a bounded local redesign, recomputation only of affected physics, and a replayable updated design history.
-
-### Phase 6 — Genesis v0.1
-
-Freeze the benchmark schema and event model, then implement:
-
-1. G0 search sanity.
-2. one G1 historical blind rediscovery.
-3. one G3 competing-mechanism falsification task.
-4. one G4 anonymous-primitive selection task.
-5. one G5 transformed/synthetic task.
-6. one G6 no-solution / insufficient-evidence task.
-7. one deliberate wrong-early-assumption recovery task.
-8. hostile leakage and replay review.
-
-The milestone remains:
-
-> **FORGE Genesis v0.1 — one blind rediscovery + one anonymous-primitive challenge + one transformed task + one no-solution control + one dependency-aware recovery task, all replayable.**
-
-### Phase 7 — Five-domain Genesis Graduation
-
-Run the same generic Mind and Trust architecture across the five core domains:
-
-```text
-1. Battery / electrochemistry
-2. Thermal / thermodynamics
-3. Mechanics + fluids
-4. Electromagnetism
-5. Therapeutics / biology
-```
-
-For each domain, exercise as many of the four benchmark classes as scientifically meaningful:
-
-```text
-Historical Blind Rediscovery
-        +
-Anonymous Primitive Selection
-        +
-Synthetic / Transformed Universe
-        +
-No-Solution / Insufficient-Evidence Control
-```
-
-No domain may introduce target-specific reasoning code into the generic Mind.
-
-**Graduation gate:** the five-domain program is replayable, leakage-audited, evidence-complete and demonstrates the same cognition semantics across independent scientific families.
-
-### Phase 8 — Strengthening domains
-
-Only after the five-domain graduation gate:
-
-6. Materials / chemistry.
-7. High-level nuclear-energy principles under the safe, non-operational benchmark contract.
-
-These strengthen the generality claim; they are not required to start external technical evaluation.
-
-### Execution rules for the implementation agent
-
-The implementation agent should follow these rules unless the owner explicitly changes the plan:
-
-- do not reopen feature breadth outside the phases above;
-- do not create a domain-specific Mind;
-- do not bypass Trust Layer semantics to make a benchmark pass;
-- do not treat LLM output as numerical or scientific authority;
-- do not replace failed evidence with looser post-hoc thresholds;
-- do not hide failed hypotheses or abandoned design branches;
-- prefer generic primitives, contracts and providers over product-specific core logic;
-- preserve the distinction between search output, solver output, validation evidence and supported claims;
-- record performance claims only after measurement;
-- stop and classify a blocker when scientific correctness, identity, provenance, replay or evidence integrity would otherwise be compromised.
-
-## 14. Promotion gates
-
-The Discovery Runtime must not be described as scientifically validated until all required gates are satisfied.
-
-Suggested gates:
+## 22. Promotion gates
 
 ### Gate A — Runtime integrity
 
 - immutable event log;
 - reproducible environment;
-- deterministic replay where expected;
-- correct provenance.
+- correct provenance;
+- replay succeeds.
 
-### Gate B — Search competence
+### Gate B — Baseline competence
 
-- beats or materially improves on a preregistered simple baseline on at least one task;
-- does not rely solely on random enumeration.
+- beats equal-budget baseline with uncertainty reported;
+- result is not attributable only to representation narrowing.
 
-### Gate C — Falsification
+### Gate C — Prediction quality
 
-- rejects invalid candidates correctly;
-- no silent constraint repair;
-- no unsupported success verdict.
+- predictive distributions are preregistered before outcomes;
+- calibration and proper score meet the declared threshold.
 
-### Gate D — Leakage resistance
+### Gate D — Falsification + refusal
 
-- historical task plus transformed/synthetic controls;
-- external corpus blocked;
-- leakage audit recorded.
+- invalid candidates are rejected for explicit reasons;
+- no unsupported success verdict;
+- no-solution/insufficient-evidence controls are handled correctly.
 
-### Gate E — Cross-domain repeatability
+### Gate E — Leakage resistance
 
-- success in at least two independent physics families;
-- same generic discovery architecture;
-- no target-specific hard-coded solution path.
+- synthetic/transformed tasks;
+- anti-historical traps;
+- frozen shared primitive library;
+- LLM ablation/model swap;
+- evaluator separated from the Mind;
+- task authoring/reveal protocol recorded.
 
-### Gate F — Trust integration
+### Gate F — Replanning correctness
 
-- applicability, uncertainty, provenance and replay flow through the normal FORGE evidence system;
-- benchmark success cannot bypass Trust Layer semantics.
+- injected invalid assumptions produce precise dependency invalidation;
+- unaffected evidence survives.
 
-## 15. Failure rules
+### Gate G — Cross-domain transfer
 
-Genesis is designed so that negative results remain useful.
+- a new domain is added via a domain pack only;
+- generic Mind code remains frozen.
+
+### Gate H — Trust integration
+
+- applicability, uncertainty, provenance and replay remain governed by normal FORGE evidence semantics;
+- benchmark success cannot self-promote into a scientific claim.
+
+---
+
+## 23. Failure rules
 
 Do not:
 
-- loosen a success threshold after a failed run;
-- add the hidden answer to the admissible primitives;
-- silently increase the compute budget;
-- delete failed hypotheses from the event log;
-- silently patch a downstream design after an upstream assumption was falsified;
-- discard valid unrelated evidence merely because another branch was invalidated;
-- reclassify unknown uncertainty as zero;
-- promote solver agreement to experimental validation;
-- call a historically known mechanism a novel discovery.
+- loosen thresholds after seeing failure;
+- expand the compute budget mid-run;
+- tailor primitives after seeing the hidden target;
+- delete failed hypotheses;
+- silently prune rivals;
+- convert missing uncertainty to zero;
+- let an LLM provide planner-authoritative priors/separations/thresholds;
+- let model disagreement masquerade as uncertainty;
+- silently patch a downstream design after an upstream assumption fails;
+- discard unrelated valid evidence during replanning;
+- call historical recovery “novel discovery”;
+- use internal FORGE trust code as the sole benchmark grader.
 
-If a benchmark specification is defective, mark the run `INVALID_BENCHMARK`, revise the preregistration, and start a new run with a new identity.
+A defective task is marked `INVALID_BENCHMARK`, assigned a new identity after correction, and rerun from preregistration.
 
-## 16. Relationship to Scientific Twins and Design Memory
+---
 
-Genesis should reuse the common FORGE identity and evidence architecture.
+## 24. Genesis v0.1 — trimmed definition of done
 
-- **Scientific Twin**: candidate system identity, model state, geometry and evidence state.
-- **Design Memory**: prior tested candidates, failures, constraints and evidence.
-- **Discovery Memory**: ordered search history and belief updates.
-- **Credibility Graph**: links claims to evidence and unresolved gaps.
-- **Scientific Red Team / Design-Killer**: actively searches for reasons a candidate should fail.
+Genesis v0.1 is deliberately smaller than the full roadmap.
 
-A rediscovered candidate is not promoted because it is historically recognizable. It is promoted only through evidence.
+It is complete when:
 
-## 17. Commercial interpretation
-
-Genesis is primarily a technical validation benchmark, not marketing copy.
-
-If successful, the defensible statement is:
-
-> FORGE can autonomously search a bounded physical design space, falsify candidates and rediscover established mechanisms under preregistered blinded conditions, with replayable evidence.
-
-Do not replace that statement with claims that FORGE discovers unknown science unless a separate, independently reviewed evidence program supports such a claim.
-
-## 18. Definition of done for Genesis v0.1
-
-Genesis v0.1 is complete only when all of the following are true:
-
-- [ ] benchmark schema is committed;
+- [ ] benchmark schema/event model is frozen;
 - [ ] preregistration is immutable and hash-addressed;
-- [ ] network/search isolation is demonstrated;
-- [ ] one G1 historical rediscovery task runs end-to-end;
-- [ ] one G4 anonymous-primitive selection task runs end-to-end;
-- [ ] one G5 transformed/synthetic control with anonymous primitives runs end-to-end;
-- [ ] one G6 no-solution control runs end-to-end;
-- [ ] every hypothesis and experiment is recorded;
-- [ ] hypothesis/design dependencies are recorded;
-- [ ] at least one benchmark demonstrates dependency-aware rollback/replanning after a later contradiction invalidates an earlier assumption;
-- [ ] unaffected valid evidence survives replanning with unchanged identity;
-- [ ] invalid candidates have explicit rejection reasons;
-- [ ] evidence bundle replays successfully;
+- [ ] evaluator scoring is separated from the Mind/Core authority being evaluated;
+- [ ] Blindfold/Genesis-lite baselines are recorded over ≥20 seeds;
+- [ ] one generic Minimal Mind loop runs end-to-end;
+- [ ] the Mind emits predictive distributions before experiments;
+- [ ] predictions are scored with a proper scoring rule;
+- [ ] a production OutcomeModel exists for the v0.1 task family;
+- [ ] competing hypotheses are explicit;
+- [ ] no LLM-origin numerical prior/weight/separation/threshold can steer authority;
+- [ ] every planner-used number cites an execution/surrogate record;
+- [ ] one G1 mechanism-recovery task runs end-to-end;
+- [ ] one G3 competing-mechanism falsification task runs end-to-end;
+- [ ] one G4 anonymous-primitive task runs end-to-end;
+- [ ] one G5 synthetic/transformed task runs end-to-end;
+- [ ] one G6 no-solution/insufficient-evidence task runs end-to-end;
+- [ ] one anti-historical trap task is included;
+- [ ] one deliberate wrong-early-assumption task demonstrates dependency-aware recovery;
+- [ ] invalidation precision/recall and preserved-work rate are reported;
+- [ ] an equal-budget baseline exists for every scored task;
+- [ ] an LLM-ablation arm exists;
+- [ ] replay succeeds;
 - [ ] leakage audit is recorded;
-- [ ] uncertainty and applicability are not overstated;
-- [ ] no target-specific hard-coded answer path exists;
-- [ ] historical names and privileged primitive labels are withheld from the discovery runtime;
-- [ ] candidate-selection efficiency, false-elimination and invalid-survivor metrics are reported;
-- [ ] one generic FORGE Mind executes across the qualified benchmark domains without target-specific reasoning code;
-- [ ] causal/counterfactual proposals are separated from evidence and tested before promotion;
-- [ ] speculative ideas remain isolated until they pass ordinary admissibility, falsification and Trust Layer gates;
-- [ ] cross-domain analogies transfer abstract structure only, never target answers;
-- [ ] value-of-information or equivalent planning is available where multiple next experiments are admissible;
-- [ ] repeated hypothesis failure can trigger explicit search-space adequacy checks rather than blind continued optimization;
-- [ ] conflicting evidence remains explicit until a discriminating test resolves it;
-- [ ] reusable reasoning strategies are recorded separately from domain answers;
-- [ ] coupled-domain dependencies are represented explicitly in a Coupling Intelligence Graph;
-- [ ] applicable mass/energy/charge/momentum/species exchanges are checked through a Conservation Ledger;
-- [ ] fidelity promotion is adaptive, justified and recorded rather than globally fixed;
-- [ ] model/data disagreement can trigger discrepancy localization instead of only a global failure;
-- [ ] cross-scale transfers record assumptions, lost information, applicability and introduced uncertainty;
-- [ ] intelligent-design tasks retain semantic/parametric editability and decision lineage where applicable;
-- [ ] compute campaigns record CPU/GPU/concurrency, fidelity-promotion and time-to-result metrics;
-- [ ] the graduation suite is evaluated against the five-core-domain target before any domain-general maturity claim;
-- [ ] hostile scientific review is completed;
-- [ ] final claims use only the maturity level actually demonstrated.
+- [ ] failed hypotheses and negative evidence remain in the ledger;
+- [ ] no target-specific rescue or reasoning path exists;
+- [ ] final claims stay at the maturity actually demonstrated.
 
-Until these conditions are met, Genesis remains an experimental Discovery benchmark and must not be represented as validated autonomous science.
+Genesis v0.1 does **not** require:
+
+- GPU/HPC scheduling;
+- meta-learning;
+- a standalone imagination subsystem;
+- a standalone analogy engine;
+- full multiphysics graduation;
+- free-form generative geometry;
+- materials/chemistry graduation;
+- therapeutics;
+- frontier historical tasks;
+- five-domain graduation.
+
+Those are later capabilities only if measurement shows they are needed.
+
+---
+
+## 25. Deferred backlog
+
+Postpone until the corresponding prerequisite is real:
+
+- GPU scheduling — until accelerator-suitable workloads exist;
+- strategy meta-learning — until ≥50 comparable campaigns exist;
+- full multiscale reasoning — until more than one task needs it;
+- full free-form generative geometry — until geometry-driven coupling is executable;
+- therapeutics assurance — until biological/clinical evidence semantics are independently designed and validated;
+- materials/chemistry as a strengthening domain — until the core loop transfers;
+- frontier historical rediscovery — historical memory makes it weak evidence.
+
+---
+
+## 26. External evaluation
+
+Externalize Blindfold/Genesis early.
+
+A strong external-evaluation protocol is:
+
+1. outside party authors hidden tasks;
+2. FORGE Mind code digest is frozen;
+3. evaluator material remains outside development sessions;
+4. outside proposer or outside task set runs against the escrow;
+5. scoring is generated by independent evaluator code;
+6. the resulting score/evidence bundle is published or shared for technical diligence.
+
+One credible external score is more valuable than many self-authored demos.
+
+---
+
+## 27. Commercial interpretation
+
+The near-term demo should be narrow, real and auditable.
+
+A strong engineering demo is:
+
+> FORGE refuses an infeasible drone/system requirement, identifies the binding constraint, proposes a corrected admissible specification, executes real providers, and reports uncertainty, applicability and replayable evidence.
+
+That demonstrates the distinctive combination of:
+
+- scientific search;
+- refusal;
+- explanation;
+- provider execution;
+- evidence-bound authority.
+
+Blindfold/Genesis may also stand alone as assurance/evaluation infrastructure for AI-for-science systems.
+
+---
+
+## 28. Final program principle
+
+FORGE should not try to prove intelligence by accumulating named capabilities.
+
+The program succeeds when the same frozen scientific loop:
+
+- makes calibrated predictions;
+- chooses informative actions;
+- falsifies wrong hypotheses;
+- revises belief;
+- invalidates dependencies correctly;
+- preserves unaffected evidence;
+- transfers across reasoning structures;
+- refuses when evidence is insufficient;
+- beats matched baselines;
+- survives LLM ablation and anti-memory controls;
+- and produces externally auditable evidence.
+
+The central gap to close is **discovery credibility**, not feature count.
+
+> **Close it with measurement, not with more capabilities.**
