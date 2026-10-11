@@ -1,72 +1,281 @@
-# Forge Master Plan — Scientific Multiphysics + Lifecycle Runtime
+# Forge Master Plan — Strategy
 
-> **Status:** Strategic operating contract  
-> **Authority:** This document defines the long-term technical direction of Forge.  
-> **Use:** Read this file at the start of every new AI/engineering session before choosing work.
+> **Status:** strategic contract, consolidated 2026-10-11.
+> **Owns:** direction — what Forge is proving NOW, what comes NEXT, what waits until LATER, and what is superseded.
+> **Does not own:** the task queue (`docs/work/ACTIVE_PLAN.md`), the Mind/Discovery scientific contract
+> (`docs/discovery/FORGE_GENESIS.md`), maturity (`docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md`),
+> measurement (`docs/project/PERFORMANCE.md`) or repository rules (`CLAUDE.md`).
+> **Previous version** (including "Big Rocks First" and the P0–P40 phase table):
+> `docs/archive/FORGE_MASTER_PLAN_2026-10-10.md` — historical reference, not executable authority.
 
-## 1. North Star
+Part I (§1–§6) is the live strategy. Part II is architecture reference: it constrains *how* things are built and never
+authorizes *what* to build next.
 
-Forge is being built as a **solver-neutral Scientific Multiphysics + Lifecycle Runtime with a built-in Trust Engine**.
+---
 
-The target is not to recreate every scientific solver. Forge should coordinate mature numerical/scientific providers, bind them through canonical contracts, run coupled simulations across different time scales, track how products change through environment and use, and state exactly what the resulting evidence is allowed to prove.
+## 1. Authority by scope
 
-Canonical direction:
+Authority is assigned **by scope**. No document globally overrides another; each is final only inside its own scope.
+**Execution authority does not imply semantic authority outside the document's scope.**
+
+| Scope | Owning document | Owns | Does not own |
+|---|---|---|---|
+| Repository-wide working rules | `CLAUDE.md` (+ `docs/CORE_FREEZE_POLICY.md` for frozen contracts) | Non-negotiable engineering and scientific working rules | Strategy, the queue |
+| Strategic direction | this file, Part I | NOW / NEXT / LATER / SUPERSEDED | Tasks, science semantics, maturity, measurement |
+| Active work | `docs/work/ACTIVE_PLAN.md` | Only "what work is active right now?" — the sole execution queue | Any semantics owned below |
+| Mind / Discovery / Genesis | `docs/discovery/FORGE_GENESIS.md` | Scientific and benchmark semantics, step gates | Scheduling |
+| Capability maturity | `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md` + `scientific_capability_completion.json` | Maturity stages, promotion, active-epic and exception rules | Scheduling beyond its own policy |
+| Performance | `docs/project/PERFORMANCE.md` (measured numbers in `docs/performance/core-performance.md`) | Measurement semantics, measured evidence, freezes, compute claims | Scheduling |
+| History | `docs/work/PROGRESS.md`, `docs/work/archive/`, `docs/archive/`, `docs/audits/` | The historical record | Anything current |
+
+Rules:
+
+- `ACTIVE_PLAN.md` selects what to work on. It may **not** override Genesis science, Completion maturity rules,
+  Performance measurement semantics, or `CLAUDE.md` repository constraints. Work that would need such an override is
+  not schedulable until the owning document is changed through its own process.
+- This file sets direction. It does not redefine a semantic owned by another document.
+- `CLAUDE.md` scientific authority rules bind every document and every change.
+- **Conflict rule.** If two live documents appear to disagree, decide by scope: the document that owns the scope in
+  question governs it. If ownership itself is unclear, do not silently pick one: record the conflict in
+  `ACTIVE_PLAN.md` under OWNER_DECISION_REQUIRED and continue only with work every involved document allows.
+- Repository code and executed results remain the authority for what is actually implemented.
+
+## 2. North Star and boundary
+
+Forge is a **solver-neutral scientific reasoning and trust runtime**. It is **not** a universal physics solver. It
+orchestrates mature numerical and scientific providers and decides what can scientifically be claimed from their
+outputs: SUPPORTED, REVIEW or REFUSED, with the evidence, uncertainty, applicability and replay that justify it.
+
+Core boundary:
 
 ```text
-Engineering / Scientific Intent
-                ↓
-       Canonical Scientific IR
-                ↓
-        Scientific Planner
-                ↓
-        Multiphysics Graph
-                ↓
-   Domain / Solver Providers
-                ↓
-        Coupling Runtime
-                ↓
-        Scientific Results
-                ↓
- Time + Environment + Lifecycle
-                ↓
-         Updated System State
-                ↓
- Validity / V&V / UQ / Evidence
-                ↓
-  SUPPORTED / REVIEW / REFUSED
+AI workers (Claude, Codex, …)  → propose        (typed proposals only; replaceable)
+Solvers / providers            → compute
+Data                           → observe        (admitted with provenance, licence, uncertainty)
+FORGE Mind                     → manages scientific state and decisions
+Trust Layer                    → admits evidence and controls every scientific claim
 ```
 
-## 2. What Forge must become
+AI workers never own scientific verdicts, evidence admission, applicability, uncertainty, hypothesis status,
+planner-authoritative priors or hypothesis weights, predicted separation/divergence, falsification thresholds, success
+criteria, utility exchange rates, stopping policy, benchmark grading, or novelty/equivalence decisions. Every
+planner-authoritative number must trace back to an execution, admitted data, or a qualified surrogate/model record.
 
-Forge must be able to model a **complete engineered system**, not only an isolated equation or component.
+**The moat** is evidence-bound scientific authority: executable Trust semantics, correct refusal, sealed falsification,
+multiplicity tracking, Blindfold/escrowed evaluation, provenance and replay, and adversarial scientific validation.
 
-Examples include:
+**Not the moat:** provider count, feature count, line count, number of named domains, or generated-candidate count.
 
-- HVAC systems;
-- battery packs and thermal management;
-- drones and multirotors;
-- vehicle subsystems and eventually full vehicles;
-- thermo-structural and fluid-structure systems;
-- chemical/reactor systems;
-- systems whose material properties and performance change over time.
+## 3. What Forge is proving now
 
-The long-term differentiator is the combination of:
+> Forge is currently proving a **trustworthy, measurable scientific reasoning loop** — not maximizing feature or
+> provider breadth.
+>
+> 1. Stabilize / recertify the Trust lane within a bounded timebox.
+> 2. Establish Genesis-lite measurement and strong baselines on the existing Blindfold substrate.
+> 3. Assemble the Minimal Mind and prove benchmark lift over those baselines.
+> 4. Execute one narrow, real engineering refusal/correction demo.
+> 5. Add broader cognition, multiphysics and compute only when measurements justify them.
 
-1. mathematics and numerical foundations;
-2. multiphysics orchestration;
-3. materials and field/mesh semantics;
-4. time and multi-timescale execution;
-5. environment and exposure;
-6. degradation and lifecycle state;
-7. solver/data neutrality;
-8. scientific trust, evidence, uncertainty and refusal;
-9. mechanism-aware reasoning grounded in declared laws, mechanisms, applicability and evidence;
-10. engineering design synthesis from requirements through geometry, assemblies and manufacturing constraints;
-11. motion-system reasoning: kinematics, multibody dynamics, compliant elements, contact, actuation and controls;
-12. a global 3D engineering visualization runtime that can show assemblies, dimensions, cutaways, motion and evidence-bound scientific overlays;
-13. high-throughput multi-fidelity design discovery without confusing optimization with validation.
+Governing principle (from Genesis): **Measure first. Build the minimum generic mechanism that improves the measurement.
+Keep only capabilities that survive ablation.**
 
-### 2.1 Universal architecture rule
+## 4. Now / Next / Later
+
+Two near-term tracks share **one** Trust architecture and **one** Mind. Neither may create a second scientific
+authority, hypothesis store, belief state, evidence graph or planner.
+
+- **Track A — Discovery credibility:** Genesis-lite, Minimal Mind, measurement, anti-leakage, ablation.
+- **Track B — Narrow real demo:** infeasible-specification refusal and correction with real engineering providers.
+
+### NOW
+
+| ID | Item | Why now | Detailed gate |
+|---|---|---|---|
+| N0 | **Trust lane (Gate G0):** land or honestly disposition the open trust/authority work and recertify against the intended HEAD, inside a timebox with a circuit breaker (§5.2). | Everything else rests on authority that matches the code. | `ACTIVE_PLAN.md` G0 |
+| N1 | **Genesis-lite measurement (Track A1):** freeze scoring, strong equal-budget baselines, leakage controls and a compute-budget estimate on the existing Blindfold substrate. | A fitness function must exist before cognition is added. | Genesis §18 Step 1 |
+| N2 | **Minimal Mind loop (Track A2):** one closed, measurable loop over existing owners — only after N1 baselines are frozen **and** the Completion Policy's active-epic condition is met (epic changed, or one narrowly scoped approved exception). | Prove lift, calibration and correct refusal. | Genesis §18 Step 2 |
+| N3 | **Narrow demo preparation (Track B1):** infeasible-spec refusal + correction on real providers. Preparatory engineering may run alongside N2 using already-built capabilities (new foundations follow the Completion Policy); the demo is not claimed until the N2 gate passes. | One real, auditable demonstration. | `ACTIVE_PLAN.md` Track B |
+
+Continuous in NOW: authority-critical defects interrupt any track (wrong numbers, false SUPPORTED/validated,
+corrupted identity/provenance/replay/evidence, evaluator capture, hidden-data leakage). Everything else goes to the
+deferred-hardening ledger.
+
+### NEXT — starts only when its prerequisite gate passes
+
+- **One justification/dependency graph** (Genesis Step 3), unifying assumption dependencies, hypothesis lineage,
+  evidence support/contradiction, plan/run dependencies, Twin context, design impact, fidelity
+  invalidation/resurrection and coupling staleness over existing content identities.
+- **Port-based mechanism representation** (Genesis Step 4): typed effort/flow ports, storage, dissipation,
+  transformation, conservation, constitutive laws, units/applicability; domain packs supply semantics.
+- **Stronger multiphysics only where a benchmark demands it**, extending the existing PhysicsGraph / coupling runtime
+  (never a second one): coupling stability/strength, stronger coupling methods, coupled-level verification, interface
+  error transport into UQ, consistent constitutive state, regime/instability detection, geometry–physics staleness,
+  qualified ROMs, DAE initialization, coupled identifiability.
+- **Measured compute scaling** on the staged architecture (`PERFORMANCE.md` §Compute staging): 10 → 100 → 1,000
+  candidate campaigns before any larger claim.
+- **Narrow intelligent engineering synthesis:** catalog/component selection + bounded continuous parameters +
+  explicit constraints + typed interfaces + local replacement + impact analysis that preserves unaffected results.
+- **Held-out graduation by reasoning structure** (Genesis Step 6) with a named external evaluator.
+
+### LATER — pulled only by a named benchmark, a measured workload or a customer; never by availability
+
+- Broad provider expansion (new providers need a named benchmark or claim that requires them).
+- Free-form / generative geometry and general CAD/assembly synthesis.
+- Large distributed / HPC / GPU infrastructure.
+- Strategy meta-learning (after ≥ 50 comparable recorded campaigns).
+- Therapeutic Hypothesis Assurance as a product (after observational/clinical evidence semantics exist).
+- Strengthening domains: materials/chemistry, NIST AM-Bench, safe fusion-energy engineering, bounded biomedical
+  engineering.
+- Product depth beyond the Track B demo: full drone, vehicle, motor, HVAC, battery-pack products; motion systems;
+  assembly breadth; the 3D engineering viewer (Scene IR stays presentation-only).
+- Public Blindfold leaderboard, external red-team engagements, an L6 prospective result.
+
+### DEFERRED / SUPERSEDED
+
+| Former rule | Status | Replaced by | Where the old text lives |
+|---|---|---|---|
+| "Big Rocks First" (old §8.1, 2026-10-09): breadth and providers before hardening | **SUPERSEDED** | §3–§4 and the provider strategy freeze | `docs/archive/FORGE_MASTER_PLAN_2026-10-10.md` §8.1 |
+| Roadmap P0–P40 as an ordered phase queue (old §9) | **SUPERSEDED** as execution order; kept as a capability-horizon reference | §4 + `ACTIVE_PLAN.md` | archive §9 |
+| Old §10 flagship breadth (HVAC, battery pack, drone, vehicle, fusion, biomedical) | **DEFERRED → LATER** | Track B narrow demo | archive §10; `PERFORMANCE.md` rows 50–58 |
+| "Finish the three rocks, then pivot" (`PERFORMANCE.md`, 2026-10-09) | **CLOSED** (rocks merged in #124, Roadmap V2 R1–R8 merged in #125; not certified) | §4 | archive appendix |
+| BIG 14 / BIG 15 milestone queue in `ACTIVE_PLAN.md` | **SUPERSEDED** as a queue; live open items carried into G0 | `ACTIVE_PLAN.md` G0 | `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md` |
+| Nuclear-principle rediscovery in Genesis graduation (owner direction, early Oct 2026; never in this plan's text) | **REMOVED** | Genesis §17.3 | — |
+| Therapeutics as a Genesis-core graduation requirement; retrospective therapeutic ranking as a Genesis benchmark (old §4.13.3, §10) | **REMOVED** from Genesis core; LATER product | Genesis §17.1 | archive §4.13.3, §10 |
+| Graduation by count of named domains ("five-domain") | **SUPERSEDED** | graduation by reasoning structure, Genesis §17 | — |
+| Old §11 progress metrics led by counts | **SUPERSEDED** | §5.4 evidence-maturity progress | archive §11 |
+
+## 5. Program governance
+
+### 5.1 Timebox framework
+
+Every active step in `ACTIVE_PLAN.md` records:
+
+- **start condition;**
+- **window:** a maximum engineering window or an owner-set deadline. Dates are never invented: until the owner sets
+  one, the field reads `OWNER_DECISION_REQUIRED`;
+- **exit gate;**
+- **circuit-breaker condition;**
+- **allowed outcomes:** `PASS` · `FAIL` · `BLOCKED_WITH_EVIDENCE` · `DEFERRED_BY_OWNER`.
+
+A step whose window has expired may not keep blocking the steps after it: the circuit breaker (§5.2) applies. A `FAIL`
+or `BLOCKED_WITH_EVIDENCE` outcome is recorded exactly as observed; it is never rewritten into a pass.
+
+### 5.2 Trust-lane circuit breaker
+
+The project has repeatedly spent large effort on assurance/control-plane work. The circuit breaker stops that work
+from blocking everything indefinitely **without** loosening any scientific gate. It changes scheduling only.
+
+When a Trust, recertification or assurance blocker exceeds its window, it is placed in exactly one state:
+
+| State | Meaning | Behaviour |
+|---|---|---|
+| `SCIENTIFIC_CORRECTNESS` | It can produce wrong numbers, a false SUPPORTED/validated result, or corrupted evidence admission, identity, provenance, replay or claim authority. | **Blocking** until scientifically resolved, or explicitly superseded by stronger evidence. It blocks every claim that depends on it. |
+| `GOVERNANCE_ONLY` | Automation, CI enforcement, certificate staleness, packaging or assurance-tool performance — **and** a complete evidence record (below) shows no scientific effect. | May be isolated or deferred. Dependent work may proceed; everything produced meanwhile is labelled **uncertified**. The red result stays recorded. |
+| `UNCLASSIFIED` | Default state, and the state of anything whose evidence record is missing or incomplete. | **Blocking** (fail-closed), exactly like `SCIENTIFIC_CORRECTNESS`. Escalate as OWNER_DECISION_REQUIRED if it cannot be classified. |
+
+`GOVERNANCE_ONLY` is never inferred because a blocker is inconvenient, slow or expensive. It requires a short evidence
+record, kept in `ACTIVE_PLAN.md` or PROGRESS, that answers all six questions:
+
+1. What scientific result could this issue corrupt?
+2. Why can it not corrupt that result?
+3. Does it affect evidence admission?
+4. Does it affect identity, provenance or replay?
+5. Does it affect merge or claim authority?
+6. What remains red or unknown after deferral?
+
+If any answer is missing, unsupported or "unknown", the blocker is `UNCLASSIFIED` and blocks.
+
+Every time the breaker fires:
+
+1. **Preserve** the red or negative result exactly as observed.
+2. **Document** the blocker, its state and its evidence record in `ACTIVE_PLAN.md`.
+3. **Never** loosen a gate, tolerance, criterion, skip rule or certificate to clear it.
+
+The circuit breaker never makes anything certified, qualified or validated, and it never permits bypassing scientific
+integrity.
+
+### 5.3 Control-plane budget
+
+Assurance, orchestration, CI, mutation testing and governance exist to protect the product; they must not become the
+whole roadmap.
+
+- **Planning warning threshold:** roughly **20 %** of engineering effort over the last four checkpoints, measured by
+  merged PRs or sessions by area. It is a warning, not a scientific rule.
+- **Why 20 % alone is weak:** effort is hard to measure, and front-loaded trust work is legitimate. So it is paired
+  with a sharper signal: **two consecutive `ACTIVE_PLAN.md` checkpoints that advance no Track A/B gate and no
+  capability maturity stage** also raise the warning.
+- On a warning, record it under OWNER_DECISION_REQUIRED; do not stop work.
+- Fixes classified `SCIENTIFIC_CORRECTNESS` are exempt and never count against the budget.
+
+### 5.4 Progress metric
+
+Primary question: **how many relevant capabilities advanced in evidence maturity?** — the computed stage in
+`docs/project/scientific_capability_completion.json` (`python -m tools.capability_maturity`), plus the Genesis
+measurement vector (baseline lift, calibration, correct refusal, invalidation precision/recall).
+
+Secondary, never primary: qualified provider/regime combinations, replayable evidence bundles, externally scored
+blind results, Red Team seeded-flaw detection, false-discovery and false-elimination rates.
+
+Not progress: files, lines, providers, features, foundations, or generated-candidate counts.
+
+### 5.5 Negative results stay visible
+
+Planning never manufactures maturity. As of 2026-10-11 the record includes: the four BIG 13 flagships end
+`insufficient_evidence`; the Kirkaldy 2024 fade study is NOT MET (activation energy NOT ESTABLISHED, model discrepancy
+NOT QUANTIFIED); the LG M50 DFN study is NOT MET; Battery Practical Pass 1 reported WEAKLY_IDENTIFIABLE (local record,
+not on the remote); many uncertainty channels are UNKNOWN; the Roadmap V2 discovery stack is built but not certified or
+qualified. Details: `docs/work/PROGRESS.md`, `docs/flagships/README.md`.
+
+### 5.6 Change-control rule
+
+Before adding a large feature, ask:
+
+1. Which NOW/NEXT item and which measurement does it serve?
+2. Does a mature provider already solve the numerical problem?
+3. Does it require a new generic contract, or only a DomainPack/provider?
+4. What is the validity envelope, and what evidence proves it?
+5. How are time, environment, lifecycle and uncertainty represented?
+6. Can it replay, and does it preserve fail-closed behaviour?
+7. Does it duplicate an existing owner (see `docs/architecture/discovery_authority_map.md`)?
+
+If those questions cannot be answered, the feature is not ready.
+
+## 6. Session resume protocol
+
+Every new AI/engineering session:
+
+1. reads `CLAUDE.md` and Part I of this file;
+2. reads `docs/work/ACTIVE_PLAN.md` — the only executable queue;
+3. reads `docs/discovery/FORGE_GENESIS.md` when the task touches the Mind, Discovery, Blindfold or Genesis;
+4. reads the newest relevant `docs/work/PROGRESS.md` entries;
+5. inspects the actual HEAD, branches and open PRs before assuming any status;
+6. works on the **current gate** in `ACTIVE_PLAN.md`; Part II of this file and every archive are not task lists;
+7. updates `ACTIVE_PLAN.md` when the bounded plan changes, appends facts to `PROGRESS.md`, and edits this file only
+   for a genuine strategic decision.
+
+Recovery prompt for a lost chat:
+
+> Read `CLAUDE.md`, Part I of `docs/project/FORGE_MASTER_PLAN.md`, and `docs/work/ACTIVE_PLAN.md`. Inspect the current
+> HEAD and open PRs and continue the current gate in the active plan. Do not change direction unless repository
+> evidence requires it.
+
+---
+
+# Part II — Architecture reference (not an execution queue)
+
+These principles constrain **how** anything is built. They never authorize **what** to build next: scheduling comes
+only from Part I §4 and `ACTIVE_PLAN.md`. Phrases such as "must eventually" describe the long-term horizon.
+
+Section numbers keep their pre-2026-10-11 values with an `A.` prefix (old "§4.8" = `A.4.8`) so older references still
+resolve. Gaps are sections moved to
+`docs/archive/FORGE_MASTER_PLAN_2026-10-10.md`: §4.10–§4.12 and §4.14 (product breadth: design synthesis, motion
+systems, electromechanical/wiring, 3D viewer — LATER; detail also in `docs/architecture/design_synthesis.md`,
+`motion_systems.md`, `visualization_runtime.md`), §4.13.2–§4.13.3 (now owned by Genesis), §4.13.6 (frontier verticals —
+LATER), §8.1 (Big Rocks First — SUPERSEDED), §9 (P0–P40 — SUPERSEDED), §10 (flagships — LATER), §11 (metrics — replaced
+by Part I §5.4), §12–§14 (replaced by Part I §5.6 and §6).
+
+### A.2.1 Universal architecture rule
 
 Forge should generalize engineering concepts at the lowest layer where their
 meaning is truly cross-domain, then add domain meaning above that layer.
@@ -109,7 +318,7 @@ A concept must not be specialized to one flagship merely because that flagship
 is the first place it is exercised. Geometry/body work in particular is a
 global Spatial/Geometry Foundation, not an automotive or aerospace subsystem.
 
-## 3. Explicit non-goals
+## A.3. Explicit non-goals
 
 Forge must **not** become an inferior rewrite of mature tools.
 
@@ -135,9 +344,9 @@ Expected provider families include, over time:
 
 A provider is not considered "integrated" because it can be imported or executed. A real Forge integration requires canonical input/output, identity, applicability, evidence, replay and failure semantics.
 
-## 4. First-class scientific pillars
+## A.4. First-class scientific pillars
 
-### 4.1 Mathematics
+### A.4.1 Mathematics
 
 Forge needs explicit mathematical capabilities for:
 
@@ -156,7 +365,7 @@ Forge needs explicit mathematical capabilities for:
 
 Forge owns the contracts, scientific semantics and evidence. External libraries perform computation.
 
-### 4.2 Scientific data
+### A.4.2 Scientific data
 
 Data is a first-class scientific input.
 
@@ -178,7 +387,7 @@ Initial policy: **open/free data first**. Use NASA, NIST, Zenodo, universities, 
 
 Paid/proprietary data is deferred until funding, a customer, or a specific capability justifies it.
 
-### 4.3 Materials
+### A.4.3 Materials
 
 A material is not a bag of constants.
 
@@ -200,7 +409,7 @@ The material system must support properties that depend on state and history, in
 
 The same material identity should be consumable by multiple domains without duplicating authority.
 
-### 4.4 Time
+### A.4.4 Time
 
 Time is a core scientific dimension, not an add-on.
 
@@ -218,7 +427,7 @@ Forge must represent:
 
 Different domains may advance on different time scales.
 
-### 4.5 Environment
+### A.4.5 Environment
 
 Environment is an input domain with explicit history.
 
@@ -237,7 +446,7 @@ Target environmental quantities include:
 
 Environmental inputs must remain traceable to source data or declared scenarios.
 
-### 4.6 Lifecycle and degradation
+### A.4.6 Lifecycle and degradation
 
 Forge must represent how a product changes with time, use and environment.
 
@@ -259,7 +468,7 @@ Target degradation families include:
 
 Degradation changes the future physics. Updated thickness, material properties, resistance, capacity, geometry or other state must feed back into subsequent simulation.
 
-### 4.7 Spatial / Geometry Foundation, fields and mesh
+### A.4.7 Spatial / Geometry Foundation, fields and mesh
 
 Spatial/geometry semantics are a **global Core foundation** shared by every
 applicable domain. They must not be designed around cars, drones or any other
@@ -302,7 +511,7 @@ Spatial / Geometry Foundation
 
 Core semantics remain provider-neutral.
 
-### 4.8 Multiphysics
+### A.4.8 Multiphysics
 
 A multiphysics simulation is not several independent runs.
 
@@ -322,7 +531,7 @@ Forge must support:
 - coupling residual history;
 - stateful transient execution.
 
-### 4.9 Scientific trust
+### A.4.9 Scientific trust
 
 The existing scientific authority rules remain load-bearing.
 
@@ -338,94 +547,14 @@ In particular:
 - removing evidence cannot increase assurance;
 - unsupported claims must remain REVIEW/REFUSED rather than being forced through.
 
-## 4.10 Engineering design synthesis and assembly
+### A.4.10–4.12 → LATER (moved to the archive)
 
-Forge's long-term target is not only to analyse a supplied geometry. It must
-eventually turn engineering requirements into buildable candidate products.
+Design synthesis, motion systems / multibody dynamics and electromechanical actuation / controls / wiring are
+long-term horizon. Detail: `docs/architecture/design_synthesis.md`, `docs/architecture/motion_systems.md` and the
+archived Master Plan §4.10–§4.12. The NEXT item "narrow intelligent engineering synthesis" (Part I §4) is the only
+currently scheduled slice.
 
-Target flow:
-
-```text
-requirements
-  -> system architecture / product template
-  -> design space / topology
-  -> parametric geometry / CAD
-  -> assembly synthesis
-  -> standard components + custom parts
-  -> joints / interfaces / fits / routing
-  -> motion / electrical / thermal / structural model graph
-  -> solver planning
-  -> multi-fidelity design campaign
-  -> reliability / lifecycle / manufacturing / cost
-  -> experiment / evidence
-```
-
-A mesh is not a product design, and a set of solids is not an assembly.
-
-Assembly engineering must be first-class, including bolts, screws, nuts,
-washers, pins, shafts, keys/splines, bearings, bushings, gears, belts, chains,
-couplings, springs, dampers, seals, guides, welds, bonded joints, press-fits,
-motors, gearboxes, actuators, sensors, encoders, connectors, cable/hose/pipe
-routing, lubrication, mechanical stops, tolerances, assembly sequence, tool
-access and serviceability.
-
-Prefer standard/catalog components when appropriate. Missing ratings,
-tolerances, life, cost, availability or operating limits remain UNKNOWN.
-
-Detailed direction: `docs/architecture/design_synthesis.md`.
-
-## 4.11 Motion systems, mechanisms and multibody dynamics
-
-Forge must represent how an assembled machine actually moves, not only whether
-its individual parts survive static loads.
-
-Required future capabilities include:
-
-- forward and inverse kinematics;
-- generalized coordinates, degrees of freedom and joint limits;
-- forward and inverse dynamics;
-- mass/inertia and gravity;
-- rigid and flexible links where supported;
-- revolute, prismatic, spherical, universal and compound joints;
-- four-bar and other linkages, cams, slider-cranks and rack/pinion mechanisms;
-- gears, belts, chains, cable/tendon transmissions and lead/ball screws;
-- springs, dampers, bushings, flexures and other compliant elements;
-- friction, stiction, backlash, hysteresis and joint compliance;
-- contact, impact and grasp/slip behaviour where supported;
-- vibration and suspension behaviour;
-- actuator sizing from torque/force/speed/duty requirements;
-- motion targets, trajectories and control-performance constraints.
-
-A robot arm, suspension, gripper or machine mechanism must therefore be
-simulated as a dynamic system rather than a collection of ideal hinges.
-
-Detailed direction: `docs/architecture/motion_systems.md`.
-
-## 4.12 Electromechanical actuation, controls and power/wiring
-
-Mechanical motion must be coupled to how it is powered and controlled.
-
-Forge should eventually support model composition across:
-
-- electric motors, solenoids and linear actuators;
-- hydraulic and pneumatic actuators where applicable;
-- gearboxes, transmissions and tendon/cable drives;
-- motor electrical behaviour, current, voltage, back-EMF, losses and heating;
-- drives / power electronics where modeled;
-- sensors and encoders;
-- feedback controllers;
-- power supply / battery constraints;
-- electrical conductors, wire gauge/type, insulation and temperature limits;
-- current capacity, voltage drop and resistive heating;
-- connectors, fuses/protection and harness identities;
-- bend radius, routing, strain relief and serviceability;
-- EMI/EMC constraints only where supported by an admitted model/provider.
-
-A motor is not an ideal torque source, and a cable is not only a CAD curve.
-Unsupported electrical or control behaviour stays explicit rather than being
-silently idealized.
-
-## 4.13 Mechanism-aware and blind scientific discovery
+## A.4.13 Mechanism-aware and blind scientific discovery
 
 Forge's discovery direction is mechanism-aware rather than black-box search.
 
@@ -488,7 +617,7 @@ The LLM is a proposer and interpreter, not scientific authority. Numerical
 providers, admitted data, holdouts, experiments and Forge's Trust Layer remain
 the authority for what a hypothesis is allowed to claim.
 
-### 4.13.1 High-throughput multi-fidelity discovery
+### A.4.13.1 High-throughput multi-fidelity discovery
 
 "Millions of experiments" means millions of **virtual hypothesis/candidate
 evaluations** where the fidelity permits it, not millions of high-fidelity CFD,
@@ -519,66 +648,13 @@ Throughput is recorded by fidelity class. A cheap screening result must never
 be relabeled as high-fidelity support. A favorable surrogate must not override
 a contradictory higher-fidelity or experimental result.
 
-### 4.13.2 Blind historical rediscovery and leakage control
+### A.4.13.2–4.13.3 → owned by FORGE Genesis
 
-Historical rediscovery is a benchmark, not proof of novel science. To make it
-meaningful, Forge should support a frozen knowledge cutoff: only information
-available before a chosen historical date is admitted during discovery, while
-later evidence is hidden for scoring.
+Blind historical rediscovery, leakage control and the Genesis benchmark are specified only in
+`docs/discovery/FORGE_GENESIS.md`. The archived text is superseded where they differ (for example, therapeutic and
+fusion tasks are no longer Genesis-core benchmark families).
 
-Because foundation models may already know famous discoveries, benchmark mode
-must reduce memorization leakage through combinations of:
-
-- anonymized entity identifiers;
-- hidden domain labels where practical;
-- transformed variables/coordinates;
-- withheld future evidence;
-- exact data/provenance cutoffs;
-- synthetic universes generated after model training and unknown to the model.
-
-A strong benchmark asks whether the system can recover a predictive mechanism
-or useful candidate from relationships and evidence, not whether it can recall
-a famous name.
-
-### 4.13.3 FORGE Genesis benchmark
-
-Create a general benchmark family spanning:
-
-- blinded known-law rediscovery;
-- transformed known physics;
-- synthetic hidden-law universes;
-- competing hypotheses requiring discriminating experiments;
-- materials/design discovery;
-- safe biomedical retrospective-discovery tasks;
-- safe energy/fusion engineering tasks;
-- adversarial/noisy/insufficient-evidence cases where refusal is correct.
-
-Each challenge binds:
-
-```text
-knowledge cutoff
-allowed primitives
-allowed tools/providers
-compute budget
-hidden target/future evidence
-scoring protocol
-```
-
-Score at minimum:
-
-- holdout prediction;
-- law/mechanism recovery where defined;
-- candidate rank and search efficiency;
-- false-discovery rate;
-- uncertainty calibration;
-- experiment efficiency;
-- compute used by fidelity class;
-- correct refusal when no stable conclusion is supportable.
-
-Forge earns credit for saying **INSUFFICIENT EVIDENCE** when that is the
-scientifically correct result.
-
-### 4.13.4 Scientific Red Team / Design-Killer search
+### A.4.13.4 Scientific Red Team / Design-Killer search
 
 Discovery must also be able to run in the opposite direction: attempt to break
 a proposed engineering/scientific claim.
@@ -608,7 +684,7 @@ differentiator. It should find the conditions, assumptions or coupled
 subsystems that destroy a nominally attractive result before Forge permits a
 strong support claim.
 
-### 4.13.5 Credibility graph and next-best experiment
+### A.4.13.5 Credibility graph and next-best experiment
 
 For system-level decisions, Forge should represent how lower-level evidence and
 uncertainty support or weaken higher-level claims. A weak upstream material,
@@ -624,74 +700,13 @@ The discovery runtime should therefore support:
   decision-relevant uncertainty;
 - immutable evidence updates that create new Scientific Twin revisions.
 
-### 4.13.6 Frontier-science verticals
+### A.4.13.6 and 4.14 → LATER (moved to the archive)
 
-Discovery remains generic, but selected verticals should exercise it.
+Frontier verticals (safe fusion-energy engineering, bounded biomedical / medical-device engineering) and the global 3D
+engineering viewer are LATER items (Part I §4). Detail: archived §4.13.6 and §4.14 and
+`docs/architecture/visualization_runtime.md`. Scene IR remains presentation-only.
 
-**Fusion energy engineering** is a strategic frontier vertical because it
-forces coupled plasma/field, electromagnetic, thermal, structural, materials,
-cooling, controls, lifecycle and reliability reasoning. Initial work should
-focus on non-weapon energy-system/component problems, design-killer search,
-materials/lifetime uncertainty and whole-system credibility rather than
-claiming a new plasma solver.
-
-**Biomedical / medical-device engineering** is another strategic vertical.
-Initial work should focus on bounded in-silico engineering questions such as
-biomechanics, implants, hemodynamics, bioheat and retrospective therapeutic
-hypothesis ranking from frozen historical evidence. Simulation or discovery
-does not become a patient-specific diagnosis or treatment claim without the
-required clinical evidence and validation path.
-
-## 4.14 Global 3D engineering visualization runtime## 4.14 Global 3D engineering visualization runtime
-
-Forge should have one global interactive engineering viewer for complete
-products and their internal subsystems. The viewer is a presentation/runtime
-layer over authoritative Forge product, geometry, simulation and evidence
-records; it is not a new scientific authority.
-
-Target capabilities include:
-
-- whole-product and hierarchical subsystem 3D views;
-- assembly tree with exact part/component identities;
-- authoritative dimensions, tolerances, fits, labels and engineering metadata;
-- transparent / X-ray modes;
-- section and cutaway views;
-- exploded assembly views;
-- hide/show/isolate and progressive level-of-detail loading;
-- motion playback for mechanisms, multibody trajectories and flight/vehicle states;
-- time-synchronized telemetry and simulation values;
-- thermal, electrical, structural, flow, vibration and lifecycle overlays;
-- force, torque, velocity, heat-flow, current or other vectors where supported;
-- interactive inspection of limits, margins, warnings and failure-risk indicators;
-- large-system scene streaming so a vehicle, drone or machine does not require every detailed fastener/mesh to be loaded at once.
-
-A motor should eventually be viewable in normal, transparent, cutaway,
-exploded, motion, electrical, thermal and risk/limits modes. A winding
-hotspot may be highlighted only when the thermal/electrical model,
-component/material limit and applicability/evidence path support that
-interpretation. The viewer must never infer burnout, failure or safe state
-from colour or geometry alone.
-
-Preferred architecture:
-
-```text
-Forge Product / Assembly / Simulation Records
-                    ↓
-          Canonical Forge Scene IR
-                    ↓
-          VisualizationProvider
-                    ↓
-        Three.js (initial web provider)
-                    ↓
-      Interactive Engineering Viewer
-```
-
-Three.js is an initial rendering provider, not a Core dependency. Future
-Babylon.js, ParaView/VTK, WebGPU, Unity or other visualization providers may
-consume the same scene contract when justified.
-
-Detailed direction: `docs/architecture/visualization_runtime.md`.
-## 5. Multi-timescale execution
+## A.5. Multi-timescale execution
 
 Forge must eventually coordinate phenomena whose natural time scales differ by many orders of magnitude.
 
@@ -711,7 +726,7 @@ Do not brute-force a decade using the fastest time step.
 
 The runtime should support scientifically justified representative windows, aggregation, reduced/accelerated evolution, slow-state updates, re-evaluation and explicit approximation evidence.
 
-## 6. Domain-extension rule
+## A.6. Domain-extension rule
 
 A new domain must enter through generic extension contracts.
 
@@ -747,7 +762,7 @@ assumptions and product-level requirements.
 
 The strongest extensibility test is an external package that can be installed and enabled without modifying Forge Core.
 
-## 7. Provider-integration definition of done
+## A.7. Provider-integration definition of done
 
 A provider is production-worthy only when it has:
 
@@ -766,7 +781,7 @@ A provider is production-worthy only when it has:
 
 Do not count shallow wrappers toward provider breadth.
 
-## 8. Data policy
+## A.8. Data policy
 
 Until funding or a specific commercial need:
 
@@ -777,365 +792,3 @@ Until funding or a specific commercial need:
 5. keep calibration and validation/holdout roles explicit;
 6. do not call public data "certified" unless an appropriate authority actually certifies it;
 7. use paid data only when it unlocks a capability not reasonably achievable with open data.
-
-## 8.1 Owner strategy update — 2026-10-09: Big Rocks First
-
-The owner has explicitly changed the execution strategy from small-fix-first to
-**Big Rocks First**.
-
-Forge should build the largest reusable capability foundations and provider
-breadth first, using targeted tests while building, then perform a deliberate
-integration/hardening/qualification campaign over the resulting architecture.
-
-This does **not** weaken scientific authority. A small issue interrupts a Big
-Rock only when it:
-
-1. can make scientific numbers materially wrong;
-2. can create a false `SUPPORTED`/validated result;
-3. corrupts identity, provenance, replay or evidence;
-4. blocks the Big Rock itself.
-
-Other cleanup, product polish, lint, packaging and non-authority debt goes to a
-`DEFERRED_HARDENING` ledger.
-
-The in-flight Trust Repair/certification work remains isolated and must finish
-against its frozen source. Parallel expansion work must not mutate that source,
-certificate or assurance artifacts.
-
-### Big Rock A — General Spatial / Geometry Foundation
-
-Build provider-neutral geometry/body/part/assembly/region/boundary/interface,
-frames/transforms, parameterized variants, material/boundary bindings,
-geometry-to-mesh bindings and provider-entity receipts.
-
-First provider: generalized Gmsh/OpenCASCADE rather than one-off geometry paths.
-
-### Big Rock B — Assembly / product topology
-
-Build the reusable hierarchy and interfaces required by complete engineered
-systems:
-
-```text
-System → Subsystem → Assembly → Component → Part / Body
-```
-
-Composition owns placement, interfaces, replaceable components and state
-ownership without leaking drone/car/motor semantics into Core.
-
-### Big Rock C — Provider breadth before polish
-
-Add the broad solver/provider boundaries early. Integration means canonical
-contracts, probe/identity, input translation, output parsing, provenance,
-failure/refusal semantics and targeted tests. Real execution should be used
-where the environment provides it; unavailable executables do not block
-independent adapter work and must remain explicitly unqualified.
-
-Priority provider families:
-
-- geometry/mesh: Gmsh/OpenCASCADE, meshio, OpenVSP;
-- CFD: OpenFOAM, SU2;
-- PDE/FEM/structural: FEniCSx/PETSc, CalculiX, Code_Aster, Elmer;
-- explicit dynamics/crash: OpenRadioss;
-- multibody: Project Chrono;
-- coupling: preCICE;
-- battery: PyBaMM/PyBOP;
-- electrical: ngspice;
-- chemistry/thermo: Cantera, CoolProp;
-- system thermal/dynamics: TESPy, OpenModelica/FMI-FMU, EnergyPlus where useful;
-- additional domain providers only when they fit the same canonical boundary.
-
-Provider maturity remains explicit:
-
-`AVAILABLE → INTEGRATED → QUALIFIED → COUPLING_CERTIFIED → VALIDATED FLAGSHIP`
-
-Availability or adapter existence alone never implies qualification.
-
-### Big Rock D — Scientific Twin
-
-Create a versioned executable representation of a concrete candidate system
-that binds/references geometry, composition, materials, models, state,
-environment/scenario, evidence, uncertainty and lineage without manufacturing
-new scientific authority.
-
-### Big Rock E — Blind Discovery Runtime
-
-Build the generic hypothesis/candidate search runtime described in §4.13:
-
-- Hypothesis/Experiment IR;
-- high-throughput multi-fidelity evaluation;
-- falsification;
-- Design Memory;
-- next-best-experiment selection;
-- recursive component/system discovery;
-- blind historical rediscovery;
-- synthetic-universe benchmarks.
-
-Do not create disease-, fusion-, drone- or vehicle-answer templates and call
-them discovery.
-
-### Big Rock F — Scientific Red Team / Credibility Graph
-
-Build autonomous counterexample/design-killer search, trust envelopes and
-system-level credibility/evidence-gap graphs over Scientific Twins.
-
-### Big Rock G — Cross-domain vertical slices
-
-Exercise the generic architecture with real compositions rather than new Core
-branches:
-
-- Drone;
-- Vehicle/Car;
-- Electric Motor;
-- HVAC;
-- Battery Pack;
-- Fusion energy engineering;
-- Biomedical / medical-device engineering.
-
-### Hardening after the large structure exists
-
-Do not run Full Local Assurance after every Big Rock. During expansion, run
-bounded targeted/contract tests and checkpoint coherent work.
-
-After the achievable Big Rocks reach an architecture freeze:
-
-```text
-integration inventory
-    → deferred correctness/hardening
-    → supported-environment tests
-    → provider qualification
-    → scientific hostile review
-    → scope classification
-    → one final recertification boundary where required
-```
-
-Known B1/B2/B4/B5/UQ issues remain important. Fix immediately when they can
-invalidate discovery/trust results; otherwise integrate them into the final
-hardening campaign rather than serializing the whole program behind every
-small defect.
-
-### Cloud / local execution split
-
-Cloud development may build contracts, adapters, geometry, twins, discovery,
-safe vertical compositions and targeted tests, checkpointing to feature
-branches. Heavy provider qualification and final assurance remain bound to
-declared supported local/provider environments.
-
-## 9. Roadmap## 9. Roadmap
-
-The roadmap is ordered by dependency and the project's current strategic priority.
-**Time, environment and lifecycle are early Core concerns, not late product features.**
-Mathematics/data/material capabilities are strengthened alongside these phases whenever
-the active slice requires them.
-
-| Phase | Objective | Exit criterion |
-|---|---|---|
-| **P0** | Core/CI/assurance stabilization | automatic gates; one coherent assurance path; current evidence is SHA-bound |
-| **P1** | Time Engine | canonical clocks, windows, events, usage/exposure/cycle histories and state transitions |
-| **P2** | Environment Engine | reusable environment timeline with solar/weather/exposure/body-force inputs |
-| **P3** | Lifecycle/Degradation Engine | generic degradation state changes future model/material/system state |
-| **P4** | Scientific Data + Materials | open datasets are normalized with provenance/license/uncertainty and materials are state-dependent across domains |
-| **P5** | Mathematical provider foundation | symbolic/numerical/statistical capabilities are provider-backed without creating new authority paths |
-| **P6** | Field + Mesh Core | provider-neutral scalar/vector/tensor field, region, boundary and mesh contracts |
-| **P7** | FEM/PDE provider stack | verified spatial thermal + structural cases through external providers |
-| **P8** | Generic Multiphysics Coupling | arbitrary two-provider coupled simulation with evidence, mapping and convergence |
-| **P9** | CFD provider | validated flow + heat-transfer cases |
-| **P10** | Structural mechanics breadth | static/modal/thermo-structural/fatigue foundations |
-| **P11** | Battery electrochemistry | PyBaMM-class electrochemical + thermal + degradation workflow |
-| **P12** | HVAC / thermodynamic systems | refrigerant/property/system/CFD coupling |
-| **P13** | Chemistry | detailed kinetics/thermo/transport provider |
-| **P14** | Multi-timescale Runtime | fast/medium/slow physics evolve one lifecycle state without brute force |
-| **P15** | Graph-level UQ/V&V | uncertainty, validation and numerical evidence compose across coupling |
-| **P16** | Flagship systems | HVAC, battery pack, drone and vehicle subsystem demonstrate the architecture |
-| **P17** | HPC/scale | distributed/remote execution with documented scale and replay |
-| **P18** | Commercial data/funding expansion | paid data/providers only where technically justified |
-| **P19** | Architecture boundary cleanup | Core, CapabilityPack/DomainPack, Provider and SystemPack/ProductTemplate responsibilities are explicit and product-specific logic does not leak into frozen Core |
-| **P20** | OSS provider capability matrix | every integrated provider has capability/applicability/maturity coverage; availability is not confused with full solver capability |
-| **P21** | Mechanism semantics | laws/mechanisms/state transitions are provider-neutral and dependency is not promoted to causal proof |
-| **P22** | Advanced UQ + model discrepancy | uncertainty, sensitivity and identifiability compose across systems using only admitted information |
-| **P23** | Engineering requirements + design space | objectives, constraints, operating envelope, controllable variables and topology choices are identity-bound |
-| **P24** | Parametric geometry / CAD / topology | candidate geometry/topology is reproducible and feeds analysis without losing design identity |
-| **P25** | Global 3D Engineering Viewer + Scene Runtime | whole products and subsystems render from a canonical scene contract with exact dimensions, hierarchy, transparency/cutaways, exploded views, progressive loading and evidence-bound simulation overlays |
-| **P26** | Assembly + standard-component synthesis | buildable assembly graph, catalog component selection and custom parts with exact identities/provenance |
-| **P27** | Motion systems + multibody dynamics | kinematics/dynamics, mechanisms, trajectories, DOFs, mass/inertia and dynamic loads are modeled for assembled systems and can drive viewer playback |
-| **P28** | Compliance + suspension + joint/contact physics | springs, dampers, bushings, flexures, friction, backlash, contact, vibration and suspension behaviour are explicit |
-| **P29** | Electromechanical actuation + controls + wiring | actuators, transmissions, sensors, control loops, electrical behaviour and harness/routing constraints compose with mechanics |
-| **P30** | Capability-based solver planning | realization, fidelity, primary provider and independent verification routes are selected from declared capability/applicability |
-| **P31** | Intervention + counterfactual runtime | controlled changes and replayable counterfactuals support root-cause and design reasoning without granting causal authority |
-| **P32** | High-throughput multi-fidelity design discovery | large campaigns use feasibility filters, parallelism, caching, early stopping, fidelity escalation, trusted surrogates and Pareto/MDO search |
-| **P33** | Reliability + lifecycle + manufacturability + cost | degradation, fatigue/wear, manufacturing variation/tolerances, serviceability and cost status constrain candidates |
-| **P34** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and negative results are first-class |
-| **P35** | Closed-loop experimental validation | calibration and independent/holdout validation remain separate; physical measurements update evidence/model discrepancy |
-| **P36** | Validated design discovery | requirements -> design -> 3D/assembly -> dynamics/multiphysics -> UQ/reliability -> experiment, with improvement claims limited to admitted evidence |
-| **P37** | Blind Scientific Discovery Runtime | generic hypotheses/experiments, frozen knowledge universes, multi-fidelity falsification and Design Memory work without answer templates |
-| **P38** | FORGE Genesis benchmark | blinded historical rediscovery, transformed physics, synthetic universes and insufficient-evidence cases measure genuine discovery rather than memorization |
-| **P39** | Scientific Red Team + Credibility Graph | candidate/claim attacks find counterexamples, design killers, trust envelopes and dominant evidence gaps across coupled systems |
-| **P40** | Frontier discovery verticals | Fusion-energy and biomedical/medical-device slices exercise the generic runtime with bounded claims, independent evidence and no domain-specific scientific-authority shortcuts |
-
-Do not skip prerequisite phases merely to increase the number of domains.
-
-## 10. Flagship systems
-
-Flagships are integration proofs, not demos that bypass the generic architecture.
-
-### HVAC
-
-Target physics:
-
-- refrigeration thermodynamics;
-- compressor/fan/electrical behavior;
-- heat exchangers;
-- CFD airflow;
-- solid conduction;
-- humidity/condensation where supported;
-- controls;
-- environment;
-- fouling/corrosion/wear over lifecycle.
-
-### Battery pack
-
-Target physics:
-
-- electrochemistry;
-- electrical network;
-- heat generation and cooling;
-- environment;
-- calendar/cycle degradation;
-- uncertainty and validation.
-
-### Drone
-
-Target physics:
-
-- battery;
-- electrical/motor;
-- propeller/aerodynamics;
-- thermal;
-- structural;
-- vibration;
-- controls;
-- environment and aging.
-
-### Vehicle subsystem
-
-Start bounded rather than attempting a whole car immediately.
-
-Good initial scope:
-
-- battery enclosure;
-- cooling;
-- structure/materials;
-- environmental exposure;
-- corrosion/fatigue;
-- lifecycle state.
-
-### Fusion energy engineering
-
-Target use is a safe frontier engineering vertical over the generic platform,
-not a weapon-design benchmark and not a replacement plasma solver.
-
-Initial targets:
-
-- coupled thermal/structural/electromagnetic/materials system reasoning;
-- geometry/material/lifecycle candidate search;
-- cooling and power-conversion interfaces;
-- reliability/availability/maintainability/inspectability reasoning;
-- design-killer search and trust-envelope construction;
-- whole-system credibility/evidence-gap graphs;
-- next-best experiment selection where evidence is expensive.
-
-### Biomedical / medical-device engineering
-
-Initial targets are bounded engineering/scientific questions:
-
-- biomechanics and implants;
-- hemodynamics/airflow;
-- bioheat and tissue thermal models;
-- musculoskeletal/mechanical-system models;
-- retrospective, blinded therapeutic-hypothesis ranking from historically
-  frozen evidence as a Discovery benchmark.
-
-Forge must keep simulation/hypothesis support separate from clinical diagnosis,
-prescription or patient-specific treatment authority.
-
-## 11. Progress metrics
-
-Do not use repository file count or raw line count as progress.
-
-Track:
-
-- production domains;
-- real external providers;
-- validated models;
-- admitted external datasets;
-- coupled domain pairs;
-- supported field types;
-- largest verified DOF;
-- largest verified coupled graph;
-- validated applicability regimes;
-- lifecycle/degradation models;
-- independent oracles/evaluators;
-- replayable reference cases;
-- known unsupported regimes;
-- supported mechanism/joint types;
-- supported compliant/contact models;
-- catalog/component families with provenance-bound ratings;
-- maximum verified multibody DOF and motion-system complexity;
-- validated actuator/control/wiring model combinations;
-- design-campaign throughput by fidelity class;
-- buildable candidate designs with closed-loop experimental evidence.
-
-## 12. Session resume protocol
-
-Every new AI/engineering session must:
-
-1. read `CLAUDE.md`;
-2. read this file;
-3. read `docs/work/ACTIVE_PLAN.md`;
-4. read the newest relevant entries in `docs/work/PROGRESS.md`;
-5. inspect the actual repository HEAD and current branch/PR before assuming status;
-6. continue the **first executable unfinished task** in the active plan unless it is blocked;
-7. do not silently redesign the project based on a single new idea;
-8. update `ACTIVE_PLAN.md` when the bounded execution plan changes;
-9. append factual milestones/failures/test results to `PROGRESS.md`;
-10. update this Master Plan only for a genuine strategic decision.
-
-If documents disagree, use this precedence for project direction:
-
-```text
-Scientific authority/frozen-contract rules
-        ↓
-FORGE_MASTER_PLAN.md
-        ↓
-ACTIVE_PLAN.md
-        ↓
-PROGRESS.md
-        ↓
-historical audits / old chat text
-```
-
-Repository code and current test/workflow results remain the authority for what is actually implemented.
-
-## 13. Recovery prompt for a lost chat
-
-If a chat/session is lost, the user can simply say:
-
-> Read `CLAUDE.md`, `docs/project/FORGE_MASTER_PLAN.md`, `docs/work/ACTIVE_PLAN.md`, and `docs/work/PROGRESS.md`. Inspect the current Forge branch/PR and continue from the first unfinished executable task. Do not change the project direction unless the repository evidence requires it.
-
-The agent should not require the previous chat transcript to resume technical work.
-
-## 14. Change-control rule
-
-Before adding a large feature, ask:
-
-1. Which pillar does this strengthen?
-2. Does a mature provider already solve the numerical problem?
-3. Does it require a new generic contract, or only a DomainPack/provider?
-4. What is the validity envelope?
-5. What evidence proves it?
-6. How does it interact with time/environment/lifecycle?
-7. How is uncertainty represented?
-8. Can it replay?
-9. Does it preserve fail-closed behavior?
-10. Does it make the flagship systems more complete?
-
-If those questions cannot be answered, the feature is not ready for Core.
