@@ -42,8 +42,9 @@ Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust l
 
 Next actions (agent-executable now):
 
-1. Run the FAST tier on `4634eba` in a supported environment (3.11 or 3.12); record exact failures in PROGRESS and
-   diff them against the known 14-test drift set.
+1. Run the FAST tier on the intended certification HEAD selected by OD-3, normally the post-merge `main` HEAD, in a
+   supported environment (3.11 or 3.12); record exact failures in PROGRESS. Compare failures against the previously
+   recorded 14-test drift set only where still applicable; the historical drift set is not current truth.
 2. Classify every failure as `SCIENTIFIC_CORRECTNESS`, `GOVERNANCE_ONLY` or `UNCLASSIFIED` (Master Plan §5.2).
    `GOVERNANCE_ONLY` needs the complete six-question evidence record; anything less stays `UNCLASSIFIED` and blocking.
 3. Rebase PR #123 onto current `main` locally, run the `CLAUDE.md` gates and `forge-scientific-review`, and report.
@@ -110,7 +111,7 @@ therapeutic work.
 | OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
 | OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
-| OD-9 | Merge order for PR #127 (Genesis) and this consolidation. | This consolidation includes the Genesis file. |
+| OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 is to be closed without merge once #128 metadata is finalized. | PR #127 existed as the standalone Genesis document. |
 | OD-10 | Publish or record the local-only commits `803946af` and `7e923e75`. | Not verifiable from the remote. |
 | OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
