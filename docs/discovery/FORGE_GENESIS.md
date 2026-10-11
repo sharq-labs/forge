@@ -69,6 +69,8 @@ Objective
    ↓
 Preregistered admissible knowledge
    ↓
+Anonymous Primitive / Candidate Selector
+   ↓
 Hypothesis Generator
    ↓
 Experiment / Simulation Planner
@@ -215,6 +217,78 @@ The strongest v1 evidence comes from combining historical targets with:
 
 Success across these classes reduces the chance that the system is merely recalling a memorized answer.
 
+### 6.2 Anonymous primitive selection
+
+For stronger rediscovery tests, Genesis must not hand the Discovery Runtime the historically correct material, isotope, component, mechanism family or other privileged primitive when the objective is to test whether the system can identify it.
+
+Instead, the runtime receives a bounded, preregistered candidate library whose entries are represented by neutral identifiers such as:
+
+```text
+PRIMITIVE_A17
+PRIMITIVE_B04
+PRIMITIVE_C91
+...
+```
+
+The discovery process may see only the physical properties and relationships explicitly authorized by the benchmark contract. Historical names, common-use labels, answer-bearing categories and target-specific hints remain evaluator-only information.
+
+The intended loop is:
+
+```text
+anonymous candidate library
+        ↓
+physics-based screening
+        ↓
+hypothesis generation
+        ↓
+simulation / experiment
+        ↓
+falsification
+        ↓
+belief update
+        ↓
+next-best candidate / experiment
+        ↺
+surviving mechanism
+```
+
+The benchmark must distinguish between:
+
+- candidates eliminated before execution by valid physical constraints;
+- candidates tested and falsified;
+- candidates surviving because evidence is genuinely supportive;
+- candidates surviving only because evidence is insufficient.
+
+A candidate must never be promoted merely because it resembles a historically familiar answer.
+
+For high-consequence domains, anonymous primitive selection remains bounded to safe, non-operational scientific properties. Genesis does not expose or optimize actionable construction, fuel-cycle, weapons-relevant or other hazardous procedures.
+
+### 6.3 Synthetic-universe anti-memorization control
+
+Historical rediscovery alone cannot rule out latent model memory. Therefore the stronger control replaces real-world names and may also transform admissible constants, scales, property values or primitive relationships while preserving a hidden solvable structure.
+
+Example evaluator view:
+
+```text
+Universe PHI-3
+PRIMITIVE_Q17
+PRIMITIVE_L82
+PRIMITIVE_R05
+...
+```
+
+The Discovery Runtime is not told which transformed primitive corresponds to any real-world material or mechanism.
+
+A valid synthetic-universe benchmark freezes:
+
+- the transformed laws/relationships;
+- the anonymous primitive library;
+- the evaluator-only latent solution;
+- the no-solution status, when applicable;
+- the same compute and evidence rules used by historical benchmarks.
+
+Success on historical rediscovery plus anonymous transformed controls is stronger evidence of search competence than historical rediscovery alone.
+
 ## 7. FORGE Genesis benchmark families
 
 ### G0 — Search sanity
@@ -270,15 +344,30 @@ FORGE must reject candidates for explicit reasons such as:
 
 Exit requirement: high-quality refusal is scored positively.
 
-### G4 — Transformed-physics / synthetic-universe tasks
+### G4 — Anonymous primitive selection
+
+The benchmark provides a large bounded library of neutral candidate primitives rather than the historically correct choice.
+
+The Discovery Runtime must determine which candidates merit testing from their allowed physical properties and constraints.
+
+Exit requirement:
+
+- identify a physically plausible subset without answer-bearing labels;
+- correctly eliminate invalid candidates;
+- retain potentially valid candidates when evidence is insufficient rather than falsely rejecting them;
+- recover a viable mechanism within the preregistered budget.
+
+The benchmark reports selection efficiency and false-elimination / invalid-survivor rates.
+
+### G5 — Transformed-physics / synthetic-universe tasks
 
 The evaluator changes names, constants, scales or admissible relationships while preserving a solvable latent structure.
 
-Purpose: reduce dependence on memorized historical answers.
+Purpose: reduce dependence on memorized historical answers and test whether primitive selection still works when familiar names and values are absent.
 
 Exit requirement: recover the latent mechanism from the transformed problem, not from historical naming cues.
 
-### G5 — No-solution / insufficient-evidence tasks
+### G6 — No-solution / insufficient-evidence tasks
 
 Some tasks intentionally have:
 
@@ -291,9 +380,9 @@ Correct output may be `REFUSED` or `INSUFFICIENT_EVIDENCE`.
 
 A system that always returns a candidate fails Genesis.
 
-### G6 — Frontier historical principles
+### G7 — Frontier historical principles
 
-Only after G0–G5 are stable, test more demanding historical principles requiring broader physics.
+Only after G0–G6 are stable, test more demanding historical principles requiring broader physics.
 
 These remain **rediscovery benchmarks**, not novelty claims.
 
@@ -372,8 +461,10 @@ Recommended metrics:
 | Solver-call count | Total provider executions |
 | Compute cost | CPU/GPU/wall-clock budget actually consumed |
 | Falsification precision | How often rejected candidates were rejected for valid reasons |
-| Invalid-survivor rate | Physically invalid candidates that incorrectly survived |
 | Search efficiency | Progress relative to a simple baseline |
+| Candidate selection efficiency | Useful candidates identified per screened/executed candidate |
+| False-elimination rate | Physically viable candidates incorrectly removed during screening |
+| Invalid-survivor rate | Physically invalid candidates incorrectly retained after screening/falsification |
 | Mechanism distance | Distance from the hidden reference under an evaluator-defined equivalence relation |
 | Replay success | Whether the evidence bundle reproduces the assessed result |
 | Leakage audit | PASS / FAIL / UNKNOWN |
@@ -408,10 +499,11 @@ A credible Discovery Runtime should succeed at progressively stronger forms of i
 1. **Known target, hidden label** — weakest.
 2. **Known target, hidden topology**.
 3. **Target reconstructed from primitive laws only**.
-4. **Renamed/permuted primitive universe**.
-5. **Transformed constants and scales**.
-6. **Synthetic mechanism absent from historical corpus**.
-7. **No-solution cases correctly refused**.
+4. **Correct primitive hidden inside an anonymous candidate library**.
+5. **Renamed/permuted primitive universe**.
+6. **Transformed constants and scales**.
+7. **Synthetic mechanism absent from historical corpus**.
+8. **No-solution cases correctly refused**.
 
 Claims must be tied to the highest rung actually demonstrated.
 
@@ -427,16 +519,17 @@ Recommended order:
 3. Implement G0 search sanity task.
 4. Implement one G1 historical rediscovery task.
 5. Add one G3 falsification task.
-6. Add one G4 transformed/synthetic task.
-7. Add one G5 no-solution task.
-8. Run hostile leakage and replay review.
-9. Repeat across a second independent physics family.
-10. Only then consider broader multiphysics historical benchmarks.
+6. Add one G4 anonymous-primitive selection task.
+7. Add one G5 transformed/synthetic control using anonymous primitives.
+8. Add one G6 no-solution task.
+9. Run hostile leakage and replay review.
+10. Repeat across a second independent physics family.
+11. Only then consider broader multiphysics historical benchmarks.
 ```
 
 The first milestone is therefore:
 
-> **FORGE Genesis v0.1 — one blind rediscovery + one transformed task + one no-solution control, all replayable.**
+> **FORGE Genesis v0.1 — one blind rediscovery + one anonymous-primitive challenge + one transformed task + one no-solution control, all replayable.**
 
 ## 14. Promotion gates
 
@@ -525,14 +618,17 @@ Genesis v0.1 is complete only when all of the following are true:
 - [ ] preregistration is immutable and hash-addressed;
 - [ ] network/search isolation is demonstrated;
 - [ ] one G1 historical rediscovery task runs end-to-end;
-- [ ] one G4 transformed/synthetic control runs end-to-end;
-- [ ] one G5 no-solution control runs end-to-end;
+- [ ] one G4 anonymous-primitive selection task runs end-to-end;
+- [ ] one G5 transformed/synthetic control with anonymous primitives runs end-to-end;
+- [ ] one G6 no-solution control runs end-to-end;
 - [ ] every hypothesis and experiment is recorded;
 - [ ] invalid candidates have explicit rejection reasons;
 - [ ] evidence bundle replays successfully;
 - [ ] leakage audit is recorded;
 - [ ] uncertainty and applicability are not overstated;
 - [ ] no target-specific hard-coded answer path exists;
+- [ ] historical names and privileged primitive labels are withheld from the discovery runtime;
+- [ ] candidate-selection efficiency, false-elimination and invalid-survivor metrics are reported;
 - [ ] hostile scientific review is completed;
 - [ ] final claims use only the maturity level actually demonstrated.
 
