@@ -111,7 +111,7 @@ therapeutic work.
 | OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
 | OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
-| OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 is to be closed without merge once #128 metadata is finalized. | PR #127 existed as the standalone Genesis document. |
+| OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
 | OD-10 | Publish or record the local-only commits `803946af` and `7e923e75`. | Not verifiable from the remote. |
 | OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |

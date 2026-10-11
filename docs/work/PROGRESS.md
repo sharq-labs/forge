@@ -2057,7 +2057,7 @@ fast-forwarded.
   - `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
     -> 7 passed.
   - `python3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
-  - `git diff --check` -> clean.
+  - `git diff --check` on this session's incremental tracked diff -> no live-document whitespace findings. This is not a claim that the full planning diff against `main` is clean.
   - FAST / SCIENTIFIC tiers, regression pack, recertification: NOT RUN (docs-only change).
 - No code, test, threshold, result, maturity state or certificate changed. Not committed or pushed.
 - Correction pass (same day, docs only): (1) authority is by scope, not a global precedence chain ("execution authority
@@ -2069,7 +2069,7 @@ fast-forwarded.
   headings, so it was not verbatim). Archive check (sha256 of archive bodies vs `git show 4634eba:<path>`, per-section
   containment, appendix blocks vs original line ranges): PASS. Cross-reference audit: no broken references.
   `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
-  -> 7 passed; `python3 -m tools.capability_maturity` -> coherent; `git diff --check` clean;
+  -> 7 passed; `python3 -m tools.capability_maturity` -> coherent; `git diff --check` on the incremental correction diff -> no live-document whitespace findings (not a claim about the full planning diff against `main`);
   `recertification_reasons` for every changed path -> none (ORDINARY). FAST / recertification: NOT RUN.
 
 ## 2026-10-11 Planning consolidation landing
@@ -2077,6 +2077,6 @@ fast-forwarded.
 - Reconstructed the reviewed docs tree on `docs/planning-consolidation-2026-10-11` from `main` @ `4634eba`, including the B1 non-shortcut circuit breaker. No maturity, code, test, or scientific-result change.
 - `py -3 -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py` -> 7 passed.
 - `py -3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
-- `git diff --check` -> clean.
+- `git diff --check` against the full planning diff reports exactly two archive-only trailing-whitespace findings inherited byte-exact from the historical Master Plan; no live-document whitespace findings. The incremental cleanup diff was clean where applicable. Those historical whitespace lines were not removed or normalized; archive byte integrity is intentional.
 - ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26–53 and 126–189, SHA-256 byte match).
 - FAST / Full Local Assurance: NOT RUN.
