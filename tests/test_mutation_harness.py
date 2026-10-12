@@ -33,7 +33,7 @@ import io
 import tokenize
 import pathlib
 
-import mutation_guards as mg
+from tests import mutation_guards as mg
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 

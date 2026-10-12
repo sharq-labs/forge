@@ -40,7 +40,7 @@ import dataclasses
 
 import pytest
 
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import ScientificCoreError
 from engcore.scientific.results.provenance import ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult

@@ -30,7 +30,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import ModelValidityError, ScientificCoreError
 from engcore.scientific.models.definition import (
     CategoryCondition,
