@@ -35,3 +35,28 @@ def test_verified_record_requires_bundle_for_custom_trust():
         assert "replay bundle" in str(exc)
     else:
         raise AssertionError("custom-trust raw assessment must require a replay bundle")
+
+
+def test_the_diagnostic_carries_what_offline_verification_can_say(tmp_path):
+    """Trust Repair Pass 1: a diagnosis that restates a verdict never presents a REPLAY_REQUIRED record as verified."""
+    import sys
+
+    sys.path.insert(0, "tests/claims")
+    from claims_support import et_claim, t3_claim
+    from engcore.claims import assess_claim
+    from engcore.claims.replay.bundle import make_bundle
+    from engcore.mcp.capabilities import production_registry
+
+    registry = production_registry()
+    et = make_bundle(assess_claim(et_claim(), registry), registry)
+    _, standing = forge_diagnose._verified_record_and_standing(et, registry, source="et.json")
+    assert standing["bundle_status"] == "replay_required" and standing["reasons"]
+    t3 = assess_claim(t3_claim(), registry).to_dict()
+    _, standing = forge_diagnose._verified_record_and_standing(t3, registry, source="t3.json")
+    assert standing["revalidation"] == "scientifically_revalidated"
+
+    path = tmp_path / "et.json"
+    path.write_text(json.dumps(et), encoding="utf-8")
+    out = tmp_path / "out.json"
+    assert forge_diagnose.main([str(path), "--output", str(out)]) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["offline_verification"]["bundle_status"] == "replay_required"

@@ -106,7 +106,7 @@ therapeutic work.
 | OD-1 | Merge-gate enforcement: make the repository public, upgrade the plan, or formally accept local SHA-bound assurance as the only merge control. | Rulesets API 403; red gates cannot block merges. |
 | OD-2 | Supported Python policy. | `requires-python >=3.11`; CI 3.11/3.12; local runs on 3.13 and 3.14. |
 | OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `3e396bc4`, not `main`. |
-| OD-4 | PR #123: land plan. | Conflicts against `main`; closes R3-01/R3-02 only. |
+| OD-4 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #123 lands by a merge commit (no rebase); it closes R3-01/R3-02 only. | Its certificate binds `39d43456` (the PR tree), not the merged `main`; recertification stays OD-3. |
 | OD-5 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #126 lands as one PR; it creates no new scientific capability stage and changes no maturity. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. Not recertified (OD-3). |
 | OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
@@ -140,3 +140,6 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   direction (OD-5). Its follow-ups (designate the battery confirmatory dataset, provision a production authority ledger,
   seal real battery falsifiers, systematic prior-art search, deploy the data authority behind the escrow) are owner-gated
   and sit under LATER with row 47. Kirkaldy stays NOT MET; no confirmatory datum was exposed. Not recertified (OD-3).
+- 2026-10-12 — PR #123 Trust Repair Pass 1 (R3-01 offline revalidation, R3-02 MCP `assess_claim` delegating to the
+  canonical claim runtime) merged with `main` on owner direction (OD-4). `803946af` is therefore on the remote (OD-10,
+  partly). R3-03 to R3-16 stay open. Not recertified on the merged tree (OD-3).

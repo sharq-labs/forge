@@ -2312,3 +2312,128 @@ Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shall
 - `python -m pytest -q -n 4 --dist loadfile tests/foundations tests/claims flagships/tests` -> 964 passed, 50 skipped.
 - forge-scientific-review (read-only) of the combined `main` + #126 + #123 tree: PASS; three LOW findings.
 - Hardened recertification: NOT RUN (owner-run, OD-3). SCIENTIFIC / FULL / campaign tiers: NOT RUN.
+
+
+## Trust Repair Pass 1: R3-01 + R3-02 (2026-10-08, branch fix/trust-repair-pass1 from main 16c87f40)
+
+R3-02. MCP `assess_claim` ran its own SRIA decision (report-wide levels, no comparison, no
+uncertainty, discrepancy or policy). It now delegates to canonical `engcore.claims.assess_claim`
+(`mcp/claim_assessment.py` rewritten).
+- Case-shaped requests are translated through `inputs_from_case`, and they require an explicit
+  `comparison` and `uncertainty` demand.
+- `report_index`, free-text-only requests, and routing to another capability are refused.
+- `assess_scientific_claim` shares the same helper.
+
+R3-01. `verify_assessment` / `verify_bundle` accepted consistently rewritten forgeries.
+New `claims/revalidation.py`:
+- stored oracle checks are re-run against pinned evidence reached via the plan's routes;
+- refuted checks raise `AssessmentForgeryError` (TAMPERED);
+- every other level and every demanded run-quantified channel is REPLAY_REQUIRED;
+- the verdict must be admissible and the comparison invariant over the pinned band.
+
+`verify_bundle` NEVER returns VERIFIED any more. It returns at most SCIENTIFICALLY_REVALIDATED
+(not publishable). VERIFIED comes only from `replay_bundle`, after re-execution.
+
+Review history:
+1. forge-scientific-review returned BLOCKER (F1): offline VERIFIED re-earned the level but not the
+   verdict. A runtime adversary independently forged "T > 309.795 K" at 309.7999 K → VERIFIED supported.
+   Fixed with band invariance.
+   Also fixed: F2 (binding and authority lines), F4 (unroutable oracle refuted), F3 (diagnose carries
+   the standing), F5/F6 (MCP uncertainty demand, routing guard), and the AttributeError crash.
+2. Adversary round 2: the invariance rule held over 588 values x 3,380 claims (units, ulps,
+   endpoints). New attack: a genuine 160-cell report carried under a 40-cell claim (real run
+   INSUFFICIENT) verified offline. No offline rule can tell runs apart, so offline VERIFIED was
+   removed.
+
+Failed approaches:
+- Treating offline revalidation as publishable. It verified the level and not the verdict, then
+  not the run identity.
+- Writing the F4 attack through a rerouted capability registry. CapabilityDeclaration already
+  refuses untrusted or foreign route evidence.
+
+Commands (WSL, `.forge/venvs/3.12`, TMPDIR outside repo, `-p no:cacheprovider`):
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py
+  tests/test_forge_diagnose.py`: 59 passed.
+- `pytest tests/claims tests/mcp tests/test_forge_diagnose.py tests/credibility -n 4 -m "not campaign"`:
+  1110 passed.
+- `tools/forge_check.py --changed`: 225 passed.
+- Formal TARGETS (48) + test_repository_architecture + test_core_api_layering + tests/mcp/test_bundle
+  + tests/mcp/test_server, `-n 4`: 1224 passed.
+- Adversary scripts attack1-7 on the final code: 0 offline VERIFIED.
+
+Remaining Review 3 findings, untouched: R3-03, R3-04, R3-05, R3-06, R3-07, R3-08, R3-09, R3-10,
+R3-11, R3-12, R3-13, R3-14, R3-15, R3-16.
+New notes from this pass:
+- a caller's free-text CONSTRAINED_PRIOR reference satisfies require_supported_discrepancy
+  (canonical behaviour, = R3 A2-F10);
+- replay tolerance is caller-chosen and unbounded (= R3-16);
+- a bundle with capability=None skips the carried-capability check;
+- a genuine record whose oracle check predates a change to compare() semantics would read TAMPERED
+  (no compare-algorithm version is recorded).
+Full suite and Local Assurance: NOT RUN (not required for this pass). Not pushed.
+
+Pre-commit smoke (2026-10-09, same venv; `forge_check --changed` log 17:10 is after the last source edit 17:09):
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py
+  tests/test_forge_diagnose.py`: 59 passed.
+- `pytest tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+  tests/test_repository_architecture.py tests/mcp/test_bundle.py`: 32 passed.
+- attack1-7 re-run: 0 offline VERIFIED; verify_bundle gave only replay_required,
+  scientifically_revalidated or tampered. attack4 predates the F5 uncertainty requirement, so its
+  case-shaped requests are now refused; attack5 covers case-shape parity with MCP.
+
+## 2026-10-09 Trust Repair Pass 1 landing prep: main sync, focused regression, scope (branch `fix/trust-repair-pass1`)
+
+The original Trust Repair Pass 1 commit `803946af` (tree `d93e84cd`, parent `16c87f40`) is kept unchanged. Main
+`44637065` (after PR #121) was merged into the branch as `24373be4`, a normal merge with no rebase or cherry-pick.
+- The only conflict was in this file. Both appended histories were kept: main's entries first, then the Trust Pass 1
+  entry verbatim. Main's archival removals of 782 lines carried over exactly.
+- Against `44637065`, the effective diff is the 12 Trust Pass 1 files. Eleven are blob-identical to `803946af`, and
+  PROGRESS.md gains 67 lines. `certification/current_core_v2.json` is unchanged from main (`7756e5a6`).
+- PR #120 commits (`2c0e024b`, `3e396bc4`, `d383eed0`) and PR #121 commits (`44637065`, `3f5096bb`) are ancestors.
+- Prereg blob `0668576d` is unchanged, and the Kirkaldy NOT MET record is present.
+
+Commands (WSL, the shared clone's `.forge/venvs/3.12`, `PYTHONPATH=<worktree>/src:<worktree>`, TMPDIR outside the
+repo, `-p no:cacheprovider`), all on `24373be4`:
+- `pytest tests/claims/test_offline_revalidation.py tests/mcp/test_claim_assessment.py tests/test_forge_diagnose.py`:
+  59 passed.
+- Adversary attack1-7 (`~/forge-pass1-adversary`, cwd = worktree): output is identical to the 2026-10-08 final logs
+  (attack4 has no stored log; its MCP/canonical parity reads `identical_records=True`). Offline VERIFIED outcomes: 0.
+  verify_bundle gave 14 replay_required, 14 scientifically_revalidated and 4 tampered.
+  - The 305 K oracle forgery is refused at construction.
+  - Numerics substitution (attack7) is at most scientifically_revalidated offline, and replay_bundle reports
+    not_reproducible.
+  - Run with the adversary directory as cwd, replay_bundle refuses earlier with "source-control commit identity is
+    unavailable", because `_git_identity` reads the cwd. This is not a regression.
+- `pytest tests/claims tests/mcp tests/test_forge_diagnose.py tests/credibility -n 4 -m "not campaign"`: 1110 passed.
+- `tools/forge_check.py --changed --base gh/main` (gh/main = `44637065`): 225 passed.
+- Formal TARGETS (48) + `tests/test_repository_architecture.py tests/test_core_api_layering.py tests/mcp/test_bundle.py
+  tests/mcp/test_server.py`, `-n 4`: 1224 passed.
+- `recertification_scope classify --event pull_request --base 44637065 --head 24373be4`: `recertify_source`.
+  - RECERTIFY: `src/engcore/mcp/server.py` (mutation_targets), and four certified-harness/assurance-suite test files.
+  - Observation: `recertification_scope explain` classifies the trust implementation paths themselves as ordinary:
+    `claims/assessment.py`, `claims/replay/bundle.py`, `claims/revalidation.py` and `mcp/claim_assessment.py`.
+    Recertification is triggered here only through `mcp/server.py` and the tests. This is a possible follow-up for
+    scope policy and is not changed in this pass.
+
+Full Local Assurance runs on the commit that adds this entry, in a dedicated clone, because the shared assurance clone
+carries worktrees, which the mutation workspace refuses as external Git storage. Its result is recorded by the certificate-only child and the PR
+body, not here, because any later edit would move the certification subject.
+
+## 2026-10-12 PR #123 landing gates (owner direction; merge commits only, no rebase)
+
+`origin/main` `17444e14` (with #126) merged into `fix/trust-repair-pass1`; conflicts were PROGRESS / ACTIVE_PLAN only.
+The diff against `main` is exactly #123's 13 files plus docs. The owner-produced certificate (binds `39d43456`) is
+carried unedited. One review LOW was fixed (`tools/forge_diagnose.py` comment: offline verification never yields VERIFIED).
+Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shallow clone), on `fbb52f5e`:
+- `python -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider` -> 14 failed, 9789 passed,
+  135 skipped (287 s). The failure set is identical to unmodified `main` in the same environment (mutation_workspace x2,
+  certificate x1, freeze v1 x5, batch56 r65, freeze v3 x2, freeze v4 x3).
+- `python -m pytest -q -n 4 --dist loadfile -m "not campaign" tests/claims tests/mcp tests/test_forge_diagnose.py
+  tests/credibility tests/foundations` -> 1380 passed.
+- `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
+- forge-scientific-review (read-only), combined `main` + #126 + #123: PASS. All #123 hardening intact after the
+  `mcp/server.py` auto-merge; no #126 or `main` caller consumes offline VERIFIED; attestation / `verify_evidence` and
+  offline revalidation never judge the same record. LOWs left open: (2) a REGISTRY_CHANGED bundle result carries the
+  stored verdict without re-deriving it (`claims/replay/bundle.py`, pre-existing); (3) `mcp/foundations.py` catches
+  bare `Exception` (from `main`, verdict pinned to insufficient_evidence).
+- Hardened recertification of the merged tree: NOT RUN (owner-run, OD-3). SCIENTIFIC / FULL tiers: NOT RUN.
