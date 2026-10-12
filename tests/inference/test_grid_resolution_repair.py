@@ -189,6 +189,16 @@ def tcr_wide():
 
 
 @pytest.fixture(scope="module")
+def tcr_narrow_resolved():
+    """The narrow design on a 161-node axis: the grid that DOES resolve the ridge.
+
+    Built once for the two tests that read it (classification, and predictive
+    UQ); each built it separately before, about 35 s apiece on a 2-core host.
+    """
+    return _tcr([299.0, 299.5, 300.0, 300.5, 301.0, 301.5], per_axis=161)
+
+
+@pytest.fixture(scope="module")
 def k2_multi():
     return _fixture_posterior("k2_multi", "K2-seed-20260809")
 
@@ -247,8 +257,8 @@ def test_healthy_grids_are_still_classified(tcr_wide):
         assess_identifiability(_fixture_posterior(name, name)[0])
 
 
-def test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right():
-    posterior, m, C = _tcr([299.0, 299.5, 300.0, 300.5, 301.0, 301.5], per_axis=161)
+def test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right(tcr_narrow_resolved):
+    posterior, m, C = tcr_narrow_resolved
     assert not _material(posterior, m, C)
     assert assess_identifiability(posterior).status.value != "PARAMETERS_IDENTIFIABLE"
 
@@ -302,8 +312,8 @@ def test_predictive_uq_works_on_a_healthy_grid(tcr_wide):
     assert _epistemic_sd(posterior, values) == pytest.approx(math.sqrt(g @ C @ g), rel=0.02)
 
 
-def test_predictive_uq_is_right_on_a_weak_but_resolved_grid():
-    posterior, m, C = _tcr([299.0, 299.5, 300.0, 300.5, 301.0, 301.5], per_axis=161)
+def test_predictive_uq_is_right_on_a_weak_but_resolved_grid(tcr_narrow_resolved):
+    posterior, m, C = tcr_narrow_resolved
     dT = 300.25 - 293.15
     values = posterior.points[:, 0] * (1 + posterior.points[:, 1] * dT)
     g = np.asarray([1 + m[1] * dT, m[0] * dT])

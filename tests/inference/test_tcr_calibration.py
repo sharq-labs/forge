@@ -16,6 +16,7 @@ admission boundary. Nothing here computes a resistance itself.
 
 from __future__ import annotations
 
+import functools
 import math
 
 import numpy as np
@@ -187,6 +188,18 @@ def posterior_over(temperatures, seed=20260912, curvature=0.0, sigma_span=6.0, n
     "perfectly determined" parameter with a zero-width credible interval.
     `assess_identifiability` now refuses that case outright; sizing the grid is
     the caller-side half of the same lesson.
+    """
+    return _posterior_over(tuple(temperatures), seed, curvature, sigma_span, n)
+
+
+@functools.lru_cache(maxsize=None)
+def _posterior_over(temperatures, seed, curvature, sigma_span, n):
+    """Built once per distinct design in this module.
+
+    The construction is seeded and deterministic and the posterior it returns is
+    immutable, so a test that asks for a design another test already built gets
+    the same object it would have rebuilt. Six tests ask for the wide design and
+    three for the 81-node narrow one.
     """
     observations = synthesize_tcr_observations(
         TRUTH, temperatures, sigma=SIGMA, dataset_id="tcr.cal", seed=seed,

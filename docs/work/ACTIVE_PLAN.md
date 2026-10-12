@@ -116,6 +116,7 @@ therapeutic work.
 | OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
+| OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
 
 ## Active-epic exceptions (open)
 
@@ -133,3 +134,5 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
 
 - 2026-10-11 — planning consolidation (docs only): Big Rocks First and P0–P40 superseded; this file reduced to the live
   queue; history archived. No code, test, result, threshold or certificate changed.
+- 2026-10-12 — owner-requested, outside the queue: test-suite runtime branch `perf/test-suite-runtime` (OD-14). Tier
+  relabelling and duplicate-work removal; no assertion, tolerance or result changed. Not merged, not recertified.

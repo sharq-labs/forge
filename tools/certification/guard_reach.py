@@ -29,6 +29,7 @@ cannot see.
 
 from __future__ import annotations
 
+import functools
 import json
 import pathlib
 import re
@@ -94,12 +95,18 @@ def _call_spans(text: str, pattern: str) -> list[tuple[int, str]]:
     return found
 
 
+@functools.lru_cache(maxsize=None)
 def _strip_comments_and_strings(text: str) -> str:
     """Docstrings, comments and string literals blanked, so a MENTION is never a call.
 
     Every one of these four names appears in prose in this tree -- the modules explain themselves at
     length -- and a checker that counted those would be unusable. Line structure is preserved so reported
     line numbers stay true.
+
+    Memoized on the text itself. Every checker strips every production module, and ``verify`` runs all four
+    checkers, so one ``verify`` tokenized each file four times and a test session that calls ``verify`` two
+    dozen times tokenized the tree about a hundred times. The result is a pure function of the text, so an
+    edited file is a different key and can never be served a stale answer.
     """
     import io
     import tokenize

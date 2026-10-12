@@ -83,24 +83,35 @@ def applied() -> tuple[dict[str, str], dict[str, str], tuple[str, ...]]:
     Cached because two suites ask -- this one and the batch that introduced the population -- and the
     scan reads 680 entries against the tree. One measurement, one answer, no chance of the two
     disagreeing.
+
+    Within the one measurement, a spec is located once and an UNMUTATED file is digested once: 680 entries
+    name 121 files (84 entries name `hybrid_uq/local_gaussian.py` alone), and both reads are pure functions of the spec and of the text.
+    Every mutated text is still digested on its own, so each entry is judged exactly as before.
     """
     stale: dict[str, str] = {}
     inert: dict[str, str] = {}
     fstring_only: list[str] = []
+    regions: dict[str, tuple[str, int, int]] = {}
+    unmutated: dict[str, tuple[str, str]] = {}
     for mid, spec, old, new, _test, expect, _note, also, _source in pop.POPULATION_V4:
         if expect == pop.NOT_MUTATED:
             continue
         conservative_moved = False
         for target_spec, target_old, target_new in ((spec, old, new), *also):
-            text, low, high = _region(target_spec)
+            if target_spec not in regions:
+                regions[target_spec] = _region(target_spec)
+            text, low, high = regions[target_spec]
             count = text[low:high].count(target_old)
             if count != 1:
                 stale[mid] = f"{target_spec} matched {count} times"
                 continue
             mutated = text[:low] + text[low:high].replace(target_old, target_new) + text[high:]
-            if mg._code_digest(text) == mg._code_digest(mutated):
+            if text not in unmutated:
+                unmutated[text] = (mg._code_digest(text), _conservative_digest(text))
+            code_before, conservative_before = unmutated[text]
+            if code_before == mg._code_digest(mutated):
                 inert[mid] = f"{target_spec} changes no code"
-            if _conservative_digest(text) != _conservative_digest(mutated):
+            if conservative_before != _conservative_digest(mutated):
                 conservative_moved = True
         if not conservative_moved and mid not in stale:
             fstring_only.append(mid)
