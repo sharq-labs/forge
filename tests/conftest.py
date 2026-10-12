@@ -126,6 +126,156 @@ EXPENSIVE_MODULES: dict[str, str] = {
     "tests/test_benchmark_records.py": "re-scores the committed benchmark records through the real scorer",
 }
 
+# --------------------------------------------------------------------------
+# `expensive`, test by test — numerical work that had drifted into FAST.
+#
+# Same behavioural criterion as the modules above: each of these drives a
+# solver to convergence, reproduces a committed result, or runs a seeded
+# study. They are labelled ONE BY ONE rather than by module because these
+# modules memoize no experiment at module level: the cost is in the test
+# itself, and the cheap refusal and contract tests beside them stay in FAST.
+#
+# Where tests DO share a module fixture or a memoized build, every test that
+# reads it is labelled together, so the cost has nowhere to hop (the failure
+# the module rule exists for): `long_run` in the multiscale runtime, the
+# 161-node `tcr_narrow_resolved` grid, and the 81-node narrow posterior in the
+# TCR calibration module.
+#
+# A key is either an exact node id or `module::function`, which covers every
+# parametrization. Costs in brackets were measured with `-n 2` on a 2-core
+# host on 2026-10-12; they corroborate the label and are not the criterion.
+# Every test here still runs in SCIENTIFIC and FULL.
+# --------------------------------------------------------------------------
+
+EXPENSIVE_TESTS: dict[str, str] = {
+    # benchmarks/scientific_truth — the runtime against independent oracles
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_randomized_cases_inside_the_declared_domain_hold[diffusion_property]": (
+        "property test that solves the diffusion model across randomized draws [~79 s]"
+    ),
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_the_runtime_agrees_with_an_independent_oracle[diffusion_rows]": (
+        "solves every diffusion oracle row [~47 s]"
+    ),
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_the_predicted_discretization_error_is_what_the_solver_actually_makes": (
+        "runs the diffusion solver at several resolutions against a reference [~45 s]"
+    ),
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_the_diffusion_solver_converges_at_the_order_its_scheme_justifies": (
+        "a mesh-refinement convergence study [~25 s]"
+    ),
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_every_conservation_residual_is_round_off": (
+        "solves each conserving model to measure its residual [~7 s]"
+    ),
+    "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+    "::test_the_reactor_agrees_with_an_independent_oracle[cstr_rows]": (
+        "solves every CSTR oracle row [~6 s]"
+    ),
+    # benchmarks/battery_flagship_b2 — `rerun` is read by this test only
+    "benchmarks/battery_flagship_b2/tests/test_battery_flagship_b2.py"
+    "::test_the_primary_result_reproduces_from_the_raw_file": (
+        "re-derives the committed B2 result from the raw cycler file [~71 s]"
+    ),
+    # multiscale runtime — both proof-B tests read the `long_run` fixture
+    "tests/test_multiscale_runtime.py"
+    "::test_proof_b_long_horizon_changes_state_and_future_physics_without_brute_force": (
+        "runs the 63-day multiscale horizon (`long_run`) [~52 s]"
+    ),
+    "tests/test_multiscale_runtime.py"
+    "::test_proof_b_records_adaptation_event_split_threshold_and_accounting": (
+        "reads `long_run`; labelled with its sibling so the run cannot hop into FAST"
+    ),
+    "tests/test_multiscale_runtime.py"
+    "::test_proof_e_checkpoint_resume_in_a_fresh_process_matches_uninterrupted": (
+        "runs the horizon twice, once resumed in a fresh process [~35 s]"
+    ),
+    "tests/test_multiscale_runtime.py"
+    "::test_exact_reuse_only_for_identical_requests_and_state_change_limit_refines": (
+        "several multiscale runs compared for reuse and refinement [~18 s]"
+    ),
+    "tests/test_multiscale_runtime.py"
+    "::test_one_representative_weight_or_the_hierarchy_changes_run_identity": (
+        "runs the runtime under varied representative weights [~12 s]"
+    ),
+    "tests/test_multiscale_runtime.py"
+    "::test_proof_c_event_inside_macro_window_is_split_or_refused": (
+        "multiscale runs with an event inside a macro window [~6 s]"
+    ),
+    "tests/test_multiscale_review_fixes.py"
+    "::test_f10_reuse_needs_declared_purity_and_the_consumed_environment_must_match": (
+        "multiscale runs compared under purity and environment changes [~24 s]"
+    ),
+    "tests/test_multiscale_review_fixes.py"
+    "::test_n3_forged_checkpoint_accounting_never_upgrades_the_ledger": (
+        "runs and resumes the multiscale runtime from forged checkpoints [~8 s]"
+    ),
+    "tests/test_multiscale_review_fixes.py"
+    "::test_f1_non_periodic_usage_rejects_the_repetition_and_refines": (
+        "multiscale run that refines after rejecting a repetition [~8 s]"
+    ),
+    # inference — grid resolution and TCR identifiability
+    "tests/inference/test_grid_resolution_repair.py"
+    "::test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right": (
+        "builds the 161x161 admitted TCR grid (`tcr_narrow_resolved`) and a dense quadrature [~50 s]"
+    ),
+    "tests/inference/test_grid_resolution_repair.py"
+    "::test_predictive_uq_is_right_on_a_weak_but_resolved_grid": (
+        "reads `tcr_narrow_resolved`; labelled with its sibling so the build cannot hop into FAST"
+    ),
+    "tests/inference/test_tcr_calibration.py"
+    "::test_the_narrow_span_case_is_not_reported_as_identifiable": (
+        "builds the 81x81 admitted narrow-design TCR posterior [~12 s]"
+    ),
+    "tests/inference/test_tcr_calibration.py"
+    "::test_the_two_designs_do_not_report_the_same_confidence": (
+        "reads the 81-node narrow posterior; labelled with the test that builds it"
+    ),
+    "tests/inference/test_tcr_calibration.py"
+    "::test_calibration_and_identifiability_are_separate_verdicts": (
+        "reads the 81-node narrow posterior and runs a calibration"
+    ),
+    "tests/inference/test_tcr_heldout_uq.py"
+    "::test_b_and_c_do_not_produce_the_same_diagnosis": (
+        "builds two 81-node narrow-design posteriors [~15 s]"
+    ),
+    "tests/inference/test_tcr_heldout_uq.py"
+    "::test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal": (
+        "builds 21- and 81-node narrow-design posteriors [~12 s]"
+    ),
+    "tests/inference/test_reproducibility_and_evidence.py"
+    "::test_the_coverage_study_is_a_function_of_its_seed_schedule": (
+        "runs a seeded coverage study twice [~7 s]"
+    ),
+    # hybrid UQ — routed rebuilds against dense references
+    "tests/hybrid_uq/test_hybrid_uq_tcr.py"
+    "::test_the_local_route_agrees_with_the_resolved_grid": (
+        "builds the resolved TCR grid the local route is checked against [~5-13 s per case]"
+    ),
+    "tests/hybrid_uq/test_hybrid_uq_router.py"
+    "::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference": (
+        "rebuilds a grid and compares it with a dense reference [~7-19 s per case]"
+    ),
+    "tests/hybrid_uq/test_hybrid_uq_router.py"
+    "::test_an_honest_builder_still_rebuilds_and_the_certified_grid_is_the_last_grid_it_was_asked_for": (
+        "drives the router through repeated grid rebuilds [~6-15 s]"
+    ),
+    "tests/hybrid_uq/test_core_scientific_audit_batch6.py"
+    "::test_r06_a_grid_that_spans_the_declared_bounds_needs_no_search": (
+        "builds a grid spanning the declared bounds [~11-19 s]"
+    ),
+    # battery OCV curve calibration controls
+    "tests/domains/battery/test_battery_ocv_curve_calibration.py"
+    "::test_control_a_structurally_different_ocv_calibrates_and_fails": (
+        "runs a full OCV-curve calibration [~11 s]"
+    ),
+    "tests/domains/battery/test_battery_ocv_curve_calibration.py"
+    "::test_control_a_truth_from_the_curve_itself_calibrates_and_passes": (
+        "runs a full OCV-curve calibration [~11 s]"
+    ),
+}
+
 #: Tests inside an expensive module that stay in FAST. Each only reads files,
 #: hashes bytes, or parses source — none reaches the memoized experiment.
 STATIC_GUARDS: dict[str, frozenset[str]] = {
@@ -225,6 +375,13 @@ def pytest_collection_modifyitems(
         if campaign_reason is not None:
             item.add_marker(pytest.mark.campaign(reason=campaign_reason))
             item.add_marker(pytest.mark.expensive(reason=campaign_reason))
+            continue
+
+        test_reason = EXPENSIVE_TESTS.get(nodeid) or EXPENSIVE_TESTS.get(
+            nodeid.split("[", 1)[0]
+        )
+        if test_reason is not None:
+            item.add_marker(pytest.mark.expensive(reason=test_reason))
             continue
 
         module_reason = EXPENSIVE_MODULES.get(module)
