@@ -62,14 +62,14 @@ def _basis_lines(check):
 
 def _shared_disagreement():
     """Two routes that share a dependency and report 1.0 against 1.5 for the same quantity."""
-    from test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
+    from tests.test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
 
     return _consensus((_route("a", ALPHA, "shared"), _route("b", BETA, "shared")),
                       {"a": {"x": 1.0}, "b": {"x": 1.5}})
 
 
 def _independent_pair(*, agree=True):
-    from test_trusted_consensus_gate import _consensus, _evidence_for
+    from tests.test_trusted_consensus_gate import _consensus, _evidence_for
 
     consensus = _consensus(agree=agree)
     evidence, artifact_bytes = _evidence_for(consensus)
@@ -123,7 +123,7 @@ def test_r21_a_disagreement_still_establishes_nothing():
 # machinery is still a PASS that establishes nothing. The outcome and the level are allowed to disagree, and
 # this batch changes only the disagreement branch.
 def test_r21_agreement_between_non_independent_routes_is_still_a_pass_that_earns_nothing():
-    from test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
+    from tests.test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
 
     consensus = _consensus((_route("a", ALPHA, "shared"), _route("b", BETA, "shared")),
                            {"a": {"x": 1.0}, "b": {"x": 1.0}})
