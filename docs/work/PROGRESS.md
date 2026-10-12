@@ -2437,3 +2437,151 @@ Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shall
   stored verdict without re-deriving it (`claims/replay/bundle.py`, pre-existing); (3) `mcp/foundations.py` catches
   bare `Exception` (from `main`, verdict pinned to insufficient_evidence).
 - Hardened recertification of the merged tree: NOT RUN (owner-run, OD-3). SCIENTIFIC / FULL tiers: NOT RUN.
+
+
+
+## NASA battery ingestion hostile review — 2026-10-06
+
+Requested branch was absent from shared checkout (on main with pre-existing
+work-document edits). Fetched origin/scientific/battery-1rc-production-closure
+and created isolated ../forge-battery-review at d66c4756; shared edits preserved.
+
+Confirmed/fixed: separate hash/parse reads could bind receipt A to content B;
+arbitrary matrices and complex operational values were accepted; strings and
+logical Python inputs were coerced into measurements; squeezed singleton MAT
+samples crashed; empty impedance records were accepted. Hash/parse now share
+one byte snapshot; finite real numeric operational vectors normalize to lists;
+empty impedance is refused. Complex impedance remains explicit. Dataset URLs
+are format metadata, not origin authentication; parsed helper receipts are
+caller assertions. No SOC, segmentation, uncertainty or parameters inferred.
+
+Read-only forge-scientific-review initially returned CHANGES REQUIRED with four
+findings, then PASS after fixes. This is review, not executed tests or validation.
+No implemented calibration/validation leakage path exists; cell-level split
+controls remain deferred. real_data remains MISSING; capability matrix unchanged.
+
+Executed commands (Python 3.14.2 / Windows, not CI acceptance environment):
+- `py -3.14 -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py --basetemp=.pytest-review-temp/nasa-baseline`
+  ERROR: 6 passed, 2 setup errors; missing basetemp parent. Relevant names:
+  test_source_receipt_binds_exact_raw_bytes;
+  test_real_matlab_file_round_trip_uses_the_documented_cycle_shape.
+  Failed approach: create the basetemp parent before test execution.
+- `py -3.14 -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py --basetemp=.pytest-review-temp/nasa-baseline-retry`
+  PASS: 8 passed in 0.38s.
+- `py -3.14 tools/forge_check.py --changed`
+  ERROR: 224 passed, 1 setup error:
+  test_untracked_manifest_digest_changes_with_file_content (default Windows tmp
+  root permission). Retried using explicit workspace basetemp.
+- `py -3.14 -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py --basetemp=.pytest-review-temp/nasa-fixed`
+  PASS: 33 passed in 0.50s.
+- `$env:PYTEST_ADDOPTS='--basetemp=.pytest-review-temp/nasa-changed'; py -3.14 tools/forge_check.py --changed *> .pytest-review-temp/nasa-changed.log`
+  PASS: 225 passed in 10.80s.
+- `py -3.14 -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py --basetemp=.pytest-review-temp/nasa-final`
+  PASS: 63 passed in 0.51s. Synthetic fixtures, including genuine multi-cycle
+  MATLAB struct arrays; not pinned NASA data or scientific validation.
+- `git diff --check`
+  PASS: exit 0.
+
+Remaining scientific blockers: pinned original NASA bytes and frozen ingestion
+receipt; source/license review; cell-independent calibration/holdout split;
+parameter identifiability; measured uncertainty; parameter UQ; discrepancy;
+independent held-out metrics; claims/DomainPack integration. No production
+capability promotion authorized or performed.
+
+- `py -3.14 -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py tests/test_capability_completion.py --basetemp=.pytest-review-temp/nasa-final-with-capability`
+  PASS: 68 passed in 0.53s after final source/documentation edits.
+Final independent read-only review: PASS; no remaining defect identified in
+bounded ingestion scope. Reviewer executed no tests.
+
+- `py -3.14 -m pytest -m "not expensive" -q -n 4 --tb=short --basetemp=.pytest-review-temp/nasa-fast *> .pytest-review-temp/nasa-fast.log`
+  FAIL: 20 failed, 8948 passed, 170 skipped, 67 warnings, 5 collection errors in 319.24s; exit 1.
+  Failures include core freeze/certificate and dirty-tree checks, MCP import
+  failures, battery march imports and Cantera provider outputs. No clean-tree
+  baseline run here, so pre-existing versus environmental status is not proven.
+  These gates are not bypassed or fixed outside this bounded task.
+
+Relevant FAST failure/error names:
+```text
+FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
+FAILED tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes
+FAILED tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes
+FAILED tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+FAILED tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+FAILED tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 - ...
+FAILED tests/test_core_freeze_manifest.py::test_the_command_line_verifier_agrees_with_the_function
+FAILED tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+FAILED tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+FAILED tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract
+FAILED tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions
+FAILED tests/test_core_guards.py::test_the_battery_march_runs_the_solver_it_names
+FAILED tests/test_core_guards.py::test_every_marched_step_carries_its_own_cell_report
+FAILED providers/cantera/tests/test_cantera_provider.py::test_proof_b_adiabatic_equilibrium_with_mechanism_bytes_bound
+FAILED providers/cantera/tests/test_cantera_provider.py::test_proof_b_transient_constant_pressure_reactor_on_a_big2_window
+FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record
+FAILED tests/test_core_scientific_audit_batch24.py::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers
+FAILED tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see
+ERROR tests/domains/battery/test_audit_domains_battery_pulse.py - ImportError...
+ERROR tests/mcp/test_answer.py - ImportError while importing test module 'C:\...
+ERROR tests/mcp/test_audit_domains_electrothermal_transient.py - ImportError ...
+ERROR tests/mcp/test_audit_domains_refused_coupling.py - ImportError while im...
+ERROR tests/mcp/test_core_scientific_audit_batch8.py - ImportError while impo...
+```
+
+- `py -3.14 -m pytest -m "not campaign" -q -n 4 --tb=short --basetemp=.pytest-review-temp/nasa-scientific *> .pytest-review-temp/nasa-scientific.log`
+  FAIL: 22 failed, 9502 passed, 170 skipped, 67 warnings, 5 collection errors in 420.13s; exit 1.
+
+Relevant SCIENTIFIC failure/error names:
+```text
+FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
+FAILED tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes
+FAILED tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes
+FAILED tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+FAILED tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+FAILED tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 - ...
+FAILED tests/test_core_freeze_manifest.py::test_the_command_line_verifier_agrees_with_the_function
+FAILED tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+FAILED tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+FAILED tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree
+FAILED benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+FAILED benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract
+FAILED tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions
+FAILED tests/test_core_guards.py::test_the_battery_march_runs_the_solver_it_names
+FAILED tests/test_core_guards.py::test_every_marched_step_carries_its_own_cell_report
+FAILED providers/cantera/tests/test_cantera_provider.py::test_proof_b_adiabatic_equilibrium_with_mechanism_bytes_bound
+FAILED providers/cantera/tests/test_cantera_provider.py::test_proof_b_transient_constant_pressure_reactor_on_a_big2_window
+FAILED tests/test_core_scientific_audit_batch24.py::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers
+FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record
+FAILED tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see
+ERROR tests/domains/battery/test_audit_domains_battery_pulse.py - ImportError...
+ERROR tests/mcp/test_answer.py - ImportError while importing test module 'C:\...
+ERROR tests/mcp/test_audit_domains_electrothermal_transient.py - ImportError ...
+ERROR tests/mcp/test_audit_domains_refused_coupling.py - ImportError while im...
+ERROR tests/mcp/test_core_scientific_audit_batch8.py - ImportError while impo...
+```
+
+Recommendation: DO NOT MERGE while integration tiers fail. Bounded ingestion
+review PASS does not supersede the repository gates. Pinned NASA ingestion and
+physical validation remain NOT RUN; real_data remains MISSING.
+
+Integration runs were sequential. Backed up and restored 5 test-generated
+tracked benchmark JSON reports; those paths were clean before execution.
+Logs/backups remain under .pytest-review-temp in this isolated worktree.
+
+## 2026-10-12 PR #117 landing gates (owner direction; merge commits only, no rebase)
+
+`origin/main` `21b7d20f` (with #126 and #123) merged into `scientific/battery-1rc-production-closure` as `bfccb351`;
+conflicts were PROGRESS / ACTIVE_PLAN only. The branch's ACTIVE_PLAN edit was not carried: it targeted the superseded
+queue and had re-encoded UTF-8 characters (mojibake). Diff against `main`: the ingestion tool, its test, README,
+prereg and docs. `tools/nasa_battery_aging.py` is standalone (numpy / scipy `loadmat`); it writes only the requested
+output file and does not touch the capability ledger: `real_data` stays MISSING and the capability stays FOUNDATION.
+Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shallow clone), on `bfccb351`:
+- `python -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider` -> 14 failed, 9852 passed,
+  135 skipped (286 s). Failure set identical to unmodified `main` in the same environment.
+- `python -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py tests/test_capability_completion.py` -> 68 passed.
+- `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
+- Review: the branch's own read-only forge-scientific-review (2026-10-06, above) PASS; no code changed in this landing.
+- Hardened recertification: NOT RUN (owner-run, OD-3; `tests/domains/...` is `certified:harness`). SCIENTIFIC / FULL: NOT RUN.
