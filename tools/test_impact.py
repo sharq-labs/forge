@@ -40,8 +40,12 @@ one costs false confidence.
 from __future__ import annotations
 
 import ast
+import hashlib
+import json
+import os
 import pathlib
 import re
+import sys
 import tomllib
 from dataclasses import dataclass, field
 from enum import Enum
@@ -237,7 +241,106 @@ def _python_files(root: pathlib.Path) -> list[pathlib.Path]:
     return sorted(out)
 
 
-def build_graph(root: pathlib.Path) -> ImpactGraph:
+def _file_facts(text: str) -> list | None:
+    """What one file's own text says about what it reaches: ``None`` when it does not parse.
+
+    A pure function of the text: ``("i", name)`` per ``import``, ``("f", level,
+    module, names)`` per ``from ... import``, ``("c", dotted)`` per first-party-looking
+    dotted name in a short string constant. Resolving them needs the whole tree
+    (module names, packages), which :func:`build_graph` does on every run.
+    """
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return None
+    facts: list = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            facts.extend(("i", alias.name) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            facts.append(("f", node.level, node.module or "", [alias.name for alias in node.names]))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) < 400:
+            # A short string naming a first-party module: an importlib target, a
+            # ``py:`` identity. Long strings are prose (docstrings) and are not read:
+            # measured, reading them too took one domain edit from ~45 affected
+            # modules to 557 through package docstrings that merely name a module.
+            facts.extend(("c", dotted) for dotted in _DOTTED.findall(node.value))
+    return facts
+
+
+#: Bumped by hand only for a change the identity below cannot see (none so far).
+_FACTS_SCHEMA = "forge.test_impact.facts/1"
+
+
+def _facts_identity() -> str:
+    """Everything a cached fact depends on besides the file's own bytes.
+
+    This module's whole source (any edit to the extraction, the regex or the
+    400-character rule invalidates every entry) and the interpreter version
+    (what parses can change between versions).
+    """
+    own = pathlib.Path(__file__).read_bytes()
+    return hashlib.sha256(_FACTS_SCHEMA.encode() + b"\0" + sys.version.encode() + b"\0" + own).hexdigest()
+
+
+def _load_facts_cache(path: pathlib.Path | None, identity: str) -> dict:
+    """Cached facts by content digest; empty on any doubt (absent, unreadable, other identity, malformed)."""
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("identity") != identity or not isinstance(payload.get("facts"), dict):
+            return {}
+        return payload["facts"]
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def _valid_facts(facts) -> bool:
+    if facts is None:
+        return True
+    if not isinstance(facts, list):
+        return False
+    for fact in facts:
+        if not isinstance(fact, list) or not fact:
+            return False
+        if fact[0] in ("i", "c"):
+            if len(fact) != 2 or not isinstance(fact[1], str):
+                return False
+        elif fact[0] == "f":
+            if (len(fact) != 4 or not isinstance(fact[1], int) or isinstance(fact[1], bool) or not isinstance(fact[2], str)
+                    or not isinstance(fact[3], list) or not all(isinstance(n, str) for n in fact[3])):
+                return False
+        else:
+            return False
+    return True
+
+
+def _store_facts_cache(path: pathlib.Path | None, identity: str, facts: dict) -> None:
+    """Write atomically; a cache that cannot be written is simply not kept."""
+    if path is None:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps({"identity": identity, "facts": facts}, separators=(",", ":")), encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
+def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> ImpactGraph:
+    """The import graph of every first-party Python file under ``root``.
+
+    ``cache`` (optional) keeps each file's :func:`_file_facts` keyed by the
+    sha256 of its bytes. Every file is still listed, read and hashed on every
+    call, and everything that depends on more than one file -- the pytest
+    roots from ``pyproject.toml``, module names, packages, resolution, the
+    reverse graph -- is recomputed, so an added, deleted or renamed file, a
+    changed ``pyproject`` or ``conftest`` can never be answered from the cache.
+    A cache entry can only ever stand for the exact bytes it was computed from;
+    anything doubtful is recomputed.
+    """
     root = root.resolve()
     pythonpath = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest"]["ini_options"]["pythonpath"]
     roots = [(root / r).resolve() for r in pythonpath]
@@ -264,15 +367,29 @@ def build_graph(root: pathlib.Path) -> ImpactGraph:
         bits = name.split(".")
         return [f for i in range(1, len(bits) + 1) if (f := mod_to_file.get(".".join(bits[:i])))]
 
+    identity = _facts_identity() if cache is not None else ""
+    cached = _load_facts_cache(cache, identity)
+    kept: dict = {}
     deps: dict[str, set[str]] = {}
     texts: dict[str, str] = {}
     unparseable: list[str] = []
     for f in files:
         rel = f.relative_to(root).as_posix()
+        data = f.read_bytes()
         try:
-            text = f.read_bytes().decode("utf-8-sig")
-            tree = ast.parse(text)
-        except (SyntaxError, UnicodeDecodeError, ValueError):
+            text = data.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            unparseable.append(rel)
+            deps[rel] = set()
+            continue
+        key = hashlib.sha256(data).hexdigest() if cache is not None else ""
+        if key and key in cached and _valid_facts(cached[key]):
+            facts = cached[key]
+        else:
+            facts = _file_facts(text)
+        if key:
+            kept[key] = facts
+        if facts is None:
             unparseable.append(rel)
             deps[rel] = set()
             continue
@@ -280,31 +397,41 @@ def build_graph(root: pathlib.Path) -> ImpactGraph:
         own = (file_mods.get(rel) or [""])[0]
         package = own if f.name == "__init__.py" else own.rpartition(".")[0]
         out: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    out.update(executed_by(alias.name))
-            elif isinstance(node, ast.ImportFrom):
-                base = node.module or ""
-                if node.level:
+        for fact in facts:
+            if fact[0] == "i":
+                out.update(executed_by(fact[1]))
+            elif fact[0] == "f":
+                _, level, module, names = fact
+                base = module
+                if level:
                     anchor = package.split(".") if package else []
-                    if node.level > 1:
-                        anchor = anchor[: len(anchor) - (node.level - 1)]
-                    base = ".".join(anchor + ([node.module] if node.module else []))
+                    if level > 1:
+                        anchor = anchor[: len(anchor) - (level - 1)]
+                    base = ".".join(anchor + ([module] if module else []))
                 out.update(executed_by(base))
-                for alias in node.names:
-                    out.update(executed_by(f"{base}.{alias.name}" if base else alias.name))
-            elif isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) < 400:
-                # A short string naming a first-party module: an importlib target, a
-                # ``py:`` identity. Long strings are prose (docstrings) and are not read:
-                # measured, reading them too took one domain edit from ~45 affected
-                # modules to 557 through package docstrings that merely name a module.
-                for dotted in _DOTTED.findall(node.value):
-                    if dotted in mod_to_file or dotted.split(".", 1)[0] in _FIRST_PARTY_HEADS:
-                        out.update(executed_by(dotted))
+                for name in names:
+                    out.update(executed_by(f"{base}.{name}" if base else name))
+            else:
+                dotted = fact[1]
+                if dotted in mod_to_file or dotted.split(".", 1)[0] in _FIRST_PARTY_HEADS:
+                    out.update(executed_by(dotted))
         out.discard(rel)
         deps[rel] = out
+    if cache is not None and kept != cached:
+        _store_facts_cache(cache, identity, kept)
     return ImpactGraph(root, deps, texts, tuple(unparseable), tuple(roots))
+
+
+def default_cache_path(root: pathlib.Path) -> pathlib.Path | None:
+    """The developer cache for ``root``: outside the repository, one file per checkout.
+
+    ``FORGE_IMPACT_CACHE`` overrides the location; ``off`` (or ``0``, empty) disables it.
+    """
+    override = os.environ.get("FORGE_IMPACT_CACHE")
+    if override is not None:
+        return None if override.strip().lower() in ("", "0", "off", "no", "false") else pathlib.Path(override)
+    tag = hashlib.sha256(str(pathlib.Path(root).resolve()).encode()).hexdigest()[:16]
+    return pathlib.Path.home() / ".cache" / "forge" / "test_impact" / f"facts-{tag}.json"
 
 
 # ---------------------------------------------------------------------------
