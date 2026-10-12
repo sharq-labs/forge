@@ -2294,3 +2294,21 @@ Recertification is owner-run and NOT RUN.
   walk, not the parse, was the cost; one walk for all names -> 5 s. (3) Moving refusal tests out of FAST for speed --
   reverted after review (F3): it silently drops their Python 3.11 execution. (4) Blaming `--dist loadfile` for the
   tail -- a scheduling simulation over measured durations put it at 10-15 %, not worth a change.
+
+## 2026-10-12 PR landing pass (owner direction: resolve conflicts, merge the open PRs that pass every gate)
+
+PR #126 merge preparation: `origin/main` `de36168e` merged into `feat/big-rocks-authority-escrow-battery` as `2cd4e04b`
+(docs-only conflicts: PROGRESS, PERFORMANCE row 47, ACTIVE_PLAN; resolution in the merge commit message).
+Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shallow clone):
+- `python -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider` on `2cd4e04b` -> 15 failed,
+  9738 passed, 135 skipped (330 s). 14 of the 15 also fail on unmodified `main` `de36168e` in the same environment
+  (`tests/test_mutation_workspace.py` x2, `test_core_certificate::test_the_certificate_describes_this_tree`,
+  `test_core_freeze_manifest` x5, `test_core_scientific_audit_batch56::test_r65_...`, `test_core_freeze_v3_manifest` x2,
+  `test_core_freeze_v4_manifest` x3: same files on `de36168e` -> 14 failed, 200 passed). The 15th,
+  `test_formal_xdist::test_real_xdist_infrastructure_failure_never_earns_credit[worker_lost_before_target-reasons1]`,
+  passes alone (`python -m pytest -q tests/test_formal_xdist.py` -> 67 passed): the known load-sensitive case.
+  The shallow clone may contribute to the freeze-verifier failures; UNCLASSIFIED here, unchanged from `main`.
+- `python tools/forge_check.py --changed` -> 225 passed; `python tools/forge_check.py --regression` -> 225 passed.
+- `python -m pytest -q -n 4 --dist loadfile tests/foundations tests/claims flagships/tests` -> 964 passed, 50 skipped.
+- forge-scientific-review (read-only) of the combined `main` + #126 + #123 tree: PASS; three LOW findings.
+- Hardened recertification: NOT RUN (owner-run, OD-3). SCIENTIFIC / FULL / campaign tiers: NOT RUN.
