@@ -2570,3 +2570,18 @@ physical validation remain NOT RUN; real_data remains MISSING.
 Integration runs were sequential. Backed up and restored 5 test-generated
 tracked benchmark JSON reports; those paths were clean before execution.
 Logs/backups remain under .pytest-review-temp in this isolated worktree.
+
+## 2026-10-12 PR #117 landing gates (owner direction; merge commits only, no rebase)
+
+`origin/main` `21b7d20f` (with #126 and #123) merged into `scientific/battery-1rc-production-closure` as `bfccb351`;
+conflicts were PROGRESS / ACTIVE_PLAN only. The branch's ACTIVE_PLAN edit was not carried: it targeted the superseded
+queue and had re-encoded UTF-8 characters (mojibake). Diff against `main`: the ingestion tool, its test, README,
+prereg and docs. `tools/nasa_battery_aging.py` is standalone (numpy / scipy `loadmat`); it writes only the requested
+output file and does not touch the capability ledger: `real_data` stays MISSING and the capability stays FOUNDATION.
+Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shallow clone), on `bfccb351`:
+- `python -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider` -> 14 failed, 9852 passed,
+  135 skipped (286 s). Failure set identical to unmodified `main` in the same environment.
+- `python -m pytest -q tests/domains/test_nasa_battery_aging_ingestion.py tests/test_capability_completion.py` -> 68 passed.
+- `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
+- Review: the branch's own read-only forge-scientific-review (2026-10-06, above) PASS; no code changed in this landing.
+- Hardened recertification: NOT RUN (owner-run, OD-3; `tests/domains/...` is `certified:harness`). SCIENTIFIC / FULL: NOT RUN.
