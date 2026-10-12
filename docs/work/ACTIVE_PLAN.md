@@ -151,3 +151,7 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   `perf/engineering-program-2026-10-12` (not pushed). Selection, robustness, challenge, impact, provider-timeout and
   changed-file-selection defects fixed; FAST failure set identical to `2d0fa6c3`. `tools/forge_check.py` is
   certification-pinned: landing it needs OD-3. Report `docs/audits/ENGINEERING_PROGRAM_2026-10-12.md`.
+- 2026-10-12 — owner-requested, outside the queue: test-loop round on local branch `perf/test-loop-cleanup` (not
+  pushed). FAST -14 % at `-n 4`, -28 % at `-n 8`; CI-equivalent SCIENTIFIC -15 %; identical failure sets. The changed-file
+  gate now runs the tests a change reaches. Certified harness and `tools/forge_check.py` changed: one owner-run
+  recertification (OD-3) covers the batch. Two benchmark rebuild tests still write committed JSON in place (open).

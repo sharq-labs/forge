@@ -11,21 +11,15 @@ that are not in this repository; the 9–14% is quoted here as the shape of the
 problem, not as a figure about this tree. Treat them as
 approximately one significant figure; the test counts are exact.
 
-**Counts and timings come from different measurements — read them
-differently.** Every test count in this document was re-measured on
-**2026-09-08** and is current, with
-`pytest <selection> --collect-only -q` on a pristine `git archive` export of
-`a35144e`. **Every one of them had gone stale**: the 2026-09-06 counts printed
-here until then were FAST 1406, SCIENTIFIC 1924 and FULL 1928, against 2570,
-3091 and 3095 today — the suite grew by 1167 tests and no count followed it.
-Nothing checks these numbers, which is why they drifted; treat a count here as
-current only as far as the date beside it.
-
-Every wall-clock figure was measured earlier, on
-different hardware and at a smaller suite (1526 FULL tests), and has *not* been
-re-measured; each one is marked where it appears. A timing here tells you the
-shape of the problem — which tier is worth running, why more workers stop
-helping — and nothing reliable about how long your own run will take.
+**Current versus historical.** Every count and timing under
+[Current measurements](#current-measurements-2026-10-12) was measured in one pass on
+2026-10-12 on the machine described there, against `origin/main` `305928f9` and
+branch `perf/test-loop-cleanup`. Everything under
+[Historical results](#historical-results) is kept as a record of earlier runs on
+other hardware and smaller suites; none of it was re-measured, and none of it
+predicts a run today. A count elsewhere in this file is current only if it says
+so. Nothing checks these numbers, which is how the 2026-09-08 counts (2570 /
+3091 / 3095) were still printed as current when the suite had grown past 10,000.
 
 Nothing in the tiering changes what a test asserts. No test was deleted,
 skipped, weakened, reordered, or had a tolerance loosened. Tiers only decide
@@ -73,71 +67,53 @@ decisions or changes scientific standing.
 
 ## Fast changed-file gate
 
-Before selecting a large tier by hand, Forge now has a small deterministic
-developer gate:
-
 ```bash
-python tools/forge_check.py --changed
+python tools/forge_check.py --changed --workers 4          # what changed since main, including uncommitted edits
+python tools/forge_check.py --changed --dry-run --list     # show the selection and why, run nothing
+python tools/forge_check.py --regression --workers 4       # the fixed scientific regression pack
 ```
 
-It always runs repository/layer guards and selects a fixed set of scientific
-regression sentinels from `tests/scientific_regression/manifest.json` according
-to the changed source paths. The sentinels target false-confidence failures:
-applicability, verification-vs-validation, context binding, uncertainty
-attribution, risk policy, evidence admission, evidence gaps, challenge and
-replay.
+`--changed` runs the union of:
 
-To run the complete fixed sentinel pack:
+1. the repository/layer guards (`ARCHITECTURE_TESTS`);
+2. the fixed scientific regression sentinels from
+   `tests/scientific_regression/manifest.json` chosen by path tags, or the whole
+   pack when a changed path cannot be classified;
+3. every changed test module;
+4. every test module the change can **reach** (`tools/test_impact.py`): by import
+   (any chain of first-party imports, function-level imports, package
+   `__init__` chains, dotted module names in strings, a deleted module traced by
+   name), by naming the changed file's path, by a governing `conftest.py`, or --
+   for any `src/` change -- by walking the source tree (the guards an import graph
+   cannot see). A change no rule reaches is reported as unresolved and selects the
+   whole pack.
 
-```bash
-python tools/forge_check.py --regression
-```
+Affected tests that are `expensive` are **listed, not run** -- run SCIENTIFIC, or
+pass `--with-expensive`. Each changed path is printed with its class (from
+repository ownership: `doc_only`, `test_only`, `local_nonscientific`,
+`domain_local`, `scientific_shared`, `trust_or_authority`,
+`test_infrastructure`, `certification_pinned`, `unclassified`) and the minimum
+gate it calls for. Any path the CI recertification classifier
+(`tools/certification/recertification_scope.py`) treats as a trigger is printed
+under `RECERTIFICATION_REQUIRED`: this gate never replaces the owner-run hardened
+recertification. `--committed-only` ignores staged, unstaged and untracked files.
 
-Use `--dry-run --list` to inspect the selection without executing tests.
-This command is a fast development aid only. It does **not** replace FAST,
+Why step 4 exists: before it, an edit to `src/engcore/domains/battery/thevenin.py`
+ran the tag sentinels and never `tests/domains/test_battery_thevenin.py`. The
+gate over-selects on purpose -- an extra test costs seconds, a missed one is
+false confidence. Measured cost per change class is under
+[Current measurements](#current-measurements-2026-10-12).
+
+This command is a development aid only. It does **not** replace FAST,
 SCIENTIFIC, FULL or hardened recertification.
 
 ---
 
 ## The tiers
 
-> **Current counts and timings (2026-10-12, `88a258f2`, branch
-> `perf/test-suite-runtime`).** MEASURED with `pytest <selection> --collect-only -q`
-> and `python -m pytest -m "<selection>" -q -n 2 -p no:cacheprovider` on a 2-core
-> Linux container, CPython 3.13.16, pytest 9.1.1, pytest-xdist 3.8.0, with `main`
-> (`8b028dc`) measured back to back on the same host as the comparison. ngspice was
-> absent (Linux, no `CRAFTY_NGSPICE_ARGV`), so its tests fail rather than run.
->
-> | Tier | Tests | `main` wall, `-n 2` | this branch, `-n 2` |
-> |---|---|---|---|
-> | **FAST** | **9806** (of 10388) | 992 s | **476 s** |
-> | **SCIENTIFIC** | **10384** | 1448 s | **1024 s** |
-> | **FULL** | **10388** | not measured | not measured |
->
-> Both runs of each tier had the identical failure set: the certificate and
-> freeze-manifest drift `main` already carries, two mutation-workspace tests, and
-> the ngspice tests. Wall-clock is one run on one host and carries the spread
-> described at the top of this file. The table below is the 2026-09-06 record,
-> kept as history; its counts are a third of today's suite.
-
-Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;
-see "Where the counts were measured"). Wall-clock columns are the *older*
-measurement on different hardware and a 1526-test suite — kept for shape, not
-for prediction, and not re-measured.
-
-| Tier | Selection | Tests | Sequential † | Parallel † | Use it |
-|---|---|---|---|---|---|
-| **FAST** | `-m "not expensive"` | **2570** | 9.2 s | 7.3 s | after every ordinary code edit |
-| **TARGETED** | a path | varies | seconds | — | the milestone you are working on |
-| **SCIENTIFIC** | `-m "not campaign"` | **3091** | 137.7 s | 53.7 s | after a scientific/core change |
-| **FULL** | *(no selection)* | **3095** | 578.3 s | 273.2 s | before a milestone freeze or merge |
-
-† older hardware, smaller suite, not re-measured — see the note above.
-
-FAST runs **83%** of the suite (2570 of 3095) and skips the four campaign
-tests plus every frozen-experiment reproduction and domain-solver run. On the
-hardware the timings above came from it was ~63× faster than sequential FULL;
-that ratio has not been re-measured. Use it.
+The current counts and timings are under
+[Current measurements](#current-measurements-2026-10-12). The tables that used to
+stand here are under [Historical results](#historical-results).
 
 The markers are assigned centrally in [`tests/conftest.py`](../tests/conftest.py)
 and registered in `pyproject.toml`. They are applied from `conftest.py` rather
@@ -173,7 +149,7 @@ execution costs milliseconds and the coverage is worth having every time.
 
 ## Where the counts were measured, and what changes them
 
-The counts in this document were measured on **Windows 11 with WSL**, where the
+The current counts were measured on **Windows 11 with WSL**, where the
 ngspice provider's default invocation — `("wsl.exe", "-e", "ngspice")`,
 `ngspice.py:191` — resolves without configuration. Nothing was deselected and
 no environment variable was set, so every count here is the whole suite.
@@ -186,7 +162,7 @@ so a native run needs:
 
 ```bash
 sudo apt-get install -y ngspice
-CRAFTY_NGSPICE_ARGV=ngspice python -m pytest -m "not campaign" -q -n auto \
+CRAFTY_NGSPICE_ARGV=ngspice python -m pytest -m "not campaign" -q -n 4 --dist loadfile \
   --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process \
   --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure \
   --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
@@ -195,100 +171,78 @@ CRAFTY_NGSPICE_ARGV=ngspice python -m pytest -m "not campaign" -q -n auto \
 Those three assert the WSL default invocation itself and are Windows-only.
 They are **deselected for the measurement, never skipped in the suite** — the
 markers in `conftest.py` are untouched and a Windows run still executes them.
-`.github/workflows/tests.yml` uses exactly this deselection list.
+`.github/workflows/tests.yml` deselects these three and three more (see
+[Standard commands](#standard-commands)).
 
 ---
 
 ## Standard commands
 
-Set `PY` to your interpreter (`python`, or an absolute path on Windows).
+Run every tier from the repository root **without a path argument**. CI does
+(`python -m pytest -m ...`), and so it also collects `benchmarks/*/tests`,
+`flagships/tests` and `providers/*/tests`. `python -m pytest tests/ -m "not expensive"`
+-- the command this section used to print -- collects 9,463 tests
+instead of 10,033: it silently left out 570 of them.
 
-### 1. FAST development — after ordinary code edits
-
-```bash
-python -m pytest tests/ -m "not expensive" -q
-```
-
-**2570 tests** (measured 2026-09-08). This is the default loop for
-AI-assisted development.
-
-### 2. TARGETED milestone — the package you are changing
+### 1. Changed / targeted -- after every edit
 
 ```bash
-python -m pytest tests/test_model0r_realization_foundation.py -q
+python tools/forge_check.py --changed --workers 4
 ```
 
-104 tests for that milestone (1.3 s, older hardware). Substitute the
-milestone's own module. See "Choosing targeted tests" below.
-
-### 3. SCIENTIFIC regression — after a scientific or core change
+### 2. FAST -- a checkpoint before you push
 
 ```bash
-python -m pytest tests/ -m "not campaign" -q
+python -m pytest -m "not expensive" -q -n 4 --dist loadfile
 ```
 
-**3091 tests** (measured 2026-09-08; 137.7 s sequential or 53.7 s with
-`-n 12 --dist loadfile` on the older hardware). Every
-frozen-experiment reproduction and domain solver test, without the four largest
-campaigns. Dropping just those four removes 428 s of the 578 s FULL runtime.
+10,033 tests on `origin/main` `305928f9`. Exactly CI's command.
 
-### 4. FULL sequential regression — canonical truth
+### 3. SCIENTIFIC -- before review of a scientific or core change
+
+The command CI runs (`.github/workflows/tests.yml`), deselects included:
 
 ```bash
-python -m pytest tests/ -q -rsxX --durations=30
+python -m pytest -m "not campaign" -q -n 4 --dist loadfile \
+  --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared \
+  --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process \
+  --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure \
+  --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical \
+  --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates \
+  --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
 ```
 
-**3095 tests** (measured 2026-09-08; 565.8 s on that machine, 578.3 s on the
-older one). This is the fallback and the reference result. If a parallel run
-and this run ever disagree, **this one is right**.
+10,611 tests collected before the deselects. **Do not run SCIENTIFIC
+without the two `test_rebuilding_everything...` deselects in a checkout you care
+about**: those tests rewrite 17 committed JSON files under
+`benchmarks/empirical_validation/` and `benchmarks/model_measurement_validation/`
+in place (see [Parallel safety](#parallel-safety)). Restore them with
+`git checkout -- benchmarks/` afterwards if you did.
 
-### 5. FULL parallel regression
+### 4. FULL -- milestone / freeze
 
 ```bash
-python -m pytest tests/ -n 8 --dist loadfile -q
+python -m pytest -q -n 8 --dist loadfile
 ```
 
-**3095 tests** (273.2 s, older hardware). **Use `-n 8`, not `-n auto`** — see
-"Parallel execution" below, where `-n auto` is measured failing intermittently
-with `MemoryError`. `--dist loadfile` is not optional.
+10,615 tests collected. Not run in this pass. If a parallel run and a
+sequential run (`python -m pytest -q -rsxX`) ever disagree, the sequential run is
+right.
 
-### 6. Hybrid regression
+### 5. Hybrid regression
 
-**Not required.** No test in this suite is parallel-unsafe: no serial-only
-subset exists, and every parallel run that completed produced the identical
-full count. See "Parallel safety".
+**Not required**, with one exception documented under
+[Parallel safety](#parallel-safety): the two benchmark rebuild tests.
 
 ---
 
 ## Choosing targeted tests
 
-Do not rely on recall for this. Derive the set:
-
-1. **Start from the milestone's own module.** Milestones own a test file named
-   after them — `tests/test_model0r_realization_foundation.py` for MODEL0-R,
-   `tests/test_scientific_core.py` for scientific-core work.
-
-2. **Add whoever imports what you changed.** For a change under
-   `src/engcore/scientific/`:
-
-   ```bash
-   grep -rln "engcore\.scientific" tests/
-   ```
-
-   That is the affected set, mechanically, without guessing.
-
-3. **Add the layer guards.** `tests/test_sria_m1.py` pins import direction and
-   the no-LLM-dependency rule; `tests/test_core_v02_invariants.py` and
-   `tests/test_core_v02_trust_invariants.py` pin the Core V0.2 contracts. These
-   are in FAST already, so step 1 of the workflow covers them.
-
-4. **If you touched a domain or an experiment,** run that domain's tests
-   explicitly — they are `expensive` and therefore *not* in FAST:
-
-   ```bash
-   python -m pytest tests/domains/kinetics/ -q
-   python -m pytest tests/test_thermal_t3_decision_aware_fidelity.py -q
-   ```
+Do not derive the set by hand. `python tools/forge_check.py --changed --dry-run --list`
+prints the affected set and why each module is in it (`imports ...`,
+`mentions ...`, `governed by ...`, `reads source files by path`). For a domain or
+experiment you touched, its expensive tests are printed as left out; run them
+with `--with-expensive` or as part of SCIENTIFIC.
 
 ---
 
@@ -297,30 +251,26 @@ Do not rely on recall for this. Derive the set:
 ```text
 code change
       ↓
-FAST                      (9 s)     every edit
+CHANGED / TARGETED   forge_check --changed      every edit         (about 15-65 s at --workers 4 for the measured classes)
       ↓
-TARGETED milestone tests  (1-3 s)   every edit to that milestone
+FAST                 -m "not expensive"         before push        (161.1 / 163.3 s at -n 4, 101.1 s at -n 8)
       ↓
-affected domain/experiment tests    when you touched a domain
+SCIENTIFIC           -m "not campaign" + CI deselects   before review   (245-276 s at -n 4)
       ↓
-SCIENTIFIC                (138 s)   before milestone review
-      ↓
-FULL                      (578 s)   before freeze / merge  ← mandatory
+FULL                 no selection               milestone / freeze  (not measured in this pass)
 ```
 
-**Do not run FULL after every small edit.** It costs 9½ minutes, and 46% of that
-is a single multirotor design-campaign test that no scientific-core edit can
-affect.
-
-**Do run FULL before a freeze.** The master context requires full repository
-regression as a milestone completion condition, and the tiering does not relax
-that.
+Times are this pass's measurements on the machine under
+[Current measurements](#current-measurements-2026-10-12); expect a ~10% run-to-run
+spread. **Do not run FULL after every small edit.** **Do run FULL before a
+freeze**: the master context requires full repository regression as a milestone
+completion condition, and the tiering does not relax that.
 
 ---
 
 ## What FAST does not cover
 
-FAST is a real suite — 2570 tests including the entire scientific-core contract
+FAST is a real suite — 10,033 tests including the entire scientific-core contract
 layer, the SRIA architecture layer, the design layer, campaign persistence,
 serialization, registries, error taxonomy and the dependency-direction guards.
 It is not a smoke test. But it deliberately omits these risk classes:
@@ -393,7 +343,31 @@ and the best achievable speedup is about **2.2×**, reached by the time there ar
 enough workers to overlap the other long tests with it. Adding workers past that
 buys nothing and costs memory.
 
-### Measured
+### Current worker scaling (2026-10-12)
+
+FAST (`-m "not expensive"`, 10,033 tests), `--dist loadfile`, on the
+machine under [Current measurements](#current-measurements-2026-10-12), before
+this pass's optimizations. Every run had the identical failure set.
+
+| `-n` | Wall | Process-tree CPU | Peak RSS | Summed test time | Busy max / mean |
+|---|---|---|---|---|---|
+| 1 | 589.2 s | 405.6 s | 1.10 GB | 566.4 s | -- |
+| 2 | 302.9 s | 424.8 s | 1.73 GB | 571.9 s | 1.00 |
+| 4 | 176.5-195.9 s | 487-537 s | 2.6-3.3 GB | 639-705 s | 1.01-1.02 |
+| 6 | 151.4 s | 619.8 s | 3.71 GB | 790.3 s | 1.02 |
+| 8 | 139.9 s | 686.4 s | 3.93 GB | 850.1 s | 1.19 |
+| 4, `--dist load` | 189.8 s | 485.5 s | 2.40 GB | 629.0 s | 1.11 |
+| 12 | not run: ~9 GB was free, and the memory per worker measured here puts 12 workers at the edge of it | | | | |
+
+"Summed test time" grows with the worker count: past four workers, tests
+contend for CPU, disk and process start-up, so each test gets slower. The knee
+is **6-8 workers on this 16-core / 32 GB machine**; after this pass's fixture
+change removed the 98 s critical-path module, `-n 8` fell from 139.9 s to
+101.1 s and its load imbalance from 1.19 to 1.03. `--dist load`
+was no faster than `loadfile` on FAST (189.8 s against 176.5-195.9 s) and is wrong for
+the memoizing modules, so `loadfile` stays. Keep `-n 4` in CI (4-core runners).
+
+### Historical sweep
 
 **A historical record, deliberately not rewritten.** The worker sweep and the
 memory sampling below were run once, on different hardware, against a
@@ -480,27 +454,18 @@ reasonable — the constraint here is memory, not cores.
 
 ## Parallel safety
 
-The suite was audited for shared state before parallelising. It is unusually
-clean, and this is by design rather than luck — the codebase states the rule
-explicitly ("the platform has no global mutable registry"; "no registry, global
-or otherwise").
+Re-audited 2026-10-12. The table that stood here said "Writes into the repo
+tree: None" and "Subprocesses: One"; both had stopped being true.
 
-| Hazard | Finding |
+| Hazard | Finding (2026-10-12) |
 |---|---|
-| Working-directory mutation | **None.** No `os.chdir` or `monkeypatch.chdir` anywhere in `tests/`. |
-| Environment mutation | **None.** The single `os.environ` use copies it for a subprocess. |
-| Temporary paths | Safe. Only 5 modules use temp dirs, all via `tmp_path` or `tempfile.TemporaryDirectory()` — both unique per test and per worker. No hard-coded temp path. |
-| Writes into the repo tree | **None.** Every test write goes to a temp directory. |
-| Shared output files | **None.** |
-| Ports, sockets, databases, file locks | **None.** |
-| Random seeds | **No RNG in the test suite at all.** Nothing to seed, nothing to race. |
-| Subprocesses | One, in `test_multirotor_mvr1.py`: a read-only `--help` invocation that writes nothing. |
-| Duplicate module basenames | **None** — no import-mode collisions under xdist. |
-| Global mutable state | Module-level memoization only (see above). Process-local, so workers cannot corrupt each other's copy; it costs repeated work, which `--dist loadfile` addresses. |
-| Test-order dependencies | None observed. Test counts and results are identical sequentially and in parallel. |
-
-**No hybrid serial/parallel split is required.** No test was found that fails
-only under xdist.
+| Writes into the repo tree | **Two tests.** `benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates` and its `model_measurement_validation` twin call builders that rewrite 17 committed JSON files in place (`(ROOT / name).write_text(...)`). Both are in SCIENTIFIC; CI deselects both. Measured consequence: in one local SCIENTIFIC run, `tests/claims/test_offline_revalidation.py` replayed a bundle after the rewrite and got `NOT_REPRODUCIBLE` ("runtime/source environment differs") -- correctly, because the tracked tree had changed under it. The module passes alone. Not fixed here: it needs the published-benchmark builders to accept an output directory. |
+| Working-directory mutation | `monkeypatch.chdir` in two modules -- restored per test. No bare `os.chdir`. |
+| Environment mutation | `monkeypatch.setenv` in three modules -- restored per test. |
+| Temporary paths | `tmp_path` / `tmp_path_factory` / `tempfile`; unique per test and per worker. No hard-coded temp path. |
+| Subprocesses | Many, all into temp directories: `git` in the certification suites' synthetic repositories (since 2026-10-12 built once per module and copied per test), ngspice, provider probes. |
+| Module-level memoization | Process-local; `--dist loadfile` keeps each memoizing module on one worker. |
+| Bytecode caches | Not a safety hazard, a cost: with `PYTHONDONTWRITEBYTECODE` set (some sandboxed shells set it), no `.pyc` and no rewritten-assertion cache is written, and collection costs ~20 s per process instead of ~8 s. |
 
 ---
 
@@ -534,10 +499,12 @@ FAST quietly absorbed about 680 s of solver work. Re-measure FAST with
 
 ## CI
 
-`.github/workflows/tests.yml` is the only workflow. It runs the **FAST** tier on
-every push and pull request, and the **SCIENTIFIC** tier on pushes to `main`
-(with the three Windows-only ngspice tests deselected, exactly as listed above).
-The FULL tier is run manually before a freeze.
+Four workflows exist: `tests.yml` (FAST on Python 3.11 and 3.12, SCIENTIFIC on
+3.12 with the six deselects listed under [Standard commands](#standard-commands)),
+`recertify-hardened-core.yml` (owner-triggered hardened recertification),
+`trust-mutations.yml` and `branch-policy.yml`. Pull requests are classified by
+`tools/certification/recertification_scope.py`. The FULL tier is run manually
+before a freeze.
 
 Worker counts in the sections above are **local recommendations**. The workflow
 is different: it pins `-n 4 --dist loadfile` on both jobs, and that pinning is
@@ -560,3 +527,98 @@ expensive work by the worker count.
 
 Every command in this document is path-independent and runs the same on Linux CI
 as locally.
+
+---
+
+## Current measurements (2026-10-12)
+
+Machine: Windows 11 Pro 10.0.26200, Intel (16 physical / 24 logical cores),
+31.7 GB RAM (about 9 GB free during the runs), CPython 3.14.2, pytest 9.1.1,
+pytest-xdist 3.8.0, ngspice reachable through WSL. Tree: `origin/main`
+`305928f9` ("before") and branch `perf/test-loop-cleanup` ("after"). Bytecode
+caching on (a developer shell); harness `-p no:cacheprovider`. Wall-clock spread
+for identical runs here: about 10%.
+
+**Failure sets.** On this host every FAST run, before and after, had the same
+151 failures and 21 errors: Windows / Python 3.14
+environment (mutation-workspace POSIX contracts, local-assurance source gates,
+formal-xdist, escrow and authority subprocess tests) and the known certificate
+and freeze-manifest drift. A faster run with a different failure set would not
+count; none was accepted.
+
+| Measurement | Before | After |
+|---|---|---|
+| Collection, whole suite, one process (bytecode warm / `PYTHONDONTWRITEBYTECODE=1`) | 8.0 s / 18-20 s | no measurable change: pytest-reported 5.4-5.5 s vs 5.6-6.3 s before, interleaved, within noise |
+| FAST, `-n 4 --dist loadfile` (10,033 tests before) | 195.9 / 176.5 / 195.0 s (three runs) | 161.1 / 163.3 s |
+| FAST, `-n 8 --dist loadfile` | 139.9 s | 101.1 s |
+| SCIENTIFIC as CI runs it, `-n 4` | 308.2 / 303.9 s | 245.4 / 275.7 s |
+| SCIENTIFIC without the deselects, `-n 4` (rewrites 17 JSONs) | 336.3 s | 284.0 s (2 extra failures: the race under Parallel safety) |
+| certificate_lineage + skip_admission + hardening_assurance, serial | 172-176 s | 30-34 s |
+| FULL | not measured | not measured |
+
+Changed-file gate, `forge_check --changed --workers 4`, one throwaway edit per class:
+
+| Change (class) | Old gate: tests, wall | New gate: tests, wall | What the old gate did not run |
+|---|---|---|---|
+| `domains/battery/thevenin.py` (domain_local) | 165, 11.2 s | 1,858, 52.5 s | the model's own `tests/domains/test_battery_thevenin.py`, and every source-walking guard |
+| `claims/selection.py` (scientific_shared) | 241, 12.0 s | 3,839, 63.7 s | the 160+ modules importing the claim runtime |
+| `authority/ledger.py` (trust_or_authority) | 241, 10.7 s | 2,047, 55.3 s | the authority, escrow and campaign suites |
+| `docs/TESTING.md` (doc_only) | 56, 6.1 s | 184, 15.3 s | tests that read the document |
+
+Wall time includes building the import graph (~5.8 s). The new gate's failures were the host's known environment set plus, for `selection.py`, two modules that could not run outside the full suite (fixed on this branch); none was caused by the probe edit.
+
+The heaviest FAST modules before this pass were the certification suites
+(`test_certificate_lineage` 98 s, `test_skip_admission` 56 s,
+`test_hardening_assurance` 51 s of 705 s summed test time), all rebuilding the same
+synthetic git repository per test.
+
+---
+
+## Historical results
+
+Kept as a record; not re-measured; do not read them as predictions.
+
+### Tier table, 2026-10-12, `88a258f2` (2-core Linux container)
+
+> **Current counts and timings (2026-10-12, `88a258f2`, branch
+> `perf/test-suite-runtime`).** MEASURED with `pytest <selection> --collect-only -q`
+> and `python -m pytest -m "<selection>" -q -n 2 -p no:cacheprovider` on a 2-core
+> Linux container, CPython 3.13.16, pytest 9.1.1, pytest-xdist 3.8.0, with `main`
+> (`8b028dc`) measured back to back on the same host as the comparison. ngspice was
+> absent (Linux, no `CRAFTY_NGSPICE_ARGV`), so its tests fail rather than run.
+>
+> | Tier | Tests | `main` wall, `-n 2` | this branch, `-n 2` |
+> |---|---|---|---|
+> | **FAST** | **9806** (of 10388) | 992 s | **476 s** |
+> | **SCIENTIFIC** | **10384** | 1448 s | **1024 s** |
+> | **FULL** | **10388** | not measured | not measured |
+>
+> Both runs of each tier had the identical failure set: the certificate and
+> freeze-manifest drift `main` already carries, two mutation-workspace tests, and
+> the ngspice tests. Wall-clock is one run on one host and carries the spread
+> described at the top of this file. The table below is the 2026-09-06 record,
+> kept as history; its counts are a third of today's suite.
+
+Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;
+see "Where the counts were measured"). Wall-clock columns are the *older*
+measurement on different hardware and a 1526-test suite — kept for shape, not
+for prediction, and not re-measured.
+
+| Tier | Selection | Tests | Sequential † | Parallel † | Use it |
+|---|---|---|---|---|---|
+| **FAST** | `-m "not expensive"` | **2570** | 9.2 s | 7.3 s | after every ordinary code edit |
+| **TARGETED** | a path | varies | seconds | — | the milestone you are working on |
+| **SCIENTIFIC** | `-m "not campaign"` | **3091** | 137.7 s | 53.7 s | after a scientific/core change |
+| **FULL** | *(no selection)* | **3095** | 578.3 s | 273.2 s | before a milestone freeze or merge |
+
+† older hardware, smaller suite, not re-measured — see the note above.
+
+
+### FAST share, 2026-09-08
+
+FAST runs **83%** of the suite (2570 of 3095) and skips the four campaign
+tests plus every frozen-experiment reproduction and domain-solver run. On the
+hardware the timings above came from it was ~63× faster than sequential FULL;
+that ratio has not been re-measured. Use it.
+
+
