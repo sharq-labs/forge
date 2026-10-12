@@ -137,9 +137,15 @@ EXPENSIVE_MODULES: dict[str, str] = {
 #
 # Where tests DO share a module fixture or a memoized build, every test that
 # reads it is labelled together, so the cost has nowhere to hop (the failure
-# the module rule exists for): `long_run` in the multiscale runtime, the
-# 161-node `tcr_narrow_resolved` grid, and the 81-node narrow posterior in the
-# TCR calibration module.
+# the module rule exists for): `long_run` in the multiscale runtime and the
+# 161-node `tcr_narrow_resolved` grid.
+#
+# REFUSALS STAY IN FAST EVEN WHEN THEY COST SECONDS. A test whose subject is a
+# refusal, a forgery, a context or identity binding, or the separation of two
+# scientific verdicts is not labelled here however slow it is: FAST is the only
+# tier CI runs on Python 3.11 (`fast311`; SCIENTIFIC runs on 3.12 only), so
+# moving one out would silently drop its 3.11 execution. What is labelled is
+# reproduction, convergence and oracle-agreement work, and positive controls.
 #
 # A key is either an exact node id or `module::function`, which covers every
 # parametrization. Costs in brackets were measured with `-n 2` on a 2-core
@@ -191,30 +197,6 @@ EXPENSIVE_TESTS: dict[str, str] = {
     "::test_proof_e_checkpoint_resume_in_a_fresh_process_matches_uninterrupted": (
         "runs the horizon twice, once resumed in a fresh process [~35 s]"
     ),
-    "tests/test_multiscale_runtime.py"
-    "::test_exact_reuse_only_for_identical_requests_and_state_change_limit_refines": (
-        "several multiscale runs compared for reuse and refinement [~18 s]"
-    ),
-    "tests/test_multiscale_runtime.py"
-    "::test_one_representative_weight_or_the_hierarchy_changes_run_identity": (
-        "runs the runtime under varied representative weights [~12 s]"
-    ),
-    "tests/test_multiscale_runtime.py"
-    "::test_proof_c_event_inside_macro_window_is_split_or_refused": (
-        "multiscale runs with an event inside a macro window [~6 s]"
-    ),
-    "tests/test_multiscale_review_fixes.py"
-    "::test_f10_reuse_needs_declared_purity_and_the_consumed_environment_must_match": (
-        "multiscale runs compared under purity and environment changes [~24 s]"
-    ),
-    "tests/test_multiscale_review_fixes.py"
-    "::test_n3_forged_checkpoint_accounting_never_upgrades_the_ledger": (
-        "runs and resumes the multiscale runtime from forged checkpoints [~8 s]"
-    ),
-    "tests/test_multiscale_review_fixes.py"
-    "::test_f1_non_periodic_usage_rejects_the_repetition_and_refines": (
-        "multiscale run that refines after rejecting a repetition [~8 s]"
-    ),
     # inference — grid resolution and TCR identifiability
     "tests/inference/test_grid_resolution_repair.py"
     "::test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right": (
@@ -223,26 +205,6 @@ EXPENSIVE_TESTS: dict[str, str] = {
     "tests/inference/test_grid_resolution_repair.py"
     "::test_predictive_uq_is_right_on_a_weak_but_resolved_grid": (
         "reads `tcr_narrow_resolved`; labelled with its sibling so the build cannot hop into FAST"
-    ),
-    "tests/inference/test_tcr_calibration.py"
-    "::test_the_narrow_span_case_is_not_reported_as_identifiable": (
-        "builds the 81x81 admitted narrow-design TCR posterior [~12 s]"
-    ),
-    "tests/inference/test_tcr_calibration.py"
-    "::test_the_two_designs_do_not_report_the_same_confidence": (
-        "reads the 81-node narrow posterior; labelled with the test that builds it"
-    ),
-    "tests/inference/test_tcr_calibration.py"
-    "::test_calibration_and_identifiability_are_separate_verdicts": (
-        "reads the 81-node narrow posterior and runs a calibration"
-    ),
-    "tests/inference/test_tcr_heldout_uq.py"
-    "::test_b_and_c_do_not_produce_the_same_diagnosis": (
-        "builds two 81-node narrow-design posteriors [~15 s]"
-    ),
-    "tests/inference/test_tcr_heldout_uq.py"
-    "::test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal": (
-        "builds 21- and 81-node narrow-design posteriors [~12 s]"
     ),
     "tests/inference/test_reproducibility_and_evidence.py"
     "::test_the_coverage_study_is_a_function_of_its_seed_schedule": (

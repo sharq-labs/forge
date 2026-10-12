@@ -619,6 +619,68 @@ def test_the_nested_exemptions_are_read_only_through_their_checking_parents():
     )
 
 
+def test_the_single_walk_scan_still_sees_every_reference_form_and_only_those():
+    """The scan behind the test above, on a synthetic file, in both directions.
+
+    It was restructured to parse and walk each product file once for all names,
+    so this pins what it must still count -- a direct, an aliased, a
+    package-re-exported and a relative import; a module-qualified access through
+    an aliased and an unaliased import; an uncalled reference; and the
+    ``getattr`` form -- and what it must not: a same-named class defined locally,
+    and a same-named class imported from somewhere else. Two exempted names are
+    scanned together, so a site credited to the wrong name is caught too.
+    """
+    name, exempt_file = "ParticipantStateContract", "src/engcore/coupling/adapters.py"
+    other, other_file = "GatheredInput", "src/engcore/scenarios/lifecycle.py"
+    targets = {
+        name: (exempt_file, _module_of(REPO_ROOT / exempt_file)),
+        other: (other_file, _module_of(REPO_ROOT / other_file)),
+    }
+    probe = REPO_ROOT / "src" / "engcore" / "coupling" / "_probe.py"
+    source = (
+        "import engcore.coupling.adapters\n"
+        "import engcore.coupling.adapters as qualified\n"
+        "from engcore.coupling.adapters import ParticipantStateContract\n"
+        "from engcore.coupling.adapters import ParticipantStateContract as Alias\n"
+        "from engcore.coupling import ParticipantStateContract as ReExported\n"
+        "from .adapters import ParticipantStateContract as Relative\n"
+        "from somewhere.elsewhere import GatheredInput\n"
+        "\n"
+        "ParticipantStateContract.from_dict({})\n"
+        "\n"
+        "class Reader:\n"
+        "    def direct(self):\n"
+        "        return Alias.from_dict({})\n"
+        "    def qualified(self):\n"
+        "        return qualified.ParticipantStateContract.from_dict({})\n"
+        "    def unaliased(self):\n"
+        "        return engcore.coupling.adapters.ParticipantStateContract.from_dict({})\n"
+        "\n"
+        "def uncalled(rows):\n"
+        "    return list(map(ReExported.from_dict, rows))\n"
+        "\n"
+        "def by_name():\n"
+        "    return getattr(Relative, 'from_' 'dict')({})\n"
+        "\n"
+        "def not_the_exempted_one():\n"
+        "    return GatheredInput.from_dict({})\n"
+    )
+    found = _from_dict_call_sites_in(targets, probe, ast.parse(source))
+    where = "src/engcore/coupling/_probe.py"
+    assert found[name] == {
+        (where, "<module>"),
+        (where, "Reader.direct"),
+        (where, "Reader.qualified"),
+        (where, "Reader.unaliased"),
+        (where, "uncalled"),
+        (where, "by_name"),
+    }, sorted(found[name])
+    assert found[other] == set(), sorted(found[other])
+
+    local = "class ParticipantStateContract:\n    pass\n\nParticipantStateContract.from_dict({})\n"
+    assert _from_dict_call_sites_in(targets, probe, ast.parse(local)) == {name: set(), other: set()}
+
+
 @pytest.mark.parametrize("registry_type", [ModelRegistry, RealizationRegistry])
 def test_a_registry_refuses_a_schema_it_did_not_write(registry_type):
     """The behaviour behind the static walk, in all three directions."""
